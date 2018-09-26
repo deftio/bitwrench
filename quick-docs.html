@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" type="image/x-icon" href="./images/favicon.ico" />
+<!-- above is all boiler plate -->
+
+<title>bitwrench.js</title>
+
+<!-- bitwrench.js quick-docs doc 
+	(c) M A Chatterjee
+	deftio <at> deftio <dot> com
+	github:  http:github.com/deftio/bitwrench
+ -->
+<script type="text/javascript" src="./bitwrench.js" bwargs="ex1:1;ex2:2"></script>
+<style>
+
+
+.boxStyle1 {
+	background-color: #aaa;
+}
+
+.boxStyle2 {
+	background-color: #ddd;
+}
+
+.boxStyle1:hover,.fboxStyle2:hover {
+	font-weight: 800;
+	font-style: italic;
+}
+</style>
+
+</head>
+
+<body>
+<div class="bw-container">
+<div class="bw-col-10">
+
+<img src="./images/bitwrench-thick-logo.png" width="500"></img>
+<h1>Quick Docs Page</h1>
+<p id="versionArea"></p>
+<br>
+Bitwrench is a "kitchen-sink" type library of various functions which I've used a lot from various web / HTML projects and prototypes.<br><br><br>
+Its intended purpose is not to replace mature js frameworks like JQuery, Bootstrap, Vue or React but to provide a quick set of helper glue when debugging random projects which may have little to do with web programming.  For example if you're debugging an embedded system and just want to dump some data and look at it, or you need to mock up some javascript / HTML tests but don't want to bring in a whole framework that this might be useful for you.
+<br><br>Bitwrench has no dependancies and to my knowledge can be used along side any other framework.
+<br><br>
+
+<!--
+<h1 class="bw-h1">Table of Contents</h1>
+<div id="bwTableOfContents"></div>
+<br><br>
+-->
+
+<!-- function list area -->
+<h1 class="bw-h1">Function List</h1>
+The follow functions are available covering a mix us utility functions and some simple HTML DOM manipulations.  The docs here are generated from the built-in doc-string comments.
+<div id="bwFunctionListID"></div> <!-- this list is dynamically generated, see javscript below -->
+<br>
+</div>
+
+
+<!-- grid demo area -->
+<div id="bwGridExampleId">
+<h1 class="bw-h1">CSS Layout Grid</h1>
+Bitwrench includes a built-in css grid class set for creating simple regular layouts.<br>
+<br>
+
+<div class="bw-row bw-center">
+	<div class="bw-col-1 bw-box-1 boxStyle1 ">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle1">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle1">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle1">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle1">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle1">bw-col-1</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div>
+</div><br>
+
+<div class="bw-row bw-center">
+	<div class="bw-col-2 bw-box-1 boxStyle1">bw-col-2</div><div class="bw-col-2 bw-box-1 boxStyle2">bw-col-2</div><div class="bw-col-2 bw-box-1 boxStyle1">bw-col-2</div><div class="bw-col-2 bw-box-1 boxStyle2">bw-col-2</div><div class="bw-col-2 bw-box-1 boxStyle1">bw-col-2</div><div class="bw-col-2 bw-box-1 boxStyle2">bw-col-2</div>
+</div><br>
+
+<div class="bw-row bw-center">
+	<div class="bw-col-3 bw-box-1 boxStyle1">bw-col-3</div><div class="bw-col-3 bw-box-1 boxStyle2">bw-col-3</div><div class="bw-col-3 bw-box-1 boxStyle1">bw-col-3</div><div class="bw-col-3 bw-box-1 boxStyle2">bw-col-3</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-4 bw-box-1 boxStyle1">bw-col-4</div><div class="bw-col-4 bw-box-1 boxStyle2">bw-col-4</div><div class="bw-col-4 bw-box-1 boxStyle1">bw-col-4</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-5 bw-box-1 boxStyle1">bw-col-5</div><div class="bw-col-7 bw-box-1 boxStyle2">bw-col-7</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-6 bw-box-1 boxStyle1">bw-col-6</div><div class="bw-col-6 bw-box-1 boxStyle2">bw-col-6</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-7 bw-box-1 boxStyle1">bw-col-7</div><div class="bw-col-5 bw-box-1 boxStyle2">bw-col-5</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-8 bw-box-1 boxStyle1">bw-col-8</div><div class="bw-col-4 bw-box-1 boxStyle2">bw-col-4</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-9 bw-box-1 boxStyle1">bw-col-9</div><div class="bw-col-3 bw-box-1 boxStyle2">bw-col-3</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-10 bw-box-1 boxStyle1">bw-col-10</div><div class="bw-col-2 bw-box-1 boxStyle2">bw-col-2</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-11 bw-box-1 boxStyle1">bw-col-11</div><div class="bw-col-1 bw-box-1 boxStyle2">bw-col-1</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+	<div class="bw-col-12 bw-box-1 boxStyle1">bw-col-12</div>
+</div><br>
+</div> <!-- end code for grid demo -->
+<br>
+
+<!-- Text align demo area -->
+<h1  class="bw-h1">Text Alignment & Related</h1>
+<div class="bw-tab-container">
+<ul class="bw-tab-item-list">
+	<li class="bw-tab  bw-tab-active" onclick="bw.selectTabContent(this)" >Text Styles</li>
+	<li class="bw-tab  " onclick="bw.selectTabContent(this)" >Text Styles Code</li>
+</ul>
+<div class="bw-tab-content-list">
+<div class="bw-tab-content bw-show" id="bwTextSection">
+<br>The following text styles are supported.<br><br>
+<div class="bw-box-1 boxStyle1 bw-left">This text is left aligned.</div><br>
+<div class="bw-box-1 boxStyle1 bw-center">This text is centered.</div><br>
+<div class="bw-box-1 boxStyle1 bw-right">This text is right aligned.</div><br>
+<div class="bw-box-1 boxStyle1 bw-justify">This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. </div><br>
+<div class="bw-col-8 bw-box-1 boxStyle1"><pre class="bw-code">Code Section<br>//this is sample code...<br>var i;<br>&nbsp;&nbsp;&nbsp;for(i=0;i!=10;i++)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foo(i);<br><br></pre></div>
+</div> <!-- end code for text alignment -->
+<div class="bw-tab-content" id="bwTextSectionCode"></div>
+</div>
+</div>
+
+<br>
+<!-- Headings demo area -->
+<h1 class="bw-h1">Headings</h1>
+<div class="bw-tab-container">
+<ul class="bw-tab-item-list">
+	<li class="bw-tab  bw-tab-active" onclick="bw.selectTabContent(this)" >Headings</li>
+	<li class="bw-tab  " onclick="bw.selectTabContent(this)" >Headings Code</li>
+</ul>
+<div class="bw-tab-content-list">
+<div class="bw-tab-content bw-show" id="bwHeadingSection">
+<br>The following heading sizes are built-in as well.
+<h1 class="bw-h1">H1 Heading</h1>
+<h2 class="bw-h2">H2 Heading</h2>
+<h3 class="bw-h3">H3 Heading</h3>
+<h4 class="bw-h4">H4 Heading</h4>
+<h5 class="bw-h5">H5 Heading</h5>
+<h6 class="bw-h6">H6 Heading</h6>
+</div>
+	<div class="bw-tab-content" id="bwHeadingSectionCode"></div>
+</div>
+</div>
+
+</div>
+<br><br><br>
+<hr>
+<br>
+<div class="bw-center" style="font-size: 9pt"><span style="color:teal">bit</span>wrench.js quick docs and examples</div><br>
+<script type="text/javascript">
+	document.getElementById("versionArea").innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
+
+	//draw the bitwrench function list (drawn dynamically from the built-in doc strings)
+	var funcList=[],i;
+	for (i in bw) {
+		if (bw.typeOf(bw[i])=="function") {
+			funcList.push(["div" ,{"class":"bw-col-10"}, [
+				"<hr>",
+				["h3"  ,{"class":"bw-h3 color-set1", "id":"bw."+i, "style":"color: #006666;"},"bw."+i+"()"], 
+				["p"   ,{"class":"bw-code"}, bw.htmlSafeStr(bw.docString(bw[i]))],
+				"<br>"
+			    ]]);
+		}
+	}
+	document.getElementById("bwFunctionListID").innerHTML = bw.buildHTMLObjString(["p",{"class":"bw-col-6"}, funcList]);
+
+	//function section2Code(sectionId, sectionIdCode) {
+	//	document.getElementById(sectionId).innerHTML = "<pre class='bw-code'>"+bw.htmlSafeStr(document.getElementById(sectionIdCode).innerHTML)+"</pre>";
+	//}
+
+	function section2Code(sectionId,target) {
+		var s = bw.htmlSafeStr(document.getElementById(sectionId).innerHTML.replace(/<br>/ig,"")).replace(/\&nbsp;/ig," ");
+		document.getElementById(target).innerHTML = "<pre class='bw-code' style='height:"+document.getElementById(sectionId).offsetHeight+"px'>"+s+"</pre><br>";
+	}
+
+	//this creates the exmaple code tabs
+	//code section for ..
+	section2Code("bwTextSection","bwTextSectionCode");
+	section2Code("bwHeadingSection","bwHeadingSectionCode");
+
+	//document.getElementById("bwGridExampleIdCode").innerHTML = "<pre class='bw-code'>"+bw.htmlSafeStr(document.getElementById("bwGridExampleId").innerHTML)+"</pre>";
+
+</script>
+
+</body>
+</html>

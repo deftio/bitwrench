@@ -1,0 +1,15 @@
+#travis configuration for coverage testing of bitwrench
+# M A Chatterjee 2018-07-05
+
+language: node_js
+node_js:
+  - "4.0.0"
+
+before_install:
+  - npm install coveralls
+
+after_success: npm run coveralls
+
+branches:
+  only:
+    - master
