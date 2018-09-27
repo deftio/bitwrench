@@ -2,16 +2,18 @@
 <html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<link rel="icon" type="image/x-icon" href="./images/favicon.ico" />
+<link rel="icon" type="image/x-icon" href="./images/bitwrench-thick-teal.ico" />
 <!-- above is all boiler plate -->
 
 <title>bitwrench.js</title>
 
-<!-- bitwrench.js intro page
+<!-- 
+	bitwrench.js intro page
 	(c) M A Chatterjee 2012-2018 	deftio<at>deftio<dot>com
 	github:  https:github.com/deftio/bitwrench
-	webL     https:deftio.com/bitwrench
+	web:     https:deftio.com/bitwrench
  -->
+
 <script type="text/javascript" src="./bitwrench.js" bwargs="ex1:1;ex2:2"></script>
 
 </head>
@@ -29,16 +31,16 @@
 		<h2>Features</h2>
 		<h3>bitwrench functions:</h3>
 
-		* setting/getting cookies    <br> 
-		* a better typeof operator   <br>
-		* pretty printing json       <br>
-		* saving/loading application data files (works in both browser or node)  <br>
-		* getting URL parameters with defaults   <br>
-		* some data manipulation functions and other "random" things (interpolation, clipping, multi-d arrays, random())   <br>
-		* color conversions and interpolation    <br>
-		* HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively    <br>
-		* logging with dissolve (bw.log, bw.logd, bw.logExport)   <br>
-		* built-in docString support <br>
+		&#8226; setting/getting cookies    <br> 
+		&#8226; a better typeof operator   <br>
+		&#8226; pretty printing json       <br>
+		&#8226; saving/loading application data files (works in both browser or node)  <br>
+		&#8226; getting URL parameters with defaults   <br>
+		&#8226; some data manipulation functions and other "random" things (interpolation, clipping, multi-d arrays, random())   <br>
+		&#8226; color conversions and interpolation    <br>
+		&#8226; HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively    <br>
+		&#8226; logging with dissolve (bw.log, bw.logd, bw.logExport)   <br>
+		&#8226; built-in docString support <br>
 		<br><br>Bitwrench has no dependancies can be used along side any other framework.
 		<br><br>
 		<div id="content"></div>
@@ -49,9 +51,8 @@
 </div>
 
 <script type="text/javascript">
-	document.getElementById("versionArea").innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
-	document.getElementById("cdate").innerHTML       = (new Date()).getFullYear();
-	//bw.DOMGetElements("#cdate")[0].innerHTML
+	bw.DOMGetElements("#versionArea")[0].innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
+	bw.DOMGetElements("#cdate")[0].innerHTML = (new Date()).getFullYear();
 	var h = bw.buildHTMLObjString;
 </script>
 
