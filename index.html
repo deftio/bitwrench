@@ -18,43 +18,41 @@
 
 <body>
 <div class="bw-container">
-<div class="bw-col-12">
-<img src="./images/bitwrench-thick-logo.png" width="50%" alt="bitwrench.js"></img>
+	<div class="bw-col-12">
+		<img src="./images/bitwrench-thick-logo.png" width="50%" alt="bitwrench.js"></img>
+		<h1>Intro</h1>
+		<p id="versionArea"></p>
+		<br>
+		Bitwrench is a javascript library of miscellaneous functions which used a lot from various web / HTML projects and prototypes.<br><br>
+		Its intended purpose is not to replace mature js frameworks like JQuery, Bootstrap, Vue or React but to provide a quick set of helper glue when debugging random projects which may have little to do with web programming.  For example if you're debugging an embedded system and just want to dump some data and look at it, or you need to mock up some javascript / HTML tests but don't want to bring in a whole framework that this might be useful for you.
+		<br>
+		<h2>Features</h2>
+		<h3>bitwrench functions:</h3>
 
-<h1>Intro</h1>
-<p id="versionArea"></p>
-<br>
-Bitwrench is a javascript library of miscellaneous functions which used a lot from various web / HTML projects and prototypes.<br><br>
-Its intended purpose is not to replace mature js frameworks like JQuery, Bootstrap, Vue or React but to provide a quick set of helper glue when debugging random projects which may have little to do with web programming.  For example if you're debugging an embedded system and just want to dump some data and look at it, or you need to mock up some javascript / HTML tests but don't want to bring in a whole framework that this might be useful for you.
-<br>
-<h2>Features</h2>
+		* setting/getting cookies    <br> 
+		* a better typeof operator   <br>
+		* pretty printing json       <br>
+		* saving/loading application data files (works in both browser or node)  <br>
+		* getting URL parameters with defaults   <br>
+		* some data manipulation functions and other "random" things (interpolation, clipping, multi-d arrays, random())   <br>
+		* color conversions and interpolation    <br>
+		* HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively    <br>
+		* logging with dissolve (bw.log, bw.logd, bw.logExport)   <br>
+		* built-in docString support <br>
+		<br><br>Bitwrench has no dependancies can be used along side any other framework.
+		<br><br>
+		<div id="content"></div>
+		<br>
+		<br>
+		<div class="bw-center" style="font-size: 9pt"><span style="color:teal">bit</span>wrench.js&nbsp;&nbsp;&copy&nbsp;2012-<span id="cdate"></span>&nbsp; M A Chatterjee</div><br>	
+	</div>
+</div>
 
-<h3>bitwrench functions:</h3>
-* setting/getting cookies <br> 
-* a better typeof operator  <br>
-* pretty printing json   <br>
-* saving/loading application data files (works in both browser or node)  <br>
-* getting URL parameters with defaults   <br>
-* some data manipulation functions and other "random" things (interpolation, clipping, multi-d arrays, random())   <br>
-* color conversions and interpolation   <br>
-* HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively    <br>
-* logging with dissolve (bw.log, bw.logd, bw.logExport)   <br>
-* built-in docString support   <br>
-
-<br><br>Bitwrench has no dependancies can be used along side any other framework.
-<br><br>
-<div id="content"> </div>
-<br>
-<br>
-<div class="bw-center" style="font-size: 9pt"><span style="color:teal">bit</span>wrench.js&nbsp;&nbsp;&copy&nbsp;2012-<span id="cdate"></span>&nbsp; M A Chatterjee</div><br>
 <script type="text/javascript">
 	document.getElementById("versionArea").innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
-	document.getElementById("cdate").innerHTML = (new Date()).getFullYear();
+	document.getElementById("cdate").innerHTML       = (new Date()).getFullYear();
 	//bw.DOMGetElements("#cdate")[0].innerHTML
 	var h = bw.buildHTMLObjString;
-
-
-
 </script>
 
 </body>
