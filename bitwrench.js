@@ -1846,12 +1846,21 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     dopts = optsCopy(dopts,options);
 
+    var defContainer     = "{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}\n"
+    var defFontSerif     = "{font-family: Times New Roman, Times, serif;}\n";
+    var defFontSansSerif = "{font-family: Arial, Helvetica, sans-serif }\n";
+    
+
     if (dopts["basics"] == "load") {
-        s+= "\nhtml,body {  height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}\n";
-        s+= "*{font-family: Arial, Helvetica, sans-serif }\n";
+        s+= "\nhtml,body "+ defContainer;
+        s+= "*"+defFontSansSerif;
     }
 
-    s+= ([1,2,3,4,5,6].map(function(x){return ".bw-h"+x+"{ font-size: "+3.2*Math.pow(.85,x+1)+"rem;}";}).join("\n"))+"\n";
+    s+= ".bw-def-page-setup" + defContainer;
+    s+= ".bw-font-serif"     + defFontSansSerif;
+    s+= ".bw-font-sans-serif"+ defFontSansSerif;
+
+    s+= ([1,2,3,4,5,6].map(function(x){return ".bw-h"+x+"{ font-size: "+_r(3.2*Math.pow(.85,x+1))+"rem;}";}).join("\n"))+"\n";
 
     //text handling
     s+= ".bw-left       { text-align: left;                            }\n";
@@ -2083,8 +2092,8 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.29", 
-        "about"     : "bitwrench is a simple library for miscellaneous Javascript operations.", 
+        "version"   : "1.1.30", 
+        "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
         "license"   : "BSD-2-Clause"

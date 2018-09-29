@@ -1,5 +1,5 @@
 /*"""
-bitwrench.css version 1.1.29
+bitwrench.css version 1.1.30
 bitwrench.js exported css classes (auto generated)
 This file contains the same css classes (styles used by bitwrench.js) and can be used stand-alone.
 
@@ -8,14 +8,17 @@ It is not required to load this file when using bitwrench.js since its built in 
 This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"load"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development
 
 """*/
-html,body {  height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}
+html,body {height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}
 *{font-family: Arial, Helvetica, sans-serif }
+.bw-def-page-setup{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}
+.bw-font-serif{font-family: Arial, Helvetica, sans-serif }
+.bw-font-sans-serif{font-family: Arial, Helvetica, sans-serif }
 .bw-h1{ font-size: 2.312rem;}
-.bw-h2{ font-size: 1.9651999999999998rem;}
-.bw-h3{ font-size: 1.6704199999999998rem;}
-.bw-h4{ font-size: 1.4198569999999997rem;}
-.bw-h5{ font-size: 1.2068784499999996rem;}
-.bw-h6{ font-size: 1.0258466824999997rem;}
+.bw-h2{ font-size: 1.965rem;}
+.bw-h3{ font-size: 1.67rem;}
+.bw-h4{ font-size: 1.419rem;}
+.bw-h5{ font-size: 1.206rem;}
+.bw-h6{ font-size: 1.025rem;}
 .bw-left       { text-align: left;                            }
 .bw-right      { text-align: right;                           }
 .bw-center     { text-align: center; margin: 0 auto;          }
