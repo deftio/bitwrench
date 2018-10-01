@@ -220,7 +220,7 @@ bw.DOMGetElements = function (el, type) {
             type = _toa(type,"string",type,"auto"); // auto means detect whether has a # or . in front of it
             el.trim();
             if (type == "auto")
-                type = bw.choice(el[0],{".":"className", "#":"id"},"id");
+                type = bw.choice(el[0],{".":"className", "#":"id"},"tagName");
             switch (type) {
                 case "id" : //get Element by ID
                     el = (el[0]=="#") ? el.substring(1,el.length) : el;
@@ -817,8 +817,8 @@ inline-bw-css --> emit bw default styles as inline css (include globals option)
                 ["meta", {"http-equiv":"Content-Type", "content":"text/html", "charset":"utf-8"}, ""]
                 //["title", {}, "bw doc"]
             ],
-        headIncludeUsefulJunkJS : false, // false : don't include, "embed" or "path-string"
-        headIncludeUsefulJunkCSS : false, // exports bitwrench css classes in <style> section in head
+        headIncludeBitWrenchJS : false, // false : don't include, "embed" or "path-string"
+        headIncludeBitWrenchCSS : false, // exports bitwrench css classes in <style> section in head
         headFavicon : "" //<link rel="icon" type="image/x-icon" href="../images/favicon-32x32.png" />
     };
     dopts = optsCopy(dopts,options);
@@ -1835,10 +1835,10 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     }
 
  */
-    var s ="", m="";//padding-left:1%; padding-right:1%;";
+    var s ="\n", m="";//padding-left:1%; padding-right:1%;";
     var _r = bw.fixNum;
     var dopts = {
-        "basics"       : false,
+        "globals"       : false,
         "id"           : "bw-default-styles",
         "exportCSS"    : false
 
@@ -1846,12 +1846,12 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     dopts = optsCopy(dopts,options);
 
-    var defContainer     = "{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}\n"
+    var defContainer     = "{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n"
     var defFontSerif     = "{font-family: Times New Roman, Times, serif;}\n";
     var defFontSansSerif = "{font-family: Arial, Helvetica, sans-serif }\n";
     
 
-    if (dopts["basics"] == "load") {
+    if (dopts["globals"] == "load") {
         s+= "\nhtml,body "+ defContainer;
         s+= "*"+defFontSansSerif;
     }

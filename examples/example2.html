@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" type="image/x-icon" href="../images/favicon.ico" />
+    <!-- bitwrench.js library examples  
+        (c) M A Chatterjee
+        deftio <at> deftio <dot> com
+        web   :  http:deftio.com/bitwrench
+        github:  http:github.com/deftio/bitwrench
+     -->
+<script type="text/javascript" src="../bitwrench.js"></script>
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+
+<script>
+
+  bw.bwSimpleThemes(1);
+// =======================================================    
+    var i,s="";
+    for (i=0; i<40; i++) {
+        s+= bw.buildHTMLObjString(["div",{class:"bw-col-5",style:"height:20px; background-color:" + bw.colorToRGBHex(bw.colorInterp(i,0,40,["#029b38","#cb3288","#8babc9","#9fffb0"]))},""]);
+    }
+
+    var content = 
+    [
+        ["h1" ,{},"Examples with Colors"],
+        ["p"  ,{},"bitwrench.js version " + bw.version()["version"] ],
+        ["h2" ,{},"Color Bars with bw.colorInterp()"],
+        ["pre",{"id"   :"x1"       },s],
+        "<br>"
+    ];
+
+    // make the content go live..
+    bw.DOMGetElements("body")[0].innerHTML =  content.map( function(x) {return bw.buildHTMLObjString(x)}).join("");
+/*
+// this should create random greyscale colored boxes but doesnt...
+document.getElementById("x1").innerHTML = bw.makeHTMLTableStr(bw.multiArray(function(){return bw.buildHTMLObjString(["span",{style:"width:100%;height:100%;background-color:"+bw.colorToRGBHex(bw.colorInterp(bw.random(0,1,{setType:"float"})))},""])},[8,8]),{useFirstRowAsHeaders:false,td_atr:{style:"height:15px;width:15px"}})
+*/
+
+</script>
+</body>
+</html>

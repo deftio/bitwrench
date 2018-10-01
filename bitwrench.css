@@ -8,9 +8,7 @@ It is not required to load this file when using bitwrench.js since its built in 
 This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"load"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development
 
 """*/
-html,body {height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}
-*{font-family: Arial, Helvetica, sans-serif }
-.bw-def-page-setup{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 0;}
+.bw-def-page-setup{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}
 .bw-font-serif{font-family: Arial, Helvetica, sans-serif }
 .bw-font-sans-serif{font-family: Arial, Helvetica, sans-serif }
 .bw-h1{ font-size: 2.312rem;}
