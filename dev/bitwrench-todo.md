@@ -47,7 +47,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 
 
 ## packaging and todo
-	[ ] build script # currently using gnu make
+	[ ] build script ==> webpack or gulp  (currently using gnu make)
 	[ ] README.md
 	[ ] npm register
 	[ ] npm install 
@@ -60,14 +60,14 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] dir structure
 	[x] license
 	[ ] github
-	[ ] deftio.com/bitwrench page
+	[x] deftio.com/bitwrench page
 	[x] build notes
 	[x] rename to bitwrench
 	[ ] support inline logo for example favicons: <img src="data:image/png;base64,base64encoded images" /> 
-
+	[ ] (tm) log0
 
 ## Issues and clean up
-	* bw.bwSimpleThemes has cosmetic issues
+	* bw.bwSimpleThemes has cosmetic issues --> needs to be made non-global
 	* repeatUntil usabilitiy issues
 	* make internal function for commonly used:
 		a = bw.typeOf(a) == "type" ? true_value : false_value
@@ -78,15 +78,16 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	* converge all makeHTML functions to have simple names e.g.
 		** makeHTML   /// currently called buildHTMLObjectStr()
 		** makeHTMLTabs
-		** makeHTMLList
+		** makeHTMLList (data_array1d, options)
 		** amkeHTMLCard
 		** makeHTMLTable
 		** makeHTMLPage
+		** makeHTMLTree (accordian with click to expand/hide nodes)
 	* converge file operations
 		** fileLoadJSON also csv 
 		** fileSaveJSON also csv 
-		** fileLoad
-		** fileSave
+		** fileLoad  (make "raw", "JSON", "CSV" as intrepretors)
+		** fileSave  (make "raw", "JSON", "CSV" as intrepretors)
 	* converge function registration operations
 		** funcGetID
 		** funcRegister
@@ -99,22 +100,19 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		** fixNum   	==> numFix
 		** multiArray	==> numMultiArray
 		** numHash32
+		** psuedoRand  
 	* converge color operations
 		** colorInterp
 		** colorParse ==> bwformat [c0,c1,c2,alpha,model] // model can be "rgb" | "hsl" 
 		** colorToRGBHex
 		** colorRBGToHSL
+		** colorThemeGen ==> given color ==> produce {set} of RGB colors
 	* add disolving bw.logd on all catch (e) {}
 	* add attribute "text/css" to <style></style> export functions
 	* arrows on sortTable
 		* bw-table-sort-upa  bw-table-sort-dna bw-table-sort-xxa  // arrows mark-element is in cycle xx--> upa --> dna --> xx
 		* bw-table-sort-up  bw-table-sort-dn bw-table-sort-xx  // no arrows or display just sorts.  mark-elment is in cycle xx-->up-->dn-->xx 
 			* need to add this as option to sortable in sortTable 
-	* accordian (tree explorer)
-		indented divs with show / hide
-	* makeHTMLList (data_array1d, options)
-		* ordered vs unordered
-	* makeHTMLCard (see w3 schools)
 	* makeThemes directory (?)
 	* add bw.logd(values)  // bw.debug log (adds to regular bw.log) but
 		* is dissolving via bw.logdControl
@@ -125,8 +123,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 				bw.logd()  // return current on/off status
 				all messages are writtend with "bw.logd" as message type.  use bw.log() for custom messages
 		* takes same style params as console.log (e.g. ...)
-		*
-	* polyfils needed  ==> consider jado pull in
+	* polyfils needed  ==> consider jado pull in  --> e.g. instead of [].indexOf use bw([]).indexOf
 		array.indexOf
 		array.map
 		array.filter
@@ -135,27 +132,6 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		.trim 
 
 
-//=============================================
-//arrows for table sort (needs js to be fixed)
-.bw-table-sort-upa::after {
-     content: "\2191"; 
-}
-
-.bw-table-sort-dna::after {
-     content: "\2193"; 
-}
-
-.bw-table-sort-xxa::after {
-     content: "\00a0"; 
-}
-.bw-table-sort-up::after {
-}
-
-.bw-table-sort-dn::after {
-}
-
-.bw-table-sort-xx::after {
-}
 
 ## future
 	consider merging spannit.js in to bitwrench

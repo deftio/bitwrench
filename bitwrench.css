@@ -1,5 +1,5 @@
 /*"""
-bitwrench.css version 1.1.30
+bitwrench.css version 1.1.31
 bitwrench.js exported css classes (auto generated)
 This file contains the same css classes (styles used by bitwrench.js) and can be used stand-alone.
 
@@ -8,8 +8,8 @@ It is not required to load this file when using bitwrench.js since its built in 
 This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"load"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development
 
 """*/
-.bw-def-page-setup{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}
-.bw-font-serif{font-family: Arial, Helvetica, sans-serif }
+.bw-def-page-setup{height: 100%;  width: 94%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}
+.bw-font-serif{font-family: Times New Roman, Times, serif;}
 .bw-font-sans-serif{font-family: Arial, Helvetica, sans-serif }
 .bw-h1{ font-size: 2.312rem;}
 .bw-h2{ font-size: 1.965rem;}
@@ -54,7 +54,7 @@ This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"loa
 .bw-box-1 {padding-top: 10px; padding-bottom: 10px; border-radius: 8px;}
 .bw-hide   { display: none;}
 .bw-show   { display: block;}
-@media only screen and (min-width: 540px) {  .bw-container {    width: 96%;  }}
+@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}
 @media only screen and (min-width: 720px) {  .bw-container {    width: 86%;  }}
 @media only screen and (min-width: 960px) {  .bw-container {    width: 80%;  }}
 

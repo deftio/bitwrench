@@ -1794,7 +1794,7 @@ bw.bwMakeThemeCSS   = function(color) {
     var p = "bw-theme-";
     var thm = ["l5","l4","l3","l2","l1","d1","d2","d3","d4","d5"].map(function(x){return p+x;});
     var im = " !important";
-    thm = thm.map(function(x,i){return [x,[["color", ((i<5)?"#000" : "#fff")+im ],["background-color",c + im] ]] })
+    thm = thm.map(function(x,i){return [x,[["color", ((i<5)?"#000" : "#fff")+im ],["background-color",c + im] ]]; });
 
     /*
 .w3-theme-light   {color:#000 !important; background-color:#f2f9fe !important}
@@ -1846,7 +1846,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     dopts = optsCopy(dopts,options);
 
-    var defContainer     = "{height: 100%;  width: 96%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n"
+    var defContainer     = "{height: 100%;  width: 94%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n";
     var defFontSerif     = "{font-family: Times New Roman, Times, serif;}\n";
     var defFontSansSerif = "{font-family: Arial, Helvetica, sans-serif }\n";
     
@@ -1857,7 +1857,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     }
 
     s+= ".bw-def-page-setup" + defContainer;
-    s+= ".bw-font-serif"     + defFontSansSerif;
+    s+= ".bw-font-serif"     + defFontSerif;
     s+= ".bw-font-sans-serif"+ defFontSansSerif;
 
     s+= ([1,2,3,4,5,6].map(function(x){return ".bw-h"+x+"{ font-size: "+_r(3.2*Math.pow(.85,x+1))+"rem;}";}).join("\n"))+"\n";
@@ -1900,7 +1900,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     s+= ".bw-show   { display: block;}\n";
 
     //responsive screen
-    s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 96%;  }}\n";
+    s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}\n";
     s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 86%;  }}\n";
     s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 80%;  }}\n";
     s+= "\n";
@@ -2092,7 +2092,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.30", 
+        "version"   : "1.1.31", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
