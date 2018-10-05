@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![NPM version](http://img.shields.io/npm/v/bitwrench.svg?style=flat-square)
 
-![bitwrench](./images/bitwrench-thick-logo.png)
+![bitwrench](./images/bitwrench-logo-med.png)
 
 ## Welcome to bitwrench.js 
 
