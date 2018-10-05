@@ -5,6 +5,7 @@ build:
 	./tools/update-bw-package.js package.json package.json
 	./tools/export-bw-default-css.js bitwrench.css
 	uglifyjs bitwrench.js -o  bitwrench.min.js
+	npm pack
 
 test:
 	./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec
