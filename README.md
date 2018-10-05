@@ -3,20 +3,22 @@
 
 ![bitwrench](./images/bitwrench-logo-med.png)
 
-## Welcome to bitwrench.js 
+## Welcome to bitwrench.js (alpha not fully released yet)
 
 (c) 2012- manu chatterjee 
 
+
 bitwrench is a javascript library for useful functions such as:
 
+
+* HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively
+* color conversions and interpolation
 * setting/getting cookies   
 * a better typeof operator  
 * pretty printing json
 * saving/loading application data files (works in both browser or node)
 * getting URL parameters with defaults
 * some data manipulation functions and other "random" things (interpolation, clipping, multi-d arrays, random())
-* color conversions and interpolation
-* HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively
 * logging with dissolve (bw.log, bw.logd, bw.logExport)
 * built-in docString support
 
