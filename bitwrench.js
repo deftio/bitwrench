@@ -655,17 +655,28 @@ document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...an
 };
 
 // ===================================================================================
-bw.getJSONFile  = function (fname,callback_fn) {
+bw.getFile  = function (fname,callback_fn, options) {
 /** 
-bw.getJSONFile(filename,callback) 
-Attempt to load a file as JSON data.
+bw.getFile(filename,callback) 
+Attempt to load a file.
 Works both client side and i nodejs.
 
  */
-    fname = (_to(fname) == "string") ? fname : "./data/wordfrags_en.js";     
+    var dops = {
+        parser : "raw"  // valid types are "raw", "JSON", future "CSV", "TSV" or parserFunction
+    }
+
+    dops = optsCopy(dops,options);
+
+    if (_to(fname) != "string") {
+        return "invalid filename"
+    }
+
+    var prs = (dops["parser"]=="JSON") ? JSON.parse : function(s){return s;};
+
     if (bw.isNodeJS() ==true) {
         var fs = require("fs");
-        fs.readFile(fname, "utf8", function (err, data) { if (err) throw err; callback_fn(JSON.parse(data)); });
+        fs.readFile(fname, "utf8", function (err, data) { if (err) throw err; callback_fn(prs(data)); });
     }
     else // running in a browser 
     {         
@@ -673,11 +684,43 @@ Works both client side and i nodejs.
         x.overrideMimeType("application/json");
         x.open("GET", fname, true); 
         x.onreadystatechange = 
-            function () {if (x.readyState == 4 && x.status == "200") {callback_fn(JSON.parse(x.responseText));}};
+            function () {if (x.readyState == 4 && x.status == "200") {callback_fn(prs(x.responseText));}};
         x.send(null);
     }
+    return "BWOK";
 };
 
+bw.getJSONFile = function (fname,callback_fn) { return bw.getFile(fname,callback_fn,{"parser":"JSON"})}
+
+bw.copyToClipboard = function(data) {
+/** 
+bw.copyToClipboard
+simple copy content to clipboard.  (browser only)
+*/
+
+/*
+var temp = document.createElement("input");
+var b = document.getElementsByTagName("body")[0];
+b.appendChild(temp);
+
+temp.innerText = data;
+temp.select();
+document.execCommand("copy");
+temp.remove();
+*/
+            var temp = $("<input>");
+    $("body").append(temp);
+    temp.val(data).select();
+    
+    //var temp = document.createElement("input");
+    //var b = document.getElementsByTagName("body")[0];
+    //b.appendChild(temp);
+    //temp.innerText = data;
+    temp.select();
+    document.execCommand("copy");
+    temp.remove();
+}
+    
 // ===================================================================================
 bw.saveClientFile   = function(fname,data) {
 /** 
@@ -1030,6 +1073,8 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
 
     return outFn(s,dopts);
 };
+bw.makeHTML = bw.buildHTMLObjString;
+
 // ===================================================================================
 bw.makeHTMLList = function (listData, listType, atr, atri) {
 /**
@@ -1749,7 +1794,7 @@ bw.hashFnv32a= function (str, seed, returnHexStr) {
 // =============================================================================================
 bw.prandom = function (rangeBegin,rangeEnd,seed, options) {
 /**
-    prandom - generate a psuedo random number from internal hash function 
+    prandom - generate a psuedo random number from internal hash function in a given range
 
 */
     rangeBegin = bw.typeOf(rangeBegin)  == "number" ? rangeBegin : 0;
@@ -2092,7 +2137,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.32", 
+        "version"   : "1.1.34", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
