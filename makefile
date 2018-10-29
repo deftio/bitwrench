@@ -1,3 +1,4 @@
+
 #bitwrench makefile (c) 2012 M A Chatterjee
 #remember makefiles require real tabs not spaces
 
@@ -12,6 +13,9 @@ test:
 
 lint:
 	./node_modules/.bin/eslint bitwrench.js
+
+clean:
+	rm bitwrench*.tgz -f
 
 .PHONY: test
 

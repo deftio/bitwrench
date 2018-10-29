@@ -1,5 +1,5 @@
 /*"""
-bitwrench.css version 1.1.34
+bitwrench.css version 1.1.35
 bitwrench.js exported css classes (auto generated)
 This file contains the same css classes (styles used by bitwrench.js) and can be used stand-alone.
 
@@ -55,6 +55,6 @@ This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"loa
 .bw-hide   { display: none;}
 .bw-show   { display: block;}
 @media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}
-@media only screen and (min-width: 720px) {  .bw-container {    width: 86%;  }}
-@media only screen and (min-width: 960px) {  .bw-container {    width: 80%;  }}
+@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}
+@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}
 

@@ -593,7 +593,7 @@ x = bw.getURLParam("bar","whatever") ==> returns "whatever" since bar isn't set
 };
 
 // crude performance measurements
-var gUJTime = 0; //global closure for time.  'cause we always want a gbw gbw time :)
+var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we always want a gbw gbw time :)
  
 // ===================================================================================
 bw.clearTimer = function (message) {
@@ -601,10 +601,10 @@ bw.clearTimer = function (message) {
 bw.clearTimer("message")
 When bitwrench loads its starts a page timer which can be checked for how long the page as been running (see bw.readTimer()).  bw.clearTimer() clears the timer with optional message.
  */
-    gUJTime = (new Date()).getTime();
-    if (bw.typeOf(message) == "string")
-       bw.logd(message);
-    return gUJTime;
+    gBWTime = (new Date()).getTime();
+    if (_to(message) != "undefined")
+       bw.logd(String(message));
+    return gBWTime;
 };
  
 // ===================================================================================
@@ -612,12 +612,11 @@ bw.readTimer = function (message) {
 /** 
 bw.readTimer("message")
 When bitwrench loads its starts a page timer which can be checked for how long the page as been running.
-
  */
     var ct = (new Date()).getTime();
-    if (bw.typeOf(message) == "string")
-        bw.logd(message);
-    return ct-gUJTime.getTime(); 
+    if (_to(message) != "undefined")
+       bw.logd(String(message));
+    return ct-gBWTime; 
 };
 bw.clearTimer(); //when bw is loaded, we start the timer.
 
@@ -674,6 +673,7 @@ Works both client side and i nodejs.
 
     var prs = (dops["parser"]=="JSON") ? JSON.parse : function(s){return s;};
 
+
     if (bw.isNodeJS() ==true) {
         var fs = require("fs");
         fs.readFile(fname, "utf8", function (err, data) { if (err) throw err; callback_fn(prs(data)); });
@@ -687,7 +687,7 @@ Works both client side and i nodejs.
             function () {if (x.readyState == 4 && x.status == "200") {callback_fn(prs(x.responseText));}};
         x.send(null);
     }
-    return "BWOK";
+    return "BW_OK";
 };
 
 bw.getJSONFile = function (fname,callback_fn) { return bw.getFile(fname,callback_fn,{"parser":"JSON"})}
@@ -707,10 +707,13 @@ temp.innerText = data;
 temp.select();
 document.execCommand("copy");
 temp.remove();
-*/
-            var temp = $("<input>");
-    $("body").append(temp);
-    temp.val(data).select();
+
+
+    
+    var temp = document.createElement("input");
+    document.getElementsByTagName("body")[0].append(temp);
+    temp.innerHTML = data;
+    //temp.val(data).select();
     
     //var temp = document.createElement("input");
     //var b = document.getElementsByTagName("body")[0];
@@ -719,6 +722,15 @@ temp.remove();
     temp.select();
     document.execCommand("copy");
     temp.remove();
+*/
+ var  listener = function (e) {
+    e.clipboardData.setData("text/html", data);
+    e.clipboardData.setData("text/plain", data);
+    e.preventDefault();
+  }
+  document.addEventListener("copy", listener);
+  document.execCommand("copy");
+  document.removeEventListener("copy", listener);
 }
     
 // ===================================================================================
@@ -1946,8 +1958,8 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     //responsive screen
     s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}\n";
-    s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 86%;  }}\n";
-    s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 80%;  }}\n";
+    s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}\n";
+    s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}\n";
     s+= "\n";
     
     if (bw.isNodeJS() == false) {
@@ -2137,7 +2149,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.34", 
+        "version"   : "1.1.35", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
