@@ -54,8 +54,8 @@ console.log(bw.version());  // print bitwrench.js version installed
  
     
 ## Examples
-See [Examples](./examples) folder
-
+See [Examples](./examples) folder  
+Docs (auto generated) are here: [quick-docs](./quick-docs.html)
 ## Source code home  
 all source is at github:  
 http://github.com/deftio/bitwrench  

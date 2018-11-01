@@ -182,12 +182,12 @@ var optsCopy = function(dopts,opts) {
 };
 
 //===============================================
+
+bw.DOMIsElement = function(el) {
 /**
     @method bw.DOMIsElement() return whether a supplied element is a HTML DOM element. only useful in browser,
 
- */
-bw.DOMIsElement = function(el) {
-    var r = false;
+ */    var r = false;
     try {
         if(_to(el)== "undefined")
             return r;
@@ -206,11 +206,11 @@ bw.DOMIsElement = function(el) {
 
 var _isEl = bw.DOMIsElement;
 //===============================================
+bw.DOMGetElements = function (el, type) {
 /**
     @method bw.getDOMElements() returns an array of DOM elements (if running in browser)
     
 */
-bw.DOMGetElements = function (el, type) {
     var r=[],a=[],i;
 
     if (bw.isNodeJS() == false) {  // we're running in a browser
@@ -521,6 +521,9 @@ default is "raw" which is an array of values:
 also can be exported as an HTML table.
 bw.logExport({"exportFormat":"HTML"})
 
+or as a simple text file:
+bw.logExport("exportFormat" : "text"})
+
 see bw.saveClientFile(fname) for saving the log as a file
 
  */
@@ -536,6 +539,10 @@ see bw.saveClientFile(fname) for saving the log as a file
 
     if (dopts["exportFormat"] == "HTML") {
         return bw.makeHTMLTableStr(_ld,{sortable:true});
+    }
+
+    if (dopts["exportFormat"] == "text") {
+        return bw.logExport().map(function(x){return x.map(function(y){return y.toString()}).join("\t");}).join("\n");
     }
 };
 
@@ -1489,10 +1496,12 @@ Default is a paragraph of lorem ipsum (446 chars)
 bw.docString = function (s, options) {
 /** 
 bw.docString(functionAsString, options)
-returns a docString for a function, if it exists inside the function.  
+returns array of valid docStrings embedded in a string 
 
     @param docType{string} : "jsdoc" | "python" | "custom"  (python means triplequote (") 3 times), "custom" means supply delims
     @param options {delims:[string,string]} : start, stop delimiters (only used if docType set to "custom")
+
+    @return array{strings} : array of captured params
     
  */
     var dopts = {
@@ -1511,18 +1520,24 @@ returns a docString for a function, if it exists inside the function.
         "jspy"  : ["/**\"\"\"","\"\"\"*/"]   // js && python
     },dopts["delims"]);
 
-    var c = String(s);
+    var c = (_to(s)=="function") ? s.toString() : String(s);
+    var r = [];
     
     try  {
-        var re = (new RegExp( _es(dopts["delims"][0])+ "\\s*\\n([^\\*]|(\\*(?!\\/)))*" +_es(dopts["delims"][1]),"ig"));  // "([\\s\\S]*?)"                                                 
-        c = c.match(re)[0];
+        var re = (new RegExp( _es(dopts["delims"][0])+ "\\s*\\n*([^\\*]|(\\*(?!\\/)))*" +_es(dopts["delims"][1]),"ig"));  // "([\\s\\S]*?)"                                                 
+        r = c.match(re);
     }
     catch (e)   {bw.log(String(e));}
+    //console.log(_to(r), ":::" , r);
 
-    c = c.substring(dopts["delims"][0].length, c.length-dopts["delims"][1].length);
-
-    c = (dopts["dropLeadingWS"]==true) ? c.replace(/^\s*\**\s*/,"") : c;
-    return c;
+    if (_to(r)=="array") {
+        r = r.map(function(x){return x.substring(dopts["delims"][0].length, x.length-dopts["delims"][1].length)});
+        r = (dopts["dropLeadingWS"]==true) ? r.map(function(x){return x.replace(/^\s*\**\s*/,"")}) : r;
+    }
+    else
+        r=[];
+    
+    return r;
 };
 
 // =============================================================================================
@@ -2149,7 +2164,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.36", 
+        "version"   : "1.1.37", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

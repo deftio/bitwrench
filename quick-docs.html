@@ -6,7 +6,6 @@
 <!-- above is all boiler plate -->
 
 <title>bitwrench.js</title>
-
 <!-- bitwrench.js quick-docs doc 
 	(c) M A Chatterjee
 	deftio <at> deftio <dot> com
@@ -172,7 +171,7 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 			funcList.push(["div" ,{"class":"bw-col-10"}, [
 				"<hr>",
 				["h3"  ,{"class":"bw-h3 color-set1", "id":"bw."+i, "style":"color: #006666;"},"bw."+i+"()"], 
-				["p"   ,{"class":"bw-code"}, bw.htmlSafeStr(bw.docString(bw[i]))],
+				["p"   ,{"class":"bw-code"}, bw.htmlSafeStr(bw.docString(bw[i])[0],{dropLeadingWS:true})],
 				"<br>"
 			    ]]);
 		}

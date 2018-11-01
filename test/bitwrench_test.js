@@ -6,7 +6,7 @@ this file uses the mocha test framework:
 npm install mocha --save-dev mocha
 
 */
-
+"use strict";
 var assert = require("assert");
 //var should = require('chai').should();
 
@@ -18,11 +18,9 @@ var bw = require("../bitwrench.js")["bw"];
 
 // ================================================================
 describe("#typeOf()", function() {
-  
-	//simple way to test
-	//it('A usable typeof operator for internal use in bw', function() {
-	//  _typeOf("this is a string").should.equal('string');
-	//});
+/** 
+test built-in basic bitwrench typeof operator
+*/
 
 	//using meta tests
 	var x;
@@ -45,15 +43,29 @@ describe("#typeOf()", function() {
 
 });
 
-describe("#parseJsDocString", function() {
-  
-	//simple way to test
-	//it('A usable typeof operator for internal use in bw', function() {
-	//  _typeOf("this is a string").should.equal('string');
-	//});
+// ================================================================
+describe("#docString", function() {
+/**
+test docString raw etractor.  Note this function does not parse the doc string it just returns an array of valid doc strings from the supplied string.
+This can be used on functions or objects via the toString() operator.
 
-	//using meta tests
-	var x;
+e.g. var myFunction = function( .... ) { ..... function body }
+
+bitwrench.docString(myFunction.toString()) ==> returns any doc strings inside.
+*/
+	var tests = [
+		{args: ["this.toString()"], expected: "" }
+	];
+
+	tests.forEach(function(test) {
+		it("bw.docString (docString extractor) " + test.args.length + "args", function() {
+			var res = bw.docString.apply(null, test.args);
+			//assert.equal(res, test.expected);
+		});
+ 	});
+});
+// ================================================================
+describe("#parseJsDocString", function() {
 	var tests = [
 		{args: ["/** This is a test \n*/"],           expected: []}
 	];
