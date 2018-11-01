@@ -1765,7 +1765,7 @@ bw.padString = function (s, width, dir, options) {
         {
             "left"      : [p,0],
             "right"     : [0,p],
-            "center"    : [Math.round(p/2),p-Math.round(p/2)]
+            "center"    : [Math.round(p/2), (p-Math.round(p/2))]
         },
             [0,0]
         );
