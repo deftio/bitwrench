@@ -19,7 +19,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		make params for JSON, CSV, function(provide parser), raw 
 	[x] typeOf
 	[ ] prettyPrintJSON with stylizble CSS
-		settable tab widths
+		settable tab widths (use padding:<width><units>)
 	[x] find/set css class name on supplied element (bw.markElement)
 	[ ] encode/decode var info in to a CSS classname (see spannit.js)
 	[ ] find classes by encoded var name (returns array of hits)
@@ -30,7 +30,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] setIntervalX // rename repeatN() ?
 	[*] repeatUntil   --> needs usability clean up
 	[x] randomNum in (x,y, float_or_int)
-	[ ] pseudoRandom gen
+	[x] pseudoRandom gen (prandom())
 	[ ] sha256 (can be used of psuedoRandom gen)
 	[x] multidim array quick generator
 	[x] loremIpsum quick generator
@@ -39,6 +39,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
  		use args (a.g. bwargs-loadSimpleTheme:themeIndex;
  	[x] docString()
  		support jsdoc style comments, export as JSON or prettyHTML
+ 		allow man style export e.g. doc string params ==> array of vars [] ==> nice text output 
  	[x] simple logging control to a stream (e.g. bw.log(...) with settable function)
  	[x] isHexStr 
  	[ ] graphMatrixAsImage (use canvas, also allow export as png)
@@ -137,7 +138,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		array.reduce
 		array.forEach
 		atob / btoa (base64)
-		string.trim 
+		string.trim  ==> bw.trim() 
 
 
 //=============================================

@@ -176,21 +176,21 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 			    ]]);
 		}
 	}
-	document.getElementById("bwFunctionListID").innerHTML = bw.buildHTMLObjString(["p",{"class":"bw-col-6"}, funcList]);
+	bw.DOMGetElements("#bwFunctionListID")[0].innerHTML = bw.buildHTMLObjString(["p",{"class":"bw-col-6"}, funcList]);
 
 	//function section2Code(sectionId, sectionIdCode) {
 	//	document.getElementById(sectionId).innerHTML = "<pre class='bw-code'>"+bw.htmlSafeStr(document.getElementById(sectionIdCode).innerHTML)+"</pre>";
 	//}
 
 	function section2Code(sectionId,target) {
-		var s = bw.htmlSafeStr(document.getElementById(sectionId).innerHTML.replace(/<br>/ig,"")).replace(/\&nbsp;/ig," ");
-		document.getElementById(target).innerHTML = "<pre class='bw-code' style='height:"+document.getElementById(sectionId).offsetHeight+"px'>"+s+"</pre><br>";
+		var s = bw.htmlSafeStr(bw.DOMGetElements(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/\&nbsp;/ig," ");
+		bw.DOMGetElements(target)[0].innerHTML = "<pre class='bw-code' style='height:"+bw.DOMGetElements(sectionId)[0].offsetHeight+"px'>"+s+"</pre><br>";
 	}
 
 	//this creates the exmaple code tabs
 	//code section for ..
-	section2Code("bwTextSection","bwTextSectionCode");
-	section2Code("bwHeadingSection","bwHeadingSectionCode");
+	section2Code("#bwTextSection","#bwTextSectionCode");
+	section2Code("#bwHeadingSection","#bwHeadingSectionCode");
 
 	//document.getElementById("bwGridExampleIdCode").innerHTML = "<pre class='bw-code'>"+bw.htmlSafeStr(document.getElementById("bwGridExampleId").innerHTML)+"</pre>";
 

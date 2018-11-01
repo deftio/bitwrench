@@ -262,14 +262,14 @@ var _els = bw.DOMGetElements;
 
 */
 bw.colorInterp = function(x, in0, in1, colors, stretch) {
-/**"""
+/**
 bw.colorInterp() interpolate between and array of colors.  
  x is a value between in0, in1
  colors is an array of colors supplied in rgb format e.g. ["#123", "#234"]
  colors can be anylength 
 
 
-"""*/
+*/
 
     var c = _toa(colors,"array",colors,["#000","#fff"]); // make sure we have an array of colors
     c = c.length == 0 ? ["#000","#fff"] : c; // no colors provide .. interp grayscale is default
@@ -542,7 +542,7 @@ see bw.saveClientFile(fname) for saving the log as a file
     }
 
     if (dopts["exportFormat"] == "text") {
-        return bw.logExport().map(function(x){return x.map(function(y){return y.toString()}).join("\t");}).join("\n");
+        return bw.logExport().map(function(x){return x.map(function(y){return y.toString();}).join("\t");}).join("\n");
     }
 };
 
@@ -670,12 +670,12 @@ Works both client side and i nodejs.
  */
     var dops = {
         parser : "raw"  // valid types are "raw", "JSON", future "CSV", "TSV" or parserFunction
-    }
+    };
 
     dops = optsCopy(dops,options);
 
     if (_to(fname) != "string") {
-        return "invalid filename"
+        return "invalid filename";
     }
 
     var prs = (dops["parser"]=="JSON") ? JSON.parse : function(s){return s;};
@@ -697,7 +697,7 @@ Works both client side and i nodejs.
     return "BW_OK";
 };
 
-bw.getJSONFile = function (fname,callback_fn) { return bw.getFile(fname,callback_fn,{"parser":"JSON"})}
+bw.getJSONFile = function (fname,callback_fn) { return bw.getFile(fname,callback_fn,{"parser":"JSON"});};
 
 bw.copyToClipboard = function(data) {
 /** 
@@ -734,11 +734,11 @@ temp.remove();
     e.clipboardData.setData("text/html", data);
     e.clipboardData.setData("text/plain", data);
     e.preventDefault();
-  }
+  };
   document.addEventListener("copy", listener);
   document.execCommand("copy");
   document.removeEventListener("copy", listener);
-}
+};
     
 // ===================================================================================
 bw.saveClientFile   = function(fname,data) {
@@ -1531,8 +1531,8 @@ returns array of valid docStrings embedded in a string
     //console.log(_to(r), ":::" , r);
 
     if (_to(r)=="array") {
-        r = r.map(function(x){return x.substring(dopts["delims"][0].length, x.length-dopts["delims"][1].length)});
-        r = (dopts["dropLeadingWS"]==true) ? r.map(function(x){return x.replace(/^\s*\**\s*/,"")}) : r;
+        r = r.map(function(x){return x.substring(dopts["delims"][0].length, x.length-dopts["delims"][1].length);});
+        r = (dopts["dropLeadingWS"]==true) ? r.map(function(x){return x.replace(/^\s*\**\s*/,"");}) : r;
     }
     else
         r=[];
@@ -1726,6 +1726,50 @@ bw.padNum = function(x, width, options) {
     dopts = optsCopy(dopts, options);
     x = String(x);
     return (x.length >= width) ? x : new Array(width - x.length+1).join(dopts["padChar"]) + x;
+};
+// =============================================================================================
+bw.trim = function (s, dir) {
+/**
+    @description bw.trim() trims a string on either left, right, or both.  (cross browser works before IE8)
+    @param s {string} : a string to trim white space on
+    @param dir {"left" | "right" | "both" | "none"} : trim white space on left only, right only or both sides, or no trim (default is both)
+*/
+    var t = bw.choice(
+        dir, 
+        {
+            "left"  : /^[\s\uFEFF\xA0]+/g,
+            "right" : /[\s\uFEFF\xA0]+$/g,
+            "none"  : /(?!)/ // useful for programmatic scenarios (eg. [....].map ) where not all of the entries should be trimmed.
+        },
+        /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
+    );
+    return String(s).replace(t,"");
+};
+
+// =============================================================================================
+bw.padString = function (s, width, dir, options) {
+/**
+    @description bw.padString() takes a string and pads it to the specified number of chars either left or right or centered.
+
+*/
+    var dopts = {
+        padChar    : " ",
+        trimDir    : "both"   // pre-trim the input string:  "left", "right", "both", "none"
+    };
+    dopts = optsCopy(dopts, options);
+
+    s = String(s);
+    var x = bw.trim(s,dopts["trimDir"]); 
+    var p = (width > x.length ) ? (width - x.length+1) : 0 ; // total padding
+    var q = bw.choice(dir,
+        {
+            "left"      : [p,0],
+            "right"     : [0,p],
+            "center"    : [Math.round(p/2),p-Math.round(p/2)]
+        },
+            [0,0]
+        );
+    return  (new Array(q[0]).join(dopts["padChar"]))+x+(new Array(q[1]).join(dopts["padChar"]));
 };
 
 // =============================================================================================
@@ -2164,7 +2208,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.38", 
+        "version"   : "1.1.39", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
