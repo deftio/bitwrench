@@ -171,19 +171,15 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 			funcList.push(["div" ,{"class":"bw-col-10"}, [
 				"<hr>",
 				["h3"  ,{"class":"bw-h3 color-set1", "id":"bw."+i, "style":"color: #006666;"},"bw."+i+"()"], 
-				["p"   ,{"class":"bw-code"}, bw.htmlSafeStr(bw.docString(bw[i])[0],{dropLeadingWS:true})],
+				["p"   ,{"class":"bw-code"}, bw.docString(bw[i],{dropLeadin:false})[0]],
 				"<br>"
 			    ]]);
 		}
 	}
 	bw.DOMGetElements("#bwFunctionListID")[0].innerHTML = bw.buildHTMLObjString(["p",{"class":"bw-col-6"}, funcList]);
 
-	//function section2Code(sectionId, sectionIdCode) {
-	//	document.getElementById(sectionId).innerHTML = "<pre class='bw-code'>"+bw.htmlSafeStr(document.getElementById(sectionIdCode).innerHTML)+"</pre>";
-	//}
-
 	function section2Code(sectionId,target) {
-		var s = bw.htmlSafeStr(bw.DOMGetElements(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/\&nbsp;/ig," ");
+		var s = bw.HTMLSafeStr(bw.DOMGetElements(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/\&nbsp;/ig," ");
 		bw.DOMGetElements(target)[0].innerHTML = "<pre class='bw-code' style='height:"+bw.DOMGetElements(sectionId)[0].offsetHeight+"px'>"+s+"</pre><br>";
 	}
 
@@ -191,8 +187,6 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 	//code section for ..
 	section2Code("#bwTextSection","#bwTextSectionCode");
 	section2Code("#bwHeadingSection","#bwHeadingSectionCode");
-
-	//document.getElementById("bwGridExampleIdCode").innerHTML = "<pre class='bw-code'>"+bw.htmlSafeStr(document.getElementById("bwGridExampleId").innerHTML)+"</pre>";
 
 </script>
 

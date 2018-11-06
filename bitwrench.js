@@ -111,12 +111,13 @@
 bw.choice    = function (x,choices,def) { 
 /** 
 bw.choice(x,choices-dictionary, default) 
+
 Allows a dictionary to be used as a switch statement, including functions.
 
-colors = {"red": 1, "blue": 2};
-bw.choice("red",colors,"0")   ==> "1"
-bw.choice("shiny",colors,"0") ==> "0"
-
+example:
+    colors = {"red": 1, "blue": 2};
+    bw.choice("red",colors,"0")   ==> "1"
+    bw.choice("shiny",colors,"0") ==> "0"
  */
     return (x in choices) ? choices[x] : def;
 };   
@@ -126,6 +127,7 @@ bw.choice("shiny",colors,"0") ==> "0"
 bw.jsonClone = function (x)       {
 /** 
 bw.jsonClone(object)
+
 crude deep copy by value of an object as long as no js dates or functions
  */
     return JSON.decode(JSON.encode(x));
@@ -161,7 +163,6 @@ bw.typeAssign([23],"number","is a number!", "not a number!") ==> "not a number!"
 can also supply list of types
 bw.typeAssign(23,["string","number"], "string or num", "something else") ==> "string or num"
 bw.typeAssign(true,["string","number"], "string or num", "something else") ==> "something else"
-
  */
     if (_to(typeString) == "string")
         typeString = [typeString];
@@ -185,8 +186,7 @@ var optsCopy = function(dopts,opts) {
 
 bw.DOMIsElement = function(el) {
 /**
-    @method bw.DOMIsElement() return whether a supplied element is a HTML DOM element. only useful in browser,
-
+@method bw.DOMIsElement() - returns whether a supplied element is a HTML DOM element. only useful in browser,
  */    var r = false;
     try {
         if(_to(el)== "undefined")
@@ -208,8 +208,10 @@ var _isEl = bw.DOMIsElement;
 //===============================================
 bw.DOMGetElements = function (el, type) {
 /**
-    @method bw.getDOMElements() returns an array of DOM elements (if running in browser)
-    
+@method bw.getDOMElements(el, type) returns an array of DOM elements (if running in browser)   
+
+@param {string | DOM_node} el - if string uses CSS selector other wise if DOM element returns itself
+@return an js array of zero or more matching DOM nodes
 */
     var r=[],a=[],i;
 
@@ -250,27 +252,23 @@ var _els = bw.DOMGetElements;
 
 // =============================================================================================
 /** 
-    bitwrench: color functions (used for theming and interpolations)
+bitwrench: color functions (used for theming and interpolations)
 
-    bitwrench functons operate using this internal color representation model:
-    [c0, c1, c2, alpha, model]  
-    where c0, c1, c2 are model dependant
-    alpha represents the transperancy
-    model is a color model string (lowercase) rgb, or hsl (compatible with HTML/CSS colors)
+bitwrench functons operate using this internal color representation model:
+[c0, c1, c2, alpha, model]  
+where c0, c1, c2 are model dependant
+alpha represents the transperancy
+model is a color model string (lowercase) rgb, or hsl (compatible with HTML/CSS colors)
 
-    colorParse() ==> take an input color of anymodel and output a bw [c0,c1,c2,a,m] array 
-
+colorParse() ==> take an input color of anymodel and output a bw [c0,c1,c2,a,m] array
 */
 bw.colorInterp = function(x, in0, in1, colors, stretch) {
 /**
-bw.colorInterp() interpolate between and array of colors.  
- x is a value between in0, in1
- colors is an array of colors supplied in rgb format e.g. ["#123", "#234"]
- colors can be anylength 
-
-
+bw.colorInterp(x, lo, hi, colors[], stretch) - interpolate between and array of colors.  
+    x is a value between in0, in1
+    colors is an array of colors supplied in rgb format e.g. ["#123", "#234"]
+    colors can be anylength 
 */
-
     var c = _toa(colors,"array",colors,["#000","#fff"]); // make sure we have an array of colors
     c = c.length == 0 ? ["#000","#fff"] : c; // no colors provide .. interp grayscale is default
     if (c.length == 1)
@@ -361,8 +359,9 @@ returns h, s, and l in the set [0, 1].
 
 bw.colorParse = function(s,defAlpha) {
 /**
-    @method bw.colorParse(s)
-    @description take a valid CSS style color string: #rgb | #rgba | #rrggbb | #rrggbbaa | rgb(r,g,b) | rgb(r,g,b,a) | hsl(h,s,l) | hsla(h,s,l,a )  ... and return array [c0,c1,c2,a,model] where model is one of rgb, hsl
+@method bw.colorParse(s)
+
+@description take a valid CSS style color string: #rgb | #rgba | #rrggbb | #rrggbbaa | rgb(r,g,b) | rgb(r,g,b,a) | hsl(h,s,l) | hsla(h,s,l,a )  ... and return array [c0,c1,c2,a,model] where model is one of rgb, hsl
 */
     defAlpha = _toa(defAlpha,"number",defAlpha,255);
     var r = [0,0,0,defAlpha,"rgb"]; // always return a valid type 
@@ -415,9 +414,9 @@ bw.colorParse = function(s,defAlpha) {
 // =============================================================================================
 bw.colorToRGBHex = function(c, format) {
 /**
-    @method bw.colorToRGBHex(color) 
-    @description take a color of the form [c0,c1,c2,alpha,model] ==> convert to #rrggbbaa format
-    format (optional) can be set to auto in which case alpha is ommitted if set to 255
+@method bw.colorToRGBHex(color) 
+@description take a color of the form [c0,c1,c2,alpha,model] ==> convert to #rrggbbaa format
+format (optional) can be set to auto in which case alpha is ommitted if set to 255
  */
     var r = "#00000000";
     var ph = function(x){var y=(bw.clip(Math.round(x),0,255)).toString(16); return (y.length==1)?"0"+y:y;}; // pad hex
@@ -459,7 +458,6 @@ options {
         false : normal write 
         true : clear log and add 1st entry
         clear-only - only clear don't write, value, msg 
-
     saveMethod: "raw" | "JSON"  // raw is default, save object as passed, JSON saves stringified version (useful for exporting or saving state)
 }
  */
@@ -487,14 +485,15 @@ bw.log("","",{clear:"clear-only"}); // initialize
 // =============================================================================================
 bw.logd = function() {
 /**
-    @method bw.logd() 
-    @description: bw.logd is a log funciton which behaves similar to console.log() however instread of outputting to console, it writes to bw.log() function with the following differences: 1. all a
-
-todo: comma seperated items;
-console     ==> also (attempt) to output to console.log
-bwdbg       ==> log bw catches / errors (else silent)
+@method bw.logd() 
+@description: bw.logd is a log funciton which behaves similar to console.log() however instread of outputting to console, it writes to bw.log() function with the following differences: 1. all a
+*/
+/*
+todo: comma seperated items;  ? done
+console     ==> also (attempt) to output to console.log ? would need to set a bw.state variable..
+bwdbg       ==> log bw catches / errors (else silent) 
 none        ==> no output (of any kind)
-stringigy   ==> takes bw.logd args and strinigyfies before writing to bw.log
+stringify   ==> takes bw.logd args and strinigyfies before writing to bw.log
 example:
 logd=console,bwlogd
 
@@ -519,31 +518,29 @@ default is "raw" which is an array of values:
 [ .. , .. , .. ]
 
 also can be exported as an HTML table.
-bw.logExport({"exportFormat":"HTML"})
+bw.logExport({"format":"HTML"})
 
 or as a simple text file:
-bw.logExport("exportFormat" : "text"})
+bw.logExport("format" : "text"})
 
 see bw.saveClientFile(fname) for saving the log as a file
-
  */
     var dopts = {
-        exportFormat : "raw"  // can also be HTML table if set to "HTML"
+        "format" : "raw"  // can also be HTML table if set to "HTML"
     };
     dopts = optsCopy(dopts,opts);
 
     var _ld = _logdata;  
 
-    if (dopts["exportFormat"] == "raw")
-        return _ld;
-
-    if (dopts["exportFormat"] == "HTML") {
+    if (dopts["format"] == "HTML") {
         return bw.makeHTMLTableStr(_ld,{sortable:true});
     }
 
-    if (dopts["exportFormat"] == "text") {
-        return bw.logExport().map(function(x){return x.map(function(y){return y.toString();}).join("\t");}).join("\n");
+    if (dopts["format"] == "text") {
+        return _ld.map(function(x){return x.map(function(y){return bw.padString(y.toString(),16,"left");}).join("\t");}).join("\n");
     }
+
+    return _ld;
 };
 
 
@@ -551,7 +548,7 @@ see bw.saveClientFile(fname) for saving the log as a file
 bw.setCookie = function (cname, cvalue, exdays) {
 /** 
 bw.setCookie(cookieName, value, expireDays)
-set a client side cookie.  Adapted from W3 Schools
+set a client side cookie.  
   */
     var d = new Date();
     d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -564,7 +561,7 @@ bw.getCookie = function (cname, defaultValue) {
 /** 
 bw.getCookie(cookieName, defaultValueIfNotFound)
 get a client side cookie, if it is set.  returns defaultValue if cookie could not be found
-   */
+ */
     var name = cname + "=";
     var ca = document.cookie.split(";");
     for(var i=0; i<ca.length; i++) {
@@ -634,8 +631,8 @@ bw.prettyPrintJSON(object, styles)
 pretty print any javascript object as displayable HTML. 
 e.g.
 document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...any object ....)
-//TODO make style dict
-   */
+*/
+//TODO make style dict as a param
 	function f(json) { 
 		json = JSON.stringify(json, undefined, 2);
 		if (typeof json != "string") { json = JSON.stringify(json, undefined, 2);}
@@ -666,7 +663,6 @@ bw.getFile  = function (fname,callback_fn, options) {
 bw.getFile(filename,callback) 
 Attempt to load a file.
 Works both client side and i nodejs.
-
  */
     var dops = {
         parser : "raw"  // valid types are "raw", "JSON", future "CSV", "TSV" or parserFunction
@@ -730,14 +726,16 @@ temp.remove();
     document.execCommand("copy");
     temp.remove();
 */
- var  listener = function (e) {
-    e.clipboardData.setData("text/html", data);
-    e.clipboardData.setData("text/plain", data);
-    e.preventDefault();
-  };
-  document.addEventListener("copy", listener);
-  document.execCommand("copy");
-  document.removeEventListener("copy", listener);
+    if (bw.isNodeJS())
+        return;
+    var  listener = function (e) {
+        e.clipboardData.setData("text/html", data);
+        e.clipboardData.setData("text/plain", data);
+        e.preventDefault();
+    };
+    document.addEventListener("copy", listener);
+    document.execCommand("copy");
+    document.removeEventListener("copy", listener);
 };
     
 // ===================================================================================
@@ -747,9 +745,8 @@ bw.saveClientFile(fname,data) saves data the program the client environtmnet
     fname is filename to save as
     data is data to save.
 
-    works both in node and browser.
-    
-   */
+    works both in node and browser.    
+*/
     if (bw.isNodeJS()) {
         var fs = require("fs");
         fs.writeFile(fname, data, function (err) {
@@ -783,18 +780,15 @@ bw.setIntervalX = function (callback, delay, number_of_repetitions) {
 bw.setIntervalX(callbackFn, delayBtwCalls, repetitions)
 set a javascript timer to only run a max of N repetions.
 
-NoteS: 
-    Only works in browser not server side as it requires access to window object.
-    callback function is called with the interval number to be used for whatever purposes the callback likes
+Example:
+    bw.setIntervalX(function(x){console.log(x)},100,5)
  */
-
-
     var x = 0;
-    var intervalID = window.setInterval(function () {
+    var intervalID = setInterval(function () {
         callback(x);
 
         if (++x >= number_of_repetitions) {
-                window.clearInterval(intervalID);
+                clearInterval(intervalID);
         }
     }, delay);
 };
@@ -855,7 +849,7 @@ bw.repeatUntil( myLibsAndDataAreLoaded_fn, renderMyChart, null, 250, 10, null); 
     _f();
 };
 // ===================================================================================
-bw.htmlSafeStr = function (str) {
+bw.HTMLSafeStr = function (str) {
 /** 
 bw.htmlSageString(str) 
 Replace non valid HTML characters with HTML escaped equivalents.   
@@ -870,7 +864,6 @@ bw.makeHTMLDoc(head,body,options)
 make a simple HTML document.  Note this can also be usd win bw.makeHTML()
 
 inline-bw-css --> emit bw default styles as inline css (include globals option)
-
  */
     var dopts = {
         docType : "<!DOCTYPE html>",
@@ -1101,7 +1094,6 @@ bw.makeHTMLList (listData, str)
 
 listType = "ul" | "ol"
 listHtml = [ item1, item2, item3, .. ]
-
  */
     if (bw.typeOf(listData) != "array")
         return "";
@@ -1269,12 +1261,12 @@ bw.sortHTMLTable = function (table, col, dir, sortFunction) {
 /** 
 bw.sortHTMLTable(table, column, optionalSortFunction).
 
-    sort any HTML table active in the DOM
-    table must be a valid DOM table element or be string represent a valid DOM Id.
+sort any HTML table active in the DOM
+table must be a valid DOM table element or be string represent a valid DOM Id.
 
-    default uses string compare. but can pass in a function
-    sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on what column this is   
-  */
+default uses string compare. but can pass in a function
+sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on what column this is   
+*/
     
     var  rows, switching, i, x, y, shouldSwitch;
     var sortF = bw.typeOf(sortFunction) == "function" ? sortFunction : bw.naturalSort;
@@ -1319,7 +1311,6 @@ bw.sortTableDispatch = function (item,fn) {
 /** 
 bw.sortTableDispatch(el) is used to bind sorting functions to tables generated by  bw.makeHTMLTableStr(....)
 item must be a valid DOM element or id.
-
  */
     var i;
     if (bw.typeOf(item)=="string")
@@ -1360,7 +1351,6 @@ item must be a valid DOM element or id.
 bw.function dispatch for DOM elements..
 
 the bw.fnRegistry{} is a dict of user supplied functions are assigned IDs by bitwrench.  Using these IDs one can call the functions which is useful in DOM string contexts such as makeHTMLTable() or buildHTMLObjStr().
-
  */
 var _fnRegistry = {};
 var _fnIDCounter = 0;
@@ -1381,8 +1371,6 @@ In this case in the static code call like this:
 function superDuperFunctionCode (a) { .... code for my function ... };
 bw.funcRegister(superDuperFunctionCode,"myFnName");  
 
-...
-
  */
     var fnID = "class_bwfn_" + _fnIDCounter; 
     _fnIDCounter++;
@@ -1395,8 +1383,7 @@ bw.funcRegister(superDuperFunctionCode,"myFnName");
 bw.funcUnregister = function (fnID) {
 /** 
 bw.funcUnregister(fnID)
-remove a function from the bw dispatch registry
-
+remove a function from the bitwrench dispatch registry
  */
     if (fnID in _fnRegistry)
         delete _fnRegistry[fnID];
@@ -1412,7 +1399,6 @@ errFn is optional function to call if fnID is not found.
 
 example:
     var myFunc = bw.getFuncById("myFuncID");  // function must already be registered.
-
  */
     fnID = String(fnID);
     if (fnID in _fnRegistry)
@@ -1430,7 +1416,6 @@ create a string suitble for use in DOM element dispatch.  note argstring is a li
 see bw.funcRegister() for getting valid IDs for user supplied functions.
 
 example: bw.funcGetDispatchStr("myFuncID","param1,param2")
-
  */
     
     switch (bw.typeOf(argstring)) {
@@ -1465,7 +1450,6 @@ if startWithCapitalLetter == true then the function will capitlize the first cha
     default is false;
 
 Default is a paragraph of lorem ipsum (446 chars)
-
  */
 
     startSpot  = _to(startSpot) != "number" ? 0 : Math.round(startSpot);
@@ -1498,20 +1482,21 @@ bw.docString = function (s, options) {
 bw.docString(functionAsString, options)
 returns array of valid docStrings embedded in a string 
 
-    @param docType{string} : "jsdoc" | "python" | "custom"  (python means triplequote (") 3 times), "custom" means supply delims
-    @param options {delims:[string,string]} : start, stop delimiters (only used if docType set to "custom")
+@param docType{string} : "jsdoc" | "python" | "custom"  (python means triplequote (") 3 times), "custom" means supply delims
+@param options {delims:[string,string]} : start, stop delimiters (only used if docType set to "custom")
 
-    @return array{strings} : array of captured params
+@return array{strings} : array of captured params
     
  */
+    
     var dopts = {
         docType : "jsdoc",  // "js doc", "python", "other" (jsdoc is default)
         delims  : ["/**","*/"],
         parseJSDocParams : false,
-        dropLeadingWS : false // removes leading whitespace on each line, tabs, and floating single * e.g.  " * @mycomment" ==> "@mycomment"
+        dropLeadin : false // removes lead-in whitespace or floating single * on each line e.g.  " * @mycomment" ==> "@mycomment"
     };
     dopts = optsCopy(dopts,options);
-    
+
     var _es = function (str) {return str.replace(/(?=[\\^$*+?.()|{}[\]])/g, "\\");}; // do escape of regex chars
 
     dopts["delims"] = bw.choice(dopts["docType"],{
@@ -1528,11 +1513,10 @@ returns array of valid docStrings embedded in a string
         r = c.match(re);
     }
     catch (e)   {bw.log(String(e));}
-    //console.log(_to(r), ":::" , r);
 
     if (_to(r)=="array") {
-        r = r.map(function(x){return x.substring(dopts["delims"][0].length, x.length-dopts["delims"][1].length);});
-        r = (dopts["dropLeadingWS"]==true) ? r.map(function(x){return x.replace(/^\s*\**\s*/,"");}) : r;
+        r = r.map(function(x){return x.substring(dopts["delims"][0].length, x.length-dopts["delims"][1].length);}); // this is an array of the contents of docStrings which can still be multiline in thier own right
+        r = (dopts["dropLeadin"]==true) ? r.map(function(x){return x.split(/[\n\r]/).map(function(y){return bw.trim(y,"left")+"\n";});}) : r; // need to hanlde multiline stuff here
     }
     else
         r=[];
@@ -1541,42 +1525,90 @@ returns array of valid docStrings embedded in a string
 };
 
 // =============================================================================================
-bw.parseJsDocString = function(s) {
-/**
-    @method bw.parseJsDocString() - parse and extract info from a jsdoc style comment.
-    @param{string} s - a valid js docstring
-    @return an array of triplets [@param, {types}, comment info]
+bw.docStringParse = function(s) {
+/** 
+    @method  bw.parseJsDocString()  parse and extract info from a jsdoc style comment.  expects there to be only a single docString comment
+    @description  docStringParse parses a jsdoc string 
+    and returns the paramters as an array which can be formatted for display or interrogtion.
+    @param{string} - a valid js docstring
+
+    @returns An array of triplets [@param, {types}, comment info]
  */
-    var r = s.split(/[\n\r]+/).map(function(x){return x.match(/\s*\*?\s*@([A-Za-z0-9_]*)\s*(\{[A-Za-z0-9_|\s,.\-+!@#$%^&*()=[\]]*\})?([\S\s]*)/i);});
+
+ /*
+    implementation notes:
+    the parser splits the candidate doc string in to lines.
+
+Examples:
+
+ * Assign the project to an employee.
+ * @param {Object} - The employee who is responsible for the project. ==> ["@param","object","", "The employee who is resposnsible for the project"]
+ * @param {string} employee.name - The name of the employee.
+ * @param {string} employee.department - The employee's department.
+
+
+ */
+    s = bw.trim(s);
+    s = s.substr(0,3) == "/**" ? s.substr(3,s.length) : s;
+    s = s.substr(0,-2) == "*/" ? s.substr(0,s.length-2) : s;
+
+    console.log("\n+++++++\n"+s+"\n--------\n");
+    var r = s.split(/[\n\r]+/);
+
     if (bw.typeOf(r) != "array")
         return [];
     if (r[0] == null)
         return []; // bad string
     
+    var i,c="description",res=[],o=0; // default context
+    for (i=0; i<r.length; i++) {
+         var a = r[i].match(/\s*[*]?\s*@([A-Za-z0-9_]*)\s*(\{[A-Za-z0-9_|\s,.\-+!@#$%^&*()=[\]]*\})?([\S\s]*)/i);
+         console.log("\n------------------\n"+i+"::"+_to(a)+"::"+r[i]+"\n");
+         
+         if (_to(a) == "array") {
+            a = {fieldName: "", types:[],  };
+            try {
+                console.log("\n"+a.join("|")+"\n");  
+                a = [bw.trim(a[0] || ""), bw.trim(a[1] || ""), bw.trim(a[2] || "")];
+                console.log(a.join("|")); 
+                c = a[0];
+                o++;
+                res.push(a);
+            } catch(e) {bw.log(e)}
+         }
+         else { // couldn't grok it .. treat as a string
+            if (o<1) { // there is a previous entry
+                res[res.length-1][2] += r[i]; // append current string to previous entry
+            }
+            else { // no previous structured entries
+                res.push[c,"",r[i]];
+            }
+            o++;
+         }
+    }
+    
+    /*
     r = r.map(function(x){ try {var z = _toa(x,"array",[x[1] || "",x[2] || "",x[3] || ""],[]);} catch (e){bw.log(e);} return z;});
     r = r.filter(function(x){if (_to(x)!="array") return false; return (x.length==3);});
 
-    var  _tws = function(x) { return x.replace(/^[\s\r\n]+|[\s\r\n]+$/gm,"");};  //local function to trim whitespace
+    var  _tws = function(x) { return x.replace(/^[\s\r\n]+|[\s\r\n]+$/gm,"");};  //local function to trim whitespace 
     var  _tb  = function(x) {return x.replace(/^\{?|\}?$/g,"");};
+
     r= r.map (function(x){return [_tws(x[0]),_tb(_tws(x[1])),_tws(x[2])];}); // trim white space 
-    return r;
+    */
+    return res;
 };
 // =============================================================================================
 bw.isHexStr = function (str, allowChars) {
 /** 
-
 isHexStr() returns a number of hex digits found or false if non-hex string.
 allow is an optional string of characters "-+."etc to permit in the string.
 the allow characters are not counted in the result
 
 examples:
-
-bw.isHEXStr("123a")      ===> 4
-
-bw.isHEXStr("12-3a")     ===> false
-
-bw.isHEXStr("12-3a","-") ===> 4
- 
+    bw.isHEXStr("123a")      ===> 4
+    bw.isHEXStr("12-3a")     ===> false
+    bw.isHEXStr("12-3a","-") ===> 4
  */
     if ( _to(str) == "string") {
         str = str.replace(new RegExp("["+allowChars+"]","g"),"");      
@@ -1600,9 +1632,8 @@ bw.fixNum = function(num,digits) {
 bw.fixedNum(num,digits)
 
 Truncate a number at digits number of places.  
-bw.fixNum(1.2345,2)  ===> 1.23
-bw.fixNum(234.32,-2) ===> 200
-
+    bw.fixNum(1.2345,2)  ===> 1.23
+    bw.fixNum(234.32,-2) ===> 200
  */
     num = Number(num); 
 
@@ -1637,7 +1668,6 @@ bw.multiArray also accepts functions
 bw.multiArray(bw.random, [3,4]) ===> creates 3x5 array of random #s btw 0..100
 
 bw.multiArray(function(){return (new Date()).getTime();},[4,6] ) ==> returns values based on the Javascript date
-
  */
 
     var v = function() { return (_to(value) == "function") ? value(): value;};
@@ -1658,9 +1688,11 @@ bw.multiArray(function(){return (new Date()).getTime();},[4,6] ) ==> returns val
 bw.clip = function (data, min, max) {
 /** 
 bw.clip(data, min, max)  clips data in between min and max. 
-bw.clip(5,2,20)            ==>  5   // already in range
-bw.clip(1,2,20)            ==>  2   // less than the min value so clips to min value
-bw.clip([1,4,8,35], 2, 20) ==>  [2,4,5,20]
+
+Examples:
+    bw.clip(5,2,20)            ==>  5   // already in range
+    bw.clip(1,2,20)            ==>  2   // less than the min value so clips to min value
+    bw.clip([1,4,8,35], 2, 20) ==>  [2,4,5,20]
  */
     var l = min < max ? min : max;
     var h = max > min ? max : min;
@@ -1680,7 +1712,6 @@ bw.mapScale()
 Map an input value x in its natural range in0...in1 to the output space out0...out1 with optional clipping
 expScale allows sigmoidal warping to stretch input values contrained to a small range. (floating point scale factor)
 x can be either a number or array of numbers.
-
  */
     var dopts = {
         clip : true,
@@ -1716,9 +1747,8 @@ x can be either a number or array of numbers.
 //https://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
 bw.padNum = function(x, width, options) {
 /**
-    @description bw.padnum() takes a number and pads left pads (default is '0')
-    @param x {number} 
-
+@description bw.padnum() takes a number and pads left pads (default is '0')
+@param x {number} 
 */
     var dopts = {
         padChar : " "
@@ -1730,27 +1760,26 @@ bw.padNum = function(x, width, options) {
 // =============================================================================================
 bw.trim = function (s, dir) {
 /**
-    @description bw.trim() trims a string on either left, right, or both.  (cross browser works before IE8)
-    @param s {string} : a string to trim white space on
-    @param dir {"left" | "right" | "both" | "none"} : trim white space on left only, right only or both sides, or no trim (default is both)
+@description bw.trim() trims a string on either left, right, or both.  (cross browser works before IE8)
+@param s {string} : a string to trim white space on
+@param dir {"left" | "right" | "both" | "none"} : trim white space on left only, right only or both sides, or no trim (default is both)
 */
     var t = bw.choice(
         dir, 
         {
-            "left"  : /^[\s\uFEFF\xA0]+/g,
-            "right" : /[\s\uFEFF\xA0]+$/g,
+            "left"  : /^[\s\uFEFF\xA0\n]+/g,
+            "right" : /[\s\uFEFF\xA0\n]+$/g,
             "none"  : /(?!)/ // useful for programmatic scenarios (eg. [....].map ) where not all of the entries should be trimmed.
         },
-        /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
+        /^[\s\uFEFF\xA0\n]+|[\s\uFEFF\xA0\n]+$/g
     );
-    return String(s).replace(t,"");
+    return String(_toa(s,"undefined","",s)).replace(t,"");
 };
 
 // =============================================================================================
 bw.padString = function (s, width, dir, options) {
 /**
-    @description bw.padString() takes a string and pads it to the specified number of chars either left or right or centered.
-
+@description bw.padString() takes a string and pads it to the specified number of chars either left or right or centered.
 */
     var dopts = {
         padChar    : " ",
@@ -1799,7 +1828,6 @@ options
 example:
 bw.random() ==> returns a number btw 0,100
 bw.random(-4,4,{setType: "float", dims[4,5]}) ==> returns a 3x5 array of floating pt numbers btw -4,4
-    
  */
     rangeBegin = bw.typeOf(rangeBegin)  == "number" ? rangeBegin : 0;
     rangeEnd   = bw.typeOf(rangeEnd)    == "number" ? rangeEnd   : 100;
@@ -1834,18 +1862,18 @@ bw.random(-4,4,{setType: "float", dims[4,5]}) ==> returns a 3x5 array of floatin
 
 bw.hashFnv32a= function (str, seed, returnHexStr) {
 /**
-  @moethod Calculate a 32 bit FNV-1a hash
-  Found here: https://gist.github.com/vaiorabbit/5657561
-  Ref.: http://isthe.com/chongo/tech/comp/fnv/
- 
-  @param {string} str the input value
-  
-  @param {integer} [seed] optionally pass the hash of the previous chunk
+@method Calculate a 32 bit FNV-1a hash
+Found here: https://gist.github.com/vaiorabbit/5657561
+Ref.: http://isthe.com/chongo/tech/comp/fnv/
 
-  @param {boolean} [asString=false] set to true to return the hash value as 
-      8-digit hex string instead of an integer
-  
-  @returns {integer | string}
+@param {string} str the input value
+
+@param {integer} [seed] optionally pass the hash of the previous chunk
+
+@param {boolean} [asString=false] set to true to return the hash value as 
+  8-digit hex string instead of an integer
+
+@returns {integer | string}
 */
     /*jshint bitwise:false */
     var i, l,
@@ -1865,8 +1893,7 @@ bw.hashFnv32a= function (str, seed, returnHexStr) {
 // =============================================================================================
 bw.prandom = function (rangeBegin,rangeEnd,seed, options) {
 /**
-    prandom - generate a psuedo random number from internal hash function in a given range
-
+prandom - generate a psuedo random number from internal hash function in a given range
 */
     rangeBegin = bw.typeOf(rangeBegin)  == "number" ? rangeBegin : 0;
     rangeEnd   = bw.typeOf(rangeEnd)    == "number" ? rangeEnd   : 100;
@@ -1900,10 +1927,9 @@ bw.prandom = function (rangeBegin,rangeEnd,seed, options) {
 // =============================================================================================
 bw.bwMakeThemeCSS   = function(color) {
 /**
-    makeThemeCSS (color) 
+makeThemeCSS (color) 
 
-    makes a color palettte based on the supplied color which is exported as a css style
-
+makes a color palettte based on the supplied color which is exported as a css style
  */
     var c =  bw.colorRgbToHsl( bw.colorParse(color));
 
@@ -1912,19 +1938,6 @@ bw.bwMakeThemeCSS   = function(color) {
     var im = " !important";
     thm = thm.map(function(x,i){return [x,[["color", ((i<5)?"#000" : "#fff")+im ],["background-color",c + im] ]]; });
 
-    /*
-.w3-theme-light   {color:#000 !important; background-color:#f2f9fe !important}
-.w3-theme-dark    {color:#fff !important; background-color:#074b83 !important}
-.w3-theme-action  {color:#fff !important; background-color:#074b83 !important}
-
-.w3-theme         {color:#fff !important; background-color:#2196f3 !important}
-.w3-text-theme    {color:#2196f3 !important}
-.w3-border-theme  {border-color:#2196f3 !important}
-
-.w3-hover-theme:hover {color:#fff !important; background-color:#2196f3 !important}
-.w3-hover-text-theme:hover {color:#2196f3 !important}
-.w3-hover-border-theme:hover {border-color:#2196f3 !important}
-*/
     return thm;
 
 };
@@ -2208,7 +2221,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.39", 
+        "version"   : "1.1.40", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

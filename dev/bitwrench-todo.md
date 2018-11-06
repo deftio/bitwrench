@@ -182,3 +182,18 @@ makesure bw doesn't try to "append to head" any code if in nodejs
 
 
 
+## Themes
+
+/*
+.w3-theme-light   {color:#000 !important; background-color:#f2f9fe !important}
+.w3-theme-dark    {color:#fff !important; background-color:#074b83 !important}
+.w3-theme-action  {color:#fff !important; background-color:#074b83 !important}
+
+.w3-theme         {color:#fff !important; background-color:#2196f3 !important}
+.w3-text-theme    {color:#2196f3 !important}
+.w3-border-theme  {border-color:#2196f3 !important}
+
+.w3-hover-theme:hover {color:#fff !important; background-color:#2196f3 !important}
+.w3-hover-text-theme:hover {color:#2196f3 !important}
+.w3-hover-border-theme:hover {border-color:#2196f3 !important}
+*/

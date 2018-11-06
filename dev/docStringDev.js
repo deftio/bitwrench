@@ -33,7 +33,7 @@ function() {
 function() {
 
 /*
- s2
+ @description 
  not a docstring
  */
  	var y=1; // var y=1, not a valid docstring
@@ -67,15 +67,58 @@ console.log("started ... ")
 tests.forEach(function(x){console.log(outs(x))})
 
 tests.forEach(function(x){console.log(outs(x,{}))})
-//===
+//======
 //test docStringParse()
 console.log("\n|||||||||||||||||||||||||||||||||||||\n")
+
+//http://usejsdoc.org/tags-param.html
+//Test cases
+//Name only
+function sayHello1(somebody) {
+/**
+ * @param somebody
+ */
+    alert('Hello ' + somebody);
+}
+
+//Name and type
+function sayHello2(somebody) {
+/**
+ * @param {string} somebody
+ */
+    alert('Hello ' + somebody);
+}
+
+//Name, type, and description
+function sayHello3(somebody) {
+/**
+ * @param {string} somebody Somebody's name.
+ */
+    alert('Hello ' + somebody);
+}
+
+//You can add a hyphen before the description to make it more readable. Be sure to include a space before and after the hyphen.
+//Name, type, and description, with a hyphen before the description
+function sayHello4(somebody) {
+/**
+ * @param {string} somebody - Somebody's name.
+ */
+    alert('Hello ' + somebody);
+}
+
+var testCasesParse = [
+	sayHello1.toString(),
+	sayHello2.toString(),
+	sayHello3.toString(),
+	sayHello4.toString()
+]
+
 var outp = function(x,o) {
 	var y = typeof(x) != "string" ? x.toString() : x;
 		return "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"+(bw.docString(y,o).forEach(function(z){return bw.parseJsDocString(z)}).join ("|")).join("\n..................\n")+"\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
 }
-console.log(outp(bw.parseJsDocString))
+//console.log(outp(bw.parseJsDocString))
 
 //any issues here..
-console.log("\n"+bw.logExport({"exportFormat":"text"}));
+console.log("\n"+bw.logExport({"format":"text"}));
 
