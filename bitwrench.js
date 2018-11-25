@@ -103,7 +103,32 @@
 })(Array.prototype);
 // * /
 
-(function(bw){
+(function (root, factory) {
+    if (typeof define === "function" && define.amd) { // eslint-disable-line no-undef
+        // AMD. Register as an anonymous module.
+        //define(['myRequiredDependancyModule'], factory); // use this if other modules required
+        define([], factory); // eslint-disable-line no-undef
+    } else if (typeof module === "object" && module.exports) {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like environments that support module.exports,
+        // like Node.
+        
+        //module.exports = factory(require('myRequiredDependancyModule'));  // use this if other modules required
+        module.exports = factory();
+    } else {
+        // Browser globals (root is window)
+        var module = factory(); // factory(root.myRequiredDependancyModule);  // use this if other modules required
+        root[module["exportName"]] = module;
+    }
+}(typeof self !== "undefined" ? self : this, function () { // note if needing requirements use ... (typeof self !== "undefined" ? self : this, function (myRequiredDependancyModule) 
+    // Use b in some fashion.
+
+    // Just return a value to define the module export.
+    // This example returns an object, but the module
+    // can return a function as the exported value.
+    var bw = {};
+    bw.exportName = "bw"; // 
+//(function(bw){ old way
 
 "use strict";
 
@@ -964,7 +989,7 @@ dicts not used because css can have multiple redundant selectors with different 
 };
 
 // ===================================================================================
-bw.buildHTMLObjString = function (d,options) {
+bw.html = function (d,options) {
 /**  
 bw.buildHTMLObjString(data)  
 
@@ -1085,7 +1110,10 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
 
     return outFn(s,dopts);
 };
-bw.makeHTML = bw.buildHTMLObjString;
+
+bw.makeHTML = bw.html;
+bw.buildHTMLObjString = bw.html;
+
 
 // ===================================================================================
 bw.makeHTMLList = function (listData, listType, atr, atri) {
@@ -1523,7 +1551,65 @@ returns array of valid docStrings embedded in a string
     
     return r;
 };
+// =============================================================================================
+bw.docStringParseLine = function(s) {
+/** 
+Parse a single line of a jsdoc string.
+    @param {string} s - line of docstring to parse
+    @return - dict of line contents {source: s, field:string, name:string, description: string, types: type1,type2 } 
+    if not a valid doc string line then returns source string only
+*/
+    var r={"source":s,  "field" : "", "types":"", "name" :"", "description" : ""};  
+    var a = s.replace(/^\s*(\/\*\*?)?|(\*\/)?\s*$/ig,""); // remove the comment markers if still there "/** my comment */"" ==> "my comment"
+    a = a.replace(/^\s*\**\s*/,"");                      // remove any cruft at beginning of line " * @myParam {}....." ==> "@myParam {}....."
+    if (a.charAt(0) == "@") { // if we have hit a @fieldname parameter we start parsing.
+        //  ([str, regex, fieldStr, result{}]) ==> ([str, regex, fieldStr, result{}])  ::> ([str,result{},fieldStr,regex])
+        /*
+        var _tok = function(x){
+            var m = x[0].match(x[1]);
+            if (m != null) {x[4][3]=m[1];}
+            x[0] = x[0].replace(x[1],"");
+            return x;
+        }
+        */
+        //r = [[e,f],[e,f],[e,f],[e,f]].reduce(,_tok);
 
+        var e,x;
+        var t = bw.trim;
+        e =/^@([A-Za-z0-9_<>[\]]*)/i;
+        x = a.match(e);
+        if (x != null) {r["field"] = t(x[1]);} else return r; // didn't match... opt out here
+        a = a.replace(e,"");
+        
+        e = /^\s*\{([A-Za-z0-9_|\s,.\-+!@#$%^&*()=[\]]*)\}/i;
+        x = a.match(e);
+        if (x != null)  {r["types"]=t(x[1]);} // types is optional..
+        a = a.replace(e,""); 
+
+        e  = /^\s*([\S]*)/i;
+        x = a.match(e);
+        if (x != null)  {r["description"]=t(x[1]);} //
+        a = a.replace(e,""); 
+
+        e = /^\s*([\S]*)/i;
+        x = a.match(e);
+        if (x != null)  {r["name"]=t(x[1]);} //
+        a = a.replace(e,""); 
+        
+        // descrpition                  ==> name: ""        description : "description"
+        // description  we  we          ==> name: ""        description : "description we we "
+        // name - description  we we    ==> name: "name"    descrpition : "description we we"
+        // - description we we          ==> name: ""        description : "description we we"
+        if (r["name"].match(/^\s*-+\s*/) != null) {
+            r["name"] = r["description"];
+            r["description"] = t(a);
+        } else {
+            r["description"] = r["description"]+" "+r["name"]+" "+t(a);
+            r["name"] ="";
+        }
+    }
+    return r;
+};
 // =============================================================================================
 bw.docStringParse = function(s) {
 /** 
@@ -1548,55 +1634,22 @@ Examples:
 
 
  */
-    s = bw.trim(s);
-    s = s.substr(0,3) == "/**" ? s.substr(3,s.length) : s;
-    s = s.substr(0,-2) == "*/" ? s.substr(0,s.length-2) : s;
-
-    console.log("\n+++++++\n"+s+"\n--------\n");
-    var r = s.split(/[\n\r]+/);
-
-    if (bw.typeOf(r) != "array")
-        return [];
-    if (r[0] == null)
-        return []; // bad string
     
-    var i,c="description",res=[],o=0; // default context
-    for (i=0; i<r.length; i++) {
-         var a = r[i].match(/\s*[*]?\s*@([A-Za-z0-9_]*)\s*(\{[A-Za-z0-9_|\s,.\-+!@#$%^&*()=[\]]*\})?([\S\s]*)/i);
-         console.log("\n------------------\n"+i+"::"+_to(a)+"::"+r[i]+"\n");
-         
-         if (_to(a) == "array") {
-            a = {fieldName: "", types:[],  };
-            try {
-                console.log("\n"+a.join("|")+"\n");  
-                a = [bw.trim(a[0] || ""), bw.trim(a[1] || ""), bw.trim(a[2] || "")];
-                console.log(a.join("|")); 
-                c = a[0];
-                o++;
-                res.push(a);
-            } catch(e) {bw.log(e)}
-         }
-         else { // couldn't grok it .. treat as a string
-            if (o<1) { // there is a previous entry
-                res[res.length-1][2] += r[i]; // append current string to previous entry
-            }
-            else { // no previous structured entries
-                res.push[c,"",r[i]];
-            }
-            o++;
-         }
+    
+    s=bw.docString(s)[0];
+    var a = s.split("\n");
+    //console.log(a);
+    var i,r=[bw.docStringParseLine(a[0])];
+    for (i=1;i<a.length;i++) {
+        var l = bw.docStringParseLine(a[i]);
+        if (l["field"]=="") { // nothing parseable...
+            if (r[r.length-1]["field"]=="") {
+                r[r.length-1]["source"] += l["source"];
+            } else
+            r[r.length-1]["description"] += l["source"];
+        } else r.push(l);
     }
-    
-    /*
-    r = r.map(function(x){ try {var z = _toa(x,"array",[x[1] || "",x[2] || "",x[3] || ""],[]);} catch (e){bw.log(e);} return z;});
-    r = r.filter(function(x){if (_to(x)!="array") return false; return (x.length==3);});
-
-    var  _tws = function(x) { return x.replace(/^[\s\r\n]+|[\s\r\n]+$/gm,"");};  //local function to trim whitespace 
-    var  _tb  = function(x) {return x.replace(/^\{?|\}?$/g,"");};
-
-    r= r.map (function(x){return [_tws(x[0]),_tb(_tws(x[1])),_tws(x[2])];}); // trim white space 
-    */
-    return res;
+    return r;
 };
 // =============================================================================================
 bw.isHexStr = function (str, allowChars) {
@@ -2221,7 +2274,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.40", 
+        "version"   : "1.1.41", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
@@ -2309,4 +2362,7 @@ bw.bwSimpleStyles(loadStyles,{"basics":loadStyleBasics}); // append to head the 
 
 bw.funcRegister(bw.log,"bw_log");  // this is globally registered for debugging purposes, it will never get called though unless programmer does this explicitly.
 
-})( ((typeof bw) == "undefined") ? this["bw"]={} : bw);
+//})( ((typeof bw) == "undefined") ? this["bw"]={} : bw);
+    return bw;
+}));
+

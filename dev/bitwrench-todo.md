@@ -61,17 +61,18 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] linting - JSHint or ESLint
 	[x] "use strict";
 	[ ] api ref docs
-	[ ] examples
+	[ ] examples 
 	[x] dir structure
 	[x] license
 	[x] github
-	[x] deftio.com/bitwrench pages  ==> move to deftio/opensource/bitwrench
+	[x] deftio.com/bitwrench pages  ==> move to deftio/opensource/bitwrench ?
 	[x] build notes
 	[x] rename to bitwrench
 	[ ] support inline logo for example favicons: <img src="data:image/png;base64,base64encoded images" /> 
 
 
 ## Issues and clean up
+ 	* require ("...bitwrench") ==> needs fixing
 	* bw.bwSimpleThemes has cosmetic issues
 	* repeatUntil usabilitiy issues
 	* make internal function for commonly used:

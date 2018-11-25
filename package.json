@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "1.1.40",
+	"version": "1.1.41",
 	"description": "A library for misc javascript functions.",
 	"main": "bitwrench.js",
 	"repository": {
@@ -10,7 +10,7 @@
 	"keywords": [
 		"javascript miscellaneous helper functions"
 	],
-	"author": "manu a. chatterjee <deftio.deftio@gmail.com> (http://deftio.com/)",
+	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
 	"bugs": {
 		"url": "https://github.com/deftio/bitwrench/issues"

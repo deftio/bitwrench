@@ -8,19 +8,25 @@
 (c) 2012- manu chatterjee 
 
 
-bitwrench is a javascript library for useful functions such as:
+bitwrench is a javascript library for useful demo hacking and misc kitchen sink operations.  Use it for throwing up quick web pages which don't depend on any server side framework but need a little prettyifcation or for visualizing quick data.  For example when debugging C/C++ embedded projects where I don't want to clutter my build dir with lots of "weird web stuff" - just write a simple HTML page with bitwrench and still load/debug raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.
 
 
-* HTML quick emits -- create a sortable table from a 2d array, create tabs, create HTML documents declaratively
-* color conversions and interpolation
-* setting/getting cookies   
-* a better typeof operator  
-* pretty printing json
-* saving/loading application data files (works in both browser or node)
-* getting URL parameters with defaults
-* some data manipulation functions and other "random" things (interpolation, clipping, multi-d arrays, random())
-* logging with dissolve (bw.log, bw.logd, bw.logExport)
-* built-in docString support
+* **HTML quick emits** -- create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML
+	** html(["div", {class:"class1 class2", onclick:"myFunction(this)","This is the content"}] 
+	** supports "deep" hieararchical JSON constructs and arrays
+	** registerFunction abilities allow functions to be passed statically to HTML elements (see docs)
+* **Color conversions and interpolation**
+	** RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs
+* **setting/getting cookies**   with defautls
+* **pretty printing json**
+* **Saving/Loading application data files** (works in both browser or node)
+	** save / load files as raw or JSON 
+* **Getting URL parameters with defaults**
+	** simple parsing of URL params, also used for command line scripts
+* **Data manipulation functions** and other "random" things (interpolation, clipping, multi-d arrays, random())
+* **Logging** with time-stamps, messaging, and pretty printing (raw, HTML, and text) 
+	** Logging also has auto dissolve so one can log a process and then dump later or suppress in 'production'
+* **Built-in docString parsing** with extraction support 
 
 
 There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations.    All non-dom specific calls can be run either server side or client side.
@@ -71,14 +77,14 @@ npm install eslint --save-dev
 
 ```
 Now run the lint test like this:
-```
+``` bash
 ./node_modules/.bin/eslint bitwrench.js   
 ```
 
 ## Tests  (requires mocha and chai test suites)  
 bitwrench is tested with the mocha framework installed locally using npm
 
-```
+``` bash
 npm install mocha --save-dev mocha
 
 ```
