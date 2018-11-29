@@ -35,21 +35,36 @@
 
 <p>bitwrench is a javascript library for useful demo hacking and misc kitchen sink operations.  Use it for throwing up quick web pages which don’t depend on any server side framework but need a little prettyifcation or for visualizing quick data.  For example when debugging C/C++ embedded projects where I don’t want to clutter my build dir with lots of “weird web stuff” - just write a simple HTML page with bitwrench and still load/debug raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.</p>
 <ul>
-<li><strong>HTML quick emits</strong> – create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML<br>
-** html([“div”, {class:“class1 class2”, onclick:“myFunction(this)”,“This is the content”}]<br>
-** supports “deep” hieararchical JSON constructs and arrays<br>
-** registerFunction abilities allow functions to be passed statically to HTML elements (see docs)</li>
-<li><strong>Color conversions and interpolation</strong><br>
-** RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs</li>
+<li><strong>HTML quick emits</strong> – create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML
+<ul>
+<li>html([“div”, {class:“class1 class2”, onclick:“myFunction(this)”,“This is the content”}]</li>
+<li>supports “deep” hieararchical JSON constructs and arrays</li>
+<li>registerFunction abilities allow functions to be passed statically to HTML elements (see docs)</li>
+</ul>
+</li>
+<li><strong>Color conversions and interpolation</strong>
+<ul>
+<li>RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs</li>
+</ul>
+</li>
 <li><strong>setting/getting cookies</strong>   with defautls</li>
 <li><strong>pretty printing json</strong></li>
-<li><strong>Saving/Loading application data files</strong> (works in both browser or node)<br>
-** save / load files as raw or JSON</li>
-<li><strong>Getting URL parameters with defaults</strong><br>
-** simple parsing of URL params, also used for command line scripts</li>
+<li><strong>Saving/Loading application data files</strong> (works in both browser or node)
+<ul>
+<li>save / load files as raw or JSON</li>
+</ul>
+</li>
+<li><strong>Getting URL parameters with defaults</strong>
+<ul>
+<li>simple parsing of URL params, also used for command line scripts</li>
+</ul>
+</li>
 <li><strong>Data manipulation functions</strong> and other “random” things (interpolation, clipping, multi-d arrays, random())</li>
-<li><strong>Logging</strong> with time-stamps, messaging, and pretty printing (raw, HTML, and text)<br>
-** Logging also has auto dissolve so one can log a process and then dump later or suppress in ‘production’</li>
+<li><strong>Logging</strong> with time-stamps, messaging, and pretty printing (raw, HTML, and text)
+<ul>
+<li>Logging also has auto dissolve so one can log a process and then dump later or suppress in ‘production’</li>
+</ul>
+</li>
 <li><strong>Built-in docString parsing</strong> with extraction support</li>
 </ul>
 <p>There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations.    All non-dom specific calls can be run either server side or client side.</p>

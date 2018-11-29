@@ -233,7 +233,7 @@ var _isEl = bw.DOMIsElement;
 //===============================================
 bw.DOMGetElements = function (el, type) {
 /**
-@method bw.getDOMElements(el, type) returns an array of DOM elements (if running in browser)   
+@method bw.DOMGetElements(el, type) returns an array of DOM elements (if running in browser)   
 
 @param {string | DOM_node} el - if string uses CSS selector other wise if DOM element returns itself
 @return an js array of zero or more matching DOM nodes
@@ -271,9 +271,60 @@ bw.DOMGetElements = function (el, type) {
         }
     }
 
-    return r;
+    return r.filter(function(x){return bw.DOMIsElement(x);});
 };
 var _els = bw.DOMGetElements;
+
+// =============================================================================================
+bw.DOMSetElements = function(domElement,param) {
+/**
+@method bw.DOMSetElements(domElement, param) sets DOM elements with the supplied (optional) params 
+
+@param {string | array | dict |function} - params to set on DOMElements
+@return an js array of zero or more matching DOM nodes
+*/
+
+    var els = bw.DOMGetElements(domElement);
+    if (els==[])
+        bw.log("dom element not found");
+
+    
+    var i,l,e, ef = function(x,p){bw.log(x,p);};
+    for (l=0; l<els.length; l++) {
+        e = els[l];
+        switch(bw.typeOf(param)) {
+            case "array":
+                try{
+                    for (i=0; i<param.length; i++) e[param[i][0]] = param[i][1];
+                }
+                catch(d) {ef(d,param);}
+                break;
+            case "object":
+                try {
+                    for (i in param)  e[i] = param[i];
+                }
+                catch(d) {ef(d,param);}
+                break;
+            case "string":
+                try {
+                    e.innerHTML = param;
+                }
+                catch(d) {ef(d,param);}
+                break;
+            case "function":
+                try {
+                    param(e); // apply a function to e
+                }
+                catch(d) {ef(d,param);}
+                break;
+            default: break;
+        }
+    }
+
+    return els;
+};
+
+bw.DOM = bw.DOMSetElements;
 
 // =============================================================================================
 /** 
@@ -2274,7 +2325,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.41", 
+        "version"   : "1.1.42", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

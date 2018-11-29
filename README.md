@@ -12,20 +12,20 @@ bitwrench is a javascript library for useful demo hacking and misc kitchen sink 
 
 
 * **HTML quick emits** -- create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML
-	** html(["div", {class:"class1 class2", onclick:"myFunction(this)","This is the content"}] 
-	** supports "deep" hieararchical JSON constructs and arrays
-	** registerFunction abilities allow functions to be passed statically to HTML elements (see docs)
+	* html(["div", {class:"class1 class2", onclick:"myFunction(this)","This is the content"}] 
+	* supports "deep" hieararchical JSON constructs and arrays
+	* registerFunction abilities allow functions to be passed statically to HTML elements (see docs)
 * **Color conversions and interpolation**
-	** RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs
+	* RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs
 * **setting/getting cookies**   with defautls
 * **pretty printing json**
 * **Saving/Loading application data files** (works in both browser or node)
-	** save / load files as raw or JSON 
+	* save / load files as raw or JSON 
 * **Getting URL parameters with defaults**
-	** simple parsing of URL params, also used for command line scripts
+	* simple parsing of URL params, also used for command line scripts
 * **Data manipulation functions** and other "random" things (interpolation, clipping, multi-d arrays, random())
 * **Logging** with time-stamps, messaging, and pretty printing (raw, HTML, and text) 
-	** Logging also has auto dissolve so one can log a process and then dump later or suppress in 'production'
+	* Logging also has auto dissolve so one can log a process and then dump later or suppress in 'production'
 * **Built-in docString parsing** with extraction support 
 
 
