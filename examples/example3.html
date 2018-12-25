@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" type="image/x-icon" href="../images/favicon.ico" />
+	<!-- bitwrench.js library examples  
+		(c) M A Chatterjee
+		deftio <at> deftio <dot> com
+		web   :  http:deftio.com/bitwrench
+		github:  http:github.com/deftio/bitwrench
+	 -->
+<script type="text/javascript" src="../bitwrench.js"></script>
+<style>
+
+
+</style>
+
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+
+<script> // this page is written entirely in JSON.
+
+	var jsonContent = [
+		["h2", {style:"font-style:italic"},"This is the JSON content section"],
+		"Some content is just a string...<br>",
+		["p",{},"Some content can be a long in paragraph form."]
+	]
+
+	
+
+	// this is the static content at the top of the page.
+	var html = 
+	[
+		["h2",{},"Bitwrench JSON Content demo"],
+		"<br>",
+		["p",{},"The JSON below this paragraph represents the page content.  The JSON can contain hierachal arrays or objects."],
+		"<hr>",
+		bw.htmlJSON(jsonContent),
+		"<hr>",
+		bw.html(jsonContent.map(x=>bw.html(x)).join(""))
+	];
+
+
+	bw.DOM("body",html.map(x=>bw.html(x)).join(""));
+
+</script>
+
+</body>
+</html>

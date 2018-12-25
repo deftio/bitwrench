@@ -53,7 +53,7 @@ bitwrench is a "kitchen-sink" type library of function which I've used a lot fro
 			th_atr:{class:"tbox"}, // header row cell attributes
 			td_atr:{class:"tbox"}  //cell attributes
 		});
-	document.getElementById("table1").innerHTML= thtml;
+	bw.DOM("#table1",thtml);
 
 	var reA = /[^a-zA-Z]/g;
 	var reN = /[^0-9]/g;

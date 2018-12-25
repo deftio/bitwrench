@@ -701,9 +701,9 @@ When bitwrench loads its starts a page timer which can be checked for how long t
 bw.clearTimer(); //when bw is loaded, we start the timer.
 
 // ===================================================================================
-bw.prettyPrintJSON=function (json) {
+bw.htmlJSON=function (json) {
 /** 
-bw.prettyPrintJSON(object, styles) 
+bw.htmlJSON(object, styles) 
 pretty print any javascript object as displayable HTML. 
 e.g.
 document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...any object ....)
@@ -732,6 +732,8 @@ document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...an
 	}
 	return "<pre style=''>"+f(json)+"</pre>";
 };
+
+bw.prettyPrintJSON = bw.htmlJSON;
 
 // ===================================================================================
 bw.getFile  = function (fname,callback_fn, options) {
@@ -925,7 +927,7 @@ bw.repeatUntil( myLibsAndDataAreLoaded_fn, renderMyChart, null, 250, 10, null); 
     _f();
 };
 // ===================================================================================
-bw.HTMLSafeStr = function (str) {
+bw.htmlSafeStr = function (str) {
 /** 
 bw.htmlSageString(str) 
 Replace non valid HTML characters with HTML escaped equivalents.   
@@ -933,6 +935,7 @@ Replace non valid HTML characters with HTML escaped equivalents.
        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/\n/g,"<br>");
 };
 
+bw.HTMLSafeStr = bw.htmlSafeStr; // deprecated
 // ===================================================================================
 bw.makeHTMLPage = function (head, body, options) {
 /** 
@@ -1162,12 +1165,13 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
     return outFn(s,dopts);
 };
 
-bw.makeHTML = bw.html;
-bw.buildHTMLObjString = bw.html;
+
+bw.makeHTML = bw.html;              //deprecated name
+bw.buildHTMLObjString = bw.html;    //deprecated name
 
 
 // ===================================================================================
-bw.makeHTMLList = function (listData, listType, atr, atri) {
+bw.htmlList = function (listData, listType, atr, atri) {
 /**
 bw.makeHTMLList (listData, str)
 
@@ -1187,8 +1191,10 @@ listHtml = [ item1, item2, item3, .. ]
 
     return bw.buildHTMLObjString ([listType,atr,lc]);
 };
+
+bw.makeHTMLList = bw.htmlList; //deprecated name
 // ===================================================================================
-bw.makeHTMLTabs = function(tabData, atr) {
+bw.htmlTabs = function(tabData, atr) {
 /** 
 bw.makeHTMLTabs(tabData, atr)
 tabData = [[tab1,tab1-content],[tab2,tab2-content],[tab2,tab2-content]]
@@ -1212,9 +1218,11 @@ tabData = [[tab1,tab1-content],[tab2,tab2-content],[tab2,tab2-content]]
     return bw.buildHTMLObjString(["div", atr,[["ul",{"class":"bw-tab-item-list"},ti],["div",{"class":"bw-tab-content-list"},tc]]]);
 };
 
+bw.makeHTMLTabs = bw.htmlTabs; //deprecated name
+
 // ===================================================================================
 
-bw.makeHTMLTableStr = function(data,opts) {    
+bw.htmlTable = function(data,opts) {    
 /** 
 bw.makeHTMLTableStr (data, options)
 
@@ -1295,6 +1303,7 @@ Options:
     return _hs(["table",dopts.atr,[dopts.caption,head,body]]);
 };
 
+bw.makeHTMLTableStr = bw.htmlTable; ////deprecated name
 // =============================================================================================
 bw.naturalSort = function (as, bs){
 /** 
@@ -1349,6 +1358,7 @@ sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on w
     
     var  rows, switching, i, x, y, shouldSwitch;
     var sortF = bw.typeOf(sortFunction) == "function" ? sortFunction : bw.naturalSort;
+    //table = bw.DOM(table)[0];//TODO
     table = _isEl(table) ? table : _els(table);
     //table = bw.typeOf(table)=="string" ? document.getElementById(table) : table;  // if its a string try to get it by id else assume DOM element
     dir = (dir==true) || (dir=="up") ? true : false;
@@ -1550,7 +1560,7 @@ Default is a paragraph of lorem ipsum (446 chars)
     if (s[s.length-1] == " ")
         s= s.substring(0,s.length-1) + "."; // always end on non-whitespace.  "." was chosen arbitrarily.
     if ((startWithCapitalLetter == true) && (s[0].match(/[A-Z]/) == null))
-        s = "M"+s.substring(1,s.length); // arbitrary capital letter chosen whichc sorta goes will if next letter is a consonant or vowel
+        s = "M"+s.substring(1,s.length); // arbitrary capital letter chosen which sorta goes well if next letter is a consonant or vowel
 
     return s;
 
@@ -2325,7 +2335,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.42", 
+        "version"   : "1.1.43", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
