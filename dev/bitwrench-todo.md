@@ -1,5 +1,5 @@
 # bitwrench.js todo list  
-(c) 2012-2018 manu chatterjee 
+(c) 2012-2019 manu chatterjee 
  			  deftio (at) deftio (dot) com
 
 This list is used for internal ideas, housekeeping, checklists and notes
@@ -8,7 +8,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] typeOf
 	[x] getURLParam
 	[x] buildHTMLObjecStr (note rename)
-		add pretty print option (prettyPrint : true) --> adds tabbed beginning, \n in output for readability.
+		add pretty print option (prettyPrint : true) --> adds tabbed || space beginning, \n in output for readability.
 	[x] makeHTMLTable (also add sort, style examples)
 		[ ] support adding column headers to makeHTMLTable as option ==> {header_content: [,,,]}
 	[x] makeHTMLTabs()
@@ -20,6 +20,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] typeOf
 	[ ] prettyPrintJSON with stylizble CSS
 		settable tab widths (use padding:<width><units>)
+		allow prettyPrint of functions and member-functions
 	[x] find/set css class name on supplied element (bw.markElement)
 	[ ] encode/decode var info in to a CSS classname (see spannit.js)
 	[ ] find classes by encoded var name (returns array of hits)
@@ -46,9 +47,9 @@ This list is used for internal ideas, housekeeping, checklists and notes
  	[ ] save canvas as data:url (show example with save as button)
  	[ ] color conversions, interpolate colors (used in themes, graphMatrix)
  	[x] command line processing via <script bwargs="arg1:val1;arg2:val2">  # also works from URL param, can be disabled here as well 
- 	[ ] simple boolean search of text object.  (TBD: jado and frabjous mix support this)
- 	[ ] pad strings (used in logExport({exportFormat:"text"}))
-
+ 	[ ] simple boolean search of text object.  (TBD: jado and frabjousmix support this)
+ 	[x] pad strings (used in logExport({exportFormat:"text"}))
+ 	[ ] bitwrench-server.js / bitwrench-server.php / bitwrench-server.py - simple server for receiving JSON encoded data
 
 
 ## packaging and todo
@@ -62,6 +63,8 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] "use strict";
 	[ ] api ref docs
 	[ ] examples 
+	[ ] pure JSON page generation
+	[ ] example of using YAML instead of JSON
 	[x] dir structure
 	[x] license
 	[x] github
@@ -179,8 +182,6 @@ el.className.replace("bw-col", "bw-none");
 ## doc notes:
 document how to "mannually" set up tabs
 makesure bw doesn't try to "append to head" any code if in nodejs
-
-
 
 
 ## Themes

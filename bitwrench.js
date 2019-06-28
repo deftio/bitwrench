@@ -160,20 +160,44 @@ crude deep copy by value of an object as long as no js dates or functions
 
 
 // ===================================================================================
-bw.typeOf    = function (x)       {
+bw.typeOf    = function (x, baseTypeOnly)       {
 /** 
-bw.typeOf(obj)
+bw.typeOf(x, baseTypeOnly) returns a useful typeOf the object.
 
-A useable typeof operator.  See this fantastic reference: 
-https://javascriptweblog.wordpress.com/2011/08/08/fixing-the-javascript-typeof-operator/
+bw.typeOf(2) // "number"
+bw.typeof( function(){}) // "function"
+
+function Car(make, model, year) {
+    this.make = make;
+    this.model = model;
+    this.year = year;
+}
+
+x = new Car("Ford", "Escape", 2009);
+
+bw.typeOf(Car)      // "function"
+bw.typeOf(x)        // "Car"        ---> returns correct object type
+bw.typeOf(x,true)   // "object"     ---> returns base object type 
+
  */
+
+//A useable typeof operator.  See this fantastic reference for a starter 
+//https://javascriptweblog.wordpress.com/2011/08/08/fixing-the-javascript-typeof-operator/
+
     if (x === null)
         return "null";
 
-    return (typeof x == "undefined") ? "undefined" : (({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase());
+    var y = (typeof x == "undefined") ? "undefined" : (({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase()) 
+    if ((y != "object") && (y != "function"))
+        return y;
+    if (baseTypeOnly == true) // so if undefind or anything but true
+       return y; 
+
+    return (x.constructor.name.toLowerCase() == y.toLowerCase()) ?  y : x.constructor.name;  // return object's name e.g.
 };
 
-var _to  = bw.typeOf;
+var _to = bw.typeOf;
+bw.to   = bw.typeOf;
 //===============================================
 // internally used type check and assign function
 bw.typeAssign = function (a, typeString, trueValue, falseValue) {
@@ -191,11 +215,42 @@ bw.typeAssign(true,["string","number"], "string or num", "something else") ==> "
  */
     if (_to(typeString) == "string")
         typeString = [typeString];
+    
     return (typeString.indexOf(bw.typeOf(a)) >= 0) ? trueValue : falseValue;
 };
 
-var _toa = bw.typeAssign;  // eslint-disable-line no-unused-vars
+var _toa = bw.typeAssign;
+bw.toa   = bw.typeAssign;  // eslint-disable-line no-unused-vars
 
+
+//===============================================
+// internally used type check and assign function with functional support (trueValue or falseValue can be functions which are passed the param a)
+
+bw.typeConvert = function (a, typeString, trueValue, falseValue) {
+/**
+bw.typeConvert(variable, typeString, trueValue, falseValue) 
+typeConvert is used to see if the argument a is of type typeString as defined by bw.typeOf().
+if it is then trueValue is returned else falseValue.
+
+bw.typeConvert("23","number","is a number!", "not a number!") ==> "is a number!"
+bw.typeConvert([23],"number","is a number!", "not a number!") ==> "not a number!" // is an array of length 1
+
+can also supply list of types
+bw.typeConvert(23,["string","number"], "string or num", "something else") ==> "string or num"
+bw.typeConvert(true,["string","number"], "string or num", "something else") ==> "something else"
+
+however typeConvert also allows functions (as apposed to typeAssign)
+*/
+    if (_to(typeString) == "string")
+        typeString = [typeString];
+      
+    trueValue  = _to(trueValue)  == "function" ? function(a){return trueValue(a) } : trueValue;
+    falseValue = _to(falseValue) == "function" ? function(a){return falseValue(a)} : falseValue;
+
+    return (typeString.indexOf(bw.typeOf(a)) >= 0) ? trueValue : falseValue;
+}
+var   _tc = bw.typeConvert;
+bw.tc = bw.typeConvert;
 //===============================================
 // internally used function for options copy
 var optsCopy = function(dopts,opts) {
@@ -1037,10 +1092,257 @@ dicts not used because css can have multiple redundant selectors with different 
     }
     catch (e) {}  //  eslint-disable-line no-empty
     if (dopts["emitStyleTag"]) {
-        s = bw.buildHTMLObjString(["style",dopts["atr"],s]);
+        s = bw.html(["style",dopts["atr"],s]);
     }
     return s;
 };
+
+// ===================================================================================
+//==================================================
+/**
+    html_fc (html form convert) converts acceptable html contructs into html json dict form: 
+    { t: <tag>, a: {attribs}, c: [content], o: {options}, s:{state}}
+    
+    does not operate on the t a c o s params --> just does the conversion
+ */
+/*
+html gen using {html_dict}
+_typeOf(x)
+
+ "object" 
+    accepted keys below, other keys ignored
+    t: String | Number | Date() ==> tag  function==> f().toString()
+    a: {}  ==>  key : value ==>  num | str | Date | [] ==> [].join(dopts.a_join) 
+    c: [] || String | Number | Date  ==> each_item : str | {html_dict} 
+    o: {} ==> options (note inherit / copy)  => if not supplied uses previous levels options
+    
+    s: {} ==> state info (used internally) e.g. indent level, stats
+    
+    also accepts: "tag", "attrib", "content", "options", "state" as keys instead of t,a,c,o,s
+    
+    if any of t,a,c,o are a function it will be invoked immediatly w no params ==> t:myFunc ===> t:(myFunc()) <== 
+
+    defaults:
+        t ==> "div"
+        a ==> {}
+        c ==> ""
+        o ==> {}
+
+        s ==> {level:0, nodes: 0}
+
+"string" | "number" | Date() ==> {}
+        t ==> "div"
+        a ==> {}
+        c ==> .toString()
+        o ==> {}
+
+        s ==> {}
+
+"array" 
+    [         ]   ==> {} // defaults to empty default object 
+    [c        ]   ==> {}
+    [t,c      ]   ==> {}
+    [t,a,c    ]   ==> {}
+    [t,a,c,o  ]   ==> {}
+    [t,a,c,o,s]   ==> {}
+    [ 6+      ]   ==> {} // uses, first 5 others ignored
+    
+    // this dict repreesnts the mapping
+    {
+    0 : { }
+    1 : {c : 0},
+    2 : {t : 0, c : 1},
+    3 : {t : 0, a : 1, c : 2}
+    4 : {t : 0, a : 1, c : 3, o : 4}
+    5 : {t : 0, a : 1, c : 3, o : 4, s : 5}
+    }
+
+    // this array contruct implements the above dict mapping more compactly
+    var i,idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
+    for (i=0; i< x.length; i++) 
+        hd[idx[x.length]][i] = x[i];
+    
+*/
+/*
+bw.html_fc = function(x) {
+    var i,hd  = { t: "div", a: {}, c: "", o: {t_close: true}, s: { level: 0, nodes: 0, html:""}}; // default html dict format
+
+    switch (_to(x)) {
+        case "null" :
+        case "undefined" :
+            break;
+        case "object":
+            [["tag","t"],["attrib","a"],["content","c"],["options","o"],["state","s"]].forEach(function(z){ hd[z[1]]= z[0] in x ? x[z[0]] : hd[z[1]];});
+            for (i in hd)  // we only copy those fields we care about..
+                hd[i] = (i in x) ? x[i] : hd[i];  // need to handle fields differenty.. t : "", a : {}, c:"" | [],o :{} -- this is because we want to have proper defaults
+            break;
+        case "array":
+            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
+            var m = (x.length > 5) ? 5 : x.length;
+            for (i=0; i< m; i++)   { 
+                console.log(idx[m][i] + ":" + x[i]);
+                hd[idx[m][i]] = x[i];
+            }
+            break;
+        case "function":  
+            hd = bw.html_fc(x(),opts); // evaluate and convert...
+            break;
+        default: // string, number, Date  
+            hd.c = x.toString();
+    }
+    return hd;
+}
+*/
+
+bw.html_fc = function(x) {
+    var i,n = { t: "div", a: {}, c: "", o: {}}; // default html dict format
+    var m = "";
+    switch (_to(x)) {
+        case "null" :
+        case "undefined" :
+            n = x;
+            break;
+        case "object":
+            [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
+            for (i in n) {  // we only copy those fields we care about..
+                n[i] = (i in x) ? x[i] : n[i]; // need to handle complicated types: t:"", a:{}, c:"" | []
+                if (bw.isnu(n[i])) {
+                    n = null; // force entire object to be null or undefined
+                    m = "HTML gen err: bad object";
+                    break;
+                }
+            }
+            break;
+        case "array":
+            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
+            var m = (x.length > 5) ? 5 : x.length;
+            for (i=0; i< m; i++)   { 
+                console.log(idx[m][i] + ":" + x[i]);
+                n[idx[m][i]] = x[i];
+            }
+            for (i in n)
+                if (bw.isnu(n[i])) {
+                    n = null;
+                    m = "HTML gen err: bad array"
+                    break;
+                }
+
+            break;
+        case "function":  
+            n = bw.html_fc2(x(),opts); // evaluate and convert...
+            break;
+        default: // string, number, Date, bool, Regex 
+            n.c =x.toString();
+    }
+    return n; 
+}
+bw.HTMLNorm = function(x) {
+
+    function bwHTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={};}
+    function bwError  (v,x) {this.value=v; this.msg = typeof x == "undefined" ? "error" : x;}
+    
+    var i,n = new bwHTMLNode(); // default html dict format
+    var m = "";
+    switch (_to(x)) {
+        case "null" :
+        case "undefined" :
+            n = new bwError(x,"HTML Node error : "+_to(x));
+            break;
+        case "object":
+            [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
+            for (i in n) {  // we only copy those fields we care about..
+                n[i] = (i in x) ? x[i] : n[i]; // need to handle complicated types: t:"", a:{}, c:"" | []
+                if (bw.isnu(n[i])) {
+                    n = null; // force entire object to be null or undefined
+                    m = "HTML gen err: bad object";
+                    break;
+                }
+            }
+            break;
+        case "array":
+            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
+            var m = (x.length > 5) ? 5 : x.length;
+            for (i=0; i< m; i++)   { 
+                console.log(idx[m][i] + ":" + x[i]);
+                n[idx[m][i]] = x[i];
+            }
+            for (i in n)
+                if (bw.isnu(n[i])) {
+                    n = null;
+                    m = "HTML gen err: bad array"
+                    break;
+                }
+
+            break;
+        case "function":  
+            n = bw.html_fc2(x(),opts); // evaluate and convert...
+            n = _to(n)=="function" ? new bwError(n.toString(),"HTML Node error: function returned a function") : n;
+            break;
+        default: // string, number, Date, bool, Regex  ==> will be come just plain rendered content later
+            n.c =x.toString();
+    }
+    return n; 
+}
+//==================================================
+/**
+    htmld -- html generator
+    convert _accteptable_types_  ==> htmLJSON_dict
+
+*/
+bw.htmld = function(htmlJSON, opts) {
+    var dopts = {               // def options note t_ a_ c_ o_ are options applied to the t, a, c, or o local keys directly
+        t_close   : "auto",     // "auto" | "false" | "true"  ==> "auto" doesn't close certain tag decl such as !DOCTYPE, <br>
+        a_join    : ";",        // default join for attribute arrays 
+        o_pretty  : false,      // makes nice html 
+        o_indent  : 4,          // default indent when pretty printing
+        o_verbose : false,      // returns object instead of html string ==> {html: <htmloutput string>, stats: dict{}, status: "success" | "warnings"}
+        c_htmlesc : true        // true | false  ==> escape html safe chars, replace "\n" with <br> etc
+    }
+    
+
+    dopts = optsCopy(dopts,opts);
+
+    var stk=[], i, d, h="", ind_s, ind_e; // ind_s, ind_e control pretty printing
+
+    h="";
+    d = bw.html_fc(htmlJSON); // now in dict form with state vector
+    for (i in d)
+        if (_to(i) == "function")
+            d[i] = d[i](d); 
+
+    d.s["level"]++;
+    
+    d.t = d.t.toString();  
+    d.a = (_to(d.a) == "object") ? d.a : {} // must be dict.  
+    d.c = (_to(d.c) == "array" ) ? d.c : (_to(d.c)=="object") ? html_fc(d.c) : d.c.toString(); 
+    d.o = optsCopy(dopts,d.o);
+
+    //now gen html...
+    ind_s = d.o.o_pretty ? Array(d.s.level * d.o.o_indent ).join(" ") : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
+    ind_e = d.o.o_pretty ? "\n" : "";
+    
+    h += ind_s+  "<" + d.t;
+    for (i in d.a)
+        h+= " "+i+"=\""+d.a[i]+"\"";
+    h += ">"+ ind_e; 
+
+    //content gen
+    switch (_to(d.c)) {
+        case "object":
+            h += bw.htmld(d.c,dopts);
+            break;
+        case "array":
+            h += d.c.map(function(x){ return bw.htmld(x,dopts)}).join("");
+            break;
+        default:
+            h+= d.c; 
+    }
+    
+    //closing tag
+    h += ind_s + "</" + d.t + ">" + ind_e;
+    d.s.html = h;
+    return d;
+}
 
 // ===================================================================================
 bw.html = function (d,options) {
@@ -1074,7 +1376,7 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
     };
     
     var outFn = function(s,opts) {
-        var w  = Array(opts["indent"]).join(opts["indentStr"]);
+        var w  =  Array(opts["indent"]).join(opts["indentStr"]);
         var we =  Array(opts["indent"]-1).join(opts["indentStr"]);
         return opts["pretty"] ? "\n"+w+ s + "\n" +we: s;
     };
@@ -1168,7 +1470,18 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
 
 bw.makeHTML = bw.html;              //deprecated name
 bw.buildHTMLObjString = bw.html;    //deprecated name
+bw.htmla = function (listData,options) {
+/**  
+bw.htmla(listData,options)  
 
+listData is a single dim array of bw.html() compatible cnostructs
+
+*/
+    if (bw.typeOf(listData) != "array")
+        return bw.html(listData,options);
+
+    return listData.map( function(x) {return bw.html(x,options)}).join(""); 
+}
 
 // ===================================================================================
 bw.htmlList = function (listData, listType, atr, atri) {
@@ -1189,7 +1502,7 @@ listHtml = [ item1, item2, item3, .. ]
 
     var lc = listData.map(function(x){return bw.buildHTMLObjString(["li",atri,x]);});
 
-    return bw.buildHTMLObjString ([listType,atr,lc]);
+    return bw.html ([listType,atr,lc]);
 };
 
 bw.makeHTMLList = bw.htmlList; //deprecated name
@@ -1215,7 +1528,7 @@ tabData = [[tab1,tab1-content],[tab2,tab2-content],[tab2,tab2-content]]
     else
         atr["class"] = "bw-tab-container";
 
-    return bw.buildHTMLObjString(["div", atr,[["ul",{"class":"bw-tab-item-list"},ti],["div",{"class":"bw-tab-content-list"},tc]]]);
+    return bw.html(["div", atr,[["ul",{"class":"bw-tab-item-list"},ti],["div",{"class":"bw-tab-content-list"},tc]]]);
 };
 
 bw.makeHTMLTabs = bw.htmlTabs; //deprecated name
@@ -2335,7 +2648,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.43", 
+        "version"   : "1.1.44", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
