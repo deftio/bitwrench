@@ -1510,7 +1510,7 @@ bw.makeHTMLList = bw.htmlList; //deprecated name
 bw.htmlTabs = function(tabData, atr) {
 /** 
 bw.makeHTMLTabs(tabData, atr)
-tabData = [[tab1,tab1-content],[tab2,tab2-content],[tab2,tab2-content]]
+tabData = [ [tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-content]]
  */
     if (bw.typeOf(tabData) != "array")
         return "";
@@ -2435,11 +2435,12 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     s+= ".bw-table-sort-xxa::after { content: \"\\00a0\"; }\n";  // table sort space  (when visible arrows chosen)
 
     //tabs
-    s+= ".bw-tab-item-list { padding:0;}\n";
-    s+= ".bw-tab           { padding-top:1%; padding-left: 1%; padding-right: 1%; padding-bottom: 20px;  margin-bottom: 2%; display:inline; position:relative; border-top-right-radius: 7px; border-top-left-radius: 7px;}\n";
-    s+= ".bw-tab-active    { background-color : #eee; font-weight:700;}\n";
-    s+= ".bw-tab:hover     { cursor: pointer;  font-weight: 700;/* font-weight: 700; border: 1px  solid #bbb; */}\n";
-    s+= ".bw-tab-content   { background-color : #eee;  display: none; }\n";
+    s+= ".bw-tab-item-list    { margin: 0; }\n";
+    s+= ".bw-tab              { display:inline; margin-top:5px; margin-left:10px; margin-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}\n";
+    s+= ".bw-tab-active       { padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;   font-weight:700;}\n";
+    s+= ".bw-tab:hover        { cursor: pointer;  font-weight: 700;/* font-weight: 700; border: 1px  solid #bbb; */}\n";
+    s+= ".bw-tab-content-list { margin: 0; }\n";
+    s+= ".bw-tab-content      { display: none; margin-top:-1px; border-radius:0  }\n";
     s+= ".bw-tab-content, .bw-tab-active       {background-color: #ddd}\n";
 
     //grid
@@ -2471,7 +2472,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
             h.appendChild(el);
     }
     if (dopts["exportCSS"])
-        s = bw.buildHTMLObjString(["style",{"id":dopts["id"]},"\n/**\n bitwrench basic css styles\n version: "+bw.version()["version"]+"\n */"+s]);
+        s = bw.html(["style",{"id":dopts["id"]},"\n/**\n bitwrench basic css styles\n version: "+bw.version()["version"]+"\n */"+s]);
     return s;
 };
 
@@ -2648,7 +2649,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.44", 
+        "version"   : "1.1.45", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
