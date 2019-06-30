@@ -36,6 +36,11 @@ Of course your mileage may very..
 A minified form bitwrench.min.js is provided with identical functionality
 
 ## Usage 
+See the quick docs here:
+[bitwrench quick docs](./quick-docs.html)
+
+or examples here:
+[bitwrench examples](./examples)
 
 ### node.js
 ```
@@ -62,9 +67,11 @@ console.log(bw.version());  // print bitwrench.js version installed
 ## Examples
 See [Examples](./examples) folder  
 Docs (auto generated) are here: [quick-docs](./quick-docs.html)
+
 ## Source code home  
 all source is at github:  
-http://github.com/deftio/bitwrench  
+[bitwrench on github](http://github.com/deftio/bitwrench)  
+
 
 
 ## Linting 

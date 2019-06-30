@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" type="image/x-icon" href="./images/bitwrench-thick-teal.ico" />
+
+<title>bitwrench.js</title>
+<!-- 
+	bitwrench.js intro page
+	(c) M A Chatterjee 2012-2018 	deftio<at>deftio<dot>com
+	github:  https:github.com/deftio/bitwrench
+	web:     https:deftio.com/bitwrench
+	NPM:	 https://www.npmjs.com/package/bitwrench
+ -->
+<link   rel="stylesheet" type="text/css" href="bitwrench.css" /> 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-30080304-3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-30080304-3');
+</script>
+
+<script type="text/javascript" src="./bitwrench.js" ></script>
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+<div  class="bw-container">
+	<div class="bw-col-12">
+		<a href="http://www.deftio.com/bitwrench"><img src="./images/bitwrench-thick-logo.png" width="50%" alt="bitwrench.js"></img></a>
+		<h1>Intro</h1>
+		<p id="versionArea"></p>
+		<br>
+		
+
+<p>bitwrench is a javascript library for useful demo hacking and misc kitchen sink operations.  Use it for throwing up quick web pages which don’t depend on any server side framework but need a little prettyifcation or for visualizing quick data.  For example when debugging C/C++ embedded projects where I don’t want to clutter my build dir with lots of “weird web stuff” - just write a simple HTML page with bitwrench and still load/debug raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.</p>
+<ul>
+<li><strong>HTML quick emits</strong> – create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML
+<ul>
+<li>html([“div”, {class:“class1 class2”, onclick:“myFunction(this)”,“This is the content”}]</li>
+<li>supports “deep” hieararchical JSON constructs and arrays</li>
+<li>registerFunction abilities allow functions to be passed statically to HTML elements (see docs)</li>
+</ul>
+</li>
+<li><strong>Color conversions and interpolation</strong>
+<ul>
+<li>RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs</li>
+</ul>
+</li>
+<li><strong>setting/getting cookies</strong>   with defautls</li>
+<li><strong>pretty printing json</strong></li>
+<li><strong>Saving/Loading application data files</strong> (works in both browser or node)
+<ul>
+<li>save / load files as raw or JSON</li>
+</ul>
+</li>
+<li><strong>Getting URL parameters with defaults</strong>
+<ul>
+<li>simple parsing of URL params, also used for command line scripts</li>
+</ul>
+</li>
+<li><strong>Data manipulation functions</strong> and other “random” things (interpolation, clipping, multi-d arrays, random())</li>
+<li><strong>Logging</strong> with time-stamps, messaging, and pretty printing (raw, HTML, and text)
+<ul>
+<li>Logging also has auto dissolve so one can log a process and then dump later or suppress in ‘production’</li>
+</ul>
+</li>
+<li><strong>Built-in docString parsing</strong> with extraction support</li>
+</ul>
+<p>There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations.    All non-dom specific calls can be run either server side or client side.</p>
+<p>Of course your mileage may very…</p>
+<p>A minified form bitwrench.min.js is provided with identical functionality</p>
+
+		<br><br>
+		<div id="content"></div>
+		<br><br>
+		<div class="bw-center" style="font-size: 9pt"><span style="color:teal">bit</span>wrench.js&nbsp;&nbsp;&copy&nbsp;2012-<span id="cdate"></span>&nbsp; M A Chatterjee</div><br>	
+	</div>
+</div>
+<script type="text/javascript">
+	bw.DOMGetElements("#versionArea")[0].innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
+	bw.DOMGetElements("#cdate")[0].innerHTML = (new Date()).getFullYear();
+	var h = bw.buildHTMLObjString;
+</script>
+
+</body>
+</html>

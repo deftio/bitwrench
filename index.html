@@ -25,63 +25,108 @@
 <script type="text/javascript" src="./bitwrench.js" ></script>
 </head>
 <body class="bw-def-page-setup bw-font-sans-serif">
-<div  class="bw-container">
-	<div class="bw-col-12">
-		<a href="http://www.deftio.com/bitwrench"><img src="./images/bitwrench-thick-logo.png" width="50%" alt="bitwrench.js"></img></a>
-		<h1>Intro</h1>
-		<p id="versionArea"></p>
-		<br>
-		
 
-<p>bitwrench is a javascript library for useful demo hacking and misc kitchen sink operations.  Use it for throwing up quick web pages which don’t depend on any server side framework but need a little prettyifcation or for visualizing quick data.  For example when debugging C/C++ embedded projects where I don’t want to clutter my build dir with lots of “weird web stuff” - just write a simple HTML page with bitwrench and still load/debug raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.</p>
+<p><a href="https://opensource.org/licenses/BSD-2-Clause"><img src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License" /></a> <img src="http://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version" /></p>
+<p><a href="http://www.deftio.com/bitwrench"><img src="./images/bitwrench-logo-med.png" alt="bitwrench" /></a></p>
+<h2 id="welcome-to-bitwrench.js-alpha-not-fully-released-yet">Welcome to bitwrench.js (alpha not fully released yet)</h2>
+<ol start="3" style="list-style-type: lower-alpha">
+<li>2012- manu chatterjee</li>
+</ol>
+<p>bitwrench is a javascript library for useful demo hacking and misc kitchen sink operations. Use it for throwing up quick web pages which don't depend on any server side framework but need a little prettyifcation or for visualizing quick data. For example when debugging C/C++ embedded projects where I don't want to clutter my build dir with lots of &quot;weird web stuff&quot; - just write a simple HTML page with bitwrench and still load/debug raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.</p>
 <ul>
-<li><strong>HTML quick emits</strong> – create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML
+<li><strong>HTML quick emits</strong> -- create HTML objects either client or server side from pure JSON. useful for making quick components or dynamic content w/o any inline HTML
 <ul>
-<li>html([“div”, {class:“class1 class2”, onclick:“myFunction(this)”,“This is the content”}]</li>
-<li>supports “deep” hieararchical JSON constructs and arrays</li>
+<li>html([&quot;div&quot;, {class:&quot;class1 class2&quot;, onclick:&quot;myFunction(this)&quot;,&quot;This is the content&quot;}]</li>
+<li>supports &quot;deep&quot; hieararchical JSON constructs and arrays</li>
 <li>registerFunction abilities allow functions to be passed statically to HTML elements (see docs)</li>
-</ul>
-</li>
+</ul></li>
 <li><strong>Color conversions and interpolation</strong>
 <ul>
 <li>RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs</li>
-</ul>
-</li>
-<li><strong>setting/getting cookies</strong>   with defautls</li>
+</ul></li>
+<li><strong>setting/getting cookies</strong> with defautls</li>
 <li><strong>pretty printing json</strong></li>
 <li><strong>Saving/Loading application data files</strong> (works in both browser or node)
 <ul>
 <li>save / load files as raw or JSON</li>
-</ul>
-</li>
+</ul></li>
 <li><strong>Getting URL parameters with defaults</strong>
 <ul>
 <li>simple parsing of URL params, also used for command line scripts</li>
-</ul>
-</li>
-<li><strong>Data manipulation functions</strong> and other “random” things (interpolation, clipping, multi-d arrays, random())</li>
+</ul></li>
+<li><strong>Data manipulation functions</strong> and other &quot;random&quot; things (interpolation, clipping, multi-d arrays, random())</li>
 <li><strong>Logging</strong> with time-stamps, messaging, and pretty printing (raw, HTML, and text)
 <ul>
-<li>Logging also has auto dissolve so one can log a process and then dump later or suppress in ‘production’</li>
-</ul>
-</li>
+<li>Logging also has auto dissolve so one can log a process and then dump later or suppress in 'production'</li>
+</ul></li>
 <li><strong>Built-in docString parsing</strong> with extraction support</li>
 </ul>
-<p>There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations.    All non-dom specific calls can be run either server side or client side.</p>
-<p>Of course your mileage may very…</p>
+<p>There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations. All non-dom specific calls can be run either server side or client side.</p>
+<p>Of course your mileage may very..</p>
 <p>A minified form bitwrench.min.js is provided with identical functionality</p>
+<h2 id="usage">Usage</h2>
+<p>See the quick docs here: <a href="./quick-docs.html">bitwrench quick docs</a></p>
+<p>or examples here: <a href="./examples">bitwrench examples</a></p>
+<h3 id="node.js">node.js</h3>
+<pre><code>#Installation (server side)  
+npm install bitwrench --save 
 
-		<br><br>
-		<div id="content"></div>
-		<br><br>
-		<div class="bw-center" style="font-size: 9pt"><span style="color:teal">bit</span>wrench.js&nbsp;&nbsp;&copy&nbsp;2012-<span id="cdate"></span>&nbsp; M A Chatterjee</div><br>	
-	</div>
-</div>
-<script type="text/javascript">
-	bw.DOMGetElements("#versionArea")[0].innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
-	bw.DOMGetElements("#cdate")[0].innerHTML = (new Date()).getFullYear();
-	var h = bw.buildHTMLObjString;
-</script>
+//usage in nodejs
+var bw = require(&#39;./bitwrench.js&#39;)[&quot;bw&quot;];  //adds to current scope
+</code></pre>
+<h3 id="browser">browser</h3>
+<pre><code>//usage in browser
+&lt;script type=&quot;text/javascript&quot; src=&quot;./bitwrench.min.js&quot;&gt;&lt;/script&gt;
 
+&lt;script&gt;
+console.log(bw.version());  // print bitwrench.js version installed
+&lt;/script&gt;</code></pre>
+<h2 id="examples">Examples</h2>
+<p>See <a href="./examples">Examples</a> folder<br />
+Docs (auto generated) are here: <a href="./quick-docs.html">quick-docs</a></p>
+<h2 id="source-code-home">Source code home</h2>
+<p>all source is at github:<br />
+<a href="http://github.com/deftio/bitwrench">bitwrench on github</a></p>
+<h2 id="linting">Linting</h2>
+<p>bitwrench uses eslint for static code checking and analysis.</p>
+<pre><code>npm install eslint --save-dev
+
+./node_modules/.bin/eslint --init
+</code></pre>
+<p>Now run the lint test like this:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">./node_modules/.bin/eslint</span> bitwrench.js   </code></pre></div>
+<h2 id="tests-requires-mocha-and-chai-test-suites">Tests (requires mocha and chai test suites)</h2>
+<p>bitwrench is tested with the mocha framework installed locally using npm</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="ex">npm</span> install mocha --save-dev mocha</code></pre></div>
+<p>Run the tests as follows:</p>
+<pre><code>./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec
+</code></pre>
+<h2 id="release-history">Release History</h2>
+<ul>
+<li>1.1 Initial release</li>
+</ul>
+<h2 id="license">License</h2>
+<p>bitwrench is released under the OSI Approved FreeBSD 2-clause license</p>
+<p>Copyright (c) 2011-18, M. A. Chatterjee (deftio at deftio dot com)<br />
+All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without<br />
+modification, are permitted provided that the following conditions are met:</p>
+<ul>
+<li><p>Redistributions of source code must retain the above copyright notice, this<br />
+list of conditions and the following disclaimer.</p></li>
+<li><p>Redistributions in binary form must reproduce the above copyright notice,<br />
+this list of conditions and the following disclaimer in the documentation<br />
+and/or other materials provided with the distribution.</p></li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot;<br />
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE<br />
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE<br />
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE<br />
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL<br />
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR<br />
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER<br />
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,<br />
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE<br />
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 </body>
 </html>
