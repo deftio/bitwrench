@@ -1013,9 +1013,9 @@ inline-bw-css --> emit bw default styles as inline css (include globals option)
     dopts = optsCopy(dopts,options);
 
     var s = dopts["docType"]+"\n";
-    s += bw.buildHTMLObjString(["html",dopts["htmlParams"],[
+    s += bw.html(["html",dopts["htmlParams"],[
             "\n",
-            ["head", {}, [ "\n",dopts["headDefaultContent"].map(function(x){return bw.buildHTMLObjString(x);}).join("\n"),head,"\n"]],
+            ["head", {}, [ "\n",dopts["headDefaultContent"].map(function(x){return bw.html(x);}).join("\n"),head,"\n"]],
             "\n",
             ["body", {}, [ "\n",body,"\n"]],
             "\n"
@@ -1347,12 +1347,14 @@ bw.htmld = function(htmlJSON, opts) {
 // ===================================================================================
 bw.html = function (d,options) {
 /**  
-bw.buildHTMLObjString(data)  
+bw.html(data)  
 
-takes data of one of these forms:
+takes data of one of these exact forms:
 
    string
+   array: ["div", content]
    array: ["div",{attribute dict},content]
+   array: ["div",{attribute dict},content, options]
    dict:  {tag:"div", atr: {attribute dict}, "content": content}
         content can be string or array
 
@@ -1438,7 +1440,7 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
             }
             break;
         default:
-            bw.log("bw.buildHTMLObjString:: error in type");
+            bw.log("bw.html:: error in type");
     }
     
     s+= "<" + t ;
@@ -1455,7 +1457,7 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
                 _c = c[i]();  // eslint-disable-line no-fallthrough
             case "object":    // eslint-disable-line no-fallthrough
             case "array" :
-            _c = bw.buildHTMLObjString(c[i],dopts);
+            _c = bw.html(c[i],dopts);
             break;
             default:
             _c = String (c[i]);
@@ -1470,6 +1472,7 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
 
 bw.makeHTML = bw.html;              //deprecated name
 bw.buildHTMLObjString = bw.html;    //deprecated name
+// ===================================================================================
 bw.htmla = function (listData,options) {
 /**  
 bw.htmla(listData,options)  
@@ -2601,46 +2604,76 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
 bw.markElement = function(el, key, replace) {
 /** 
 bw.markElement(el,value) 
-returns whether a specific DOM element class name (key) is set on the supplied element.  
+returns whether a specific DOM element class name (key) is set on atleast one the supplied element(s).  
 
 If replace is supplied then the class name (key) is replaced or added if it doesn't exist.
     note that if key is not found but a replace is supplied the return-value is still false as the supplied key was not found even though a replace value is not present
 
-el must be a valid dom ID string (e.g. "myID") or valid DOM element (e.g. document.getElementById("myId"))
+el must be a valid dom ID string (e.g. "#myID") or valid DOM element (e.g. document.getElementById("myId"))
 
 markElement is used by bw UI toggles
  */
-    var r = false;
-    if (bw.typeOf(el) == "string")
-        el=document.getElementById(el);
+    var r = false, elems, x,j;
+    //if (bw.typeOf(el) == "string")
+    //    el=document.getElementById(el);
+    elems = bw.DOM(el);
+    if (elems.length <=0 )
+        return r;
 
-    try {
-        var c = el.className.split(/[ ]+/);
-        var i = c.indexOf(key);
+    for (j=0; j< elems.length; j++) {
+        x = elems[j];
+        try {
+            var c = x.className.split(/[ ]+/);
+            var i = c.indexOf(key);
 
-        if (i >= 0) // found key
-            r = true;
-        
-        
-        if ((bw.typeOf(replace) == "string") && (c.indexOf(replace)== -1)){
-            if (i == -1) //key not found
-                c.push(replace);
-            else {
-                if (replace.length > 0)
-                   c[i]=replace;
-                else
-                   c.splice(i,1);
+            if (i >= 0) // found key
+                r = true;
+            
+            
+            if ((bw.typeOf(replace) == "string") && (c.indexOf(replace)== -1)){
+                if (i == -1) //key not found
+                    c.push(replace);
+                else {
+                    if (replace.length > 0)
+                       c[i]=replace;
+                    else
+                       c.splice(i,1);
+                }
+                x.className  = c.join(" ").trim();
+                r = true;
+                // element.className = element.className.replace(/\bmystyle\b/g, "");
             }
-            el.className  = c.join(" ").trim();
-            r = true;
-            // element.className = element.className.replace(/\bmystyle\b/g, "");
         }
+        catch(e) { bw.log(e);}
     }
-    catch(e) { bw.log(e);}
-
     return r;
 };
+bw.DOMClass = bw.markElement;
 
+// =============================================================================================
+bw.DOMClassToggle  = function(el,className) {
+/**
+bw.DOMClassToggle(el,classname) 
+for each element specified in el (eg "#id", ".myClass", <DOM OBJECT>) toggle className.
+If className is present on the object then it is removed. if it is not present it is added.
+classNames with spaces or tabs are not valid and result in undefined behavior.
+
+returns last element current toggle state.
+*/    
+    var x,i,elems = bw.DOM(el), r=false;
+    for (i=0; i< elems.length; i++) {
+        x=elems[i];
+        try {
+            r = bw.DOMClass(x,className);
+            if (r)
+                bw.DOMClass(x,className,"");
+            else
+                bw.DOMClass(x,className,className);
+
+        } catch(e) { bw.log(e);    }
+    }
+    return !r;
+}
 // =============================================================================================
 bw.version  = function() {
 /** 
@@ -2649,7 +2682,7 @@ bitwrench runtime version & license info.
 debateable how useful this is.. :)
  */
     var v = {
-        "version"   : "1.1.45", 
+        "version"   : "1.1.47", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
