@@ -132,6 +132,9 @@
 
 "use strict";
 
+//deprated attributes / names
+bw.depAttr = [];
+
 // ===================================================================================
 bw.choice    = function (x,choices,def) { 
 /** 
@@ -678,8 +681,8 @@ see bw.saveClientFile(fname) for saving the log as a file
 // ===================================================================================
 bw.setCookie = function (cname, cvalue, exdays) {
 /** 
-bw.setCookie(cookieName, value, expireDays)
-set a client side cookie.  
+bw.setCookie(cookieName, value, expireDays) 
+set a client side cookie.  (browser only)
   */
     var d = new Date();
     d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -690,7 +693,7 @@ set a client side cookie.
 // ===================================================================================
 bw.getCookie = function (cname, defaultValue) {
 /** 
-bw.getCookie(cookieName, defaultValueIfNotFound)
+bw.getCookie(cookieName, defaultValueIfNotFound) (browser only)
 get a client side cookie, if it is set.  returns defaultValue if cookie could not be found
  */
     var name = cname + "=";
@@ -788,6 +791,7 @@ document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...an
 	return "<pre style=''>"+f(json)+"</pre>";
 };
 
+bw.depAttr.push["prettyPrintJSON"];
 bw.prettyPrintJSON = bw.htmlJSON;
 
 // ===================================================================================
@@ -1120,7 +1124,7 @@ _typeOf(x)
     
     also accepts: "tag", "attrib", "content", "options", "state" as keys instead of t,a,c,o,s
     
-    if any of t,a,c,o are a function it will be invoked immediatly w no params ==> t:myFunc ===> t:(myFunc()) <== 
+    if any of t,a,c,o are a function it will be invoked immediatly w no params ==> t:myFunc ===> t:myFunc() <== 
 
     defaults:
         t ==> "div"
@@ -1150,7 +1154,7 @@ _typeOf(x)
     // this dict repreesnts the mapping
     {
     0 : { }
-    1 : {c : 0},
+    1 : {c : 0},  
     2 : {t : 0, c : 1},
     3 : {t : 0, a : 1, c : 2}
     4 : {t : 0, a : 1, c : 3, o : 4}
@@ -2373,7 +2377,7 @@ makes a color palettte based on the supplied color which is exported as a css st
 };
 // =============================================================================================
 bw.bwSimpleStyles = function(appendToHead, options) {
-/** 
+/* 
 bw.bwSimpleStyles(appendToHead,options)
 
 bitwrench simpleStyles is the function which writes loads 
@@ -2394,13 +2398,18 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     }
 
  */
-    var s ="\n", m="";//padding-left:1%; padding-right:1%;";
+    var s ="\n", m="",i;//padding-left:1%; padding-right:1%;";
     var _r = bw.fixNum;
     var dopts = {
         "globals"       : false,
         "id"           : "bw-default-styles",
-        "exportCSS"    : false
-
+        "exportCSS"    : false,
+        "colorset"     : {"color" : "#000", "background-color" :"#ddd", "active" : "#222"}, 
+        "themes"       :  // built-in primitive themes
+            [ // must be valid CSS keys / values
+                {".bw-thm-lght"   : {"color": "#020202 !important;", "background-color": "#e2e2e2 !important;"}},
+                {".bw-thm-dark"   : {"color": "#e2e2e2 !important;", "background-color": "#020202 !important;"}},
+            ]
     };
 
     dopts = optsCopy(dopts,options);
@@ -2421,6 +2430,11 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     s+= ([1,2,3,4,5,6].map(function(x){return ".bw-h"+x+"{ font-size: "+_r(3.2*Math.pow(.85,x+1))+"rem;}";}).join("\n"))+"\n";
 
+    //primtive in-built color themeing  see opts to overide
+    for (i in dopts["colorset"]){
+        s+= ".bw-color-"+i+" {"+i+":" +dopts["colorset"][i]+"}\n";
+    }
+        
     //text handling
     s+= ".bw-left       { text-align: left;                            }\n";
     s+= ".bw-right      { text-align: right;                           }\n";
@@ -2439,9 +2453,9 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     //tabs
     s+= ".bw-tab-item-list    { margin: 0; }\n";
-    s+= ".bw-tab              { display:inline; margin-top:5px; margin-left:10px; margin-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}\n";
+    s+= ".bw-tab              { display:inline; padding-top:5px; padding-left:10px; padding-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}\n";
     s+= ".bw-tab-active       { padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;   font-weight:700;}\n";
-    s+= ".bw-tab:hover        { cursor: pointer;  font-weight: 700;/* font-weight: 700; border: 1px  solid #bbb; */}\n";
+    s+= ".bw-tab:hover        { cursor: pointer;  font-weight: 700;/* border: 1px  solid #bbb; */}\n";
     s+= ".bw-tab-content-list { margin: 0; }\n";
     s+= ".bw-tab-content      { display: none; margin-top:-1px; border-radius:0  }\n";
     s+= ".bw-tab-content, .bw-tab-active       {background-color: #ddd}\n";
@@ -2718,7 +2732,8 @@ var parseArgs = function(s) {
 
 var getArgs =  function () {
     if(bw.isNodeJS()==false) { // in browser
-        var els = document.getElementsByTagName("script"); // array of script elements
+        //var els = document.getElementsByTagName("script"); // array of script elements
+        var els = bw.DOM("script");
         var i,a,b;
         for (i in els) {
             try {

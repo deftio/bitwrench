@@ -23,8 +23,6 @@
 
 <script type="text/javascript" src="./bitwrench.js" bwargs="ex1:1;ex2:2"></script>
 <style>
-
-
 .boxStyle1 {
 	background-color: #aaa;
 }
@@ -51,7 +49,7 @@
 <br>
 Bitwrench is a "kitchen-sink" type library of various functions which I've used a lot from various web / HTML projects and prototypes.<br><br><br>
 Its intended purpose is not to replace mature js frameworks like JQuery, Bootstrap, Vue or React but to provide a quick set of helper glue when debugging random projects which may have little to do with web programming.  For example if you're debugging an embedded system and just want to dump some data and look at it, or you need to mock up some javascript / HTML tests but don't want to bring in a whole framework that this might be useful for you.
-<br><br>Bitwrench has no dependancies and to my knowledge can be used along side any other framework.
+<br><br>Bitwrench has no dependancies and can be used along side any other framework.
 <br><br>
 
 <!--
@@ -129,7 +127,7 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 <div class="bw-tab-container">
 <ul class="bw-tab-item-list">
 	<li class="bw-tab  bw-tab-active" onclick="bw.selectTabContent(this)" >Text Styles</li>
-	<li class="bw-tab  " onclick="bw.selectTabContent(this)" >Text Styles Code</li>
+	<li class="bw-tab "               onclick="bw.selectTabContent(this)" >Text Styles Code</li>
 </ul>
 <div class="bw-tab-content-list">
 <div class="bw-tab-content bw-show" id="bwTextSection">
@@ -138,7 +136,9 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 <div class="bw-box-1 boxStyle1 bw-center">This text is centered.</div><br>
 <div class="bw-box-1 boxStyle1 bw-right">This text is right aligned.</div><br>
 <div class="bw-box-1 boxStyle1 bw-justify">This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. </div><br>
-<div class="bw-col-8 bw-box-1 boxStyle1"><pre class="bw-code">Code Section<br>//this is sample code...<br>var i;<br>&nbsp;&nbsp;&nbsp;for(i=0;i!=10;i++)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foo(i);<br><br></pre></div>
+<div class="bw-col-8 bw-box-1 boxStyle1">
+	<pre class="bw-code">Code Section<br>//this is sample code...<br>var i;<br>&nbsp;&nbsp;&nbsp;for(i=0;i!=10;i++)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foo(i);<br><br></pre> 
+</div>
 </div> <!-- end code for text alignment -->
 <div class="bw-tab-content" id="bwTextSectionCode"></div>
 </div>
@@ -148,56 +148,57 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 <!-- Headings demo area -->
 <h1 class="bw-h1">Headings</h1>
 <div class="bw-tab-container">
-<ul class="bw-tab-item-list">
-	<li class="bw-tab  bw-tab-active" onclick="bw.selectTabContent(this)" >Headings</li>
-	<li class="bw-tab  " onclick="bw.selectTabContent(this)" >Headings Code</li>
-</ul>
-<div class="bw-tab-content-list">
-<div class="bw-tab-content bw-show" id="bwHeadingSection">
-<br>The following heading sizes are built-in as well.
-<h1 class="bw-h1">H1 Heading</h1>
-<h2 class="bw-h2">H2 Heading</h2>
-<h3 class="bw-h3">H3 Heading</h3>
-<h4 class="bw-h4">H4 Heading</h4>
-<h5 class="bw-h5">H5 Heading</h5>
-<h6 class="bw-h6">H6 Heading</h6>
-</div>
-	<div class="bw-tab-content" id="bwHeadingSectionCode"></div>
-</div>
+	<ul class="bw-tab-item-list" style="height:20px">
+		<li class="bw-tab  bw-tab-active" onclick="bw.selectTabContent(this)" >Headings</li>
+		<li class="bw-tab"                onclick="bw.selectTabContent(this)" >Headings Code</li>
+	</ul>
+	<div class="bw-tab-content-list">
+		<div class="bw-tab-content bw-show" id="bwHeadingSection">
+			<br>The following heading sizes are built-in as well.
+			<h1 class="bw-h1">H1 Heading</h1>
+			<h2 class="bw-h2">H2 Heading</h2>
+			<h3 class="bw-h3">H3 Heading</h3>
+			<h4 class="bw-h4">H4 Heading</h4>
+			<h5 class="bw-h5">H5 Heading</h5>
+			<h6 class="bw-h6">H6 Heading</h6>
+		</div>
+		<div class="bw-tab-content bw-background" id="bwHeadingSectionCode"></div>
+	</div>
 </div>
 
 </div>
 <br><br><br>
 <hr>
 <br>
-<div class="bw-center" style="font-size: 9pt"><span style="color:teal">bit</span>wrench.js quick docs and examples</div><br>
+<div class="bw-center" style="font-size: 9pt"><span >bit</span><span style="color:teal">wrench</span> quick docs and examples</div><br>
 <script type="text/javascript">
-	document.getElementById("versionArea").innerHTML = "<strong>bitwrench.js version:</strong> " + bw.version()["version"];
-
+	
+	bw.DOM("#versionArea","<strong>bitwrench.js version: </strong>" + bw.version()["version"]);
 	//draw the bitwrench function list (drawn dynamically from the built-in doc strings)
 	var funcList=[],i;
 	for (i in bw) {
 		if (bw.typeOf(bw[i])=="function") {
 			funcList.push(["div" ,{"class":"bw-col-10"}, [
 				"<hr>",
-				["h3"  ,{"class":"bw-h3 color-set1", "id":"bw."+i, "style":"color: #006666;"},"bw."+i+"()"], 
-				["p"   ,{"class":"bw-code"}, bw.docString(bw[i],{dropLeadin:false})[0]],
+				["h3"  ,{"class":"bw-h3 color-set1", "id":"bw_func_"+i, "style":"color: #006666;"},"bw."+i+"()"], 
+				["p"   ,{"class":"bw-code"}, bw.docString(bw[i],{dropLeadin:false})[0]], // makes use of self-parsing of docString data 
 				"<br>"
 			    ]]);
 		}
 	}
-	bw.DOMGetElements("#bwFunctionListID")[0].innerHTML = bw.buildHTMLObjString(["p",{"class":"bw-col-6"}, funcList]);
+	// funcList = funcList.sort(function(a,b){return bw.naturalSort(a,b)});
+	bw.DOM("#bwFunctionListID", bw.html(["p",{"class":"bw-col-6"}, funcList]));
 
+	//takes HTML content and pretty prints it.  no syntax highlighting is performed
 	function section2Code(sectionId,target) {
-		var s = bw.HTMLSafeStr(bw.DOMGetElements(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/\&nbsp;/ig," ");
-		bw.DOMGetElements(target)[0].innerHTML = "<pre class='bw-code' style='height:"+bw.DOMGetElements(sectionId)[0].offsetHeight+"px'>"+s+"</pre><br>";
+		var s = bw.HTMLSafeStr(bw.DOM(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/[ ]+/ig," ");
+		bw.DOM(target, "<div class='bw-code' >"+s+"</div><br>");
 	}
 
 	//this creates the exmaple code tabs
 	//code section for ..
 	section2Code("#bwTextSection","#bwTextSectionCode");
 	section2Code("#bwHeadingSection","#bwHeadingSectionCode");
-
 </script>
 
 </body>

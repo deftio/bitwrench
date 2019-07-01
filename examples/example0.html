@@ -35,15 +35,15 @@ bitwrench is a "kitchen-sink" javascript library for building quick web apps usi
 <div id="table1"></div><br>
 <div id="arr"></div>
 <div id="test">bitwrench test --> bw.DOM(".foo","test data");
-	<div class="foo boo"></div>
-	<div class="foo boo"></div>
-	<div class="foo"></div>
-	<div class="foo boo"></div>
+	<div class="foo boo">default content</div>
+	<div class="foo boo">default content</div>
+	<div class="foo">default content</div>
+	<div class="foo boo">default content</div>
 </div>
 
 <br>
 <h2>Tabs</h2>
-<div id="tabs"></div>
+<div id="tabs" class="bw-col-8"></div>
 
 <script type="text/javascript">
 	//var bw = bitwrench;
@@ -65,7 +65,7 @@ bitwrench is a "kitchen-sink" javascript library for building quick web apps usi
 
 	bw.bwSimpleThemes(1,true);
 
-	bw.DOM(".foo", "mass content set"); 
+	bw.DOM(".boo", "mass content set"); 
 	bw.DOM("#version","<strong>bitwrench.js version:</strong> " + bw.version()["version"]), 
 	bw.DOM("#tabs",	bw.makeHTMLTabs([["tab1",bw.loremIpsum(333)],["tab2",bw.loremIpsum(433)], ["tab3",bw.loremIpsum(533)]])); 
 </script>
