@@ -17,6 +17,9 @@ This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"loa
 .bw-h4{ font-size: 1.419rem;}
 .bw-h5{ font-size: 1.206rem;}
 .bw-h6{ font-size: 1.025rem;}
+.bw-color-color {color:#000}
+.bw-color-background-color {background-color:#ddd}
+.bw-color-active {active:#222}
 .bw-left       { text-align: left;                            }
 .bw-right      { text-align: right;                           }
 .bw-center     { text-align: center; margin: 0 auto;          }
@@ -30,9 +33,9 @@ This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"loa
 .bw-table-sort-dna::after { content: "\2193"; }
 .bw-table-sort-xxa::after { content: "\00a0"; }
 .bw-tab-item-list    { margin: 0; }
-.bw-tab              { display:inline; margin-top:5px; margin-left:10px; margin-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}
+.bw-tab              { display:inline; padding-top:5px; padding-left:10px; padding-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}
 .bw-tab-active       { padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;   font-weight:700;}
-.bw-tab:hover        { cursor: pointer;  font-weight: 700;/* font-weight: 700; border: 1px  solid #bbb; */}
+.bw-tab:hover        { cursor: pointer;  font-weight: 700;/* border: 1px  solid #bbb; */}
 .bw-tab-content-list { margin: 0; }
 .bw-tab-content      { display: none; margin-top:-1px; border-radius:0  }
 .bw-tab-content, .bw-tab-active       {background-color: #ddd}
