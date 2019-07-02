@@ -291,7 +291,7 @@ var _isEl = bw.DOMIsElement;
 //===============================================
 bw.DOMGetElements = function (el, type) {
 /**
-@method bw.DOMGetElements(el, type) returns an array of DOM elements (if running in browser)   
+@method DOMGetElements(el, type) returns an array of DOM elements (if running in browser)   
 
 @param {string | DOM_node} el - if string uses CSS selector other wise if DOM element returns itself
 @return an js array of zero or more matching DOM nodes
@@ -336,7 +336,7 @@ var _els = bw.DOMGetElements;
 // =============================================================================================
 bw.DOMSetElements = function(domElement,param) {
 /**
-@method bw.DOMSetElements(domElement, param) sets DOM elements with the supplied (optional) params 
+@method DOMSetElements(domElement, param) sets DOM elements with the supplied (optional) params 
 
 @param {string | array | dict |function} - params to set on DOMElements
 @return an js array of zero or more matching DOM nodes
@@ -398,7 +398,7 @@ colorParse() ==> take an input color of anymodel and output a bw [c0,c1,c2,a,m] 
 */
 bw.colorInterp = function(x, in0, in1, colors, stretch) {
 /**
-bw.colorInterp(x, lo, hi, colors[], stretch) - interpolate between and array of colors.  
+@method colorInterp (x, lo, hi, colors[], stretch) - interpolate between and array of colors.  
     x is a value between in0, in1
     colors is an array of colors supplied in rgb format e.g. ["#123", "#234"]
     colors can be anylength 
@@ -421,6 +421,7 @@ bw.colorInterp(x, lo, hi, colors[], stretch) - interpolate between and array of 
 // =============================================================================================
 bw.colorHslToRgb = function (h, s, l, a){
 /**
+@method colorHslToRgb
 Converts an HSL color value to RGB. Conversion formula
 adapted from http://en.wikipedia.org/wiki/HSL_color_space.
 Assumes h, s, and l are contained in the set [0, 1].  Note to convert h from degrees use (h_degrees/360)
@@ -1046,6 +1047,9 @@ cssData = [
             [["div",".myClass"],"color : red"],              ==> div,.myClass   {color: red;}
             ["p > .myclass", ["color:red","display:block"]]  ==> p > .myClass   {color: red;  display:block;}
           ]
+cssData = [
+            [selectors], { dict }
+          ]
 
 dicts not used because css can have multiple redundant selectors with different rules
 
@@ -1094,13 +1098,63 @@ dicts not used because css can have multiple redundant selectors with different 
                 s="";
         }
     }
-    catch (e) {}  //  eslint-disable-line no-empty
+    catch (e) {bw.logd(e)}  //  eslint-disable-line no-empty
     if (dopts["emitStyleTag"]) {
         s = bw.html(["style",dopts["atr"],s]);
     }
     return s;
 };
 
+// ===================================================================================
+bw.makeCSSObjectLine = function (cssData, options) {
+/** 
+@method bw.makeCSSObj(cssData, options)
+
+expects this form:
+ [str, {k,v}] 
+ or
+ [[array of rules str], {}]
+
+
+
+ */
+    var dopts = {
+        emitStyleTag: false,
+        atr: {},
+        emitCR: true
+    };
+    dopts = optsCopy(dopts,options);
+
+    var s="";
+    
+    try {
+        if (_to(cssData)== "array") {
+            switch (_to(cssData[0])) {
+                case "string":
+                    s+= cssData[0]+" {\n";
+                    break;
+                case "array":
+                    s+= cssData[0].map(function(x){return x.toString()}).join(",");
+                    break;
+                default:
+                    throw "makeCSSObjectLine type error in first argument";
+            }
+            var k;
+            if (_to(cssData[1])=="object") {
+
+                for (k in cssData[1]) {
+                    s+= "  "+k+":"+cssData[1][k];
+                    s+= dopts["emitCR"] ? "\n" : "";
+                }
+                s+= "}\n"
+            }
+        }
+    } catch(e) {
+        bw.logd(e);
+    }
+    return s;
+
+}
 // ===================================================================================
 //==================================================
 /**
@@ -1624,6 +1678,15 @@ Options:
 };
 
 bw.makeHTMLTableStr = bw.htmlTable; ////deprecated name
+
+bw.htmlAccordian   = function (data, opts) {
+/** 
+
+ */
+    var s = "";
+
+    return s;
+}
 // =============================================================================================
 bw.naturalSort = function (as, bs){
 /** 
@@ -2121,7 +2184,7 @@ bw.multiArray(function(){return (new Date()).getTime();},[4,6] ) ==> returns val
 // =============================================================================================
 bw.clip = function (data, min, max) {
 /** 
-bw.clip(data, min, max)  clips data in between min and max. 
+@method: bw.clip(data, min, max)  clips data in between min and max. 
 
 Examples:
     bw.clip(5,2,20)            ==>  5   // already in range
@@ -2141,7 +2204,7 @@ Examples:
 // =============================================================================================
 bw.mapScale = function (x, in0, in1, out0, out1, options) {
 /** 
-bw.mapScale()
+@method: bw.mapScale()
 
 Map an input value x in its natural range in0...in1 to the output space out0...out1 with optional clipping
 expScale allows sigmoidal warping to stretch input values contrained to a small range. (floating point scale factor)
@@ -2238,7 +2301,7 @@ bw.padString = function (s, width, dir, options) {
 // =============================================================================================
 bw.random = function(rangeBegin, rangeEnd, options) {
 /** 
-bw.random(rangeBegin, RangeEnd, {options} 
+@method: random
 
 Return a random number between rangeBegin and RangeEnd (inclusive)
     default is 0,100
@@ -2262,6 +2325,9 @@ options
 example:
 bw.random() ==> returns a number btw 0,100
 bw.random(-4,4,{setType: "float", dims[4,5]}) ==> returns a 3x5 array of floating pt numbers btw -4,4
+
+see also prandom for psuedorandom numbers
+
  */
     rangeBegin = bw.typeOf(rangeBegin)  == "number" ? rangeBegin : 0;
     rangeEnd   = bw.typeOf(rangeEnd)    == "number" ? rangeEnd   : 100;
@@ -2398,7 +2464,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     }
 
  */
-    var s ="\n", m="",i;//padding-left:1%; padding-right:1%;";
+    var s ="\n", m="",i,j,k,l,m;
     var _r = bw.fixNum;
     var dopts = {
         "globals"       : false,
@@ -2407,8 +2473,8 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         "colorset"     : {"color" : "#000", "background-color" :"#ddd", "active" : "#222"}, 
         "themes"       :  // built-in primitive themes
             [ // must be valid CSS keys / values
-                {".bw-thm-lght"   : {"color": "#020202 !important;", "background-color": "#e2e2e2 !important;"}},
-                {".bw-thm-dark"   : {"color": "#e2e2e2 !important;", "background-color": "#020202 !important;"}},
+                [".bw-thm-light"  , {"color": "#020202 !important;", "background-color": "#e2e2e2 !important;"}],
+                [".bw-thm-dark"   , {"color": "#e2e2e2 !important;", "background-color": "#020202 !important;"}],
             ]
     };
 
@@ -2433,6 +2499,12 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     //primtive in-built color themeing  see opts to overide
     for (i in dopts["colorset"]){
         s+= ".bw-color-"+i+" {"+i+":" +dopts["colorset"][i]+"}\n";
+    }
+
+    bw.makeCSS( dopts["themes"])
+    for (i=0; i< dopts["themes"].length; i++) {
+        s+= bw.makeCSSObjectLine( dopts["themes"][i]);
+        //s+= bw.makeCSS( dopts["themes"][i])
     }
         
     //text handling
@@ -2496,7 +2568,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
 bw.bwSimpleThemes = function (d,appendToHead) {
 /** 
-bw.bwSimpleThemes() selects simple (and I do mean simple) HTML themes for some basic elements.
+bw.bwSimpleThemes() selects simple (we I do mean simple) HTML themes for some basic elements.
 if d is an number it selects the built-in theme by index (see docs) else if d is a dictionary the elements
 in d will be converted to a CSS style.
 
@@ -2511,7 +2583,7 @@ output is a CSS style.  if appendToHead is true or omitted then the theme is app
         "tbody tr:nth-child(even)" : "background-color: #f0f0f0",
         "table, td, th"            : "border-collapse: collapse; border:1px solid #ddd; ",
         "td,th"                    : "padding:4px; ",
-        "div,body,button,table,input" : "border-radius: 5px"
+        //"div,body,button,table,input" : "border-radius: 5px"
         //"div" : "padding-left:2%; padding-right:2%; padding-top:1%;padding-bottom:1%;"   
     },
     {// light theme
@@ -2691,12 +2763,11 @@ returns last element current toggle state.
 // =============================================================================================
 bw.version  = function() {
 /** 
-bw.version()
-bitwrench runtime version & license info.
-debateable how useful this is.. :)
+@method version() - bitwrench runtime version & license info.
+
  */
     var v = {
-        "version"   : "1.1.48", 
+        "version"   : "1.1.49", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

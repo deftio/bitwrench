@@ -51,7 +51,21 @@
         ],
         ["h2",{},"Tabbed Content"],
         bw.makeHTMLTabs([["Tab1",bw.loremIpsum(500)],["Tab2",bw.loremIpsum(500,20)],["Tab3",bw.loremIpsum(500,50)]]) ,
+        "<br>",
+        ['h2',{},"Accordian"],
+        ["div",{},"An accordian allows expanding and collapsing of a list of dynamic content"],
+        "<br>",
+        ["div", {class:"bw-col-5"}, [
+            ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 1"],
+            ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')",  "class":"bw-thm-light "},bw.loremIpsum(200)],
+            ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 2"],
+            ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')","class":"bw-thm-light "},bw.loremIpsum(200,20)] ,
+            ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 3"],
+            ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')","class":"bw-thm-light "},bw.loremIpsum(200,50)]
+            ]
+        ],
         "<br><br>"
+
     ];
 
     // make the content go live since we're in a browser.  Note that if we were on node we could just write out our content

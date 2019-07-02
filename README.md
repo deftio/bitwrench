@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
-![NPM version](http://img.shields.io/npm/v/bitwrench.svg?style=flat-square)
+![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](http://www.deftio.com/bitwrench)
 
