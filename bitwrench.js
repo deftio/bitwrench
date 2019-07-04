@@ -1113,9 +1113,7 @@ bw.makeCSSObjectLine = function (cssData, options) {
 expects this form:
  [str, {k,v}] 
  or
- [[array of rules str], {}]
-
-
+ [[array of rules str], {k,v}]
 
  */
     var dopts = {
@@ -1164,8 +1162,8 @@ expects this form:
     does not operate on the t a c o s params --> just does the conversion
  */
 /*
-html gen using {html_dict}
-_typeOf(x)
+html gen using {input}
+_typeOf(input)
 
  "object" 
     accepted keys below, other keys ignored
@@ -1530,6 +1528,9 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
 
 bw.makeHTML = bw.html;              //deprecated name
 bw.buildHTMLObjString = bw.html;    //deprecated name
+
+bw.depAttr.push("makeHTML");
+bw.depAttr.push("buildHTMLObjString");
 // ===================================================================================
 bw.htmla = function (listData,options) {
 /**  
@@ -1561,14 +1562,46 @@ listHtml = [ item1, item2, item3, .. ]
     atr  = _toa(atr,"object",atr,{});
     atri = _toa(atr,"object",atr,{});
 
-    var lc = listData.map(function(x){return bw.buildHTMLObjString(["li",atri,x]);});
+    var lc = listData.map(function(x){return bw.html(["li",atri,x]);});
 
     return bw.html ([listType,atr,lc]);
 };
 
 bw.makeHTMLList = bw.htmlList; //deprecated name
+bw.depAttr.push["makeHTMLList"];
+
 // ===================================================================================
-bw.htmlTabs = function(tabData, atr) {
+bw.attributeClassAddDel = function (classData,classesToAdd,classesToDel) {
+/** 
+attributeClassAddDel (classData, classesToAdd, classesToDel)
+for CSS classes
+
+takes a valid classData string e.g. "myclass1 myclass2" etc
+
+and adds/del classes from classesToAdd string if they are not already present in classData
+
+attributeClassAddDel("class1 class2", "class3") ==> "class1 class2 class3"
+attributeClassAddDel("class1 class2", "class3 class4") ==> "class1 class2 class3 class4"
+attributeClassAddDel("class1 class2", "class 2 class3") ==> "class1 class2 class3" // doesn't add class2 again
+
+attributeClassAddDel("class1 class2", "class 2 class3",class1) ==> "class2 class3" // doesn't add class2 again. removes class1
+
+classData, classesToAdd, classesToDel may be strings (space delimited) or arrays of strings (["c1", "c2"], ["c3", "c4"], ["c1"])
+ */
+    classData = _to(classData)=="array" ? classData.join(" ") : classData.toString();
+    classesToAdd = _to(classesToAdd)=="undefined" ? "" : classesToAdd;
+    classesToAdd = _to(classesToAdd)=="array" ? classesToAdd.join(" ") : classesToAdd.toString();
+    classesToDel = _to(classesToDel)=="undefined" ? "" : classesToDel;
+    classesToDel = _to(classesToDel)=="array" ? classesToDel.join(" ") : classesToDel.toString();
+    classesToDel = classesToDel.trim().replace(/\s+/ig," ").split(" ");
+
+    var addc = function(x,c){return x.trim() + ((x.split(/\s+/ig).indexOf(c) < 0) ? " "+c: "") ;}
+    var c =  (classesToAdd.split(/\s+/ig)).reduce(function(s,x){return addc(s,x);},classData).trim().replace(/\s+/ig," ");
+    return classesToDel.reduce(function(s,x){return s.replace(x.trim(),"")},c).replace(/\s+/ig," ");;
+
+}
+// ===================================================================================
+bw.htmlTabs = function(tabData, opts) {
 /** 
 bw.makeHTMLTabs(tabData, atr)
 tabData = [ [tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-content]]
@@ -1577,22 +1610,32 @@ tabData = [ [tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-
         return "";
     if (tabData.length < 1)
         return "";
-    atr = (bw.typeOf(atr) == "object") ? atr :{};
+
+    dopts = {
+        atr     : {},    //container {}
+        tab_atr : {},    //attributs for each tab container
+        tabc_atr: {}     //attributes for each tab-content area container
+    }
+    dopts = optsCopy(dopts,opts);
+
     var ti = tabData.map(function(x){return ["li",{"class":"bw-tab", "onclick":"bw.selectTabContent(this)"},x[0]];});
     var tc = tabData.map(function(x){return ["div",{"class":"bw-tab-content"},x[1]];});
     
-    ti[0][1]["class"] = ti[0][1]["class"] + " bw-tab-active";
-    tc[0][1]["class"] = tc[0][1]["class"] + " bw-show";
+    ti[0][1]["class"] = bw.attributeClassAddDel(ti[0][1]["class"], "bw-tab-active")
+    tc[0][1]["class"] = bw.attributeClassAddDel(tc[0][1]["class"], "bw-show");
     
-    if ("class" in atr)
-        atr["class"] += atr["class"].split(/\s+/ig).indexOf("bw-tab-container") < 0 ? " bw-tab-container": "" ;
+    
+    if ("class" in dopts["atr"])
+        dopts["atr"]["class"] +=  bw.attributeClassAddDel (dopts["atr"]["class"],"bw-tab-container");// atr["class"].split(/\s+/ig).indexOf("bw-tab-container") < 0 ? " bw-tab-container": "" ;
     else
-        atr["class"] = "bw-tab-container";
+        dopts["atr"]["class"] = "bw-tab-container";
 
-    return bw.html(["div", atr,[["ul",{"class":"bw-tab-item-list"},ti],["div",{"class":"bw-tab-content-list"},tc]]]);
+    
+    return bw.html(["div", dopts["atr"],[["ul",{"class":"bw-tab-item-list"},ti],["div",{"class":"bw-tab-content-list"},tc]]]);
 };
 
 bw.makeHTMLTabs = bw.htmlTabs; //deprecated name
+bw.depAttr.push("makeHTMLTabs");
 
 // ===================================================================================
 
@@ -1678,6 +1721,7 @@ Options:
 };
 
 bw.makeHTMLTableStr = bw.htmlTable; ////deprecated name
+bw.depAttr.push("makeHTMLTableStr");
 
 bw.htmlAccordian   = function (data, opts) {
 /** 
@@ -1781,12 +1825,13 @@ sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on w
 // =============================================================================================
 bw.sortTableDispatch = function (item,fn) {
 /** 
-bw.sortTableDispatch(el) is used to bind sorting functions to tables generated by  bw.makeHTMLTableStr(....)
+bw.sortTableDispatch(el) is used to bind sorting functions to tables generated by  bw.htmlTable(....)
 item must be a valid DOM element or id.
  */
     var i;
-    if (bw.typeOf(item)=="string")
-        item = document.getElementById(item);
+    //if (bw.typeOf(item)=="string")
+    //    item = document.getElementById(item);
+    item = bw.DOM(item)[0];
 
     if (bw.typeOf(item).substr(0,4) != "html")
        return false;  //something not right about this table element
@@ -2425,11 +2470,13 @@ prandom - generate a psuedo random number from internal hash function in a given
 
 };
 // =============================================================================================
-bw.bwMakeThemeCSS   = function(color) {
+bw.CSSMakeTheme   = function(color) {
 /**
 makeThemeCSS (color) 
 
-makes a color palettte based on the supplied color which is exported as a css style
+makes a CSS theme color palettte based on the supplied color which is exported as a css style
+
+TODO
  */
     var c =  bw.colorRgbToHsl( bw.colorParse(color));
 
@@ -2442,7 +2489,7 @@ makes a color palettte based on the supplied color which is exported as a css st
 
 };
 // =============================================================================================
-bw.bwSimpleStyles = function(appendToHead, options) {
+bw.CSSSimpleStyles = function(appendToHead, options) {
 /* 
 bw.bwSimpleStyles(appendToHead,options)
 
@@ -2565,6 +2612,8 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     return s;
 };
 
+bw.bwSimpleStyles = bw.CSSSimpleStyles;
+bw.depAttr.push["bwSimpleStyles"];
 
 bw.bwSimpleThemes = function (d,appendToHead) {
 /** 
@@ -2583,7 +2632,7 @@ output is a CSS style.  if appendToHead is true or omitted then the theme is app
         "tbody tr:nth-child(even)" : "background-color: #f0f0f0",
         "table, td, th"            : "border-collapse: collapse; border:1px solid #ddd; ",
         "td,th"                    : "padding:4px; ",
-        //"div,body,button,table,input" : "border-radius: 5px"
+        "div,body,button,table,input" : "border-radius: 2px"
         //"div" : "padding-left:2%; padding-right:2%; padding-top:1%;padding-bottom:1%;"   
     },
     {// light theme
@@ -2593,9 +2642,8 @@ output is a CSS style.  if appendToHead is true or omitted then the theme is app
         "tbody  tr:nth-child(even)": "background-color: #ddd",
         "table, td, th"            : "border-collapse: collapse; border:1px solid #111; ",
         "td,th"                    : "padding:4px; ",
-        "div,body,button,table,input" : "border-radius: 7px;"
+        "div,body,button,table,input" : "border-radius: 2px;"
         //"div" : "padding-left:2%; padding-right:2%; padding-top:1%;padding-bottom:1%;"   
-
     }
     ];
 
@@ -2609,9 +2657,11 @@ output is a CSS style.  if appendToHead is true or omitted then the theme is app
         s+= i + " " +"{"+xs[i]+"}\n";
     }
     if (appendToHead != false) {
-        var hs = document.getElementById("bw-simple-theme-styles");
-        if (hs == null) {// first time
-            var h  = document.getElementsByTagName("head")[0];
+        //var hs = document.getElementById("bw-simple-theme-styles");
+        var hs = bw.DOM("bw-simple-theme-styles");
+        if (hs.length == 0) {// first time
+            //var h  = document.getElementsByTagName("head")[0];
+            var h = bw.DOM("head")[0];
             var el = document.createElement("style");
             el.id = "bw-simple-theme-styles";
             el.textContent = s;  //note IE8 requires .text=
@@ -2650,8 +2700,9 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
     </div> <!-- end of tab content sect -->
 </div>
  */
-    if (bw.typeOf(item)=="string")
-        item = document.getElementById(item);
+    //if (bw.typeOf(item)=="string")
+    //    item = document.getElementById(item);
+    item = bw.DOM(item)[0];
 
     if (bw.typeOf(item).substr(0,4) != "html")
        return false;  //unable to set tab content
@@ -2687,7 +2738,7 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
 
 // =============================================================================================
 
-bw.markElement = function(el, key, replace) {
+bw.DOMClass = function(el, key, replace) {
 /** 
 bw.markElement(el,value) 
 returns whether a specific DOM element class name (key) is set on atleast one the supplied element(s).  
@@ -2734,7 +2785,8 @@ markElement is used by bw UI toggles
     }
     return r;
 };
-bw.DOMClass = bw.markElement;
+bw.markElement = bw.DOMClass;
+bw.depAttr.push("markElement");
 
 // =============================================================================================
 bw.DOMClassToggle  = function(el,className) {
