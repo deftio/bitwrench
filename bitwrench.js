@@ -1571,33 +1571,33 @@ bw.makeHTMLList = bw.htmlList; //deprecated name
 bw.depAttr.push["makeHTMLList"];
 
 // ===================================================================================
-bw.attributeClassAddDel = function (classData,classesToAdd,classesToDel) {
+bw.classStrAddDel = function (classData,classesToAdd,classesToDel) {
 /** 
-attributeClassAddDel (classData, classesToAdd, classesToDel)
+classStrAddDel (classData, classesToAdd, classesToDel)
 for CSS classes
 
 takes a valid classData string e.g. "myclass1 myclass2" etc
 
 and adds/del classes from classesToAdd string if they are not already present in classData
 
-attributeClassAddDel("class1 class2", "class3") ==> "class1 class2 class3"
-attributeClassAddDel("class1 class2", "class3 class4") ==> "class1 class2 class3 class4"
-attributeClassAddDel("class1 class2", "class 2 class3") ==> "class1 class2 class3" // doesn't add class2 again
+classStrAddDel("class1 class2", "class3") ==> "class1 class2 class3"
+classStrAddDel("class1 class2", "class3 class4") ==> "class1 class2 class3 class4"
+classStrAddDel("class1 class2", "class 2 class3") ==> "class1 class2 class3" // doesn't add class2 again
 
-attributeClassAddDel("class1 class2", "class 2 class3",class1) ==> "class2 class3" // doesn't add class2 again. removes class1
+classStrAddDel("class1 class2", "class 2 class3",class1) ==> "class2 class3" // doesn't add class2 again. removes class1
+classStrAddDel("class1 class2", "",class1) ==> "class2" //  removes class1
 
 classData, classesToAdd, classesToDel may be strings (space delimited) or arrays of strings (["c1", "c2"], ["c3", "c4"], ["c1"])
  */
-    classData = _to(classData)=="array" ? classData.join(" ") : classData.toString();
-    classesToAdd = _to(classesToAdd)=="undefined" ? "" : classesToAdd;
-    classesToAdd = _to(classesToAdd)=="array" ? classesToAdd.join(" ") : classesToAdd.toString();
-    classesToDel = _to(classesToDel)=="undefined" ? "" : classesToDel;
-    classesToDel = _to(classesToDel)=="array" ? classesToDel.join(" ") : classesToDel.toString();
+    //classData    = _to(classData)   =="undefined" ? "" : classData;
+    var tnorm    = function(x){x=_toa(x,"undefined","",x); return (x=="array")? x.join(" ") : x.toString();}
+    classData    = tnorm(classData);
+    classesToAdd = tnorm(classesToAdd);
+    classesToDel = tnorm(classesToDel);
     classesToDel = classesToDel.trim().replace(/\s+/ig," ").split(" ");
-
     var addc = function(x,c){return x.trim() + ((x.split(/\s+/ig).indexOf(c) < 0) ? " "+c: "") ;}
     var c =  (classesToAdd.split(/\s+/ig)).reduce(function(s,x){return addc(s,x);},classData).trim().replace(/\s+/ig," ");
-    return classesToDel.reduce(function(s,x){return s.replace(x.trim(),"")},c).replace(/\s+/ig," ");;
+    return (classesToDel.reduce(function(s,x){return s.replace(x.trim(),"")},c).replace(/\s+/ig," ")).trim();
 
 }
 // ===================================================================================
@@ -1612,26 +1612,25 @@ tabData = [ [tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-
         return "";
 
     dopts = {
-        atr     : {},    //container {}
-        tab_atr : {},    //attributs for each tab container
-        tabc_atr: {}     //attributes for each tab-content area container
+        atr     : {class:""},    //container {}
+        tab_atr : {class:""},    //attributs for each tab container
+        tabc_atr: {class:""},    //attributes for each tab-content area container
+        indent  : "",            //indent string for pretty printing
+        pretty  : false
     }
     dopts = optsCopy(dopts,opts);
 
     var ti = tabData.map(function(x){return ["li",{"class":"bw-tab", "onclick":"bw.selectTabContent(this)"},x[0]];});
     var tc = tabData.map(function(x){return ["div",{"class":"bw-tab-content"},x[1]];});
     
-    ti[0][1]["class"] = bw.attributeClassAddDel(ti[0][1]["class"], "bw-tab-active")
-    tc[0][1]["class"] = bw.attributeClassAddDel(tc[0][1]["class"], "bw-show");
-    
-    
-    if ("class" in dopts["atr"])
-        dopts["atr"]["class"] +=  bw.attributeClassAddDel (dopts["atr"]["class"],"bw-tab-container");// atr["class"].split(/\s+/ig).indexOf("bw-tab-container") < 0 ? " bw-tab-container": "" ;
-    else
-        dopts["atr"]["class"] = "bw-tab-container";
+    ti[0][1]["class"] = bw.classStrAddDel(ti[0][1]["class"], "bw-tab-active")
+    tc[0][1]["class"] = bw.classStrAddDel(tc[0][1]["class"], "bw-show");
 
-    
-    return bw.html(["div", dopts["atr"],[["ul",{"class":"bw-tab-item-list"},ti],["div",{"class":"bw-tab-content-list"},tc]]]);
+    dopts["atr"     ]["class"] = bw.classStrAddDel (dopts["atr"     ]["class"],"bw-tab-container");
+    dopts["tab_atr" ]["class"] = bw.classStrAddDel (dopts["tab_atr" ]["class"],"bw-tab-item-list");
+    dopts["tabc_atr"]["class"] = bw.classStrAddDel (dopts["tabc_atr"]["class"],"bw-tab-content-list");
+
+    return bw.html(["div", dopts["atr"],[["ul",dopts["tab_atr"],ti],["div",dopts["tabc_atr"],tc]]]);
 };
 
 bw.makeHTMLTabs = bw.htmlTabs; //deprecated name
@@ -1708,13 +1707,13 @@ Options:
     }
     else
         i=0;
-    head = bw.buildHTMLObjString(["thead",dopts.thead_atr,head]);
+    head = bw.html(["thead",dopts.thead_atr,head]);
 
     for (; i<data.length; i++) {
         r = data[i].map(function(x){return _hs(["td",dopts.td_atr,x]);}).join(""); 
         body+= _hs(["tr",dopts.tr_atr,r]);
     }
-    body = bw.buildHTMLObjString(["tbody",dopts.tbody_atr,body]);
+    body = bw.html(["tbody",dopts.tbody_atr,body]);
     //console.log(head,'\n',body);
     dopts.caption = dopts.caption == "" ? "" :  _hs(["caption",{},dopts.caption]);
     return _hs(["table",dopts.atr,[dopts.caption,head,body]]);
@@ -1777,7 +1776,7 @@ bw.sortHTMLTable = function (table, col, dir, sortFunction) {
 bw.sortHTMLTable(table, column, optionalSortFunction).
 
 sort any HTML table active in the DOM
-table must be a valid DOM table element or be string represent a valid DOM Id.
+table must be a valid DOM table element or CSS selector (first element is used)
 
 default uses string compare. but can pass in a function
 sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on what column this is   
@@ -1785,9 +1784,9 @@ sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on w
     
     var  rows, switching, i, x, y, shouldSwitch;
     var sortF = bw.typeOf(sortFunction) == "function" ? sortFunction : bw.naturalSort;
-    //table = bw.DOM(table)[0];//TODO
-    table = _isEl(table) ? table : _els(table);
-    //table = bw.typeOf(table)=="string" ? document.getElementById(table) : table;  // if its a string try to get it by id else assume DOM element
+    
+    table = bw.DOM(table)[0];
+    
     dir = (dir==true) || (dir=="up") ? true : false;
 
     switching = true;
@@ -1829,8 +1828,7 @@ bw.sortTableDispatch(el) is used to bind sorting functions to tables generated b
 item must be a valid DOM element or id.
  */
     var i;
-    //if (bw.typeOf(item)=="string")
-    //    item = document.getElementById(item);
+    
     item = bw.DOM(item)[0];
 
     if (bw.typeOf(item).substr(0,4) != "html")

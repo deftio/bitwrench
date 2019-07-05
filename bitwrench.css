@@ -1,5 +1,5 @@
 /*"""
-bitwrench.css version 1.1.48
+bitwrench.css version 1.1.49
 bitwrench.js exported css classes (auto generated)
 This file contains the same css classes (styles used by bitwrench.js) and can be used stand-alone.
 
@@ -20,6 +20,14 @@ This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"loa
 .bw-color-color {color:#000}
 .bw-color-background-color {background-color:#ddd}
 .bw-color-active {active:#222}
+.bw-thm-light {
+  color:#020202 !important;
+  background-color:#e2e2e2 !important;
+}
+.bw-thm-dark {
+  color:#e2e2e2 !important;
+  background-color:#020202 !important;
+}
 .bw-left       { text-align: left;                            }
 .bw-right      { text-align: right;                           }
 .bw-center     { text-align: center; margin: 0 auto;          }
