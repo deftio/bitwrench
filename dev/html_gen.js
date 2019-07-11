@@ -36,23 +36,25 @@ undefined       ==> undefined
 */
 bw.HTMLNorm = function(x) {
 
-    function bw.HTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={};}
-    function bwError  (v,x) {this.value=v; this.msg = (typeof x == "undefined") ? "error" : x;}
+    function bw.HTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={}; this.s={};}
+    //function bwError  (v,x) {this.value=v; this.msg = (typeof x == "undefined") ? "error" : x;}
     
     var i,n = new bwHTMLNode(); // default html dict format
     var m = "";
     switch (_to(x)) {
         case "null" :
         case "undefined" :
-            n = new bwError(x,"HTML Node error : "+_to(x));
+            //n = new bwError(x,"HTML Node error : "+_to(x));
+            n="";
+            bw.logd("Error: HTMLNorm type null or undefined");
             break;
         case "object":
             [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
             for (i in n) {  // we only copy those fields we care about..
                 n[i] = (i in x) ? x[i] : n[i]; // need to handle complicated types: t:"", a:{}, c:"" | []
                 if (bw.isnu(n[i])) {
-                    n = null; // force entire object to be null or undefined
-                    m = "HTML gen err: bad object";
+                    n = ""; // force entire object to be null or undefined
+                    bw.logd("Error HTMLNorm : bad object");
                     break;
                 }
             }
@@ -66,8 +68,8 @@ bw.HTMLNorm = function(x) {
             }
             for (i in n)
                 if (bw.isnu(n[i])) {
-                    n = null;
-                    m = "HTML gen err: bad array"
+                    n = ""
+                    bw.logd("Error HTMLNorm : bad array");
                     break;
                 }
 
@@ -77,11 +79,15 @@ bw.HTMLNorm = function(x) {
             n = _to(n)=="function" ? new bwError(n.toString(),"HTML Node error: function returned a function");
             break;
         default: // string, number, Date, bool, Regex  ==> will be come just plain rendered content later
-            n.c =x.toString();
+            n =x.toString();
     }
     return n; 
 }
 
+//assumes proper node form
+bw.htmlNodeRender(x) {
+
+}
 bw.html_fcNew1= function(x) {
     var i,n = { t: "div", a: {}, c: "", o: {}}; // default html dict format
     var m = "";

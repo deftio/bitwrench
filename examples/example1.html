@@ -50,12 +50,13 @@
             ],
         ],
         ["h2",{},"Tabbed Content"],
-        bw.htmlTabs([["Tab1",bw.loremIpsum(500)],["Tab2",bw.loremIpsum(500,20)],["Tab3",bw.loremIpsum(500,50)]],/*{tab_atr:{style:"padding:10px; background-color:#ddd"}}*/) ,
+        bw.htmlTabs([["Tab1",bw.loremIpsum(500)],["Tab2",bw.loremIpsum(500,20)],["Tab3",bw.loremIpsum(500,50)]],{tab_atr:{style:""}}) ,
         "<br>",
         ['h2',{},"Accordian"],
         ["div",{},"An accordian allows expanding and collapsing of a list of dynamic content"],
         "<br>",
-        ["div", {class:"bw-col-5"}, [
+        //accordian done using direct HTML
+        ["div", {class:"bw-col-5"}, [ 
             ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 1"],
             ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')",  "class":"bw-thm-light "},bw.loremIpsum(200)],
             ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 2"],
@@ -64,12 +65,22 @@
             ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')","class":"bw-thm-light "},bw.loremIpsum(200,50)]
             ]
         ],
+        "<br>",
+        //accordian done using bw.html accordian
+        bw.htmlAccordian([
+            ["One Tab",bw.loremIpsum(500)],
+            ["Two Tabs",bw.loremIpsum(500)],
+            ["Three Tabs",bw.htmlTabs([["Tab1",bw.loremIpsum(500)],["Tab2",bw.loremIpsum(500,20)],["Tab3",bw.loremIpsum(500,50)]])],
+            ["Four Tabs",bw.loremIpsum(500)]
+            ],{atr_h: {style:""},atr_c:{class:"bw-thm-light"}}
+            ),
         "<br><br>"
 
     ];
 
     // make the content go live since we're in a browser.  Note that if we were on node we could just write out our content
-    bw.DOMGetElements("body")[0].innerHTML=    content.map( function(x) {return bw.buildHTMLObjString(x)}).join(""); // ()=>() not supported in ealrly Internet Explorer versions
+    //bw.DOMGetElements("body")[0].innerHTML=    content.map( function(x) {return bw.buildHTMLObjString(x)}).join(""); // ()=>() not supported in ealrly Internet Explorer versions
+    bw.DOM("body", bw.htmla(content));
 
     bw.bwSimpleThemes(1);
     //document.getElementById("test").innerHTML = bw.logExport({"exportFormat":"HTML"});

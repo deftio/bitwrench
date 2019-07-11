@@ -21,12 +21,13 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[ ] prettyPrintJSON with stylizble CSS
 		settable tab widths (use padding:<width><units>)
 		allow prettyPrint of functions and member-functions
+		allow functions to print correctly
 	[x] find/set css class name on supplied element (bw.markElement)
 	[ ] encode/decode var info in to a CSS classname (see spannit.js)
 	[ ] find classes by encoded var name (returns array of hits)
 		note bw.markElement does some of this
 	[x] xformScaleSig   #sigmoidal scale, linear, constrain
-	[ ] xformScalePow   #power scale ==> remove
+	[0] xformScalePow   #power scale ==> remove
 	[x] clip 
 	[x] setIntervalX // rename repeatN() ?
 	[*] repeatUntil   --> needs usability clean up
@@ -90,6 +91,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		** makeHTMLList(data_array1d, options)
 			* ordered vs unordered
 		** makeHTMLCard (see w3 schools)
+		** makeHTMLAccordian
 		** makeHTMLTable
 		** makeHTMLPage
 		** makeHTMLFooter
@@ -122,10 +124,11 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		* bw-table-sort-upa  bw-table-sort-dna bw-table-sort-xxa  // arrows mark-element is in cycle xx--> upa --> dna --> xx
 		* bw-table-sort-up  bw-table-sort-dn bw-table-sort-xx     // no arrows or display just sorts.  mark-elment is in cycle xx-->up-->dn-->xx 
 			* need to add this as option to sortable in sortTable 
-	* accordian (tree explorer)
+	* tree accordian (eg  explorer)
 		indented divs with show / hide
 	* makeThemes directory (?)
 	* add bw.logd(values)  // bw.debug log (adds to regular bw.log) but
+		TODO: transpose .logd and .log names --> more readable e.g. bw.log acts like console.log
 		* is dissolving via bw.logdControl
 			bw.logd joins all args like console.log
 			bw.logd can be turned on

@@ -190,13 +190,18 @@ bw.typeOf(x,true)   // "object"     ---> returns base object type
     if (x === null)
         return "null";
 
-    var y = (typeof x == "undefined") ? "undefined" : (({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLowerCase()) 
+    var y = (typeof x == "undefined") ? "undefined" : (({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLocaleLowerCase()) 
     if ((y != "object") && (y != "function"))
         return y;
     if (baseTypeOnly == true) // so if undefind or anything but true
        return y; 
 
-    return (x.constructor.name.toLowerCase() == y.toLowerCase()) ?  y : x.constructor.name;  // return object's name e.g.
+    var r = y;
+    try {
+        r =  (x.constructor.name.toLocaleLowerCase() == y.toLocaleLowerCase()) ?  y : x.constructor.name;  // return object's name e.g.
+    }
+    catch (e) {};
+    return r;
 };
 
 var _to = bw.typeOf;
@@ -264,7 +269,30 @@ var optsCopy = function(dopts,opts) {
     }
     return dopts;
 };
+// ===================================================================================
 
+bw.arrayUniq =  function (x){
+/** 
+    arrayUniq(x)
+    returns uniq elements of simple array x.
+*/    
+    return x.filter (function (v, i, arr) {return (arr.indexOf(v)==i);});
+};
+// ===================================================================================
+bw.arrayBinA = function (a,b) {
+/** 
+    arrayBinA(x)
+    returns intersection elements of to simple arrays a and b
+*/      
+    return bw.arrayUniq(a.filter(function(n) { return b.indexOf(n) !== -1;}));
+}
+bw.arrayBNotInA = function (a,b) {
+/** 
+    arrayBNotinA(x)
+    returns  elements of b not present in a
+*/      
+    return bw.arrayUniq(b.filter(function(n) { return a.indexOf(n) < 0;}));
+}
 //===============================================
 
 bw.DOMIsElement = function(el) {
@@ -525,7 +553,7 @@ bw.colorParse = function(s,defAlpha) {
             }
         }
         else { // its should be of form (c0,c1,c2) or (c0,c1,c2,alpha)
-            r[4] = x[1].toLowerCase();
+            r[4] = x[1].toLocaleLowerCase();
             if ((x[2][0] == "(") && (x[2][x[2].length-1] == ")")) { // parans are present
                 var v = x[2].substring(1,x[2].length-1);
                 v = v.split(",");
@@ -621,7 +649,10 @@ bw.log("","",{clear:"clear-only"}); // initialize
 bw.logd = function() {
 /**
 @method bw.logd() 
-@description: bw.logd is a log funciton which behaves similar to console.log() however instread of outputting to console, it writes to bw.log() function with the following differences: 1. all a
+@description: bw.logd is a log funciton which behaves similar to console.log() however instread of outputting to console, 
+it writes to bw.log() function with the following differences: 
+
+
 */
 /*
 todo: comma seperated items;  ? done
@@ -639,7 +670,7 @@ logd=console,bwlogd
         var i=0;
         var _a = [];
         for (i=0; i< arguments.length; i++)
-            _a.push(arguments[i]); //arguments, a reserved javascript keyword is not a true array
+            _a.push(arguments[i]); //arguments, a reserved javascript keyword, is not a true array
         bw.log(_a,"bw.logd: "+bw.bwargs["bwlogd"]); // message
     }
 };
@@ -1589,22 +1620,34 @@ classStrAddDel("class1 class2", "",class1) ==> "class2" //  removes class1
 
 classData, classesToAdd, classesToDel may be strings (space delimited) or arrays of strings (["c1", "c2"], ["c3", "c4"], ["c1"])
  */
-    //classData    = _to(classData)   =="undefined" ? "" : classData;
-    var tnorm    = function(x){x=_toa(x,"undefined","",x); return (x=="array")? x.join(" ") : x.toString();}
-    classData    = tnorm(classData);
-    classesToAdd = tnorm(classesToAdd);
-    classesToDel = tnorm(classesToDel);
-    classesToDel = classesToDel.trim().replace(/\s+/ig," ").split(" ");
-    var addc = function(x,c){return x.trim() + ((x.split(/\s+/ig).indexOf(c) < 0) ? " "+c: "") ;}
-    var c =  (classesToAdd.split(/\s+/ig)).reduce(function(s,x){return addc(s,x);},classData).trim().replace(/\s+/ig," ");
-    return (classesToDel.reduce(function(s,x){return s.replace(x.trim(),"")},c).replace(/\s+/ig," ")).trim();
+ 
+    var tnorm    = function(x){x=bw.toa(x,"undefined",[],x); return (bw.to(x)=="array")? x : x.toString().trim().split(/\s+/ig);}
+    var c  = tnorm(classData);
+    var ca = tnorm(classesToAdd);
+    var cd = tnorm(classesToDel);
+    return bw.arrayBNotInA(cd,c.concat(ca)).join(" ").trim().replace(/\s+/ig," ");
 
 }
+// ===================================================================================
+bw.classStrToggle = function (classData, classesToToggle) {
+/** 
+    classStrToggle (classData, classesToToggle)
+
+    toggles classes listed in classesToToggle
+
+    takes a valid classData string e.g. "myclass1 myclass2" etc
+*/
+    var tnorma    = function(x){x=bw.toa(x,"undefined",[],x); return (bw.to(x)=="array")? x : x.toString().trim().split(/\s+/ig);}
+    var c   = tnorma(classData);
+    var t   = tnorma(classesToToggle);
+    return bw.classStrAddDel(classData,bw.arrayBNotInA(c,t),bw.arrayBinA(c,t));
+}
+
 // ===================================================================================
 bw.htmlTabs = function(tabData, opts) {
 /** 
 bw.makeHTMLTabs(tabData, atr)
-tabData = [ [tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-content]]
+tabData = [[tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-content]]
  */
     if (bw.typeOf(tabData) != "array")
         return "";
@@ -1620,7 +1663,7 @@ tabData = [ [tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-
     }
     dopts = optsCopy(dopts,opts);
 
-    var ti = tabData.map(function(x){return ["li",{"class":"bw-tab", "onclick":"bw.selectTabContent(this)"},x[0]];});
+    var ti = tabData.map(function(x){return ["li",{"class":"bw-tab-item", "onclick":"bw.selectTabContent(this)"},x[0]];});
     var tc = tabData.map(function(x){return ["div",{"class":"bw-tab-content"},x[1]];});
     
     ti[0][1]["class"] = bw.classStrAddDel(ti[0][1]["class"], "bw-tab-active")
@@ -1724,11 +1767,62 @@ bw.depAttr.push("makeHTMLTableStr");
 
 bw.htmlAccordian   = function (data, opts) {
 /** 
+    htmlAccordian 
+    
+    [[data-title, data-to-show, {show: true|false, clickShow: true|fa;se}], // TODO: optional 3rd element
+     [...]]
 
+    data-title and data-to-show can be strings or any valid bw.html() constructs
  */
     var s = "";
+    if (_to(data) !== "array")
+        return s;
 
+    var dopts = {
+        atr   : { class:"bw-accordian-container"}, // div for overall accordian
+        atr_h : { "onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"}, // div wrapping each header
+        atr_c : {/*"onclick":"bw.DOMClassToggle(this,'bw-hide')",*/ "class":"bw-hide"} // div wrapping each content
+    }
+    dopts = optsCopy(dopts,opts);
+    dopts["atr_h"]["onclick"]="bw.DOMClassToggle(this.nextSibling, 'bw-hide')";
+    var fns = function(x){return (x==false) ? "bw-hide" : ""; } // converts x[2] in to class string 
+    //var fc  = function(x,s){if ("class" in x){ x["class"] = } 
+
+    s = data.map(function(x){return bw.html(["div",dopts["atr_h"],x[0]])+bw.html(["div",dopts["atr_c"],x[1]])}).join("");
+    s = bw.html(["div",dopts["atr"],s]);
     return s;
+}
+// =============================================================================================
+bw.htmlDataToImg = function(data, opts) {
+/**
+    htmlDataToImg(data, opts) // takes a 2D array of numbers and render as an image
+    each data point must evaluate to a Number or be a function which will be called with its positional arguments and must return a number.
+
+    OR
+
+    function can be a string as long as it returns a valud HTML color prefixed with "#"
+
+    e.g. 
+    "#123"
+    "#112233"
+
+    e.g.:
+        function (return 23)
+        function(x,y) { return x+y;}
+
+ */
+    var dopts = {
+        outputType  : "canvas" ,  // "table" | "divs" | "svg"
+        colorMode   : "auto",     // use greyscale map
+        colorStretch: 1.0
+    }
+
+    dopts = optsCopy(dopts,opts);
+//    if (_to(dopts["colorMapFn"]) != "function")
+//        dopts["colorMapFn"] = function(x){var c= mapScale(x,0,255,0,255,true).}
+
+
+
 }
 // =============================================================================================
 bw.naturalSort = function (as, bs){
@@ -1748,8 +1842,8 @@ it is the default sort for bw.sortHTMLTable()
 
     var a, b, a1, b1, i= 0, L, rx=  /(\d+)|(\D+)/g, rd=  /\d/;
     if(isFinite(as) && isFinite(bs)) return as - bs;
-    a= String(as).toLowerCase();
-    b= String(bs).toLowerCase();
+    a= String(as).toLocaleLowerCase();
+    b= String(bs).toLocaleLowerCase();
     if(a=== b) return 0;
     if(!(rd.test(a) && rd.test(b))) return a> b? 1:-1;
     a= a.match(rx);
@@ -2569,11 +2663,11 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     s+= ".bw-table-sort-xxa::after { content: \"\\00a0\"; }\n";  // table sort space  (when visible arrows chosen)
 
     //tabs
-    s+= ".bw-tab-item-list    { margin: 0; }\n";
-    s+= ".bw-tab              { display:inline; padding-top:5px; padding-left:10px; padding-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}\n";
-    s+= ".bw-tab-active       { padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;   font-weight:700;}\n";
+    s+= ".bw-tab-item-list    { margin: 0; padding-inline-start:0}\n";
+    s+= ".bw-tab-item         { display:inline; padding-top:5px; padding-left:10px; padding-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}\n";
+    s+= ".bw-tab-active       {/* padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;  */ font-weight:700;}\n";
     s+= ".bw-tab:hover        { cursor: pointer;  font-weight: 700;/* border: 1px  solid #bbb; */}\n";
-    s+= ".bw-tab-content-list { margin: 0; }\n";
+    s+= ".bw-tab-content-list { margin: 0;  }\n";
     s+= ".bw-tab-content      { display: none; margin-top:-1px; border-radius:0  }\n";
     s+= ".bw-tab-content, .bw-tab-active       {background-color: #ddd}\n";
 
@@ -2738,13 +2832,14 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
 
 bw.DOMClass = function(el, key, replace) {
 /** 
-bw.markElement(el,value) 
+bw.DOMClass(el,value) 
+
 returns whether a specific DOM element class name (key) is set on atleast one the supplied element(s).  
 
 If replace is supplied then the class name (key) is replaced or added if it doesn't exist.
-    note that if key is not found but a replace is supplied the return-value is still false as the supplied key was not found even though a replace value is not present
+    note that if key is not found but a replace is supplied the return-value is still false as the supplied key was not found 
 
-el must be a valid dom ID string (e.g. "#myID") or valid DOM element (e.g. document.getElementById("myId"))
+el must be valid element or CSS selector
 
 markElement is used by bw UI toggles
  */
@@ -2790,8 +2885,11 @@ bw.depAttr.push("markElement");
 bw.DOMClassToggle  = function(el,className) {
 /**
 bw.DOMClassToggle(el,classname) 
-for each element specified in el (eg "#id", ".myClass", <DOM OBJECT>) toggle className.
+for each element specified in el (eg "#id", ".myClass", "h2", <DOM OBJECT>) toggle className.
+
 If className is present on the object then it is removed. if it is not present it is added.
+
+
 classNames with spaces or tabs are not valid and result in undefined behavior.
 
 returns last element current toggle state.
@@ -2866,7 +2964,7 @@ var getArgs =  function () {
                 var s = String(el.getAttribute("src"));
                 var f = "bitwrench.js";
 
-                if (s.toLowerCase().substring(s.length-f.length,s.length) == f.toLowerCase()) {
+                if (s.toLocaleLowerCase().substring(s.length-f.length,s.length) == f.toLocaleLowerCase()) {
                     s = _to(s) == "string" ? el.getAttribute("bwargs") : [""];
                     s = _to(s) == "string" ? el.getAttribute("data-bwargs") : s; //the html4/5 standard way
                     a = parseArgs(s);
