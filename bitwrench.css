@@ -1,5 +1,5 @@
 /*"""
-bitwrench.css version 1.1.49
+bitwrench.css version 1.1.50
 bitwrench.js exported css classes (auto generated)
 This file contains the same css classes (styles used by bitwrench.js) and can be used stand-alone.
 
@@ -40,11 +40,11 @@ This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"loa
 .bw-table-sort-upa::after { content: "\2191"; }
 .bw-table-sort-dna::after { content: "\2193"; }
 .bw-table-sort-xxa::after { content: "\00a0"; }
-.bw-tab-item-list    { margin: 0; }
-.bw-tab              { display:inline; padding-top:5px; padding-left:10px; padding-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}
-.bw-tab-active       { padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;   font-weight:700;}
+.bw-tab-item-list    { margin: 0; padding-inline-start:0}
+.bw-tab-item         { display:inline; padding-top:5px; padding-left:10px; padding-right: 10px;  border-top-right-radius: 7px; border-top-left-radius: 7px;}
+.bw-tab-active       {/* padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;  */ font-weight:700;}
 .bw-tab:hover        { cursor: pointer;  font-weight: 700;/* border: 1px  solid #bbb; */}
-.bw-tab-content-list { margin: 0; }
+.bw-tab-content-list { margin: 0;  }
 .bw-tab-content      { display: none; margin-top:-1px; border-radius:0  }
 .bw-tab-content, .bw-tab-active       {background-color: #ddd}
 .bw-container  { margin: 0 auto;  }

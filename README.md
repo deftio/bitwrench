@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
-![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)
+[![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)](https://www.npmjs.com/package/bitwrench)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](http://www.deftio.com/bitwrench)
 
@@ -32,8 +32,6 @@ bitwrench is a javascript library for useful demo hacking and misc kitchen sink 
 
 
 There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations.    All non-dom specific calls can be run either server side or client side.
-
-Of course your mileage may very..
 
 A minified form bitwrench.min.js is provided with identical functionality
 

@@ -100,6 +100,8 @@
     }
     if (!fn.map) fn.map=function(f){var r=[];for(var i=0;i<this.length;i++)r.push(f(this[i]));return r;};
     if (!fn.filter) fn.filter=function(f){var r=[];for(var i=0;i<this.length;i++)if(f(this[i]))r.push(this[i]);return r;};
+    if (!String.prototype.trim) {String.prototype.trim = function () {  return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''); };}
+
 })(Array.prototype);
 // * /
 
@@ -276,6 +278,8 @@ bw.arrayUniq =  function (x){
     arrayUniq(x)
     returns uniq elements of simple array x.
 */    
+    if (_to(x) != "array")
+        return [];
     return x.filter (function (v, i, arr) {return (arr.indexOf(v)==i);});
 };
 // ===================================================================================
@@ -323,6 +327,15 @@ bw.DOMGetElements = function (el, type) {
 
 @param {string | DOM_node} el - if string uses CSS selector other wise if DOM element returns itself
 @return an js array of zero or more matching DOM nodes
+
+
+*/
+
+/*
+TODO: 
+ var container = document.querySelector("#test");
+ var matches = container.querySelectorAll("div.highlighted > p");
+
 */
     var r=[],a=[],i;
 
@@ -350,7 +363,11 @@ bw.DOMGetElements = function (el, type) {
                 case "name":
                     a = document.getElementsByName(el);
                     break;
-                default:  // auto 
+                case "CSS" :
+                    a = document.querySelectorAll(el);
+                default:  
+                    a = document.querySelectorAll(el);
+
             }
             for (i in a)
                 r.push(a[i]);
@@ -1655,9 +1672,9 @@ tabData = [[tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-c
         return "";
 
     dopts = {
-        atr     : {class:""},    //container {}
-        tab_atr : {class:""},    //attributs for each tab container
-        tabc_atr: {class:""},    //attributes for each tab-content area container
+        atr     : {"class":""},    //container {}
+        tab_atr : {"class":""},    //attributs for each tab container
+        tabc_atr: {"class":""},    //attributes for each tab-content area container
         indent  : "",            //indent string for pretty printing
         pretty  : false
     }
@@ -1779,7 +1796,7 @@ bw.htmlAccordian   = function (data, opts) {
         return s;
 
     var dopts = {
-        atr   : { class:"bw-accordian-container"}, // div for overall accordian
+        atr   : { "class":"bw-accordian-container"}, // div for overall accordian
         atr_h : { "onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"}, // div wrapping each header
         atr_c : {/*"onclick":"bw.DOMClassToggle(this,'bw-hide')",*/ "class":"bw-hide"} // div wrapping each content
     }
@@ -2915,7 +2932,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.1.49", 
+        "version"   : "1.1.50", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

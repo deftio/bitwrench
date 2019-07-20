@@ -7,6 +7,8 @@
 //more traditional shebang would be:
 //#!/usr/bin/env node
 
+//===============================================
+// bitwrench console apps starter
 //begin actual javascript below
 
 var fs = require('fs');
@@ -14,4 +16,5 @@ var bw = require('../bitwrench.js')["bw"]
 
 console.log ("bitwrench version:"+bw.version()["version"]);
 
-// do stuff with bitwrench.js at command line 
+// do stuff with bitwrench.js at command line
+
