@@ -9,7 +9,7 @@
 
 //begin actual javascript below
 
-var bw = require('../bitwrench.js')["bw"];
+var bw = require('../bitwrench.js');
 
 console.log ("Export bitwrench css: using bw version:"+bw.version()["version"]+"\n ");
 

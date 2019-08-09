@@ -12,7 +12,7 @@
 //begin actual javascript below
 
 var fs = require('fs');
-var bw = require('../bitwrench.js')["bw"]
+var bw = require('../bitwrench.js')
 
 console.log ("bitwrench version:"+bw.version()["version"]);
 

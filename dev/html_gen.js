@@ -86,8 +86,10 @@ bw.HTMLNorm = function(x) {
 
 //assumes proper node form
 bw.htmlNodeRender(x) {
-
+    s = bw.toa(x,"string",x,)
+    return s;
 }
+
 bw.html_fcNew1= function(x) {
     var i,n = { t: "div", a: {}, c: "", o: {}}; // default html dict format
     var m = "";
@@ -120,7 +122,6 @@ bw.html_fcNew1= function(x) {
                     m = "HTML gen err: bad array"
                     break;
                 }
-
             break;
         case "function":  
             n = bw.html_fc2(x(),opts); // evaluate and convert...

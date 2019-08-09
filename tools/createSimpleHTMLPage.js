@@ -9,14 +9,14 @@
 
 //begin actual javascript below
 
-var bw = require('../bitwrench.js')["bw"];
+var bw = require('../bitwrench.js');
 
 console.log ("Create simple web page\n using bw version:"+bw.version()["version"]+"\n ");
 
 /* process cmd line notes
 
 process.argv[0] --> nodejs executable
-process.argv[1] --> /full/path/to/this/file/update-bw-package.js 
+process.argv[1] --> /full/path/to/this/file/createSimpleHTMLPage.js 
 process.argv[2] --> export_filename
 
 */

@@ -9,7 +9,7 @@
 
 //begin actual javascript below
 
-var bw = require('../bitwrench.js')["bw"];
+var bw = require('../bitwrench.js');
 
 //console.log ("bitwrench version:"+bw.version()["version"]+" package version updater loaded.\n ");
 

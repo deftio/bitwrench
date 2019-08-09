@@ -110,17 +110,23 @@
         // AMD. Register as an anonymous module.
         //define(['myRequiredDependancyModule'], factory); // use this if other modules required
         define([], factory); // eslint-disable-line no-undef
-    } else if (typeof module === "object" && module.exports) {
+    } else if (typeof module === "object") {
+                
+        if ((typeof module !== 'object' ) || (typeof module !== "function") ) // this hack required for older versions of node
+            var m =require('module');
         // Node. Does not work with strict CommonJS, but
         // only CommonJS-like environments that support module.exports,
         // like Node.
-        
-        //module.exports = factory(require('myRequiredDependancyModule'));  // use this if other modules required
-        module.exports = factory();
+        //console.log("node...");
+        var lib= factory();
+        module.exports=lib;
+
     } else {
+        //console.log("browser..",root, typeof root);
         // Browser globals (root is window)
-        var module = factory(); // factory(root.myRequiredDependancyModule);  // use this if other modules required
-        root[module["exportName"]] = module;
+        var lib = factory();
+        root[lib["exportName"]] = lib;
+
     }
 }(typeof self !== "undefined" ? self : this, function () { // note if needing requirements use ... (typeof self !== "undefined" ? self : this, function (myRequiredDependancyModule) 
     // Use b in some fashion.
@@ -2932,7 +2938,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.1.50", 
+        "version"   : "1.2.00", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
