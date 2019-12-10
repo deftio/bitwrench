@@ -785,6 +785,68 @@ x = bw.getURLParam("bar","whatever") ==> returns "whatever" since bar isn't set
     return params[key];
 };
 
+bw.getURLParamDict = function (url) {
+/**
+bw.getURLParamDict(optionalString) 
+decode a URL encoded string in to a javascript dictionary
+if no string is supplied then it uses window.location.href (browser only)
+
+ */
+    if (_to(url) != "string") {
+        if (bw.isNodeJS() == true)
+            return {}
+        else url = location.href;
+    }
+    
+    var question = url.indexOf("?");
+    var hash = url.indexOf("#");
+
+    if(hash==-1 && question==-1) return {};
+    if(hash==-1) hash = url.length;
+    var query = question==-1 || hash==question+1 ? url.substring(hash) : 
+    url.substring(question+1,hash);
+    var result = {};
+    query.split("&").forEach(function(part) {
+        if(!part) return;
+            part = part.split("+").join(" "); // replace every + with space, regexp-free version
+            var eq = part.indexOf("=");
+            var key = eq>-1 ? part.substr(0,eq) : part;
+            var val = eq>-1 ? decodeURIComponent(part.substr(eq+1)) : "";
+            var from = key.indexOf("[");
+            if(from==-1) result[decodeURIComponent(key)] = val;
+            else {
+              var to = key.indexOf("]",from);
+              var index = decodeURIComponent(key.substring(from+1,to));
+              key = decodeURIComponent(key.substring(0,from));
+              if(!result[key]) result[key] = [];
+              if(!index) result[key].push(val);
+              else result[key][index] = val;
+            }
+        });
+  return result;
+}
+
+function parseURLParam(name, url) {
+if (_to(url) != "string") {
+        if (bw.isNodeJS() == true)
+            return {}
+        else url = location.href;
+    }
+    
+    var question = url.indexOf("?");
+    var hash = url.indexOf("#");
+
+    if(hash==-1 && question==-1) return {};
+    if(hash==-1) hash = url.length;
+    var query = question==-1 || hash==question+1 ? url.substring(hash) : 
+    url.substring(question+1,hash);
+
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(urlString);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
 // crude performance measurements
 var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we always want a gbw gbw time :)
  
@@ -1102,10 +1164,13 @@ cssData = [
             ["p > .myclass", ["color:red","display:block"]]  ==> p > .myClass   {color: red;  display:block;}
           ]
 cssData = [
-            [selectors], { dict }
+            [str, {}]
+          ]
+cssData = [
+            [[selectors], { dict }]
           ]
 
-dicts not used because css can have multiple redundant selectors with different rules
+dicts not used at root because css can have multiple redundant selectors with different rules
 
  */
     var dopts = {
@@ -1126,22 +1191,44 @@ dicts not used because css can have multiple redundant selectors with different 
                 for (i=0; i<cssData.length; i++) {
                     var j = cssData[i];
                     switch (bw.typeOf(j)) {
-                        case "string": 
+                        case "string":  // this means we assume correcly formatted style is being passed in and we're just letting it through e.g. ".myclass {color:red}"
                             s+= j+"\n"; 
                             break;
-                        case "array" : //expects length 2 array, ==>[str, str], [[str,str,str],str]  //these are the 2 valid types
+                        case "array" : //expects length 2 array for each entry, though 2nd member can be dict or array
+                                    //  ==>[str, str], [[str,str,str],str] , [str, {}], [[str,str,str],{}]
+
                             if ((j.length == 1) && (bw.typeOf(j[0])=="string")) {
                                 s+= j[0]+"\n";
                                 break;
                             }
+                            
                             if (j.length == 2) {
-                                if (bw.typeOf(j[0])=="string") {
-                                    s+= j[0]+ tb(j[1]);
-                                    break;
+                                var _name = j[0], _rule = j[1], _ruleOutput="";
+                                if (bw.typeOf(_name)=="array") {
+                                    s+= _name.join(",");
                                 }
-                                if (bw.typeOf(j[0])=="array")
-                                    s+= j[0].join(",") + tb(j[1]);
+                                else {
+                                    s+= String(_name);
+                                }
+                                // now we have the names e.g. ("h2" or "h2,.myClass") done we need to emit the rules
+                                switch( bw.typeOf(_rule)) {
+                                    case "array" :  // ["h2", ["color: black","left:20%"]] or [["h2",".myClass"], ["color: black","left:20%"]]
+                                        _ruleOutput = _rule.join(" "); 
+                                        break;
+                                    case "object" : //  ["h2", {color: "black", left:"20%"}] or [["h2",".myClass"], {color:black, left:"20%"}]
+                                        {
+                                            var x;
+                                            for (x in _rule) { _ruleOutput += (x + " :" + _rule[x]+";" )}
+                                        }
+                                        break;
+                                    case "string": // ["h2", "color: black"] or [["h2",".myClass"], "color:black"]
+                                    default:
+                                        rl = String(_rule);
+                                }
+                                s+= tb(_ruleOutput)+"\n";
+                                
                             }
+
                             break;
                         default:
                     }
@@ -2642,7 +2729,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     dopts = optsCopy(dopts,options);
 
-    var defContainer     = "{height: 100%;  width: 94%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n";
+    var defContainer     = "{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n";
     var defFontSerif     = "{font-family: Times New Roman, Times, serif;}\n";
     var defFontSansSerif = "{font-family: Arial, Helvetica, sans-serif }\n";
     
@@ -2711,6 +2798,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}\n";
     s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}\n";
     s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}\n";
+    s+= "@media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}\n";
     s+= "\n";
     
     if (bw.isNodeJS() == false) {
@@ -2732,7 +2820,7 @@ bw.depAttr.push["bwSimpleStyles"];
 
 bw.bwSimpleThemes = function (d,appendToHead) {
 /** 
-bw.bwSimpleThemes() selects simple (we I do mean simple) HTML themes for some basic elements.
+bw.bwSimpleThemes() selects simple (we do mean simple) HTML themes for some basic elements.
 if d is an number it selects the built-in theme by index (see docs) else if d is a dictionary the elements
 in d will be converted to a CSS style.
 
@@ -2938,7 +3026,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.00", 
+        "version"   : "1.2.2", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

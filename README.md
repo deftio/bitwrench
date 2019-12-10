@@ -15,6 +15,7 @@ bitwrench is a javascript library for useful demo hacking and misc kitchen sink 
 		* bw.DOM(".myClass",function(x){... do something on each element described by CSS selector .myClass})
 	* supports "deep" hieararchical JSON constructs and arrays
 	* registerFunction abilities allow functions to be passed statically to HTML elements (see docs)
+	* Useful as a "onefile" framework which an interpret rich JSON in to full web pages.  
 * **Color conversions and interpolation**
 	* RGB, RGBa, HSL, HSLa, and theme generation both as numeric values also as CSS outputs
 * **setting/getting cookies**   
@@ -50,7 +51,8 @@ npm install bitwrench --save
 
 ```javascript
 //usage in nodejs
-var bw = require('./bitwrench.js')["bw"];  //adds to current scope
+var bw = require('./bitwrench.js');  //adds to current scope
+var s = bw.html(["div",{"class":"foo"},"This is some  HTMLE"]); // now... ===> s = "<div class='foo'>This is some HTMLE</div>
 
 ```
 

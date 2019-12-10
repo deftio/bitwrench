@@ -51,6 +51,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
  	[ ] simple boolean search of text object.  (TBD: jado and frabjousmix support this)
  	[x] pad strings (used in logExport({exportFormat:"text"}))
  	[ ] bitwrench-server.js / bitwrench-server.php / bitwrench-server.py - simple server for receiving JSON encoded data
+ 	[ ] in options (bw.html) allow non-closed tags e.g. bw.html(["meta",{keywords:"foo, bar"},null,{tagClose:false}]) // default is tagClose:true
 
 
 ## packaging and todo
