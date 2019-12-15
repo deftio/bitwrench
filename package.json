@@ -21,7 +21,10 @@
 		"mocha": "^2.5.3"
 	},
 	"scripts": {
-		"test": "make test"
+		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && npm pack",
+		"test": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
+		"clean": "rm bitwrench*.tgz -f",
+		"lint": "./node_modules/.bin/eslint bitwrench.js"
 	},
 	"homepage": "http://deftio.com/bitwrench"
 }
