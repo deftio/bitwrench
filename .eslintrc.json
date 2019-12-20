@@ -20,6 +20,7 @@
         "semi": [
             "error",
             "always"
-        ]
+        ],
+        "allowEmptyCatch": true
     }
 }

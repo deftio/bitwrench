@@ -100,7 +100,7 @@
     }
     if (!fn.map) fn.map=function(f){var r=[];for(var i=0;i<this.length;i++)r.push(f(this[i]));return r;};
     if (!fn.filter) fn.filter=function(f){var r=[];for(var i=0;i<this.length;i++)if(f(this[i]))r.push(this[i]);return r;};
-    if (!String.prototype.trim) {String.prototype.trim = function () {  return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''); };}
+    if (!String.prototype.trim) {String.prototype.trim = function () {  return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ""); };}
 
 })(Array.prototype);
 // * /
@@ -112,20 +112,20 @@
         define([], factory); // eslint-disable-line no-undef
     } else if (typeof module === "object") {
                 
-        if ((typeof module !== 'object' ) || (typeof module !== "function") ) // this hack required for older versions of node
-            var m =require('module');
-        // Node. Does not work with strict CommonJS, but
-        // only CommonJS-like environments that support module.exports,
-        // like Node.
-        //console.log("node...");
-        var lib= factory();
-        module.exports=lib;
+        if ((typeof module !== "object" ) || (typeof module !== "function") ) // this hack required for older versions of node
+            // var m =require("module");
+            // Node. Does not work with strict CommonJS, but
+            // only CommonJS-like environments that support module.exports,
+            // like Node.
+            //console.log("node...");
+            var lib= factory();
+            module.exports=lib;
 
     } else {
         //console.log("browser..",root, typeof root);
         // Browser globals (root is window)
-        var lib = factory();
-        root[lib["exportName"]] = lib;
+        var libx = factory();
+        root[libx["exportName"]] = libx;
 
     }
 }(typeof self !== "undefined" ? self : this, function () { // note if needing requirements use ... (typeof self !== "undefined" ? self : this, function (myRequiredDependancyModule) 
@@ -198,7 +198,8 @@ bw.typeOf(x,true)   // "object"     ---> returns base object type
     if (x === null)
         return "null";
 
-    var y = (typeof x == "undefined") ? "undefined" : (({}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLocaleLowerCase()) 
+    var y = (typeof x == "undefined") ? "undefined" : (({ /*empty*/}).toString.call(x).match(/\s([a-zA-Z]+)/)[1].toLocaleLowerCase());
+
     if ((y != "object") && (y != "function"))
         return y;
     if (baseTypeOnly == true) // so if undefind or anything but true
@@ -208,7 +209,7 @@ bw.typeOf(x,true)   // "object"     ---> returns base object type
     try {
         r =  (x.constructor.name.toLocaleLowerCase() == y.toLocaleLowerCase()) ?  y : x.constructor.name;  // return object's name e.g.
     }
-    catch (e) {};
+    catch (e) {/*empty*/}
     return r;
 };
 
@@ -260,12 +261,12 @@ however typeConvert also allows functions (as apposed to typeAssign)
     if (_to(typeString) == "string")
         typeString = [typeString];
       
-    trueValue  = _to(trueValue)  == "function" ? function(a){return trueValue(a) } : trueValue;
-    falseValue = _to(falseValue) == "function" ? function(a){return falseValue(a)} : falseValue;
+    trueValue  = _to(trueValue)  == "function" ? function(a){return trueValue(a); } : trueValue;
+    falseValue = _to(falseValue) == "function" ? function(a){return falseValue(a);} : falseValue;
 
     return (typeString.indexOf(bw.typeOf(a)) >= 0) ? trueValue : falseValue;
-}
-var   _tc = bw.typeConvert;
+};
+//var   _tc = bw.typeConvert;
 bw.tc = bw.typeConvert;
 //===============================================
 // internally used function for options copy
@@ -295,14 +296,16 @@ bw.arrayBinA = function (a,b) {
     returns intersection elements of to simple arrays a and b
 */      
     return bw.arrayUniq(a.filter(function(n) { return b.indexOf(n) !== -1;}));
-}
+};
+
 bw.arrayBNotInA = function (a,b) {
 /** 
     arrayBNotinA(x)
     returns  elements of b not present in a
 */      
     return bw.arrayUniq(b.filter(function(n) { return a.indexOf(n) < 0;}));
-}
+};
+
 //===============================================
 
 bw.DOMIsElement = function(el) {
@@ -371,6 +374,7 @@ TODO:
                     break;
                 case "CSS" :
                     a = document.querySelectorAll(el);
+                    break;
                 default:  
                     a = document.querySelectorAll(el);
 
@@ -382,7 +386,7 @@ TODO:
 
     return r.filter(function(x){return bw.DOMIsElement(x);});
 };
-var _els = bw.DOMGetElements;
+//var _els = bw.DOMGetElements;
 
 // =============================================================================================
 bw.DOMSetElements = function(domElement,param) {
@@ -784,17 +788,18 @@ x = bw.getURLParam("bar","whatever") ==> returns "whatever" since bar isn't set
         return defaultValue; // note if defaultValue is undefined then result is still undefined. :)
     return params[key];
 };
-
+//=================================================
 bw.getURLParamDict = function (url) {
 /**
 bw.getURLParamDict(optionalString) 
 decode a URL encoded string in to a javascript dictionary
-if no string is supplied then it uses window.location.href (browser only)
+if no string is supplied then it uses window.location.href (in browser only)
 
  */
     if (_to(url) != "string") {
-        if (bw.isNodeJS() == true)
-            return {}
+        if (bw.isNodeJS() == true) {
+            return {/*empty*/};
+        }
         else url = location.href;
     }
     
@@ -824,12 +829,14 @@ if no string is supplied then it uses window.location.href (browser only)
             }
         });
   return result;
-}
+};
 
-function parseURLParam(name, url) {
+
+//============================================
+bw.parseURLParam = function (name, url) {
 if (_to(url) != "string") {
         if (bw.isNodeJS() == true)
-            return {}
+            {return {/*empty*/}; }
         else url = location.href;
     }
     
@@ -838,14 +845,15 @@ if (_to(url) != "string") {
 
     if(hash==-1 && question==-1) return {};
     if(hash==-1) hash = url.length;
-    var query = question==-1 || hash==question+1 ? url.substring(hash) : 
+    //var query = question==-1 || hash==question+1 ? url.substring(hash) : 
     url.substring(question+1,hash);
 
-    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    name = name.replace(/[/, '\\[').replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+    var urlString = ""; // need to finish this
     var results = regex.exec(urlString);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-}
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+};
 
 // crude performance measurements
 var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we always want a gbw gbw time :)
@@ -1181,6 +1189,7 @@ dicts not used at root because css can have multiple redundant selectors with di
 
     var s="\n";
     var tb = function (a) {a =(String(a)).trim(); a=(a[0]=="{"?" ":" {")+a; a+=(a[a.length]=="}"?"":"}")+"\n"; return a;};
+    var rl = "";
     try {
         switch (bw.typeOf(cssData)) {
             case "string":
@@ -1218,7 +1227,7 @@ dicts not used at root because css can have multiple redundant selectors with di
                                     case "object" : //  ["h2", {color: "black", left:"20%"}] or [["h2",".myClass"], {color:black, left:"20%"}]
                                         {
                                             var x;
-                                            for (x in _rule) { _ruleOutput += (x + " :" + _rule[x]+";" )}
+                                            for (x in _rule) { _ruleOutput += (x + " :" + _rule[x]+";" );}
                                         }
                                         break;
                                     case "string": // ["h2", "color: black"] or [["h2",".myClass"], "color:black"]
@@ -1239,7 +1248,7 @@ dicts not used at root because css can have multiple redundant selectors with di
                 s="";
         }
     }
-    catch (e) {bw.logd(e)}  //  eslint-disable-line no-empty
+    catch (e) {bw.logd(e);}  //  eslint-disable-line no-empty
     if (dopts["emitStyleTag"]) {
         s = bw.html(["style",dopts["atr"],s]);
     }
@@ -1273,7 +1282,7 @@ expects this form:
                     s+= cssData[0]+" {\n";
                     break;
                 case "array":
-                    s+= cssData[0].map(function(x){return x.toString()}).join(",");
+                    s+= cssData[0].map(function(x){return x.toString();}).join(",");
                     break;
                 default:
                     throw "makeCSSObjectLine type error in first argument";
@@ -1285,7 +1294,7 @@ expects this form:
                     s+= "  "+k+":"+cssData[1][k];
                     s+= dopts["emitCR"] ? "\n" : "";
                 }
-                s+= "}\n"
+                s+= "}\n";
             }
         }
     } catch(e) {
@@ -1293,7 +1302,7 @@ expects this form:
     }
     return s;
 
-}
+};
 // ===================================================================================
 //==================================================
 /**
@@ -1412,27 +1421,29 @@ bw.html_fc = function(x) {
             break;
         case "array":
             var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-            var m = (x.length > 5) ? 5 : x.length;
+            m = (x.length > 5) ? 5 : x.length;
             for (i=0; i< m; i++)   { 
-                console.log(idx[m][i] + ":" + x[i]);
+                bw.logd(idx[m][i] + ":" + x[i]);
                 n[idx[m][i]] = x[i];
             }
             for (i in n)
                 if (bw.isnu(n[i])) {
                     n = null;
-                    m = "HTML gen err: bad array"
+                    m = "HTML gen err: bad array";
                     break;
                 }
 
             break;
         case "function":  
+            var opts = {};
             n = bw.html_fc2(x(),opts); // evaluate and convert...
             break;
         default: // string, number, Date, bool, Regex 
             n.c =x.toString();
     }
     return n; 
-}
+};
+
 bw.HTMLNorm = function(x) {
 
     function bwHTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={};}
@@ -1458,7 +1469,7 @@ bw.HTMLNorm = function(x) {
             break;
         case "array":
             var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-            var m = (x.length > 5) ? 5 : x.length;
+            m = (x.length > 5) ? 5 : x.length;
             for (i=0; i< m; i++)   { 
                 console.log(idx[m][i] + ":" + x[i]);
                 n[idx[m][i]] = x[i];
