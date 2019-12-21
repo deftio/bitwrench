@@ -1189,7 +1189,7 @@ dicts not used at root because css can have multiple redundant selectors with di
 
     var s="\n";
     var tb = function (a) {a =(String(a)).trim(); a=(a[0]=="{"?" ":" {")+a; a+=(a[a.length]=="}"?"":"}")+"\n"; return a;};
-    var rl = "";
+    //var rl = "";
     try {
         switch (bw.typeOf(cssData)) {
             case "string":
@@ -1232,7 +1232,7 @@ dicts not used at root because css can have multiple redundant selectors with di
                                         break;
                                     case "string": // ["h2", "color: black"] or [["h2",".myClass"], "color:black"]
                                     default:
-                                        rl = String(_rule);
+                                        //rl = String(_rule);
                                 }
                                 s+= tb(_ruleOutput)+"\n";
                                 
@@ -1471,18 +1471,19 @@ bw.HTMLNorm = function(x) {
             var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
             m = (x.length > 5) ? 5 : x.length;
             for (i=0; i< m; i++)   { 
-                console.log(idx[m][i] + ":" + x[i]);
+                //console.log(idx[m][i] + ":" + x[i]);
                 n[idx[m][i]] = x[i];
             }
             for (i in n)
                 if (bw.isnu(n[i])) {
                     n = null;
-                    m = "HTML gen err: bad array"
+                    m = "HTML gen err: bad array";
                     break;
                 }
 
             break;
         case "function":  
+            var opts = {};
             n = bw.html_fc2(x(),opts); // evaluate and convert...
             n = _to(n)=="function" ? new bwError(n.toString(),"HTML Node error: function returned a function") : n;
             break;
@@ -1490,13 +1491,13 @@ bw.HTMLNorm = function(x) {
             n.c =x.toString();
     }
     return n; 
-}
+};
 //==================================================
 /**
     htmld -- html generator
     convert _accteptable_types_  ==> htmLJSON_dict
 
-*/
+
 bw.htmld = function(htmlJSON, opts) {
     var dopts = {               // def options note t_ a_ c_ o_ are options applied to the t, a, c, or o local keys directly
         t_close   : "auto",     // "auto" | "false" | "true"  ==> "auto" doesn't close certain tag decl such as !DOCTYPE, <br>
@@ -1505,12 +1506,12 @@ bw.htmld = function(htmlJSON, opts) {
         o_indent  : 4,          // default indent when pretty printing
         o_verbose : false,      // returns object instead of html string ==> {html: <htmloutput string>, stats: dict{}, status: "success" | "warnings"}
         c_htmlesc : true        // true | false  ==> escape html safe chars, replace "\n" with <br> etc
-    }
+    };
     
 
     dopts = optsCopy(dopts,opts);
 
-    var stk=[], i, d, h="", ind_s, ind_e; // ind_s, ind_e control pretty printing
+    var  i, d, h="", ind_s, ind_e; // ind_s, ind_e control pretty printing
 
     h="";
     d = bw.html_fc(htmlJSON); // now in dict form with state vector
@@ -1521,7 +1522,7 @@ bw.htmld = function(htmlJSON, opts) {
     d.s["level"]++;
     
     d.t = d.t.toString();  
-    d.a = (_to(d.a) == "object") ? d.a : {} // must be dict.  
+    d.a = (_to(d.a) == "object") ? d.a : {}; // must be dict.  
     d.c = (_to(d.c) == "array" ) ? d.c : (_to(d.c)=="object") ? html_fc(d.c) : d.c.toString(); 
     d.o = optsCopy(dopts,d.o);
 
@@ -1540,7 +1541,7 @@ bw.htmld = function(htmlJSON, opts) {
             h += bw.htmld(d.c,dopts);
             break;
         case "array":
-            h += d.c.map(function(x){ return bw.htmld(x,dopts)}).join("");
+            h += d.c.map(function(x){ return bw.htmld(x,dopts);}).join("");
             break;
         default:
             h+= d.c; 
@@ -1551,7 +1552,7 @@ bw.htmld = function(htmlJSON, opts) {
     d.s.html = h;
     return d;
 }
-
+*/
 // ===================================================================================
 bw.html = function (d,options) {
 /**  
@@ -1694,8 +1695,8 @@ listData is a single dim array of bw.html() compatible cnostructs
     if (bw.typeOf(listData) != "array")
         return bw.html(listData,options);
 
-    return listData.map( function(x) {return bw.html(x,options)}).join(""); 
-}
+    return listData.map( function(x) {return bw.html(x,options);}).join(""); 
+};
 
 // ===================================================================================
 bw.htmlList = function (listData, listType, atr, atri) {
@@ -1742,13 +1743,13 @@ classStrAddDel("class1 class2", "",class1) ==> "class2" //  removes class1
 classData, classesToAdd, classesToDel may be strings (space delimited) or arrays of strings (["c1", "c2"], ["c3", "c4"], ["c1"])
  */
  
-    var tnorm    = function(x){x=bw.toa(x,"undefined",[],x); return (bw.to(x)=="array")? x : x.toString().trim().split(/\s+/ig);}
+    var tnorm    = function(x){x=bw.toa(x,"undefined",[],x); return (bw.to(x)=="array")? x : x.toString().trim().split(/\s+/ig);};
     var c  = tnorm(classData);
     var ca = tnorm(classesToAdd);
     var cd = tnorm(classesToDel);
     return bw.arrayBNotInA(cd,c.concat(ca)).join(" ").trim().replace(/\s+/ig," ");
 
-}
+};
 // ===================================================================================
 bw.classStrToggle = function (classData, classesToToggle) {
 /** 
@@ -1758,11 +1759,11 @@ bw.classStrToggle = function (classData, classesToToggle) {
 
     takes a valid classData string e.g. "myclass1 myclass2" etc
 */
-    var tnorma    = function(x){x=bw.toa(x,"undefined",[],x); return (bw.to(x)=="array")? x : x.toString().trim().split(/\s+/ig);}
+    var tnorma    = function(x){x=bw.toa(x,"undefined",[],x); return (bw.to(x)=="array")? x : x.toString().trim().split(/\s+/ig);};
     var c   = tnorma(classData);
     var t   = tnorma(classesToToggle);
     return bw.classStrAddDel(classData,bw.arrayBNotInA(c,t),bw.arrayBinA(c,t));
-}
+};
 
 // ===================================================================================
 bw.htmlTabs = function(tabData, opts) {
@@ -1775,19 +1776,19 @@ tabData = [[tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-c
     if (tabData.length < 1)
         return "";
 
-    dopts = {
+    var dopts = {
         atr     : {"class":""},    //container {}
         tab_atr : {"class":""},    //attributs for each tab container
         tabc_atr: {"class":""},    //attributes for each tab-content area container
         indent  : "",            //indent string for pretty printing
         pretty  : false
-    }
+    };
     dopts = optsCopy(dopts,opts);
 
     var ti = tabData.map(function(x){return ["li",{"class":"bw-tab-item", "onclick":"bw.selectTabContent(this)"},x[0]];});
     var tc = tabData.map(function(x){return ["div",{"class":"bw-tab-content"},x[1]];});
     
-    ti[0][1]["class"] = bw.classStrAddDel(ti[0][1]["class"], "bw-tab-active")
+    ti[0][1]["class"] = bw.classStrAddDel(ti[0][1]["class"], "bw-tab-active");
     tc[0][1]["class"] = bw.classStrAddDel(tc[0][1]["class"], "bw-show");
 
     dopts["atr"     ]["class"] = bw.classStrAddDel (dopts["atr"     ]["class"],"bw-tab-container");
@@ -1903,17 +1904,18 @@ bw.htmlAccordian   = function (data, opts) {
         atr   : { "class":"bw-accordian-container"}, // div for overall accordian
         atr_h : { "onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"}, // div wrapping each header
         atr_c : {/*"onclick":"bw.DOMClassToggle(this,'bw-hide')",*/ "class":"bw-hide"} // div wrapping each content
-    }
+    };
     dopts = optsCopy(dopts,opts);
     dopts["atr_h"]["onclick"]="bw.DOMClassToggle(this.nextSibling, 'bw-hide')";
-    var fns = function(x){return (x==false) ? "bw-hide" : ""; } // converts x[2] in to class string 
+    //var fns = function(x){return (x==false) ? "bw-hide" : ""; } // converts x[2] in to class string 
     //var fc  = function(x,s){if ("class" in x){ x["class"] = } 
 
-    s = data.map(function(x){return bw.html(["div",dopts["atr_h"],x[0]])+bw.html(["div",dopts["atr_c"],x[1]])}).join("");
+    s = data.map(function(x){return bw.html(["div",dopts["atr_h"],x[0]])+bw.html(["div",dopts["atr_c"],x[1]]);}).join("");
     s = bw.html(["div",dopts["atr"],s]);
     return s;
-}
+};
 // =============================================================================================
+/*
 bw.htmlDataToImg = function(data, opts) {
 /**
     htmlDataToImg(data, opts) // takes a 2D array of numbers and render as an image
@@ -1931,7 +1933,7 @@ bw.htmlDataToImg = function(data, opts) {
         function (return 23)
         function(x,y) { return x+y;}
 
- */
+ * /
     var dopts = {
         outputType  : "canvas" ,  // "table" | "divs" | "svg"
         colorMode   : "auto",     // use greyscale map
@@ -1945,6 +1947,7 @@ bw.htmlDataToImg = function(data, opts) {
 
 
 }
+*/
 // =============================================================================================
 bw.naturalSort = function (as, bs){
 /** 
@@ -2724,7 +2727,8 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     }
 
  */
-    var s ="\n", m="",i,j,k,l,m;
+    var s ="\n", m="",i;
+    //var i,j,k,l;
     var _r = bw.fixNum;
     var dopts = {
         "globals"       : false,
@@ -2761,7 +2765,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         s+= ".bw-color-"+i+" {"+i+":" +dopts["colorset"][i]+"}\n";
     }
 
-    bw.makeCSS( dopts["themes"])
+    bw.makeCSS( dopts["themes"]);
     for (i=0; i< dopts["themes"].length; i++) {
         s+= bw.makeCSSObjectLine( dopts["themes"][i]);
         //s+= bw.makeCSS( dopts["themes"][i])
@@ -3029,7 +3033,7 @@ returns last element current toggle state.
         } catch(e) { bw.log(e);    }
     }
     return !r;
-}
+};
 // =============================================================================================
 bw.version  = function() {
 /** 
@@ -3037,7 +3041,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.2", 
+        "version"   : "1.2.3", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
