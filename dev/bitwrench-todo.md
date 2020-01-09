@@ -6,8 +6,8 @@ This list is used for internal ideas, housekeeping, checklists and notes
 
 ## features
 	[x] typeOf
-	[x] getURLParam
-	[x] buildHTMLObjecStr (note rename)
+	[o] getURLParam fails test case where URL param contains # character
+	[x] bw.html formelry buildHTMLObjecStr (note rename)
 		add pretty print option (prettyPrint : true) --> adds tabbed || space beginning, \n in output for readability.
 	[x] makeHTMLTable (also add sort, style examples)
 		[ ] support adding column headers to makeHTMLTable as option ==> {header_content: [,,,]}
@@ -22,7 +22,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 		settable tab widths (use padding:<width><units>)
 		allow prettyPrint of functions and member-functions
 		allow functions to print correctly
-	[x] find/set css class name on supplied element (bw.markElement)
+	[o] find/set css class name on supplied element (bw.markElement)  clean this up
 	[ ] encode/decode var info in to a CSS classname (see spannit.js)
 	[ ] find classes by encoded var name (returns array of hits)
 		note bw.markElement does some of this
@@ -52,11 +52,16 @@ This list is used for internal ideas, housekeeping, checklists and notes
  	[x] pad strings (used in logExport({exportFormat:"text"}))
  	[ ] bitwrench-server.js / bitwrench-server.php / bitwrench-server.py - simple server for receiving JSON encoded data
  	[ ] in options (bw.html) allow non-closed tags e.g. bw.html(["meta",{keywords:"foo, bar"},null,{tagClose:false}]) // default is tagClose:true
+ 	[ ] in options (bw.html) allow attribs with no value e.g. bw.html(["special tag", {type:"javascript", specialTag:null},null])
+ 	[ ] in options (bw.html) null for content means no content e.g.g <tag></tag>
+ 	[ ] in options (bw.html) tagSingle:true generates this <tag /> instead of <tag></tag> as long as content is null (attributes of course are allowed)
 
 
 ## packaging and todo
-	[ ] build script # currently using gnu make  --> migrate to gulp or webpack
+	[o] build script # currently using gnu make --> migrated to just using NPM
+	[ ] build script should fail building new package if either lint or tests fail (e.g. make script exit conditional)
 	[x] README.md
+	[ ] index.html should be auto-gen'd from README.md (but include bitwrench.js)
 	[x] npm register
 	[x] npm install 
 	[x] minify (yes, using uglifyjs)
@@ -73,12 +78,12 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] deftio.com/bitwrench pages  ==> move to deftio/opensource/bitwrench ?
 	[x] build notes
 	[x] rename to bitwrench
+	[ ] npm release (already an npm package)
 	[ ] support inline logo for example favicons: <img src="data:image/png;base64,base64encoded images" /> 
-
+	[ ] full UMD support (cjs / require / AMD / import / browser)
 
 ## Issues and clean up
- 	* require ("...bitwrench") ==> needs fixing
-	* bw.bwSimpleThemes has cosmetic issues
+ 	* bw.bwSimpleThemes has cosmetic issues
 	* repeatUntil usabilitiy issues
 	* make internal function for commonly used:
 		a = bw.typeOf(a) == "type" ? true_value : false_value
@@ -185,7 +190,7 @@ el.className.replace("bw-col", "bw-none");
 
 ## doc notes:
 document how to "mannually" set up tabs
-makesure bw doesn't try to "append to head" any code if in nodejs
+make sure bw doesn't try to "append to head" any code if in nodejs
 
 
 ## Themes

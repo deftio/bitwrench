@@ -40,6 +40,7 @@
 //var bw = require('./bitwrench.js')["bw"];  //adds to current scope
 
  // optional polyfill for IE8 and earlier
+ "use strict";
 (function(fn){
     /*
     //node.textContent
@@ -104,7 +105,7 @@
 
 })(Array.prototype);
 // * /
-
+"use strict";
 (function (root, factory) {
     if (typeof define === "function" && define.amd) { // eslint-disable-line no-undef
         // AMD. Register as an anonymous module.
@@ -166,7 +167,8 @@ bw.jsonClone(object)
 
 crude deep copy by value of an object as long as no js dates or functions
  */
-    return JSON.decode(JSON.encode(x));
+    return JSON.parse(JSON.stringify({1:2}))
+
 };
 
 
@@ -230,9 +232,12 @@ can also supply list of types
 bw.typeAssign(23,["string","number"], "string or num", "something else") ==> "string or num"
 bw.typeAssign(true,["string","number"], "string or num", "something else") ==> "something else"
  */
+    if (["string","array"].indexOf(_to(typeString)) == -1) // typeString must be a string or an arrag or strings
+        return falseValue;
+
     if (_to(typeString) == "string")
         typeString = [typeString];
-    
+
     return (typeString.indexOf(bw.typeOf(a)) >= 0) ? trueValue : falseValue;
 };
 
@@ -3041,7 +3046,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.3", 
+        "version"   : "1.2.4", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

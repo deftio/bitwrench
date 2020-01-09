@@ -165,7 +165,25 @@ bw.html_fcOld = function(x) {
 
 //====================================
 
-bw.htmld = function(htmlJSON, opts) {
-    
+
+bw.htmlFromDict = function(htmlDict, opts) {
+/**
+    must be of form 
+    t ==> tag
+    a ==> attrib
+    c ==> content
+    o ==> options
+    s ==> state
+
+    htmldict
+    { 
+        tag: "tagValue",
+        attrib : {},
+        content : [],    // each member must be: string or htmlDict or null.  other values cast to string.
+        options : {},
+        state : {}   
+     }
+*/
+
 }
 

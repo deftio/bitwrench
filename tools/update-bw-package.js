@@ -21,12 +21,16 @@ process.argv[3] --> output_filename
 
 */
 
-
-if ((bw.typeOf(process.argv[2]) == "string") && (bw.typeOf(process.argv[3]) == "string")) {
-	function savePackage(data) {
-		data["version"] = bw.version()["version"]
-		bw.saveClientFile(process.argv[3],JSON.stringify(data, null, "\t"));
+if (process.argv.length <=2) {
+	console.log("update-bw-package: no arguments supplied (no operations performed).  \nThis tool updates the version number in package.json\n\n");
+	console.log("usage:\n ./udpate-bw-package original-package.json updated.json\n\n");
+}
+else {
+	if ((bw.typeOf(process.argv[2]) == "string") && (bw.typeOf(process.argv[3]) == "string")) {
+		var savePackage = function (data) {
+			data["version"] = bw.version()["version"];  // get bitwrench version from itself... 
+			bw.saveClientFile(process.argv[3],JSON.stringify(data, null, "\t")); // use bitwrench internal file ops to write json file back
+		}
+		bw.getJSONFile(process.argv[2], savePackage); // use bitwrench internal ops to fetch original json file
 	}
-	bw.getJSONFile(process.argv[2], savePackage);
-
 }

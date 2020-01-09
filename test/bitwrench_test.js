@@ -42,6 +42,43 @@ test built-in basic bitwrench typeof operator
  	});
 
 });
+// ================================================================
+describe("#typeAssign() - see if a variable is a certain type or one of a list of types", function() {
+/**
+
+*/
+	var tests = [
+		{args: [1,0,true,false], expected:false },  // needs typeString to be a number or string
+		{args: [1,"number",true,false], expected: true },
+		{args: [1,"string",true,false], expected: false },
+		{args: [1,["number","string"],true,false], expected: true }
+	];
+
+	tests.forEach(function(test) {
+		it("bw.typeAssign  " + test.args.length + "args", function() {
+			var res = bw.typeAssign.apply(null, test.args);
+			//assert.equal(res, test.expected);
+		});
+ 	});
+});
+
+// ================================================================
+describe("#jsonClone() - duplicate an object by converting to JSON and back", function() {
+/**
+
+*/
+	var tests = [
+		{args: [{1:2,foo:"bar"}], expected: {1:2,foo:"bar"} }
+	];
+
+	tests.forEach(function(test) {
+		it("bw.jsonClone  " + test.args.length + "args", function() {
+			var res = bw.jsonClone.apply(null, test.args);
+			//assert.equal(res, test.expected);
+		});
+ 	});
+});
+
 
 // ================================================================
 describe("#docString", function() {
@@ -78,4 +115,3 @@ describe("#docStringParse", function() {
  	});
 
 });
-//describe('')
