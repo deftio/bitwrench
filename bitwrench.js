@@ -37,7 +37,7 @@
 //<script type="text/javascript" src="./bitwrench.js"></script>
 
 //usage in nodejs
-//var bw = require('./bitwrench.js')["bw"];  //adds to current scope
+//var bw = require('./bitwrench.js');  //adds to current scope in nodejs
 
  // optional polyfill for IE8 and earlier
  "use strict";
@@ -103,9 +103,9 @@
     if (!fn.filter) fn.filter=function(f){var r=[];for(var i=0;i<this.length;i++)if(f(this[i]))r.push(this[i]);return r;};
     if (!String.prototype.trim) {String.prototype.trim = function () {  return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ""); };}
 
-})(Array.prototype);
+})(Array.prototype); // end polyfills
 // * /
-"use strict";
+
 (function (root, factory) {
     if (typeof define === "function" && define.amd) { // eslint-disable-line no-undef
         // AMD. Register as an anonymous module.
@@ -119,17 +119,20 @@
             // only CommonJS-like environments that support module.exports,
             // like Node.
             //console.log("node...");
-            var lib= factory();
-            module.exports=lib;
+            var libm= factory();
+            libm.exportModuleType = "module.exports";
+            module.exports=libm;
 
     } else {
         //console.log("browser..",root, typeof root);
         // Browser globals (root is window)
-        var libx = factory();
-        root[libx["exportName"]] = libx;
+        var libg = factory();
+        libg.exportModuleType="global"; 
+        root[libg["exportName"]] = libg;
 
     }
 }(typeof self !== "undefined" ? self : this, function () { // note if needing requirements use ... (typeof self !== "undefined" ? self : this, function (myRequiredDependancyModule) 
+"use strict";
     // Use b in some fashion.
 
     // Just return a value to define the module export.
@@ -137,9 +140,7 @@
     // can return a function as the exported value.
     var bw = {};
     bw.exportName = "bw"; // 
-//(function(bw){ old way
-
-"use strict";
+    bw.exportModuleType = "AMD"; //default export see UMD wrapper above for more info this.  it allows the consumer to know how this was loaded.
 
 //deprated attributes / names
 bw.depAttr = [];
@@ -149,14 +150,17 @@ bw.choice    = function (x,choices,def) {
 /** 
 bw.choice(x,choices-dictionary, default) 
 
+
 Allows a dictionary to be used as a switch statement, including functions.
 
 example:
-    colors = {"red": 1, "blue": 2};
+    colors = {"red": 1, "blue": 2, "aqua" : function(z){return z+"marine"}};
     bw.choice("red",colors,"0")   ==> "1"
     bw.choice("shiny",colors,"0") ==> "0"
+    bw.choice("aqua",colors)      ==> "aquamarine"
  */
-    return (x in choices) ? choices[x] : def;
+    var z = (x in choices) ? choices[x] : def;
+    return _to(z) == "function" ? z(x) : z;  
 };   
 
 
@@ -167,8 +171,7 @@ bw.jsonClone(object)
 
 crude deep copy by value of an object as long as no js dates or functions
  */
-    return JSON.parse(JSON.stringify({1:2}))
-
+    return JSON.parse(JSON.stringify(x));
 };
 
 
@@ -233,7 +236,7 @@ bw.typeAssign(23,["string","number"], "string or num", "something else") ==> "st
 bw.typeAssign(true,["string","number"], "string or num", "something else") ==> "something else"
  */
     if (["string","array"].indexOf(_to(typeString)) == -1) // typeString must be a string or an arrag or strings
-        return falseValue;
+        typeString = "notValidType"
 
     if (_to(typeString) == "string")
         typeString = [typeString];
@@ -261,20 +264,25 @@ can also supply list of types
 bw.typeConvert(23,["string","number"], "string or num", "something else") ==> "string or num"
 bw.typeConvert(true,["string","number"], "string or num", "something else") ==> "something else"
 
+bw.typeConvert(23,["string","number"],function(x){return x+1},function(){return function(x){return x+2}})}) ==> 24
+
+bw.typeConvert(23,["string"],function(x){return x+1},function(){return function(x){return x+2;}})}) ==> function(x){return x+2;}
+
 however typeConvert also allows functions (as apposed to typeAssign)
 */
+    if (["string","array"].indexOf(_to(typeString)) == -1) // typeString must be a string or an arrag or strings
+        typeString = "notValidType"
+
     if (_to(typeString) == "string")
         typeString = [typeString];
       
-    trueValue  = _to(trueValue)  == "function" ? function(a){return trueValue(a); } : trueValue;
-    falseValue = _to(falseValue) == "function" ? function(a){return falseValue(a);} : falseValue;
-
-    return (typeString.indexOf(bw.typeOf(a)) >= 0) ? trueValue : falseValue;
+    return (typeString.indexOf(bw.typeOf(a)) >= 0) ? (_to(trueValue)  == "function") ? trueValue(a) : trueValue : ( _to(falseValue) == "function") ? falseValue(a): falseValue;
 };
 //var   _tc = bw.typeConvert;
 bw.tc = bw.typeConvert;
 //===============================================
 // internally used function for options copy
+// keys in opts are copied to dopts (or overwrite options in dopts)
 var optsCopy = function(dopts,opts) {
     if ((_to(opts) == "object") && (_to(dopts)=="object")) {
         var i;
