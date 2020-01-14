@@ -243,7 +243,8 @@ describe("#colorHslToRgb(h, s, l, a - convert HSL color space to RGB ", function
 
 */
 	var tests = [
-		{args: [120,100,50,128], expected:[0,255,0,128,"rgb"] } 
+		{args: [120,100,50,128], expected:[0,255,0,128,"rgb"] } ,
+		{args: [[0,0,75,128]], expected:[191,191,191,128,"rgb"] } 
 	];
 
 	var crnd = function(a){return [Math.round(a[0]),Math.round(a[1]),Math.round(a[2]),Math.round(a[3]),a[4] ];}
@@ -264,7 +265,8 @@ describe("#colorRgbToHsl(r, g, b, a - convert HSL color space to RGB ", function
 
 */
 	var tests = [
-		{args: [0,255,0,100], expected:[120,100,50,100,"hsl"] } 		
+		{args: [0,255,0,100], expected:[120,100,50,100,"hsl"] },
+		{args: [[191,191,191,100]], expected:[0,0,75,100,"hsl"] } 		 		
 	];
 	
 	var hrnd = function(a){return [Math.round(a[0]*360),bw.fixNum(a[1],2),bw.fixNum(a[2],2),Math.round(a[3]),a[4] ];}
