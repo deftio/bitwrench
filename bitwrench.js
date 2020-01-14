@@ -292,7 +292,6 @@ var optsCopy = function(dopts,opts) {
     return dopts;
 };
 // ===================================================================================
-
 bw.arrayUniq =  function (x){
 /** 
     arrayUniq(x)
@@ -308,6 +307,8 @@ bw.arrayBinA = function (a,b) {
     arrayBinA(x)
     returns intersection elements of to simple arrays a and b
 */      
+    if ((_to(a)!="array") || (_to(b)!== "array"))
+        return [];
     return bw.arrayUniq(a.filter(function(n) { return b.indexOf(n) !== -1;}));
 };
 
@@ -316,6 +317,8 @@ bw.arrayBNotInA = function (a,b) {
     arrayBNotinA(x)
     returns  elements of b not present in a
 */      
+    if ((_to(a)!="array") || (_to(b)!== "array"))
+        return [];
     return bw.arrayUniq(b.filter(function(n) { return a.indexOf(n) < 0;}));
 };
 
@@ -324,7 +327,8 @@ bw.arrayBNotInA = function (a,b) {
 bw.DOMIsElement = function(el) {
 /**
 @method bw.DOMIsElement() - returns whether a supplied element is a HTML DOM element. only useful in browser,
- */    var r = false;
+ */    
+    var r = false;
     try {
         if(_to(el)== "undefined")
             return r;
@@ -347,9 +351,10 @@ bw.DOMGetElements = function (el, type) {
 /**
 @method DOMGetElements(el, type) returns an array of DOM elements (if running in browser)   
 
-@param {string | DOM_node} el - if string uses CSS selector other wise if DOM element returns itself
+@param {string | DOM_node} el - if string uses CSS selector other wise if already a DOM element returns itself
 @return an js array of zero or more matching DOM nodes
 
+DOMGetElements always looks in the root.
 
 */
 
@@ -414,7 +419,6 @@ bw.DOMSetElements = function(domElement,param) {
     if (els==[])
         bw.log("dom element not found");
 
-    
     var i,l,e, ef = function(x,p){bw.log(x,p);};
     for (l=0; l<els.length; l++) {
         e = els[l];
@@ -450,24 +454,24 @@ bw.DOMSetElements = function(domElement,param) {
     return els;
 };
 
-bw.DOM = bw.DOMSetElements;
+bw.DOM = bw.DOMSetElements; //short hand
 
 // =============================================================================================
 /** 
 bitwrench: color functions (used for theming and interpolations)
 
-bitwrench functons operate using this internal color representation model:
+bitwrench color functons operate using this internal color representation model:
 [c0, c1, c2, alpha, model]  
 where c0, c1, c2 are model dependant
 alpha represents the transperancy
-model is a color model string (lowercase) rgb, or hsl (compatible with HTML/CSS colors)
+model is a color model string (lowercase) "rgb", or "hsl" (compatible with HTML/CSS colors)
 
 colorParse() ==> take an input color of anymodel and output a bw [c0,c1,c2,a,m] array
 */
 bw.colorInterp = function(x, in0, in1, colors, stretch) {
 /**
 @method colorInterp (x, lo, hi, colors[], stretch) - interpolate between and array of colors.  
-    x is a value between in0, in1
+    x is a number between the numbers in0 <= x <=  in1
     colors is an array of colors supplied in rgb format e.g. ["#123", "#234"]
     colors can be anylength 
 */
@@ -487,7 +491,7 @@ bw.colorInterp = function(x, in0, in1, colors, stretch) {
 
 
 // =============================================================================================
-bw.colorHslToRgb = function (h, s, l, a){
+bw.colorHslToRgb = function (h, s, l, a, rnd){
 /**
 @method colorHslToRgb
 Converts an HSL color value to RGB. Conversion formula
@@ -495,39 +499,69 @@ adapted from http://en.wikipedia.org/wiki/HSL_color_space.
 Assumes h, s, and l are contained in the set [0, 1].  Note to convert h from degrees use (h_degrees/360)
 returns r, g, and b in the set [0, 255].
 
-@param   {number}  h       The hue [0..1]
-@param   {number}  s       The saturation [0..1]
-@param   {number}  l       The lightness [0..1]
-@return  {Array}           The RGB representation
+@param   {number}  h       The hue [0..360]
+@param   {number}  s       The saturation [0..100]
+@param   {number}  l       The lightness [0..100]
+@return  {Array}           The RGB representation as [r, g, b, alpha, "rgb"]
 
-https://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
+see : adapted from  http://hsl2rgb.nichabi.com/javascript-function.php 
+
  */    
-    var r, g, b;
-
-    if(s == 0){
-        r = g = b = l; // achromatic
-    }else{
-        var hue2rgb = function (p, q, t){
-            if(t < 0) t += 1;
-            if(t > 1) t -= 1;
-            if(t < 1/6) return p + (q - p) * 6 * t;
-            if(t < 1/2) return q;
-            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-            return p;
-        };
-
-        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        var p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
+    if (bw.typeOf(h)=="array") { // handles colors of [h,s,l,a,"hsl"]
+        s=h[1];
+        l=h[2];
+        a=h[3];
+        h=h[0]; //do this last so it doesn't overwrite iself
     }
-    var _fn = function(x){return bw.clip(Math.round(x),0,255);};
-    return [_fn(r), _fn(g), _fn(b), a, "rgb"];
+    var _fn = rnd == false ? function(x){return x} : function(x){return bw.clip(Math.round(x),0,255);} ;
+   
+    var r,g,b,c,x,m;
+    h = (h+360)%360;
+    h /= 60
+    if (h < 0) h = 6 - (-h % 6)
+    h %= 6
+
+    s = Math.max(0, Math.min(1, s / 100))
+    l = Math.max(0, Math.min(1, l / 100))
+
+    c = (1 - Math.abs((2 * l) - 1)) * s
+    x = c * (1 - Math.abs((h % 2) - 1))
+
+    if (h < 1) {
+        r = c
+        g = x
+        b = 0
+    } else if (h < 2) {
+        r = x
+        g = c
+        b = 0
+    } else if (h < 3) {
+        r = 0
+        g = c
+        b = x
+    } else if (h < 4) {
+        r = 0
+        g = x
+        b = c
+    } else if (h < 5) {
+        r = x
+        g = 0
+        b = c
+    } else {
+        r = c
+        g = 0
+        b = x
+    }
+
+    m = l - c / 2
+    r = (r + m) * 255;
+    g = (g + m) * 255;
+    b = (b + m) * 255;
+    return [_fn(r),_fn(g),_fn(b),a,"rgb"];
 };
 
 // =============================================================================================
-bw.colorRgbToHsl = function (r, g, b, a) {
+bw.colorRgbToHsl = function (r, g, b, a, rnd) {
 /**
 Converts an RGB color value to HSL. Conversion formula
 adapted from http://en.wikipedia.org/wiki/HSL_color_space.
@@ -539,6 +573,13 @@ returns h, s, and l in the set [0, 1].
 @param   {number}  b       The blue color value
 @return  {Array}           The HSL representation
 */
+    if (bw.typeOf(r)=="array") { // handles colors of [h,s,l,a,"hsl"]
+        g=r[1];
+        b=r[2];
+        a=r[3];
+        r=r[0]; //do this last so it doesn't overwrite iself
+    }
+
     r /= 255, g /= 255, b /= 255;
     var max = Math.max(r, g, b), min = Math.min(r, g, b);
     var h, s, l = (max + min) / 2;
@@ -555,7 +596,8 @@ returns h, s, and l in the set [0, 1].
         }
         h /= 6;
     }
-    return [h, s, l, a, "hsl"];
+    var _fn = rnd == false ? function (x){return x} : function(x){return Math.round(x)} ;
+    return [_fn(h*360), _fn(s*100), _fn(l*100), a, "hsl"];
 };    
 
 // =============================================================================================
@@ -564,7 +606,8 @@ bw.colorParse = function(s,defAlpha) {
 /**
 @method bw.colorParse(s)
 
-@description take a valid CSS style color string: #rgb | #rgba | #rrggbb | #rrggbbaa | rgb(r,g,b) | rgb(r,g,b,a) | hsl(h,s,l) | hsla(h,s,l,a )  ... and return array [c0,c1,c2,a,model] where model is one of rgb, hsl
+@description take a valid CSS style color string: #rgb | #rgba | #rrggbb | #rrggbbaa | rgb(r,g,b) | rgb(r,g,b,a) | hsl(h,s,l) | hsla(h,s,l,a )  
+... and return array [c0,c1,c2,a,model] where model is one of "rgb", "hsl"
 */
     defAlpha = _toa(defAlpha,"number",defAlpha,255);
     var r = [0,0,0,defAlpha,"rgb"]; // always return a valid type 
@@ -2115,7 +2158,8 @@ In this case in the static code call like this:
 <div class="..." onclick="bw.funcGetById('myFnName')(this)"> regular html content goes here  </div>
 <script ..>
 function superDuperFunctionCode (a) { .... code for my function ... };
-bw.funcRegister(superDuperFunctionCode,"myFnName");  
+bw.funcRegister(superDuperFunctionCode,"myFnName");  //now when the element is clicked on superDuperFunctionCode() will be called.
+</script>
 
  */
     var fnID = "class_bwfn_" + _fnIDCounter; 
