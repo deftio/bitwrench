@@ -41,7 +41,8 @@
 
  // optional polyfill for IE8 and earlier
  "use strict";
-(function(fn){
+ /* istanbul ignore next */ 
+(function(fn){ // this is a polyfill for IE7/IE8
     /*
     //node.textContent
     // Source: Eli Grey @ https://eligrey.com/blog/post/textcontent-in-ie8
@@ -283,7 +284,8 @@ bw.tc = bw.typeConvert;
 //===============================================
 // internally used function for options copy
 // keys in opts are copied to dopts (or overwrite options in dopts)
-var optsCopy = function(dopts,opts) {
+var optsCopy =  function(dopts,opts) {
+     /* istanbul ignore next */ 
     if ((_to(opts) == "object") && (_to(dopts)=="object")) {
         var i;
         for (i in opts)
@@ -323,7 +325,7 @@ bw.arrayBNotInA = function (a,b) {
 };
 
 //===============================================
-
+ /* istanbul ignore next */ 
 bw.DOMIsElement = function(el) {
 /**
 @method bw.DOMIsElement() - returns whether a supplied element is a HTML DOM element. only useful in browser,
@@ -346,7 +348,9 @@ bw.DOMIsElement = function(el) {
 };
 
 var _isEl = bw.DOMIsElement;
+
 //===============================================
+ /* istanbul ignore next */ 
 bw.DOMGetElements = function (el, type) {
 /**
 @method DOMGetElements(el, type) returns an array of DOM elements (if running in browser)   
@@ -407,6 +411,7 @@ TODO:
 //var _els = bw.DOMGetElements;
 
 // =============================================================================================
+ /* istanbul ignore next */ 
 bw.DOMSetElements = function(domElement,param) {
 /**
 @method DOMSetElements(domElement, param) sets DOM elements with the supplied (optional) params 
@@ -502,6 +507,13 @@ returns r, g, and b in the set [0, 255].
 @param   {number}  h       The hue [0..360]
 @param   {number}  s       The saturation [0..100]
 @param   {number}  l       The lightness [0..100]
+
+OR...
+
+pass the colors as a bitwrench color array as a single parameter:
+
+colorHslToRgb([h,s,l,a,"hsl"])
+
 @return  {Array}           The RGB representation as [r, g, b, alpha, "rgb"]
 
 see : adapted from  http://hsl2rgb.nichabi.com/javascript-function.php 
@@ -571,6 +583,10 @@ returns h, s, and l in the set [0, 1].
 @param   {number}  r       The red color value
 @param   {number}  g       The green color value
 @param   {number}  b       The blue color value
+
+pass the colors as a bitwrench color array as a single parameter:
+colorRgbToHsl([h,s,l,a,"rgb"])
+
 @return  {Array}           The HSL representation
 */
     if (bw.typeOf(r)=="array") { // handles colors of [h,s,l,a,"hsl"]
@@ -1099,7 +1115,8 @@ bw.setIntervalX(callbackFn, delayBtwCalls, repetitions)
 set a javascript timer to only run a max of N repetions.
 
 Example:
-    bw.setIntervalX(function(x){console.log(x)},100,5)
+    bw.setIntervalX(function(x){console.log(x)},100,5) 
+    this will the function 5 times 100ms apart
  */
     var x = 0;
     var intervalID = setInterval(function () {

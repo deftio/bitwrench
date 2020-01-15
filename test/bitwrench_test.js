@@ -240,7 +240,7 @@ describe("#colorInterp((x, in0, in1, colors, stretch) - interpolate a value from
 
 describe("#colorHslToRgb(h, s, l, a - convert HSL color space to RGB ", function() {
 /**
-
+	test conversion of HSL colors to RGB
 */
 	var tests = [
 		{args: [120,100,50,128], expected:[0,255,0,128,"rgb"] } ,
@@ -262,7 +262,7 @@ describe("#colorHslToRgb(h, s, l, a - convert HSL color space to RGB ", function
 
 describe("#colorRgbToHsl(r, g, b, a - convert HSL color space to RGB ", function() {
 /**
-
+ test conversion of RGB style colors to HSL
 */
 	var tests = [
 		{args: [0,255,0,100], expected:[120,100,50,100,"hsl"] },
@@ -280,6 +280,28 @@ describe("#colorRgbToHsl(r, g, b, a - convert HSL color space to RGB ", function
  	});
 });
 
+describe("#colorParse(colorToParseString, defaultAlpha - parse a color object e.g. #abc or HSL(12,3,43,0.3) to a bitwrench color array [,,,] ", function() {
+/**
+
+*/
+	var tests = [
+		{args: ["#abc"], expected:[170, 187, 204, 255, "rgb"] },
+		{args: ["#abc",255], expected:[170, 187, 204, 255, "rgb"] },
+		{args: ["#abcd"], expected:[170, 187, 204, 221, "rgb"] },
+		{args: ["#AABBCC"], expected:[170, 187, 204, 255, "rgb"] },
+		{args: ["hsl(12,34,45,100)"], expected:[12,34,45,100,"hsl"] },
+		{args: ["	hsl ( 12 ,	34, 45,	100  )"], expected:[12,34,45,100,"hsl"] } 		 		 		 		
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.colorParse  " + test.args.length + "args", function() {
+			var res = bw.colorParse.apply(null, test.args);
+			//res = hrnd(res);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
 
 // ================================================================
 describe("#docString", function() {
