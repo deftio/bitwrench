@@ -290,7 +290,10 @@ describe("#colorParse(colorToParseString, defaultAlpha - parse a color object e.
 		{args: ["#abcd"], expected:[170, 187, 204, 221, "rgb"] },
 		{args: ["#AABBCC"], expected:[170, 187, 204, 255, "rgb"] },
 		{args: ["hsl(12,34,45,100)"], expected:[12,34,45,100,"hsl"] },
-		{args: ["	hsl ( 12 ,	34, 45,	100  )"], expected:[12,34,45,100,"hsl"] } 		 		 		 		
+		{args: ["	hsl ( 12 ,	34, 45,	100  )"], expected:[12,34,45,100,"hsl"] },
+		{args: [[0xaa,0xbb,0xcc]], expected: [0xaa,0xbb,0xcc,0xff,"rgb"]},
+		{args: [[10,20,30,40,"rgb"]], expected: [10,20,30,40,"rgb"]},
+		{args: [[300,20,30,50,"hsl"]], expected: [300,20,30,50,"hsl"]}	 		 		 		
 	];
 	
 	
@@ -299,6 +302,51 @@ describe("#colorParse(colorToParseString, defaultAlpha - parse a color object e.
 			var res = bw.colorParse.apply(null, test.args);
 			//res = hrnd(res);
 			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
+
+describe("#colorConvertColorSpace( convert a color from one space to another)", function() {
+/**
+ test conversion of RGB style colors to HSL
+*/
+	var tests = [
+		{args: [[0,255,0,100,"rgb"],"hsl"], expected:[120,100,50,100,"hsl"] },
+		{args: [[0,255,0,100,"rgb"],"rgb"], expected:[0,255,0,100,"rgb"] },
+		{args: [[120,100,50,111,"hsl"],"rgb"], expected:[0,255,0,111,"rgb"] }, 		 		
+		{args: [[120,100,50,111,"hsl"],"hsl"], expected:[120,100,50,111,"hsl"] } 		 		
+	];
+	
+	var hrnd = function(a){return [Math.round(a[0]*360),bw.fixNum(a[1],2),bw.fixNum(a[2],2),Math.round(a[3]),a[4] ];}
+	
+	tests.forEach(function(test) {
+		it("bw.colorConvertColorSpace  " + test.args.length + "args", function() {
+			var res = bw.colorConvertColorSpace.apply(null, test.args);
+			//res = hrnd(res);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
+
+describe("#getURLParamDict(url, optKey, OptDefValue - parse URL query string (must have ? present) to get values", function() {
+/**
+ test conversion of RGB style colors to HSL
+*/
+	var tests = [
+		{args: ["http://bar.com:80?foo=bar&x=#234&y=#45"], expected:{foo:"bar",x:"#234",y:"#45"} },
+		{args: ["?a=123&b=234","a"], expected:"123" },
+		{args: ["?a=123&b=234","c"], expected: undefined },
+		{args: ["?a=123&b=234","c","def"], expected:"def" }
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.getURLParamDict  " + test.args.length + "args", function() {
+			var res = bw.getURLParamDict.apply(null, test.args);
+			if (typeof res == "string")
+				assert.equal(res, test.expected);
+			else
+				assert.deepEqual(res, test.expected);
 		});
  	});
 });

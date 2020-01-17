@@ -237,7 +237,7 @@ bw.typeAssign(23,["string","number"], "string or num", "something else") ==> "st
 bw.typeAssign(true,["string","number"], "string or num", "something else") ==> "something else"
  */
     if (["string","array"].indexOf(_to(typeString)) == -1) // typeString must be a string or an arrag or strings
-        typeString = "notValidType"
+        typeString = "notValidType";
 
     if (_to(typeString) == "string")
         typeString = [typeString];
@@ -272,7 +272,7 @@ bw.typeConvert(23,["string"],function(x){return x+1},function(){return function(
 however typeConvert also allows functions (as apposed to typeAssign)
 */
     if (["string","array"].indexOf(_to(typeString)) == -1) // typeString must be a string or an arrag or strings
-        typeString = "notValidType"
+        typeString = "notValidType";
 
     if (_to(typeString) == "string")
         typeString = [typeString];
@@ -500,8 +500,8 @@ bw.colorHslToRgb = function (h, s, l, a, rnd){
 /**
 @method colorHslToRgb
 Converts an HSL color value to RGB. Conversion formula
-adapted from http://en.wikipedia.org/wiki/HSL_color_space.
-Assumes h, s, and l are contained in the set [0, 1].  Note to convert h from degrees use (h_degrees/360)
+
+Assumes h is [0..360] ,  s, and l are contained in the set [0 .. 100].
 returns r, g, and b in the set [0, 255].
 
 @param   {number}  h       The hue [0..360]
@@ -516,6 +516,8 @@ colorHslToRgb([h,s,l,a,"hsl"])
 
 @return  {Array}           The RGB representation as [r, g, b, alpha, "rgb"]
 
+last parameter rnd rounds the results to 0..255.  set to false to eliminate rounding.  This can be useful for chained calcs
+
 see : adapted from  http://hsl2rgb.nichabi.com/javascript-function.php 
 
  */    
@@ -525,47 +527,35 @@ see : adapted from  http://hsl2rgb.nichabi.com/javascript-function.php
         a=h[3];
         h=h[0]; //do this last so it doesn't overwrite iself
     }
-    var _fn = rnd == false ? function(x){return x} : function(x){return bw.clip(Math.round(x),0,255);} ;
+    var _fn = rnd == false ? function(x){return x;} : function(x){return bw.clip(Math.round(x),0,255);} ;
    
     var r,g,b,c,x,m;
     h = (h+360)%360;
-    h /= 60
-    if (h < 0) h = 6 - (-h % 6)
-    h %= 6
+    h /= 60;
+    if (h < 0) h = 6 - (-h % 6);
+    h %= 6;
 
-    s = Math.max(0, Math.min(1, s / 100))
-    l = Math.max(0, Math.min(1, l / 100))
+    s = Math.max(0, Math.min(1, s / 100));
+    l = Math.max(0, Math.min(1, l / 100));
 
-    c = (1 - Math.abs((2 * l) - 1)) * s
-    x = c * (1 - Math.abs((h % 2) - 1))
+    c = (1 - Math.abs((2 * l) - 1)) * s;
+    x = c * (1 - Math.abs((h % 2) - 1));
 
     if (h < 1) {
-        r = c
-        g = x
-        b = 0
+        r = c;     g = x;     b = 0;
     } else if (h < 2) {
-        r = x
-        g = c
-        b = 0
+        r = x;   g = c;  b = 0;
     } else if (h < 3) {
-        r = 0
-        g = c
-        b = x
+        r = 0; g = c;    b = x;
     } else if (h < 4) {
-        r = 0
-        g = x
-        b = c
+        r = 0;   g = x;  b = c;
     } else if (h < 5) {
-        r = x
-        g = 0
-        b = c
+        r = x;   g = 0;  b = c;
     } else {
-        r = c
-        g = 0
-        b = x
+        r = c;   g = 0;  b = x;
     }
 
-    m = l - c / 2
+    m = l - c / 2;
     r = (r + m) * 255;
     g = (g + m) * 255;
     b = (b + m) * 255;
@@ -578,7 +568,7 @@ bw.colorRgbToHsl = function (r, g, b, a, rnd) {
 Converts an RGB color value to HSL. Conversion formula
 adapted from http://en.wikipedia.org/wiki/HSL_color_space.
 Assumes r, g, and b are contained in the set [0, 255] and
-returns h, s, and l in the set [0, 1].
+returns h as [0..360] s, and l in the set [0 .. 100].
 
 @param   {number}  r       The red color value
 @param   {number}  g       The green color value
@@ -587,6 +577,7 @@ returns h, s, and l in the set [0, 1].
 pass the colors as a bitwrench color array as a single parameter:
 colorRgbToHsl([h,s,l,a,"rgb"])
 
+last parameter rnd rounds the results to 0..255.  set to false to eliminate rounding.  This can be useful for chained calcs
 @return  {Array}           The HSL representation
 */
     if (bw.typeOf(r)=="array") { // handles colors of [h,s,l,a,"hsl"]
@@ -612,7 +603,7 @@ colorRgbToHsl([h,s,l,a,"rgb"])
         }
         h /= 6;
     }
-    var _fn = rnd == false ? function (x){return x} : function(x){return Math.round(x)} ;
+    var _fn = rnd == false ? function (x){return x;} : function(x){return Math.round(x);} ;
     return [_fn(h*360), _fn(s*100), _fn(l*100), a, "hsl"];
 };    
 
@@ -627,9 +618,13 @@ bw.colorParse = function(s,defAlpha) {
 */
     defAlpha = _toa(defAlpha,"number",defAlpha,255);
     var r = [0,0,0,defAlpha,"rgb"]; // always return a valid type 
-    if ((_to(s)=="array")&&(s.length==5)){ // it could be a bwcolor type [c0,c1,c2,a,model]
-        s= String(s[4])+"("+String(s[0])+","+String(s[1])+","+String(s[2])+","+String(s[3])+")"; //could use slice..join(",")
+    if (_to(s)=="array"){ // it could be a bwcolor type [c0,c1,c2,a,model]
+        var p,df = [0,0,0,255,"rgb"];
+        for (p=0; p< s.length; p++)
+            df[p]=s[p];
+        s= String(df[4])+"("+String(df[0])+","+String(df[1])+","+String(df[2])+","+String(df[3])+")"; //could use slice..join(",")   
     }
+
     s = String(s).replace(/\s/g,"");
     var reT = /\s*(#|hsl|rgb|yuv|hsv){1}([a-f|A-F|0-9|,().\t ]*)/img;
     var i,j=0,x = reT.exec(s);
@@ -677,36 +672,62 @@ bw.colorParse = function(s,defAlpha) {
 bw.colorToRGBHex = function(c, format) {
 /**
 @method bw.colorToRGBHex(color) 
-@description take a color of the form [c0,c1,c2,alpha,model] ==> convert to #rrggbbaa format
+@description take a color of the form a string or  [c0,c1,c2,alpha,model] ==> convert to #rrggbbaa format
 format (optional) can be set to auto in which case alpha is ommitted if set to 255
  */
     var r = "#00000000";
     var ph = function(x){var y=(bw.clip(Math.round(x),0,255)).toString(16); return (y.length==1)?"0"+y:y;}; // pad hex
-    if ((_to(c) == "array") && (c.length == 5)) {
-        switch(c[4]) {
-            case "rgb":
-                r = "#"+ph(c[0])+ph(c[1])+ph(c[2]);
-                if (!((format == "auto") && (c[3]==255)))
-                    r += ph(c[3]);
-                break;
-            case "hsl":
-                //bw.colorRgbToHsl
-                var z = bw.colorHslToRgb(c[0],c[1],c[2]);  // convert to rgb components
-                r = bw.colorToRGBHex([z[0],z[1],z[2],c[3],"rgb"]); // packout rgb
-                break;
-            default:
-                bw.logd("colorToRGBHex : unsupported format" + c[4]);
-        }
+    c = bw.colorParse(c); // converts color to bw color vector format
+    switch(c[4]) {
+        case "rgb":
+            r = "#"+ph(c[0])+ph(c[1])+ph(c[2]);
+            if (!((format == "auto") && (c[3]==255)))
+                r += ph(c[3]);
+            break;
+        case "hsl":
+            r= bw.colorToRGBHex(bw.colorHslToRgb(c)); 
+            break;
+        default:
+            bw.logd("colorToRGBHex : unsupported format" + c[4]);
     }
     return r; // default
 };
-/* simple version rgb2hex
-function rgbToHex(r, g, b, a) {
-    var c2r = function (c){c = bw.clip(c,0,255).toString(16); return ((c.length==1 ) ?"0":"")+c;};
-    if (typeof a == "undefined") { a = "";} else {a = c2r(a)};
-    return "#" + c2r(r) + c2r(g) + c2r(b) + a;
-}
+// =============================================================================================
+bw.colorConvertColorSpace = function(c, space, rnd) {
+/**
+@method bw.colorConvertColorSpace(color, spaceToConvertTo) 
+@description take a color and convert it to the destination color space ("rgb" | "hsl")
+color can be any valid color type ("#abc" | "hs(...)" or [r,g,b,a,"rgb"] etc)
+
+optional 3rd param rnd if set to false will suppress rounding in calcs to allow chained color conversion w/o loss of precision
+
 */
+    c = bw.colorParse(c); 
+    if (space == c[4])
+        return c;
+
+    switch(c[4]) {
+        case "rgb":
+            break;
+        case "hsl":
+            c = bw.colorHslToRgb(c[0],c[1],c[2],c[3],rnd); // turns off rounding
+            break;
+        default:
+            bw.logd("colorConvertColorSpace: unsupported color format");
+    }
+    //now c is in the rgb space
+
+    switch(space) {
+        case "rgb":
+            break;
+        case "hsl":
+            c = bw.colorRgbToHsl(c[0],c[1],c[2],c[3],rnd); // turns off rounding
+            break;
+        default:
+            bw.logd("colorConvertColorSpace: unsupported color format");
+    }
+    return c;  
+};
 
 // =============================================================================================
 var _logdata=[];
@@ -839,7 +860,7 @@ get a client side cookie, if it is set.  returns defaultValue if cookie could no
 
 
 // ===================================================================================
-bw.getURLParam = function (key,defaultValue) {
+bw.getURLParam = function (key, defaultValue) {
 /** 
 bw.getURLParam(key,defaultValueIfNotFound)
 read the URL (e.g. http://example.com/my/page?this=that&foo=123) and parse the URL paraemeters
@@ -847,21 +868,31 @@ read the URL (e.g. http://example.com/my/page?this=that&foo=123) and parse the U
 x = bw.getURLParam("foo","whatever") ==> returns 123
 x = bw.getURLParam("bar","whatever") ==> returns "whatever" since bar isn't set 
 */
-    var params = {};
-    if (location.search) {
-        var parts = location.search.substring(1).split("&");
-        for (var i = 0; i < parts.length; i++) {
-            var nv = parts[i].split("=");
-            if (!nv[0]) continue;
-            params[nv[0]] = nv[1] || true;
-        }
-    }     
+    if ((bw.isNodeJS()== true) || (typeof window != "object"))
+        return defaultValue;
+
+    var params = {},s;
+    var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";}; // extract location.search but with support for # e.g. foo=#123&bar=#123 (non standard)
+    try {
+        if (window.location.search) {
+            s= hs(window.location.href);
+            var parts = s.split("&");
+            for (var i = 0; i < parts.length; i++) {
+                var nv = parts[i].split("=");
+                if (!nv[0]) continue;
+                params[nv[0]] = nv[1] || true;
+            }
+        }   
+    }  
+    catch(e) {
+        return defaultValue;
+    }
     if (params.hasOwnProperty(key) == false)
         return defaultValue; // note if defaultValue is undefined then result is still undefined. :)
     return params[key];
 };
 //=================================================
-bw.getURLParamDict = function (url) {
+bw.getURLParamDict = function (url,key,defValue) {
 /**
 bw.getURLParamDict(optionalString) 
 decode a URL encoded string in to a javascript dictionary
@@ -874,7 +905,7 @@ if no string is supplied then it uses window.location.href (in browser only)
         }
         else url = location.href;
     }
-    
+    /*
     var question = url.indexOf("?");
     var hash = url.indexOf("#");
 
@@ -882,6 +913,9 @@ if no string is supplied then it uses window.location.href (in browser only)
     if(hash==-1) hash = url.length;
     var query = question==-1 || hash==question+1 ? url.substring(hash) : 
     url.substring(question+1,hash);
+    */
+    var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";};
+    var query = hs(url);
     var result = {};
     query.split("&").forEach(function(part) {
         if(!part) return;
@@ -900,7 +934,12 @@ if no string is supplied then it uses window.location.href (in browser only)
               else result[key][index] = val;
             }
         });
-  return result;
+
+    if (bw.typeOf(key)=="string") {
+        return (key in result) ? result[key] : defValue;
+    }
+    else
+        return result;
 };
 
 
