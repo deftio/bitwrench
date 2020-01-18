@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "1.2.4",
+	"version": "1.2.5",
 	"description": "A library for misc javascript functions.",
 	"main": "bitwrench.js",
 	"repository": {

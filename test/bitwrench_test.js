@@ -336,7 +336,9 @@ describe("#getURLParamDict(url, optKey, OptDefValue - parse URL query string (mu
 		{args: ["http://bar.com:80?foo=bar&x=#234&y=#45"], expected:{foo:"bar",x:"#234",y:"#45"} },
 		{args: ["?a=123&b=234","a"], expected:"123" },
 		{args: ["?a=123&b=234","c"], expected: undefined },
-		{args: ["?a=123&b=234","c","def"], expected:"def" }
+		{args: ["?a=123&b=234","c","def"], expected:"def" },
+		{args: ["?a=123&b=234&d&e=#123","d","def"], expected:true }, // case of key with no value
+		{args: ["?a=123&b=234&d&e=#123","e","#123"], expected:"#123" }
 	];
 	
 	

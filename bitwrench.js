@@ -863,40 +863,33 @@ get a client side cookie, if it is set.  returns defaultValue if cookie could no
 bw.getURLParam = function (key, defaultValue) {
 /** 
 bw.getURLParam(key,defaultValueIfNotFound)
-read the URL (e.g. http://example.com/my/page?this=that&foo=123) and parse the URL paraemeters
+read the URL (e.g. http://example.com/my/page?this=that&foo=123&bub&x=123) and parse the URL paraemeters
 
-x = bw.getURLParam("foo","whatever") ==> returns 123
+x = bw.getURLParam("foo","whatever") ==> returns "123"
 x = bw.getURLParam("bar","whatever") ==> returns "whatever" since bar isn't set 
+x = bw.getURLParam("bub","whatever") ==> returns true  since bub doesn't have a value (note boolean true not "true")
 */
     if ((bw.isNodeJS()== true) || (typeof window != "object"))
         return defaultValue;
-
-    var params = {},s;
-    var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";}; // extract location.search but with support for # e.g. foo=#123&bar=#123 (non standard)
     try {
-        if (window.location.search) {
-            s= hs(window.location.href);
-            var parts = s.split("&");
-            for (var i = 0; i < parts.length; i++) {
-                var nv = parts[i].split("=");
-                if (!nv[0]) continue;
-                params[nv[0]] = nv[1] || true;
-            }
-        }   
-    }  
-    catch(e) {
-        return defaultValue;
+        if (window.location.href) {
+            return bw.getURLParamDict(window.location.href,key,defaultValue);
+        }
     }
-    if (params.hasOwnProperty(key) == false)
-        return defaultValue; // note if defaultValue is undefined then result is still undefined. :)
-    return params[key];
+    catch (e) {
+        bw.log(e);
+    }
+    return defaultValue;
+    
 };
 //=================================================
 bw.getURLParamDict = function (url,key,defValue) {
 /**
-bw.getURLParamDict(optionalString) 
+@moethod bw.getURLParamDict(urlString, key, defaultValue) 
 decode a URL encoded string in to a javascript dictionary
 if no string is supplied then it uses window.location.href (in browser only)
+
+
 
  */
     if (_to(url) != "string") {
@@ -905,41 +898,25 @@ if no string is supplied then it uses window.location.href (in browser only)
         }
         else url = location.href;
     }
-    /*
-    var question = url.indexOf("?");
-    var hash = url.indexOf("#");
-
-    if(hash==-1 && question==-1) return {};
-    if(hash==-1) hash = url.length;
-    var query = question==-1 || hash==question+1 ? url.substring(hash) : 
-    url.substring(question+1,hash);
-    */
-    var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";};
-    var query = hs(url);
-    var result = {};
-    query.split("&").forEach(function(part) {
-        if(!part) return;
-            part = part.split("+").join(" "); // replace every + with space, regexp-free version
-            var eq = part.indexOf("=");
-            var key = eq>-1 ? part.substr(0,eq) : part;
-            var val = eq>-1 ? decodeURIComponent(part.substr(eq+1)) : "";
-            var from = key.indexOf("[");
-            if(from==-1) result[decodeURIComponent(key)] = val;
-            else {
-              var to = key.indexOf("]",from);
-              var index = decodeURIComponent(key.substring(from+1,to));
-              key = decodeURIComponent(key.substring(0,from));
-              if(!result[key]) result[key] = [];
-              if(!index) result[key].push(val);
-              else result[key][index] = val;
-            }
-        });
-
-    if (bw.typeOf(key)=="string") {
-        return (key in result) ? result[key] : defValue;
+    
+    try {
+        var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";};
+        var params={}, parts = hs(url).split("&");
+        for (var i = 0; i < parts.length; i++) {
+            var e = parts[i].split("=");
+            if (!e[0]) 
+                continue;
+            params[e[0]] = _to(e[1])=="string" ? decodeURIComponent(e[1].replace("#","%23")) : true;
+        }
+        if (_to(key)=="undefined")
+            return params;
+        return params.hasOwnProperty(key) ? params[key] : defValue;
     }
-    else
-        return result;
+    catch (e) {
+        bw.log(e);
+        return defValue;
+    }
+    
 };
 
 
@@ -3154,7 +3131,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.4", 
+        "version"   : "1.2.5", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
