@@ -328,23 +328,34 @@ describe("#colorConvertColorSpace( convert a color from one space to another)", 
  	});
 });
 
-describe("#getURLParamDict(url, optKey, OptDefValue - parse URL query string (must have ? present) to get values", function() {
+describe("#URLParamParse(url, optKey, OptDefValue - parse URL query string (must have ? present) to get values", function() {
 /**
  test conversion of RGB style colors to HSL
 */
 	var tests = [
-		{args: ["http://bar.com:80?foo=bar&x=#234&y=#45"], expected:{foo:"bar",x:"#234",y:"#45"} },
+		{args: ["http://bar.com:80?foo=bar&x=234&y=45"], expected:{foo:"bar",x:"234",y:"45"} },
 		{args: ["?a=123&b=234","a"], expected:"123" },
 		{args: ["?a=123&b=234","c"], expected: undefined },
 		{args: ["?a=123&b=234","c","def"], expected:"def" },
-		{args: ["?a=123&b=234&d&e=#123","d","def"], expected:true }, // case of key with no value
-		{args: ["?a=123&b=234&d&e=#123","e","#123"], expected:"#123" }
+		{args: ["?a=123&b=234&d&e=#123","d","def",true], expected:true }, // case of key with no value
+		{args: ["?a=123&b=234&d&e=#123","e","#123",true], expected:"#123" },
+		{args: ["https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",true], expected: "234#thisisit"},
+		{args: ["https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",false], expected: "234"},
+		{args: ["https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no"], expected: "234" }
+		/*
+		bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",true)
+"234#thisisit"
+bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",false)
+"234"
+bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no")
+"234"
+*/
 	];
 	
 	
 	tests.forEach(function(test) {
-		it("bw.getURLParamDict  " + test.args.length + "args", function() {
-			var res = bw.getURLParamDict.apply(null, test.args);
+		it("bw.URLParamParse  " + test.args.length + "args", function() {
+			var res = bw.URLParamParse.apply(null, test.args);
 			if (typeof res == "string")
 				assert.equal(res, test.expected);
 			else
@@ -352,6 +363,28 @@ describe("#getURLParamDict(url, optKey, OptDefValue - parse URL query string (mu
 		});
  	});
 });
+
+describe("#clearTimer()", function() {
+/**
+ test conversion of RGB style colors to HSL
+*/
+	var tests = [
+		{args: [], expected:true },
+		{args: ["clearTimerMsg"], expected:true },
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.clearTimer  " + test.args.length + "args", function() {
+			var ref = bw.logExport()[1][1];
+			var res = bw.clearTimer.apply(null, test.args);
+			assert.equal((res-ref) < 100,true);
+			if (test.args[0]=="clearTimerMsg")
+				assert.equal(test.args[0],bw.logExport()[2][1]);
+		});
+ 	});
+});
+
 
 // ================================================================
 describe("#docString", function() {
@@ -364,26 +397,28 @@ e.g. var myFunction = function( .... ) { ..... function body }
 bitwrench.docString(myFunction.toString()) ==> returns any doc strings inside.
 */
 	var tests = [
-		{args: ["this.toString()"], expected: "" }
+		{args: ["this is not a docstring"], expected: []},
+		{args: ["/** this is a test */ /* foo*/  /** another test */"], expected: [" this is a test ", " another test "] }
+	
 	];
 
 	tests.forEach(function(test) {
 		it("bw.docString (docString extractor) " + test.args.length + "args", function() {
 			var res = bw.docString.apply(null, test.args);
-			//assert.equal(res, test.expected);
+			assert.deepEqual(res, test.expected);
 		});
  	});
 });
 // ================================================================
 describe("#docStringParse", function() {
 	var tests = [
-		{args: ["/** This is a test \n*/"],           expected: []}
+		{args: ["/** This is a test \n*/"],           expected: [{source: " This is a test ", field: "", types: "", name: "", description: ""}]}
 	];
   
   	tests.forEach(function(test) {
     	it("bw.docStringParse (jsdoc comment parser)  " + test.args.length + " args", function() {
 	      	var res = bw.docStringParse.apply(null, test.args);
-	      	//assert.deepEqual(res, test.expected);
+	      	assert.deepEqual(res, test.expected);
     	});
  	});
 

@@ -833,8 +833,10 @@ see bw.saveClientFile(fname) for saving the log as a file
 // ===================================================================================
 bw.setCookie = function (cname, cvalue, exdays) {
 /** 
-bw.setCookie(cookieName, value, expireDays) 
-set a client side cookie.  (browser only)
+@method bw.setCookie(cookieName, value, expireDays)  set a client side cookie.  (browser only)
+@param cname  : a string for the name of the cookie
+@param cvalue : a string for the value of the cookie
+@param expdays : cookie expiration date in days
   */
     var d = new Date();
     d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -845,7 +847,7 @@ set a client side cookie.  (browser only)
 // ===================================================================================
 bw.getCookie = function (cname, defaultValue) {
 /** 
-bw.getCookie(cookieName, defaultValueIfNotFound) (browser only)
+@method bw.getCookie: bw.getCookie(cookieName, defaultValueIfNotFound) (browser only)
 get a client side cookie, if it is set.  returns defaultValue if cookie could not be found
  */
     var name = cname + "=";
@@ -862,18 +864,20 @@ get a client side cookie, if it is set.  returns defaultValue if cookie could no
 // ===================================================================================
 bw.getURLParam = function (key, defaultValue) {
 /** 
-bw.getURLParam(key,defaultValueIfNotFound)
+@method bw.getURLParam(key,defaultValueIfNotFound)
 read the URL (e.g. http://example.com/my/page?this=that&foo=123&bub&x=123) and parse the URL paraemeters
 
+x = bw.getURLParam() ==> returns entire dict of url params ==? {this:"that",foo:"123",bub:true,x:"123"}
 x = bw.getURLParam("foo","whatever") ==> returns "123"
 x = bw.getURLParam("bar","whatever") ==> returns "whatever" since bar isn't set 
 x = bw.getURLParam("bub","whatever") ==> returns true  since bub doesn't have a value (note boolean true not "true")
+
 */
     if ((bw.isNodeJS()== true) || (typeof window != "object"))
         return defaultValue;
     try {
         if (window.location.href) {
-            return bw.getURLParamDict(window.location.href,key,defaultValue);
+            return bw.URLParamParse(window.location.href,key,defaultValue, allowHash);
         }
     }
     catch (e) {
@@ -883,30 +887,31 @@ x = bw.getURLParam("bub","whatever") ==> returns true  since bub doesn't have a 
     
 };
 //=================================================
-bw.getURLParamDict = function (url,key,defValue) {
+bw.URLParamParse = function (url,key,defValue,allowHash) {
 /**
-@moethod bw.getURLParamDict(urlString, key, defaultValue) 
-decode a URL encoded string in to a javascript dictionary
-if no string is supplied then it uses window.location.href (in browser only)
 
+@method bw.URLParamParse(urlString, key, defaultValue) 
 
+decode a URL encoded string in to a javascript dictionary.  Other params (http, port, path) are not handled
 
+key, default value checks to see if a key is in the url provided (or window.location.href)
+if key is present than only that value is returned (as a string ) else defValue is returned.
+
+examples:
+x = URLParamParse("http://example.com?a=123&b=345") ==> {a:"123", b:"456"}
+x = URLParamParse("http://example.com?a=123&b=345","a") ==> "123"
+x = URLParamParse("http://example.com?a=123&b=345","c","otherValue") ==> {a:"123", b:"456"} ==> "otherValue"
  */
-    if (_to(url) != "string") {
-        if (bw.isNodeJS() == true) {
-            return {/*empty*/};
-        }
-        else url = location.href;
-    }
     
     try {
         var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";};
-        var params={}, parts = hs(url).split("&");
+        var sh=function(u,b){return (b==true) ? u : u.split(/#+/)[0]}
+        var params={}, parts = sh(hs(url),allowHash).split("&");
         for (var i = 0; i < parts.length; i++) {
             var e = parts[i].split("=");
             if (!e[0]) 
                 continue;
-            params[e[0]] = _to(e[1])=="string" ? decodeURIComponent(e[1].replace("#","%23")) : true;
+            params[decodeURIComponent(e[0])] = _to(e[1])=="string" ? decodeURIComponent(e[1].replace("#","%23")) : true;
         }
         if (_to(key)=="undefined")
             return params;
@@ -916,33 +921,10 @@ if no string is supplied then it uses window.location.href (in browser only)
         bw.log(e);
         return defValue;
     }
-    
 };
 
 
-//============================================
-bw.parseURLParam = function (name, url) {
-if (_to(url) != "string") {
-        if (bw.isNodeJS() == true)
-            {return {/*empty*/}; }
-        else url = location.href;
-    }
-    
-    var question = url.indexOf("?");
-    var hash = url.indexOf("#");
-
-    if(hash==-1 && question==-1) return {};
-    if(hash==-1) hash = url.length;
-    //var query = question==-1 || hash==question+1 ? url.substring(hash) : 
-    url.substring(question+1,hash);
-
-    name = name.replace(/[/, '\\[').replace(/[\]]/, "\\]");
-    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-    var urlString = ""; // need to finish this
-    var results = regex.exec(urlString);
-    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-};
-
+// ===================================================================================
 // crude performance measurements
 var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we always want a gbw gbw time :)
  
@@ -950,7 +932,8 @@ var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we alwa
 bw.clearTimer = function (message) {
 /** 
 bw.clearTimer("message")
-When bitwrench loads its starts a page timer which can be checked for how long the page as been running (see bw.readTimer()).  bw.clearTimer() clears the timer with optional message.
+When bitwrench loads its starts a  timer which can be checked at any time as a ref running (see bw.readTimer()).  
+bw.clearTimer() clears the timer with optional message.
  */
     gBWTime = (new Date()).getTime();
     if (_to(message) != "undefined")
@@ -3220,7 +3203,6 @@ bw.bwSimpleStyles(loadStyles,{"basics":loadStyleBasics}); // append to head the 
 
 bw.funcRegister(bw.log,"bw_log");  // this is globally registered for debugging purposes, it will never get called though unless programmer does this explicitly.
 
-//})( ((typeof bw) == "undefined") ? this["bw"]={} : bw);
     return bw;
 }));
 
