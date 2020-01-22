@@ -877,7 +877,7 @@ x = bw.getURLParam("bub","whatever") ==> returns true  since bub doesn't have a 
         return defaultValue;
     try {
         if (window.location.href) {
-            return bw.URLParamParse(window.location.href,key,defaultValue, allowHash);
+            return bw.URLParamParse(window.location.href,key,defaultValue);
         }
     }
     catch (e) {
@@ -885,6 +885,16 @@ x = bw.getURLParam("bub","whatever") ==> returns true  since bub doesn't have a 
     }
     return defaultValue;
     
+};
+bw.URLHash = function (url,defValue) {
+/**
+@method bw.URLHash(url,defValue) - returns the hash portion of a URL (if present) else return defValue
+*/
+    if (_to(url)=="undefined")
+        url = typeof window == "object" ? window.location.href : "";
+
+    var r = url.split(/#+/);
+    return url.includes("#") ? r[r.length-1] : defValue;
 };
 //=================================================
 bw.URLParamParse = function (url,key,defValue,allowHash) {
@@ -894,7 +904,6 @@ bw.URLParamParse = function (url,key,defValue,allowHash) {
 
 decode a URL encoded string in to a javascript dictionary.  Other params (http, port, path) are not handled
 
-key, default value checks to see if a key is in the url provided (or window.location.href)
 if key is present than only that value is returned (as a string ) else defValue is returned.
 
 examples:
@@ -905,7 +914,7 @@ x = URLParamParse("http://example.com?a=123&b=345","c","otherValue") ==> {a:"123
     
     try {
         var hs=function(u){var x = u.split(/^.*\?+/); return x.length==2 ? x[1] : "";};
-        var sh=function(u,b){return (b==true) ? u : u.split(/#+/)[0]}
+        var sh=function(u,b){return (b==true) ? u : u.split(/#+/)[0];};
         var params={}, parts = sh(hs(url),allowHash).split("&");
         for (var i = 0; i < parts.length; i++) {
             var e = parts[i].split("=");
@@ -922,313 +931,89 @@ x = URLParamParse("http://example.com?a=123&b=345","c","otherValue") ==> {a:"123
         return defValue;
     }
 };
+//=================================================
+bw.URLParamPack = function (simpleDict,inclQuestion) {
+/**
+    @method bw.URLParamPack(simpleDict, inclQuestion) : packs a simple dict in to URL encoded format
+    @param simpleDict(object) - dictionary of simple key value pairs (not nested) if "deep" JSON needs to be packed then stringify that first 
+    @param InclQuestion(boolean) - if true adds "?" to string otherwise ommitted.
 
-
-// ===================================================================================
-// crude performance measurements
-var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we always want a gbw gbw time :)
- 
-// ===================================================================================
-bw.clearTimer = function (message) {
-/** 
-bw.clearTimer("message")
-When bitwrench loads its starts a  timer which can be checked at any time as a ref running (see bw.readTimer()).  
-bw.clearTimer() clears the timer with optional message.
- */
-    gBWTime = (new Date()).getTime();
-    if (_to(message) != "undefined")
-       bw.logd(String(message));
-    return gBWTime;
-};
- 
-// ===================================================================================
-bw.readTimer = function (message) {
-/** 
-bw.readTimer("message")
-When bitwrench loads its starts a page timer which can be checked for how long the page as been running.
- */
-    var ct = (new Date()).getTime();
-    if (_to(message) != "undefined")
-       bw.logd(String(message));
-    return ct-gBWTime; 
-};
-bw.clearTimer(); //when bw is loaded, we start the timer.
-
-// ===================================================================================
-bw.htmlJSON=function (json) {
-/** 
-bw.htmlJSON(object, styles) 
-pretty print any javascript object as displayable HTML. 
-e.g.
-document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...any object ....)
+    see also URLParamParse.  
+    note if using bw.URLParamParse besure to include "?"" ==> bw.URLParamParse(bw.URLParamPack({a:1,b;2},"true"))
 */
-//TODO make style dict as a param
-	function f(json) { 
-		json = JSON.stringify(json, undefined, 2);
-		if (typeof json != "string") { json = JSON.stringify(json, undefined, 2);}
-		json = json.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-		return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
-			var sty = "color: darkorange;";
-			if (/^"/.test(match)) {
-				if (/:$/.test(match)) {
-                    sty = "color:red";
-				} else {
-                    sty = "color:purple";
-				}
-			} else if (/true|false/.test(match)) {
-                sty = "color:grey";
-			} else if (/null/.test(match)) {
-				sty = "color:black";
-			} else
-                sty = "color:green";
-			return "<span style=\"" + sty + "\">" + match + "</span>";
-		});
-	}
-	return "<pre style=''>"+f(json)+"</pre>";
-};
-
-bw.depAttr.push["prettyPrintJSON"];
-bw.prettyPrintJSON = bw.htmlJSON;
-
-// ===================================================================================
-bw.getFile  = function (fname,callback_fn, options) {
-/** 
-bw.getFile(filename,callback) 
-Attempt to load a file.
-Works both client side and i nodejs.
- */
-    var dops = {
-        parser : "raw"  // valid types are "raw", "JSON", future "CSV", "TSV" or parserFunction
-    };
-
-    dops = optsCopy(dops,options);
-
-    if (_to(fname) != "string") {
-        return "invalid filename";
-    }
-
-    var prs = (dops["parser"]=="JSON") ? JSON.parse : function(s){return s;};
-
-
-    if (bw.isNodeJS() ==true) {
-        var fs = require("fs");
-        fs.readFile(fname, "utf8", function (err, data) { if (err) throw err; callback_fn(prs(data)); });
-    }
-    else // running in a browser 
-    {         
-        var x = new XMLHttpRequest();
-        x.overrideMimeType("application/json");
-        x.open("GET", fname, true); 
-        x.onreadystatechange = 
-            function () {if (x.readyState == 4 && x.status == "200") {callback_fn(prs(x.responseText));}};
-        x.send(null);
-    }
-    return "BW_OK";
-};
-
-bw.getJSONFile = function (fname,callback_fn) { return bw.getFile(fname,callback_fn,{"parser":"JSON"});};
-
-bw.copyToClipboard = function(data) {
-/** 
-bw.copyToClipboard
-simple copy content to clipboard.  (browser only)
-*/
-
-/*
-var temp = document.createElement("input");
-var b = document.getElementsByTagName("body")[0];
-b.appendChild(temp);
-
-temp.innerText = data;
-temp.select();
-document.execCommand("copy");
-temp.remove();
-
-
-    
-    var temp = document.createElement("input");
-    document.getElementsByTagName("body")[0].append(temp);
-    temp.innerHTML = data;
-    //temp.val(data).select();
-    
-    //var temp = document.createElement("input");
-    //var b = document.getElementsByTagName("body")[0];
-    //b.appendChild(temp);
-    //temp.innerText = data;
-    temp.select();
-    document.execCommand("copy");
-    temp.remove();
-*/
-    if (bw.isNodeJS())
-        return;
-    var  listener = function (e) {
-        e.clipboardData.setData("text/html", data);
-        e.clipboardData.setData("text/plain", data);
-        e.preventDefault();
-    };
-    document.addEventListener("copy", listener);
-    document.execCommand("copy");
-    document.removeEventListener("copy", listener);
-};
-    
-// ===================================================================================
-bw.saveClientFile   = function(fname,data) {
-/** 
-bw.saveClientFile(fname,data) saves data the program the client environtmnet
-    fname is filename to save as
-    data is data to save.
-
-    works both in node and browser.    
-*/
-    if (bw.isNodeJS()) {
-        var fs = require("fs");
-        fs.writeFile(fname, data, function (err) {
-                if (err) return bw.log(err);
-                bw.log("error saving ",fname,data);
-            });
-    }
-    else { // we're in a browser
-            
-        var saveData = (function () {
-            var a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none";
-            return function (data, fname) {
-                var json = JSON.stringify(data),
-                    blob = new Blob([json], {type: "octet/stream"}),
-                    url = window.URL.createObjectURL(blob);
-                a.href = url;
-                a.download = fname;
-                a.click();
-                window.URL.revokeObjectURL(url);
-            };
-        }());
-        saveData(data,fname);
-    }
-};
-
-// ===================================================================================
-bw.setIntervalX = function (callback, delay, number_of_repetitions) {
-/** 
-bw.setIntervalX(callbackFn, delayBtwCalls, repetitions)
-set a javascript timer to only run a max of N repetions.
-
-Example:
-    bw.setIntervalX(function(x){console.log(x)},100,5) 
-    this will the function 5 times 100ms apart
- */
-    var x = 0;
-    var intervalID = setInterval(function () {
-        callback(x);
-
-        if (++x >= number_of_repetitions) {
-                clearInterval(intervalID);
+    var k,s=[];
+    if (_to(simpleDict) == "object") {
+        for (k in simpleDict) {
+            s.push([encodeURIComponent(k)+"="+encodeURIComponent(simpleDict[k])]);
         }
-    }, delay);
+        s = s.join("&");
+    }
+    else
+        s="";
+
+    return (inclQuestion ? "?" : "") + s;
 };
 
-// ===================================================================================
-bw.repeatUntil = function (testFn, successFn, failFn, delay, maxReps, lastFn) {
-/**  
-bw.repeatUntil()
-repeatUntil runs the supplied testFn every delay milliseconds up until a maxReps number of times.
-if the test function returns true it runs the successFn and stops the iterations.
-    then the lastFn is called with the params (true, number_of_attempts).
-    lastFn is optional.
-
-for each time the testFn is called and fails, the failFn() is called.
-
-After the last rep has been completed the lastFn is called with (with the last testFn result and
-with the current iteration).  
 
 
-lastFn is optional.  
-failFn is optional
-
-Example:
-bw.repeatUntil( myLibsAndDataAreLoaded_fn, renderMyChart, null, 250, 10, null); // attempts to wait until mylib is loaded 10 times before giving up
-
-*/   
-    var _count = 0;
-    if (typeof testFn != "function")
-      return "err";
-    if (typeof delay != "number")
-      delay = 250;  // 250ms
-    if (typeof maxReps != "number")
-      maxReps = 1; // run 1 time.
-
-    var _testFn = testFn;
-    var _successFn = (typeof successFn == "function") ? successFn : function () {};
-    var _failFn = (typeof failFn == "function") ? failFn : function () {};
-    var _lastFn = (typeof lastFn == "function") ? lastFn : function () {};
-
-    var _f = function () {
-    var success = _testFn();
-        if (true == success) {
-            _successFn();
-            _lastFn(true, _count);
-        }
-        else {
-            _failFn();
-        
-            if (_count >= maxReps) {
-              _lastFn(success, _count);
-            }
-            else {
-                _count++;
-                window.setTimeout(_f, delay);
-            }
-        }
-    };
-    _f();
-};
 // ===================================================================================
 bw.htmlSafeStr = function (str) {
 /** 
 bw.htmlSageString(str) 
 Replace non valid HTML characters with HTML escaped equivalents.   
  */
-       return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/\n/g,"<br>");
+    //generic way..
+    //var x = function(x){return "&#"+x.toString().charCodeAt(0)+";";}
+    //return (str.toString()).replace(/[<>&\\#]/gm,x).replace(/[\n]/gm,"<br>");
+    
+    //old way is "pretty", tabs are issued 4 spaces..
+    var c = {"<":"&lt;", ">":"&gt;", "&":"&amp;", "\"":"&quot;", "'":"&#039;","#":"&#035;","\\\\":"","\n":"<br>","\t":"&nbsp;&nbsp;&nbsp;&nbsp;"};
+    return (str.toString()).replace(new RegExp("["+Object.keys(c).join("")+"]","gm"),function(s){return c[s];});
 };
 
 bw.HTMLSafeStr = bw.htmlSafeStr; // deprecated
+
 // ===================================================================================
-bw.makeHTMLPage = function (head, body, options) {
+bw.htmlJSON=function (json) {
 /** 
-bw.makeHTMLDoc(head,body,options)
-make a simple HTML document.  Note this can also be usd win bw.makeHTML()
-
-inline-bw-css --> emit bw default styles as inline css (include globals option)
- */
-    var dopts = {
-        docType : "<!DOCTYPE html>",
-        htmlParams  : {lang: "en"},
-        headDefaultContent : [
-                ["meta", {"http-equiv":"Content-Type", "content":"text/html", "charset":"utf-8"}, ""]
-                //["title", {}, "bw doc"]
-            ],
-        headIncludeBitWrenchJS : false, // false : don't include, "embed" or "path-string"
-        headIncludeBitWrenchCSS : false, // exports bitwrench css classes in <style> section in head
-        headFavicon : "" //<link rel="icon" type="image/x-icon" href="../images/favicon-32x32.png" />
-    };
-    dopts = optsCopy(dopts,options);
-
-    var s = dopts["docType"]+"\n";
-    s += bw.html(["html",dopts["htmlParams"],[
-            "\n",
-            ["head", {}, [ "\n",dopts["headDefaultContent"].map(function(x){return bw.html(x);}).join("\n"),head,"\n"]],
-            "\n",
-            ["body", {}, [ "\n",body,"\n"]],
-            "\n"
-        ]]);
-    return s;
+@method bw.htmlJSON(object, styles) 
+pretty print any javascript object as displayable HTML. 
+e.g.
+document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...any object ....)
+*/
+//TODO make style dict as a param
+    function f(json) { 
+        json = JSON.stringify(json, undefined, 2);
+        if (typeof json != "string") { json = JSON.stringify(json, undefined, 2);}
+        
+        json = json.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); //html safe chars
+        //json = bw.htmlSafeStr(json);
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+            var sty = "color: darkorange;";
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    sty = "color:red";
+                } else {
+                    sty = "color:purple";
+                }
+            } else if (/true|false/.test(match)) {
+                sty = "color:grey";
+            } else if (/null/.test(match)) {
+                sty = "color:black";
+            } else
+                sty = "color:green";
+            return "<span style=\"" + sty + "\">" + match + "</span>";
+        });
+    }
+    return "<pre style=''>"+f(json)+"</pre>";
 };
+
 // ===================================================================================
 bw.makeCSS = function (cssData, options) {
 /** 
 bw.makeCSS(cssData, options)
 
-cssData = "h2 {color:blue;}"    // string
+cssData = "h2 {color:blue;}"      // string as full rule (all correctness is on the caller)
 cssData = ["h2 {color:blue;}"]    // array entry but single string
 cssData = ["h2 {color:blue}", "div {width:30px}"] // 2 entries, both strings
 cssData = [["h2","color:blue"]] // array of rules (here length 1 rule)
@@ -1271,40 +1056,39 @@ dicts not used at root because css can have multiple redundant selectors with di
                 var i; 
                 for (i=0; i<cssData.length; i++) {
                     var j = cssData[i];
-                    switch (bw.typeOf(j)) {
+                    switch (_to(j)) {
                         case "string":  // this means we assume correcly formatted style is being passed in and we're just letting it through e.g. ".myclass {color:red}"
                             s+= j+"\n"; 
                             break;
                         case "array" : //expects length 2 array for each entry, though 2nd member can be dict or array
                                     //  ==>[str, str], [[str,str,str],str] , [str, {}], [[str,str,str],{}]
-
-                            if ((j.length == 1) && (bw.typeOf(j[0])=="string")) {
+                            if ((j.length == 1) && (_to(j[0])=="string")) {
                                 s+= j[0]+"\n";
                                 break;
                             }
                             
                             if (j.length == 2) {
                                 var _name = j[0], _rule = j[1], _ruleOutput="";
-                                if (bw.typeOf(_name)=="array") {
-                                    s+= _name.join(",");
+                                if (_to(_name)=="array") {
+                                    s+= _name.join(", ");
                                 }
                                 else {
                                     s+= String(_name);
                                 }
                                 // now we have the names e.g. ("h2" or "h2,.myClass") done we need to emit the rules
-                                switch( bw.typeOf(_rule)) {
+                                switch( _to(_rule)) {
                                     case "array" :  // ["h2", ["color: black","left:20%"]] or [["h2",".myClass"], ["color: black","left:20%"]]
-                                        _ruleOutput = _rule.join(" "); 
+                                        _ruleOutput = _rule.join("; ")+";";
                                         break;
                                     case "object" : //  ["h2", {color: "black", left:"20%"}] or [["h2",".myClass"], {color:black, left:"20%"}]
                                         {
                                             var x;
-                                            for (x in _rule) { _ruleOutput += (x + " :" + _rule[x]+";" );}
+                                            for (x in _rule) { _ruleOutput += (x + ": " + _rule[x]+"; ");}
                                         }
                                         break;
                                     case "string": // ["h2", "color: black"] or [["h2",".myClass"], "color:black"]
                                     default:
-                                        //rl = String(_rule);
+                                        _ruleOutput=_rule;
                                 }
                                 s+= tb(_ruleOutput)+"\n";
                                 
@@ -1328,9 +1112,9 @@ dicts not used at root because css can have multiple redundant selectors with di
 };
 
 // ===================================================================================
-bw.makeCSSObjectLine = function (cssData, options) {
+bw.makeCSSRule = function (cssData, options) {
 /** 
-@method bw.makeCSSObj(cssData, options)
+@method bw.makeCSSRule(cssData, options)
 
 expects this form:
  [str, {k,v}] 
@@ -1357,7 +1141,7 @@ expects this form:
                     s+= cssData[0].map(function(x){return x.toString();}).join(",");
                     break;
                 default:
-                    throw "makeCSSObjectLine type error in first argument";
+                    throw "makeCSSRule type error in first argument";
             }
             var k;
             if (_to(cssData[1])=="object") {
@@ -1374,6 +1158,39 @@ expects this form:
     }
     return s;
 
+};
+
+// ===================================================================================
+bw.htmlPage = function (head, body, options) {
+/** 
+TBD finish (include bw params, handling meta w/o close tags)
+bw.makeHTMLDoc(head,body,options)
+make a simple HTML document.  
+
+inline-bw-css --> emit bw default styles as inline css (include globals option)
+ */
+    var dopts = {
+        docType : "<!DOCTYPE html>",
+        htmlParams  : {lang: "en"},
+        headDefaultContent : [
+                ["meta", {"http-equiv":"Content-Type", "content":"text/html", "charset":"utf-8"}, ""]
+                //["title", {}, "bw doc"]
+            ],
+        headIncludeBitWrenchJS : false, // false : don't include, "embed" or "path-string"
+        headIncludeBitWrenchCSS : false, // exports bitwrench css classes in <style> section in head
+        headFavicon : "" //<link rel="icon" type="image/x-icon" href="../images/favicon-32x32.png" />
+    };
+    dopts = optsCopy(dopts,options);
+
+    var s = dopts["docType"]+"\n";
+    s += bw.html(["html",dopts["htmlParams"],[
+            "\n",
+            ["head", {}, [ "\n",dopts["headDefaultContent"].map(function(x){return bw.html(x);}).join("\n"),head,"\n"]],
+            "\n",
+            ["body", {}, [ "\n",body,"\n"]],
+            "\n"
+        ]]);
+    return s;
 };
 // ===================================================================================
 //==================================================
@@ -1773,10 +1590,11 @@ listData is a single dim array of bw.html() compatible cnostructs
 // ===================================================================================
 bw.htmlList = function (listData, listType, atr, atri) {
 /**
-bw.makeHTMLList (listData, str)
+bw.makeHTMLList (listData, listType, attribute{}, attribute_for_each_items {})
 
 listType = "ul" | "ol"
-listHtml = [ item1, item2, item3, .. ]
+listData = [ item1, item2, item3, .. ]
+
  */
     if (bw.typeOf(listData) != "array")
         return "";
@@ -1788,7 +1606,7 @@ listHtml = [ item1, item2, item3, .. ]
     atri = _toa(atr,"object",atr,{});
 
     var lc = listData.map(function(x){return bw.html(["li",atri,x]);});
-
+    listType = ["ul","ol"].indexOf(listType)== -1 ? "ol" : listType;
     return bw.html ([listType,atr,lc]);
 };
 
@@ -1807,7 +1625,7 @@ and adds/del classes from classesToAdd string if they are not already present in
 
 classStrAddDel("class1 class2", "class3") ==> "class1 class2 class3"
 classStrAddDel("class1 class2", "class3 class4") ==> "class1 class2 class3 class4"
-classStrAddDel("class1 class2", "class 2 class3") ==> "class1 class2 class3" // doesn't add class2 again
+classStrAddDel("class1 class2", "class2 class3") ==> "class1 class2 class3" // doesn't add class2 again
 
 classStrAddDel("class1 class2", "class 2 class3",class1) ==> "class2 class3" // doesn't add class2 again. removes class1
 classStrAddDel("class1 class2", "",class1) ==> "class2" //  removes class1
@@ -1979,12 +1797,235 @@ bw.htmlAccordian   = function (data, opts) {
     };
     dopts = optsCopy(dopts,opts);
     dopts["atr_h"]["onclick"]="bw.DOMClassToggle(this.nextSibling, 'bw-hide')";
-    //var fns = function(x){return (x==false) ? "bw-hide" : ""; } // converts x[2] in to class string 
-    //var fc  = function(x,s){if ("class" in x){ x["class"] = } 
 
     s = data.map(function(x){return bw.html(["div",dopts["atr_h"],x[0]])+bw.html(["div",dopts["atr_c"],x[1]]);}).join("");
     s = bw.html(["div",dopts["atr"],s]);
     return s;
+};
+// ===================================================================================
+bw.getFile  = function (fname,callback_fn, options) {
+/** 
+bw.getFile(filename,callback) 
+Attempt to load a file.
+Works both client side and i nodejs.
+ */
+    var dops = {
+        parser : "raw"  // valid types are "raw", "JSON", future "CSV", "TSV" or parserFunction
+    };
+
+    dops = optsCopy(dops,options);
+
+    if (_to(fname) != "string") {
+        return "invalid filename";
+    }
+
+    var prs = (dops["parser"]=="JSON") ? JSON.parse : function(s){return s;};
+
+
+    if (bw.isNodeJS() ==true) {
+        var fs = require("fs");
+        fs.readFile(fname, "utf8", function (err, data) { if (err) throw err; callback_fn(prs(data)); });
+    }
+    else // running in a browser 
+    {         
+        var x = new XMLHttpRequest();
+        x.overrideMimeType("application/json");
+        x.open("GET", fname, true); 
+        x.onreadystatechange = 
+            function () {if (x.readyState == 4 && x.status == "200") {callback_fn(prs(x.responseText));}};
+        x.send(null);
+    }
+    return "BW_OK";
+};
+
+bw.getJSONFile = function (fname,callback_fn) { return bw.getFile(fname,callback_fn,{"parser":"JSON"});};
+
+bw.copyToClipboard = function(data) {
+/** 
+bw.copyToClipboard
+simple copy content to clipboard.  (browser only)
+*/
+
+/*
+var temp = document.createElement("input");
+var b = document.getElementsByTagName("body")[0];
+b.appendChild(temp);
+
+temp.innerText = data;
+temp.select();
+document.execCommand("copy");
+temp.remove();
+
+
+    
+    var temp = document.createElement("input");
+    document.getElementsByTagName("body")[0].append(temp);
+    temp.innerHTML = data;
+    //temp.val(data).select();
+    
+    //var temp = document.createElement("input");
+    //var b = document.getElementsByTagName("body")[0];
+    //b.appendChild(temp);
+    //temp.innerText = data;
+    temp.select();
+    document.execCommand("copy");
+    temp.remove();
+*/
+    if (bw.isNodeJS())
+        return;
+    var  listener = function (e) {
+        e.clipboardData.setData("text/html", data);
+        e.clipboardData.setData("text/plain", data);
+        e.preventDefault();
+    };
+    document.addEventListener("copy", listener);
+    document.execCommand("copy");
+    document.removeEventListener("copy", listener);
+};
+    
+// ===================================================================================
+bw.saveClientFile   = function(fname,data) {
+/** 
+bw.saveClientFile(fname,data) saves data the program the client environtmnet
+    fname is filename to save as
+    data is data to save.
+
+    works both in node and browser.    
+*/
+    if (bw.isNodeJS()) {
+        var fs = require("fs");
+        fs.writeFile(fname, data, function (err) {
+                if (err) return bw.log(err);
+                bw.log("error saving ",fname,data);
+            });
+    }
+    else { // we're in a browser
+            
+        var saveData = (function () {
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            return function (data, fname) {
+                var json = JSON.stringify(data),
+                    blob = new Blob([json], {type: "octet/stream"}),
+                    url = window.URL.createObjectURL(blob);
+                a.href = url;
+                a.download = fname;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            };
+        }());
+        saveData(data,fname);
+    }
+};
+
+// ===================================================================================
+//Timers ... clear / read / fixed number of events
+
+// ===================================================================================
+// crude performance measurements
+var gBWTime = (new Date()).getTime(); //global closure for time.  'cause we always want a gbw gbw time :)
+ 
+// ===================================================================================
+bw.clearTimer = function (message) {
+/** 
+bw.clearTimer("message")
+When bitwrench loads its starts a  timer which can be checked at any time as a ref running (see bw.readTimer()).  
+bw.clearTimer() clears the timer with optional message.
+ */
+    gBWTime = (new Date()).getTime();
+    if (_to(message) != "undefined")
+       bw.logd(String(message));
+    return gBWTime;
+};
+ 
+// ===================================================================================
+bw.readTimer = function (message) {
+/** 
+bw.readTimer("message")
+When bitwrench loads its starts a page timer which can be checked for how long the page as been running.
+ */
+    var ct = (new Date()).getTime();
+    if (_to(message) != "undefined")
+       bw.logd(String(message));
+    return ct-gBWTime; 
+};
+bw.clearTimer(); //when bw is loaded, we start the timer.
+
+// ===================================================================================
+bw.setIntervalX = function (callback, delay, number_of_repetitions) {
+/** 
+bw.setIntervalX(callbackFn, delayBtwCalls, repetitions)
+set a javascript timer to only run a max of N repetions.
+
+Example:
+    bw.setIntervalX(function(x){console.log(x)},100,5) 
+    this will the function 5 times 100ms apart
+ */
+    var x = 0;
+    var intervalID = setInterval(function () {
+        callback(x);
+
+        if (++x >= number_of_repetitions) {
+                clearInterval(intervalID);
+        }
+    }, delay);
+};
+
+// ===================================================================================
+bw.repeatUntil = function (testFn, successFn, failFn, delay, maxReps, lastFn) {
+/**  
+bw.repeatUntil()
+repeatUntil runs the supplied testFn every delay milliseconds up until a maxReps number of times.
+if the test function returns true it runs the successFn and stops the iterations.
+    then the lastFn is called with the params (true, number_of_attempts).
+    lastFn is optional.
+
+for each time the testFn is called and fails, the failFn() is called.
+
+After the last rep has been completed the lastFn is called with (with the last testFn result and
+with the current iteration).  
+
+
+lastFn is optional.  
+failFn is optional
+
+Example:
+bw.repeatUntil( myLibsAndDataAreLoaded_fn, renderMyChart, null, 250, 10, null); // attempts to wait until mylib is loaded 10 times before giving up
+
+*/   
+    var _count = 0;
+    if (typeof testFn != "function")
+      return "err";
+    if (typeof delay != "number")
+      delay = 250;  // 250ms
+    if (typeof maxReps != "number")
+      maxReps = 1; // run 1 time.
+
+    var _testFn = testFn;
+    var _successFn = (typeof successFn == "function") ? successFn : function () {};
+    var _failFn = (typeof failFn == "function") ? failFn : function () {};
+    var _lastFn = (typeof lastFn == "function") ? lastFn : function () {};
+
+    var _f = function () {
+    var success = _testFn();
+        if (true == success) {
+            _successFn();
+            _lastFn(true, _count);
+        }
+        else {
+            _failFn();
+        
+            if (_count >= maxReps) {
+              _lastFn(success, _count);
+            }
+            else {
+                _count++;
+                window.setTimeout(_f, delay);
+            }
+        }
+    };
+    _f();
 };
 // =============================================================================================
 /*
@@ -2840,7 +2881,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     bw.makeCSS( dopts["themes"]);
     for (i=0; i< dopts["themes"].length; i++) {
-        s+= bw.makeCSSObjectLine( dopts["themes"][i]);
+        s+= bw.makeCSSRule( dopts["themes"][i]);
         //s+= bw.makeCSS( dopts["themes"][i])
     }
         

@@ -327,10 +327,10 @@ describe("#colorConvertColorSpace( convert a color from one space to another)", 
 		});
  	});
 });
-
+//====================================================================================
 describe("#URLParamParse(url, optKey, OptDefValue - parse URL query string (must have ? present) to get values", function() {
 /**
- test conversion of RGB style colors to HSL
+ test extraction or URL params.  note in bitwrench this is used both for URL parsing and "command line" args parsing
 */
 	var tests = [
 		{args: ["http://bar.com:80?foo=bar&x=234&y=45"], expected:{foo:"bar",x:"234",y:"45"} },
@@ -342,14 +342,7 @@ describe("#URLParamParse(url, optKey, OptDefValue - parse URL query string (must
 		{args: ["https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",true], expected: "234#thisisit"},
 		{args: ["https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",false], expected: "234"},
 		{args: ["https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no"], expected: "234" }
-		/*
-		bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",true)
-"234#thisisit"
-bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no",false)
-"234"
-bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no")
-"234"
-*/
+
 	];
 	
 	
@@ -363,7 +356,165 @@ bw.URLParamParse("https:1bca.com/a/b/c?a=134&b=234#thisisit&d=234","b","no")
 		});
  	});
 });
+//====================================================================================
+describe("#URLHash (url,defValue) - returns the hash portion of a url encoded string.  If no params supplied attempts to get has from window.location.href", function() {
+/**
+	see if a URL has a hash string at the end 
+*/
+	var tests = [
+		{args: [], expected: undefined},
+		{args: ["http://bar.com:80?foo=bar&x=234&y=45#123"], expected:"123" },
+		{args: ["?a=123&b=234","no"], expected:"no" },
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.URLHash " + test.args.length + "args", function() {
+			var res = bw.URLHash.apply(null, test.args);
+			if (typeof res == "string")
+				assert.equal(res, test.expected);
+			else
+				assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
+//====================================================================================
+describe("#URLParamPack (dict,addQuestionToFront) -packs a simple (not deep) dict in to URL form", function() {
+/**
+	pack a simple dict to a URL encoded string. 
+*/
+	var tests = [
+		{args: [{123:"abc",234:456}], expected: "123=abc&234=456"},
+		{args: [{123:"abc",234:456},true], expected: "?123=abc&234=456"},
+		{args: ["foo"], expected:"" },
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.URLParamPack " + test.args.length + "args", function() {
+			var res = bw.URLParamPack.apply(null, test.args);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
+//====================================================================================
+describe("#htmlSafeStr (string) -encodes chars such as & < > ' etc to HTML safe equiv. also handles spaces, linefeeds and tabs", function() {
+/**
+	see if a URL has a hash string at the end 
+*/
+	var tests = [
+		{args: ["<>& x\tx\nabc"], expected: "&lt;&gt;&amp; x&nbsp;&nbsp;&nbsp;&nbsp;x<br>abc"},
+		{args: ["abcdefghijklmopqurstuvwxyz1234567890-=_+[]{}|;',./?"], expected: "abcdefghijklmopqurstuvwxyz1234567890-=_+[]{}|;&#039;,./?"}
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.htmlSafeStr " + test.args.length + "args", function() {
+			var res = bw.htmlSafeStr.apply(null, test.args);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
+//====================================================================================
+describe("#htmlJSON(any object) -encodes an object to viewable HTML", function() {
+/**
+	
+*/
+	var tests = [
+		{args: ["123#123"], expected: `<pre style=''><span style="color:purple">"123#123"</span></pre>`},
+		{args: [{1:2,3:4,5:{a:1,b:3},c:[2,3,4,{5:"abc"},6]}], expected: 
+		//yay for template strings!
+`<pre style=''>{
+  <span style="color:red">"1":</span> <span style="color:green">2</span>,
+  <span style="color:red">"3":</span> <span style="color:green">4</span>,
+  <span style="color:red">"5":</span> {
+    <span style="color:red">"a":</span> <span style="color:green">1</span>,
+    <span style="color:red">"b":</span> <span style="color:green">3</span>
+  },
+  <span style="color:red">"c":</span> [
+    <span style="color:green">2</span>,
+    <span style="color:green">3</span>,
+    <span style="color:green">4</span>,
+    {
+      <span style="color:red">"5":</span> <span style="color:purple">"abc"</span>
+    },
+    <span style="color:green">6</span>
+  ]
+}</pre>`}
+	];
+	
+	
+	tests.forEach(function(test) {
+		it("bw.htmlJSON " + test.args.length + "args", function() {
+			var res = bw.htmlJSON.apply(null, test.args);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
+//====================================================================================
 
+describe("#makeCSS()", function() {
+/**
+	makeCSS
+ */
+ `
+cssData = "h2 {color:blue;}"      // string as full rule (all correctness is on the caller)
+cssData = ["h2 {color:blue;}"]    // array entry but single string
+cssData = ["h2 {color:blue}", "div {width:30px}"] // 2 entries, both strings
+cssData = [["h2","color:blue"]] // array of rules (here length 1 rule)
+cssData = [["h2","color:blue"], ["h3", "font-color:red"]] // array of rules
+cssData = [
+            [["h2","h4"], "color:blue"],  // array or selectors, string for rule
+             ["h3", "color:red"]          // string for selector, string for rule
+          ]
+cssData = [ 
+            [["h1","div p"],["color:blue","display:block"]], ==> h1, div p      {color: blue; diplay:block;}
+            "h3 {color:red;}",                               ==> h3             {color: red;}
+            [["div",".myClass"],"color : red"],              ==> div,.myClass   {color: red;}
+            ["p > .myclass", ["color:red","display:block"]]  ==> p > .myClass   {color: red;  display:block;}
+          ]
+cssData = [
+            [str, {}]
+          ]
+cssData = [
+            [[selectors], { dict }]
+          ]
+`
+
+	var tests = [
+		{args: ["h2 {color:blue;}"], expected:"\nh2 {color:blue;}\n" },
+		{args: [["h2 {color:blue;}"]], expected:"\nh2 {color:blue;}\n" },
+		{args: [["h2 {color:blue}", "div {width:30px}"]], expected:"\nh2 {color:blue}\ndiv {width:30px}\n" },
+		{args: [[["h2","color:blue"]]], expected:"\nh2 {color:blue}\n\n"},
+		{args: [[[["h2","h4"], "color:blue"],["h3", "color:red"]]], expected: "\nh2, h4 {color:blue}\n\nh3 {color:red}\n\n"},
+		{args: [
+			[ 
+            [["h1","div p"],["color: blue","display: block"]],
+            "h3 {color: red;}",                               
+            [["div",".myClass"],"color: red;"],             
+            ["p > .myClass", ["color: red","display: block"]]  
+          	]
+          ], expected: "\nh1, div p {color: blue; display: block;}\n\nh3 {color: red;}\ndiv, .myClass {color: red;}\n\np > .myClass {color: red; display: block;}\n\n"
+      	},
+      	{args: [
+      		[[".myclass", {color:"red", "font-weight":700}]]
+      		], expected :"\n.myclass {color: red; font-weight: 700;}\n\n" },
+      	{args: [
+      		[[[".myclass","div > p"], {color:"red", "font-weight":700}]]
+      		], expected :"\n.myclass, div > p {color: red; font-weight: 700;}\n\n" }
+          
+	];
+	
+	tests.forEach(function(test) {
+		it("bw.makeCSS" + test.args.length + "args", function() {
+			var res = bw.makeCSS.apply(null, test.args);
+			assert.deepEqual(res,test.expected);
+		});
+ 	});
+});
+
+
+//====================================================================================
 describe("#clearTimer()", function() {
 /**
  test conversion of RGB style colors to HSL
@@ -372,13 +523,13 @@ describe("#clearTimer()", function() {
 		{args: [], expected:true },
 		{args: ["clearTimerMsg"], expected:true },
 	];
-	
+	bw.logExport({clear:true})
 	
 	tests.forEach(function(test) {
 		it("bw.clearTimer  " + test.args.length + "args", function() {
 			var ref = bw.logExport()[1][1];
 			var res = bw.clearTimer.apply(null, test.args);
-			assert.equal((res-ref) < 100,true);
+			assert.equal((res-ref) < 400,true);
 			if (test.args[0]=="clearTimerMsg")
 				assert.equal(test.args[0],bw.logExport()[2][1]);
 		});
