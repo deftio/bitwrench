@@ -512,7 +512,24 @@ cssData = [
 		});
  	});
 });
+//====================================================================================
+describe("#makeCSSRule()",function(){
+	var tests = [
+		{args: [
+      		[".myclass", {color:"red", "font-weight":700}]
+      		], expected :"\n.myclass {color: red; font-weight: 700;}\n\n" },
+      	{args: [
+      		[[".myclass","div > p"], {color:"red", "font-weight":700}]
+      		], expected :"\n.myclass, div > p {color: red; font-weight: 700;}\n\n" }
+      ];
 
+	tests.forEach(function(test) {
+		it("bw.makeCSSRule" + test.args.length + "args", function() {
+			var res = bw.makeCSSRule.apply(null, test.args);
+			assert.deepEqual(res,test.expected);
+		});
+ 	});
+});
 
 //====================================================================================
 describe("#clearTimer()", function() {

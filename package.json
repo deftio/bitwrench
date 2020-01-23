@@ -24,7 +24,7 @@
 	"scripts": {
 		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && npm pack",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "nyc --reporter=text mocha",
+		"test": "nyc --reporter=text --cache=false mocha ",
 		"clean": "rm bitwrench*.tgz -f",
 		"lint": "./node_modules/.bin/eslint bitwrench.js"
 	},

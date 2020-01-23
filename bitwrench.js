@@ -1121,37 +1121,29 @@ expects this form:
  or
  [[array of rules str], {k,v}]
 
+ e,g, [".myClass", {"color": "red", "font-weight" : "700 !important!"}]
+ or
+ [[".myClass","div > p"], {"color": "red", "font-weight" : "700 !important!"}]
+
  */
     var dopts = {
         emitStyleTag: false,
         atr: {},
-        emitCR: true
+        pretty: true // make it pretty otherwise compact form generated
     };
     dopts = optsCopy(dopts,options);
 
-    var s="";
+    var k,d,v=[],s="",sp=dopts.pretty?" ":"", cr=dopts.pretty?"\n":"";
     
     try {
         if (_to(cssData)== "array") {
-            switch (_to(cssData[0])) {
-                case "string":
-                    s+= cssData[0]+" {\n";
-                    break;
-                case "array":
-                    s+= cssData[0].map(function(x){return x.toString();}).join(",");
-                    break;
-                default:
-                    throw "makeCSSRule type error in first argument";
+            k=cssData[0], d=cssData[1];
+            s +=_toa(k,"array",k,[k.toString()]).join(","+sp)+cr;
+            for (k in d) {
+                console.log(k,cssData[1][k])
+                v.push([sp+sp+k+":"+sp+cssData[1][k]+";"+sp+cr]);
             }
-            var k;
-            if (_to(cssData[1])=="object") {
-
-                for (k in cssData[1]) {
-                    s+= "  "+k+":"+cssData[1][k];
-                    s+= dopts["emitCR"] ? "\n" : "";
-                }
-                s+= "}\n";
-            }
+            s+= "{"+cr+v.join("")+"}"+cr;
         }
     } catch(e) {
         bw.logd(e);
