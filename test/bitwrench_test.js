@@ -69,6 +69,7 @@ test built-in basic bitwrench typeof operator
 		{args: ["test string"],   expected: "string"},
 		{args: [x],				  expected: "undefined"},
 		{args: [null],			  expected: "null"},
+		{args: [new Date()],	  expected: "date"},
 		{args: [function(){}],    expected: "function"},
 		{args: [class{}],		  expected: "function"	}
 	];
@@ -516,11 +517,11 @@ cssData = [
 describe("#makeCSSRule()",function(){
 	var tests = [
 		{args: [
-      		[".myclass", {color:"red", "font-weight":700}]
-      		], expected :"\n.myclass {color: red; font-weight: 700;}\n\n" },
+      		[".myclass", {color:"red", "font-weight":700}],{pretty:false}
+      		], expected :".myclass{color:red;font-weight:700;}" },
       	{args: [
-      		[[".myclass","div > p"], {color:"red", "font-weight":700}]
-      		], expected :"\n.myclass, div > p {color: red; font-weight: 700;}\n\n" }
+      		[[".myclass","div > p"], {color:"red", "font-weight":700}],{pretty:true}
+      		], expected :".myclass, div > p\n{\n  color: red; \n  font-weight: 700; \n}\n" }
       ];
 
 	tests.forEach(function(test) {
@@ -553,6 +554,50 @@ describe("#clearTimer()", function() {
  	});
 });
 
+// ================================================================
+describe("#htmlTable()", function() {
+/**
+ test conversion of RGB style colors to HSL
+*/
+	var tests = [
+		{args: [[[1,2,3],[2,3,4]]], expected: "<table><thead><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody><tr><td>2</td><td>3</td><td>4</td></tr></tbody></table>" }
+	];
+	
+	tests.forEach(function(test) {
+		it("bw.htmlTable  " + test.args.length + "args", function() {
+			var res = bw.htmlTable.apply(null, test.args);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+
+});
+
+// ================================================================
+describe("#loremIpsum", function() {
+/**
+test docString raw etractor.  Note this function does not parse the doc string it just returns an array of valid doc strings from the supplied string.
+This can be used on functions or objects via the toString() operator.
+
+e.g. var myFunction = function( .... ) { ..... function body }
+
+bitwrench.docString(myFunction.toString()) ==> returns any doc strings inside.
+*/
+	var tests = [
+		{args: [25], expected: "Lorem ipsum dolor sit ame"},
+		{args: [25,1], expected: "Orem ipsum dolor sit amet"},
+		{args: [25,5,1], expected: "Mipsum dolor sit amet, co"},
+		{args: [25,5,0], expected: " ipsum dolor sit amet, co"},
+		{args: [2000,5,1], expected: "Mipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo."}
+	
+	];
+
+	tests.forEach(function(test) {
+		it("bw.loremIpsum " + test.args.length + "args", function() {
+			var res = bw.loremIpsum.apply(null, test.args);
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+});
 
 // ================================================================
 describe("#docString", function() {

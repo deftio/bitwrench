@@ -191,7 +191,7 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 
 	//takes HTML content and pretty prints it.  no syntax highlighting is performed
 	function section2Code(sectionId,target) {
-		var s = bw.HTMLSafeStr(bw.DOM(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/[ ]+/ig," ");
+		var s = bw.htmlSafeStr(bw.DOM(sectionId)[0].innerHTML.replace(/<br>/ig,"")).replace(/[ ]+/ig," ");
 		bw.DOM(target, "<div class='bw-code' >"+s+"</div><br>");
 	}
 

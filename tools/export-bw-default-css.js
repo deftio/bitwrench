@@ -33,9 +33,9 @@ if (bw.typeOf(process.argv[2]) == "string") {
 	bwCSSExport += "/*\"\"\"\n";
 	bwCSSExport += "bitwrench.css version " + bw.version()["version"]+ "\n";
 	bwCSSExport += "bitwrench.js exported css classes (auto generated)\nThis file contains the same css classes (styles used by bitwrench.js) and can be used stand-alone.\n\nIt is not required to load this file when using bitwrench.js since its built in to the bitwrench.js library and autoloaded.\n\n";
-	bwCSSExport += "This file can be generated at runtime via bw.bwSimpleStyles(false,{\"basics\":\"load\"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development";
+	bwCSSExport += "This file can be generated at runtime via bw.CSSSimpleStyles(false,{\"basics\":\"load\"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development";
 	bwCSSExport += "\n\n\"\"\"*/";
-	bwCSSExport += bw.bwSimpleStyles(false,{"globals":process.argv[3]});
+	bwCSSExport += bw.CSSSimpleStyles(false,{"globals":process.argv[3]});
 
 	bw.saveClientFile(process.argv[2],bwCSSExport);  // if running on node this internally uses ==> var fs = require('fs');
 }
