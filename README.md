@@ -5,13 +5,13 @@
 
 ## Welcome to bitwrench.js (alpha not fully released yet)
 
-bitwrench is a javascript library for useful demo hacking and misc kitchen sink operations.  Use it for throwing up quick web pages which don't depend on any server side framework but need a little prettyifcation or for visualizing quick data.  For example when debugging C/C++ embedded projects where we don't want to clutter the build dirs with lots of "weird web stuff" - just write a simple HTML page with bitwrench and still load/debug raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.
+bitwrench is a javascript library for for creating quick demos with almost no depedancies.  It also has handyman functions such as loremIpsum generation, ranged random numbers and interpolaters, and color blenders.  Use it for throwing up quick web pages which don't depend on any server side framework but need a little prettyifcation or for visualizing quick data.  For example when debugging C/C++ embedded projects where we don't want to clutter the build dirs with lots of "weird web stuff" - just write a simple HTML page with bitwrench and still load and view raw text files, JSON, arrays and other bits of embedded files with no extra dependancies.
 
 
 * **HTML quick emits** -- create HTML objects either client or server side from pure JSON.  useful for making quick components or dynamic content w/o any inline HTML
 	* html(["div", {class:"class1 class2", onclick:"myFunction(this)","This is the content"}] 
 	* DOM selects and applies e.g. 
-		* bw.DOM("h3","tada") // set all <h3> tags to have the content "tada"
+		* bw.DOM("h3","tada") // set all "h3" tags to have the content "tada"
 		* bw.DOM(".myClass",function(x){... do something on each element described by CSS selector .myClass})
 	* supports "deep" hieararchical JSON constructs and arrays
 	* registerFunction abilities allow functions to be passed statically to HTML elements (see docs)
@@ -23,13 +23,18 @@ bitwrench is a javascript library for useful demo hacking and misc kitchen sink 
 * **Saving/Loading application data files** (works in both browser or node)
 	* save / load files as raw or JSON 
 * **Getting URL parameters with defaults**
-	* simple parsing of URL params, also can be  used for command line scripts
-* **Data manipulation functions** and other "random" things (interpolation, clipping, multi-d arrays, random())
+	* simple parsing of URL params, also can be  used for command line scripts, also packs simple dicts back to URLs.  note that this functionality predated modern URL libs so you might want to use those for modern apps.  However bitwrench versions do work on old browers such as IE8 and iPodTouch 4th generation
+* **Data manipulation functions** and other "random" things 
+	* numeric interpolation & clipping
+	* create multi-d arrays
+	* random(4,11) ==> put out a random number in the range 4-11, also provides multidim arrays of random numbers useful for testing tables etc
+	* prandom() ==> pseudorandom numbers with range settings,   also provides multidim arrays of random numbers useful for testing tables etc
 * **Logging** with time-stamps, messaging, and pretty printing (raw, HTML, and text) 
 	* Logging also has auto dissolve so one can log a process and then dump later or suppress in 'production'
 * **Built-in docString parsing** with extraction support 
 	* bitwrench.js self-documents in that from the browser DOM one can pull out a given function's doc strings such as bw.docString("DOM") ==> gives docString inforfor that function.
 	* note that bitwrench.min.js strips comments so built-in help is not available.
+
 
 
 There is no great structure here, just a bunch of kitchen sink things that seemed to be handy in alot of quick web dev situations.    All non-dom specific calls can be run either server side or client side.
@@ -52,19 +57,44 @@ npm install bitwrench --save
 ```javascript
 //usage in nodejs
 var bw = require('./bitwrench.js');  //adds to current scope
-var s = bw.html(["div",{"class":"foo"},"This is some  HTMLE"]); // now... ===> s = "<div class='foo'>This is some HTMLE</div>
+var s = bw.html(["div",{"class":"foo"},"This is some  HTML"]); // now... ===> s = "<div class='foo'>This is some HTML</div>
 
 ```
 
 ### browser
 In the browser bitwrench is loaded like any script library.  Note that parameters can be passed to bitwrench to control the loading process.
+bitwrench generates its own default css from javascript and loads those.  You can see these statically in the bitwrench.css file (note that bitwrench.css can also be used standalone without the bitwrench.js library).
 ```html
-//usage in browser
-<script type="text/javascript" src="./bitwrench.min.js"></script>
-
+<!-- example demo in browser - a complete page, see docs or examples for lists, justifiaction, styles, etc -->
+<html>
+<head>
+<script src="https://unpkg.com/bitwrench/bitwrench.min.js"></script> <!-- get latest version from npm cdn -->
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+<div  style="width:100%,height:100%">we</div>
 <script>
-console.log(bw.version());  // print bitwrench.js version installed
+    var myHTML = bw.htmla(
+		[
+			["h1" ,{"class":"bw-h1"},"Demo Area"         ],
+			["div",{"class":"foo"}  ,"This is some HTML"],
+			["span",{},bw.loremIpsum(230)],
+			"<br>",
+			["h2", {}, "A Title Area with centered text below"],
+			["div",{class:"bw-center"},bw.loremIpsum(200)],
+			["h2", {}, "A table of numbers"],
+			["div",{}, bw.htmlTable(
+			    [
+			        ["Col1", "Col2", "Col2"], // just an 2D array 
+			        [12, 23, 34],
+			        [340,293,230],
+			        [49,82,12]
+			    ],{sortable:true})]
+		]);
+	console.log(myHTML);
+	bw.DOM("div",myHTML);
 </script>
+</body>
+</html>
 ```
  
 
@@ -74,7 +104,7 @@ all source is at github:
 
 
 ## Linting 
-bitwrench uses eslint for static code checking and analysis.
+bitwrench uses eslint for static code checking and analysis.  Due to bitwrench's age we've kept ";" as a required part of the linting process.  After running lint you should see no errors or warnings.
 
 ```bash
 npm install eslint --save-dev
@@ -84,11 +114,11 @@ npm install eslint --save-dev
 ```
 Now run the lint test like this:
 ```bash
-./node_modules/.bin/eslint bitwrench.js   
+npm run lint
 ```
 
 ## Tests  (requires mocha and chai test suites)  
-bitwrench is tested with the mocha framework installed locally using npm
+bitwrench is tested with the mocha framework installed locally using npm along with instanbul for code / line coverage
 
 ```bash
 npm install mocha --save-dev mocha
@@ -97,40 +127,14 @@ npm install mocha --save-dev mocha
 
 Run the tests as follows:
 ```bash
-./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec
+npm run test
 
 ```
 
 ## Release History  
-* 1.1x Initial release  
+* 1.2x Initial release  
   
 ## License  
 bitwrench is released under the OSI Approved FreeBSD 2-clause license  
 
-Copyright (c) 2011-19, M. A. Chatterjee <deftio at deftio dot com>  
-All rights reserved.  
-  
-Redistribution and use in source and binary forms, with or without  
-modification, are permitted provided that the following conditions are met:  
-  
-* Redistributions of source code must retain the above copyright notice, this  
-  list of conditions and the following disclaimer.  
-
-* Redistributions in binary form must reproduce the above copyright notice,  
-  this list of conditions and the following disclaimer in the documentation  
-  and/or other materials provided with the distribution.  
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"  
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE  
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE  
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL  
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR  
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER  
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,  
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE  
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  
-
-
-
-
+see LICENSE.txt file
