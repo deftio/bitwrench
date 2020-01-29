@@ -5,7 +5,7 @@ This file contains the same css classes (styles used by bitwrench.js) and can be
 
 It is not required to load this file when using bitwrench.js since its built in to the bitwrench.js library and autoloaded.
 
-This file can be generated at runtime via bw.bwSimpleStyles(false,{"basics":"load"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development
+This file can be generated at runtime via bw.CSSSimpleStyles(false,{"basics":"load"}) and saving the data.  Also note that this version includes global css (* {}) rules which aren't required but useful for quick-n-dirty development
 
 """*/
 .bw-def-page-setup{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}

@@ -332,7 +332,7 @@ bw.DOMIsElement = function(el) {
     try {
         if(_to(el)== "undefined")
             return r;
-        if (bw.isNodeJS() == false)
+        if ((bw.isNodeJS() == false) || (typeof Element == "function"))
             r = el instanceof Element;  
 
     } 
@@ -346,7 +346,9 @@ bw.DOMIsElement = function(el) {
 };
 
 var _isEl = bw.DOMIsElement;
-
+bw.__rewire__ = function(a,b) {
+    bw[a]=b;
+};
 //===============================================
  /* istanbul ignore next */ 
 bw.DOMGetElements = function (el, type) {
@@ -367,8 +369,9 @@ TODO:
 
 */
     var r=[],a=[],i;
-
-    if (bw.isNodeJS() == false) {  // we're running in a browser
+    
+    if (bw.isNodeJS() == false) 
+    {  // we're running in a browser
         if (_isEl(el))
             return [el];  
         if (_to(el) == "string") { // now its a string so we have choices.. 
@@ -404,7 +407,7 @@ TODO:
         }
     }
 
-    return r.filter(function(x){return bw.DOMIsElement(x);});
+    return r.filter(function(x){return _isEl(x);});
 };
 //var _els = bw.DOMGetElements;
 
@@ -2041,14 +2044,14 @@ bw.htmlDataToImg = function(data, opts) {
 }
 */
 // =============================================================================================
-bw.naturalSort = function (as, bs){
+bw.naturalCompare = function (as, bs){
 /** 
-bw.naturalSort(a,b) {
-bw.naturalSort() is a function which can be passed to an array sort to provide natural sorting of mixed array elements.
+bw.naturalCompare(a,b) {
+bw.naturalCompare() is a function which can be passed to an array sort to provide natural sorting of mixed array elements.
 
 [3,4,2,1,"10","111","foo","bar","01","this123","This123", "848"].sort()
 vs
-[3,4,2,1,"10","111","foo","bar","01","this123","This123", "848"].sort(bw.naturalSort)
+[3,4,2,1,"10","111","foo","bar","01","this123","This123", "848"].sort(bw.naturalCompare)
 
 it is the default sort for bw.sortHTMLTable()
 
@@ -2057,10 +2060,10 @@ it is the default sort for bw.sortHTMLTable()
 //using .localCompare() in newer versions of JS
 
     var a, b, a1, b1, i= 0, L, rx=  /(\d+)|(\D+)/g, rd=  /\d/;
-    if(isFinite(as) && isFinite(bs)) return as - bs;
+    if(isFinite(as) && isFinite(bs)) return Math.sign(as - bs);
     a= String(as).toLocaleLowerCase();
     b= String(bs).toLocaleLowerCase();
-    if(a=== b) return 0;
+    if(a=== b) return (as > bs) ? 1 : 0;
     if(!(rd.test(a) && rd.test(b))) return a> b? 1:-1;
     a= a.match(rx);
     b= b.match(rx);
@@ -2093,7 +2096,7 @@ sortFunc(a,b,col) // a and b are the cells to compare, col is optional info on w
 */
     
     var  rows, switching, i, x, y, shouldSwitch;
-    var sortF = _to(sortFunction) == "function" ? sortFunction : bw.naturalSort;
+    var sortF = _to(sortFunction) == "function" ? sortFunction : bw.naturalCompare;
     
     table = bw.DOM(table)[0];
     
@@ -2477,8 +2480,11 @@ bw.isNodeJS = function () {
 /** 
 bw.isNodeJS() ==> returns true if running in node environment (else browser)
  */
+    if (typeof __monkey_patch_is_nodejs__ != "undefined") 
+        return false;
     return (typeof module !== "undefined" && module.exports) !== false;  //a hack will fix later
 };
+//console.log("=====",bw.isNodeJS())
 
 // =============================================================================================
 bw.fixNum = function(num,digits) {
@@ -2566,6 +2572,10 @@ bw.mapScale = function (x, in0, in1, out0, out1, options) {
 Map an input value x in its natural range in0...in1 to the output space out0...out1 with optional clipping
 expScale allows sigmoidal warping to stretch input values contrained to a small range. (floating point scale factor)
 x can be either a number or array of numbers.
+
+if options["clip"] = false, then mapScale will extrapolate outside of out0,out1
+
+//this is the function that oficially started bitwrench..
  */
     var dopts = {
         clip : true,
@@ -2601,20 +2611,25 @@ x can be either a number or array of numbers.
 //https://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
 bw.padNum = function(x, width, options) {
 /**
-@description bw.padnum() takes a number and pads left pads (default is '0')
+@description bw.padnum() takes a number and pads left pads (default is '0').  padNum also accepts strings so
+
+bw.padNum(123,5)  ==> "  123"
+bw.padNum(1234,5) ==> " 1234"
+bw.padNum("foo",5)==> "  foo"
 @param x {number} 
+@return {string} padded number
 */
     var dopts = {
-        padChar : " "
+        pad : " "
     };
     dopts = optsCopy(dopts, options);
     x = String(x);
-    return (x.length >= width) ? x : new Array(width - x.length+1).join(dopts["padChar"]) + x;
+    return (x.length >= width) ? x : new Array(width - x.length+1).join(dopts["pad"]) + x;
 };
 // =============================================================================================
 bw.trim = function (s, dir) {
 /**
-@description bw.trim() trims a string on either left, right, or both.  (cross browser works before IE8)
+@description bw.trim() trims whitespace from  string on either left, right, or both.  (cross browser works before IE8)
 @param s {string} : a string to trim white space on
 @param dir {"left" | "right" | "both" | "none"} : trim white space on left only, right only or both sides, or no trim (default is both)
 */
@@ -2636,7 +2651,7 @@ bw.padString = function (s, width, dir, options) {
 @description bw.padString() takes a string and pads it to the specified number of chars either left or right or centered.
 */
     var dopts = {
-        padChar    : " ",
+        pad        : " ",
         trimDir    : "both"   // pre-trim the input string:  "left", "right", "both", "none"
     };
     dopts = optsCopy(dopts, options);
@@ -2652,7 +2667,7 @@ bw.padString = function (s, width, dir, options) {
         },
             [0,0]
         );
-    return  ((new Array(q[0])).join(dopts["padChar"]))+x+(new Array(q[1])).join(dopts["padChar"]);
+    return  ((new Array(q[0])).join(dopts["pad"]))+x+(new Array(q[1])).join(dopts["pad"]);
 };
 
 // =============================================================================================
@@ -2670,8 +2685,8 @@ options
     }
 
 options
-    seType: 
-    "int"               ==> return an integer
+    setType: 
+    "int"               ==> return an integer (default)
     "float" or "number" ==> return floating point number
 
     dims
@@ -2714,6 +2729,42 @@ see also prandom for psuedorandom numbers
 
     return _rnd();
 };
+
+// =============================================================================================
+bw.prandom = function (rangeBegin,rangeEnd,seed, options) {
+/**
+prandom - generate a psuedo random number from internal hash function in a given range
+*/
+    rangeBegin = _to(rangeBegin)  == "number" ? rangeBegin : 0;
+    rangeEnd   = _to(rangeEnd)    == "number" ? rangeEnd   : 100;
+
+    var dopts = {
+        setType : "int",
+        dims    : false // if dims is array e.g. [3,4,5] returns random elements array
+    };
+    
+    dopts = optsCopy(dopts,options);
+    var _cseed = seed;
+    var _rnd = function () {
+        var n = 0;
+    
+        dopts.setType    = ["int","float","number"].indexOf(dopts.setType) == -1 ? "int" : dopts.setType;   
+
+        if (rangeEnd < rangeBegin ) {
+            rangeBegin ^= rangeEnd; rangeEnd ^= rangeBegin; rangeBegin ^= rangeEnd;
+        }
+        n = (((bw.hashFnv32a("start string",_cseed) & 0xffff)/(65536)) * (rangeEnd-rangeBegin)) + rangeBegin;
+
+        _cseed = (dopts.setType == "int") ? Math.round(n) : n;
+        return (dopts.setType == "int") ? Math.round(n) : n;
+    };
+
+    if ((_to(dopts["dims"]) == "array") || (_to(dopts["dims"])== "number"))
+        return bw.multiArray( _rnd, dopts["dims"]);
+
+    return _rnd();
+
+};
 // =============================================================================================
 
 
@@ -2747,40 +2798,6 @@ Ref.: http://isthe.com/chongo/tech/comp/fnv/
     return hval >>> 0;
 };
 
-// =============================================================================================
-bw.prandom = function (rangeBegin,rangeEnd,seed, options) {
-/**
-prandom - generate a psuedo random number from internal hash function in a given range
-*/
-    rangeBegin = _to(rangeBegin)  == "number" ? rangeBegin : 0;
-    rangeEnd   = _to(rangeEnd)    == "number" ? rangeEnd   : 100;
-
-    var dopts = {
-        setType : "int",
-        dims    : false // if dims is array e.g. [3,4,5] returns random elements array
-    };
-    
-    dopts = optsCopy(dopts,options);
-    
-    var _rnd = function () {
-        var n = 0;
-    
-        dopts.setType    = ["int","float","number"].indexOf(dopts.setType) == -1 ? "int" : dopts.setType;   
-
-        if (rangeEnd < rangeBegin ) {
-            rangeBegin ^= rangeEnd; rangeEnd ^= rangeBegin; rangeBegin ^= rangeEnd;
-        }
-        n = (((bw.hashFnv32a("start string",seed) & 0xffff)/(65536)) * (rangeEnd-rangeBegin)) + rangeBegin;
-    
-        return (dopts.setType == "int") ? Math.round(n) : n;
-    };
-
-    if ((_to(dopts["dims"]) == "array") || (_to(dopts["dims"])== "number"))
-        return bw.multiArray( _rnd, dopts["dims"]);
-
-    return _rnd();
-
-};
 // =============================================================================================
 bw.CSSMakeTheme   = function(color) {
 /**
@@ -2831,6 +2848,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         "id"           : "bw-default-styles",
         "exportCSS"    : false,
         "colorset"     : {"color" : "#000", "background-color" :"#ddd", "active" : "#222"}, 
+        "pretty"       : false, //make easy to read
         "themes"       :  // built-in primitive themes
             [ // must be valid CSS keys / values
                 [".bw-thm-light"  , {"color": "#020202 !important;", "background-color": "#e2e2e2 !important;"}],
@@ -2840,20 +2858,20 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     dopts = optsCopy(dopts,options);
 
-
-    var defContainer     = "{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n";
-    var defFontSerif     = "{font-family: Times New Roman, Times, serif;}\n";
-    var defFontSansSerif = "{font-family: Arial, Helvetica, sans-serif }\n";
-    
+    var defs = {
+        defContainer:       "{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n",
+        defFontSerif:       "{font-family: Times New Roman, Times, serif;}\n",
+        defFontSansSerif:   "{font-family: Arial, Helvetica, sans-serif }\n",
+    };
 
     if (dopts["globals"] == "load") {
-        s+= "\nhtml,body "+ defContainer;
-        s+= "*"+defFontSansSerif;
+        s+= "\nhtml,body "+ defs.defContainer;
+        s+= "*"+defs.defFontSansSerif;
     }
 
-    s+= ".bw-def-page-setup" + defContainer;
-    s+= ".bw-font-serif"     + defFontSerif;
-    s+= ".bw-font-sans-serif"+ defFontSansSerif;
+    s+= ".bw-def-page-setup" + defs.defContainer;
+    s+= ".bw-font-serif"     + defs.defFontSerif;
+    s+= ".bw-font-sans-serif"+ defs.defFontSansSerif;
 
     s+= ([1,2,3,4,5,6].map(function(x){return ".bw-h"+x+"{ font-size: "+_r(3.2*Math.pow(.85,x+1))+"rem;}";}).join("\n"))+"\n";
 
@@ -2906,12 +2924,14 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         [".bw-hide",   { display: "none"}],
         [".bw-show",   { display: "block"}]
         ];
-    s+= d.map(function(x){return rl(x,{pretty:false});}).join("\n")+"\n";
+    s+= d.map(function(x){return rl(x,{pretty:dopts.pretty});}).join("\n")+"\n";
     //responsive screen
     s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}\n";
     s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}\n";
     s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}\n";
     s+= "@media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}\n";
+
+    //grid system
     s+= [1,2,3,4,5,6,7,8,9,10,11,12].map(function(x){return ".bw-col-"+x+" {width:"+ (_r(x*100/12))+"%;"+m+" }";}).join("\n");
     
     s+= "\n";

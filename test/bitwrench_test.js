@@ -8,10 +8,23 @@ npm install chai  --save-dev chai
 
 */
 "use strict";
+
+const __monkey_patch_is_nodejs__ = true;
+
 var assert = require("assert");
 //var should = require('chai').should();
 
 
+//====================
+
+var jsdom = require('jsdom');
+const { JSDOM } = jsdom;
+
+//var jsdom = require('jsdom');
+//const { JSDOM } = jsdom;
+
+
+//==================================
 // include bitwrench!
 var bw = require("../bitwrench.js");
 
@@ -547,7 +560,7 @@ describe("#clearTimer()", function() {
 		it("bw.clearTimer  " + test.args.length + "args", function() {
 			var ref = bw.logExport()[1][1];
 			var res = bw.clearTimer.apply(null, test.args);
-			assert.equal((res-ref) < 400,true);
+			assert.equal((res-ref) < 500,true);
 			if (test.args[0]=="clearTimerMsg")
 				assert.equal(test.args[0],bw.logExport()[2][1]);
 		});
@@ -557,7 +570,7 @@ describe("#clearTimer()", function() {
 // ================================================================
 describe("#htmlTable()", function() {
 /**
- test conversion of RGB style colors to HSL
+ gen HTML table from simple array
 */
 	var tests = [
 		{args: [[[1,2,3],[2,3,4]]], expected: "<table><thead><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody><tr><td>2</td><td>3</td><td>4</td></tr></tbody></table>" }
@@ -570,6 +583,81 @@ describe("#htmlTable()", function() {
 		});
  	});
 
+});
+// ================================================================
+describe("#naturalCompare()", function() {
+/**
+ sorting function for strings and nums in HTML table other array sorts
+*/
+	var tests = [
+		{args: [-2,2], expected: -1 },
+		{args: [2,-2], expected: 1 },
+		{args: ["abc",-2], expected: +1 },
+		{args: ["abc","def"], expected: -1 },
+		{args: ["abc","abc"], expected: 0 }
+	];
+	
+	tests.forEach(function(test) {
+		it("bw.naturalCompare " + test.args.length + "args", function() {
+			var res = bw.naturalCompare.apply(null, test.args);
+			assert.equal(res, test.expected);
+		});
+ 	});
+
+ 	var test2 = [
+ 			{args: [-2,3,"-3","3",0,"1xx","11xx","10xx",9], expected: ["-3", -2, 0, "1xx", 3, "3", 9, "10xx", "11xx"]}
+ 			];
+
+ 	test2.forEach(function(test) {
+		it("bw.naturalCompare :: full array " + test.args.length + " args", function() {
+			assert.deepEqual(test.args.sort(bw.naturalCompare),test.expected)
+			
+		});
+ 	});
+
+
+});
+// ================================================================
+
+/*
+
+*/
+describe("#bw.DOM())", function() {
+/**
+ bw.DOM checks
+
+ const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`);
+console.log(dom.window.document.querySelector("p").textContent);
+const { window } = new JSDOM(`...`);
+// or even
+const { document } = (new JSDOM(`...`)).window;
+*/
+	console.log("got here....")
+
+	var dom = new JSDOM('<!DOCTYPE html><html><head></head><body><span id="myspan">starter</span><div class="foo">default</div></body></html>');
+
+	//const { window } = new JSDOM();
+	//const { document } = dom.window;
+	global.window   = dom.window;
+	global.document = window.document;
+
+	var isNodeJS = bw.isNodeJS;
+	bw.__rewire__("isNodeJS",  function(){return false}) //need to spoof bitwrench to think its running in a browser.  Note uses rewire module for monkey patch testing
+	console.log("isNodeJS()",bw.isNodeJS()) 
+
+
+	console.log(">>",document.getElementsByTagName("span")[0].innerHTML,"--", /*bw.DOMIsElement(document.getElementsByTagName("span")[0])*/0);
+
+		it("bw.DOM test " , function() {
+			var s="this stuff" 
+			var res = bw.DOMGetElements("span","tagName")[0];
+
+			console.log("-->",res, document.getElementsByTagName("span")[0]);
+			console.log(bw.logExport())
+			//assert.equal(res, document.getElementsByTagName("span")[0].innerHTML);
+		});
+
+	bw.__rewire__("isNodeJS",isNodeJS)
 });
 
 // ================================================================
@@ -631,6 +719,287 @@ describe("#docStringParse", function() {
   	tests.forEach(function(test) {
     	it("bw.docStringParse (jsdoc comment parser)  " + test.args.length + " args", function() {
 	      	var res = bw.docStringParse.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+
+});
+// ================================================================
+describe("#isHexStr(str) return whether a string is hexadecimal number (returns number of hex digits if true)", function() {
+	var tests = [
+		{args: ["123abc"],  expected: 6},
+		{args: ["123abc-23","#-"],  expected: 8},
+		{args: ["123zabc-23","-"],  expected: 0}
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.isHexStr   " + test.args.length + " args", function() {
+	      	var res = bw.isHexStr.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+
+});
+// ================================================================
+describe("#fixNum(num,sf) trims a number to sf number of digits ", function() {
+	var tests = [
+		{args: [123.345,2],  expected: 123.34},
+		{args: [-345.345,1],  expected: -345.3},
+		{args: [345,-1],  expected: 340}
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.fixNum   " + test.args.length + " args", function() {
+	      	var res = bw.fixNum.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+
+});
+// ================================================================
+describe("#multiArray() creates a multiDim array ", function() {
+	var tests = [
+		{args: [2,[2,3]],  expected: [[2,2,2],[2,2,2]]},
+		{args: ["test",[3,2]],  expected: [["test","test"],["test","test"],["test","test"]]},
+		{args: [function(){return 3;},[3,2]],  expected: [[3,3],[3,3],[3,3]]}
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.multiArray   " + test.args.length + " args", function() {
+	      	var res = bw.multiArray.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+
+});
+// ================================================================
+describe("#clip(x,lo,hi) clips a number between 2 values ", function() {
+	var tests = [
+		{args: [2,-4,5],  expected: 2},
+		{args: [-10,-4,5],  expected: -4},
+		{args: [10,-4,5],  expected: 5},
+		{args: [[1,4,8,35], 2, 20], expected: [2,4,8,20]}
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.clip   " + test.args.length + " args", function() {
+	      	var res = bw.clip.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+});
+
+// ================================================================
+describe("#mapScale(x,inLo,inHi,outLo,OutHi,opts) scales a number btw 2 values ", function() {
+	var tests = [
+		{args: [1,0,10,100,200],  expected: 110},
+		{args: [[1,2,3],0,10,100,200],  expected: [110,120,130]},
+		{args: [22,20,40,200,400,{expScale: 2.0}], expected: 262.005},
+		{args: [-22,20,40,200,400,{expScale: 3.0,clip:true}], expected: 200.081}
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.mapScale   " + test.args.length + " args", function() {
+	      	var res = bw.mapScale.apply(null, test.args);
+	      	res = typeof res == "number" ? bw.fixNum(res,3) : res.map(function(x){return bw.fixNum(x,3)});
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+});
+// ================================================================
+describe("#padNum(x,width,padOpts", function() {
+	var tests = [
+		{args: [123,5],  expected:  "  123"},
+		{args: [1234,5],  expected: " 1234"},
+		{args: [123,5, {pad:"x"}],  expected: "xx123"},
+		{args: ["abc",5, {pad:"x"}],  expected: "xxabc"}				
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.padNum   " + test.args.length + " args", function() {
+	      	var res = bw.padNum.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+});
+
+// ================================================================
+describe("#bw.trim(str,dir)", function() {
+	var tests = [
+		{args: [" abc "],  expected:  "abc"},
+		{args: [" abc ","left"],  expected:  "abc "},
+		{args: [" abc ","right"],  expected:  " abc"},
+		{args: [" abc ","both"],  expected:  "abc"},
+		{args: [" abc ","none"],  expected:  " abc "}
+
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.trim   " + test.args.length + " args", function() {
+	      	var res = bw.trim.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+});
+// ================================================================
+describe("#padString(x,width,padOpts", function() {
+	var tests = [
+		{args: ["this is it",20,"left"] ,  expected:  "          this is it"},
+		{args: ["this is it",20,"right"],  expected:  "this is it          "},
+		{args: ["this is it",20,"center"], expected:  "     this is it     "},
+		{args: ["this is it",20,"center",{trimDir:"both",pad:"x"}], expected:  "xxxxxthis is itxxxxx"},
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.padString   " + test.args.length + " args", function() {
+	      	var res = bw.padString.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+});
+// ================================================================
+describe("#random(x,lo,hi,opts) - generate a random number between lo, hi", function() {
+
+  
+	it("bw.random ()  ", function() {
+      	var res = bw.random();
+      	assert( (res >= 0 && res <=100));
+	});
+	it("bw.random (20,30)  ", function() {
+      	var res = bw.random(20,30);
+      	assert( (res >= 20 && res <=30));
+	});
+	it("bw.random (0,1,{setType:'float'})  ", function() {
+      	var res = bw.random(0,1,{setType:"float"});
+      	assert( (res >= 0 && res <=1));
+	});
+	it("bw.random (0,1,{setType:'float'})  ", function() {
+      	var res = bw.random(30,40,{setType:"int",dims:[2,2]});
+      	res = [res[0][0], res[0][1], res[1][0], res[1][1]];
+      	assert( res.filter(x => (x>40) ||(x<  30)).length == 0);
+	});
+});
+
+// ================================================================
+
+describe("#prandom(x,lo,hi,opts) - generate a random number between lo, hi, using a seed (repeated able random #s)", function() {
+
+  
+	it("bw.prandom ()  ", function() {
+      	var res = bw.random();
+      	assert( res != 73);
+	});
+	it("bw.prandom (20,30)  ", function() {
+      	var res = bw.prandom(20,30);
+      	assert( (res >= 20 && res <=30));
+	});
+	it("bw.prandom (0,1,10,{setType:'float'})  ", function() {
+      	var res = bw.prandom(0,1,{setType:"float"});
+      	assert( (res >= 0 && res <=1));
+	});
+	it("bw.random (0,1,{setType:'float'})  ", function() {
+      	var res = bw.prandom(30,40,10,{setType:"int",dims:[2,2]});
+      	res = [res[0][0], res[0][1], res[1][0], res[1][1]];
+      	assert( res.filter(x => (x>40) ||(x<  30)).length == 0);
+	});
+});
+
+// ================================================================
+describe("#hashFnv32a(str, seed, returnAsHexStr) - generate a quick checksum (Fnv32a) of a string", function() {
+var tests = [
+		{args: ["this is it"] ,  expected:  3562000208},
+		{args: ["this is it",32] ,  expected:  2503917409},
+		{args: ["this is it",33] ,  expected:  857015836},
+		{args: ["this is it",32,true] ,  expected:  "953ebf61"}
+		
+	];
+  
+  	tests.forEach(function(test) {
+    	it("bw.hashFnv32a   " + test.args.length + " args", function() {
+	      	var res = bw.hashFnv32a.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+
+});
+// ================================================================
+describe("#CSSSimpleStyles (appendToHead, options) create the default bitwrench CSS styles, classes", function() {
+var tests = [
+		{args: [] ,  
+			expected:  
+`
+.bw-def-page-setup{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}
+.bw-font-serif{font-family: Times New Roman, Times, serif;}
+.bw-font-sans-serif{font-family: Arial, Helvetica, sans-serif }
+.bw-h1{ font-size: 2.312rem;}
+.bw-h2{ font-size: 1.965rem;}
+.bw-h3{ font-size: 1.67rem;}
+.bw-h4{ font-size: 1.419rem;}
+.bw-h5{ font-size: 1.206rem;}
+.bw-h6{ font-size: 1.025rem;}
+.bw-color-color {color:#000}
+.bw-color-background-color {background-color:#ddd}
+.bw-color-active {active:#222}
+.bw-thm-light
+{
+  color: #020202 !important;; 
+  background-color: #e2e2e2 !important;; 
+}
+.bw-thm-dark
+{
+  color: #e2e2e2 !important;; 
+  background-color: #020202 !important;; 
+}
+.bw-left{text-align:left;}
+.bw-right{text-align:right;}
+.bw-center{text-align:center;margin:0 auto;}
+.bw-justify{text-align:justify;}
+.bw-code{font-family:monospace;white-space:pre-wrap;}
+.bw-pad1{padding-left:1%;padding-right:1%;}
+.bw-table-stripe tr:nth-child(even){background-color:#f0f0f0;}
+.bw-table-col0-bold tr td:first-child{font-weight:700;}
+.bw-table-compact{border-collapse:collapse;border-spacing:0;}
+.bw-table-sort-upa::after{content:"\\2191";}
+.bw-table-sort-dna::after{content:"\\2193";}
+.bw-table-sort-xxa::after{content:"\\00a0";}
+.bw-tab-item-list{margin:0;padding-inline-start:0;}
+.bw-tab-item{display:inline;padding-top:5px;padding-left:10px;padding-right:10px;border-top-right-radius:7px;border-top-left-radius:7px;}
+.bw-tab-active{font-weight:700;}
+.bw-tab:hover{cursor:pointer;font-weight:700;}
+.bw-tab-content-list{margin:0;}
+.bw-tab-content{display:none;margin-top:-1px;border-radius:0;}
+.bw-tab-content, .bw-tab-active{background-color:#ddd;}
+.bw-container{margin:0 auto;}
+.bw-row{width:100%;display:block;}
+.bw-row [class^="bw-col"]{float:left;}
+.bw-row::after{content:"";display:table;clear:both;}
+.bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
+.bw-hide{display:none;}
+.bw-show{display:block;}
+@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}
+@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}
+@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}
+@media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}
+.bw-col-1 {width:8.333%; }
+.bw-col-2 {width:16.666%; }
+.bw-col-3 {width:25%; }
+.bw-col-4 {width:33.333%; }
+.bw-col-5 {width:41.666%; }
+.bw-col-6 {width:50%; }
+.bw-col-7 {width:58.333%; }
+.bw-col-8 {width:66.666%; }
+.bw-col-9 {width:75%; }
+.bw-col-10 {width:83.333%; }
+.bw-col-11 {width:91.666%; }
+.bw-col-12 {width:100%; }
+`
+		}
+		
+	];
+  
+  	tests.forEach(function(test) {
+    	it("CSSSimpleStyles   " + test.args.length + " args", function() {
+	      	var res = bw.CSSSimpleStyles.apply(null, test.args);
 	      	assert.deepEqual(res, test.expected);
     	});
  	});

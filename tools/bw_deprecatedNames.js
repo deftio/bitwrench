@@ -1,15 +1,18 @@
+//now that bitwrench as emerged from alpha status some old names were dropped use this functions to map old names to current functions.
 function useDepcreatedNames(bitwrenchInstance) {
-	bitwrenchInstrance.HTMLSafeStr 	= bitwrenchInstrance.htmlSafeStr; // deprecated
-	bitwrenchInstrance.makeHTML 	= bitwrenchInstrance.html;              //deprecated name
-	bitwrenchInstrance.buildHTMLObjString = bitwrenchInstrance.html;    //deprecated name
-	bitwrenchInstrance.makeHTMLList = bitwrenchInstrance.htmlList; //deprecated name
-	bitwrenchInstrance.makeHTMLTabs = bitwrenchInstrance.htmlTabs; //deprecated name
-	bitwrenchInstrance.makeHTMLTableStr = bitwrenchInstrance.htmlTable; ////deprecated name
 
-	bitwrenchInstrance.markElement = bitwrenchInstrance.DOMClass;
-	bitwrenchInstrance.bwSimpleStyles = bitwrenchInstrance.CSSSimpleStyles;
-
-
-
-	return bitwrenchInstrance;
+	var names = {
+		"HTMLSafeStr" 		: "htmlSafeStr", 
+		"makeHTML" 			: "html",       
+		"buildHTMLObjString": "html",  
+		"makeHTMLList" 		: "htmlList", 
+		"makeHTMLTabs" 		: "htmlTabs", 
+		"makeHTMLTableStr" 	: "htmlTable", 
+		"markElement"	 	: "DOMClass",
+		"bwSimpleStyles" 	: "CSSSimpleStyles",
+		"naturalSort" 		: "naturalCompare"
+	}
+	for (i in names)
+		bitwrenchInstance[i] = bitwrenchInstance[names[i]];
+	return bitwrenchInstance;
 }

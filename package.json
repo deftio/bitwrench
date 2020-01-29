@@ -8,7 +8,7 @@
 		"url": "git://github.com/deftio/bitwrench.git"
 	},
 	"keywords": [
-		"javascript miscellaneous helper functions"
+		"javascript miscellaneous helper functions library"
 	],
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
@@ -18,11 +18,13 @@
 	"devDependencies": {
 		"chai": "^3.0.0",
 		"eslint": "^4.19.1",
-		"mocha": "^2.5.3",
+		"jsdom": "16.0.1",
+		"jsdom-global": "3.0.2",
+		"mocha": "^7.0.1",
 		"nyc": "^15.0.0"
 	},
 	"scripts": {
-		"updaterm" : "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
+		"updaterm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
 		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && npm pack",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "nyc --reporter=text --cache=false mocha ",
