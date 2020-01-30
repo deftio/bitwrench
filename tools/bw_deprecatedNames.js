@@ -10,8 +10,8 @@ function useDepcreatedNames(bitwrenchInstance) {
 		"makeHTMLTableStr" 	: "htmlTable", 
 		"markElement"	 	: "DOMClass",
 		"bwSimpleStyles" 	: "CSSSimpleStyles",
-		"naturalSort" 		: "naturalCompare"
-	}
+		"naturalSort" 		: "naturalCompare",
+		"bwSimpleThemes"	: "CSSSimpleThemes"
 	for (i in names)
 		bitwrenchInstance[i] = bitwrenchInstance[names[i]];
 	return bitwrenchInstance;

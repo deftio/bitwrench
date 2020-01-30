@@ -976,22 +976,22 @@ var tests = [
 .bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
 .bw-hide{display:none;}
 .bw-show{display:block;}
+.bw-col-1{width:8.333%;}
+.bw-col-2{width:16.666%;}
+.bw-col-3{width:25%;}
+.bw-col-4{width:33.333%;}
+.bw-col-5{width:41.666%;}
+.bw-col-6{width:50%;}
+.bw-col-7{width:58.333%;}
+.bw-col-8{width:66.666%;}
+.bw-col-9{width:75%;}
+.bw-col-10{width:83.333%;}
+.bw-col-11{width:91.666%;}
+.bw-col-12{width:100%;}
 @media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}
 @media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}
 @media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}
 @media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}
-.bw-col-1 {width:8.333%; }
-.bw-col-2 {width:16.666%; }
-.bw-col-3 {width:25%; }
-.bw-col-4 {width:33.333%; }
-.bw-col-5 {width:41.666%; }
-.bw-col-6 {width:50%; }
-.bw-col-7 {width:58.333%; }
-.bw-col-8 {width:66.666%; }
-.bw-col-9 {width:75%; }
-.bw-col-10 {width:83.333%; }
-.bw-col-11 {width:91.666%; }
-.bw-col-12 {width:100%; }
 `
 		}
 		
@@ -1000,6 +1000,31 @@ var tests = [
   	tests.forEach(function(test) {
     	it("CSSSimpleStyles   " + test.args.length + " args", function() {
 	      	var res = bw.CSSSimpleStyles.apply(null, test.args);
+	      	assert.deepEqual(res, test.expected);
+    	});
+ 	});
+
+});
+
+// ================================================================
+describe("#CSSSimpleThemes (index, options) simple styles for live use", function() {
+var tests = [
+		{args: [1,false,{}] ,  
+			expected:  
+`*{background-color:#f8f8f8;color:#111;font-family:sans-serif;box-sizing:border-box;}
+body{margin-top:1%;}
+th{background-color:#ddd;}
+tbody tr:nth-child(even){background-color:#ddd;}
+table,td,th{border-collapse:collapse;border:1px solid #111;}
+td,th{padding:4px;}
+div,body,button,table,input{border-radius:2px;}`
+		}
+		
+	];
+  
+  	tests.forEach(function(test) {
+    	it("CSSSimpleThemes   " + test.args.length + " args", function() {
+	      	var res = bw.CSSSimpleThemes.apply(null, test.args);
 	      	assert.deepEqual(res, test.expected);
     	});
  	});

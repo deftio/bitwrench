@@ -1041,7 +1041,8 @@ dicts not used at root because css can have multiple redundant selectors with di
  */
     var dopts = {
         emitStyleTag: false,
-        atr: {}
+        atr: {},
+        pretty : false
     };
     dopts = optsCopy(dopts,options);
 
@@ -1085,6 +1086,7 @@ dicts not used at root because css can have multiple redundant selectors with di
                                         {
                                             var x;
                                             for (x in _rule) { _ruleOutput += (x + ": " + _rule[x]+"; ");}
+                                            //_ruleOutput = bw.makeCSSRule([_name,_rule],{pretty:opts.pretty});
                                         }
                                         break;
                                     case "string": // ["h2", "color: black"] or [["h2",".myClass"], "color:black"]
@@ -2839,7 +2841,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         "id" : "bw-default-styles" // id assigned to the script tag, used for preventing multiple loading in a browser page
 
  */
-    var s ="\n", m="",i;
+    var s ="\n", i;
     //var i,j,k,l;
     var _r = bw.fixNum;
     var rl = bw.makeCSSRule;
@@ -2858,7 +2860,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
     dopts = optsCopy(dopts,options);
 
-    var defs = {
+    var defs = { // defaults
         defContainer:       "{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n",
         defFontSerif:       "{font-family: Times New Roman, Times, serif;}\n",
         defFontSansSerif:   "{font-family: Arial, Helvetica, sans-serif }\n",
@@ -2913,31 +2915,35 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         [".bw-tab-content",{ display:"none","margin-top":"-1px", "border-radius":0}],
         [".bw-tab-content, .bw-tab-active", {"background-color": "#ddd"}],
 
-    //grid
+        //grid setup
         [".bw-container",{ margin: "0 auto"}],
         [".bw-row",      { width: "100%", display: "block"}],
         [".bw-row [class^=\"bw-col\"]", { float: "left"}],
         [".bw-row::after", { content: "\"\"",   display: "table", clear:"both"}],
         [".bw-box-1", {"padding-top":"10px","padding-bottom": "10px", "border-radius": "8px"}],
     
-    //misc element controls
+        //misc element controls
         [".bw-hide",   { display: "none"}],
         [".bw-show",   { display: "block"}]
-        ];
+    ];
+
+
+    // grid system (generated)
+    for (var k=1; k<=12; k++)
+        d.push([".bw-col-"+k, {width:(_r(k*100/12)+"%")}]);
+
+    // generate CSS from above rules    
     s+= d.map(function(x){return rl(x,{pretty:dopts.pretty});}).join("\n")+"\n";
+
     //responsive screen
     s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}\n";
     s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}\n";
     s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}\n";
     s+= "@media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}\n";
-
-    //grid system
-    s+= [1,2,3,4,5,6,7,8,9,10,11,12].map(function(x){return ".bw-col-"+x+" {width:"+ (_r(x*100/12))+"%;"+m+" }";}).join("\n");
     
-    s+= "\n";
     
     if (bw.isNodeJS() == false) {
-        var h  = document.getElementsByTagName("head")[0];
+        var h  = bw.DOM("head")[0];
         var el = document.createElement("style");
         el.id = dopts["id"];
         el.textContent = s;
@@ -2951,7 +2957,7 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 };
 
 
-bw.bwSimpleThemes = function (d,appendToHead) {
+bw.CSSSimpleThemes = function (d,appendToHead) {
 /** 
 bw.bwSimpleThemes() selects simple (we do mean simple) HTML themes for some basic elements.
 if d is an number it selects the built-in theme by index (see docs) else if d is a dictionary the elements
@@ -2959,39 +2965,64 @@ in d will be converted to a CSS style.
 
 output is a CSS style.  if appendToHead is true or omitted then the theme is appended to the head element.
  */
-    var s ="",xs={}, i;
-    var def = [  // default styles
-    { // dark theme
-        "*"  : "background-color: #333; color: #ddd; font-family: sans-serif; box-sizing:border-box;",
-        "body" : "margin-top:1%;",
-        "th"                       : "background-color: #555",
-        "tbody tr:nth-child(even)" : "background-color: #f0f0f0",
-        "table, td, th"            : "border-collapse: collapse; border:1px solid #ddd; ",
-        "td,th"                    : "padding:4px; ",
-        "div,body,button,table,input" : "border-radius: 2px"
-        //"div" : "padding-left:2%; padding-right:2%; padding-top:1%;padding-bottom:1%;"   
+    var s ="",xs={};
+    /*
+    var thm = {
+        defBkgCol : "#333",
+        defCol    : "#ddd",
+        col1      : "#555",
+        col2      : "#f0f0f0",
+        brd       : "#ddd"
+    };
+
+    var thmCSS =  
+            [ 
+                ["*"                        , {"background-color": thm.defBkgCol, "color":thm.defCol, "font-family": "sans-serif", "box-sizing":"border-box"}],
+                ["body"                     , {"margin-top":"1%"}],
+                ["th"                       , {"background-color":thm.col1}],
+                ["tbody tr:nth-child(even)" , {"background-color": thm.col2}],
+                [["table", "td", "th"]      , {"border-collapse":"collapse", "border":"1px solid "+thm.brd}],
+                [["td","th"]                , {"padding":"4px"}],
+                [["div","body","button","table","input"] , {"border-radius": "2px"}]
+                // ["div", {"padding-left":"2%", "padding-right":"2%","padding-top":"1%","padding-bottom":"1%"}]   
+            ];
+        */
+    var def =  [ // default styles
+    {
+        
+        css: 
+            [ 
+                ["*"                        , {"background-color": "#333", "color":"#ddd", "font-family": "sans-serif", "box-sizing":"border-box"}],
+                ["body"                     , {"margin-top":"1%"}],
+                ["th"                       , {"background-color":"#555"}],
+                ["tbody tr:nth-child(even)" , {"background-color": "#f0f0f0"}],
+                [["table", "td", "th"]      , {"border-collapse":"collapse", "border":"1px solid #ddd"}],
+                [["td","th"]                , {"padding":"4px"}],
+                [["div","body","button","table","input"] , {"border-radius": "2px"}]
+                // ["div", {"padding-left":"2%", "padding-right":"2%","padding-top":"1%","padding-bottom":"1%"}]   
+            ],
     },
-    {// light theme
-        "*": "background-color: #f8f8f8; color: #111; font-family: sans-serif; box-sizing:border-box;",
-        "body" : "margin-top:1%;",
-        "th"                       : "background-color: #ddd",
-        "tbody  tr:nth-child(even)": "background-color: #ddd",
-        "table, td, th"            : "border-collapse: collapse; border:1px solid #111; ",
-        "td,th"                    : "padding:4px; ",
-        "div,body,button,table,input" : "border-radius: 2px;"
-        //"div" : "padding-left:2%; padding-right:2%; padding-top:1%;padding-bottom:1%;"   
+    {
+        css: 
+            [ 
+                ["*"                        , {"background-color": "#f8f8f8", "color":"#111", "font-family": "sans-serif", "box-sizing":"border-box"}],
+                ["body"                     , {"margin-top":"1%"}],
+                ["th"                       , {"background-color":"#ddd"}],
+                ["tbody tr:nth-child(even)" , {"background-color":"#ddd"}],
+                [["table", "td", "th"]      , {"border-collapse":"collapse", "border":"1px solid #111"}],
+                [["td","th"]                , {"padding":"4px"}],
+                [["div","body","button","table","input"] , {"border-radius": "2px"}]
+                // ["div", {"padding-left":"2%", "padding-right":"2%","padding-top":"1%","padding-bottom":"1%"}]   
+            ],
     }
     ];
-
     xs = bw.choice(_to(d),{
             "object" : d,
-            "number" : ((d>=0) && (d<def.length))?def[d]:def[0] 
-        },def[0]);
+//            "string" : function(){}
+            "number" : ((d>=0) && (d<def.length))?def[d].css:def[0].css 
+        },def[0].css);
 
-
-    for (i in xs) {
-        s+= i + " " +"{"+xs[i]+"}\n";
-    }
+    s= xs.map(function(y){return bw.makeCSSRule(y,{pretty:false});}).join("\n");
     if (appendToHead != false) {
         //var hs = document.getElementById("bw-simple-theme-styles");
         var hs = bw.DOM("bw-simple-theme-styles");
