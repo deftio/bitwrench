@@ -1030,3 +1030,17 @@ div,body,button,table,input{border-radius:2px;}`
  	});
 
 });
+
+// ================================================================
+describe("#version() returns version info at runtime", function() {
+	it("version()   " + 0 + " args", function() {
+	      	var res = bw.version();
+	      	assert(res.version.split(".").length>=3);
+	      	assert((res.hasOwnProperty("about")));
+	      	assert((res.hasOwnProperty("copy")));
+	      	assert((res.hasOwnProperty("url")));
+	      	assert.equal(res.license , "BSD-2-Clause");
+
+    	});
+});
+
