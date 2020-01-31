@@ -12,6 +12,7 @@ function useDepcreatedNames(bitwrenchInstance) {
 		"bwSimpleStyles" 	: "CSSSimpleStyles",
 		"naturalSort" 		: "naturalCompare",
 		"bwSimpleThemes"	: "CSSSimpleThemes"
+		
 	for (i in names)
 		bitwrenchInstance[i] = bitwrenchInstance[names[i]];
 	return bitwrenchInstance;

@@ -37,8 +37,8 @@
 		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && npm pack",
 		"cleanbuild": "npm run clean && npm run update_rm && npm run build",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "nyc --reporter=text --cache=false mocha ",
-		"testk": "./node_modules/karma/bin/karma start karma.conf.js",
+		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js ",
+		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm bitwrench*.tgz -f",
 		"lint": "./node_modules/.bin/eslint bitwrench.js"
 	},

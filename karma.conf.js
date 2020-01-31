@@ -80,8 +80,10 @@ module.exports = function(config) {
  
     reporters: ['progress','coverage'],
     coverageReporter: {
+      type : 'text',
       dir:  'coverage',
-      subdir: 'report'
+      //subdir: 'report'
+      file : 'coverage.txt'
       // Would output the results into: .'/coverage/report/'
     },
  
