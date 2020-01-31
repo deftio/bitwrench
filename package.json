@@ -20,16 +20,30 @@
 		"eslint": "^4.19.1",
 		"jsdom": "16.0.1",
 		"jsdom-global": "3.0.2",
+		"karma": "^4.4.1",
+		"karma-chai": "^0.1.0",
+		"karma-chrome-launcher": "^3.1.0",
+		"karma-cli": "^2.0.0",
+		"karma-coverage": "^2.0.1",
+		"karma-firefox-launcher": "^1.3.0",
+		"karma-ie-launcher": "^1.0.0",
+		"karma-mocha": "^1.3.0",
 		"mocha": "^7.0.1",
-		"nyc": "^15.0.0"
+		"nyc": "^15.0.0",
+		"uglifyjs": "^2.4.11"
 	},
 	"scripts": {
-		"updaterm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
+		"update_rm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
 		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && npm pack",
+		"cleanbuild": "npm run clean && npm run update_rm && npm run build",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "nyc --reporter=text --cache=false mocha ",
+		"testk": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm bitwrench*.tgz -f",
 		"lint": "./node_modules/.bin/eslint bitwrench.js"
 	},
-	"homepage": "http://deftio.com/bitwrench"
+	"homepage": "http://deftio.com/bitwrench",
+	"dependencies": {
+		"karma-coverage-istanbul-reporter": "^2.1.1"
+	}
 }

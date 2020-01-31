@@ -1,32 +1,13 @@
-/**
-bitwrench test functions for npm (nodejs) see bitwrench_test_karam.js for browser version of tests
+/*"""
+bitwrench test functions for karma headless browser tests
 
-this file uses the mocha test framework and chai assert framework
 
-npm install mocha --save-dev mocha
-npm install chai  --save-dev chai
-
-*/
+"""*/
 "use strict";
 
 
 
-var assert = require("assert");
-//var should = require('chai').should();
 
-
-//====================
-
-var jsdom = require('jsdom');
-const { JSDOM } = jsdom;
-
-//var jsdom = require('jsdom');
-//const { JSDOM } = jsdom;
-
-
-//==================================
-// include bitwrench!
-var bw = require("../bitwrench.js");
 
 //tests begin:
 // ================================================================
@@ -632,32 +613,22 @@ const { window } = new JSDOM(`...`);
 // or even
 const { document } = (new JSDOM(`...`)).window;
 */
-	console.log("got here....")
-
-	var dom = new JSDOM('<!DOCTYPE html><html><head></head><body><span id="myspan">starter</span><div class="foo">default</div></body></html>');
-
-	//const { window } = new JSDOM();
-	//const { document } = dom.window;
-	global.window   = dom.window;
-	global.document = window.document;
-
-	var isNodeJS = bw.isNodeJS;
-	bw.__rewire__("isNodeJS",  function(){return false}) //need to spoof bitwrench to think its running in a browser.  Note uses rewire module for monkey patch testing
-	console.log("isNodeJS()",bw.isNodeJS()) 
-
-
-	console.log(">>",document.getElementsByTagName("span")[0].innerHTML,"--", /*bw.DOMIsElement(document.getElementsByTagName("span")[0])*/0);
-
+		var el = document.createElement("div");
+        el.innerHTML = 
+       `
+       <span id="span1">this is a test..</span>
+       <span class=".myspan">span2 content</span>
+       `
+		document.getElementsByTagName("body")[0].appendChild(el);
 		it("bw.DOM test " , function() {
-			var s="this stuff" 
-			var res = bw.DOMGetElements("span","tagName")[0];
+			
+			var res = bw.DOM("span")[0];
+			console.log("626:: ",res);
+			res.innerHTML ="test stuff";
 
-			console.log("-->",res, document.getElementsByTagName("span")[0]);
-			console.log(bw.logExport())
-			//assert.equal(res, document.getElementsByTagName("span")[0].innerHTML);
+			assert.equal(res.innerHTML, document.getElementsByTagName("span")[0].innerHTML);
 		});
 
-	bw.__rewire__("isNodeJS",isNodeJS)
 });
 
 // ================================================================
