@@ -40,7 +40,8 @@
 		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js ",
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm bitwrench*.tgz -f",
-		"lint": "./node_modules/.bin/eslint bitwrench.js"
+		"lint": "./node_modules/.bin/eslint bitwrench.js",
+		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser"
 	},
 	"homepage": "http://deftio.com/bitwrench",
 	"dependencies": {

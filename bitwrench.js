@@ -282,6 +282,7 @@ bw.tc = bw.typeConvert;
 //===============================================
 // internally used function for options copy
 // keys in opts are copied to dopts (or overwrite options in dopts)
+/* istanbul ignore next */ 
 var optsCopy =  function(dopts,opts) {
      /* istanbul ignore next */ 
     if ((_to(opts) == "object") && (_to(dopts)=="object")) {
@@ -346,9 +347,7 @@ bw.DOMIsElement = function(el) {
 };
 
 var _isEl = bw.DOMIsElement;
-bw.__rewire__ = function(a,b) {
-    bw[a]=b;
-};
+
 //===============================================
  /* istanbul ignore next */ 
 bw.DOMGetElements = function (el, type) {

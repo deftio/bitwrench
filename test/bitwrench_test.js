@@ -84,7 +84,8 @@ test built-in basic bitwrench typeof operator
 		{args: [null],			  expected: "null"},
 		{args: [new Date()],	  expected: "date"},
 		{args: [function(){}],    expected: "function"},
-		{args: [class{}],		  expected: "function"	}
+		{args: [class{}],		  expected: "function"	},
+		{args: [class{},true],    expected: "function" }
 	];
   
   	tests.forEach(function(test) {

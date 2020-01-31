@@ -1,5 +1,6 @@
 // Karma configuration
 // Generated on Thu Jan 30 2020 21:16:09 GMT-0800 (Pacific Standard Time)
+// note karma may need env set: export CHROME_BIN=/usr/bin/chromium-browser
 
 module.exports = function(config) {
   config.set({
@@ -35,7 +36,8 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors : {
-      'test/karma-test.js': 'coverage'
+      //'test/karma-test.js': 'coverage'
+      'bitwrench.js':'coverage'
     },
 
     // test results reporter to use
@@ -80,10 +82,9 @@ module.exports = function(config) {
  
     reporters: ['progress','coverage'],
     coverageReporter: {
-      type : 'text',
+      type : 'lcov',
       dir:  'coverage',
-      //subdir: 'report'
-      file : 'coverage.txt'
+      //file : 'coverage.txt'
       // Would output the results into: .'/coverage/report/'
     },
  

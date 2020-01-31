@@ -1,6 +1,9 @@
 /*"""
 bitwrench test functions for karma headless browser tests
 
+note you may need an env var set such as :
+
+export CHROME_BIN=/usr/bin/chromium-browser
 
 """*/
 "use strict";
