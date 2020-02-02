@@ -12,21 +12,22 @@ npm install chai  --save-dev chai
 
 
 var assert = require("assert");
-//var should = require('chai').should();
+
 
 
 //====================
 
 var jsdom = require('jsdom');
 const { JSDOM } = jsdom;
-
-//var jsdom = require('jsdom');
-//const { JSDOM } = jsdom;
-
+//var jsdom    = require("jsdom");
+const fs = require("fs");
+const path = require("path");
+const bitwrenchFile = fs.readFileSync(path.resolve(__dirname,"../bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
+console.log("bitwrenchFile Loaded..."+bitwrenchFile.length+" chars"); 
 
 //==================================
 // include bitwrench!
-var bw = require("../bitwrench.js");
+var bw = require("../bitwrench.js"); // this is a live copy of bitwrench for nodejs testing as below
 
 //tests begin:
 // ================================================================
@@ -561,7 +562,7 @@ describe("#clearTimer()", function() {
 		it("bw.clearTimer  " + test.args.length + "args", function() {
 			var ref = bw.logExport()[1][1];
 			var res = bw.clearTimer.apply(null, test.args);
-			assert.equal((res-ref) < 500,true);
+			assert.equal((res-ref) < 800,true);
 			if (test.args[0]=="clearTimerMsg")
 				assert.equal(test.args[0],bw.logExport()[2][1]);
 		});
@@ -619,7 +620,7 @@ describe("#naturalCompare()", function() {
 
 });
 // ================================================================
-
+//var jsdom    = require("jsdom");
 /*
 
 */
@@ -633,32 +634,77 @@ const { window } = new JSDOM(`...`);
 // or even
 const { document } = (new JSDOM(`...`)).window;
 */
-	console.log("got here....")
+	
+		let window;
+		beforeEach(() => {
+			const testDoc = `<!DOCTYPE html><html><head></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`;
+		  	window = (new JSDOM(testDoc, { runScripts: "dangerously" })).window;
 
-	var dom = new JSDOM('<!DOCTYPE html><html><head></head><body><span id="myspan">starter</span><div class="foo">default</div></body></html>');
+		  	// Execute my library by inserting a <script> tag containing it.
+		  	const scriptEl = window.document.createElement("script");
+		  	scriptEl.textContent = bitwrenchFile;
+		  	window.document.head.appendChild(scriptEl);
+		});
 
-	//const { window } = new JSDOM();
-	//const { document } = dom.window;
-	global.window   = dom.window;
-	global.document = window.document;
+		it("should do the right thing", () => {
+		 	assert.equal(window.bw.version().version, "1.2.5");
+		 	assert.equal(window.document.getElementById("myTestSpan").innerHTML, "starter");
+		 	assert.equal(window.bw.DOM("#myTestSpan")[0].innerHTML, "starter");
+		});
 
-	var isNodeJS = bw.isNodeJS;
-	bw.__rewire__("isNodeJS",  function(){return false}) //need to spoof bitwrench to think its running in a browser.  Note uses rewire module for monkey patch testing
-	console.log("isNodeJS()",bw.isNodeJS()) 
+		
+		//
+		
+	    //var document = jsdom(testDoc),
+	//    jsdom.env
+	    //window   = document.createWindow();
+/*
+		beforeEach(() => {
+		  //dx = (new JSDOM(`<!DOCTYPE html><html><head><script id='bw'></script></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`, { runScripts: "dangerously" }));
+		  
+		  // Execute my library by inserting a <script> tag containing it.
+		  //console.log("===>",window)
+		  //dx.window.bw = bw;
+
+		  console.log( "bw in dom result",window.document.getElementById("myTestSpan").innerHTML);//, jsdom.window.bw.version().version);//, jsdom.window.bw.DOM("#myTestSpan"));
+		  //console.log( "bw version in jsdom ==>" ,window.bw.version().version());
+		});
+
+		it("should do the right thing", () => {
+		  //console.log( "bw version in jsdom ==>" ,window.bw.version().version());
+		  //assert.equal(window.myLibrary.doThing("foo"), "bar");
+		  //assert.equal(window.bw.version().version,"1.2.5");
+		});
+		*/
 
 
-	console.log(">>",document.getElementsByTagName("span")[0].innerHTML,"--", /*bw.DOMIsElement(document.getElementsByTagName("span")[0])*/0);
-
+		/*
 		it("bw.DOM test " , function() {
+			
+			var dom = new JSDOM('<!DOCTYPE html><html><head></head><body><span id="myspan">starter</span><div class="foo">default</div></body></html>');
+
+			//const { window } = new JSDOM();
+			//const { document } = dom.window;
+			global.window   = dom.window;
+			global.document = window.document;
+
+			bw.__monkey_patch_is_nodejs__ = false; //need to spoof bitwrench to think its running in a browser.  Note uses rewire module for monkey patch testing
+			console.log("isNodeJS() (after monkey patch) ==> ",bw.isNodeJS()) 
+
+			console.log(">>",document.getElementsByTagName("span")[0].innerHTML,"--",  /*bw.DOMIsElement(document.getElementsByTagName("span")[0]) * / 0);
+
 			var s="this stuff" 
-			var res = bw.DOMGetElements("span","tagName")[0];
+			
+			var res = bw.DOM("span")[0];
 
 			console.log("-->",res, document.getElementsByTagName("span")[0]);
 			console.log(bw.logExport())
 			//assert.equal(res, document.getElementsByTagName("span")[0].innerHTML);
+			
 		});
-
-	bw.__rewire__("isNodeJS",isNodeJS)
+		*/
+	//bw.__monkey_patch_is_nodejs__ = "ignore";
+	//bw.__rewire__("isNodeJS",isNodeJS)
 });
 
 // ================================================================

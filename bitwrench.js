@@ -2477,12 +2477,14 @@ examples:
 };
 
 // =============================================================================================
+bw.__monkey_patch_is_nodejs__ = "ignore";  //used in test suites
+
 bw.isNodeJS = function () {
 /** 
 bw.isNodeJS() ==> returns true if running in node environment (else browser)
  */
-    if (typeof __monkey_patch_is_nodejs__ != "undefined") 
-        return false;
+    if (bw.__monkey_patch_is_nodejs__ != "ignore") 
+        return bw.__monkey_patch_is_nodejs__;
     return (typeof module !== "undefined" && module.exports) !== false;  //a hack will fix later
 };
 //console.log("=====",bw.isNodeJS())
