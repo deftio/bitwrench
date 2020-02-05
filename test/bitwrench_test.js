@@ -13,21 +13,43 @@ npm install chai  --save-dev chai
 
 var assert = require("assert");
 
-
+// include bitwrench!
+//var bw = require("../bitwrench.js"); // this is a live copy of bitwrench for nodejs testing as below
+var bw = require("../instr_tmp/bitwrench.js"); // this is a live copy of bitwrench for nodejs testing as below
 
 //====================
 
 var jsdom = require('jsdom');
 const { JSDOM } = jsdom;
-//var jsdom    = require("jsdom");
+
+var istanbul = require('nyc')
+console.log(istanbul,istanbul.__coverage__)
 const fs = require("fs");
 const path = require("path");
+
 const bitwrenchFile = fs.readFileSync(path.resolve(__dirname,"../bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
 console.log("bitwrenchFile Loaded..."+bitwrenchFile.length+" chars"); 
 
+const bitwrenchFileInstrumented = fs.readFileSync(path.resolve(__dirname,"../instr_tmp/bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
+console.log("bitwrenchFileInstrumented Loaded..."+bitwrenchFileInstrumented.length+" chars"); 
+
+
+var coverageVar = (
+    function() {
+        var coverageVar = __coverage__;
+        /*
+        for(var key of Object.keys(global)) {
+            if (/\$\$cov\d+\$\$/.test(key)) {
+                coverageVar = key;
+            }
+        }*/
+        console.log('Coverage var:', coverageVar);
+        return coverageVar;
+    }
+)();
+
+
 //==================================
-// include bitwrench!
-var bw = require("../bitwrench.js"); // this is a live copy of bitwrench for nodejs testing as below
 
 //tests begin:
 // ================================================================
@@ -219,7 +241,112 @@ describe("#arrayBNotinA(a,b) - return elements of Array B not in Array A ", func
 		});
  	});
 });
+// ================================================================
+describe("#bw.DOMIsElement()", function() {
+/**
+ 
 
+*/
+	
+		let window;
+		beforeEach(() => {
+			const testDoc = `<!DOCTYPE html><html><head></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`;
+		  	window = (new JSDOM(testDoc, { 
+		  		runScripts: "dangerously" , 
+		  		created: function (errors, wnd) { wnd[coverageVar] = global[coverageVar]; console.log(coverageVar) },
+		  		done   : function (errors, wnd) {if (errors) {console.log(errors);  done(true); } else { window = wnd; done(); }
+			    }
+		  	})).window;
+
+		  	// Execute my library by inserting a <script> tag containing it.
+		  	const scriptEl = window.document.createElement("script");
+		  	scriptEl.textContent = bitwrenchFileInstrumented;
+		  	window.document.head.appendChild(scriptEl);
+		});
+
+		it("DOMIsElement()", () => {
+		 	assert.equal(window.bw.DOMIsElement(window.bw.DOM("span")[0]), true); // test jsdom is using bw correctly in window context
+		});
+		it("DOMIsElement()", () => {
+		 	assert.equal(window.bw.DOMIsElement(window.bw.DOM("not an Element")[0]), false); // test jsdom is using bw correctly in window context
+		});
+});
+
+describe("#bw.DOMGetElements())", function() {
+/**
+
+
+
+*/
+	
+		let window;
+		beforeEach(() => {
+			const testDoc = `<!DOCTYPE html><html><head></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`;
+		  	window = (new JSDOM(testDoc, { 
+		  		runScripts: "dangerously" , 
+		  		created: function (errors, wnd) { wnd[coverageVar] = global[coverageVar]; console.log(coverageVar) },
+		  		done   : function (errors, wnd) {if (errors) {console.log(errors);  done(true); } else { window = wnd; done(); }
+			    }
+		  	})).window;
+
+		  	// Execute my library by inserting a <script> tag containing it.
+		  	const scriptEl = window.document.createElement("script");
+		  	scriptEl.textContent = bitwrenchFileInstrumented;
+		  	window.document.head.appendChild(scriptEl);
+		});
+
+		it("bw.DOM test equivalents...", () => {
+		 	assert.equal(window.document.getElementById("myTestSpan").innerHTML, "starter");
+		 	assert.equal(window.bw.DOMGetElements("myTestSpan","id")[0].innerHTML, "starter");
+		});
+		it("bw.DOM test equivalents...", () => { 	
+		 	
+		 	var res = window.bw.DOMGetElements("foo","className")[0].innerHTML;
+		 	assert.equal(window.document.getElementsByClassName("foo")[0].innerHTML, res);
+		});
+
+
+});
+
+describe("#bw.DOM())", function() {
+/**
+ bw.DOM and bw.DOMSetElements
+
+
+*/
+	
+		let window;
+		beforeEach(() => {
+			const testDoc = `<!DOCTYPE html><html><head></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`;
+		  	window = (new JSDOM(testDoc, { 
+		  		runScripts: "dangerously" , 
+		  		created: function (errors, wnd) { wnd[coverageVar] = global[coverageVar]; console.log(coverageVar) },
+		  		done   : function (errors, wnd) {if (errors) {console.log(errors);  done(true); } else { window = wnd; done(); }
+			    }
+		  	})).window;
+
+		  	// Execute my library by inserting a <script> tag containing it.
+		  	const scriptEl = window.document.createElement("script");
+		  	scriptEl.textContent = bitwrenchFileInstrumented;
+		  	window.document.head.appendChild(scriptEl);
+		});
+
+		it("bw.DOM test equivalents...", () => {
+		 	assert.equal(window.document.getElementById("myTestSpan").innerHTML, "starter");
+		 	assert.equal(window.bw.DOM("#myTestSpan")[0].innerHTML, "starter");
+		});
+		it("bw.DOM test equivalents...", () => { 	
+		 	
+		 	window.bw.DOM(".foo","fizbinn");
+		 	assert.equal(window.document.getElementsByClassName("foo")[0].innerHTML, "fizbinn");
+		});
+		it("bw.DOM test equivalents...", () => { 	
+		 	window.bw.DOM("span","fizbinnagain");
+		 	assert.equal(window.document.getElementsByTagName("span")[0].innerHTML, "fizbinnagain");
+		});
+
+
+});
 // ================================================================
 
 describe("#colorInterp((x, in0, in1, colors, stretch) - interpolate a value from an array of colors ", function() {
@@ -562,9 +689,9 @@ describe("#clearTimer()", function() {
 		it("bw.clearTimer  " + test.args.length + "args", function() {
 			var ref = bw.logExport()[1][1];
 			var res = bw.clearTimer.apply(null, test.args);
-			assert.equal((res-ref) < 800,true);
+			assert.equal((res-ref) < 3400,true);
 			if (test.args[0]=="clearTimerMsg")
-				assert.equal(test.args[0],bw.logExport()[2][1]);
+				assert(bw.logExport().filter(function(x){return x[1]=="clearTimerMsg"?true:false}).length > 0);//bw.logExport()[2][1]);
 		});
  	});
 });
@@ -620,19 +747,11 @@ describe("#naturalCompare()", function() {
 
 });
 // ================================================================
-//var jsdom    = require("jsdom");
-/*
 
-*/
-describe("#bw.DOM())", function() {
+describe("#bw.isNodeJS())", function() {
 /**
  bw.DOM checks
 
- const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`);
-console.log(dom.window.document.querySelector("p").textContent);
-const { window } = new JSDOM(`...`);
-// or even
-const { document } = (new JSDOM(`...`)).window;
 */
 	
 		let window;
@@ -646,66 +765,20 @@ const { document } = (new JSDOM(`...`)).window;
 		  	window.document.head.appendChild(scriptEl);
 		});
 
-		it("should do the right thing", () => {
-		 	assert.equal(window.bw.version().version, "1.2.5");
-		 	assert.equal(window.document.getElementById("myTestSpan").innerHTML, "starter");
-		 	assert.equal(window.bw.DOM("#myTestSpan")[0].innerHTML, "starter");
+		it("isNodeJS() in window (jsdom)", () => {
+		 	assert.equal(window.bw.isNodeJS(), false); // test jsdom is using bw correctly in window context
 		});
-
-		
-		//
-		
-	    //var document = jsdom(testDoc),
-	//    jsdom.env
-	    //window   = document.createWindow();
-/*
-		beforeEach(() => {
-		  //dx = (new JSDOM(`<!DOCTYPE html><html><head><script id='bw'></script></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`, { runScripts: "dangerously" }));
-		  
-		  // Execute my library by inserting a <script> tag containing it.
-		  //console.log("===>",window)
-		  //dx.window.bw = bw;
-
-		  console.log( "bw in dom result",window.document.getElementById("myTestSpan").innerHTML);//, jsdom.window.bw.version().version);//, jsdom.window.bw.DOM("#myTestSpan"));
-		  //console.log( "bw version in jsdom ==>" ,window.bw.version().version());
+		it("isNodeJS() in nodejs", () => { 	
+		 	assert.equal(bw.isNodeJS(), true);
 		});
-
-		it("should do the right thing", () => {
-		  //console.log( "bw version in jsdom ==>" ,window.bw.version().version());
-		  //assert.equal(window.myLibrary.doThing("foo"), "bar");
-		  //assert.equal(window.bw.version().version,"1.2.5");
+		bw.__monkey_patch_is_nodejs__ = true;
+		it("isNodeJS() in nodejs", () => { 	
+		 	assert.equal(bw.isNodeJS(), true);
 		});
-		*/
+		bw.__monkey_patch_is_nodejs__ = "ignore";
 
-
-		/*
-		it("bw.DOM test " , function() {
-			
-			var dom = new JSDOM('<!DOCTYPE html><html><head></head><body><span id="myspan">starter</span><div class="foo">default</div></body></html>');
-
-			//const { window } = new JSDOM();
-			//const { document } = dom.window;
-			global.window   = dom.window;
-			global.document = window.document;
-
-			bw.__monkey_patch_is_nodejs__ = false; //need to spoof bitwrench to think its running in a browser.  Note uses rewire module for monkey patch testing
-			console.log("isNodeJS() (after monkey patch) ==> ",bw.isNodeJS()) 
-
-			console.log(">>",document.getElementsByTagName("span")[0].innerHTML,"--",  /*bw.DOMIsElement(document.getElementsByTagName("span")[0]) * / 0);
-
-			var s="this stuff" 
-			
-			var res = bw.DOM("span")[0];
-
-			console.log("-->",res, document.getElementsByTagName("span")[0]);
-			console.log(bw.logExport())
-			//assert.equal(res, document.getElementsByTagName("span")[0].innerHTML);
-			
-		});
-		*/
-	//bw.__monkey_patch_is_nodejs__ = "ignore";
-	//bw.__rewire__("isNodeJS",isNodeJS)
 });
+
 
 // ================================================================
 describe("#loremIpsum", function() {
@@ -1078,6 +1151,46 @@ div,body,button,table,input{border-radius:2px;}`
 
 });
 
+// ================================================================
+describe("#bw.selectTabContent()", function() {
+/**
+ 
+
+*/
+	
+		let window;
+		beforeEach(() => {
+var myTabs = 
+`
+<div class="bw-tab-container">  <!-- bw-tab-container -- bw-tab-items (array of items), bw-tab-content (array of content to show) -->
+    <ul class="bw-tab-item-list"> <!-- container for the tabs -->
+        <li class="bw-tab userTab  bw-tab-active" onclick="bw.selectTabContent(this)" >Tab 1</li>
+        <li class="bw-tab userTab  " onclick="bw.selectTabContent(this)" >Tab 2</li>
+        <li class="bw-tab userTab  " onclick="bw.selectTabContent(this)" >Tab 3</li>
+        <li class="bw-tab userTab  " onclick="bw.selectTabContent(this)" >Tab 4</li>
+    </ul>
+    <div class="bw-tab-content-list"> <!-- container for the tab content -->
+        <div class="bw-tab-content bw-show" >coontent area 1 </div>  <!-- bw-show picks which tab to make active at first -->
+        <div class="bw-tab-content" >content area 2</div>
+        <div class="bw-tab-content" >content 3</div>
+        <div class="bw-tab-content" >content 4</div>
+    </div> <!-- end of tab content sect -->
+</div>
+`
+			const testDoc = `<!DOCTYPE html><html><head></head><body><span id="myTestSpan">starter</span>{$myTabs}<div class="foo">default</div></body></html>`;
+		  	window = (new JSDOM(testDoc, { runScripts: "dangerously" })).window;
+
+		  	// Execute my library by inserting a <script> tag containing it.
+		  	const scriptEl = window.document.createElement("script");
+		  	scriptEl.textContent = bitwrenchFile;
+		  	window.document.head.appendChild(scriptEl);
+		});
+
+		it("selectTab()", () => {
+
+		 	//assert.equal(window.bw.isNodeJS(), false); // test jsdom is using bw correctly in window context
+		});
+});
 // ================================================================
 describe("#version() returns version info at runtime", function() {
 	it("version()   " + 0 + " args", function() {

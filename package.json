@@ -25,6 +25,7 @@
 		"karma-chrome-launcher": "^3.1.0",
 		"karma-cli": "^2.0.0",
 		"karma-coverage": "^2.0.1",
+		"karma-coverage-istanbul-reporter": "^2.1.1",
 		"karma-firefox-launcher": "^1.3.0",
 		"karma-ie-launcher": "^1.0.0",
 		"karma-mocha": "^1.3.0",
@@ -38,13 +39,13 @@
 		"cleanbuild": "npm run clean && npm run update_rm && npm run build",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js ",
+		"test2": "NODE_ENV=test nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js ",
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm bitwrench*.tgz -f",
 		"lint": "./node_modules/.bin/eslint bitwrench.js",
+		"instrument-bw" : "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser"
 	},
 	"homepage": "http://deftio.com/bitwrench",
-	"dependencies": {
-		"karma-coverage-istanbul-reporter": "^2.1.1"
-	}
+	"dependencies": {}
 }

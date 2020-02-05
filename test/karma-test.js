@@ -626,9 +626,7 @@ const { document } = (new JSDOM(`...`)).window;
 		it("bw.DOM test " , function() {
 			
 			var res = bw.DOM("span")[0];
-			console.log("626:: ",res);
 			res.innerHTML ="test stuff";
-
 			assert.equal(res.innerHTML, document.getElementsByTagName("span")[0].innerHTML);
 		});
 

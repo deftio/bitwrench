@@ -378,23 +378,24 @@ TODO:
             el.trim();
             if (type == "auto")
                 type = bw.choice(el[0],{".":"className", "#":"id"},"tagName");
+            type=type.toLowerCase()
             switch (type) {
                 case "id" : //get Element by ID
                     el = (el[0]=="#") ? el.substring(1,el.length) : el;
                     a = document.getElementById(el);
                     a = _toa(a,"null",[],[a]);
                     break;
-                case "className": // get Elements by class name
+                case "classname": // get Elements by class name
                     el = (el[0]==".") ? el.substring(1,el.length) : el;
                     a = document.getElementsByClassName(el);
                     break;
-                case "tagName" : // get Elements by tag name
+                case "tagname" : // get Elements by tag name
                     a = document.getElementsByTagName(el);
                     break;
                 case "name":
                     a = document.getElementsByName(el);
                     break;
-                case "CSS" :
+                case "css" :
                     a = document.querySelectorAll(el);
                     break;
                 default:  
