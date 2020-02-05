@@ -378,7 +378,7 @@ TODO:
             el.trim();
             if (type == "auto")
                 type = bw.choice(el[0],{".":"className", "#":"id"},"tagName");
-            type=type.toLowerCase()
+            type=type.toLowerCase();
             switch (type) {
                 case "id" : //get Element by ID
                     el = (el[0]=="#") ? el.substring(1,el.length) : el;

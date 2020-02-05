@@ -43,7 +43,7 @@
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm bitwrench*.tgz -f",
 		"lint": "./node_modules/.bin/eslint bitwrench.js",
-		"instrument-bw" : "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
+		"instrument-bw": "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser"
 	},
 	"homepage": "http://deftio.com/bitwrench",
