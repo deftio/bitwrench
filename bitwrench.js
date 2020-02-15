@@ -753,7 +753,8 @@ options {
     dopts = optsCopy(dopts,opts);
     if ((dopts["clear"] == true) || (dopts["clear"] == "clear-only")) {
         _logdata = [["Time-stamp (ms)"," Value "," Message "]];
-        _logdata.push ([0,(new Date()).getTime()," log started (absolute timestamp)"]);
+        var ct = (new Date());
+        _logdata.push ([0, ct.getTime()," log started at " + ct.toString()]);
     }
 
     msg     = _toa(msg,"undefined","",String(msg));
@@ -1188,255 +1189,182 @@ inline-bw-css --> emit bw default styles as inline css (include globals option)
     return s;
 };
 // ===================================================================================
-//==================================================
-/**
-    html_fc (html form convert) converts acceptable html contructs into html json dict form: 
-    { t: <tag>, a: {attribs}, c: [content], o: {options}, s:{state}}
-    
-    does not operate on the t a c o s params --> just does the conversion
- */
 /*
-html gen using {input}
-_typeOf(input)
-
- "object" 
-    accepted keys below, other keys ignored
-    t: String | Number | Date() ==> tag  function==> f().toString()
-    a: {}  ==>  key : value ==>  num | str | Date | [] ==> [].join(dopts.a_join) 
-    c: [] || String | Number | Date  ==> each_item : str | {html_dict} 
-    o: {} ==> options (note inherit / copy)  => if not supplied uses previous levels options
+bw.htmlRender(hdict, opts) {
+    var dgopts = {
+        pretty : true,
+        pretty_space: "  ",
+        pretty_indent: "", //fixed indent when pretty pass as "    " etc
+        tagClose : "auto" // default behavior 
+    }
+    var state = {
+        levelCnt : 0,
+        nodeCnt  : 0,
+        errors   : []
+    }
+    dgopts = optsCopy(dgopts,opts);
     
-    s: {} ==> state info (used internally) e.g. indent level, stats
-    
-    also accepts: "tag", "attrib", "content", "options", "state" as keys instead of t,a,c,o,s
-    
-    if any of t,a,c,o are a function it will be invoked immediatly w no params ==> t:myFunc ===> t:myFunc() <== 
+    var _isv = function(x){return "area base br col command embed hr img input keygen link meta param source track wbr".search(x.toLowerCase()) >=0;}
 
-    defaults:
-        t ==> "div"
-        a ==> {}
-        c ==> []
-        o ==> {}
-
-        s ==> {level:0, nodes: 0}
-
-"string" | "number" | Date() ==> {}
-        t ==> "div"
-        a ==> {}
-        c ==> .toString()
-        o ==> {}
-
-        s ==> {}
-
-"array" 
-    [         ]   ==> {} // defaults to empty default object 
-    [c        ]   ==> {}
-    [t,c      ]   ==> {}
-    [t,a,c    ]   ==> {}
-    [t,a,c,o  ]   ==> {}
-    [t,a,c,o,s]   ==> {}
-    [ 6+      ]   ==> {} // uses, first 5 others ignored
-    
-    // this dict repreesnts the mapping
-    {
-    0 : { }
-    1 : {c : 0},  
-    2 : {t : 0, c : 1},
-    3 : {t : 0, a : 1, c : 2}
-    4 : {t : 0, a : 1, c : 3, o : 4}
-    5 : {t : 0, a : 1, c : 3, o : 4, s : 5}
+    var _atr = function(k,v,o){  // to do handle "smart" attributes ==> class : ["class1", "class2"]  ==> style : bw.makeCSS()
+        var val=v,ok = "atr_def"in o ? "none" : k; 
+        if (v==null)
+            return k;
+        switch(ok) {
+            case "style" :
+                val = bw.makeCSS(val,{pretty:false});
+                break;
+            default :
+                if (bw.to(v)=="array")
+                    val = val.join(" ");
+                val = val.toString();
+        }
+        return k+"="+"\""+val.replace("\"","\\\"")+"\"";
     }
 
-    // this array contruct implements the above dict mapping more compactly
-    var i,idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-    for (i=0; i< x.length; i++) 
-        hd[idx[x.length]][i] = x[i];
-    
-*/
-/*
-bw.html_fc = function(x) {
-    var i,hd  = { t: "div", a: {}, c: "", o: {t_close: true}, s: { level: 0, nodes: 0, html:""}}; // default html dict format
+    var _cls = function(t,o,c) {
+      
+        var ce = _to(c)!="array" ? true : ((c.length ==0) ? true : false);
+        // o.tagClose==auto         && _isv(t)==true   ==>  ,
+        //                             _isv(t)==false  ==>  , </t>      
+        // o.tagClose==closeEmpty   && _isv(t)==true   ==> /,
+        //                             _isv(t)==false  ==>  , </t>
 
-    switch (_to(x)) {
-        case "null" :
-        case "undefined" :
-            break;
-        case "object":
-            [["tag","t"],["attrib","a"],["content","c"],["options","o"],["state","s"]].forEach(function(z){ hd[z[1]]= z[0] in x ? x[z[0]] : hd[z[1]];});
-            for (i in hd)  // we only copy those fields we care about..
-                hd[i] = (i in x) ? x[i] : hd[i];  // need to handle fields differenty.. t : "", a : {}, c:"" | [],o :{} -- this is because we want to have proper defaults
-            break;
-        case "array":
-            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-            var m = (x.length > 5) ? 5 : x.length;
-            for (i=0; i< m; i++)   { 
-                console.log(idx[m][i] + ":" + x[i]);
-                hd[idx[m][i]] = x[i];
-            }
-            break;
-        case "function":  
-            hd = bw.html_fc(x(),opts); // evaluate and convert...
-            break;
-        default: // string, number, Date  
-            hd.c = x.toString();
+        // o.tagClose==none                            ==>  ,                  
+        // o.tagClose==all                             ==>  , </t>
+        var r = bw.choice(o.tagClose,
+            {
+                "auto" :       function(){return _isv(t) ? ["" ,""] : ["","</"+t+">"];}) (),
+                "closeEmpty" : function(){return _isv(t) ? ["/",""] : ["","</"+t+">"];}) (),
+                "none" : ["",""]
+            },["","</"+t+">"]);
+        return r;
     }
-    return hd;
+
+    _emitHTML = function(data) { // uses state from outr fn
+
+    }
+
 }
 */
-
-bw.html_fc = function(x) {
-    var i,n = { t: "div", a: {}, c: "", o: {}}; // default html dict format
-    var m = "";
-    switch (_to(x)) {
-        case "null" :
-        case "undefined" :
-            n = x;
-            break;
-        case "object":
-            [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
-            for (i in n) {  // we only copy those fields we care about..
-                n[i] = (i in x) ? x[i] : n[i]; // need to handle complicated types: t:"", a:{}, c:"" | []
-                if (bw.isnu(n[i])) {
-                    n = null; // force entire object to be null or undefined
-                    m = "HTML gen err: bad object";
-                    break;
-                }
-            }
-            break;
-        case "array":
-            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-            m = (x.length > 5) ? 5 : x.length;
-            for (i=0; i< m; i++)   { 
-                bw.logd(idx[m][i] + ":" + x[i]);
-                n[idx[m][i]] = x[i];
-            }
-            for (i in n)
-                if (bw.isnu(n[i])) {
-                    n = null;
-                    m = "HTML gen err: bad array";
-                    break;
-                }
-
-            break;
-        case "function":  
-            var opts = {};
-            n = bw.html_fc2(x(),opts); // evaluate and convert...
-            break;
-        default: // string, number, Date, bool, Regex 
-            n.c =x.toString();
-    }
-    return n; 
-};
-
-bw.HTMLNorm = function(x) {
-
-    function bwHTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={};}
-    function bwError  (v,x) {this.value=v; this.msg = typeof x == "undefined" ? "error" : x;}
-    
-    var i,n = new bwHTMLNode(); // default html dict format
-    var m = "";
-    switch (_to(x)) {
-        case "null" :
-        case "undefined" :
-            n = new bwError(x,"HTML Node error : "+_to(x));
-            break;
-        case "object":
-            [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
-            for (i in n) {  // we only copy those fields we care about..
-                n[i] = (i in x) ? x[i] : n[i]; // need to handle complicated types: t:"", a:{}, c:"" | []
-                if (bw.isnu(n[i])) {
-                    n = null; // force entire object to be null or undefined
-                    m = "HTML gen err: bad object";
-                    break;
-                }
-            }
-            break;
-        case "array":
-            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-            m = (x.length > 5) ? 5 : x.length;
-            for (i=0; i< m; i++)   { 
-                //console.log(idx[m][i] + ":" + x[i]);
-                n[idx[m][i]] = x[i];
-            }
-            for (i in n)
-                if (bw.isnu(n[i])) {
-                    n = null;
-                    m = "HTML gen err: bad array";
-                    break;
-                }
-
-            break;
-        case "function":  
-            var opts = {};
-            n = bw.html_fc2(x(),opts); // evaluate and convert...
-            n = _to(n)=="function" ? new bwError(n.toString(),"HTML Node error: function returned a function") : n;
-            break;
-        default: // string, number, Date, bool, Regex  ==> will be come just plain rendered content later
-            n.c =x.toString();
-    }
-    return n; 
-};
-//==================================================
+bw.htmlFromDict = function(htmlDict) {
 /**
-    htmld -- html generator
-    convert _accteptable_types_  ==> htmLJSON_dict
-
-
-bw.htmld = function(htmlJSON, opts) {
-    var dopts = {               // def options note t_ a_ c_ o_ are options applied to the t, a, c, or o local keys directly
-        t_close   : "auto",     // "auto" | "false" | "true"  ==> "auto" doesn't close certain tag decl such as !DOCTYPE, <br>
-        a_join    : ";",        // default join for attribute arrays 
-        o_pretty  : false,      // makes nice html 
-        o_indent  : 4,          // default indent when pretty printing
-        o_verbose : false,      // returns object instead of html string ==> {html: <htmloutput string>, stats: dict{}, status: "success" | "warnings"}
-        c_htmlesc : true        // true | false  ==> escape html safe chars, replace "\n" with <br> etc
-    };
+    must be of form 
+    t ==> tag     (string)
+    a ==> attrib  {}   
+    c ==> content []   content can be string | node  (other values converted to string)  
+    o ==> options {}
     
 
-    dopts = optsCopy(dopts,opts);
+    htmldict
+    { 
+        tag     : "tagName",
+        attrib  : {},
+        content : [],    // each member must be: string or htmlDict or null.  other values cast to string.
+        options : {},
+        state : {}   
+     }
 
-    var  i, d, h="", ind_s, ind_e; // ind_s, ind_e control pretty printing
+    //options:
+    pretty        (true | false) (default: true)  attempts to make HTML pretty (human readable) if false it will be as compact as possible
+    pretty_space  (if pretty == true) (default: "  ") this is the stirng used as the indent string but one could make it "\t" or " " etc.
+    pretty_indent (if pretty == true) a fixed indent to provide to every line of html
 
-    h="";
-    d = bw.html_fc(htmlJSON); // now in dict form with state vector
-    for (i in d)
-        if (_to(i) == "function")
-            d[i] = d[i](d); 
+    tagClose : ("auto" | closeempty | all | none) whether to close a tag.  default is "auto"
+        "auto"       : will apply smart rules to tag closing. e.g. html void elements such as br are not closed 
+        "closeempty" : all void elements are now self closed  (e.g. are self closed ==> <meta /> or <br />)
+        "all"        : tags are forced closed with </tagname>  ==>  can be useful for xml type generation
+        "none"       : tags are not closed at all
 
-    d.s["level"]++;
-    
-    d.t = d.t.toString();  
-    d.a = (_to(d.a) == "object") ? d.a : {}; // must be dict.  
-    d.c = (_to(d.c) == "array" ) ? d.c : (_to(d.c)=="object") ? html_fc(d.c) : d.c.toString(); 
-    d.o = optsCopy(dopts,d.o);
 
-    //now gen html...
-    ind_s = d.o.o_pretty ? Array(d.s.level * d.o.o_indent ).join(" ") : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
-    ind_e = d.o.o_pretty ? "\n" : "";
-    
-    h += ind_s+  "<" + d.t;
-    for (i in d.a)
-        h+= " "+i+"=\""+d.a[i]+"\"";
-    h += ">"+ ind_e; 
-
-    //content gen
-    switch (_to(d.c)) {
-        case "object":
-            h += bw.htmld(d.c,dopts);
-            break;
-        case "array":
-            h += d.c.map(function(x){ return bw.htmld(x,dopts);}).join("");
-            break;
-        default:
-            h+= d.c; 
-    }
-    
-    //closing tag
-    h += ind_s + "</" + d.t + ">" + ind_e;
-    d.s.html = h;
-    return d;
-}
 */
+    var html = "",stats={};
+    //var voidTags = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"]; 
+    //var _isv = function(s){return (voidTags.indexOf(s) >= 0)};
+    var _isvoid= function(s){return "area base br col command embed hr img input keygen link meta param source track wbr".search(s.toLowerCase()) >=0;}
+    var ddict = {
+        t:  "div",
+        a:  {},   // if an attribute is null then only key is listed e.g.  {a:"foo", b:null, c:0} ==> a="foo" b  c="0"
+        c:  [],
+        o:  {
+                pretty : true,
+                pretty_space: "  ",
+                pretty_indent: "", //fixed indent when pretty pass as "    " etc
+                tagClose : "auto",
+            },
+    }
+    var state = {
+        level : 0,
+        node : 0
+    }
+    var _atr = function(k,v,o){  // to do handle "smart" attributes ==> class : ["class1", "class2"]  ==> style : bw.makeCSS()
+        var val=v,ok = "atr_def"in o ? "none" : k; 
+        if (v==null)
+            return k;
+        switch(ok) {
+            case "style" :
+                val = bw.makeCSS(val,{pretty:false});
+                break;
+            default :
+                if (bw.to(v)=="array")
+                    val = val.join(" ");
+                val = val.toString();
+        }
+        return k+"="+"\""+val.replace("\"","\\\"")+"\"";
+    }
+
+    var _cls = function(t,o,c) {
+        var r=["","</"+t+">"] // r[0] is whether to include closing slash on start tag, r[1] is whether to include closing tag
+        var ce = _to(c)!="array" ? true : ((c.length ==0) ? true : false);
+        // o.tagClose==auto         && _isv(t)==true   ==>  ,
+        //                             _isv(t)==false  ==>  , </t>      
+        // o.tagClose==closeEmpty   && _isv(t)==true   ==> /,
+        //                             _isv(t)==false  ==>  , </t>
+
+        // o.tagClose==none                            ==>  ,                  
+        // o.tagClose==all                             ==>  , </t>
+        r = bw.choice(o.tagClose,
+            {
+                "auto" :       (function(){return _isv(t) ? ["",""]  : ["","</"+t+">"];}) (),
+                "closeEmpty" : (function(){return _isv(t) ? ["/",""] : ["","</"+t+">"];}) (),
+                "none" : ["",""]
+            },r);
+        return r;
+    }
+    ddict = optsCopy(ddict,htmlDict);
+    var ind_s = ddict.o.pretty ? Array(ddict.s.levelCnt * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
+    var ind_c = ddict.o.pretty ? Array((ddict.s.levelCnt+1) * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
+    var ind_e = ddict.o.pretty ? "\n" : "";
+    
+    try {
+        var i,atrk=[],_a=[],k,v;
+        for (i in ddict.a)
+            if (ddict.a.hasOwnProperty(i)) atrk.push(i);
+        atrk = atrk.sort(bw.naturalCompare);
+        for (i=0; i<atrk.length; i++) {
+            k=atrk[i]; v=ddict.a[k];
+            console.log(k,v)
+            _a.push(_atr(k,v,ddict.o));
+        }
+        _a = _a.join(" ");
+        _a = ((_a.length>0) ? " ": "") + _a;
+
+        html += ind_s + "<" +ddict.t + _a+ _cls(ddict.t,ddict.o.tagClose,ddict.c)[0]+">";
+        html += ddict.c.map(function(x){
+                var s = _to(x) == "object" ? bw.htmlFromDict(x) : x.toString();
+                return ind_c+s;
+            }                
+            ).join((ddict.pretty?"\n":""));
+        html += ind_e + _cls(ddict.t,ddict.o.tagClose,c)[1] +(ddict.o.pretty?"\n":"");
+    }
+    catch(e) {
+        console.log(e);
+        bw.logd(e);
+    }
+
+    return {html:html, stats: stats}
+}
+
 // ===================================================================================
 bw.html = function (d,options) {
 /**  
@@ -1480,7 +1408,7 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
 
     dopts["indent"]++;
 
-    var s="", t="",a={},c=[],i;
+    var s="", t="div",a={},c=[],i;
 
     switch (_to(d)) {
         case "date":
@@ -2478,14 +2406,15 @@ examples:
 };
 
 // =============================================================================================
-bw.__monkey_patch_is_nodejs__ = "ignore";  //used in test suites
+//bw.__monkey_patch_is_nodejs__ = "ignore";  //used in test suites.  use carefully. only acceptable values are true, false, "ignore"
+bw.__monkey_patch_is_nodejs__ = new (function() { var _t="ignore"; this.set=function(x){_t = _toa(x,"boolean",x,"ignore");}; this.get=function(){return _t;}; return this;});
 
 bw.isNodeJS = function () {
 /** 
 bw.isNodeJS() ==> returns true if running in node environment (else browser)
  */
-    if (bw.__monkey_patch_is_nodejs__ != "ignore") 
-        return bw.__monkey_patch_is_nodejs__;
+    if (bw.__monkey_patch_is_nodejs__.get() != "ignore") 
+        return bw.__monkey_patch_is_nodejs__.get();
     return (typeof module !== "undefined" && module.exports) !== false;  //a hack will fix later
 };
 //console.log("=====",bw.isNodeJS())
@@ -2824,29 +2753,20 @@ TODO
 // =============================================================================================
 bw.CSSSimpleStyles = function(appendToHead, options) {
 /* 
-bw.bwSimpleStyles(appendToHead,options)
+bw.CSSimpleStyles(appendToHead,options)
 
-bitwrench simpleStyles is the function which writes loads 
+Generate simple styles for bitwrench.  
 write a quick grid style sheet for quick n dirty layout.  See docs for examples.
 
-<h1 class='bw-h1'>Title for my section</h1>
-<p>This section contains some interesting data and topics</p>
-<div class="bw-row">  <!-- defines a row using bw css classes -->
-<div class="bw-col3">column 1 content</div><div class="bw-col3">column 2 content</div><div class="bw-col3">column 3 content</div><div class="bw-col3">column 4 content</div>
-</div>
-<div>
-
-    appendToHead  ==> if true, attempts to append to HTML <head> (only writes if not already present)
-    options: {
-        "basics" : "load"  // if set to "load will load some global constants for html, body, font-family", set to false to leave these unchanged.
-        "exportCSS": false // if true will wrap the output css in "script" tags.  
-        "id" : "bw-default-styles" // id assigned to the script tag, used for preventing multiple loading in a browser page
+appendToHead  ==> if true, attempts to append to HTML <head> (only writes if not already present)
+options: {
+    "basics" : "load"  // if set to "load will load some global constants for html, body, font-family", set to false to leave these unchanged.
+    "exportCSS": false // if true will wrap the output css in "script" tags.  
+    "id" : "bw-default-styles" // id assigned to the script tag, used for preventing multiple loading in a browser page
+}
 
  */
-    var s ="\n", i;
-    //var i,j,k,l;
-    var _r = bw.fixNum;
-    var rl = bw.makeCSSRule;
+
     var dopts = {
         "globals"       : false,
         "id"           : "bw-default-styles",
@@ -2860,39 +2780,34 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
             ]
     };
 
+    var s ="\n", i;
+    //var i,j,k,l;
+    var _r = bw.fixNum;
+    var rl = bw.makeCSSRule;
     dopts = optsCopy(dopts,options);
 
     var defs = { // defaults
-        defContainer:       "{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}\n",
-        defFontSerif:       "{font-family: Times New Roman, Times, serif;}\n",
-        defFontSansSerif:   "{font-family: Arial, Helvetica, sans-serif }\n",
+        defGlobals:         {"box-sizing": "border-box"},
+        defContainer:       {"height": "100%", "width":"86%", "margin": "0 auto", "padding-left": "2%","padding-right":"2%","left":"0","top":"1%","box-sizing":"border-box"},
+        defFontSerif:       {"font-family": "Times New Roman, Times, serif"},
+        defFontSansSerif:   {"font-family": "Arial, Helvetica, sans-serif" }
     };
 
     if (dopts["globals"] == "load") {
-        s+= "\nhtml,body "+ defs.defContainer;
-        s+= "*"+defs.defFontSansSerif;
+        s+= rl([["html","body"],defs.defContainer]);
+        s+= rl(["*"+defs.defFontSansSerif]);
     }
-
-    s+= ".bw-def-page-setup" + defs.defContainer;
-    s+= ".bw-font-serif"     + defs.defFontSerif;
-    s+= ".bw-font-sans-serif"+ defs.defFontSansSerif;
-
-    s+= ([1,2,3,4,5,6].map(function(x){return ".bw-h"+x+"{ font-size: "+_r(3.2*Math.pow(.85,x+1))+"rem;}";}).join("\n"))+"\n";
-
-    //primtive in-built color themeing  see opts to overide
-    for (i in dopts["colorset"]){
-        s+= ".bw-color-"+i+" {"+i+":" +dopts["colorset"][i]+"}\n";
-    }
-
-    bw.makeCSS( dopts["themes"]);
-    for (i=0; i< dopts["themes"].length; i++) {
-        s+= rl( dopts["themes"][i]);
-        //s+= bw.makeCSS( dopts["themes"][i])
-    }
-        
-    //text handling
     
+    
+        
     var d = [ 
+        //globals
+        ["*", defs.defGlobals],
+        [".bw-def-page-setup" , defs.defContainer],
+        [".bw-font-serif"     , defs.defFontSerif],
+        [".bw-font-sans-serif", defs.defFontSansSerif],
+
+        //text handling
         [".bw-left",    {"text-align": "left"}],
         [".bw-right",   {"text-align": "right"}],
         [".bw-center",  {"text-align": "center", "margin": "0 auto"}],
@@ -2929,6 +2844,8 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
         [".bw-show",   { display: "block"}]
     ];
 
+    //heading generator
+    [1,2,3,4,5,6].map(function(x){d.push([".bw-h"+x, {"font-size":_r(3.2*Math.pow(.85,x+1))+"rem"}]);});
 
     // grid system (generated)
     for (var k=1; k<=12; k++)
@@ -2937,11 +2854,23 @@ write a quick grid style sheet for quick n dirty layout.  See docs for examples.
     // generate CSS from above rules    
     s+= d.map(function(x){return rl(x,{pretty:dopts.pretty});}).join("\n")+"\n";
 
+    //primtive in-built color themeing  see opts to overide
+    for (i in dopts["colorset"]){
+        s+= ".bw-color-"+i+" {"+i+":" +dopts["colorset"][i]+"}\n";
+    }
+
+    bw.makeCSS( dopts["themes"]);
+    for (i=0; i< dopts["themes"].length; i++) {
+        s+= rl( dopts["themes"][i]);
+        //s+= bw.makeCSS( dopts["themes"][i])
+    }
+    
     //responsive screen
-    s+= "@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}\n";
-    s+= "@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}\n";
-    s+= "@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}\n";
-    s+= "@media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}\n";
+    s+= "@media only screen and (min-width: 540px) {  .bw-def-page-setup {    width: 96%;  }}\n";
+    s+= "@media only screen and (min-width: 720px) {  .bw-def-page-setup {    width: 92%;  }}\n";
+    s+= "@media only screen and (min-width: 960px) {  .bw-def-page-setup {    width: 88%;  }}\n";
+    s+= "@media only screen and (min-width: 1100px){  .bw-def-page-setup {    width: 86%;  }}\n";
+    s+= "@media only screen and (min-width: 1600px){  .bw-def-page-setup {    width: 84%;  }}\n";
     
     
     if (bw.isNodeJS() == false) {
@@ -3082,10 +3011,10 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
     for (i=0; i< cols.length; i++) {
         if (cols[i] == item) { // selected tab logic
             index = i;
-            bw.markElement(cols[i],"bw-tab-active","bw-tab-active");
+            bw.DOMClass(cols[i],"bw-tab-active","bw-tab-active");
         }
         else { // unselected tab logic
-            bw.markElement(cols[i],"bw-tab-active","");
+            bw.DOMClass(cols[i],"bw-tab-active","");
         }
     }
     //console.log(item);
@@ -3098,9 +3027,9 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
     var i;
     for (i=0; i < tcols.length; i++) {
         if (tcols[i] == target) 
-            bw.markElement(tcols[i],"bw-show","bw-show"); //tcols[i].style.display = "block";
+            bw.DOMClass(tcols[i],"bw-show","bw-show"); //tcols[i].style.display = "block";
         else
-            bw.markElement(tcols[i],"bw-show","");//tcols[i].style.display = "none";  
+            bw.DOMClass(tcols[i],"bw-show","");//tcols[i].style.display = "none";  
     }
     return true;  
 };
@@ -3274,8 +3203,8 @@ getArgs();
 
 // do command line stuff
 var loadStyles      =  bw.bwargs["bw-load-styles"]!="false";
-var loadStyleBasics =  bw.typeAssign(bw.bwargs["bw-load-style-basics"],"string",bw.bwargs["bw-load-style-basics"],"load");
-bw.CSSSimpleStyles(loadStyles,{"basics":loadStyleBasics}); // append to head the bitwrench css styles by default
+var loadStyleBasics =  bw.typeAssign(bw.bwargs["bw-load-style-basics"],"string", bw.bwargs["bw-load-style-basics"], "load");
+bw.CSSSimpleStyles(loadStyles,{"globals":loadStyleBasics}); // append to head the bitwrench css styles by default
 
 bw.funcRegister(bw.log,"bw_log");  // this is globally registered for debugging purposes, it will never get called though unless programmer does this explicitly.
 

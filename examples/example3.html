@@ -10,20 +10,17 @@
 		github:  http:github.com/deftio/bitwrench
 	 -->
 <script type="text/javascript" src="../bitwrench.js"></script>
-<style>
-
-
-</style>
 
 </head>
-<body class="bw-def-page-setup bw-font-sans-serif">
 
+<body class="bw-def-page-setup bw-font-sans-serif">
+<div id="content"></div>
 <script> // this page is written  in JSON-HTML.
 
 	var jsonContent = [
 		["h2", {style:"font-style:italic"},"This is the JSON content section"],
 		"Some content is just a string...<br>",
-		["div", {}, [["p",{},"inside1"],"inside string contnt","br",["p",{"style":"color:red"},"inside red content"]]],
+		{c: [["p",{},"inside1"],"inside string contnt","br",["p",{"style":"color:red"},"inside red content"]]},
 		["p",{},"Some content can be a long in paragraph form."]
 	]
 
@@ -36,16 +33,16 @@
 		"<br>",
 		["p",{},"The JSON below this paragraph represents the page content.  The JSON can contain hierachal arrays or objects."],
 		"<hr>",
-		bw.htmlJSON(bw.htmld(jsonContent[0],{o_pretty:true})),
+		bw.htmlJSON(bw.html(jsonContent[0],{o_pretty:true})),
 		"<hr>",
-		bw.html(jsonContent.map(x=>bw.htmld(x).s.html).join(""))
+		bw.html(jsonContent.map(x=>bw.html(x)).join(""))
 	];
 
 
-	bw.DOM("body",html.map(x=>bw.html(x)).join(""));
+	bw.DOM("#content",html.map(x=>bw.html(x)).join(""));
 
-	console.log(bw.htmld(jsonContent,{o_pretty:true}));
 </script>
+
 
 </body>
 </html>

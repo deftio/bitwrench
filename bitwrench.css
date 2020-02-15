@@ -36,9 +36,11 @@ This file can be generated at runtime via bw.CSSSimpleStyles(false,{"basics":"lo
 .bw-justify{text-align:justify;}
 .bw-code{font-family:monospace;white-space:pre-wrap;}
 .bw-pad1{padding-left:1%;padding-right:1%;}
+
 .bw-table-stripe tr:nth-child(even){background-color:#f0f0f0;}
 .bw-table-col0-bold tr td:first-child{font-weight:700;}
 .bw-table-compact{border-collapse:collapse;border-spacing:0;}
+
 .bw-table-sort-upa::after{content:"\2191";}
 .bw-table-sort-dna::after{content:"\2193";}
 .bw-table-sort-xxa::after{content:"\00a0";}
@@ -53,6 +55,9 @@ This file can be generated at runtime via bw.CSSSimpleStyles(false,{"basics":"lo
 .bw-row{width:100%;display:block;}
 .bw-row [class^="bw-col"]{float:left;}
 .bw-row::after{content:"";display:table;clear:both;}
+
+
+
 .bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
 .bw-hide{display:none;}
 .bw-show{display:block;}

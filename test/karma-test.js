@@ -9,6 +9,30 @@ export CHROME_BIN=/usr/bin/chromium-browser
 "use strict";
 
 
+// ================================================================
+var setupdom = function(wnd,html) {
+	if (bw.isNodeJS() ) {
+
+		const testDoc = `<!DOCTYPE html><html><head></head><body><span id="myTestSpan">starter</span><div class="foo">default</div></body></html>`;
+	  	wnd = (new JSDOM( (((typeof html) !== "undefined") ? html : testDoc), 
+	  		{ 
+	  		runScripts: "dangerously" , 
+	  		created: function (errors, wnd) { wnd[coverageVar] = global[coverageVar]; console.log(coverageVar) },
+	  		done   : function (errors, wnd) {if (errors) {console.log(errors);  done(true); } else { window = wnd; done(); }
+		    }
+	  	})).window;
+
+	  	// Execute my library by inserting a <script> tag containing it.
+	  	const scriptEl = window.document.createElement("script");
+	  	scriptEl.textContent = bitwrenchFileInstrumented;
+	  	window.document.head.appendChild(scriptEl);
+	}
+	else {
+		wnd = window; // yes the global window -- we're in the browser
+		console.log("browser context")
+	}
+	return wnd;
+}
 
 
 
@@ -202,6 +226,23 @@ describe("#arrayBNotinA(a,b) - return elements of Array B not in Array A ", func
  	});
 });
 
+describe("#bw.DOMIsElement()", function() {
+/**
+ 
+
+*/
+		var wind;
+		beforeEach(() => {
+		  	wind = setupdom(wind);
+		});
+
+		it("DOMIsElement()", () => {
+		 	assert.equal(wind.bw.DOMIsElement(wind.bw.DOM("span")[0]), true); // test jsdom is using bw correctly in window context
+		});
+		it("DOMIsElement()", () => {
+		 	assert.equal(wind.bw.DOMIsElement(wind.bw.DOM("not an Element")[0]), false); // test jsdom is using bw correctly in window context
+		});
+});
 // ================================================================
 
 describe("#colorInterp((x, in0, in1, colors, stretch) - interpolate a value from an array of colors ", function() {
@@ -898,30 +939,12 @@ var tests = [
 describe("#CSSSimpleStyles (appendToHead, options) create the default bitwrench CSS styles, classes", function() {
 var tests = [
 		{args: [] ,  
-			expected:  
+			expected:
 `
-.bw-def-page-setup{height: 100%;  width: 86%;  margin: 0 auto;  padding-left: 2%; padding-right:2%; left: 0;  top: 1%;}
-.bw-font-serif{font-family: Times New Roman, Times, serif;}
-.bw-font-sans-serif{font-family: Arial, Helvetica, sans-serif }
-.bw-h1{ font-size: 2.312rem;}
-.bw-h2{ font-size: 1.965rem;}
-.bw-h3{ font-size: 1.67rem;}
-.bw-h4{ font-size: 1.419rem;}
-.bw-h5{ font-size: 1.206rem;}
-.bw-h6{ font-size: 1.025rem;}
-.bw-color-color {color:#000}
-.bw-color-background-color {background-color:#ddd}
-.bw-color-active {active:#222}
-.bw-thm-light
-{
-  color: #020202 !important;; 
-  background-color: #e2e2e2 !important;; 
-}
-.bw-thm-dark
-{
-  color: #e2e2e2 !important;; 
-  background-color: #020202 !important;; 
-}
+*{box-sizing:border-box;}
+.bw-def-page-setup{height:100%;width:86%;margin:0 auto;padding-left:2%;padding-right:2%;left:0;top:1%;box-sizing:border-box;}
+.bw-font-serif{font-family:Times New Roman, Times, serif;}
+.bw-font-sans-serif{font-family:Arial, Helvetica, sans-serif;}
 .bw-left{text-align:left;}
 .bw-right{text-align:right;}
 .bw-center{text-align:center;margin:0 auto;}
@@ -948,6 +971,12 @@ var tests = [
 .bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
 .bw-hide{display:none;}
 .bw-show{display:block;}
+.bw-h1{font-size:2.312rem;}
+.bw-h2{font-size:1.965rem;}
+.bw-h3{font-size:1.67rem;}
+.bw-h4{font-size:1.419rem;}
+.bw-h5{font-size:1.206rem;}
+.bw-h6{font-size:1.025rem;}
 .bw-col-1{width:8.333%;}
 .bw-col-2{width:16.666%;}
 .bw-col-3{width:25%;}
@@ -960,11 +989,26 @@ var tests = [
 .bw-col-10{width:83.333%;}
 .bw-col-11{width:91.666%;}
 .bw-col-12{width:100%;}
-@media only screen and (min-width: 540px) {  .bw-container {    width: 94%;  }}
-@media only screen and (min-width: 720px) {  .bw-container {    width: 90%;  }}
-@media only screen and (min-width: 960px) {  .bw-container {    width: 86%;  }}
-@media only screen and (min-width: 1100px){  .bw-container {    width: 78%;  }}
+.bw-color-color {color:#000}
+.bw-color-background-color {background-color:#ddd}
+.bw-color-active {active:#222}
+.bw-thm-light
+{
+  color: #020202 !important;; 
+  background-color: #e2e2e2 !important;; 
+}
+.bw-thm-dark
+{
+  color: #e2e2e2 !important;; 
+  background-color: #020202 !important;; 
+}
+@media only screen and (min-width: 540px) {  .bw-def-page-setup {    width: 96%;  }}
+@media only screen and (min-width: 720px) {  .bw-def-page-setup {    width: 92%;  }}
+@media only screen and (min-width: 960px) {  .bw-def-page-setup {    width: 88%;  }}
+@media only screen and (min-width: 1100px){  .bw-def-page-setup {    width: 86%;  }}
+@media only screen and (min-width: 1600px){  .bw-def-page-setup {    width: 84%;  }}
 `
+
 		}
 		
 	];
