@@ -1419,7 +1419,7 @@ d is string or an array ["tag".{attributs dict},content] or dict of this form
             return outFn(s,dopts); // Note return statement here... 
             break;                 // eslint-disable-line no-unreachable
         case "function" :
-            s = bw.buildHTMLObjString(d(),dopts);
+            s = bw.html(d(),dopts);
             break;
         case "array":
 

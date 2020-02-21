@@ -20,6 +20,8 @@ bw.keynu = function(x) {
             return x; //boolean, number, string
     }
 }
+var _s = function(n,c){return Array(n+1).join(c);}
+
 //===
 /*
 
@@ -31,22 +33,24 @@ string          ==> string_content
 array [0..5]    ==> node
 object          ==> node     
 
-null            ==> null
+null            ==> empty
 undefined       ==> undefined
 */
-bw.HTMLNorm = function(x) {
+bw.HTMLNormX = function(x,opts) {
 
-    function bw.HTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={}; this.s={};}
+    var err="",dopts: {
+        errorLog : true
+    }
+
+    dopts = optsCopy(opts,dopts);
+    function bw.HTMLNode () {this.t="div"; this.a={}; this.c=[]; this.o={tagClose:"auto"};}
     //function bwError  (v,x) {this.value=v; this.msg = (typeof x == "undefined") ? "error" : x;}
     
-    var i,n = new bwHTMLNode(); // default html dict format
-    var m = "";
+    var n = new bwHTMLNode(); // default html dict format
     switch (_to(x)) {
         case "null" :
         case "undefined" :
-            //n = new bwError(x,"HTML Node error : "+_to(x));
-            n="";
-            bw.logd("Error: HTMLNorm type null or undefined");
+            err = "error: html node content is " : _to(x);
             break;
         case "object":
             [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
@@ -59,6 +63,9 @@ bw.HTMLNorm = function(x) {
                 }
             }
             break;
+        case "HTMLNode" :
+            for ( i in x) { n[i] = x[i]}
+            break;
         case "array":
             var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
             var m = (x.length > 5) ? 5 : x.length;
@@ -68,20 +75,19 @@ bw.HTMLNorm = function(x) {
             }
             for (i in n)
                 if (bw.isnu(n[i])) {
-                    n = ""
-                    bw.logd("Error HTMLNorm : bad array");
+                    err = "Error HTMLNorm : bad array";
                     break;
                 }
-
             break;
-        case "function":  
-            n = bw.html_fc2(x(),opts); // evaluate and convert...
-            n = _to(n)=="function" ? new bwError(n.toString(),"HTML Node error: function returned a function");
+        case "function":   // this whole node is a function
+            var h = x(opts, state);
+
+            for (i in n) 
             break;
         default: // string, number, Date, bool, Regex  ==> will be come just plain rendered content later
-            n =x.toString();
+            n.c =[x.toString()];
     }
-    return n; 
+    return [n,err]; 
 }
 
 //assumes proper node form
@@ -173,15 +179,14 @@ bw.htmlFromDict = function(htmlDict, opts) {
     a ==> attrib  {}   
     c ==> content []   content can be string | node  (other values converted to string)  
     o ==> options {}
-    s ==> state   {}
-
+    
     htmldict
     { 
         tag: "tagValue",
         attrib : {},
         content : [],    // each member must be: string or htmlDict or null.  other values cast to string.
         options : {},
-        state : {}   
+    
      }
 */
 
@@ -190,18 +195,11 @@ bw.htmlFromDict = function(htmlDict, opts) {
         t:  "div",
         a:  {},   // if an attribute is null then only key is listed e.g.  {a:"foo", b:null, c:0} ==> a="foo" b  c=0
         c:  [],
-        o:  {
-                pretty : true,
-                pretty_space: " ",
-                pretty_indent: "", //fixed indent when pretty pass as "    " etc
-                tagClose : "auto"  // can be "auto", false (e.g. <br>), "inline" (e.g. <tag ... />), true (e.g. <tag ...>...</tag>)
+        o:  { tagClose : "auto"  // can be "auto", false (e.g. <br>), "inline" (e.g. <tag ... />), true (e.g. <tag ...>...</tag>)
 
             },
-        s:  {
-                levelCount : 0,
-                nodeCount  : 0
-            }
     }
+
     var _atr = function(k,v,o){  // to do handle "smart" attributes ==> class : ["class1", "class2"]  ==> style : bw.makeCSS()
         var val=v,ok = _to(o.overide)=="undefined" ? k : ok; 
         switch(ok) {
@@ -215,6 +213,7 @@ bw.htmlFromDict = function(htmlDict, opts) {
         }
         return k+"="+"\""+val.replace("\"","\\\"")+"\"";
     }
+    var _s = function(n,c){return Array(n+1).join(c);}
     ind_s = ddict.o.pretty ? Array(ddict.s.level * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
     ind_c = ddict.o.pretty ? Array((ddict.s.level+1) * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
     ind_e = ddict.o.pretty ? "\n" : "";
@@ -390,9 +389,54 @@ bw.html_fc = function(x) {
     return n; 
 };
 
-bw.HTMLNorm = function(x) {
+bw.htmlExt  = function(data, opts) {
+    var dopts = {
+        tagClose: "auto",
+        contentHTMLSafe : "false",  // convert content node chars to htmlSafe equivalents e.g. " " ==> &nbsp;
 
-    function bwHTMLNode () {this.t="div"; this.a={}; this.c=""; this.o={};}
+        pretty: "true",
+        indStr : "  ",  // only used in pretty set to true. can be "\t" etc
+        indFixed: "",   // 
+
+        maxdepthAllowed : 50
+
+    };
+    dopts = optsCopy(dopts,opts);
+    var state = {
+        cdepth   : 0, // curdepth
+        cbreadth : 0, // curbreadth (e.g. content[3])
+        maxdepth : 0,
+        ncount   : 0, // num nodes rendered
+        errors   : [] // trapped erors
+    }
+    var ret = ["",state];
+    var htmlRenderNode = function(d,o,s) { // assumes
+        var h="", n = htmlNorm(d,o,s) // get it in dict form
+
+    }
+     {
+        var hd = (function(){return {t:"div",a:{},c:[],{o:tagClose:"auto"}}})();
+
+        //emit tagOpen  
+        // indFixed + ?pretty|indstr + <tag + atr() + tagselfclose>
+        // for i=0.. hd.c.length
+        // if c[i] == object | function : 
+        //      cbreadth++
+        //      convert
+        // else 
+        // (emit) indFixed + ?pretty|indstr c[i].toString()
+
+    }
+    return ret;
+}
+
+//=======================================
+/*
+ state has levels, node, nodecount info
+*/
+bw.HTMLNorm = function(x,state) {
+
+    function bwHTMLNode () {this.t="div"; this.a={}; this.c=[]; this.o={};}
     function bwError  (v,x) {this.value=v; this.msg = typeof x == "undefined" ? "error" : x;}
     
     var i,n = new bwHTMLNode(); // default html dict format
@@ -438,64 +482,128 @@ bw.HTMLNorm = function(x) {
     }
     return n; 
 };
-//==================================================
-/**
-    htmld -- html generator
-    convert _accteptable_types_  ==> htmLJSON_dict
+//**********************************************************
+//**********************************************************
+bw.htmlMod20200215 = function (d,options) {
+/**  
+bw.html(data)  
 
+takes data of one of these exact forms:
 
-bw.htmld = function(htmlJSON, opts) {
-    var dopts = {               // def options note t_ a_ c_ o_ are options applied to the t, a, c, or o local keys directly
-        t_close   : "auto",     // "auto" | "false" | "true"  ==> "auto" doesn't close certain tag decl such as !DOCTYPE, <br>
-        a_join    : ";",        // default join for attribute arrays 
-        o_pretty  : false,      // makes nice html 
-        o_indent  : 4,          // default indent when pretty printing
-        o_verbose : false,      // returns object instead of html string ==> {html: <htmloutput string>, stats: dict{}, status: "success" | "warnings"}
-        c_htmlesc : true        // true | false  ==> escape html safe chars, replace "\n" with <br> etc
+   string
+   array: ["div", content]
+   array: ["div",{attribute dict},content]
+   array: ["div",{attribute dict},content, options]
+   dict:  {tag:"div", atr: {attribute dict}, "content": content}
+        content can be string or array
+
+and creates an HTML string wich can be used to generate DOM elements such as
+document.getELementById("theID").innerHTML = buildHTMLObjString(data).
+
+content can be nested 
+
+d is string or an array ["tag".{attributs dict},content] or dict of this form
+   tag, atr, content  (also allow short hand t,a,c)
+   tag or t = string --> "div"
+   atr or a = dict  --> {"style" : "width=40;height=50", "class" : "foo bar"}
+    content or c = [] or string.  if array each element must be either string or dict of this form.
+    if any element is a function it will be evaluated in place with no params. 
+
+*/
+    var dopts = {
+        pretty     : false,
+        indent     : 0,
+        indentStr  : "  "
     };
+    dopts = optsCopy(dopts,options);
     
+    var outFn = function(s,opts) {
+        var w  =  Array(opts["indent"]).join(opts["indentStr"]);
+        var we =  Array(opts["indent"]-1).join(opts["indentStr"]);
+        return opts["pretty"] ? "\n"+w+ s + "\n" +we: s;
+    };
 
-    dopts = optsCopy(dopts,opts);
 
-    var  i, d, h="", ind_s, ind_e; // ind_s, ind_e control pretty printing
+    dopts["indent"]++;
 
-    h="";
-    d = bw.html_fc(htmlJSON); // now in dict form with state vector
-    for (i in d)
-        if (_to(i) == "function")
-            d[i] = d[i](d); 
+    var s="", t="div",a={},c=[],i;
 
-    d.s["level"]++;
-    
-    d.t = d.t.toString();  
-    d.a = (_to(d.a) == "object") ? d.a : {}; // must be dict.  
-    d.c = (_to(d.c) == "array" ) ? d.c : (_to(d.c)=="object") ? html_fc(d.c) : d.c.toString(); 
-    d.o = optsCopy(dopts,d.o);
-
-    //now gen html...
-    ind_s = d.o.o_pretty ? Array(d.s.level * d.o.o_indent ).join(" ") : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
-    ind_e = d.o.o_pretty ? "\n" : "";
-    
-    h += ind_s+  "<" + d.t;
-    for (i in d.a)
-        h+= " "+i+"=\""+d.a[i]+"\"";
-    h += ">"+ ind_e; 
-
-    //content gen
-    switch (_to(d.c)) {
-        case "object":
-            h += bw.htmld(d.c,dopts);
+    switch (_to(d)) {
+        case "date":
+        case "number":
+            s=String(d); // eslint-disable-line no-fallthrough
+        case "string":    
+            s=d;
+            return outFn(s,dopts); // Note return statement here... 
+            break;                 // eslint-disable-line no-unreachable
+        case "function" :
+            s = bw.html(d(),dopts);
             break;
         case "array":
-            h += d.c.map(function(x){ return bw.htmld(x,dopts);}).join("");
+
+            if ((_to(d[0]) == "undefined") || d.length != 3)
+                return "";
+            t = _to(d[0]) != "undefined" ? d[0] :t;
+            a = _to(d[1]) != "undefined" ? d[1] :a;
+            c = _to(d[2]) != "undefined" ? d[2] :c;
+            t = _to(t)    == "function"  ? t()  :t;
+            a = _to(a)    == "function"  ? a()  :a;
+            c = _to(c)    == "function"  ? c()  :c;
+            c = _to(c)    != "array"     ? [c]  :c;
+            break;
+        case "object":
+            t = _to(d["t"])         == "function" ? d["t"]()       : t;
+            t = _to(d["tag"])       == "function" ? d["tag"]()     : t;
+            t = _to(d["t"])         == "string"   ? d["t"]         : t;  
+            t = _to(d["tag"])       == "string"   ? d["tag"]       : t;  
+
+            a = _to(d["a"])         == "function" ? d["a"]()       : a;
+            a = _to(d["atr"])       == "function" ? d["atr"]()     : a;
+            a = _to(d["a"])         == "object"   ? d["a"]         : a;
+            a = _to(d["atr"])       == "object"   ? d["atr"]       : a;
+            switch (_to(d["c"])) {
+                case "function" : 
+                    c = d["content"](); break;
+                case "array" : 
+                    c = d["content"]; break;
+                default:
+                    c = [d["content"]];
+            }
+            switch (_to(d["c"])) {
+                case "function" : 
+                    c = d["c"](); break;
+                case "array" : 
+                    c = d["c"]; break;
+                default:
+                    c = [d["c"]];
+            }
             break;
         default:
-            h+= d.c; 
+            bw.log("bw.html:: error in type");
     }
     
-    //closing tag
-    h += ind_s + "</" + d.t + ">" + ind_e;
-    d.s.html = h;
-    return d;
-}
-*/
+    s+= "<" + t ;
+    for (i in a) { 
+        s+=" "+ String(i)+"=\"" + String(a[i]) +"\"";
+    }
+    s+= ">";
+    //console.log(t,a,c);
+    for (i=0; i<c.length; i++) {
+        var _c = "";
+
+        switch(_to(c[i])) {
+            case "function":
+                _c = c[i]();  // eslint-disable-line no-fallthrough
+            case "object":    // eslint-disable-line no-fallthrough
+            case "array" :
+            _c = bw.html(c[i],dopts);
+            break;
+            default:
+            _c = String (c[i]);
+        }
+        s+= _c;
+    }
+    s+= "</" + t + ">";
+
+    return outFn(s,dopts);
+};
