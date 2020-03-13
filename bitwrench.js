@@ -292,6 +292,7 @@ var optsCopy =  function(dopts,opts) {
     }
     return dopts;
 };
+bw._oc = optsCopy;
 // ===================================================================================
 bw.arrayUniq =  function (x){
 /** 
@@ -1189,308 +1190,275 @@ inline-bw-css --> emit bw default styles as inline css (include globals option)
     return s;
 };
 // ===================================================================================
-/*
-bw.htmlRender(hdict, opts) {
-    var dgopts = {
-        pretty : true,
-        pretty_space: "  ",
-        pretty_indent: "", //fixed indent when pretty pass as "    " etc
-        tagClose : "auto" // default behavior 
-    }
-    var state = {
-        levelCnt : 0,
-        nodeCnt  : 0,
-        errors   : []
-    }
-    dgopts = optsCopy(dgopts,opts);
-    
-    var _isv = function(x){return "area base br col command embed hr img input keygen link meta param source track wbr".search(x.toLowerCase()) >=0;}
-
-    var _atr = function(k,v,o){  // to do handle "smart" attributes ==> class : ["class1", "class2"]  ==> style : bw.makeCSS()
-        var val=v,ok = "atr_def"in o ? "none" : k; 
-        if (v==null)
-            return k;
-        switch(ok) {
-            case "style" :
-                val = bw.makeCSS(val,{pretty:false});
-                break;
-            default :
-                if (bw.to(v)=="array")
-                    val = val.join(" ");
-                val = val.toString();
-        }
-        return k+"="+"\""+val.replace("\"","\\\"")+"\"";
-    }
-
-    var _cls = function(t,o,c) {
-      
-        var ce = _to(c)!="array" ? true : ((c.length ==0) ? true : false);
-        // o.tagClose==auto         && _isv(t)==true   ==>  ,
-        //                             _isv(t)==false  ==>  , </t>      
-        // o.tagClose==closeEmpty   && _isv(t)==true   ==> /,
-        //                             _isv(t)==false  ==>  , </t>
-
-        // o.tagClose==none                            ==>  ,                  
-        // o.tagClose==all                             ==>  , </t>
-        var r = bw.choice(o.tagClose,
-            {
-                "auto" :       function(){return _isv(t) ? ["" ,""] : ["","</"+t+">"];}) (),
-                "closeEmpty" : function(){return _isv(t) ? ["/",""] : ["","</"+t+">"];}) (),
-                "none" : ["",""]
-            },["","</"+t+">"]);
-        return r;
-    }
-
-    _emitHTML = function(data) { // uses state from outr fn
-
-    }
-
-}
-*/
-bw.htmlFromDict = function(htmlDict) {
 /**
-    must be of form 
-    t ==> tag     (string)
-    a ==> attrib  {}   
-    c ==> content []   content can be string | node  (other values converted to string)  
-    o ==> options {}
-    
-
-    htmldict
-    { 
-        tag     : "tagName",
-        attrib  : {},
-        content : [],    // each member must be: string or htmlDict or null.  other values cast to string.
-        options : {},
-        state : {}   
-     }
-
-    //options:
-    pretty        (true | false) (default: true)  attempts to make HTML pretty (human readable) if false it will be as compact as possible
-    pretty_space  (if pretty == true) (default: "  ") this is the stirng used as the indent string but one could make it "\t" or " " etc.
-    pretty_indent (if pretty == true) a fixed indent to provide to every line of html
-
-    tagClose : ("auto" | closeempty | all | none) whether to close a tag.  default is "auto"
-        "auto"       : will apply smart rules to tag closing. e.g. html void elements such as br are not closed 
-        "closeempty" : all void elements are now self closed  (e.g. are self closed ==> <meta /> or <br />)
-        "all"        : tags are forced closed with </tagname>  ==>  can be useful for xml type generation
-        "none"       : tags are not closed at all
-
-
+    htmlIsVoidTag(tagString) returns true if the supplied string is a html void tag (e.g. meta or br) which doesn't require a closing bracket else false
 */
-    var html = "",stats={};
-    //var voidTags = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"]; 
-    //var _isv = function(s){return (voidTags.indexOf(s) >= 0)};
-    var _isvoid= function(s){return "area base br col command embed hr img input keygen link meta param source track wbr".search(s.toLowerCase()) >=0;}
-    var ddict = {
-        t:  "div",
-        a:  {},   // if an attribute is null then only key is listed e.g.  {a:"foo", b:null, c:0} ==> a="foo" b  c="0"
-        c:  [],
-        o:  {
-                pretty : true,
-                pretty_space: "  ",
-                pretty_indent: "", //fixed indent when pretty pass as "    " etc
-                tagClose : "auto",
-            },
-    }
-    var state = {
-        level : 0,
-        node : 0
-    }
-    var _atr = function(k,v,o){  // to do handle "smart" attributes ==> class : ["class1", "class2"]  ==> style : bw.makeCSS()
-        var val=v,ok = "atr_def"in o ? "none" : k; 
-        if (v==null)
-            return k;
-        switch(ok) {
-            case "style" :
-                val = bw.makeCSS(val,{pretty:false});
-                break;
-            default :
-                if (bw.to(v)=="array")
-                    val = val.join(" ");
-                val = val.toString();
-        }
-        return k+"="+"\""+val.replace("\"","\\\"")+"\"";
-    }
-
-    var _cls = function(t,o,c) {
-        var r=["","</"+t+">"] // r[0] is whether to include closing slash on start tag, r[1] is whether to include closing tag
-        var ce = _to(c)!="array" ? true : ((c.length ==0) ? true : false);
-        // o.tagClose==auto         && _isv(t)==true   ==>  ,
-        //                             _isv(t)==false  ==>  , </t>      
-        // o.tagClose==closeEmpty   && _isv(t)==true   ==> /,
-        //                             _isv(t)==false  ==>  , </t>
-
-        // o.tagClose==none                            ==>  ,                  
-        // o.tagClose==all                             ==>  , </t>
-        r = bw.choice(o.tagClose,
-            {
-                "auto" :       (function(){return _isv(t) ? ["",""]  : ["","</"+t+">"];}) (),
-                "closeEmpty" : (function(){return _isv(t) ? ["/",""] : ["","</"+t+">"];}) (),
-                "none" : ["",""]
-            },r);
-        return r;
-    }
-    ddict = optsCopy(ddict,htmlDict);
-    var ind_s = ddict.o.pretty ? Array(ddict.s.levelCnt * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
-    var ind_c = ddict.o.pretty ? Array((ddict.s.levelCnt+1) * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : ""; // not &nbsp; ==> we're not trying to render this space just make it pretty for inspection
-    var ind_e = ddict.o.pretty ? "\n" : "";
-    
-    try {
-        var i,atrk=[],_a=[],k,v;
-        for (i in ddict.a)
-            if (ddict.a.hasOwnProperty(i)) atrk.push(i);
-        atrk = atrk.sort(bw.naturalCompare);
-        for (i=0; i<atrk.length; i++) {
-            k=atrk[i]; v=ddict.a[k];
-            console.log(k,v)
-            _a.push(_atr(k,v,ddict.o));
-        }
-        _a = _a.join(" ");
-        _a = ((_a.length>0) ? " ": "") + _a;
-
-        html += ind_s + "<" +ddict.t + _a+ _cls(ddict.t,ddict.o.tagClose,ddict.c)[0]+">";
-        html += ddict.c.map(function(x){
-                var s = _to(x) == "object" ? bw.htmlFromDict(x) : x.toString();
-                return ind_c+s;
-            }                
-            ).join((ddict.pretty?"\n":""));
-        html += ind_e + _cls(ddict.t,ddict.o.tagClose,c)[1] +(ddict.o.pretty?"\n":"");
-    }
-    catch(e) {
-        console.log(e);
-        bw.logd(e);
-    }
-
-    return {html:html, stats: stats}
-}
-
+bw.htmlIsVoidTag = function(tag) {
+    return " area base br col command embed hr img input keygen link meta param source track wbr ".search(" "+String(tag).trim().toLowerCase()+" ") >=0;
+};
 // ===================================================================================
-bw.html = function (d,options) {
-/**  
-bw.html(data)  
+bw.htmlNode = function(x,opts) {
+/**
 
-takes data of one of these exact forms:
+   bw.htmlNode - converts acceptable data contructs into htmlEmit() compatible form,
+        { t: <tag>, a: {attribs}, c: [content], o: {options} }
+        or 
+        a string e.g. "my html content" note that this can include html as well.
+        or
+        a function to be evaluated later
+        f(){return htmlNode compatible data structure}  ==> when bw.HTMLEmit encounters this it will evaluate the the function contents.  Useful for live templating.
 
-   string
-   array: ["div", content]
-   array: ["div",{attribute dict},content]
-   array: ["div",{attribute dict},content, options]
-   dict:  {tag:"div", atr: {attribute dict}, "content": content}
-        content can be string or array
+How htmlNode handles different objects:
 
-and creates an HTML string wich can be used to generate DOM elements such as
-document.getELementById("theID").innerHTML = buildHTMLObjString(data).
-
-content can be nested 
-
-d is string or an array ["tag".{attributs dict},content] or dict of this form
-   tag, atr, content  (also allow short hand t,a,c)
-   tag or t = string --> "div"
-   atr or a = dict  --> {"style" : "width=40;height=50", "class" : "foo bar"}
-    content or c = [] or string.  if array each element must be either string or dict of this form.
-    if any element is a function it will be evaluated in place with no params. 
-
-*/
-    var dopts = {
-        pretty     : false,
-        indent     : 0,
-        indentStr  : "  "
-    };
+ "object" 
+    accepted keys below, other keys ignored (e.g. if your objects looks like this: {tag:"div", c:["this is my content"], data: [ ....] } the key called data will be ignored by htmlNode
+    t: String | Number | Date() ==> tag  function==> f().toString()
+    a: {}  ==>  key : value ==>  num | str | Date | [] ==> [].join(dopts.a_join) , 
+    c: [] || String | Number | Date  ==> each_item : str | {html_dict} 
+    o: {} ==> options (note inherit / copy)  => if not supplied uses previous levels options
     
-    var outFn = function(s,opts) {
-        var w  =  Array(opts["indent"]).join(opts["indentStr"]);
-        var we =  Array(opts["indent"]-1).join(opts["indentStr"]);
-        return opts["pretty"] ? "\n"+w+ s + "\n" +we: s;
+    
+    also accepts: "tag", "attrib", "content", "options" as keys instead of t,a,c,o,s
+    
+    if any of t,a,c,o are a function it will be invoked immediatly w no params ==> t:myFunc ===> t:myFunc() <== 
+
+    defaults:
+        t ==> "div"
+        a ==> {}
+        c ==> []
+        o ==> {}
+
+        s ==> {level:0, nodes: 0}
+
+"string" | "number" | Date() ==> {}
+        t ==> "div"
+        a ==> {}
+        c ==> .toString()
+        o ==> {}
+
+        s ==> {}
+
+"array" type objects are mapped BW_HTMLNodes as follows:
+    [         ]   ==> {t:"span", a: {}, c: "", o: {}}
+    [c        ]   ==> {t:"span", a: {}, c: c , o: {}}
+    [t,c      ]   ==> {t:t,      a: {}, c: c , o: {}}
+    [t,a,c    ]   ==> {t:t,      a: a,  c: c}
+    [t,a,c,o  ]   ==> {}
+    [ 5+      ]   ==> {} // uses, first 4 entries, others ignored
+    
+    // this dict repreesnts the mapping
+    {
+    0 : { }
+    1 : {c : 0},  
+    2 : {t : 0, c : 1},
+    3 : {t : 0, a : 1, c : 2}
+    4 : {t : 0, a : 1, c : 3, o : 4}
+    5 : {t : 0, a : 1, c : 3, o : 4, s : 5}
+    }
+
+    // this array contruct implements the above dict mapping more compactly
+    var i,idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
+    for (i=0; i< x.length; i++) 
+        hd[idx[x.length]][i] = x[i];    
+
+    returns [BWHTMLNode object,errorInfoString] 
+
+ */
+
+    var err="",dopts = {
+        functionExec : true, // if this node data is a function, execute it with no params eg x ====> x()
+        atomic2span  : false // convert atomic strings to a span element
     };
 
-    dopts = optsCopy(dopts,options);
-
-    dopts["indent"]++;
-
-    var s="", t="div",a={},c=[],i;
-
-    switch (_to(d)) {
-        case "date":
-        case "number":
-            s=String(d); // eslint-disable-line no-fallthrough
-        case "string":    
-            s=d;
-            return outFn(s,dopts); // Note return statement here... 
-            break;                 // eslint-disable-line no-unreachable
-        case "function" :
-            s = bw.html(d(),dopts);
-            break;
-        case "array":
-
-            if ((_to(d[0]) == "undefined") || d.length != 3)
-                return "";
-            t = _to(d[0]) != "undefined" ? d[0] :t;
-            a = _to(d[1]) != "undefined" ? d[1] :a;
-            c = _to(d[2]) != "undefined" ? d[2] :c;
-            t = _to(t)    == "function"  ? t()  :t;
-            a = _to(a)    == "function"  ? a()  :a;
-            c = _to(c)    == "function"  ? c()  :c;
-            c = _to(c)    != "array"     ? [c]  :c;
+    dopts = optsCopy(dopts,opts);
+    var isv   = bw.htmlIsVoidTag;
+    var isnu  = function(x) {return bw.toa(x,["null","undefined"],true,false);}; // is x null or undefined
+    var HTMLNode = function BW_HTMLNode() {this.t="div"; this.a={}; this.c=[]; this.o={tagClose:"auto"};};
+    //function bwError  (v,x) {this.value=v; this.msg = (typeof x == "undefined") ? "error" : x;}
+    
+    var i,n = new HTMLNode(); // default html dict format
+    switch (bw.to(x)) {
+        case "null" :
+        case "undefined" :
+            n = ""; 
+            err = "error: html node content is " + bw.to(x);
             break;
         case "object":
-            t = _to(d["t"])         == "function" ? d["t"]()       : t;
-            t = _to(d["tag"])       == "function" ? d["tag"]()     : t;
-            t = _to(d["t"])         == "string"   ? d["t"]         : t;  
-            t = _to(d["tag"])       == "string"   ? d["tag"]       : t;  
-
-            a = _to(d["a"])         == "function" ? d["a"]()       : a;
-            a = _to(d["atr"])       == "function" ? d["atr"]()     : a;
-            a = _to(d["a"])         == "object"   ? d["a"]         : a;
-            a = _to(d["atr"])       == "object"   ? d["atr"]       : a;
-            switch (_to(d["c"])) {
-                case "function" : 
-                    c = d["content"](); break;
-                case "array" : 
-                    c = d["content"]; break;
-                default:
-                    c = [d["content"]];
-            }
-            switch (_to(d["c"])) {
-                case "function" : 
-                    c = d["c"](); break;
-                case "array" : 
-                    c = d["c"]; break;
-                default:
-                    c = [d["c"]];
+            [["tag","t"],["attrib","a"],["content","c"],["options","o"]].forEach(function(z){ n[z[1]]= z[0] in x ? x[z[0]] : n[z[1]];});
+            for (i in n) {  // we only copy those fields we care about..
+                n[i] = (i in x) ? x[i] : n[i]; // need to handle complicated types: t:"", a:{}, c:"" | []
+                if (isnu(n[i])) {
+                    n = ""; // force entire object to be null or undefined
+                    err = ("Error HTMLNode : a field is null or undefined");
+                    break;
+                }
             }
             break;
-        default:
-            bw.log("bw.html:: error in type");
+        case "BW_HTMLNode" :
+            for ( i in x) { n[i] = x[i];}
+            break;
+        case "array":
+            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"]];
+            var m = (x.length > 4) ? 4 : x.length;
+            for (i=0; i< m; i++)   { 
+              //  console.log(idx[m][i] + ":" + x[i]);
+                n[idx[m][i]] = x[i];
+            }
+            for (i in n)
+                if (isnu(n[i])) {
+                    n = "";
+                    err = "Error HTMLNode : bad array array input";
+                    break;
+                }
+            //n.c = _toa(n.c,"array",n.c,[n.c]);
+            break;
+        case "function":   // this whole node is a function
+            var h;
+            if (dopts.functionExec) {
+                h = bw.htmlNode(x(),dopts);
+                n=h.node;
+                err = h.error;
+            }
+            else 
+                n=h;
+            break;
+        default: // string, number, Date, bool, Regex  ==> will be come just plain rendered content later
+            if (dopts.atomic2span) {
+                n.c =[x.toString()];
+                n.t = "span";
+            }
+            else 
+                n = x.toString();
     }
+    var r= {
+        node  : n,
+        ntype : bw.typeOf(n), // BW_HTMLNode | string | function
+        error : err,
+        isVoidTag : (bw.typeOf(n)=="BW_HTMLNode")? isv(n.t) : false
+    };
     
-    s+= "<" + t ;
-    for (i in a) { 
-        s+=" "+ String(i)+"=\"" + String(a[i]) +"\"";
-    }
-    s+= ">";
-    //console.log(t,a,c);
-    for (i=0; i<c.length; i++) {
-        var _c = "";
-
-        switch(_to(c[i])) {
-            case "function":
-                _c = c[i]();  // eslint-disable-line no-fallthrough
-            case "object":    // eslint-disable-line no-fallthrough
-            case "array" :
-            _c = bw.html(c[i],dopts);
-            break;
-            default:
-            _c = String (c[i]);
-        }
-        s+= _c;
-    }
-    s+= "</" + t + ">";
-
-    return outFn(s,dopts);
+    return r;
 };
+// ===================================================================================
+bw.htmlEmit = function(htmlData, opts, state) {
+    
+    var dopts = {
+        tagClose       : "inherit",
+        htmlEscContent : false // change spaces, /n /t to html equivalents
+    };
+    
+    state = bw.toa(state,["undefined","null"], {
+        nodesCnt : 0,
+        levelCnt : 0,
+        levelMax : 0
+    },state);
 
+    dopts = optsCopy(dopts,opts);
+    
+    var _atr = function(n){  
+        // handle "smart" attributes ==> 
+        // class : ["class1", "class2"]  ==> style : bw.makeCSS(),
+        // functions e.g. onclick:function(){}   // html on... events can be encoded auto  e.g. onclick=function() ==> onclick=bw.registerfunction(... )
 
+        var as = [], k,v,vr;
+
+        for (k in n.a) {
+            v = n.a[k];  // now we have k, v 
+            if (v == null) {
+                as.push(k);   //null values are ignored.  e.g.g  {t:"div", a:{checked:null, c:...} ==> <div checked /> ... 
+                continue;
+            }
+            if (k.search(/^on/) >=0 ) { // its a on... hanlder
+                if (bw.to(v) == "function") {
+                    if (n.o["atrOnEventRegister"] == false) {
+                        vr = String(v()); // its a function but execute it and return a string value
+                    }
+                    else { // register it
+                        vr = bw.funcGetDispatchStr(bw.funcRegister(v),"this"); // 
+                    }       
+                }else { // not a function but some other type
+                    vr = "";
+                    try {
+                        vr = v.toString();
+                    } catch (e) { vr = String(v);}
+                }
+            } 
+            else 
+            {
+                switch(k) {
+                    case "style" :
+                        vr = bw.makeCSS(v,{pretty:false});
+                        break;
+                    default :
+                        if (bw.to(v)=="array")
+                            vr = v.join(" ");
+                        vr = v.toString();
+                }
+            }
+            as.push(k+"="+"\""+vr.replace("\"","\\\"")+"\"");
+        }
+        as = as.join(" ");
+        return (as.length > 0 ? " ": "") + as;
+    };
+
+    var h=[],n= bw.htmlNode(htmlData);
+
+    if (_to(n.node) == "function") {
+        n = bw.htmlNode(n.node());
+        n = _toa(n.ntype,["BW_HTMLNode","string"],n,""); // if its still not a string or BW_HTMLNode  we just need to punt it.
+
+    }
+    state.nodesCnt++;
+    if (n.ntype != "BW_HTMLNode") {
+        h.push( dopts.htmlEscContent ? bw.htmlSafeStr(n.node.toString()) : n.node.toString() );
+    }
+    else { // bw_HTMLNode
+        
+        h.push("<",n.node.t, _atr(n.node));
+
+        var tagClose =  dopts.tagClose != "inherit" ? dopts.tagClose : n.node.o.tagClose;
+        switch(tagClose) {
+/*eslint no-fallthrough: [0, { "commentPattern": "break[\\s\\w]*omitted" }]*/
+             case "auto":
+                if (n.isVoidTag){
+                     // <tag a{} /> # content is not rendered for void tags  # ["<",n.t , a{}, "/>" ]
+                     h.push( "/>");
+                     break;
+                }
+
+            case "all":
+            default:
+                //<tag a{}> .... </tag>  # h=["<",n.t , a{}, crend() , "</", n.t, ">"]
+                h.push(">"); 
+                var i,x;
+                if (bw.typeOf (n.node.c) != "array") {
+                    state.levelCnt++;
+                    state.levelMax = state.levelCnt > state.levelMax ? state.levelCnt : state.levelMax;                                                
+                    x = bw.htmlEmit(n.node.c,dopts,state);
+                    state.levelCnt--;
+                    h.push(x.html);
+                }
+                else {
+                    for (i in n.node.c) {
+                        state.levelCnt++;
+                        state.levelMax = state.levelCnt > state.levelMax ? state.levelCnt : state.levelMax;                        
+                        x= bw.htmlEmit(n.node.c[i],dopts,state);
+                        state.levelCnt--;
+                        h.push(x.html);
+                    }
+                }
+                if ( tagClose != "none" )
+                    h.push( "</",n.node.t,">");
+        }
+
+    }
+    var html = h.join("");
+    return {html: html, state: state};
+};
+// ===================================================================================
+bw.html = function(data,options) {
+    return bw.htmlEmit(data,options).html;
+};
 // ===================================================================================
 bw.htmla = function (listData,options) {
 /**  
@@ -2195,6 +2163,10 @@ example: bw.funcGetDispatchStr("myFuncID","param1,param2")
     return "bw.funcGetById('"+fnID+"')("+argstring+")";
 };
 
+bw.funcGetRegistry = function() {
+    return _fnRegistry;
+};
+
 // =============================================================================================
 bw.loremIpsum = function (numChars, startSpot, startWithCapitalLetter) {
 /** 
@@ -2788,7 +2760,7 @@ options: {
 
     var defs = { // defaults
         defGlobals:         {"box-sizing": "border-box"},
-        defContainer:       {"height": "100%", "width":"86%", "margin": "0 auto", "padding-left": "2%","padding-right":"2%","left":"0","top":"1%","box-sizing":"border-box"},
+        defContainer:       {"height": "100%", "width":"90%", "margin": "0 auto", "padding-left": "2%","padding-right":"2%","left":"0","top":"1%","box-sizing":"border-box"},
         defFontSerif:       {"font-family": "Times New Roman, Times, serif"},
         defFontSansSerif:   {"font-family": "Arial, Helvetica, sans-serif" }
     };

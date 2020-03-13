@@ -18,7 +18,7 @@
 	"devDependencies": {
 		"chai": "^3.0.0",
 		"eslint": "^4.19.1",
-		"jsdom": "16.0.1",
+		"jsdom": "^16.0.1",
 		"jsdom-global": "3.0.2",
 		"karma": "^4.4.1",
 		"karma-chai": "^0.1.0",
@@ -44,7 +44,7 @@
 		"lint": "./node_modules/.bin/eslint bitwrench.js",
 		"instrument-bw": "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser",
-		"generate-sri" : "cat bitwrench.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.js_sri.txt && cat bitwrench.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.min.js_sri.txt"
+		"generate-sri": "cat bitwrench.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.js_sri.txt && cat bitwrench.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.min.js_sri.txt"
 	},
 	"homepage": "http://deftio.com/bitwrench",
 	"dependencies": {}

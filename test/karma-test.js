@@ -942,7 +942,7 @@ var tests = [
 			expected:
 `
 *{box-sizing:border-box;}
-.bw-def-page-setup{height:100%;width:86%;margin:0 auto;padding-left:2%;padding-right:2%;left:0;top:1%;box-sizing:border-box;}
+.bw-def-page-setup{height:100%;width:90%;margin:0 auto;padding-left:2%;padding-right:2%;left:0;top:1%;box-sizing:border-box;}
 .bw-font-serif{font-family:Times New Roman, Times, serif;}
 .bw-font-sans-serif{font-family:Arial, Helvetica, sans-serif;}
 .bw-left{text-align:left;}

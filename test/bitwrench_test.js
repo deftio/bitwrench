@@ -1,10 +1,11 @@
 /**
 bitwrench test functions for npm (nodejs) see bitwrench_test_karam.js for browser version of tests
 
-this file uses the mocha test framework and chai assert framework
+this file uses the mocha test framework and chai assert framework along with jsdom to test certiain environment params
 
-npm install mocha --save-dev mocha
-npm install chai  --save-dev chai
+npm install mocha --save-dev 
+npm install chai  --save-dev 
+npm install jsdom --save-dev 
 
 */
 "use strict";
@@ -1038,7 +1039,7 @@ var tests = [
 			expected:  
 `
 *{box-sizing:border-box;}
-.bw-def-page-setup{height:100%;width:86%;margin:0 auto;padding-left:2%;padding-right:2%;left:0;top:1%;box-sizing:border-box;}
+.bw-def-page-setup{height:100%;width:90%;margin:0 auto;padding-left:2%;padding-right:2%;left:0;top:1%;box-sizing:border-box;}
 .bw-font-serif{font-family:Times New Roman, Times, serif;}
 .bw-font-sans-serif{font-family:Arial, Helvetica, sans-serif;}
 .bw-left{text-align:left;}

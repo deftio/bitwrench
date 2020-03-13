@@ -20,26 +20,28 @@
 	var jsonContent = [
 		["h2", {style:"font-style:italic"},"This is the JSON content section"],
 		"Some content is just a string...<br>",
-		{c: [["p",{},"inside1"],"inside string contnt","br",["p",{"style":"color:red"},"inside red content"]]},
-		["p",{},"Some content can be a long in paragraph form."]
+		{c: [["span",{},"inside1 "],"inside string contnt 2","<br>",["p",{"style":"color:red"},"inside red content"]]},
+		["p",{onclick:function(){alert("I was clicked!")}},"Some content which can be clicked."],
+
 	]
 
-	
 
 	// this is the static content at the top of the page.
 	var html = 
-	[
+	{	t: "div",
+		c:[
 		["h2",{},"Bitwrench JSON Content demo"],
 		"<br>",
 		["p",{},"The JSON below this paragraph represents the page content.  The JSON can contain hierachal arrays or objects."],
 		"<hr>",
-		bw.htmlJSON(bw.html(jsonContent[0],{o_pretty:true})),
+		bw.htmlJSON(jsonContent),
 		"<hr>",
-		bw.html(jsonContent.map(x=>bw.html(x)).join(""))
-	];
+		bw.html({c:jsonContent})
+		]
+	};
 
 
-	bw.DOM("#content",html.map(x=>bw.html(x)).join(""));
+	bw.DOM("#content",bw.html(html));
 
 </script>
 
