@@ -53,21 +53,21 @@ bitwrench is a "kitchen-sink" javascript library for building quick web apps usi
 	var thtml = bw.htmlTable(table1,
 		{
 			atr:{  //table level attributes
-				id:"tabe1Id",
-				class:"bw-table-compact",
-				style:"border: 1px solid #ddd;"
+				id:"tabe1Id"
+				//class:"bw-table-compact",
+				//style:"border: 1px solid #ddd;"
 			}, 
-			sortable:true, // use auto sorter
-			th_atr:{class:"tbox"}, // header row cell attributes
-			td_atr:{class:"tbox"}  //cell attributes
+			sortable:true // use auto sorter
+		//	th_atr:{class:"tbox"}, // header row cell attributes
+		//	td_atr:{class:"tbox"}  //cell attributes
 		});
 	bw.DOM("#table1",thtml);
 
-	bw.CSSSimpleThemes(1,true);
+//	bw.CSSSimpleThemes(1,true);
 
 	bw.DOM(".boo", "mass content set"); 
 	bw.DOM("#version","<strong>bitwrench.js version:</strong> " + bw.version()["version"]), 
-	bw.DOM("#tabs",	bw.makeHTMLTabs([["tab1",bw.loremIpsum(333)],["tab2",bw.loremIpsum(433)], ["tab3",bw.loremIpsum(533)]])); 
+	bw.DOM("#tabs",	bw.htmlTabs([["tab1",bw.loremIpsum(333)],["tab2",bw.loremIpsum(433)], ["tab3",bw.loremIpsum(533)]])); 
 </script>
 
 </body>

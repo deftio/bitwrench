@@ -1601,6 +1601,7 @@ Options:
     //default options
     var dopts = {
         useFirstRowAsHeaders : true,
+        useDefaultStyle : true, // for 
         atr         : {},  // attributes for table object can use function() for dynamic
         thead_atr   : {},  // attributes for table head section
         th_atr      : {},  // attributes for header cells, 
@@ -1613,15 +1614,10 @@ Options:
 
     var i=0,head="",body="",r,_hs=bw.html;
     dopts = optsCopy(dopts,opts);
-    /*
-    for (i in opts)
-        dopts[i] = opts[i];  // overide defaults
-    */
 
-    if (_to(dopts.th_atr["onclick"]) == "function") {
-        bw.log("todo buildHTMLtable function dispatch");      
+    if (dopts.useDefaultStyle) {
+        dopts.atr["class"] = "bw-table-stripe bw-table-col0-bold bw-table-compact bw-table-border-round bw-table-head  bw-table-cellpad";
     }
-    
     if (dopts.sortable == true) {
         dopts.th_atr["onclick"] = "bw.sortTableDispatch(this)";
         if ("class" in dopts.th_atr)
@@ -1633,27 +1629,26 @@ Options:
         if (_to(dopts.sortable) == "function") {
             var sfid = bw.funcRegister(dopts.sortable);
             dopts.th_atr["onclick"] = bw.funcGetDispatchStr(sfid,"this");       
-            bw.log("todo function makeHTML sort function dispatch");
         }
     }
 
     if (dopts["useFirstRowAsHeaders"]) {
-        head=data[0].map(function(x){return _hs(["th",dopts.th_atr,x]);}).join("");
-        head= _hs(["tr",dopts.tr_atr,head]);
+        head=data[0].map(function(x){return _hs({t:"th",a:dopts.th_atr,c:x});}).join("");
+        head= _hs({t:"tr",a:dopts.tr_atr,c:head});
         i=1;
     }
     else
         i=0;
-    head = bw.html(["thead",dopts.thead_atr,head]);
+    head = bw.html({t:"thead",a:dopts.thead_atr,c:head});
 
     for (; i<data.length; i++) {
-        r = data[i].map(function(x){return _hs(["td",dopts.td_atr,x]);}).join(""); 
-        body+= _hs(["tr",dopts.tr_atr,r]);
+        r = data[i].map(function(x){return _hs({t:"td",a:dopts.td_atr,c:x});}).join(""); 
+        body+= _hs({t:"tr",a:dopts.tr_atr,c:r});
     }
-    body = bw.html(["tbody",dopts.tbody_atr,body]);
+    body = bw.html({t:"tbody",a:dopts.tbody_atr,c:body});
     //console.log(head,'\n',body);
-    dopts.caption = dopts.caption == "" ? "" :  _hs(["caption",{},dopts.caption]);
-    return _hs(["table",dopts.atr,[dopts.caption,head,body]]);
+    dopts.caption = dopts.caption == "" ? "" :  _hs({t:"caption",a:{},c:dopts.caption});
+    return _hs({t:"table",a:dopts.atr,c:[dopts.caption,head,body]});
 };
 
 
@@ -2788,9 +2783,12 @@ options: {
         [".bw-pad1",    {"padding-left": "1%", "padding-right":"1%"}],
     
         //tables
+        [".bw-table-head th", {"background-color": "#bbb", "padding": "4px","border":"1px solid #444"}], 
+        [".bw-table-cellpad td", {"padding": "4px","border":"1px solid #444"}],
         [".bw-table-stripe tr:nth-child(even)" , {"background-color":"#f0f0f0"}],  // striped rows
         [".bw-table-col0-bold tr td:first-child", {"font-weight": "700"}],         // make first col bold
-        [".bw-table-compact",  {"border-collapse":"collapse", "border-spacing": "0"}],
+        [".bw-table-compact",  {"border-collapse":"collapse", "border-spacing": "0", "border":"1px solid #444"}],
+        [".bw-table-border-round", {"border-radius":"2px"}],
         [".bw-table-sort-upa::after", {"content": "\"\\2191\""}],  // table sort arrow up (when visible arrows chosen)
         [".bw-table-sort-dna::after", {"content": "\"\\2193\""}],  // table sort arrow dn (when visible arrows chosen)
         [".bw-table-sort-xxa::after", {"content": "\"\\00a0\""}],  // table sort space  (when visible arrows chosen)
@@ -3091,7 +3089,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.5", 
+        "version"   : "1.2.6", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
