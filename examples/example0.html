@@ -12,17 +12,7 @@
 <script type="text/javascript" src="../bitwrench.js"></script>
 <style>
 
-.tbox {
-	padding: 10px;
-}
 
-.cblue {
-	color: blue;
-}
-
-.cred {
-	color: red;
-}
 </style>
 
 </head>
@@ -30,7 +20,6 @@
 <h2>Bitwrench.js Simple Example Page</h2>
 <p id="version"></p><br>
 bitwrench is a "kitchen-sink" javascript library for building quick web apps using JSON.<br><br>
-
 <h3>Examples</h3><br>
 <div id="table1"></div><br>
 <div id="arr"></div>
@@ -50,20 +39,8 @@ bitwrench is a "kitchen-sink" javascript library for building quick web apps usi
   
 	var table1 = 
 	[["this", "that", "the", "other"],[,6,4,0,4],[3,5,1,4],[1,2,4,5],["2u30","23",function(){return 834},23]];
-	var thtml = bw.htmlTable(table1,
-		{
-			atr:{  //table level attributes
-				id:"tabe1Id"
-				//class:"bw-table-compact",
-				//style:"border: 1px solid #ddd;"
-			}, 
-			sortable:true // use auto sorter
-		//	th_atr:{class:"tbox"}, // header row cell attributes
-		//	td_atr:{class:"tbox"}  //cell attributes
-		});
-	bw.DOM("#table1",thtml);
-
-//	bw.CSSSimpleThemes(1,true);
+	var tableHTML = bw.htmlTable(table1, {	sortable:true 	});
+	bw.DOM("#table1",tableHTML);
 
 	bw.DOM(".boo", "mass content set"); 
 	bw.DOM("#version","<strong>bitwrench.js version:</strong> " + bw.version()["version"]), 

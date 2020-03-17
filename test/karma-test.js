@@ -598,7 +598,7 @@ describe("#htmlTable()", function() {
  gen HTML table from simple array
 */
 	var tests = [
-		{args: [[[1,2,3],[2,3,4]]], expected: "<table><thead><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody><tr><td>2</td><td>3</td><td>4</td></tr></tbody></table>" }
+		{args: [[[1,2,3],[2,3,4]]], expected: "<table class=\"bw-table bw-table-stripe\"><thead><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody><tr><td>2</td><td>3</td><td>4</td></tr></tbody></table>"  }
 	];
 	
 	tests.forEach(function(test) {
@@ -940,35 +940,44 @@ describe("#CSSSimpleStyles (appendToHead, options) create the default bitwrench 
 var tests = [
 		{args: [] ,  
 			expected:
+
 `
 *{box-sizing:border-box;}
 .bw-def-page-setup{height:100%;width:90%;margin:0 auto;padding-left:2%;padding-right:2%;left:0;top:1%;box-sizing:border-box;}
 .bw-font-serif{font-family:Times New Roman, Times, serif;}
 .bw-font-sans-serif{font-family:Arial, Helvetica, sans-serif;}
+
 .bw-left{text-align:left;}
 .bw-right{text-align:right;}
 .bw-center{text-align:center;margin:0 auto;}
 .bw-justify{text-align:justify;}
 .bw-code{font-family:monospace;white-space:pre-wrap;}
 .bw-pad1{padding-left:1%;padding-right:1%;}
+
+.bw-table{border-collapse:collapse;border-spacing:0;border:1px solid #444;}
+.bw-table th{background-color:#bbb;padding:4px;border:1px solid #444;}
+.bw-table td{padding:4px;border:1px solid #444;}
 .bw-table-stripe tr:nth-child(even){background-color:#f0f0f0;}
-.bw-table-col0-bold tr td:first-child{font-weight:700;}
-.bw-table-compact{border-collapse:collapse;border-spacing:0;}
-.bw-table-sort-upa::after{content:"\\2191";}
-.bw-table-sort-dna::after{content:"\\2193";}
-.bw-table-sort-xxa::after{content:"\\00a0";}
+.bw-table tr td:first-child{font-weight:700;}
+.bw-table-border-round{border-radius:2px;}
+.bw-table-sort-upa::after{content:\"\\2191\";}
+.bw-table-sort-dna::after{content:\"\\2193\";}
+.bw-table-sort-xxa::after{content:\"\\00a0\";}
+
 .bw-tab-item-list{margin:0;padding-inline-start:0;}
-.bw-tab-item{display:inline;padding-top:5px;padding-left:10px;padding-right:10px;border-top-right-radius:7px;border-top-left-radius:7px;}
+.bw-tab-item{display:inline;padding-top:0.5em;padding-left:0.75em;padding-right:0.75em;border-top-right-radius:7px;border-top-left-radius:7px;}
 .bw-tab-active{font-weight:700;}
 .bw-tab:hover{cursor:pointer;font-weight:700;}
-.bw-tab-content-list{margin:0;}
-.bw-tab-content{display:none;margin-top:-1px;border-radius:0;}
-.bw-tab-content, .bw-tab-active{background-color:#ddd;}
+.bw-tab-content-list{margin:0;padding-top:0.0em;}
+.bw-tab-content{display:none;border-radius:0;}
+.bw-tab-content, .bw-tab-active{background-color:#ddd;padding:0.5em;}
+
 .bw-container{margin:0 auto;}
 .bw-row{width:100%;display:block;}
-.bw-row [class^="bw-col"]{float:left;}
-.bw-row::after{content:"";display:table;clear:both;}
+.bw-row [class^=\"bw-col\"]{float:left;}
+.bw-row::after{content:\"\";display:table;clear:both;}
 .bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
+
 .bw-hide{display:none;}
 .bw-show{display:block;}
 .bw-h1{font-size:2.312rem;}
@@ -977,6 +986,7 @@ var tests = [
 .bw-h4{font-size:1.419rem;}
 .bw-h5{font-size:1.206rem;}
 .bw-h6{font-size:1.025rem;}
+
 .bw-col-1{width:8.333%;}
 .bw-col-2{width:16.666%;}
 .bw-col-3{width:25%;}
@@ -989,6 +999,7 @@ var tests = [
 .bw-col-10{width:83.333%;}
 .bw-col-11{width:91.666%;}
 .bw-col-12{width:100%;}
+
 .bw-color-color {color:#000}
 .bw-color-background-color {background-color:#ddd}
 .bw-color-active {active:#222}
@@ -1008,6 +1019,7 @@ var tests = [
 @media only screen and (min-width: 1100px){  .bw-def-page-setup {    width: 86%;  }}
 @media only screen and (min-width: 1600px){  .bw-def-page-setup {    width: 84%;  }}
 `
+
 
 		}
 		

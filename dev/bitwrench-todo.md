@@ -52,10 +52,9 @@ This list is used for internal ideas, housekeeping, checklists and notes
  	[ ] simple boolean search of text object.  (TBD: jado and frabjousmix support this)
  	[x] pad strings (used in logExport({exportFormat:"text"}))
  	[ ] bitwrench-server.js / bitwrench-server.php / bitwrench-server.py - simple server for receiving JSON encoded data
- 	[ ] in options (bw.html) allow non-closed tags e.g. bw.html(["meta",{keywords:"foo, bar"},null,{tagClose:false}]) // default is tagClose:true
- 	[ ] in options (bw.html) allow attribs with no value e.g. bw.html(["special tag", {type:"javascript", specialTag:null},null])
- 	[ ] in options (bw.html) null for content means no content e.g.g <tag></tag>
- 	[ ] in options (bw.html) tagSingle:true generates this <tag /> instead of <tag></tag> as long as content is null (attributes of course are allowed)
+ 	[x] in options (bw.html) allow non-closed tags e.g. bw.html(["meta",{keywords:"foo, bar"},null,{tagClose:false}]) // default is tagClose:true
+ 	[x] in options (bw.html) allow attribs with no value e.g. bw.html(["special tag", {type:"javascript", specialTag:null},null])
+ 	[x] in options (bw.html) null for content means no content e.g.g <tag></tag>
  	[ ] in makeCSS (pretty:false) remove "\n"
  	[ ] makeCSS, makeCSSRule ==> CSS CSSRuleEmit
 

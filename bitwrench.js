@@ -214,6 +214,10 @@ _to(x,true)   // "object"     ---> returns base object type
         r =  (x.constructor.name.toLocaleLowerCase() == y.toLocaleLowerCase()) ?  y : x.constructor.name;  // return object's name e.g.
     }
     catch (e) {/*empty*/}
+    if (r == "object") {
+        if (x["_is_BW_HTMLNode"] == true )
+            r="BW_HTMLNode";
+    }
     return r;
 };
 
@@ -462,6 +466,29 @@ bw.DOMSetElements = function(domElement,param) {
 };
 
 bw.DOM = bw.DOMSetElements; //short hand
+//================================================================================
+bw.DOMInsertElement = function (htmldata,attachEl,putFirst) {
+/**
+ DOMInsertElement (html, attachEl, putFirst) 
+    creates an HTML element (browser only).  If an attachment element is provided it will attach the new element to the attachElement. 
+    if putFirst == true it is made the first child of the attachEl else it is the lastChild of the attachEl
+ */
+    var el;
+    if (bw.isNodeJS() == false) {
+        el = document.createElement("div");
+        el.innerHTML = bw.html(htmldata); 
+
+        if (attachEl) {
+            attachEl = bw.DOM(attachEl)[0];
+            if (putFirst ) {
+                attachEl.insertBefore(el, attachEl.firstChild); // put it first
+            }
+            else
+                attachEl.appendChild(el);  // put it last
+        }
+    }
+    return el;
+};
 
 // =============================================================================================
 /** 
@@ -1273,7 +1300,7 @@ How htmlNode handles different objects:
     dopts = optsCopy(dopts,opts);
     var isv   = bw.htmlIsVoidTag;
     var isnu  = function(x) {return bw.toa(x,["null","undefined"],true,false);}; // is x null or undefined
-    var HTMLNode = function BW_HTMLNode() {this.t="div"; this.a={}; this.c=[]; this.o={tagClose:"auto"};};
+    var HTMLNode = function BW_HTMLNode() {this.t="div"; this.a={}; this.c=[]; this.o={tagClose:"auto"}; this._is_BW_HTMLNode=true;}; //isBWHTMLNode is for IE compatiblity
     //function bwError  (v,x) {this.value=v; this.msg = (typeof x == "undefined") ? "error" : x;}
     
     var i,n = new HTMLNode(); // default html dict format
@@ -1493,7 +1520,7 @@ listData = [ item1, item2, item3, .. ]
 
     var lc = listData.map(function(x){return bw.html(["li",atri,x]);});
     listType = ["ul","ol"].indexOf(listType)== -1 ? "ol" : listType;
-    return bw.html ([listType,atr,lc]);
+    return bw.html ({t:listType,a:atr,c:lc});
 };
 
 
@@ -1569,7 +1596,7 @@ tabData = [[tab1Title,tab1-content], [tab2Title,tab2-content], [tab3Title,tab3-c
     dopts["tab_atr" ]["class"] = bw.classStrAddDel (dopts["tab_atr" ]["class"],"bw-tab-item-list");
     dopts["tabc_atr"]["class"] = bw.classStrAddDel (dopts["tabc_atr"]["class"],"bw-tab-content-list");
 
-    return bw.html(["div", dopts["atr"],[["ul",dopts["tab_atr"],ti],["div",dopts["tabc_atr"],tc]]]);
+    return bw.html({t:"div",a: dopts["atr"],c:[["ul",dopts["tab_atr"],ti],["div",dopts["tabc_atr"],tc]]});
 };
 
 
@@ -1616,7 +1643,8 @@ Options:
     dopts = optsCopy(dopts,opts);
 
     if (dopts.useDefaultStyle) {
-        dopts.atr["class"] = "bw-table-stripe bw-table-col0-bold bw-table-compact bw-table-border-round bw-table-head  bw-table-cellpad";
+      //  dopts.atr["class"] = "bw-table-stripe bw-table-col0-bold bw-table-compact bw-table-border-round bw-table-head  bw-table-cellpad";
+        dopts.atr["class"] = "bw-table bw-table-stripe";
     }
     if (dopts.sortable == true) {
         dopts.th_atr["onclick"] = "bw.sortTableDispatch(this)";
@@ -1656,7 +1684,7 @@ bw.htmlAccordian   = function (data, opts) {
 /** 
     htmlAccordian 
     
-    [[data-title, data-to-show, {show: true|false, clickShow: true|fa;se}], // TODO: optional 3rd element
+    [[data-title, data-to-show, {show: true|false}], // show determines whether the default content is visible
      [...]]
 
     data-title and data-to-show can be strings or any valid bw.html() constructs
@@ -1666,15 +1694,26 @@ bw.htmlAccordian   = function (data, opts) {
         return s;
 
     var dopts = {
-        atr   : { "class":"bw-accordian-container"}, // div for overall accordian
-        atr_h : { "onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"}, // div wrapping each header
-        atr_c : {/*"onclick":"bw.DOMClassToggle(this,'bw-hide')",*/ "class":"bw-hide"} // div wrapping each content
+        "atr"   : { "class": "bw-accordian-container"}, // div for overall accordian
+        "atr_h" : { "onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')", "class" : "bw-thm-light"}, // div wrapping each header 
+        "atr_c" : { "class":"bw-hide"} // div wrapping each content
     };
     dopts = optsCopy(dopts,opts);
-    dopts["atr_h"]["onclick"]="bw.DOMClassToggle(this.nextSibling, 'bw-hide')";
+    dopts.atr_h["onclick"]="bw.DOMClassToggle(this.nextSibling,'bw-hide')";
+    //dopts.atr_h["class"]="bw-thm-light";
+    //console.log(dopts);
+    s = data.map(function(x){
+        var a=dopts["atr_c"],show;
+        show = ( (x.length > 2) && (x[2].show==true));
 
-    s = data.map(function(x){return bw.html(["div",dopts["atr_h"],x[0]])+bw.html(["div",dopts["atr_c"],x[1]]);}).join("");
-    s = bw.html(["div",dopts["atr"],s]);
+        if (a.class) {
+            a.class = show ? bw.classStrAddDel(a.class,"","bw-hide"):bw.classStrAddDel(a.class,"bw-hide") ;
+        }
+        else a["class"]=show ? "":"bw-hide";
+
+        return bw.html({t:"div",a:dopts["atr_h"],c:[x[0]]})+bw.html({t:"div",a:a,c:[x[1]]} );
+    }).join("");
+    s = bw.html({t:"div",a:dopts["atr"],c:[s]});
     return s;
 };
 // ===================================================================================
@@ -2064,7 +2103,6 @@ item must be a valid DOM element or id.
         }
 
     }
-    //console.log(item.parentElement.parentElement.parentElement);
     bw.sortHTMLTable(item.parentElement.parentElement.parentElement,index,dir,fn);
 };
 // ===================================================================================
@@ -2773,7 +2811,7 @@ options: {
         [".bw-def-page-setup" , defs.defContainer],
         [".bw-font-serif"     , defs.defFontSerif],
         [".bw-font-sans-serif", defs.defFontSansSerif],
-
+        "\n",
         //text handling
         [".bw-left",    {"text-align": "left"}],
         [".bw-right",   {"text-align": "right"}],
@@ -2781,34 +2819,37 @@ options: {
         [".bw-justify", {"text-align": "justify"}],
         [".bw-code",    {"font-family":"monospace", "white-space":"pre-wrap"}],
         [".bw-pad1",    {"padding-left": "1%", "padding-right":"1%"}],
-    
+        "\n",
         //tables
-        [".bw-table-head th", {"background-color": "#bbb", "padding": "4px","border":"1px solid #444"}], 
-        [".bw-table-cellpad td", {"padding": "4px","border":"1px solid #444"}],
+        [".bw-table",  {"border-collapse":"collapse", "border-spacing": "0", "border":"1px solid #444"}],
+        [".bw-table th", {"background-color": "#bbb", "padding": "4px","border":"1px solid #444"}], 
+        [".bw-table td", {"padding": "4px","border":"1px solid #444"}],
         [".bw-table-stripe tr:nth-child(even)" , {"background-color":"#f0f0f0"}],  // striped rows
-        [".bw-table-col0-bold tr td:first-child", {"font-weight": "700"}],         // make first col bold
-        [".bw-table-compact",  {"border-collapse":"collapse", "border-spacing": "0", "border":"1px solid #444"}],
+        [".bw-table tr td:first-child", {"font-weight": "700"}],         // make first col bold
         [".bw-table-border-round", {"border-radius":"2px"}],
         [".bw-table-sort-upa::after", {"content": "\"\\2191\""}],  // table sort arrow up (when visible arrows chosen)
         [".bw-table-sort-dna::after", {"content": "\"\\2193\""}],  // table sort arrow dn (when visible arrows chosen)
         [".bw-table-sort-xxa::after", {"content": "\"\\00a0\""}],  // table sort space  (when visible arrows chosen)
-
+        "\n",
         //tabs
         [".bw-tab-item-list",  { "margin": 0, "padding-inline-start":0}],
-        [".bw-tab-item",{"display":"inline", "padding-top":"5px", "padding-left":"10px", "padding-right":"10px", "border-top-right-radius":"7px", "border-top-left-radius": "7px"}],
+        [".bw-tab-item",{"display":"inline", "padding-top":"0.5em", "padding-left":"0.75em", "padding-right":"0.75em", "border-top-right-radius":"7px", "border-top-left-radius": "7px"}],
         [".bw-tab-active", {/* padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;  */ "font-weight":"700"}],
         [".bw-tab:hover",{"cursor": "pointer", "font-weight": 700/* border: 1px  solid #bbb; */}],
-        [".bw-tab-content-list", { margin: 0 }],
-        [".bw-tab-content",{ display:"none","margin-top":"-1px", "border-radius":0}],
-        [".bw-tab-content, .bw-tab-active", {"background-color": "#ddd"}],
-
+        [".bw-tab-content-list", { margin: 0, "padding-top": "0.0em"}],
+        [".bw-tab-content",{ display:"none", "border-radius":0}],
+        [".bw-tab-content, .bw-tab-active", {"background-color": "#ddd", "padding":"0.5em"}],
+        "\n",
+        //accordian
+        [".bw-accordian-container > div", {"padding": "0.5em"}],
+        "\n",
         //grid setup
         [".bw-container",{ margin: "0 auto"}],
         [".bw-row",      { width: "100%", display: "block"}],
         [".bw-row [class^=\"bw-col\"]", { float: "left"}],
         [".bw-row::after", { content: "\"\"",   display: "table", clear:"both"}],
         [".bw-box-1", {"padding-top":"10px","padding-bottom": "10px", "border-radius": "8px"}],
-    
+        "\n",
         //misc element controls
         [".bw-hide",   { display: "none"}],
         [".bw-show",   { display: "block"}]
@@ -2817,18 +2858,22 @@ options: {
     //heading generator
     [1,2,3,4,5,6].map(function(x){d.push([".bw-h"+x, {"font-size":_r(3.2*Math.pow(.85,x+1))+"rem"}]);});
 
+    d.push("\n");
     // grid system (generated)
     for (var k=1; k<=12; k++)
         d.push([".bw-col-"+k, {width:(_r(k*100/12)+"%")}]);
 
+    d.push("\n");
     // generate CSS from above rules    
     s+= d.map(function(x){return rl(x,{pretty:dopts.pretty});}).join("\n")+"\n";
 
+    d.push("\n");
     //primtive in-built color themeing  see opts to overide
     for (i in dopts["colorset"]){
         s+= ".bw-color-"+i+" {"+i+":" +dopts["colorset"][i]+"}\n";
     }
 
+    d.push("\n");
     bw.makeCSS( dopts["themes"]);
     for (i=0; i< dopts["themes"].length; i++) {
         s+= rl( dopts["themes"][i]);
@@ -2857,6 +2902,9 @@ options: {
     return s;
 };
 
+
+
+//================================================================================
 
 bw.CSSSimpleThemes = function (d,appendToHead) {
 /** 

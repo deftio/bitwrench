@@ -10,11 +10,11 @@
         github:  http:github.com/deftio/bitwrench
      -->
 <script type="text/javascript" src="../bitwrench.js"></script>
+
 </head>
 <body class="bw-def-page-setup bw-font-sans-serif">
 <script>
-    //var bw = bitwrench;
-  
+   
     //sample function to generate some sample table data.  
     //loops used instead of array.map() for those less familiar with javascript map/filter/reduce 
     function getRandomTableData(cols,rows) {
@@ -56,35 +56,23 @@
         ['h2',{},"Accordian"],
         ["div",{},"An accordian allows expanding and collapsing of a list of dynamic content"],
         "<br>",
-        //accordian done using direct HTML
-        ["div", {"class":"bw-col-5"}, [ 
-            ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 1"],
-            ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')",  "class":"bw-thm-light "},bw.loremIpsum(200)],
-            ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 2"],
-            ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')","class":"bw-thm-light "},bw.loremIpsum(200,20)] ,
-            ["div",{"onclick":"bw.DOMClassToggle(this.nextSibling,'bw-hide')"},"Accordian 3"],
-            ["div",{"onclick":"bw.DOMClassToggle(this,'bw-hide')","class":"bw-thm-light "},bw.loremIpsum(200,50)]
-            ]
-        ],
-        "<br>",
+
         //accordian done using bw.html accordian
         bw.htmlAccordian([
-            ["One Tab",bw.loremIpsum(500)],
-            ["Two Tabs",bw.loremIpsum(500)],
-            ["Three Tabs",bw.htmlTabs([["Tab1",bw.loremIpsum(500)],["Tab2",bw.loremIpsum(500,20)],["Tab3",bw.loremIpsum(500,50)]])],
-            ["Four Tabs",bw.loremIpsum(500)]
-            ],{atr_h: {style:""},atr_c:{"class":"bw-thm-light"}}
+            ["Accordian 1",bw.loremIpsum(500,4)],
+            ["Accordian 2",bw.loremIpsum(500,5),{show:false}],
+            ["Accordian 3",bw.htmlTabs([["Inner Tab1",bw.loremIpsum(500,10)],["Inner Tab2",bw.loremIpsum(500,20)],["Inner Tab3",bw.loremIpsum(500,50)]])],
+            ["Accordian 4",bw.loremIpsum(500,4),{show:true}]
+            ]
+            ,{ atr_h: {class:"bw-thm-dark"},atr_c:{"style": "color: red "}}
             ),
         "<br><br>"
 
     ];
 
     // make the content go live since we're in a browser.  Note that if we were on node we could just write out our content
-    //bw.DOMGetElements("body")[0].innerHTML=    content.map( function(x) {return bw.buildHTMLObjString(x)}).join(""); // ()=>() not supported in ealrly Internet Explorer versions
-    bw.DOM("body", bw.htmla(content));
+    bw.DOMInsertElement({c:content},"body",true);
 
-    bw.CSSSimpleThemes(1);
-    //document.getElementById("test").innerHTML = bw.logExport({"exportFormat":"HTML"});
 </script>
 </body>
 </html>
