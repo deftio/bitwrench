@@ -1096,6 +1096,10 @@ var tests = [
 .bw-row::after{content:\"\";display:table;clear:both;}
 .bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
 
+.bw-sign{position:inherit;display:table;height:100%;width:100%;}
+.bw-sign > div{display:table-cell;vertical-align:middle;}
+.bw-sign > div > div{text-align:center;}
+
 .bw-hide{display:none;}
 .bw-show{display:block;}
 .bw-h1{font-size:2.312rem;}

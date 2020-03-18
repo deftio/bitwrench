@@ -475,9 +475,13 @@ bw.DOMInsertElement = function (htmldata,attachEl,putFirst) {
  */
     var el;
     if (bw.isNodeJS() == false) {
-        el = document.createElement("div");
-        el.innerHTML = bw.html(htmldata); 
-
+        if (bw.DOMIsElement(htmldata))
+            el = htmldata;
+        else {
+            el = document.createElement("div"); //outer wrapper
+            el.innerHTML = bw.html(htmldata); 
+            el = el.firstChild; // get our element back
+        }
         if (attachEl) {
             attachEl = bw.DOM(attachEl)[0];
             if (putFirst ) {
@@ -1410,11 +1414,11 @@ bw.htmlEmit = function(htmlData, opts, state) {
                     } catch (e) { vr = String(v);}
                 }
             } 
-            else 
+            else // not an "on" handler
             {
                 switch(k) {
                     case "style" :
-                        vr = bw.makeCSS(v,{pretty:false});
+                        vr = bw.makeCSSRule(["",v],{pretty:false}).trim().replace(/^{/,"").replace(/}$/,"").trim();
                         break;
                     default :
                         if (bw.to(v)=="array")
@@ -1523,6 +1527,22 @@ listData = [ item1, item2, item3, .. ]
     return bw.html ({t:listType,a:atr,c:lc});
 };
 
+// ===================================================================================
+bw.openFullScreen = function () {    
+/**
+bw.openFullScreen() attempt to open the document full screen (usefull for signs, banners)
+*/
+    var elem = document.documentElement;
+    if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+    } else if (elem.mozRequestFullScreen) { /* Firefox */
+    elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+    elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { /* IE/Edge */
+    elem.msRequestFullscreen();
+    }
+};
 
 // ===================================================================================
 bw.classStrAddDel = function (classData,classesToAdd,classesToDel) {
@@ -1715,6 +1735,22 @@ bw.htmlAccordian   = function (data, opts) {
     }).join("");
     s = bw.html({t:"div",a:dopts["atr"],c:[s]});
     return s;
+};
+// ===================================================================================
+bw.htmlSign = function (content, opts) {
+/**
+  htmlSign("my content",options)
+  create a centered banner / billboard  
+ */
+    var dopts = {
+        atr : {style:{"font-weight":"700", "font-size":"7em"}},
+        escContent : false,
+    };
+    dopts = optsCopy(dopts,opts);
+    content = dopts.escContent!=false ? bw.htmlSafeStr(content) : content;
+    var c = {a:{class:"bw-sign" },c:[{c:{a:dopts.atr, c:[content]}}]};
+            //{a:{class:"bw-jumbo"},c:[{c:{       c:"foo"}}]}
+    return bw.html(c);
 };
 // ===================================================================================
 bw.getFile  = function (fname,callback_fn, options) {
@@ -2849,6 +2885,10 @@ options: {
         [".bw-row [class^=\"bw-col\"]", { float: "left"}],
         [".bw-row::after", { content: "\"\"",   display: "table", clear:"both"}],
         [".bw-box-1", {"padding-top":"10px","padding-bottom": "10px", "border-radius": "8px"}],
+        "\n",
+        [".bw-sign", {"position": "inherit", "display": "table", "height": "100%", "width": "100%"}],
+        [".bw-sign > div", {display:"table-cell", "vertical-align" : "middle"}],
+        [".bw-sign > div > div", {"text-align":"center"}],
         "\n",
         //misc element controls
         [".bw-hide",   { display: "none"}],
