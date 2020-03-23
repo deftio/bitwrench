@@ -247,8 +247,7 @@ bw.typeAssign(true,["string","number"], "string or num", "something else") ==> "
     return (typeString.indexOf(_to(a)) >= 0) ? trueValue : falseValue;
 };
 
-var _toa = bw.typeAssign;
-bw.toa   = bw.typeAssign;  // eslint-disable-line no-unused-vars
+var _toa = bw.toa   = bw.typeAssign;  // eslint-disable-line no-unused-vars
 
 
 //===============================================
@@ -282,7 +281,7 @@ however typeConvert also allows functions (as apposed to typeAssign)
     return (typeString.indexOf(_to(a)) >= 0) ? (_to(trueValue)  == "function") ? trueValue(a) : trueValue : ( _to(falseValue) == "function") ? falseValue(a): falseValue;
 };
 //var   _tc = bw.typeConvert;
-bw.tc = bw.typeConvert;
+var _toc = bw.tc = bw.typeConvert; // eslint-disable-line no-unused-vars
 //===============================================
 // internally used function for options copy
 // keys in opts are copied to dopts (or overwrite options in dopts)
@@ -291,8 +290,15 @@ var optsCopy =  function(dopts,opts) {
      /* istanbul ignore next */ 
     if ((_to(opts) == "object") && (_to(dopts)=="object")) {
         var i;
-        for (i in opts)
-            dopts[i] = opts[i];
+        for (i in opts) {
+            if ((_to(opts[i]) == "object" )||(_to(dopts[i])=="object")) {
+                var j;
+                for (j in opts[i])
+                    dopts[i][j] = opts[i][j];
+            }
+            else
+                dopts[i] = opts[i];
+        }
     }
     return dopts;
 };
@@ -1416,9 +1422,13 @@ bw.htmlEmit = function(htmlData, opts, state) {
             } 
             else // not an "on" handler
             {
-                switch(k) {
+
+                 switch(k) {
                     case "style" :
-                        vr = bw.makeCSSRule(["",v],{pretty:false}).trim().replace(/^{/,"").replace(/}$/,"").trim();
+                        if (_to(v) == "string")
+                            vr=v.toString();
+                        else
+                            vr = bw.makeCSSRule(["",v],{pretty:false}).trim().replace(/^{/,"").replace(/}$/,"").trim();
                         break;
                     default :
                         if (bw.to(v)=="array")
@@ -1746,6 +1756,7 @@ bw.htmlSign = function (content, opts) {
         atr : {style:{"font-weight":"700", "font-size":"7em"}},
         escContent : false,
     };
+
     dopts = optsCopy(dopts,opts);
     content = dopts.escContent!=false ? bw.htmlSafeStr(content) : content;
     var c = {a:{class:"bw-sign" },c:[{c:{a:dopts.atr, c:[content]}}]};
@@ -3177,7 +3188,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.6", 
+        "version"   : "1.2.7", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

@@ -972,11 +972,17 @@ var tests = [
 .bw-tab-content{display:none;border-radius:0;}
 .bw-tab-content, .bw-tab-active{background-color:#ddd;padding:0.5em;}
 
+.bw-accordian-container > div{padding:0.5em;}
+
 .bw-container{margin:0 auto;}
 .bw-row{width:100%;display:block;}
 .bw-row [class^=\"bw-col\"]{float:left;}
 .bw-row::after{content:\"\";display:table;clear:both;}
 .bw-box-1{padding-top:10px;padding-bottom:10px;border-radius:8px;}
+
+.bw-sign{position:inherit;display:table;height:100%;width:100%;}
+.bw-sign > div{display:table-cell;vertical-align:middle;}
+.bw-sign > div > div{text-align:center;}
 
 .bw-hide{display:none;}
 .bw-show{display:block;}
