@@ -715,7 +715,7 @@ describe("#htmlTable()", function() {
  gen HTML table from simple array
 */
 	var tests = [
-		{args: [[[1,2,3],[2,3,4]]], expected: "<table class=\"bw-table bw-table-stripe\"><thead><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody><tr><td>2</td><td>3</td><td>4</td></tr></tbody></table>" }
+		{args: [[[1,2,3],[2,3,4]]], expected: "<table class=\"bw-table bw-table-stripe\" ><thead><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody><tr><td>2</td><td>3</td><td>4</td></tr></tbody></table>" }
 	];
 	
 	tests.forEach(function(test) {

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="../bitwrench.js" ></script>
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+<script>
+var myHTML = bw.html({c:
+ [
+   ["h1" ,{"class":"bw-h1"},"Bitwrench Test Area"  ],
+   ["div",{"class":"foo"}  ,"This page has HTML content which is entirely written as JSON-like content using "+bw.html(["a",{href:"https://npmjs.com/package/bitwrench"},"bitwrench.js"])+". Bitwrench has built-in grids, tables, and loremIpsum sample text"],
+   "<br/>",
+  ["div",{},bw.loremIpsum(530)],
+  "<br>",
+  ["h2",{},"Sample Content with 3 Columns"],
+    ["div",{"class":"bw-row"}, 
+      [ //create a row
+      ["div",{"class":"bw-col-4 bw-left "},"<h3>Left justified</h3>"+bw.loremIpsum(200)], 
+      ["div",{"class":"bw-col-4 bw-center bw-pad1"},"<h3>Centered</h3>"+bw.loremIpsum(200,3)], 
+      ["div",{"class":"bw-col-4 bw-right "},"<h3>Right justified</h3>"+bw.loremIpsum(200,2)],
+      ],
+    ],        
+  ["h2", {}, "Example Sortable Table"],
+  bw.htmlTable( // json to table (note data can be live functions as well)
+    [
+        ["Name","Age", "Prof", "Fav Color"], // just an 2D array 
+            ["Sue", 34, "Engineer", "red"],
+      ["Bob",35,"Teacher","green"],
+      ["Vito",23,"Mechanic","blue"],
+      ["Hank",73,"Retired","purple"]
+    ],{sortable:true}),
+   "<br>",
+   ["h2",{},"Sample Buttons.."],
+   ["button",{onclick:"alert('button pressed')"},"Alert Button"], // staight js
+   "&nbsp;&nbsp;",
+   ["button",{onclick:myFunc},"Date Button"], // bitwrench maps and registers event functions
+   "<br>",
+   ["h2",{},"Simple Sign"],
+   ["div",{style:"padding:10%; border:1px solid black;"},bw.htmlSign("This is a big sign!")],
+   "<br>",
+   ["h2",{},"Tabbed Content"],
+     bw.htmlTabs([
+        ["Tab1",bw.loremIpsum(300)],
+      ["Tab2",bw.loremIpsum(300,20)],
+      ["Tab3",bw.loremIpsum(300,50)]],{tab_atr:{style:""}}) ,
+   "<br>",
+   "<br>"
+ ]});
+bw.DOMInsertElement("body",myHTML,true);
+function myFunc(x){return x.innerHTML = (new Date()).toLocaleTimeString();}
+</script>
+</body>
+</html>

@@ -473,9 +473,9 @@ bw.DOMSetElements = function(domElement,param) {
 
 bw.DOM = bw.DOMSetElements; //short hand
 //================================================================================
-bw.DOMInsertElement = function (htmldata,attachEl,putFirst) {
+bw.DOMInsertElement = function (parentEl, htmldata, putFirst) {
 /**
- DOMInsertElement (html, attachEl, putFirst) 
+ DOMInsertElement (attachEl, html , putFirst) 
     creates an HTML element (browser only).  If an attachment element is provided it will attach the new element to the attachElement. 
     if putFirst == true it is made the first child of the attachEl else it is the lastChild of the attachEl
  */
@@ -488,13 +488,13 @@ bw.DOMInsertElement = function (htmldata,attachEl,putFirst) {
             el.innerHTML = bw.html(htmldata); 
             el = el.firstChild; // get our element back
         }
-        if (attachEl) {
-            attachEl = bw.DOM(attachEl)[0];
+        if (parentEl) {
+            parentEl = bw.DOM(parentEl)[0];
             if (putFirst ) {
-                attachEl.insertBefore(el, attachEl.firstChild); // put it first
+                parentEl.insertBefore(el, parentEl.firstChild); // put it first
             }
             else
-                attachEl.appendChild(el);  // put it last
+                parentEl.appendChild(el);  // put it last
         }
     }
     return el;
@@ -1439,7 +1439,7 @@ bw.htmlEmit = function(htmlData, opts, state) {
             as.push(k+"="+"\""+vr.replace("\"","\\\"")+"\"");
         }
         as = as.join(" ");
-        return (as.length > 0 ? " ": "") + as;
+        return (as.length > 0 ? " ": "") + as + (as.length > 0 ? " ": "");
     };
 
     var h=[],n= bw.htmlNode(htmlData);
@@ -3188,7 +3188,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.7", 
+        "version"   : "1.2.8", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
