@@ -479,7 +479,7 @@ bw.DOMInsertElement = function (parentEl, htmldata, putFirst) {
     creates an HTML element (browser only).  If an attachment element is provided it will attach the new element to the attachElement. 
     if putFirst == true it is made the first child of the attachEl else it is the lastChild of the attachEl
  */
-    var el;
+    var el = null;
     if (bw.isNodeJS() == false) {
         if (bw.DOMIsElement(htmldata))
             el = htmldata;
@@ -499,7 +499,29 @@ bw.DOMInsertElement = function (parentEl, htmldata, putFirst) {
     }
     return el;
 };
+// =============================================================================================
+bw.htmlToElement = function (htmldata) {
+    var el=null;
+    if (bw.isNodeJS() == false) {
+        if (bw.DOMIsElement(htmldata))
+                el = htmldata;
+            else {
+                el = document.createElement("div"); //outer wrapper
+                el.innerHTML = bw.html(htmldata); 
+                el = el.firstChild; // get our element back
+            }
+    }
+    return el;
+};
+// =============================================================================================
 
+bw.DOMReplaceElement = function(oldEl, newEl) {
+    if (bw.isNodeJS() == false) {
+        var e = bw.DOM(oldEl)[0];
+        return e.parentNode.replaceChild(bw.htmlToElement(newEl), e);
+    }
+    return null;
+};
 // =============================================================================================
 /** 
 bitwrench: color functions (used for theming and interpolations)
@@ -1011,7 +1033,15 @@ Replace non valid HTML characters with HTML escaped equivalents.
     return (str.toString()).replace(new RegExp("["+Object.keys(c).join("")+"]","gm"),function(s){return c[s];});
 };
 
-
+// ===================================================================================
+bw.htmlFavicon = function(iconStr,color) {
+/**
+    create and HTML favicon from a string.  Can use any unicode char including emoticons. 
+ */    
+    iconStr = iconStr ? iconStr : "🔧";// ♪ ❤ ♡ 🦉 🔧 🌴 ♫
+    var c = bw.to(color)=="string" ? color : "black";
+    return bw.html( {t:"link", a: {href: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90' style='fill:"+ c+"'>"+iconStr+"</text></svg>", rel: "icon"} } );
+};
 
 // ===================================================================================
 bw.htmlJSON=function (json) {
@@ -3188,7 +3218,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.8", 
+        "version"   : "1.2.9", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
