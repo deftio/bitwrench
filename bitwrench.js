@@ -100,6 +100,7 @@
             return -1;
         };
     }
+    if (!fn.join) fn.join = function(s) {var i,r="";s=s?s:""; if (this.length) {for(i=0;i<this.length-1;i++){r+= this[i].toString()+s;} r= (i>=0) ? r+this[i].toString() : r;} return r;};
     if (!fn.map) fn.map=function(f){var r=[];for(var i=0;i<this.length;i++)r.push(f(this[i]));return r;};
     if (!fn.filter) fn.filter=function(f){var r=[];for(var i=0;i<this.length;i++)if(f(this[i]))r.push(this[i]);return r;};
     if (!String.prototype.trim) {String.prototype.trim = function () {  return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ""); };}
@@ -1766,8 +1767,9 @@ bw.htmlAccordian   = function (data, opts) {
         var a=dopts["atr_c"],show;
         show = ( (x.length > 2) && (x[2].show==true));
 
-        if (a.class) {
-            a.class = show ? bw.classStrAddDel(a.class,"","bw-hide"):bw.classStrAddDel(a.class,"bw-hide") ;
+
+        if (a["class"]) {
+            a["class"] = show ? bw.classStrAddDel(a["class"],"","bw-hide"):bw.classStrAddDel(a["class"],"bw-hide") ;
         }
         else a["class"]=show ? "":"bw-hide";
 
@@ -3218,7 +3220,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.9", 
+        "version"   : "1.2.10", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
