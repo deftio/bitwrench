@@ -1045,12 +1045,12 @@ bw.htmlFavicon = function(iconStr,color) {
 };
 
 // ===================================================================================
-bw.htmlJSON=function (json) {
+bw.htmlJSON=function (json,pwrap) {
 /** 
 @method bw.htmlJSON(object, styles) 
 pretty print any javascript object as displayable HTML. 
 e.g.
-document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...any object ....)
+document.getElementById("myPlaceToDisplay").innerHTML = bw.htmlJSON(...any object ....)
 */
 //TODO make style dict as a param
     function f(json) { 
@@ -1076,7 +1076,9 @@ document.getElementById("myPlaceToDisplay").innerHTML = bw.prettyPrintJSON(...an
             return "<span style=\"" + sty + "\">" + match + "</span>";
         });
     }
-    return "<pre style=''>"+f(json)+"</pre>";
+    pwrap =  _toa(pwrap,"undefined","white-space:pre-wrap;","");
+        
+    return "<pre style='"+pwrap+"'>"+f(json)+"</pre>";
 };
 
 // ===================================================================================
@@ -3094,8 +3096,8 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
     <div class="bw-tab-content-list"> <!-- container for the tab content -->
         <div class="bw-tab-content bw-show" >coontent area 1 </div>  <!-- bw-show picks which tab to make active at first -->
         <div class="bw-tab-content" >content area 2</div>
-        <div class="bw-tab-content" >content 3</div>
-        <div class="bw-tab-content" >content 4</div>
+        <div class="bw-tab-content" >content area 3</div>
+        <div class="bw-tab-content" >content area 4</div>
     </div> <!-- end of tab content sect -->
 </div>
  */
@@ -3105,32 +3107,48 @@ note that DOM IDs are not required as selectTabContent() uses DOM path relative 
 
     if (_to(item).substr(0,4) != "html")
        return false;  //unable to set tab content
-
-    var index=0;
-    var cols = item.parentElement.getElementsByTagName("li");
+    document.gx=item;
+    var i,j,index=0;
+    var cols = item.parentNode.getElementsByTagName("li");
     //update which tab selected
     for (i=0; i< cols.length; i++) {
         if (cols[i] == item) { // selected tab logic
             index = i;
-            bw.DOMClass(cols[i],"bw-tab-active","bw-tab-active");
+            cols[i].className = bw.classStrAddDel(cols[i].className,"bw-tab-active");
         }
         else { // unselected tab logic
-            bw.DOMClass(cols[i],"bw-tab-active","");
+            cols[i].className = bw.classStrAddDel(cols[i].className,"","bw-tab-active");
         }
     }
     //console.log(item);
-    var tcols = item.parentNode.parentNode.getElementsByClassName("bw-tab-content-list")[0].getElementsByClassName("bw-tab-content");
+    var tcols=[];// = item.parentNode.parentNode.getElementsByClassName("bw-tab-content-list")[0].getElementsByClassName("bw-tab-content");
+
+    
+    for (i=0; i<item.parentNode.parentNode.children.length; i++) {
+        if (item.parentNode.parentNode.children[i].className.trim().split(/\s+/).indexOf("bw-tab-content-list")>=0) {
+            //were in the right child...
+            for (j=0; j<item.parentNode.parentNode.children[i].children.length;j++) {
+                if (item.parentNode.parentNode.children[i].children[j].className.trim().split(/\s+/).indexOf("bw-tab-content") >=0)
+                    tcols.push(item.parentNode.parentNode.children[i].children[j]);
+            }
+        }
+
+    }
+    
     if (tcols.length <= 0)
         return false;
 
     target = (_to(target) == "undefined") ? tcols[index] : target;  //we will infer it by the tab index
-    target = (_to(target) == "string"   ) ? document.getElementById(target) : target;  // we hav an ID so we'll use that
-    var i;
+    target = (_to(target) == "string"   ) ? bw.DOM(target)[0] : target;  // we hav an ID so we'll use that
+    
     for (i=0; i < tcols.length; i++) {
         if (tcols[i] == target) 
-            bw.DOMClass(tcols[i],"bw-show","bw-show"); //tcols[i].style.display = "block";
+            tcols[i].className = bw.classStrAddDel(tcols[i].className,"bw-show");
+            //bw.DOMClass(tcols[i],"bw-show","bw-show"); //tcols[i].style.display = "block";
         else
-            bw.DOMClass(tcols[i],"bw-show","");//tcols[i].style.display = "none";  
+            tcols[i].className = bw.classStrAddDel(tcols[i].className,"","bw-show");
+            //bw.DOMClass(tcols[i],"bw-show","");//tcols[i].style.display = "none";  
+        
     }
     return true;  
 };
@@ -3151,8 +3169,6 @@ el must be valid element or CSS selector
 markElement is used by bw UI toggles
  */
     var r = false, elems, x,j;
-    //if (_to(el) == "string")
-    //    el=document.getElementById(el);
     elems = bw.DOM(el);
     if (elems.length <=0 )
         return r;
@@ -3160,6 +3176,7 @@ markElement is used by bw UI toggles
     for (j=0; j< elems.length; j++) {
         x = elems[j];
         try {
+            
             var c = x.className.split(/[ ]+/);
             var i = c.indexOf(key);
 
@@ -3180,6 +3197,11 @@ markElement is used by bw UI toggles
                 r = true;
                 // element.className = element.className.replace(/\bmystyle\b/g, "");
             }
+            /*
+            var c = x.className;
+            x.className = bw.classStrAddDel(c,key,replace);
+            r=true;
+            */
         }
         catch(e) { bw.log(e);}
     }

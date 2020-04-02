@@ -58,10 +58,7 @@ Its intended purpose is not to replace mature js frameworks like JQuery, Bootstr
 -->
 
 <!-- function list area -->
-<h1 class="bw-h1">Function List</h1>
-The follow functions are available covering a mix us utility functions and some simple HTML DOM manipulations.  The docs here are generated from the built-in doc-string comments.
-<div id="bwFunctionListID"></div> <!-- this list is dynamically generated, see javscript below -->
-<br>
+
 </div>
 
 
@@ -166,6 +163,10 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 </div>
 
 </div>
+<h1 class="bw-h1">Function List</h1>
+The following functions are available covering a mix us utility functions and some simple HTML DOM manipulations.  The docs here are generated from the built-in doc-string comments.
+<div id="bwFunctionListID"></div> <!-- this list is dynamically generated, see javscript below -->
+<br>
 <br><br><br>
 <hr>
 <br>
@@ -174,16 +175,17 @@ Bitwrench includes a built-in css grid class set for creating simple regular lay
 	
 	bw.DOM("#versionArea","<strong>bitwrench.js version: </strong>" + bw.version()["version"]);
 	//draw the bitwrench function list (drawn dynamically from the built-in doc strings)
-	var funcList=[],i;
-	for (i in bw) {
-		if (bw.typeOf(bw[i])=="function") {
-			funcList.push(["div" ,{"class":"bw-col-10"}, [
-				"<hr>",
-				["h3"  ,{"class":"bw-h3 color-set1", "id":"bw_func_"+i, "style":"color: #006666;"},"bw."+i+"()"], 
-				["p"   ,{"class":"bw-code"}, bw.docString(bw[i],{dropLeadin:false})[0]], // makes use of self-parsing of docString data 
-				"<br>"
-			    ]]);
-		}
+	var funcList=[],i,keys=[];
+	
+	keys = (Object.keys(bw).filter(function(x){return bw.to(bw[x])=="function" && x[0]!="_"})).sort(bw.naturalCompare)
+	for (i=0; i<keys.length; i++) {
+		funcList.push(["div" ,{"class":"bw-col-10"}, [
+			"<hr>",
+			["h3"  ,{"class":"bw-h3 color-set1", "id":"bw_func_"+i, "style":"color: #006666;"},"bw."+keys[i]+"()"], 
+			["p"   ,{"class":"bw-code"}, bw.docString(bw[keys[i]],{dropLeadin:false})[0]], // makes use of self-parsing of docString data 
+			"<br>"
+		    ]]);
+	
 	}
 	// funcList = funcList.sort(function(a,b){return bw.naturalSort(a,b)});
 	bw.DOM("#bwFunctionListID", bw.html(["p",{"class":"bw-col-6"}, funcList]));

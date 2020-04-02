@@ -460,10 +460,10 @@ describe("#htmlJSON(any object) -encodes an object to viewable HTML", function()
 	
 */
 	var tests = [
-		{args: ["123#123"], expected: `<pre style=''><span style="color:purple">"123#123"</span></pre>`},
+		{args: ["123#123"], expected: `<pre style='white-space:pre-wrap;'><span style="color:purple">"123#123"</span></pre>`},
 		{args: [{1:2,3:4,5:{a:1,b:3},c:[2,3,4,{5:"abc"},6]}], expected: 
 		//yay for template strings!
-`<pre style=''>{
+`<pre style='white-space:pre-wrap;'>{
   <span style="color:red">"1":</span> <span style="color:green">2</span>,
   <span style="color:red">"3":</span> <span style="color:green">4</span>,
   <span style="color:red">"5":</span> {
