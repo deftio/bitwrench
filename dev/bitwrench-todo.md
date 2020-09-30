@@ -208,69 +208,8 @@ var bthem =
 
 ```
 
-# html
-```
-htmlExt (dict, global_opts) // extended parameters for html generation.  note that html() just calls htmlExt with some fixed defaults
 
-def_global_opts:
-     pretty : true,
-     pretty_space: "  ",
-     pretty_indent: "", //fixed indent when pretty pass as "    " etc makes all the html indented by this string. useful if 'stringing' html snippets together
-     tagClose : "auto" // default behavior spec'd here, can be overidden @ node level 
-     			""
-     			"none"
-     			"all"
-
-     	// o.tagClose==auto         && _isv(t)==true   ==>  ,
-        //                             _isv(t)==false  ==>  , </t>      
-        // o.tagClose==closeEmpty   && _isv(t)==true   ==> /,
-        //                             _isv(t)==false  ==>  , </t>
-
-        // o.tagClose==none                            ==>  ,                  
-        // o.tagClose==all                             ==>  , </t>
-
-
-def_global_opts = optsCopy(def_global_opts,global_opts)
-
-state_init = {
-	levelCnt : 0
-	nodeCnt  : 0
-	errors   : []   // errors are presented as: { level, seq, node, error}
-}
-var indent = ddict.o.pretty ? Array(ddict.s.level * ddict.o.pretty_indent ).join(ddict.o.pretty_space) : "";
-
-_render(data, state) // uses global_opts
-	ddict {t, a, c, o}  <== data
-	
-	emit tag 
-	sate.nodeCnt++
-	emit atr
-	emit *self-close
-	if content.length > 0 (note if content not array treat as no content.  )
-		emit content
-			state.levelCnt++
-			for (0 .. content.length) 
-				_render(c[i],{stateupadted})
-	emit *close
-
-return {html: html, info: {stats}}
-
-not_pretty:
-<tag atr1="sds" atr2="weow" atr3 atr4="e3">cntonetn</content>
-pretty:
-
-
-
-html(data,opts) {  // old apis won't use opts so defaults used instead
-	return htmlFromDict(data,opts).html;  // drops stats uses global defaults
-}
-```
-
-htmlNorm (data,state) ==> {t,a,c,o,state}  (not recursive) 
-	if function() for any of t,a,c,o
-	then f(state)
-	functions allowed for data or data.c  
-		data(state)
-		data.c(t,state)
-
-
+================================
+testing
+log
+logd

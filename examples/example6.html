@@ -9,40 +9,120 @@
         web   :  http:deftio.com/bitwrench
         github:  http:github.com/deftio/bitwrench
      -->
+<script type="text/javascript" src="../bitwrench.css"></script>
 <script type="text/javascript" src="../bitwrench.js"></script>
-<style type="text/css"></style>
+<style type="text/css">
+.btn {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+.bw-button {
+  display: inline-block;
+  margin-bottom: 0;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  font-weight: 400;
+  background-image: none;
+  white-space: pre-wrap;  
+}
+.test  {
+    vertical-align: middle;
+}
+
+.boxEv {background-color: #aaa; height: 30px; border-radius:5px; border:1px solid black; vertical-align: middle;}
+.boxOd {background-color: #ddd; height: 30px; border-radius:5px; border:1px solid black; vertical-align: middle;}
+
 </style>
 </head>
 <body class="bw-def-page-setup bw-font-sans-serif">
-<div id="top"></div>
-<script>
-  
-    var calctable = 
-        [
-            [],
-        ];
+<h1>bitwrench HTML layout and CSS stylesd demo</h1>
+Bitwrench.js contains built-in css.  This can be used when loading bitwrench.js or by using included stylesheets: bitwrench.css or bitwrench.min.css.  These style sheets work without any need for javascript and can be used with any other html project.  However some bitwrench functionality (such as selecting tabs or table sorts) due require the javascript portion of bitwrench (bitwrench.js).<br><br>
+bitwrench.css prefixes all css classes with "bw" as such as here:<br>
 
-    var currenValue = 0;
-    var calculate = function(x) {
-        return currenValue;
-        
-    }
-    var content = 
-    [
-        ["h1",{},"Example Calculator Using Bitwrench"],
-        ["p", {},"<strong>bitwrench.js version:</strong> " + bw.version()["version"]], 
-        ["p", {},"This example shows how to set up a simple web calculator with bitwrench"],
-        ["h2",{class:"bw-right bw-col-6", id:"result"},"0"],
-        "<br>",
-        ["h2",{},"More Sample Content but using only half width"],
-        "<br>",
-    ];
+<pre class="bw-code">
+</pre>
 
-    // make the content go live since we're in a browser.  Note that if we were on node we could just write out our content
-    bw.DOM("#top", bw.htmla(content));//)[0].innerHTML=    content.map( function(x) {return bw.html(x)}).join(""); // ()=>() not supported in ealrly Internet Explorer versions
+<div>
+<h1 class="bw-h1">CSS Layout Grid</h1>
+Bitwrench includes a built-in css grid class set for creating simple regular layouts.<br>
+<br>
 
-    bw.bwSimpleThemes(1);
-    //document.getElementById("test").innerHTML = bw.logExport({"exportFormat":"HTML"});
-</script>
+<div class="bw-row bw-center test">
+    <div class="bw-col-1  boxOd ">bw-col-1</div><div class="bw-col-1  boxEv">bw-col-1</div><div class="bw-col-1  boxOd">bw-col-1</div><div class="bw-col-1  boxEv">bw-col-1</div><div class="bw-col-1  boxOd">bw-col-1</div><div class="bw-col-1  boxEv">bw-col-1</div><div class="bw-col-1  boxOd">bw-col-1</div><div class="bw-col-1  boxEv">bw-col-1</div><div class="bw-col-1  boxOd">bw-col-1</div><div class="bw-col-1  boxEv">bw-col-1</div><div class="bw-col-1  boxOd">bw-col-1</div><div class="bw-col-1  boxEv">bw-col-1</div>
+</div><br>
+
+<div class="bw-row bw-center">
+    <div class="bw-col-2  boxOd">bw-col-2</div><div class="bw-col-2  boxEv">bw-col-2</div><div class="bw-col-2  boxOd">bw-col-2</div><div class="bw-col-2  boxEv">bw-col-2</div><div class="bw-col-2  boxOd">bw-col-2</div><div class="bw-col-2  boxEv">bw-col-2</div>
+</div><br>
+
+<div class="bw-row bw-center">
+    <div class="bw-col-3  boxOd">bw-col-3</div><div class="bw-col-3  boxEv">bw-col-3</div><div class="bw-col-3  boxOd">bw-col-3</div><div class="bw-col-3  boxEv">bw-col-3</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-4  boxOd">bw-col-4</div><div class="bw-col-4  boxEv">bw-col-4</div><div class="bw-col-4  boxOd">bw-col-4</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-5  boxOd">bw-col-5</div><div class="bw-col-7  boxEv">bw-col-7</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-6  boxOd">bw-col-6</div><div class="bw-col-6  boxEv">bw-col-6</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-7  boxOd">bw-col-7</div><div class="bw-col-5  boxEv">bw-col-5</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-8  boxOd">bw-col-8</div><div class="bw-col-4  boxEv">bw-col-4</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-9  boxOd">bw-col-9</div><div class="bw-col-3  boxEv">bw-col-3</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-10  boxOd">bw-col-10</div><div class="bw-col-2  boxEv">bw-col-2</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-11  boxOd">bw-col-11</div><div class="bw-col-1  boxEv">bw-col-1</div>
+</div><br>
+
+<div class="bw-row bw-center" >
+    <div class="bw-col-12  boxOd">bw-col-12</div>
+</div><br>
+</div> <!-- end code for grid demo -->
+<br>
+
+<br>
+
+<!-- Text align demo area -->
+<h1  class="bw-h1">Text Alignment & Related</h1>
+<div class="bw-tab-container">
+<ul class="bw-tab-item-list">
+    <li class="bw-tab  bw-tab-active" onclick="bw.selectTabContent(this)" >Text Styles</li>
+    <li class="bw-tab "               onclick="bw.selectTabContent(this)" >Text Styles Code</li>
+</ul>
+<div class="bw-tab-content-list">
+<div class="bw-tab-content bw-show" id="bwTextSection">
+<br>The following text styles are supported.<br><br>
+<div class="  bw-left">This text is left aligned.</div><br>
+<div class="  bw-center">This text is centered.</div><br>
+<div class="  bw-right">This text is right aligned.</div><br>
+<div class="  bw-justify">This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. This text is justified. </div><br>
+
 </body>
 </html>

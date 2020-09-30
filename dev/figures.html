@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<script src="https://unpkg.com/bitwrench/bitwrench.js"></script>
+<body class="bw-def-page-setup">
+
+<h1>The figure and figcaption element</h1>
+This demo shows use of html figure elements...<br>
+<div style="display:inline-block">
+<figure style="width:500px; ">
+  <img src="../images/bitwrench-512x512.png" alt="Image Alt Text" style="width:100%">
+  <figcaption id="x1">Fig.1 - Sample Image weij we owjroiew jroiew joiwewjrwe</figcaption>
+</figure>
+<figure style="width:200px">
+  <img src="../images/bitwrench-512x512.png" alt="Image Alt Text" style="width:100%">
+  <figcaption>Fig.1 - Sample Image</figcaption>
+</figure>
+<figure style="width:200px; ">
+  <figcaption>Fig.1 - Sample Image</figcaption>
+  <img src="../images/bitwrench-512x512.png" alt="Image Alt Text" style="width:100%">
+  
+</figure>
+<figure style="width:200px">
+  <img src="../images/bitwrench-512x512.png" alt="Image Alt Text" style="width:100%">
+  <figcaption>Fig.1 - Sample Image</figcaption>
+</figure>
+</div>
+End of the figures..
+
+<script>
+bw.DOM("#x1",bw.htmlTabs([["tab1","content1"],["tab2",`<figure style="width:200px; ">
+  <figcaption>Fig.1 - Sample Image</figcaption>
+  <img src="../images/bitwrench-512x512.png" alt="Image Alt Text" style="width:100%">
+  
+</figure>`],["tab3","content3"]]));
+</script>
+</body>
+</html>

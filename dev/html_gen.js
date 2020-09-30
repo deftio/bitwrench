@@ -1,5 +1,5 @@
 
-var _s = function(n,c){return Array(n+1).join(c);}
+
 
 //assumes proper node form
 bw.htmlNodeRender(x) {
@@ -10,7 +10,7 @@ bw.htmlNodeRender(x) {
 //====================================
 
 
-bw.htmlFromDict = function(htmlDict, opts) {
+bw.htmlRender = function(htmlData, opts) {
 /**
     must be of form 
     t ==> tag     (string)
@@ -29,15 +29,7 @@ bw.htmlFromDict = function(htmlDict, opts) {
 */
 
     var html = "";
-    var ddict = {
-        t:  "div",
-        a:  {},   // if an attribute is null then only key is listed e.g.  {a:"foo", b:null, c:0} ==> a="foo" b  c=0
-        c:  [],
-        o:  { tagClose : "auto"  // can be "auto", false (e.g. <br>), "inline" (e.g. <tag ... />), true (e.g. <tag ...>...</tag>)
-
-            },
-    }
-
+   
     var _atr = function(k,v,o){  // to do handle "smart" attributes ==> class : ["class1", "class2"]  ==> style : bw.makeCSS()
         var val=v,ok = _to(o.overide)=="undefined" ? k : ok; 
         switch(ok) {
@@ -89,99 +81,9 @@ bw.htmlFromDict = function(htmlDict, opts) {
 //=====old=====
 //==================================================
 /**
-    html_fc (html form convert) converts acceptable html contructs into html json dict form: 
-    { t: <tag>, a: {attribs}, c: [content], o: {options}, s:{state}}
-    
-    does not operate on the t a c o s params --> just does the conversion
  */
-/*
-html gen using {input}
-_typeOf(input)
 
- "object" 
-    accepted keys below, other keys ignored
-    t: String | Number | Date() ==> tag  function==> f().toString()
-    a: {}  ==>  key : value ==>  num | str | Date | [] ==> [].join(dopts.a_join) 
-    c: [] || String | Number | Date  ==> each_item : str | {html_dict} 
-    o: {} ==> options (note inherit / copy)  => if not supplied uses previous levels options
-    
-    s: {} ==> state info (used internally) e.g. indent level, stats
-    
-    also accepts: "tag", "attrib", "content", "options", "state" as keys instead of t,a,c,o,s
-    
-    if any of t,a,c,o are a function it will be invoked immediatly w no params ==> t:myFunc ===> t:myFunc() <== 
 
-    defaults:
-        t ==> "div"
-        a ==> {}
-        c ==> []
-        o ==> {}
-
-        s ==> {level:0, nodes: 0}
-
-"string" | "number" | Date() ==> {}
-        t ==> "div"
-        a ==> {}
-        c ==> .toString()
-        o ==> {}
-
-        s ==> {}
-
-"array" 
-    [         ]   ==> {} // defaults to empty default object 
-    [c        ]   ==> {}
-    [t,c      ]   ==> {}
-    [t,a,c    ]   ==> {}
-    [t,a,c,o  ]   ==> {}
-    [t,a,c,o,s]   ==> {}
-    [ 6+      ]   ==> {} // uses, first 5 others ignored
-    
-    // this dict repreesnts the mapping
-    {
-    0 : { }
-    1 : {c : 0},  
-    2 : {t : 0, c : 1},
-    3 : {t : 0, a : 1, c : 2}
-    4 : {t : 0, a : 1, c : 3, o : 4}
-    5 : {t : 0, a : 1, c : 3, o : 4, s : 5}
-    }
-
-    // this array contruct implements the above dict mapping more compactly
-    var i,idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-    for (i=0; i< x.length; i++) 
-        hd[idx[x.length]][i] = x[i];
-    
-*/
-/*
-bw.html_fc = function(x) {
-    var i,hd  = { t: "div", a: {}, c: "", o: {t_close: true}, s: { level: 0, nodes: 0, html:""}}; // default html dict format
-
-    switch (_to(x)) {
-        case "null" :
-        case "undefined" :
-            break;
-        case "object":
-            [["tag","t"],["attrib","a"],["content","c"],["options","o"],["state","s"]].forEach(function(z){ hd[z[1]]= z[0] in x ? x[z[0]] : hd[z[1]];});
-            for (i in hd)  // we only copy those fields we care about..
-                hd[i] = (i in x) ? x[i] : hd[i];  // need to handle fields differenty.. t : "", a : {}, c:"" | [],o :{} -- this is because we want to have proper defaults
-            break;
-        case "array":
-            var idx = [[],["c"], ["t","c"], ["t","a","c"],["t","a","c","o"],["t","a","c","o","s"]];
-            var m = (x.length > 5) ? 5 : x.length;
-            for (i=0; i< m; i++)   { 
-                console.log(idx[m][i] + ":" + x[i]);
-                hd[idx[m][i]] = x[i];
-            }
-            break;
-        case "function":  
-            hd = bw.html_fc(x(),opts); // evaluate and convert...
-            break;
-        default: // string, number, Date  
-            hd.c = x.toString();
-    }
-    return hd;
-}
-*/
 
 bw.html_fc = function(x) {
     var i,n = { t: "div", a: {}, c: "", o: {}}; // default html dict format

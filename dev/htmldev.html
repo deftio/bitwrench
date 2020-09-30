@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" type="image/x-icon" href="../images/favicon.ico" />
+    <!-- bitwrench.js library examples  
+        (c) M A Chatterjee
+        deftio <at> deftio <dot> com
+        web   :  http:deftio.com/bitwrench
+        github:  http:github.com/deftio/bitwrench
+     -->
+<script type="text/javascript" src="../bitwrench.js"></script>
+<style type="text/css"></style>
+</style>
+</head>
+<body class="bw-def-page-setup bw-font-sans-serif">
+<div id="top"></div>
+<hr>
+<div id="bot"></div>
+<script>
+  
+    var content = 
+    [
+        ["h1","Example HTML Gen with bitwrench"],
+        ["p", {},[{t:"strong",a:{style:{color:"red"}}, c:"bitwrench.js version"},  bw.version()["version"]]], 
+        ["p", {},"This example shows how to set up json like webpage with bitwrench"],
+        ["p",{style:"color:orange;"},()=>{return "arrow "+new Date()}],
+        "<br>",
+        {tag:"div",a:{class:"bw-left", onclick:function(x){x.style.color=x.style.color=="red"?"blue":"red";} }, c:"click me"},
+        ["h2",{class:"bw-left bw-col-6", id:"result"},"H2 heading"],
+        ["div",{}, [{c:"foo"},"bar",["span"," bar2"],{c:[1," content in the middle " ,43]}    ]],
+        "<br>",
+    ];
+
+    var c2 = {c:content};
+
+    // make the content go live since we're in a browser.  Note that if we were on node we could just write out our content
+    bw.DOM("#top", bw.html({c:content}));
+    var x = bw.htmlEmit(c2);
+    bw.DOM("#bot", x.html);
+    
+    //document.getElementById("test").innerHTML = bw.logExport({"exportFormat":"HTML"});
+</script>
+</body>
+</html>
