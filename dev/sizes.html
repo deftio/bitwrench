@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" type="image/x-icon" href="../images/favicon.ico" />
+<!-- above is all boiler plate -->
+
+<title>bitwrench.js</title>
+<!-- bitwrench.js quick-docs doc 
+	(c) M A Chatterjee
+	deftio <at> deftio <dot> com
+	github:  https:github.com/deftio/bitwrench
+	web: https://deftio.com/bitwrench
+ -->
+
+<script type="text/javascript" src="../bitwrench.min.js" bwargs="ex1:1;ex2:2"></script>
+
+</head>
+
+<body class="bw-def-page-setup bw-font-sans-serif">
+<div class="bw-container">
+<div class="bw-col-10">
+<img src="../images/bitwrench-thick-logo.png" width="500"></img>
+<h1>Bitwrench Size Analysis</h1>
+<p id="versionArea"></p>
+<br>
+<div>total size (bytes) not incl umd wrapper = <span id="total"></span></div>
+Size of each function for pruning (bitwrench.min.js)
+
+
+</div>
+<div id="tab1"></div>
+<!-- grid demo area -->
+</div>
+
+<script>
+	var i,	 t = [["Name","Type", "Key size (bytes)", "Val Size (bytes)", "Total (bytes)"]];
+	for (i in bw) {
+		var s = "undef";
+		if (bw.to(bw[i] != "undefined"))
+			var s = String(bw[i]).length;
+		t.push( [i,bw.to(bw[i]), i.length, s, i.length+s])	
+	}
+	bw.DOM("#tab1",bw.htmlTable(t,{"sortable":true}));
+	bw.sortHTMLTable("#tab1",4,"down"); // show biggest at top...
+	bw.DOM("#total",t.reduce((s,x)=> s+(isNaN(Number(x[4]))?0:Number(x[4])),0).toString())
+</script>
+</body>
+</html>
