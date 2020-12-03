@@ -1,7 +1,9 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)](https://www.npmjs.com/package/bitwrench)
+[![Build Status](https://travis-ci.org/deftio/bitwrench.svg?branch=master)](https://travis-ci.org/deftio/fifostr)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](http://www.deftio.com/bitwrench)
+
 
 ## Welcome to bitwrench.js (alpha not fully released yet)
 

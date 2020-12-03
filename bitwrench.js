@@ -1228,6 +1228,7 @@ expects this form:
 };
 
 // ===================================================================================
+/*
 bw.htmlPage = function (head, body, options) {
 /** 
 TBD finish (include bw params, handling meta w/o close tags)
@@ -1235,7 +1236,7 @@ bw.makeHTMLDoc(head,body,options)
 make a simple HTML document.  
 
 inline-bw-css --> emit bw default styles as inline css (include globals option)
- */
+ * /
     var dopts = {
         docType : "<!DOCTYPE html>",
         htmlParams  : {lang: "en"},
@@ -1259,6 +1260,7 @@ inline-bw-css --> emit bw default styles as inline css (include globals option)
         ]]);
     return s;
 };
+*/
 // ===================================================================================
 /**
     htmlIsVoidTag(tagString) returns true if the supplied string is a html void tag (e.g. meta or br) which doesn't require a closing bracket else false
@@ -2966,11 +2968,12 @@ options: {
     }
     
     //responsive screen
-    s+= "@media only screen and (min-width: 540px) {  .bw-def-page-setup {    width: 96%;  }}\n";
-    s+= "@media only screen and (min-width: 720px) {  .bw-def-page-setup {    width: 92%;  }}\n";
-    s+= "@media only screen and (min-width: 960px) {  .bw-def-page-setup {    width: 88%;  }}\n";
-    s+= "@media only screen and (min-width: 1100px){  .bw-def-page-setup {    width: 86%;  }}\n";
-    s+= "@media only screen and (min-width: 1600px){  .bw-def-page-setup {    width: 84%;  }}\n";
+    var m = "@media only screen and (min-width: ";
+    s+= m + "540px) {.bw-def-page-setup {width: 96%;}}\n";
+    s+= m + "720px) {.bw-def-page-setup {width: 92%;}}\n";
+    s+= m + "960px) {.bw-def-page-setup {width: 88%;}}\n";
+    s+= m + "1100px){.bw-def-page-setup {width: 86%;}}\n";
+    s+= m + "1600px){.bw-def-page-setup {width: 84%;}}\n";
     
     
     if (bw.isNodeJS() == false) {
@@ -3242,7 +3245,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.10", 
+        "version"   : "1.2.11", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

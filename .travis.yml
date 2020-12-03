@@ -17,7 +17,7 @@ cache:
 install:
   - npm
 script:
-  - npm run testkarma
+  - npm run test
 
 
 #language: node_js

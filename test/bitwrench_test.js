@@ -1135,11 +1135,11 @@ var tests = [
   color: #e2e2e2 !important;; 
   background-color: #020202 !important;; 
 }
-@media only screen and (min-width: 540px) {  .bw-def-page-setup {    width: 96%;  }}
-@media only screen and (min-width: 720px) {  .bw-def-page-setup {    width: 92%;  }}
-@media only screen and (min-width: 960px) {  .bw-def-page-setup {    width: 88%;  }}
-@media only screen and (min-width: 1100px){  .bw-def-page-setup {    width: 86%;  }}
-@media only screen and (min-width: 1600px){  .bw-def-page-setup {    width: 84%;  }}
+@media only screen and (min-width: 540px) {.bw-def-page-setup {width: 96%;}}
+@media only screen and (min-width: 720px) {.bw-def-page-setup {width: 92%;}}
+@media only screen and (min-width: 960px) {.bw-def-page-setup {width: 88%;}}
+@media only screen and (min-width: 1100px){.bw-def-page-setup {width: 86%;}}
+@media only screen and (min-width: 1600px){.bw-def-page-setup {width: 84%;}}
 `
 
 		}
