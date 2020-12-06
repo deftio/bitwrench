@@ -2,7 +2,7 @@
 	"name": "bitwrench",
 	"version": "1.2.11",
 	"description": "A library for misc javascript functions.",
-	"main": "bitwrench.js",
+	"main": "./bitwrench.min.js",
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/deftio/bitwrench.git"
@@ -12,6 +12,12 @@
 	],
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
+	"module": "./bitwrenc.min.js",
+	"exports": {
+		"require": "./bitwrench.min.js",
+		"import": "./bitwrench.min.js",
+		"default": "./bitwrench.min.js"
+	},
 	"bugs": {
 		"url": "https://github.com/deftio/bitwrench/issues"
 	},
