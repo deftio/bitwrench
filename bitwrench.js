@@ -500,6 +500,8 @@ bw.DOMInsertElement = function (parentEl, htmldata, putFirst) {
     }
     return el;
 };
+bw.DOMIns = bw.DOMInsertElement;
+
 // =============================================================================================
 bw.htmlToElement = function (htmldata) {
     var el=null;

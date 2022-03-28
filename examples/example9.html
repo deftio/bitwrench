@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en"><!-- btiwrench responsive clock example works in all browsers back to IE7 etc -->
+<head>
+<script src="../bitwrench.js" ></script>
+<style>
+body {
+  background-color: black;
+}
+.card {
+  height:100%;
+  background-attachment: center center;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+</style>
+<script>
+
+
+//create some cards
+
+/* write the body element.  Note bw.DOM writes all matching css selectors. 
+e.g. "bw.DOM(".myClass", ..content..) writes all the elements with a myClass field.
+*/
+var cards;
+function renderPage(){ bw.DOM("body",bw.html(page))}
+</script>
+</head>
+<body class="bw-font-sans-serif bw-def-page-setup" ></body>
+<div id="content"></div>
+<script>
+
+//create a bunch of cards
+var page = {
+  t: "div",  a:{style:"width:100%; height:100vh;", class:"bw-container"},  // set up master container with rows and cards
+  c:  [ 
+      {  
+        t:"div", a:{class: "bw-row", style: "height:33%"}, c:[ 
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 0")},
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 1")},
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 2")}
+      ]
+    },
+    {  
+        t:"div", a:{class: "bw-row", style: "height:33%"}, c:[ 
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 3")},
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 4")},
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 5")}
+      ]
+    },
+    {  
+        t:"div", a:{class: "bw-row", style: "height:33%"}, c:[ 
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 6")},
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 7")},
+          {t:"div", a: {class: "bw-col-4 card"}, c:bw.htmlSign("card 8")}
+      ]
+    }
+
+    ]
+};
+ 
+bw.DOM("#content",bw.html(page));  // make the above js dict go live as page elements
+
+cards = bw.DOM(".card");  // grab a handle to all the cards as an array of html elements
+
+var dogs = function() {
+  fetch('https://dog.ceo/api/breeds/image/random')
+  .then( response => 
+    { 
+        response.json().then(message => {
+          let msg = message.message;
+          let card = cards[bw.random(0, cards.length -1)];  
+          console.log(msg)
+          card.style.backgroundImage='url(' +msg+')';
+          card.innerHTML ="";
+      })
+    })
+}
+
+setInterval(function(){
+  //var x = bw.random(0, cards.length -1); // grab a random card..
+  //cards[x].style["backgroundColor"] = ["green","orange","red","blue","white"][bw.random(0,4)];
+  dogs();
+},
+1000);
+
+/*
+setInterval(function() {
+    var t = new Date(); 
+    cards[4].innerHTML=  bw.html(
+        {
+          t:"div",
+          a:{style:"width:100%; height:100%; font-size: 16pt !important!;"},
+          c:[bw.htmlSign(t.toLocaleTimeString()+"<br>"+t.toDateString() )] 
+        }
+      )
+  },
+    
+1000);
+*/
+</script>
+</html>

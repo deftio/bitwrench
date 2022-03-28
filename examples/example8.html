@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><!-- btiwrench responsive clock example works in all browsers back to IE7 etc -->
+<head>
+<script src="../bitwrench.js" ></script>
+<script>
+setInterval(function() {
+    var t = new Date(); 
+    bw.DOM("body", bw.htmlSign(t.toLocaleTimeString()+"<br>"+t.toDateString()));  // short hand approach replaces body with bw.htmlSign contents each interval
+
+    //commented out below allows one to replace entire body DOM tree with arbitrary html from javascrpit dict
+    /*
+      bw.DOM("body", 
+        bw.html(
+          {
+            t:"div",
+            a:{style:"width:100%; height:100%;"},
+            c:[bw.htmlSign(t.toLocaleTimeString()+"<br>"+t.toDateString()) ] 
+          }
+        )
+      );
+    */
+}, 500);
+
+</script>
+</head>
+<body class="bw-font-sans-serif"></body>
+</html>
