@@ -24,7 +24,7 @@
 	},
 	"devDependencies": {
 		"chai": "^3.0.0",
-		"eslint": "^4.19.1",
+		"eslint": "^8.28.0",
 		"jsdom": "^16.4.0",
 		"jsdom-global": "3.0.2",
 		"karma": "^6.3.16",
