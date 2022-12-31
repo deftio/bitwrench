@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "1.2.13",
+	"version": "1.2.14",
 	"description": "A library for misc javascript functions.",
 	"main": "./bitwrench.min.js",
 	"repository": {
@@ -43,7 +43,7 @@
 	},
 	"scripts": {
 		"update_rm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
-		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && npm pack",
+		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && ./tools/umd2ModuleHack.js && npm pack",
 		"cleanbuild": "npm run clean && npm run update_rm && npm run build",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js -r jsdom-global/",
