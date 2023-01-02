@@ -1287,7 +1287,7 @@ How htmlNode handles different objects:
 
  "object" 
     accepted keys below, other keys ignored (e.g. if your objects looks like this: {tag:"div", c:["this is my content"], data: [ ....] } the key called data will be ignored by htmlNode
-    t: String | Number | Date() ==> tag  function==> f().toString()
+    t: String | Number | Date() ==> tag  function==> f().toString(), null means no outer tag will be emitted.
     a: {}  ==>  key : value ==>  num | str | Date | [] ==> [].join(dopts.a_join) , 
     c: [] || String | Number | Date  ==> each_item : str | {html_dict} 
     o: {} ==> options (note inherit / copy)  => if not supplied uses previous levels options
@@ -1493,7 +1493,9 @@ bw.htmlEmit = function(htmlData, opts, state) {
     }
     else { // bw_HTMLNode
         
-        h.push("<",n.node.t, _atr(n.node));
+        if (n.node.t != "")
+            h.push("<",n.node.t, _atr(n.node)); // add tag
+
 
         var tagClose =  dopts.tagClose != "inherit" ? dopts.tagClose : n.node.o.tagClose;
         switch(tagClose) {
@@ -1508,7 +1510,8 @@ bw.htmlEmit = function(htmlData, opts, state) {
             case "all":
             default:
                 //<tag a{}> .... </tag>  # h=["<",n.t , a{}, crend() , "</", n.t, ">"]
-                h.push(">"); 
+                if (n.node.t != "")
+                    h.push(">"); 
                 var i,x;
                 if (bw.typeOf (n.node.c) != "array") {
                     state.levelCnt++;
@@ -1526,8 +1529,10 @@ bw.htmlEmit = function(htmlData, opts, state) {
                         h.push(x.html);
                     }
                 }
-                if ( tagClose != "none" )
-                    h.push( "</",n.node.t,">");
+                if ( tagClose != "none" ) {
+                    if (n.node.t != "")
+                        h.push( "</",n.node.t,">");
+                }
         }
 
     }
@@ -3248,7 +3253,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.14", 
+        "version"   : "1.2.15", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",

@@ -708,6 +708,26 @@ describe("#htmlIsVoidTag()", function() {
  	});
 
 });
+// ================================================================
+describe("#htmlEmit()", function() {
+/**
+ gen HTML from object (or JSON) 
+*/
+	var tests = [
+		{args: ["test content"], expected: "test content" },
+		{args: [{c:"test content"}], expected: "<div>test content</div>" },
+		{args: [{t:"",c:"test content"}], expected: "test content" },
+
+	];
+	
+	tests.forEach(function(test) {
+		it("bw.htmlEmit  " + test.args.length + "args", function() {
+			var res = bw.htmlEmit.apply(null, test.args).html;
+			assert.deepEqual(res, test.expected);
+		});
+ 	});
+
+});
 
 // ================================================================
 describe("#htmlTable()", function() {
