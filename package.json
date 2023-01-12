@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "1.2.15",
+	"version": "1.2.16",
 	"description": "A library for misc javascript functions.",
 	"main": "./bitwrench.min.js",
 	"repository": {
@@ -43,8 +43,8 @@
 	},
 	"scripts": {
 		"update_rm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
-		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && ./tools/umd2ModuleHack.js && npm pack",
-		"cleanbuild": "npm run clean && npm run update_rm && npm run build",
+		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
+		"cleanbuild": "npm run clean && npm run update_rm && npm run generate-sri && npm run build",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js -r jsdom-global/",
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
@@ -52,7 +52,7 @@
 		"lint": "./node_modules/.bin/eslint bitwrench.js",
 		"instrument-bw": "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser",
-		"generate-sri": "cat bitwrench.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.js_sri.txt && cat bitwrench.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.min.js_sri.txt"
+		"generate-sri": "cat bitwrench.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.js_sri.txt && cat bitwrench.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.min.js_sri.txt && cat bitwrench_ESM.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench_ESM.js_sri.txt && cat bitwrench_ESM.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench_ESM.min.js_sri.txt"
 	},
 	"homepage": "http://deftio.com/bitwrench",
 	"dependencies": {}

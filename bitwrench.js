@@ -3253,7 +3253,7 @@ bw.version  = function() {
 
  */
     var v = {
-        "version"   : "1.2.15", 
+        "version"   : "1.2.16", 
         "about"     : "bitwrench is a simple library of miscellaneous Javascript helper functions for common web design tasks.", 
         "copy"      : "(c) M A Chatterjee deftio (at) deftio (dot) com",    
         "url"       : "http://github.com/deftio/bitwrench",
