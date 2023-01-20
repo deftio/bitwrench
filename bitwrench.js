@@ -2924,7 +2924,7 @@ options: {
         "\n",
         //tabs
         [".bw-tab-item-list",  { "margin": 0, "padding-inline-start":0}],
-        [".bw-tab-item",{"display":"inline", "padding-top":"0.5em", "padding-left":"0.75em", "padding-right":"0.75em", "border-top-right-radius":"7px", "border-top-left-radius": "7px"}],
+        [".bw-tab-item",{"display":"inline", "padding-top":"0.75em", "padding-left":"0.75em", "padding-right":"0.75em" , "border-top-right-radius":"7px", "border-top-left-radius": "7px"}],
         [".bw-tab-active", {/* padding-top:4px; padding-left:6px; padding-right:6px; padding-bottom:0;  */ "font-weight":"700"}],
         [".bw-tab:hover",{"cursor": "pointer", "font-weight": 700/* border: 1px  solid #bbb; */}],
         [".bw-tab-content-list", { margin: 0, "padding-top": "0.0em"}],
