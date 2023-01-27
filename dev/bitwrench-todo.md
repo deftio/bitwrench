@@ -18,6 +18,7 @@ This list is used for internal ideas, housekeeping, checklists and notes
 	[x] save/store file 
 		make params for JSON, CSV, function(provide parser), raw 
 	[x] typeOf
+	[ ] fix classReplace to trim tabs/spaces in supplied input
 	[ ] prettyPrintJSON with stylizble CSS
 		settable tab widths (use padding:<width><units>)
 		allow prettyPrint of functions and member-functions
@@ -57,6 +58,28 @@ This list is used for internal ideas, housekeeping, checklists and notes
  	[x] in options (bw.html) null for content means no content e.g.g <tag></tag>
  	[ ] in makeCSS (pretty:false) remove "\n"
  	[ ] makeCSS, makeCSSRule ==> CSS CSSRuleEmit
+ 	[ ] fix inbuilt bitwrench.css styles - clean up for classless applications
+ 		[ ] classless
+ 		[ ] h1 .. h6 - fix, 
+ 		[ ] text: left / center / right / justify
+ 		[ ] code: monospace
+ 		[ ] cards
+ 		[ ] list - horizontal
+ 		[ ] list - vertical
+ 		[ ] table
+ 		[ ] table striped
+ 		[ ] button (a few types with hover)
+ 		[ ] header
+ 		[ ] footer
+ 		[ ] tabs
+ 		[ ] grid12 - fixed  (note give examples of 1/2, 1/3, 1/4) col-3, col-4, col-6
+ 		[ ] grid12 - responsive (note give examples as same as fixed)
+ 	[ ] examples for css ==> full page of all widgets - classless
+ 	[ ] examples for css ==> full page of all widgets - class based
+ 	[ ] examples for sample pages => home page, about, profile, etc
+ 	[ ] clean up ESM naming ==> bitwrench.mjs  or bitwrench.min.mjs
+ 	[ ] clean up version distro ==> /dist , /src, allow serve both 1.x and 2.x in npm
+
 
 ## packaging and todo
 	[x] build script # currently using gnu make --> migrated to just using NPM
