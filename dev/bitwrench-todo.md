@@ -79,7 +79,9 @@ This list is used for internal ideas, housekeeping, checklists and notes
  	[ ] examples for sample pages => home page, about, profile, etc
  	[ ] clean up ESM naming ==> bitwrench.mjs  or bitwrench.min.mjs
  	[ ] clean up version distro ==> /dist , /src, allow serve both 1.x and 2.x in npm
-
+ 	[ ] css flipX flipY
+ 	[ ] uuid gen (for internal use like tabs) 
+ 		'xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx'.replace(/x/g, function (c){var r = (bw.random(0,15)) | 0; return r.toString(16)})
 
 ## packaging and todo
 	[x] build script # currently using gnu make --> migrated to just using NPM
