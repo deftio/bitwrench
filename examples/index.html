@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- bitwrench.js library examples  
+        (c) M A Chatterjee
+        deftio <at> deftio <dot> com
+        web   :  http:deftio.com/bitwrench
+        github:  http:github.com/deftio/bitwrench
+     -->
+    <script type="text/javascript" src="../bitwrench.js"></script>
+
+    <title>Bitwrench Examples</title>
+
+    <style>
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            left: 0;
+        }
+    </style>
+</head>
+
+<body class="bw-def-page-setup bw-font-sans-serif">
+    <div class="container">
+        <h2 class="mb-8">Bitwrench Examples</h2>
+        <p>The following examples can help in getting started with using bitwrench</p>
+        <div id="examples"></div>
+
+    </div>
+    <script>
+
+        let ln = (title, url, desc) => {
+            return `<div><h2><a href="${url}">${title}</a></h2>${desc}</div>`;
+        }
+        function getCurrentPath() {
+            // Create a new URL object based on the current window location
+            const url = new URL(window.location.href);
+
+            // Get the pathname from the URL
+            let pathname = url.pathname;
+
+            // Check if the pathname includes a file name by looking for a dot followed by a file extension at the end
+            if (pathname.includes('.')) {
+                // Remove the file name by truncating the pathname at the last slash
+                pathname = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+            }
+
+            // Reconstruct the URL without the filename
+            url.pathname = pathname;
+            let path = url.toString();
+            path = path.endsWith("/") ? path : path + "/";
+
+            // Return the modified URL as a string
+            return path;
+        }
+
+        // this hack is so that this works both local host and github pages w/o needing extra libraries
+        let examples = [
+            { title: "Bitwrench Basics", url: "example1.html", desc: "Simple setup with headings, paragraphs, and sortable tables." },
+            { title: "Tables and Colors", url: "example2.html", desc: "Tables and color bars" },
+            { title: "JSON formatting", url: "example3.html", desc: "Auto JSON formatting and printing" },
+            { title: "Full Banner", url: "example4.html", desc: "Full Page Banner / Sign with 2 lines" },
+            { title: "Full Demo with UMD", url: "example5.html", desc: "Headings, Left / Center / Right Justify, sortable tables, function support, grid demo" },
+            { title: "Grids", url: "example6.html", desc: "Grid text and alignment" },
+            { title: "Tab with Rendered and Raw content", url: "example7.html", desc: "Rendered Tabs and Code " },
+            { title: "Live Clock", url: "example8.html", desc: "Full Page Clock" },
+            { title: "Live Image Grid", url: "example9.html", desc: "Image Grid Generator with Puppies" },
+            { title: "Full Demo with ESM Module", url: "example10.html", desc: "Full demo but using ESM (JS module) version" },
+            { title: "Bitwrench ES Module and ES content", url: "example11.html", desc: "Bitwrench loaded as module and content loaded as module" },
+            { title: "Bitwrench ES Module and pico.css", url: "example12.html", desc: "Bitwrench loaded as module and using pico.css styling" }
+          
+        ], content = "";
+        for (i in examples)
+            content += ln(examples[i].title, getCurrentPath() + examples[i].url, examples[i].desc);
+        document.getElementById("examples").innerHTML = content;
+
+    </script>
+</body>
+
+</html>
