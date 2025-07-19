@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitwrench v2 Test</title>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="module">
+        // For testing, we'll use the UMD build
+        // import bw from '../dist/bitwrench.esm.js';
+    </script>
+    <script src="../dist/bitwrench.umd.js"></script>
+    <script>
+        
+        // Load default styles
+        bw.loadDefaultStyles();
+        
+        // Create a simple component
+        const Navbar = ({ brand, links }) => ({
+            t: "nav",
+            a: { class: "navbar" },
+            c: [
+                {
+                    t: "div",
+                    a: { class: "navbar-brand" },
+                    c: brand
+                },
+                {
+                    t: "ul",
+                    a: { class: "navbar-nav" },
+                    c: links.map(link => ({
+                        t: "li",
+                        c: {
+                            t: "a",
+                            a: { 
+                                href: link.href,
+                                class: ["nav-link", link.active && "active"].filter(Boolean)
+                            },
+                            c: link.text
+                        }
+                    }))
+                }
+            ]
+        });
+        
+        const Card = ({ title, content, footer }) => ({
+            t: "div",
+            a: { class: "card" },
+            c: [
+                {
+                    t: "div",
+                    a: { class: "card-body" },
+                    c: [
+                        title && { t: "h5", a: { class: "card-title" }, c: title },
+                        { t: "p", a: { class: "card-text" }, c: content }
+                    ].filter(Boolean)
+                },
+                footer && {
+                    t: "div",
+                    a: { class: "card-footer" },
+                    c: footer
+                }
+            ].filter(Boolean)
+        });
+        
+        const Button = ({ text, variant = "primary", onClick }) => ({
+            t: "button",
+            a: { 
+                class: `btn btn-${variant}`,
+                onclick: onClick
+            },
+            c: text
+        });
+        
+        // Create the app
+        const App = () => ({
+            t: "div",
+            c: [
+                Navbar({
+                    brand: "Bitwrench v2",
+                    links: [
+                        { text: "Home", href: "#", active: true },
+                        { text: "Features", href: "#features" },
+                        { text: "Docs", href: "#docs" }
+                    ]
+                }),
+                {
+                    t: "div",
+                    a: { class: "container", style: { "margin-top": "2rem" } },
+                    c: [
+                        {
+                            t: "h1",
+                            c: "Welcome to Bitwrench v2"
+                        },
+                        {
+                            t: "p",
+                            a: { class: "lead" },
+                            c: "Build beautiful UIs with just JavaScript objects. Zero dependencies, works everywhere."
+                        },
+                        {
+                            t: "div",
+                            a: { class: "row" },
+                            c: [
+                                {
+                                    t: "div",
+                                    a: { class: "col col-md-4" },
+                                    c: Card({
+                                        title: "Simple",
+                                        content: "UI as data - just JavaScript objects",
+                                        footer: Button({
+                                            text: "Learn More",
+                                            onClick: () => alert("Simple!")
+                                        })
+                                    })
+                                },
+                                {
+                                    t: "div",
+                                    a: { class: "col col-md-4" },
+                                    c: Card({
+                                        title: "Beautiful",
+                                        content: "Modern, responsive design out of the box",
+                                        footer: Button({
+                                            text: "See Examples",
+                                            variant: "secondary",
+                                            onClick: () => alert("Beautiful!")
+                                        })
+                                    })
+                                },
+                                {
+                                    t: "div",
+                                    a: { class: "col col-md-4" },
+                                    c: Card({
+                                        title: "Universal",
+                                        content: "Works in browsers and Node.js",
+                                        footer: Button({
+                                            text: "Get Started",
+                                            variant: "success",
+                                            onClick: () => alert("Universal!")
+                                        })
+                                    })
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        // Mount to DOM
+        bw.DOM("#app", App());
+        
+        // Log version info
+        console.log("Bitwrench v" + bw.version + " loaded!");
+        console.log("Full version info:", bw.versionInfo);
+    </script>
+</body>
+</html>

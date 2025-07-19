@@ -1,6 +1,33 @@
-node_modules
+# testing
 .nyc_output
 *~
 *.log
 *.tgz
 coverage
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore any temporary files
+*.log
+*.tmp
+
+# Ignore any IDE-specific files
+.vscode/
+.idea/
+
+# Ignore any compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+
+# env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+.DS_Store

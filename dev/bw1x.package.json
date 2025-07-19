@@ -1,44 +1,28 @@
 {
 	"name": "bitwrench",
-	"version": "2.0.0",
-	"description": "A library for javascript UI functions.",
-	"main": "./dist/bitwrench.umd.js",
+	"version": "1.2.16",
+	"description": "A library for misc javascript functions.",
+	"main": "./bitwrench.min.js",
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/deftio/bitwrench.git"
 	},
 	"keywords": [
-		"javascript DOM UI utitlities"
+		"javascript miscellaneous helper functions library"
 	],
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
-	"type": "module",
-	"module": "./dist/bitwrench.esm.js",
+	"module": "./bitwrench.min.js",
 	"exports": {
-		".": {
-			"import": "./dist/bitwrench.esm.js",
-			"require": "./dist/bitwrench.cjs.js",
-			"default": "./dist/bitwrench.umd.js"
-		}
+		"require": "./bitwrench.min.js",
+		"import": "./bitwrench.min.js",
+		"default": "./bitwrench.min.js"
 	},
-	"types": "./dist/bitwrench.d.ts",
-	"files": [
-		"dist/",
-		"src/",
-		"README.md",
-		"LICENSE.txt"
-	],
+	"types": "./bitwrench.min.js",
 	"bugs": {
 		"url": "https://github.com/deftio/bitwrench/issues"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.25.2",
-		"@babel/preset-env": "^7.25.3",
-		"@babel/preset-react": "^7.24.7",
-		"@rollup/plugin-babel": "^6.0.4",
-		"@rollup/plugin-commonjs": "^26.0.1",
-		"@rollup/plugin-node-resolve": "^15.2.3",
-		"@rollup/plugin-terser": "^0.4.4",
 		"chai": "^3.0.0",
 		"eslint": "^8.28.0",
 		"jsdom": "^16.4.0",
@@ -55,24 +39,18 @@
 		"mocha": "^10.1.0",
 		"nyc": "^15.1.0",
 		"rollup": "^4.29.1",
-		"rollup-plugin-css-only": "^4.5.2",
-		"rollup-plugin-postcss": "^4.0.2",
 		"uglify-js": "^3.19.3",
 		"uglifyjs": "^2.4.11"
 	},
 	"scripts": {
-		"generate-version": "node tools/generate-version.cjs",
-		"prebuild": "npm run generate-version",
-		"build": "rollup --config",
-		"build:watch": "rollup --config --watch",
 		"update_rm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
-		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
+		"build": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
 		"cleanbuild": "npm run clean && npm run update_rm && npm run generate-sri && npm run build",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js -r jsdom-global/",
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
-		"clean": "rm -rf dist/* bitwrench*.tgz",
-		"lint": "./node_modules/.bin/eslint src/bitwrench_v2.js",
+		"clean": "rm bitwrench*.tgz -f",
+		"lint": "./node_modules/.bin/eslint bitwrench.js",
 		"instrument-bw": "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser",
 		"generate-sri": "cat bitwrench.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.js_sri.txt && cat bitwrench.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.min.js_sri.txt && cat bitwrench_ESM.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench_ESM.js_sri.txt && cat bitwrench_ESM.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench_ESM.min.js_sri.txt"

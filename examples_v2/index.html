@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitwrench v2 Examples</title>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="../dist/bitwrench.umd.js"></script>
+    <script>
+        // Load default styles
+        bw.loadDefaultStyles();
+        
+        // Example list
+        const examples = [
+            {
+                title: "Basic Example",
+                description: "Simple components with cards, buttons, and navbar",
+                file: "01-basic-example.html"
+            },
+            {
+                title: "Form Components",
+                description: "Forms, inputs, and validation",
+                file: "02-forms.html"
+            },
+            {
+                title: "Data Tables",
+                description: "Sortable tables and data grids",
+                file: "03-tables.html"
+            },
+            {
+                title: "Interactive Components",
+                description: "Tabs, accordions, dropdowns",
+                file: "04-interactive.html"
+            },
+            {
+                title: "Dynamic Updates",
+                description: "State management and reactivity",
+                file: "05-dynamic.html"
+            }
+        ];
+        
+        // Create the page
+        const ExampleCard = ({ title, description, file }) => ({
+            t: "div",
+            a: { class: "col col-md-6 col-lg-4", style: { "margin-bottom": "1rem" } },
+            c: {
+                t: "div",
+                a: { class: "card" },
+                c: [
+                    {
+                        t: "div",
+                        a: { class: "card-body" },
+                        c: [
+                            { t: "h5", a: { class: "card-title" }, c: title },
+                            { t: "p", a: { class: "card-text" }, c: description },
+                            {
+                                t: "a",
+                                a: { 
+                                    href: file,
+                                    class: "btn btn-primary"
+                                },
+                                c: "View Example"
+                            }
+                        ]
+                    }
+                ]
+            }
+        });
+        
+        const App = () => ({
+            t: "div",
+            c: [
+                {
+                    t: "nav",
+                    a: { class: "navbar bg-dark", style: { color: "#fff" } },
+                    c: {
+                        t: "div",
+                        a: { class: "container" },
+                        c: [
+                            {
+                                t: "h3",
+                                a: { style: { margin: "0.5rem 0", color: "#fff" } },
+                                c: "Bitwrench v2 Examples"
+                            }
+                        ]
+                    }
+                },
+                {
+                    t: "div",
+                    a: { class: "container", style: { "margin-top": "2rem" } },
+                    c: [
+                        {
+                            t: "h1",
+                            c: "Welcome to Bitwrench v2"
+                        },
+                        {
+                            t: "p",
+                            a: { class: "lead" },
+                            c: "Explore these examples to see how bitwrench makes UI development simple and beautiful."
+                        },
+                        {
+                            t: "div",
+                            a: { class: "alert", style: { 
+                                "background-color": "#d1ecf1",
+                                "border": "1px solid #bee5eb",
+                                "color": "#0c5460",
+                                "padding": "1rem",
+                                "border-radius": "0.25rem",
+                                "margin-bottom": "2rem"
+                            }},
+                            c: [
+                                { t: "strong", c: "Version: " },
+                                `${bw.version} • `,
+                                { t: "strong", c: "Build Date: " },
+                                new Date(bw.versionInfo.buildDate).toLocaleDateString()
+                            ]
+                        },
+                        {
+                            t: "h2",
+                            c: "Examples"
+                        },
+                        {
+                            t: "div",
+                            a: { class: "row" },
+                            c: examples.map(ex => ExampleCard(ex))
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        // Mount the app
+        bw.DOM("#app", App());
+    </script>
+</body>
+</html>

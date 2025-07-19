@@ -8,19 +8,23 @@ Welcome to **bitwrench.js** — a lightweight JavaScript library designed for ra
 
 Whether you're debugging embedded C/C++ projects or building lightweight web apps, bitwrench.js offers powerful, no-frills tools to help you work efficiently.
 
-### Key Features
+## Key Features
 
 - **Dynamic HTML Generation**: Create complex HTML elements and structures directly from JSON objects, making it easy to dynamically generate web content.
-  - Example: 
+  - Example:
+
     ```javascript
     bw.html(["div", { class: "container", onclick: "myFunction(this)" }, "This is the content"]);
     ```
+
   - Support for deep hierarchical structures and arrays.
   - Select and modify DOM elements via CSS selectors:
+
     ```javascript
     bw.DOM("h3", "Updated content");
     bw.DOM(".myClass", function(el) { /* apply actions */ });
     ```
+
   - Function registration to bind JavaScript functions to HTML elements.
 
 - **Color Manipulation**: Convert between RGB, RGBA, HSL, and HSLA formats, and interpolate colors. Generate themed colors as both numerical values and CSS-compatible strings.
@@ -35,6 +39,7 @@ Whether you're debugging embedded C/C++ projects or building lightweight web app
 
 - **Random Data Functions**: Generate random numbers within a range, including multidimensional arrays of random values for use in data visualization or testing.
   - Example:
+
     ```javascript
     bw.random(4, 11); // returns a random number between 4 and 11
     ```
@@ -97,6 +102,7 @@ Bitwrench generates default CSS from JavaScript, though you can also include `bi
 - **Lorem Ipsum Generator**: Generate placeholder text for layouts and prototypes.
 - **Color Interpolation**: Dynamically generate gradients or theme-based color schemes.
 - **Sortable Tables**: Quickly generate sortable tables from JSON data.
+
   ```javascript
   bw.htmlTable([
     ["Name", "Age", "Profession", "Favorite Color"],
