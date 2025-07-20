@@ -6,6 +6,7 @@
     <title>Kitchen Sink - Bitwrench v2</title>
     <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
     <link rel="stylesheet" href="../dist/bitwrench.css">
+    <link rel="stylesheet" href="../dist/bitwrench-responsive-fixes.css">
     <link rel="stylesheet" href="bitwrench_examples.css">
 </head>
 <body>
@@ -66,7 +67,7 @@
                                                     ', ',
                                                     { t: 'em', c: 'italic text' },
                                                     ', ',
-                                                    { t: 'mark', c: 'highlighted text' },
+                                                    { t: 'mark', a: { style: 'background-color: #fff3cd; padding: 0.2em 0.4em;' }, c: 'highlighted text' },
                                                     ', and ',
                                                     { t: 'u', c: 'underlined text' },
                                                     '.'
@@ -80,12 +81,12 @@
                                     children: Card({
                                         title: 'Text Colors',
                                         children: [
-                                            { t: 'p', a: { class: 'text-primary' }, c: 'Primary text color' },
-                                            { t: 'p', a: { class: 'text-secondary' }, c: 'Secondary text color' },
-                                            { t: 'p', a: { class: 'text-success' }, c: 'Success text color' },
-                                            { t: 'p', a: { class: 'text-danger' }, c: 'Danger text color' },
-                                            { t: 'p', a: { class: 'text-warning' }, c: 'Warning text color' },
-                                            { t: 'p', a: { class: 'text-info' }, c: 'Info text color' },
+                                            { t: 'p', a: { class: 'text-primary mb-2' }, c: 'Primary text color' },
+                                            { t: 'p', a: { class: 'text-secondary mb-2' }, c: 'Secondary text color' },
+                                            { t: 'p', a: { class: 'text-success mb-2' }, c: 'Success text color' },
+                                            { t: 'p', a: { class: 'text-danger mb-2' }, c: 'Danger text color' },
+                                            { t: 'p', a: { class: 'text-warning mb-2' }, c: 'Warning text color' },
+                                            { t: 'p', a: { class: 'text-info mb-2' }, c: 'Info text color' },
                                             { t: 'p', a: { class: 'text-muted mb-0' }, c: 'Muted text color' }
                                         ]
                         })
@@ -111,7 +112,7 @@
                                                     children: [
                                                         {
                                                             t: 'div',
-                                                            a: { class: 'd-flex flex-wrap gap-2' },
+                                                            a: { class: 'd-flex flex-wrap', style: 'gap: 0.5rem;' },
                                                 c: [
                                                                 Button({ variant: 'primary', children: 'Primary' }),
                                                                 Button({ variant: 'secondary', children: 'Secondary' }),
@@ -136,15 +137,15 @@
                                                             t: 'div',
                                                             a: { class: 'mb-3' },
                                                 c: [
-                                                                Button({ variant: 'primary', size: 'lg', children: 'Large', class: 'me-2' }),
-                                                                Button({ variant: 'primary', children: 'Normal', class: 'me-2' }),
-                                                                Button({ variant: 'primary', size: 'sm', children: 'Small' })
+                                                                Button({ variant: 'primary', size: 'lg', children: 'Large', class: 'mb-2 me-2' }),
+                                                                Button({ variant: 'primary', children: 'Normal', class: 'mb-2 me-2' }),
+                                                                Button({ variant: 'primary', size: 'sm', children: 'Small', class: 'mb-2' })
                                                             ]
                                 },
                                                         {
                                                             t: 'div',
                                                 c: [
-                                                                Button({ variant: 'primary', disabled: true, children: 'Disabled', class: 'me-2' }),
+                                                                Button({ variant: 'primary', disabled: true, children: 'Disabled', class: 'mb-2 me-2' }),
                                                                 Button({ 
                                                                     variant: 'success', 
                                                                     children: '✓ With Icon',
@@ -195,17 +196,17 @@
                                                             t: 'div',
                                                             a: { class: 'mb-3' },
                                                 c: [
-                                                                Badge({ variant: 'primary', children: 'Primary', class: 'me-2' }),
-                                                                Badge({ variant: 'secondary', children: 'Secondary', class: 'me-2' }),
-                                                                Badge({ variant: 'success', children: 'Success', class: 'me-2' }),
-                                                                Badge({ variant: 'danger', children: 'Danger' })
+                                                                Badge({ variant: 'primary', children: 'Primary', class: 'me-2 mb-2' }),
+                                                                Badge({ variant: 'secondary', children: 'Secondary', class: 'me-2 mb-2' }),
+                                                                Badge({ variant: 'success', children: 'Success', class: 'me-2 mb-2' }),
+                                                                Badge({ variant: 'danger', children: 'Danger', class: 'mb-2' })
                                                             ]
                                 },
                                                         {
                                                             t: 'h5',
                                                 c: [
                                                                 'Notifications ',
-                                                                Badge({ variant: 'danger', pill: true, children: '5' })
+                                                                Badge({ variant: 'danger', pill: true, children: '5', class: 'ms-2' })
                                                             ]
                                 },
                                                         {
@@ -363,7 +364,7 @@
                                             }))
                                         }
                                                 ],
-                                                className: 'table table-striped table-hover',
+                                                className: 'table table-striped table-hover table-bordered',
                                                 sortable: true,
                                                 sortColumn: 'name',
                                                 responsive: true
@@ -438,7 +439,7 @@
                                                                 { t: 'h6', c: 'Checkboxes' },
                                                                 {
                                                                     t: 'div',
-                                                                    a: { class: 'form-check' },
+                                                                    a: { class: 'form-check mb-2' },
                                                         c: [
                                                                         { t: 'input', a: { class: 'form-check-input', type: 'checkbox', id: 'check1' } },
                                                                         { t: 'label', a: { class: 'form-check-label', for: 'check1' }, c: 'Default checkbox' }
@@ -446,7 +447,7 @@
                                         },
                                                                 {
                                                                     t: 'div',
-                                                                    a: { class: 'form-check' },
+                                                                    a: { class: 'form-check mb-2' },
                                                         c: [
                                                                         { t: 'input', a: { class: 'form-check-input', type: 'checkbox', id: 'check2', checked: true } },
                                                                         { t: 'label', a: { class: 'form-check-label', for: 'check2' }, c: 'Checked checkbox' }
@@ -461,7 +462,7 @@
                                                                 { t: 'h6', c: 'Radio Buttons' },
                                                                 {
                                                                     t: 'div',
-                                                                    a: { class: 'form-check' },
+                                                                    a: { class: 'form-check mb-2' },
                                                         c: [
                                                                         { t: 'input', a: { class: 'form-check-input', type: 'radio', name: 'radios', id: 'radio1', checked: true } },
                                                                         { t: 'label', a: { class: 'form-check-label', for: 'radio1' }, c: 'Default radio' }
@@ -469,7 +470,7 @@
                                         },
                                                                 {
                                                                     t: 'div',
-                                                                    a: { class: 'form-check' },
+                                                                    a: { class: 'form-check mb-2' },
                                                         c: [
                                                                         { t: 'input', a: { class: 'form-check-input', type: 'radio', name: 'radios', id: 'radio2' } },
                                                                         { t: 'label', a: { class: 'form-check-label', for: 'radio2' }, c: 'Second radio' }
@@ -508,24 +509,24 @@
                                                     Row({
                                                         class: 'mb-3',
                                                         children: [
-                                                            Col({ children: { t: 'div', a: { class: 'p-3 bg-light border' }, c: 'col' } }),
-                                                            Col({ children: { t: 'div', a: { class: 'p-3 bg-light border' }, c: 'col' } }),
-                                                            Col({ children: { t: 'div', a: { class: 'p-3 bg-light border' }, c: 'col' } })
+                                                            Col({ children: { t: 'div', a: { class: 'p-3 bg-light border rounded' }, c: 'col' } }),
+                                                            Col({ children: { t: 'div', a: { class: 'p-3 bg-light border rounded' }, c: 'col' } }),
+                                                            Col({ children: { t: 'div', a: { class: 'p-3 bg-light border rounded' }, c: 'col' } })
                                                         ]
                                         }),
                                                     Row({
                                                         class: 'mb-3',
                                                         children: [
-                                                            Col({ size: 8, children: { t: 'div', a: { class: 'p-3 bg-light border' }, c: 'col-8' } }),
-                                                            Col({ size: 4, children: { t: 'div', a: { class: 'p-3 bg-light border' }, c: 'col-4' } })
+                                                            Col({ size: 8, children: { t: 'div', a: { class: 'p-3 bg-light border rounded' }, c: 'col-8' } }),
+                                                            Col({ size: 4, children: { t: 'div', a: { class: 'p-3 bg-light border rounded' }, c: 'col-4' } })
                                                         ]
                                         }),
                                                     Row({
                                                         children: [
-                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-light border mb-3' }, c: 'Responsive' } }),
-                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-light border mb-3' }, c: 'Grid' } }),
-                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-light border mb-3' }, c: 'System' } }),
-                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-light border mb-3' }, c: 'Works!' } })
+                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-primary text-white border rounded mb-3' }, c: 'Responsive' } }),
+                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-success text-white border rounded mb-3' }, c: 'Grid' } }),
+                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-warning text-dark border rounded mb-3' }, c: 'System' } }),
+                                                            Col({ sm: 12, md: 6, lg: 3, children: { t: 'div', a: { class: 'p-3 bg-info text-white border rounded mb-3' }, c: 'Works!' } })
                                                         ]
                                         })
                                                 ]

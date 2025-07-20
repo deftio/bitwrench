@@ -2,22 +2,108 @@
 
 ## Executive Summary
 
-Bitwrench v2 has drifted from its core philosophy. This document refocuses on:
+Bitwrench v2 focuses on:
+- building web components with bitwrench {t,a,c,o} object system.
 - Legacy browser compatibility (IE8+)
-- Zero namespace collisions (bs css classes with other frameworks, bw functions with common libraries)
+- Zero namespace collisions (coexists with Bootstrap, jQuery, D3.js, Chart.js)
 - Clear component lifecycle
 - Memory leak prevention
 - Practical, working examples
 
+## Why Bitwrench? The Real Value Proposition
+
+### The Problem We Solve
+
+Modern frontend frameworks require:
+- Node.js installation
+- Build tools (webpack, vite, etc.)
+- Transpilation pipeline
+- Package managers
+- Development servers
+- Complex deployment
+
+**But what if you're:**
+- A data scientist wanting to visualize ML results?
+- A backend developer needing a quick dashboard?
+- Building tools that generate UIs programmatically?
+- Working in languages other than JavaScript?
+- Integrating with existing jQuery/Bootstrap apps?
+
+###  Bitwrench Solution
+
+```python
+# Python example - generate a dashboard after ML training
+results = train_model(data)
+
+dashboard = {
+    "t": "div",
+    "a": {"class": "bw-dashboard"},
+    "c": [
+        {"t": "h1", "c": f"Model Accuracy: {results.accuracy}"},
+        {
+            "t": "div",
+            "a": {"class": "bw-chart"},
+            "c": "Chart will render here",
+            "o": {
+                "mount": f"Chart.js code with data: {results.to_json()}"
+            }
+        }
+    ]
+}
+
+TODO:  you could use a f string, but actually you could generate the *entire* page just using {t,a,c,o}
+
+# Generate complete HTML file
+html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        bw.render('#app', {json.dumps(dashboard)});
+    </script>
+</body>
+</html>
+"""
+
+# Save and open in browser - instant interactive dashboard!
+```
+
+
+TODO: don't bash streamlit - that will start a religious war, instead lets talk about ease of bitwrench and refreshing live content via server side replensh {fastapi + bitwrench}
+### Better Than Streamlit Because:  
+
+1. **No server required** - Just HTML files
+2. **Use any JS library** - D3.js, Chart.js, Three.js work seamlessly  ## TODO need examples of these
+3. **Full control** - Not limited to Streamlit's components
+4. **Portable** - Email the HTML file, it just works
+5. **Integratable** - Drop into existing apps
+
+### Who Could Use Bitwrench:
+
+1. **Data Scientists & ML Engineers** - Visualize results without learning React
+2. **Backend Developers** - Build dashboards without frontend tooling
+3. **Tool Builders** - Generate UIs from any language
+4. **Legacy App Maintainers** - Add modern components to jQuery/Bootstrap apps
+5. **Embedded Widget Creators** - Works everywhere, no conflicts
+
 ## Core Precepts (Non-Negotiable)
 
+# TODO I wouldn't start with support for IE8 as the top item.  Very few people care about that.  Bitwrench needs to stand alone based on its design philophies
 1. **Works in legacy browsers** - If it doesn't work in IE8, it's not bitwrench
 2. **Zero dependencies** - (polyfills OK)
 3. **No namespace collisions** - Coexists with jQuery, React, anything 
 4. **UI as data** - TACO objects are just data and functions, not magic
 5. **Memory safe** - Components clean up after themselves
 
-## The TACO Model: Clarified
+
+## The Bitwrench TACO Model
+
+TODO: explain what the bitwrench TACO model is in english first and why it is used.  Then show how to use it.
 
 ```javascript
 {
@@ -26,9 +112,9 @@ Bitwrench v2 has drifted from its core philosophy. This document refocuses on:
   c: content,        // Children: string, TACO, or array of TACOs
   o: {               // OPTIONS - bitwrench-specific, never rendered to HTML
     // Lifecycle hooks
-    mount: function(element) {},      // Called after element added to DOM
-    unmount: function(element) {},    // Called when element removed from DOM
-    update: function(element, newTACO) {}, // Called when updating
+    mount: function(element) {},      // Called after element added to DOM  TODO not clear how this is called. does bitwrench do this automatically?
+    unmount: function(element) {},    // Called when element removed from DOM  TODO not clear how this is called. does bitwrench do this automatically?
+    update: function(element, newTACO) {}, // Called when updating  TODO not clear how this is called. does bitwrench do this automatically?
     
     // Component state
     state: {},        // Component's private state
@@ -40,6 +126,8 @@ Bitwrench v2 has drifted from its core philosophy. This document refocuses on:
   }
 }
 ```
+
+TODO:  the following section tells us what not to do.  It should be preceded by what we should do and why we do it that way.
 
 ### What NEVER goes in 'o':
 - Style information (use 'a.style' or 'a["class"]')
@@ -54,7 +142,7 @@ Bitwrench v2 has drifted from its core philosophy. This document refocuses on:
 - Server-side rendering
 - Email templates  
 - SEO is critical
-- No interactivity needed
+- No interactivity needed (TODO not true in bitwrench1.x  you could store functions as strings and bitwrench, via the fn registry would hydrate your function)
 
 ```javascript
 const myCard = {
@@ -76,14 +164,12 @@ document.getElementById('container').innerHTML = html;
 Bitwrench v1.x pioneered the function registry system, allowing event handlers in static HTML:
 
 ```javascript
-// Event handlers work in bw.html()!
+// Event handlers work in bw.html()
 const button = {
   t: "button",
   a: {
     "class": "bw-btn",
-    onclick: function() {
-      alert('Clicked!');
-    }
+    "onclick": function() { alert('Clicked!');}
   },
   c: "Click Me"
 };
@@ -97,6 +183,7 @@ document.getElementById('container').innerHTML = html;
 ```
 
 **How it works:**
+TODO: explain how functions work and why (and we should decide if we still want to support the fn registry.  Its powerful but needs some testing like what if someone remove the target element from the DOM)
 1. Functions are registered with unique IDs
 2. HTML gets `onclick="bw.funcCall('f_123')"`  
 3. Click events lookup and execute the registered function
@@ -133,6 +220,7 @@ const myClock = {
 };
 
 // Returns a handle for lifecycle management
+TODO remember, bw.render(element, {t,a,c,o}) can take a css selector or a real DOM element.
 const clockHandle = bw.render('#clock-container', myClock);
 
 // Later...
@@ -142,19 +230,21 @@ clockHandle.destroy(); // Calls unmount, cleans up timer
 ## Component Lifecycle Management
 
 ### The Lifecycle Flow
+TODO explain better this section.  Are the mount and unmount handled automatically by bitwrench??
 
 ```
-1. Create TACO object
+1. Create TACO object  or import from a library
 2. bw.render() creates DOM element
 3. Element added to DOM
 4. mount() hook called
 5. Component lives...
 6. Element removed from DOM (or destroy() called)
-7. unmount() hook called
+7. unmount() hook called  
 8. Cleanup complete
 ```
 
 ### Automatic Cleanup via MutationObserver (IE11+)
+TODO so how does it work in earlier browsers - seem like we need a fall back method.
 
 ```javascript
 // For modern browsers, auto-detect removal
@@ -2365,6 +2455,157 @@ module.exports = function(config) {
 };
 ```
 
+## Real-World Examples
+
+### Analytics Dashboard
+```javascript
+// Dashboard with real-time updates and Chart.js integration
+function Dashboard() {
+    return {
+        t: 'div',
+        c: [
+            // Metrics cards
+            Row({
+                children: metrics.map(metric => 
+                    Col({ 
+                        md: 3,
+                        children: MetricCard(metric)
+                    })
+                )
+            }),
+            // Live chart
+            Card({
+                title: 'Sales Trend',
+                children: {
+                    t: 'canvas',
+                    a: { id: 'salesChart' }
+                }
+            })
+        ]
+    };
+}
+
+// Update dashboard every 5 seconds
+setInterval(async () => {
+    const data = await fetch('/api/metrics');
+    updateDashboard(data);
+}, 5000);
+```
+
+### Data Fetching with Loading States
+```javascript
+async function fetchUsers() {
+    appState.loading = true;
+    render(); // Show skeleton loaders
+    
+    try {
+        const response = await fetch('https://api.example.com/users');
+        const users = await response.json();
+        
+        appState.users = users;
+        appState.loading = false;
+        render(); // Show user cards
+    } catch (error) {
+        appState.error = error.message;
+        appState.loading = false;
+        render(); // Show error state
+    }
+}
+```
+
+### Python Integration Example
+```python
+# Generate dashboard HTML from ML results
+import json
+from bitwrench_generator import bw
+
+def create_ml_dashboard(model_results):
+    """Generate a dashboard from ML model results"""
+    
+    dashboard = bw.page({
+        'title': 'ML Model Results',
+        'components': [
+            # Metrics section
+            bw.row([
+                bw.metric_card({
+                    'title': 'Accuracy',
+                    'value': f"{model_results['accuracy']:.2%}",
+                    'trend': model_results['accuracy_change']
+                }),
+                bw.metric_card({
+                    'title': 'F1 Score',
+                    'value': f"{model_results['f1_score']:.3f}"
+                })
+            ]),
+            
+            # Confusion matrix
+            bw.card({
+                'title': 'Confusion Matrix',
+                'content': bw.table(model_results['confusion_matrix'])
+            }),
+            
+            # Feature importance chart
+            bw.card({
+                'title': 'Feature Importance',
+                'content': bw.chart({
+                    'type': 'bar',
+                    'data': model_results['feature_importance']
+                })
+            })
+        ]
+    })
+    
+    # Generate standalone HTML file
+    with open('ml_results.html', 'w') as f:
+        f.write(dashboard.to_html())
+```
+
+### Streamlit Alternative Example
+```javascript
+// Create interactive ML exploration tool
+function MLExplorer() {
+    const [selectedModel, setModel] = useState('random_forest');
+    const [metrics, setMetrics] = useState(null);
+    
+    return Container({
+        children: [
+            // Model selector
+            Select({
+                label: 'Choose Model',
+                options: ['random_forest', 'neural_net', 'svm'],
+                value: selectedModel,
+                onChange: async (value) => {
+                    setModel(value);
+                    const data = await fetch(`/api/model/${value}/metrics`);
+                    setMetrics(await data.json());
+                }
+            }),
+            
+            // Results display
+            metrics && [
+                MetricsGrid(metrics),
+                ConfusionMatrix(metrics.confusion),
+                ROCCurve(metrics.roc_data)
+            ]
+        ]
+    });
+}
+
+// No server required - just open the HTML file!
+```
+
+## Standard Component Library
+
+The built-in component library provides ready-to-use components:
+
+- **Layout**: Container, Row, Col, Card, Navbar, Footer
+- **Forms**: Input, Select, Checkbox, Radio, TextArea
+- **Feedback**: Alert, Toast, Modal, Progress
+- **Navigation**: Tabs, Breadcrumb, Pagination
+- **Data**: Table, List, Badge, Avatar
+
+All components follow the TACO pattern and work with both `bw.html()` and `bw.render()`.
+
 ## Summary: The Path Forward
 
 1. **Simplify the 'o' object** - Only lifecycle hooks and state
@@ -2373,5 +2614,7 @@ module.exports = function(config) {
 4. **Namespace safety** - All classes prefixed with 'bw-'
 5. **Legacy browser support** - Test everything in IE8
 6. **Learn from v1** - Keep what worked, fix what didn't
+7. **Focus on data scientists** - Not competing with React/Vue
+8. **Better than Streamlit** - No server needed, just HTML files
 
 The goal: A library that is genuinely simple, not just claiming to be simple.

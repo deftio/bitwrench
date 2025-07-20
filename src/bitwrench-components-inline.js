@@ -160,7 +160,7 @@ if (typeof window !== 'undefined' && window.bw) {
         role: 'alert'
       },
       c: [
-        children,
+        ...(Array.isArray(children) ? children : [children]),
         dismissible && {
           t: 'button',
           a: {
@@ -290,6 +290,36 @@ if (typeof window !== 'undefined' && window.bw) {
         ]
       }
     };
+  };
+  
+  // Table Component
+  c.Table = function({ 
+    striped = false, 
+    hover = false, 
+    bordered = false,
+    responsive = false,
+    class: className = '',
+    children 
+  }) {
+    const table = {
+      t: 'table',
+      a: { 
+        class: [
+          'table',
+          striped && 'table-striped',
+          hover && 'table-hover',
+          bordered && 'table-bordered',
+          className
+        ].filter(Boolean).join(' ')
+      },
+      c: children
+    };
+    
+    return responsive ? {
+      t: 'div',
+      a: { class: 'table-responsive' },
+      c: table
+    } : table;
   };
   
   // Table with sorting support

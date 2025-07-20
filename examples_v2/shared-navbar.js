@@ -18,7 +18,9 @@ window.ExampleNavbar = function() {
     { text: 'Dashboard', href: '05-dashboard.html' },
     { text: 'Interactive', href: '06-interactive.html' },
     { text: 'Render API', href: '07-render-api.html' },
-    { text: 'Theme', href: '08-theme-switcher.html' }
+    { text: 'Theme', href: '08-theme-switcher.html' },
+    { text: 'Analytics', href: 'dashboard-demo.html' },
+    { text: 'Data Fetch', href: 'data-fetching-demo.html' }
   ];
   
   // Mark current page as active
