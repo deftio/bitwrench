@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bitwrench v2</title>
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="../dist/bitwrench.css">
+    <link rel="stylesheet" href="bitwrench_examples.css">
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="../dist/bitwrench.umd.js"></script>
+    <script src="../src/bitwrench-components-inline.js"></script>
+    <script src="shared-navbar.js"></script>
+    <script>
+        
+        // Component shortcuts
+        const { Navbar, Container, Row, Col, Card, StatCard, Progress, Badge, Button, SortableTable } = bw.components;
+        
+        // Dashboard state
+        let state = {
+            stats: {
+                users: { value: 2847, change: 12.5 },
+                revenue: { value: '$48,352', change: 8.2 },
+                orders: { value: 342, change: -3.4 },
+                conversion: { value: '3.24%', change: 2.1 }
+            },
+            salesData: [
+                { id: 1, product: 'Product A', category: 'Electronics', sales: 234, revenue: 28450, trend: 'up' },
+                { id: 2, product: 'Product B', category: 'Clothing', sales: 187, revenue: 15623, trend: 'up' },
+                { id: 3, product: 'Product C', category: 'Books', sales: 156, revenue: 4680, trend: 'down' },
+                { id: 4, product: 'Product D', category: 'Electronics', sales: 142, revenue: 21300, trend: 'stable' },
+                { id: 5, product: 'Product E', category: 'Home', sales: 98, revenue: 7840, trend: 'up' }
+            ],
+            sortColumn: 'sales',
+            sortDirection: 'desc',
+            lastUpdate: new Date()
+        };
+        
+        // Sort function
+        function sortData(column) {
+            if (state.sortColumn === column) {
+                state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortColumn = column;
+                state.sortDirection = 'asc';
+            }
+            
+            state.salesData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (state.sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            render();
+        }
+        
+        // Simulate real-time updates
+        function updateStats() {
+            // Update random stat
+            const statKeys = Object.keys(state.stats);
+            const randomStat = statKeys[Math.floor(Math.random() * statKeys.length)];
+            const stat = state.stats[randomStat];
+            
+            // Generate new change value
+            stat.change = (Math.random() * 20 - 10).toFixed(1);
+            
+            // Update timestamp
+            state.lastUpdate = new Date();
+            
+            render();
+        }
+        
+        // Create the dashboard
+        function Dashboard() {
+            return ExamplePage({
+                title: 'Dashboard',
+                content: [
+                    // Header
+                    {
+                        t: 'div',
+                        a: { class: 'd-flex justify-content-between align-items-center mb-4' },
+                        c: [
+                            {
+                                t: 'div',
+                                c: [
+                                    { t: 'h1', c: 'Analytics Dashboard' },
+                                    { 
+                                        t: 'p', 
+                                        a: { class: 'text-muted mb-0' }, 
+                                        c: `Last updated: ${state.lastUpdate.toLocaleTimeString()}`
+                                    }
+                                ]
+                            },
+                            Button({
+                                variant: 'primary',
+                                onClick: () => updateStats(),
+                                children: '🔄 Refresh Data'
+                            })
+                        ]
+                    },
+                    
+                    // Stats Cards
+                    Row({
+                        class: 'mb-4',
+                        children: [
+                            Col({
+                                md: 6,
+                                lg: 3,
+                                children: {
+                                    t: 'div',
+                                    a: { class: 'mb-4' },
+                                    c: StatCard({
+                                        title: 'Total Users',
+                                        value: state.stats.users.value.toLocaleString(),
+                                        change: parseFloat(state.stats.users.change),
+                                        icon: '👥',
+                                        variant: 'primary'
+                                    })
+                                }
+                            }),
+                            Col({
+                                md: 6,
+                                lg: 3,
+                                children: {
+                                    t: 'div',
+                                    a: { class: 'mb-4' },
+                                    c: StatCard({
+                                        title: 'Revenue',
+                                        value: state.stats.revenue.value,
+                                        change: parseFloat(state.stats.revenue.change),
+                                        icon: '💰',
+                                        variant: 'success'
+                                    })
+                                }
+                            }),
+                            Col({
+                                md: 6,
+                                lg: 3,
+                                children: {
+                                    t: 'div',
+                                    a: { class: 'mb-4' },
+                                    c: StatCard({
+                                        title: 'Total Orders',
+                                        value: state.stats.orders.value,
+                                        change: parseFloat(state.stats.orders.change),
+                                        icon: '📦',
+                                        variant: 'warning'
+                                    })
+                                }
+                            }),
+                            Col({
+                                md: 6,
+                                lg: 3,
+                                children: {
+                                    t: 'div',
+                                    a: { class: 'mb-4' },
+                                    c: StatCard({
+                                        title: 'Conversion Rate',
+                                        value: state.stats.conversion.value,
+                                        change: parseFloat(state.stats.conversion.change),
+                                        icon: '📈',
+                                        variant: 'info'
+                                    })
+                                }
+                            })
+                        ]
+                    }),
+                    
+                    // Charts and Tables Row
+                    Row({
+                        children: [
+                            // Sales Performance
+                            Col({
+                                lg: 8,
+                                children: Card({
+                                    class: 'mb-4',
+                                    title: 'Sales Performance',
+                                    children: [
+                                        // Simulated chart with progress bars
+                                        {
+                                            t: 'div',
+                                            a: { class: 'mb-4' },
+                                            c: state.salesData.map(item => ({
+                                                t: 'div',
+                                                a: { class: 'mb-3' },
+                                                c: [
+                                                    {
+                                                        t: 'div',
+                                                        a: { class: 'd-flex justify-content-between mb-1' },
+                                                        c: [
+                                                            { t: 'span', c: item.product },
+                                                            { t: 'span', c: `${item.sales} sales` }
+                                                        ]
+                                                    },
+                                                    Progress({
+                                                        value: item.sales,
+                                                        max: 300,
+                                                        height: 20,
+                                                        variant: item.trend === 'up' ? 'success' : 
+                                                                item.trend === 'down' ? 'danger' : 'warning'
+                                                    })
+                                                ]
+                                            }))
+                                        }
+                                    ]
+                                })
+                            }),
+                            
+                            // Quick Stats
+                            Col({
+                                lg: 4,
+                                children: Card({
+                                    class: 'mb-4',
+                                    title: 'Quick Stats',
+                                    children: [
+                                        {
+                                            t: 'div',
+                                            c: [
+                                                {
+                                                    t: 'div',
+                                                    a: { class: 'd-flex justify-content-between align-items-center mb-3' },
+                                                    c: [
+                                                        { t: 'span', c: 'Avg. Order Value' },
+                                                        { t: 'strong', c: '$141.37' }
+                                                    ]
+                                                },
+                                                {
+                                                    t: 'div',
+                                                    a: { class: 'd-flex justify-content-between align-items-center mb-3' },
+                                                    c: [
+                                                        { t: 'span', c: 'Cart Abandonment' },
+                                                        Badge({ variant: 'danger', children: '23.4%' })
+                                                    ]
+                                                },
+                                                {
+                                                    t: 'div',
+                                                    a: { class: 'd-flex justify-content-between align-items-center mb-3' },
+                                                    c: [
+                                                        { t: 'span', c: 'Return Rate' },
+                                                        Badge({ variant: 'warning', children: '5.2%' })
+                                                    ]
+                                                },
+                                                {
+                                                    t: 'div',
+                                                    a: { class: 'd-flex justify-content-between align-items-center mb-3' },
+                                                    c: [
+                                                        { t: 'span', c: 'Customer Satisfaction' },
+                                                        Badge({ variant: 'success', children: '94%' })
+                                                    ]
+                                                },
+                                                { t: 'hr' },
+                                                {
+                                                    t: 'div',
+                                                    a: { class: 'text-center' },
+                                                    c: [
+                                                        { t: 'h3', a: { class: 'mb-1' }, c: '⭐ 4.8/5' },
+                                                        { t: 'small', a: { class: 'text-muted' }, c: 'Average Rating' }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                })
+                            })
+                        ]
+                    }),
+                    
+                    // Sales Table
+                    Card({
+                        title: 'Product Sales Details',
+                        children: SortableTable({
+                            data: state.salesData,
+                            columns: [
+                                { key: 'product', label: 'Product' },
+                                { key: 'category', label: 'Category' },
+                                { key: 'sales', label: 'Sales' },
+                                { 
+                                    key: 'revenue', 
+                                    label: 'Revenue',
+                                    render: (val) => `$${val.toLocaleString()}`
+                                },
+                                { 
+                                    key: 'trend', 
+                                    label: 'Trend',
+                                    render: (val) => {
+                                        const variant = val === 'up' ? 'success' : 
+                                                      val === 'down' ? 'danger' : 'warning';
+                                        const icon = val === 'up' ? '↑' : 
+                                                   val === 'down' ? '↓' : '→';
+                                        return bw.html(Badge({ 
+                                            variant, 
+                                            children: `${icon} ${val}`
+                                        }));
+                                    }
+                                }
+                            ],
+                            sortColumn: state.sortColumn,
+                            sortDirection: state.sortDirection,
+                            onSort: sortData
+                        })
+                    })
+                ]
+            });
+        }
+        
+        // Render function
+        function render() {
+            bw.DOM('#app', Dashboard());
+        }
+        
+        // Initial render
+        render();
+        
+        // Auto-update every 5 seconds
+        setInterval(updateStats, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitwrench v2 - Interactive Demo</title>
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="../dist/bitwrench.css">
+    <link rel="stylesheet" href="bitwrench_examples.css">
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="../dist/bitwrench.umd.js"></script>
+    <script src="../src/bitwrench-components-inline.js"></script>
+    <script src="shared-navbar.js"></script>
+    <script>
+        
+        // Component shortcuts
+        const { Navbar, Container, Row, Col, Card, Button, Badge, Alert, Progress } = bw.components;
+        
+        // App state
+        let todos = [
+            { id: 1, text: 'Learn Bitwrench basics', done: true },
+            { id: 2, text: 'Build a dynamic app', done: false },
+            { id: 3, text: 'Deploy to production', done: false }
+        ];
+        
+        let counter = 0;
+        let clockTime = new Date().toLocaleTimeString();
+        let showAlert = false;
+        let alertMessage = '';
+        
+        // Helper functions
+        function addTodo() {
+            const input = document.querySelector('#todo-input');
+            if (input && input.value.trim()) {
+                todos.push({
+                    id: Date.now(),
+                    text: input.value.trim(),
+                    done: false
+                });
+                input.value = '';
+                render();
+            }
+        }
+        
+        function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.done = !todo.done;
+                render();
+            }
+        }
+        
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            render();
+        }
+        
+        function incrementCounter() {
+            counter++;
+            render();
+        }
+        
+        function decrementCounter() {
+            counter--;
+            render();
+        }
+        
+        function resetCounter() {
+            counter = 0;
+            render();
+        }
+        
+        function showMessage(message) {
+            alertMessage = message;
+            showAlert = true;
+            render();
+            setTimeout(() => {
+                showAlert = false;
+                render();
+            }, 3000);
+        }
+        
+        function updateClock() {
+            clockTime = new Date().toLocaleTimeString();
+            // Only update the clock element
+            const clockEl = document.querySelector('#clock');
+            if (clockEl) {
+                clockEl.textContent = clockTime;
+            }
+        }
+        
+        // Main app component
+        function InteractiveApp() {
+            const completedCount = todos.filter(t => t.done).length;
+            const totalCount = todos.length;
+            const completionPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+            
+            return ExamplePage({
+                title: 'Interactive Demo',
+                content: [
+                    // Alert
+                    showAlert && Alert({
+                        variant: 'success',
+                        dismissible: true,
+                        children: alertMessage,
+                        onClose: () => {
+                            showAlert = false;
+                            render();
+                        }
+                    }),
+                    
+                    // Header
+                    {
+                        t: 'div',
+                        a: { class: 'mb-4 p-4 bg-light rounded' },
+                        c: [
+                            { t: 'h1', c: 'Interactive Demo' },
+                            { t: 'p', a: { class: 'lead mb-0' }, c: 'Dynamic state management without a framework' },
+                            { t: 'p', a: { class: 'mb-0' }, c: ['Current time: ', { t: 'span', a: { id: 'clock' }, c: clockTime }] }
+                        ]
+                    },
+                    
+                    // Main content
+                    Row({
+                        children: [
+                            // Todo List Column
+                            Col({
+                                lg: 8,
+                                children: Card({
+                                    class: 'mb-4',
+                                    title: 'Todo List',
+                                    children: [
+                                        // Add todo form
+                                        {
+                                            t: 'form',
+                                            a: { 
+                                                onsubmit: (e) => { 
+                                                    e.preventDefault(); 
+                                                    addTodo(); 
+                                                },
+                                                class: 'mb-4'
+                                            },
+                                            c: {
+                                                t: 'div',
+                                                a: { class: 'input-group' },
+                                                c: [
+                                                    {
+                                                        t: 'input',
+                                                        a: {
+                                                            type: 'text',
+                                                            id: 'todo-input',
+                                                            class: 'form-control',
+                                                            placeholder: 'Add a new todo...'
+                                                        }
+                                                    },
+                                                    Button({
+                                                        variant: 'primary',
+                                                        type: 'submit',
+                                                        children: 'Add'
+                                                    })
+                                                ]
+                                            }
+                                        },
+                                        
+                                        // Progress bar
+                                        {
+                                            t: 'div',
+                                            a: { class: 'mb-3' },
+                                            c: [
+                                                { t: 'div', a: { class: 'd-flex justify-content-between mb-2' }, c: [
+                                                    { t: 'small', c: `${completedCount} of ${totalCount} completed` },
+                                                    { t: 'small', c: `${Math.round(completionPercent)}%` }
+                                                ]},
+                                                Progress({
+                                                    value: completionPercent,
+                                                    variant: completionPercent === 100 ? 'success' : 'primary'
+                                                })
+                                            ]
+                                        },
+                                        
+                                        // Todo items
+                                        {
+                                            t: 'div',
+                                            a: { class: 'list-group' },
+                                            c: todos.length === 0 
+                                                ? { t: 'p', a: { class: 'text-muted text-center py-4' }, c: 'No todos yet. Add one above!' }
+                                                : todos.map(todo => ({
+                                                    t: 'div',
+                                                    a: { class: 'list-group-item d-flex align-items-center' },
+                                                    c: [
+                                                        {
+                                                            t: 'input',
+                                                            a: {
+                                                                type: 'checkbox',
+                                                                class: 'form-check-input me-2',
+                                                                checked: todo.done,
+                                                                onchange: () => toggleTodo(todo.id)
+                                                            }
+                                                        },
+                                                        {
+                                                            t: 'span',
+                                                            a: { 
+                                                                class: todo.done ? 'text-decoration-line-through text-muted flex-grow-1' : 'flex-grow-1'
+                                                            },
+                                                            c: todo.text
+                                                        },
+                                                        Button({
+                                                            variant: 'danger',
+                                                            size: 'sm',
+                                                            onClick: () => deleteTodo(todo.id),
+                                                            children: '×'
+                                                        })
+                                                    ]
+                                                }))
+                                        }
+                                    ]
+                                })
+                            }),
+                            
+                            // Interactive Features Column
+                            Col({
+                                lg: 4,
+                                children: [
+                                    // Counter Card
+                                    Card({
+                                        class: 'mb-4',
+                                        title: 'Counter Demo',
+                                        children: [
+                                            {
+                                                t: 'div',
+                                                a: { class: 'text-center' },
+                                                c: [
+                                                    { t: 'h2', a: { class: 'display-1 mb-4' }, c: counter },
+                                                    {
+                                                        t: 'div',
+                                                        a: { class: 'd-flex gap-2 justify-content-center' },
+                                                        c: [
+                                                            Button({
+                                                                variant: 'primary',
+                                                                onClick: incrementCounter,
+                                                                children: '+'
+                                                            }),
+                                                            Button({
+                                                                variant: 'secondary',
+                                                                onClick: decrementCounter,
+                                                                children: '-'
+                                                            }),
+                                                            Button({
+                                                                variant: 'warning',
+                                                                onClick: resetCounter,
+                                                                children: 'Reset'
+                                                            })
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }),
+                                    
+                                    // Actions Card
+                                    Card({
+                                        title: 'Interactive Actions',
+                                        children: [
+                                            {
+                                                t: 'div',
+                                                a: { class: 'd-grid gap-2' },
+                                                c: [
+                                                    Button({
+                                                        variant: 'success',
+                                                        onClick: () => showMessage('🎉 Success! Action completed.'),
+                                                        children: 'Show Success'
+                                                    }),
+                                                    Button({
+                                                        variant: 'info',
+                                                        onClick: () => {
+                                                            const name = prompt('What\'s your name?');
+                                                            if (name) showMessage(`👋 Hello, ${name}!`);
+                                                        },
+                                                        children: 'Get User Input'
+                                                    }),
+                                                    Button({
+                                                        variant: 'secondary',
+                                                        onClick: () => {
+                                                            const confirmed = confirm('Clear all todos?');
+                                                            if (confirmed) {
+                                                                todos = [];
+                                                                render();
+                                                                showMessage('📋 All todos cleared!');
+                                                            }
+                                                        },
+                                                        children: 'Clear All Todos'
+                                                    })
+                                                ]
+                                            }
+                                        ]
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            });
+        }
+        
+        // Render function
+        function render() {
+            bw.DOM('#app', InteractiveApp());
+        }
+        
+        // Initial render
+        render();
+        
+        // Update clock every second
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>

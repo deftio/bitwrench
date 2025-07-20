@@ -3,158 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitwrench v2 Test</title>
+    <title>Basic Components - Bitwrench v2</title>
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="../dist/bitwrench.css">
+    <link rel="stylesheet" href="bitwrench_examples.css">
 </head>
 <body>
     <div id="app"></div>
-
-    <script type="module">
-        // For testing, we'll use the UMD build
-        // import bw from '../dist/bitwrench.esm.js';
-    </script>
+    
     <script src="../dist/bitwrench.umd.js"></script>
+    <script src="../src/bitwrench-components-inline.js"></script>
+    <script src="shared-navbar.js"></script>
     <script>
-        
-        // Load default styles
-        bw.loadDefaultStyles();
-        
-        // Create a simple component
-        const Navbar = ({ brand, links }) => ({
-            t: "nav",
-            a: { class: "navbar" },
-            c: [
-                {
-                    t: "div",
-                    a: { class: "navbar-brand" },
-                    c: brand
-                },
-                {
-                    t: "ul",
-                    a: { class: "navbar-nav" },
-                    c: links.map(link => ({
-                        t: "li",
-                        c: {
-                            t: "a",
-                            a: { 
-                                href: link.href,
-                                class: ["nav-link", link.active && "active"].filter(Boolean)
-                            },
-                            c: link.text
-                        }
-                    }))
-                }
-            ]
-        });
-        
-        const Card = ({ title, content, footer }) => ({
-            t: "div",
-            a: { class: "card" },
-            c: [
-                {
-                    t: "div",
-                    a: { class: "card-body" },
-                    c: [
-                        title && { t: "h5", a: { class: "card-title" }, c: title },
-                        { t: "p", a: { class: "card-text" }, c: content }
-                    ].filter(Boolean)
-                },
-                footer && {
-                    t: "div",
-                    a: { class: "card-footer" },
-                    c: footer
-                }
-            ].filter(Boolean)
-        });
-        
-        const Button = ({ text, variant = "primary", onClick }) => ({
-            t: "button",
-            a: { 
-                class: `btn btn-${variant}`,
-                onclick: onClick
-            },
-            c: text
-        });
+        // Component shortcuts
+        const { Container, Row, Col, Card, Button, Badge, Alert, Progress } = bw.components;
         
         // Create the app
-        const App = () => ({
-            t: "div",
-            c: [
-                Navbar({
-                    brand: "Bitwrench v2",
-                    links: [
-                        { text: "Home", href: "#", active: true },
-                        { text: "Features", href: "#features" },
-                        { text: "Docs", href: "#docs" }
-                    ]
-                }),
+        const App = () => ExamplePage({
+            title: 'Basic Components',
+            content: [
                 {
-                    t: "div",
-                    a: { class: "container", style: { "margin-top": "2rem" } },
+                    t: 'h1',
+                    a: { class: 'mb-4' },
+                    c: 'Basic Components'
+                },
+                {
+                    t: 'p',
+                    a: { class: 'lead mb-4' },
+                    c: 'Explore the fundamental UI components in Bitwrench v2'
+                },
+                
+                // Buttons Section
+                {
+                    t: 'section',
+                    a: { class: 'mb-5' },
                     c: [
-                        {
-                            t: "h1",
-                            c: "Welcome to Bitwrench v2"
-                        },
-                        {
-                            t: "p",
-                            a: { class: "lead" },
-                            c: "Build beautiful UIs with just JavaScript objects. Zero dependencies, works everywhere."
-                        },
-                        {
-                            t: "div",
-                            a: { class: "row" },
-                            c: [
+                        { t: 'h2', a: { class: 'mb-3' }, c: 'Buttons' },
+                        Card({
+                            children: [
+                                { t: 'h5', a: { class: 'card-title' }, c: 'Button Variants' },
                                 {
-                                    t: "div",
-                                    a: { class: "col col-md-4" },
-                                    c: Card({
-                                        title: "Simple",
-                                        content: "UI as data - just JavaScript objects",
-                                        footer: Button({
-                                            text: "Learn More",
-                                            onClick: () => alert("Simple!")
-                                        })
-                                    })
+                                    t: 'div',
+                                    a: { class: 'd-flex flex-wrap gap-2 mb-3' },
+                                    c: [
+                                        Button({ variant: 'primary', children: 'Primary' }),
+                                        Button({ variant: 'secondary', children: 'Secondary' }),
+                                        Button({ variant: 'success', children: 'Success' }),
+                                        Button({ variant: 'danger', children: 'Danger' }),
+                                        Button({ variant: 'warning', children: 'Warning' }),
+                                        Button({ variant: 'info', children: 'Info' }),
+                                        Button({ variant: 'light', children: 'Light' }),
+                                        Button({ variant: 'dark', children: 'Dark' })
+                                    ]
                                 },
+                                { t: 'h5', a: { class: 'card-title mt-4' }, c: 'Button Sizes' },
                                 {
-                                    t: "div",
-                                    a: { class: "col col-md-4" },
-                                    c: Card({
-                                        title: "Beautiful",
-                                        content: "Modern, responsive design out of the box",
-                                        footer: Button({
-                                            text: "See Examples",
-                                            variant: "secondary",
-                                            onClick: () => alert("Beautiful!")
-                                        })
-                                    })
-                                },
-                                {
-                                    t: "div",
-                                    a: { class: "col col-md-4" },
-                                    c: Card({
-                                        title: "Universal",
-                                        content: "Works in browsers and Node.js",
-                                        footer: Button({
-                                            text: "Get Started",
-                                            variant: "success",
-                                            onClick: () => alert("Universal!")
-                                        })
-                                    })
+                                    t: 'div',
+                                    a: { class: 'd-flex align-items-center gap-2' },
+                                    c: [
+                                        Button({ variant: 'primary', size: 'lg', children: 'Large' }),
+                                        Button({ variant: 'primary', children: 'Normal' }),
+                                        Button({ variant: 'primary', size: 'sm', children: 'Small' })
+                                    ]
                                 }
                             ]
-                        }
+                        })
+                    ]
+                },
+                
+                // Alerts Section
+                {
+                    t: 'section',
+                    a: { class: 'mb-5' },
+                    c: [
+                        { t: 'h2', a: { class: 'mb-3' }, c: 'Alerts' },
+                        Card({
+                            children: [
+                                Alert({ variant: 'primary', children: 'This is a primary alert — check it out!' }),
+                                Alert({ variant: 'success', children: '✓ Success! Your operation completed successfully.' }),
+                                Alert({ variant: 'danger', children: '⚠️ Error! Something went wrong.' }),
+                                Alert({ variant: 'warning', children: 'Warning! Please review your input.' }),
+                                Alert({ variant: 'info', children: 'ℹ️ Info: Here\'s some helpful information.' })
+                            ]
+                        })
+                    ]
+                },
+                
+                // Badges Section
+                {
+                    t: 'section',
+                    a: { class: 'mb-5' },
+                    c: [
+                        { t: 'h2', a: { class: 'mb-3' }, c: 'Badges' },
+                        Card({
+                            children: [
+                                {
+                                    t: 'div',
+                                    a: { class: 'mb-3' },
+                                    c: [
+                                        Badge({ variant: 'primary', children: 'Primary', class: 'me-2' }),
+                                        Badge({ variant: 'secondary', children: 'Secondary', class: 'me-2' }),
+                                        Badge({ variant: 'success', children: 'Success', class: 'me-2' }),
+                                        Badge({ variant: 'danger', children: 'Danger', class: 'me-2' }),
+                                        Badge({ variant: 'warning', children: 'Warning', class: 'me-2' }),
+                                        Badge({ variant: 'info', children: 'Info', class: 'me-2' }),
+                                        Badge({ variant: 'light', children: 'Light', class: 'me-2' }),
+                                        Badge({ variant: 'dark', children: 'Dark' })
+                                    ]
+                                },
+                                {
+                                    t: 'h5',
+                                    c: [
+                                        'Example heading ',
+                                        Badge({ variant: 'danger', children: 'New' })
+                                    ]
+                                }
+                            ]
+                        })
+                    ]
+                },
+                
+                // Progress Bars Section
+                {
+                    t: 'section',
+                    a: { class: 'mb-5' },
+                    c: [
+                        { t: 'h2', a: { class: 'mb-3' }, c: 'Progress Bars' },
+                        Card({
+                            children: [
+                                {
+                                    t: 'div',
+                                    a: { class: 'mb-3' },
+                                    c: Progress({ value: 25, variant: 'primary' })
+                                },
+                                {
+                                    t: 'div',
+                                    a: { class: 'mb-3' },
+                                    c: Progress({ value: 50, variant: 'success' })
+                                },
+                                {
+                                    t: 'div',
+                                    a: { class: 'mb-3' },
+                                    c: Progress({ value: 75, variant: 'warning', striped: true })
+                                },
+                                {
+                                    t: 'div',
+                                    c: Progress({ value: 90, variant: 'danger', striped: true, animated: true })
+                                }
+                            ]
+                        })
+                    ]
+                },
+                
+                // Cards Section
+                {
+                    t: 'section',
+                    a: { class: 'mb-5' },
+                    c: [
+                        { t: 'h2', a: { class: 'mb-3' }, c: 'Cards' },
+                        Row({
+                            children: [
+                                Col({
+                                    md: 4,
+                                    children: Card({
+                                        title: 'Card Title',
+                                        text: 'Some quick example text to build on the card title and make up the bulk of the card\'s content.',
+                                        children: Button({ variant: 'primary', children: 'Go somewhere' }),
+                                        class: 'mb-4'
+                                    })
+                                }),
+                                Col({
+                                    md: 4,
+                                    children: Card({
+                                        header: 'Featured',
+                                        title: 'Special Card',
+                                        text: 'With supporting text below as a natural lead-in to additional content.',
+                                        footer: 'Card footer',
+                                        class: 'mb-4'
+                                    })
+                                }),
+                                Col({
+                                    md: 4,
+                                    children: Card({
+                                        title: 'Card with Shadow',
+                                        text: 'This card has a shadow effect on hover.',
+                                        shadow: true,
+                                        class: 'mb-4'
+                                    })
+                                })
+                            ]
+                        })
                     ]
                 }
             ]
         });
         
-        // Mount to DOM
-        bw.DOM("#app", App());
-        
-        // Log version info
-        console.log("Bitwrench v" + bw.version + " loaded!");
-        console.log("Full version info:", bw.versionInfo);
+        // Mount the app
+        bw.DOM('#app', App());
     </script>
 </body>
 </html>

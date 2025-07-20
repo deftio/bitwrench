@@ -63,7 +63,8 @@
 	"scripts": {
 		"generate-version": "node tools/generate-version.cjs",
 		"prebuild": "npm run generate-version",
-		"build": "rollup --config",
+		"build": "rollup --config && npm run build:css",
+		"build:css": "node src/generate-css.js",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
 		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",

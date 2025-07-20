@@ -81,3 +81,89 @@ Each format has both minified and non-minified versions with source maps.
 - CSS can be generated from JavaScript or included separately
 - Global namespace: `bw` (configurable in UMD builds)
 - All builds include the core CSS generation functionality
+
+## Bitwrench v2 Architecture
+
+### Philosophy
+Bitwrench v2 is a counter-thesis to modern JavaScript frameworks. Instead of JSX and virtual DOMs, it uses pure JavaScript objects (TACO format) to represent UI. This approach:
+- Eliminates build steps and transpilation
+- Works directly with native DOM APIs
+- Provides full control over HTML generation
+- Supports both server-side rendering and client-side updates
+
+### TACO Format (Tag-Attributes-Content-Options)
+```javascript
+{
+  t: "div",                    // tag name
+  a: { class: "card" },       // attributes
+  c: "Hello World",           // content (string, array, or nested TACOs)
+  o: {                        // options
+    mounted: (el) => {},      // lifecycle hook
+    unmount: (el) => {},      // cleanup hook
+    state: {}                 // component state
+  }
+}
+```
+
+### Core v2 Functions
+
+#### HTML Generation
+- `bw.html(taco, options)` - Convert TACO to HTML string
+- `bw.createDOM(taco, options)` - Create DOM element from TACO
+- `bw.DOM(selector, taco, options)` - Mount TACO to DOM
+
+#### CSS Generation
+- `bw.css(rules, options)` - Generate CSS from JS objects
+- `bw.injectCSS(css, options)` - Inject CSS into document
+- `bw.loadDefaultStyles()` - Load Bootstrap-like defaults
+
+#### Utilities
+- `bw.typeOf(x)` - Enhanced type detection
+- `bw.uuid()` - Generate unique IDs
+- `bw.escapeHTML(str)` - Escape HTML special chars
+- `bw.mapScale(x, in0, in1, out0, out1)` - Map value between ranges
+- `bw.clip(value, min, max)` - Clamp value
+- `bw.$(selector)` - DOM selection (always returns array)
+- `bw.cleanup(element)` - Clean up lifecycle hooks
+
+### Legacy v1 Functions Retained in v2
+
+#### Array Utilities
+- `bw.arrayUniq(arr)` - Get unique elements
+- `bw.arrayBinA(a, b)` - Intersection of two arrays
+- `bw.arrayBNotInA(a, b)` - Elements in b not in a
+
+#### Color Functions
+- `bw.colorParse(str)` - Parse CSS color to [r,g,b,a,"rgb/hsl"]
+- `bw.colorInterp(x, in0, in1, colors)` - Interpolate between colors
+- `bw.colorHslToRgb(h, s, l, a)` - Convert HSL to RGB
+- `bw.colorRgbToHsl(r, g, b, a)` - Convert RGB to HSL
+
+#### Data Generation
+- `bw.loremIpsum(numChars)` - Generate Lorem Ipsum text
+- `bw.multiArray(value, dims)` - Create multidimensional arrays
+
+#### HTML Generation
+- `bw.htmlTable(data, opts)` - Create HTML table from array
+- `bw.htmlTabs(tabData, opts)` - Create tab interface
+
+#### Browser Utilities
+- `bw.setCookie(name, value, days, options)` - Set cookie with options
+- `bw.getCookie(name, default)` - Get cookie value
+- `bw.getURLParam(key, default)` - Get URL parameter
+
+#### Timing Utilities
+- `bw.setIntervalX(fn, delay, count)` - Run interval N times
+- `bw.repeatUntil(test, success, fail, delay, max)` - Retry until condition
+
+#### Other Utilities
+- `bw.choice(x, choices, default)` - Dictionary as switch
+- `bw.naturalCompare(a, b)` - Natural sort comparison
+
+### v2 Development Files
+- `/src/bitwrench_v2.js` - Main v2 implementation
+- `/src/bitwrench-styles.js` - Default Bootstrap-inspired styles
+- `/examples_v2/` - v2 specific examples
+- `/dev/bitwrench_v2_design.md` - v2 design philosophy
+- `/dev/bitwrench_v2_components.md` - Component examples
+- `/dev/bitwrench_v2_examples.md` - Full page examples

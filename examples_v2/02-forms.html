@@ -3,56 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bitwrench v2 - Form Components</title>
+    <title>Form Components - Bitwrench v2</title>
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="../dist/bitwrench.css">
+    <link rel="stylesheet" href="bitwrench_examples.css">
 </head>
 <body>
     <div id="app"></div>
     
     <script src="../dist/bitwrench.umd.js"></script>
+    <script src="../src/bitwrench-components-inline.js"></script>
+    <script src="shared-navbar.js"></script>
     <script>
-        // Load default styles
-        bw.loadDefaultStyles();
+        // Component shortcuts
+        const { Card, Row, Col, Button } = bw.components;
         
         // Form components
         const FormGroup = ({ label, children }) => ({
             t: "div",
-            a: { class: "form-group" },
+            a: { class: "form-group mb-3" },
             c: [
                 label && { t: "label", a: { class: "form-label" }, c: label },
                 children
             ].filter(Boolean)
         });
         
-        const Input = ({ type = "text", placeholder, value, onChange, id }) => ({
+        const Input = ({ type = "text", placeholder, value, onChange, id, required }) => ({
             t: "input",
-            a: {
+            a: { 
                 type,
                 class: "form-control",
                 placeholder,
                 value,
+                onchange: onChange,
+                oninput: onChange,
                 id,
-                oninput: onChange
+                required
             }
         });
         
         const Select = ({ options, value, onChange, id }) => ({
             t: "select",
-            a: {
-                class: "form-control",
+            a: { 
+                class: "form-select",
                 value,
-                id,
-                onchange: onChange
+                onchange: onChange,
+                id
             },
             c: options.map(opt => ({
                 t: "option",
-                a: { value: opt.value },
+                a: { value: opt.value, selected: opt.value === value },
                 c: opt.label
             }))
         });
         
+        const Textarea = ({ placeholder, value, onChange, rows = 3, id }) => ({
+            t: "textarea",
+            a: {
+                class: "form-control",
+                placeholder,
+                value,
+                onchange: onChange,
+                oninput: onChange,
+                rows,
+                id
+            }
+        });
+        
         const Checkbox = ({ label, checked, onChange, id }) => ({
             t: "div",
-            a: { class: "form-check" },
+            a: { class: "form-check mb-3" },
             c: [
                 {
                     t: "input",
@@ -60,16 +80,13 @@
                         type: "checkbox",
                         class: "form-check-input",
                         checked,
-                        id,
-                        onchange: onChange
+                        onchange: onChange,
+                        id
                     }
                 },
                 {
                     t: "label",
-                    a: { 
-                        class: "form-check-label",
-                        for: id
-                    },
+                    a: { class: "form-check-label", for: id },
                     c: label
                 }
             ]
@@ -82,7 +99,9 @@
                 name: '',
                 email: '',
                 country: 'us',
-                subscribe: false
+                message: '',
+                subscribe: false,
+                experience: 'intermediate'
             };
             
             const handleSubmit = (e) => {
@@ -90,179 +109,179 @@
                 alert('Form submitted!\n' + JSON.stringify(formData, null, 2));
             };
             
-            return {
-                t: "div",
-                c: [
+            const handleReset = () => {
+                formData = {
+                    name: '',
+                    email: '',
+                    country: 'us',
+                    message: '',
+                    subscribe: false,
+                    experience: 'intermediate'
+                };
+                // Re-render to update form
+                bw.DOM("#app", App());
+            };
+            
+            return ExamplePage({
+                title: 'Form Components',
+                content: [
                     {
-                        t: "nav",
-                        a: { class: "navbar" },
-                        c: {
-                            t: "div",
-                            a: { class: "container" },
-                            c: [
-                                {
-                                    t: "a",
-                                    a: { href: "index.html", class: "navbar-brand" },
-                                    c: "← Back to Examples"
-                                }
-                            ]
-                        }
+                        t: "h1",
+                        a: { class: "mb-4" },
+                        c: "Form Components"
                     },
                     {
-                        t: "div",
-                        a: { class: "container", style: { "margin-top": "2rem" } },
-                        c: [
-                            {
-                                t: "h1",
-                                c: "Form Components"
-                            },
-                            {
-                                t: "p",
-                                a: { class: "lead" },
-                                c: "Beautiful form components with built-in styling"
-                            },
-                            {
-                                t: "div",
-                                a: { class: "row" },
-                                c: [
-                                    {
-                                        t: "div",
-                                        a: { class: "col col-md-6" },
-                                        c: {
-                                            t: "div",
-                                            a: { class: "card" },
-                                            c: {
+                        t: "p",
+                        a: { class: "lead mb-4" },
+                        c: "Beautiful form components with built-in styling and validation"
+                    },
+                    Row({
+                        children: [
+                            Col({
+                                md: 6,
+                                children: Card({
+                                    title: "Contact Form",
+                                    children: {
+                                        t: "form",
+                                        a: { onsubmit: handleSubmit },
+                                        c: [
+                                            FormGroup({
+                                                label: "Name",
+                                                children: Input({
+                                                    placeholder: "Enter your name",
+                                                    value: formData.name,
+                                                    onChange: (e) => formData.name = e.target.value,
+                                                    required: true
+                                                })
+                                            }),
+                                            FormGroup({
+                                                label: "Email",
+                                                children: Input({
+                                                    type: "email",
+                                                    placeholder: "Enter your email",
+                                                    value: formData.email,
+                                                    onChange: (e) => formData.email = e.target.value,
+                                                    required: true
+                                                })
+                                            }),
+                                            FormGroup({
+                                                label: "Country",
+                                                children: Select({
+                                                    options: [
+                                                        { value: "us", label: "United States" },
+                                                        { value: "uk", label: "United Kingdom" },
+                                                        { value: "ca", label: "Canada" },
+                                                        { value: "au", label: "Australia" },
+                                                        { value: "other", label: "Other" }
+                                                    ],
+                                                    value: formData.country,
+                                                    onChange: (e) => formData.country = e.target.value
+                                                })
+                                            }),
+                                            FormGroup({
+                                                label: "Message",
+                                                children: Textarea({
+                                                    placeholder: "Enter your message...",
+                                                    value: formData.message,
+                                                    onChange: (e) => formData.message = e.target.value,
+                                                    rows: 4
+                                                })
+                                            }),
+                                            {
                                                 t: "div",
-                                                a: { class: "card-body" },
-                                                c: [
-                                                    { t: "h5", a: { class: "card-title" }, c: "Contact Form" },
-                                                    {
-                                                        t: "form",
-                                                        a: { onsubmit: handleSubmit },
-                                                        c: [
-                                                            FormGroup({
-                                                                label: "Name",
-                                                                children: Input({
-                                                                    placeholder: "Enter your name",
-                                                                    value: formData.name,
-                                                                    onChange: (e) => formData.name = e.target.value
-                                                                })
-                                                            }),
-                                                            FormGroup({
-                                                                label: "Email",
-                                                                children: Input({
-                                                                    type: "email",
-                                                                    placeholder: "Enter your email",
-                                                                    value: formData.email,
-                                                                    onChange: (e) => formData.email = e.target.value
-                                                                })
-                                                            }),
-                                                            FormGroup({
-                                                                label: "Country",
-                                                                children: Select({
-                                                                    options: [
-                                                                        { value: "us", label: "United States" },
-                                                                        { value: "uk", label: "United Kingdom" },
-                                                                        { value: "ca", label: "Canada" },
-                                                                        { value: "au", label: "Australia" }
-                                                                    ],
-                                                                    value: formData.country,
-                                                                    onChange: (e) => formData.country = e.target.value
-                                                                })
-                                                            }),
-                                                            Checkbox({
-                                                                label: "Subscribe to newsletter",
-                                                                checked: formData.subscribe,
-                                                                onChange: (e) => formData.subscribe = e.target.checked,
-                                                                id: "subscribe"
-                                                            }),
-                                                            {
-                                                                t: "div",
-                                                                a: { style: { "margin-top": "1rem" } },
-                                                                c: [
-                                                                    {
-                                                                        t: "button",
-                                                                        a: { 
-                                                                            type: "submit",
-                                                                            class: "btn btn-primary"
-                                                                        },
-                                                                        c: "Submit"
-                                                                    },
-                                                                    {
-                                                                        t: "button",
-                                                                        a: { 
-                                                                            type: "button",
-                                                                            class: "btn btn-secondary",
-                                                                            style: { "margin-left": "0.5rem" },
-                                                                            onclick: () => alert("Form reset!")
-                                                                        },
-                                                                        c: "Reset"
-                                                                    }
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    {
-                                        t: "div",
-                                        a: { class: "col col-md-6" },
-                                        c: {
-                                            t: "div",
-                                            a: { class: "card" },
-                                            c: {
+                                                a: { class: "mb-3" },
+                                                c: Checkbox({
+                                                    label: "Subscribe to newsletter",
+                                                    checked: formData.subscribe,
+                                                    onChange: (e) => formData.subscribe = e.target.checked,
+                                                    id: "subscribe"
+                                                })
+                                            },
+                                            {
                                                 t: "div",
-                                                a: { class: "card-body" },
+                                                a: { class: "d-flex gap-2" },
                                                 c: [
-                                                    { t: "h5", a: { class: "card-title" }, c: "Form Variations" },
-                                                    FormGroup({
-                                                        label: "Disabled Input",
-                                                        children: {
-                                                            t: "input",
-                                                            a: {
-                                                                type: "text",
-                                                                class: "form-control",
-                                                                disabled: true,
-                                                                value: "This input is disabled"
-                                                            }
-                                                        }
+                                                    Button({
+                                                        type: "submit",
+                                                        variant: "primary",
+                                                        children: "Submit"
                                                     }),
-                                                    FormGroup({
-                                                        label: "Textarea",
-                                                        children: {
-                                                            t: "textarea",
-                                                            a: {
-                                                                class: "form-control",
-                                                                rows: "3",
-                                                                placeholder: "Enter multiple lines of text..."
-                                                            }
-                                                        }
-                                                    }),
-                                                    FormGroup({
-                                                        label: "Range Slider",
-                                                        children: {
-                                                            t: "input",
-                                                            a: {
-                                                                type: "range",
-                                                                class: "form-control",
-                                                                min: "0",
-                                                                max: "100",
-                                                                value: "50"
-                                                            }
-                                                        }
+                                                    Button({
+                                                        type: "button",
+                                                        variant: "secondary",
+                                                        onClick: handleReset,
+                                                        children: "Reset"
                                                     })
                                                 ]
                                             }
-                                        }
+                                        ]
                                     }
+                                })
+                            }),
+                            Col({
+                                md: 6,
+                                children: [
+                                    Card({
+                                        title: "Form Controls Demo",
+                                        class: "mb-4",
+                                        children: [
+                                            { t: "h6", c: "Input Variants" },
+                                            FormGroup({
+                                                label: "Text Input",
+                                                children: Input({ placeholder: "Standard text input" })
+                                            }),
+                                            FormGroup({
+                                                label: "Password Input",
+                                                children: Input({ type: "password", placeholder: "Enter password" })
+                                            }),
+                                            FormGroup({
+                                                label: "Number Input",
+                                                children: Input({ type: "number", placeholder: "Enter a number" })
+                                            }),
+                                            FormGroup({
+                                                label: "Date Input",
+                                                children: Input({ type: "date" })
+                                            })
+                                        ]
+                                    }),
+                                    Card({
+                                        title: "Radio Buttons",
+                                        children: [
+                                            { t: "p", c: "Select your experience level:" },
+                                            ...["beginner", "intermediate", "advanced"].map(level => ({
+                                                t: "div",
+                                                a: { class: "form-check" },
+                                                c: [
+                                                    {
+                                                        t: "input",
+                                                        a: {
+                                                            type: "radio",
+                                                            class: "form-check-input",
+                                                            name: "experience",
+                                                            id: `exp-${level}`,
+                                                            value: level,
+                                                            checked: formData.experience === level,
+                                                            onchange: (e) => {
+                                                                formData.experience = e.target.value;
+                                                                bw.DOM("#app", App());
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        t: "label",
+                                                        a: { class: "form-check-label", for: `exp-${level}` },
+                                                        c: level.charAt(0).toUpperCase() + level.slice(1)
+                                                    }
+                                                ]
+                                            }))
+                                        ]
+                                    })
                                 ]
-                            }
+                            })
                         ]
-                    }
+                    })
                 ]
-            };
+            });
         };
         
         // Mount the app

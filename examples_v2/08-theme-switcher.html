@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Switcher - Bitwrench v2</title>
+    <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="../dist/bitwrench.css">
+    <link rel="stylesheet" href="bitwrench_examples.css">
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script src="../dist/bitwrench.umd.js"></script>
+    <script src="../src/bitwrench-components-inline.js"></script>
+    <script src="shared-navbar.js"></script>
+    <script>
+        // Component shortcuts
+        const { Container, Row, Col, Card, Button, Alert, Badge, Progress } = bw.components;
+        
+        // Theme state
+        let currentTheme = 'light';
+        
+        // Apply theme to body
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                document.body.classList.add('bw-theme-dark');
+            } else {
+                document.body.classList.remove('bw-theme-dark');
+            }
+            currentTheme = theme;
+        };
+        
+        // Theme toggle component
+        const ThemeToggle = () => ({
+            t: 'div',
+            a: { class: 'text-end mb-4' },
+            c: {
+                t: 'button',
+                a: { 
+                    class: 'btn btn-outline-secondary',
+                    onclick: () => {
+                        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                        applyTheme(newTheme);
+                        // Re-render the app to update the toggle button text
+                        bw.DOM('#app', App());
+                    }
+                },
+                c: currentTheme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'
+            }
+        });
+        
+        // Create the app
+        const App = () => ExamplePage({
+            title: 'Theme Switcher',
+            content: [
+                ThemeToggle(),
+                
+                {
+                    t: 'h1',
+                    a: { class: 'mb-4' },
+                    c: 'Theme Switching Demo'
+                },
+                {
+                    t: 'p',
+                    a: { class: 'lead mb-4' },
+                    c: 'Toggle between light and dark themes with the switch above'
+                },
+                
+                // Demo content section
+                {
+                    t: 'section',
+                    a: { class: 'mb-5' },
+                    c: [
+                        { t: 'h2', a: { class: 'mb-3' }, c: 'Components in Current Theme' },
+                        
+                        // Cards
+                        Row({
+                            children: [
+                                Col({
+                                    md: 6,
+                                    children: Card({
+                                        title: 'Card Example',
+                                        text: 'This card adapts to the current theme automatically.',
+                                        class: 'mb-4'
+                                    })
+                                }),
+                                Col({
+                                    md: 6,
+                                    children: Card({
+                                        header: 'Featured',
+                                        title: 'Another Card',
+                                        text: 'All components maintain readability in both themes.',
+                                        footer: 'Card footer',
+                                        class: 'mb-4'
+                                    })
+                                })
+                            ]
+                        }),
+                        
+                        // Alerts
+                        Card({
+                            title: 'Alerts',
+                            class: 'mb-4',
+                            children: [
+                                Alert({ variant: 'primary', children: 'This is a primary alert in the current theme' }),
+                                Alert({ variant: 'success', children: '✓ Success alerts remain visible in both themes' }),
+                                Alert({ variant: 'warning', children: '⚠️ Warning messages adapt to the theme' })
+                            ]
+                        }),
+                        
+                        // Buttons
+                        Card({
+                            title: 'Buttons',
+                            class: 'mb-4',
+                            children: {
+                                t: 'div',
+                                a: { class: 'd-flex flex-wrap gap-2' },
+                                c: [
+                                    Button({ variant: 'primary', children: 'Primary' }),
+                                    Button({ variant: 'secondary', children: 'Secondary' }),
+                                    Button({ variant: 'success', children: 'Success' }),
+                                    Button({ variant: 'danger', children: 'Danger' }),
+                                    Button({ variant: 'light', children: 'Light' }),
+                                    Button({ variant: 'dark', children: 'Dark' })
+                                ]
+                            }
+                        }),
+                        
+                        // Badges and Progress
+                        Row({
+                            children: [
+                                Col({
+                                    md: 6,
+                                    children: Card({
+                                        title: 'Badges',
+                                        class: 'mb-4',
+                                        children: {
+                                            t: 'div',
+                                            c: [
+                                                Badge({ variant: 'primary', children: 'Primary', class: 'me-2' }),
+                                                Badge({ variant: 'secondary', children: 'Secondary', class: 'me-2' }),
+                                                Badge({ variant: 'success', children: 'Success', class: 'me-2' }),
+                                                Badge({ variant: 'info', children: 'Info', class: 'me-2' }),
+                                                Badge({ variant: 'warning', children: 'Warning', class: 'me-2' }),
+                                                Badge({ variant: 'danger', children: 'Danger' })
+                                            ]
+                                        }
+                                    })
+                                }),
+                                Col({
+                                    md: 6,
+                                    children: Card({
+                                        title: 'Progress Bars',
+                                        class: 'mb-4',
+                                        children: [
+                                            Progress({ value: 25, variant: 'primary', class: 'mb-2' }),
+                                            Progress({ value: 50, variant: 'success', class: 'mb-2' }),
+                                            Progress({ value: 75, variant: 'warning', striped: true })
+                                        ]
+                                    })
+                                })
+                            ]
+                        }),
+                        
+                        // Tables
+                        Card({
+                            title: 'Table Example',
+                            class: 'mb-4',
+                            children: {
+                                t: 'div',
+                                a: { class: 'table-responsive' },
+                                c: bw.makeTable({
+                                    data: [
+                                        ['Alice', 'alice@example.com', 'Active'],
+                                        ['Bob', 'bob@example.com', 'Pending'],
+                                        ['Charlie', 'charlie@example.com', 'Active']
+                                    ],
+                                    columns: [
+                                        { key: 0, label: 'Name' },
+                                        { key: 1, label: 'Email' },
+                                        { key: 2, label: 'Status' }
+                                    ],
+                                    className: 'table table-striped table-hover'
+                                })
+                            }
+                        }),
+                        
+                        // Code blocks
+                        Card({
+                            title: 'Code Blocks',
+                            children: [
+                                { t: 'p', c: 'Code blocks also adapt to the theme:' },
+                                {
+                                    t: 'pre',
+                                    a: { class: 'bg-light p-3 rounded' },
+                                    c: {
+                                        t: 'code',
+                                        c: `// JavaScript example
+const themeToggle = () => {
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+  applyTheme(newTheme);
+};`
+                                    }
+                                }
+                            ]
+                        })
+                    ]
+                }
+            ]
+        });
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('bw-theme') || 'light';
+        applyTheme(savedTheme);
+        
+        // Save theme preference when changed
+        const originalApplyTheme = applyTheme;
+        window.applyTheme = (theme) => {
+            originalApplyTheme(theme);
+            localStorage.setItem('bw-theme', theme);
+        };
+        
+        // Mount the app
+        bw.DOM('#app', App());
+    </script>
+</body>
+</html>
