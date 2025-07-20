@@ -168,15 +168,16 @@
                                         // Progress bar
                                         {
                                             t: 'div',
-                                            a: { class: 'mb-3' },
+                                            a: { class: 'mb-4' },
                                             c: [
                                                 { t: 'div', a: { class: 'd-flex justify-content-between mb-2' }, c: [
-                                                    { t: 'small', c: `${completedCount} of ${totalCount} completed` },
-                                                    { t: 'small', c: `${Math.round(completionPercent)}%` }
+                                                    { t: 'small', a: { class: 'text-muted' }, c: `${completedCount} of ${totalCount} completed` },
+                                                    { t: 'small', a: { class: 'text-muted' }, c: `${Math.round(completionPercent)}%` }
                                                 ]},
                                                 Progress({
                                                     value: completionPercent,
-                                                    variant: completionPercent === 100 ? 'success' : 'primary'
+                                                    variant: completionPercent === 100 ? 'success' : 'primary',
+                                                    height: '8px'
                                                 })
                                             ]
                                         },
@@ -189,31 +190,37 @@
                                                 ? { t: 'p', a: { class: 'text-muted text-center py-4' }, c: 'No todos yet. Add one above!' }
                                                 : todos.map(todo => ({
                                                     t: 'div',
-                                                    a: { class: 'list-group-item d-flex align-items-center' },
-                                                    c: [
-                                                        {
-                                                            t: 'input',
-                                                            a: {
-                                                                type: 'checkbox',
-                                                                class: 'form-check-input me-2',
-                                                                checked: todo.done,
-                                                                onchange: () => toggleTodo(todo.id)
-                                                            }
-                                                        },
-                                                        {
-                                                            t: 'span',
-                                                            a: { 
-                                                                class: todo.done ? 'text-decoration-line-through text-muted flex-grow-1' : 'flex-grow-1'
+                                                    a: { class: 'list-group-item' },
+                                                    c: {
+                                                        t: 'div',
+                                                        a: { class: 'd-flex align-items-center gap-3' },
+                                                        c: [
+                                                            {
+                                                                t: 'input',
+                                                                a: {
+                                                                    type: 'checkbox',
+                                                                    class: 'form-check-input mt-0',
+                                                                    checked: todo.done,
+                                                                    onchange: () => toggleTodo(todo.id),
+                                                                    style: { width: '20px', height: '20px', cursor: 'pointer' }
+                                                                }
                                                             },
-                                                            c: todo.text
-                                                        },
-                                                        Button({
-                                                            variant: 'danger',
-                                                            size: 'sm',
-                                                            onClick: () => deleteTodo(todo.id),
-                                                            children: '×'
-                                                        })
-                                                    ]
+                                                            {
+                                                                t: 'span',
+                                                                a: { 
+                                                                    class: todo.done ? 'text-decoration-line-through text-muted flex-grow-1' : 'flex-grow-1',
+                                                                    style: { fontSize: '16px' }
+                                                                },
+                                                                c: todo.text
+                                                            },
+                                                            Button({
+                                                                variant: 'outline-danger',
+                                                                size: 'sm',
+                                                                onClick: () => deleteTodo(todo.id),
+                                                                children: 'Delete'
+                                                            })
+                                                        ]
+                                                    }
                                                 }))
                                         }
                                     ]
@@ -228,28 +235,31 @@
                                     Card({
                                         class: 'mb-4',
                                         title: 'Counter Demo',
+                                        subtitle: 'Click buttons to update the count',
                                         children: [
                                             {
                                                 t: 'div',
                                                 a: { class: 'text-center' },
                                                 c: [
-                                                    { t: 'h2', a: { class: 'display-1 mb-4' }, c: counter },
+                                                    { t: 'h2', a: { class: 'display-1 mb-4', style: { fontWeight: '300' } }, c: counter },
                                                     {
                                                         t: 'div',
                                                         a: { class: 'd-flex gap-2 justify-content-center' },
                                                         c: [
                                                             Button({
                                                                 variant: 'primary',
+                                                                size: 'lg',
                                                                 onClick: incrementCounter,
-                                                                children: '+'
+                                                                children: [{ t: 'span', a: { style: { fontSize: '1.5rem' } }, c: '+' }]
                                                             }),
                                                             Button({
                                                                 variant: 'secondary',
+                                                                size: 'lg',
                                                                 onClick: decrementCounter,
-                                                                children: '-'
+                                                                children: [{ t: 'span', a: { style: { fontSize: '1.5rem' } }, c: '−' }]
                                                             }),
                                                             Button({
-                                                                variant: 'warning',
+                                                                variant: 'outline-warning',
                                                                 onClick: resetCounter,
                                                                 children: 'Reset'
                                                             })
@@ -263,7 +273,9 @@
                                     // Actions Card
                                     Card({
                                         title: 'Interactive Actions',
+                                        subtitle: 'Try these interactive features',
                                         children: [
+                                            { t: 'p', a: { class: 'text-muted small mb-3' }, c: 'Click buttons to see alerts, prompts, and actions' },
                                             {
                                                 t: 'div',
                                                 a: { class: 'd-grid gap-2' },
@@ -271,7 +283,7 @@
                                                     Button({
                                                         variant: 'success',
                                                         onClick: () => showMessage('🎉 Success! Action completed.'),
-                                                        children: 'Show Success'
+                                                        children: 'Show Success Alert'
                                                     }),
                                                     Button({
                                                         variant: 'info',
@@ -282,7 +294,7 @@
                                                         children: 'Get User Input'
                                                     }),
                                                     Button({
-                                                        variant: 'secondary',
+                                                        variant: 'outline-danger',
                                                         onClick: () => {
                                                             const confirmed = confirm('Clear all todos?');
                                                             if (confirmed) {

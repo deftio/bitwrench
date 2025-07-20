@@ -182,6 +182,47 @@ body.dark-mode {
   color: #e0e0e0;
 }
 
+/* Input group styling */
+.input-group {
+  display: flex;
+  width: 100%;
+}
+
+.input-group .form-control {
+  flex: 1 1 auto;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* Better spacing for forms */
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+/* Alert improvements */
+.alert {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+}
+
+.alert-success {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+/* Badge improvements */
+.badge {
+  font-weight: 500;
+  padding: 0.35em 0.65em;
+}
+
 body.dark-mode .bw-page-content {
   background-color: #1a1a1a;
 }
