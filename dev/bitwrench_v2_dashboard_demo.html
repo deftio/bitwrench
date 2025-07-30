@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitwrench v2 Dashboard Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+        }
+        
+        /* Bitwrench CSS Classes */
+        .bw-header {
+            background: #007bff;
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .bw-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+        
+        .bw-row {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .bw-col-3 {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .bw-col-12 {
+            flex: 0 0 100%;
+        }
+        
+        .bw-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        
+        .bw-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .bw-card-body {
+            padding: 24px;
+        }
+        
+        .bw-card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+        
+        .bw-card-content {
+            font-size: 32px;
+            font-weight: bold;
+            color: #212529;
+        }
+        
+        .bw-card-footer {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .bw-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        
+        .bw-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .bw-btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .bw-btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .bw-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .bw-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .bw-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .bw-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .bw-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .bw-sortable {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .bw-sortable::after {
+            content: '↕';
+            position: absolute;
+            right: 8px;
+            opacity: 0.3;
+        }
+        
+        .bw-sortable.asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        
+        .bw-sortable.desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+        
+        /* Theme support */
+        body.dark {
+            background: #222222;
+            color: #ffffff;
+        }
+        
+        body.dark .bw-header {
+            background: #375a7f;
+        }
+        
+        body.dark .bw-card {
+            background: #303030;
+            color: #ffffff;
+        }
+        
+        body.dark .bw-card-title {
+            color: #adb5bd;
+        }
+        
+        body.dark .bw-card-footer {
+            background: #495057;
+            border-color: #495057;
+        }
+        
+        body.dark .bw-table {
+            background: #303030;
+        }
+        
+        body.dark .bw-table th {
+            background: #495057;
+            border-color: #495057;
+        }
+        
+        body.dark .bw-table td {
+            border-color: #495057;
+        }
+        
+        body.dark .bw-table tbody tr:hover {
+            background: #495057;
+        }
+        
+        /* Utilities */
+        .bw-mb-4 { margin-bottom: 24px; }
+        .bw-text-success { color: #28a745; }
+        .bw-text-danger { color: #dc3545; }
+        
+        /* Period selector */
+        .period-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .period-selector select {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+        }
+        
+        body.dark .period-selector select {
+            background: #495057;
+            color: white;
+            border-color: #495057;
+        }
+        
+        /* Notifications */
+        .bw-notifications {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+        }
+        
+        .bw-notification {
+            background: white;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(320px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .bw-notification.info {
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .bw-notification.success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .bw-notification.error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .bw-notification button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            opacity: 0.5;
+        }
+        
+        .bw-notification button:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script>
+        // Bitwrench v2 implementation
+        window.bw = {
+            _uuidCounter: 0,
+            _handles: new WeakMap(),
+            _mountedComponents: new Map(),
+            _eventBus: new EventTarget(),
+            _stores: new Map(),
+
+            // Generate unique UUID
+            uuid() {
+                return `bw_uuid_${Date.now()}_${++this._uuidCounter}`;
+            },
+
+            // Convert style object to CSS string
+            makeCSS(styleObj) {
+                if (typeof styleObj === 'string') return styleObj;
+                
+                return Object.entries(styleObj)
+                    .map(([key, value]) => {
+                        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+                        const cssValue = typeof value === 'number' && 
+                            !['opacity', 'zIndex', 'fontWeight'].includes(key) 
+                            ? `${value}px` : value;
+                        return `${cssKey}: ${cssValue}`;
+                    })
+                    .join('; ');
+            },
+
+            // Create DOM element from TACO
+            createDOM(taco) {
+                if (!taco) return null;
+                if (typeof taco === 'string') {
+                    return document.createTextNode(taco);
+                }
+                
+                const { t, a = {}, c = '', o = {} } = taco;
+                const element = document.createElement(t);
+                
+                // Set attributes
+                Object.entries(a).forEach(([key, value]) => {
+                    if (key === 'style' && typeof value === 'object') {
+                        element.setAttribute('style', this.makeCSS(value));
+                    } else if (key.startsWith('on') && typeof value === 'function') {
+                        element[key] = value;
+                    } else if (value !== undefined && value !== null) {
+                        element.setAttribute(key, value);
+                    }
+                });
+                
+                // Process children
+                const processChild = (child) => {
+                    if (!child && child !== 0) return null;
+                    if (typeof child === 'string' || typeof child === 'number') {
+                        return document.createTextNode(String(child));
+                    }
+                    if (child.nodeType) {
+                        return child;
+                    }
+                    if (typeof child === 'function') {
+                        return processChild(child());
+                    }
+                    if (Array.isArray(child)) {
+                        const fragment = document.createDocumentFragment();
+                        child.forEach(c => {
+                            const node = processChild(c);
+                            if (node) fragment.appendChild(node);
+                        });
+                        return fragment;
+                    }
+                    return this.createDOM(child);
+                };
+                
+                if (Array.isArray(c)) {
+                    c.forEach(child => {
+                        const node = processChild(child);
+                        if (node) element.appendChild(node);
+                    });
+                } else {
+                    const node = processChild(c);
+                    if (node) element.appendChild(node);
+                }
+                
+                return element;
+            },
+
+            // Render component and return handle
+            renderComponent(taco, parentHandle = null) {
+                const uuid = this.uuid();
+                const modifiedTaco = {
+                    ...taco,
+                    a: {
+                        ...taco.a,
+                        class: `${taco.a?.class || ''} ${uuid}`.trim()
+                    }
+                };
+                
+                const element = this.createDOM(modifiedTaco);
+                
+                // Create handle
+                const handle = {
+                    element,
+                    uuid,
+                    type: taco.o?.type || 'generic',
+                    state: { ...(taco.o?.state || {}) },
+                    parent: parentHandle,
+                    children: new Map(),
+                    refs: new Map(),
+                    
+                    // Common methods
+                    getBwId() { return this.uuid; },
+                    select(selector) { 
+                        return Array.from(this.element.querySelectorAll(selector));
+                    },
+                    find(ref) {
+                        return this.refs.get(ref);
+                    },
+                    show() { 
+                        this.element.style.display = ''; 
+                        return this;
+                    },
+                    hide() { 
+                        this.element.style.display = 'none'; 
+                        return this;
+                    },
+                    addClass(className) { 
+                        this.element.classList.add(className); 
+                        return this;
+                    },
+                    removeClass(className) { 
+                        this.element.classList.remove(className); 
+                        return this;
+                    },
+                    on(event, handler) {
+                        this.element.addEventListener(event, handler);
+                        return this;
+                    },
+                    emit(event, data) {
+                        const customEvent = new CustomEvent(event, { 
+                            detail: data,
+                            bubbles: true 
+                        });
+                        this.element.dispatchEvent(customEvent);
+                        return this;
+                    },
+                    setState(updates) {
+                        Object.assign(this.state, updates);
+                        if (this.refresh) this.refresh();
+                        return this;
+                    },
+                    getState(key) {
+                        return key ? this.state[key] : this.state;
+                    },
+                    update(props) {
+                        // Component-specific update logic
+                        if (taco.o?.updates) {
+                            Object.entries(props).forEach(([key, value]) => {
+                                if (taco.o.updates[key]) {
+                                    taco.o.updates[key](this.element, value, this.state[key], this);
+                                    this.state[key] = value;
+                                }
+                            });
+                        }
+                        return this;
+                    },
+                    destroy() {
+                        if (taco.o?.unmount) {
+                            taco.o.unmount(this.element, this);
+                        }
+                        if (this.element.parentNode) {
+                            this.element.parentNode.removeChild(this.element);
+                        }
+                        bw._mountedComponents.delete(this.uuid);
+                        bw._handles.delete(this.element);
+                    }
+                };
+                
+                // Process child refs
+                if (taco.o?.ref && parentHandle) {
+                    parentHandle.refs.set(taco.o.ref, handle);
+                }
+                
+                // Store handle reference
+                this._handles.set(element, handle);
+                
+                // Call mounted lifecycle
+                if (taco.o?.mounted) {
+                    requestAnimationFrame(() => {
+                        taco.o.mounted(element, handle);
+                    });
+                }
+                
+                return handle;
+            },
+
+            // Mount to DOM
+            DOM(target, content) {
+                const targetEl = typeof target === 'string' 
+                    ? document.querySelector(target) 
+                    : target;
+                
+                if (!targetEl) {
+                    throw new Error(`Target not found: ${target}`);
+                }
+                
+                targetEl.innerHTML = '';
+                
+                if (content && content.element) {
+                    targetEl.appendChild(content.element);
+                    this._mountedComponents.set(content.uuid, true);
+                } else if (content && content.nodeType) {
+                    targetEl.appendChild(content);
+                } else if (typeof content === 'string') {
+                    targetEl.innerHTML = content;
+                } else if (content) {
+                    const element = this.createDOM(content);
+                    targetEl.appendChild(element);
+                }
+                
+                return targetEl;
+            },
+
+            // Event bus
+            on(event, handler) {
+                this._eventBus.addEventListener(event, handler);
+            },
+            
+            off(event, handler) {
+                this._eventBus.removeEventListener(event, handler);
+            },
+            
+            emit(event, data) {
+                this._eventBus.dispatchEvent(new CustomEvent(event, { detail: data }));
+            },
+
+            // Store creation
+            createStore(initialState = {}) {
+                const store = {
+                    _state: { ...initialState },
+                    _listeners: new Map(),
+                    
+                    get(path) {
+                        if (!path) return { ...this._state };
+                        const keys = path.split('.');
+                        return keys.reduce((obj, key) => obj?.[key], this._state);
+                    },
+                    
+                    set(path, value) {
+                        const keys = path.split('.');
+                        const lastKey = keys.pop();
+                        const target = keys.reduce((obj, key) => {
+                            if (!obj[key]) obj[key] = {};
+                            return obj[key];
+                        }, this._state);
+                        
+                        const oldValue = target[lastKey];
+                        target[lastKey] = value;
+                        
+                        // Notify listeners
+                        if (this._listeners.has(path)) {
+                            this._listeners.get(path).forEach(callback => {
+                                callback(value, oldValue);
+                            });
+                        }
+                        
+                        // Notify parent path listeners
+                        const parentPath = keys.join('.');
+                        if (parentPath && this._listeners.has(parentPath)) {
+                            this._listeners.get(parentPath).forEach(callback => {
+                                callback(this.get(parentPath));
+                            });
+                        }
+                    },
+                    
+                    subscribe(path, callback) {
+                        if (!this._listeners.has(path)) {
+                            this._listeners.set(path, []);
+                        }
+                        this._listeners.get(path).push(callback);
+                        
+                        // Return unsubscribe function
+                        return () => {
+                            const listeners = this._listeners.get(path);
+                            const index = listeners.indexOf(callback);
+                            if (index > -1) listeners.splice(index, 1);
+                        };
+                    }
+                };
+                
+                return store;
+            },
+
+            // DOM selection
+            $(selector, context = document) {
+                return Array.from(context.querySelectorAll(selector));
+            }
+        };
+
+        // Themes
+        const themes = {
+            light: {
+                colors: {
+                    primary: '#007bff',
+                    success: '#28a745',
+                    danger: '#dc3545',
+                    background: '#f5f5f5',
+                    surface: '#ffffff',
+                    text: '#212529'
+                },
+                spacing: {
+                    sm: 8,
+                    md: 16,
+                    lg: 24,
+                    xl: 32
+                }
+            },
+            dark: {
+                colors: {
+                    primary: '#375a7f',
+                    success: '#00bc8c',
+                    danger: '#e74c3c',
+                    background: '#222222',
+                    surface: '#303030',
+                    text: '#ffffff'
+                },
+                spacing: {
+                    sm: 8,
+                    md: 16,
+                    lg: 24,
+                    xl: 32
+                }
+            }
+        };
+
+        let currentTheme = themes.light;
+
+        // Component definitions
+        const MetricCard = ({ title, value, change, format = 'number' }) => ({
+            t: 'div',
+            a: { class: 'bw-card' },
+            c: [
+                {
+                    t: 'div',
+                    a: { class: 'bw-card-body' },
+                    c: [
+                        { 
+                            t: 'h3', 
+                            a: { class: 'bw-card-title' }, 
+                            c: title 
+                        },
+                        { 
+                            t: 'div', 
+                            a: { 
+                                class: 'bw-card-content',
+                                'data-bind': 'value'
+                            }, 
+                            c: format === 'currency' 
+                                ? `$${value.toLocaleString()}` 
+                                : format === 'percent'
+                                ? `${value}%`
+                                : value.toLocaleString()
+                        },
+                        change !== undefined && {
+                            t: 'div',
+                            a: {
+                                class: change >= 0 ? 'bw-text-success' : 'bw-text-danger',
+                                style: { fontSize: '14px', marginTop: '8px' }
+                            },
+                            c: `${change >= 0 ? '↑' : '↓'} ${Math.abs(change)}%`
+                        }
+                    ].filter(Boolean)
+                }
+            ],
+            o: {
+                type: 'metric-card',
+                state: { value, change },
+                ref: `metric-${title.toLowerCase().replace(/\s+/g, '-')}`,
+                updates: {
+                    value: (el, val, oldVal, handle) => {
+                        const valueEl = el.querySelector('[data-bind="value"]');
+                        valueEl.textContent = format === 'currency' 
+                            ? `$${val.toLocaleString()}` 
+                            : format === 'percent'
+                            ? `${val}%`
+                            : val.toLocaleString();
+                            
+                        // Animate change
+                        valueEl.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            valueEl.style.transform = 'scale(1)';
+                        }, 300);
+                    }
+                }
+            }
+        });
+
+        const DataTable = (data, options = {}) => {
+            const headers = options.headers || Object.keys(data[0] || {});
+            
+            return {
+                t: 'table',
+                a: { class: 'bw-table' },
+                c: [
+                    {
+                        t: 'thead',
+                        c: {
+                            t: 'tr',
+                            c: headers.map(header => ({
+                                t: 'th',
+                                a: { 
+                                    class: options.sortable ? 'bw-sortable' : '',
+                                    'data-column': header,
+                                    onclick: options.sortable ? function(e) {
+                                        const handle = bw._handles.get(this.closest('.bw-table'));
+                                        if (handle && handle.sortBy) {
+                                            handle.sortBy(header);
+                                        }
+                                    } : null
+                                },
+                                c: header
+                            }))
+                        }
+                    },
+                    {
+                        t: 'tbody',
+                        c: data.map((row, i) => ({
+                            t: 'tr',
+                            a: { 'data-row-index': i },
+                            c: headers.map(header => ({
+                                t: 'td',
+                                c: row[header]
+                            }))
+                        }))
+                    }
+                ],
+                o: {
+                    type: 'table',
+                    state: {
+                        data: [...data],
+                        originalData: [...data],
+                        sortColumn: null,
+                        sortDirection: 'asc',
+                        headers
+                    }
+                }
+            };
+        };
+
+        // Table handle enhancement
+        function enhanceTableHandle(handle, taco) {
+            handle.sortBy = function(column) {
+                const currentSort = this.state.sortColumn;
+                const currentDir = this.state.sortDirection;
+                
+                // Toggle direction if same column
+                const newDir = currentSort === column && currentDir === 'asc' ? 'desc' : 'asc';
+                
+                // Sort data
+                const sorted = [...this.state.data].sort((a, b) => {
+                    const aVal = a[column];
+                    const bVal = b[column];
+                    const result = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                    return newDir === 'asc' ? result : -result;
+                });
+                
+                // Update state
+                this.state.sortColumn = column;
+                this.state.sortDirection = newDir;
+                this.state.data = sorted;
+                
+                // Update UI
+                const headers = this.element.querySelectorAll('th');
+                headers.forEach(th => {
+                    th.classList.remove('asc', 'desc');
+                    if (th.dataset.column === column) {
+                        th.classList.add(newDir);
+                    }
+                });
+                
+                // Re-render tbody
+                const tbody = this.element.querySelector('tbody');
+                tbody.innerHTML = '';
+                sorted.forEach((row, i) => {
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-row-index', i);
+                    this.state.headers.forEach(header => {
+                        const td = document.createElement('td');
+                        td.textContent = row[header];
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                
+                return this;
+            };
+            
+            handle.addRow = function(rowData) {
+                this.state.data.push(rowData);
+                this.state.originalData.push(rowData);
+                
+                const tbody = this.element.querySelector('tbody');
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-row-index', this.state.data.length - 1);
+                
+                this.state.headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[header];
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+                return this;
+            };
+            
+            handle.setData = function(newData) {
+                this.state.data = [...newData];
+                this.state.originalData = [...newData];
+                this.state.sortColumn = null;
+                this.state.sortDirection = 'asc';
+                
+                // Re-render entire table body
+                const tbody = this.element.querySelector('tbody');
+                tbody.innerHTML = '';
+                newData.forEach((row, i) => {
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-row-index', i);
+                    this.state.headers.forEach(header => {
+                        const td = document.createElement('td');
+                        td.textContent = row[header];
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                
+                return this;
+            };
+        }
+
+        // Override renderComponent to add type-specific methods
+        const originalRenderComponent = bw.renderComponent;
+        bw.renderComponent = function(taco, parentHandle) {
+            const handle = originalRenderComponent.call(this, taco, parentHandle);
+            
+            // Add type-specific methods
+            if (taco.o?.type === 'table') {
+                enhanceTableHandle(handle, taco);
+            }
+            
+            return handle;
+        };
+
+        // Store for dashboard data
+        const dashboardStore = bw.createStore({
+            user: { name: 'John Doe', role: 'Admin' },
+            metrics: {
+                revenue: 125000,
+                users: 1234,
+                growth: 12.5
+            },
+            orders: [
+                { id: '001', customer: 'Alice Johnson', amount: '$2,500', status: 'Completed' },
+                { id: '002', customer: 'Bob Smith', amount: '$1,750', status: 'Pending' },
+                { id: '003', customer: 'Charlie Brown', amount: '$3,200', status: 'Completed' },
+                { id: '004', customer: 'Diana Prince', amount: '$950', status: 'Processing' }
+            ],
+            selectedPeriod: '7d',
+            notifications: []
+        });
+
+        // Notification system
+        function addNotification(type, message) {
+            const notifications = dashboardStore.get('notifications');
+            const notification = {
+                id: bw.uuid(),
+                type,
+                message,
+                timestamp: Date.now()
+            };
+            
+            dashboardStore.set('notifications', [...notifications, notification]);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                const current = dashboardStore.get('notifications');
+                dashboardStore.set('notifications', 
+                    current.filter(n => n.id !== notification.id)
+                );
+            }, 5000);
+        }
+
+        // Dashboard component
+        const Dashboard = () => ({
+            t: 'div',
+            a: { class: 'dashboard' },
+            c: [
+                // Header
+                {
+                    t: 'header',
+                    a: { class: 'bw-header' },
+                    c: [
+                        { t: 'h1', c: 'Analytics Dashboard' },
+                        {
+                            t: 'div',
+                            a: { style: { display: 'flex', gap: '16px', alignItems: 'center' } },
+                            c: [
+                                {
+                                    t: 'span',
+                                    c: `Welcome, ${dashboardStore.get('user.name')}`
+                                },
+                                {
+                                    t: 'button',
+                                    a: {
+                                        class: 'bw-btn bw-btn-secondary',
+                                        onclick: () => {
+                                            const newTheme = document.body.classList.contains('dark') ? 'light' : 'dark';
+                                            document.body.classList.toggle('dark');
+                                            currentTheme = themes[newTheme];
+                                            addNotification('info', `Switched to ${newTheme} theme`);
+                                        }
+                                    },
+                                    c: '🌓 Toggle Theme'
+                                }
+                            ]
+                        }
+                    ]
+                },
+                
+                // Main content
+                {
+                    t: 'main',
+                    a: { class: 'bw-container' },
+                    c: [
+                        // Controls
+                        {
+                            t: 'div',
+                            a: { 
+                                style: { 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '24px'
+                                }
+                            },
+                            c: [
+                                { t: 'h2', c: 'Overview' },
+                                {
+                                    t: 'div',
+                                    a: { class: 'period-selector' },
+                                    c: [
+                                        { t: 'label', c: 'Period:' },
+                                        {
+                                            t: 'select',
+                                            a: {
+                                                value: dashboardStore.get('selectedPeriod'),
+                                                onchange: function(e) {
+                                                    const period = e.target.value;
+                                                    dashboardStore.set('selectedPeriod', period);
+                                                    
+                                                    // Simulate data loading
+                                                    addNotification('info', `Loading data for ${period}...`);
+                                                    
+                                                    setTimeout(() => {
+                                                        const multiplier = {
+                                                            '1d': 0.1,
+                                                            '7d': 1,
+                                                            '30d': 4.3,
+                                                            '90d': 12.9
+                                                        }[period];
+                                                        
+                                                        // Update metrics
+                                                        const metrics = dashboardStore.get('metrics');
+                                                        dashboardStore.set('metrics.revenue', 
+                                                            Math.floor(125000 * multiplier));
+                                                        dashboardStore.set('metrics.users', 
+                                                            Math.floor(1234 * multiplier * 0.8));
+                                                        dashboardStore.set('metrics.growth', 
+                                                            parseFloat((12.5 * multiplier * 0.3).toFixed(1)));
+                                                        
+                                                        addNotification('success', 'Data updated successfully');
+                                                    }, 1000);
+                                                }
+                                            },
+                                            c: [
+                                                { t: 'option', a: { value: '1d' }, c: 'Today' },
+                                                { t: 'option', a: { value: '7d' }, c: 'Last 7 days' },
+                                                { t: 'option', a: { value: '30d' }, c: 'Last 30 days' },
+                                                { t: 'option', a: { value: '90d' }, c: 'Last 90 days' }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        
+                        // Metrics
+                        {
+                            t: 'div',
+                            a: { class: 'bw-row bw-mb-4' },
+                            c: [
+                                {
+                                    t: 'div',
+                                    a: { class: 'bw-col-3' },
+                                    c: MetricCard({
+                                        title: 'Revenue',
+                                        value: dashboardStore.get('metrics.revenue'),
+                                        change: 12.5,
+                                        format: 'currency'
+                                    })
+                                },
+                                {
+                                    t: 'div',
+                                    a: { class: 'bw-col-3' },
+                                    c: MetricCard({
+                                        title: 'Active Users',
+                                        value: dashboardStore.get('metrics.users'),
+                                        change: -3.2
+                                    })
+                                },
+                                {
+                                    t: 'div',
+                                    a: { class: 'bw-col-3' },
+                                    c: MetricCard({
+                                        title: 'Growth Rate',
+                                        value: dashboardStore.get('metrics.growth'),
+                                        change: dashboardStore.get('metrics.growth'),
+                                        format: 'percent'
+                                    })
+                                }
+                            ],
+                            o: { ref: 'metrics-row' }
+                        },
+                        
+                        // Table
+                        {
+                            t: 'div',
+                            a: { class: 'bw-row' },
+                            c: {
+                                t: 'div',
+                                a: { class: 'bw-col-12' },
+                                c: [
+                                    {
+                                        t: 'div',
+                                        a: { 
+                                            style: { 
+                                                display: 'flex', 
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                marginBottom: '16px'
+                                            }
+                                        },
+                                        c: [
+                                            { t: 'h3', c: 'Recent Orders' },
+                                            {
+                                                t: 'button',
+                                                a: {
+                                                    class: 'bw-btn bw-btn-primary',
+                                                    onclick: () => {
+                                                        const tableHandle = dashboardHandle.find('orders-table');
+                                                        if (tableHandle) {
+                                                            const newOrder = {
+                                                                id: String(Date.now()).slice(-3),
+                                                                customer: 'New Customer',
+                                                                amount: `$${Math.floor(Math.random() * 5000)}`,
+                                                                status: 'Pending'
+                                                            };
+                                                            tableHandle.addRow(newOrder);
+                                                            addNotification('success', 'New order added');
+                                                        }
+                                                    }
+                                                },
+                                                c: '+ Add Order'
+                                            }
+                                        ]
+                                    },
+                                    DataTable(dashboardStore.get('orders'), {
+                                        headers: ['id', 'customer', 'amount', 'status'],
+                                        sortable: true
+                                    })
+                                ],
+                                o: { ref: 'orders-table' }
+                            }
+                        }
+                    ]
+                },
+                
+                // Notifications
+                {
+                    t: 'div',
+                    a: { class: 'bw-notifications' },
+                    c: [],
+                    o: { ref: 'notifications' }
+                }
+            ],
+            o: {
+                type: 'dashboard',
+                mounted: (el, handle) => {
+                    // Store dashboard handle globally for demo
+                    window.dashboardHandle = handle;
+                    
+                    // Subscribe to metric updates
+                    dashboardStore.subscribe('metrics', (newMetrics) => {
+                        const metricsRow = handle.find('metrics-row');
+                        if (metricsRow) {
+                            // Update each metric card
+                            Object.entries(newMetrics).forEach(([key, value]) => {
+                                const metricHandle = handle.find(`metric-${key}`);
+                                if (metricHandle) {
+                                    metricHandle.update({ value });
+                                }
+                            });
+                        }
+                    });
+                    
+                    // Subscribe to notifications
+                    dashboardStore.subscribe('notifications', (notifications) => {
+                        const notifContainer = handle.find('notifications');
+                        if (notifContainer && notifContainer.element) {
+                            // Clear and rebuild notifications
+                            notifContainer.element.innerHTML = '';
+                            
+                            notifications.forEach(notif => {
+                                const notifEl = bw.createDOM({
+                                    t: 'div',
+                                    a: { class: `bw-notification ${notif.type}` },
+                                    c: [
+                                        { t: 'span', c: notif.message },
+                                        {
+                                            t: 'button',
+                                            a: {
+                                                onclick: () => {
+                                                    const current = dashboardStore.get('notifications');
+                                                    dashboardStore.set('notifications',
+                                                        current.filter(n => n.id !== notif.id)
+                                                    );
+                                                }
+                                            },
+                                            c: '×'
+                                        }
+                                    ]
+                                });
+                                notifContainer.element.appendChild(notifEl);
+                            });
+                        }
+                    });
+                    
+                    // Initial notification
+                    setTimeout(() => {
+                        addNotification('info', 'Dashboard loaded successfully');
+                    }, 500);
+                }
+            }
+        });
+
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', () => {
+            const dashboard = bw.renderComponent(Dashboard());
+            bw.DOM('#app', dashboard);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Component Interaction & Lifecycle Example - Bitwrench v2</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .card.highlight {
+            box-shadow: 0 4px 12px rgba(0,100,255,0.3);
+            transform: translateY(-2px);
+        }
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .card-text {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .card-footer {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: 15px;
+            font-size: 0.875rem;
+            color: #999;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .status {
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            background: white;
+            border-radius: 3px;
+        }
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>Component Interaction & Lifecycle Demo</h1>
+    
+    <div class="status" id="status">
+        <strong>Active Components:</strong> <span id="component-count">0</span> | 
+        <strong>Memory Usage:</strong> <span id="memory-status">Checking...</span>
+    </div>
+    
+    <div class="container">
+        <!-- Control Panel -->
+        <div id="control-panel"></div>
+        
+        <!-- Display Area -->
+        <div id="display-area"></div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div style="margin-bottom: 20px;">
+        <button onclick="addNewCard()">Add New Card</button>
+        <button onclick="removeRandomCard()" class="danger">Remove Random Card</button>
+        <button onclick="updateAllCards()">Update All Cards</button>
+        <button onclick="clearAll()" class="danger">Clear All</button>
+    </div>
+    
+    <!-- Event Log -->
+    <h3>Event Log</h3>
+    <div class="log" id="event-log"></div>
+
+    <script>
+        // Mock Bitwrench v2 implementation for this example
+        const bw = {
+            _componentRefs: new Map(),
+            _idCounter: 0,
+            
+            uuid() {
+                return `bw_${Date.now()}_${++this._idCounter}`;
+            },
+            
+            createDOM(taco) {
+                const el = document.createElement(taco.t);
+                if (taco.a) {
+                    Object.entries(taco.a).forEach(([key, value]) => {
+                        if (key.startsWith('on')) {
+                            el.addEventListener(key.slice(2), value);
+                        } else if (key === 'class') {
+                            el.className = value;
+                        } else {
+                            el.setAttribute(key, value);
+                        }
+                    });
+                }
+                if (taco.c) {
+                    if (typeof taco.c === 'string') {
+                        el.textContent = taco.c;
+                    } else if (Array.isArray(taco.c)) {
+                        taco.c.forEach(child => {
+                            if (typeof child === 'string') {
+                                el.appendChild(document.createTextNode(child));
+                            } else {
+                                el.appendChild(this.createDOM(child));
+                            }
+                        });
+                    } else {
+                        el.appendChild(this.createDOM(taco.c));
+                    }
+                }
+                return el;
+            },
+            
+            render(target, position, componentOrTaco) {
+                const targetEl = typeof target === 'string' 
+                    ? document.querySelector(target) 
+                    : target;
+                    
+                const element = this.createDOM(componentOrTaco);
+                
+                switch(position) {
+                    case 'append': targetEl.appendChild(element); break;
+                    case 'prepend': targetEl.insertBefore(element, targetEl.firstChild); break;
+                }
+                
+                if (componentOrTaco._bw_component_type) {
+                    const ref = new BWComponent(element, componentOrTaco._bw_config);
+                    ref.type = componentOrTaco._bw_component_type;
+                    this._componentRefs.set(ref.id, ref);
+                    return ref;
+                }
+                
+                return element;
+            },
+            
+            makeCard(config) {
+                return {
+                    t: 'div',
+                    a: { class: 'card' },
+                    c: [
+                        config.title && { t: 'div', a: { class: 'card-title' }, c: config.title },
+                        config.content && { t: 'div', a: { class: 'card-text' }, c: config.content },
+                        config.footer && { t: 'div', a: { class: 'card-footer' }, c: config.footer }
+                    ].filter(Boolean),
+                    _bw_component_type: 'card',
+                    _bw_config: config
+                };
+            },
+            
+            makeForm(config) {
+                return {
+                    t: 'form',
+                    a: { 
+                        class: 'card',
+                        onsubmit: (e) => {
+                            e.preventDefault();
+                            if (config.onSubmit) {
+                                const formData = new FormData(e.target);
+                                const data = Object.fromEntries(formData);
+                                config.onSubmit(data);
+                            }
+                        }
+                    },
+                    c: [
+                        { t: 'div', a: { class: 'card-title' }, c: config.title },
+                        ...config.fields.map(field => ({
+                            t: 'div',
+                            a: { class: 'form-group' },
+                            c: [
+                                { t: 'label', c: field.label },
+                                field.type === 'textarea' 
+                                    ? { t: 'textarea', a: { name: field.name, placeholder: field.placeholder } }
+                                    : { t: 'input', a: { type: field.type || 'text', name: field.name, placeholder: field.placeholder } }
+                            ]
+                        })),
+                        { t: 'button', a: { type: 'submit' }, c: config.submitText || 'Submit' }
+                    ],
+                    _bw_component_type: 'form',
+                    _bw_config: config
+                };
+            }
+        };
+        
+        // Simple Component Base Class
+        class BWComponent {
+            constructor(element, config) {
+                this.element = element;
+                this.id = bw.uuid();
+                this._config = { ...config };
+                this._events = {};
+                this._linkedComponents = new Set();
+                
+                this.element.setAttribute('data-bw-id', this.id);
+                
+                log(`Component created: ${this.id}`);
+                updateStatus();
+            }
+            
+            link(otherComponent) {
+                this._linkedComponents.add(otherComponent);
+                otherComponent._linkedComponents.add(this);
+                log(`Linked ${this.id} <-> ${otherComponent.id}`);
+            }
+            
+            unlink(otherComponent) {
+                this._linkedComponents.delete(otherComponent);
+                otherComponent._linkedComponents.delete(this);
+                log(`Unlinked ${this.id} <-> ${otherComponent.id}`);
+            }
+            
+            update(updates) {
+                Object.assign(this._config, updates);
+                
+                if (updates.title) {
+                    const titleEl = this.element.querySelector('.card-title');
+                    if (titleEl) titleEl.textContent = updates.title;
+                }
+                
+                if (updates.content) {
+                    const contentEl = this.element.querySelector('.card-text');
+                    if (contentEl) contentEl.textContent = updates.content;
+                }
+                
+                if (updates.footer) {
+                    const footerEl = this.element.querySelector('.card-footer');
+                    if (footerEl) footerEl.textContent = updates.footer;
+                }
+                
+                log(`Updated ${this.id}: ${JSON.stringify(updates)}`);
+                return this;
+            }
+            
+            highlight(duration = 1000) {
+                this.element.classList.add('highlight');
+                setTimeout(() => this.element.classList.remove('highlight'), duration);
+                return this;
+            }
+            
+            on(event, handler) {
+                if (!this._events[event]) this._events[event] = [];
+                this._events[event].push(handler);
+                return this;
+            }
+            
+            emit(event, data) {
+                if (this._events[event]) {
+                    this._events[event].forEach(handler => handler(data));
+                }
+                return this;
+            }
+            
+            destroy() {
+                log(`Destroying ${this.id} with ${this._linkedComponents.size} links`);
+                
+                // Unlink all linked components
+                this._linkedComponents.forEach(comp => {
+                    comp._linkedComponents.delete(this);
+                });
+                this._linkedComponents.clear();
+                
+                // Fade out effect
+                this.element.classList.add('fade-out');
+                
+                setTimeout(() => {
+                    // Remove from DOM
+                    if (this.element.parentNode) {
+                        this.element.parentNode.removeChild(this.element);
+                    }
+                    
+                    // Remove from registry
+                    bw._componentRefs.delete(this.id);
+                    
+                    // Clear event listeners
+                    this._events = {};
+                    
+                    log(`Destroyed ${this.id}`);
+                    updateStatus();
+                }, 300);
+            }
+        }
+        
+        // Global references for demo
+        let cardCounter = 0;
+        let updateForm, displayCard;
+        
+        // Initialize the demo
+        function initDemo() {
+            // Create the form
+            updateForm = bw.render('#control-panel', 'append', bw.makeForm({
+                title: 'Update Card',
+                fields: [
+                    { name: 'title', label: 'Title', placeholder: 'Enter title...' },
+                    { name: 'content', label: 'Content', type: 'textarea', placeholder: 'Enter content...' }
+                ],
+                submitText: 'Update Display Card',
+                onSubmit: (data) => {
+                    if (displayCard) {
+                        displayCard.update({
+                            title: data.title || displayCard._config.title,
+                            content: data.content || displayCard._config.content,
+                            footer: `Updated: ${new Date().toLocaleTimeString()}`
+                        }).highlight();
+                    } else {
+                        alert('No display card to update!');
+                    }
+                }
+            }));
+            
+            // Create initial display card
+            displayCard = bw.render('#display-area', 'append', bw.makeCard({
+                title: 'Display Card',
+                content: 'This card will be updated by the form.',
+                footer: 'Not updated yet'
+            }));
+            
+            // Link components
+            updateForm.link(displayCard);
+            
+            // Add some interaction
+            displayCard.on('updated', (data) => {
+                log(`Display card received update: ${JSON.stringify(data)}`);
+            });
+        }
+        
+        // Helper functions
+        function addNewCard() {
+            const newCard = bw.render('#display-area', 'append', bw.makeCard({
+                title: `Dynamic Card ${++cardCounter}`,
+                content: `Created at ${new Date().toLocaleTimeString()}`,
+                footer: 'Click to highlight'
+            }));
+            
+            // Make it interactive
+            newCard.element.addEventListener('click', () => {
+                newCard.highlight();
+                
+                // Update linked form if this is now the display card
+                if (displayCard !== newCard) {
+                    if (displayCard) {
+                        updateForm.unlink(displayCard);
+                    }
+                    displayCard = newCard;
+                    updateForm.link(displayCard);
+                    log(`Switched display card to ${newCard.id}`);
+                }
+            });
+            
+            return newCard;
+        }
+        
+        function removeRandomCard() {
+            const cards = Array.from(bw._componentRefs.values())
+                .filter(ref => ref.type === 'card' && ref !== displayCard);
+            
+            if (cards.length === 0) {
+                alert('No cards to remove (display card is protected)');
+                return;
+            }
+            
+            const randomCard = cards[Math.floor(Math.random() * cards.length)];
+            randomCard.destroy();
+        }
+        
+        function updateAllCards() {
+            const timestamp = new Date().toLocaleTimeString();
+            bw._componentRefs.forEach(ref => {
+                if (ref.type === 'card') {
+                    ref.update({ footer: `Batch updated: ${timestamp}` })
+                       .highlight();
+                }
+            });
+        }
+        
+        function clearAll() {
+            if (!confirm('Remove all components?')) return;
+            
+            // Copy the refs to avoid mutation during iteration
+            const refs = Array.from(bw._componentRefs.values());
+            refs.forEach(ref => ref.destroy());
+            
+            // Reset
+            displayCard = null;
+            updateForm = null;
+            cardCounter = 0;
+            
+            // Reinitialize after a delay
+            setTimeout(initDemo, 500);
+        }
+        
+        function log(message) {
+            const logEl = document.getElementById('event-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+            
+            // Keep only last 20 entries
+            while (logEl.children.length > 20) {
+                logEl.removeChild(logEl.lastChild);
+            }
+        }
+        
+        function updateStatus() {
+            document.getElementById('component-count').textContent = bw._componentRefs.size;
+            
+            // Simulate memory check
+            if (performance.memory) {
+                const mb = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
+                document.getElementById('memory-status').textContent = `${mb} MB`;
+            } else {
+                document.getElementById('memory-status').textContent = 'N/A';
+            }
+        }
+        
+        // Check for memory leaks periodically
+        setInterval(() => {
+            const orphanedElements = document.querySelectorAll('[data-bw-id]');
+            let orphanCount = 0;
+            
+            orphanedElements.forEach(el => {
+                const id = el.getAttribute('data-bw-id');
+                if (!bw._componentRefs.has(id)) {
+                    orphanCount++;
+                    console.warn('Orphaned element found:', id);
+                }
+            });
+            
+            if (orphanCount > 0) {
+                log(`⚠️ Found ${orphanCount} orphaned elements`);
+            }
+        }, 5000);
+        
+        // Initialize on load
+        initDemo();
+    </script>
+</body>
+</html>

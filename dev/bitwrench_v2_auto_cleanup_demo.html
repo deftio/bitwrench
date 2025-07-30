@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Cleanup Demo - Bitwrench v2</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .panel {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+        }
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .card:hover {
+            background: #e9ecef;
+        }
+        .card.disconnected {
+            opacity: 0.5;
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .stats {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            padding: 2px 0;
+        }
+        .log-entry.cleanup {
+            color: #28a745;
+        }
+        .log-entry.error {
+            color: #dc3545;
+        }
+        .log-entry.warn {
+            color: #ffc107;
+        }
+        .strategy-toggle {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        button.success {
+            background: #28a745;
+        }
+        button.success:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Automatic Cleanup Demo</h1>
+    
+    <div class="stats" id="stats">
+        <strong>Active Components:</strong> <span id="active-count">0</span> | 
+        <strong>Total Created:</strong> <span id="total-created">0</span> | 
+        <strong>Auto Cleaned:</strong> <span id="auto-cleaned">0</span> | 
+        <strong>GC Runs:</strong> <span id="gc-runs">0</span>
+    </div>
+    
+    <div class="controls">
+        <h3>Cleanup Strategies</h3>
+        <div>
+            <label class="strategy-toggle">
+                <input type="checkbox" id="check-before-op" checked>
+                Check Before Operations
+            </label>
+            <label class="strategy-toggle">
+                <input type="checkbox" id="mutation-observer" checked>
+                MutationObserver
+            </label>
+            <label class="strategy-toggle">
+                <input type="checkbox" id="garbage-collector" checked>
+                Garbage Collector (5s)
+            </label>
+        </div>
+        <br>
+        <button onclick="updateStrategies()">Apply Settings</button>
+        <button onclick="forceGC()" class="success">Force GC Now</button>
+    </div>
+    
+    <div class="controls">
+        <h3>Test Scenarios</h3>
+        <button onclick="addCards(5)">Add 5 Cards</button>
+        <button onclick="clearViaInnerHTML()" class="danger">Clear via innerHTML</button>
+        <button onclick="removeViaDOM()" class="danger">Remove via removeChild</button>
+        <button onclick="moveCards()">Move Cards Between Panels</button>
+        <button onclick="testDisconnectedAccess()">Access Disconnected Component</button>
+        <button onclick="rapidCreateDestroy()">Rapid Create/Destroy (100x)</button>
+    </div>
+    
+    <div class="container">
+        <div class="panel" id="panel1">
+            <h3>Panel 1</h3>
+        </div>
+        <div class="panel" id="panel2">
+            <h3>Panel 2</h3>
+        </div>
+    </div>
+    
+    <h3>Event Log</h3>
+    <div class="log" id="log"></div>
+
+    <script>
+        // Component tracking
+        let totalCreated = 0;
+        let autoCleaned = 0;
+        let gcRuns = 0;
+        
+        // Mock Bitwrench v2 with automatic cleanup
+        const bw = {
+            _componentRefs: new Map(),
+            _cleanupObserver: null,
+            _gc: null,
+            
+            config: {
+                cleanup: {
+                    checkBeforeOp: true,
+                    useMutationObserver: true,
+                    useGarbageCollector: true,
+                    gcInterval: 5000
+                }
+            },
+            
+            uuid() {
+                return `bw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+        };
+        
+        // Component class with cleanup strategies
+        class BWComponent {
+            constructor(element, config) {
+                this.element = element;
+                this.id = bw.uuid();
+                this.type = 'card';
+                this._config = config;
+                this._isDestroyed = false;
+                
+                element.setAttribute('data-bw-id', this.id);
+                bw._componentRefs.set(this.id, this);
+                
+                totalCreated++;
+                log(`Created component ${this.id}`);
+                updateStats();
+            }
+            
+            get isConnected() {
+                return this.element && this.element.isConnected;
+            }
+            
+            _ensureValid() {
+                if (this._isDestroyed) {
+                    throw new Error(`Component ${this.id} has been destroyed`);
+                }
+                
+                if (bw.config.cleanup.checkBeforeOp && !this.isConnected) {
+                    log(`Component ${this.id} disconnected, auto-cleaning...`, 'warn');
+                    this._autoCleanup();
+                    throw new Error(`Component ${this.id} is disconnected`);
+                }
+            }
+            
+            update(text) {
+                this._ensureValid();
+                this.element.querySelector('.card-content').textContent = text;
+                log(`Updated component ${this.id}`);
+            }
+            
+            _autoCleanup() {
+                if (this._isDestroyed) return;
+                
+                this._isDestroyed = true;
+                bw._componentRefs.delete(this.id);
+                
+                autoCleaned++;
+                log(`Auto-cleaned component ${this.id}`, 'cleanup');
+                updateStats();
+            }
+        }
+        
+        // MutationObserver strategy
+        class ComponentCleanupObserver {
+            constructor() {
+                this.observer = null;
+            }
+            
+            start() {
+                if (this.observer) return;
+                
+                this.observer = new MutationObserver((mutations) => {
+                    mutations.forEach(mutation => {
+                        mutation.removedNodes.forEach(node => {
+                            this.checkNode(node);
+                        });
+                    });
+                });
+                
+                this.observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                log('MutationObserver started');
+            }
+            
+            checkNode(node) {
+                if (node.nodeType !== 1) return;
+                
+                const elements = [node];
+                if (node.querySelectorAll) {
+                    elements.push(...node.querySelectorAll('[data-bw-id]'));
+                }
+                
+                elements.forEach(el => {
+                    const id = el.getAttribute && el.getAttribute('data-bw-id');
+                    if (id) {
+                        const ref = bw._componentRefs.get(id);
+                        if (ref && !ref.isConnected) {
+                            ref._autoCleanup();
+                        }
+                    }
+                });
+            }
+            
+            stop() {
+                if (this.observer) {
+                    this.observer.disconnect();
+                    this.observer = null;
+                    log('MutationObserver stopped');
+                }
+            }
+        }
+        
+        // Garbage collector strategy
+        class ComponentGarbageCollector {
+            constructor(interval) {
+                this.interval = interval;
+                this.timer = null;
+            }
+            
+            start() {
+                if (this.timer) return;
+                
+                this.timer = setInterval(() => {
+                    this.collect();
+                }, this.interval);
+                
+                log(`Garbage collector started (${this.interval}ms interval)`);
+            }
+            
+            collect() {
+                gcRuns++;
+                let cleaned = 0;
+                const toClean = [];
+                
+                bw._componentRefs.forEach((ref, id) => {
+                    if (!ref.isConnected) {
+                        toClean.push(ref);
+                    }
+                });
+                
+                toClean.forEach(ref => {
+                    ref._autoCleanup();
+                    cleaned++;
+                });
+                
+                if (cleaned > 0) {
+                    log(`GC: Cleaned ${cleaned} components`, 'cleanup');
+                }
+                
+                updateStats();
+                return cleaned;
+            }
+            
+            stop() {
+                if (this.timer) {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                    log('Garbage collector stopped');
+                }
+            }
+        }
+        
+        // Initialize cleanup strategies
+        function initStrategies() {
+            if (bw._cleanupObserver) {
+                bw._cleanupObserver.stop();
+            }
+            if (bw._gc) {
+                bw._gc.stop();
+            }
+            
+            if (bw.config.cleanup.useMutationObserver) {
+                bw._cleanupObserver = new ComponentCleanupObserver();
+                bw._cleanupObserver.start();
+            }
+            
+            if (bw.config.cleanup.useGarbageCollector) {
+                bw._gc = new ComponentGarbageCollector(bw.config.cleanup.gcInterval);
+                bw._gc.start();
+            }
+        }
+        
+        // UI Functions
+        function createCard(text) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <strong>Card ${totalCreated + 1}</strong>
+                <div class="card-content">${text}</div>
+            `;
+            
+            const component = new BWComponent(card, { text });
+            
+            card.addEventListener('click', () => {
+                try {
+                    component.update(`Clicked at ${new Date().toLocaleTimeString()}`);
+                } catch (e) {
+                    log(`Error: ${e.message}`, 'error');
+                    card.classList.add('disconnected');
+                }
+            });
+            
+            return card;
+        }
+        
+        function addCards(count) {
+            const panel = document.getElementById('panel1');
+            for (let i = 0; i < count; i++) {
+                panel.appendChild(createCard(`Card created at ${new Date().toLocaleTimeString()}`));
+            }
+        }
+        
+        function clearViaInnerHTML() {
+            log('Clearing panel 1 via innerHTML', 'warn');
+            document.getElementById('panel1').innerHTML = '<h3>Panel 1</h3>';
+        }
+        
+        function removeViaDOM() {
+            log('Removing cards via removeChild', 'warn');
+            const panel = document.getElementById('panel1');
+            const cards = panel.querySelectorAll('.card');
+            cards.forEach(card => panel.removeChild(card));
+        }
+        
+        function moveCards() {
+            const panel1 = document.getElementById('panel1');
+            const panel2 = document.getElementById('panel2');
+            const cards = panel1.querySelectorAll('.card');
+            
+            cards.forEach(card => {
+                panel2.appendChild(card);
+            });
+            
+            log(`Moved ${cards.length} cards to panel 2`);
+        }
+        
+        function testDisconnectedAccess() {
+            const panel = document.getElementById('panel1');
+            const card = createCard('Test card');
+            panel.appendChild(card);
+            
+            const component = bw._componentRefs.get(card.getAttribute('data-bw-id'));
+            
+            // Remove from DOM
+            panel.removeChild(card);
+            
+            // Try to access
+            setTimeout(() => {
+                try {
+                    component.update('This should fail');
+                } catch (e) {
+                    log(`Expected error: ${e.message}`, 'error');
+                }
+            }, 100);
+        }
+        
+        function rapidCreateDestroy() {
+            const panel = document.getElementById('panel1');
+            const start = performance.now();
+            
+            for (let i = 0; i < 100; i++) {
+                const card = createCard(`Rapid test ${i}`);
+                panel.appendChild(card);
+                panel.removeChild(card);
+            }
+            
+            const duration = performance.now() - start;
+            log(`Created/destroyed 100 components in ${duration.toFixed(2)}ms`);
+            
+            // Force immediate cleanup
+            setTimeout(forceGC, 100);
+        }
+        
+        function forceGC() {
+            let cleaned = 0;
+            
+            if (bw._gc) {
+                cleaned = bw._gc.collect();
+            } else {
+                // Manual collection
+                const toClean = [];
+                bw._componentRefs.forEach((ref, id) => {
+                    if (!ref.isConnected) {
+                        toClean.push(ref);
+                    }
+                });
+                
+                toClean.forEach(ref => {
+                    ref._autoCleanup();
+                    cleaned++;
+                });
+            }
+            
+            log(`Manual GC: Cleaned ${cleaned} components`, 'cleanup');
+        }
+        
+        function updateStrategies() {
+            bw.config.cleanup.checkBeforeOp = document.getElementById('check-before-op').checked;
+            bw.config.cleanup.useMutationObserver = document.getElementById('mutation-observer').checked;
+            bw.config.cleanup.useGarbageCollector = document.getElementById('garbage-collector').checked;
+            
+            initStrategies();
+            log('Updated cleanup strategies');
+        }
+        
+        function log(message, type = '') {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function updateStats() {
+            document.getElementById('active-count').textContent = bw._componentRefs.size;
+            document.getElementById('total-created').textContent = totalCreated;
+            document.getElementById('auto-cleaned').textContent = autoCleaned;
+            document.getElementById('gc-runs').textContent = gcRuns;
+        }
+        
+        // Initialize
+        initStrategies();
+        updateStats();
+        
+        // Add initial cards
+        addCards(3);
+    </script>
+</body>
+</html>

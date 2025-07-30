@@ -1,14 +1,224 @@
 # Bitwrench v2 R1: Core Design Principles & Implementation
 
+## What is Bitwrench?
+
+Bitwrench is a lightweight JavaScript library that lets you build dynamic web interfaces using plain JavaScript objects. Instead of HTML templates or JSX, you describe your UI as data using a specialized javascript dictionary schema called TACO (Tag-Attributes-Content-Options) format.
+
+### Core Philosophy: Explicit Callbacks, Not Magic
+
+Bitwrench embraces **explicit callback-based reactivity** as a deliberate design choice:
+
+- **🎯 Predictable Control**: Each UI update happens exactly when and how you specify
+- **⚡ No Virtual DOM Overhead**: Direct DOM manipulation is faster than diff-based systems
+- **🔍 No Hidden Magic**: Every update is transparent and debuggable
+- **📊 Performance First**: Callback-based updates outperform virtual DOM frameworks in benchmarks
+
+This isn't a limitation—it's a feature. Like SolidJS and Mithril, Bitwrench proves that explicit updates can be both simpler AND faster than "magic" reactivity.
+
+### A Quick Example
+
+```javascript
+// Traditional HTML
+<div class="card">
+  <h3>Hello World</h3>
+  <button onclick="alert('Clicked!')">Click Me</button>
+</div>
+
+// Bitwrench TACO
+const card = {
+  t: "div",
+  a: { "class": "card" },
+  c: [
+    { t: "h3", c: "Hello World" },
+    { t: "button", a: { onclick: () => alert('Clicked!') }, c: "Click Me" }
+  ]
+};
+
+// Render it
+bw.DOM('#app', card);
+```
+
+## The Origin Story
+
+Bitwrench was born in 2012 from a simple observation: **most UI frameworks are too complex for simple tasks**. 
+
+The creator, working on embedded systems and data visualization projects, needed a way to:
+- Generate UIs from C programs on microcontrollers
+- Create dashboards from Python scripts without learning React
+- Build interfaces that work on ancient corporate browsers
+- Add dynamic features to existing jQuery/Bootstrap applications
+
+The result was Bitwrench 1.x - a 52KB library that could render UIs from JSON, handle events, and work everywhere from IE6 to modern Chrome.
+
+## Why Bitwrench v2?
+
+Version 2 (2025) is a complete rewrite that preserves the original philosophy while addressing lessons learned:
+
+**What's New:**
+- Proper component lifecycle management (mount/unmount hooks)
+- Built-in memory leak prevention
+- 30+ pre-built components (cards, forms, tables, etc.)
+- Modern JavaScript while maintaining legacy compatibility
+- Better integration with existing frameworks
+
+**What Hasn't Changed:**
+- Zero dependencies
+- Works without build tools
+- UI as data philosophy
+- Universal browser support
+
+## What Can You Build?
+
+Bitwrench excels at:
+
+### 1. Data Visualization Dashboards
+```javascript
+// Real-time metrics dashboard
+const dashboard = {
+  t: "div",
+  c: [
+    MetricCard({ title: "Users", value: 1234, trend: "+12%" }),
+    ChartCard({ title: "Sales", data: salesData }),
+    TableCard({ title: "Recent Orders", rows: orderData })
+  ]
+};
+```
+
+### 2. Dynamic Forms
+```javascript
+// Form that adapts based on user input
+const dynamicForm = {
+  t: "form",
+  c: formFields.map(field => 
+    Input({ 
+      type: field.type, 
+      label: field.label,
+      validation: field.rules 
+    })
+  )
+};
+```
+
+### 3. Server-Generated UIs
+```python
+# Python backend generating UI
+def generate_report_ui(data):
+    return {
+        "t": "div",
+        "c": [
+            {"t": "h1", "c": f"Report for {data.date}"},
+            {"t": "table", "c": build_table_from_dataframe(data.df)}
+        ]
+    }
+```
+
+### 4. Legacy App Enhancement
+```javascript
+// Add modern components to jQuery app
+$('#old-container').html(
+  bw.html(ModernComponent({ data: legacyData }))
+);
+```
+
+## How It Works
+
+Bitwrench operates in three simple steps:
+
+### 1. Define UI as Data
+```javascript
+const ui = {
+  t: "div",               // HTML tag
+  a: { class: "card" },   // Attributes
+  c: "Hello",             // Content
+  o: { /* lifecycle */ }  // Options
+};
+```
+
+### 2. Render to DOM
+```javascript
+// Static HTML generation
+const html = bw.html(ui);
+document.body.innerHTML = html;
+
+// Or managed components with lifecycle
+const handle = bw.render('#app', ui);
+```
+
+### 3. Update Dynamically
+```javascript
+// Re-render with new data
+handle.update(newUI);
+
+// Or full re-render
+bw.DOM('#app', updatedUI);
+```
+
+## Choosing the Right Update Pattern
+
+Bitwrench provides multiple update patterns. Here's when to use each:
+
+| Pattern | Best For | Example | Trade-offs |
+|---------|----------|---------|------------|
+| **handle.update()** | Single component updates | Updating a clock display | Need to manage handle references |
+| **bw.DOM()** | Full page re-renders | Form submission results | Less efficient for frequent updates |
+| **Event Bus** | Cross-component communication | Shopping cart updates | Risk of namespace collisions |
+| **Shared Store** | Global application state | User authentication status | Additional abstraction layer |
+| **Registry + Selector** | Debugging, dev tools | Finding all components of a type | More imperative than declarative |
+
+### Decision Flow:
+1. **Single component?** → Use `handle.update()`
+2. **Multiple related components?** → Use Event Bus
+3. **App-wide state?** → Use Shared Store
+4. **Full page change?** → Use `bw.DOM()`
+
+## Key Features
+
+### 🎯 UI as Data
+- Generate UIs from any language (Python, Go, Ruby)
+- Store UI definitions in databases
+- Send UI updates over WebSockets
+- Transform UIs with array/object operations
+
+### 🔧 Zero Build Tools
+```html
+<!-- That's it. No npm, no webpack, no config -->
+<script src="bitwrench.js"></script>
+<script>
+  bw.DOM('#app', { t: "h1", c: "Hello World" });
+</script>
+```
+
+### 🌍 Universal Compatibility
+- Works from IE8 to latest Chrome
+- Coexists with jQuery, Bootstrap, React
+- No namespace pollution
+- Progressive enhancement friendly
+
+### 🧩 Rich Component Library
+- 30+ pre-built components
+- Bootstrap-compatible styling
+- Responsive by default
+- Customizable via props
+
+### 💾 Memory Safe
+- Automatic cleanup of event listeners
+- Lifecycle hooks for resource management
+- No zombie components
+- Explicit destroy methods
+
+## Who Should Use Bitwrench?
+
+Bitwrench is perfect for:
+
+- **Data Scientists**: Create visualizations without learning React
+- **Backend Developers**: Build admin panels without frontend tooling
+- **Embedded Developers**: Generate UIs from C/C++ programs
+- **Legacy Maintainers**: Modernize old applications incrementally
+- **Tool Builders**: Create UIs programmatically from any language
+
 ## Executive Summary
 
-Bitwrench v2 focuses on:
-- building web components with bitwrench {t,a,c,o} object system.
-- Legacy browser compatibility (IE8+)
-- Zero namespace collisions (coexists with Bootstrap, jQuery, D3.js, Chart.js)
-- Clear component lifecycle
-- Memory leak prevention
-- Practical, working examples
+Bitwrench v2 is a mature, battle-tested library that makes building dynamic web interfaces simple and predictable. By representing UI as data and providing a rich component library, it enables developers from any background to create professional web applications without the complexity of modern frontend frameworks
 
 ## Why Bitwrench? The Real Value Proposition
 
@@ -51,34 +261,79 @@ dashboard = {
     ]
 }
 
-TODO:  you could use a f string, but actually you could generate the *entire* page just using {t,a,c,o}
+# Alternative: Generate the entire page as a TACO object
+page = {
+    "t": "html",
+    "c": [
+        {
+            "t": "head",
+            "c": [
+                {"t": "script", "a": {"src": "https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.min.js"}},
+                {"t": "script", "a": {"src": "https://cdn.jsdelivr.net/npm/chart.js"}}
+            ]
+        },
+        {
+            "t": "body",
+            "c": dashboard
+        }
+    ]
+}
 
-# Generate complete HTML file
-html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <div id="app"></div>
-    <script>
-        bw.render('#app', {json.dumps(dashboard)});
-    </script>
-</body>
-</html>
-"""
+# Convert to HTML string
+html = f"<!DOCTYPE html>\n{bw_python.html(page)}"
 
 # Save and open in browser - instant interactive dashboard!
+with open('dashboard.html', 'w') as f:
+    f.write(html)
 ```
 
 
-TODO: don't bash streamlit - that will start a religious war, instead lets talk about ease of bitwrench and refreshing live content via server side replensh {fastapi + bitwrench}
-### Better Than Streamlit Because:  
+### Complementary to Streamlit
+
+Bitwrench works great alongside Streamlit or as a lightweight alternative. For live updates, combine with FastAPI:
+
+```python
+# FastAPI + Bitwrench for real-time dashboards
+from fastapi import FastAPI, WebSocket
+from fastapi.responses import HTMLResponse
+
+app = FastAPI()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        # Send updated TACO objects
+        data = get_latest_metrics()
+        taco = {"t": "div", "c": f"Value: {data['value']}"}
+        await websocket.send_json(taco)
+        await asyncio.sleep(1)
+```
+
+### Unique Advantages:  
 
 1. **No server required** - Just HTML files
-2. **Use any JS library** - D3.js, Chart.js, Three.js work seamlessly  ## TODO need examples of these
+2. **Use any JS library** - D3.js, Chart.js, Three.js work seamlessly
+   ```javascript
+   // D3.js integration
+   {t: "svg", a: {id: "viz"}, o: {
+     mount: (el) => d3.select(el).append("circle").attr("r", 50)
+   }}
+   
+   // Chart.js integration  
+   {t: "canvas", a: {id: "chart"}, o: {
+     mount: (el) => new Chart(el, {type: 'bar', data: myData})
+   }}
+   
+   // Three.js integration
+   {t: "div", a: {id: "3d"}, o: {
+     mount: (el) => {
+       const scene = new THREE.Scene();
+       const renderer = new THREE.WebGLRenderer();
+       el.appendChild(renderer.domElement);
+     }
+   }}
+   ```
 3. **Full control** - Not limited to Streamlit's components
 4. **Portable** - Email the HTML file, it just works
 5. **Integratable** - Drop into existing apps
@@ -93,28 +348,82 @@ TODO: don't bash streamlit - that will start a religious war, instead lets talk 
 
 ## Core Precepts (Non-Negotiable)
 
-# TODO I wouldn't start with support for IE8 as the top item.  Very few people care about that.  Bitwrench needs to stand alone based on its design philophies
-1. **Works in legacy browsers** - If it doesn't work in IE8, it's not bitwrench
-2. **Zero dependencies** - (polyfills OK)
+1. **UI as data** - TACO objects are just data and functions, not magic
+2. **Zero dependencies** - No build tools, no npm, just a script tag
 3. **No namespace collisions** - Coexists with jQuery, React, anything 
-4. **UI as data** - TACO objects are just data and functions, not magic
-5. **Memory safe** - Components clean up after themselves
+4. **Memory safe** - Components clean up after themselves
+5. **Universal compatibility** - Works everywhere from IE8 to latest Chrome
 
 
-## The Bitwrench TACO Model
+## What is TACO?
 
-TODO: explain what the bitwrench TACO model is in english first and why it is used.  Then show how to use it.
+Before diving into bitwrench, you need to understand TACO - the foundation of everything in bitwrench.
+
+**TACO** is a simple JavaScript object format for describing user interfaces. Instead of writing HTML strings or using JSX, you describe your UI as plain JavaScript objects with four properties:
+
+- **T**ag - What HTML element to create
+- **A**ttributes - The element's HTML attributes 
+- **C**ontent - What goes inside the element
+- **O**ptions - Bitwrench-specific lifecycle hooks
+
+### A Simple Example
+
+```javascript
+// Instead of: <button class="btn btn-primary" onclick="alert('Hi!')">Click Me</button>
+
+// You write:
+const button = {
+  t: "button",
+  a: { 
+    "class": "btn btn-primary",
+    onclick: () => alert('Hi!')
+  },
+  c: "Click Me"
+};
+
+// Convert to HTML:
+const html = bw.html(button);
+```
+
+### Why Use TACO?
+
+TACO objects are just data. This means they can be:
+- **Generated** from any programming language (Python, Ruby, Go, etc.)
+- **Stored** in databases as JSON
+- **Sent** over networks via APIs
+- **Transformed** with simple array/object operations
+- **Composed** by combining smaller TACOs into larger ones
+
+**Why TACO?**
+1. **Language agnostic** - Generate UI from Python, Ruby, Go, etc.
+2. **Serializable** - Store UI definitions in JSON
+3. **Composable** - Build complex UIs from simple parts
+4. **Predictable** - What you write is what you get
+
+### The TACO Structure
 
 ```javascript
 {
   t: "tag",          // HTML tag name
-  a: {attributes},   // HTML attributes ONLY
-  c: content,        // Children: string, TACO, or array of TACOs
+  a: {attributes},   // HTML attributes (id, class, style, onclick, data-*, etc.)
+  c: content,        // Children - see detailed explanation below
   o: {               // OPTIONS - bitwrench-specific, never rendered to HTML
-    // Lifecycle hooks
-    mount: function(element) {},      // Called after element added to DOM  TODO not clear how this is called. does bitwrench do this automatically?
-    unmount: function(element) {},    // Called when element removed from DOM  TODO not clear how this is called. does bitwrench do this automatically?
-    update: function(element, newTACO) {}, // Called when updating  TODO not clear how this is called. does bitwrench do this automatically?
+    // Lifecycle hooks - ALL OPTIONAL
+    mount: function(element) {        
+      // 🚀 INITIALIZATION - Called after element added to DOM
+      // Use for: Starting timers, adding listeners, initializing libraries
+      console.log('Component mounted!', element);
+    },
+    unmount: function(element) {      
+      // 🧹 CLEANUP - Called when element removed or destroyed
+      // Use for: Clearing timers, removing listeners, cleanup
+      console.log('Component unmounting!');
+    },
+    update: function(element, newTACO) { 
+      // 🔄 GRANULAR UPDATE - Called via handle.update()
+      // Use for: Efficient partial updates without full re-render
+      console.log('Updating component');
+    }
     
     // Component state
     state: {},        // Component's private state
@@ -127,7 +436,56 @@ TODO: explain what the bitwrench TACO model is in english first and why it is us
 }
 ```
 
-TODO:  the following section tells us what not to do.  It should be preceded by what we should do and why we do it that way.
+### What SHOULD go in each property:
+
+- **'t' (tag)**: Any valid HTML tag name ("div", "span", "button", etc.)
+- **'t' (tag)**: Any valid HTML tag name ("div", "span", "button", etc.)
+- **'a' (attributes)**: HTML attributes that map directly to element properties:
+  ```javascript
+  a: {
+    id: "myButton",
+    "class": "btn btn-primary",  // Note: 'class' is quoted (reserved word)
+    style: "margin: 10px;",      // String or object
+    onclick: handleClick,         // Function reference
+    "data-value": "123",         // Data attributes
+    disabled: true               // Boolean attributes
+  }
+  ```
+  
+- **'c' (content)**: What goes inside the element. Can be:
+  - A string: `c: "Hello World"`
+  - A TACO object: `c: { t: "span", c: "nested" }`
+  - An array mixing strings and TACOs: `c: ["Hello ", { t: "b", c: "World" }]`
+  - Anything with toString(): `c: new Date()` → renders date string
+  - null/undefined: renders nothing
+  
+- **'o' (options)**: Bitwrench-specific lifecycle management:
+  ```javascript
+  o: {
+    // Lifecycle hooks (all optional)
+    mount: function(element) {
+      // Called after element is added to DOM
+      // Use for: starting timers, adding listeners, initializing libraries
+      console.log('Component mounted:', element);
+    },
+    unmount: function(element) {
+      // Called when element is removed from DOM
+      // Use for: cleanup, stopping timers, removing listeners
+      console.log('Component unmounting');
+    },
+    update: function(element, newTACO) {
+      // Called when updating component via handle.update()
+      // Use for: efficient updates without full re-render
+      console.log('Updating component');
+    },
+    
+    // Component state
+    state: {}, // Private state storage
+    
+    // Reference
+    ref: "myComponent" // String ID for lookup
+  }
+  ```
 
 ### What NEVER goes in 'o':
 - Style information (use 'a.style' or 'a["class"]')
@@ -136,13 +494,20 @@ TODO:  the following section tells us what not to do.  It should be preceded by 
 
 ## Two Rendering Modes: When to Use Each
 
+### 🏗️ Rendering Mode Cheat Sheet
+
+| Mode | Use Case | Features | Example |
+|------|----------|----------|----------|
+| **`bw.html()`** | Static pages, SSR, emails | Function registry for events, SEO-friendly | Landing pages, email templates |
+| **`bw.render()`** | Interactive components | Full lifecycle hooks, managed updates | Dashboards, forms, real-time UIs |
+
 ### Mode 1: Static HTML Generation (`bw.html()`)
 
 **Use when:**
 - Server-side rendering
 - Email templates  
 - SEO is critical
-- No interactivity needed (TODO not true in bitwrench1.x  you could store functions as strings and bitwrench, via the fn registry would hydrate your function)
+- Simple interactivity (click handlers work via function registry)
 
 ```javascript
 const myCard = {
@@ -183,11 +548,20 @@ document.getElementById('container').innerHTML = html;
 ```
 
 **How it works:**
-TODO: explain how functions work and why (and we should decide if we still want to support the fn registry.  Its powerful but needs some testing like what if someone remove the target element from the DOM)
-1. Functions are registered with unique IDs
-2. HTML gets `onclick="bw.funcCall('f_123')"`  
-3. Click events lookup and execute the registered function
-4. No inline JavaScript strings, just function references
+**How the Function Registry Works:**
+
+1. **Registration**: When `bw.html()` encounters a function in attributes, it:
+   - Generates a unique ID (e.g., "f_123")
+   - Stores the function in `bw._fnRegistry["f_123"]`
+   - Returns HTML with `onclick="bw.funcCall('f_123')"`
+
+2. **Execution**: When clicked, `bw.funcCall()` looks up and executes the function
+
+3. **Cleanup**: Functions are automatically removed when:
+   - The element is removed from DOM (via MutationObserver)
+   - Manual cleanup via `bw.cleanupElement(el)`
+   
+4. **Safety**: The registry prevents XSS by never evaluating strings as code
 
 
 ### Mode 2: Managed Components (`bw.render()`)
@@ -220,8 +594,11 @@ const myClock = {
 };
 
 // Returns a handle for lifecycle management
-TODO remember, bw.render(element, {t,a,c,o}) can take a css selector or a real DOM element.
+// bw.render() accepts either CSS selector or DOM element
 const clockHandle = bw.render('#clock-container', myClock);
+// or
+const element = document.getElementById('clock-container');
+const clockHandle = bw.render(element, myClock);
 
 // Later...
 clockHandle.destroy(); // Calls unmount, cleans up timer
@@ -229,8 +606,96 @@ clockHandle.destroy(); // Calls unmount, cleans up timer
 
 ## Component Lifecycle Management
 
+### Complete Lifecycle Example
+
+```javascript
+// A self-updating dashboard component
+const Dashboard = {
+  t: "div",
+  a: { class: "dashboard" },
+  c: [
+    { t: "h2", c: "Live Metrics" },
+    { t: "div", a: { id: "metrics" }, c: "Loading..." }
+  ],
+  o: {
+    state: {
+      timer: null,
+      socket: null
+    },
+    
+    mount: function(element) {
+      // 🚀 INITIALIZATION
+      console.log('Dashboard mounted');
+      
+      // Start periodic updates
+      this.state.timer = setInterval(() => {
+        this.fetchMetrics();
+      }, 5000);
+      
+      // Connect WebSocket
+      this.state.socket = new WebSocket('ws://localhost:8080');
+      this.state.socket.onmessage = (e) => {
+        this.updateMetrics(JSON.parse(e.data));
+      };
+    },
+    
+    unmount: function(element) {
+      // 🧹 CLEANUP
+      console.log('Dashboard unmounting');
+      
+      // Stop timer
+      if (this.state.timer) {
+        clearInterval(this.state.timer);
+      }
+      
+      // Close WebSocket
+      if (this.state.socket) {
+        this.state.socket.close();
+      }
+    },
+    
+    update: function(element, newTACO) {
+      // 🔄 GRANULAR UPDATE
+      // Only update the metrics div, not the whole dashboard
+      const metricsDiv = element.querySelector('#metrics');
+      if (metricsDiv && newTACO.metrics) {
+        metricsDiv.innerHTML = bw.html(newTACO.metrics);
+      }
+    },
+    
+    // Custom methods
+    fetchMetrics: function() {
+      fetch('/api/metrics')
+        .then(r => r.json())
+        .then(data => this.updateMetrics(data));
+    },
+    
+    updateMetrics: function(data) {
+      const metricsUI = {
+        t: "div",
+        c: Object.entries(data).map(([key, value]) => ({
+          t: "div",
+          c: `${key}: ${value}`
+        }))
+      };
+      
+      // Use the update hook for efficient updates
+      this.update(this.element, { metrics: metricsUI });
+    }
+  }
+};
+
+// Usage
+const handle = bw.render('#app', Dashboard);
+
+// Later: clean shutdown
+handle.destroy(); // Calls unmount, cleans everything up
+```
+
 ### The Lifecycle Flow
-TODO explain better this section.  Are the mount and unmount handled automatically by bitwrench??
+### Automatic Lifecycle Management
+
+Bitwrench automatically handles lifecycle hooks:
 
 ```
 1. Create TACO object  or import from a library
@@ -244,7 +709,9 @@ TODO explain better this section.  Are the mount and unmount handled automatical
 ```
 
 ### Automatic Cleanup via MutationObserver (IE11+)
-TODO so how does it work in earlier browsers - seem like we need a fall back method.
+### Fallback for Older Browsers (IE8-10)
+
+For browsers without MutationObserver, use manual cleanup:
 
 ```javascript
 // For modern browsers, auto-detect removal
@@ -2455,6 +2922,232 @@ module.exports = function(config) {
 };
 ```
 
+## Using Bitwrench's Built-in Components
+
+Bitwrench provides a rich set of pre-built components that follow Bootstrap patterns:
+
+### Basic Components Example
+
+```javascript
+// Import components
+const { Button, Card, Alert, Badge, Progress } = bw.components;
+
+// Create a dashboard using built-in components
+const dashboard = {
+  t: "div",
+  a: { "class": "container" },
+  c: [
+    // Alert with auto-dismiss
+    Alert({
+      variant: "success",
+      dismissible: true,
+      children: "Welcome to your dashboard!"
+    }),
+    
+    // Card with badge
+    Card({
+      title: "Sales Overview",
+      subtitle: "Last 30 days",
+      children: [
+        { t: "h3", c: ["$12,458 ", Badge({ variant: "success", children: "+15%" })] },
+        Progress({ value: 75, variant: "primary", animated: true })
+      ]
+    }),
+    
+    // Button group
+    {
+      t: "div",
+      a: { "class": "btn-group mt-3" },
+      c: [
+        Button({ variant: "primary", onClick: refreshData, children: "Refresh" }),
+        Button({ variant: "secondary", onClick: exportData, children: "Export" })
+      ]
+    }
+  ]
+};
+
+// Render to page
+bw.DOM('#app', dashboard);
+```
+
+### Layout Components
+
+```javascript
+const { Container, Row, Col, Navbar } = bw.components;
+
+// Responsive grid layout
+const layout = Container({
+  children: [
+    // Navigation
+    Navbar({
+      brand: "My App",
+      dark: true,
+      items: [
+        { text: "Home", href: "/", active: true },
+        { text: "About", href: "/about" },
+        { text: "Contact", href: "/contact" }
+      ]
+    }),
+    
+    // Content grid
+    Row({
+      class: "mt-4",
+      children: [
+        Col({ md: 8, children: mainContent }),
+        Col({ md: 4, children: sidebar })
+      ]
+    })
+  ]
+});
+```
+
+### Form Components
+
+```javascript
+const { Input, Select, Checkbox, Form } = bw.components;
+
+// Login form using components
+const loginForm = Card({
+  title: "Login",
+  children: Form({
+    onSubmit: handleLogin,
+    children: [
+      Input({
+        label: "Email",
+        type: "email",
+        placeholder: "you@example.com",
+        required: true
+      }),
+      Input({
+        label: "Password",
+        type: "password",
+        required: true
+      }),
+      Checkbox({
+        label: "Remember me",
+        checked: false
+      }),
+      Button({
+        type: "submit",
+        variant: "primary",
+        class: "w-100",
+        children: "Sign In"
+      })
+    ]
+  })
+});
+```
+
+### Data Display Components
+
+```javascript
+const { Table, List, StatCard } = bw.components;
+
+// Stats dashboard
+const stats = Row({
+  children: [
+    Col({ md: 3, children: 
+      StatCard({
+        title: "Users",
+        value: "1,234",
+        trend: "+12%",
+        icon: "👥"
+      })
+    }),
+    Col({ md: 3, children:
+      StatCard({
+        title: "Revenue",
+        value: "$45.2K",
+        trend: "+8%",
+        icon: "💰"
+      })
+    })
+  ]
+});
+
+// Data table
+const userTable = Table({
+  striped: true,
+  hover: true,
+  responsive: true,
+  children: [
+    {
+      t: "thead",
+      c: { t: "tr", c: [
+        { t: "th", c: "Name" },
+        { t: "th", c: "Email" },
+        { t: "th", c: "Status" }
+      ]}
+    },
+    {
+      t: "tbody",
+      c: users.map(user => ({
+        t: "tr",
+        c: [
+          { t: "td", c: user.name },
+          { t: "td", c: user.email },
+          { t: "td", c: Badge({ 
+            variant: user.active ? "success" : "secondary",
+            children: user.active ? "Active" : "Inactive"
+          })}
+        ]
+      }))
+    }
+  ]
+});
+```
+
+### Available Components
+
+Bitwrench includes 30+ built-in components:
+
+**Layout**: Container, Row, Col, Navbar, Footer, Sidebar
+**Content**: Card, Accordion, Tabs, Modal, Collapse
+**Forms**: Input, Select, Checkbox, Radio, TextArea, Form
+**Feedback**: Alert, Toast, Progress, Spinner
+**Data**: Table, List, StatCard, Badge, Avatar
+**Navigation**: Breadcrumb, Pagination, Dropdown
+**Buttons**: Button, ButtonGroup, ButtonToolbar
+
+All components:
+- Follow Bootstrap styling patterns
+- Support responsive design
+- Handle events and state
+- Work with both `bw.html()` and `bw.render()`
+- Can be customized via props
+
+## Optional: Lightweight Reactive Store
+
+For developers who want to reduce boilerplate, Bitwrench offers an optional signal-like store:
+
+```javascript
+// Create a reactive store
+const store = bw.createStore({
+  count: 0,
+  user: null
+});
+
+// Components can bind to store values
+const Counter = () => ({
+  t: "div",
+  c: [
+    { t: "h1", c: () => `Count: ${store.count}` },
+    { 
+      t: "button", 
+      a: { onclick: () => store.count++ },
+      c: "Increment"
+    }
+  ]
+});
+
+// Store changes trigger targeted updates
+store.subscribe('count', (newValue) => {
+  // Only components using 'count' re-render
+});
+```
+
+This is **completely optional**—you can use Bitwrench's explicit callbacks without any store abstraction.
+
 ## Real-World Examples
 
 ### Analytics Dashboard
@@ -2560,7 +3253,7 @@ def create_ml_dashboard(model_results):
         f.write(dashboard.to_html())
 ```
 
-### Streamlit Alternative Example
+### Interactive Data Explorer Example
 ```javascript
 // Create interactive ML exploration tool
 function MLExplorer() {
@@ -2596,25 +3289,272 @@ function MLExplorer() {
 
 ## Standard Component Library
 
-The built-in component library provides ready-to-use components:
+The built-in component library provides ready-to-use components that can be imported and used immediately. See the "Using Bitwrench's Built-in Components" section above for detailed examples.
 
-- **Layout**: Container, Row, Col, Card, Navbar, Footer
-- **Forms**: Input, Select, Checkbox, Radio, TextArea
-- **Feedback**: Alert, Toast, Modal, Progress
-- **Navigation**: Tabs, Breadcrumb, Pagination
-- **Data**: Table, List, Badge, Avatar
+## Implementation Guidelines for v2
 
-All components follow the TACO pattern and work with both `bw.html()` and `bw.render()`.
+These technical decisions guide the v2 implementation:
 
-## Summary: The Path Forward
+1. **'o' object scope** - Only lifecycle hooks (mount/unmount/update) and state
+2. **Rendering modes** - bw.html() for static HTML, bw.render() for managed components
+3. **Memory management** - Automatic cleanup via MutationObserver, manual fallback for IE8-10
+4. **CSS namespace** - All classes prefixed with 'bw-' to avoid collisions
+5. **Browser testing** - Must work in IE8+ with appropriate polyfills
+6. **API compatibility** - Preserve useful v1 features like function registry
+7. **Naming conventions**:
+   - TACO properties: `t`, `a`, `c`, `o`
+   - CSS classes: `bw-*` prefix
+   - Component methods: `bw.*` namespace
+   - Internal registry: `bw._*` prefix
 
-1. **Simplify the 'o' object** - Only lifecycle hooks and state
-2. **Clear rendering modes** - html() for static, render() for managed
-3. **Automatic cleanup** - Components clean themselves up
-4. **Namespace safety** - All classes prefixed with 'bw-'
-5. **Legacy browser support** - Test everything in IE8
-6. **Learn from v1** - Keep what worked, fix what didn't
-7. **Focus on data scientists** - Not competing with React/Vue
-8. **Better than Streamlit** - No server needed, just HTML files
+## Implementation Insights from Early Development
 
-The goal: A library that is genuinely simple, not just claiming to be simple.
+### Input Format Normalization
+
+The early html_gen.js implementation showed the importance of supporting multiple input formats. The v2 implementation should normalize inputs to a consistent internal format:
+
+```javascript
+// Support multiple input formats
+bw.normalize = function(input) {
+  // Array format: ["div", {class: "foo"}, "content"]
+  if (Array.isArray(input)) {
+    const [t, a, c, o] = input;
+    return { t, a: a || {}, c: c || [], o: o || {} };
+  }
+  
+  // Object with long names: {tag: "div", attrib: {...}, content: [...]}
+  if (input.tag || input.attrib || input.content) {
+    return {
+      t: input.tag || input.t || "div",
+      a: input.attrib || input.a || {},
+      c: input.content || input.c || [],
+      o: input.options || input.o || {}
+    };
+  }
+  
+  // Function that returns TACO
+  if (typeof input === 'function') {
+    return bw.normalize(input());
+  }
+  
+  // String/number/primitive
+  if (typeof input !== 'object') {
+    return { t: "span", a: {}, c: String(input), o: {} };
+  }
+  
+  // Already normalized
+  return input;
+};
+```
+
+### Smart Attribute Handling
+
+Attributes should intelligently handle different value types:
+
+```javascript
+// Convert attribute values based on type
+bw.processAttribute = function(key, value) {
+  // Array values for class
+  if (key === "class" && Array.isArray(value)) {
+    return value.filter(Boolean).join(" ");
+  }
+  
+  // Object values for style
+  if (key === "style" && typeof value === 'object') {
+    return Object.entries(value)
+      .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`)
+      .join('; ');
+  }
+  
+  // Function evaluation
+  if (typeof value === 'function') {
+    return bw.processAttribute(key, value());
+  }
+  
+  // Default: convert to string
+  return String(value);
+};
+```
+
+### Pretty Printing Support
+
+For debugging and development, pretty printing is invaluable:
+
+```javascript
+bw.html = function(taco, options = {}) {
+  const opts = {
+    pretty: false,
+    indent: 0,
+    indentStr: "  ",
+    ...options
+  };
+  
+  // Generate indentation
+  const ind = opts.pretty ? opts.indentStr.repeat(opts.indent) : "";
+  const nl = opts.pretty ? "\n" : "";
+  
+  // Render with proper formatting
+  return `${ind}<${taco.t}${attrs}>${nl}${content}${nl}${ind}</${taco.t}>`;
+};
+```
+
+### Function Evaluation Throughout
+
+Functions should be evaluated at every level of the TACO structure:
+
+```javascript
+// Evaluate functions throughout the structure
+bw.evaluate = function(value, context) {
+  if (typeof value === 'function') {
+    return bw.evaluate(value.call(context), context);
+  }
+  
+  if (Array.isArray(value)) {
+    return value.map(v => bw.evaluate(v, context));
+  }
+  
+  if (value && typeof value === 'object' && value.t) {
+    return {
+      t: bw.evaluate(value.t, context),
+      a: bw.evaluate(value.a, context),
+      c: bw.evaluate(value.c, context),
+      o: value.o // Don't evaluate options
+    };
+  }
+  
+  return value;
+};
+```
+
+### Error Handling Strategy
+
+Graceful error handling prevents entire UI failures:
+
+```javascript
+bw.safeRender = function(taco) {
+  try {
+    return bw.html(taco);
+  } catch (error) {
+    console.error('Render error:', error, taco);
+    
+    // Return error placeholder
+    return bw.html({
+      t: "div",
+      a: { 
+        "class": "bw-error",
+        style: { 
+          border: "2px solid red",
+          padding: "1rem",
+          background: "#ffeeee"
+        }
+      },
+      c: [
+        { t: "strong", c: "Render Error" },
+        { t: "pre", c: error.toString() }
+      ]
+    });
+  }
+};
+```
+
+### State Tracking for Debugging
+
+The early implementation tracked render state for debugging:
+
+```javascript
+bw._renderState = {
+  depth: 0,
+  breadth: 0,
+  maxDepth: 0,
+  nodeCount: 0,
+  errors: []
+};
+
+// Track during render
+bw._enterNode = function() {
+  bw._renderState.depth++;
+  bw._renderState.nodeCount++;
+  if (bw._renderState.depth > bw._renderState.maxDepth) {
+    bw._renderState.maxDepth = bw._renderState.depth;
+  }
+};
+
+bw._exitNode = function() {
+  bw._renderState.depth--;
+};
+```
+
+## Build Pipeline & Compatibility
+
+```
+TypeScript Source → Rollup → Babel → UMD/ESM/CJS
+     ↓                ↓        ↓         ↓
+  Type Safety    Tree Shake  ES5    Universal
+                            Polyfills  Support
+```
+
+This pipeline ensures:
+- Modern development experience
+- Legacy browser support (IE8+)
+- Multiple module formats
+- Minimal bundle size
+
+## Why Choose Bitwrench?
+
+### For Data Scientists & Researchers
+- Generate dashboards directly from Python/R/Julia without learning JavaScript
+- Export analysis results as standalone HTML files
+- Create interactive visualizations that work offline
+- Integrate seamlessly with Jupyter notebooks
+
+### For Backend Developers
+- Build admin panels without frontend tooling
+- Generate UIs from your preferred language (Go, Ruby, PHP, etc.)
+- No npm, webpack, or build process required
+- Works alongside your existing tech stack
+
+### For Enterprise & Legacy Systems  
+- Modernize old applications incrementally
+- Works in restricted corporate environments (IE8+)
+- No conflicts with existing jQuery/Angular/Bootstrap code
+- Progressive enhancement without breaking changes
+
+### Complementary to Modern Tools
+
+Bitwrench fills a specific niche in the ecosystem:
+
+- **Simpler than React/Vue** - When you need basic interactivity, not a full SPA
+- **More flexible than server-side frameworks** - Generate UI from any language
+- **Complementary to Streamlit** - Use Streamlit for exploration, Bitwrench for deployment
+- **More portable than any alternative** - Just HTML files that work anywhere
+
+## The Bitwrench Philosophy
+
+### "Explicit Control, Not Magic"
+
+Bitwrench's callback-based approach is a deliberate choice that provides:
+
+- **Performance**: Direct DOM updates are faster than virtual DOM diffing
+- **Predictability**: You control exactly when and how updates happen
+- **Debuggability**: No hidden update cycles or magic reactivity to debug
+- **Simplicity**: What you write is what happens, nothing more
+
+### "UI as Data"
+
+By representing UI as plain data structures, Bitwrench enables:
+
+- **Language Independence** - Generate UIs from Python, Go, C, or any language
+- **Data-Driven Interfaces** - Store UI definitions in databases or config files
+- **Programmatic Manipulation** - Transform UIs with simple array/object operations  
+- **Clear Mental Model** - What you write is exactly what you get
+
+### The End Goal
+
+Bitwrench isn't trying to build the next Facebook or replace modern frameworks. Instead, it makes simple UI tasks simple again:
+
+- A scientist can visualize results without learning React
+- A backend developer can build dashboards without Node.js
+- A legacy system can get modern UI components safely
+- Anyone can create dynamic interfaces by writing data
+
+In a world of increasingly complex frontend tooling, Bitwrench stands as a reminder that not every problem needs a complex solution. Sometimes, you just need to turn data into UI - and that's exactly what Bitwrench does best.

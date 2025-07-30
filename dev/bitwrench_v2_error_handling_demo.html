@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graceful Error Handling Demo - Bitwrench v2</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .card.error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .card.warning {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.success {
+            background: #28a745;
+        }
+        
+        /* Log Viewer Styles */
+        .bw-log-viewer {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .bw-log-controls {
+            padding: 10px;
+            background: #e9ecef;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bw-log-entries {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .bw-log-entry {
+            padding: 4px 8px;
+            margin-bottom: 2px;
+            border-radius: 3px;
+            display: grid;
+            grid-template-columns: 80px 60px 100px 1fr;
+            gap: 10px;
+        }
+        .bw-log-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .bw-log-warn {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .bw-log-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .bw-log-debug {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        .bw-log-time {
+            color: #666;
+        }
+        .bw-log-level {
+            font-weight: bold;
+        }
+        .bw-log-category {
+            color: #6610f2;
+        }
+        
+        /* Monitor Dashboard */
+        .bw-monitor {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .bw-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .bw-stat-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+        }
+        .bw-stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .bw-stat-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        .health-status {
+            padding: 10px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.875rem;
+        }
+        .health-good {
+            background: #d4edda;
+            color: #155724;
+        }
+        .health-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .health-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Graceful Error Handling Demo</h1>
+    
+    <div class="container">
+        <!-- Test Controls -->
+        <div class="panel">
+            <h2>Error Scenarios</h2>
+            <h3>Component Operations</h3>
+            <button onclick="createTestCard()">Create Test Card</button>
+            <button onclick="updateDisconnectedCard()">Update Disconnected Card</button>
+            <button onclick="chainedFailure()">Test Chained Failure</button>
+            <button onclick="invalidData()">Send Invalid Data</button>
+            
+            <h3>Table Operations</h3>
+            <button onclick="createTestTable()">Create Test Table</button>
+            <button onclick="addInvalidRow()">Add Invalid Row</button>
+            <button onclick="sortNonExistentColumn()">Sort Missing Column</button>
+            
+            <h3>System</h3>
+            <button onclick="clearLog()" class="danger">Clear Log</button>
+            <button onclick="showStats()" class="success">Show Stats</button>
+            
+            <div id="card-container"></div>
+        </div>
+        
+        <!-- Monitor Dashboard -->
+        <div class="panel">
+            <div id="monitor"></div>
+        </div>
+    </div>
+    
+    <!-- Log Viewer -->
+    <div class="panel">
+        <h2>Event Log</h2>
+        <div id="log-viewer"></div>
+    </div>
+
+    <script>
+        // Mock Bitwrench v2 with error handling
+        const bw = {
+            _componentRefs: new Map(),
+            config: {
+                debug: true,
+                errorHandling: {
+                    logErrors: true,
+                    logWarnings: true,
+                    autoRecover: true
+                }
+            },
+            
+            uuid() {
+                return `bw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            },
+            
+            // Event logging system
+            eventLog: {
+                _entries: [],
+                _maxEntries: 1000,
+                _listeners: new Set(),
+                
+                log(level, category, message, details = {}) {
+                    const entry = {
+                        id: bw.uuid(),
+                        timestamp: new Date(),
+                        level,
+                        category,
+                        message,
+                        details
+                    };
+                    
+                    this._entries.push(entry);
+                    if (this._entries.length > this._maxEntries) {
+                        this._entries.shift();
+                    }
+                    
+                    // Notify listeners
+                    this._listeners.forEach(listener => {
+                        try {
+                            listener(entry);
+                        } catch (e) {
+                            console.error('Error in log listener:', e);
+                        }
+                    });
+                    
+                    // Console output in debug mode
+                    if (bw.config.debug) {
+                        const method = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
+                        console[method](`[${category}] ${message}`, details);
+                    }
+                    
+                    return entry;
+                },
+                
+                error(category, message, details) {
+                    return this.log('error', category, message, details);
+                },
+                
+                warn(category, message, details) {
+                    return this.log('warn', category, message, details);
+                },
+                
+                info(category, message, details) {
+                    return this.log('info', category, message, details);
+                },
+                
+                query(filter = {}) {
+                    return this._entries.filter(entry => {
+                        if (filter.level && entry.level !== filter.level) return false;
+                        if (filter.category && entry.category !== filter.category) return false;
+                        return true;
+                    });
+                },
+                
+                subscribe(listener) {
+                    this._listeners.add(listener);
+                    return () => this._listeners.delete(listener);
+                },
+                
+                clear() {
+                    this._entries = [];
+                    this._listeners.forEach(listener => listener({ cleared: true }));
+                },
+                
+                stats() {
+                    const stats = {
+                        total: this._entries.length,
+                        byLevel: {},
+                        byCategory: {}
+                    };
+                    
+                    this._entries.forEach(entry => {
+                        stats.byLevel[entry.level] = (stats.byLevel[entry.level] || 0) + 1;
+                        stats.byCategory[entry.category] = (stats.byCategory[entry.category] || 0) + 1;
+                    });
+                    
+                    return stats;
+                }
+            }
+        };
+        
+        // Component with graceful error handling
+        class BWComponent {
+            constructor(element, config) {
+                this.element = element;
+                this.id = bw.uuid();
+                this.type = config.type || 'component';
+                this._config = { ...config };
+                this._isDestroyed = false;
+                this._failedOperations = 0;
+                
+                element.setAttribute('data-bw-id', this.id);
+                bw._componentRefs.set(this.id, this);
+                
+                bw.eventLog.info('component', `Created ${this.type}`, { 
+                    id: this.id,
+                    config: this._config 
+                });
+            }
+            
+            get isConnected() {
+                return this.element && this.element.isConnected;
+            }
+            
+            // Safe wrapper for operations
+            _safe(methodName, operation) {
+                try {
+                    if (this._isDestroyed) {
+                        bw.eventLog.warn('component', `Called ${methodName} on destroyed component`, {
+                            componentId: this.id,
+                            method: methodName
+                        });
+                        return this;
+                    }
+                    
+                    if (!this.isConnected) {
+                        bw.eventLog.warn('component', `Component disconnected during ${methodName}`, {
+                            componentId: this.id,
+                            method: methodName
+                        });
+                        this._autoCleanup();
+                        return this;
+                    }
+                    
+                    return operation.call(this);
+                    
+                } catch (error) {
+                    bw.eventLog.error('component', `Error in ${methodName}`, {
+                        componentId: this.id,
+                        method: methodName,
+                        error: error.message,
+                        stack: error.stack
+                    });
+                    
+                    this._failedOperations++;
+                    this.element.classList.add('error');
+                    
+                    // Still return self for chaining
+                    return this;
+                }
+            }
+            
+            update(updates) {
+                return this._safe('update', function() {
+                    if (updates.title) {
+                        const titleEl = this.element.querySelector('.card-title');
+                        if (titleEl) {
+                            titleEl.textContent = updates.title;
+                        }
+                    }
+                    
+                    if (updates.content) {
+                        const contentEl = this.element.querySelector('.card-content');
+                        if (contentEl) {
+                            contentEl.textContent = updates.content;
+                        }
+                    }
+                    
+                    bw.eventLog.info('component', 'Updated component', {
+                        componentId: this.id,
+                        updates
+                    });
+                    
+                    return this;
+                });
+            }
+            
+            highlight() {
+                return this._safe('highlight', function() {
+                    this.element.style.background = '#fffbdd';
+                    setTimeout(() => {
+                        this.element.style.background = '';
+                    }, 1000);
+                    return this;
+                });
+            }
+            
+            getHealth() {
+                const errors = bw.eventLog.query({
+                    category: 'component'
+                }).filter(e => e.details.componentId === this.id && e.level === 'error');
+                
+                return {
+                    id: this.id,
+                    type: this.type,
+                    connected: this.isConnected,
+                    destroyed: this._isDestroyed,
+                    failedOperations: this._failedOperations,
+                    errors: errors.length,
+                    status: this._failedOperations === 0 ? 'healthy' : 
+                            this._failedOperations < 3 ? 'warning' : 'error'
+                };
+            }
+            
+            _autoCleanup() {
+                if (this._isDestroyed) return;
+                
+                this._isDestroyed = true;
+                bw._componentRefs.delete(this.id);
+                
+                bw.eventLog.info('component', 'Auto-cleaned component', {
+                    componentId: this.id
+                });
+            }
+            
+            destroy() {
+                this._autoCleanup();
+                if (this.element && this.element.parentNode) {
+                    this.element.parentNode.removeChild(this.element);
+                }
+            }
+        }
+        
+        // Table with error handling
+        class BWTable extends BWComponent {
+            constructor(element, config) {
+                super(element, { ...config, type: 'table' });
+                this._data = config.data || [];
+                this._columns = config.columns || [];
+            }
+            
+            addRow(rowData) {
+                return this._safe('addRow', function() {
+                    if (!rowData || typeof rowData !== 'object') {
+                        bw.eventLog.warn('table', 'Invalid row data', {
+                            componentId: this.id,
+                            data: rowData
+                        });
+                        return this;
+                    }
+                    
+                    this._data.push(rowData);
+                    this._renderRow(rowData);
+                    
+                    bw.eventLog.info('table', 'Added row', {
+                        componentId: this.id,
+                        row: rowData
+                    });
+                    
+                    return this;
+                });
+            }
+            
+            sort(column) {
+                return this._safe('sort', function() {
+                    if (!this._columns.find(c => c.key === column)) {
+                        bw.eventLog.warn('table', 'Sort on non-existent column', {
+                            componentId: this.id,
+                            column,
+                            availableColumns: this._columns.map(c => c.key)
+                        });
+                        
+                        // Show available columns to user
+                        alert(`Column "${column}" not found. Available: ${this._columns.map(c => c.key).join(', ')}`);
+                        return this;
+                    }
+                    
+                    // Sort logic would go here
+                    bw.eventLog.info('table', 'Sorted table', {
+                        componentId: this.id,
+                        column
+                    });
+                    
+                    return this;
+                });
+            }
+            
+            _renderRow(data) {
+                const tbody = this.element.querySelector('tbody');
+                const tr = document.createElement('tr');
+                
+                this._columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = data[col.key] || '';
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+            }
+        }
+        
+        // Create components for testing
+        let testCard, testTable;
+        
+        function createTestCard() {
+            const container = document.getElementById('card-container');
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.innerHTML = `
+                <div class="card-title">Test Card</div>
+                <div class="card-content">Click buttons to test error scenarios</div>
+            `;
+            container.appendChild(cardEl);
+            
+            testCard = new BWComponent(cardEl, { title: 'Test Card' });
+            
+            // Show health status
+            updateHealthDisplay();
+        }
+        
+        function createTestTable() {
+            const container = document.getElementById('card-container');
+            const tableEl = document.createElement('div');
+            tableEl.className = 'card';
+            tableEl.innerHTML = `
+                <h4>Test Table</h4>
+                <table>
+                    <thead>
+                        <tr><th>Name</th><th>Value</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            `;
+            container.appendChild(tableEl);
+            
+            testTable = new BWTable(tableEl, {
+                columns: [
+                    { key: 'name', label: 'Name' },
+                    { key: 'value', label: 'Value' }
+                ],
+                data: []
+            });
+        }
+        
+        function updateDisconnectedCard() {
+            if (!testCard) {
+                alert('Create a test card first!');
+                return;
+            }
+            
+            // Remove card from DOM
+            testCard.element.remove();
+            
+            // Try to update it (will log warning, not throw)
+            testCard
+                .update({ title: 'This will fail gracefully' })
+                .highlight()
+                .update({ content: 'Still chaining!' });
+        }
+        
+        function chainedFailure() {
+            if (!testCard) {
+                alert('Create a test card first!');
+                return;
+            }
+            
+            // Force an error by removing title element
+            const titleEl = testCard.element.querySelector('.card-title');
+            if (titleEl) titleEl.remove();
+            
+            // Chain operations - won't break!
+            testCard
+                .update({ title: 'No title element!' })
+                .highlight()
+                .update({ content: 'But content still works!' })
+                .highlight();
+            
+            updateHealthDisplay();
+        }
+        
+        function invalidData() {
+            if (!testTable) {
+                alert('Create a test table first!');
+                return;
+            }
+            
+            // Try various invalid data
+            testTable
+                .addRow(null)
+                .addRow("not an object")
+                .addRow({ name: 'Valid Row', value: 42 })
+                .sort('nonExistentColumn')
+                .addRow({ name: 'Another Row', value: 'works!' });
+        }
+        
+        function addInvalidRow() {
+            if (!testTable) {
+                alert('Create a test table first!');
+                return;
+            }
+            
+            testTable.addRow("This is not valid row data");
+        }
+        
+        function sortNonExistentColumn() {
+            if (!testTable) {
+                alert('Create a test table first!');
+                return;
+            }
+            
+            testTable.sort('fakeColumn');
+        }
+        
+        function clearLog() {
+            bw.eventLog.clear();
+        }
+        
+        function showStats() {
+            console.log('Event Log Stats:', bw.eventLog.stats());
+            console.log('Components:', Array.from(bw._componentRefs.values()).map(c => c.getHealth()));
+        }
+        
+        function updateHealthDisplay() {
+            if (!testCard) return;
+            
+            const health = testCard.getHealth();
+            const healthEl = testCard.element.querySelector('.health-status') || 
+                           document.createElement('div');
+            
+            healthEl.className = `health-status health-${health.status}`;
+            healthEl.innerHTML = `
+                Health: ${health.status} | 
+                Failed Ops: ${health.failedOperations} | 
+                Errors: ${health.errors}
+            `;
+            
+            if (!testCard.element.querySelector('.health-status')) {
+                testCard.element.appendChild(healthEl);
+            }
+        }
+        
+        // Initialize log viewer
+        function initLogViewer() {
+            const viewer = document.getElementById('log-viewer');
+            viewer.innerHTML = `
+                <div class="bw-log-viewer">
+                    <div class="bw-log-controls">
+                        <select id="log-filter">
+                            <option value="all">All Levels</option>
+                            <option value="error">Errors Only</option>
+                            <option value="warn">Warnings Only</option>
+                            <option value="info">Info Only</option>
+                        </select>
+                        <button onclick="clearLog()">Clear Log</button>
+                    </div>
+                    <div class="bw-log-entries" id="log-entries"></div>
+                </div>
+            `;
+            
+            const entriesEl = document.getElementById('log-entries');
+            const filterEl = document.getElementById('log-filter');
+            
+            // Subscribe to log updates
+            bw.eventLog.subscribe(entry => {
+                if (entry.cleared) {
+                    entriesEl.innerHTML = '';
+                    updateMonitor();
+                    return;
+                }
+                
+                const filter = filterEl.value;
+                if (filter !== 'all' && entry.level !== filter) return;
+                
+                const entryEl = document.createElement('div');
+                entryEl.className = `bw-log-entry bw-log-${entry.level}`;
+                entryEl.innerHTML = `
+                    <span class="bw-log-time">${entry.timestamp.toLocaleTimeString()}</span>
+                    <span class="bw-log-level">${entry.level}</span>
+                    <span class="bw-log-category">${entry.category}</span>
+                    <span class="bw-log-message">${entry.message}</span>
+                `;
+                
+                entriesEl.appendChild(entryEl);
+                entriesEl.scrollTop = entriesEl.scrollHeight;
+                
+                // Update monitor
+                updateMonitor();
+            });
+            
+            filterEl.addEventListener('change', () => {
+                entriesEl.innerHTML = '';
+                const filter = filterEl.value;
+                const entries = filter === 'all' ? 
+                    bw.eventLog._entries : 
+                    bw.eventLog.query({ level: filter });
+                
+                entries.forEach(entry => {
+                    const entryEl = document.createElement('div');
+                    entryEl.className = `bw-log-entry bw-log-${entry.level}`;
+                    entryEl.innerHTML = `
+                        <span class="bw-log-time">${entry.timestamp.toLocaleTimeString()}</span>
+                        <span class="bw-log-level">${entry.level}</span>
+                        <span class="bw-log-category">${entry.category}</span>
+                        <span class="bw-log-message">${entry.message}</span>
+                    `;
+                    entriesEl.appendChild(entryEl);
+                });
+            });
+        }
+        
+        // Initialize monitor dashboard
+        function updateMonitor() {
+            const stats = bw.eventLog.stats();
+            const monitor = document.getElementById('monitor');
+            
+            monitor.innerHTML = `
+                <div class="bw-monitor">
+                    <h3>System Health Monitor</h3>
+                    <div class="bw-stats-grid">
+                        <div class="bw-stat-card" style="background: ${(stats.byLevel.error || 0) > 0 ? '#fee' : '#efe'}">
+                            <div class="bw-stat-value">${stats.byLevel.error || 0}</div>
+                            <div class="bw-stat-label">Errors</div>
+                        </div>
+                        <div class="bw-stat-card" style="background: ${(stats.byLevel.warn || 0) > 0 ? '#fff3cd' : '#f8f9fa'}">
+                            <div class="bw-stat-value">${stats.byLevel.warn || 0}</div>
+                            <div class="bw-stat-label">Warnings</div>
+                        </div>
+                        <div class="bw-stat-card">
+                            <div class="bw-stat-value">${bw._componentRefs.size}</div>
+                            <div class="bw-stat-label">Active Components</div>
+                        </div>
+                        <div class="bw-stat-card">
+                            <div class="bw-stat-value">${stats.total}</div>
+                            <div class="bw-stat-label">Log Entries</div>
+                        </div>
+                    </div>
+                    
+                    <h4>Components Health</h4>
+                    ${Array.from(bw._componentRefs.values()).map(comp => {
+                        const health = comp.getHealth();
+                        return `
+                            <div class="health-status health-${health.status}">
+                                ${health.type} (${health.id.substr(-8)}): 
+                                ${health.status} - 
+                                ${health.failedOperations} failed ops
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+        
+        // Initialize
+        initLogViewer();
+        updateMonitor();
+    </script>
+</body>
+</html>

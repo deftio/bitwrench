@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitwrench v2 Pattern Testing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .bw-card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 16px;
+            margin: 10px 0;
+            background: white;
+        }
+        .bw-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .bw-table th, .bw-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .bw-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .console-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .uuid-highlight {
+            background: yellow;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bitwrench v2 Pattern Testing</h1>
+    <p>Testing the key architectural patterns defined in v2r2.md</p>
+
+    <div id="test-output"></div>
+
+    <script>
+        // Console capture for testing
+        const consoleLog = [];
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn
+        };
+
+        function captureConsole() {
+            console.log = function(...args) {
+                consoleLog.push({ type: 'log', message: args.join(' ') });
+                originalConsole.log.apply(console, args);
+            };
+            console.error = function(...args) {
+                consoleLog.push({ type: 'error', message: args.join(' ') });
+                originalConsole.error.apply(console, args);
+            };
+            console.warn = function(...args) {
+                consoleLog.push({ type: 'warn', message: args.join(' ') });
+                originalConsole.warn.apply(console, args);
+            };
+        }
+
+        function restoreConsole() {
+            console.log = originalConsole.log;
+            console.error = originalConsole.error;
+            console.warn = originalConsole.warn;
+        }
+
+        function getConsoleOutput() {
+            const output = [...consoleLog];
+            consoleLog.length = 0;
+            return output;
+        }
+
+        // Minimal Bitwrench v2 implementation for testing
+        window.bw = {
+            _uuidCounter: 0,
+            _handles: new WeakMap(),
+            _mountedComponents: new Map(),
+
+            // Generate unique UUID
+            uuid() {
+                return `bw_uuid_${++this._uuidCounter}`;
+            },
+
+            // Convert style object to CSS string
+            makeCSS(styleObj) {
+                if (typeof styleObj === 'string') return styleObj;
+                
+                return Object.entries(styleObj)
+                    .map(([key, value]) => {
+                        // Convert camelCase to kebab-case
+                        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+                        // Add px to numbers (except for certain properties)
+                        const cssValue = typeof value === 'number' && 
+                            !['opacity', 'zIndex', 'fontWeight'].includes(key) 
+                            ? `${value}px` : value;
+                        return `${cssKey}: ${cssValue}`;
+                    })
+                    .join('; ') + ';';
+            },
+
+            // Mode 1: HTML String Generation
+            html(taco) {
+                if (!taco) return '';
+                if (typeof taco === 'string') return taco;
+                if (Array.isArray(taco)) return taco.map(t => this.html(t)).join('');
+                
+                const { t, a = {}, c = '' } = taco;
+                const attrs = Object.entries(a)
+                    .map(([key, val]) => {
+                        if (key === 'style' && typeof val === 'object') {
+                            return `style="${this.makeCSS(val)}"`;
+                        }
+                        return `${key}="${val}"`;
+                    })
+                    .join(' ');
+                
+                const content = Array.isArray(c) 
+                    ? c.map(child => this.html(child)).join('')
+                    : this.html(c);
+                
+                return `<${t}${attrs ? ' ' + attrs : ''}>${content}</${t}>`;
+            },
+
+            // Create DOM element from TACO
+            createDOM(taco) {
+                if (!taco) return null;
+                if (typeof taco === 'string') {
+                    return document.createTextNode(taco);
+                }
+                
+                const { t, a = {}, c = '', o = {} } = taco;
+                const element = document.createElement(t);
+                
+                // Set attributes
+                Object.entries(a).forEach(([key, value]) => {
+                    if (key === 'style' && typeof value === 'object') {
+                        element.setAttribute('style', this.makeCSS(value));
+                    } else if (key.startsWith('on') && typeof value === 'function') {
+                        element[key] = value;
+                    } else {
+                        element.setAttribute(key, value);
+                    }
+                });
+                
+                // Process children
+                const processChild = (child) => {
+                    if (!child) return null;
+                    if (typeof child === 'string') {
+                        return document.createTextNode(child);
+                    }
+                    if (child.nodeType) { // DOM element
+                        return child;
+                    }
+                    if (typeof child === 'function') {
+                        return processChild(child());
+                    }
+                    if (Array.isArray(child)) {
+                        const fragment = document.createDocumentFragment();
+                        child.forEach(c => {
+                            const node = processChild(c);
+                            if (node) fragment.appendChild(node);
+                        });
+                        return fragment;
+                    }
+                    if (child.move) {
+                        // Handle move instruction
+                        const handle = child.move;
+                        if (handle.element && handle.element.parentNode) {
+                            handle.element.parentNode.removeChild(handle.element);
+                            return handle.element;
+                        }
+                    }
+                    // TACO object
+                    return this.createDOM(child);
+                };
+                
+                if (Array.isArray(c)) {
+                    c.forEach(child => {
+                        const node = processChild(child);
+                        if (node) element.appendChild(node);
+                    });
+                } else {
+                    const node = processChild(c);
+                    if (node) element.appendChild(node);
+                }
+                
+                return element;
+            },
+
+            // Mode 3: Render component and return handle
+            renderComponent(taco) {
+                // Inject UUID
+                const uuid = this.uuid();
+                const modifiedTaco = {
+                    ...taco,
+                    a: {
+                        ...taco.a,
+                        class: `${taco.a?.class || ''} ${uuid}`.trim()
+                    }
+                };
+                
+                // Create DOM element
+                const element = this.createDOM(modifiedTaco);
+                
+                // Create handle
+                const handle = {
+                    element,
+                    uuid,
+                    type: taco.o?.type || 'generic',
+                    state: taco.o?.state || {},
+                    parent: null,
+                    children: [],
+                    
+                    // Common methods
+                    getBwId() { return this.uuid; },
+                    select(selector) { 
+                        return Array.from(this.element.querySelectorAll(selector));
+                    },
+                    show() { this.element.style.display = ''; return this; },
+                    hide() { this.element.style.display = 'none'; return this; },
+                    addClass(className) { 
+                        this.element.classList.add(className); 
+                        return this;
+                    },
+                    removeClass(className) { 
+                        this.element.classList.remove(className); 
+                        return this;
+                    },
+                    destroy() {
+                        if (this.element.parentNode) {
+                            this.element.parentNode.removeChild(this.element);
+                        }
+                        bw._mountedComponents.delete(this.uuid);
+                        if (taco.o?.unmount) {
+                            taco.o.unmount(this.element, this);
+                        }
+                    },
+                    detach() {
+                        if (this.element.parentNode) {
+                            this.element.parentNode.removeChild(this.element);
+                            bw._mountedComponents.delete(this.uuid);
+                        }
+                        return this;
+                    }
+                };
+                
+                // Add component-specific methods based on type
+                if (taco.o?.type === 'table') {
+                    handle.addRow = function(data) {
+                        console.log(`Table ${this.uuid}: Adding row`, data);
+                        return this;
+                    };
+                    handle.sortBy = function(column, dir) {
+                        console.log(`Table ${this.uuid}: Sorting by ${column} ${dir}`);
+                        return this;
+                    };
+                }
+                
+                if (taco.o?.type === 'card') {
+                    handle.setTitle = function(title) {
+                        const titleEl = this.element.querySelector('.bw-card-title');
+                        if (titleEl) titleEl.textContent = title;
+                        return this;
+                    };
+                    handle.setContent = function(content) {
+                        const contentEl = this.element.querySelector('.bw-card-content');
+                        if (contentEl) contentEl.textContent = content;
+                        return this;
+                    };
+                }
+                
+                // Store handle reference
+                this._handles.set(element, handle);
+                
+                // Call mounted lifecycle
+                if (taco.o?.mounted) {
+                    taco.o.mounted(element, handle);
+                }
+                
+                return handle;
+            },
+
+            // Mount to DOM
+            DOM(target, content) {
+                const targetEl = typeof target === 'string' 
+                    ? document.querySelector(target) 
+                    : target;
+                
+                if (!targetEl) {
+                    throw new Error(`Target not found: ${target}`);
+                }
+                
+                // Clear target
+                targetEl.innerHTML = '';
+                
+                // Handle different content types
+                if (content && content.element) {
+                    // Component handle
+                    if (this._mountedComponents.has(content.uuid)) {
+                        throw new Error(`Component ${content.uuid} is already mounted. Use .detach() to move or create a new instance.`);
+                    }
+                    targetEl.appendChild(content.element);
+                    this._mountedComponents.set(content.uuid, true);
+                } else if (content && content.nodeType) {
+                    // DOM element
+                    targetEl.appendChild(content);
+                } else if (typeof content === 'string') {
+                    // HTML string
+                    targetEl.innerHTML = content;
+                } else if (content) {
+                    // TACO object
+                    const element = this.createDOM(content);
+                    targetEl.appendChild(element);
+                }
+                
+                return targetEl;
+            },
+
+            // Utility: DOM selection
+            $(selector, context = document) {
+                return Array.from(context.querySelectorAll(selector));
+            },
+
+            // Get handle from element
+            getHandle(element) {
+                return this._handles.get(element);
+            }
+        };
+
+        // Component helper functions
+        bw.makeCard = function(props) {
+            return {
+                t: 'div',
+                a: { class: 'bw-card' },
+                c: [
+                    props.title && {
+                        t: 'h3',
+                        a: { class: 'bw-card-title' },
+                        c: props.title
+                    },
+                    props.content && {
+                        t: 'div',
+                        a: { class: 'bw-card-content' },
+                        c: props.content
+                    }
+                ].filter(Boolean),
+                o: { type: 'card', state: props.state || {} }
+            };
+        };
+
+        bw.createCard = function(props) {
+            return bw.renderComponent(bw.makeCard(props));
+        };
+
+        bw.htmlTable = function(data) {
+            const headers = Object.keys(data[0] || {});
+            return `<table class="bw-table">
+                <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                <tbody>${data.map(row => 
+                    `<tr>${Object.values(row).map(v => `<td>${v}</td>`).join('')}</tr>`
+                ).join('')}</tbody>
+            </table>`;
+        };
+
+        bw.makeTable = function(data, options = {}) {
+            const headers = options.headers || Object.keys(data[0] || {});
+            return {
+                t: 'table',
+                a: { class: 'bw-table' },
+                c: [
+                    {
+                        t: 'thead',
+                        c: {
+                            t: 'tr',
+                            c: headers.map(h => ({ t: 'th', c: h }))
+                        }
+                    },
+                    {
+                        t: 'tbody',
+                        c: data.map(row => ({
+                            t: 'tr',
+                            c: Object.values(row).map(v => ({ t: 'td', c: String(v) }))
+                        }))
+                    }
+                ],
+                o: { type: 'table', state: { data } }
+            };
+        };
+
+        bw.createTable = function(data, options) {
+            return bw.renderComponent(bw.makeTable(data, options));
+        };
+
+        // Test runner
+        function runTest(title, testFn) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            
+            const titleEl = document.createElement('div');
+            titleEl.className = 'test-title';
+            titleEl.textContent = title;
+            section.appendChild(titleEl);
+            
+            const resultEl = document.createElement('div');
+            section.appendChild(resultEl);
+            
+            captureConsole();
+            try {
+                testFn(resultEl);
+                const logs = getConsoleOutput();
+                
+                if (logs.length > 0) {
+                    const consoleEl = document.createElement('div');
+                    consoleEl.className = 'console-output';
+                    consoleEl.innerHTML = logs.map(log => 
+                        `<div style="color: ${log.type === 'error' ? 'red' : log.type === 'warn' ? 'orange' : 'black'}">${log.type}: ${log.message}</div>`
+                    ).join('');
+                    section.appendChild(consoleEl);
+                }
+            } catch (error) {
+                const errorEl = document.createElement('div');
+                errorEl.className = 'test-result test-fail';
+                errorEl.textContent = `Error: ${error.message}`;
+                resultEl.appendChild(errorEl);
+                restoreConsole();
+            }
+            
+            document.getElementById('test-output').appendChild(section);
+            restoreConsole();
+        }
+
+        // Run tests
+        window.addEventListener('DOMContentLoaded', () => {
+            // Test 1: Three Rendering Modes
+            runTest('Test 1: Three Rendering Modes', (container) => {
+                // Mode 1: HTML String
+                const htmlString = bw.html({ t: 'div', c: 'Mode 1: HTML String' });
+                const div1 = document.createElement('div');
+                div1.innerHTML = htmlString;
+                div1.className = 'test-result test-info';
+                container.appendChild(div1);
+                
+                // Mode 2: TACO Object
+                const taco = bw.makeCard({ title: 'Mode 2: TACO Object', content: 'Pure data structure' });
+                const div2 = document.createElement('div');
+                div2.className = 'test-result test-info';
+                div2.innerHTML = `<pre>${JSON.stringify(taco, null, 2)}</pre>`;
+                container.appendChild(div2);
+                
+                // Mode 3: Live Component
+                const handle = bw.createCard({ title: 'Mode 3: Live Component', content: 'Interactive handle' });
+                const div3 = document.createElement('div');
+                div3.className = 'test-result test-info';
+                bw.DOM(div3, handle);
+                div3.innerHTML += `<p>UUID: <span class="uuid-highlight">${handle.uuid}</span></p>`;
+                container.appendChild(div3);
+                
+                // Test handle methods
+                handle.setTitle('Updated Title!');
+                handle.setContent('Content updated via handle method');
+            });
+
+            // Test 2: UUID Injection and Selection
+            runTest('Test 2: UUID Injection and Selection', (container) => {
+                const card1 = bw.createCard({ title: 'Card 1' });
+                const card2 = bw.createCard({ title: 'Card 2' });
+                
+                const wrapper = document.createElement('div');
+                bw.DOM(wrapper, card1);
+                
+                const wrapper2 = document.createElement('div');
+                bw.DOM(wrapper2, card2);
+                
+                container.appendChild(wrapper);
+                container.appendChild(wrapper2);
+                
+                // Test selection by UUID
+                const found1 = bw.$(`.${card1.uuid}`);
+                const found2 = bw.$(`.${card2.uuid}`);
+                
+                const result = document.createElement('div');
+                result.className = 'test-result test-pass';
+                result.innerHTML = `
+                    Found card1: ${found1.length === 1 ? 'YES' : 'NO'}<br>
+                    Found card2: ${found2.length === 1 ? 'YES' : 'NO'}<br>
+                    Card1 UUID: <span class="uuid-highlight">${card1.uuid}</span><br>
+                    Card2 UUID: <span class="uuid-highlight">${card2.uuid}</span>
+                `;
+                container.appendChild(result);
+            });
+
+            // Test 3: Mixed Content Arrays
+            runTest('Test 3: Mixed Content Arrays', (container) => {
+                const tableData = [
+                    { name: 'John', age: 30 },
+                    { name: 'Jane', age: 25 }
+                ];
+                
+                const mixedContent = {
+                    t: 'div',
+                    c: [
+                        "Plain text at start",
+                        { t: 'h3', c: 'TACO heading' },
+                        bw.htmlTable(tableData),
+                        () => ({ t: 'p', c: 'Function-generated content' }),
+                        null,
+                        [
+                            { t: 'span', c: 'Nested ' },
+                            { t: 'strong', c: 'array' }
+                        ]
+                    ]
+                };
+                
+                const element = bw.createDOM(mixedContent);
+                container.appendChild(element);
+                
+                const result = document.createElement('div');
+                result.className = 'test-result test-pass';
+                result.textContent = 'Mixed content array processed successfully';
+                container.appendChild(result);
+            });
+
+            // Test 4: Component Movement Rules
+            runTest('Test 4: Component Movement Rules', (container) => {
+                const card = bw.createCard({ title: 'Moveable Card', content: 'Try to move me!' });
+                
+                // First mount
+                const div1 = document.createElement('div');
+                div1.style.border = '2px solid blue';
+                div1.style.padding = '10px';
+                div1.style.marginBottom = '10px';
+                const label1 = document.createElement('p');
+                label1.textContent = 'First location:';
+                div1.appendChild(label1);
+                container.appendChild(div1);
+                
+                bw.DOM(div1, card);
+                
+                // Try to mount again (should fail)
+                const div2 = document.createElement('div');
+                div2.style.border = '2px solid red';
+                div2.style.padding = '10px';
+                const label2 = document.createElement('p');
+                label2.textContent = 'Second location (should fail):';
+                div2.appendChild(label2);
+                container.appendChild(div2);
+                
+                try {
+                    bw.DOM(div2, card);
+                    const fail = document.createElement('div');
+                    fail.className = 'test-result test-fail';
+                    fail.textContent = 'ERROR: Component was mounted twice!';
+                    container.appendChild(fail);
+                } catch (error) {
+                    const pass = document.createElement('div');
+                    pass.className = 'test-result test-pass';
+                    pass.textContent = `Correctly prevented double mount: ${error.message}`;
+                    container.appendChild(pass);
+                }
+                
+                // Test detach and remount
+                card.detach();
+                const div3 = document.createElement('div');
+                div3.style.border = '2px solid green';
+                div3.style.padding = '10px';
+                div3.style.marginTop = '10px';
+                const label3 = document.createElement('p');
+                label3.textContent = 'Third location (after detach):';
+                div3.appendChild(label3);
+                container.appendChild(div3);
+                
+                try {
+                    bw.DOM(div3, card);
+                    const success = document.createElement('div');
+                    success.className = 'test-result test-pass';
+                    success.textContent = 'Successfully moved component after detach';
+                    container.appendChild(success);
+                } catch (error) {
+                    const fail = document.createElement('div');
+                    fail.className = 'test-result test-fail';
+                    fail.textContent = `Failed to move after detach: ${error.message}`;
+                    container.appendChild(fail);
+                }
+            });
+
+            // Test 5: Component Lifecycle
+            runTest('Test 5: Component Lifecycle', (container) => {
+                let mountedCalled = false;
+                let unmountCalled = false;
+                
+                const component = {
+                    t: 'div',
+                    a: { class: 'lifecycle-test' },
+                    c: 'Lifecycle Test Component',
+                    o: {
+                        mounted: (el, handle) => {
+                            mountedCalled = true;
+                            console.log('Component mounted:', handle.uuid);
+                        },
+                        unmount: (el, handle) => {
+                            unmountCalled = true;
+                            console.log('Component unmounting:', handle.uuid);
+                        }
+                    }
+                };
+                
+                const handle = bw.renderComponent(component);
+                bw.DOM(container, handle);
+                
+                const result1 = document.createElement('div');
+                result1.className = 'test-result ' + (mountedCalled ? 'test-pass' : 'test-fail');
+                result1.textContent = `Mounted callback: ${mountedCalled ? 'Called' : 'Not called'}`;
+                container.appendChild(result1);
+                
+                handle.destroy();
+                
+                const result2 = document.createElement('div');
+                result2.className = 'test-result ' + (unmountCalled ? 'test-pass' : 'test-fail');
+                result2.textContent = `Unmount callback: ${unmountCalled ? 'Called' : 'Not called'}`;
+                container.appendChild(result2);
+            });
+
+            // Test 6: Handle Methods by Component Type
+            runTest('Test 6: Handle Methods by Component Type', (container) => {
+                const tableData = [
+                    { id: 1, name: 'Alice', score: 95 },
+                    { id: 2, name: 'Bob', score: 87 }
+                ];
+                
+                const table = bw.createTable(tableData);
+                const card = bw.createCard({ title: 'Test Card' });
+                
+                const wrapper = document.createElement('div');
+                bw.DOM(wrapper, table);
+                container.appendChild(wrapper);
+                
+                const wrapper2 = document.createElement('div');
+                bw.DOM(wrapper2, card);
+                container.appendChild(wrapper2);
+                
+                // Test table-specific methods
+                const hasTableMethods = typeof table.addRow === 'function' && 
+                                       typeof table.sortBy === 'function';
+                
+                const hasCardMethods = typeof card.setTitle === 'function' && 
+                                      typeof card.setContent === 'function';
+                
+                const result = document.createElement('div');
+                result.className = 'test-result ' + (hasTableMethods && hasCardMethods ? 'test-pass' : 'test-fail');
+                result.innerHTML = `
+                    Table has addRow: ${typeof table.addRow === 'function' ? 'YES' : 'NO'}<br>
+                    Table has sortBy: ${typeof table.sortBy === 'function' ? 'YES' : 'NO'}<br>
+                    Card has setTitle: ${typeof card.setTitle === 'function' ? 'YES' : 'NO'}<br>
+                    Card has setContent: ${typeof card.setContent === 'function' ? 'YES' : 'NO'}<br>
+                `;
+                container.appendChild(result);
+                
+                // Test methods work
+                table.addRow({ id: 3, name: 'Charlie', score: 92 });
+                table.sortBy('score', 'desc');
+                card.setTitle('Updated via Handle!');
+            });
+
+            // Test 7: Style Object to CSS Conversion
+            runTest('Test 7: Style Object to CSS Conversion', (container) => {
+                const styleObj = {
+                    padding: 16,
+                    margin: '1rem',
+                    backgroundColor: '#f0f0f0',
+                    fontSize: 14,
+                    opacity: 0.9,
+                    zIndex: 10
+                };
+                
+                const css = bw.makeCSS(styleObj);
+                
+                const component = {
+                    t: 'div',
+                    a: { style: styleObj },
+                    c: 'Styled with object'
+                };
+                
+                const element = bw.createDOM(component);
+                container.appendChild(element);
+                
+                const result = document.createElement('div');
+                result.className = 'test-result test-info';
+                result.innerHTML = `
+                    <strong>Style Object:</strong><br>
+                    <pre>${JSON.stringify(styleObj, null, 2)}</pre>
+                    <strong>Generated CSS:</strong><br>
+                    <code>${css}</code>
+                `;
+                container.appendChild(result);
+            });
+        });
+    </script>
+</body>
+</html>
