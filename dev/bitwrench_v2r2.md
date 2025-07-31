@@ -171,6 +171,21 @@ class ComponentHandle {
   destroy()                  // Remove and cleanup
   
   // Component-specific methods added by type
+  
+  // Enhanced DOM methods
+  focus()                      // Focus element
+  blur()                       // Blur element
+  enable()                     // Enable element
+  disable()                    // Disable element
+  hasClass(className)          // Check if class exists
+  getAttribute(name)           // Get attribute value
+  setAttribute(name, value)    // Set attribute value
+  
+  // Style helpers
+  css(prop, value)            // Get/set inline styles
+  // css('color') returns current color
+  // css('color', 'red') sets color
+  // css({color: 'red', padding: 16}) sets multiple
 }
 ```
 
@@ -592,6 +607,182 @@ const dashboard = bw.renderComponent(DashboardPage(dashboardData));
 bw.DOM(document.body, dashboard);
 ```
 
+## Automatic Cleanup
+
+Bitwrench v2 includes automatic cleanup strategies to prevent memory leaks:
+
+```javascript
+// Configuration (can be customized)
+bw.config.cleanup = {
+  checkBeforeOp: true,       // Validate element connection before operations
+  useMutationObserver: true, // Watch DOM for removed elements
+  useGarbageCollector: true, // Periodic cleanup of orphaned components
+  gcInterval: 10000          // GC runs every 10 seconds
+};
+
+// Manual cleanup
+bw.cleanup(element);  // Clean up specific element and children
+bw.cleanupAll();     // Clean up all orphaned components
+```
+
+### Cleanup Strategy Details
+
+1. **Check Before Operations**: Each handle method validates the element is still connected
+2. **MutationObserver**: Watches for removed nodes and cleans up their handles
+3. **Periodic GC**: Scans all components and removes orphaned references
+
+## Error Handling and Logging
+
+### Event Logging System
+
+Non-throwing error system that logs issues without breaking execution:
+
+```javascript
+// Log an error
+bw.eventLog.error('component', 'Card mount failed', { id: card.uuid });
+
+// Log a warning  
+bw.eventLog.warn('performance', 'Render took > 100ms', { time: 125 });
+
+// Query logs
+const errors = bw.eventLog.query({ level: 'error', category: 'component' });
+
+// Subscribe to events
+bw.eventLog.subscribe((event) => {
+  if (event.level === 'error') {
+    console.error(`[${event.category}] ${event.message}`, event.details);
+  }
+});
+
+// Get statistics
+const stats = bw.eventLog.stats();
+// { errors: 3, warnings: 12, info: 45 }
+```
+
+### Safe Method Pattern
+
+Component methods use safe wrappers:
+
+```javascript
+class ComponentHandle {
+  addClass(className) {
+    return this._safe('addClass', () => {
+      this.element.classList.add(className);
+      return this;
+    });
+  }
+  
+  _safe(methodName, operation) {
+    try {
+      if (!this.element.isConnected) {
+        bw.eventLog.warn('component', `${methodName} called on disconnected element`, {
+          uuid: this.uuid
+        });
+        return this;
+      }
+      return operation.call(this);
+    } catch (error) {
+      bw.eventLog.error('component', `${methodName} failed`, {
+        uuid: this.uuid,
+        error: error.message
+      });
+      return this; // Allow chaining to continue
+    }
+  }
+}
+```
+
+## Debug Tools
+
+Development tools for inspecting and debugging components:
+
+```javascript
+// List all active components
+bw.debug.listComponents();
+// [{uuid: 'bw_uuid_abc123', type: 'card', connected: true}, ...]
+
+// Find component by element
+const handle = bw.debug.findByElement(document.querySelector('.my-card'));
+
+// Check for memory leaks
+const leaks = bw.debug.checkLeaks();
+// [{uuid: 'bw_uuid_xyz789', type: 'table', reason: 'element removed but handle exists'}]
+
+// Enable lifecycle tracing
+bw.debug.traceLifecycle = true;
+// Now all mount/unmount operations are logged
+
+// Component tree visualization
+bw.debug.showTree(rootHandle);
+// Logs hierarchical component structure
+
+// Performance metrics
+bw.debug.metrics();
+// {renders: 145, avgRenderTime: 12.5, slowestRender: 89}
+```
+
+## TACO Utilities
+
+Helper functions for TACO manipulation:
+
+```javascript
+// Create TACO with builder pattern
+const card = bw.taco.create('div')
+  .addClass('bw-card')
+  .addChild({ t: 'h3', c: 'Title' })
+  .addChild({ t: 'p', c: 'Content' })
+  .build();
+
+// Manipulate existing TACOs
+bw.taco.addClass(myTaco, 'highlight');
+bw.taco.setAttribute(myTaco, 'data-id', '123');
+
+// Find nested elements
+const buttons = bw.taco.find(pageTaco, (node) => node.t === 'button');
+
+// Transform TACOs
+const darkTheme = bw.taco.map(lightTaco, (node) => {
+  if (node.a?.class?.includes('bw-bg-light')) {
+    return { ...node, a: { ...node.a, class: node.a.class.replace('bw-bg-light', 'bw-bg-dark') }};
+  }
+  return node;
+});
+
+// Insert/remove children
+bw.taco.insertChild(parent, 0, newChild);  // Insert at position
+bw.taco.appendChild(parent, child);        // Append
+bw.taco.removeChild(parent, child);        // Remove
+```
+
+## Performance Budgets
+
+Target performance metrics for v2:
+
+```javascript
+// Rendering performance
+- Render 1000 simple elements: < 100ms
+- Render 100 complex components: < 50ms  
+- Initial library load: < 10ms
+
+// Bundle sizes
+- UMD build: < 50KB minified
+- ESM build: < 45KB minified
+- Core CSS: < 20KB minified
+- Gzipped total: < 25KB
+
+// Memory usage
+- Component handle overhead: < 1KB per component
+- Event listener cleanup: 100% on destroy
+- No memory leaks after 1000 create/destroy cycles
+
+// Browser support
+- Chrome/Edge: Latest 2 versions
+- Firefox: Latest 2 versions  
+- Safari: Latest 2 versions
+- IE: 11+ (with polyfills)
+- IE: 8+ (core features only, no MutationObserver)
+```
+
 ## Import/Export Patterns
 
 ### ESM Module Pattern
@@ -648,6 +839,48 @@ fetch('/api/page/dashboard')
       "a": { "data-component": "chart", "data-source": "/api/chart/sales" }
     }
   ]
+}
+```
+
+## Browser Compatibility
+
+### IE8+ Core Support
+
+Core functionality works in IE8+ with these polyfills:
+
+```javascript
+// isConnected polyfill
+if (!('isConnected' in Node.prototype)) {
+  Object.defineProperty(Node.prototype, 'isConnected', {
+    get: function() { return document.contains(this); }
+  });
+}
+
+// classList polyfill for IE9
+if (!('classList' in Element.prototype)) {
+  // Polyfill implementation
+}
+
+// Array methods for IE8
+if (!Array.prototype.filter) {
+  Array.prototype.filter = function(fn) { /* ... */ };
+}
+```
+
+### Feature Detection
+
+```javascript
+bw.support = {
+  mutationObserver: 'MutationObserver' in window,
+  classList: 'classList' in Element.prototype,
+  isConnected: 'isConnected' in Node.prototype,
+  flexbox: CSS.supports && CSS.supports('display', 'flex'),
+  grid: CSS.supports && CSS.supports('display', 'grid')
+};
+
+// Graceful degradation
+if (!bw.support.mutationObserver) {
+  bw.config.cleanup.useMutationObserver = false;
 }
 ```
 
