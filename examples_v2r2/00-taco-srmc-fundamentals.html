@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench v2 - Introduction</title>
+  <script src="dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="dist/bitwrench.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    .page-header {
+      background: white;
+      border-bottom: 1px solid #e9ecef;
+      padding: 1.5rem 0;
+      margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #212529;
+    }
+    
+    .page-header .subtitle {
+      color: #6c757d;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .concept-section {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+    
+    .concept-header {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .concept-header h2 {
+      margin: 0;
+      font-size: 1.75rem;
+      color: #212529;
+    }
+    
+    .concept-header .tagline {
+      color: #6c757d;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+    }
+    
+    .concept-content {
+      padding: 2rem;
+    }
+    
+    .concept-box {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    
+    .concept-box h3 {
+      margin-top: 0;
+      color: #495057;
+    }
+    
+    .code-example {
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 1rem;
+      margin: 1rem 0;
+      position: relative;
+    }
+    
+    .code-example h4 {
+      margin: 0 0 0.5rem 0;
+      color: #24292e;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    pre {
+      margin: 0;
+      background: transparent;
+      border: none;
+    }
+    
+    code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    
+    .side-by-side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    
+    .feature-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h4 {
+      margin: 0 0 0.5rem 0;
+      color: #212529;
+    }
+    
+    .feature-card p {
+      margin: 0;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    
+    .comparison-table th,
+    .comparison-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .comparison-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .comparison-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .highlight {
+      background: #fff3cd;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+    
+    .demo-result {
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+    
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+      .side-by-side {
+        grid-template-columns: 1fr;
+      }
+      
+      .page-header h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Shared Navigation -->
+  <div id="example-nav"></div>
+  
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <h1>Intro to Bitwrench</h1>
+      <div class="subtitle">Version: <span id="version"></span></div>
+    </div>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Introduction -->
+    <div class="concept-section">
+      <div class="concept-header">
+        <h2>Introduction</h2>
+        <div class="tagline">A JavaScript UI Library</div>
+      </div>
+      <div class="concept-content">
+        <p>
+          Bitwrench is a JavaScript library that represents HTML and CSS as plain JavaScript objects. 
+          Instead of writing HTML strings, you create UI using data structures called TACO (for HTML) 
+          and SRMC (for CSS). This approach requires no compilers, no JSX, no TSX, and no Babel - 
+          just pure JavaScript that runs directly in the browser.
+        </p>
+        
+        <p>
+          The library provides a straightforward way to create dynamic user interfaces by treating 
+          UI elements as data that can be easily manipulated and updated.
+        </p>
+        
+        <h3>Key Features</h3>
+        <ul>
+          <li>No build step required - write JavaScript, run JavaScript</li>
+          <li>HTML elements are represented as TACO objects</li>
+          <li>CSS styles are represented as SRMC objects</li>
+          <li>Built-in reactivity and dynamic templating</li>
+          <li>Direct DOM manipulation for efficient updates</li>
+          <li>Component system with lifecycle hooks</li>
+          <li>Works in modern browsers without transpilation</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TACO Section -->
+    <div class="concept-section">
+      <div class="concept-header">
+        <h2>TACO Format</h2>
+        <div class="tagline">Tag - Attributes - Content - Options</div>
+      </div>
+      <div class="concept-content">
+        <p>
+          TACO (Tag-Attributes-Content-Options) is how Bitwrench represents HTML elements as JavaScript objects. 
+          Each HTML element becomes a JavaScript object with up to four properties:
+        </p>
+        
+        <div class="concept-box">
+          <h3>The TACO Structure</h3>
+          <pre><code>{
+  t: "tag",        // HTML tag name (required)
+  a: { ... },      // Attributes object (optional)
+  c: "content",    // Content: string, array, or nested TACOs (optional)
+  o: { ... }       // Options: lifecycle, state, etc. (optional)
+}</code></pre>
+        </div>
+
+        <h3>Basic Examples</h3>
+        
+        <div class="side-by-side">
+          <div class="code-example">
+            <h4>Simple Text</h4>
+            <pre><code>// TACO
+{
+  t: "p",
+  c: "Hello, World!"
+}</code></pre>
+          </div>
+          <div class="code-example">
+            <h4>Result HTML</h4>
+            <pre><code>&lt;p&gt;Hello, World!&lt;/p&gt;</code></pre>
+          </div>
+        </div>
+
+        <div class="side-by-side">
+          <div class="code-example">
+            <h4>With Attributes</h4>
+            <pre><code>// TACO
+{
+  t: "div",
+  a: { 
+    class: "card",
+    id: "main-card"
+  },
+  c: "Card content"
+}</code></pre>
+          </div>
+          <div class="code-example">
+            <h4>Result HTML</h4>
+            <pre><code>&lt;div class="card" id="main-card"&gt;
+  Card content
+&lt;/div&gt;</code></pre>
+          </div>
+        </div>
+
+        <div class="side-by-side">
+          <div class="code-example">
+            <h4>Nested Elements</h4>
+            <pre><code>// TACO
+{
+  t: "div",
+  a: { class: "card" },
+  c: [
+    { t: "h3", c: "Title" },
+    { t: "p", c: "Content" },
+    { 
+      t: "button",
+      a: { onclick: () => alert('Click!') },
+      c: "Click Me"
+    }
+  ]
+}</code></pre>
+          </div>
+          <div class="code-example">
+            <h4>Result HTML</h4>
+            <pre><code>&lt;div class="card"&gt;
+  &lt;h3&gt;Title&lt;/h3&gt;
+  &lt;p&gt;Content&lt;/p&gt;
+  &lt;button&gt;Click Me&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+          </div>
+        </div>
+
+        <h3>Advanced Features</h3>
+        
+        <div class="code-example">
+          <h4>Options Object - Lifecycle & State</h4>
+          <pre><code>{
+  t: "div",
+  a: { class: "dynamic-component" },
+  c: "I have lifecycle hooks!",
+  o: {
+    // Called when element is added to DOM
+    mounted: (element) => {
+      console.log('Component mounted:', element);
+    },
+    
+    // Called when element is removed
+    unmount: (element) => {
+      console.log('Component unmounting');
+    },
+    
+    // Component state
+    state: {
+      counter: 0,
+      active: true
+    }
+  }
+}</code></pre>
+        </div>
+
+        <h3>Live Demo - Build a Card</h3>
+        <div id="taco-demo"></div>
+      </div>
+    </div>
+
+    <!-- SRMC Section -->
+    <div class="concept-section">
+      <div class="concept-header">
+        <h2>SRMC Format</h2>
+        <div class="tagline">Selector - Rules - Media - Children</div>
+      </div>
+      <div class="concept-content">
+        <p>
+          SRMC (Selector-Rules-Media-Children) is how Bitwrench represents CSS as JavaScript objects. 
+          This allows you to generate and manipulate styles dynamically using data structures:
+        </p>
+        
+        <div class="concept-box">
+          <h3>The SRMC Structure</h3>
+          <pre><code>{
+  s: "selector",    // CSS selector (required)
+  r: { ... },       // CSS rules object (optional)
+  m: "@media ...",  // Media query (optional)
+  c: [ ... ]        // Child SRMC objects (optional)
+}</code></pre>
+        </div>
+
+        <h3>Basic Examples</h3>
+        
+        <div class="side-by-side">
+          <div class="code-example">
+            <h4>Simple Style</h4>
+            <pre><code>// SRMC
+{
+  s: ".button",
+  r: {
+    padding: "10px 20px",
+    backgroundColor: "#007bff",
+    color: "white",
+    borderRadius: "4px"
+  }
+}</code></pre>
+          </div>
+          <div class="code-example">
+            <h4>Result CSS</h4>
+            <pre><code>.button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+}</code></pre>
+          </div>
+        </div>
+
+        <div class="side-by-side">
+          <div class="code-example">
+            <h4>With Media Query</h4>
+            <pre><code>// SRMC
+{
+  s: ".container",
+  r: { maxWidth: "1200px" },
+  m: "@media (max-width: 768px)",
+  c: [{
+    s: ".container",
+    r: { maxWidth: "100%" }
+  }]
+}</code></pre>
+          </div>
+          <div class="code-example">
+            <h4>Result CSS</h4>
+            <pre><code>.container {
+  max-width: 1200px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <h3>Dynamic Theming Example</h3>
+        <div id="srmc-demo"></div>
+      </div>
+    </div>
+
+    <!-- Comparison Section -->
+    <div class="concept-section">
+      <div class="concept-header">
+        <h2>How It Works</h2>
+        <div class="tagline">Comparing Approaches</div>
+      </div>
+      <div class="concept-content">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Traditional Approach</th>
+              <th>Bitwrench Approach</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>HTML Creation</strong></td>
+              <td><code>innerHTML = '&lt;div&gt;...&lt;/div&gt;'</code></td>
+              <td><code>bw.DOM(el, { t: 'div', ... })</code></td>
+            </tr>
+            <tr>
+              <td><strong>Event Handling</strong></td>
+              <td>String onclick or addEventListener</td>
+              <td>Direct function references in TACO</td>
+            </tr>
+            <tr>
+              <td><strong>CSS Generation</strong></td>
+              <td>String concatenation</td>
+              <td>SRMC objects with bw.css()</td>
+            </tr>
+            <tr>
+              <td><strong>Build Process</strong></td>
+              <td>Often requires JSX, TSX, or Babel</td>
+              <td>Pure JavaScript, no build step</td>
+            </tr>
+            <tr>
+              <td><strong>Performance</strong></td>
+              <td>HTML parsing overhead</td>
+              <td>Direct DOM manipulation</td>
+            </tr>
+            <tr>
+              <td><strong>Dynamic Updates</strong></td>
+              <td>Replace entire HTML strings</td>
+              <td>Update only changed elements</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Practical Examples -->
+    <div class="concept-section">
+      <div class="concept-header">
+        <h2>Using Bitwrench</h2>
+        <div class="tagline">Three Ways to Render</div>
+      </div>
+      <div class="concept-content">
+        <h3>Example: Dynamic Theme Switcher</h3>
+        <div id="practical-demo"></div>
+        
+        <h3>Three Rendering Modes</h3>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4>1. HTML String</h4>
+            <p><code>bw.html(taco)</code></p>
+            <p>Returns HTML string for server-side rendering</p>
+          </div>
+          <div class="feature-card">
+            <h4>2. DOM Creation</h4>
+            <p><code>bw.createDOM(taco)</code></p>
+            <p>Creates DOM element without mounting</p>
+          </div>
+          <div class="feature-card">
+            <h4>3. Live Mounting</h4>
+            <p><code>bw.DOM(selector, taco)</code></p>
+            <p>Mounts to DOM with lifecycle hooks</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mount the shared navigation
+    mountExampleNav('#example-nav', '00-taco-srmc-fundamentals.html');
+    
+    // Show version
+    document.getElementById('version').textContent = bw.version || '2.0.0';
+    
+    // Helper for copy buttons
+    function addCopyButton(element, text) {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.onclick = () => {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = 'Copied!';
+          btn.style.background = '#28a745';
+          setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.style.background = '#007bff';
+          }, 2000);
+        });
+      };
+      element.appendChild(btn);
+    }
+    
+    // 1. TACO Demo - Interactive Card Builder
+    const tacoDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'h3',
+          c: 'Live TACO Example - Interactive Card'
+        },
+        {
+          t: 'div',
+          a: { class: 'side-by-side' },
+          c: [
+            {
+              t: 'div',
+              c: [
+                { t: 'h4', c: 'TACO Code:' },
+                {
+                  t: 'pre',
+                  c: {
+                    t: 'code',
+                    c: `const card = {
+  t: "div",
+  a: { class: "bw-card" },
+  c: [
+    {
+      t: "div",
+      a: { class: "bw-card-header" },
+      c: "Interactive Card"
+    },
+    {
+      t: "div",
+      a: { class: "bw-card-body" },
+      c: [
+        { t: "h5", c: "Click the button!" },
+        { t: "p", c: "This card was built with TACO" },
+        {
+          t: "button",
+          a: {
+            class: "bw-btn bw-btn-primary",
+            onclick: () => alert('TACO power! 🌮')
+          },
+          c: "Click Me"
+        }
+      ]
+    }
+  ]
+};
+
+// Mount it to the DOM
+bw.DOM('#result', card);`
+                  }
+                }
+              ]
+            },
+            {
+              t: 'div',
+              c: [
+                { t: 'h4', c: 'Result:' },
+                {
+                  t: 'div',
+                  a: { class: 'demo-result' },
+                  c: {
+                    t: "div",
+                    a: { class: "bw-card" },
+                    c: [
+                      {
+                        t: "div",
+                        a: { class: "bw-card-header" },
+                        c: "Interactive Card"
+                      },
+                      {
+                        t: "div",
+                        a: { class: "bw-card-body" },
+                        c: [
+                          { t: "h5", c: "Click the button!" },
+                          { t: "p", c: "This card was built with TACO" },
+                          {
+                            t: "button",
+                            a: {
+                              class: "bw-btn bw-btn-primary",
+                              onclick: () => alert('TACO power! 🌮')
+                            },
+                            c: "Click Me"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    
+    bw.DOM('#taco-demo', tacoDemo);
+    
+    // 2. SRMC Demo - Dynamic Theme
+    let currentTheme = 'light';
+    
+    function renderSrmcDemo() {
+      const themes = {
+        light: {
+          bg: '#ffffff',
+          text: '#333333',
+          primary: '#007bff'
+        },
+        dark: {
+          bg: '#2d2d2d',
+          text: '#ffffff',
+          primary: '#0d6efd'
+        },
+        ocean: {
+          bg: '#e3f2fd',
+          text: '#0d47a1',
+          primary: '#2196f3'
+        }
+      };
+      
+      const theme = themes[currentTheme];
+      
+      // Generate CSS with SRMC
+      const styles = [
+        {
+          s: '.theme-demo',
+          r: {
+            backgroundColor: theme.bg,
+            color: theme.text,
+            padding: '2rem',
+            borderRadius: '8px',
+            transition: 'all 0.3s ease'
+          }
+        },
+        {
+          s: '.theme-demo h3',
+          r: {
+            color: theme.primary,
+            marginTop: 0
+          }
+        },
+        {
+          s: '.theme-demo .bw-btn',
+          r: {
+            marginRight: '0.5rem'
+          }
+        }
+      ];
+      
+      // Generate and inject CSS
+      const css = bw.css(styles);
+      bw.injectCSS(css, { id: 'theme-demo-styles' });
+      
+      const demo = {
+        t: 'div',
+        c: [
+          {
+            t: 'h3',
+            c: 'Dynamic SRMC Theming'
+          },
+          {
+            t: 'div',
+            a: { class: 'side-by-side' },
+            c: [
+              {
+                t: 'div',
+                c: [
+                  { t: 'h4', c: 'SRMC Code:' },
+                  {
+                    t: 'pre',
+                    c: {
+                      t: 'code',
+                      c: `// Current theme: ${currentTheme}
+const styles = [
+  {
+    s: '.theme-demo',
+    r: {
+      backgroundColor: '${theme.bg}',
+      color: '${theme.text}',
+      padding: '2rem',
+      borderRadius: '8px'
+    }
+  },
+  {
+    s: '.theme-demo h3',
+    r: {
+      color: '${theme.primary}'
+    }
+  }
+];
+
+// Generate CSS
+const css = bw.css(styles);
+
+// Inject into document
+bw.injectCSS(css, { id: 'my-theme' });`
+                    }
+                  }
+                ]
+              },
+              {
+                t: 'div',
+                c: [
+                  { t: 'h4', c: 'Result:' },
+                  {
+                    t: 'div',
+                    a: { class: 'theme-demo demo-result' },
+                    c: [
+                      { t: 'h3', c: 'Themed Content' },
+                      { t: 'p', c: 'This box is styled with SRMC-generated CSS. Click the buttons to change themes!' },
+                      {
+                        t: 'div',
+                        c: [
+                          bw.makeButton({
+                            text: 'Light',
+                            variant: currentTheme === 'light' ? 'primary' : 'secondary',
+                            onclick: () => {
+                              currentTheme = 'light';
+                              renderSrmcDemo();
+                            }
+                          }),
+                          bw.makeButton({
+                            text: 'Dark',
+                            variant: currentTheme === 'dark' ? 'primary' : 'secondary',
+                            onclick: () => {
+                              currentTheme = 'dark';
+                              renderSrmcDemo();
+                            }
+                          }),
+                          bw.makeButton({
+                            text: 'Ocean',
+                            variant: currentTheme === 'ocean' ? 'primary' : 'secondary',
+                            onclick: () => {
+                              currentTheme = 'ocean';
+                              renderSrmcDemo();
+                            }
+                          })
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+      
+      bw.DOM('#srmc-demo', demo);
+    }
+    
+    renderSrmcDemo();
+    
+    // 3. Practical Demo - Complete Component
+    const practicalDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'pre',
+          c: {
+            t: 'code',
+            c: `// Complete theme switcher component
+function createThemeSwitcher() {
+  let theme = 'light';
+  
+  const themes = {
+    light: { bg: '#fff', text: '#333', accent: '#007bff' },
+    dark: { bg: '#222', text: '#fff', accent: '#0d6efd' }
+  };
+  
+  function render() {
+    // Generate dynamic styles
+    const styles = {
+      '.app': {
+        backgroundColor: themes[theme].bg,
+        color: themes[theme].text,
+        minHeight: '200px',
+        padding: '2rem'
+      }
+    };
+    
+    // Component TACO
+    const component = {
+      t: 'div',
+      a: { class: 'app' },
+      c: [
+        { t: 'h3', c: 'My App' },
+        { t: 'p', c: \`Current theme: \${theme}\` },
+        {
+          t: 'button',
+          a: {
+            class: 'bw-btn bw-btn-primary',
+            onclick: () => {
+              theme = theme === 'light' ? 'dark' : 'light';
+              render(); // Re-render on state change
+            }
+          },
+          c: 'Toggle Theme'
+        }
+      ]
+    };
+    
+    // Apply styles and mount component
+    bw.injectCSS(bw.css(styles), { id: 'app-theme' });
+    bw.DOM('#theme-app', component);
+  }
+  
+  return { render };
+}
+
+// Initialize the app
+const app = createThemeSwitcher();
+app.render();`
+          }
+        },
+        {
+          t: 'div',
+          a: { class: 'demo-result' },
+          c: {
+            t: 'div',
+            a: { id: 'theme-app' },
+            o: {
+              mounted: (el) => {
+              // Actual implementation
+              function createThemeSwitcher() {
+                let theme = 'light';
+                
+                const themes = {
+                  light: { bg: '#fff', text: '#333', accent: '#007bff' },
+                  dark: { bg: '#222', text: '#fff', accent: '#0d6efd' }
+                };
+                
+                function render() {
+                  // Use plain object format for CSS, not SRMC
+                  const styles = {
+                    '#theme-app .theme-app': {
+                      backgroundColor: themes[theme].bg,
+                      color: themes[theme].text,
+                      minHeight: '200px',
+                      padding: '2rem',
+                      borderRadius: '8px',
+                      transition: 'all 0.3s ease',
+                      border: '1px solid #ddd'
+                    }
+                  };
+                  
+                  const component = {
+                    t: 'div',
+                    a: { class: 'theme-app' },
+                    c: [
+                      { t: 'h3', c: 'Theme Switcher Demo' },
+                      { t: 'p', c: `Current theme: ${theme}` },
+                      {
+                        t: 'button',
+                        a: {
+                          class: 'bw-btn bw-btn-primary',
+                          onclick: () => {
+                            theme = theme === 'light' ? 'dark' : 'light';
+                            render();
+                          }
+                        },
+                        c: 'Toggle Theme'
+                      }
+                    ]
+                  };
+                  
+                  bw.injectCSS(bw.css(styles), { id: 'theme-app-styles' });
+                  // Clear and update content
+                  el.innerHTML = '';
+                  const dom = bw.createDOM(component);
+                  el.appendChild(dom);
+                }
+                
+                return { render };
+              }
+              
+              const app = createThemeSwitcher();
+              app.render();
+              }
+            }
+          }
+        }
+      ]
+    };
+    
+    bw.DOM('#practical-demo', practicalDemo);
+    
+    // Add copy buttons to all code examples
+    document.querySelectorAll('.code-example').forEach(el => {
+      const code = el.querySelector('code');
+      if (code && !el.querySelector('.copy-btn')) {
+        addCopyButton(el, code.textContent);
+      }
+    });
+  </script>
+</body>
+</html>

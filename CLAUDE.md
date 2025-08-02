@@ -167,3 +167,30 @@ Bitwrench v2 is a counter-thesis to modern JavaScript frameworks. Instead of JSX
 - `/dev/bitwrench_v2_design.md` - v2 design philosophy
 - `/dev/bitwrench_v2_components.md` - Component examples
 - `/dev/bitwrench_v2_examples.md` - Full page examples
+
+## Critical Development Rules
+
+### NO Direct DOM Manipulation
+**NEVER use `document.getElementById()`, `document.querySelector()`, or any direct DOM manipulation in Bitwrench examples.**
+- Use `bw.DOM()` for mounting components
+- Use TACO objects and reactive patterns for state management
+- If you need DOM access, use `bw.$()` which returns arrays
+- Re-render components by calling render functions, not by manipulating DOM directly
+- If Bitwrench cannot accomplish something without direct DOM access, raise it as a fundamental issue
+
+Example of WRONG approach:
+```javascript
+// WRONG - Direct DOM manipulation
+const container = document.getElementById('my-container');
+container.innerHTML = '<div>Content</div>';
+```
+
+Example of CORRECT approach:
+```javascript
+// CORRECT - Bitwrench reactive pattern
+function render() {
+  const content = { t: 'div', c: 'Content' };
+  bw.DOM('#my-container', content);
+}
+render();
+```

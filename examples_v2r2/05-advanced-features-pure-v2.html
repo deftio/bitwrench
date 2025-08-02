@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench v2 - Advanced Features (Pure v2)</title>
+  <script src="dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="dist/bitwrench.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      font-size: 14px;
+    }
+    .header {
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 0.5rem 0;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .demo-section {
+      background: white;
+      padding: 1rem;
+      margin: 0.75rem auto;
+      max-width: 1200px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin: 0.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    h2 {
+      color: #34495e;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.25rem;
+      margin: 0 0 0.75rem 0;
+      font-size: 1.1rem;
+    }
+    h3 {
+      font-size: 1rem;
+      margin: 0.5rem 0;
+    }
+    h4 {
+      font-size: 0.95rem;
+      margin: 0.5rem 0;
+    }
+    .version-info {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 0.75rem;
+      margin: 0.25rem 0;
+    }
+    pre code {
+      background: #f8f8f8;
+      padding: 0.75rem;
+      border-radius: 4px;
+      display: block;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      position: relative;
+    }
+    .state-demo {
+      border: 1px solid #e0e0e0;
+      padding: 0.75rem;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+    }
+    .handle-demo {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      border-radius: 4px;
+      margin: 0.5rem 0;
+    }
+    /* Copy button */
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    /* Compact components */
+    .bw-btn {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    .bw-form-control {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    .bw-list-group-item {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    .bw-badge {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+    .bw-alert {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    .container {
+      padding: 0 1rem;
+    }
+    .dynamic-box {
+      padding: 1rem !important;
+      margin: 0.5rem 0 !important;
+      transition: all 0.3s ease;
+    }
+    /* Performance test styling */
+    .perf-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- App mount point -->
+  <div id="app"></div>
+
+  <script>
+    // Pure Bitwrench v2 - Advanced Features with No DOM Manipulation
+    
+    function createAdvancedApp() {
+      // Application state for all demos
+      let state = {
+        // Counter demo
+        counter: {
+          count: 0
+        },
+        // Todo demo
+        todos: {
+          items: [],
+          inputValue: ''
+        },
+        // Dynamic list demo
+        dynamicList: {
+          items: []
+        },
+        // Table demo
+        table: {
+          data: Array.from({ length: 20 }, (_, i) => ({
+            id: i + 1,
+            name: `Item ${i + 1}`,
+            value: Math.floor(Math.random() * 100),
+            status: Math.random() > 0.5 ? 'active' : 'inactive'
+          })),
+          sortField: null,
+          filterStatus: null
+        },
+        // CSS demo
+        dynamicStyle: {
+          currentColor: '#007bff'
+        },
+        // Performance demo
+        performance: {
+          testResult: null,
+          renderTime: null
+        }
+      };
+      
+      // Mount point for reactive updates
+      let appMountPoint;
+      
+      // Update state and re-render
+      function updateState(path, value) {
+        const keys = path.split('.');
+        let obj = state;
+        for (let i = 0; i < keys.length - 1; i++) {
+          obj = obj[keys[i]];
+        }
+        obj[keys[keys.length - 1]] = value;
+        render();
+      }
+      
+      // Helper to create demo tabs
+      function createDemoTabs(resultContent, codeContent) {
+        return bw.makeTabs({
+          tabs: [
+            {
+              label: 'Demo',
+              active: true,
+              content: resultContent
+            },
+            {
+              label: 'Code',
+              content: {
+                t: 'div',
+                a: { style: 'position: relative;' },
+                c: [
+                  {
+                    t: 'button',
+                    a: {
+                      class: 'copy-btn',
+                      onclick: (e) => {
+                        navigator.clipboard.writeText(codeContent).then(() => {
+                          e.target.textContent = 'Copied!';
+                          e.target.style.background = '#28a745';
+                          setTimeout(() => {
+                            e.target.textContent = 'Copy';
+                            e.target.style.background = '#007bff';
+                          }, 2000);
+                        });
+                      }
+                    },
+                    c: 'Copy'
+                  },
+                  {
+                    t: 'pre',
+                    c: {
+                      t: 'code',
+                      c: codeContent
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        });
+      }
+      
+      // 1. Counter Demo - Pure functional state management
+      function createCounterDemo() {
+        return {
+          t: 'div',
+          c: [
+            { 
+              t: 'h4', 
+              c: ['Count: ', { t: 'strong', c: String(state.counter.count) }]
+            },
+            {
+              t: 'div',
+              a: { style: 'margin-top: 0.5rem;' },
+              c: [
+                bw.makeButton({ 
+                  text: 'Increment', 
+                  variant: 'primary',
+                  onclick: () => updateState('counter.count', state.counter.count + 1)
+                }),
+                ' ',
+                bw.makeButton({ 
+                  text: 'Decrement', 
+                  variant: 'secondary',
+                  onclick: () => updateState('counter.count', state.counter.count - 1)
+                }),
+                ' ',
+                bw.makeButton({ 
+                  text: 'Reset', 
+                  variant: 'danger',
+                  onclick: () => updateState('counter.count', 0)
+                })
+              ]
+            }
+          ]
+        };
+      }
+      
+      // 2. Todo List Demo - Complex state with array manipulation
+      function createTodoDemo() {
+        return {
+          t: 'div',
+          c: [
+            {
+              t: 'div',
+              a: { style: 'margin-bottom: 1rem;' },
+              c: [
+                bw.makeInput({
+                  placeholder: 'Enter a todo...',
+                  value: state.todos.inputValue,
+                  oninput: (e) => updateState('todos.inputValue', e.target.value),
+                  onkeypress: (e) => {
+                    if (e.key === 'Enter' && state.todos.inputValue.trim()) {
+                      const newTodos = [...state.todos.items, {
+                        id: Date.now(),
+                        text: state.todos.inputValue,
+                        completed: false
+                      }];
+                      state.todos.items = newTodos;
+                      updateState('todos.inputValue', '');
+                    }
+                  }
+                }),
+                ' ',
+                bw.makeButton({
+                  text: 'Add Todo',
+                  variant: 'primary',
+                  onclick: () => {
+                    if (state.todos.inputValue.trim()) {
+                      const newTodos = [...state.todos.items, {
+                        id: Date.now(),
+                        text: state.todos.inputValue,
+                        completed: false
+                      }];
+                      state.todos.items = newTodos;
+                      updateState('todos.inputValue', '');
+                    }
+                  }
+                })
+              ]
+            },
+            state.todos.items.length === 0 
+              ? { t: 'p', c: 'No todos yet. Add one above!' }
+              : bw.makeListGroup({
+                  items: state.todos.items.map(todo => ({
+                    text: todo.text,
+                    active: todo.completed,
+                    onclick: () => {
+                      const newTodos = state.todos.items.map(t => 
+                        t.id === todo.id ? { ...t, completed: !t.completed } : t
+                      );
+                      updateState('todos.items', newTodos);
+                    }
+                  }))
+                })
+          ]
+        };
+      }
+      
+      // 3. Dynamic List with Event Delegation
+      function createDynamicListDemo() {
+        return {
+          t: 'div',
+          c: [
+            bw.makeButton({
+              text: 'Add Item',
+              variant: 'primary',
+              onclick: () => {
+                const newItems = [...state.dynamicList.items, {
+                  id: Date.now(),
+                  text: `Dynamic Item ${state.dynamicList.items.length + 1}`
+                }];
+                updateState('dynamicList.items', newItems);
+              }
+            }),
+            {
+              t: 'ul',
+              a: { class: 'bw-list-group', style: 'margin-top: 0.75rem;' },
+              c: state.dynamicList.items.map(item => ({
+                t: 'li',
+                a: { 
+                  class: 'bw-list-group-item',
+                  style: 'cursor: pointer;',
+                  onclick: () => alert(`Clicked: ${item.text}`)
+                },
+                c: item.text
+              }))
+            }
+          ]
+        };
+      }
+      
+      // 4. Table with Sorting and Filtering
+      function createTableDemo() {
+        let displayData = [...state.table.data];
+        
+        // Apply filter
+        if (state.table.filterStatus) {
+          displayData = displayData.filter(item => item.status === state.table.filterStatus);
+        }
+        
+        // Apply sort
+        if (state.table.sortField) {
+          displayData.sort((a, b) => {
+            if (state.table.sortField === 'value') {
+              return b.value - a.value;
+            }
+            return 0;
+          });
+        }
+        
+        return {
+          t: 'div',
+          c: [
+            {
+              t: 'div',
+              a: { style: 'margin-bottom: 0.75rem;' },
+              c: [
+                bw.makeButton({
+                  text: 'Sort by Value',
+                  variant: state.table.sortField === 'value' ? 'primary' : 'secondary',
+                  onclick: () => updateState('table.sortField', 
+                    state.table.sortField === 'value' ? null : 'value'
+                  )
+                }),
+                ' ',
+                bw.makeButton({
+                  text: 'Show Active Only',
+                  variant: state.table.filterStatus === 'active' ? 'info' : 'secondary',
+                  onclick: () => updateState('table.filterStatus', 
+                    state.table.filterStatus === 'active' ? null : 'active'
+                  )
+                }),
+                ' ',
+                bw.makeButton({
+                  text: 'Reset',
+                  variant: 'secondary',
+                  onclick: () => {
+                    state.table.sortField = null;
+                    updateState('table.filterStatus', null);
+                  }
+                })
+              ]
+            },
+            bw.makeTable({
+              data: displayData,
+              columns: [
+                { key: 'id', label: 'ID' },
+                { key: 'name', label: 'Name' },
+                { key: 'value', label: 'Value' },
+                { 
+                  key: 'status', 
+                  label: 'Status',
+                  render: (value) => bw.makeBadge({
+                    text: value,
+                    variant: value === 'active' ? 'success' : 'secondary'
+                  })
+                }
+              ],
+              striped: true,
+              hover: true
+            })
+          ]
+        };
+      }
+      
+      // 5. Dynamic CSS Demo
+      function createCSSDemo() {
+        return {
+          t: 'div',
+          c: [
+            {
+              t: 'div',
+              a: { 
+                class: 'dynamic-box',
+                style: `background: ${state.dynamicStyle.currentColor}20; 
+                        border: 2px solid ${state.dynamicStyle.currentColor}; 
+                        color: ${state.dynamicStyle.currentColor};`
+              },
+              c: 'This box has dynamically generated inline styles'
+            },
+            bw.makeButton({
+              text: 'Apply Random Theme',
+              variant: 'primary',
+              onclick: () => {
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                updateState('dynamicStyle.currentColor', color);
+              }
+            })
+          ]
+        };
+      }
+      
+      // 6. Performance Demo
+      function createPerformanceDemo() {
+        return {
+          t: 'div',
+          c: [
+            { t: 'p', c: 'Click the button to render 1000 items and measure performance.' },
+            bw.makeButton({
+              text: 'Run Performance Test',
+              variant: 'warning',
+              onclick: () => {
+                const start = performance.now();
+                
+                const items = Array.from({ length: 1000 }, (_, i) => ({
+                  t: 'span',
+                  a: { class: 'bw-badge bw-badge-primary', style: 'margin: 2px;' },
+                  c: String(i + 1)
+                }));
+                
+                state.performance.testResult = items;
+                const end = performance.now();
+                const time = (end - start).toFixed(2);
+                
+                updateState('performance.renderTime', time);
+              }
+            }),
+            state.performance.renderTime && {
+              t: 'div',
+              a: { class: 'bw-alert bw-alert-success', style: 'margin-top: 0.75rem;' },
+              c: `Rendered 1000 items in ${state.performance.renderTime}ms`
+            },
+            state.performance.testResult && {
+              t: 'div',
+              a: { class: 'perf-items', style: 'margin-top: 0.75rem;' },
+              c: state.performance.testResult
+            }
+          ].filter(Boolean)
+        };
+      }
+      
+      // Create the complete app structure
+      function createApp() {
+        return {
+          t: 'div',
+          c: [
+            // Shared navigation
+            {
+              t: 'div',
+              o: {
+                mounted: (el) => {
+                  mountExampleNav(el, '05-advanced-features-pure-v2.html');
+                }
+              }
+            },
+            
+            // Header
+            {
+              t: 'div',
+              a: { class: 'header' },
+              c: {
+                t: 'div',
+                a: { class: 'container' },
+                c: [
+                  { t: 'h1', c: 'Bitwrench v2 - Advanced Features (Pure v2)' },
+                  {
+                    t: 'p',
+                    a: { class: 'version-info' },
+                    c: ['Version: ', bw.version || '2.0.1-dev']
+                  }
+                ]
+              }
+            },
+            
+            // State Management Demo
+            {
+              t: 'div',
+              a: { class: 'demo-section' },
+              c: [
+                { t: 'h2', c: 'State Management' },
+                {
+                  t: 'div',
+                  a: { class: 'state-demo' },
+                  c: [
+                    { t: 'h3', c: 'Counter with State' },
+                    createDemoTabs(
+                      createCounterDemo(),
+                      `// Pure functional state management
+let state = { count: 0 };
+
+function updateState(newState) {
+  state = { ...state, ...newState };
+  render();
+}
+
+function createCounter() {
+  return {
+    t: 'div',
+    c: [
+      { t: 'h4', c: ['Count: ', state.count] },
+      bw.makeButton({ 
+        text: 'Increment',
+        onclick: () => updateState({ count: state.count + 1 })
+      })
+    ]
+  };
+}`
+                    ),
+                    
+                    { t: 'h3', c: 'Todo List with State', style: 'margin-top: 1.5rem;' },
+                    createDemoTabs(
+                      createTodoDemo(),
+                      `// Complex state with array manipulation
+let state = {
+  todos: [],
+  inputValue: ''
+};
+
+function addTodo() {
+  if (state.inputValue.trim()) {
+    state.todos.push({
+      id: Date.now(),
+      text: state.inputValue,
+      completed: false
+    });
+    state.inputValue = '';
+    render();
+  }
+}`
+                    )
+                  ]
+                }
+              ]
+            },
+            
+            // Event Delegation Demo
+            {
+              t: 'div',
+              a: { class: 'demo-section' },
+              c: [
+                { t: 'h2', c: 'Event Delegation' },
+                {
+                  t: 'div',
+                  a: { class: 'handle-demo' },
+                  c: [
+                    { t: 'h3', c: 'Dynamic List with Event Delegation' },
+                    createDemoTabs(
+                      createDynamicListDemo(),
+                      `// Events attached to dynamically created elements
+const items = state.items.map(item => ({
+  t: 'li',
+  a: { 
+    class: 'bw-list-group-item',
+    onclick: () => handleItemClick(item)
+  },
+  c: item.text
+}));
+
+// No need for manual event delegation!
+// Bitwrench handles it automatically`
+                    )
+                  ]
+                }
+              ]
+            },
+            
+            // Component Handles Demo
+            {
+              t: 'div',
+              a: { class: 'demo-section' },
+              c: [
+                { t: 'h2', c: 'Advanced Table Features' },
+                {
+                  t: 'div',
+                  a: { class: 'handle-demo' },
+                  c: [
+                    { t: 'h3', c: 'Sortable and Filterable Table' },
+                    createDemoTabs(
+                      createTableDemo(),
+                      `// Table with sorting and filtering
+function createTable(data, filters) {
+  let displayData = [...data];
+  
+  // Apply filters
+  if (filters.status) {
+    displayData = displayData.filter(
+      item => item.status === filters.status
+    );
+  }
+  
+  // Apply sort
+  if (filters.sortBy) {
+    displayData.sort((a, b) => 
+      b[filters.sortBy] - a[filters.sortBy]
+    );
+  }
+  
+  return bw.makeTable({
+    data: displayData,
+    columns: [...],
+    striped: true,
+    hover: true
+  });
+}`
+                    )
+                  ]
+                }
+              ]
+            },
+            
+            // Dynamic CSS Demo
+            {
+              t: 'div',
+              a: { class: 'demo-section' },
+              c: [
+                { t: 'h2', c: 'Dynamic CSS Generation' },
+                createDemoTabs(
+                  createCSSDemo(),
+                  `// Dynamic inline styles - reactive approach
+const color = state.currentColor;
+
+return {
+  t: 'div',
+  a: {
+    style: \`
+      background: \${color}20;
+      border: 2px solid \${color};
+      color: \${color};
+    \`
+  },
+  c: 'Dynamically styled element'
+};
+
+// Changes trigger re-render automatically`
+                )
+              ]
+            },
+            
+            // Performance Demo
+            {
+              t: 'div',
+              a: { class: 'demo-section' },
+              c: [
+                { t: 'h2', c: 'Performance Test' },
+                { t: 'h3', c: 'Render Performance Test' },
+                createDemoTabs(
+                  createPerformanceDemo(),
+                  `// Efficient rendering of many elements
+const items = Array.from(
+  { length: 1000 }, 
+  (_, i) => ({
+    t: 'span',
+    a: { class: 'badge' },
+    c: String(i + 1)
+  })
+);
+
+// Bitwrench creates all elements efficiently
+// No virtual DOM overhead`
+                )
+              ]
+            }
+          ]
+        };
+      }
+      
+      // Render function
+      function render() {
+        if (appMountPoint) {
+          bw.DOM(appMountPoint, createApp());
+        }
+      }
+      
+      // Return mount function
+      return {
+        mount: (element) => {
+          appMountPoint = element;
+          render();
+        }
+      };
+    }
+    
+    // Create and mount the app
+    const advancedApp = createAdvancedApp();
+    advancedApp.mount('#app');
+  </script>
+</body>
+</html>

@@ -371,18 +371,56 @@ bw.DOM = function(target, taco, options = {}) {
   targetEl.innerHTML = '';
   
   if (taco != null) {
-    if (Array.isArray(taco)) {
+    // Handle component handles (objects with element property)
+    if (taco.element instanceof Element) {
+      targetEl.appendChild(taco.element);
+    }
+    // Handle arrays
+    else if (Array.isArray(taco)) {
       taco.forEach(t => {
         if (t != null) {
-          targetEl.appendChild(bw.createDOM(t, options));
+          if (t.element instanceof Element) {
+            targetEl.appendChild(t.element);
+          } else {
+            targetEl.appendChild(bw.createDOM(t, options));
+          }
         }
       });
-    } else {
+    }
+    // Handle TACO objects
+    else {
       targetEl.appendChild(bw.createDOM(taco, options));
     }
   }
   
   return targetEl;
+};
+
+/**
+ * Render a component and return a handle
+ * @param {Object} taco - TACO object
+ * @param {Object} options - Render options
+ * @returns {Object} Component handle
+ */
+bw.renderComponent = function(taco, options = {}) {
+  const element = bw.createDOM(taco, options);
+  
+  // Return basic handle
+  return {
+    element,
+    state: taco.o?.state || {},
+    update: function(newProps) {
+      // Basic update - replace content
+      const newTaco = { ...taco, ...newProps };
+      const newElement = bw.createDOM(newTaco, options);
+      element.replaceWith(newElement);
+      this.element = newElement;
+    },
+    destroy: function() {
+      bw.cleanup(this.element);
+      this.element.remove();
+    }
+  };
 };
 
 /**
@@ -1757,6 +1795,62 @@ bw.getComponent = function(id) {
  */
 bw.getAllComponents = function() {
   return new Map(bw._componentRegistry);
+};
+
+// =========================================================================
+// Import and register all components
+// =========================================================================
+import * as components from './bitwrench-components-v2.js';
+
+// Register all make functions
+Object.entries(components).forEach(([name, fn]) => {
+  if (name.startsWith('make')) {
+    bw[name] = fn;
+  }
+});
+
+// Register component handles
+bw._componentHandles = components.componentHandles || {};
+
+// Create functions that return handles
+Object.entries(components).forEach(([name, fn]) => {
+  if (name.startsWith('make')) {
+    const componentType = name.substring(4).toLowerCase(); // Remove 'make' prefix
+    const createName = 'create' + name.substring(4); // createCard, createTable, etc.
+    
+    bw[createName] = function(props) {
+      const taco = fn(props);
+      const handle = bw.renderComponent(taco);
+      
+      // Use specialized handle class if available
+      const HandleClass = bw._componentHandles[componentType];
+      if (HandleClass) {
+        const specializedHandle = new HandleClass(handle.element, taco);
+        // Copy base handle properties
+        Object.setPrototypeOf(specializedHandle, handle);
+        return specializedHandle;
+      }
+      
+      return handle;
+    };
+  }
+});
+
+// Manual registration for functions defined in this file
+// createTable
+bw.createTable = function(data, options = {}) {
+  const taco = bw.makeTable({ data, ...options });
+  const handle = bw.renderComponent(taco);
+  
+  // Use specialized TableHandle
+  const TableHandle = bw._componentHandles.table;
+  if (TableHandle) {
+    const specializedHandle = new TableHandle(handle.element, taco);
+    Object.setPrototypeOf(specializedHandle, handle);
+    return specializedHandle;
+  }
+  
+  return handle;
 };
 
 // Export for different environments

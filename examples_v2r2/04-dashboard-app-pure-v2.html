@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench v2 - Dashboard Application (Pure v2)</title>
+  <script src="dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="dist/bitwrench.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      font-size: 14px;
+    }
+    .dashboard {
+      display: flex;
+      height: calc(100vh - 40px); /* Account for shared nav */
+    }
+    .sidebar {
+      width: 200px;
+      background: #2c3e50;
+      color: white;
+      padding: 0.75rem;
+    }
+    .sidebar h3 {
+      font-size: 1.1rem;
+      margin: 0 0 0.75rem 0;
+    }
+    .main-content {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .main-content h1 {
+      font-size: 1.5rem;
+      margin: 0 0 1rem 0;
+      color: #2c3e50;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .stat-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .stat-label {
+      color: #666;
+      margin-top: 0.25rem;
+      font-size: 0.875rem;
+    }
+    .chart-container {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+    .chart-container h3 {
+      font-size: 1.1rem;
+      margin: 0 0 0.75rem 0;
+    }
+    .sidebar .bw-nav-link {
+      color: white !important;
+      margin-bottom: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .sidebar .bw-nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .sidebar .bw-nav-link.active {
+      background: #34495e;
+    }
+    /* Compact table */
+    .bw-table td,
+    .bw-table th {
+      padding: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .shared-nav-container {
+      height: 40px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    /* Simple chart visualization */
+    .simple-chart {
+      display: flex;
+      align-items: flex-end;
+      height: 200px;
+      gap: 0.5rem;
+      padding: 1rem;
+    }
+    .chart-bar {
+      flex: 1;
+      background: #007bff;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: opacity 0.2s;
+    }
+    .chart-bar:hover {
+      opacity: 0.8;
+    }
+    .chart-bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <!-- App mount point -->
+  <div id="app"></div>
+
+  <script>
+    // Pure Bitwrench v2 - Dashboard Application with No DOM Manipulation
+    
+    function createDashboardApp() {
+      // Application state
+      let state = {
+        activeSection: 'overview',
+        stats: [
+          { label: 'Total Revenue', value: '$45,231', change: '+12.5%', trend: 'up' },
+          { label: 'Active Users', value: '2,345', change: '+5.3%', trend: 'up' },
+          { label: 'Orders Today', value: '123', change: '-2.1%', trend: 'down' },
+          { label: 'Conversion Rate', value: '3.2%', change: '+0.8%', trend: 'up' }
+        ],
+        activities: [
+          { id: 1, user: 'John Doe', action: 'Placed order #1234', time: '5 minutes ago', status: 'success' },
+          { id: 2, user: 'Jane Smith', action: 'Updated profile', time: '10 minutes ago', status: 'info' },
+          { id: 3, user: 'Bob Johnson', action: 'Cancelled order #1233', time: '15 minutes ago', status: 'danger' },
+          { id: 4, user: 'Alice Brown', action: 'Added product review', time: '20 minutes ago', status: 'success' },
+          { id: 5, user: 'Charlie Wilson', action: 'Changed password', time: '25 minutes ago', status: 'warning' }
+        ],
+        chartData: [
+          { month: 'Jan', value: 65 },
+          { month: 'Feb', value: 75 },
+          { month: 'Mar', value: 85 },
+          { month: 'Apr', value: 70 },
+          { month: 'May', value: 90 },
+          { month: 'Jun', value: 95 }
+        ]
+      };
+      
+      // Mount point for reactive updates
+      let appMountPoint;
+      
+      // Update state and re-render
+      function updateState(updates) {
+        state = { ...state, ...updates };
+        render();
+      }
+      
+      // Create sidebar navigation
+      function createSidebar() {
+        const navItems = [
+          { text: 'Overview', id: 'overview' },
+          { text: 'Analytics', id: 'analytics' },
+          { text: 'Customers', id: 'customers' },
+          { text: 'Products', id: 'products' },
+          { text: 'Orders', id: 'orders' },
+          { text: 'Settings', id: 'settings' }
+        ];
+        
+        return {
+          t: 'div',
+          a: { class: 'sidebar' },
+          c: [
+            { t: 'h3', c: 'Dashboard' },
+            {
+              t: 'nav',
+              c: navItems.map(item => ({
+                t: 'a',
+                a: {
+                  href: '#',
+                  class: `bw-nav-link ${state.activeSection === item.id ? 'active' : ''}`,
+                  onclick: (e) => {
+                    e.preventDefault();
+                    updateState({ activeSection: item.id });
+                  }
+                },
+                c: item.text
+              }))
+            }
+          ]
+        };
+      }
+      
+      // Create stats cards
+      function createStatsCards() {
+        return {
+          t: 'div',
+          a: { class: 'stats-grid' },
+          c: state.stats.map(stat => ({
+            t: 'div',
+            a: { class: 'stat-card' },
+            c: [
+              {
+                t: 'div',
+                a: { class: 'stat-value' },
+                c: stat.value
+              },
+              {
+                t: 'div',
+                a: { class: 'stat-label' },
+                c: stat.label
+              },
+              {
+                t: 'div',
+                a: { 
+                  class: `bw-text-${stat.trend === 'up' ? 'success' : 'danger'}`,
+                  style: 'margin-top: 0.25rem; font-size: 0.875rem;'
+                },
+                c: stat.change
+              }
+            ]
+          }))
+        };
+      }
+      
+      // Create simple chart visualization
+      function createChart() {
+        const maxValue = Math.max(...state.chartData.map(d => d.value));
+        
+        return {
+          t: 'div',
+          a: { class: 'chart-container' },
+          c: [
+            { t: 'h3', c: 'Sales Overview' },
+            {
+              t: 'div',
+              a: { class: 'simple-chart' },
+              c: state.chartData.map(data => ({
+                t: 'div',
+                a: {
+                  class: 'chart-bar',
+                  style: `height: ${(data.value / maxValue) * 100}%`,
+                  title: `${data.month}: ${data.value}`
+                },
+                c: {
+                  t: 'div',
+                  a: { class: 'chart-bar-label' },
+                  c: data.month
+                }
+              }))
+            }
+          ]
+        };
+      }
+      
+      // Create activity table
+      function createActivityTable() {
+        return {
+          t: 'div',
+          a: { class: 'chart-container' },
+          c: [
+            { t: 'h3', c: 'Recent Activity' },
+            bw.makeTable({
+              data: state.activities,
+              columns: [
+                { key: 'user', label: 'User' },
+                { key: 'action', label: 'Action' },
+                { key: 'time', label: 'Time' },
+                { 
+                  key: 'status', 
+                  label: 'Status',
+                  render: (value) => bw.makeBadge({ 
+                    text: value, 
+                    variant: value 
+                  })
+                }
+              ],
+              striped: true,
+              hover: true
+            })
+          ]
+        };
+      }
+      
+      // Create main content based on active section
+      function createMainContent() {
+        let content;
+        
+        switch (state.activeSection) {
+          case 'overview':
+            content = [
+              createStatsCards(),
+              createChart(),
+              createActivityTable()
+            ];
+            break;
+          case 'analytics':
+            content = [
+              { t: 'h2', c: 'Analytics' },
+              createChart(),
+              {
+                t: 'div',
+                a: { class: 'chart-container' },
+                c: [
+                  { t: 'h3', c: 'Traffic Sources' },
+                  { t: 'p', c: 'Analytics content would go here...' }
+                ]
+              }
+            ];
+            break;
+          case 'customers':
+            content = [
+              { t: 'h2', c: 'Customers' },
+              {
+                t: 'div',
+                a: { class: 'chart-container' },
+                c: 'Customer management interface would go here...'
+              }
+            ];
+            break;
+          default:
+            content = [
+              { t: 'h2', c: state.activeSection.charAt(0).toUpperCase() + state.activeSection.slice(1) },
+              {
+                t: 'div',
+                a: { class: 'chart-container' },
+                c: `${state.activeSection} content would go here...`
+              }
+            ];
+        }
+        
+        return {
+          t: 'div',
+          a: { class: 'main-content' },
+          c: [
+            { t: 'h1', c: 'Dashboard Application' },
+            ...content
+          ]
+        };
+      }
+      
+      // Create the complete app structure
+      function createApp() {
+        return {
+          t: 'div',
+          c: [
+            // Shared navigation
+            {
+              t: 'div',
+              a: { class: 'shared-nav-container' },
+              o: {
+                mounted: (el) => {
+                  mountExampleNav(el, '04-dashboard-app-pure-v2.html');
+                }
+              }
+            },
+            
+            // Dashboard
+            {
+              t: 'div',
+              a: { class: 'dashboard' },
+              c: [
+                createSidebar(),
+                createMainContent()
+              ]
+            }
+          ]
+        };
+      }
+      
+      // Render function
+      function render() {
+        if (appMountPoint) {
+          bw.DOM(appMountPoint, createApp());
+        }
+      }
+      
+      // Add dynamic updates - simulate real-time data
+      function startDataUpdates() {
+        setInterval(() => {
+          // Update stats with random changes
+          const newStats = state.stats.map(stat => {
+            const change = (Math.random() - 0.5) * 10;
+            const trend = change > 0 ? 'up' : 'down';
+            return {
+              ...stat,
+              change: `${change > 0 ? '+' : ''}${change.toFixed(1)}%`,
+              trend
+            };
+          });
+          
+          // Add new activity
+          const actions = ['Placed order', 'Updated profile', 'Added review', 'Changed settings'];
+          const users = ['John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown'];
+          const statuses = ['success', 'info', 'warning'];
+          
+          const newActivity = {
+            id: state.activities.length + 1,
+            user: users[Math.floor(Math.random() * users.length)],
+            action: actions[Math.floor(Math.random() * actions.length)],
+            time: 'Just now',
+            status: statuses[Math.floor(Math.random() * statuses.length)]
+          };
+          
+          // Update activities, keep only last 5
+          const newActivities = [newActivity, ...state.activities.slice(0, 4)];
+          
+          // Only update if on overview page
+          if (state.activeSection === 'overview') {
+            updateState({ 
+              stats: newStats,
+              activities: newActivities
+            });
+          }
+        }, 5000); // Update every 5 seconds
+      }
+      
+      // Return mount function
+      return {
+        mount: (element) => {
+          appMountPoint = element;
+          render();
+          startDataUpdates();
+        }
+      };
+    }
+    
+    // Create and mount the dashboard app
+    const dashboardApp = createDashboardApp();
+    dashboardApp.mount('#app');
+  </script>
+</body>
+</html>

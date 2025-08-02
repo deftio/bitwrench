@@ -10,31 +10,36 @@ npm install jsdom --save-dev
 */
 "use strict";
 
-
-
-var assert = require("assert");
-
-// include bitwrench!
-var bw = require("../bitwrench.js"); // this is a live copy of bitwrench for nodejs testing as below
-//var bw = require("../instr_tmp/bitwrench.js"); // this is a live copy of bitwrench for nodejs testing as below
+import assert from "assert";
+import bw from "../dist/bitwrench.esm.js";
 
 //====================
 
 //if (bw.isNodeJS()) {
 
-var jsdom = require('jsdom');
+import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
-var istanbul = require('nyc')
+import istanbul from 'nyc';
 // console.log(istanbul,istanbul.__coverage__)
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from 'url';
 
-const bitwrenchFile = fs.readFileSync(path.resolve(__dirname,"../bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const bitwrenchFile = fs.readFileSync(path.resolve(__dirname,"../src/bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
 console.log("bitwrenchFile Loaded..."+bitwrenchFile.length+" chars"); 
 
-const bitwrenchFileInstrumented = fs.readFileSync(path.resolve(__dirname,"../instr_tmp/bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
-console.log("bitwrenchFileInstrumented Loaded..."+bitwrenchFileInstrumented.length+" chars"); 
+let bitwrenchFileInstrumented = "";
+try {
+  bitwrenchFileInstrumented = fs.readFileSync(path.resolve(__dirname,"../instr_tmp/bitwrench.js"), { encoding: "utf-8" }).toString(); // this is a literal copy of bitwrench for jsdom injection
+  console.log("bitwrenchFileInstrumented Loaded..."+bitwrenchFileInstrumented.length+" chars");
+} catch (e) {
+  console.log("Instrumented file not found, using regular file");
+  bitwrenchFileInstrumented = bitwrenchFile;
+} 
 
 `
 var coverageVar = (

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench Core Components Library (BCCL)</title>
+  <script src="dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="dist/bitwrench.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    /* Modern, compact design with reduced whitespace */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      line-height: 1.5;
+    }
+    
+    /* Container with better max-width */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    /* Compact header */
+    .page-header {
+      background: white;
+      border-bottom: 1px solid #e9ecef;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+    }
+    
+    .page-header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #212529;
+    }
+    
+    .page-header .subtitle {
+      color: #6c757d;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    /* Compact demo sections */
+    .demo-section {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    
+    .demo-section h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #212529;
+      margin: 0;
+      padding: 1rem 1.5rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .demo-content {
+      padding: 1.5rem;
+    }
+    
+    .demo-description {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    
+    /* Compact tabs styling */
+    .bw-tabs {
+      margin: 0;
+    }
+    
+    .bw-nav-tabs {
+      border-bottom: 2px solid #e9ecef;
+      padding: 0 1.5rem;
+      background: #f8f9fa;
+    }
+    
+    .bw-nav-tabs .bw-nav-link {
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #6c757d;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+    
+    .bw-nav-tabs .bw-nav-link:hover {
+      color: #212529;
+      border: none;
+      background: transparent;
+    }
+    
+    .bw-nav-tabs .bw-nav-link.active {
+      color: #0d6efd;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #0d6efd;
+      margin-bottom: -2px;
+    }
+    
+    .bw-tab-content {
+      padding: 1.5rem;
+    }
+    
+    .bw-tab-pane {
+      padding: 0;
+    }
+    
+    /* Code blocks */
+    pre {
+      margin: 0;
+      border-radius: 4px;
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      position: relative;
+    }
+    
+    code {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+    
+    pre code {
+      display: block;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    
+    /* Copy button */
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    /* Responsive grid */
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Utility classes */
+    .mb-0 { margin-bottom: 0 !important; }
+    .mb-1 { margin-bottom: 0.5rem !important; }
+    .mb-2 { margin-bottom: 1rem !important; }
+    .mb-3 { margin-bottom: 1.5rem !important; }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 0.75rem;
+      }
+      
+      .demo-section h2 {
+        padding: 0.75rem 1rem;
+      }
+      
+      .demo-content {
+        padding: 1rem;
+      }
+      
+      .bw-tab-content {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Shared Navigation -->
+  <div id="example-nav"></div>
+  
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <h1>Bitwrench Core Components Library</h1>
+      <div class="subtitle">Version: <span id="version"></span></div>
+    </div>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Introduction Section -->
+    <div class="demo-section">
+      <h2>About the BCCL</h2>
+      <div class="demo-content">
+        <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
+          Bitwrench includes a comprehensive set of UI components similar to Bootstrap or shadcn/ui to help you 
+          get started quickly. The Bitwrench Core Components Library (BCCL) is entirely optional - you can create 
+          components from scratch using TACO objects, extend existing components, or mix both approaches.
+        </p>
+        
+        <h3>Using BCCL Components</h3>
+        <p style="line-height: 1.8; margin-bottom: 1rem;">
+          All BCCL components are available as <code>bw.makeXxx()</code> functions that return TACO objects. 
+          You can use them in three ways:
+        </p>
+        <ol style="line-height: 1.8; margin-bottom: 1.5rem;">
+          <li><strong>Direct rendering</strong>: <code>bw.DOM('#target', bw.makeCard({ title: 'Hello' }))</code></li>
+          <li><strong>Composition</strong>: Include components within other TACO structures</li>
+          <li><strong>Extension</strong>: Use the returned TACO as a base and modify it</li>
+        </ol>
+        
+        <p style="line-height: 1.8;">
+          This page demonstrates every component family in the BCCL with live examples and code. 
+          Use it as a reference while building your applications.
+        </p>
+      </div>
+    </div>
+    <!-- Cards Demo -->
+    <div class="demo-section">
+      <h2>Cards</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Cards are flexible content containers with multiple optional parts including header, body, and footer. 
+          They're perfect for displaying related information in a clean, organized way. Cards can contain text, 
+          images, buttons, or any other components.
+        </p>
+        <div id="cards-demo"></div>
+      </div>
+    </div>
+
+    <!-- Buttons Demo -->
+    <div class="demo-section">
+      <h2>Buttons</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Buttons are interactive elements that trigger actions. Bitwrench provides various button styles 
+          (primary, secondary, success, danger, warning, info) and sizes (small, normal, large). Buttons 
+          can be disabled and include click handlers for interactivity.
+        </p>
+        <div id="buttons-demo"></div>
+      </div>
+    </div>
+
+    <!-- Grid Demo -->
+    <div class="demo-section">
+      <h2>Grid System</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          The grid system provides a flexible 12-column layout for creating responsive designs. Columns can 
+          have different widths at different breakpoints, making it easy to create layouts that work on all 
+          screen sizes. Use makeContainer, makeRow, and makeCol to build your layouts.
+        </p>
+        <div id="grid-demo"></div>
+      </div>
+    </div>
+
+    <!-- Navigation Demo -->
+    <div class="demo-section">
+      <h2>Navigation</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Navigation components help users move through your application. Create horizontal or vertical 
+          navigation bars, breadcrumbs, and navbar components. Items can be marked as active to show the 
+          current page or section.
+        </p>
+        <div id="nav-demo"></div>
+      </div>
+    </div>
+
+    <!-- Alerts Demo -->
+    <div class="demo-section">
+      <h2>Alerts</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Alerts provide contextual feedback messages for typical user actions. They come in several variants 
+          (primary, success, danger, warning, info) and can be made dismissible. Use alerts to show important 
+          messages, confirmations, or warnings to users.
+        </p>
+        <div id="alerts-demo"></div>
+      </div>
+    </div>
+
+    <!-- Badges Demo -->
+    <div class="demo-section">
+      <h2>Badges</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Badges are small count and labeling components. Use them to add context to just about any content. 
+          They're commonly used for notifications, status indicators, or highlighting new/important items.
+        </p>
+        <div id="badges-demo"></div>
+      </div>
+    </div>
+
+    <!-- Progress Demo -->
+    <div class="demo-section">
+      <h2>Progress Bars</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Progress bars show the completion status of a task or process. They can be styled with different 
+          colors, made striped or animated, and include labels. Use them for file uploads, form completion, 
+          or any multi-step process.
+        </p>
+        <div id="progress-demo"></div>
+      </div>
+    </div>
+
+    <!-- Lists Demo -->
+    <div class="demo-section">
+      <h2>List Groups</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          List groups are flexible components for displaying a series of content. They can be used for 
+          simple lists, navigation menus, or complex content lists. Items can be marked as active or disabled 
+          to show state.
+        </p>
+        <div id="lists-demo"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mount the shared navigation
+    mountExampleNav('#example-nav', '01-basic-components.html');
+    
+    // Show version
+    document.getElementById('version').textContent = bw.version || '2.0.1-dev';
+    
+    // Helper function to create tabbed demos with copy button
+    function createTabbedDemo(resultContent, codeContent) {
+      return bw.makeTabs({
+        tabs: [
+          {
+            label: 'Result',
+            active: true,
+            content: resultContent
+          },
+          {
+            label: 'Code',
+            content: {
+              t: 'div',
+              a: { style: 'position: relative;' },
+              c: [
+                {
+                  t: 'button',
+                  a: {
+                    class: 'copy-btn',
+                    onclick: (e) => {
+                      navigator.clipboard.writeText(codeContent).then(() => {
+                        e.target.textContent = 'Copied!';
+                        e.target.style.background = '#28a745';
+                        setTimeout(() => {
+                          e.target.textContent = 'Copy';
+                          e.target.style.background = '#007bff';
+                        }, 2000);
+                      });
+                    }
+                  },
+                  c: 'Copy'
+                },
+                {
+                  t: 'pre',
+                  c: {
+                    t: 'code',
+                    c: codeContent
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      });
+    }
+    
+    // 1. Cards Demo
+    const cardsDemo = {
+      t: 'div',
+      a: { class: 'demo-grid' },
+      c: [
+        bw.makeCard({
+          title: 'Basic Card',
+          content: 'This is a simple card with title and content. Cards are flexible content containers.',
+          footer: 'Card footer'
+        }),
+        bw.makeCard({
+          header: 'Featured',
+          title: 'Card with Header',
+          content: 'This card has a header section. Headers are great for categories or status.',
+          footer: bw.makeButton({ text: 'Action', variant: 'primary' })
+        }),
+        bw.makeCard({
+          title: 'Interactive Card',
+          content: 'Cards can contain any content including buttons and forms.',
+          footer: {
+            t: 'div',
+            c: [
+              bw.makeButton({ text: 'Primary', variant: 'primary' }),
+              ' ',
+              bw.makeButton({ text: 'Secondary', variant: 'secondary' })
+            ]
+          }
+        })
+      ]
+    };
+    
+    const cardsCode = `// Basic card
+const basicCard = bw.makeCard({
+  title: 'Basic Card',
+  content: 'This is a simple card with title and content.',
+  footer: 'Card footer'
+});
+
+// Card with header and button
+const featuredCard = bw.makeCard({
+  header: 'Featured',
+  title: 'Card with Header',
+  content: 'This card has a header section.',
+  footer: bw.makeButton({ text: 'Action', variant: 'primary' })
+});
+
+// Card with multiple buttons
+const interactiveCard = bw.makeCard({
+  title: 'Interactive Card',
+  content: 'Cards can contain any content.',
+  footer: {
+    t: 'div',
+    c: [
+      bw.makeButton({ text: 'Primary', variant: 'primary' }),
+      ' ',
+      bw.makeButton({ text: 'Secondary', variant: 'secondary' })
+    ]
+  }
+});
+
+// Mount cards in a grid
+bw.DOM('#cards-container', {
+  t: 'div',
+  a: { class: 'demo-grid' },
+  c: [basicCard, featuredCard, interactiveCard]
+});`;
+
+    bw.DOM('#cards-demo', createTabbedDemo(cardsDemo, cardsCode));
+
+    // 2. Buttons Demo
+    const buttonsDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'mb-2' },
+          c: [
+            { t: 'h4', c: 'Button Variants' },
+            bw.makeButton({ text: 'Primary', variant: 'primary' }),
+            ' ',
+            bw.makeButton({ text: 'Secondary', variant: 'secondary' }),
+            ' ',
+            bw.makeButton({ text: 'Success', variant: 'success' }),
+            ' ',
+            bw.makeButton({ text: 'Danger', variant: 'danger' }),
+            ' ',
+            bw.makeButton({ text: 'Warning', variant: 'warning' }),
+            ' ',
+            bw.makeButton({ text: 'Info', variant: 'info' })
+          ]
+        },
+        {
+          t: 'div',
+          a: { class: 'mb-2' },
+          c: [
+            { t: 'h4', c: 'Button Sizes' },
+            bw.makeButton({ text: 'Small', size: 'sm' }),
+            ' ',
+            bw.makeButton({ text: 'Normal' }),
+            ' ',
+            bw.makeButton({ text: 'Large', size: 'lg' })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Button States' },
+            bw.makeButton({ text: 'Disabled', disabled: true }),
+            ' ',
+            bw.makeButton({ 
+              text: 'Click Me!', 
+              onclick: () => alert('Button clicked!') 
+            })
+          ]
+        }
+      ]
+    };
+    
+    const buttonsCode = `// Button variants
+bw.makeButton({ text: 'Primary', variant: 'primary' })
+bw.makeButton({ text: 'Secondary', variant: 'secondary' })
+bw.makeButton({ text: 'Success', variant: 'success' })
+bw.makeButton({ text: 'Danger', variant: 'danger' })
+bw.makeButton({ text: 'Warning', variant: 'warning' })
+bw.makeButton({ text: 'Info', variant: 'info' })
+
+// Button sizes
+bw.makeButton({ text: 'Small', size: 'sm' })
+bw.makeButton({ text: 'Normal' }) // default size
+bw.makeButton({ text: 'Large', size: 'lg' })
+
+// Button states
+bw.makeButton({ text: 'Disabled', disabled: true })
+
+// Button with click handler
+bw.makeButton({ 
+  text: 'Click Me!', 
+  variant: 'primary',
+  onclick: () => alert('Button clicked!') 
+})`;
+
+    bw.DOM('#buttons-demo', createTabbedDemo(buttonsDemo, buttonsCode));
+
+    // 3. Grid Demo
+    const gridDemo = {
+      t: 'div',
+      c: [
+        bw.makeContainer({
+          children: [
+            { t: 'h4', c: 'Basic Grid Layouts' },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #e3f2fd; padding: 1rem; text-align: center; border-radius: 4px;' },
+                    c: 'Column 1 (4/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #f3e5f5; padding: 1rem; text-align: center; border-radius: 4px;' },
+                    c: 'Column 2 (4/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #e8f5e9; padding: 1rem; text-align: center; border-radius: 4px;' },
+                    c: 'Column 3 (4/12)'
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 1rem;' } }, // spacer
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 8,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #fff3e0; padding: 1rem; text-align: center; border-radius: 4px;' },
+                    c: 'Wide Column (8/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #fce4ec; padding: 1rem; text-align: center; border-radius: 4px;' },
+                    c: 'Narrow Column (4/12)'
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 1rem;' } }, // spacer
+            { t: 'h4', c: 'Responsive Grid' },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: { xs: 12, md: 6, lg: 3 },
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #e1f5fe; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                    c: 'Responsive 1'
+                  }
+                }),
+                bw.makeCol({
+                  size: { xs: 12, md: 6, lg: 3 },
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #f3e5f5; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                    c: 'Responsive 2'
+                  }
+                }),
+                bw.makeCol({
+                  size: { xs: 12, md: 6, lg: 3 },
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #e8f5e9; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                    c: 'Responsive 3'
+                  }
+                }),
+                bw.makeCol({
+                  size: { xs: 12, md: 6, lg: 3 },
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #fff3e0; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                    c: 'Responsive 4'
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 2rem;' } }, // spacer
+            { t: 'h3', c: 'Advanced Grid Layouts', a: { style: 'margin-bottom: 1rem;' } },
+            
+            // Layout 1: Magazine Layout
+            { t: 'h4', c: 'Magazine Layout' },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 12,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #3f51b5; color: white; padding: 2rem; text-align: center; border-radius: 4px; font-size: 1.2rem;' },
+                    c: 'Header (12/12)'
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 0.5rem;' } },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 8,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #ff9800; padding: 4rem 2rem; text-align: center; border-radius: 4px;' },
+                    c: 'Main Article (8/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    c: [
+                      {
+                        t: 'div',
+                        a: { style: 'background: #4caf50; padding: 1.5rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                        c: 'Sidebar Top (4/12)'
+                      },
+                      {
+                        t: 'div',
+                        a: { style: 'background: #2196f3; padding: 1.5rem; text-align: center; border-radius: 4px;' },
+                        c: 'Sidebar Bottom (4/12)'
+                      }
+                    ]
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 0.5rem;' } },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #9c27b0; padding: 2rem; text-align: center; border-radius: 4px;' },
+                    c: 'Feature 1 (4/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #e91e63; padding: 2rem; text-align: center; border-radius: 4px;' },
+                    c: 'Feature 2 (4/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 4,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #00bcd4; padding: 2rem; text-align: center; border-radius: 4px;' },
+                    c: 'Feature 3 (4/12)'
+                  }
+                })
+              ]
+            }),
+            
+            { t: 'div', a: { style: 'height: 2rem;' } },
+            
+            // Layout 2: Dashboard Layout
+            { t: 'h4', c: 'Dashboard Layout' },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 3,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #37474f; color: white; padding: 8rem 1rem; text-align: center; border-radius: 4px;' },
+                    c: 'Sidebar (3/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 9,
+                  content: {
+                    t: 'div',
+                    c: [
+                      bw.makeRow({
+                        children: [
+                          bw.makeCol({
+                            size: 4,
+                            content: {
+                              t: 'div',
+                              a: { style: 'background: #ff7043; padding: 2rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                              c: 'Widget 1 (3/9)'
+                            }
+                          }),
+                          bw.makeCol({
+                            size: 4,
+                            content: {
+                              t: 'div',
+                              a: { style: 'background: #66bb6a; padding: 2rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                              c: 'Widget 2 (3/9)'
+                            }
+                          }),
+                          bw.makeCol({
+                            size: 4,
+                            content: {
+                              t: 'div',
+                              a: { style: 'background: #42a5f5; padding: 2rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
+                              c: 'Widget 3 (3/9)'
+                            }
+                          })
+                        ]
+                      }),
+                      bw.makeRow({
+                        children: [
+                          bw.makeCol({
+                            size: 12,
+                            content: {
+                              t: 'div',
+                              a: { style: 'background: #ab47bc; padding: 3rem; text-align: center; border-radius: 4px;' },
+                              c: 'Main Content Area (9/9)'
+                            }
+                          })
+                        ]
+                      })
+                    ]
+                  }
+                })
+              ]
+            }),
+            
+            { t: 'div', a: { style: 'height: 2rem;' } },
+            
+            // Layout 3: Masonry-style Layout
+            { t: 'h4', c: 'Mixed Column Layout' },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 6,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #ff5722; padding: 3rem; text-align: center; border-radius: 4px;' },
+                    c: 'Half Width (6/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 3,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #795548; color: white; padding: 3rem 1rem; text-align: center; border-radius: 4px;' },
+                    c: '1/4 (3/12)'
+                  }
+                }),
+                bw.makeCol({
+                  size: 3,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #607d8b; color: white; padding: 3rem 1rem; text-align: center; border-radius: 4px;' },
+                    c: '1/4 (3/12)'
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 0.5rem;' } },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 2,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #f44336; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
+                    c: '2/12'
+                  }
+                }),
+                bw.makeCol({
+                  size: 2,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #e91e63; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
+                    c: '2/12'
+                  }
+                }),
+                bw.makeCol({
+                  size: 2,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #9c27b0; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
+                    c: '2/12'
+                  }
+                }),
+                bw.makeCol({
+                  size: 2,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #673ab7; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
+                    c: '2/12'
+                  }
+                }),
+                bw.makeCol({
+                  size: 2,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #3f51b5; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
+                    c: '2/12'
+                  }
+                }),
+                bw.makeCol({
+                  size: 2,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #2196f3; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
+                    c: '2/12'
+                  }
+                })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 0.5rem;' } },
+            bw.makeRow({
+              children: [
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #00bcd4; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #009688; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #4caf50; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #8bc34a; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #cddc39; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #ffeb3b; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #ffc107; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #ff9800; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #ff5722; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #795548; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #9e9e9e; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                }),
+                bw.makeCol({
+                  size: 1,
+                  content: {
+                    t: 'div',
+                    a: { style: 'background: #607d8b; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
+                    c: '1'
+                  }
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    };
+    
+    const gridCode = `// Basic grid with equal columns
+bw.makeContainer({
+  children: [
+    bw.makeRow({
+      children: [
+        bw.makeCol({ size: 4, content: 'Column 1' }),
+        bw.makeCol({ size: 4, content: 'Column 2' }),
+        bw.makeCol({ size: 4, content: 'Column 3' })
+      ]
+    })
+  ]
+})
+
+// Grid with different column sizes
+bw.makeRow({
+  children: [
+    bw.makeCol({ size: 8, content: 'Wide Column' }),
+    bw.makeCol({ size: 4, content: 'Narrow Column' })
+  ]
+})
+
+// Responsive grid
+bw.makeCol({
+  size: { 
+    xs: 12,  // Full width on mobile
+    md: 6,   // Half width on tablets
+    lg: 3    // Quarter width on desktop
+  },
+  content: 'Responsive Column'
+})
+
+// Magazine Layout Example
+bw.makeContainer({
+  children: [
+    // Full width header
+    bw.makeRow({
+      children: [
+        bw.makeCol({ size: 12, content: 'Header' })
+      ]
+    }),
+    // Main content with sidebar
+    bw.makeRow({
+      children: [
+        bw.makeCol({ size: 8, content: 'Main Article' }),
+        bw.makeCol({ size: 4, content: 'Sidebar' })
+      ]
+    }),
+    // Three column features
+    bw.makeRow({
+      children: [
+        bw.makeCol({ size: 4, content: 'Feature 1' }),
+        bw.makeCol({ size: 4, content: 'Feature 2' }),
+        bw.makeCol({ size: 4, content: 'Feature 3' })
+      ]
+    })
+  ]
+})
+
+// Dashboard Layout with Nested Grids
+bw.makeRow({
+  children: [
+    // Sidebar
+    bw.makeCol({ size: 3, content: 'Sidebar' }),
+    // Main area with nested grid
+    bw.makeCol({
+      size: 9,
+      content: bw.makeRow({
+        children: [
+          bw.makeCol({ size: 4, content: 'Widget 1' }),
+          bw.makeCol({ size: 4, content: 'Widget 2' }),
+          bw.makeCol({ size: 4, content: 'Widget 3' })
+        ]
+      })
+    })
+  ]
+})
+
+// All 12 columns demonstrated
+bw.makeRow({
+  children: [
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' }),
+    bw.makeCol({ size: 1, content: '1' })
+  ]
+})`;
+
+    bw.DOM('#grid-demo', createTabbedDemo(gridDemo, gridCode));
+
+    // 4. Navigation Demo
+    const navDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'mb-3' },
+          c: [
+            { t: 'h4', c: 'Horizontal Navigation (makeNav)' },
+            bw.makeNav({
+              items: [
+                { text: 'Home', href: '#', active: true },
+                { text: 'Products', href: '#products' },
+                { text: 'Services', href: '#services' },
+                { text: 'About', href: '#about' },
+                { text: 'Contact', href: '#contact' }
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          a: { class: 'mb-3' },
+          c: [
+            { t: 'h4', c: 'Navbar Component' },
+            bw.makeNavbar({
+              brand: 'My Brand',
+              brandHref: '#',
+              items: [
+                { text: 'Dashboard', href: '#', active: true },
+                { text: 'Projects', href: '#' },
+                { text: 'Team', href: '#' },
+                { text: 'Settings', href: '#' }
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Breadcrumb Navigation' },
+            bw.makeBreadcrumb({
+              items: [
+                { text: 'Home', href: '#' },
+                { text: 'Products', href: '#products' },
+                { text: 'Electronics', href: '#electronics' },
+                { text: 'Laptops', active: true }
+              ]
+            })
+          ]
+        }
+      ]
+    };
+    
+    const navCode = `// Basic navigation
+bw.makeNav({
+  items: [
+    { text: 'Home', href: '#', active: true },
+    { text: 'Products', href: '#products' },
+    { text: 'Services', href: '#services' },
+    { text: 'About', href: '#about' }
+  ]
+})
+
+// Navbar with brand
+bw.makeNavbar({
+  brand: 'My Brand',
+  brandHref: '#',
+  items: [
+    { text: 'Dashboard', href: '#', active: true },
+    { text: 'Projects', href: '#' },
+    { text: 'Team', href: '#' }
+  ]
+})
+
+// Breadcrumb navigation
+bw.makeBreadcrumb({
+  items: [
+    { text: 'Home', href: '#' },
+    { text: 'Products', href: '#products' },
+    { text: 'Laptops', active: true }
+  ]
+})`;
+
+    bw.DOM('#nav-demo', createTabbedDemo(navDemo, navCode));
+
+    // 5. Alerts Demo
+    const alertsDemo = {
+      t: 'div',
+      c: [
+        bw.makeAlert({ content: 'This is a primary alert — check it out!', variant: 'primary' }),
+        bw.makeAlert({ content: 'This is a success alert — your action was successful!', variant: 'success' }),
+        bw.makeAlert({ content: 'This is a danger alert — something went wrong!', variant: 'danger' }),
+        bw.makeAlert({ content: 'This is a warning alert — please be careful!', variant: 'warning' }),
+        bw.makeAlert({ content: 'This is an info alert — here\'s some information!', variant: 'info' }),
+        bw.makeAlert({ 
+          content: 'This is a dismissible alert — you can close it!', 
+          variant: 'secondary',
+          dismissible: true 
+        })
+      ]
+    };
+    
+    const alertsCode = `// Basic alerts
+bw.makeAlert({ 
+  content: 'This is a primary alert!', 
+  variant: 'primary' 
+})
+
+bw.makeAlert({ 
+  content: 'Success! Your action was completed.', 
+  variant: 'success' 
+})
+
+bw.makeAlert({ 
+  content: 'Error! Something went wrong.', 
+  variant: 'danger' 
+})
+
+// Dismissible alert
+bw.makeAlert({ 
+  content: 'This alert can be closed!', 
+  variant: 'info',
+  dismissible: true 
+})`;
+
+    bw.DOM('#alerts-demo', createTabbedDemo(alertsDemo, alertsCode));
+
+    // 6. Badges Demo
+    const badgesDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'mb-2' },
+          c: [
+            { t: 'h4', c: 'Badge Variants' },
+            bw.makeBadge({ text: 'Primary', variant: 'primary' }),
+            ' ',
+            bw.makeBadge({ text: 'Secondary', variant: 'secondary' }),
+            ' ',
+            bw.makeBadge({ text: 'Success', variant: 'success' }),
+            ' ',
+            bw.makeBadge({ text: 'Danger', variant: 'danger' }),
+            ' ',
+            bw.makeBadge({ text: 'Warning', variant: 'warning' }),
+            ' ',
+            bw.makeBadge({ text: 'Info', variant: 'info' }),
+            ' ',
+            bw.makeBadge({ text: 'Light', variant: 'light' }),
+            ' ',
+            bw.makeBadge({ text: 'Dark', variant: 'dark' })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Badges in Context' },
+            {
+              t: 'h3',
+              c: [
+                'Notifications ',
+                bw.makeBadge({ text: '99+', variant: 'danger' })
+              ]
+            },
+            {
+              t: 'p',
+              c: [
+                'You have ',
+                bw.makeBadge({ text: '5', variant: 'primary' }),
+                ' new messages and ',
+                bw.makeBadge({ text: '2', variant: 'warning' }),
+                ' warnings.'
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    
+    const badgesCode = `// Badge variants
+bw.makeBadge({ text: 'Primary', variant: 'primary' })
+bw.makeBadge({ text: 'Success', variant: 'success' })
+bw.makeBadge({ text: 'Danger', variant: 'danger' })
+bw.makeBadge({ text: 'Warning', variant: 'warning' })
+
+// Badges in headings
+{
+  t: 'h3',
+  c: [
+    'Notifications ',
+    bw.makeBadge({ text: '99+', variant: 'danger' })
+  ]
+}
+
+// Badges in text
+{
+  t: 'p',
+  c: [
+    'You have ',
+    bw.makeBadge({ text: '5', variant: 'primary' }),
+    ' new messages'
+  ]
+}`;
+
+    bw.DOM('#badges-demo', createTabbedDemo(badgesDemo, badgesCode));
+
+    // 7. Progress Bars Demo
+    const progressDemo = {
+      t: 'div',
+      c: [
+        { t: 'div', a: { class: 'mb-2' }, c: [
+          { t: 'h4', c: 'Basic Progress Bars' },
+          bw.makeProgress({ value: 0 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 25 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 50 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 75 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 100 })
+        ]},
+        { t: 'div', a: { class: 'mb-2' }, c: [
+          { t: 'h4', c: 'Colored Progress Bars' },
+          bw.makeProgress({ value: 25, variant: 'success' }),
+          { t: 'br' },
+          bw.makeProgress({ value: 50, variant: 'warning' }),
+          { t: 'br' },
+          bw.makeProgress({ value: 75, variant: 'danger' })
+        ]},
+        { t: 'div', c: [
+          { t: 'h4', c: 'Striped & Animated' },
+          bw.makeProgress({ value: 60, variant: 'info', striped: true }),
+          { t: 'br' },
+          bw.makeProgress({ value: 80, variant: 'success', striped: true, animated: true })
+        ]}
+      ]
+    };
+    
+    const progressCode = `// Basic progress bar
+bw.makeProgress({ value: 50 })
+
+// Colored progress bars
+bw.makeProgress({ value: 25, variant: 'success' })
+bw.makeProgress({ value: 50, variant: 'warning' })
+bw.makeProgress({ value: 75, variant: 'danger' })
+
+// Striped progress bar
+bw.makeProgress({ 
+  value: 60, 
+  variant: 'info', 
+  striped: true 
+})
+
+// Animated progress bar
+bw.makeProgress({ 
+  value: 80, 
+  variant: 'success', 
+  striped: true, 
+  animated: true 
+})`;
+
+    bw.DOM('#progress-demo', createTabbedDemo(progressDemo, progressCode));
+
+    // 8. List Groups Demo
+    const listsDemo = {
+      t: 'div',
+      a: { class: 'demo-grid' },
+      c: [
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Basic List' },
+            bw.makeListGroup({
+              items: [
+                'First item',
+                'Second item',
+                'Third item',
+                'Fourth item',
+                'Fifth item'
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Interactive List' },
+            bw.makeListGroup({
+              interactive: true,
+              items: [
+                { text: 'Active item', active: true, onclick: () => console.log('Active clicked') },
+                { text: 'Regular item', onclick: () => console.log('Regular clicked') },
+                { text: 'Another item', onclick: () => console.log('Another clicked') },
+                { text: 'Disabled item', disabled: true },
+                { text: 'Link item', href: '#link' }
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Flush List (no borders)' },
+            bw.makeListGroup({
+              flush: true,
+              items: [
+                'Clean item 1',
+                'Clean item 2',
+                'Clean item 3',
+                'Clean item 4'
+              ]
+            })
+          ]
+        }
+      ]
+    };
+    
+    const listsCode = `// Basic list group
+bw.makeListGroup({
+  items: [
+    'First item',
+    'Second item',
+    'Third item'
+  ]
+})
+
+// Interactive list with click handlers
+bw.makeListGroup({
+  interactive: true,
+  items: [
+    { text: 'Active item', active: true, onclick: () => console.log('Clicked!') },
+    { text: 'Regular item', onclick: () => console.log('Clicked!') },
+    { text: 'Disabled item', disabled: true },
+    { text: 'Link item', href: '#link' }
+  ]
+})
+
+// Flush list (no borders)
+bw.makeListGroup({
+  flush: true,
+  items: [
+    'Clean item 1',
+    'Clean item 2',
+    'Clean item 3'
+  ]
+})`;
+
+    bw.DOM('#lists-demo', createTabbedDemo(listsDemo, listsCode));
+  </script>
+</body>
+</html>
