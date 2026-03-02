@@ -117,7 +117,7 @@
 
   <script>
     // Show version
-    document.getElementById('version').textContent = bw.version;
+    bw.DOM('#version', { t: 'span', c: bw.version });
     
     // Helper function to create demo tabs
     function createDemoTabs(title, resultContent, codeContent) {
@@ -207,9 +207,7 @@ const featuredCard = bw.makeCard({
 // Render to DOM
 bw.DOM('#cards-container', card);`;
 
-    document.getElementById('cards-tabs').innerHTML = bw.html(
-      createDemoTabs('Cards', cardsDemo, cardsCode)
-    );
+    bw.DOM('#cards-tabs', createDemoTabs('Cards', cardsDemo, cardsCode));
 
     // 2. Buttons Demo
     const buttonsDemo = {
@@ -286,9 +284,7 @@ bw.makeButton({
   onclick: () => alert('Button clicked!')
 })`;
 
-    document.getElementById('buttons-tabs').innerHTML = bw.html(
-      createDemoTabs('Buttons', buttonsDemo, buttonsCode)
-    );
+    bw.DOM('#buttons-tabs', createDemoTabs('Buttons', buttonsDemo, buttonsCode));
 
     // 3. Grid Demo
     const gridDemo = {
@@ -390,9 +386,7 @@ bw.makeCol({
   content: 'Responsive column'
 })`;
 
-    document.getElementById('grid-tabs').innerHTML = bw.html(
-      createDemoTabs('Grid', gridDemo, gridCode)
-    );
+    bw.DOM('#grid-tabs', createDemoTabs('Grid', gridDemo, gridCode));
 
     // 4. Navigation Demo
     const navDemo = {
@@ -446,9 +440,7 @@ const breadcrumb = bw.makeBreadcrumb({
   ]
 });`;
 
-    document.getElementById('nav-tabs').innerHTML = bw.html(
-      createDemoTabs('Navigation', navDemo, navCode)
-    );
+    bw.DOM('#nav-tabs', createDemoTabs('Navigation', navDemo, navCode));
 
     // 5. Alerts Demo
     const alertsDemo = {

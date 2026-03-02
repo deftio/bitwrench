@@ -1,0 +1,93 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - text: Bitwrench v2
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Fundamentals":
+        - /url: 00-taco-srmc-fundamentals.html
+    - listitem:
+      - link "Basic":
+        - /url: 01-basic-components.html
+    - listitem:
+      - link "Tables & Forms":
+        - /url: 02-interactive-tables-forms.html
+    - listitem:
+      - link "Themes":
+        - /url: 03-themes-styling.html
+    - listitem:
+      - link "Dashboard":
+        - /url: 04-dashboard-app.html
+    - listitem:
+      - link "Advanced":
+        - /url: 05-advanced-features.html
+    - listitem:
+      - link "Tic Tac Toe":
+        - /url: 06-tic-tac-toe-tutorial.html
+  - text: v2.0.3
+- heading "Bitwrench v2.0.3" [level=1]
+- paragraph: Build UIs with JavaScript objects. No JSX. No build tools. Just JavaScript.
+- heading "Welcome to Bitwrench" [level=2]
+- paragraph: Create powerful user interfaces using TACO (Tag-Attributes-Content-Options) objects and style them dynamically with SRMC (Selector-Rules-Media-Children).
+- text: 🚀
+- heading "Zero Build" [level=3]
+- paragraph: No webpack, babel, or npm. Just include and use.
+- text: 📦
+- heading "TACO Format" [level=3]
+- paragraph: Intuitive UI as data approach.
+- text: 🎨
+- heading "Dynamic CSS" [level=3]
+- paragraph: Generate styles programmatically.
+- heading "Interactive Examples" [level=2]
+- paragraph: Learn Bitwrench through hands-on examples
+- text: "00"
+- strong: Introduction to Bitwrench
+- heading "Introduction to Bitwrench" [level=5]
+- paragraph: Start here to understand TACO and SRMC, the core concepts that make Bitwrench powerful.
+- text: Essential TACO SRMC
+- button "View Example →"
+- text: "01"
+- strong: Component Library
+- heading "Component Library" [level=5]
+- paragraph: Explore the complete Bitwrench Core Components Library (BCCL) with live examples.
+- text: Components BCCL
+- button "View Example →"
+- text: "02"
+- strong: Interactive Tables & Forms
+- heading "Interactive Tables & Forms" [level=5]
+- paragraph: Build interactive data tables with sorting and forms with validation.
+- text: Tables Forms Interactive
+- button "View Example →"
+- text: "03"
+- strong: Themes & Styling
+- heading "Themes & Styling" [level=5]
+- paragraph: Master dynamic CSS generation with SRMC and implement theme switching.
+- text: SRMC Themes Styling
+- button "View Example →"
+- text: "04"
+- strong: Complete Dashboard
+- heading "Complete Dashboard" [level=5]
+- paragraph: See everything come together in a fully-functional dashboard application.
+- text: Full App Dashboard
+- button "View Example →"
+- text: "05"
+- strong: Advanced Features
+- heading "Advanced Features" [level=5]
+- paragraph: Explore state management, component handles, and performance optimization.
+- text: Advanced State Performance
+- button "View Example →"
+- text: "06"
+- strong: Build Tic Tac Toe
+- heading "Build Tic Tac Toe" [level=5]
+- paragraph: Learn by building! Create an interactive Tic Tac Toe game with Bitwrench.
+- text: Tutorial Game Interactive
+- button "View Example →"
+- heading "Ready to Build?" [level=2]
+- paragraph: Start creating modern web applications without the complexity
+- button "View on GitHub"
+- button "Documentation"
+```

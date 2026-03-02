@@ -1,0 +1,220 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - text: Bitwrench v2
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Fundamentals":
+        - /url: 00-taco-srmc-fundamentals.html
+    - listitem:
+      - link "Basic":
+        - /url: 01-basic-components.html
+    - listitem:
+      - link "Tables & Forms":
+        - /url: 02-interactive-tables-forms.html
+    - listitem:
+      - link "Themes":
+        - /url: 03-themes-styling.html
+    - listitem:
+      - link "Dashboard":
+        - /url: 04-dashboard-app.html
+    - listitem:
+      - link "Advanced":
+        - /url: 05-advanced-features.html
+    - listitem:
+      - link "Tic Tac Toe":
+        - /url: 06-tic-tac-toe-tutorial.html
+  - text: v2.0.3
+- heading "Bitwrench Core Components Library" [level=1]
+- text: "Version: 2.0.3"
+- heading "About the BCCL" [level=2]
+- paragraph: Bitwrench includes a comprehensive set of UI components similar to Bootstrap or shadcn/ui to help you get started quickly. The Bitwrench Core Components Library (BCCL) is entirely optional - you can create components from scratch using TACO objects, extend existing components, or mix both approaches.
+- heading "Using BCCL Components" [level=3]
+- paragraph:
+  - text: All BCCL components are available as
+  - code: bw.makeXxx()
+  - text: "functions that return TACO objects. You can use them in three ways:"
+- list:
+  - listitem:
+    - strong: Direct rendering
+    - text: ":"
+    - code: "bw.DOM('#target', bw.makeCard({ title: 'Hello' }))"
+  - listitem:
+    - strong: Composition
+    - text: ": Include components within other TACO structures"
+  - listitem:
+    - strong: Extension
+    - text: ": Use the returned TACO as a base and modify it"
+- paragraph: This page demonstrates every component family in the BCCL with live examples and code. Use it as a reference while building your applications.
+- heading "Cards" [level=2]
+- paragraph: Cards are flexible content containers with multiple optional parts including header, body, and footer. They're perfect for displaying related information in a clean, organized way. Cards can contain text, images, buttons, or any other components.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Basic Card" [level=5]
+  - text: This is a simple card with title and content. Cards are flexible content containers. Card footer Featured
+  - heading "Card with Header" [level=5]
+  - text: This card has a header section. Headers are great for categories or status.
+  - button "Action"
+  - heading "Interactive Card" [level=5]
+  - text: Cards can contain any content including buttons and forms.
+  - button "Primary"
+  - button "Secondary"
+- heading "Buttons" [level=2]
+- paragraph: Buttons are interactive elements that trigger actions. Bitwrench provides various button styles (primary, secondary, success, danger, warning, info) and sizes (small, normal, large). Buttons can be disabled and include click handlers for interactivity.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Button Variants" [level=4]
+  - button "Primary"
+  - button "Secondary"
+  - button "Success"
+  - button "Danger"
+  - button "Warning"
+  - button "Info"
+  - heading "Button Sizes" [level=4]
+  - button "Small"
+  - button "Normal"
+  - button "Large"
+  - heading "Button States" [level=4]
+  - button "Disabled" [disabled]
+  - button "Click Me!"
+- heading "Grid System" [level=2]
+- paragraph: The grid system provides a flexible 12-column layout for creating responsive designs. Columns can have different widths at different breakpoints, making it easy to create layouts that work on all screen sizes. Use makeContainer, makeRow, and makeCol to build your layouts.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Basic Grid Layouts" [level=4]
+  - text: Column 1 (4/12) Column 2 (4/12) Column 3 (4/12) Wide Column (8/12) Narrow Column (4/12)
+  - heading "Responsive Grid" [level=4]
+  - text: Responsive 1 Responsive 2 Responsive 3 Responsive 4
+  - heading "Advanced Grid Layouts" [level=3]
+  - heading "Magazine Layout" [level=4]
+  - text: Header (12/12) Main Article (8/12) Sidebar Top (4/12) Sidebar Bottom (4/12) Feature 1 (4/12) Feature 2 (4/12) Feature 3 (4/12)
+  - heading "Dashboard Layout" [level=4]
+  - text: Sidebar (3/12) Widget 1 (3/9) Widget 2 (3/9) Widget 3 (3/9) Main Content Area (9/9)
+  - heading "Mixed Column Layout" [level=4]
+  - text: Half Width (6/12) 1/4 (3/12) 1/4 (3/12) 2/12 2/12 2/12 2/12 2/12 2/12 1 1 1 1 1 1 1 1 1 1 1 1
+- heading "Navigation" [level=2]
+- paragraph: Navigation components help users move through your application. Create horizontal or vertical navigation bars, breadcrumbs, and navbar components. Items can be marked as active to show the current page or section.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Horizontal Navigation (makeNav)" [level=4]
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: "#"
+    - listitem:
+      - link "Products":
+        - /url: "#products"
+    - listitem:
+      - link "Services":
+        - /url: "#services"
+    - listitem:
+      - link "About":
+        - /url: "#about"
+    - listitem:
+      - link "Contact":
+        - /url: "#contact"
+  - heading "Navbar Component" [level=4]
+  - navigation:
+    - link "My Brand":
+      - /url: "#"
+    - link "Dashboard":
+      - /url: "#"
+    - link "Projects":
+      - /url: "#"
+    - link "Team":
+      - /url: "#"
+    - link "Settings":
+      - /url: "#"
+  - heading "Breadcrumb Navigation" [level=4]
+  - navigation "breadcrumb":
+    - list:
+      - listitem:
+        - link "Home":
+          - /url: "#"
+      - listitem:
+        - text: /
+        - link "Products":
+          - /url: "#products"
+      - listitem:
+        - text: /
+        - link "Electronics":
+          - /url: "#electronics"
+      - listitem: / Laptops
+- heading "Alerts" [level=2]
+- paragraph: Alerts provide contextual feedback messages for typical user actions. They come in several variants (primary, success, danger, warning, info) and can be made dismissible. Use alerts to show important messages, confirmations, or warnings to users.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - alert: This is a primary alert — check it out!
+  - alert: This is a success alert — your action was successful!
+  - alert: This is a danger alert — something went wrong!
+  - alert: This is a warning alert — please be careful!
+  - alert: This is an info alert — here's some information!
+  - alert:
+    - text: This is a dismissible alert — you can close it!
+    - button "Close": ×
+- heading "Badges" [level=2]
+- paragraph: Badges are small count and labeling components. Use them to add context to just about any content. They're commonly used for notifications, status indicators, or highlighting new/important items.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Badge Variants" [level=4]
+  - text: Primary Secondary Success Danger Warning Info Light Dark
+  - heading "Badges in Context" [level=4]
+  - heading "Notifications 99+" [level=3]
+  - paragraph: You have 5 new messages and 2 warnings.
+- heading "Progress Bars" [level=2]
+- paragraph: Progress bars show the completion status of a task or process. They can be styled with different colors, made striped or animated, and include labels. Use them for file uploads, form completion, or any multi-step process.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Basic Progress Bars" [level=4]
+  - progressbar: 0%
+  - progressbar: 25%
+  - progressbar: 50%
+  - progressbar: 75%
+  - progressbar: 100%
+  - heading "Colored Progress Bars" [level=4]
+  - progressbar: 25%
+  - progressbar: 50%
+  - progressbar: 75%
+  - heading "Striped & Animated" [level=4]
+  - progressbar: 60%
+  - progressbar: 80%
+- heading "List Groups" [level=2]
+- paragraph: List groups are flexible components for displaying a series of content. They can be used for simple lists, navigation menus, or complex content lists. Items can be marked as active or disabled to show state.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Basic List" [level=4]
+  - text: First item Second item Third item Fourth item Fifth item
+  - heading "Interactive List" [level=4]
+  - link "Active item":
+    - /url: "#"
+  - link "Regular item":
+    - /url: "#"
+  - link "Another item":
+    - /url: "#"
+  - link "Disabled item":
+    - /url: "#"
+  - link "Link item":
+    - /url: "#link"
+  - heading "Flush List (no borders)" [level=4]
+  - text: Clean item 1 Clean item 2 Clean item 3 Clean item 4
+```

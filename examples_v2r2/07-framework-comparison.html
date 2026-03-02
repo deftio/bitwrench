@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Framework Comparison</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    /* Comparison-specific styles */
+    .intro-text {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: var(--bw-text);
+      margin: 0 0 1rem;
+      max-width: 720px;
+    }
+    .intro-text:last-child { margin-bottom: 0; }
+
+    .cmp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+    .cmp-table th, .cmp-table td {
+      padding: 0.65rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--bw-card-border);
+    }
+    .cmp-table th {
+      background: var(--bw-teal-bg);
+      font-weight: 600;
+      color: var(--bw-text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .cmp-table tr:hover { background: var(--bw-teal-bg); }
+
+    .callout {
+      padding: 1rem 1.25rem;
+      border-radius: var(--bw-radius);
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    .callout h4 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+    .callout p { margin: 0.25rem 0; line-height: 1.6; }
+
+    .use-case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .use-case-card {
+      background: var(--bw-teal-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      padding: 1.25rem;
+    }
+    .use-case-card h4 { margin: 0 0 0.35rem; color: var(--bw-text); font-size: 0.95rem; }
+    .use-case-card p { margin: 0; color: var(--bw-text-secondary); font-size: 0.875rem; line-height: 1.55; }
+  </style>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Framework Comparison</h1>
+      <p class="subtitle">The same tasks solved different ways. Every approach has trade-offs.</p>
+    </div>
+  </div>
+
+  <div class="content-container wide">
+
+    <!-- Intro -->
+    <div class="demo-section">
+      <h2>About This Comparison</h2>
+      <div style="padding: 1.5rem;">
+        <p class="intro-text">
+          There are many good tools for building web UIs. Each makes different trade-offs
+          around complexity, bundle size, developer experience, and ecosystem. This page shows
+          the same tasks implemented in several approaches so you can compare them directly.
+        </p>
+        <p class="intro-text">
+          Bitwrench is not a replacement for React, Vue, or Svelte. Those are mature frameworks
+          with large ecosystems, excellent tooling, and strong communities. Bitwrench is a
+          lightweight alternative for situations where those tools are more than you need.
+        </p>
+      </div>
+    </div>
+
+    <!-- Comparison 1: Counter -->
+    <div class="demo-section">
+      <h2>Comparison 1: A Counter</h2>
+      <div style="padding: 1.5rem;">
+        <p class="intro-text">The simplest interactive component: a number that increments on click.</p>
+        <div id="counter-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 2: Data-driven list -->
+    <div class="demo-section">
+      <h2>Comparison 2: Rendering a List from Data</h2>
+      <div style="padding: 1.5rem;">
+        <p class="intro-text">Given an array of users, render a styled list with badges. This is where data-driven approaches start to show their strengths.</p>
+        <div id="list-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 3: Dynamic styling -->
+    <div class="demo-section">
+      <h2>Comparison 3: Dynamic Styling</h2>
+      <div style="padding: 1.5rem;">
+        <p class="intro-text">Change element styles at runtime based on data or user interaction.</p>
+        <div id="style-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Summary table -->
+    <div class="demo-section">
+      <h2>Summary</h2>
+      <div style="padding: 1.5rem;">
+        <div id="summary-table"></div>
+      </div>
+    </div>
+
+    <!-- Where bitwrench fits -->
+    <div class="demo-section">
+      <h2>Where Bitwrench Fits</h2>
+      <div style="padding: 1.5rem;">
+        <p class="intro-text">
+          Bitwrench works best in situations where a full framework would add unnecessary
+          complexity. Here are some specific scenarios:
+        </p>
+        <div id="use-cases"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '07-framework-comparison.html');
+
+    // ---- Reusable helpers ----
+    // Build a tabbed code comparison from an array of { label, code } objects
+    var codeComparison = function(examples) {
+      return bw.makeTabs({
+        tabs: examples.map(function(ex) {
+          return {
+            label: ex.label,
+            content: {
+              t: 'div',
+              a: { style: 'position: relative;' },
+              c: {
+                t: 'pre',
+                c: { t: 'code', c: ex.code }
+              }
+            }
+          };
+        })
+      });
+    };
+
+    // ---- Comparison 1: Counter ----
+    (function() {
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '<!-- Pure HTML + JavaScript -->',
+            '<div id="counter">',
+            '  <h4>Count: <span id="value">0</span></h4>',
+            '  <button id="btn">Increment</button>',
+            '</div>',
+            '',
+            '<script>',
+            '  var count = 0;',
+            '  var span = document.getElementById("value");',
+            '  var btn = document.getElementById("btn");',
+            '',
+            '  btn.addEventListener("click", function() {',
+            '    count++;',
+            '    span.textContent = count;',
+            '  });',
+            '<\/script>'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React with JSX (requires build step)',
+            'import { useState } from "react";',
+            '',
+            'function Counter() {',
+            '  const [count, setCount] = useState(0);',
+            '',
+            '  return (',
+            '    <div>',
+            '      <h4>Count: {count}</h4>',
+            '      <button onClick={() => setCount(count + 1)}>',
+            '        Increment',
+            '      </button>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Vue single-file component -->',
+            '<script setup>',
+            'import { ref } from "vue";',
+            'const count = ref(0);',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div>',
+            '    <h4>Count: {{ count }}</h4>',
+            '    <button @click="count++">',
+            '      Increment',
+            '    </button>',
+            '  </div>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Svelte component -->',
+            '<script>',
+            '  let count = 0;',
+            '<\/script>',
+            '',
+            '<div>',
+            '  <h4>Count: {count}</h4>',
+            '  <button on:click={() => count++}>',
+            '    Increment',
+            '  </button>',
+            '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// No build step needed',
+            'var count = 0;',
+            '',
+            'function render() {',
+            '  bw.DOM("#counter", {',
+            '    t: "div",',
+            '    c: [',
+            '      { t: "h4", c: "Count: " + count },',
+            '      {',
+            '        t: "button",',
+            '        a: {',
+            '          class: "bw-btn bw-btn-primary",',
+            '          onclick: function() {',
+            '            count++;',
+            '            render();',
+            '          }',
+            '        },',
+            '        c: "Increment"',
+            '      }',
+            '    ]',
+            '  });',
+            '}',
+            '',
+            'render();'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#counter-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 2: List from data ----
+    (function() {
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            'var users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob", role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '',
+            'var ul = document.createElement("ul");',
+            'ul.className = "list-group";',
+            '',
+            'users.forEach(function(u) {',
+            '  var li = document.createElement("li");',
+            '  li.className = "list-group-item";',
+            '  li.innerHTML = u.name +',
+            '    \' <span class="badge">\' + u.role + "</span>";',
+            '  ul.appendChild(li);',
+            '});',
+            '',
+            'document.getElementById("app").appendChild(ul);'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            'function UserList({ users }) {',
+            '  return (',
+            '    <ul className="list-group">',
+            '      {users.map(u => (',
+            '        <li key={u.name} className="list-group-item">',
+            '          {u.name}',
+            '          <span className="badge">{u.role}</span>',
+            '        </li>',
+            '      ))}',
+            '    </ul>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<template>',
+            '  <ul class="list-group">',
+            '    <li v-for="u in users" :key="u.name"',
+            '      class="list-group-item">',
+            '      {{ u.name }}',
+            '      <span class="badge">{{ u.role }}</span>',
+            '    </li>',
+            '  </ul>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<ul class="list-group">',
+            '  {#each users as u}',
+            '    <li class="list-group-item">',
+            '      {u.name}',
+            '      <span class="badge">{u.role}</span>',
+            '    </li>',
+            '  {/each}',
+            '</ul>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            'var users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob", role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '',
+            'bw.DOM("#app", {',
+            '  t: "ul",',
+            '  a: { class: "bw-list-group" },',
+            '  c: users.map(function(u) {',
+            '    return {',
+            '      t: "li",',
+            '      a: { class: "bw-list-group-item" },',
+            '      c: [',
+            '        u.name, " ",',
+            '        bw.makeBadge({ text: u.role, variant: "primary" })',
+            '      ]',
+            '    };',
+            '  })',
+            '});'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#list-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 3: Dynamic styling ----
+    (function() {
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Toggle a CSS class on click',
+            'var box = document.getElementById("box");',
+            'var btn = document.getElementById("toggle");',
+            '',
+            'btn.addEventListener("click", function() {',
+            '  box.classList.toggle("highlighted");',
+            '});',
+            '',
+            '// Or set inline styles directly:',
+            'box.style.backgroundColor = "#006666";',
+            'box.style.color = "#ffffff";'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            'function StyledBox() {',
+            '  const [active, setActive] = useState(false);',
+            '',
+            '  const style = {',
+            '    backgroundColor: active ? "#006666" : "#fff",',
+            '    color: active ? "#fff" : "#000",',
+            '    padding: "1rem",',
+            '    borderRadius: "8px",',
+            '    transition: "all 0.3s"',
+            '  };',
+            '',
+            '  return (',
+            '    <div>',
+            '      <div style={style}>Styled box</div>',
+            '      <button onClick={() => setActive(!active)}>',
+            '        Toggle',
+            '      </button>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<script setup>',
+            'import { ref } from "vue";',
+            'const active = ref(false);',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div :style="{',
+            '    backgroundColor: active ? \'#006666\' : \'#fff\',',
+            '    color: active ? \'#fff\' : \'#000\',',
+            '    padding: \'1rem\',',
+            '    borderRadius: \'8px\'',
+            '  }">',
+            '    Styled box',
+            '  </div>',
+            '  <button @click="active = !active">Toggle</button>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<script>',
+            '  let active = false;',
+            '<\/script>',
+            '',
+            '<div style="',
+            '  background: {active ? \'#006666\' : \'#fff\'};',
+            '  color: {active ? \'#fff\' : \'#000\'};',
+            '  padding: 1rem;',
+            '  border-radius: 8px;',
+            '">',
+            '  Styled box',
+            '</div>',
+            '<button on:click={() => active = !active}>Toggle</button>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            'var active = false;',
+            '',
+            'function render() {',
+            '  var bg = active ? "#006666" : "#fff";',
+            '  var fg = active ? "#fff" : "#000";',
+            '',
+            '  bw.DOM("#app", {',
+            '    t: "div", c: [',
+            '      {',
+            '        t: "div",',
+            '        a: {',
+            '          style: "padding: 1rem; border-radius: 8px;" +',
+            '            "background:" + bg + "; color:" + fg',
+            '        },',
+            '        c: "Styled box"',
+            '      },',
+            '      bw.makeButton({',
+            '        text: "Toggle", variant: "primary",',
+            '        onclick: function() {',
+            '          active = !active;',
+            '          render();',
+            '        }',
+            '      })',
+            '    ]',
+            '  });',
+            '}',
+            '',
+            'render();'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#style-comparison', codeComparison(examples));
+    })();
+
+    // ---- Summary table ----
+    (function() {
+      var rows = [
+        { feature: 'Build step', htmljs: 'None', react: 'Required', vue: 'Recommended', svelte: 'Required', bitwrench: 'None' },
+        { feature: 'HTML in JS?', htmljs: 'Strings', react: 'JSX (compiled)', vue: 'Templates', svelte: 'Templates', bitwrench: 'Objects (native)' },
+        { feature: 'Attribute names', htmljs: 'class, for', react: 'className, htmlFor', vue: 'class, for', svelte: 'class, for', bitwrench: 'class, for' },
+        { feature: 'Event handlers', htmljs: 'addEventListener', react: 'onClick (synthetic)', vue: '@click (directive)', svelte: 'on:click', bitwrench: 'onclick (function ref)' },
+        { feature: 'Data to UI', htmljs: 'Manual DOM ops', react: '.map() in JSX', vue: 'v-for directive', svelte: '{#each} block', bitwrench: '.map() in objects' },
+        { feature: 'Bundle size', htmljs: '0 KB', react: '~40 KB', vue: '~33 KB', svelte: '~5 KB', bitwrench: '~20 KB' },
+        { feature: 'Server-side JSON', htmljs: 'No', react: 'No', vue: 'No', svelte: 'No', bitwrench: 'Yes' }
+      ];
+
+      // Table header row
+      var headerRow = { t: 'tr', c: ['', 'HTML/JS', 'React', 'Vue', 'Svelte', 'Bitwrench'].map(function(h) {
+        return { t: 'th', c: h };
+      })};
+
+      // Data rows — reuse a single row factory
+      var dataRow = function(row) {
+        return {
+          t: 'tr',
+          c: [
+            { t: 'td', c: { t: 'strong', c: row.feature } },
+            { t: 'td', c: row.htmljs },
+            { t: 'td', c: row.react },
+            { t: 'td', c: row.vue },
+            { t: 'td', c: row.svelte },
+            { t: 'td', c: row.bitwrench }
+          ]
+        };
+      };
+
+      bw.DOM('#summary-table', {
+        t: 'table',
+        a: { class: 'cmp-table' },
+        c: [
+          { t: 'thead', c: headerRow },
+          { t: 'tbody', c: rows.map(dataRow) }
+        ]
+      });
+    })();
+
+    // ---- Where bitwrench fits ----
+    (function() {
+      var useCases = [
+        {
+          title: 'Embedded & IoT',
+          desc: 'ESP32, Raspberry Pi, and similar devices can serve bitwrench objects as JSON. The device generates data; the browser renders the UI. No templating engine needed on the device.'
+        },
+        {
+          title: 'Prototyping',
+          desc: 'No project setup, no npm install, no configuration files. Include one script tag and start building. When the prototype matures, you can always migrate.'
+        },
+        {
+          title: 'Polyglot Backends',
+          desc: 'Any server that can produce JSON can generate bitwrench UIs. A Python Flask app, a Go HTTP server, a Rust CLI tool — they all emit JSON, and bitwrench renders it.'
+        },
+        {
+          title: 'Single-File Tools',
+          desc: 'Dashboards, admin panels, configuration UIs, documentation pages — anything where a single HTML file is the right delivery format.'
+        },
+        {
+          title: 'Learning & Teaching',
+          desc: 'The entire bitwrench model fits in your head: objects describe elements, functions transform data into objects, bw.DOM() renders them. No concepts to unlearn.'
+        },
+        {
+          title: 'Server-Rendered UIs',
+          desc: 'Generate UI definitions on the server, send as JSON, render on the client. Update specific parts by sending partial JSON. No server-side JavaScript required.'
+        }
+      ];
+
+      // Reuse a card factory
+      var useCaseCard = function(uc) {
+        return {
+          t: 'div',
+          a: { class: 'use-case-card' },
+          c: [
+            { t: 'h4', c: uc.title },
+            { t: 'p', c: uc.desc }
+          ]
+        };
+      };
+
+      bw.DOM('#use-cases', {
+        t: 'div',
+        a: { class: 'use-case-grid' },
+        c: useCases.map(useCaseCard)
+      });
+    })();
+  </script>
+</body>
+</html>

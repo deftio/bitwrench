@@ -209,21 +209,51 @@
     homepage: 'http://deftio.com/bitwrench',
     repository: 'git://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2025-08-01T14:02:08.386Z'
+    buildDate: '2026-03-02T05:41:06.373Z'
   };
 
   var _typography, _grid;
   /**
    * Bitwrench v2 Default Styles
-   * Beautiful, responsive CSS inspired by modern design systems
-   * Zero dependencies, works everywhere
+   *
+   * CSS-in-JS style definitions providing a complete, Bootstrap-inspired
+   * design system. Styles are defined as nested JavaScript objects that
+   * bw.css() converts to CSS strings and bw.injectCSS() injects into the DOM.
+   *
+   * The module exports:
+   * - {@link defaultStyles} - All style categories as a structured object
+   * - {@link getAllStyles} - Merges all categories into a flat CSS rules object
+   * - {@link theme} - Design token configuration (colors, breakpoints, spacing, typography)
+   *
+   * Style categories: root (CSS variables), reset, typography, grid, buttons,
+   * cards, forms, navigation, tables, alerts, badges, progress, tabs, listGroups,
+   * pagination, breadcrumb, hero, features, enhancedCards, sections, cta,
+   * utilities, responsive.
+   *
+   * @module bitwrench-styles
+   * @license BSD-2-Clause
+   * @author M A Chatterjee <deftio [at] deftio [dot] com>
    */
 
+  /**
+   * Complete default style definitions organized by component category
+   *
+   * Each property is a style category containing CSS rule objects.
+   * Pass individual categories to bw.css() or use getAllStyles() to
+   * get everything merged into a single flat object.
+   *
+   * @type {Object}
+   */
   var defaultStyles = {
-    // Custom properties (CSS variables)
+    /**
+     * CSS custom properties (variables) on :root
+     *
+     * Defines the full color palette, typography, border, and shadow tokens
+     * used by all other style categories via var() references.
+     */
     root: {
       ':root': {
-        '--bw-blue': '#0d6efd',
+        '--bw-blue': '#006666',
         '--bw-indigo': '#6610f2',
         '--bw-purple': '#6f42c1',
         '--bw-pink': '#d63384',
@@ -246,7 +276,7 @@
         '--bw-gray-700': '#495057',
         '--bw-gray-800': '#343a40',
         '--bw-gray-900': '#212529',
-        '--bw-primary': '#0d6efd',
+        '--bw-primary': '#006666',
         '--bw-secondary': '#6c757d',
         '--bw-success': '#198754',
         '--bw-info': '#0dcaf0',
@@ -254,8 +284,8 @@
         '--bw-danger': '#dc3545',
         '--bw-light': '#f8f9fa',
         '--bw-dark': '#212529',
-        '--bw-font-sans-serif': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        '--bw-font-monospace': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        '--bw-font-sans-serif': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        '--bw-font-monospace': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", "Courier New", monospace',
         '--bw-body-font-family': 'var(--bw-font-sans-serif)',
         '--bw-body-font-size': '1rem',
         '--bw-body-font-weight': '400',
@@ -277,7 +307,12 @@
         '--bw-box-shadow-inset': 'inset 0 1px 2px rgba(0, 0, 0, .075)'
       }
     },
-    // CSS Reset and Base
+    /**
+     * CSS reset and base element styles
+     *
+     * Provides box-sizing reset, body defaults, page layout helpers
+     * (.bw-page, .bw-page-content), and hr normalization.
+     */
     reset: {
       '*': {
         'box-sizing': 'border-box',
@@ -292,14 +327,16 @@
         '-moz-osx-font-smoothing': 'grayscale'
       },
       'body': {
-        'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         'font-size': '1rem',
         'font-weight': '400',
-        'line-height': '1.5',
-        'color': '#212529',
-        'background-color': '#f8f9fa',
+        'line-height': '1.6',
+        'color': '#1a1a1a',
+        'background-color': '#f5f5f5',
         'margin': '0',
-        'padding': '0'
+        'padding': '0',
+        '-webkit-font-smoothing': 'antialiased',
+        '-moz-osx-font-smoothing': 'grayscale'
       },
       // Standard page layout
       '.bw-page': {
@@ -328,13 +365,20 @@
         'height': '1px'
       }
     },
-    // Typography
+    /**
+     * Typography styles for headings, paragraphs, links, and small text
+     *
+     * Headings use responsive font sizes with clamp-like calc() values.
+     * Links default to primary color with underline decoration.
+     */
     typography: (_typography = {
       'h1, h2, h3, h4, h5, h6': {
         'margin-top': '0',
         'margin-bottom': '.5rem',
-        'font-weight': '500',
-        'line-height': '1.2'
+        'font-weight': '600',
+        'line-height': '1.25',
+        'letter-spacing': '-0.01em',
+        'color': '#1a1a1a'
       },
       'h1': {
         'font-size': 'calc(1.375rem + 1.5vw)'
@@ -373,12 +417,20 @@
     }), 'small', {
       'font-size': '0.875rem'
     }), 'a', {
-      'color': '#0d6efd',
-      'text-decoration': 'underline'
+      'color': '#006666',
+      'text-decoration': 'none',
+      'transition': 'color 0.15s'
     }), _defineProperty(_typography, 'a:hover', {
-      'color': '#0a58ca'
+      'color': '#004d4d',
+      'text-decoration': 'underline'
     })),
-    // Grid System
+    /**
+     * 12-column flexbox grid system
+     *
+     * Classes: .bw-container (responsive max-widths), .bw-container-fluid,
+     * .bw-row, .bw-col, .bw-col-{1-12}. Breakpoint-specific columns
+     * are in the responsive category.
+     */
     grid: (_grid = {
       '.bw-container': {
         'width': '100%',
@@ -471,13 +523,21 @@
       'flex': '0 0 100%',
       'max-width': '100%'
     })),
-    // Buttons
+    /**
+     * Button styles - all variants, sizes, outlines, and states
+     *
+     * Classes: .bw-btn (base), .bw-btn-{variant} (filled), .bw-btn-outline-{variant},
+     * .bw-btn-sm, .bw-btn-lg. States: :hover, :active, :focus, :disabled.
+     * Variants: primary, secondary, success, danger, warning, info, light, dark.
+     */
     buttons: {
       '.bw-btn': {
-        'display': 'inline-block',
-        'font-weight': '400',
+        'display': 'inline-flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'font-weight': '500',
         'line-height': '1.5',
-        'color': '#212529',
+        'color': '#1a1a1a',
         'text-align': 'center',
         'text-decoration': 'none',
         'vertical-align': 'middle',
@@ -485,39 +545,42 @@
         'user-select': 'none',
         'background-color': 'transparent',
         'border': '1px solid transparent',
-        'padding': '.5rem 1rem',
-        'font-size': '1rem',
-        'border-radius': '.375rem',
-        'transition': 'all .15s ease-in-out',
-        'box-shadow': '0 1px 2px rgba(0,0,0,.05)'
+        'padding': '0.5rem 1.125rem',
+        'font-size': '0.875rem',
+        'font-family': 'inherit',
+        'border-radius': '6px',
+        'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+        'box-shadow': '0 1px 2px rgba(0,0,0,.05)',
+        'gap': '0.5rem'
       },
       '.bw-btn:hover': {
         'text-decoration': 'none',
         'transform': 'translateY(-1px)',
-        'box-shadow': '0 3px 5px rgba(0,0,0,.1)'
+        'box-shadow': '0 4px 6px rgba(0,0,0,.07)'
       },
       '.bw-btn:active': {
         'transform': 'translateY(0)',
         'box-shadow': '0 1px 2px rgba(0,0,0,.05)'
       },
-      '.bw-btn:focus': {
+      '.bw-btn:focus-visible': {
         'outline': '0',
-        'box-shadow': '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+        'box-shadow': '0 0 0 3px rgba(0, 102, 102, 0.3)'
       },
       '.bw-btn:disabled': {
-        'opacity': '0.65',
-        'cursor': 'not-allowed'
+        'opacity': '0.5',
+        'cursor': 'not-allowed',
+        'pointer-events': 'none'
       },
       // Button variants
       '.bw-btn-primary': {
         'color': '#fff',
-        'background-color': '#0d6efd',
-        'border-color': '#0d6efd'
+        'background-color': '#006666',
+        'border-color': '#006666'
       },
       '.bw-btn-primary:hover': {
         'color': '#fff',
-        'background-color': '#0b5ed7',
-        'border-color': '#0a58ca'
+        'background-color': '#005555',
+        'border-color': '#004d4d'
       },
       '.bw-btn-secondary': {
         'color': '#fff',
@@ -589,19 +652,106 @@
         'background-color': '#1c1f23',
         'border-color': '#1a1e21'
       },
+      // Outline variants
+      '.bw-btn-outline-primary': {
+        'color': '#006666',
+        'border-color': '#006666',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-primary:hover': {
+        'color': '#fff',
+        'background-color': '#006666',
+        'border-color': '#006666'
+      },
+      '.bw-btn-outline-secondary': {
+        'color': '#6c757d',
+        'border-color': '#6c757d',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-secondary:hover': {
+        'color': '#fff',
+        'background-color': '#6c757d',
+        'border-color': '#6c757d'
+      },
+      '.bw-btn-outline-success': {
+        'color': '#198754',
+        'border-color': '#198754',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-success:hover': {
+        'color': '#fff',
+        'background-color': '#198754',
+        'border-color': '#198754'
+      },
+      '.bw-btn-outline-danger': {
+        'color': '#dc3545',
+        'border-color': '#dc3545',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-danger:hover': {
+        'color': '#fff',
+        'background-color': '#dc3545',
+        'border-color': '#dc3545'
+      },
+      '.bw-btn-outline-warning': {
+        'color': '#ffc107',
+        'border-color': '#ffc107',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-warning:hover': {
+        'color': '#000',
+        'background-color': '#ffc107',
+        'border-color': '#ffc107'
+      },
+      '.bw-btn-outline-info': {
+        'color': '#0dcaf0',
+        'border-color': '#0dcaf0',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-info:hover': {
+        'color': '#000',
+        'background-color': '#0dcaf0',
+        'border-color': '#0dcaf0'
+      },
+      '.bw-btn-outline-light': {
+        'color': '#f8f9fa',
+        'border-color': '#f8f9fa',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-light:hover': {
+        'color': '#000',
+        'background-color': '#f8f9fa',
+        'border-color': '#f8f9fa'
+      },
+      '.bw-btn-outline-dark': {
+        'color': '#212529',
+        'border-color': '#212529',
+        'background-color': 'transparent'
+      },
+      '.bw-btn-outline-dark:hover': {
+        'color': '#fff',
+        'background-color': '#212529',
+        'border-color': '#212529'
+      },
       // Button sizes
       '.bw-btn-lg': {
-        'padding': '0.5rem 1rem',
-        'font-size': '1.25rem',
-        'border-radius': '0.3rem'
+        'padding': '0.625rem 1.5rem',
+        'font-size': '1rem',
+        'border-radius': '8px'
       },
       '.bw-btn-sm': {
-        'padding': '0.25rem 0.5rem',
-        'font-size': '0.875rem',
-        'border-radius': '0.2rem'
+        'padding': '0.25rem 0.75rem',
+        'font-size': '0.8125rem',
+        'border-radius': '5px'
       }
     },
-    // Cards
+    /**
+     * Card component styles
+     *
+     * Classes: .bw-card, .bw-card-body, .bw-card-title, .bw-card-text,
+     * .bw-card-header, .bw-card-footer, .card-img-top, .card-subtitle.
+     * Cards include hover lift animation by default.
+     */
     cards: {
       '.bw-card': {
         'position': 'relative',
@@ -612,88 +762,131 @@
         'word-wrap': 'break-word',
         'background-color': '#fff',
         'background-clip': 'border-box',
-        'border': '1px solid rgba(0,0,0,.125)',
-        'border-radius': '.5rem',
-        'box-shadow': '0 0.125rem 0.25rem rgba(0,0,0,.075)',
-        'transition': 'box-shadow .15s ease-in-out, transform .15s ease-in-out',
-        'margin-bottom': '1.5rem'
+        'border': '1px solid #e5e5e5',
+        'border-radius': '8px',
+        'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
+        'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+        'margin-bottom': '1.5rem',
+        'overflow': 'hidden'
       },
       '.bw-card:hover': {
-        'box-shadow': '0 0.5rem 1rem rgba(0,0,0,.15)',
+        'box-shadow': '0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06)',
         'transform': 'translateY(-2px)'
       },
       '.bw-card-body': {
         'flex': '1 1 auto',
-        'padding': '1.5rem'
+        'padding': '1.25rem 1.5rem'
       },
       '.bw-card-body > *:last-child': {
         'margin-bottom': '0'
       },
       '.bw-card-title': {
-        'margin-bottom': '0.75rem',
-        'font-size': '1.25rem',
-        'font-weight': '500',
-        'line-height': '1.2'
+        'margin-bottom': '0.5rem',
+        'font-size': '1.125rem',
+        'font-weight': '600',
+        'line-height': '1.3',
+        'color': '#1a1a1a'
       },
       '.card-subtitle': {
-        'margin-top': '-0.375rem',
+        'margin-top': '-0.25rem',
         'margin-bottom': '0.5rem',
-        'color': '#6c757d'
+        'color': '#777',
+        'font-size': '0.875rem'
       },
       '.bw-card-text': {
-        'margin-bottom': '0'
+        'margin-bottom': '0',
+        'color': '#555',
+        'font-size': '0.9375rem',
+        'line-height': '1.6'
       },
       '.bw-card-header': {
-        'padding': '0.75rem 1.25rem',
+        'padding': '0.875rem 1.5rem',
         'margin-bottom': '0',
-        'background-color': 'rgba(0,0,0,.03)',
-        'border-bottom': '1px solid rgba(0,0,0,.125)',
-        'font-weight': '600'
+        'background-color': '#fafafa',
+        'border-bottom': '1px solid #e5e5e5',
+        'font-weight': '600',
+        'font-size': '0.875rem'
       },
       '.bw-card-footer': {
-        'padding': '0.5rem 1rem',
-        'background-color': 'rgba(0,0,0,.03)',
-        'border-top': '1px solid rgba(0,0,0,.125)'
+        'padding': '0.75rem 1.5rem',
+        'background-color': '#fafafa',
+        'border-top': '1px solid #e5e5e5',
+        'font-size': '0.875rem',
+        'color': '#777'
       },
       '.card-img-top': {
         'width': '100%',
-        'border-top-left-radius': 'calc(0.25rem - 1px)',
-        'border-top-right-radius': 'calc(0.25rem - 1px)'
+        'border-top-left-radius': '7px',
+        'border-top-right-radius': '7px'
       }
     },
-    // Forms
+    /**
+     * Form control styles
+     *
+     * Classes: .bw-form-control (inputs, selects, textareas),
+     * .bw-form-label, .bw-form-group. Includes focus ring styling.
+     */
     forms: {
       '.bw-form-control': {
         'display': 'block',
         'width': '100%',
-        'padding': '0.375rem 0.75rem',
-        'font-size': '1rem',
+        'padding': '0.5rem 0.875rem',
+        'font-size': '0.9375rem',
         'font-weight': '400',
         'line-height': '1.5',
-        'color': '#212529',
+        'color': '#1a1a1a',
         'background-color': '#fff',
         'background-clip': 'padding-box',
-        'border': '1px solid #ced4da',
+        'border': '1px solid #ccc',
         'appearance': 'none',
-        'border-radius': '0.25rem',
-        'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out'
+        'border-radius': '6px',
+        'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+        'font-family': 'inherit'
       },
       '.bw-form-control:focus': {
-        'color': '#212529',
+        'color': '#1a1a1a',
         'background-color': '#fff',
-        'border-color': '#86b7fe',
+        'border-color': '#80cccc',
         'outline': '0',
-        'box-shadow': '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+        'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
+      },
+      '.bw-form-control::placeholder': {
+        'color': '#999',
+        'opacity': '1'
       },
       '.bw-form-label': {
-        'margin-bottom': '0.5rem',
-        'font-weight': '500'
+        'display': 'block',
+        'margin-bottom': '0.375rem',
+        'font-size': '0.875rem',
+        'font-weight': '600',
+        'color': '#333'
       },
       '.bw-form-group': {
-        'margin-bottom': '1rem'
+        'margin-bottom': '1.25rem'
+      },
+      '.bw-form-text': {
+        'margin-top': '0.25rem',
+        'font-size': '0.8125rem',
+        'color': '#777'
+      },
+      'select.bw-form-control': {
+        'padding-right': '2.25rem',
+        'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
+        'background-repeat': 'no-repeat',
+        'background-position': 'right 0.75rem center',
+        'background-size': '16px 12px'
+      },
+      'textarea.bw-form-control': {
+        'min-height': '5rem',
+        'resize': 'vertical'
       }
     },
-    // Navigation
+    /**
+     * Navbar and navigation link styles
+     *
+     * Classes: .bw-navbar, .bw-navbar-dark, .bw-navbar-light,
+     * .bw-navbar-brand, .bw-navbar-nav, .bw-nav-link (with :hover and .active).
+     */
     navigation: {
       '.bw-navbar': {
         'position': 'relative',
@@ -701,9 +894,9 @@
         'flex-wrap': 'wrap',
         'align-items': 'center',
         'justify-content': 'space-between',
-        'padding-top': '.5rem',
-        'padding-bottom': '.5rem',
-        'background-color': '#f8f9fa'
+        'padding': '0.5rem 1.5rem',
+        'background-color': '#fafafa',
+        'border-bottom': '1px solid #e5e5e5'
       },
       '.bw-navbar > .container': {
         'display': 'flex',
@@ -712,65 +905,85 @@
         'justify-content': 'space-between'
       },
       '.bw-navbar-dark': {
-        'background-color': '#212529'
+        'background-color': '#1a1a1a',
+        'border-bottom-color': '#333'
       },
       '.bw-navbar-dark .bw-navbar-brand': {
         'color': '#fff'
       },
       '.bw-navbar-dark .bw-nav-link': {
-        'color': 'rgba(255,255,255,.55)'
+        'color': 'rgba(255,255,255,.65)'
       },
       '.bw-navbar-dark .bw-nav-link:hover': {
-        'color': 'rgba(255,255,255,.75)'
-      },
-      '.bw-navbar-dark .bw-nav-link.active': {
         'color': '#fff'
       },
+      '.bw-navbar-dark .bw-nav-link.active': {
+        'color': '#fff',
+        'font-weight': '600'
+      },
       '.bw-navbar-brand': {
-        'display': 'inline-block',
-        'padding-top': '0.3125rem',
-        'padding-bottom': '0.3125rem',
-        'margin-right': '1rem',
-        'font-size': '1.25rem',
+        'display': 'inline-flex',
+        'align-items': 'center',
+        'gap': '0.5rem',
+        'padding-top': '0.25rem',
+        'padding-bottom': '0.25rem',
+        'margin-right': '1.5rem',
+        'font-size': '1.125rem',
+        'font-weight': '600',
         'line-height': 'inherit',
-        'white-space': 'nowrap'
+        'white-space': 'nowrap',
+        'text-decoration': 'none',
+        'color': '#1a1a1a'
       },
       '.bw-navbar-nav': {
         'display': 'flex',
         'flex-direction': 'row',
         'padding-left': '0',
         'margin-bottom': '0',
-        'list-style': 'none'
+        'list-style': 'none',
+        'gap': '0.25rem'
       },
-      '.bw-nav-link': {
+      '.bw-navbar-nav .bw-nav-link': {
         'display': 'block',
-        'padding': '0.5rem 1rem',
-        'color': '#0d6efd',
+        'padding': '0.5rem 0.875rem',
+        'color': '#555',
         'text-decoration': 'none',
-        'transition': 'color 0.15s ease-in-out'
+        'font-size': '0.875rem',
+        'font-weight': '500',
+        'border-radius': '6px',
+        'transition': 'color 0.15s, background-color 0.15s'
       },
-      '.bw-nav-link:hover': {
-        'color': '#0a58ca'
+      '.bw-navbar-nav .bw-nav-link:hover': {
+        'color': '#1a1a1a',
+        'background-color': 'rgba(0,0,0,.04)'
       },
-      '.bw-nav-link.active': {
-        'color': '#495057',
-        'font-weight': '500'
+      '.bw-navbar-nav .bw-nav-link.active': {
+        'color': '#006666',
+        'font-weight': '600',
+        'background-color': 'rgba(0, 102, 102, 0.06)'
       }
     },
-    // Tables
-    tables: _defineProperty({
+    /**
+     * Table styles with striped and hover variants
+     *
+     * Classes: .bw-table, .bw-table-striped, .bw-table-hover,
+     * .bw-table-bordered. Applies to thead, tbody, th, td.
+     */
+    tables: {
       '.bw-table': {
         'width': '100%',
-        'margin-bottom': '1rem',
-        'color': '#212529',
+        'margin-bottom': '1.5rem',
+        'color': '#1a1a1a',
         'vertical-align': 'top',
-        'border-color': '#dee2e6'
+        'border-color': '#e0e0e0',
+        'border-collapse': 'collapse',
+        'font-size': '0.9375rem',
+        'line-height': '1.5'
       },
       '.bw-table > :not(caption) > * > *': {
-        'padding': '0.5rem 0.5rem',
+        'padding': '0.75rem 1rem',
         'background-color': 'transparent',
-        'border-bottom-width': '1px',
-        'box-shadow': 'inset 0 0 0 9999px transparent'
+        'border-bottom': '1px solid #e0e0e0'
       },
       '.bw-table > tbody': {
         'vertical-align': 'inherit'
@@ -778,29 +991,50 @@
       '.bw-table > thead': {
         'vertical-align': 'bottom'
       },
+      '.bw-table > thead > tr > *': {
+        'padding': '0.625rem 1rem',
+        'font-size': '0.8125rem',
+        'font-weight': '600',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.04em',
+        'color': '#555',
+        'border-bottom': '2px solid #ccc',
+        'background-color': '#f8f8f8'
+      },
       '.bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
-        'background-color': 'rgba(0, 0, 0, 0.05)'
+        'background-color': 'rgba(0, 0, 0, 0.025)'
       },
       '.bw-table-hover > tbody > tr:hover > *': {
-        'background-color': 'rgba(0, 0, 0, 0.075)'
+        'background-color': 'rgba(0, 102, 102, 0.05)'
       },
       '.bw-table-bordered': {
-        'border': '1px solid #dee2e6'
+        'border': '1px solid #e0e0e0'
       },
       '.bw-table-bordered > :not(caption) > * > *': {
-        'border-width': '1px 0'
+        'border': '1px solid #e0e0e0'
+      },
+      '.bw-table caption': {
+        'padding': '0.5rem 1rem',
+        'font-size': '0.875rem',
+        'color': '#777',
+        'caption-side': 'bottom'
       }
-    }, ".bw-table-bordered > :not(caption) > * > *", {
-      'border-width': '0 1px'
-    }),
-    // Alerts
+    },
+    /**
+     * Alert/notification styles for all color variants
+     *
+     * Classes: .bw-alert, .bw-alert-{variant}, .bw-alert-dismissible.
+     * Variants: primary, secondary, success, info, warning, danger, light, dark.
+     */
     alerts: {
       '.bw-alert': {
         'position': 'relative',
-        'padding': '1rem 1rem',
+        'padding': '0.875rem 1.25rem',
         'margin-bottom': '1rem',
         'border': '1px solid transparent',
-        'border-radius': '.375rem'
+        'border-radius': '8px',
+        'font-size': '0.9375rem',
+        'line-height': '1.6'
       },
       '.alert-heading': {
         'color': 'inherit'
@@ -819,12 +1053,12 @@
         'padding': '1.25rem 1rem'
       },
       '.bw-alert-primary': {
-        'color': '#084298',
-        'background-color': '#cfe2ff',
-        'border-color': '#b6d4fe'
+        'color': '#004d4d',
+        'background-color': '#e0f2f1',
+        'border-color': '#b2dfdb'
       },
       '.bw-alert-primary .alert-link': {
-        'color': '#06357a'
+        'color': '#003d3d'
       },
       '.bw-alert-secondary': {
         'color': '#41464b',
@@ -883,7 +1117,12 @@
         'color': '#101214'
       }
     },
-    // Badges
+    /**
+     * Inline badge/label styles
+     *
+     * Classes: .bw-badge, .bw-badge-{variant}.
+     * Variants: primary, secondary, success, info, warning, danger, light, dark.
+     */
     badges: {
       '.bw-badge': {
         'display': 'inline-block',
@@ -906,7 +1145,7 @@
       },
       '.bw-badge-primary': {
         'color': '#fff',
-        'background-color': '#0d6efd'
+        'background-color': '#006666'
       },
       '.bw-badge-secondary': {
         'color': '#fff',
@@ -937,7 +1176,12 @@
         'background-color': '#212529'
       }
     },
-    // Progress bars
+    /**
+     * Progress bar styles with striped and animated variants
+     *
+     * Classes: .bw-progress, .bw-progress-bar, .bw-progress-bar-striped,
+     * .bw-progress-bar-animated. Includes @keyframes for stripe animation.
+     */
     progress: {
       '.bw-progress': {
         'display': 'flex',
@@ -956,7 +1200,7 @@
         'color': '#fff',
         'text-align': 'center',
         'white-space': 'nowrap',
-        'background-color': '#0d6efd',
+        'background-color': '#006666',
         'transition': 'width .6s ease',
         'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)',
         'font-weight': '600'
@@ -974,40 +1218,61 @@
         }
       }
     },
-    // Tabs
+    /**
+     * Tab navigation and content pane styles
+     *
+     * Classes: .bw-nav, .bw-nav-tabs, .bw-nav-item, .bw-nav-link (.active, :hover),
+     * .bw-tab-content, .bw-tab-pane (.active). Inactive panes use display:none.
+     */
     tabs: {
       '.bw-nav': {
         'display': 'flex',
         'flex-wrap': 'wrap',
         'padding-left': '0',
         'margin-bottom': '0',
-        'list-style': 'none'
+        'list-style': 'none',
+        'gap': '0'
       },
       '.bw-nav-tabs': {
-        'border-bottom': '1px solid #dee2e6'
+        'border-bottom': '2px solid #e5e5e5'
       },
       '.bw-nav-item': {
         'display': 'block'
       },
       '.bw-nav-tabs .bw-nav-item': {
-        'margin-bottom': '-1px'
+        'margin-bottom': '-2px'
+      },
+      '.bw-nav-link': {
+        'display': 'block',
+        'padding': '0.625rem 1rem',
+        'font-size': '0.875rem',
+        'font-weight': '500',
+        'color': '#777',
+        'text-decoration': 'none',
+        'cursor': 'pointer',
+        'border': 'none',
+        'background': 'transparent',
+        'transition': 'color 0.15s, border-color 0.15s',
+        'font-family': 'inherit'
       },
       '.bw-nav-tabs .bw-nav-link': {
-        'border': '1px solid transparent',
-        'border-top-left-radius': '0.25rem',
-        'border-top-right-radius': '0.25rem',
+        'border': 'none',
+        'border-bottom': '2px solid transparent',
+        'border-radius': '0',
         'background-color': 'transparent'
       },
       '.bw-nav-tabs .bw-nav-link:hover': {
-        'border-color': '#e9ecef #e9ecef #dee2e6'
+        'color': '#1a1a1a',
+        'border-bottom-color': '#ccc'
       },
       '.bw-nav-tabs .bw-nav-link.active': {
-        'color': '#495057',
-        'background-color': '#fff',
-        'border-color': '#dee2e6 #dee2e6 #fff'
+        'color': '#006666',
+        'background-color': 'transparent',
+        'border-bottom': '2px solid #006666',
+        'font-weight': '600'
       },
       '.bw-tab-content': {
-        'padding': '1rem'
+        'padding': '1.25rem 0'
       },
       '.bw-tab-pane': {
         'display': 'none'
@@ -1016,7 +1281,12 @@
         'display': 'block'
       }
     },
-    // List groups
+    /**
+     * List group styles for vertical lists of items
+     *
+     * Classes: .bw-list-group, .bw-list-group-item (.active, .disabled),
+     * .bw-list-group-flush. Supports anchor tags for interactive items.
+     */
     listGroups: {
       '.bw-list-group': {
         'display': 'flex',
@@ -1029,10 +1299,11 @@
         'position': 'relative',
         'display': 'block',
         'padding': '0.75rem 1.25rem',
-        'color': '#212529',
+        'color': '#1a1a1a',
         'text-decoration': 'none',
         'background-color': '#fff',
-        'border': '1px solid rgba(0,0,0,.125)'
+        'border': '1px solid #e5e5e5',
+        'font-size': '0.9375rem'
       },
       '.bw-list-group-item:first-child': {
         'border-top-left-radius': 'inherit',
@@ -1048,8 +1319,8 @@
       '.bw-list-group-item.active': {
         'z-index': '2',
         'color': '#fff',
-        'background-color': '#0d6efd',
-        'border-color': '#0d6efd'
+        'background-color': '#006666',
+        'border-color': '#006666'
       },
       '.bw-list-group-item.disabled': {
         'color': '#6c757d',
@@ -1076,7 +1347,12 @@
         'border-bottom-width': '0'
       }
     },
-    // Pagination
+    /**
+     * Pagination control styles
+     *
+     * Classes: .bw-pagination, .bw-page-item (.bw-active, .bw-disabled),
+     * .bw-page-link (:hover, :focus). First/last items get rounded corners.
+     */
     pagination: {
       '.bw-pagination': {
         'display': 'flex',
@@ -1094,7 +1370,7 @@
         'padding': '0.375rem 0.75rem',
         'margin-left': '-1px',
         'line-height': '1.25',
-        'color': '#0d6efd',
+        'color': '#006666',
         'text-decoration': 'none',
         'background-color': '#fff',
         'border': '1px solid #dee2e6',
@@ -1102,16 +1378,16 @@
       },
       '.bw-page-link:hover': {
         'z-index': '2',
-        'color': '#0a58ca',
+        'color': '#004d4d',
         'background-color': '#e9ecef',
         'border-color': '#dee2e6'
       },
       '.bw-page-link:focus': {
         'z-index': '3',
-        'color': '#0a58ca',
+        'color': '#004d4d',
         'background-color': '#e9ecef',
         'outline': '0',
-        'box-shadow': '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+        'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
       },
       '.bw-page-item:first-child .bw-page-link': {
         'margin-left': '0',
@@ -1125,8 +1401,8 @@
       '.bw-page-item.bw-active .bw-page-link': {
         'z-index': '3',
         'color': '#fff',
-        'background-color': '#0d6efd',
-        'border-color': '#0d6efd'
+        'background-color': '#006666',
+        'border-color': '#006666'
       },
       '.bw-page-item.bw-disabled .bw-page-link': {
         'color': '#6c757d',
@@ -1135,7 +1411,12 @@
         'border-color': '#dee2e6'
       }
     },
-    // Breadcrumb
+    /**
+     * Breadcrumb navigation styles
+     *
+     * Classes: .bw-breadcrumb, .bw-breadcrumb-item (.active).
+     * Uses "/" separator via ::before pseudo-element.
+     */
     breadcrumb: {
       '.bw-breadcrumb': {
         'display': 'flex',
@@ -1161,7 +1442,197 @@
         'color': '#6c757d'
       }
     },
-    // Utilities
+    /**
+     * Hero section styles for landing page headers
+     *
+     * Classes: .bw-hero, .bw-hero-{variant} (gradient backgrounds),
+     * .bw-hero-overlay, .bw-hero-content, .bw-hero-title.
+     * Also includes .bw-display-4, .bw-lead, and .bw-py-{3-6} spacing.
+     */
+    hero: {
+      '.bw-hero': {
+        'position': 'relative',
+        'overflow': 'hidden'
+      },
+      '.bw-hero-primary': {
+        'background': 'linear-gradient(135deg, #006666 0%, #004d4d 100%)',
+        'color': '#fff'
+      },
+      '.bw-hero-secondary': {
+        'background': 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)',
+        'color': '#fff'
+      },
+      '.bw-hero-light': {
+        'background': '#f8f9fa',
+        'color': '#212529'
+      },
+      '.bw-hero-dark': {
+        'background': 'linear-gradient(135deg, #212529 0%, #16181b 100%)',
+        'color': '#fff'
+      },
+      '.bw-hero-overlay': {
+        'position': 'absolute',
+        'top': '0',
+        'left': '0',
+        'right': '0',
+        'bottom': '0',
+        'background': 'rgba(0,0,0,0.5)',
+        'z-index': '1'
+      },
+      '.bw-hero-content': {
+        'position': 'relative',
+        'z-index': '2'
+      },
+      '.bw-hero-title': {
+        'font-weight': '300',
+        'letter-spacing': '-0.05rem'
+      },
+      '.bw-display-4': {
+        'font-size': 'calc(1.475rem + 2.7vw)',
+        'font-weight': '300',
+        'line-height': '1.2'
+      },
+      '@media (min-width: 1200px)': {
+        '.bw-display-4': {
+          'font-size': '3.5rem'
+        }
+      },
+      '.bw-lead': {
+        'font-size': '1.25rem',
+        'font-weight': '300'
+      },
+      '.bw-py-3': {
+        'padding-top': '1rem !important',
+        'padding-bottom': '1rem !important'
+      },
+      '.bw-py-4': {
+        'padding-top': '1.5rem !important',
+        'padding-bottom': '1.5rem !important'
+      },
+      '.bw-py-5': {
+        'padding-top': '3rem !important',
+        'padding-bottom': '3rem !important'
+      },
+      '.bw-py-6': {
+        'padding-top': '4rem !important',
+        'padding-bottom': '4rem !important'
+      }
+    },
+    /**
+     * Feature grid item styles
+     *
+     * Classes: .bw-feature, .bw-feature-icon, .bw-feature-title, .bw-g-4.
+     */
+    features: {
+      '.bw-feature': {
+        'padding': '1rem'
+      },
+      '.bw-feature-icon': {
+        'display': 'inline-block',
+        'margin-bottom': '1rem'
+      },
+      '.bw-feature-title': {
+        'margin-bottom': '0.5rem'
+      },
+      '.bw-g-4': {
+        '--bw-gutter-x': '1.5rem',
+        '--bw-gutter-y': '1.5rem'
+      }
+    },
+    /**
+     * Enhanced card styles with hover effects and horizontal image support
+     *
+     * Classes: .bw-card-hoverable (lift on hover), .bw-card-img-left,
+     * .bw-card-img-right, .bw-h5, .bw-h6.
+     */
+    enhancedCards: {
+      '.bw-card-hoverable': {
+        'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      },
+      '.bw-card-hoverable:hover': {
+        'transform': 'translateY(-4px)',
+        'box-shadow': '0 1rem 2rem rgba(0,0,0,.15)'
+      },
+      '.bw-card-img-left': {
+        'width': '40%',
+        'object-fit': 'cover'
+      },
+      '.bw-card-img-right': {
+        'width': '40%',
+        'object-fit': 'cover'
+      },
+      '.bw-h5': {
+        'font-size': '1.25rem'
+      },
+      '.bw-h6': {
+        'font-size': '1rem'
+      }
+    },
+    /**
+     * Page section styles with header and subtitle
+     *
+     * Classes: .bw-section, .bw-section-header, .bw-section-title,
+     * .bw-section-subtitle. Responsive title sizing included.
+     */
+    sections: {
+      '.bw-section': {
+        'position': 'relative'
+      },
+      '.bw-section-header': {
+        'margin-bottom': '3rem'
+      },
+      '.bw-section-title': {
+        'margin-bottom': '1rem',
+        'font-weight': '300',
+        'font-size': 'calc(1.325rem + .9vw)'
+      },
+      '@media (min-width: 1200px)': {
+        '.bw-section-title': {
+          'font-size': '2rem'
+        }
+      },
+      '.bw-section-subtitle': {
+        'font-size': '1.125rem',
+        'color': '#6c757d'
+      }
+    },
+    /**
+     * Call-to-action section styles
+     *
+     * Classes: .bw-cta, .bw-cta-content, .bw-cta-title, .bw-cta-actions.
+     * Content is centered with max-width constraint.
+     */
+    cta: {
+      '.bw-cta': {
+        'position': 'relative'
+      },
+      '.bw-cta-content': {
+        'max-width': '48rem',
+        'margin': '0 auto'
+      },
+      '.bw-cta-title': {
+        'font-weight': '300'
+      },
+      '.bw-cta-actions': {
+        'display': 'flex',
+        'gap': '1rem',
+        'justify-content': 'center',
+        'flex-wrap': 'wrap'
+      }
+    },
+    /**
+     * Utility classes for spacing, text, display, flexbox, colors, borders, etc.
+     *
+     * Spacing: .bw-m-{0-5}, .bw-mt-{0-5}, .bw-mb-{0-5}, .bw-ms-{0-5}, .bw-me-{0-5},
+     *          .bw-p-{0-5}, .pt-{0-5}, .pb-{0-5}, .ps-{0-5}, .pe-{0-5}
+     * Text: .bw-text-{left,right,center}, .bw-text-{variant}, .fw-{weight}, .fs-{1-6}
+     * Display: .bw-d-{none,block,inline,inline-block,flex}
+     * Background: .bw-bg-{variant}
+     * Borders: .bw-border, .bw-border-0, .bw-rounded, .bw-rounded-circle
+     * Shadows: .bw-shadow, .bw-shadow-sm, .bw-shadow-lg
+     * Sizing: .w-{25,50,75,100,auto}, .h-{25,50,75,100,auto}
+     * Position: .position-{static,relative,absolute,fixed,sticky}
+     */
     utilities: {
       // Spacing
       '.bw-m-0': {
@@ -1400,7 +1871,7 @@
       },
       // Colors
       '.bw-text-primary': {
-        'color': '#0d6efd'
+        'color': '#006666'
       },
       '.bw-text-secondary': {
         'color': '#6c757d'
@@ -1427,7 +1898,7 @@
         'color': '#6c757d'
       },
       '.bw-bg-primary': {
-        'background-color': '#0d6efd'
+        'background-color': '#006666'
       },
       '.bw-bg-secondary': {
         'background-color': '#6c757d'
@@ -1728,7 +2199,12 @@
         'opacity': '1 !important'
       }
     },
-    // Responsive utilities
+    /**
+     * Responsive grid columns for sm, md, and lg breakpoints
+     *
+     * Classes: .bw-col-sm-{1-12} (>=576px), .bw-col-md-{1-12} (>=768px),
+     * .bw-col-lg-{1-12} (>=992px). Applied via @media min-width queries.
+     */
     responsive: {
       '@media (min-width: 576px)': {
         '.bw-col-sm-1': {
@@ -1884,18 +2360,71 @@
   };
 
   /**
-   * Get all default styles as a single object
+   * Merge all style categories into a single flat CSS rules object
+   *
+   * Returns an object suitable for passing directly to bw.css() or
+   * bw.injectCSS(). All category objects are merged via Object.assign,
+   * so later categories override earlier ones if selectors collide.
+   *
+   * @returns {Object} Merged CSS rules object with all selectors
+   * @example
+   * const allRules = getAllStyles();
+   * const cssString = bw.css(allRules);
+   * bw.injectCSS(cssString);
    */
+  /**
+   * Add underscore aliases for all bw- selectors
+   * For each selector containing .bw-, adds a duplicate with .bw_ so both work in CSS
+   * @param {Object} rules - CSS rules object
+   * @returns {Object} - Rules with underscore aliases added
+   */
+  function addUnderscoreAliases(rules) {
+    var result = {};
+    for (var _i = 0, _Object$entries = Object.entries(rules); _i < _Object$entries.length; _i++) {
+      var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
+        selector = _Object$entries$_i[0],
+        styles = _Object$entries$_i[1];
+      result[selector] = styles;
+      // If selector contains .bw-, add underscore variant
+      if (selector.includes('.bw-')) {
+        var underscoreSelector = selector.replace(/\.bw-/g, '.bw_');
+        result[underscoreSelector] = styles;
+      }
+    }
+    return result;
+  }
   function getAllStyles() {
-    return Object.assign({}, defaultStyles.root, defaultStyles.reset, defaultStyles.typography, defaultStyles.grid, defaultStyles.buttons, defaultStyles.cards, defaultStyles.forms, defaultStyles.navigation, defaultStyles.tables, defaultStyles.alerts, defaultStyles.badges, defaultStyles.progress, defaultStyles.tabs, defaultStyles.listGroup, defaultStyles.pagination, defaultStyles.breadcrumb, defaultStyles.utilities, defaultStyles.responsive);
+    var merged = Object.assign({}, defaultStyles.root, defaultStyles.reset, defaultStyles.typography, defaultStyles.grid, defaultStyles.buttons, defaultStyles.cards, defaultStyles.forms, defaultStyles.navigation, defaultStyles.tables, defaultStyles.alerts, defaultStyles.badges, defaultStyles.progress, defaultStyles.tabs, defaultStyles.listGroups, defaultStyles.pagination, defaultStyles.breadcrumb, defaultStyles.hero, defaultStyles.features, defaultStyles.enhancedCards, defaultStyles.sections, defaultStyles.cta, defaultStyles.utilities, defaultStyles.responsive);
+    return addUnderscoreAliases(merged);
   }
 
   /**
-   * Get default theme configuration
+   * Default theme design tokens
+   *
+   * Provides programmatic access to the design system values used in
+   * the CSS. Useful for dynamic styling, color interpolation, and
+   * building custom theme overrides.
+   *
+   * @type {Object}
+   * @property {Object} colors - Named color values (primary, secondary, success, etc.)
+   * @property {Object} breakpoints - Responsive breakpoint widths in pixels (xs, sm, md, lg, xl, xxl)
+   * @property {Object} spacing - Spacing scale (0-5) mapped to rem values
+   * @property {Object} typography - Font family and font size scale
+   * @property {string} typography.fontFamily - Default sans-serif font stack
+   * @property {Object} typography.fontSize - Named size scale (xs through 5xl)
+   */
+  /**
+   * Default theme design tokens
+   *
+   * Provides programmatic access to the design system values used in
+   * the CSS. Useful for dynamic styling, color interpolation, and
+   * building custom theme overrides.
+   *
+   * @type {Object}
    */
   var theme = {
     colors: {
-      primary: '#0d6efd',
+      primary: '#006666',
       secondary: '#6c757d',
       success: '#198754',
       danger: '#dc3545',
@@ -1923,7 +2452,7 @@
       5: '3rem'
     },
     typography: {
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       fontSize: {
         xs: '0.75rem',
         sm: '0.875rem',
@@ -1935,18 +2464,132 @@
         '4xl': '2.25rem',
         '5xl': '3rem'
       }
-    }
+    },
+    darkMode: false
   };
+
+  /**
+   * Get dark mode CSS rules
+   * @returns {Object} - CSS rules for dark mode
+   */
+  function getDarkModeStyles() {
+    return {
+      ':root.bw-dark': {
+        '--bw-body-color': '#e9ecef',
+        '--bw-body-bg': '#1a1a2e'
+      },
+      '.bw-dark body, :root.bw-dark body': {
+        'color': '#e9ecef',
+        'background-color': '#1a1a2e'
+      },
+      '.bw-dark .bw-card': {
+        'background-color': '#16213e',
+        'border-color': '#495057',
+        'color': '#e9ecef'
+      },
+      '.bw-dark .bw-navbar': {
+        'background-color': '#0f3460'
+      },
+      '.bw-dark .bw-form-control': {
+        'background-color': '#16213e',
+        'border-color': '#495057',
+        'color': '#e9ecef'
+      },
+      '.bw-dark .bw-table': {
+        'color': '#e9ecef'
+      },
+      '.bw-dark .bw-table > :not(caption) > * > *': {
+        'border-bottom-color': '#495057'
+      },
+      '.bw-dark .bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
+        'background-color': 'rgba(255, 255, 255, 0.05)'
+      },
+      '.bw-dark .bw-alert': {
+        'border-color': '#495057'
+      },
+      '.bw-dark .bw-list-group-item': {
+        'background-color': '#16213e',
+        'border-color': '#495057',
+        'color': '#e9ecef'
+      },
+      '@media (prefers-color-scheme: dark)': {
+        ':root.bw-auto-dark body': {
+          'color': '#e9ecef',
+          'background-color': '#1a1a2e'
+        }
+      }
+    };
+  }
+
+  /**
+   * Deep merge two objects (target is mutated)
+   * @param {Object} target
+   * @param {Object} source
+   * @returns {Object}
+   */
+  function deepMerge(target, source) {
+    for (var _i2 = 0, _Object$keys = Object.keys(source); _i2 < _Object$keys.length; _i2++) {
+      var key = _Object$keys[_i2];
+      if (source[key] && _typeof(source[key]) === 'object' && !Array.isArray(source[key]) && target[key] && _typeof(target[key]) === 'object' && !Array.isArray(target[key])) {
+        deepMerge(target[key], source[key]);
+      } else {
+        target[key] = source[key];
+      }
+    }
+    return target;
+  }
+
+  /**
+   * Update the theme with new values (deep merge)
+   * @param {Object} overrides - Partial theme object to merge
+   */
+  function updateTheme(overrides) {
+    deepMerge(theme, overrides);
+  }
 
   var _excluded$1 = ["type", "placeholder", "value", "id", "name", "disabled", "readonly", "required", "className", "style"],
     _excluded2 = ["placeholder", "value", "rows", "id", "name", "disabled", "readonly", "required", "className"],
     _excluded3 = ["options", "value", "id", "name", "disabled", "required", "className"];
   /**
-   * Bitwrench v2 Components Implementation
-   * All core components with make/create functions
+   * Bitwrench v2 Components
+   *
+   * TACO-based UI component library providing Bootstrap-inspired components
+   * as pure JavaScript objects. Every make* function returns a TACO object
+   * ({t, a, c, o}) that can be rendered with bw.html() or bw.DOM().
+   *
+   * Components included: Card, Button, Container, Row, Col, Nav, Navbar,
+   * Tabs, Alert, Badge, Progress, ListGroup, Breadcrumb, Form controls,
+   * Stack, Spinner, Hero, FeatureGrid, CardV2, CTA, Section, CodeDemo.
+   *
+   * Handle classes (CardHandle, TableHandle, NavbarHandle, TabsHandle)
+   * provide imperative DOM manipulation for rendered components.
+   *
+   * @module bitwrench-components-v2
+   * @license BSD-2-Clause
+   * @author M A Chatterjee <deftio [at] deftio [dot] com>
    */
 
-  // Card Component
+  /**
+   * Create a card component with optional header, body, and footer
+   *
+   * @param {Object} [props] - Card configuration
+   * @param {string} [props.title] - Card title displayed in the body
+   * @param {string|Object|Array} [props.content] - Card body content (string, TACO, or array)
+   * @param {string|Object} [props.footer] - Card footer content
+   * @param {string|Object} [props.header] - Card header content
+   * @param {string} [props.variant] - Color variant (e.g. "primary", "danger")
+   * @param {string} [props.className] - Additional CSS classes
+   * @param {Object} [props.style] - Inline style object
+   * @param {Object} [props.state] - Component state object
+   * @returns {Object} TACO object representing a card component
+   * @example
+   * const card = makeCard({
+   *   title: "Status",
+   *   content: "All systems operational",
+   *   variant: "success"
+   * });
+   * bw.DOM("#app", card);
+   */
   function makeCard() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var title = props.title,
@@ -1995,7 +2638,26 @@
     };
   }
 
-  // Button Component
+  /**
+   * Create a button component
+   *
+   * @param {Object} [props] - Button configuration
+   * @param {string} [props.text] - Button label text
+   * @param {string} [props.variant="primary"] - Color variant (e.g. "primary", "secondary", "danger")
+   * @param {string} [props.size] - Size variant ("sm" or "lg")
+   * @param {boolean} [props.disabled=false] - Whether the button is disabled
+   * @param {Function} [props.onclick] - Click event handler
+   * @param {string} [props.type="button"] - HTML button type ("button", "submit", "reset")
+   * @param {string} [props.className] - Additional CSS classes
+   * @param {Object} [props.style] - Inline style object
+   * @returns {Object} TACO object representing a button element
+   * @example
+   * const btn = makeButton({
+   *   text: "Save",
+   *   variant: "success",
+   *   onclick: () => console.log("saved")
+   * });
+   */
   function makeButton() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var text = props.text,
@@ -2026,7 +2688,20 @@
     };
   }
 
-  // Container Component
+  /**
+   * Create a container component for centering and constraining content width
+   *
+   * @param {Object} [props] - Container configuration
+   * @param {boolean} [props.fluid=false] - Use full-width fluid container
+   * @param {Array|Object|string} [props.children] - Child content
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a container div
+   * @example
+   * const container = makeContainer({
+   *   fluid: true,
+   *   children: [makeRow({ children: [...] })]
+   * });
+   */
   function makeContainer() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$fluid = props.fluid,
@@ -2043,7 +2718,20 @@
     };
   }
 
-  // Row Component
+  /**
+   * Create a flexbox row for the grid system
+   *
+   * @param {Object} [props] - Row configuration
+   * @param {Array|Object|string} [props.children] - Child columns
+   * @param {string} [props.className] - Additional CSS classes
+   * @param {number} [props.gap] - Gap size (1-5) applied via bw-g-{gap} class
+   * @returns {Object} TACO object representing a grid row
+   * @example
+   * const row = makeRow({
+   *   gap: 4,
+   *   children: [makeCol({ size: 6, content: "Left" }), makeCol({ size: 6, content: "Right" })]
+   * });
+   */
   function makeRow() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var children = props.children,
@@ -2059,7 +2747,24 @@
     };
   }
 
-  // Column Component
+  /**
+   * Create a grid column with responsive sizing
+   *
+   * Supports both fixed and responsive column sizes. Pass an object for
+   * responsive breakpoints (e.g. {xs: 12, md: 6, lg: 4}).
+   *
+   * @param {Object} [props] - Column configuration
+   * @param {number|Object} [props.size] - Column size (1-12) or responsive object {xs, sm, md, lg, xl}
+   * @param {number} [props.offset] - Column offset (1-12)
+   * @param {number} [props.push] - Column push (1-12)
+   * @param {number} [props.pull] - Column pull (1-12)
+   * @param {Array|Object|string} [props.content] - Column content (alias for children)
+   * @param {Array|Object|string} [props.children] - Column content
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a grid column
+   * @example
+   * const col = makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
+   */
   function makeCol() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var size = props.size,
@@ -2100,7 +2805,28 @@
     };
   }
 
-  // Nav Component (simple navigation)
+  /**
+   * Create a navigation component with tabs or pills styling
+   *
+   * @param {Object} [props] - Nav configuration
+   * @param {Array<Object>} [props.items=[]] - Navigation items
+   * @param {string} props.items[].text - Item display text
+   * @param {string} [props.items[].href="#"] - Item link URL
+   * @param {boolean} [props.items[].active] - Whether this item is active
+   * @param {boolean} [props.items[].disabled] - Whether this item is disabled
+   * @param {boolean} [props.pills=false] - Use pill styling instead of tabs
+   * @param {boolean} [props.vertical=false] - Stack items vertically
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a nav element
+   * @example
+   * const nav = makeNav({
+   *   pills: true,
+   *   items: [
+   *     { text: "Home", href: "/", active: true },
+   *     { text: "About", href: "/about" }
+   *   ]
+   * });
+   */
   function makeNav() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$items = props.items,
@@ -2135,7 +2861,29 @@
     };
   }
 
-  // Navbar Component
+  /**
+   * Create a navbar component with brand and navigation links
+   *
+   * @param {Object} [props] - Navbar configuration
+   * @param {string} [props.brand] - Brand name or logo text
+   * @param {string} [props.brandHref="#"] - Brand link URL
+   * @param {Array<Object>} [props.items=[]] - Navigation items
+   * @param {string} props.items[].text - Item display text
+   * @param {string} [props.items[].href="#"] - Item link URL
+   * @param {boolean} [props.items[].active] - Whether this item is active
+   * @param {boolean} [props.dark=true] - Use dark theme styling
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a navbar element
+   * @example
+   * const navbar = makeNavbar({
+   *   brand: "MyApp",
+   *   dark: true,
+   *   items: [
+   *     { text: "Home", href: "/", active: true },
+   *     { text: "Docs", href: "/docs" }
+   *   ]
+   * });
+   */
   function makeNavbar() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var brand = props.brand,
@@ -2192,7 +2940,29 @@
     };
   }
 
-  // Tabs Component
+  /**
+   * Create a tabbed interface with accessible tab navigation
+   *
+   * Each tab is rendered as a button with ARIA attributes for accessibility.
+   * Clicking a tab shows its content pane and hides others. The active tab
+   * can be set via activeIndex or by setting active:true on a tab item.
+   *
+   * @param {Object} [props] - Tabs configuration
+   * @param {Array<Object>} [props.tabs=[]] - Tab definitions
+   * @param {string} props.tabs[].label - Tab button label
+   * @param {string|Object|Array} props.tabs[].content - Tab pane content
+   * @param {boolean} [props.tabs[].active] - Whether this tab is initially active
+   * @param {number} [props.activeIndex=0] - Default active tab index (overridden by tab.active)
+   * @returns {Object} TACO object representing a tabbed interface
+   * @example
+   * const tabs = makeTabs({
+   *   tabs: [
+   *     { label: "Overview", content: "Tab 1 content", active: true },
+   *     { label: "Details", content: "Tab 2 content" }
+   *   ]
+   * });
+   * bw.DOM("#app", tabs);
+   */
   function makeTabs() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$tabs = props.tabs,
@@ -2279,7 +3049,22 @@
     };
   }
 
-  // Alert Component
+  /**
+   * Create an alert/notification component
+   *
+   * @param {Object} [props] - Alert configuration
+   * @param {string|Object|Array} [props.content] - Alert message content
+   * @param {string} [props.variant="info"] - Color variant ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")
+   * @param {boolean} [props.dismissible=false] - Show a close button to dismiss the alert
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing an alert element
+   * @example
+   * const alert = makeAlert({
+   *   content: "Operation completed successfully!",
+   *   variant: "success",
+   *   dismissible: true
+   * });
+   */
   function makeAlert() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var content = props.content,
@@ -2307,7 +3092,18 @@
     };
   }
 
-  // Badge Component
+  /**
+   * Create an inline badge/label component
+   *
+   * @param {Object} [props] - Badge configuration
+   * @param {string} [props.text] - Badge display text
+   * @param {string} [props.variant="primary"] - Color variant
+   * @param {boolean} [props.pill=false] - Use pill (rounded) shape
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a badge span
+   * @example
+   * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
+   */
   function makeBadge() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var text = props.text,
@@ -2326,7 +3122,26 @@
     };
   }
 
-  // Progress Component
+  /**
+   * Create a progress bar component with ARIA accessibility
+   *
+   * @param {Object} [props] - Progress bar configuration
+   * @param {number} [props.value=0] - Current progress value
+   * @param {number} [props.max=100] - Maximum value
+   * @param {string} [props.variant="primary"] - Color variant
+   * @param {boolean} [props.striped=false] - Use striped pattern
+   * @param {boolean} [props.animated=false] - Animate the stripes
+   * @param {string} [props.label] - Custom label text (defaults to percentage)
+   * @param {number} [props.height] - Custom height in pixels
+   * @returns {Object} TACO object representing a progress bar
+   * @example
+   * const progress = makeProgress({
+   *   value: 75,
+   *   variant: "success",
+   *   striped: true,
+   *   animated: true
+   * });
+   */
   function makeProgress() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$value = props.value,
@@ -2367,7 +3182,33 @@
     };
   }
 
-  // List Group Component
+  /**
+   * Create a list group component for displaying lists of items
+   *
+   * Items can be simple strings or objects with text, active, disabled,
+   * href, and onclick properties. When interactive is true or items have
+   * href/onclick, items render as anchor tags.
+   *
+   * @param {Object} [props] - List group configuration
+   * @param {Array<string|Object>} [props.items=[]] - List items (strings or objects)
+   * @param {string} props.items[].text - Item display text
+   * @param {boolean} [props.items[].active] - Whether this item is active
+   * @param {boolean} [props.items[].disabled] - Whether this item is disabled
+   * @param {string} [props.items[].href] - Item link URL
+   * @param {Function} [props.items[].onclick] - Item click handler
+   * @param {boolean} [props.flush=false] - Remove borders for use inside cards
+   * @param {boolean} [props.interactive=false] - Make all items interactive (anchor tags)
+   * @returns {Object} TACO object representing a list group
+   * @example
+   * const list = makeListGroup({
+   *   interactive: true,
+   *   items: [
+   *     { text: "Active item", active: true },
+   *     { text: "Regular item" },
+   *     { text: "Disabled item", disabled: true }
+   *   ]
+   * });
+   */
   function makeListGroup() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$items3 = props.items,
@@ -2417,7 +3258,27 @@
     };
   }
 
-  // Breadcrumb Component
+  /**
+   * Create a breadcrumb navigation component
+   *
+   * The last item with active:true is rendered as plain text (no link).
+   * All other items render as anchor tags.
+   *
+   * @param {Object} [props] - Breadcrumb configuration
+   * @param {Array<Object>} [props.items=[]] - Breadcrumb items
+   * @param {string} props.items[].text - Item display text
+   * @param {string} [props.items[].href="#"] - Item link URL
+   * @param {boolean} [props.items[].active] - Whether this is the current page
+   * @returns {Object} TACO object representing a breadcrumb nav
+   * @example
+   * const crumbs = makeBreadcrumb({
+   *   items: [
+   *     { text: "Home", href: "/" },
+   *     { text: "Products", href: "/products" },
+   *     { text: "Widget", active: true }
+   *   ]
+   * });
+   */
   function makeBreadcrumb() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$items4 = props.items,
@@ -2452,7 +3313,23 @@
     };
   }
 
-  // Form Components
+  /**
+   * Create a form wrapper with default submit prevention
+   *
+   * @param {Object} [props] - Form configuration
+   * @param {Array|Object|string} [props.children] - Form contents (form groups, inputs, buttons)
+   * @param {Function} [props.onsubmit] - Submit handler (defaults to preventDefault)
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a form element
+   * @example
+   * const form = makeForm({
+   *   onsubmit: (e) => { e.preventDefault(); handleSubmit(); },
+   *   children: [
+   *     makeFormGroup({ label: "Name", input: makeInput({ placeholder: "Enter name" }) }),
+   *     makeButton({ text: "Submit", type: "submit" })
+   *   ]
+   * });
+   */
   function makeForm() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var children = props.children,
@@ -2470,6 +3347,24 @@
       c: children
     };
   }
+
+  /**
+   * Create a form group with label, input, and optional help text
+   *
+   * @param {Object} [props] - Form group configuration
+   * @param {string} [props.label] - Label text
+   * @param {Object} [props.input] - Input TACO object (from makeInput, makeSelect, etc.)
+   * @param {string} [props.help] - Help text displayed below the input
+   * @param {string} [props.id] - Input ID (links label to input via for/id)
+   * @returns {Object} TACO object representing a form group
+   * @example
+   * const group = makeFormGroup({
+   *   label: "Email",
+   *   id: "email",
+   *   input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }),
+   *   help: "We'll never share your email."
+   * });
+   */
   function makeFormGroup() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var label = props.label,
@@ -2497,6 +3392,33 @@
       }].filter(Boolean)
     };
   }
+
+  /**
+   * Create an input element with form control styling
+   *
+   * Additional event handlers (oninput, onchange, etc.) can be passed
+   * as extra properties and are spread onto the element attributes.
+   *
+   * @param {Object} [props] - Input configuration
+   * @param {string} [props.type="text"] - Input type ("text", "email", "password", "number", etc.)
+   * @param {string} [props.placeholder] - Placeholder text
+   * @param {string} [props.value] - Input value
+   * @param {string} [props.id] - Element ID
+   * @param {string} [props.name] - Input name attribute
+   * @param {boolean} [props.disabled=false] - Whether the input is disabled
+   * @param {boolean} [props.readonly=false] - Whether the input is read-only
+   * @param {boolean} [props.required=false] - Whether the input is required
+   * @param {string} [props.className] - Additional CSS classes
+   * @param {Object} [props.style] - Inline style object
+   * @returns {Object} TACO object representing an input element
+   * @example
+   * const input = makeInput({
+   *   type: "email",
+   *   placeholder: "you@example.com",
+   *   required: true,
+   *   oninput: (e) => validate(e.target.value)
+   * });
+   */
   function makeInput() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$type2 = props.type,
@@ -2531,6 +3453,28 @@
       }, eventHandlers)
     };
   }
+
+  /**
+   * Create a textarea element with form control styling
+   *
+   * @param {Object} [props] - Textarea configuration
+   * @param {string} [props.placeholder] - Placeholder text
+   * @param {string} [props.value] - Textarea content
+   * @param {number} [props.rows=3] - Number of visible text rows
+   * @param {string} [props.id] - Element ID
+   * @param {string} [props.name] - Textarea name attribute
+   * @param {boolean} [props.disabled=false] - Whether the textarea is disabled
+   * @param {boolean} [props.readonly=false] - Whether the textarea is read-only
+   * @param {boolean} [props.required=false] - Whether the textarea is required
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a textarea element
+   * @example
+   * const textarea = makeTextarea({
+   *   rows: 5,
+   *   placeholder: "Enter your message...",
+   *   required: true
+   * });
+   */
   function makeTextarea() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var placeholder = props.placeholder,
@@ -2563,6 +3507,31 @@
       c: value
     };
   }
+
+  /**
+   * Create a select dropdown with options
+   *
+   * @param {Object} [props] - Select configuration
+   * @param {Array<Object>} [props.options=[]] - Dropdown options
+   * @param {string} props.options[].value - Option value
+   * @param {string} [props.options[].text] - Option display text (defaults to value)
+   * @param {string} [props.value] - Currently selected value
+   * @param {string} [props.id] - Element ID
+   * @param {string} [props.name] - Select name attribute
+   * @param {boolean} [props.disabled=false] - Whether the select is disabled
+   * @param {boolean} [props.required=false] - Whether the select is required
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a select element
+   * @example
+   * const select = makeSelect({
+   *   value: "b",
+   *   options: [
+   *     { value: "a", text: "Option A" },
+   *     { value: "b", text: "Option B" },
+   *     { value: "c", text: "Option C" }
+   *   ]
+   * });
+   */
   function makeSelect() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$options = props.options,
@@ -2598,6 +3567,25 @@
       })
     };
   }
+
+  /**
+   * Create a checkbox input with label
+   *
+   * @param {Object} [props] - Checkbox configuration
+   * @param {string} [props.label] - Checkbox label text
+   * @param {boolean} [props.checked=false] - Whether the checkbox is checked
+   * @param {string} [props.id] - Element ID (links label to checkbox)
+   * @param {string} [props.name] - Input name attribute
+   * @param {boolean} [props.disabled=false] - Whether the checkbox is disabled
+   * @param {string} [props.value] - Checkbox value attribute
+   * @returns {Object} TACO object representing a checkbox form group
+   * @example
+   * const checkbox = makeCheckbox({
+   *   label: "I agree to the terms",
+   *   id: "agree",
+   *   checked: false
+   * });
+   */
   function makeCheckbox() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var label = props.label,
@@ -2635,7 +3623,25 @@
     };
   }
 
-  // Stack Component (Flexbox utility)
+  /**
+   * Create a flexbox stack layout (vertical or horizontal)
+   *
+   * @param {Object} [props] - Stack configuration
+   * @param {Array|Object|string} [props.children] - Stack children
+   * @param {string} [props.direction="vertical"] - Stack direction ("vertical" or "horizontal")
+   * @param {number} [props.gap=3] - Gap size (0-5)
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a stack layout
+   * @example
+   * const stack = makeStack({
+   *   direction: "horizontal",
+   *   gap: 2,
+   *   children: [
+   *     makeButton({ text: "Cancel", variant: "secondary" }),
+   *     makeButton({ text: "Save", variant: "primary" })
+   *   ]
+   * });
+   */
   function makeStack() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var children = props.children,
@@ -2654,7 +3660,17 @@
     };
   }
 
-  // Spinner Component
+  /**
+   * Create a loading spinner indicator
+   *
+   * @param {Object} [props] - Spinner configuration
+   * @param {string} [props.variant="primary"] - Color variant
+   * @param {string} [props.size="md"] - Spinner size ("sm", "md", "lg")
+   * @param {string} [props.type="border"] - Spinner type ("border" or "grow")
+   * @returns {Object} TACO object representing a spinner with screen-reader text
+   * @example
+   * const spinner = makeSpinner({ variant: "info", size: "sm" });
+   */
   function makeSpinner() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _props$variant5 = props.variant,
@@ -2679,8 +3695,501 @@
     };
   }
 
+  /**
+   * Create a hero section for landing pages and headers
+   *
+   * Supports gradient backgrounds, background images with overlays,
+   * and action buttons. Commonly used as the first visible section.
+   *
+   * @param {Object} [props] - Hero configuration
+   * @param {string} [props.title] - Main headline text
+   * @param {string} [props.subtitle] - Supporting description text
+   * @param {string|Object|Array} [props.content] - Additional body content
+   * @param {string} [props.variant="primary"] - Background variant ("primary", "secondary", "light", "dark")
+   * @param {string} [props.size="lg"] - Vertical padding size ("sm", "md", "lg", "xl")
+   * @param {boolean} [props.centered=true] - Center-align text
+   * @param {boolean} [props.overlay=false] - Add dark overlay (for background images)
+   * @param {string} [props.backgroundImage] - Background image URL
+   * @param {Array|Object} [props.actions] - Call-to-action buttons
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a hero section
+   * @example
+   * const hero = makeHero({
+   *   title: "Welcome to Bitwrench",
+   *   subtitle: "Build UIs with pure JavaScript",
+   *   variant: "dark",
+   *   actions: [
+   *     makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
+   *     makeButton({ text: "Learn More", variant: "outline-light", size: "lg" })
+   *   ]
+   * });
+   */
+  function makeHero() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var title = props.title,
+      subtitle = props.subtitle,
+      content = props.content,
+      _props$variant6 = props.variant,
+      variant = _props$variant6 === void 0 ? 'primary' : _props$variant6,
+      _props$size2 = props.size,
+      size = _props$size2 === void 0 ? 'lg' : _props$size2,
+      _props$centered = props.centered,
+      centered = _props$centered === void 0 ? true : _props$centered,
+      _props$overlay = props.overlay,
+      overlay = _props$overlay === void 0 ? false : _props$overlay,
+      backgroundImage = props.backgroundImage,
+      actions = props.actions,
+      _props$className15 = props.className,
+      className = _props$className15 === void 0 ? '' : _props$className15;
+    var sizeClasses = {
+      sm: 'bw-py-3',
+      md: 'bw-py-4',
+      lg: 'bw-py-5',
+      xl: 'bw-py-6'
+    };
+    return {
+      t: 'section',
+      a: {
+        "class": "bw-hero bw-hero-".concat(variant, " ").concat(sizeClasses[size] || sizeClasses.lg, " ").concat(centered ? 'bw-text-center' : '', " ").concat(className).trim(),
+        style: backgroundImage ? "background-image: url('".concat(backgroundImage, "'); background-size: cover; background-position: center;") : undefined
+      },
+      c: [overlay && {
+        t: 'div',
+        a: {
+          "class": 'bw-hero-overlay'
+        }
+      }, {
+        t: 'div',
+        a: {
+          "class": 'bw-container'
+        },
+        c: {
+          t: 'div',
+          a: {
+            "class": 'bw-hero-content'
+          },
+          c: [title && {
+            t: 'h1',
+            a: {
+              "class": 'bw-hero-title bw-display-4 bw-mb-3'
+            },
+            c: title
+          }, subtitle && {
+            t: 'p',
+            a: {
+              "class": 'bw-hero-subtitle bw-lead bw-mb-4'
+            },
+            c: subtitle
+          }, content, actions && {
+            t: 'div',
+            a: {
+              "class": 'bw-hero-actions bw-mt-4'
+            },
+            c: actions
+          }].filter(Boolean)
+        }
+      }].filter(Boolean)
+    };
+  }
+
+  /**
+   * Create a responsive feature grid for showcasing capabilities
+   *
+   * Renders features in an equal-width column grid with optional icons,
+   * titles, and descriptions.
+   *
+   * @param {Object} [props] - Feature grid configuration
+   * @param {Array<Object>} [props.features=[]] - Feature items
+   * @param {string} [props.features[].icon] - Icon content (emoji, HTML entity, or text)
+   * @param {string} [props.features[].title] - Feature title
+   * @param {string} [props.features[].description] - Feature description text
+   * @param {number} [props.columns=3] - Number of columns (divides 12-col grid)
+   * @param {boolean} [props.centered=true] - Center-align feature text
+   * @param {string} [props.iconSize="3rem"] - Icon font size
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a feature grid
+   * @example
+   * const features = makeFeatureGrid({
+   *   columns: 3,
+   *   features: [
+   *     { icon: "⚡", title: "Fast", description: "Zero build step" },
+   *     { icon: "📦", title: "Small", description: "Under 45KB gzipped" },
+   *     { icon: "🔧", title: "Flexible", description: "Pure JS objects" }
+   *   ]
+   * });
+   */
+  function makeFeatureGrid() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var _props$features = props.features,
+      features = _props$features === void 0 ? [] : _props$features,
+      _props$columns = props.columns,
+      columns = _props$columns === void 0 ? 3 : _props$columns,
+      _props$centered2 = props.centered,
+      centered = _props$centered2 === void 0 ? true : _props$centered2,
+      _props$iconSize = props.iconSize,
+      iconSize = _props$iconSize === void 0 ? '3rem' : _props$iconSize,
+      _props$className16 = props.className,
+      className = _props$className16 === void 0 ? '' : _props$className16;
+    var colClass = "bw-col-md-".concat(12 / columns);
+    return {
+      t: 'div',
+      a: {
+        "class": "bw-feature-grid ".concat(className).trim()
+      },
+      c: {
+        t: 'div',
+        a: {
+          "class": 'bw-row bw-g-4'
+        },
+        c: features.map(function (feature) {
+          return {
+            t: 'div',
+            a: {
+              "class": colClass
+            },
+            c: {
+              t: 'div',
+              a: {
+                "class": "bw-feature ".concat(centered ? 'bw-text-center' : '')
+              },
+              c: [feature.icon && {
+                t: 'div',
+                a: {
+                  "class": 'bw-feature-icon bw-mb-3',
+                  style: "font-size: ".concat(iconSize, "; color: var(--bw-primary);")
+                },
+                c: feature.icon
+              }, feature.title && {
+                t: 'h3',
+                a: {
+                  "class": 'bw-feature-title bw-h5 bw-mb-2'
+                },
+                c: feature.title
+              }, feature.description && {
+                t: 'p',
+                a: {
+                  "class": 'bw-feature-description bw-text-muted'
+                },
+                c: feature.description
+              }].filter(Boolean)
+            }
+          };
+        })
+      }
+    };
+  }
+
+  /**
+   * Create an enhanced card with image support, shadows, and hover effects
+   *
+   * Extended version of makeCard with support for images (top, bottom, left, right),
+   * shadow levels, subtitle, hover animation, and custom section class overrides.
+   * For horizontal image layouts (left/right), content is wrapped in a row grid.
+   *
+   * @param {Object} [props] - Enhanced card configuration
+   * @param {string} [props.title] - Card title
+   * @param {string} [props.subtitle] - Card subtitle (muted text below title)
+   * @param {string|Object|Array} [props.content] - Card body content
+   * @param {string|Object} [props.footer] - Card footer content
+   * @param {string|Object} [props.header] - Card header content
+   * @param {Object} [props.image] - Card image configuration
+   * @param {string} props.image.src - Image source URL
+   * @param {string} [props.image.alt] - Image alt text
+   * @param {string} [props.imagePosition="top"] - Image position ("top", "bottom", "left", "right")
+   * @param {string} [props.variant] - Color variant
+   * @param {boolean} [props.bordered=true] - Show card border
+   * @param {string} [props.shadow="sm"] - Shadow level ("none", "sm", "md", "lg")
+   * @param {boolean} [props.hoverable=false] - Enable hover lift animation
+   * @param {string} [props.className] - Additional CSS classes
+   * @param {Object} [props.style] - Inline style object
+   * @param {string} [props.headerClass] - Additional header CSS classes
+   * @param {string} [props.bodyClass] - Additional body CSS classes
+   * @param {string} [props.footerClass] - Additional footer CSS classes
+   * @param {Object} [props.state] - Component state object
+   * @returns {Object} TACO object representing an enhanced card
+   * @example
+   * const card = makeCardV2({
+   *   title: "Project Alpha",
+   *   subtitle: "v2.0 Release",
+   *   content: "Major performance improvements.",
+   *   image: { src: "/img/alpha.jpg", alt: "Alpha" },
+   *   imagePosition: "top",
+   *   shadow: "lg",
+   *   hoverable: true
+   * });
+   */
+  function makeCardV2() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var title = props.title,
+      subtitle = props.subtitle,
+      content = props.content,
+      footer = props.footer,
+      header = props.header,
+      image = props.image,
+      _props$imagePosition = props.imagePosition,
+      imagePosition = _props$imagePosition === void 0 ? 'top' : _props$imagePosition,
+      variant = props.variant,
+      _props$bordered = props.bordered,
+      bordered = _props$bordered === void 0 ? true : _props$bordered,
+      _props$shadow = props.shadow,
+      shadow = _props$shadow === void 0 ? 'sm' : _props$shadow,
+      _props$hoverable = props.hoverable,
+      hoverable = _props$hoverable === void 0 ? false : _props$hoverable,
+      _props$className17 = props.className,
+      className = _props$className17 === void 0 ? '' : _props$className17,
+      style = props.style,
+      _props$headerClass = props.headerClass,
+      headerClass = _props$headerClass === void 0 ? '' : _props$headerClass,
+      _props$bodyClass = props.bodyClass,
+      bodyClass = _props$bodyClass === void 0 ? '' : _props$bodyClass,
+      _props$footerClass = props.footerClass,
+      footerClass = _props$footerClass === void 0 ? '' : _props$footerClass;
+    var shadowClasses = {
+      none: '',
+      sm: 'bw-shadow-sm',
+      md: 'bw-shadow',
+      lg: 'bw-shadow-lg'
+    };
+    var cardContent = [header && {
+      t: 'div',
+      a: {
+        "class": "bw-card-header ".concat(headerClass).trim()
+      },
+      c: header
+    }, image && (imagePosition === 'top' || imagePosition === 'left') && {
+      t: 'img',
+      a: {
+        "class": "bw-card-img-".concat(imagePosition),
+        src: image.src,
+        alt: image.alt || ''
+      }
+    }, {
+      t: 'div',
+      a: {
+        "class": "bw-card-body ".concat(bodyClass).trim()
+      },
+      c: [title && {
+        t: 'h5',
+        a: {
+          "class": 'bw-card-title'
+        },
+        c: title
+      }, subtitle && {
+        t: 'h6',
+        a: {
+          "class": 'bw-card-subtitle bw-mb-2 bw-text-muted'
+        },
+        c: subtitle
+      }, content && (Array.isArray(content) ? content : [content])].flat().filter(Boolean)
+    }, image && (imagePosition === 'bottom' || imagePosition === 'right') && {
+      t: 'img',
+      a: {
+        "class": "bw-card-img-".concat(imagePosition),
+        src: image.src,
+        alt: image.alt || ''
+      }
+    }, footer && {
+      t: 'div',
+      a: {
+        "class": "bw-card-footer ".concat(footerClass).trim()
+      },
+      c: footer
+    }].filter(Boolean);
+
+    // Handle horizontal layout for left/right images
+    if (image && (imagePosition === 'left' || imagePosition === 'right')) {
+      return {
+        t: 'div',
+        a: {
+          "class": "bw-card ".concat(variant ? "bw-card-".concat(variant) : '', " ").concat(!bordered ? 'bw-border-0' : '', " ").concat(shadowClasses[shadow], " ").concat(hoverable ? 'bw-card-hoverable' : '', " ").concat(className).trim(),
+          style: style
+        },
+        c: {
+          t: 'div',
+          a: {
+            "class": 'bw-row bw-g-0'
+          },
+          c: cardContent
+        },
+        o: {
+          type: 'card',
+          state: props.state || {}
+        }
+      };
+    }
+    return {
+      t: 'div',
+      a: {
+        "class": "bw-card ".concat(variant ? "bw-card-".concat(variant) : '', " ").concat(!bordered ? 'bw-border-0' : '', " ").concat(shadowClasses[shadow], " ").concat(hoverable ? 'bw-card-hoverable' : '', " ").concat(className).trim(),
+        style: style
+      },
+      c: cardContent,
+      o: {
+        type: 'card',
+        state: props.state || {}
+      }
+    };
+  }
+
+  /**
+   * Create a call-to-action section with title, description, and action buttons
+   *
+   * @param {Object} [props] - CTA configuration
+   * @param {string} [props.title] - CTA headline
+   * @param {string} [props.description] - CTA description text
+   * @param {Array|Object} [props.actions] - CTA buttons or content
+   * @param {string} [props.variant="light"] - Background variant
+   * @param {boolean} [props.centered=true] - Center-align content
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a CTA section
+   * @example
+   * const cta = makeCTA({
+   *   title: "Ready to get started?",
+   *   description: "Join thousands of developers using Bitwrench.",
+   *   actions: [
+   *     makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" })
+   *   ]
+   * });
+   */
+  function makeCTA() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var title = props.title,
+      description = props.description,
+      actions = props.actions,
+      _props$variant7 = props.variant,
+      variant = _props$variant7 === void 0 ? 'light' : _props$variant7,
+      _props$centered3 = props.centered,
+      centered = _props$centered3 === void 0 ? true : _props$centered3,
+      _props$className18 = props.className,
+      className = _props$className18 === void 0 ? '' : _props$className18;
+    return {
+      t: 'section',
+      a: {
+        "class": "bw-cta bw-bg-".concat(variant, " bw-py-5 ").concat(className).trim()
+      },
+      c: {
+        t: 'div',
+        a: {
+          "class": 'bw-container'
+        },
+        c: {
+          t: 'div',
+          a: {
+            "class": "bw-cta-content ".concat(centered ? 'bw-text-center' : '')
+          },
+          c: [title && {
+            t: 'h2',
+            a: {
+              "class": 'bw-cta-title bw-mb-3'
+            },
+            c: title
+          }, description && {
+            t: 'p',
+            a: {
+              "class": 'bw-cta-description bw-lead bw-mb-4'
+            },
+            c: description
+          }, actions && {
+            t: 'div',
+            a: {
+              "class": 'bw-cta-actions'
+            },
+            c: actions
+          }].filter(Boolean)
+        }
+      }
+    };
+  }
+
+  /**
+   * Create a page section with optional centered header and background
+   *
+   * @param {Object} [props] - Section configuration
+   * @param {string} [props.title] - Section title
+   * @param {string} [props.subtitle] - Section subtitle (muted)
+   * @param {string|Object|Array} [props.content] - Section body content
+   * @param {string} [props.variant="default"] - Background variant ("default" for none, or a color name)
+   * @param {string} [props.spacing="md"] - Vertical padding ("sm", "md", "lg", "xl")
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a content section
+   * @example
+   * const section = makeSection({
+   *   title: "Features",
+   *   subtitle: "Everything you need to build great UIs",
+   *   spacing: "lg",
+   *   content: makeFeatureGrid({ features: [...] })
+   * });
+   */
+  function makeSection() {
+    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var title = props.title,
+      subtitle = props.subtitle,
+      content = props.content,
+      _props$variant8 = props.variant,
+      variant = _props$variant8 === void 0 ? 'default' : _props$variant8,
+      _props$spacing = props.spacing,
+      spacing = _props$spacing === void 0 ? 'md' : _props$spacing,
+      _props$className19 = props.className,
+      className = _props$className19 === void 0 ? '' : _props$className19;
+    var spacingClasses = {
+      sm: 'bw-py-3',
+      md: 'bw-py-4',
+      lg: 'bw-py-5',
+      xl: 'bw-py-6'
+    };
+    return {
+      t: 'section',
+      a: {
+        "class": "bw-section ".concat(spacingClasses[spacing] || spacingClasses.md, " ").concat(variant !== 'default' ? "bw-bg-".concat(variant) : '', " ").concat(className).trim()
+      },
+      c: {
+        t: 'div',
+        a: {
+          "class": 'bw-container'
+        },
+        c: [(title || subtitle) && {
+          t: 'div',
+          a: {
+            "class": 'bw-section-header bw-text-center bw-mb-5'
+          },
+          c: [title && {
+            t: 'h2',
+            a: {
+              "class": 'bw-section-title'
+            },
+            c: title
+          }, subtitle && {
+            t: 'p',
+            a: {
+              "class": 'bw-section-subtitle bw-text-muted'
+            },
+            c: subtitle
+          }].filter(Boolean)
+        }, content].filter(Boolean)
+      }
+    };
+  }
+
+  // =========================================================================
   // Component Handle Classes
+  //
+  // Handle classes provide imperative DOM manipulation for rendered components.
+  // They cache child element references for efficient updates without
+  // full re-renders. Used by bw.createCard(), bw.createTable(), etc.
+  // =========================================================================
+
+  /**
+   * Imperative handle for a rendered card component
+   *
+   * Provides methods to update card title, content, and CSS classes
+   * without re-rendering the entire component. Created automatically
+   * when using bw.createCard().
+   */
   var CardHandle = /*#__PURE__*/function () {
+    /**
+     * @param {Element} element - The card's root DOM element
+     * @param {Object} taco - The original TACO object used to create the card
+     */
     function CardHandle(element, taco) {
       var _taco$o;
       _classCallCheck(this, CardHandle);
@@ -2696,6 +4205,13 @@
         footer: element.querySelector('.bw-card-footer')
       };
     }
+
+    /**
+     * Update the card title text
+     *
+     * @param {string} title - New title text
+     * @returns {CardHandle} this (for chaining)
+     */
     return _createClass(CardHandle, [{
       key: "setTitle",
       value: function setTitle(title) {
@@ -2704,6 +4220,13 @@
         }
         return this;
       }
+
+      /**
+       * Replace the card body content
+       *
+       * @param {string|Object} content - New content (string or TACO object)
+       * @returns {CardHandle} this (for chaining)
+       */
     }, {
       key: "setContent",
       value: function setContent(content) {
@@ -2719,18 +4242,39 @@
         }
         return this;
       }
+
+      /**
+       * Add a CSS class to the card root element
+       *
+       * @param {string} className - Class to add
+       * @returns {CardHandle} this (for chaining)
+       */
     }, {
       key: "addClass",
       value: function addClass(className) {
         this.element.classList.add(className);
         return this;
       }
+
+      /**
+       * Remove a CSS class from the card root element
+       *
+       * @param {string} className - Class to remove
+       * @returns {CardHandle} this (for chaining)
+       */
     }, {
       key: "removeClass",
       value: function removeClass(className) {
         this.element.classList.remove(className);
         return this;
       }
+
+      /**
+       * Query a child element within the card
+       *
+       * @param {string} selector - CSS selector
+       * @returns {Element|null} Matching element or null
+       */
     }, {
       key: "select",
       value: function select(selector) {
@@ -2738,7 +4282,19 @@
       }
     }]);
   }();
+
+  /**
+   * Imperative handle for a rendered table component
+   *
+   * Provides methods for data updates and column sorting. Caches
+   * thead/tbody/header references for efficient DOM updates.
+   * Created automatically when using bw.createTable().
+   */
   var TableHandle = /*#__PURE__*/function () {
+    /**
+     * @param {Element} element - The table's root DOM element
+     * @param {Object} taco - The original TACO object used to create the table
+     */
     function TableHandle(element, taco) {
       var _taco$o2;
       _classCallCheck(this, TableHandle);
@@ -2761,6 +4317,11 @@
         this._setupSorting();
       }
     }
+
+    /**
+     * Attach click-to-sort handlers on all column headers
+     * @private
+     */
     return _createClass(TableHandle, [{
       key: "_setupSorting",
       value: function _setupSorting() {
@@ -2772,6 +4333,13 @@
           };
         });
       }
+
+      /**
+       * Replace the table data and re-render the body
+       *
+       * @param {Array<Object>} data - Array of row objects
+       * @returns {TableHandle} this (for chaining)
+       */
     }, {
       key: "setData",
       value: function setData(data) {
@@ -2779,6 +4347,16 @@
         this._renderBody();
         return this;
       }
+
+      /**
+       * Sort the table by a column name
+       *
+       * Toggles direction if the same column is sorted again.
+       *
+       * @param {string} column - Column header text to sort by
+       * @param {string} [direction] - Sort direction ("asc" or "desc"); toggles if omitted
+       * @returns {TableHandle} this (for chaining)
+       */
     }, {
       key: "sortBy",
       value: function sortBy(column, direction) {
@@ -2801,6 +4379,11 @@
         this._renderBody();
         return this;
       }
+
+      /**
+       * Re-render the tbody from current _data
+       * @private
+       */
     }, {
       key: "_renderBody",
       value: function _renderBody() {
@@ -2818,7 +4401,18 @@
       }
     }]);
   }();
+
+  /**
+   * Imperative handle for a rendered navbar component
+   *
+   * Provides methods to update the active navigation link.
+   * Created automatically when using bw.createNavbar().
+   */
   var NavbarHandle = /*#__PURE__*/function () {
+    /**
+     * @param {Element} element - The navbar's root DOM element
+     * @param {Object} taco - The original TACO object used to create the navbar
+     */
     function NavbarHandle(element, taco) {
       var _taco$o3;
       _classCallCheck(this, NavbarHandle);
@@ -2830,6 +4424,13 @@
         links: element.querySelectorAll('.bw-nav-link')
       };
     }
+
+    /**
+     * Set the active navigation link by href
+     *
+     * @param {string} href - The href value of the link to activate
+     * @returns {NavbarHandle} this (for chaining)
+     */
     return _createClass(NavbarHandle, [{
       key: "setActive",
       value: function setActive(href) {
@@ -2844,7 +4445,19 @@
       }
     }]);
   }();
+
+  /**
+   * Imperative handle for a rendered tabs component
+   *
+   * Provides programmatic tab switching. Sets up click handlers
+   * on tab buttons and manages active states on both buttons and panes.
+   * Created automatically when using bw.createTabs().
+   */
   var TabsHandle = /*#__PURE__*/function () {
+    /**
+     * @param {Element} element - The tabs container DOM element
+     * @param {Object} taco - The original TACO object used to create the tabs
+     */
     function TabsHandle(element, taco) {
       var _taco$o4;
       _classCallCheck(this, TabsHandle);
@@ -2857,6 +4470,11 @@
       };
       this._setupTabs();
     }
+
+    /**
+     * Attach click handlers to tab navigation buttons
+     * @private
+     */
     return _createClass(TabsHandle, [{
       key: "_setupTabs",
       value: function _setupTabs() {
@@ -2868,6 +4486,13 @@
           };
         });
       }
+
+      /**
+       * Programmatically switch to a tab by index
+       *
+       * @param {number} index - Zero-based tab index to activate
+       * @returns {TabsHandle} this (for chaining)
+       */
     }, {
       key: "switchTo",
       value: function switchTo(index) {
@@ -2891,7 +4516,27 @@
     }]);
   }();
 
-  // Code Demo Component - for documentation pages
+  /**
+   * Create a code demo component for documentation pages
+   *
+   * Displays a live result alongside source code in a tabbed interface.
+   * Includes a copy-to-clipboard button on the code tab.
+   *
+   * @param {Object} [props] - Code demo configuration
+   * @param {string} [props.title] - Demo title heading
+   * @param {string} [props.description] - Demo description text
+   * @param {string} [props.code] - Source code to display (adds a "Code" tab when present)
+   * @param {string|Object|Array} [props.result] - Live result content for the "Result" tab
+   * @param {string} [props.language="javascript"] - Code language for syntax class
+   * @returns {Object} TACO object representing a code demo with tabbed Result/Code views
+   * @example
+   * const demo = makeCodeDemo({
+   *   title: "Button Example",
+   *   description: "A simple primary button",
+   *   code: 'makeButton({ text: "Click me" })',
+   *   result: makeButton({ text: "Click me" })
+   * });
+   */
   function makeCodeDemo() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var title = props.title,
@@ -2907,48 +4552,55 @@
       label: 'Result',
       active: true,
       content: result
-    }, {
-      label: 'Code',
-      content: {
-        t: 'div',
-        a: {
-          style: 'position: relative;'
-        },
-        c: [{
-          t: 'button',
-          a: {
-            "class": 'copy-btn',
-            style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;',
-            onclick: function onclick(e) {
-              navigator.clipboard.writeText(code).then(function () {
-                var btn = e.target;
-                var originalText = btn.textContent;
-                btn.textContent = 'Copied!';
-                btn.style.background = '#28a745';
-                setTimeout(function () {
-                  btn.textContent = originalText;
-                  btn.style.background = '#007bff';
-                }, 2000);
-              });
-            }
-          },
-          c: 'Copy'
-        }, {
-          t: 'pre',
-          a: {
-            style: 'margin: 0; background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 4px; overflow-x: auto;'
-          },
-          c: {
-            t: 'code',
-            a: {
-              "class": "language-".concat(language),
-              style: 'display: block; padding: 1rem; font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace; font-size: 0.875rem; line-height: 1.5;'
-            },
-            c: code
-          }
-        }]
-      }
     }];
+
+    // Only add Code tab if code is provided
+    if (code) {
+      tabs.push({
+        label: 'Code',
+        content: {
+          t: 'div',
+          a: {
+            style: 'position: relative;'
+          },
+          c: [{
+            t: 'button',
+            a: {
+              "class": 'copy-btn',
+              style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.6875rem; background: rgba(255,255,255,0.12); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s;',
+              onclick: function onclick(e) {
+                navigator.clipboard.writeText(code).then(function () {
+                  var btn = e.target;
+                  var originalText = btn.textContent;
+                  btn.textContent = 'Copied!';
+                  btn.style.background = '#006666';
+                  btn.style.color = '#fff';
+                  setTimeout(function () {
+                    btn.textContent = originalText;
+                    btn.style.background = 'rgba(255,255,255,0.12)';
+                    btn.style.color = '#aaa';
+                  }, 2000);
+                });
+              }
+            },
+            c: 'Copy'
+          }, {
+            t: 'pre',
+            a: {
+              style: 'margin: 0; background: #1e293b; border: none; border-radius: 6px; overflow-x: auto;'
+            },
+            c: {
+              t: 'code',
+              a: {
+                "class": "language-".concat(language),
+                style: 'display: block; padding: 1.25rem; font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace; font-size: 0.8125rem; line-height: 1.6; color: #e2e8f0;'
+              },
+              c: code
+            }
+          }]
+        }
+      });
+    }
     var content = [title && {
       t: 'h3',
       c: title
@@ -2972,7 +4624,14 @@
     };
   }
 
-  // Handle registry
+  /**
+   * Registry mapping component type names to their handle classes
+   *
+   * Used by bw.createCard(), bw.createTable(), etc. to wrap rendered
+   * DOM elements in the appropriate imperative handle.
+   *
+   * @type {Object.<string, Function>}
+   */
   var componentHandles = {
     card: CardHandle,
     table: TableHandle,
@@ -2991,19 +4650,24 @@
     makeBadge: makeBadge,
     makeBreadcrumb: makeBreadcrumb,
     makeButton: makeButton,
+    makeCTA: makeCTA,
     makeCard: makeCard,
+    makeCardV2: makeCardV2,
     makeCheckbox: makeCheckbox,
     makeCodeDemo: makeCodeDemo,
     makeCol: makeCol,
     makeContainer: makeContainer,
+    makeFeatureGrid: makeFeatureGrid,
     makeForm: makeForm,
     makeFormGroup: makeFormGroup,
+    makeHero: makeHero,
     makeInput: makeInput,
     makeListGroup: makeListGroup,
     makeNav: makeNav,
     makeNavbar: makeNavbar,
     makeProgress: makeProgress,
     makeRow: makeRow,
+    makeSection: makeSection,
     makeSelect: makeSelect,
     makeSpinner: makeSpinner,
     makeStack: makeStack,
@@ -3018,6 +4682,13 @@
     // Version info from generated file
     version: VERSION_INFO.version,
     versionInfo: VERSION_INFO,
+    /**
+     * Get version metadata object (v1-compatible callable API)
+     * @returns {Object} - Copy of VERSION_INFO with version, name, buildDate, etc.
+     */
+    getVersion: function getVersion() {
+      return _objectSpread2({}, VERSION_INFO);
+    },
     // Internal state
     _idCounter: 0,
     _unmountCallbacks: new Map(),
@@ -3144,6 +4815,17 @@
   };
 
   /**
+   * Normalize CSS class names: convert underscores to hyphens for bw-prefixed classes
+   * Allows users to write bw_card or bw-card and get consistent output
+   * @param {string} classStr - Class string to normalize
+   * @returns {string} - Normalized class string with hyphens
+   */
+  bw.normalizeClass = function (classStr) {
+    if (typeof classStr !== 'string') return classStr;
+    return classStr.replace(/\bbw_/g, 'bw-');
+  };
+
+  /**
    * Convert TACO object to HTML string
    * @param {Object|Array|string} taco - TACO object, array of TACOs, or string
    * @param {Object} [options] - Rendering options
@@ -3205,8 +4887,8 @@
           attrStr += " style=\"".concat(bw.escapeHTML(styleStr), "\"");
         }
       } else if (key === 'class') {
-        // Handle class as array or string
-        var classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
+        // Handle class as array or string, normalize bw_ to bw-
+        var classStr = bw.normalizeClass(Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value));
         if (classStr) {
           attrStr += " class=\"".concat(bw.escapeHTML(classStr), "\"");
         }
@@ -3280,8 +4962,8 @@
         // Apply styles directly
         Object.assign(el.style, value);
       } else if (key === 'class') {
-        // Handle class as array or string
-        var classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
+        // Handle class as array or string, normalize bw_ to bw-
+        var classStr = bw.normalizeClass(Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value));
         if (classStr) {
           el.className = classStr;
         }
@@ -3402,32 +5084,186 @@
   };
 
   /**
-   * Render a component and return a handle
+   * Compile props into getter/setter functions
+   * @param {Object} handle - Component handle
+   * @param {Object} props - Initial props
+   * @returns {Object} Compiled props object
+   */
+  bw.compileProps = function (handle) {
+    var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var compiledProps = {};
+    Object.keys(props).forEach(function (key) {
+      // Create getter/setter for each prop
+      Object.defineProperty(compiledProps, key, {
+        get: function get() {
+          return handle._props[key];
+        },
+        set: function set(value) {
+          var oldValue = handle._props[key];
+          if (oldValue !== value) {
+            handle._props[key] = value;
+            // Trigger update if prop changed
+            if (handle.onPropChange) {
+              handle.onPropChange(key, value, oldValue);
+            }
+          }
+        },
+        enumerable: true,
+        configurable: true
+      });
+    });
+    return compiledProps;
+  };
+
+  /**
+   * Render a component and return an enhanced handle
    * @param {Object} taco - TACO object
    * @param {Object} options - Render options
-   * @returns {Object} Component handle
+   * @returns {Object} Component handle with compiled props
    */
   bw.renderComponent = function (taco) {
     var _taco$o3;
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     var element = bw.createDOM(taco, options);
 
-    // Return basic handle
-    return {
+    // Enhanced handle with prop compilation
+    var handle = {
       element: element,
-      state: ((_taco$o3 = taco.o) === null || _taco$o3 === void 0 ? void 0 : _taco$o3.state) || {},
-      update: function update(newProps) {
-        // Basic update - replace content
-        var newTaco = _objectSpread2(_objectSpread2({}, taco), newProps);
-        var newElement = bw.createDOM(newTaco, options);
-        element.replaceWith(newElement);
-        this.element = newElement;
+      taco: taco,
+      _props: _objectSpread2({}, taco.a),
+      // Store props internally
+      _state: ((_taco$o3 = taco.o) === null || _taco$o3 === void 0 ? void 0 : _taco$o3.state) || {},
+      _children: {},
+      // Store child component references
+
+      // Get compiled props with getters/setters
+      get props() {
+        if (!this._compiledProps) {
+          this._compiledProps = bw.compileProps(this, this._props);
+        }
+        return this._compiledProps;
       },
+      /**
+       * Query all matching elements within this component
+       * @param {string} selector - CSS selector
+       * @returns {NodeList} Matching elements
+       */
+      $: function $(selector) {
+        return this.element.querySelectorAll(selector);
+      },
+      /**
+       * Query the first matching element within this component
+       * @param {string} selector - CSS selector
+       * @returns {Element|null} First matching element or null
+       */
+      $first: function $first(selector) {
+        return this.element.querySelector(selector);
+      },
+      /**
+       * Update component with new props and re-render in place
+       * @param {Object} newProps - Properties to merge into current props
+       * @returns {Object} this handle (for chaining)
+       */
+      update: function update(newProps) {
+        // Update internal props
+        Object.assign(this._props, newProps);
+
+        // Rebuild TACO with new props
+        var newTaco = _objectSpread2(_objectSpread2({}, this.taco), {}, {
+          a: _objectSpread2(_objectSpread2({}, this.taco.a), newProps)
+        });
+        var newElement = bw.createDOM(newTaco, options);
+
+        // Replace in DOM
+        this.element.replaceWith(newElement);
+        this.element = newElement;
+        this.taco = newTaco;
+        return this;
+      },
+      /**
+       * Re-render the component from its current TACO, replacing the DOM element
+       * @returns {Object} this handle (for chaining)
+       */
+      render: function render() {
+        var newElement = bw.createDOM(this.taco, options);
+        this.element.replaceWith(newElement);
+        this.element = newElement;
+        return this;
+      },
+      /**
+       * Called when a compiled prop value changes. Override to customize behavior.
+       * Default implementation triggers a full re-render.
+       * @param {string} key - Property name that changed
+       * @param {*} newValue - New property value
+       * @param {*} oldValue - Previous property value
+       */
+      onPropChange: function onPropChange(key, newValue, oldValue) {
+        // Auto re-render on prop change by default
+        this.render();
+      },
+      // State management
+      get state() {
+        return this._state;
+      },
+      set state(newState) {
+        this._state = newState;
+        this.render();
+      },
+      /**
+       * Merge state updates and re-render the component
+       * @param {Object} updates - State properties to merge
+       * @returns {Object} this handle (for chaining)
+       */
+      setState: function setState(updates) {
+        Object.assign(this._state, updates);
+        this.render();
+        return this;
+      },
+      /**
+       * Register a child component under a name for later retrieval
+       * @param {string} name - Child name key
+       * @param {Object} component - Child component handle
+       * @returns {Object} this handle (for chaining)
+       */
+      addChild: function addChild(name, component) {
+        this._children[name] = component;
+        return this;
+      },
+      /**
+       * Retrieve a registered child component by name
+       * @param {string} name - Child name key
+       * @returns {Object|undefined} Child component handle
+       */
+      getChild: function getChild(name) {
+        return this._children[name];
+      },
+      /**
+       * Destroy this component and all registered children
+       *
+       * Calls destroy() recursively on children, runs bw.cleanup(),
+       * removes the element from DOM, and clears all internal references.
+       */
       destroy: function destroy() {
+        // Destroy children first
+        Object.values(this._children).forEach(function (child) {
+          if (child && child.destroy) child.destroy();
+        });
+
+        // Clean up this component
         bw.cleanup(this.element);
         this.element.remove();
+
+        // Clear references
+        this._children = {};
+        this._props = {};
+        this._state = {};
+        this._compiledProps = null;
       }
     };
+
+    // Store handle reference on element
+    element._bwHandle = handle;
+    return handle;
   };
 
   /**
@@ -3651,11 +5487,65 @@
   };
 
   /**
-   * Get theme configuration
+   * Get current theme configuration (deep copy)
    * @returns {Object} - Theme object
    */
   bw.getTheme = function () {
-    return _objectSpread2({}, theme);
+    return JSON.parse(JSON.stringify(theme));
+  };
+
+  /**
+   * Set theme overrides and optionally re-inject CSS
+   * @param {Object} overrides - Partial theme object to merge
+   * @param {Object} [options] - Options
+   * @param {boolean} [options.inject=true] - Whether to re-inject CSS (browser only)
+   * @returns {Object} - Updated theme
+   */
+  bw.setTheme = function (overrides) {
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var _options$inject = options.inject,
+      inject = _options$inject === void 0 ? true : _options$inject;
+    updateTheme(overrides);
+
+    // Update CSS custom properties if colors changed and we're in browser
+    if (inject && !bw._isNode && overrides.colors) {
+      var root = document.documentElement;
+      for (var _i3 = 0, _Object$entries3 = Object.entries(overrides.colors); _i3 < _Object$entries3.length; _i3++) {
+        var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i3], 2),
+          name = _Object$entries3$_i[0],
+          value = _Object$entries3$_i[1];
+        root.style.setProperty('--bw-' + name, value);
+      }
+    }
+    return bw.getTheme();
+  };
+
+  /**
+   * Toggle dark mode on/off
+   * Adds/removes 'bw-dark' class on <html> and injects dark mode CSS
+   * @param {boolean} [force] - Force dark (true) or light (false). Omit to toggle.
+   * @returns {boolean} - Whether dark mode is now active
+   */
+  bw.toggleDarkMode = function (force) {
+    var isDark = force !== undefined ? force : !theme.darkMode;
+    theme.darkMode = isDark;
+    if (!bw._isNode) {
+      var root = document.documentElement;
+      if (isDark) {
+        root.classList.add('bw-dark');
+        // Inject dark mode styles if not already present
+        if (!document.getElementById('bw-dark-styles')) {
+          var darkCSS = bw.css(getDarkModeStyles());
+          var styleEl = document.createElement('style');
+          styleEl.id = 'bw-dark-styles';
+          styleEl.textContent = darkCSS;
+          document.head.appendChild(styleEl);
+        }
+      } else {
+        root.classList.remove('bw-dark');
+      }
+    }
+    return isDark;
   };
 
   // ===================================================================================
@@ -3881,8 +5771,8 @@
         }
       } else if (hex.length === 6 || hex.length === 8) {
         // #rrggbb or #rrggbbaa
-        for (var _i3 = 0; _i3 < hex.length; _i3 += 2) {
-          r[_i3 / 2] = parseInt(hex.substring(_i3, _i3 + 2), 16);
+        for (var _i4 = 0; _i4 < hex.length; _i4 += 2) {
+          r[_i4 / 2] = parseInt(hex.substring(_i4, _i4 + 2), 16);
         }
       }
     } else {
@@ -4038,14 +5928,24 @@
     return html;
   };
 
-  // Helper for attributes to string conversion
+  /**
+   * Convert an attributes object to an HTML attribute string
+   *
+   * Handles boolean attributes (key only), null/undefined/false (skipped),
+   * and regular string values (HTML-escaped). Used internally by bw.htmlTable()
+   * and bw.htmlTabs().
+   *
+   * @param {Object} attrs - Attribute key-value pairs
+   * @returns {string} HTML attribute string with leading space, or empty string
+   * @private
+   */
   bw._attrsToStr = function (attrs) {
     if (!attrs || _typeof(attrs) !== "object") return "";
     var str = "";
-    for (var _i4 = 0, _Object$entries3 = Object.entries(attrs); _i4 < _Object$entries3.length; _i4++) {
-      var _Object$entries3$_i = _slicedToArray(_Object$entries3[_i4], 2),
-        key = _Object$entries3$_i[0],
-        value = _Object$entries3$_i[1];
+    for (var _i5 = 0, _Object$entries4 = Object.entries(attrs); _i5 < _Object$entries4.length; _i5++) {
+      var _Object$entries4$_i = _slicedToArray(_Object$entries4[_i5], 2),
+        key = _Object$entries4$_i[0],
+        value = _Object$entries4$_i[1];
       if (value != null && value !== false) {
         if (value === true) {
           str += " ".concat(key);
@@ -4352,6 +6252,103 @@
     return intervalID;
   };
 
+  // ===================================================================================
+  // File I/O Functions - Works in both Node.js and browser
+  // ===================================================================================
+
+  /**
+   * Save data to a file (works in both Node.js and browser)
+   * @param {string} fname - Filename to save as
+   * @param {*} data - Data to save
+   */
+  bw.saveClientFile = function (fname, data) {
+    if (bw.isNodeJS()) {
+      // Node.js environment
+      var fs = require("fs");
+      fs.writeFile(fname, data, function (err) {
+        if (err) {
+          console.error("Error saving file:", err);
+        }
+      });
+    } else {
+      // Browser environment
+      var blob = new Blob([data], {
+        type: "application/octet-stream"
+      });
+      var url = window.URL.createObjectURL(blob);
+      var a = bw.createDOM({
+        t: 'a',
+        a: {
+          href: url,
+          download: fname,
+          style: 'display: none'
+        }
+      });
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+  };
+
+  /**
+   * Save data as JSON file
+   * @param {string} fname - Filename to save as
+   * @param {*} data - Data to save as JSON
+   */
+  bw.saveClientJSON = function (fname, data) {
+    bw.saveClientFile(fname, JSON.stringify(data, null, 2));
+  };
+
+  /**
+   * Copy text to clipboard
+   * @param {string} text - Text to copy
+   * @returns {Promise} - Promise that resolves when copy is complete
+   */
+  bw.copyToClipboard = function (text) {
+    // Modern clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+
+    // Fallback for older browsers
+    return new Promise(function (resolve, reject) {
+      var textarea = bw.createDOM({
+        t: 'textarea',
+        a: {
+          value: text,
+          style: {
+            position: 'fixed',
+            top: '-999px',
+            left: '-999px',
+            width: '2em',
+            height: '2em',
+            padding: 0,
+            border: 'none',
+            outline: 'none',
+            boxShadow: 'none',
+            background: 'transparent'
+          }
+        }
+      });
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        var successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (successful) {
+          resolve();
+        } else {
+          reject(new Error('Copy command failed'));
+        }
+      } catch (err) {
+        document.body.removeChild(textarea);
+        reject(err);
+      }
+    });
+  };
+
   /**
    * Create a sortable HTML table from data
    * @param {Object} config - Table configuration
@@ -4494,9 +6491,24 @@
   };
 
   /**
-   * Create a responsive data table with built-in features
+   * Create a responsive data table with title and optional wrapper
+   *
+   * Wraps bw.makeTable() output in a responsive container div.
+   * Adds an optional title heading above the table.
+   *
    * @param {Object} config - Table configuration
-   * @returns {Object} - TACO object for table with wrapper
+   * @param {string} [config.title] - Table title heading
+   * @param {Array<Object>} config.data - Array of row objects
+   * @param {Array<Object>} [config.columns] - Column definitions
+   * @param {string} [config.className="table table-striped table-hover"] - Table CSS class
+   * @param {boolean} [config.responsive=true] - Wrap table in responsive overflow div
+   * @returns {Object} TACO object for table with wrapper
+   * @example
+   * const table = bw.makeDataTable({
+   *   title: "Users",
+   *   data: [{ name: "Alice", role: "Admin" }],
+   *   responsive: true
+   * });
    */
   bw.makeDataTable = function (config) {
     var title = config.title,

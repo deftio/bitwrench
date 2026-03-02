@@ -3,111 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench v2 - Interactive Tables & Forms</title>
+  <title>Bitwrench - Tables & Forms</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      font-size: 14px;
-    }
-    .header {
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 0.5rem 0;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .demo-section {
-      background: white;
-      padding: 1rem;
-      margin: 0.75rem auto;
-      max-width: 1200px;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      margin: 0.5rem 0;
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-    h2 {
-      color: #34495e;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 0.25rem;
-      margin: 0 0 0.75rem 0;
-      font-size: 1.1rem;
-    }
-    .version-info {
-      text-align: center;
-      color: #7f8c8d;
-      font-size: 0.75rem;
-      margin: 0.25rem 0;
-    }
-    pre code {
-      background: #f8f8f8;
-      border: 1px solid #e0e0e0;
-      display: block;
-      padding: 0.75rem;
-      border-radius: 4px;
-      overflow-x: auto;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-    /* Tab content should have proper spacing */
-    .tab-pane {
-      padding-top: 0.75rem;
-    }
+    /* Page-specific overrides (shared-theme.css handles the rest) */
     .controls {
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
       align-items: center;
+      padding: 1rem 1.25rem;
+      background: var(--bw-teal-bg);
+      border-radius: var(--bw-radius) var(--bw-radius) 0 0;
+      border-bottom: 1px solid var(--bw-card-border);
+    }
+    .table-card {
+      background: var(--bw-card-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      box-shadow: var(--bw-card-shadow);
+      overflow: hidden;
+    }
+    .table-card .bw-table { margin-bottom: 0; }
+    .table-card .bw-table > thead > tr > * {
+      background: var(--bw-teal-dark);
+      color: #fff;
+      border-bottom-color: var(--bw-teal);
+      font-weight: 600;
     }
     .table-info {
-      margin-top: 0.5rem;
-      padding: 0.5rem;
-      background: #f8f9fa;
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-    /* Compact form styles */
-    .bw-form-group {
-      margin-bottom: 0.75rem;
-    }
-    .bw-form-label {
-      margin-bottom: 0.25rem;
-      font-size: 0.875rem;
-    }
-    .bw-btn {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-    }
-    .bw-form-control {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-    }
-    /* Compact table */
-    .bw-table td,
-    .bw-table th {
-      padding: 0.5rem;
-      font-size: 0.875rem;
-    }
-    /* Compact nav */
-    .bw-nav-tabs .bw-nav-link {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-    }
-    /* Reduce container padding */
-    .bw-container {
-      padding: 0 1rem;
+      padding: 0.75rem 1.25rem;
+      background: var(--bw-teal-bg);
+      border-top: 1px solid var(--bw-card-border);
+      font-size: 0.8125rem;
+      color: var(--bw-text-secondary);
     }
   </style>
 </head>
@@ -115,14 +49,14 @@
   <!-- Shared Navigation -->
   <div id="example-nav"></div>
   
-  <div class="header">
-    <div class="bw-container">
-      <h1>Bitwrench v2 - Interactive Tables & Forms</h1>
-      <div class="version-info">Version: <span id="version"></span></div>
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Tables & Forms</h1>
+      <p class="subtitle">Interactive data tables, sortable columns, forms with validation, and pagination.</p>
     </div>
   </div>
 
-  <div class="bw-container">
+  <div class="content-container wide">
     <!-- Interactive Table Demo -->
     <div class="demo-section">
       <h2>Interactive Sortable Table</h2>
@@ -173,16 +107,18 @@
                 {
                   t: 'button',
                   a: {
-                    style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;',
+                    style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.6875rem; background: rgba(255,255,255,0.12); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-family: inherit; z-index: 2;',
                     onclick: (e) => {
                       navigator.clipboard.writeText(codeContent).then(() => {
                         const btn = e.target;
                         const originalText = btn.textContent;
                         btn.textContent = 'Copied!';
-                        btn.style.background = '#28a745';
+                        btn.style.background = '#006666';
+                        btn.style.color = '#fff';
                         setTimeout(() => {
                           btn.textContent = originalText;
-                          btn.style.background = '#007bff';
+                          btn.style.background = 'rgba(255,255,255,0.12)';
+                          btn.style.color = '#aaa';
                         }, 2000);
                       });
                     }
@@ -203,7 +139,7 @@
       });
     }
 
-    // 1. Interactive Table Demo - Using Pure Bitwrench v2 Approach
+    // 1. Interactive Table Demo - Using Pure bitwrench Approach
     // Complete data that can be copy-pasted
     const employees = [
       { id: 1, name: 'John Smith', position: 'Software Engineer', department: 'Engineering', salary: 95000, startDate: '2021-03-15' },
@@ -217,7 +153,7 @@
     ];
 
 
-    // Create a reactive table component using Bitwrench v2 patterns
+    // Create a reactive table component using bitwrench patterns
     function createTableComponent() {
       const state = {
         employees: [...employees],
@@ -335,13 +271,14 @@
 
       const tableDemo = {
         t: 'div',
+        a: { class: 'table-card' },
         c: [
           {
             t: 'div',
             a: { class: 'controls' },
             c: [
-              bw.makeButton({ 
-                text: 'Add Employee', 
+              bw.makeButton({
+                text: 'Add Employee',
                 variant: 'primary',
                 onclick: () => {
                   const newEmployee = {
@@ -357,9 +294,9 @@
                   updateView();
                 }
               }),
-              bw.makeButton({ 
-                text: `Remove Selected (${state.selectedRows.size})`, 
-                variant: 'danger',
+              bw.makeButton({
+                text: `Remove Selected (${state.selectedRows.size})`,
+                variant: 'secondary',
                 disabled: state.selectedRows.size === 0,
                 onclick: () => {
                   state.employees = state.employees.filter(e => !state.selectedRows.has(e.id));
@@ -368,8 +305,8 @@
                   updateView();
                 }
               }),
-              bw.makeButton({ 
-                text: isAllSelected() ? 'Deselect All' : 'Select All', 
+              bw.makeButton({
+                text: isAllSelected() ? 'Deselect All' : 'Select All',
                 variant: 'secondary',
                 onclick: () => {
                   if (isAllSelected()) {
@@ -380,18 +317,11 @@
                   updateView();
                 }
               }),
-              bw.makeButton({ 
-                text: 'Export Data', 
-                variant: 'success',
+              bw.makeButton({
+                text: 'Export Data',
+                variant: 'secondary',
                 onclick: () => {
-                  const data = JSON.stringify(state.filteredEmployees, null, 2);
-                  const blob = new Blob([data], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'employees.json';
-                  a.click();
-                  URL.revokeObjectURL(url);
+                  bw.saveClientJSON('employees.json', state.filteredEmployees);
                 }
               }),
               bw.makeInput({
@@ -427,7 +357,7 @@
 
     const tableDemo = createTableComponent();
 
-    const tableCode = `// Interactive Table - Pure Bitwrench v2 Approach
+    const tableCode = `// Interactive Table - Pure bitwrench Approach
 // Complete, copy-pasteable code
 
 // Full employee data
@@ -439,7 +369,7 @@ const employees = [
   { id: 5, name: 'Alex Rivera', position: 'Marketing Manager', department: 'Marketing', salary: 90000, startDate: '2020-11-30' }
 ];
 
-// Bitwrench v2 Approach - Reactive Component Pattern
+// bitwrench Approach - Reactive Component Pattern
 function createTableComponent() {
   // Component state
   const state = {
@@ -552,9 +482,9 @@ function createTableComponent() {
               updateView();
             }
           }),
-          bw.makeButton({ 
-            text: 'Remove Selected', 
-            variant: 'danger',
+          bw.makeButton({
+            text: 'Remove Selected',
+            variant: 'secondary',
             onclick: () => {
               state.employees = state.employees.filter(e => !state.selectedRows.has(e.id));
               state.selectedRows.clear();
@@ -562,9 +492,9 @@ function createTableComponent() {
               updateView();
             }
           }),
-          bw.makeButton({ 
-            text: 'Export JSON', 
-            variant: 'success',
+          bw.makeButton({
+            text: 'Export JSON',
+            variant: 'secondary',
             onclick: () => {
               const data = JSON.stringify(state.filteredEmployees, null, 2);
               const blob = new Blob([data], { type: 'application/json' });
@@ -704,7 +634,7 @@ bw.DOM('#table-container', tableComponent);`;
       ]
     };
 
-    const formCode = `// Form Components Demo with Bitwrench v2
+    const formCode = `// Form Components Demo with bitwrench
 const formDemo = {
   t: 'div',
   c: [
@@ -1093,7 +1023,7 @@ bw.makeTabs({
     // Initialize pagination
     setTimeout(() => renderPaginatedTable(), 0);
 
-    const paginationCode = `// Table with Pagination using Bitwrench v2
+    const paginationCode = `// Table with Pagination using bitwrench
 // Generate sample data
 const moreEmployees = [];
 for (let i = 1; i <= 50; i++) {

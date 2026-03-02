@@ -3,733 +3,852 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench v2 - Tic Tac Toe Tutorial</title>
+  <title>Bitwrench - Tic Tac Toe Tutorial</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      font-size: 14px;
-    }
-    .header {
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 0.5rem 0;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .demo-section {
-      background: white;
-      padding: 1.5rem;
-      margin: 1rem auto;
-      max-width: 1200px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    h1 {
+    /* Tutorial header */
+    .tutorial-header {
+      background: var(--bw-teal, #006666);
+      color: white;
+      padding: 2.5rem 1.5rem 2rem;
       text-align: center;
-      color: #2c3e50;
-      margin: 0.5rem 0;
-      font-size: 1.75rem;
-      font-weight: 600;
     }
-    h2 {
-      color: #2c3e50;
-      border-bottom: 2px solid #3498db;
-      padding-bottom: 0.5rem;
-      margin: 0 0 1rem 0;
-      font-size: 1.25rem;
+    .tutorial-header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
-    h3 {
-      color: #34495e;
-      margin: 1.5rem 0 0.75rem 0;
-      font-size: 1.1rem;
-    }
-    .version-info {
-      text-align: center;
-      color: #7f8c8d;
-      font-size: 0.875rem;
-      margin: 0.25rem 0;
-    }
-    pre code {
-      background: #2c3e50;
-      color: #ecf0f1;
-      border: 1px solid #34495e;
-      display: block;
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      font-size: 13px;
-      line-height: 1.5;
-      font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-    }
-    .bw-container {
-      padding: 0 1rem;
-      max-width: 1200px;
+    .tutorial-header p {
       margin: 0 auto;
+      opacity: 0.85;
+      font-size: 1.05rem;
+      max-width: 600px;
     }
-    /* Tic Tac Toe specific styles */
-    .game-container {
+
+    /* Main content container */
+    .tutorial-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* Step sections */
+    .step {
+      background: var(--bw-card-bg, #fff);
+      border-radius: var(--bw-radius, 8px);
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+    .step-header {
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 3rem;
-      flex-wrap: wrap;
-      margin: 2rem 0;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--bw-card-border, #e0e0e0);
+      background: #fafafa;
     }
-    .game-board {
-      display: grid;
-      grid-template-columns: repeat(3, 120px);
-      grid-gap: 8px;
-      background: #2c3e50;
-      padding: 8px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .square {
-      background: white;
-      border: none;
-      cursor: pointer;
-      font-size: 36px;
-      font-weight: bold;
-      height: 120px;
-      width: 120px;
+    .step-num {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
-      border-radius: 4px;
-      color: #2c3e50;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bw-teal, #006666);
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .step-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--bw-text-primary, #1a1a1a);
+    }
+    .step-body {
+      padding: 1.5rem;
+    }
+    .step-body > p {
+      margin: 0 0 1rem;
+      color: var(--bw-text-secondary, #555);
+      font-size: 0.95rem;
+    }
+
+    /* Concept callout boxes */
+    .callout {
+      padding: 1rem 1.25rem;
+      border-radius: var(--bw-radius, 8px);
+      margin: 1rem 0 1.25rem;
+      font-size: 0.9rem;
+    }
+    .callout h4 {
+      margin: 0 0 0.5rem;
+      font-size: 0.95rem;
+    }
+    .callout p { margin: 0.25rem 0; }
+    .callout ul, .callout ol {
+      margin: 0.5rem 0 0;
+      padding-left: 1.25rem;
+    }
+    .callout li { margin: 0.3rem 0; }
+
+    .callout-concept {
+      background: var(--bw-teal-light, #e0f2f1);
+      border-left: 4px solid var(--bw-teal, #006666);
+    }
+    .callout-concept h4 { color: var(--bw-teal-dark, #004d4d); }
+
+    .callout-tip {
+      background: #fff8e1;
+      border-left: 4px solid #f9a825;
+    }
+    .callout-tip h4 { color: #e65100; }
+
+    .callout-challenge {
+      background: #f3e5f5;
+      border-left: 4px solid #7b1fa2;
+    }
+    .callout-challenge h4 { color: #6a1b9a; }
+
+    /* Result/Code tab area */
+    .demo-tabs {
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+      border-radius: var(--bw-radius, 8px);
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    .demo-tab-bar {
+      display: flex;
+      background: #f0f0f0;
+      border-bottom: 1px solid var(--bw-card-border, #e0e0e0);
+    }
+    .demo-tab-btn {
+      padding: 0.6rem 1.25rem;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--bw-text-secondary, #555);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .demo-tab-btn:hover {
+      color: var(--bw-text-primary, #1a1a1a);
+      background: #e8e8e8;
+    }
+    .demo-tab-btn.active {
+      color: var(--bw-teal, #006666);
+      border-bottom-color: var(--bw-teal, #006666);
+      background: white;
+    }
+    .demo-tab-panel {
+      display: none;
+      padding: 1.5rem;
+    }
+    .demo-tab-panel.active {
+      display: block;
+    }
+    .demo-tab-panel.code-panel {
+      padding: 0;
       position: relative;
     }
-    .square:hover:not(:disabled) {
-      background: #ecf0f1;
-      transform: scale(0.98);
-    }
-    .square:disabled {
-      cursor: not-allowed;
-    }
-    .square.winning {
-      background: #a8e6cf;
-      animation: pulse 0.5s ease-in-out;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-    .game-info {
-      min-width: 250px;
-    }
-    .status {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-      color: #2c3e50;
-      text-align: center;
-      padding: 1rem;
-      background: #ecf0f1;
-      border-radius: 8px;
-    }
-    .status.winner {
-      background: #d4efdf;
-      color: #27ae60;
-    }
-    .status.draw {
-      background: #fadbd8;
-      color: #e74c3c;
-    }
-    .history-container {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 8px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    .history-move {
-      margin: 0.5rem 0;
-    }
-    .tip-box {
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      border-left: 4px solid #2196f3;
+    .demo-tab-panel.code-panel pre {
+      margin: 0;
       padding: 1.25rem;
-      margin: 1.5rem 0;
+      background: var(--bw-code-bg, #1e293b);
+      color: var(--bw-code-text, #e2e8f0);
+      overflow-x: auto;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.7rem;
+      background: rgba(255,255,255,0.15);
+      color: #ccc;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 2;
+      font-family: inherit;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Tic Tac Toe game styles */
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      gap: 4px;
+      background: var(--bw-teal-dark, #004d4d);
+      padding: 4px;
       border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+      margin: 0 auto;
+      width: fit-content;
     }
-    .tip-box h4 {
-      margin: 0 0 0.75rem 0;
-      color: #1565c0;
-      font-size: 1.1rem;
-    }
-    .tip-box ul {
-      margin: 0;
-      padding-left: 1.5rem;
-    }
-    .tip-box li {
-      margin: 0.5rem 0;
-      color: #424242;
-    }
-    /* Code demo styling */
-    .code-demo {
-      margin: 2rem 0;
-    }
-    .code-demo h3 {
-      margin-bottom: 0.5rem;
-    }
-    .code-demo .bw-tab-content {
-      border: 1px solid #dee2e6;
-      border-top: none;
-      border-radius: 0 0 6px 6px;
-      padding: 1rem;
+    .square {
+      width: 90px;
+      height: 90px;
       background: white;
-    }
-    /* Introduction styling */
-    .intro-text {
-      font-size: 1.1rem;
-      line-height: 1.8;
-      color: #424242;
-      margin: 1rem 0;
-    }
-    .intro-list {
-      background: #f8f9fa;
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin: 1.5rem 0;
-    }
-    .intro-list ul {
-      margin: 0;
-      padding-left: 1.5rem;
-    }
-    .intro-list li {
-      margin: 0.75rem 0;
-      color: #2c3e50;
-    }
-    /* Step numbering */
-    .step-number {
-      display: inline-flex;
+      border: none;
+      cursor: pointer;
+      font-size: 2rem;
+      font-weight: 700;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
-      background: #3498db;
-      color: white;
-      border-radius: 50%;
-      font-weight: bold;
-      margin-right: 0.5rem;
+      transition: background 0.15s;
+      border-radius: 3px;
+      color: var(--bw-text-primary, #1a1a1a);
+      font-family: inherit;
     }
-    /* New game button */
+    .square:hover:not(:disabled) { background: #f0f0f0; }
+    .square:disabled { cursor: default; }
+    .square.winning { background: #b2dfdb; }
+    .x-mark { color: var(--bw-teal, #006666); }
+    .o-mark { color: #c62828; }
+
+    .status-bar {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: var(--bw-radius, 8px);
+      margin-bottom: 1rem;
+      background: #f5f5f5;
+      color: var(--bw-text-primary, #1a1a1a);
+    }
+    .status-bar.winner {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-bar.draw {
+      background: #fce4ec;
+      color: #c62828;
+    }
+
     .new-game-btn {
-      background: #27ae60;
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.5rem 1.25rem;
+      background: var(--bw-teal, #006666);
       color: white;
       border: none;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      font-weight: bold;
       border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
-      margin: 1rem auto;
-      display: block;
+      font-family: inherit;
+      transition: background 0.15s;
     }
-    .new-game-btn:hover {
-      background: #229954;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+    .new-game-btn:hover { background: var(--bw-teal-dark, #004d4d); }
+
+    /* Game layout for steps 4-5 */
+    .game-layout {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
     }
-    /* Game controls */
-    .game-controls {
+    .game-sidebar {
+      min-width: 200px;
+      max-width: 260px;
+    }
+    .game-sidebar h4 {
+      margin: 0 0 0.5rem;
+      font-size: 0.9rem;
+      color: var(--bw-text-secondary, #555);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .history-list {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      margin-top: 1.5rem;
+      gap: 0.25rem;
+      max-height: 280px;
+      overflow-y: auto;
     }
-    .control-group {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 6px;
-    }
-    .control-group label {
-      display: flex;
-      align-items: center;
+    .history-btn {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+      border-radius: 4px;
+      background: white;
+      font-size: 0.8rem;
       cursor: pointer;
-      font-weight: 500;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.15s;
     }
-    .control-group input[type="checkbox"] {
-      margin-right: 0.5rem;
+    .history-btn:hover { background: #f5f5f5; border-color: var(--bw-teal, #006666); }
+    .history-btn.current {
+      background: var(--bw-teal, #006666);
+      color: white;
+      border-color: var(--bw-teal, #006666);
     }
-    /* Summary section */
-    .summary-box {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      padding: 2rem;
-      border-radius: 8px;
-      margin-top: 2rem;
-    }
-    .summary-box h4 {
-      color: #2c3e50;
+    .game-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
       margin-bottom: 1rem;
     }
-    .summary-box ul {
-      margin: 0;
-      padding-left: 1.5rem;
+    .game-options label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      cursor: pointer;
     }
-    .summary-box li {
-      margin: 0.75rem 0;
-      color: #34495e;
+    .sort-btn {
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+      border-radius: 4px;
+      background: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
     }
-    /* X and O styling */
-    .square .x {
-      color: #3498db;
+    .sort-btn:hover { background: #f5f5f5; }
+
+    /* Congratulations */
+    .congrats {
+      background: linear-gradient(135deg, var(--bw-teal-light, #e0f2f1) 0%, #b2dfdb 100%);
+      border: 1px solid #80cbc4;
+      border-radius: var(--bw-radius, 8px);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
     }
-    .square .o {
-      color: #e74c3c;
+    .congrats h2 { color: var(--bw-teal-dark, #004d4d); margin: 0 0 0.75rem; }
+    .congrats p { color: var(--bw-text-secondary, #555); margin: 0.5rem 0; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .tutorial-header h1 { font-size: 1.5rem; }
+      .step-body { padding: 1rem; }
+      .game-board {
+        grid-template-columns: repeat(3, 70px);
+      }
+      .square { width: 70px; height: 70px; font-size: 1.5rem; }
+      .game-layout { flex-direction: column; align-items: center; }
+      .game-sidebar { max-width: 100%; min-width: auto; width: 100%; }
+      .demo-tab-panel { padding: 1rem; }
     }
   </style>
 </head>
 <body>
-  <!-- Shared Navigation -->
   <div id="example-nav"></div>
-  
-  <div class="header">
-    <div class="bw-container">
-      <h1>Building Tic Tac Toe with Bitwrench</h1>
-      <div class="version-info">A step-by-step tutorial for creating interactive applications</div>
-    </div>
+
+  <div class="tutorial-header">
+    <h1>Build Tic Tac Toe with Bitwrench</h1>
+    <p>Learn bitwrench step by step by building a complete game. Each step adds a new concept.</p>
   </div>
 
-  <div class="bw-container">
-    <!-- Introduction -->
-    <div class="demo-section">
-      <h2><span class="step-number">🎮</span> Introduction</h2>
-      <p class="intro-text">
-        Welcome to the Bitwrench Tic Tac Toe tutorial! In this hands-on guide, we'll build a fully interactive 
-        game from scratch using Bitwrench v2. This tutorial is perfect for understanding how Bitwrench's reactive 
-        patterns work in practice.
-      </p>
-      <div class="intro-list">
-        <h4>What You'll Learn:</h4>
-        <ul>
-          <li>📦 <strong>TACO Objects</strong> - How to structure UI with Tag-Attributes-Content-Options</li>
-          <li>🔄 <strong>State Management</strong> - Managing data without frameworks</li>
-          <li>⚡ <strong>Event Handling</strong> - Responding to user interactions</li>
-          <li>🎨 <strong>Reactive Updates</strong> - Re-rendering UI when state changes</li>
-          <li>🧩 <strong>Component Composition</strong> - Building complex UI from simple parts</li>
-          <li>⏰ <strong>Time Travel</strong> - Implementing undo/redo functionality</li>
-        </ul>
+  <div class="tutorial-content">
+    <!-- Step 0: What You'll Learn -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num" style="background: #555;">?</div>
+        <h2>What You'll Learn</h2>
       </div>
-      <div class="tip-box">
-        <h4>💡 Before You Start</h4>
-        <p>This tutorial assumes basic JavaScript knowledge. No React, Vue, or other framework experience needed!</p>
+      <div class="step-body">
+        <p>This tutorial builds a tic tac toe game in 5 steps. Each step introduces a new bitwrench concept. By the end you'll understand:</p>
+        <div class="callout callout-concept">
+          <h4>TACO Format</h4>
+          <p>Bitwrench describes HTML using plain JavaScript objects called <strong>TACOs</strong>:</p>
+          <pre style="background: var(--bw-code-bg, #1e293b); color: var(--bw-code-text, #e2e8f0); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0 0; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto;"><code>{ t: 'div', a: { class: 'card' }, c: 'Hello' }
+//  Tag       Attributes            Content</code></pre>
+        </div>
+        <div class="callout callout-concept">
+          <h4>The Render Pattern</h4>
+          <ol>
+            <li><strong>State</strong> - plain JS object holding your data</li>
+            <li><strong>Render</strong> - function that builds TACOs from state</li>
+            <li><strong>Event</strong> - handler that mutates state, then calls render</li>
+            <li><strong>Mount</strong> - <code>bw.DOM(selector, taco)</code> puts it on the page</li>
+          </ol>
+          <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--bw-text-secondary, #555);">No virtual DOM, no JSX, no build step. Just JavaScript.</p>
+        </div>
       </div>
     </div>
 
-    <!-- Step 1: Basic Game Board -->
-    <div class="demo-section">
-      <h2><span class="step-number">1</span> Creating the Game Board</h2>
-      <p>Let's start by creating a simple 3x3 grid for our Tic Tac Toe board. We'll use TACO objects to define our UI structure.</p>
-      <div id="step1-demo"></div>
-    </div>
-
-    <!-- Step 2: Adding State -->
-    <div class="demo-section">
-      <h2><span class="step-number">2</span> Adding Game State</h2>
-      <p>Now we'll add state management to track which squares have been clicked and whose turn it is. Notice how we use plain JavaScript objects for state!</p>
-      <div id="step2-demo"></div>
-    </div>
-
-    <!-- Step 3: Determining Winner -->
-    <div class="demo-section">
-      <h2><span class="step-number">3</span> Determining the Winner</h2>
-      <p>Let's add logic to check for a winner after each move. We'll also highlight the winning combination and add a "New Game" button.</p>
-      <div id="step3-demo"></div>
-    </div>
-
-    <!-- Step 4: Move History -->
-    <div class="demo-section">
-      <h2><span class="step-number">4</span> Adding Move History</h2>
-      <p>Now for the fun part - we'll add the ability to track move history and jump to previous states. This demonstrates the power of immutable state updates.</p>
-      <div id="step4-demo"></div>
-    </div>
-
-    <!-- Step 5: Final Game -->
-    <div class="demo-section">
-      <h2><span class="step-number">5</span> The Complete Game</h2>
-      <p>Here's our complete Tic Tac Toe game with all features integrated, including coordinate display, move sorting, and winning line highlighting!</p>
-      <div id="final-demo"></div>
-    </div>
-
-    <!-- Congratulations Section -->
-    <div id="congratulations-section"></div>
+    <!-- Step 1 -->
+    <div class="step" id="step-1"></div>
+    <!-- Step 2 -->
+    <div class="step" id="step-2"></div>
+    <!-- Step 3 -->
+    <div class="step" id="step-3"></div>
+    <!-- Step 4 -->
+    <div class="step" id="step-4"></div>
+    <!-- Step 5 -->
+    <div class="step" id="step-5"></div>
+    <!-- Congrats -->
+    <div id="congrats-section"></div>
   </div>
 
   <script>
-    // Mount the shared navigation
     mountExampleNav('#example-nav', '06-tic-tac-toe-tutorial.html');
-    
-    // Helper function to create code demos
-    function createCodeDemo(props) {
-      return bw.makeCodeDemo(props);
-    }
 
-    // Step 1: Basic Game Board
-    function createBasicBoard() {
-      const squares = Array(9).fill(null);
-      
+    // ---- Utility: create a tabbed Result/Code demo ----
+    function stepTabs(containerId, resultTaco, codeStr) {
+      const id = containerId.replace('#','');
+      const tabBarId = id + '-tabbar';
+      const resultId = id + '-result';
+      const codeId = id + '-code';
+
       return {
-        t: 'div',
+        t: 'div', a: { class: 'demo-tabs' },
         c: [
           {
-            t: 'div',
-            a: { class: 'game-board' },
-            c: squares.map((_, i) => ({
-              t: 'button',
-              a: { 
-                class: 'square',
-                onclick: () => alert(`Square ${i} clicked!`)
+            t: 'div', a: { class: 'demo-tab-bar' },
+            c: [
+              {
+                t: 'button',
+                a: {
+                  class: 'demo-tab-btn active',
+                  onclick: function(e) { switchTab(e, resultId, codeId); }
+                },
+                c: 'Result'
               },
-              c: ''
-            }))
+              {
+                t: 'button',
+                a: {
+                  class: 'demo-tab-btn',
+                  onclick: function(e) { switchTab(e, codeId, resultId); }
+                },
+                c: 'Code'
+              }
+            ]
           },
           {
-            t: 'div',
-            a: { class: 'tip-box' },
+            t: 'div', a: { id: resultId, class: 'demo-tab-panel active' },
+            c: resultTaco
+          },
+          {
+            t: 'div', a: { id: codeId, class: 'demo-tab-panel code-panel' },
             c: [
-              { t: 'h4', c: '🔑 Key Concepts:' },
-              { 
-                t: 'ul',
-                c: [
-                  { t: 'li', c: 'TACO objects define UI structure with simple JavaScript' },
-                  { t: 'li', c: 'Array.map() generates repeated elements dynamically' },
-                  { t: 'li', c: 'Event handlers are just functions in the attributes' },
-                  { t: 'li', c: 'No JSX, no templates - just objects!' }
-                ]
-              }
+              {
+                t: 'button',
+                a: {
+                  class: 'copy-btn',
+                  onclick: function(e) {
+                    navigator.clipboard.writeText(codeStr).then(function() {
+                      e.target.textContent = 'Copied!';
+                      setTimeout(function() { e.target.textContent = 'Copy'; }, 1500);
+                    });
+                  }
+                },
+                c: 'Copy'
+              },
+              { t: 'pre', c: { t: 'code', c: codeStr } }
             ]
           }
         ]
       };
     }
 
-    const step1Code = `// Create a basic 3x3 grid using TACO objects
-function createBasicBoard() {
-  const squares = Array(9).fill(null);
-  
-  return {
-    t: 'div',
-    c: [
-      {
-        t: 'div',
-        a: { class: 'game-board' },
-        c: squares.map((_, i) => ({
-          t: 'button',
-          a: { 
-            class: 'square',
-            onclick: () => alert(\`Square \${i} clicked!\`)
-          },
-          c: ''  // Empty content for now
-        }))
+    function switchTab(e, showId, hideId) {
+      var bar = e.target.parentElement;
+      var btns = bar.querySelectorAll('.demo-tab-btn');
+      btns.forEach(function(b) { b.classList.remove('active'); });
+      e.target.classList.add('active');
+      document.getElementById(showId).classList.add('active');
+      document.getElementById(hideId).classList.remove('active');
+    }
+
+    // ================================================================
+    // STEP 1: Draw the Board
+    // ================================================================
+    (function() {
+      function renderBoard() {
+        var squares = Array(9).fill(null);
+        return {
+          t: 'div',
+          c: {
+            t: 'div', a: { class: 'game-board' },
+            c: squares.map(function(_, i) {
+              return {
+                t: 'button',
+                a: {
+                  class: 'square',
+                  onclick: function() { alert('You clicked square ' + i); }
+                },
+                c: ''
+              };
+            })
+          }
+        };
       }
-    ]
-  };
-}
 
-// Mount the board using Bitwrench
-bw.DOM('#game-container', createBasicBoard());`;
+      var code = [
+        '// Step 1: Draw the board',
+        '// Each square is a TACO: { t: "button", a: { ... }, c: "" }',
+        '',
+        'var squares = Array(9).fill(null);',
+        '',
+        'var board = {',
+        '  t: "div", a: { class: "game-board" },',
+        '  c: squares.map(function(_, i) {',
+        '    return {',
+        '      t: "button",',
+        '      a: {',
+        '        class: "square",',
+        '        onclick: function() { alert("Clicked square " + i); }',
+        '      },',
+        '      c: ""',
+        '    };',
+        '  })',
+        '};',
+        '',
+        '// Mount it to the page',
+        'bw.DOM("#my-game", board);'
+      ].join('\n');
 
-    bw.DOM('#step1-demo', createCodeDemo({
-      title: 'Basic Game Board',
-      description: 'Click any square to see the click handler in action',
-      result: createBasicBoard(),
-      code: step1Code
-    }));
+      bw.DOM('#step-1', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'step-header' },
+            c: [
+              { t: 'div', a: { class: 'step-num' }, c: '1' },
+              { t: 'h2', c: 'Draw the Board' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'step-body' },
+            c: [
+              { t: 'p', c: 'We start by creating 9 squares with Array.map(). Each square is a TACO button object. Click a square to see the click handler fire.' },
+              {
+                t: 'div', a: { class: 'callout callout-tip' },
+                c: [
+                  { t: 'h4', c: 'Key idea' },
+                  { t: 'p', c: 'Array.map() is the workhorse of bitwrench. Map your data to TACO objects and bitwrench renders them. No templates needed.' }
+                ]
+              },
+              stepTabs('#step1', renderBoard(), code)
+            ]
+          }
+        ]
+      });
+    })();
 
-    // Step 2: Adding State
-    function createStatefulGame() {
-      const state = {
-        squares: Array(9).fill(null),
-        xIsNext: true
-      };
+    // ================================================================
+    // STEP 2: Add State and Turns
+    // ================================================================
+    (function() {
+      var state = { squares: Array(9).fill(null), xIsNext: true };
 
       function handleClick(i) {
         if (state.squares[i]) return;
-        
         state.squares[i] = state.xIsNext ? 'X' : 'O';
         state.xIsNext = !state.xIsNext;
         render();
       }
 
       function render() {
-        const board = {
+        var taco = {
           t: 'div',
           c: [
             {
-              t: 'div',
-              a: { class: 'game-info' },
-              c: {
-                t: 'div',
-                a: { class: 'status' },
-                c: `Next player: ${state.xIsNext ? 'X' : 'O'}`
-              }
+              t: 'div', a: { class: 'status-bar' },
+              c: 'Next: ' + (state.xIsNext ? 'X' : 'O')
             },
             {
-              t: 'div',
-              a: { class: 'game-board' },
-              c: state.squares.map((square, i) => ({
-                t: 'button',
-                a: { 
-                  class: 'square',
-                  onclick: () => handleClick(i),
-                  disabled: square !== null
-                },
-                c: square ? {
-                  t: 'span',
-                  a: { class: square.toLowerCase() },
-                  c: square
-                } : ''
-              }))
-            }
-          ]
-        };
-        
-        bw.DOM('#step2-game', board);
-      }
-
-      // Initial render
-      setTimeout(render, 0);
-      
-      return { t: 'div', a: { id: 'step2-game' } };
-    }
-
-    const step2Code = `// Game with state management
-function createStatefulGame() {
-  // State is just a plain JavaScript object
-  const state = {
-    squares: Array(9).fill(null),
-    xIsNext: true
-  };
-
-  function handleClick(i) {
-    if (state.squares[i]) return;  // Square already filled
-    
-    // Update state
-    state.squares[i] = state.xIsNext ? 'X' : 'O';
-    state.xIsNext = !state.xIsNext;
-    
-    // Re-render the UI
-    render();
-  }
-
-  function render() {
-    const board = {
-      t: 'div',
-      c: [
-        // Status display
-        {
-          t: 'div',
-          a: { class: 'game-info' },
-          c: {
-            t: 'div',
-            a: { class: 'status' },
-            c: \`Next player: \${state.xIsNext ? 'X' : 'O'}\`
-          }
-        },
-        // Game board
-        {
-          t: 'div',
-          a: { class: 'game-board' },
-          c: state.squares.map((square, i) => ({
-            t: 'button',
-            a: { 
-              class: 'square',
-              onclick: () => handleClick(i),
-              disabled: square !== null
+              t: 'div', a: { class: 'game-board' },
+              c: state.squares.map(function(sq, i) {
+                return {
+                  t: 'button',
+                  a: {
+                    class: 'square',
+                    disabled: sq !== null,
+                    onclick: function() { handleClick(i); }
+                  },
+                  c: sq ? { t: 'span', a: { class: sq === 'X' ? 'x-mark' : 'o-mark' }, c: sq } : ''
+                };
+              })
             },
-            c: square || ''
-          }))
-        }
-      ]
-    };
-    
-    // Mount the updated UI
-    bw.DOM('#game-container', board);
-  }
-
-  // Initial render
-  render();
-}`;
-
-    bw.DOM('#step2-demo', createCodeDemo({
-      title: 'Game with State',
-      description: 'Click squares to place X and O alternately',
-      result: createStatefulGame(),
-      code: step2Code
-    }));
-
-    // Step 3: Winner Detection
-    function createGameWithWinner() {
-      const state = {
-        squares: Array(9).fill(null),
-        xIsNext: true
-      };
-
-      function calculateWinner(squares) {
-        const lines = [
-          [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-          [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-          [0, 4, 8], [2, 4, 6] // Diagonals
-        ];
-        
-        for (let i = 0; i < lines.length; i++) {
-          const [a, b, c] = lines[i];
-          if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return { winner: squares[a], line: lines[i] };
-          }
-        }
-        return null;
-      }
-
-      function handleClick(i) {
-        if (calculateWinner(state.squares) || state.squares[i]) return;
-        
-        state.squares[i] = state.xIsNext ? 'X' : 'O';
-        state.xIsNext = !state.xIsNext;
-        render();
-      }
-
-      function render() {
-        const winInfo = calculateWinner(state.squares);
-        const winner = winInfo ? winInfo.winner : null;
-        const winningLine = winInfo ? winInfo.line : [];
-        const isDraw = !winner && state.squares.every(s => s !== null);
-        
-        let status;
-        if (winner) {
-          status = { t: 'div', a: { class: 'status winner' }, c: `🎉 Winner: ${winner}` };
-        } else if (isDraw) {
-          status = { t: 'div', a: { class: 'status draw' }, c: '🤝 Draw!' };
-        } else {
-          status = { t: 'div', a: { class: 'status' }, c: `Next player: ${state.xIsNext ? 'X' : 'O'}` };
-        }
-
-        const board = {
-          t: 'div',
-          c: [
-            { t: 'div', a: { class: 'game-info' }, c: status },
             {
-              t: 'div',
-              a: { class: 'game-board' },
-              c: state.squares.map((square, i) => ({
-                t: 'button',
-                a: { 
-                  class: `square ${winningLine.includes(i) ? 'winning' : ''}`,
-                  onclick: () => handleClick(i),
-                  disabled: square !== null || winner !== null
-                },
-                c: square ? {
-                  t: 'span',
-                  a: { class: square.toLowerCase() },
-                  c: square
-                } : ''
-              }))
-            },
-            (winner || isDraw) ? {
               t: 'button',
               a: {
                 class: 'new-game-btn',
-                onclick: () => {
+                onclick: function() {
                   state.squares = Array(9).fill(null);
                   state.xIsNext = true;
                   render();
                 }
               },
-              c: '🔄 New Game'
-            } : null
-          ].filter(Boolean)
+              c: 'Reset'
+            }
+          ]
         };
-        
-        bw.DOM('#step3-game', board);
+        bw.DOM('#step2-game', taco);
       }
 
-      setTimeout(render, 0);
-      return { t: 'div', a: { id: 'step3-game' } };
-    }
+      var code = [
+        '// Step 2: State + Turns',
+        '// State is just a plain object. When it changes, call render().',
+        '',
+        'var state = { squares: Array(9).fill(null), xIsNext: true };',
+        '',
+        'function handleClick(i) {',
+        '  if (state.squares[i]) return;           // ignore filled squares',
+        '  state.squares[i] = state.xIsNext ? "X" : "O";',
+        '  state.xIsNext = !state.xIsNext;',
+        '  render();                                // re-render after change',
+        '}',
+        '',
+        'function render() {',
+        '  var taco = {',
+        '    t: "div",',
+        '    c: [',
+        '      // Status bar',
+        '      { t: "div", a: { class: "status-bar" },',
+        '        c: "Next: " + (state.xIsNext ? "X" : "O") },',
+        '      // Board',
+        '      { t: "div", a: { class: "game-board" },',
+        '        c: state.squares.map(function(sq, i) {',
+        '          return {',
+        '            t: "button",',
+        '            a: {',
+        '              class: "square",',
+        '              disabled: sq !== null,',
+        '              onclick: function() { handleClick(i); }',
+        '            },',
+        '            c: sq || ""',
+        '          };',
+        '        })',
+        '      }',
+        '    ]',
+        '  };',
+        '  bw.DOM("#game", taco);',
+        '}',
+        '',
+        'render(); // initial render'
+      ].join('\n');
 
-    const step3Code = `// Add winner detection logic
-function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-    [0, 4, 8], [2, 4, 6] // Diagonals
-  ];
-  
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return { winner: squares[a], line: lines[i] };
-    }
-  }
-  return null;
-}
-
-// In render function:
-const winInfo = calculateWinner(state.squares);
-const winner = winInfo ? winInfo.winner : null;
-const winningLine = winInfo ? winInfo.line : [];
-
-// Highlight winning squares
-c: state.squares.map((square, i) => ({
-  t: 'button',
-  a: { 
-    class: \`square \${winningLine.includes(i) ? 'winning' : ''}\`,
-    // ... rest of attributes
-  }
-}))`;
-
-    bw.DOM('#step3-demo', createCodeDemo({
-      title: 'Winner Detection',
-      description: 'The game now detects wins, draws, and highlights the winning combination',
-      result: createGameWithWinner(),
-      code: step3Code
-    }));
-
-    // Step 4: Move History
-    function createGameWithHistory() {
-      const state = {
-        history: [{ squares: Array(9).fill(null) }],
-        stepNumber: 0,
-        xIsNext: true
-      };
-
-      function calculateWinner(squares) {
-        const lines = [
-          [0, 1, 2], [3, 4, 5], [6, 7, 8],
-          [0, 3, 6], [1, 4, 7], [2, 5, 8],
-          [0, 4, 8], [2, 4, 6]
-        ];
-        
-        for (let i = 0; i < lines.length; i++) {
-          const [a, b, c] = lines[i];
-          if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
+      // mount container, then render into it
+      bw.DOM('#step-2', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'step-header' },
+            c: [
+              { t: 'div', a: { class: 'step-num' }, c: '2' },
+              { t: 'h2', c: 'Add State and Turns' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'step-body' },
+            c: [
+              { t: 'p', c: 'Now we add a state object and a render function. When a player clicks, we update state and call render(). This is the entire bitwrench pattern.' },
+              {
+                t: 'div', a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', c: 'The pattern' },
+                  { t: 'p', c: [
+                    { t: 'strong', c: 'State' }, ' (plain object) ',
+                    { t: 'span', a: { style: 'color: var(--bw-teal, #006666);' }, c: ' \u2192 ' },
+                    { t: 'strong', c: 'Render' }, ' (build TACO) ',
+                    { t: 'span', a: { style: 'color: var(--bw-teal, #006666);' }, c: ' \u2192 ' },
+                    { t: 'strong', c: 'Mount' }, ' (bw.DOM)'
+                  ]}
+                ]
+              },
+              stepTabs('#step2', { t: 'div', a: { id: 'step2-game' } }, code)
+            ]
           }
+        ]
+      });
+      render();
+    })();
+
+    // ================================================================
+    // STEP 3: Detect the Winner
+    // ================================================================
+    (function() {
+      var state = { squares: Array(9).fill(null), xIsNext: true };
+
+      function calcWinner(sq) {
+        var lines = [
+          [0,1,2],[3,4,5],[6,7,8],
+          [0,3,6],[1,4,7],[2,5,8],
+          [0,4,8],[2,4,6]
+        ];
+        for (var i = 0; i < lines.length; i++) {
+          var a = lines[i][0], b = lines[i][1], c = lines[i][2];
+          if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])
+            return { winner: sq[a], line: lines[i] };
         }
         return null;
       }
 
       function handleClick(i) {
-        const history = state.history.slice(0, state.stepNumber + 1);
-        const current = history[history.length - 1];
-        const squares = current.squares.slice();
-        
-        if (calculateWinner(squares) || squares[i]) return;
-        
-        squares[i] = state.xIsNext ? 'X' : 'O';
-        state.history = history.concat([{ squares: squares }]);
-        state.stepNumber = history.length;
+        if (calcWinner(state.squares) || state.squares[i]) return;
+        state.squares[i] = state.xIsNext ? 'X' : 'O';
+        state.xIsNext = !state.xIsNext;
+        render();
+      }
+
+      function render() {
+        var info = calcWinner(state.squares);
+        var winner = info ? info.winner : null;
+        var winLine = info ? info.line : [];
+        var isDraw = !winner && state.squares.every(function(s) { return s !== null; });
+
+        var statusClass = 'status-bar';
+        var statusText = 'Next: ' + (state.xIsNext ? 'X' : 'O');
+        if (winner) { statusClass += ' winner'; statusText = 'Winner: ' + winner + '!'; }
+        if (isDraw) { statusClass += ' draw'; statusText = 'Draw!'; }
+
+        var taco = {
+          t: 'div',
+          c: [
+            { t: 'div', a: { class: statusClass }, c: statusText },
+            {
+              t: 'div', a: { class: 'game-board' },
+              c: state.squares.map(function(sq, i) {
+                return {
+                  t: 'button',
+                  a: {
+                    class: 'square' + (winLine.indexOf(i) >= 0 ? ' winning' : ''),
+                    disabled: sq !== null || winner !== null,
+                    onclick: function() { handleClick(i); }
+                  },
+                  c: sq ? { t: 'span', a: { class: sq === 'X' ? 'x-mark' : 'o-mark' }, c: sq } : ''
+                };
+              })
+            },
+            (winner || isDraw) ? {
+              t: 'button',
+              a: {
+                class: 'new-game-btn',
+                onclick: function() {
+                  state.squares = Array(9).fill(null);
+                  state.xIsNext = true;
+                  render();
+                }
+              },
+              c: 'New Game'
+            } : null
+          ].filter(Boolean)
+        };
+        bw.DOM('#step3-game', taco);
+      }
+
+      var code = [
+        '// Step 3: Winner detection',
+        '// Check all 8 possible winning lines after each move.',
+        '',
+        'function calcWinner(sq) {',
+        '  var lines = [',
+        '    [0,1,2], [3,4,5], [6,7,8],  // rows',
+        '    [0,3,6], [1,4,7], [2,5,8],  // columns',
+        '    [0,4,8], [2,4,6]            // diagonals',
+        '  ];',
+        '  for (var i = 0; i < lines.length; i++) {',
+        '    var a = lines[i][0], b = lines[i][1], c = lines[i][2];',
+        '    if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])',
+        '      return { winner: sq[a], line: lines[i] };',
+        '  }',
+        '  return null;',
+        '}',
+        '',
+        'function handleClick(i) {',
+        '  // Block clicks if game is over or square is filled',
+        '  if (calcWinner(state.squares) || state.squares[i]) return;',
+        '  state.squares[i] = state.xIsNext ? "X" : "O";',
+        '  state.xIsNext = !state.xIsNext;',
+        '  render();',
+        '}',
+        '',
+        'function render() {',
+        '  var info = calcWinner(state.squares);',
+        '  var winner = info ? info.winner : null;',
+        '  var winLine = info ? info.line : [];',
+        '',
+        '  // Highlight winning squares via CSS class',
+        '  c: state.squares.map(function(sq, i) {',
+        '    return {',
+        '      t: "button",',
+        '      a: {',
+        '        class: "square" + (winLine.indexOf(i) >= 0 ? " winning" : ""),',
+        '        disabled: sq !== null || winner !== null,',
+        '        onclick: function() { handleClick(i); }',
+        '      },',
+        '      c: sq || ""',
+        '    };',
+        '  })',
+        '}'
+      ].join('\n');
+
+      bw.DOM('#step-3', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'step-header' },
+            c: [
+              { t: 'div', a: { class: 'step-num' }, c: '3' },
+              { t: 'h2', c: 'Detect the Winner' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'step-body' },
+            c: [
+              { t: 'p', c: 'We add a calcWinner() function that checks all 8 winning lines. When someone wins, the winning squares highlight and a New Game button appears.' },
+              {
+                t: 'div', a: { class: 'callout callout-tip' },
+                c: [
+                  { t: 'h4', c: 'Conditional rendering' },
+                  { t: 'p', c: 'Use ternary expressions and .filter(Boolean) to conditionally include TACO objects. Return null for elements you don\'t want, then filter them out.' }
+                ]
+              },
+              stepTabs('#step3', { t: 'div', a: { id: 'step3-game' } }, code)
+            ]
+          }
+        ]
+      });
+      render();
+    })();
+
+    // ================================================================
+    // STEP 4: Move History (Time Travel)
+    // ================================================================
+    (function() {
+      var state = {
+        history: [{ squares: Array(9).fill(null) }],
+        stepNumber: 0,
+        xIsNext: true
+      };
+
+      function calcWinner(sq) {
+        var lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (var i = 0; i < lines.length; i++) {
+          var a = lines[i][0], b = lines[i][1], c = lines[i][2];
+          if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c]) return sq[a];
+        }
+        return null;
+      }
+
+      function handleClick(i) {
+        var hist = state.history.slice(0, state.stepNumber + 1);
+        var current = hist[hist.length - 1];
+        var sq = current.squares.slice();
+        if (calcWinner(sq) || sq[i]) return;
+        sq[i] = state.xIsNext ? 'X' : 'O';
+        state.history = hist.concat([{ squares: sq, lastMove: i }]);
+        state.stepNumber = hist.length;
         state.xIsNext = !state.xIsNext;
         render();
       }
@@ -741,477 +860,465 @@ c: state.squares.map((square, i) => ({
       }
 
       function render() {
-        const current = state.history[state.stepNumber];
-        const winner = calculateWinner(current.squares);
-        const isDraw = !winner && current.squares.every(s => s !== null);
-        
-        let status;
-        if (winner) {
-          status = { t: 'div', a: { class: 'status winner' }, c: `🎉 Winner: ${winner}` };
-        } else if (isDraw) {
-          status = { t: 'div', a: { class: 'status draw' }, c: '🤝 Draw!' };
-        } else {
-          status = { t: 'div', a: { class: 'status' }, c: `Next player: ${state.xIsNext ? 'X' : 'O'}` };
-        }
+        var current = state.history[state.stepNumber];
+        var winner = calcWinner(current.squares);
+        var isDraw = !winner && current.squares.every(function(s) { return s !== null; });
 
-        const moves = state.history.map((step, move) => {
-          const desc = move ? `Go to move #${move}` : 'Go to game start';
+        var statusClass = 'status-bar';
+        var statusText = 'Next: ' + (state.xIsNext ? 'X' : 'O');
+        if (winner) { statusClass += ' winner'; statusText = 'Winner: ' + winner + '!'; }
+        if (isDraw) { statusClass += ' draw'; statusText = 'Draw!'; }
+
+        var moves = state.history.map(function(step, move) {
+          var label = move === 0 ? 'Start' : 'Move ' + move;
+          if (move > 0 && step.lastMove !== undefined) {
+            var r = Math.floor(step.lastMove / 3) + 1;
+            var c = (step.lastMove % 3) + 1;
+            label += ' (' + r + ',' + c + ')';
+          }
           return {
-            t: 'div',
-            a: { class: 'history-move' },
-            c: bw.makeButton({
-              text: desc,
-              variant: move === state.stepNumber ? 'primary' : 'secondary',
-              size: 'sm',
-              onclick: () => jumpTo(move)
-            })
+            t: 'button',
+            a: {
+              class: 'history-btn' + (move === state.stepNumber ? ' current' : ''),
+              onclick: function() { jumpTo(move); }
+            },
+            c: label
           };
         });
 
-        const board = {
-          t: 'div',
-          a: { class: 'game-container' },
+        var taco = {
+          t: 'div', a: { class: 'game-layout' },
           c: [
             {
               t: 'div',
               c: [
-                { t: 'div', a: { class: 'game-info' }, c: status },
+                { t: 'div', a: { class: statusClass }, c: statusText },
                 {
-                  t: 'div',
-                  a: { class: 'game-board' },
-                  c: current.squares.map((square, i) => ({
-                    t: 'button',
-                    a: { 
-                      class: 'square',
-                      onclick: () => handleClick(i),
-                      disabled: square !== null || winner !== null
-                    },
-                    c: square ? {
-                      t: 'span',
-                      a: { class: square.toLowerCase() },
-                      c: square
-                    } : ''
-                  }))
+                  t: 'div', a: { class: 'game-board' },
+                  c: current.squares.map(function(sq, i) {
+                    return {
+                      t: 'button',
+                      a: {
+                        class: 'square',
+                        disabled: sq !== null || winner !== null,
+                        onclick: function() { handleClick(i); }
+                      },
+                      c: sq ? { t: 'span', a: { class: sq === 'X' ? 'x-mark' : 'o-mark' }, c: sq } : ''
+                    };
+                  })
+                },
+                {
+                  t: 'button',
+                  a: {
+                    class: 'new-game-btn',
+                    onclick: function() {
+                      state.history = [{ squares: Array(9).fill(null) }];
+                      state.stepNumber = 0;
+                      state.xIsNext = true;
+                      render();
+                    }
+                  },
+                  c: 'New Game'
                 }
               ]
             },
             {
-              t: 'div',
-              a: { class: 'game-info' },
+              t: 'div', a: { class: 'game-sidebar' },
               c: [
-                { t: 'h3', c: '📜 Move History' },
-                {
-                  t: 'div',
-                  a: { class: 'history-container' },
-                  c: moves
-                }
+                { t: 'h4', c: 'History' },
+                { t: 'div', a: { class: 'history-list' }, c: moves }
               ]
             }
           ]
         };
-        
-        bw.DOM('#step4-game', board);
+        bw.DOM('#step4-game', taco);
       }
 
-      setTimeout(render, 0);
-      return { t: 'div', a: { id: 'step4-game' } };
-    }
+      var code = [
+        '// Step 4: Time travel with immutable history',
+        '// Each move creates a NEW squares array (immutable update).',
+        '// We keep the full history so we can jump to any point.',
+        '',
+        'var state = {',
+        '  history: [{ squares: Array(9).fill(null) }],',
+        '  stepNumber: 0,',
+        '  xIsNext: true',
+        '};',
+        '',
+        'function handleClick(i) {',
+        '  // Slice history up to current step (discard any "future")',
+        '  var hist = state.history.slice(0, state.stepNumber + 1);',
+        '  var current = hist[hist.length - 1];',
+        '  var sq = current.squares.slice();  // copy the array',
+        '',
+        '  if (calcWinner(sq) || sq[i]) return;',
+        '',
+        '  sq[i] = state.xIsNext ? "X" : "O";',
+        '  state.history = hist.concat([{ squares: sq, lastMove: i }]);',
+        '  state.stepNumber = hist.length;',
+        '  state.xIsNext = !state.xIsNext;',
+        '  render();',
+        '}',
+        '',
+        'function jumpTo(step) {',
+        '  state.stepNumber = step;',
+        '  state.xIsNext = (step % 2) === 0;',
+        '  render();',
+        '}',
+        '',
+        '// Render history buttons',
+        'var moves = state.history.map(function(step, move) {',
+        '  return {',
+        '    t: "button",',
+        '    a: {',
+        '      class: "history-btn" + (move === state.stepNumber ? " current" : ""),',
+        '      onclick: function() { jumpTo(move); }',
+        '    },',
+        '    c: move === 0 ? "Start" : "Move " + move',
+        '  };',
+        '});'
+      ].join('\n');
 
-    const step4Code = `// Game with move history - immutable state updates
-const state = {
-  history: [{ squares: Array(9).fill(null) }],
-  stepNumber: 0,
-  xIsNext: true
-};
+      bw.DOM('#step-4', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'step-header' },
+            c: [
+              { t: 'div', a: { class: 'step-num' }, c: '4' },
+              { t: 'h2', c: 'Add Move History' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'step-body' },
+            c: [
+              { t: 'p', c: 'Instead of mutating the squares array, we create a new copy each move and push it onto a history stack. This lets us "time travel" back to any previous board state.' },
+              {
+                t: 'div', a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', c: 'Immutable updates' },
+                  { t: 'p', c: 'We use .slice() to copy the array before modifying it. The old array is preserved in history. This pattern is simple but powerful.' }
+                ]
+              },
+              stepTabs('#step4', { t: 'div', a: { id: 'step4-game' } }, code)
+            ]
+          }
+        ]
+      });
+      render();
+    })();
 
-function handleClick(i) {
-  // Copy history up to current step
-  const history = state.history.slice(0, state.stepNumber + 1);
-  const current = history[history.length - 1];
-  const squares = current.squares.slice(); // Copy array
-  
-  if (calculateWinner(squares) || squares[i]) return;
-  
-  squares[i] = state.xIsNext ? 'X' : 'O';
-  
-  // Add new state to history
-  state.history = history.concat([{ squares: squares }]);
-  state.stepNumber = history.length;
-  state.xIsNext = !state.xIsNext;
-  render();
-}
-
-function jumpTo(step) {
-  state.stepNumber = step;
-  state.xIsNext = (step % 2) === 0;
-  render(); // Re-render at historical state
-}
-
-// Create history buttons
-const moves = state.history.map((step, move) => {
-  const desc = move ? \`Go to move #\${move}\` : 'Go to game start';
-  return bw.makeButton({
-    text: desc,
-    variant: move === state.stepNumber ? 'primary' : 'secondary',
-    size: 'sm',
-    onclick: () => jumpTo(move)
-  });
-});`;
-
-    bw.DOM('#step4-demo', createCodeDemo({
-      title: 'Time Travel with History',
-      description: 'Click the history buttons to jump to any previous game state',
-      result: createGameWithHistory(),
-      code: step4Code
-    }));
-
-    // Step 5: Complete Game
-    function createCompleteGame() {
-      const gameState = {
+    // ================================================================
+    // STEP 5: Complete Game
+    // ================================================================
+    (function() {
+      var state = {
         history: [{ squares: Array(9).fill(null) }],
         stepNumber: 0,
         xIsNext: true,
-        showCoords: false,
-        sortAscending: true
+        sortAsc: true,
+        showCoords: true
       };
 
-      function calculateWinner(squares) {
-        const lines = [
-          [0, 1, 2], [3, 4, 5], [6, 7, 8],
-          [0, 3, 6], [1, 4, 7], [2, 5, 8],
-          [0, 4, 8], [2, 4, 6]
-        ];
-        
-        for (let i = 0; i < lines.length; i++) {
-          const [a, b, c] = lines[i];
-          if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return { winner: squares[a], line: lines[i] };
-          }
+      function calcWinner(sq) {
+        var lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (var i = 0; i < lines.length; i++) {
+          var a = lines[i][0], b = lines[i][1], c = lines[i][2];
+          if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])
+            return { winner: sq[a], line: lines[i] };
         }
         return null;
       }
 
-      function getCoords(i) {
-        return `(${Math.floor(i / 3) + 1}, ${(i % 3) + 1})`;
-      }
-
       function handleClick(i) {
-        const history = gameState.history.slice(0, gameState.stepNumber + 1);
-        const current = history[history.length - 1];
-        const squares = current.squares.slice();
-        
-        if (calculateWinner(squares) || squares[i]) return;
-        
-        squares[i] = gameState.xIsNext ? 'X' : 'O';
-        gameState.history = history.concat([{ 
-          squares: squares,
-          lastMove: i
-        }]);
-        gameState.stepNumber = history.length;
-        gameState.xIsNext = !gameState.xIsNext;
+        var hist = state.history.slice(0, state.stepNumber + 1);
+        var current = hist[hist.length - 1];
+        var sq = current.squares.slice();
+        if (calcWinner(sq) || sq[i]) return;
+        sq[i] = state.xIsNext ? 'X' : 'O';
+        state.history = hist.concat([{ squares: sq, lastMove: i }]);
+        state.stepNumber = hist.length;
+        state.xIsNext = !state.xIsNext;
         render();
       }
 
       function jumpTo(step) {
-        gameState.stepNumber = step;
-        gameState.xIsNext = (step % 2) === 0;
+        state.stepNumber = step;
+        state.xIsNext = (step % 2) === 0;
         render();
       }
 
       function render() {
-        const current = gameState.history[gameState.stepNumber];
-        const winInfo = calculateWinner(current.squares);
-        const winner = winInfo ? winInfo.winner : null;
-        const winningLine = winInfo ? winInfo.line : [];
-        const isDraw = !winner && current.squares.every(s => s !== null);
-        
-        let status;
-        if (winner) {
-          status = { t: 'div', a: { class: 'status winner' }, c: `🎉 Winner: ${winner}!` };
-        } else if (isDraw) {
-          status = { t: 'div', a: { class: 'status draw' }, c: '🤝 It\'s a Draw!' };
-        } else {
-          status = { t: 'div', a: { class: 'status' }, c: `Next player: ${gameState.xIsNext ? 'X' : 'O'}` };
-        }
+        var current = state.history[state.stepNumber];
+        var info = calcWinner(current.squares);
+        var winner = info ? info.winner : null;
+        var winLine = info ? info.line : [];
+        var isDraw = !winner && current.squares.every(function(s) { return s !== null; });
 
-        let moves = gameState.history.map((step, move) => {
-          const desc = move ? 
-            `Go to move #${move} ${gameState.showCoords && step.lastMove !== undefined ? getCoords(step.lastMove) : ''}` : 
-            'Go to game start';
+        var statusClass = 'status-bar';
+        var statusText = 'Next: ' + (state.xIsNext ? 'X' : 'O');
+        if (winner) { statusClass += ' winner'; statusText = 'Winner: ' + winner + '!'; }
+        if (isDraw) { statusClass += ' draw'; statusText = 'Draw!'; }
+
+        var moves = state.history.map(function(step, move) {
+          var label = move === 0 ? 'Start' : 'Move ' + move;
+          if (state.showCoords && move > 0 && step.lastMove !== undefined) {
+            var r = Math.floor(step.lastMove / 3) + 1;
+            var c = (step.lastMove % 3) + 1;
+            label += ' (' + r + ',' + c + ')';
+          }
           return {
-            move: move,
-            element: {
-              t: 'div',
-              a: { class: 'history-move' },
-              c: bw.makeButton({
-                text: desc,
-                variant: move === gameState.stepNumber ? 'primary' : 'secondary',
-                size: 'sm',
-                onclick: () => jumpTo(move)
-              })
-            }
+            t: 'button',
+            a: {
+              class: 'history-btn' + (move === state.stepNumber ? ' current' : ''),
+              onclick: function() { jumpTo(move); }
+            },
+            c: label
           };
         });
 
-        if (!gameState.sortAscending) {
-          moves = moves.reverse();
-        }
+        if (!state.sortAsc) moves = moves.slice().reverse();
 
-        const board = {
-          t: 'div',
+        var taco = {
+          t: 'div', a: { class: 'game-layout' },
           c: [
             {
               t: 'div',
-              a: { class: 'game-container' },
               c: [
+                { t: 'div', a: { class: statusClass }, c: statusText },
                 {
-                  t: 'div',
+                  t: 'div', a: { class: 'game-board' },
+                  c: current.squares.map(function(sq, i) {
+                    return {
+                      t: 'button',
+                      a: {
+                        class: 'square' + (winLine.indexOf(i) >= 0 ? ' winning' : ''),
+                        disabled: sq !== null || winner !== null,
+                        onclick: function() { handleClick(i); }
+                      },
+                      c: sq ? { t: 'span', a: { class: sq === 'X' ? 'x-mark' : 'o-mark' }, c: sq } : ''
+                    };
+                  })
+                },
+                {
+                  t: 'button',
+                  a: {
+                    class: 'new-game-btn',
+                    onclick: function() {
+                      state.history = [{ squares: Array(9).fill(null) }];
+                      state.stepNumber = 0;
+                      state.xIsNext = true;
+                      render();
+                    }
+                  },
+                  c: 'New Game'
+                }
+              ]
+            },
+            {
+              t: 'div', a: { class: 'game-sidebar' },
+              c: [
+                { t: 'h4', c: 'Options' },
+                {
+                  t: 'div', a: { class: 'game-options' },
                   c: [
-                    { t: 'div', a: { class: 'game-info' }, c: status },
                     {
-                      t: 'div',
-                      a: { class: 'game-board' },
-                      c: current.squares.map((square, i) => ({
-                        t: 'button',
-                        a: { 
-                          class: `square ${winningLine.includes(i) ? 'winning' : ''}`,
-                          onclick: () => handleClick(i),
-                          disabled: square !== null || winner !== null
+                      t: 'label',
+                      c: [
+                        {
+                          t: 'input',
+                          a: {
+                            type: 'checkbox',
+                            checked: state.showCoords,
+                            onchange: function(e) {
+                              state.showCoords = e.target.checked;
+                              render();
+                            }
+                          }
                         },
-                        c: square ? {
-                          t: 'span',
-                          a: { class: square.toLowerCase() },
-                          c: square
-                        } : ''
-                      }))
+                        ' Show coordinates'
+                      ]
                     },
                     {
                       t: 'button',
                       a: {
-                        class: 'new-game-btn',
-                        onclick: () => {
-                          gameState.history = [{ squares: Array(9).fill(null) }];
-                          gameState.stepNumber = 0;
-                          gameState.xIsNext = true;
+                        class: 'sort-btn',
+                        onclick: function() {
+                          state.sortAsc = !state.sortAsc;
                           render();
                         }
                       },
-                      c: '🔄 New Game'
+                      c: state.sortAsc ? 'Sort: Oldest first' : 'Sort: Newest first'
                     }
                   ]
                 },
-                {
-                  t: 'div',
-                  a: { class: 'game-info' },
-                  c: [
-                    { t: 'h3', c: '⚙️ Game Options' },
-                    {
-                      t: 'div',
-                      a: { class: 'game-controls' },
-                      c: [
-                        {
-                          t: 'div',
-                          a: { class: 'control-group' },
-                          c: [
-                            {
-                              t: 'label',
-                              c: [
-                                {
-                                  t: 'input',
-                                  a: {
-                                    type: 'checkbox',
-                                    checked: gameState.showCoords,
-                                    onchange: (e) => {
-                                      gameState.showCoords = e.target.checked;
-                                      render();
-                                    }
-                                  }
-                                },
-                                'Show move coordinates'
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          t: 'div',
-                          a: { class: 'control-group' },
-                          c: bw.makeButton({
-                            text: gameState.sortAscending ? '⬇️ Sort descending' : '⬆️ Sort ascending',
-                            variant: 'secondary',
-                            onclick: () => {
-                              gameState.sortAscending = !gameState.sortAscending;
-                              render();
-                            }
-                          })
-                        }
-                      ]
-                    },
-                    { t: 'h3', c: '📜 Move History' },
-                    {
-                      t: 'div',
-                      a: { class: 'history-container' },
-                      c: moves.map(m => m.element)
-                    }
-                  ]
-                }
+                { t: 'h4', c: 'History' },
+                { t: 'div', a: { class: 'history-list' }, c: moves }
               ]
             }
           ]
         };
-        
-        bw.DOM('#final-game', board);
+        bw.DOM('#step5-game', taco);
       }
 
-      setTimeout(render, 0);
-      return { t: 'div', a: { id: 'final-game' } };
-    }
+      var code = [
+        '// Step 5: The complete game',
+        '// Combines everything: winner detection, winning line highlights,',
+        '// move history with coordinates, sorting, and time travel.',
+        '',
+        'var state = {',
+        '  history: [{ squares: Array(9).fill(null) }],',
+        '  stepNumber: 0,',
+        '  xIsNext: true,',
+        '  sortAsc: true,',
+        '  showCoords: true',
+        '};',
+        '',
+        'function calcWinner(sq) {',
+        '  var lines = [',
+        '    [0,1,2], [3,4,5], [6,7,8],',
+        '    [0,3,6], [1,4,7], [2,5,8],',
+        '    [0,4,8], [2,4,6]',
+        '  ];',
+        '  for (var i = 0; i < lines.length; i++) {',
+        '    var a = lines[i][0], b = lines[i][1], c = lines[i][2];',
+        '    if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])',
+        '      return { winner: sq[a], line: lines[i] };',
+        '  }',
+        '  return null;',
+        '}',
+        '',
+        'function handleClick(i) {',
+        '  var hist = state.history.slice(0, state.stepNumber + 1);',
+        '  var current = hist[hist.length - 1];',
+        '  var sq = current.squares.slice();',
+        '  if (calcWinner(sq) || sq[i]) return;',
+        '  sq[i] = state.xIsNext ? "X" : "O";',
+        '  state.history = hist.concat([{ squares: sq, lastMove: i }]);',
+        '  state.stepNumber = hist.length;',
+        '  state.xIsNext = !state.xIsNext;',
+        '  render();',
+        '}',
+        '',
+        'function jumpTo(step) {',
+        '  state.stepNumber = step;',
+        '  state.xIsNext = (step % 2) === 0;',
+        '  render();',
+        '}',
+        '',
+        'function render() {',
+        '  var current = state.history[state.stepNumber];',
+        '  var info = calcWinner(current.squares);',
+        '  var winner = info ? info.winner : null;',
+        '  var winLine = info ? info.line : [];',
+        '',
+        '  // Build move history buttons with optional coords',
+        '  var moves = state.history.map(function(step, move) {',
+        '    var label = move === 0 ? "Start" : "Move " + move;',
+        '    if (state.showCoords && step.lastMove !== undefined) {',
+        '      var r = Math.floor(step.lastMove / 3) + 1;',
+        '      var c = (step.lastMove % 3) + 1;',
+        '      label += " (" + r + "," + c + ")";',
+        '    }',
+        '    return {',
+        '      t: "button",',
+        '      a: { class: "history-btn", onclick: function() { jumpTo(move); } },',
+        '      c: label',
+        '    };',
+        '  });',
+        '',
+        '  if (!state.sortAsc) moves = moves.slice().reverse();',
+        '',
+        '  // Highlight winning squares',
+        '  var board = current.squares.map(function(sq, i) {',
+        '    return {',
+        '      t: "button",',
+        '      a: {',
+        '        class: "square" + (winLine.indexOf(i) >= 0 ? " winning" : ""),',
+        '        disabled: sq !== null || winner !== null,',
+        '        onclick: function() { handleClick(i); }',
+        '      },',
+        '      c: sq || ""',
+        '    };',
+        '  });',
+        '',
+        '  bw.DOM("#game", { t: "div", c: [ /* board + sidebar */ ] });',
+        '}',
+        '',
+        'render();'
+      ].join('\n');
 
-    const finalCode = `// Complete Tic Tac Toe game with all features
-function createTicTacToeGame() {
-  const gameState = {
-    history: [{ squares: Array(9).fill(null) }],
-    stepNumber: 0,
-    xIsNext: true,
-    showCoords: false,
-    sortAscending: true
-  };
+      bw.DOM('#step-5', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'step-header' },
+            c: [
+              { t: 'div', a: { class: 'step-num' }, c: '5' },
+              { t: 'h2', c: 'The Complete Game' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'step-body' },
+            c: [
+              { t: 'p', c: 'The finished game: winner detection with highlighted winning line, move history with row/column coordinates, sort order toggle, and time travel. All built with plain JavaScript objects.' },
+              stepTabs('#step5', { t: 'div', a: { id: 'step5-game' } }, code)
+            ]
+          }
+        ]
+      });
+      render();
+    })();
 
-  function calculateWinner(squares) {
-    const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const [a, b, c] = lines[i];
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return { winner: squares[a], line: lines[i] };
-      }
-    }
-    return null;
-  }
-
-  function render() {
-    // Build TACO structure for the entire game
-    const board = {
-      t: 'div',
+    // ================================================================
+    // Congratulations
+    // ================================================================
+    bw.DOM('#congrats-section', {
+      t: 'div', a: { class: 'congrats' },
       c: [
-        createGameBoard(),     // The 3x3 grid
-        createGameControls(),  // Options and settings
-        createMoveHistory()    // Time travel controls
-      ]
-    };
-    
-    // Mount to DOM using Bitwrench
-    bw.DOM('#game-container', board);
-  }
-
-  // Event handlers update state and re-render
-  function handleClick(i) {
-    // Update game state immutably
-    // Add to history
-    // Re-render entire game
-    render();
-  }
-
-  // Initial render
-  render();
-}
-
-// Start the game!
-createTicTacToeGame();`;
-
-    bw.DOM('#final-demo', createCodeDemo({
-      title: 'Complete Tic Tac Toe Game',
-      description: 'A fully-featured game with history, coordinates display, and sorting options',
-      result: createCompleteGame(),
-      code: finalCode
-    }));
-
-    // Add summary section
-    const summary = {
-      t: 'div',
-      a: { class: 'demo-section' },
-      c: [
-        { t: 'h2', c: '🎉 Congratulations!' },
-        { 
-          t: 'p', 
-          a: { class: 'intro-text' },
-          c: 'You\'ve successfully built a complete Tic Tac Toe game using Bitwrench! This tutorial demonstrated the power of reactive programming without complex frameworks.' 
+        { t: 'h2', c: 'You did it!' },
+        { t: 'p', c: 'You built a complete tic tac toe game with bitwrench. Along the way you learned:' },
+        {
+          t: 'div', a: { style: 'text-align: left; max-width: 500px; margin: 1rem auto;' },
+          c: {
+            t: 'ul', a: { style: 'list-style: none; padding: 0;' },
+            c: [
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO' }, ' \u2014 describe HTML with plain JS objects'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'State \u2192 Render \u2192 Mount' }, ' \u2014 the bitwrench pattern'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, ' \u2014 ternaries + filter(Boolean)'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable updates' }, ' \u2014 .slice() for undo/history'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Composition' }, ' \u2014 build complex UIs from small TACO pieces'] }
+            ]
+          }
         },
         {
-          t: 'div',
-          a: { class: 'summary-box' },
+          t: 'div', a: { class: 'callout callout-challenge', style: 'text-align: left; max-width: 500px; margin: 1.5rem auto 0;' },
           c: [
-            { t: 'h4', c: '🔑 Key Takeaways' },
+            { t: 'h4', c: 'Challenge yourself' },
             {
               t: 'ul',
               c: [
-                { t: 'li', c: { t: 'span', c: ['🏗️ ', { t: 'strong', c: 'TACO Objects' }, ' - Declarative UI with simple JavaScript objects'] } },
-                { t: 'li', c: { t: 'span', c: ['📊 ', { t: 'strong', c: 'State Management' }, ' - Plain objects + render functions = reactive UI'] } },
-                { t: 'li', c: { t: 'span', c: ['🔄 ', { t: 'strong', c: 'No Virtual DOM' }, ' - Direct DOM updates with bw.DOM()'] } },
-                { t: 'li', c: { t: 'span', c: ['⚡ ', { t: 'strong', c: 'Event Handling' }, ' - Native JavaScript events, no synthetic wrappers'] } },
-                { t: 'li', c: { t: 'span', c: ['🧩 ', { t: 'strong', c: 'Composition' }, ' - Build complex UIs from simple components'] } }
+                { t: 'li', c: 'Add a simple AI opponent' },
+                { t: 'li', c: 'Save/load games with localStorage' },
+                { t: 'li', c: 'Add score tracking across games' },
+                { t: 'li', c: 'Make a 4x4 variant' }
               ]
             }
           ]
         },
         {
-          t: 'div',
-          a: { class: 'tip-box', style: 'background: linear-gradient(135deg, #f5f3ff 0%, #e0dcff 100%); border-color: #7c3aed;' },
-          c: [
-            { t: 'h4', a: { style: 'color: #6d28d9;' }, c: '🚀 Challenge Yourself!' },
-            {
-              t: 'p',
-              c: 'Ready to level up? Try these enhancements:'
+          t: 'div', a: { style: 'margin-top: 1.5rem;' },
+          c: {
+            t: 'a',
+            a: {
+              href: 'index.html',
+              style: 'display: inline-block; padding: 0.6rem 1.5rem; background: var(--bw-teal, #006666); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem;'
             },
-            {
-              t: 'ul',
-              c: [
-                { t: 'li', c: '👥 Add player profiles with avatars and win tracking' },
-                { t: 'li', c: '🎮 Create different game modes (4x4 grid, Connect Four rules)' },
-                { t: 'li', c: '✨ Add smooth animations and sound effects' },
-                { t: 'li', c: '🤖 Build an AI opponent with difficulty levels' },
-                { t: 'li', c: '💾 Persist games to localStorage with save/load' },
-                { t: 'li', c: '🌐 Add multiplayer support with WebSockets' }
-              ]
-            }
-          ]
-        },
-        {
-          t: 'div',
-          a: { style: 'text-align: center; margin-top: 2rem;' },
-          c: [
-            {
-              t: 'p',
-              a: { style: 'font-size: 1.2rem; color: #2c3e50;' },
-              c: 'Remember: With Bitwrench, it\'s all just JavaScript. No magic, no build steps, just code!'
-            },
-            {
-              t: 'div',
-              a: { style: 'margin-top: 1.5rem;' },
-              c: [
-                bw.makeButton({
-                  text: '← Back to Examples',
-                  variant: 'primary',
-                  onclick: () => window.location.href = 'index.html'
-                }),
-                { t: 'span', c: ' ' },
-                bw.makeButton({
-                  text: 'View More Tutorials →',
-                  variant: 'success',
-                  onclick: () => window.location.href = '05-advanced-features.html'
-                })
-              ]
-            }
-          ]
+            c: 'Back to Examples'
+          }
         }
       ]
-    };
-
-    // Mount the congratulations section at the end
-    bw.DOM('#congratulations-section', summary);
+    });
   </script>
 </body>
 </html>

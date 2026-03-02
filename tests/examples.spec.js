@@ -25,7 +25,7 @@ test.describe('Bitwrench v2 Examples', () => {
     await page.goto('/01-basic-components.html');
     
     // Check page loaded
-    await expect(page.locator('h1')).toContainText('Basic Components');
+    await expect(page.locator('h1')).toContainText('Bitwrench Core Components Library');
     
     // Check version is displayed
     await expect(page.locator('#version')).not.toBeEmpty();

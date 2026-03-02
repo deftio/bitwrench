@@ -10,8 +10,8 @@
 	<![CDATA[
 		.st1 {fill:#006666;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.24}
 		.st2 {fill:none;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
-		.st3 {fill:#000000;font-family:Calibri;font-size:4.99999em}
-		.st4 {fill:#006666;font-family:Calibri;font-size:4.99999em}
+		.st3 {fill:#000000;font-family:Calibri,system-ui,-apple-system,sans-serif;font-size:4.99999em}
+		.st4 {fill:#006666;font-family:Calibri,system-ui,-apple-system,sans-serif;font-size:4.99999em}
 		.st5 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
 	]]>
 	</style>

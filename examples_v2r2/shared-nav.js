@@ -1,125 +1,144 @@
 /**
- * Shared navigation component for Bitwrench v2 examples
- * Uses bitwrench components to create a consistent navigation bar
+ * Shared navigation component for bitwrench examples
+ * Includes hamburger menu for mobile/tablet breakpoints
  */
 
 (function() {
   'use strict';
 
-  // Define the navigation items
   const navItems = [
     { text: 'Home', href: 'index.html' },
     { text: 'Fundamentals', href: '00-taco-srmc-fundamentals.html' },
-    { text: 'Basic', href: '01-basic-components.html' },
+    { text: 'Components', href: '01-basic-components.html' },
     { text: 'Tables & Forms', href: '02-interactive-tables-forms.html' },
     { text: 'Themes', href: '03-themes-styling.html' },
     { text: 'Dashboard', href: '04-dashboard-app.html' },
     { text: 'Advanced', href: '05-advanced-features.html' },
-    { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' }
+    { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
+    { text: 'Comparison', href: '07-framework-comparison.html' }
   ];
 
-  /**
-   * Creates the example navigation bar
-   * @param {string} currentPage - The current page filename to highlight active item
-   * @returns {Object} TACO object for the navigation
-   */
   function createExampleNav(currentPage) {
-    // Mark the active item based on current page
     const items = navItems.map(item => ({
       ...item,
       active: item.href === currentPage
     }));
 
+    const ver = window.bw && window.bw.version || '2.0.3';
+
     return {
       t: 'nav',
-      a: { 
-        class: 'example-nav',
-        style: 'background: #2c3e50; padding: 0; margin: 0 0 1rem 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'
+      a: {
+        class: 'bw-site-nav',
       },
-      c: {
-        t: 'div',
-        a: { 
-          class: 'bw-container',
-          style: 'max-width: 1400px; margin: 0 auto; padding: 0 1rem;'
-        },
-        c: [
-          {
-            t: 'div',
-            a: { 
-              style: 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0;'
-            },
-            c: [
-              // Logo/Brand
-              {
-                t: 'div',
-                a: { style: 'display: flex; align-items: center;' },
-                c: [
-                  {
-                    t: 'span',
-                    a: { 
-                      style: 'color: white; font-size: 1.125rem; font-weight: bold; margin-right: 2rem;'
-                    },
-                    c: 'Bitwrench v2'
-                  },
-                  // Navigation items
-                  {
-                    t: 'ul',
-                    a: { 
-                      class: 'bw-nav example-nav-items',
-                      style: 'display: flex; gap: 0.25rem; margin: 0; padding: 0; list-style: none;'
-                    },
-                    c: items.map(item => ({
-                      t: 'li',
-                      a: { class: 'bw-nav-item', style: 'margin: 0;' },
-                      c: {
-                        t: 'a',
-                        a: { 
-                          href: item.href,
-                          class: `bw-nav-link ${item.active ? 'active' : ''}`,
-                          style: `
-                            color: #ecf0f1 !important;
-                            background: ${item.active ? '#3498db' : 'transparent'};
-                            border: none;
-                            padding: 0.375rem 0.75rem;
-                            text-decoration: none;
-                            border-radius: 4px;
-                            transition: all 0.2s ease;
-                            display: block;
-                          `
-                        },
-                        c: item.text
-                      }
-                    }))
-                  }
-                ]
+      c: [
+        {
+          t: 'div',
+          a: { class: 'bw-site-nav-inner' },
+          c: [
+            // Left: logo image + version
+            {
+              t: 'a',
+              a: {
+                href: 'index.html',
+                class: 'bw-site-nav-brand'
               },
-              // Version info
-              {
-                t: 'span',
-                a: { 
-                  style: 'color: #ecf0f1; font-size: 0.75rem;'
+              c: [
+                {
+                  t: 'img',
+                  a: {
+                    src: '../images/bitwrench-thick-logo.svg',
+                    alt: 'bitwrench',
+                    class: 'bw-site-nav-logo'
+                  }
                 },
-                c: `v${window.bw && window.bw.version || '2.0.1-dev'}`
-              }
-            ]
-          }
-        ]
-      }
+                {
+                  t: 'span',
+                  a: { class: 'bw-site-nav-ver' },
+                  c: 'v' + ver
+                }
+              ]
+            },
+            // Center: nav links (desktop)
+            {
+              t: 'ul',
+              a: { class: 'bw-site-nav-links' },
+              c: items.map(item => ({
+                t: 'li',
+                c: {
+                  t: 'a',
+                  a: {
+                    href: item.href,
+                    class: 'bw-site-nav-link' + (item.active ? ' active' : '')
+                  },
+                  c: item.text
+                }
+              }))
+            },
+            // Right: controls group
+            {
+              t: 'div',
+              a: { class: 'bw-site-nav-controls' },
+              c: [
+                // Dark mode toggle
+                {
+                  t: 'button',
+                  a: {
+                    class: 'bw-site-nav-toggle',
+                    title: 'Toggle dark mode',
+                    onclick: function() {
+                      var html = document.documentElement;
+                      var isDark = html.getAttribute('data-theme') === 'dark';
+                      html.setAttribute('data-theme', isDark ? '' : 'dark');
+                      this.textContent = isDark ? '\u263D' : '\u2600';
+                    }
+                  },
+                  c: '\u263D'
+                },
+                // Hamburger button (visible on mobile/tablet)
+                {
+                  t: 'button',
+                  a: {
+                    class: 'bw-site-nav-hamburger',
+                    title: 'Toggle menu',
+                    'aria-label': 'Toggle navigation menu',
+                    onclick: function() {
+                      var mobile = this.closest('.bw-site-nav').querySelector('.bw-site-nav-mobile');
+                      if (mobile) {
+                        mobile.classList.toggle('open');
+                        this.textContent = mobile.classList.contains('open') ? '\u2715' : '\u2630';
+                      }
+                    }
+                  },
+                  c: '\u2630'
+                }
+              ]
+            }
+          ]
+        },
+        // Mobile menu (hidden by default, toggled by hamburger)
+        {
+          t: 'div',
+          a: { class: 'bw-site-nav-mobile' },
+          c: items.map(item => ({
+            t: 'a',
+            a: {
+              href: item.href,
+              class: item.active ? 'active' : ''
+            },
+            c: item.text
+          }))
+        }
+      ]
     };
   }
 
-  /**
-   * Mounts the navigation to a specific element
-   * @param {string} selector - The selector where to mount the nav
-   * @param {string} currentPage - The current page filename
-   */
   function mountExampleNav(selector, currentPage) {
     if (typeof window.bw !== 'undefined' && window.bw.DOM) {
       window.bw.DOM(selector, createExampleNav(currentPage || ''));
     }
   }
 
-  // Export to window
   window.createExampleNav = createExampleNav;
   window.mountExampleNav = mountExampleNav;
 })();

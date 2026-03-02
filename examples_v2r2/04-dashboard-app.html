@@ -3,31 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench v2 - Dashboard Application</title>
+  <title>Bitwrench - Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      font-size: 14px;
-    }
+    /* Dashboard layout */
     .dashboard {
       display: flex;
-      height: calc(100vh - 40px); /* Account for shared nav */
+      height: calc(100vh - 56px);
     }
     .sidebar {
       width: 200px;
-      background: #2c3e50;
+      background: var(--bw-teal-dark, #004d4d);
       color: white;
       padding: 0.75rem;
     }
     .sidebar h3 {
       font-size: 1.1rem;
       margin: 0 0 0.75rem 0;
+      font-weight: 600;
     }
     .main-content {
       flex: 1;
@@ -37,7 +34,7 @@
     .main-content h1 {
       font-size: 1.5rem;
       margin: 0 0 1rem 0;
-      color: #2c3e50;
+      color: var(--bw-teal-dark, #004d4d);
     }
     .stats-grid {
       display: grid;
@@ -46,26 +43,28 @@
       margin-bottom: 1rem;
     }
     .stat-card {
-      background: white;
+      background: var(--bw-card-bg, #fff);
       padding: 1rem;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-radius: var(--bw-radius, 8px);
+      border: 1px solid var(--bw-card-border, #e5e5e5);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
     }
     .stat-value {
       font-size: 1.5rem;
-      font-weight: bold;
-      color: #2c3e50;
+      font-weight: 700;
+      color: var(--bw-teal-dark, #004d4d);
     }
     .stat-label {
-      color: #666;
+      color: var(--bw-text-secondary, #555);
       margin-top: 0.25rem;
       font-size: 0.875rem;
     }
     .chart-container {
-      background: white;
+      background: var(--bw-card-bg, #fff);
       padding: 1rem;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-radius: var(--bw-radius, 8px);
+      border: 1px solid var(--bw-card-border, #e5e5e5);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
       margin-bottom: 1rem;
     }
     .chart-container h3 {
@@ -73,25 +72,22 @@
       margin: 0 0 0.75rem 0;
     }
     .sidebar .bw-nav-link {
-      color: white !important;
+      color: rgba(255,255,255,0.85) !important;
       margin-bottom: 0.25rem;
       padding: 0.5rem 0.75rem;
       font-size: 0.875rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .sidebar .bw-nav-link:hover {
+      color: white !important;
+      background: rgba(255,255,255,0.1);
     }
     .sidebar .bw-nav-link.active {
-      background: #34495e;
+      background: rgba(255,255,255,0.15);
+      color: white !important;
     }
-    /* Compact table */
-    .bw-table td,
-    .bw-table th {
-      padding: 0.5rem;
-      font-size: 0.875rem;
-    }
-    #example-nav {
-      height: 40px;
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
-    }
+    #example-nav { height: auto; }
   </style>
 </head>
 <body>
@@ -245,7 +241,7 @@
 
       // Re-attach event handlers
       setTimeout(() => {
-        document.querySelectorAll('#sidebar-nav .bw-nav-link').forEach(link => {
+        bw.$('#sidebar-nav .bw-nav-link').forEach(link => {
           link.addEventListener('click', (e) => {
             e.preventDefault();
             const view = e.target.getAttribute('href').substring(1);
@@ -259,7 +255,7 @@
 
     // Update Main Content Based on View
     function updateMainContent(view) {
-      const mainContent = document.querySelector('.main-content');
+      const mainContent = bw.$('.main-content')[0];
       const title = mainContent.querySelector('h1');
       
       // Update title with fade effect
@@ -282,8 +278,7 @@
 
     // Analytics View
     function renderAnalyticsView() {
-      const chartContainer = document.querySelector('.chart-container');
-      chartContainer.innerHTML = '';
+      const chartContainer = bw.$('.chart-container')[0];
       
       const analyticsContent = {
         t: 'div',
@@ -321,8 +316,7 @@
 
     // Customers View
     function renderCustomersView() {
-      const statsGrid = document.getElementById('stats-grid');
-      statsGrid.innerHTML = '';
+      const statsGrid = bw.$('#stats-grid')[0];
       
       const customers = [
         { id: 1, name: 'Acme Corp', contact: 'john@acme.com', value: 125000, status: 'active' },
@@ -445,13 +439,12 @@
     }, 5000);
 
     // Add CSS transition for title
-    const style = document.createElement('style');
-    style.textContent = `
+    // Add transition styles
+    bw.injectCSS(`
       .main-content h1 {
         transition: opacity 0.2s ease;
       }
-    `;
-    document.head.appendChild(style);
+    `);
   </script>
 </body>
 </html>

@@ -1,0 +1,169 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - text: Bitwrench v2
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Fundamentals":
+        - /url: 00-taco-srmc-fundamentals.html
+    - listitem:
+      - link "Basic":
+        - /url: 01-basic-components.html
+    - listitem:
+      - link "Tables & Forms":
+        - /url: 02-interactive-tables-forms.html
+    - listitem:
+      - link "Themes":
+        - /url: 03-themes-styling.html
+    - listitem:
+      - link "Dashboard":
+        - /url: 04-dashboard-app.html
+    - listitem:
+      - link "Advanced":
+        - /url: 05-advanced-features.html
+    - listitem:
+      - link "Tic Tac Toe":
+        - /url: 06-tic-tac-toe-tutorial.html
+  - text: v2.0.3
+- heading "Bitwrench v2 - Advanced Features" [level=1]
+- paragraph: "Version: 2.0.3"
+- heading "State Management" [level=2]
+- heading "Counter with State" [level=3]
+- 'heading "Count: 0" [level=4]'
+- button "Increment"
+- button "Decrement"
+- button "Reset"
+- heading "Todo List with State" [level=3]
+- textbox "Enter a todo..."
+- button "Add Todo"
+- paragraph: No todos yet. Add one above!
+- heading "Event Delegation" [level=2]
+- heading "Dynamic List with Event Delegation" [level=3]
+- button "Add Item"
+- list
+- heading "Component Handles" [level=2]
+- heading "Dynamic Table with Handle" [level=3]
+- table:
+  - rowgroup:
+    - row "ID Name Value Status":
+      - cell "ID"
+      - cell "Name"
+      - cell "Value"
+      - cell "Status"
+  - rowgroup:
+    - row "1 Item 1 36 active":
+      - cell "1"
+      - cell "Item 1"
+      - cell "36"
+      - cell "active"
+    - row "2 Item 2 28 active":
+      - cell "2"
+      - cell "Item 2"
+      - cell "28"
+      - cell "active"
+    - row "3 Item 3 50 active":
+      - cell "3"
+      - cell "Item 3"
+      - cell "50"
+      - cell "active"
+    - row "4 Item 4 17 inactive":
+      - cell "4"
+      - cell "Item 4"
+      - cell "17"
+      - cell "inactive"
+    - row "5 Item 5 30 inactive":
+      - cell "5"
+      - cell "Item 5"
+      - cell "30"
+      - cell "inactive"
+    - row "6 Item 6 70 active":
+      - cell "6"
+      - cell "Item 6"
+      - cell "70"
+      - cell "active"
+    - row "7 Item 7 93 inactive":
+      - cell "7"
+      - cell "Item 7"
+      - cell "93"
+      - cell "inactive"
+    - row "8 Item 8 66 active":
+      - cell "8"
+      - cell "Item 8"
+      - cell "66"
+      - cell "active"
+    - row "9 Item 9 39 active":
+      - cell "9"
+      - cell "Item 9"
+      - cell "39"
+      - cell "active"
+    - row "10 Item 10 35 inactive":
+      - cell "10"
+      - cell "Item 10"
+      - cell "35"
+      - cell "inactive"
+    - row "11 Item 11 59 active":
+      - cell "11"
+      - cell "Item 11"
+      - cell "59"
+      - cell "active"
+    - row "12 Item 12 1 inactive":
+      - cell "12"
+      - cell "Item 12"
+      - cell "1"
+      - cell "inactive"
+    - row "13 Item 13 91 active":
+      - cell "13"
+      - cell "Item 13"
+      - cell "91"
+      - cell "active"
+    - row "14 Item 14 60 active":
+      - cell "14"
+      - cell "Item 14"
+      - cell "60"
+      - cell "active"
+    - row "15 Item 15 38 active":
+      - cell "15"
+      - cell "Item 15"
+      - cell "38"
+      - cell "active"
+    - row "16 Item 16 53 inactive":
+      - cell "16"
+      - cell "Item 16"
+      - cell "53"
+      - cell "inactive"
+    - row "17 Item 17 3 inactive":
+      - cell "17"
+      - cell "Item 17"
+      - cell "3"
+      - cell "inactive"
+    - row "18 Item 18 19 inactive":
+      - cell "18"
+      - cell "Item 18"
+      - cell "19"
+      - cell "inactive"
+    - row "19 Item 19 56 inactive":
+      - cell "19"
+      - cell "Item 19"
+      - cell "56"
+      - cell "inactive"
+    - row "20 Item 20 24 active":
+      - cell "20"
+      - cell "Item 20"
+      - cell "24"
+      - cell "active"
+- button "Sort by Value"
+- button "Filter Active"
+- button "Reset"
+- heading "Dynamic CSS Generation" [level=2]
+- heading "Dynamic Styles" [level=3]
+- text: This box has dynamically generated styles
+- button "Apply Random Theme"
+- heading "Performance Test" [level=2]
+- heading "Render Performance Test" [level=3]
+- paragraph: Click the button to render 1000 items and measure performance.
+- button "Run Performance Test"
+```

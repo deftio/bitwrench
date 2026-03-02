@@ -1,0 +1,154 @@
+/* High Contrast Overrides for WCAG AA Compliance */
+
+/* Text colors for proper contrast */
+body {
+  color: #212529 !important; /* Dark gray instead of light gray */
+}
+
+body * {
+  color: inherit !important; /* Force inheritance for all elements */
+}
+
+p, li, td, .text-muted, ul li {
+  color: #495057 !important; /* Darker gray for better contrast (7:1 ratio) */
+}
+
+h1, h2, h3, h4, h5, h6, .hero h1, .hero-title {
+  color: #212529 !important; /* Ensure headers are dark */
+}
+
+/* Hero section specific overrides */
+.hero, .page-hero {
+  background: #003d82 !important; /* Darker blue */
+}
+
+.hero h1, .hero p, .hero-title {
+  color: #ffffff !important; /* White text on dark blue */
+}
+
+/* Link colors */
+a {
+  color: #0056b3 !important; /* Darker blue for better contrast */
+}
+
+a:hover {
+  color: #003d82 !important; /* Even darker on hover */
+}
+
+/* Navigation overrides */
+.example-nav {
+  background-color: #1a1a1a !important; /* Very dark background */
+}
+
+.bw-nav-link {
+  color: #ffffff !important; /* Pure white for maximum contrast */
+}
+
+.bw-nav-link.active {
+  background-color: #0056b3 !important; /* Darker blue for active state */
+  color: #ffffff !important;
+}
+
+.bw-nav-link:hover {
+  background-color: #004494 !important;
+  color: #ffffff !important;
+}
+
+/* Card and section text */
+.example-card p,
+.concept-content p,
+.feature-card p {
+  color: #495057 !important; /* Darker gray for body text */
+}
+
+/* Code blocks */
+pre, code {
+  color: #212529 !important;
+  background-color: #f8f9fa !important;
+}
+
+/* Buttons */
+.bw-btn-primary {
+  background-color: #0056b3 !important;
+  border-color: #0056b3 !important;
+  color: #ffffff !important;
+}
+
+.bw-btn-primary:hover {
+  background-color: #003d82 !important;
+  border-color: #003d82 !important;
+}
+
+/* Tags and badges */
+.tag {
+  font-weight: 500; /* Make text slightly bolder for better readability */
+}
+
+.tag.primary {
+  background: #cfe2ff !important;
+  color: #052c65 !important; /* Much darker blue */
+}
+
+.tag.success {
+  background: #d1e7dd !important;
+  color: #0a3622 !important; /* Much darker green */
+}
+
+.tag.warning {
+  background: #fff3cd !important;
+  color: #664d03 !important; /* Already has good contrast */
+}
+
+/* Remove inline styles that override our CSS */
+[style*="color: #666"] {
+  color: #495057 !important;
+}
+
+[style*="color: #333"] {
+  color: #212529 !important;
+}
+
+/* Force specific text elements */
+.example-card p,
+.container p,
+div p {
+  color: #495057 !important;
+}
+
+/* Lists in example cards */
+.example-card ul li {
+  color: #495057 !important;
+}
+
+/* Subtle text should still be readable */
+.subtitle,
+.text-secondary {
+  color: #6c757d !important; /* This is the minimum for AA compliance on white */
+}
+
+/* Form elements */
+input, select, textarea {
+  color: #212529 !important;
+  border-color: #6c757d !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6c757d !important;
+}
+
+/* Table cells */
+.bw-table td,
+.bw-table th {
+  color: #212529 !important;
+}
+
+/* Alert and info boxes */
+.bw-alert {
+  color: #212529 !important;
+}
+
+/* Ensure icons have proper contrast */
+.feature-icon {
+  color: #0056b3 !important;
+}

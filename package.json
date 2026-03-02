@@ -40,6 +40,7 @@
 		"@rollup/plugin-commonjs": "^26.0.1",
 		"@rollup/plugin-node-resolve": "^15.2.3",
 		"@rollup/plugin-terser": "^0.4.4",
+		"c8": "^8.0.1",
 		"chai": "^3.0.0",
 		"eslint": "^8.28.0",
 		"jsdom": "^16.4.0",
@@ -54,7 +55,6 @@
 		"karma-ie-launcher": "^1.0.0",
 		"karma-mocha": "^2.0.1",
 		"mocha": "^10.1.0",
-		"nyc": "^15.1.0",
 		"rollup": "^4.29.1",
 		"rollup-plugin-css-only": "^4.5.2",
 		"rollup-plugin-postcss": "^4.0.2",
@@ -66,24 +66,44 @@
 		"prebuild": "npm run generate-version",
 		"build": "rollup --config && npm run build:css",
 		"build:css": "node src/generate-css.js",
+		"build:index": "node tools/build-index.js",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "./tools/emitreadme.sh && ./tools/updatereadme.js index.html index.html",
 		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
-		"cleanbuild": "npm run clean && npm run update_rm && npm run generate-sri && npm run build",
+		"cleanbuild": "npm run clean && npm run update_rm && npm run generate-sri && npm run build && npm run build:index",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "nyc --reporter=text --cache=false mocha ./test/bitwrench_test.js -r jsdom-global/",
+		"test": "c8 --reporter=text mocha ./test/bitwrench_v2_ci.js -r jsdom-global/",
+		"test:v1": "c8 --reporter=text mocha ./test/bitwrench_test.js -r jsdom-global/",
+		"test:pending": "mocha ./test/bitwrench_v2_test_pending.js -r jsdom-global/",
+		"test:all-unit": "c8 --reporter=text mocha './test/bitwrench_v2_test*.js' -r jsdom-global/",
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm -rf dist/* bitwrench*.tgz",
 		"lint": "./node_modules/.bin/eslint src/bitwrench_v2.js",
 		"serve": "node server.js",
 		"dev": "npm run build && npm run serve",
-		"instrument-bw": "./node_modules/nyc/bin/nyc.js instrument ./bitwrench.js ./instr_tmp",
+		"instrument-bw": "echo 'deprecated: use c8 instead'",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser",
 		"generate-sri": "cat bitwrench.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.js_sri.txt && cat bitwrench.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench.min.js_sri.txt && cat bitwrench_ESM.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench_ESM.js_sri.txt && cat bitwrench_ESM.min.js | openssl dgst -sha384 -binary | openssl base64 -A > bitwrench_ESM.min.js_sri.txt",
 		"test:e2e": "playwright test",
 		"test:e2e:headed": "playwright test --headed",
 		"test:e2e:debug": "playwright test --debug",
-		"test:examples": "playwright test tests/examples.spec.js"
+		"test:examples": "playwright test tests/examples.spec.js",
+		"test:all": "node run-all-tests.js",
+		"test:coverage": "c8 --reporter=html --reporter=text mocha ./test/bitwrench_v2_ci.js -r jsdom-global/",
+		"test:summary": "node test-results-summary.js"
 	},
-	"homepage": "http://deftio.com/bitwrench"
+	"homepage": "http://deftio.com/bitwrench",
+	"c8": {
+		"include": [
+			"src/**"
+		],
+		"exclude": [
+			"src/bitwrench.js"
+		],
+		"check-coverage": false,
+		"branches": 80,
+		"lines": 80,
+		"functions": 80,
+		"statements": 80
+	}
 }

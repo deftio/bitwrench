@@ -8,7 +8,7 @@
  */
 
 import { VERSION_INFO } from './version.js';
-import { getAllStyles, theme } from './bitwrench-styles.js';
+import { getAllStyles, theme, updateTheme, getDarkModeStyles, deepMerge } from './bitwrench-styles.js';
 
 // Core bitwrench namespace
 const bw = {
@@ -16,6 +16,14 @@ const bw = {
   version: VERSION_INFO.version,
   versionInfo: VERSION_INFO,
   
+  /**
+   * Get version metadata object (v1-compatible callable API)
+   * @returns {Object} - Copy of VERSION_INFO with version, name, buildDate, etc.
+   */
+  getVersion: function() {
+    return { ...VERSION_INFO };
+  },
+
   // Internal state
   _idCounter: 0,
   _unmountCallbacks: new Map(),
@@ -151,6 +159,17 @@ bw.escapeHTML = function(str) {
 };
 
 /**
+ * Normalize CSS class names: convert underscores to hyphens for bw-prefixed classes
+ * Allows users to write bw_card or bw-card and get consistent output
+ * @param {string} classStr - Class string to normalize
+ * @returns {string} - Normalized class string with hyphens
+ */
+bw.normalizeClass = function(classStr) {
+  if (typeof classStr !== 'string') return classStr;
+  return classStr.replace(/\bbw_/g, 'bw-');
+};
+
+/**
  * Convert TACO object to HTML string
  * @param {Object|Array|string} taco - TACO object, array of TACOs, or string
  * @param {Object} [options] - Rendering options
@@ -197,10 +216,12 @@ bw.html = function(taco, options = {}) {
         attrStr += ` style="${bw.escapeHTML(styleStr)}"`;
       }
     } else if (key === 'class') {
-      // Handle class as array or string
-      const classStr = Array.isArray(value) 
-        ? value.filter(Boolean).join(' ')
-        : String(value);
+      // Handle class as array or string, normalize bw_ to bw-
+      const classStr = bw.normalizeClass(
+        Array.isArray(value)
+          ? value.filter(Boolean).join(' ')
+          : String(value)
+      );
       if (classStr) {
         attrStr += ` class="${bw.escapeHTML(classStr)}"`;
       }
@@ -212,7 +233,7 @@ bw.html = function(taco, options = {}) {
       attrStr += ` ${key}="${bw.escapeHTML(String(value))}"`;
     }
   }
-  
+
   // Add bw-id as a class if lifecycle hooks present
   if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw-id-')) {
     const id = opts.bw_id || bw.uuid();
@@ -268,10 +289,12 @@ bw.createDOM = function(taco, options = {}) {
       // Apply styles directly
       Object.assign(el.style, value);
     } else if (key === 'class') {
-      // Handle class as array or string
-      const classStr = Array.isArray(value)
-        ? value.filter(Boolean).join(' ')
-        : String(value);
+      // Handle class as array or string, normalize bw_ to bw-
+      const classStr = bw.normalizeClass(
+        Array.isArray(value)
+          ? value.filter(Boolean).join(' ')
+          : String(value)
+      );
       if (classStr) {
         el.className = classStr;
       }
@@ -397,30 +420,194 @@ bw.DOM = function(target, taco, options = {}) {
 };
 
 /**
- * Render a component and return a handle
+ * Compile props into getter/setter functions
+ * @param {Object} handle - Component handle
+ * @param {Object} props - Initial props
+ * @returns {Object} Compiled props object
+ */
+bw.compileProps = function(handle, props = {}) {
+  const compiledProps = {};
+  
+  Object.keys(props).forEach(key => {
+    // Create getter/setter for each prop
+    Object.defineProperty(compiledProps, key, {
+      get() {
+        return handle._props[key];
+      },
+      set(value) {
+        const oldValue = handle._props[key];
+        if (oldValue !== value) {
+          handle._props[key] = value;
+          // Trigger update if prop changed
+          if (handle.onPropChange) {
+            handle.onPropChange(key, value, oldValue);
+          }
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+  });
+  
+  return compiledProps;
+};
+
+/**
+ * Render a component and return an enhanced handle
  * @param {Object} taco - TACO object
  * @param {Object} options - Render options
- * @returns {Object} Component handle
+ * @returns {Object} Component handle with compiled props
  */
 bw.renderComponent = function(taco, options = {}) {
   const element = bw.createDOM(taco, options);
   
-  // Return basic handle
-  return {
+  // Enhanced handle with prop compilation
+  const handle = {
     element,
-    state: taco.o?.state || {},
-    update: function(newProps) {
-      // Basic update - replace content
-      const newTaco = { ...taco, ...newProps };
-      const newElement = bw.createDOM(newTaco, options);
-      element.replaceWith(newElement);
-      this.element = newElement;
+    taco,
+    _props: { ...taco.a },  // Store props internally
+    _state: taco.o?.state || {},
+    _children: {},  // Store child component references
+    
+    // Get compiled props with getters/setters
+    get props() {
+      if (!this._compiledProps) {
+        this._compiledProps = bw.compileProps(this, this._props);
+      }
+      return this._compiledProps;
     },
-    destroy: function() {
+    
+    /**
+     * Query all matching elements within this component
+     * @param {string} selector - CSS selector
+     * @returns {NodeList} Matching elements
+     */
+    $(selector) {
+      return this.element.querySelectorAll(selector);
+    },
+    
+    /**
+     * Query the first matching element within this component
+     * @param {string} selector - CSS selector
+     * @returns {Element|null} First matching element or null
+     */
+    $first(selector) {
+      return this.element.querySelector(selector);
+    },
+    
+    /**
+     * Update component with new props and re-render in place
+     * @param {Object} newProps - Properties to merge into current props
+     * @returns {Object} this handle (for chaining)
+     */
+    update(newProps) {
+      // Update internal props
+      Object.assign(this._props, newProps);
+      
+      // Rebuild TACO with new props
+      const newTaco = { ...this.taco, a: { ...this.taco.a, ...newProps } };
+      const newElement = bw.createDOM(newTaco, options);
+      
+      // Replace in DOM
+      this.element.replaceWith(newElement);
+      this.element = newElement;
+      this.taco = newTaco;
+      
+      return this;
+    },
+    
+    /**
+     * Re-render the component from its current TACO, replacing the DOM element
+     * @returns {Object} this handle (for chaining)
+     */
+    render() {
+      const newElement = bw.createDOM(this.taco, options);
+      this.element.replaceWith(newElement);
+      this.element = newElement;
+      return this;
+    },
+    
+    /**
+     * Called when a compiled prop value changes. Override to customize behavior.
+     * Default implementation triggers a full re-render.
+     * @param {string} key - Property name that changed
+     * @param {*} newValue - New property value
+     * @param {*} oldValue - Previous property value
+     */
+    onPropChange(key, newValue, oldValue) {
+      // Auto re-render on prop change by default
+      this.render();
+    },
+    
+    // State management
+    get state() {
+      return this._state;
+    },
+    
+    set state(newState) {
+      this._state = newState;
+      this.render();
+    },
+    
+    /**
+     * Merge state updates and re-render the component
+     * @param {Object} updates - State properties to merge
+     * @returns {Object} this handle (for chaining)
+     */
+    setState(updates) {
+      Object.assign(this._state, updates);
+      this.render();
+      return this;
+    },
+
+    /**
+     * Register a child component under a name for later retrieval
+     * @param {string} name - Child name key
+     * @param {Object} component - Child component handle
+     * @returns {Object} this handle (for chaining)
+     */
+    addChild(name, component) {
+      this._children[name] = component;
+      return this;
+    },
+    
+    /**
+     * Retrieve a registered child component by name
+     * @param {string} name - Child name key
+     * @returns {Object|undefined} Child component handle
+     */
+    getChild(name) {
+      return this._children[name];
+    },
+
+    /**
+     * Destroy this component and all registered children
+     *
+     * Calls destroy() recursively on children, runs bw.cleanup(),
+     * removes the element from DOM, and clears all internal references.
+     */
+    destroy() {
+      // Destroy children first
+      Object.values(this._children).forEach(child => {
+        if (child && child.destroy) child.destroy();
+      });
+      
+      // Clean up this component
       bw.cleanup(this.element);
       this.element.remove();
+      
+      // Clear references
+      this._children = {};
+      this._props = {};
+      this._state = {};
+      this._compiledProps = null;
     }
   };
+  
+  // Store handle reference on element
+  element._bwHandle = handle;
+  
+  return handle;
 };
 
 /**
@@ -628,11 +815,63 @@ bw.loadDefaultStyles = function(options = {}) {
 };
 
 /**
- * Get theme configuration
+ * Get current theme configuration (deep copy)
  * @returns {Object} - Theme object
  */
 bw.getTheme = function() {
-  return { ...theme };
+  return JSON.parse(JSON.stringify(theme));
+};
+
+/**
+ * Set theme overrides and optionally re-inject CSS
+ * @param {Object} overrides - Partial theme object to merge
+ * @param {Object} [options] - Options
+ * @param {boolean} [options.inject=true] - Whether to re-inject CSS (browser only)
+ * @returns {Object} - Updated theme
+ */
+bw.setTheme = function(overrides, options = {}) {
+  const { inject = true } = options;
+  updateTheme(overrides);
+
+  // Update CSS custom properties if colors changed and we're in browser
+  if (inject && !bw._isNode && overrides.colors) {
+    const root = document.documentElement;
+    for (const [name, value] of Object.entries(overrides.colors)) {
+      root.style.setProperty('--bw-' + name, value);
+    }
+  }
+
+  return bw.getTheme();
+};
+
+/**
+ * Toggle dark mode on/off
+ * Adds/removes 'bw-dark' class on <html> and injects dark mode CSS
+ * @param {boolean} [force] - Force dark (true) or light (false). Omit to toggle.
+ * @returns {boolean} - Whether dark mode is now active
+ */
+bw.toggleDarkMode = function(force) {
+  const isDark = force !== undefined ? force : !theme.darkMode;
+  theme.darkMode = isDark;
+
+  if (!bw._isNode) {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add('bw-dark');
+      // Inject dark mode styles if not already present
+      if (!document.getElementById('bw-dark-styles')) {
+        const darkCSS = bw.css(getDarkModeStyles());
+        const styleEl = document.createElement('style');
+        styleEl.id = 'bw-dark-styles';
+        styleEl.textContent = darkCSS;
+        document.head.appendChild(styleEl);
+      }
+    } else {
+      root.classList.remove('bw-dark');
+    }
+  }
+
+  return isDark;
 };
 
 // ===================================================================================
@@ -1006,7 +1245,17 @@ bw.htmlTable = function(data, opts = {}) {
   return html;
 };
 
-// Helper for attributes to string conversion
+/**
+ * Convert an attributes object to an HTML attribute string
+ *
+ * Handles boolean attributes (key only), null/undefined/false (skipped),
+ * and regular string values (HTML-escaped). Used internally by bw.htmlTable()
+ * and bw.htmlTabs().
+ *
+ * @param {Object} attrs - Attribute key-value pairs
+ * @returns {string} HTML attribute string with leading space, or empty string
+ * @private
+ */
 bw._attrsToStr = function(attrs) {
   if (!attrs || typeof attrs !== "object") return "";
   
@@ -1320,6 +1569,104 @@ bw.repeatUntil = function(testFn, successFn, failFn, delay = 250, maxReps = 10, 
   return intervalID;
 };
 
+// ===================================================================================
+// File I/O Functions - Works in both Node.js and browser
+// ===================================================================================
+
+/**
+ * Save data to a file (works in both Node.js and browser)
+ * @param {string} fname - Filename to save as
+ * @param {*} data - Data to save
+ */
+bw.saveClientFile = function(fname, data) {
+  if (bw.isNodeJS()) {
+    // Node.js environment
+    const fs = require("fs");
+    fs.writeFile(fname, data, function(err) {
+      if (err) {
+        console.error("Error saving file:", err);
+      }
+    });
+  } else {
+    // Browser environment
+    const blob = new Blob([data], { type: "application/octet-stream" });
+    const url = window.URL.createObjectURL(blob);
+    const a = bw.createDOM({
+      t: 'a',
+      a: { 
+        href: url, 
+        download: fname,
+        style: 'display: none'
+      }
+    });
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+};
+
+/**
+ * Save data as JSON file
+ * @param {string} fname - Filename to save as
+ * @param {*} data - Data to save as JSON
+ */
+bw.saveClientJSON = function(fname, data) {
+  bw.saveClientFile(fname, JSON.stringify(data, null, 2));
+};
+
+/**
+ * Copy text to clipboard
+ * @param {string} text - Text to copy
+ * @returns {Promise} - Promise that resolves when copy is complete
+ */
+bw.copyToClipboard = function(text) {
+  // Modern clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  
+  // Fallback for older browsers
+  return new Promise((resolve, reject) => {
+    const textarea = bw.createDOM({
+      t: 'textarea',
+      a: {
+        value: text,
+        style: {
+          position: 'fixed',
+          top: '-999px',
+          left: '-999px',
+          width: '2em',
+          height: '2em',
+          padding: 0,
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          background: 'transparent'
+        }
+      }
+    });
+    
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    try {
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      if (successful) {
+        resolve();
+      } else {
+        reject(new Error('Copy command failed'));
+      }
+    } catch (err) {
+      document.body.removeChild(textarea);
+      reject(err);
+    }
+  });
+};
+
 /**
  * Create a sortable HTML table from data
  * @param {Object} config - Table configuration
@@ -1447,9 +1794,24 @@ bw.makeTable = function(config) {
 };
 
 /**
- * Create a responsive data table with built-in features
+ * Create a responsive data table with title and optional wrapper
+ *
+ * Wraps bw.makeTable() output in a responsive container div.
+ * Adds an optional title heading above the table.
+ *
  * @param {Object} config - Table configuration
- * @returns {Object} - TACO object for table with wrapper
+ * @param {string} [config.title] - Table title heading
+ * @param {Array<Object>} config.data - Array of row objects
+ * @param {Array<Object>} [config.columns] - Column definitions
+ * @param {string} [config.className="table table-striped table-hover"] - Table CSS class
+ * @param {boolean} [config.responsive=true] - Wrap table in responsive overflow div
+ * @returns {Object} TACO object for table with wrapper
+ * @example
+ * const table = bw.makeDataTable({
+ *   title: "Users",
+ *   data: [{ name: "Alice", role: "Admin" }],
+ *   responsive: true
+ * });
  */
 bw.makeDataTable = function(config) {
   const {

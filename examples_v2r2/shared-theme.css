@@ -1,0 +1,467 @@
+/* ==========================================================
+   Bitwrench Examples - Shared Theme
+   Site-wide design tokens, layout, and dark mode support.
+   Include this in every example page AFTER bitwrench.css.
+   ========================================================== */
+
+/* ---- Design Tokens ---- */
+:root {
+  --bw-teal: #006666;
+  --bw-teal-dark: #004d4d;
+  --bw-teal-light: #e0f2f1;
+  --bw-teal-bg: #f0faf9;
+
+  --bw-page-bg: #eee;
+  --bw-card-bg: #ffffff;
+  --bw-card-border: #d8d8d8;
+  --bw-card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+  --bw-text: #1a1a1a;
+  --bw-text-secondary: #555;
+  --bw-text-muted: #888;
+
+  --bw-header-bg: var(--bw-teal);
+  --bw-header-text: #ffffff;
+
+  --bw-code-bg: #1e293b;
+  --bw-code-text: #e2e8f0;
+
+  --bw-radius: 8px;
+  --bw-content-max: 1200px;
+  --bw-content-wide: 1600px;
+
+  --bw-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bw-font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+}
+
+/* ---- Dark Mode ---- */
+[data-theme="dark"] {
+  --bw-page-bg: #121212;
+  --bw-card-bg: #1e1e1e;
+  --bw-card-border: #333;
+  --bw-card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+
+  --bw-text: #e0e0e0;
+  --bw-text-secondary: #aaa;
+  --bw-text-muted: #777;
+
+  --bw-teal-light: #1a3a3a;
+  --bw-teal-bg: #162828;
+
+  --bw-code-bg: #0f172a;
+  --bw-code-text: #cbd5e1;
+}
+
+/* ---- Site Navigation ---- */
+.bw-site-nav {
+  background: #1a1a1a;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid #333;
+}
+.bw-site-nav-inner {
+  max-width: var(--bw-content-wide);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 64px;
+}
+.bw-site-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.bw-site-nav-logo {
+  height: 28px;
+  filter: brightness(0) invert(1);
+}
+.bw-site-nav-ver {
+  font-size: 0.6875rem;
+  color: #666;
+  align-self: flex-end;
+  margin-bottom: 3px;
+}
+.bw-site-nav-links {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.bw-site-nav-link {
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  padding: 0.7rem 0.85rem;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.12s, background 0.12s;
+}
+.bw-site-nav-link:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+.bw-site-nav-link.active {
+  color: #fff;
+  background: var(--bw-teal);
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+/* Right-side controls (dark toggle) */
+.bw-site-nav-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.bw-site-nav-toggle {
+  background: transparent;
+  border: 1px solid #444;
+  color: rgba(255,255,255,0.5);
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.bw-site-nav-toggle:hover {
+  border-color: #666;
+  color: #fff;
+}
+/* Hamburger menu button - hidden on desktop */
+.bw-site-nav-hamburger {
+  display: none;
+  background: transparent;
+  border: 1px solid #444;
+  color: rgba(255,255,255,0.7);
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.bw-site-nav-hamburger:hover {
+  border-color: #666;
+  color: #fff;
+}
+/* Mobile menu overlay */
+.bw-site-nav-mobile {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  padding: 0.5rem 0;
+  z-index: 999;
+}
+.bw-site-nav-mobile.open {
+  display: block;
+}
+.bw-site-nav-mobile a {
+  display: block;
+  padding: 0.6rem 1.5rem;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  transition: background 0.12s, color 0.12s;
+}
+.bw-site-nav-mobile a:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.bw-site-nav-mobile a.active {
+  color: #fff;
+  background: var(--bw-teal);
+}
+
+@media (max-width: 900px) {
+  .bw-site-nav-links { display: none; }
+  .bw-site-nav-hamburger { display: flex; }
+}
+@media (max-width: 480px) {
+  .bw-site-nav-inner { padding: 0 0.75rem; gap: 0.75rem; }
+  .bw-site-nav-logo { height: 22px; }
+}
+
+/* ---- Base Reset ---- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--bw-font);
+  background: var(--bw-page-bg);
+  color: var(--bw-text);
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Page Header ---- */
+.page-header {
+  background: var(--bw-header-bg);
+  color: var(--bw-header-text);
+  padding: 2rem 1.5rem 1.75rem;
+}
+.page-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: inherit;
+}
+.page-header .subtitle {
+  opacity: 0.8;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ---- Content Container ---- */
+.content-container {
+  max-width: var(--bw-content-max);
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 2.5rem;
+}
+.content-container.wide {
+  max-width: var(--bw-content-wide);
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* ---- Card / Demo Section ---- */
+.demo-section {
+  background: var(--bw-card-bg);
+  border: 1px solid var(--bw-card-border);
+  border-radius: var(--bw-radius);
+  box-shadow: var(--bw-card-shadow);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.demo-section > h2,
+.demo-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--bw-text);
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: var(--bw-teal-bg);
+  border-bottom: 1px solid var(--bw-card-border);
+}
+
+.demo-content {
+  padding: 1.5rem;
+}
+
+.demo-description {
+  color: var(--bw-text-secondary);
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+}
+
+/* ---- Result / Code Tabs ---- */
+.demo-tabs {
+  border: 1px solid var(--bw-card-border);
+  border-radius: var(--bw-radius);
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.demo-tab-bar {
+  display: flex;
+  background: var(--bw-page-bg);
+  border-bottom: 1px solid var(--bw-card-border);
+}
+.demo-tab-btn {
+  padding: 0.6rem 1.25rem;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--bw-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.demo-tab-btn:hover {
+  color: var(--bw-text);
+  background: rgba(0,0,0,0.03);
+}
+.demo-tab-btn.active {
+  color: var(--bw-teal);
+  border-bottom-color: var(--bw-teal);
+  background: var(--bw-card-bg);
+}
+.demo-tab-panel {
+  display: none;
+  padding: 1.5rem;
+  background: var(--bw-card-bg);
+}
+.demo-tab-panel.active {
+  display: block;
+}
+.demo-tab-panel.code-panel {
+  padding: 0;
+  position: relative;
+}
+.demo-tab-panel.code-panel pre {
+  margin: 0;
+  padding: 1.25rem;
+  background: var(--bw-code-bg);
+  color: var(--bw-code-text);
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  font-family: var(--bw-font-mono);
+}
+.copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.12);
+  color: #aaa;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+  font-family: inherit;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.22); color: #fff; }
+
+/* ---- bitwrench tab overrides for better contrast ---- */
+.bw-nav-tabs {
+  border-bottom: 2px solid var(--bw-card-border);
+  padding: 0;
+  background: var(--bw-page-bg);
+}
+.bw-nav-tabs .bw-nav-link {
+  padding: 0.6rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--bw-text-secondary);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.bw-nav-tabs .bw-nav-link:hover {
+  color: var(--bw-text);
+}
+.bw-nav-tabs .bw-nav-link.active {
+  color: var(--bw-teal);
+  border: none;
+  border-bottom: 2px solid var(--bw-teal);
+  margin-bottom: -2px;
+  background: transparent;
+}
+.bw-tab-content {
+  padding: 1.25rem;
+}
+
+/* ---- Code blocks ---- */
+pre {
+  margin: 0;
+  border-radius: 6px;
+  background: var(--bw-code-bg);
+  position: relative;
+}
+pre code {
+  display: block;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: var(--bw-font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--bw-code-text);
+  background: transparent;
+  border: none;
+}
+
+/* ---- Inline code ---- */
+code:not(pre code) {
+  background: var(--bw-teal-light);
+  color: var(--bw-teal-dark);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  font-size: 0.85em;
+  font-family: var(--bw-font-mono);
+}
+[data-theme="dark"] code:not(pre code) {
+  background: #1a3636;
+  color: #80cbc4;
+}
+
+/* ---- Links ---- */
+a { color: var(--bw-teal); }
+a:hover { color: var(--bw-teal-dark); }
+
+/* ---- Callout boxes ---- */
+.callout {
+  padding: 1rem 1.25rem;
+  border-radius: var(--bw-radius);
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+.callout h4 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.callout p { margin: 0.25rem 0; }
+.callout ul, .callout ol { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+.callout li { margin: 0.25rem 0; }
+
+.callout-concept {
+  background: var(--bw-teal-light);
+  border-left: 4px solid var(--bw-teal);
+}
+.callout-concept h4 { color: var(--bw-teal-dark); }
+
+.callout-tip {
+  background: #fff8e1;
+  border-left: 4px solid #f9a825;
+}
+.callout-tip h4 { color: #e65100; }
+[data-theme="dark"] .callout-tip { background: #2a2200; }
+
+.callout-warning {
+  background: #fce4ec;
+  border-left: 4px solid #c62828;
+}
+.callout-warning h4 { color: #c62828; }
+
+/* (dark mode toggle is .bw-site-nav-toggle, styled above) */
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .page-header { padding: 1.5rem 1rem; }
+  .page-header h1 { font-size: 1.35rem; }
+  .content-container { padding: 1rem 0.75rem 2rem; }
+  .demo-content { padding: 1rem; }
+  .demo-tab-panel { padding: 1rem; }
+  .bw-tab-content { padding: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .demo-section > h2,
+  .demo-section-title { padding: 0.75rem 1rem; font-size: 1rem; }
+  .demo-content { padding: 0.75rem; }
+}

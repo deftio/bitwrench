@@ -3,966 +3,804 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench v2 - Introduction</title>
+  <title>Bitwrench - Fundamentals</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      line-height: 1.5;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-    
-    .page-header {
-      background: white;
-      border-bottom: 1px solid #e9ecef;
-      padding: 1.5rem 0;
-      margin-bottom: 2rem;
-    }
-    
-    .page-header h1 {
-      margin: 0;
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #212529;
-    }
-    
-    .page-header .subtitle {
-      color: #6c757d;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-    }
-    
-    .concept-section {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 2rem;
+    /* Section cards */
+    .section {
+      background: var(--bw-card-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      box-shadow: var(--bw-card-shadow);
+      margin-bottom: 1.5rem;
       overflow: hidden;
     }
-    
-    .concept-header {
-      background: #f8f9fa;
-      padding: 1.5rem;
-      border-bottom: 1px solid #e9ecef;
+    .section-head {
+      background: var(--bw-teal-bg);
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--bw-card-border);
     }
-    
-    .concept-header h2 {
+    .section-head h2 {
       margin: 0;
-      font-size: 1.75rem;
-      color: #212529;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--bw-text);
     }
-    
-    .concept-header .tagline {
-      color: #6c757d;
-      margin-top: 0.5rem;
-      font-size: 1.1rem;
+    .section-head .tagline {
+      color: var(--bw-text-secondary);
+      margin-top: 0.25rem;
+      font-size: 0.9375rem;
     }
-    
-    .concept-content {
-      padding: 2rem;
-    }
-    
-    .concept-box {
-      background: #f8f9fa;
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
+    .section-body {
       padding: 1.5rem;
-      margin: 1rem 0;
     }
-    
-    .concept-box h3 {
-      margin-top: 0;
-      color: #495057;
+    .section-body > p {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: var(--bw-text);
+      margin: 0 0 1rem;
     }
-    
-    .code-example {
-      background: #f6f8fa;
-      border: 1px solid #e1e4e8;
-      border-radius: 6px;
-      padding: 1rem;
-      margin: 1rem 0;
-      position: relative;
-    }
-    
-    .code-example h4 {
-      margin: 0 0 0.5rem 0;
-      color: #24292e;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    pre {
-      margin: 0;
-      background: transparent;
-      border: none;
-    }
-    
-    code {
-      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-      font-size: 0.875rem;
-      line-height: 1.5;
-    }
-    
+    .section-body > p:last-child { margin-bottom: 0; }
+
+    /* Side-by-side code comparisons (2-col) */
     .side-by-side {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
       margin: 1rem 0;
     }
-    
+    @media (max-width: 768px) {
+      .side-by-side { grid-template-columns: 1fr; }
+    }
+
+    /* Three-column layout: bitwrench | HTML | rendered */
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    @media (max-width: 1024px) {
+      .three-col { grid-template-columns: 1fr; }
+    }
+
+    /* Dark code blocks with labels */
+    .code-block {
+      background: var(--bw-code-bg);
+      border-radius: 6px;
+      padding: 1.25rem;
+      position: relative;
+    }
+    .code-block pre { margin: 0; background: transparent; border: none; border-radius: 0; }
+    .code-block code { color: var(--bw-code-text); font-size: 0.8125rem; line-height: 1.6; }
+    .code-label {
+      margin: 0 0 0.5rem 0;
+      color: var(--bw-code-text);
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.5;
+      font-weight: 600;
+    }
+
+    /* Callout boxes */
+    .insight {
+      background: var(--bw-teal-light);
+      border-left: 4px solid var(--bw-teal);
+      border-radius: 0 var(--bw-radius) var(--bw-radius) 0;
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+    }
+    .insight h4 {
+      margin: 0 0 0.5rem;
+      color: var(--bw-teal-dark);
+      font-size: 0.95rem;
+    }
+    .insight p { margin: 0.25rem 0; font-size: 0.9375rem; line-height: 1.6; }
+    .insight code { background: rgba(0,102,102,0.12); color: var(--bw-teal-dark); padding: 0.1em 0.35em; border-radius: 3px; font-size: 0.85em; }
+
+    /* Feature grid */
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1rem;
-      margin: 2rem 0;
-    }
-    
-    .feature-card {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 1.5rem;
-      text-align: center;
-    }
-    
-    .feature-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-    
-    .feature-card h4 {
-      margin: 0 0 0.5rem 0;
-      color: #212529;
-    }
-    
-    .feature-card p {
-      margin: 0;
-      color: #6c757d;
-      font-size: 0.9rem;
-    }
-    
-    .comparison-table {
-      width: 100%;
-      border-collapse: collapse;
       margin: 1rem 0;
     }
-    
-    .comparison-table th,
-    .comparison-table td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid #dee2e6;
+    .feature-card {
+      background: var(--bw-teal-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      padding: 1.25rem;
     }
-    
-    .comparison-table th {
-      background: #f8f9fa;
-      font-weight: 600;
-      color: #495057;
-    }
-    
-    .comparison-table tr:hover {
-      background: #f8f9fa;
-    }
-    
-    .highlight {
-      background: #fff3cd;
-      padding: 0.2rem 0.4rem;
-      border-radius: 3px;
-      font-weight: 500;
-    }
-    
+    .feature-card h4 { margin: 0 0 0.25rem; color: var(--bw-text); font-size: 0.95rem; }
+    .feature-card p { margin: 0; color: var(--bw-text-secondary); font-size: 0.875rem; line-height: 1.5; }
+
+    /* Live demo result area */
     .demo-result {
-      border: 2px dashed #dee2e6;
-      border-radius: 8px;
+      border: 2px dashed var(--bw-card-border);
+      border-radius: var(--bw-radius);
       padding: 1.5rem;
       margin-top: 1rem;
     }
-    
+
+    /* Copy button */
     .copy-btn {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      padding: 0.25rem 0.625rem; font-size: 0.6875rem;
+      background: rgba(255,255,255,0.12); color: #aaa;
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+      cursor: pointer; font-family: inherit;
     }
-    
-    @media (max-width: 768px) {
-      .side-by-side {
-        grid-template-columns: 1fr;
-      }
-      
-      .page-header h1 {
-        font-size: 2rem;
-      }
-    }
+    .copy-btn:hover { background: rgba(255,255,255,0.22); color: #fff; }
   </style>
 </head>
 <body>
-  <!-- Shared Navigation -->
   <div id="example-nav"></div>
-  
-  <!-- Page Header -->
+
   <div class="page-header">
-    <div class="container">
-      <h1>Intro to Bitwrench</h1>
-      <div class="subtitle">Version: <span id="version"></span></div>
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Fundamentals</h1>
+      <p class="subtitle">What bitwrench is, why it exists, and how it works.</p>
     </div>
   </div>
-  
-  <!-- Main Content -->
-  <div class="container">
-    <!-- Introduction -->
-    <div class="concept-section">
-      <div class="concept-header">
-        <h2>Introduction</h2>
-        <div class="tagline">A JavaScript UI Library</div>
-      </div>
-      <div class="concept-content">
-        <p>
-          Bitwrench is a JavaScript library that represents HTML and CSS as plain JavaScript objects. 
-          Instead of writing HTML strings, you create UI using data structures called TACO (for HTML) 
-          and SRMC (for CSS). This approach requires no compilers, no JSX, no TSX, and no Babel - 
-          just pure JavaScript that runs directly in the browser.
-        </p>
-        
-        <p>
-          The library provides a straightforward way to create dynamic user interfaces by treating 
-          UI elements as data that can be easily manipulated and updated.
-        </p>
-        
-        <h3>Key Features</h3>
-        <ul>
-          <li>No build step required - write JavaScript, run JavaScript</li>
-          <li>HTML elements are represented as TACO objects</li>
-          <li>CSS styles are represented as SRMC objects</li>
-          <li>Built-in reactivity and dynamic templating</li>
-          <li>Direct DOM manipulation for efficient updates</li>
-          <li>Component system with lifecycle hooks</li>
-          <li>Works in modern browsers without transpilation</li>
-        </ul>
-      </div>
-    </div>
 
-    <!-- TACO Section -->
-    <div class="concept-section">
-      <div class="concept-header">
-        <h2>TACO Format</h2>
-        <div class="tagline">Tag - Attributes - Content - Options</div>
-      </div>
-      <div class="concept-content">
-        <p>
-          TACO (Tag-Attributes-Content-Options) is how Bitwrench represents HTML elements as JavaScript objects. 
-          Each HTML element becomes a JavaScript object with up to four properties:
-        </p>
-        
-        <div class="concept-box">
-          <h3>The TACO Structure</h3>
-          <pre><code>{
-  t: "tag",        // HTML tag name (required)
-  a: { ... },      // Attributes object (optional)
-  c: "content",    // Content: string, array, or nested TACOs (optional)
-  o: { ... }       // Options: lifecycle, state, etc. (optional)
-}</code></pre>
-        </div>
+  <div class="content-container wide">
 
-        <h3>Basic Examples</h3>
-        
-        <div class="side-by-side">
-          <div class="code-example">
-            <h4>Simple Text</h4>
-            <pre><code>// TACO
-{
-  t: "p",
-  c: "Hello, World!"
-}</code></pre>
-          </div>
-          <div class="code-example">
-            <h4>Result HTML</h4>
-            <pre><code>&lt;p&gt;Hello, World!&lt;/p&gt;</code></pre>
-          </div>
-        </div>
+    <!-- ====== Section 1: What Is Bitwrench? ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>What Is Bitwrench?</h2>
+      </div>
+      <div class="section-body">
+        <p>
+          Bitwrench is a JavaScript library for building web pages and applications.
+          It lets you describe your user interface using plain JavaScript objects instead
+          of writing HTML strings. You hand bitwrench an object, and it turns it into
+          real elements on the page.
+        </p>
 
         <div class="side-by-side">
-          <div class="code-example">
-            <h4>With Attributes</h4>
-            <pre><code>// TACO
-{
-  t: "div",
-  a: { 
-    class: "card",
-    id: "main-card"
-  },
-  c: "Card content"
-}</code></pre>
+          <div class="code-block">
+            <div class="code-label">What you write (JavaScript)</div>
+            <pre><code>bw.DOM('#app', {
+  t: 'div',
+  c: [
+    { t: 'h1', c: 'Hello!' },
+    { t: 'p', c: 'Built with bitwrench.' }
+  ]
+});</code></pre>
           </div>
-          <div class="code-example">
-            <h4>Result HTML</h4>
-            <pre><code>&lt;div class="card" id="main-card"&gt;
-  Card content
+          <div class="code-block">
+            <div class="code-label">What appears on the page (HTML)</div>
+            <pre><code>&lt;div&gt;
+  &lt;h1&gt;Hello!&lt;/h1&gt;
+  &lt;p&gt;Built with bitwrench.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
           </div>
         </div>
 
+        <p>
+          That's it. No special syntax to learn, no compiler to set up, no build step to
+          configure. You write JavaScript, bitwrench renders it. If you know basic
+          JavaScript (objects, arrays, functions), you already know enough to use bitwrench.
+        </p>
+      </div>
+    </div>
+
+    <!-- ====== Section 2: The Idea Behind Bitwrench ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>The Idea Behind Bitwrench</h2>
+        <div class="tagline">UI as data</div>
+      </div>
+      <div class="section-body">
+        <p>
+          Every HTML element is really just an object: it has a tag name, some attributes,
+          and some content. JavaScript has a native notation for exactly this kind of
+          structure — object literals. Bitwrench uses that observation directly: describe
+          your DOM as plain JavaScript objects, and let the library handle the rendering.
+        </p>
+
+        <p>
+          Once your UI is data, you can do everything JavaScript does well:
+        </p>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4>Transform</h4>
+            <p>Use <code>.map()</code> to turn an array of records into a list of elements.
+               Use <code>.filter()</code> to show a subset. The data drives the UI directly.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Compose</h4>
+            <p>A function that returns a bitwrench object is a component. No special syntax,
+               no registration — just functions calling functions.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Serialize</h4>
+            <p>Bitwrench objects are JSON-compatible. A Python, Go, or Rust backend can emit
+               JSON, and bitwrench renders it in the browser. Any language becomes a UI language.</p>
+          </div>
+          <div class="feature-card">
+            <h4>Inspect</h4>
+            <p>Because it's plain data, you can <code>console.log()</code> your UI, diff it,
+               store it, send it over a network, or test it without a browser.</p>
+          </div>
+        </div>
+
+        <div class="insight">
+          <h4>Where this approach shines</h4>
+          <p>
+            <strong>Prototyping</strong> — no project setup, no build tools. Include one script tag and go.
+          </p>
+          <p>
+            <strong>Embedded devices</strong> — ESP32, Raspberry Pi, and other IoT boards can serve
+            bitwrench objects as JSON. The device sends data; the browser renders the UI.
+          </p>
+          <p>
+            <strong>Polyglot backends</strong> — any server that can produce JSON can generate
+            bitwrench UIs. No JavaScript templating engine required on the server.
+          </p>
+          <p>
+            <strong>Learning and teaching</strong> — the gap between "I know JavaScript objects" and
+            "I can build a web UI" is one function call: <code>bw.DOM()</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== Section 3: The TACO Format ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>The TACO Format</h2>
+        <div class="tagline">Tag - Attributes - Content - Options</div>
+      </div>
+      <div class="section-body">
+        <p>
+          TACO stands for <strong>T</strong>ag, <strong>A</strong>ttributes,
+          <strong>C</strong>ontent, <strong>O</strong>ptions. It's a plain JavaScript
+          object that describes an HTML element. Every HTML element has a tag name,
+          some attributes, and some content - a TACO object mirrors this structure exactly.
+        </p>
+
+        <div class="code-block" style="margin: 1rem 0;">
+          <div class="code-label">The TACO structure</div>
+          <pre><code>{
+  t: 'div',            // Tag: what kind of element (div, p, button, etc.)
+  a: { class: 'card' }, // Attributes: id, class, style, event handlers
+  c: 'Hello world',    // Content: text, another TACO, or an array of TACOs
+  o: { ... }           // Options: lifecycle hooks, state (advanced, optional)
+}</code></pre>
+        </div>
+
+        <p>
+          Only <code>t</code> (tag) is required. Everything else is optional. Let's
+          build up from simple examples:
+        </p>
+
+        <h3>A paragraph</h3>
         <div class="side-by-side">
-          <div class="code-example">
-            <h4>Nested Elements</h4>
-            <pre><code>// TACO
-{
-  t: "div",
-  a: { class: "card" },
+          <div class="code-block">
+            <div class="code-label">TACO</div>
+            <pre><code>{ t: 'p', c: 'Hello, world!' }</code></pre>
+          </div>
+          <div class="code-block">
+            <div class="code-label">Resulting HTML</div>
+            <pre><code>&lt;p&gt;Hello, world!&lt;/p&gt;</code></pre>
+          </div>
+        </div>
+
+        <h3>An element with attributes</h3>
+        <div class="side-by-side">
+          <div class="code-block">
+            <div class="code-label">TACO</div>
+            <pre><code>{
+  t: 'a',
+  a: {
+    href: 'https://example.com',
+    class: 'link',
+    target: '_blank'
+  },
+  c: 'Visit Example'
+}</code></pre>
+          </div>
+          <div class="code-block">
+            <div class="code-label">Resulting HTML</div>
+            <pre><code>&lt;a href="https://example.com"
+   class="link"
+   target="_blank"&gt;
+  Visit Example
+&lt;/a&gt;</code></pre>
+          </div>
+        </div>
+
+        <h3>Nested elements</h3>
+        <p>
+          Content (<code>c</code>) can be a string, another TACO object, or an array
+          of TACOs. This is how you nest elements inside each other:
+        </p>
+        <div class="side-by-side">
+          <div class="code-block">
+            <div class="code-label">TACO</div>
+            <pre><code>{
+  t: 'div',
+  a: { class: 'card' },
   c: [
-    { t: "h3", c: "Title" },
-    { t: "p", c: "Content" },
-    { 
-      t: "button",
-      a: { onclick: () => alert('Click!') },
-      c: "Click Me"
-    }
+    { t: 'h3', c: 'Card Title' },
+    { t: 'p', c: 'Some content.' },
+    { t: 'button', c: 'Click me' }
   ]
 }</code></pre>
           </div>
-          <div class="code-example">
-            <h4>Result HTML</h4>
+          <div class="code-block">
+            <div class="code-label">Resulting HTML</div>
             <pre><code>&lt;div class="card"&gt;
-  &lt;h3&gt;Title&lt;/h3&gt;
-  &lt;p&gt;Content&lt;/p&gt;
-  &lt;button&gt;Click Me&lt;/button&gt;
+  &lt;h3&gt;Card Title&lt;/h3&gt;
+  &lt;p&gt;Some content.&lt;/p&gt;
+  &lt;button&gt;Click me&lt;/button&gt;
 &lt;/div&gt;</code></pre>
           </div>
         </div>
 
-        <h3>Advanced Features</h3>
-        
-        <div class="code-example">
-          <h4>Options Object - Lifecycle & State</h4>
-          <pre><code>{
-  t: "div",
-  a: { class: "dynamic-component" },
-  c: "I have lifecycle hooks!",
-  o: {
-    // Called when element is added to DOM
-    mounted: (element) => {
-      console.log('Component mounted:', element);
-    },
-    
-    // Called when element is removed
-    unmount: (element) => {
-      console.log('Component unmounting');
-    },
-    
-    // Component state
-    state: {
-      counter: 0,
-      active: true
-    }
-  }
-}</code></pre>
-        </div>
-
-        <h3>Live Demo - Build a Card</h3>
-        <div id="taco-demo"></div>
-      </div>
-    </div>
-
-    <!-- SRMC Section -->
-    <div class="concept-section">
-      <div class="concept-header">
-        <h2>SRMC Format</h2>
-        <div class="tagline">Selector - Rules - Media - Children</div>
-      </div>
-      <div class="concept-content">
+        <h3>Adding interactivity</h3>
         <p>
-          SRMC (Selector-Rules-Media-Children) is how Bitwrench represents CSS as JavaScript objects. 
-          This allows you to generate and manipulate styles dynamically using data structures:
+          Event handlers like <code>onclick</code> go in the attributes object, just
+          like they would in HTML - except they're real JavaScript functions, not strings:
         </p>
-        
-        <div class="concept-box">
-          <h3>The SRMC Structure</h3>
+        <div class="code-block" style="margin: 1rem 0;">
           <pre><code>{
-  s: "selector",    // CSS selector (required)
-  r: { ... },       // CSS rules object (optional)
-  m: "@media ...",  // Media query (optional)
-  c: [ ... ]        // Child SRMC objects (optional)
+  t: 'button',
+  a: {
+    class: 'bw-btn bw-btn-primary',
+    onclick: function() { alert('You clicked!'); }
+  },
+  c: 'Click Me'
 }</code></pre>
         </div>
 
-        <h3>Basic Examples</h3>
-        
-        <div class="side-by-side">
-          <div class="code-example">
-            <h4>Simple Style</h4>
-            <pre><code>// SRMC
-{
-  s: ".button",
-  r: {
-    padding: "10px 20px",
-    backgroundColor: "#007bff",
-    color: "white",
-    borderRadius: "4px"
-  }
-}</code></pre>
-          </div>
-          <div class="code-example">
-            <h4>Result CSS</h4>
-            <pre><code>.button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border-radius: 4px;
-}</code></pre>
-          </div>
+        <div class="insight">
+          <h4>Why this matters</h4>
+          <p>
+            Since a TACO is just a JavaScript object, you can build it with <code>if</code>
+            statements, <code>.map()</code> arrays into lists, spread objects together, pass
+            them as function arguments, store them in variables, and use every tool JavaScript
+            gives you. No special template syntax needed.
+          </p>
         </div>
-
-        <div class="side-by-side">
-          <div class="code-example">
-            <h4>With Media Query</h4>
-            <pre><code>// SRMC
-{
-  s: ".container",
-  r: { maxWidth: "1200px" },
-  m: "@media (max-width: 768px)",
-  c: [{
-    s: ".container",
-    r: { maxWidth: "100%" }
-  }]
-}</code></pre>
-          </div>
-          <div class="code-example">
-            <h4>Result CSS</h4>
-            <pre><code>.container {
-  max-width: 1200px;
-}
-
-@media (max-width: 768px) {
-  .container {
-    max-width: 100%;
-  }
-}</code></pre>
-          </div>
-        </div>
-
-        <h3>Dynamic Theming Example</h3>
-        <div id="srmc-demo"></div>
       </div>
     </div>
 
-    <!-- Comparison Section -->
-    <div class="concept-section">
-      <div class="concept-header">
-        <h2>How It Works</h2>
-        <div class="tagline">Comparing Approaches</div>
+    <!-- ====== Section 4: Rendering ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Rendering TACOs</h2>
+        <div class="tagline">Three ways to turn objects into UI</div>
       </div>
-      <div class="concept-content">
-        <table class="comparison-table">
-          <thead>
-            <tr>
-              <th>Aspect</th>
-              <th>Traditional Approach</th>
-              <th>Bitwrench Approach</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>HTML Creation</strong></td>
-              <td><code>innerHTML = '&lt;div&gt;...&lt;/div&gt;'</code></td>
-              <td><code>bw.DOM(el, { t: 'div', ... })</code></td>
-            </tr>
-            <tr>
-              <td><strong>Event Handling</strong></td>
-              <td>String onclick or addEventListener</td>
-              <td>Direct function references in TACO</td>
-            </tr>
-            <tr>
-              <td><strong>CSS Generation</strong></td>
-              <td>String concatenation</td>
-              <td>SRMC objects with bw.css()</td>
-            </tr>
-            <tr>
-              <td><strong>Build Process</strong></td>
-              <td>Often requires JSX, TSX, or Babel</td>
-              <td>Pure JavaScript, no build step</td>
-            </tr>
-            <tr>
-              <td><strong>Performance</strong></td>
-              <td>HTML parsing overhead</td>
-              <td>Direct DOM manipulation</td>
-            </tr>
-            <tr>
-              <td><strong>Dynamic Updates</strong></td>
-              <td>Replace entire HTML strings</td>
-              <td>Update only changed elements</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <div class="section-body">
+        <p>
+          Bitwrench gives you three functions for turning TACO objects into output,
+          depending on what you need:
+        </p>
 
-    <!-- Practical Examples -->
-    <div class="concept-section">
-      <div class="concept-header">
-        <h2>Using Bitwrench</h2>
-        <div class="tagline">Three Ways to Render</div>
-      </div>
-      <div class="concept-content">
-        <h3>Example: Dynamic Theme Switcher</h3>
-        <div id="practical-demo"></div>
-        
-        <h3>Three Rendering Modes</h3>
         <div class="feature-grid">
           <div class="feature-card">
-            <h4>1. HTML String</h4>
-            <p><code>bw.html(taco)</code></p>
-            <p>Returns HTML string for server-side rendering</p>
+            <h4>bw.DOM(selector, taco)</h4>
+            <p>Renders a TACO into an existing element on the page. This is the most common
+               way to use bitwrench - it replaces the content of the selected element.</p>
           </div>
           <div class="feature-card">
-            <h4>2. DOM Creation</h4>
-            <p><code>bw.createDOM(taco)</code></p>
-            <p>Creates DOM element without mounting</p>
+            <h4>bw.html(taco)</h4>
+            <p>Returns an HTML string. Useful for server-side rendering, email templates,
+               or any time you need HTML as text rather than live DOM elements.</p>
           </div>
           <div class="feature-card">
-            <h4>3. Live Mounting</h4>
-            <p><code>bw.DOM(selector, taco)</code></p>
-            <p>Mounts to DOM with lifecycle hooks</p>
+            <h4>bw.createDOM(taco)</h4>
+            <p>Creates a real DOM element without putting it on the page. Use this when you
+               want to build elements first and insert them later.</p>
+          </div>
+        </div>
+
+        <h3>Live example</h3>
+        <p>This card is rendered live by the code shown beside it:</p>
+        <div id="render-demo"></div>
+      </div>
+    </div>
+
+    <!-- ====== Section 5: The Pattern ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>The Bitwrench Pattern</h2>
+        <div class="tagline">State, Render, Mount</div>
+      </div>
+      <div class="section-body">
+        <p>
+          Interactive applications follow a simple three-step pattern:
+        </p>
+        <ol style="font-size: 0.9375rem; line-height: 1.8; margin: 0.5rem 0 1rem; padding-left: 1.5rem;">
+          <li><strong>State</strong> - a plain JavaScript object holding your data</li>
+          <li><strong>Render</strong> - a function that builds a TACO from that state</li>
+          <li><strong>Mount</strong> - <code>bw.DOM()</code> puts it on the page</li>
+        </ol>
+        <p>
+          When something changes (a button click, new data from a server), you update the
+          state and call render again. Bitwrench replaces the old content with the new.
+          That's the entire architecture.
+        </p>
+
+        <h3>Live example: a counter</h3>
+        <div id="pattern-demo"></div>
+
+        <div class="insight">
+          <h4>No magic</h4>
+          <p>
+            There's no virtual DOM, no reactivity system, no observable patterns.
+            You update a variable and call a function. The simplicity is the point -
+            you can understand the entire flow by reading the code.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== Section 6: Data-Driven UI ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Data-Driven UI</h2>
+        <div class="tagline">JavaScript is the template language</div>
+      </div>
+      <div class="section-body">
+        <p>
+          Because TACOs are JavaScript objects, you can use <code>.map()</code> to turn
+          arrays of data into arrays of elements. This is the most powerful idea in
+          bitwrench - your data drives your UI directly:
+        </p>
+
+        <div class="code-block" style="margin: 1rem 0;">
+          <pre><code>var fruits = ['Apple', 'Banana', 'Cherry'];
+
+bw.DOM('#list', {
+  t: 'ul',
+  c: fruits.map(function(fruit) {
+    return { t: 'li', c: fruit };
+  })
+});</code></pre>
+        </div>
+
+        <p>
+          The list has three items because the array has three elements. Add a fourth
+          element and re-render - you get four items. The data is the source of truth.
+        </p>
+
+        <h3>Live example: a filterable list</h3>
+        <div id="data-demo"></div>
+      </div>
+    </div>
+
+    <!-- ====== Section 7: CSS with bw.css() ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Generating CSS</h2>
+        <div class="tagline">Styles as JavaScript objects too</div>
+      </div>
+      <div class="section-body">
+        <p>
+          Just as TACO represents HTML as objects, bitwrench can generate CSS from
+          JavaScript objects using <code>bw.css()</code>. This lets you create dynamic
+          styles that respond to data:
+        </p>
+
+        <div class="side-by-side">
+          <div class="code-block">
+            <div class="code-label">JavaScript</div>
+            <pre><code>var css = bw.css({
+  '.card': {
+    padding: '1rem',
+    borderRadius: '8px',
+    backgroundColor: '#fff'
+  },
+  '.card h3': {
+    color: '#006666'
+  }
+});
+
+bw.injectCSS(css);</code></pre>
+          </div>
+          <div class="code-block">
+            <div class="code-label">Generated CSS</div>
+            <pre><code>.card {
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.card h3 {
+  color: #006666;
+}</code></pre>
+          </div>
+        </div>
+
+        <p>
+          This is particularly useful for theming - you can define color palettes as
+          variables and generate an entire stylesheet dynamically. See the
+          <a href="03-themes-styling.html">Themes & Styling</a> example for a full demo.
+        </p>
+      </div>
+    </div>
+
+    <!-- ====== Section 8: Where to Go Next ====== -->
+    <div class="section">
+      <div class="section-head">
+        <h2>Next Steps</h2>
+      </div>
+      <div class="section-body">
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4><a href="01-basic-components.html" style="text-decoration: none;">Component Library</a></h4>
+            <p>See all the built-in components: cards, buttons, alerts, tabs, badges, and more.</p>
+          </div>
+          <div class="feature-card">
+            <h4><a href="02-interactive-tables-forms.html" style="text-decoration: none;">Tables & Forms</a></h4>
+            <p>Build sortable data tables and validated forms.</p>
+          </div>
+          <div class="feature-card">
+            <h4><a href="06-tic-tac-toe-tutorial.html" style="text-decoration: none;">Tic Tac Toe Tutorial</a></h4>
+            <p>Build a complete game step by step. The best way to learn bitwrench.</p>
+          </div>
+          <div class="feature-card">
+            <h4><a href="07-framework-comparison.html" style="text-decoration: none;">Framework Comparison</a></h4>
+            <p>See the same tasks implemented in HTML/JS, React, Vue, Svelte, and bitwrench side by side.</p>
           </div>
         </div>
       </div>
     </div>
-  </div>
+
+  </div><!-- /content-container -->
 
   <script>
-    // Mount the shared navigation
     mountExampleNav('#example-nav', '00-taco-srmc-fundamentals.html');
-    
-    // Show version
-    document.getElementById('version').textContent = bw.version || '2.0.0';
-    
-    // Helper for copy buttons
-    function addCopyButton(element, text) {
-      const btn = document.createElement('button');
-      btn.className = 'copy-btn';
-      btn.textContent = 'Copy';
-      btn.onclick = () => {
-        navigator.clipboard.writeText(text).then(() => {
-          btn.textContent = 'Copied!';
-          btn.style.background = '#28a745';
-          setTimeout(() => {
-            btn.textContent = 'Copy';
-            btn.style.background = '#007bff';
-          }, 2000);
-        });
+
+    // ---- Section 4: Rendering demo (3-column: bitwrench | HTML | rendered) ----
+    (function() {
+      // The bitwrench object we're demonstrating
+      var cardTaco = {
+        t: 'div',
+        a: { class: 'bw-card' },
+        c: [
+          { t: 'div', a: { class: 'bw-card-header' }, c: 'My First Card' },
+          {
+            t: 'div',
+            a: { class: 'bw-card-body' },
+            c: [
+              { t: 'p', c: 'This card is a plain JS object.' },
+              {
+                t: 'button',
+                a: {
+                  class: 'bw-btn bw-btn-primary',
+                  onclick: function() { alert('It works!'); }
+                },
+                c: 'Try It'
+              }
+            ]
+          }
+        ]
       };
-      element.appendChild(btn);
-    }
-    
-    // 1. TACO Demo - Interactive Card Builder
-    const tacoDemo = {
-      t: 'div',
-      c: [
-        {
-          t: 'h3',
-          c: 'Live TACO Example - Interactive Card'
-        },
-        {
+
+      // Column 1: the bitwrench code
+      var bwCode = [
+        'var card = {',
+        '  t: "div",',
+        '  a: { class: "bw-card" },',
+        '  c: [',
+        '    {',
+        '      t: "div",',
+        '      a: { class: "bw-card-header" },',
+        '      c: "My First Card"',
+        '    },',
+        '    {',
+        '      t: "div",',
+        '      a: { class: "bw-card-body" },',
+        '      c: [',
+        '        { t: "p", c: "This card is a plain JS object." },',
+        '        {',
+        '          t: "button",',
+        '          a: {',
+        '            class: "bw-btn bw-btn-primary",',
+        '            onclick: function() { alert("It works!"); }',
+        '          },',
+        '          c: "Try It"',
+        '        }',
+        '      ]',
+        '    }',
+        '  ]',
+        '};',
+        '',
+        'bw.DOM("#result", card);'
+      ].join('\n');
+
+      // Column 2: the resulting HTML (generated by bw.html)
+      var htmlOutput = bw.html(cardTaco);
+
+      // Reusable label element
+      var label = function(text) {
+        return { t: 'div', a: { class: 'code-label' }, c: text };
+      };
+
+      bw.DOM('#render-demo', {
+        t: 'div',
+        a: { class: 'three-col' },
+        c: [
+          {
+            t: 'div',
+            c: [
+              label('BITWRENCH'),
+              { t: 'div', a: { class: 'code-block' }, c: { t: 'pre', c: { t: 'code', c: bwCode } } }
+            ]
+          },
+          {
+            t: 'div',
+            c: [
+              label('RESULTING HTML'),
+              { t: 'div', a: { class: 'code-block' }, c: { t: 'pre', c: { t: 'code', c: htmlOutput } } }
+            ]
+          },
+          {
+            t: 'div',
+            c: [
+              label('RENDERED'),
+              { t: 'div', a: { class: 'demo-result' }, c: cardTaco }
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ---- Section 5: State-Render-Mount pattern demo ----
+    (function() {
+      var state = { count: 0 };
+
+      // Reusable label
+      var label = function(text) {
+        return { t: 'div', a: { class: 'code-label' }, c: text };
+      };
+
+      function render() {
+        // The bitwrench code for this pattern
+        var code = [
+          '// 1. State: a plain object',
+          'var state = { count: ' + state.count + ' };',
+          '',
+          '// 2. Render: build UI from state',
+          'function render() {',
+          '  bw.DOM("#counter", {',
+          '    t: "div", c: [',
+          '      { t: "h4", c: "Count: " + state.count },',
+          '      bw.makeButton({',
+          '        text: "+", variant: "primary",',
+          '        onclick: function() {',
+          '          state.count++;',
+          '          render(); // re-render',
+          '        }',
+          '      })',
+          '    ]',
+          '  });',
+          '}',
+          '',
+          '// 3. Mount: call render to start',
+          'render();'
+        ].join('\n');
+
+        bw.DOM('#pattern-demo', {
           t: 'div',
           a: { class: 'side-by-side' },
           c: [
             {
               t: 'div',
               c: [
-                { t: 'h4', c: 'TACO Code:' },
-                {
-                  t: 'pre',
-                  c: {
-                    t: 'code',
-                    c: `const card = {
-  t: "div",
-  a: { class: "bw-card" },
-  c: [
-    {
-      t: "div",
-      a: { class: "bw-card-header" },
-      c: "Interactive Card"
-    },
-    {
-      t: "div",
-      a: { class: "bw-card-body" },
-      c: [
-        { t: "h5", c: "Click the button!" },
-        { t: "p", c: "This card was built with TACO" },
-        {
-          t: "button",
-          a: {
-            class: "bw-btn bw-btn-primary",
-            onclick: () => alert('TACO power! 🌮')
-          },
-          c: "Click Me"
-        }
-      ]
-    }
-  ]
-};
-
-// Mount it to the DOM
-bw.DOM('#result', card);`
-                  }
-                }
+                label('CODE'),
+                { t: 'div', a: { class: 'code-block' }, c: { t: 'pre', c: { t: 'code', c: code } } }
               ]
             },
             {
               t: 'div',
               c: [
-                { t: 'h4', c: 'Result:' },
+                label('LIVE RESULT'),
                 {
                   t: 'div',
-                  a: { class: 'demo-result' },
-                  c: {
-                    t: "div",
-                    a: { class: "bw-card" },
-                    c: [
-                      {
-                        t: "div",
-                        a: { class: "bw-card-header" },
-                        c: "Interactive Card"
-                      },
-                      {
-                        t: "div",
-                        a: { class: "bw-card-body" },
-                        c: [
-                          { t: "h5", c: "Click the button!" },
-                          { t: "p", c: "This card was built with TACO" },
-                          {
-                            t: "button",
-                            a: {
-                              class: "bw-btn bw-btn-primary",
-                              onclick: () => alert('TACO power! 🌮')
-                            },
-                            c: "Click Me"
-                          }
-                        ]
-                      }
-                    ]
-                  }
+                  a: { class: 'demo-result', style: 'text-align: center;' },
+                  c: [
+                    { t: 'h4', a: { style: 'font-size: 2rem; margin: 0 0 1rem;' }, c: String(state.count) },
+                    {
+                      t: 'div',
+                      a: { style: 'display: flex; gap: 0.5rem; justify-content: center;' },
+                      c: [
+                        bw.makeButton({
+                          text: '+',
+                          variant: 'primary',
+                          onclick: function() { state.count++; render(); }
+                        }),
+                        bw.makeButton({
+                          text: '\u2013',
+                          variant: 'secondary',
+                          onclick: function() { state.count--; render(); }
+                        }),
+                        bw.makeButton({
+                          text: 'Reset',
+                          variant: 'secondary',
+                          onclick: function() { state.count = 0; render(); }
+                        })
+                      ]
+                    }
+                  ]
                 }
               ]
             }
           ]
-        }
-      ]
-    };
-    
-    bw.DOM('#taco-demo', tacoDemo);
-    
-    // 2. SRMC Demo - Dynamic Theme
-    let currentTheme = 'light';
-    
-    function renderSrmcDemo() {
-      const themes = {
-        light: {
-          bg: '#ffffff',
-          text: '#333333',
-          primary: '#007bff'
-        },
-        dark: {
-          bg: '#2d2d2d',
-          text: '#ffffff',
-          primary: '#0d6efd'
-        },
-        ocean: {
-          bg: '#e3f2fd',
-          text: '#0d47a1',
-          primary: '#2196f3'
-        }
-      };
-      
-      const theme = themes[currentTheme];
-      
-      // Generate CSS with SRMC
-      const styles = [
-        {
-          s: '.theme-demo',
-          r: {
-            backgroundColor: theme.bg,
-            color: theme.text,
-            padding: '2rem',
-            borderRadius: '8px',
-            transition: 'all 0.3s ease'
-          }
-        },
-        {
-          s: '.theme-demo h3',
-          r: {
-            color: theme.primary,
-            marginTop: 0
-          }
-        },
-        {
-          s: '.theme-demo .bw-btn',
-          r: {
-            marginRight: '0.5rem'
-          }
-        }
+        });
+      }
+      render();
+    })();
+
+    // ---- Section 6: Data-driven demo ----
+    (function() {
+      var allItems = [
+        { name: 'JavaScript', type: 'language' },
+        { name: 'Python', type: 'language' },
+        { name: 'React', type: 'framework' },
+        { name: 'Vue', type: 'framework' },
+        { name: 'Bitwrench', type: 'library' },
+        { name: 'Node.js', type: 'runtime' },
+        { name: 'Deno', type: 'runtime' }
       ];
-      
-      // Generate and inject CSS
-      const css = bw.css(styles);
-      bw.injectCSS(css, { id: 'theme-demo-styles' });
-      
-      const demo = {
-        t: 'div',
-        c: [
-          {
-            t: 'h3',
-            c: 'Dynamic SRMC Theming'
-          },
-          {
-            t: 'div',
-            a: { class: 'side-by-side' },
-            c: [
-              {
-                t: 'div',
-                c: [
-                  { t: 'h4', c: 'SRMC Code:' },
-                  {
-                    t: 'pre',
-                    c: {
-                      t: 'code',
-                      c: `// Current theme: ${currentTheme}
-const styles = [
-  {
-    s: '.theme-demo',
-    r: {
-      backgroundColor: '${theme.bg}',
-      color: '${theme.text}',
-      padding: '2rem',
-      borderRadius: '8px'
-    }
-  },
-  {
-    s: '.theme-demo h3',
-    r: {
-      color: '${theme.primary}'
-    }
-  }
-];
+      var filter = 'all';
 
-// Generate CSS
-const css = bw.css(styles);
+      function render() {
+        var filtered = filter === 'all'
+          ? allItems
+          : allItems.filter(function(item) { return item.type === filter; });
 
-// Inject into document
-bw.injectCSS(css, { id: 'my-theme' });`
-                    }
-                  }
-                ]
-              },
-              {
-                t: 'div',
-                c: [
-                  { t: 'h4', c: 'Result:' },
-                  {
-                    t: 'div',
-                    a: { class: 'theme-demo demo-result' },
-                    c: [
-                      { t: 'h3', c: 'Themed Content' },
-                      { t: 'p', c: 'This box is styled with SRMC-generated CSS. Click the buttons to change themes!' },
-                      {
-                        t: 'div',
-                        c: [
-                          bw.makeButton({
-                            text: 'Light',
-                            variant: currentTheme === 'light' ? 'primary' : 'secondary',
-                            onclick: () => {
-                              currentTheme = 'light';
-                              renderSrmcDemo();
-                            }
-                          }),
-                          bw.makeButton({
-                            text: 'Dark',
-                            variant: currentTheme === 'dark' ? 'primary' : 'secondary',
-                            onclick: () => {
-                              currentTheme = 'dark';
-                              renderSrmcDemo();
-                            }
-                          }),
-                          bw.makeButton({
-                            text: 'Ocean',
-                            variant: currentTheme === 'ocean' ? 'primary' : 'secondary',
-                            onclick: () => {
-                              currentTheme = 'ocean';
-                              renderSrmcDemo();
-                            }
-                          })
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      };
-      
-      bw.DOM('#srmc-demo', demo);
-    }
-    
-    renderSrmcDemo();
-    
-    // 3. Practical Demo - Complete Component
-    const practicalDemo = {
-      t: 'div',
-      c: [
-        {
-          t: 'pre',
-          c: {
-            t: 'code',
-            c: `// Complete theme switcher component
-function createThemeSwitcher() {
-  let theme = 'light';
-  
-  const themes = {
-    light: { bg: '#fff', text: '#333', accent: '#007bff' },
-    dark: { bg: '#222', text: '#fff', accent: '#0d6efd' }
-  };
-  
-  function render() {
-    // Generate dynamic styles
-    const styles = {
-      '.app': {
-        backgroundColor: themes[theme].bg,
-        color: themes[theme].text,
-        minHeight: '200px',
-        padding: '2rem'
-      }
-    };
-    
-    // Component TACO
-    const component = {
-      t: 'div',
-      a: { class: 'app' },
-      c: [
-        { t: 'h3', c: 'My App' },
-        { t: 'p', c: \`Current theme: \${theme}\` },
-        {
-          t: 'button',
-          a: {
-            class: 'bw-btn bw-btn-primary',
-            onclick: () => {
-              theme = theme === 'light' ? 'dark' : 'light';
-              render(); // Re-render on state change
-            }
-          },
-          c: 'Toggle Theme'
-        }
-      ]
-    };
-    
-    // Apply styles and mount component
-    bw.injectCSS(bw.css(styles), { id: 'app-theme' });
-    bw.DOM('#theme-app', component);
-  }
-  
-  return { render };
-}
+        var filters = ['all', 'language', 'framework', 'library', 'runtime'];
 
-// Initialize the app
-const app = createThemeSwitcher();
-app.render();`
-          }
-        },
-        {
+        bw.DOM('#data-demo', {
           t: 'div',
-          a: { class: 'demo-result' },
-          c: {
-            t: 'div',
-            a: { id: 'theme-app' },
-            o: {
-              mounted: (el) => {
-              // Actual implementation
-              function createThemeSwitcher() {
-                let theme = 'light';
-                
-                const themes = {
-                  light: { bg: '#fff', text: '#333', accent: '#007bff' },
-                  dark: { bg: '#222', text: '#fff', accent: '#0d6efd' }
+          c: [
+            {
+              t: 'div',
+              a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;' },
+              c: filters.map(function(f) {
+                return bw.makeButton({
+                  text: f.charAt(0).toUpperCase() + f.slice(1),
+                  variant: f === filter ? 'primary' : 'secondary',
+                  onclick: function() { filter = f; render(); }
+                });
+              })
+            },
+            {
+              t: 'ul',
+              a: { class: 'bw-list-group' },
+              c: filtered.map(function(item) {
+                return {
+                  t: 'li',
+                  a: { class: 'bw-list-group-item', style: 'display: flex; justify-content: space-between; align-items: center;' },
+                  c: [
+                    { t: 'span', c: item.name },
+                    bw.makeBadge({ text: item.type, variant: 'primary' })
+                  ]
                 };
-                
-                function render() {
-                  // Use plain object format for CSS, not SRMC
-                  const styles = {
-                    '#theme-app .theme-app': {
-                      backgroundColor: themes[theme].bg,
-                      color: themes[theme].text,
-                      minHeight: '200px',
-                      padding: '2rem',
-                      borderRadius: '8px',
-                      transition: 'all 0.3s ease',
-                      border: '1px solid #ddd'
-                    }
-                  };
-                  
-                  const component = {
-                    t: 'div',
-                    a: { class: 'theme-app' },
-                    c: [
-                      { t: 'h3', c: 'Theme Switcher Demo' },
-                      { t: 'p', c: `Current theme: ${theme}` },
-                      {
-                        t: 'button',
-                        a: {
-                          class: 'bw-btn bw-btn-primary',
-                          onclick: () => {
-                            theme = theme === 'light' ? 'dark' : 'light';
-                            render();
-                          }
-                        },
-                        c: 'Toggle Theme'
-                      }
-                    ]
-                  };
-                  
-                  bw.injectCSS(bw.css(styles), { id: 'theme-app-styles' });
-                  // Clear and update content
-                  el.innerHTML = '';
-                  const dom = bw.createDOM(component);
-                  el.appendChild(dom);
-                }
-                
-                return { render };
-              }
-              
-              const app = createThemeSwitcher();
-              app.render();
-              }
+              })
+            },
+            {
+              t: 'p',
+              a: { style: 'margin-top: 0.75rem; font-size: 0.85rem; color: var(--bw-text-muted);' },
+              c: 'Showing ' + filtered.length + ' of ' + allItems.length + ' items'
             }
-          }
-        }
-      ]
-    };
-    
-    bw.DOM('#practical-demo', practicalDemo);
-    
-    // Add copy buttons to all code examples
-    document.querySelectorAll('.code-example').forEach(el => {
-      const code = el.querySelector('code');
-      if (code && !el.querySelector('.copy-btn')) {
-        addCopyButton(el, code.textContent);
+          ]
+        });
       }
-    });
+      render();
+    })();
   </script>
 </body>
 </html>

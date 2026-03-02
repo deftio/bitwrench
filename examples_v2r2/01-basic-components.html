@@ -3,190 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench Core Components Library (BCCL)</title>
+  <title>Bitwrench - Component Library</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <style>
-    /* Modern, compact design with reduced whitespace */
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #f8f9fa;
-      margin: 0;
-      padding: 0;
-      line-height: 1.5;
-    }
-    
-    /* Container with better max-width */
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-    
-    /* Compact header */
-    .page-header {
-      background: white;
-      border-bottom: 1px solid #e9ecef;
-      padding: 1.5rem 0;
-      margin-bottom: 1.5rem;
-    }
-    
-    .page-header h1 {
-      margin: 0;
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #212529;
-    }
-    
-    .page-header .subtitle {
-      color: #6c757d;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-    }
-    
-    /* Compact demo sections */
-    .demo-section {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 1.5rem;
-      overflow: hidden;
-    }
-    
-    .demo-section h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #212529;
-      margin: 0;
-      padding: 1rem 1.5rem;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e9ecef;
-    }
-    
-    .demo-content {
-      padding: 1.5rem;
-    }
-    
-    .demo-description {
-      color: #6c757d;
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      background: #f8f9fa;
-      border-radius: 4px;
-    }
-    
-    /* Compact tabs styling */
-    .bw-tabs {
-      margin: 0;
-    }
-    
-    .bw-nav-tabs {
-      border-bottom: 2px solid #e9ecef;
-      padding: 0 1.5rem;
-      background: #f8f9fa;
-    }
-    
-    .bw-nav-tabs .bw-nav-link {
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #6c757d;
-      border: none;
-      border-radius: 0;
-      background: transparent;
-    }
-    
-    .bw-nav-tabs .bw-nav-link:hover {
-      color: #212529;
-      border: none;
-      background: transparent;
-    }
-    
-    .bw-nav-tabs .bw-nav-link.active {
-      color: #0d6efd;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid #0d6efd;
-      margin-bottom: -2px;
-    }
-    
-    .bw-tab-content {
-      padding: 1.5rem;
-    }
-    
-    .bw-tab-pane {
-      padding: 0;
-    }
-    
-    /* Code blocks */
-    pre {
-      margin: 0;
-      border-radius: 4px;
-      background: #f6f8fa;
-      border: 1px solid #e1e4e8;
-      position: relative;
-    }
-    
-    code {
-      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-      font-size: 0.875rem;
-      line-height: 1.5;
-    }
-    
-    pre code {
-      display: block;
-      padding: 1rem;
-      overflow-x: auto;
-    }
-    
-    /* Copy button */
-    .copy-btn {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    
-    /* Responsive grid */
+    /* Page-specific extras */
     .demo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1rem;
       margin-bottom: 1rem;
     }
-    
-    /* Utility classes */
     .mb-0 { margin-bottom: 0 !important; }
     .mb-1 { margin-bottom: 0.5rem !important; }
     .mb-2 { margin-bottom: 1rem !important; }
     .mb-3 { margin-bottom: 1.5rem !important; }
-    
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-      .container {
-        padding: 0 0.75rem;
-      }
-      
-      .demo-section h2 {
-        padding: 0.75rem 1rem;
-      }
-      
-      .demo-content {
-        padding: 1rem;
-      }
-      
-      .bw-tab-content {
-        padding: 1rem;
-      }
-    }
   </style>
 </head>
 <body>
@@ -195,14 +29,14 @@
   
   <!-- Page Header -->
   <div class="page-header">
-    <div class="container">
-      <h1>Bitwrench Core Components Library</h1>
-      <div class="subtitle">Version: <span id="version"></span></div>
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Component Library</h1>
+      <p class="subtitle">All bitwrench UI components with live demos and code</p>
     </div>
   </div>
-  
+
   <!-- Main Content -->
-  <div class="container">
+  <div class="content-container wide">
     <!-- Introduction Section -->
     <div class="demo-section">
       <h2>About the BCCL</h2>
@@ -339,7 +173,7 @@
     mountExampleNav('#example-nav', '01-basic-components.html');
     
     // Show version
-    document.getElementById('version').textContent = bw.version || '2.0.1-dev';
+    bw.DOM('#version', { t: 'span', c: bw.version || '2.0.1-dev' });
     
     // Helper function to create tabbed demos with copy button
     function createTabbedDemo(resultContent, codeContent) {
@@ -366,7 +200,7 @@
                         e.target.style.background = '#28a745';
                         setTimeout(() => {
                           e.target.textContent = 'Copy';
-                          e.target.style.background = '#007bff';
+                          e.target.style.background = '#006666';
                         }, 2000);
                       });
                     }
@@ -531,525 +365,162 @@ bw.makeButton({
     bw.DOM('#buttons-demo', createTabbedDemo(buttonsDemo, buttonsCode));
 
     // 3. Grid Demo
+    // Helper: create a colored grid cell -- define once, use everywhere
+    function gridCell(label, bg, opts) {
+      const needsWhite = (bg || '').match(/^#[0-4]/); // dark colors need white text
+      return {
+        t: 'div',
+        a: { style: `background:${bg}; color:${needsWhite ? '#fff' : '#1a1a1a'}; padding:${opts?.pad || '1rem'}; text-align:center; border-radius:6px; font-size:${opts?.fs || '0.875rem'};${opts?.mb ? ' margin-bottom:0.5rem;' : ''}` },
+        c: label
+      };
+    }
+
+    // Color palettes for demos
+    const tealScale = ['#e0f2f1','#b2dfdb','#80cbc4','#4db6ac','#26a69a','#009688','#00897b','#00796b','#00695c','#004d40','#37474f','#263238'];
+    const warmScale = ['#fff3e0','#ffe0b2','#ffcc80','#ffb74d','#ffa726','#ff9800'];
+
     const gridDemo = {
       t: 'div',
       c: [
         bw.makeContainer({
           children: [
-            { t: 'h4', c: 'Basic Grid Layouts' },
+            // Basic 3-column grid
+            { t: 'h4', c: 'Equal Columns' },
+            bw.makeRow({
+              children: ['#e0f2f1', '#b2dfdb', '#80cbc4'].map((bg, i) =>
+                bw.makeCol({ size: 4, content: gridCell(`Column ${i+1} (4/12)`, bg) })
+              )
+            }),
+            { t: 'div', a: { style: 'height: 1rem;' } },
+
+            // Unequal columns
             bw.makeRow({
               children: [
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #e3f2fd; padding: 1rem; text-align: center; border-radius: 4px;' },
-                    c: 'Column 1 (4/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #f3e5f5; padding: 1rem; text-align: center; border-radius: 4px;' },
-                    c: 'Column 2 (4/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #e8f5e9; padding: 1rem; text-align: center; border-radius: 4px;' },
-                    c: 'Column 3 (4/12)'
-                  }
-                })
+                bw.makeCol({ size: 8, content: gridCell('Wide Column (8/12)', '#fff3e0') }),
+                bw.makeCol({ size: 4, content: gridCell('Narrow (4/12)', '#ffe0b2') })
               ]
             }),
-            { t: 'div', a: { style: 'height: 1rem;' } }, // spacer
-            bw.makeRow({
-              children: [
-                bw.makeCol({
-                  size: 8,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #fff3e0; padding: 1rem; text-align: center; border-radius: 4px;' },
-                    c: 'Wide Column (8/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #fce4ec; padding: 1rem; text-align: center; border-radius: 4px;' },
-                    c: 'Narrow Column (4/12)'
-                  }
-                })
-              ]
-            }),
-            { t: 'div', a: { style: 'height: 1rem;' } }, // spacer
+            { t: 'div', a: { style: 'height: 1rem;' } },
+
+            // Responsive grid -- same config, just iterate
             { t: 'h4', c: 'Responsive Grid' },
             bw.makeRow({
-              children: [
+              children: ['#e0f2f1','#b2dfdb','#80cbc4','#fff3e0'].map((bg, i) =>
                 bw.makeCol({
                   size: { xs: 12, md: 6, lg: 3 },
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #e1f5fe; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                    c: 'Responsive 1'
-                  }
-                }),
-                bw.makeCol({
-                  size: { xs: 12, md: 6, lg: 3 },
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #f3e5f5; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                    c: 'Responsive 2'
-                  }
-                }),
-                bw.makeCol({
-                  size: { xs: 12, md: 6, lg: 3 },
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #e8f5e9; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                    c: 'Responsive 3'
-                  }
-                }),
-                bw.makeCol({
-                  size: { xs: 12, md: 6, lg: 3 },
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #fff3e0; padding: 1rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                    c: 'Responsive 4'
-                  }
+                  content: gridCell(`Responsive ${i+1}`, bg, { mb: true })
                 })
-              ]
+              )
             }),
-            { t: 'div', a: { style: 'height: 2rem;' } }, // spacer
-            { t: 'h3', c: 'Advanced Grid Layouts', a: { style: 'margin-bottom: 1rem;' } },
-            
-            // Layout 1: Magazine Layout
+            { t: 'div', a: { style: 'height: 2rem;' } },
+
+            // Magazine layout
             { t: 'h4', c: 'Magazine Layout' },
             bw.makeRow({
-              children: [
-                bw.makeCol({
-                  size: 12,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #3f51b5; color: white; padding: 2rem; text-align: center; border-radius: 4px; font-size: 1.2rem;' },
-                    c: 'Header (12/12)'
-                  }
-                })
-              ]
+              children: [bw.makeCol({ size: 12, content: gridCell('Header (12/12)', '#00695c', { pad: '2rem', fs: '1.1rem' }) })]
             }),
             { t: 'div', a: { style: 'height: 0.5rem;' } },
             bw.makeRow({
               children: [
-                bw.makeCol({
-                  size: 8,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #ff9800; padding: 4rem 2rem; text-align: center; border-radius: 4px;' },
-                    c: 'Main Article (8/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    c: [
-                      {
-                        t: 'div',
-                        a: { style: 'background: #4caf50; padding: 1.5rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                        c: 'Sidebar Top (4/12)'
-                      },
-                      {
-                        t: 'div',
-                        a: { style: 'background: #2196f3; padding: 1.5rem; text-align: center; border-radius: 4px;' },
-                        c: 'Sidebar Bottom (4/12)'
-                      }
-                    ]
-                  }
-                })
+                bw.makeCol({ size: 8, content: gridCell('Main Article (8/12)', '#ff9800', { pad: '3rem' }) }),
+                bw.makeCol({ size: 4, content: {
+                  t: 'div',
+                  c: [
+                    gridCell('Sidebar Top', '#4db6ac', { mb: true }),
+                    gridCell('Sidebar Bottom', '#26a69a')
+                  ]
+                }})
               ]
             }),
             { t: 'div', a: { style: 'height: 0.5rem;' } },
             bw.makeRow({
-              children: [
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #9c27b0; padding: 2rem; text-align: center; border-radius: 4px;' },
-                    c: 'Feature 1 (4/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #e91e63; padding: 2rem; text-align: center; border-radius: 4px;' },
-                    c: 'Feature 2 (4/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 4,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #00bcd4; padding: 2rem; text-align: center; border-radius: 4px;' },
-                    c: 'Feature 3 (4/12)'
-                  }
-                })
-              ]
+              children: ['Feature 1','Feature 2','Feature 3'].map((label, i) =>
+                bw.makeCol({ size: 4, content: gridCell(label, ['#009688','#00897b','#00796b'][i]) })
+              )
             }),
-            
             { t: 'div', a: { style: 'height: 2rem;' } },
-            
-            // Layout 2: Dashboard Layout
+
+            // Dashboard layout with nested grid
             { t: 'h4', c: 'Dashboard Layout' },
             bw.makeRow({
               children: [
-                bw.makeCol({
-                  size: 3,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #37474f; color: white; padding: 8rem 1rem; text-align: center; border-radius: 4px;' },
-                    c: 'Sidebar (3/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 9,
-                  content: {
-                    t: 'div',
-                    c: [
-                      bw.makeRow({
-                        children: [
-                          bw.makeCol({
-                            size: 4,
-                            content: {
-                              t: 'div',
-                              a: { style: 'background: #ff7043; padding: 2rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                              c: 'Widget 1 (3/9)'
-                            }
-                          }),
-                          bw.makeCol({
-                            size: 4,
-                            content: {
-                              t: 'div',
-                              a: { style: 'background: #66bb6a; padding: 2rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                              c: 'Widget 2 (3/9)'
-                            }
-                          }),
-                          bw.makeCol({
-                            size: 4,
-                            content: {
-                              t: 'div',
-                              a: { style: 'background: #42a5f5; padding: 2rem; text-align: center; border-radius: 4px; margin-bottom: 0.5rem;' },
-                              c: 'Widget 3 (3/9)'
-                            }
-                          })
-                        ]
-                      }),
-                      bw.makeRow({
-                        children: [
-                          bw.makeCol({
-                            size: 12,
-                            content: {
-                              t: 'div',
-                              a: { style: 'background: #ab47bc; padding: 3rem; text-align: center; border-radius: 4px;' },
-                              c: 'Main Content Area (9/9)'
-                            }
-                          })
-                        ]
-                      })
-                    ]
-                  }
-                })
+                bw.makeCol({ size: 3, content: gridCell('Sidebar', '#37474f', { pad: '6rem 1rem' }) }),
+                bw.makeCol({ size: 9, content: {
+                  t: 'div',
+                  c: [
+                    bw.makeRow({
+                      children: ['Widget 1','Widget 2','Widget 3'].map((w, i) =>
+                        bw.makeCol({ size: 4, content: gridCell(w, warmScale[i], { mb: true }) })
+                      )
+                    }),
+                    bw.makeRow({
+                      children: [bw.makeCol({ size: 12, content: gridCell('Main Content', '#4db6ac', { pad: '2rem' }) })]
+                    })
+                  ]
+                }})
               ]
             }),
-            
             { t: 'div', a: { style: 'height: 2rem;' } },
-            
-            // Layout 3: Masonry-style Layout
-            { t: 'h4', c: 'Mixed Column Layout' },
+
+            // 12-column demo -- one .map() call, zero repetition
+            { t: 'h4', c: '12-Column Grid' },
             bw.makeRow({
-              children: [
-                bw.makeCol({
-                  size: 6,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #ff5722; padding: 3rem; text-align: center; border-radius: 4px;' },
-                    c: 'Half Width (6/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 3,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #795548; color: white; padding: 3rem 1rem; text-align: center; border-radius: 4px;' },
-                    c: '1/4 (3/12)'
-                  }
-                }),
-                bw.makeCol({
-                  size: 3,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #607d8b; color: white; padding: 3rem 1rem; text-align: center; border-radius: 4px;' },
-                    c: '1/4 (3/12)'
-                  }
-                })
-              ]
-            }),
-            { t: 'div', a: { style: 'height: 0.5rem;' } },
-            bw.makeRow({
-              children: [
-                bw.makeCol({
-                  size: 2,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #f44336; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
-                    c: '2/12'
-                  }
-                }),
-                bw.makeCol({
-                  size: 2,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #e91e63; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
-                    c: '2/12'
-                  }
-                }),
-                bw.makeCol({
-                  size: 2,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #9c27b0; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
-                    c: '2/12'
-                  }
-                }),
-                bw.makeCol({
-                  size: 2,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #673ab7; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
-                    c: '2/12'
-                  }
-                }),
-                bw.makeCol({
-                  size: 2,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #3f51b5; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
-                    c: '2/12'
-                  }
-                }),
-                bw.makeCol({
-                  size: 2,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #2196f3; color: white; padding: 2rem 0.5rem; text-align: center; border-radius: 4px; font-size: 0.9rem;' },
-                    c: '2/12'
-                  }
-                })
-              ]
-            }),
-            { t: 'div', a: { style: 'height: 0.5rem;' } },
-            bw.makeRow({
-              children: [
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #00bcd4; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #009688; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #4caf50; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #8bc34a; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #cddc39; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #ffeb3b; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #ffc107; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #ff9800; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #ff5722; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #795548; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #9e9e9e; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                }),
-                bw.makeCol({
-                  size: 1,
-                  content: {
-                    t: 'div',
-                    a: { style: 'background: #607d8b; color: white; padding: 1.5rem 0; text-align: center; border-radius: 4px; font-size: 0.8rem;' },
-                    c: '1'
-                  }
-                })
-              ]
+              children: tealScale.map((bg, i) =>
+                bw.makeCol({ size: 1, content: gridCell(String(i+1), bg, { pad: '1rem 0', fs: '0.75rem' }) })
+              )
             })
           ]
         })
       ]
     };
-    
-    const gridCode = `// Basic grid with equal columns
-bw.makeContainer({
-  children: [
-    bw.makeRow({
-      children: [
-        bw.makeCol({ size: 4, content: 'Column 1' }),
-        bw.makeCol({ size: 4, content: 'Column 2' }),
-        bw.makeCol({ size: 4, content: 'Column 3' })
-      ]
-    })
-  ]
-})
 
-// Grid with different column sizes
+    const gridCode = `// Helper: define a reusable cell factory
+function gridCell(label, bg) {
+  return {
+    t: 'div',
+    a: { style: \`background:\${bg}; padding:1rem; text-align:center; border-radius:6px;\` },
+    c: label
+  };
+}
+
+// Equal columns -- just .map() over the data
 bw.makeRow({
-  children: [
-    bw.makeCol({ size: 8, content: 'Wide Column' }),
-    bw.makeCol({ size: 4, content: 'Narrow Column' })
-  ]
+  children: ['#e0f2f1','#b2dfdb','#80cbc4'].map((bg, i) =>
+    bw.makeCol({ size: 4, content: gridCell('Col ' + (i+1), bg) })
+  )
 })
 
-// Responsive grid
-bw.makeCol({
-  size: { 
-    xs: 12,  // Full width on mobile
-    md: 6,   // Half width on tablets
-    lg: 3    // Quarter width on desktop
-  },
-  content: 'Responsive Column'
-})
-
-// Magazine Layout Example
-bw.makeContainer({
-  children: [
-    // Full width header
-    bw.makeRow({
-      children: [
-        bw.makeCol({ size: 12, content: 'Header' })
-      ]
-    }),
-    // Main content with sidebar
-    bw.makeRow({
-      children: [
-        bw.makeCol({ size: 8, content: 'Main Article' }),
-        bw.makeCol({ size: 4, content: 'Sidebar' })
-      ]
-    }),
-    // Three column features
-    bw.makeRow({
-      children: [
-        bw.makeCol({ size: 4, content: 'Feature 1' }),
-        bw.makeCol({ size: 4, content: 'Feature 2' }),
-        bw.makeCol({ size: 4, content: 'Feature 3' })
-      ]
-    })
-  ]
-})
-
-// Dashboard Layout with Nested Grids
+// Responsive: full on mobile, half on tablet, quarter on desktop
+const colors = ['#e0f2f1','#b2dfdb','#80cbc4','#fff3e0'];
 bw.makeRow({
-  children: [
-    // Sidebar
-    bw.makeCol({ size: 3, content: 'Sidebar' }),
-    // Main area with nested grid
+  children: colors.map((bg, i) =>
     bw.makeCol({
-      size: 9,
-      content: bw.makeRow({
-        children: [
-          bw.makeCol({ size: 4, content: 'Widget 1' }),
-          bw.makeCol({ size: 4, content: 'Widget 2' }),
-          bw.makeCol({ size: 4, content: 'Widget 3' })
-        ]
-      })
+      size: { xs: 12, md: 6, lg: 3 },
+      content: gridCell('Responsive ' + (i+1), bg)
     })
-  ]
+  )
 })
 
-// All 12 columns demonstrated
+// 12-column demo: one line, zero repetition
+const scale = ['#e0f2f1','#b2dfdb','#80cbc4','#4db6ac',
+  '#26a69a','#009688','#00897b','#00796b',
+  '#00695c','#004d40','#37474f','#263238'];
+
+bw.makeRow({
+  children: scale.map((bg, i) =>
+    bw.makeCol({ size: 1, content: gridCell(String(i+1), bg) })
+  )
+})
+
+// Nested dashboard layout
 bw.makeRow({
   children: [
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' }),
-    bw.makeCol({ size: 1, content: '1' })
+    bw.makeCol({ size: 3, content: 'Sidebar' }),
+    bw.makeCol({ size: 9, content: bw.makeRow({
+      children: ['Widget 1','Widget 2','Widget 3'].map(w =>
+        bw.makeCol({ size: 4, content: w })
+      )
+    })})
   ]
 })`;
 

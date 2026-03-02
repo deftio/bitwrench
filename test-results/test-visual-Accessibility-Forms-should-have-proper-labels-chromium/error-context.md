@@ -1,0 +1,286 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - text: Bitwrench v2
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Fundamentals":
+        - /url: 00-taco-srmc-fundamentals.html
+    - listitem:
+      - link "Basic":
+        - /url: 01-basic-components.html
+    - listitem:
+      - link "Tables & Forms":
+        - /url: 02-interactive-tables-forms.html
+    - listitem:
+      - link "Themes":
+        - /url: 03-themes-styling.html
+    - listitem:
+      - link "Dashboard":
+        - /url: 04-dashboard-app.html
+    - listitem:
+      - link "Advanced":
+        - /url: 05-advanced-features.html
+    - listitem:
+      - link "Tic Tac Toe":
+        - /url: 06-tic-tac-toe-tutorial.html
+  - text: v2.0.3
+- heading "Bitwrench v2 - Interactive Tables & Forms" [level=1]
+- text: "Version: 2.0.3"
+- heading "Interactive Sortable Table" [level=2]
+- heading "Interactive Sortable Table with Search" [level=3]
+- paragraph: A fully-featured table with sorting, searching, row selection, and bulk actions.
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - button "Add Employee"
+  - button "Remove Selected (0)" [disabled]
+  - button "Select All"
+  - button "Export Data"
+  - textbox "Search employees..."
+  - table:
+    - rowgroup:
+      - row "☐ ID Name Position Department Salary Start Date":
+        - cell "☐"
+        - cell "ID"
+        - cell "Name"
+        - cell "Position"
+        - cell "Department"
+        - cell "Salary"
+        - cell "Start Date"
+    - rowgroup:
+      - row "1 John Smith Software Engineer Engineering $95,000 2021-03-15":
+        - cell:
+          - checkbox
+        - cell "1"
+        - cell "John Smith"
+        - cell "Software Engineer"
+        - cell "Engineering"
+        - cell "$95,000"
+        - cell "2021-03-15"
+      - row "2 Sarah Johnson Product Manager Product $110,000 2020-07-22":
+        - cell:
+          - checkbox
+        - cell "2"
+        - cell "Sarah Johnson"
+        - cell "Product Manager"
+        - cell "Product"
+        - cell "$110,000"
+        - cell "2020-07-22"
+      - row "3 Mike Chen UX Designer Design $85,000 2022-01-10":
+        - cell:
+          - checkbox
+        - cell "3"
+        - cell "Mike Chen"
+        - cell "UX Designer"
+        - cell "Design"
+        - cell "$85,000"
+        - cell "2022-01-10"
+      - row "4 Emily Davis Data Scientist Engineering $105,000 2021-09-05":
+        - cell:
+          - checkbox
+        - cell "4"
+        - cell "Emily Davis"
+        - cell "Data Scientist"
+        - cell "Engineering"
+        - cell "$105,000"
+        - cell "2021-09-05"
+      - row "5 Alex Rivera Marketing Manager Marketing $90,000 2020-11-30":
+        - cell:
+          - checkbox
+        - cell "5"
+        - cell "Alex Rivera"
+        - cell "Marketing Manager"
+        - cell "Marketing"
+        - cell "$90,000"
+        - cell "2020-11-30"
+      - row "6 Lisa Wang DevOps Engineer Engineering $98,000 2021-06-18":
+        - cell:
+          - checkbox
+        - cell "6"
+        - cell "Lisa Wang"
+        - cell "DevOps Engineer"
+        - cell "Engineering"
+        - cell "$98,000"
+        - cell "2021-06-18"
+      - row "7 Tom Wilson Sales Director Sales $120,000 2019-03-10":
+        - cell:
+          - checkbox
+        - cell "7"
+        - cell "Tom Wilson"
+        - cell "Sales Director"
+        - cell "Sales"
+        - cell "$120,000"
+        - cell "2019-03-10"
+      - row "8 Jessica Brown HR Manager HR $85,000 2020-09-14":
+        - cell:
+          - checkbox
+        - cell "8"
+        - cell "Jessica Brown"
+        - cell "HR Manager"
+        - cell "HR"
+        - cell "$85,000"
+        - cell "2020-09-14"
+  - text: "Total: 8 employees | Selected: 0 | Average Salary: $98,500"
+- heading "Form Components" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Input Types" [level=4]
+  - text: Text Input
+  - textbox "Enter text..."
+  - text: Email Input
+  - textbox "email@example.com"
+  - text: We'll never share your email. Password Input
+  - textbox "Enter password"
+  - text: Number Input
+  - spinbutton
+  - heading "Selection Controls" [level=4]
+  - text: Select Dropdown
+  - combobox:
+    - option "Choose..." [selected]
+    - option "Option 1"
+    - option "Option 2"
+    - option "Option 3"
+  - text: Textarea
+  - textbox "Enter long text..."
+  - text: Checkboxes
+  - checkbox [checked]
+  - text: Option 1
+  - checkbox
+  - text: Option 2
+  - checkbox
+  - text: Option 3
+- heading "Tabbed Form Interface" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - tablist:
+    - tab "Personal Info" [selected]
+    - tab "Address"
+    - tab "Preferences"
+  - tabpanel:
+    - text: Full Name
+    - textbox "Enter your full name"
+    - text: Email Address
+    - textbox "email@example.com"
+    - text: Phone Number
+    - textbox "+1 (555) 123-4567"
+    - button "Save Personal Info"
+- heading "Table with Pagination" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - paragraph: Showing 10 items per page from 50 total records.
+  - table:
+    - rowgroup:
+      - row "id name position department salary startDate":
+        - cell "id"
+        - cell "name"
+        - cell "position"
+        - cell "department"
+        - cell "salary"
+        - cell "startDate"
+    - rowgroup:
+      - row "1 James Brown 1 Manager Sales 93531 2020-08-27":
+        - cell "1"
+        - cell "James Brown 1"
+        - cell "Manager"
+        - cell "Sales"
+        - cell "93531"
+        - cell "2020-08-27"
+      - row "2 Olivia Martinez 2 Architect Product 123562 2022-01-18":
+        - cell "2"
+        - cell "Olivia Martinez 2"
+        - cell "Architect"
+        - cell "Product"
+        - cell "123562"
+        - cell "2022-01-18"
+      - row "3 Olivia Martinez 3 Engineer HR 91445 2020-11-25":
+        - cell "3"
+        - cell "Olivia Martinez 3"
+        - cell "Engineer"
+        - cell "HR"
+        - cell "91445"
+        - cell "2020-11-25"
+      - row "4 William Taylor 4 Designer Product 114794 2023-01-08":
+        - cell "4"
+        - cell "William Taylor 4"
+        - cell "Designer"
+        - cell "Product"
+        - cell "114794"
+        - cell "2023-01-08"
+      - row "5 Jane Smith 5 Manager HR 101189 2023-11-04":
+        - cell "5"
+        - cell "Jane Smith 5"
+        - cell "Manager"
+        - cell "HR"
+        - cell "101189"
+        - cell "2023-11-04"
+      - row "6 James Brown 6 Manager Engineering 126010 2023-03-02":
+        - cell "6"
+        - cell "James Brown 6"
+        - cell "Manager"
+        - cell "Engineering"
+        - cell "126010"
+        - cell "2023-03-02"
+      - row "7 Jane Smith 7 Developer Finance 134715 2021-11-15":
+        - cell "7"
+        - cell "Jane Smith 7"
+        - cell "Developer"
+        - cell "Finance"
+        - cell "134715"
+        - cell "2021-11-15"
+      - row "8 William Taylor 8 Analyst Engineering 97398 2021-06-19":
+        - cell "8"
+        - cell "William Taylor 8"
+        - cell "Analyst"
+        - cell "Engineering"
+        - cell "97398"
+        - cell "2021-06-19"
+      - row "9 Olivia Martinez 9 Analyst HR 106644 2022-03-20":
+        - cell "9"
+        - cell "Olivia Martinez 9"
+        - cell "Analyst"
+        - cell "HR"
+        - cell "106644"
+        - cell "2022-03-20"
+      - row "10 Sophia Anderson 10 Analyst Finance 80948 2022-09-25":
+        - cell "10"
+        - cell "Sophia Anderson 10"
+        - cell "Analyst"
+        - cell "Finance"
+        - cell "80948"
+        - cell "2022-09-25"
+  - navigation:
+    - list:
+      - listitem:
+        - link "Previous":
+          - /url: "#"
+      - listitem:
+        - link "1":
+          - /url: "#"
+      - listitem:
+        - link "2":
+          - /url: "#"
+      - listitem:
+        - link "3":
+          - /url: "#"
+      - listitem:
+        - link "4":
+          - /url: "#"
+      - listitem:
+        - link "5":
+          - /url: "#"
+      - listitem:
+        - link "Next":
+          - /url: "#"
+```

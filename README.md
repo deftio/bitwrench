@@ -1,6 +1,6 @@
 # bitwrench.js
 
-![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg) ![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square) ![Build Status](https://travis-ci.org/deftio/bitwrench.svg?branch=master)
+![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg) ![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square) ![CI](https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](http://www.deftio.com/bitwrench)
 

@@ -1,0 +1,120 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - text: Bitwrench v2
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Fundamentals":
+        - /url: 00-taco-srmc-fundamentals.html
+    - listitem:
+      - link "Basic":
+        - /url: 01-basic-components.html
+    - listitem:
+      - link "Tables & Forms":
+        - /url: 02-interactive-tables-forms.html
+    - listitem:
+      - link "Themes":
+        - /url: 03-themes-styling.html
+    - listitem:
+      - link "Dashboard":
+        - /url: 04-dashboard-app.html
+    - listitem:
+      - link "Advanced":
+        - /url: 05-advanced-features.html
+    - listitem:
+      - link "Tic Tac Toe":
+        - /url: 06-tic-tac-toe-tutorial.html
+  - text: v2.0.3
+- heading "Dashboard" [level=3]
+- navigation:
+  - list:
+    - listitem:
+      - link "Overview":
+        - /url: "#overview"
+    - listitem:
+      - link "Analytics":
+        - /url: "#analytics"
+    - listitem:
+      - link "Customers":
+        - /url: "#customers"
+    - listitem:
+      - link "Products":
+        - /url: "#products"
+    - listitem:
+      - link "Orders":
+        - /url: "#orders"
+    - listitem:
+      - link "Settings":
+        - /url: "#settings"
+- heading "Customers Dashboard" [level=1]
+- heading "Customer List" [level=3]
+- table:
+  - rowgroup:
+    - row "Company Contact Total Value Status":
+      - cell "Company"
+      - cell "Contact"
+      - cell "Total Value"
+      - cell "Status"
+  - rowgroup:
+    - row "Acme Corp john@acme.com $125,000 active":
+      - cell "Acme Corp"
+      - cell "john@acme.com"
+      - cell "$125,000"
+      - cell "active"
+    - row "Beta Inc jane@beta.com $87,000 active":
+      - cell "Beta Inc"
+      - cell "jane@beta.com"
+      - cell "$87,000"
+      - cell "active"
+    - row "Gamma LLC bob@gamma.com $45,000 inactive":
+      - cell "Gamma LLC"
+      - cell "bob@gamma.com"
+      - cell "$45,000"
+      - cell "inactive"
+    - row "Delta Co alice@delta.com $92,000 active":
+      - cell "Delta Co"
+      - cell "alice@delta.com"
+      - cell "$92,000"
+      - cell "active"
+- heading "Sales Overview" [level=3]
+- paragraph: Chart visualization would go here. This example focuses on layout and components.
+- heading "Recent Activity" [level=3]
+- button "Add Activity"
+- table:
+  - rowgroup:
+    - row "User Action Time Status":
+      - cell "User"
+      - cell "Action"
+      - cell "Time"
+      - cell "Status"
+  - rowgroup:
+    - 'row "John Doe Placed order #1234 5 minutes ago success"':
+      - cell "John Doe"
+      - 'cell "Placed order #1234"'
+      - cell "5 minutes ago"
+      - cell "success"
+    - row "Jane Smith Updated profile 10 minutes ago info":
+      - cell "Jane Smith"
+      - cell "Updated profile"
+      - cell "10 minutes ago"
+      - cell "info"
+    - 'row "Bob Johnson Cancelled order #1233 15 minutes ago danger"':
+      - cell "Bob Johnson"
+      - 'cell "Cancelled order #1233"'
+      - cell "15 minutes ago"
+      - cell "danger"
+    - row "Alice Brown Added product review 20 minutes ago success":
+      - cell "Alice Brown"
+      - cell "Added product review"
+      - cell "20 minutes ago"
+      - cell "success"
+    - row "Charlie Wilson Changed password 25 minutes ago warning":
+      - cell "Charlie Wilson"
+      - cell "Changed password"
+      - cell "25 minutes ago"
+      - cell "warning"
+```

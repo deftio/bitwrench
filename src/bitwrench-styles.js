@@ -1,14 +1,44 @@
 /**
  * Bitwrench v2 Default Styles
- * Beautiful, responsive CSS inspired by modern design systems
- * Zero dependencies, works everywhere
+ *
+ * CSS-in-JS style definitions providing a complete, Bootstrap-inspired
+ * design system. Styles are defined as nested JavaScript objects that
+ * bw.css() converts to CSS strings and bw.injectCSS() injects into the DOM.
+ *
+ * The module exports:
+ * - {@link defaultStyles} - All style categories as a structured object
+ * - {@link getAllStyles} - Merges all categories into a flat CSS rules object
+ * - {@link theme} - Design token configuration (colors, breakpoints, spacing, typography)
+ *
+ * Style categories: root (CSS variables), reset, typography, grid, buttons,
+ * cards, forms, navigation, tables, alerts, badges, progress, tabs, listGroups,
+ * pagination, breadcrumb, hero, features, enhancedCards, sections, cta,
+ * utilities, responsive.
+ *
+ * @module bitwrench-styles
+ * @license BSD-2-Clause
+ * @author M A Chatterjee <deftio [at] deftio [dot] com>
  */
 
+/**
+ * Complete default style definitions organized by component category
+ *
+ * Each property is a style category containing CSS rule objects.
+ * Pass individual categories to bw.css() or use getAllStyles() to
+ * get everything merged into a single flat object.
+ *
+ * @type {Object}
+ */
 export const defaultStyles = {
-  // Custom properties (CSS variables)
+  /**
+   * CSS custom properties (variables) on :root
+   *
+   * Defines the full color palette, typography, border, and shadow tokens
+   * used by all other style categories via var() references.
+   */
   root: {
     ':root': {
-      '--bw-blue': '#0d6efd',
+      '--bw-blue': '#006666',
       '--bw-indigo': '#6610f2',
       '--bw-purple': '#6f42c1',
       '--bw-pink': '#d63384',
@@ -31,7 +61,7 @@ export const defaultStyles = {
       '--bw-gray-700': '#495057',
       '--bw-gray-800': '#343a40',
       '--bw-gray-900': '#212529',
-      '--bw-primary': '#0d6efd',
+      '--bw-primary': '#006666',
       '--bw-secondary': '#6c757d',
       '--bw-success': '#198754',
       '--bw-info': '#0dcaf0',
@@ -39,8 +69,8 @@ export const defaultStyles = {
       '--bw-danger': '#dc3545',
       '--bw-light': '#f8f9fa',
       '--bw-dark': '#212529',
-      '--bw-font-sans-serif': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      '--bw-font-monospace': 'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      '--bw-font-sans-serif': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      '--bw-font-monospace': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", "Courier New", monospace',
       '--bw-body-font-family': 'var(--bw-font-sans-serif)',
       '--bw-body-font-size': '1rem',
       '--bw-body-font-weight': '400',
@@ -62,7 +92,12 @@ export const defaultStyles = {
       '--bw-box-shadow-inset': 'inset 0 1px 2px rgba(0, 0, 0, .075)'
     }
   },
-  // CSS Reset and Base
+  /**
+   * CSS reset and base element styles
+   *
+   * Provides box-sizing reset, body defaults, page layout helpers
+   * (.bw-page, .bw-page-content), and hr normalization.
+   */
   reset: {
     '*': {
       'box-sizing': 'border-box',
@@ -77,14 +112,16 @@ export const defaultStyles = {
       '-moz-osx-font-smoothing': 'grayscale'
     },
     'body': {
-      'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       'font-size': '1rem',
       'font-weight': '400',
-      'line-height': '1.5',
-      'color': '#212529',
-      'background-color': '#f8f9fa',
+      'line-height': '1.6',
+      'color': '#1a1a1a',
+      'background-color': '#f5f5f5',
       'margin': '0',
-      'padding': '0'
+      'padding': '0',
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale'
     },
     // Standard page layout
     '.bw-page': {
@@ -114,13 +151,20 @@ export const defaultStyles = {
     }
   },
 
-  // Typography
+  /**
+   * Typography styles for headings, paragraphs, links, and small text
+   *
+   * Headings use responsive font sizes with clamp-like calc() values.
+   * Links default to primary color with underline decoration.
+   */
   typography: {
     'h1, h2, h3, h4, h5, h6': {
       'margin-top': '0',
       'margin-bottom': '.5rem',
-      'font-weight': '500',
-      'line-height': '1.2'
+      'font-weight': '600',
+      'line-height': '1.25',
+      'letter-spacing': '-0.01em',
+      'color': '#1a1a1a'
     },
     'h1': { 
       'font-size': 'calc(1.375rem + 1.5vw)'
@@ -159,15 +203,23 @@ export const defaultStyles = {
     },
     
     'a': {
-      'color': '#0d6efd',
-      'text-decoration': 'underline'
+      'color': '#006666',
+      'text-decoration': 'none',
+      'transition': 'color 0.15s'
     },
     'a:hover': {
-      'color': '#0a58ca'
+      'color': '#004d4d',
+      'text-decoration': 'underline'
     }
   },
 
-  // Grid System
+  /**
+   * 12-column flexbox grid system
+   *
+   * Classes: .bw-container (responsive max-widths), .bw-container-fluid,
+   * .bw-row, .bw-col, .bw-col-{1-12}. Breakpoint-specific columns
+   * are in the responsive category.
+   */
   grid: {
     '.bw-container': {
       'width': '100%',
@@ -234,13 +286,21 @@ export const defaultStyles = {
     '.bw-col-12': { 'flex': '0 0 100%', 'max-width': '100%' }
   },
 
-  // Buttons
+  /**
+   * Button styles - all variants, sizes, outlines, and states
+   *
+   * Classes: .bw-btn (base), .bw-btn-{variant} (filled), .bw-btn-outline-{variant},
+   * .bw-btn-sm, .bw-btn-lg. States: :hover, :active, :focus, :disabled.
+   * Variants: primary, secondary, success, danger, warning, info, light, dark.
+   */
   buttons: {
     '.bw-btn': {
-      'display': 'inline-block',
-      'font-weight': '400',
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'font-weight': '500',
       'line-height': '1.5',
-      'color': '#212529',
+      'color': '#1a1a1a',
       'text-align': 'center',
       'text-decoration': 'none',
       'vertical-align': 'middle',
@@ -248,40 +308,43 @@ export const defaultStyles = {
       'user-select': 'none',
       'background-color': 'transparent',
       'border': '1px solid transparent',
-      'padding': '.5rem 1rem',
-      'font-size': '1rem',
-      'border-radius': '.375rem',
-      'transition': 'all .15s ease-in-out',
-      'box-shadow': '0 1px 2px rgba(0,0,0,.05)'
+      'padding': '0.5rem 1.125rem',
+      'font-size': '0.875rem',
+      'font-family': 'inherit',
+      'border-radius': '6px',
+      'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+      'box-shadow': '0 1px 2px rgba(0,0,0,.05)',
+      'gap': '0.5rem'
     },
     '.bw-btn:hover': {
       'text-decoration': 'none',
       'transform': 'translateY(-1px)',
-      'box-shadow': '0 3px 5px rgba(0,0,0,.1)'
+      'box-shadow': '0 4px 6px rgba(0,0,0,.07)'
     },
     '.bw-btn:active': {
       'transform': 'translateY(0)',
       'box-shadow': '0 1px 2px rgba(0,0,0,.05)'
     },
-    '.bw-btn:focus': {
+    '.bw-btn:focus-visible': {
       'outline': '0',
-      'box-shadow': '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+      'box-shadow': '0 0 0 3px rgba(0, 102, 102, 0.3)'
     },
     '.bw-btn:disabled': {
-      'opacity': '0.65',
-      'cursor': 'not-allowed'
+      'opacity': '0.5',
+      'cursor': 'not-allowed',
+      'pointer-events': 'none'
     },
     
     // Button variants
     '.bw-btn-primary': {
       'color': '#fff',
-      'background-color': '#0d6efd',
-      'border-color': '#0d6efd'
+      'background-color': '#006666',
+      'border-color': '#006666'
     },
     '.bw-btn-primary:hover': {
       'color': '#fff',
-      'background-color': '#0b5ed7',
-      'border-color': '#0a58ca'
+      'background-color': '#005555',
+      'border-color': '#004d4d'
     },
     
     '.bw-btn-secondary': {
@@ -361,20 +424,115 @@ export const defaultStyles = {
       'border-color': '#1a1e21'
     },
     
+    // Outline variants
+    '.bw-btn-outline-primary': {
+      'color': '#006666',
+      'border-color': '#006666',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-primary:hover': {
+      'color': '#fff',
+      'background-color': '#006666',
+      'border-color': '#006666'
+    },
+    
+    '.bw-btn-outline-secondary': {
+      'color': '#6c757d',
+      'border-color': '#6c757d',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-secondary:hover': {
+      'color': '#fff',
+      'background-color': '#6c757d',
+      'border-color': '#6c757d'
+    },
+    
+    '.bw-btn-outline-success': {
+      'color': '#198754',
+      'border-color': '#198754',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-success:hover': {
+      'color': '#fff',
+      'background-color': '#198754',
+      'border-color': '#198754'
+    },
+    
+    '.bw-btn-outline-danger': {
+      'color': '#dc3545',
+      'border-color': '#dc3545',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-danger:hover': {
+      'color': '#fff',
+      'background-color': '#dc3545',
+      'border-color': '#dc3545'
+    },
+    
+    '.bw-btn-outline-warning': {
+      'color': '#ffc107',
+      'border-color': '#ffc107',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-warning:hover': {
+      'color': '#000',
+      'background-color': '#ffc107',
+      'border-color': '#ffc107'
+    },
+    
+    '.bw-btn-outline-info': {
+      'color': '#0dcaf0',
+      'border-color': '#0dcaf0',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-info:hover': {
+      'color': '#000',
+      'background-color': '#0dcaf0',
+      'border-color': '#0dcaf0'
+    },
+    
+    '.bw-btn-outline-light': {
+      'color': '#f8f9fa',
+      'border-color': '#f8f9fa',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-light:hover': {
+      'color': '#000',
+      'background-color': '#f8f9fa',
+      'border-color': '#f8f9fa'
+    },
+    
+    '.bw-btn-outline-dark': {
+      'color': '#212529',
+      'border-color': '#212529',
+      'background-color': 'transparent'
+    },
+    '.bw-btn-outline-dark:hover': {
+      'color': '#fff',
+      'background-color': '#212529',
+      'border-color': '#212529'
+    },
+    
     // Button sizes
     '.bw-btn-lg': {
-      'padding': '0.5rem 1rem',
-      'font-size': '1.25rem',
-      'border-radius': '0.3rem'
+      'padding': '0.625rem 1.5rem',
+      'font-size': '1rem',
+      'border-radius': '8px'
     },
     '.bw-btn-sm': {
-      'padding': '0.25rem 0.5rem',
-      'font-size': '0.875rem',
-      'border-radius': '0.2rem'
+      'padding': '0.25rem 0.75rem',
+      'font-size': '0.8125rem',
+      'border-radius': '5px'
     }
   },
 
-  // Cards
+  /**
+   * Card component styles
+   *
+   * Classes: .bw-card, .bw-card-body, .bw-card-title, .bw-card-text,
+   * .bw-card-header, .bw-card-footer, .card-img-top, .card-subtitle.
+   * Cards include hover lift animation by default.
+   */
   cards: {
     '.bw-card': {
       'position': 'relative',
@@ -385,90 +543,133 @@ export const defaultStyles = {
       'word-wrap': 'break-word',
       'background-color': '#fff',
       'background-clip': 'border-box',
-      'border': '1px solid rgba(0,0,0,.125)',
-      'border-radius': '.5rem',
-      'box-shadow': '0 0.125rem 0.25rem rgba(0,0,0,.075)',
-      'transition': 'box-shadow .15s ease-in-out, transform .15s ease-in-out',
-      'margin-bottom': '1.5rem'
+      'border': '1px solid #e5e5e5',
+      'border-radius': '8px',
+      'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
+      'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+      'margin-bottom': '1.5rem',
+      'overflow': 'hidden'
     },
     '.bw-card:hover': {
-      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,.15)',
+      'box-shadow': '0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06)',
       'transform': 'translateY(-2px)'
     },
     '.bw-card-body': {
       'flex': '1 1 auto',
-      'padding': '1.5rem'
+      'padding': '1.25rem 1.5rem'
     },
     '.bw-card-body > *:last-child': {
       'margin-bottom': '0'
     },
     '.bw-card-title': {
-      'margin-bottom': '0.75rem',
-      'font-size': '1.25rem',
-      'font-weight': '500',
-      'line-height': '1.2'
+      'margin-bottom': '0.5rem',
+      'font-size': '1.125rem',
+      'font-weight': '600',
+      'line-height': '1.3',
+      'color': '#1a1a1a'
     },
     '.card-subtitle': {
-      'margin-top': '-0.375rem',
+      'margin-top': '-0.25rem',
       'margin-bottom': '0.5rem',
-      'color': '#6c757d'
+      'color': '#777',
+      'font-size': '0.875rem'
     },
     '.bw-card-text': {
-      'margin-bottom': '0'
+      'margin-bottom': '0',
+      'color': '#555',
+      'font-size': '0.9375rem',
+      'line-height': '1.6'
     },
     '.bw-card-header': {
-      'padding': '0.75rem 1.25rem',
+      'padding': '0.875rem 1.5rem',
       'margin-bottom': '0',
-      'background-color': 'rgba(0,0,0,.03)',
-      'border-bottom': '1px solid rgba(0,0,0,.125)',
-      'font-weight': '600'
+      'background-color': '#fafafa',
+      'border-bottom': '1px solid #e5e5e5',
+      'font-weight': '600',
+      'font-size': '0.875rem'
     },
     '.bw-card-footer': {
-      'padding': '0.5rem 1rem',
-      'background-color': 'rgba(0,0,0,.03)',
-      'border-top': '1px solid rgba(0,0,0,.125)'
+      'padding': '0.75rem 1.5rem',
+      'background-color': '#fafafa',
+      'border-top': '1px solid #e5e5e5',
+      'font-size': '0.875rem',
+      'color': '#777'
     },
     '.card-img-top': {
       'width': '100%',
-      'border-top-left-radius': 'calc(0.25rem - 1px)',
-      'border-top-right-radius': 'calc(0.25rem - 1px)'
+      'border-top-left-radius': '7px',
+      'border-top-right-radius': '7px'
     }
   },
 
-  // Forms
+  /**
+   * Form control styles
+   *
+   * Classes: .bw-form-control (inputs, selects, textareas),
+   * .bw-form-label, .bw-form-group. Includes focus ring styling.
+   */
   forms: {
     '.bw-form-control': {
       'display': 'block',
       'width': '100%',
-      'padding': '0.375rem 0.75rem',
-      'font-size': '1rem',
+      'padding': '0.5rem 0.875rem',
+      'font-size': '0.9375rem',
       'font-weight': '400',
       'line-height': '1.5',
-      'color': '#212529',
+      'color': '#1a1a1a',
       'background-color': '#fff',
       'background-clip': 'padding-box',
-      'border': '1px solid #ced4da',
+      'border': '1px solid #ccc',
       'appearance': 'none',
-      'border-radius': '0.25rem',
-      'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out'
+      'border-radius': '6px',
+      'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+      'font-family': 'inherit'
     },
     '.bw-form-control:focus': {
-      'color': '#212529',
+      'color': '#1a1a1a',
       'background-color': '#fff',
-      'border-color': '#86b7fe',
+      'border-color': '#80cccc',
       'outline': '0',
-      'box-shadow': '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+      'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
+    },
+    '.bw-form-control::placeholder': {
+      'color': '#999',
+      'opacity': '1'
     },
     '.bw-form-label': {
-      'margin-bottom': '0.5rem',
-      'font-weight': '500'
+      'display': 'block',
+      'margin-bottom': '0.375rem',
+      'font-size': '0.875rem',
+      'font-weight': '600',
+      'color': '#333'
     },
     '.bw-form-group': {
-      'margin-bottom': '1rem'
+      'margin-bottom': '1.25rem'
+    },
+    '.bw-form-text': {
+      'margin-top': '0.25rem',
+      'font-size': '0.8125rem',
+      'color': '#777'
+    },
+    'select.bw-form-control': {
+      'padding-right': '2.25rem',
+      'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
+      'background-repeat': 'no-repeat',
+      'background-position': 'right 0.75rem center',
+      'background-size': '16px 12px'
+    },
+    'textarea.bw-form-control': {
+      'min-height': '5rem',
+      'resize': 'vertical'
     }
   },
 
-  // Navigation
+  /**
+   * Navbar and navigation link styles
+   *
+   * Classes: .bw-navbar, .bw-navbar-dark, .bw-navbar-light,
+   * .bw-navbar-brand, .bw-navbar-nav, .bw-nav-link (with :hover and .active).
+   */
   navigation: {
     '.bw-navbar': {
       'position': 'relative',
@@ -476,9 +677,9 @@ export const defaultStyles = {
       'flex-wrap': 'wrap',
       'align-items': 'center',
       'justify-content': 'space-between',
-      'padding-top': '.5rem',
-      'padding-bottom': '.5rem',
-      'background-color': '#f8f9fa'
+      'padding': '0.5rem 1.5rem',
+      'background-color': '#fafafa',
+      'border-bottom': '1px solid #e5e5e5'
     },
     '.bw-navbar > .container': {
       'display': 'flex',
@@ -487,66 +688,86 @@ export const defaultStyles = {
       'justify-content': 'space-between'
     },
     '.bw-navbar-dark': {
-      'background-color': '#212529'
+      'background-color': '#1a1a1a',
+      'border-bottom-color': '#333'
     },
     '.bw-navbar-dark .bw-navbar-brand': {
       'color': '#fff'
     },
     '.bw-navbar-dark .bw-nav-link': {
-      'color': 'rgba(255,255,255,.55)'
+      'color': 'rgba(255,255,255,.65)'
     },
     '.bw-navbar-dark .bw-nav-link:hover': {
-      'color': 'rgba(255,255,255,.75)'
-    },
-    '.bw-navbar-dark .bw-nav-link.active': {
       'color': '#fff'
     },
+    '.bw-navbar-dark .bw-nav-link.active': {
+      'color': '#fff',
+      'font-weight': '600'
+    },
     '.bw-navbar-brand': {
-      'display': 'inline-block',
-      'padding-top': '0.3125rem',
-      'padding-bottom': '0.3125rem',
-      'margin-right': '1rem',
-      'font-size': '1.25rem',
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'gap': '0.5rem',
+      'padding-top': '0.25rem',
+      'padding-bottom': '0.25rem',
+      'margin-right': '1.5rem',
+      'font-size': '1.125rem',
+      'font-weight': '600',
       'line-height': 'inherit',
-      'white-space': 'nowrap'
+      'white-space': 'nowrap',
+      'text-decoration': 'none',
+      'color': '#1a1a1a'
     },
     '.bw-navbar-nav': {
       'display': 'flex',
       'flex-direction': 'row',
       'padding-left': '0',
       'margin-bottom': '0',
-      'list-style': 'none'
+      'list-style': 'none',
+      'gap': '0.25rem'
     },
-    '.bw-nav-link': {
+    '.bw-navbar-nav .bw-nav-link': {
       'display': 'block',
-      'padding': '0.5rem 1rem',
-      'color': '#0d6efd',
+      'padding': '0.5rem 0.875rem',
+      'color': '#555',
       'text-decoration': 'none',
-      'transition': 'color 0.15s ease-in-out'
+      'font-size': '0.875rem',
+      'font-weight': '500',
+      'border-radius': '6px',
+      'transition': 'color 0.15s, background-color 0.15s'
     },
-    '.bw-nav-link:hover': {
-      'color': '#0a58ca'
+    '.bw-navbar-nav .bw-nav-link:hover': {
+      'color': '#1a1a1a',
+      'background-color': 'rgba(0,0,0,.04)'
     },
-    '.bw-nav-link.active': {
-      'color': '#495057',
-      'font-weight': '500'
+    '.bw-navbar-nav .bw-nav-link.active': {
+      'color': '#006666',
+      'font-weight': '600',
+      'background-color': 'rgba(0, 102, 102, 0.06)'
     }
   },
 
-  // Tables
+  /**
+   * Table styles with striped and hover variants
+   *
+   * Classes: .bw-table, .bw-table-striped, .bw-table-hover,
+   * .bw-table-bordered. Applies to thead, tbody, th, td.
+   */
   tables: {
     '.bw-table': {
       'width': '100%',
-      'margin-bottom': '1rem',
-      'color': '#212529',
+      'margin-bottom': '1.5rem',
+      'color': '#1a1a1a',
       'vertical-align': 'top',
-      'border-color': '#dee2e6'
+      'border-color': '#e0e0e0',
+      'border-collapse': 'collapse',
+      'font-size': '0.9375rem',
+      'line-height': '1.5'
     },
     '.bw-table > :not(caption) > * > *': {
-      'padding': '0.5rem 0.5rem',
+      'padding': '0.75rem 1rem',
       'background-color': 'transparent',
-      'border-bottom-width': '1px',
-      'box-shadow': 'inset 0 0 0 9999px transparent'
+      'border-bottom': '1px solid #e0e0e0'
     },
     '.bw-table > tbody': {
       'vertical-align': 'inherit'
@@ -554,32 +775,51 @@ export const defaultStyles = {
     '.bw-table > thead': {
       'vertical-align': 'bottom'
     },
+    '.bw-table > thead > tr > *': {
+      'padding': '0.625rem 1rem',
+      'font-size': '0.8125rem',
+      'font-weight': '600',
+      'text-transform': 'uppercase',
+      'letter-spacing': '0.04em',
+      'color': '#555',
+      'border-bottom': '2px solid #ccc',
+      'background-color': '#f8f8f8'
+    },
     '.bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
-      'background-color': 'rgba(0, 0, 0, 0.05)'
+      'background-color': 'rgba(0, 0, 0, 0.025)'
     },
     '.bw-table-hover > tbody > tr:hover > *': {
-      'background-color': 'rgba(0, 0, 0, 0.075)'
+      'background-color': 'rgba(0, 102, 102, 0.05)'
     },
-    
     '.bw-table-bordered': {
-      'border': '1px solid #dee2e6'
+      'border': '1px solid #e0e0e0'
     },
     '.bw-table-bordered > :not(caption) > * > *': {
-      'border-width': '1px 0'
+      'border': '1px solid #e0e0e0'
     },
-    '.bw-table-bordered > :not(caption) > * > *': {
-      'border-width': '0 1px'
+    '.bw-table caption': {
+      'padding': '0.5rem 1rem',
+      'font-size': '0.875rem',
+      'color': '#777',
+      'caption-side': 'bottom'
     }
   },
   
-  // Alerts
+  /**
+   * Alert/notification styles for all color variants
+   *
+   * Classes: .bw-alert, .bw-alert-{variant}, .bw-alert-dismissible.
+   * Variants: primary, secondary, success, info, warning, danger, light, dark.
+   */
   alerts: {
     '.bw-alert': {
       'position': 'relative',
-      'padding': '1rem 1rem',
+      'padding': '0.875rem 1.25rem',
       'margin-bottom': '1rem',
       'border': '1px solid transparent',
-      'border-radius': '.375rem'
+      'border-radius': '8px',
+      'font-size': '0.9375rem',
+      'line-height': '1.6'
     },
     '.alert-heading': {
       'color': 'inherit'
@@ -598,12 +838,12 @@ export const defaultStyles = {
       'padding': '1.25rem 1rem'
     },
     '.bw-alert-primary': {
-      'color': '#084298',
-      'background-color': '#cfe2ff',
-      'border-color': '#b6d4fe'
+      'color': '#004d4d',
+      'background-color': '#e0f2f1',
+      'border-color': '#b2dfdb'
     },
     '.bw-alert-primary .alert-link': {
-      'color': '#06357a'
+      'color': '#003d3d'
     },
     '.bw-alert-secondary': {
       'color': '#41464b',
@@ -663,7 +903,12 @@ export const defaultStyles = {
     }
   },
   
-  // Badges
+  /**
+   * Inline badge/label styles
+   *
+   * Classes: .bw-badge, .bw-badge-{variant}.
+   * Variants: primary, secondary, success, info, warning, danger, light, dark.
+   */
   badges: {
     '.bw-badge': {
       'display': 'inline-block',
@@ -686,7 +931,7 @@ export const defaultStyles = {
     },
     '.bw-badge-primary': {
       'color': '#fff',
-      'background-color': '#0d6efd'
+      'background-color': '#006666'
     },
     '.bw-badge-secondary': {
       'color': '#fff',
@@ -718,7 +963,12 @@ export const defaultStyles = {
     }
   },
   
-  // Progress bars
+  /**
+   * Progress bar styles with striped and animated variants
+   *
+   * Classes: .bw-progress, .bw-progress-bar, .bw-progress-bar-striped,
+   * .bw-progress-bar-animated. Includes @keyframes for stripe animation.
+   */
   progress: {
     '.bw-progress': {
       'display': 'flex',
@@ -737,7 +987,7 @@ export const defaultStyles = {
       'color': '#fff',
       'text-align': 'center',
       'white-space': 'nowrap',
-      'background-color': '#0d6efd',
+      'background-color': '#006666',
       'transition': 'width .6s ease',
       'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)',
       'font-weight': '600'
@@ -754,40 +1004,61 @@ export const defaultStyles = {
     }
   },
   
-  // Tabs
+  /**
+   * Tab navigation and content pane styles
+   *
+   * Classes: .bw-nav, .bw-nav-tabs, .bw-nav-item, .bw-nav-link (.active, :hover),
+   * .bw-tab-content, .bw-tab-pane (.active). Inactive panes use display:none.
+   */
   tabs: {
     '.bw-nav': {
       'display': 'flex',
       'flex-wrap': 'wrap',
       'padding-left': '0',
       'margin-bottom': '0',
-      'list-style': 'none'
+      'list-style': 'none',
+      'gap': '0'
     },
     '.bw-nav-tabs': {
-      'border-bottom': '1px solid #dee2e6'
+      'border-bottom': '2px solid #e5e5e5'
     },
     '.bw-nav-item': {
       'display': 'block'
     },
     '.bw-nav-tabs .bw-nav-item': {
-      'margin-bottom': '-1px'
+      'margin-bottom': '-2px'
+    },
+    '.bw-nav-link': {
+      'display': 'block',
+      'padding': '0.625rem 1rem',
+      'font-size': '0.875rem',
+      'font-weight': '500',
+      'color': '#777',
+      'text-decoration': 'none',
+      'cursor': 'pointer',
+      'border': 'none',
+      'background': 'transparent',
+      'transition': 'color 0.15s, border-color 0.15s',
+      'font-family': 'inherit'
     },
     '.bw-nav-tabs .bw-nav-link': {
-      'border': '1px solid transparent',
-      'border-top-left-radius': '0.25rem',
-      'border-top-right-radius': '0.25rem',
+      'border': 'none',
+      'border-bottom': '2px solid transparent',
+      'border-radius': '0',
       'background-color': 'transparent'
     },
     '.bw-nav-tabs .bw-nav-link:hover': {
-      'border-color': '#e9ecef #e9ecef #dee2e6'
+      'color': '#1a1a1a',
+      'border-bottom-color': '#ccc'
     },
     '.bw-nav-tabs .bw-nav-link.active': {
-      'color': '#495057',
-      'background-color': '#fff',
-      'border-color': '#dee2e6 #dee2e6 #fff'
+      'color': '#006666',
+      'background-color': 'transparent',
+      'border-bottom': '2px solid #006666',
+      'font-weight': '600'
     },
     '.bw-tab-content': {
-      'padding': '1rem'
+      'padding': '1.25rem 0'
     },
     '.bw-tab-pane': {
       'display': 'none'
@@ -797,7 +1068,12 @@ export const defaultStyles = {
     }
   },
   
-  // List groups
+  /**
+   * List group styles for vertical lists of items
+   *
+   * Classes: .bw-list-group, .bw-list-group-item (.active, .disabled),
+   * .bw-list-group-flush. Supports anchor tags for interactive items.
+   */
   listGroups: {
     '.bw-list-group': {
       'display': 'flex',
@@ -810,10 +1086,11 @@ export const defaultStyles = {
       'position': 'relative',
       'display': 'block',
       'padding': '0.75rem 1.25rem',
-      'color': '#212529',
+      'color': '#1a1a1a',
       'text-decoration': 'none',
       'background-color': '#fff',
-      'border': '1px solid rgba(0,0,0,.125)'
+      'border': '1px solid #e5e5e5',
+      'font-size': '0.9375rem'
     },
     '.bw-list-group-item:first-child': {
       'border-top-left-radius': 'inherit',
@@ -829,8 +1106,8 @@ export const defaultStyles = {
     '.bw-list-group-item.active': {
       'z-index': '2',
       'color': '#fff',
-      'background-color': '#0d6efd',
-      'border-color': '#0d6efd'
+      'background-color': '#006666',
+      'border-color': '#006666'
     },
     '.bw-list-group-item.disabled': {
       'color': '#6c757d',
@@ -858,7 +1135,12 @@ export const defaultStyles = {
     }
   },
   
-  // Pagination
+  /**
+   * Pagination control styles
+   *
+   * Classes: .bw-pagination, .bw-page-item (.bw-active, .bw-disabled),
+   * .bw-page-link (:hover, :focus). First/last items get rounded corners.
+   */
   pagination: {
     '.bw-pagination': {
       'display': 'flex',
@@ -876,7 +1158,7 @@ export const defaultStyles = {
       'padding': '0.375rem 0.75rem',
       'margin-left': '-1px',
       'line-height': '1.25',
-      'color': '#0d6efd',
+      'color': '#006666',
       'text-decoration': 'none',
       'background-color': '#fff',
       'border': '1px solid #dee2e6',
@@ -884,16 +1166,16 @@ export const defaultStyles = {
     },
     '.bw-page-link:hover': {
       'z-index': '2',
-      'color': '#0a58ca',
+      'color': '#004d4d',
       'background-color': '#e9ecef',
       'border-color': '#dee2e6'
     },
     '.bw-page-link:focus': {
       'z-index': '3',
-      'color': '#0a58ca',
+      'color': '#004d4d',
       'background-color': '#e9ecef',
       'outline': '0',
-      'box-shadow': '0 0 0 0.25rem rgba(13, 110, 253, 0.25)'
+      'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
     },
     '.bw-page-item:first-child .bw-page-link': {
       'margin-left': '0',
@@ -907,8 +1189,8 @@ export const defaultStyles = {
     '.bw-page-item.bw-active .bw-page-link': {
       'z-index': '3',
       'color': '#fff',
-      'background-color': '#0d6efd',
-      'border-color': '#0d6efd'
+      'background-color': '#006666',
+      'border-color': '#006666'
     },
     '.bw-page-item.bw-disabled .bw-page-link': {
       'color': '#6c757d',
@@ -918,7 +1200,12 @@ export const defaultStyles = {
     }
   },
   
-  // Breadcrumb
+  /**
+   * Breadcrumb navigation styles
+   *
+   * Classes: .bw-breadcrumb, .bw-breadcrumb-item (.active).
+   * Uses "/" separator via ::before pseudo-element.
+   */
   breadcrumb: {
     '.bw-breadcrumb': {
       'display': 'flex',
@@ -945,7 +1232,186 @@ export const defaultStyles = {
     }
   },
 
-  // Utilities
+  /**
+   * Hero section styles for landing page headers
+   *
+   * Classes: .bw-hero, .bw-hero-{variant} (gradient backgrounds),
+   * .bw-hero-overlay, .bw-hero-content, .bw-hero-title.
+   * Also includes .bw-display-4, .bw-lead, and .bw-py-{3-6} spacing.
+   */
+  hero: {
+    '.bw-hero': {
+      'position': 'relative',
+      'overflow': 'hidden'
+    },
+    '.bw-hero-primary': {
+      'background': 'linear-gradient(135deg, #006666 0%, #004d4d 100%)',
+      'color': '#fff'
+    },
+    '.bw-hero-secondary': {
+      'background': 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)',
+      'color': '#fff'
+    },
+    '.bw-hero-light': {
+      'background': '#f8f9fa',
+      'color': '#212529'
+    },
+    '.bw-hero-dark': {
+      'background': 'linear-gradient(135deg, #212529 0%, #16181b 100%)',
+      'color': '#fff'
+    },
+    '.bw-hero-overlay': {
+      'position': 'absolute',
+      'top': '0',
+      'left': '0',
+      'right': '0',
+      'bottom': '0',
+      'background': 'rgba(0,0,0,0.5)',
+      'z-index': '1'
+    },
+    '.bw-hero-content': {
+      'position': 'relative',
+      'z-index': '2'
+    },
+    '.bw-hero-title': {
+      'font-weight': '300',
+      'letter-spacing': '-0.05rem'
+    },
+    '.bw-display-4': {
+      'font-size': 'calc(1.475rem + 2.7vw)',
+      'font-weight': '300',
+      'line-height': '1.2'
+    },
+    '@media (min-width: 1200px)': {
+      '.bw-display-4': { 'font-size': '3.5rem' }
+    },
+    '.bw-lead': {
+      'font-size': '1.25rem',
+      'font-weight': '300'
+    },
+    '.bw-py-3': { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' },
+    '.bw-py-4': { 'padding-top': '1.5rem !important', 'padding-bottom': '1.5rem !important' },
+    '.bw-py-5': { 'padding-top': '3rem !important', 'padding-bottom': '3rem !important' },
+    '.bw-py-6': { 'padding-top': '4rem !important', 'padding-bottom': '4rem !important' }
+  },
+
+  /**
+   * Feature grid item styles
+   *
+   * Classes: .bw-feature, .bw-feature-icon, .bw-feature-title, .bw-g-4.
+   */
+  features: {
+    '.bw-feature': {
+      'padding': '1rem'
+    },
+    '.bw-feature-icon': {
+      'display': 'inline-block',
+      'margin-bottom': '1rem'
+    },
+    '.bw-feature-title': {
+      'margin-bottom': '0.5rem'
+    },
+    '.bw-g-4': {
+      '--bw-gutter-x': '1.5rem',
+      '--bw-gutter-y': '1.5rem'
+    }
+  },
+
+  /**
+   * Enhanced card styles with hover effects and horizontal image support
+   *
+   * Classes: .bw-card-hoverable (lift on hover), .bw-card-img-left,
+   * .bw-card-img-right, .bw-h5, .bw-h6.
+   */
+  enhancedCards: {
+    '.bw-card-hoverable': {
+      'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    },
+    '.bw-card-hoverable:hover': {
+      'transform': 'translateY(-4px)',
+      'box-shadow': '0 1rem 2rem rgba(0,0,0,.15)'
+    },
+    '.bw-card-img-left': {
+      'width': '40%',
+      'object-fit': 'cover'
+    },
+    '.bw-card-img-right': {
+      'width': '40%',
+      'object-fit': 'cover'
+    },
+    '.bw-h5': {
+      'font-size': '1.25rem'
+    },
+    '.bw-h6': {
+      'font-size': '1rem'
+    }
+  },
+
+  /**
+   * Page section styles with header and subtitle
+   *
+   * Classes: .bw-section, .bw-section-header, .bw-section-title,
+   * .bw-section-subtitle. Responsive title sizing included.
+   */
+  sections: {
+    '.bw-section': {
+      'position': 'relative'
+    },
+    '.bw-section-header': {
+      'margin-bottom': '3rem'
+    },
+    '.bw-section-title': {
+      'margin-bottom': '1rem',
+      'font-weight': '300',
+      'font-size': 'calc(1.325rem + .9vw)'
+    },
+    '@media (min-width: 1200px)': {
+      '.bw-section-title': { 'font-size': '2rem' }
+    },
+    '.bw-section-subtitle': {
+      'font-size': '1.125rem',
+      'color': '#6c757d'
+    }
+  },
+
+  /**
+   * Call-to-action section styles
+   *
+   * Classes: .bw-cta, .bw-cta-content, .bw-cta-title, .bw-cta-actions.
+   * Content is centered with max-width constraint.
+   */
+  cta: {
+    '.bw-cta': {
+      'position': 'relative'
+    },
+    '.bw-cta-content': {
+      'max-width': '48rem',
+      'margin': '0 auto'
+    },
+    '.bw-cta-title': {
+      'font-weight': '300'
+    },
+    '.bw-cta-actions': {
+      'display': 'flex',
+      'gap': '1rem',
+      'justify-content': 'center',
+      'flex-wrap': 'wrap'
+    }
+  },
+
+  /**
+   * Utility classes for spacing, text, display, flexbox, colors, borders, etc.
+   *
+   * Spacing: .bw-m-{0-5}, .bw-mt-{0-5}, .bw-mb-{0-5}, .bw-ms-{0-5}, .bw-me-{0-5},
+   *          .bw-p-{0-5}, .pt-{0-5}, .pb-{0-5}, .ps-{0-5}, .pe-{0-5}
+   * Text: .bw-text-{left,right,center}, .bw-text-{variant}, .fw-{weight}, .fs-{1-6}
+   * Display: .bw-d-{none,block,inline,inline-block,flex}
+   * Background: .bw-bg-{variant}
+   * Borders: .bw-border, .bw-border-0, .bw-rounded, .bw-rounded-circle
+   * Shadows: .bw-shadow, .bw-shadow-sm, .bw-shadow-lg
+   * Sizing: .w-{25,50,75,100,auto}, .h-{25,50,75,100,auto}
+   * Position: .position-{static,relative,absolute,fixed,sticky}
+   */
   utilities: {
     // Spacing
     '.bw-m-0': { 'margin': '0 !important' },
@@ -1043,7 +1509,7 @@ export const defaultStyles = {
     '.align-items-center': { 'align-items': 'center' },
     
     // Colors
-    '.bw-text-primary': { 'color': '#0d6efd' },
+    '.bw-text-primary': { 'color': '#006666' },
     '.bw-text-secondary': { 'color': '#6c757d' },
     '.bw-text-success': { 'color': '#198754' },
     '.bw-text-danger': { 'color': '#dc3545' },
@@ -1053,7 +1519,7 @@ export const defaultStyles = {
     '.bw-text-dark': { 'color': '#212529' },
     '.bw-text-muted': { 'color': '#6c757d' },
     
-    '.bw-bg-primary': { 'background-color': '#0d6efd' },
+    '.bw-bg-primary': { 'background-color': '#006666' },
     '.bw-bg-secondary': { 'background-color': '#6c757d' },
     '.bw-bg-success': { 'background-color': '#198754' },
     '.bw-bg-danger': { 'background-color': '#dc3545' },
@@ -1196,7 +1662,12 @@ export const defaultStyles = {
     '.opacity-100': { 'opacity': '1 !important' }
   },
 
-  // Responsive utilities
+  /**
+   * Responsive grid columns for sm, md, and lg breakpoints
+   *
+   * Classes: .bw-col-sm-{1-12} (>=576px), .bw-col-md-{1-12} (>=768px),
+   * .bw-col-lg-{1-12} (>=992px). Applied via @media min-width queries.
+   */
   responsive: {
     '@media (min-width: 576px)': {
       '.bw-col-sm-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
@@ -1244,10 +1715,39 @@ export const defaultStyles = {
 };
 
 /**
- * Get all default styles as a single object
+ * Merge all style categories into a single flat CSS rules object
+ *
+ * Returns an object suitable for passing directly to bw.css() or
+ * bw.injectCSS(). All category objects are merged via Object.assign,
+ * so later categories override earlier ones if selectors collide.
+ *
+ * @returns {Object} Merged CSS rules object with all selectors
+ * @example
+ * const allRules = getAllStyles();
+ * const cssString = bw.css(allRules);
+ * bw.injectCSS(cssString);
  */
+/**
+ * Add underscore aliases for all bw- selectors
+ * For each selector containing .bw-, adds a duplicate with .bw_ so both work in CSS
+ * @param {Object} rules - CSS rules object
+ * @returns {Object} - Rules with underscore aliases added
+ */
+function addUnderscoreAliases(rules) {
+  const result = {};
+  for (const [selector, styles] of Object.entries(rules)) {
+    result[selector] = styles;
+    // If selector contains .bw-, add underscore variant
+    if (selector.includes('.bw-')) {
+      const underscoreSelector = selector.replace(/\.bw-/g, '.bw_');
+      result[underscoreSelector] = styles;
+    }
+  }
+  return result;
+}
+
 export function getAllStyles() {
-  return Object.assign({},
+  const merged = Object.assign({},
     defaultStyles.root,
     defaultStyles.reset,
     defaultStyles.typography,
@@ -1261,20 +1761,47 @@ export function getAllStyles() {
     defaultStyles.badges,
     defaultStyles.progress,
     defaultStyles.tabs,
-    defaultStyles.listGroup,
+    defaultStyles.listGroups,
     defaultStyles.pagination,
     defaultStyles.breadcrumb,
+    defaultStyles.hero,
+    defaultStyles.features,
+    defaultStyles.enhancedCards,
+    defaultStyles.sections,
+    defaultStyles.cta,
     defaultStyles.utilities,
     defaultStyles.responsive
   );
+  return addUnderscoreAliases(merged);
 }
 
 /**
- * Get default theme configuration
+ * Default theme design tokens
+ *
+ * Provides programmatic access to the design system values used in
+ * the CSS. Useful for dynamic styling, color interpolation, and
+ * building custom theme overrides.
+ *
+ * @type {Object}
+ * @property {Object} colors - Named color values (primary, secondary, success, etc.)
+ * @property {Object} breakpoints - Responsive breakpoint widths in pixels (xs, sm, md, lg, xl, xxl)
+ * @property {Object} spacing - Spacing scale (0-5) mapped to rem values
+ * @property {Object} typography - Font family and font size scale
+ * @property {string} typography.fontFamily - Default sans-serif font stack
+ * @property {Object} typography.fontSize - Named size scale (xs through 5xl)
  */
-export const theme = {
+/**
+ * Default theme design tokens
+ *
+ * Provides programmatic access to the design system values used in
+ * the CSS. Useful for dynamic styling, color interpolation, and
+ * building custom theme overrides.
+ *
+ * @type {Object}
+ */
+export let theme = {
   colors: {
-    primary: '#0d6efd',
+    primary: '#006666',
     secondary: '#6c757d',
     success: '#198754',
     danger: '#dc3545',
@@ -1302,7 +1829,7 @@ export const theme = {
     5: '3rem'
   },
   typography: {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     fontSize: {
       xs: '0.75rem',
       sm: '0.875rem',
@@ -1314,5 +1841,100 @@ export const theme = {
       '4xl': '2.25rem',
       '5xl': '3rem'
     }
-  }
+  },
+  darkMode: false
 };
+
+/**
+ * Dark mode color overrides applied to :root via CSS custom properties
+ * @type {Object}
+ */
+export const darkModeColors = {
+  '--bw-body-color': '#e9ecef',
+  '--bw-body-bg': '#1a1a2e',
+  '--bw-border-color': '#495057',
+  '--bw-gray-100': '#212529',
+  '--bw-gray-200': '#343a40',
+  '--bw-gray-300': '#495057',
+  '--bw-gray-800': '#e9ecef',
+  '--bw-gray-900': '#f8f9fa'
+};
+
+/**
+ * Get dark mode CSS rules
+ * @returns {Object} - CSS rules for dark mode
+ */
+export function getDarkModeStyles() {
+  return {
+    ':root.bw-dark': {
+      '--bw-body-color': '#e9ecef',
+      '--bw-body-bg': '#1a1a2e'
+    },
+    '.bw-dark body, :root.bw-dark body': {
+      'color': '#e9ecef',
+      'background-color': '#1a1a2e'
+    },
+    '.bw-dark .bw-card': {
+      'background-color': '#16213e',
+      'border-color': '#495057',
+      'color': '#e9ecef'
+    },
+    '.bw-dark .bw-navbar': {
+      'background-color': '#0f3460'
+    },
+    '.bw-dark .bw-form-control': {
+      'background-color': '#16213e',
+      'border-color': '#495057',
+      'color': '#e9ecef'
+    },
+    '.bw-dark .bw-table': {
+      'color': '#e9ecef'
+    },
+    '.bw-dark .bw-table > :not(caption) > * > *': {
+      'border-bottom-color': '#495057'
+    },
+    '.bw-dark .bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
+      'background-color': 'rgba(255, 255, 255, 0.05)'
+    },
+    '.bw-dark .bw-alert': {
+      'border-color': '#495057'
+    },
+    '.bw-dark .bw-list-group-item': {
+      'background-color': '#16213e',
+      'border-color': '#495057',
+      'color': '#e9ecef'
+    },
+    '@media (prefers-color-scheme: dark)': {
+      ':root.bw-auto-dark body': {
+        'color': '#e9ecef',
+        'background-color': '#1a1a2e'
+      }
+    }
+  };
+}
+
+/**
+ * Deep merge two objects (target is mutated)
+ * @param {Object} target
+ * @param {Object} source
+ * @returns {Object}
+ */
+export function deepMerge(target, source) {
+  for (const key of Object.keys(source)) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])
+        && target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])) {
+      deepMerge(target[key], source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  }
+  return target;
+}
+
+/**
+ * Update the theme with new values (deep merge)
+ * @param {Object} overrides - Partial theme object to merge
+ */
+export function updateTheme(overrides) {
+  deepMerge(theme, overrides);
+}

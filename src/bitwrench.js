@@ -1,34 +1,39 @@
-/*
- *  bitwrench.js  --- Misc Helper Functions .. 
- *	
- *  version 2.x 
- * 
- *  bitwrench is just a named space set of javascript helper functions useful for common web tasks and 
- *  some server side js.   No rhyme or reason I just needed these items over and overgain and didn't feel
- *  like cobbling together different common libs
+/**
+ * Bitwrench v1 Legacy IIFE Build
  *
- *	@copy Copyright (C) <2013>  <M. A. Chatterjee>
- *  	
- *  @author M A Chatterjee <deftio [at] deftio [dot] com>
+ * Self-contained legacy version of bitwrench using an IIFE (Immediately
+ * Invoked Function Expression) pattern for compatibility with older
+ * browsers and module systems (AMD, CommonJS, global script).
  *
- *	This software is provided 'as-is', without any express or implied
- *	warranty. In no event will the authors be held liable for any damages
- *	arising from the use of this software.
+ * This file is NOT used by the v2 ESM build pipeline. It exists for
+ * backward compatibility with projects that load bitwrench via a
+ * script tag or require(). The modern v2 source is in bitwrench_v2.js.
  *
- *	Permission is granted to anyone to use this software for any purpose,
- *	including commercial applications, and to alter it and redistribute it
- *	freely, subject to the following restrictions:
+ * Features included: typeOf, TACO HTML emitter, function registry,
+ * loremIpsum, escapeHtml, file I/O (saveClientFile, saveClientJSON).
  *
- *	1. The origin of this software must not be misrepresented; you must not
- *	claim that you wrote the original software. If you use this software
- *	in a product, an acknowledgment in the product documentation is required.
+ * @file bitwrench.js - Legacy v1 IIFE build
+ * @version 2.x
+ * @license BSD-2-Clause
+ * @copyright Copyright (C) 2013 M. A. Chatterjee
+ * @author M A Chatterjee <deftio [at] deftio [dot] com>
  *
- *	2. Altered source versions must be plainly marked as such, and must not be
- *	misrepresented as being the original software.
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
  *
- *	3. This notice may not be removed or altered from any source
- *	distribution.
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
  *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation is required.
+ *
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ *
+ * 3. This notice may not be removed or altered from any source distribution.
  */
 //JS Hint linter directives
 /*jshint -W069 */ //suppresses warning about using x.var_name vs x["var_name"]
@@ -212,7 +217,9 @@
   // 2. Function Registry
   // =========================================================================
 
-  var _fnRegistry = {};    // Internal dictionary of functionID -> function
+  /** @type {Object.<string, Function>} Internal dictionary of functionID -> function */
+  var _fnRegistry = {};
+  /** @type {number} Auto-incrementing counter for generating unique function IDs */
   var _fnIDCounter = 0;
 
   /**
@@ -478,6 +485,51 @@
 
   }
 
+  // =========================================================================
+  // 3.5 File I/O Functions
+  // =========================================================================
+  
+  function isNodeJS() {
+    return (typeof process !== 'undefined' && 
+            process.versions && 
+            process.versions.node);
+  }
+
+  function saveClientFile(fname, data) {
+    /**
+     * saveClientFile(fname, data) saves data to the client environment
+     * fname is filename to save as
+     * data is data to save.
+     * Works both in Node.js and browser.
+     */
+    if (isNodeJS()) {
+      var fs = require("fs");
+      fs.writeFile(fname, data, function (err) {
+        if (err) {
+          console.error("Error saving file:", err);
+        }
+      });
+    } else { 
+      // We're in a browser
+      var blob = new Blob([data], { type: "application/octet-stream" });
+      var url = window.URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+  }
+
+  function saveClientJSON(fname, data) {
+    /**
+     * Save data as JSON file
+     */
+    saveClientFile(fname, JSON.stringify(data, null, 2));
+  }
 
   // =========================================================================
   // 4. Public API (bw)
@@ -502,7 +554,12 @@
     escapeHtml: escapeHtml,
     loremIpsum: loremIpsum,
     typeOf: typeOf,
-    to: typeOf
+    to: typeOf,
+
+    // File I/O
+    isNodeJS: isNodeJS,
+    saveClientFile: saveClientFile,
+    saveClientJSON: saveClientJSON
   };
 
   return bw;

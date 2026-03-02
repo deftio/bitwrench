@@ -1,0 +1,107 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - text: Bitwrench v2
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Fundamentals":
+        - /url: 00-taco-srmc-fundamentals.html
+    - listitem:
+      - link "Basic":
+        - /url: 01-basic-components.html
+    - listitem:
+      - link "Tables & Forms":
+        - /url: 02-interactive-tables-forms.html
+    - listitem:
+      - link "Themes":
+        - /url: 03-themes-styling.html
+    - listitem:
+      - link "Dashboard":
+        - /url: 04-dashboard-app.html
+    - listitem:
+      - link "Advanced":
+        - /url: 05-advanced-features.html
+    - listitem:
+      - link "Tic Tac Toe":
+        - /url: 06-tic-tac-toe-tutorial.html
+  - text: v2.0.3
+- heading "Theme Selector" [level=4]
+- button "Default"
+- button "Dark"
+- button "Ocean"
+- button "Sunset"
+- button "Forest"
+- heading "Bitwrench v2 - Themes & Styling" [level=1]
+- text: "Version: 2.0.3"
+- heading "Theme Color Palette" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel: "primary #007bff secondary #6c757d success #28a745 danger #dc3545 warning #ffc107 info #17a2b8 light #f8f9fa dark #343a40"
+- heading "Dynamic CSS Generation" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "CSS Generation Example" [level=4]
+  - text: This element has dynamically generated styles
+  - button "Change Styles"
+  - heading "Generated CSS" [level=4]
+  - code: "/* Dynamically injected CSS */ #dynamic-css-target { background-color: rgba(0, 123, 255, 0.1); border-color: #007bff; color: #007bff; transform: scale(1); transition: all 0.3s ease; }"
+- heading "Themed Components" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Buttons" [level=4]
+  - button "Primary"
+  - button "Secondary"
+  - button "Success"
+  - button "Danger"
+  - button "Warning"
+  - button "Info"
+  - heading "Cards" [level=4]
+  - text: Primary Card This card uses the current theme colors.
+  - button "Action"
+  - text: Success Card This card uses the current theme colors.
+  - button "Action"
+  - text: Warning Card This card uses the current theme colors.
+  - button "Action"
+  - heading "Alerts" [level=4]
+  - alert: This is a info alert using theme colors.
+  - alert: This is a success alert using theme colors.
+  - alert: This is a warning alert using theme colors.
+  - alert: This is a danger alert using theme colors.
+- heading "Custom Theme Builder" [level=2]
+- tablist:
+  - tab "Result" [selected]
+  - tab "Code"
+- tabpanel:
+  - heading "Theme Settings" [level=4]
+  - text: Primary
+  - textbox: "#007bff"
+  - text: Secondary
+  - textbox: "#6c757d"
+  - text: Success
+  - textbox: "#28a745"
+  - text: Danger
+  - textbox: "#dc3545"
+  - text: Warning
+  - textbox: "#ffc107"
+  - text: Info
+  - textbox: "#17a2b8"
+  - text: Light
+  - textbox: "#f8f9fa"
+  - text: Dark
+  - textbox: "#343a40"
+  - button "Apply Custom Theme"
+  - button "Export Theme"
+  - heading "Preview" [level=4]
+  - text: primary secondary success danger warning info light dark
+  - button "Preview Button"
+  - button "Secondary"
+```
