@@ -4,12 +4,12 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = 'http://localhost:8081';
 const EXAMPLES = [
   { path: '/index.html', name: 'Index Page' },
-  { path: '/00-taco-srmc-fundamentals.html', name: 'Fundamentals' },
-  { path: '/01-basic-components.html', name: 'Basic Components' },
-  { path: '/02-interactive-tables-forms.html', name: 'Tables & Forms' },
-  { path: '/03-themes-styling.html', name: 'Themes & Styling' },
-  { path: '/04-dashboard-app.html', name: 'Dashboard' },
-  { path: '/05-advanced-features.html', name: 'Advanced Features' },
+  { path: '/00-quick-start.html', name: 'Quick Start' },
+  { path: '/01-components.html', name: 'Components' },
+  { path: '/02-tables-forms.html', name: 'Tables & Forms' },
+  { path: '/03-styling.html', name: 'Styling' },
+  { path: '/04-dashboard.html', name: 'Dashboard' },
+  { path: '/05-state.html', name: 'State' },
   { path: '/06-tic-tac-toe-tutorial.html', name: 'Tic Tac Toe Tutorial' }
 ];
 
@@ -156,7 +156,7 @@ test.describe('Interactive Components', () => {
   });
 
   test('Table sorting should work correctly', async ({ page }) => {
-    await page.goto(`${BASE_URL}/02-interactive-tables-forms.html`);
+    await page.goto(`${BASE_URL}/02-tables-forms.html`);
     
     // Find sortable table
     const table = page.locator('.bw-table').first();
@@ -182,7 +182,7 @@ test.describe('Interactive Components', () => {
   });
 
   test('Theme switcher should apply themes correctly', async ({ page }) => {
-    await page.goto(`${BASE_URL}/03-themes-styling.html`);
+    await page.goto(`${BASE_URL}/03-styling.html`);
     
     // Find theme buttons
     const darkThemeBtn = page.locator('[data-theme="dark"]');
@@ -290,7 +290,7 @@ test.describe('Accessibility', () => {
   });
 
   test('Forms should have proper labels', async ({ page }) => {
-    await page.goto(`${BASE_URL}/02-interactive-tables-forms.html`);
+    await page.goto(`${BASE_URL}/02-tables-forms.html`);
     
     const inputsWithoutLabels = await page.evaluate(() => {
       const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
@@ -306,7 +306,7 @@ test.describe('Accessibility', () => {
   });
 
   test('Interactive elements should be keyboard accessible', async ({ page }) => {
-    await page.goto(`${BASE_URL}/01-basic-components.html`);
+    await page.goto(`${BASE_URL}/01-components.html`);
     
     // Tab through page
     await page.keyboard.press('Tab');
@@ -344,7 +344,7 @@ test.describe('CSS and Styling', () => {
   });
 
   test('Components should have consistent spacing', async ({ page }) => {
-    await page.goto(`${BASE_URL}/01-basic-components.html`);
+    await page.goto(`${BASE_URL}/01-components.html`);
     
     const spacings = await page.evaluate(() => {
       const cards = Array.from(document.querySelectorAll('.bw-card'));

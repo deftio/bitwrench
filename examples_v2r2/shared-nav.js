@@ -8,12 +8,12 @@
 
   const navItems = [
     { text: 'Home', href: 'index.html' },
-    { text: 'Fundamentals', href: '00-taco-srmc-fundamentals.html' },
-    { text: 'Components', href: '01-basic-components.html' },
-    { text: 'Tables & Forms', href: '02-interactive-tables-forms.html' },
-    { text: 'Themes', href: '03-themes-styling.html' },
-    { text: 'Dashboard', href: '04-dashboard-app.html' },
-    { text: 'Advanced', href: '05-advanced-features.html' },
+    { text: 'Quick Start', href: '00-quick-start.html' },
+    { text: 'Styling', href: '03-styling.html' },
+    { text: 'Components', href: '01-components.html' },
+    { text: 'Tables & Data', href: '02-tables-forms.html' },
+    { text: 'State', href: '05-state.html' },
+    { text: 'Dashboard', href: '04-dashboard.html' },
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
     { text: 'Comparison', href: '07-framework-comparison.html' }
   ];

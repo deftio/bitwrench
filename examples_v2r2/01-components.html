@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="shared-tryit.js"></script>
   <!-- No page-specific styles needed; shared-theme.css handles everything -->
 </head>
 <body>
@@ -51,7 +52,19 @@
           Use it as a reference while building your applications.
         </p>
       </div>
+      <div id="style-origin-callout"></div>
     </div>
+
+    <!-- Pipeline Demos -->
+    <div class="demo-section">
+      <h2>How bw.make*() Works</h2>
+      <p>Every <code>bw.make*()</code> function is just a helper that returns a JavaScript object (TACO). <code>bw.DOM()</code> renders it. There is no magic &mdash; you can inspect, modify, or compose these objects however you like.</p>
+      <div id="pipeline-card"></div>
+      <div id="pipeline-button" style="margin-top: 1.5rem;"></div>
+      <div id="pipeline-alert" style="margin-top: 1.5rem;"></div>
+      <div id="pipeline-badge" style="margin-top: 1.5rem;"></div>
+    </div>
+
     <!-- Cards Demo -->
     <div class="demo-section">
       <h2>Cards</h2>
@@ -158,7 +171,33 @@
 
   <script>
     // Mount the shared navigation
-    mountExampleNav('#example-nav', '01-basic-components.html');
+    mountExampleNav('#example-nav', '01-components.html');
+    bw.DOM('#style-origin-callout', makeStyleOrigin());
+
+    // Pipeline demos — show what bw.make*() returns
+    bw.DOM('#pipeline-card', showPipeline({
+      label: 'Card',
+      helperCode: "bw.makeCard({\n  title: 'Hello',\n  content: 'Card body',\n  footer: 'Footer text'\n})",
+      taco: bw.makeCard({ title: 'Hello', content: 'Card body', footer: 'Footer text' })
+    }));
+
+    bw.DOM('#pipeline-button', showPipeline({
+      label: 'Button',
+      helperCode: "bw.makeButton({\n  text: 'Click Me',\n  variant: 'primary'\n})",
+      taco: bw.makeButton({ text: 'Click Me', variant: 'primary' })
+    }));
+
+    bw.DOM('#pipeline-alert', showPipeline({
+      label: 'Alert',
+      helperCode: "bw.makeAlert({\n  content: 'Saved!',\n  variant: 'success'\n})",
+      taco: bw.makeAlert({ content: 'Saved!', variant: 'success' })
+    }));
+
+    bw.DOM('#pipeline-badge', showPipeline({
+      label: 'Badge',
+      helperCode: "bw.makeBadge({\n  text: 'New',\n  variant: 'primary'\n})",
+      taco: bw.makeBadge({ text: 'New', variant: 'primary' })
+    }));
 
     // Helper function to create tabbed demos with copy button
     function createTabbedDemo(resultContent, codeContent) {

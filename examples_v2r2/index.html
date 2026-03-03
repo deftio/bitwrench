@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <style>
-    /* Hero overrides — taller, more impactful */
+    /* Hero */
     .hero { padding: 3rem 1.5rem 2.5rem; }
     .hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
     .hero .subtitle { font-size: 1.1rem; opacity: 0.85; max-width: 600px; }
@@ -29,7 +29,7 @@
     .hero-btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
 
     /* Section headings */
-    .landing-section { margin-bottom: 2.5rem; }
+    .landing-section { margin-bottom: var(--bw-space-2xl); }
     .landing-section > h2 {
       font-size: 1.35rem;
       font-weight: 700;
@@ -42,60 +42,20 @@
       margin: 0 0 1.25rem;
     }
 
-    /* Side-by-side code + result */
-    .demo-split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      align-items: start;
-    }
-    @media (max-width: 768px) { .demo-split { grid-template-columns: 1fr; } }
+    /* Problem cards */
+    .problem-card h3 { margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 600; color: var(--bw-text); }
+    .problem-card p { margin: 0.5rem 0 0; font-size: 0.8125rem; color: var(--bw-text-muted); font-style: italic; }
 
-    .demo-code {
-      background: var(--bw-code-bg);
-      border-radius: var(--bw-radius);
-      padding: 1.25rem;
+    /* TACO derivation */
+    .taco-buildup { margin: 1.25rem 0; }
+    .taco-buildup .bw-code-block { margin-bottom: var(--bw-space-sm); }
+    .taco-reveal {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--bw-teal-dark);
+      margin: 1rem 0;
     }
-    .demo-code pre { margin: 0; background: transparent; }
-    .demo-code code { color: var(--bw-code-text); font-size: 0.8125rem; line-height: 1.7; }
-    .demo-code-label {
-      color: var(--bw-code-text);
-      font-size: 0.6875rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      opacity: 0.5;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    .demo-result-box {
-      border: 2px dashed var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1.5rem;
-      background: var(--bw-card-bg);
-    }
-    .demo-result-label {
-      font-size: 0.6875rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--bw-text-muted);
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    /* Feature cards */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1rem;
-    }
-    .feature-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1.25rem;
-    }
-    .feature-card h3 { margin: 0 0 0.35rem; font-size: 1rem; font-weight: 600; color: var(--bw-text); }
-    .feature-card p { margin: 0; font-size: 0.875rem; color: var(--bw-text-secondary); line-height: 1.55; }
+    .taco-reveal span { color: var(--bw-teal); }
 
     /* Live demo card */
     .live-demo-card {
@@ -115,13 +75,13 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
-    .live-demo-body { padding: 1.5rem; }
+    .live-demo-body { padding: var(--bw-space-lg); }
 
     /* Examples grid */
     .example-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1rem;
+      gap: var(--bw-space-md);
     }
     .example-card {
       background: var(--bw-card-bg);
@@ -165,9 +125,9 @@
   <div class="page-header hero">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
       <h1>bitwrench</h1>
-      <p class="subtitle">Build web UIs from JavaScript objects. No JSX, no build step, no virtual DOM.</p>
+      <p class="subtitle">Build web UIs with plain JavaScript objects. No JSX, no build step, no virtual DOM.</p>
       <div class="hero-actions">
-        <a href="00-taco-srmc-fundamentals.html" class="hero-btn hero-btn-primary">Get Started</a>
+        <a href="00-quick-start.html" class="hero-btn hero-btn-primary">Get Started</a>
         <a href="https://github.com/deftio/bitwrench" class="hero-btn hero-btn-secondary">View on GitHub</a>
       </div>
     </div>
@@ -175,27 +135,42 @@
 
   <div class="content-container wide">
 
-    <!-- Section 1: What it does -->
+    <!-- Section 1: The Problem -->
     <div class="landing-section">
-      <h2>Describe UI as data, bitwrench renders it</h2>
+      <h2>The Problem</h2>
+      <p class="section-desc">Three common ways to build UI in JavaScript. None of them are great.</p>
+      <div id="the-problem"></div>
+    </div>
+
+    <!-- Section 2: What if UI was just data? -->
+    <div class="landing-section">
+      <h2>What if UI was just data?</h2>
+      <p class="section-desc">Every HTML element is really just a tag, some attributes, and some content. JavaScript already has a notation for that.</p>
+      <div id="taco-insight"></div>
+    </div>
+
+    <!-- Section 3: See it in action -->
+    <div class="landing-section">
+      <h2>See it in action</h2>
       <p class="section-desc">Write a JavaScript object. Bitwrench turns it into real DOM elements.</p>
-      <div id="what-it-does"></div>
+      <div id="see-it"></div>
     </div>
 
-    <!-- Section 2: Key features -->
+    <!-- Section 4: Styling included -->
     <div class="landing-section">
-      <h2>Why bitwrench?</h2>
-      <div id="features"></div>
+      <h2>Styling included</h2>
+      <p class="section-desc">Built-in components and CSS generation from JavaScript objects.</p>
+      <div id="styling"></div>
     </div>
 
-    <!-- Section 3: Live interactive demo -->
+    <!-- Section 5: Try it -->
     <div class="landing-section">
       <h2>Try it: a counter in 15 lines</h2>
       <p class="section-desc">The bitwrench pattern: state, render, mount. That's the whole architecture.</p>
       <div id="live-demo"></div>
     </div>
 
-    <!-- Section 4: Examples -->
+    <!-- Section 6: Examples -->
     <div class="landing-section">
       <h2>Examples</h2>
       <p class="section-desc">Each example is a standalone HTML file. View source to see how it works.</p>
@@ -207,19 +182,100 @@
   <script>
     mountExampleNav('#example-nav', 'index.html');
 
-    // ---- Reusable helpers ----
-    // A labeled section with a heading divider
-    var codeLabel = function(text) {
-      return { t: 'div', a: { class: 'demo-code-label' }, c: text };
-    };
-    var resultLabel = function(text) {
-      return { t: 'div', a: { class: 'demo-result-label' }, c: text };
-    };
+    // ---- Section 1: The Problem ----
+    (function() {
+      var problems = [
+        {
+          title: 'String Concatenation',
+          code: "innerHTML = '<div class=\"' + cls + '\">' +\n  '<h1>' + title + '</h1>' +\n  '<p>' + desc + '</p>' +\n'</div>';",
+          issue: 'XSS-prone, unreadable, no structure'
+        },
+        {
+          title: 'DOM API',
+          code: "var div = document.createElement('div');\ndiv.className = cls;\nvar h1 = document.createElement('h1');\nh1.textContent = title;\ndiv.appendChild(h1);\nvar p = document.createElement('p');\np.textContent = desc;\ndiv.appendChild(p);",
+          issue: 'Verbose: 7 lines for 3 elements'
+        },
+        {
+          title: 'Template Literals',
+          code: "el.innerHTML = `\n  <div class=\"${cls}\">\n    <h1>${title}</h1>\n    <p>${desc}</p>\n  </div>\n`;",
+          issue: 'Still strings, no composition, XSS risk'
+        }
+      ];
 
-    // ---- Section 1: What it does (side-by-side) ----
+      bw.DOM('#the-problem', {
+        t: 'div',
+        a: { class: 'bw-grid-3col' },
+        c: problems.map(function(p) {
+          return {
+            t: 'div',
+            a: { class: 'problem-card' },
+            c: [
+              { t: 'h3', c: p.title },
+              { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: p.code } } },
+              { t: 'p', c: p.issue }
+            ]
+          };
+        })
+      });
+    })();
+
+    // ---- Section 2: TACO derivation ----
+    (function() {
+      var steps = [
+        { label: 'A tag', code: "{ t: 'div' }" },
+        { label: '+ attributes', code: "{ t: 'div', a: { class: 'card' } }" },
+        { label: '+ content', code: "{ t: 'div', a: { class: 'card' }, c: 'Hello' }" },
+        { label: '+ options', code: "{ t: 'div', a: {...}, c: [...], o: { mounted: fn } }" }
+      ];
+
+      bw.DOM('#taco-insight', {
+        t: 'div',
+        c: [
+          {
+            t: 'div',
+            a: { class: 'taco-buildup' },
+            c: steps.map(function(s) {
+              return {
+                t: 'div',
+                a: { class: 'bw-grid-2col', style: 'align-items: center; margin-bottom: 0.5rem;' },
+                c: [
+                  { t: 'div', a: { class: 'bw-code-label', style: 'margin-bottom: 0; opacity: 1; color: var(--bw-text-secondary);' }, c: s.label },
+                  { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: s.code } } }
+                ]
+              };
+            })
+          },
+          {
+            t: 'div',
+            a: { class: 'taco-reveal' },
+            c: [
+              { t: 'span', c: 'T' }, 'ag ',
+              { t: 'span', c: 'A' }, 'ttributes ',
+              { t: 'span', c: 'C' }, 'ontent ',
+              { t: 'span', c: 'O' }, 'ptions = TACO'
+            ]
+          },
+          {
+            t: 'div',
+            a: { class: 'callout callout-concept' },
+            c: [
+              { t: 'h4', c: 'A TACO is just a JavaScript object' },
+              {
+                t: 'p',
+                c: [
+                  'Use ', { t: 'code', c: '.map()' }, ', conditionals, functions \u2014 everything you know about JS works. ',
+                  'No special template syntax. No compiler. No build step.'
+                ]
+              }
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ---- Section 3: See it in action ----
     (function() {
       var codeStr = [
-        '// A bitwrench object',
         'var card = {',
         '  t: "div",',
         '  a: { class: "bw-card" },',
@@ -234,14 +290,11 @@
         '      a: { class: "bw-card-body" },',
         '      c: [',
         '        { t: "p", c: "This card is a JS object." },',
-        '        {',
-        '          t: "button",',
-        '          a: {',
-        '            class: "bw-btn bw-btn-primary",',
-        '            onclick: function() { alert("Works!"); }',
-        '          },',
-        '          c: "Click Me"',
-        '        }',
+        '        bw.makeButton({',
+        '          text: "Click Me",',
+        '          variant: "primary",',
+        '          onclick: function() { alert("Works!"); }',
+        '        })',
         '      ]',
         '    }',
         '  ]',
@@ -250,7 +303,6 @@
         'bw.DOM("#result", card);'
       ].join('\n');
 
-      // The actual live TACO that renders on the right
       var cardTaco = {
         t: 'div',
         a: { class: 'bw-card' },
@@ -274,69 +326,94 @@
         ]
       };
 
-      bw.DOM('#what-it-does', {
+      bw.DOM('#see-it', {
         t: 'div',
-        a: { class: 'demo-split' },
+        a: { class: 'bw-grid-2col' },
         c: [
           {
             t: 'div',
             c: [
-              codeLabel('JavaScript input'),
-              { t: 'div', a: { class: 'demo-code' }, c: { t: 'pre', c: { t: 'code', c: codeStr } } }
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'JAVASCRIPT INPUT' },
+              { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: codeStr } } }
             ]
           },
           {
             t: 'div',
             c: [
-              resultLabel('Rendered output (live)'),
-              { t: 'div', a: { class: 'demo-result-box' }, c: cardTaco }
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'RENDERED OUTPUT (LIVE)' },
+              { t: 'div', a: { class: 'bw-demo-result' }, c: cardTaco }
             ]
           }
         ]
       });
     })();
 
-    // ---- Section 2: Key features ----
+    // ---- Section 4: Styling included ----
     (function() {
-      var features = [
-        {
-          title: 'UI as Data',
-          desc: 'Describe DOM as JavaScript objects. Use .map(), conditionals, and functions to build UI — no special template syntax.'
-        },
-        {
-          title: 'Zero Build Step',
-          desc: 'Include bitwrench via a <script> tag. It works immediately in any browser. No npm, no bundler, no configuration.'
-        },
-        {
-          title: 'Tiny Footprint',
-          desc: 'Under 45KB gzipped. Runs on embedded web servers — ESP32, Raspberry Pi, IoT devices — anywhere a browser can connect.'
-        },
-        {
-          title: 'Any Backend',
-          desc: 'Bitwrench objects are plain JSON. Python, Go, Rust, or any server can generate UI by emitting JSON — bitwrench renders it.'
-        }
-      ];
-
-      // Reuse a single card factory
-      var featureCard = function(f) {
-        return {
-          t: 'div',
-          a: { class: 'feature-card' },
-          c: [
-            { t: 'h3', c: f.title },
-            { t: 'p', c: f.desc }
-          ]
-        };
+      var leftContent = {
+        t: 'div',
+        c: [
+          { t: 'h3', a: { style: 'margin: 0 0 0.75rem;' }, c: 'Built-in components' },
+          {
+            t: 'p',
+            a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' },
+            c: [
+              'Call ', { t: 'code', c: 'bw.loadDefaultStyles()' },
+              ' once, then use Bootstrap-like classes.'
+            ]
+          },
+          {
+            t: 'div',
+            a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;' },
+            c: [
+              bw.makeButton({ text: 'Primary', variant: 'primary' }),
+              bw.makeButton({ text: 'Success', variant: 'success' }),
+              bw.makeButton({ text: 'Danger', variant: 'danger' })
+            ]
+          },
+          bw.makeAlert({ content: 'This is a bitwrench alert component.', variant: 'info' }),
+          bw.makeCard({
+            title: 'bw-card',
+            content: 'Cards, alerts, badges, grids, lists, progress bars, and more.'
+          })
+        ]
       };
 
-      bw.DOM('#features', {
+      var rightContent = {
         t: 'div',
-        a: { class: 'feature-grid' },
-        c: features.map(featureCard)
+        c: [
+          { t: 'h3', a: { style: 'margin: 0 0 0.75rem;' }, c: 'CSS from JavaScript' },
+          {
+            t: 'p',
+            a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' },
+            c: [
+              'Generate stylesheets at runtime with ',
+              { t: 'code', c: 'bw.css()' }, ' and ',
+              { t: 'code', c: 'bw.injectCSS()' }, '.'
+            ]
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-code-block' },
+            c: {
+              t: 'pre',
+              c: {
+                t: 'code',
+                c: "// Generate CSS from JS objects\nvar css = bw.css({\n  '.card': {\n    padding: '1rem',\n    borderRadius: '8px',\n    backgroundColor: '#fff'\n  }\n});\n\n// Inject into the document\nbw.injectCSS(css);"
+              }
+            }
+          }
+        ]
+      };
+
+      bw.DOM('#styling', {
+        t: 'div',
+        a: { class: 'bw-grid-2col' },
+        c: [leftContent, rightContent]
       });
     })();
 
-    // ---- Section 3: Live counter demo ----
+    // ---- Section 5: Live counter demo ----
     (function() {
       var state = { count: 0 };
 
@@ -368,19 +445,19 @@
       function render() {
         bw.DOM('#live-demo', {
           t: 'div',
-          a: { class: 'demo-split' },
+          a: { class: 'bw-grid-2col' },
           c: [
             {
               t: 'div',
               c: [
-                codeLabel('The pattern: state / render / mount'),
-                { t: 'div', a: { class: 'demo-code' }, c: { t: 'pre', c: { t: 'code', c: codeStr } } }
+                { t: 'div', a: { class: 'bw-code-label' }, c: 'THE PATTERN: STATE / RENDER / MOUNT' },
+                { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: codeStr } } }
               ]
             },
             {
               t: 'div',
               c: [
-                resultLabel('Live result'),
+                { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'LIVE RESULT' },
                 {
                   t: 'div',
                   a: { class: 'live-demo-card' },
@@ -424,20 +501,19 @@
       render();
     })();
 
-    // ---- Section 4: Examples grid ----
+    // ---- Section 6: Examples grid ----
     (function() {
       var examples = [
-        { num: '00', title: 'Fundamentals', desc: 'How bitwrench works and the state-render-mount pattern. Start here.', link: '00-taco-srmc-fundamentals.html' },
-        { num: '01', title: 'Component Library', desc: 'Cards, buttons, alerts, badges, grids, lists, and more.', link: '01-basic-components.html' },
-        { num: '02', title: 'Tables & Forms', desc: 'Sortable data tables and forms with validation.', link: '02-interactive-tables-forms.html' },
-        { num: '03', title: 'Themes & Styling', desc: 'Dynamic CSS generation and theme switching.', link: '03-themes-styling.html' },
-        { num: '04', title: 'Dashboard', desc: 'Full application with sidebar, stats, and charts.', link: '04-dashboard-app.html' },
-        { num: '05', title: 'Advanced Features', desc: 'State management, component handles, and optimization.', link: '05-advanced-features.html' },
+        { num: '00', title: 'Quick Start', desc: 'From zero to working UI in 2 minutes. Code first, try-it editors included.', link: '00-quick-start.html' },
+        { num: '03', title: 'Styling', desc: 'Where bw-* classes come from, CSS from JS objects, utility system.', link: '03-styling.html' },
+        { num: '01', title: 'Components', desc: 'Cards, buttons, alerts, badges, grids, lists, and more.', link: '01-components.html' },
+        { num: '02', title: 'Tables & Data', desc: 'Sortable data tables and forms with validation.', link: '02-tables-forms.html' },
+        { num: '05', title: 'State', desc: 'Component factories, element state, and pub/sub communication.', link: '05-state.html' },
+        { num: '04', title: 'Dashboard', desc: 'Full application with sidebar, stats, and charts.', link: '04-dashboard.html' },
         { num: '06', title: 'Tic Tac Toe Tutorial', desc: 'Learn bitwrench step by step by building a game.', link: '06-tic-tac-toe-tutorial.html' },
         { num: '07', title: 'Framework Comparison', desc: 'The same tasks in HTML/JS, React, Vue, Svelte, and bitwrench.', link: '07-framework-comparison.html' }
       ];
 
-      // Reusable card factory
       var exampleCard = function(ex) {
         return {
           t: 'a',

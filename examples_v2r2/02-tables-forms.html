@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="shared-tryit.js"></script>
   <style>
     /* Page-specific overrides (shared-theme.css handles the rest) */
     .controls {
@@ -57,6 +58,18 @@
   </div>
 
   <div class="content-container wide">
+    <div id="style-origin-callout"></div>
+
+    <!-- Pipeline Demo -->
+    <div class="demo-section">
+      <h2>How bw.makeTable() Works</h2>
+      <p>One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.</p>
+      <div id="pipeline-table"></div>
+      <div class="callout callout-tip" style="margin-top: 1rem;">
+        <strong>Compare:</strong> The vanilla JS equivalent would require 20+ lines of <code>createElement</code>/<code>appendChild</code> calls. Here it is one function call that returns a data object.
+      </div>
+    </div>
+
     <!-- Interactive Table Demo -->
     <div class="demo-section">
       <h2>Interactive Sortable Table</h2>
@@ -84,7 +97,25 @@
 
   <script>
     // Mount the shared navigation
-    mountExampleNav('#example-nav', '02-interactive-tables-forms.html');
+    mountExampleNav('#example-nav', '02-tables-forms.html');
+    bw.DOM('#style-origin-callout', makeStyleOrigin());
+
+    // Pipeline demo for bw.makeTable()
+    bw.DOM('#pipeline-table', showPipeline({
+      label: 'Table from Data',
+      helperCode: "bw.makeTable({\n  data: [\n    { name: 'Alice', role: 'Engineer' },\n    { name: 'Bob', role: 'Designer' }\n  ],\n  columns: [\n    { key: 'name', label: 'Name' },\n    { key: 'role', label: 'Role' }\n  ],\n  striped: true\n})",
+      taco: bw.makeTable({
+        data: [
+          { name: 'Alice', role: 'Engineer' },
+          { name: 'Bob', role: 'Designer' }
+        ],
+        columns: [
+          { key: 'name', label: 'Name' },
+          { key: 'role', label: 'Role' }
+        ],
+        striped: true
+      })
+    }));
 
     // Helper function to create demo tabs with copy button
     function createDemoTabs(title, resultContent, codeContent) {

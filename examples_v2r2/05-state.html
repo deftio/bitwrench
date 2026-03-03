@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench - Advanced Features</title>
+  <title>Bitwrench - State & Interactivity</title>
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="shared-tryit.js"></script>
   <style>
     /* Page-specific styles */
     .counters-row {
@@ -85,14 +86,32 @@
 
   <div class="page-header">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Advanced Features</h1>
-      <p class="subtitle">How bitwrench manages state, encapsulates components, and generates CSS.</p>
+      <h1>State & Interactivity</h1>
+      <p class="subtitle">How bitwrench manages state, from simple closures to component factories and pub/sub.</p>
     </div>
   </div>
 
   <div class="content-container wide">
 
-    <!-- Section 0: How State Works -->
+    <!-- Honest trade-off callout -->
+    <div class="demo-section">
+      <div class="callout callout-tip">
+        <strong>Honest trade-off:</strong> Bitwrench does not have reactive data binding. When state changes, you call <code>render()</code> or <code>bw.update()</code> manually. This means you always know exactly when and why your UI updates &mdash; there is no hidden reactivity system. The trade-off is that you must remember to trigger updates yourself. React/Vue/Svelte handle this automatically; bitwrench trades convenience for simplicity.
+      </div>
+    </div>
+
+    <!-- Section 0: The Simplest State Pattern -->
+    <div class="demo-section">
+      <h2>The Simplest State Pattern</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          The most basic approach: a closure variable and a render function. When state changes, call render again. This works well for simple, standalone components.
+        </p>
+        <div id="tryit-simple-state"></div>
+      </div>
+    </div>
+
+    <!-- Section 0b: How State Works -->
     <div class="demo-section">
       <h2>How State Works in Bitwrench</h2>
       <div class="demo-section-body">
@@ -539,7 +558,30 @@ bw.DOM('#perf', makePerfTest());</code></pre>
   </div><!-- /content-container -->
 
   <script>
-    mountExampleNav('#example-nav', '05-advanced-features.html');
+    mountExampleNav('#example-nav', '05-state.html');
+
+    // ── The Simplest State Pattern (try-it editor) ──
+    bw.DOM('#tryit-simple-state', makeTryIt({
+      code: '// Closure variable + render function\n' +
+        'var count = 0;\n' +
+        '\n' +
+        'function render() {\n' +
+        '  bw.DOM(target, {\n' +
+        '    t: \'div\', c: [\n' +
+        '      { t: \'h3\', c: \'Count: \' + count },\n' +
+        '      bw.makeButton({ text: \'+\', variant: \'primary\',\n' +
+        '        onclick: function() { count++; render(); }\n' +
+        '      }),\n' +
+        '      \' \',\n' +
+        '      bw.makeButton({ text: \'Reset\', variant: \'secondary\',\n' +
+        '        onclick: function() { count = 0; render(); }\n' +
+        '      })\n' +
+        '    ]\n' +
+        '  });\n' +
+        '}\n' +
+        'render();',
+      height: '280px'
+    }));
 
     // ---- Reusable Counter Component ----
     // Factory: returns a JS object with state on the element.

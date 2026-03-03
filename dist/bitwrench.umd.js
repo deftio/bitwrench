@@ -17,7 +17,7 @@
     homepage: 'http://deftio.com/bitwrench',
     repository: 'git://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-02T05:41:06.373Z'
+    buildDate: '2026-03-03T07:13:12.971Z'
   };
 
   /**
@@ -3919,6 +3919,8 @@
     // Internal state
     _idCounter: 0,
     _unmountCallbacks: new Map(),
+    _topics: {},          // topic → [{handler, id}]  (plain object for IE11 compat)
+    _subIdCounter: 0,     // monotonic ID for subscriptions
     
     // Monkey patch for testing (same as v1)
     __monkey_patch_is_nodejs__: {
@@ -4016,18 +4018,22 @@
    * Generate unique ID for elements
    * @returns {string} - Unique identifier
    */
-  bw.uuid = function() {
+  bw.uuid = function(prefix) {
+    // Optional prefix creates IDs like bw_card_<hex>, bw_todo_<hex>, etc.
+    // Without prefix: bw_<hex>
+    var tag = prefix ? 'bw_' + prefix + '_' : 'bw_';
+
     // Use crypto.randomUUID if available (modern browsers)
     if (bw._isBrowser && crypto && crypto.randomUUID) {
-      return 'bw_' + crypto.randomUUID().replace(/-/g, '');
+      return tag + crypto.randomUUID().replace(/-/g, '');
     }
-    
+
     // Fallback for older browsers and Node.js
     const timestamp = Date.now().toString(36);
     const counter = (++bw._idCounter).toString(36);
     const random = Math.random().toString(36).substring(2, 11);
-    
-    return `bw_${timestamp}_${counter}_${random}`;
+
+    return `${tag}${timestamp}_${counter}_${random}`;
   };
 
   /**
@@ -4221,23 +4227,39 @@
       }
     }
     
-    // Handle lifecycle hooks
-    if (opts.mounted || opts.unmount) {
+    // Handle lifecycle hooks and state
+    if (opts.mounted || opts.unmount || opts.render || opts.state) {
       const id = attrs['data-bw-id'] || bw.uuid();
       el.setAttribute('data-bw-id', id);
-      
+
       // Store state
       if (opts.state) {
         el._bw_state = opts.state;
       }
-      
-      // Queue mounted callback
-      if (opts.mounted) {
+
+      // o.render — first-class render function (replaces mounted boilerplate)
+      if (opts.render) {
+        el._bw_render = opts.render;
+
+        if (opts.mounted) {
+          console.warn('bw.createDOM: o.render and o.mounted are mutually exclusive. o.render wins.');
+        }
+
+        // Queue initial render (same timing as mounted)
         if (document.body.contains(el)) {
-          // Already in DOM
+          opts.render(el, el._bw_state || {});
+        } else {
+          requestAnimationFrame(() => {
+            if (document.body.contains(el)) {
+              opts.render(el, el._bw_state || {});
+            }
+          });
+        }
+      } else if (opts.mounted) {
+        // Queue mounted callback (legacy pattern)
+        if (document.body.contains(el)) {
           opts.mounted(el, el._bw_state || {});
         } else {
-          // Wait for insertion
           requestAnimationFrame(() => {
             if (document.body.contains(el)) {
               opts.mounted(el, el._bw_state || {});
@@ -4245,7 +4267,7 @@
           });
         }
       }
-      
+
       // Store unmount callback
       if (opts.unmount) {
         bw._unmountCallbacks.set(id, () => {
@@ -4279,9 +4301,25 @@
       return null;
     }
     
-    // Clean up existing content
+    // Clean up existing children (but preserve the target's own state, render, and subs —
+    // the target is the mount point, not the content being replaced)
+    const savedState = targetEl._bw_state;
+    const savedRender = targetEl._bw_render;
+    const savedBwId = targetEl.getAttribute('data-bw-id');
+    const savedSubs = targetEl._bw_subs;
+
+    // Temporarily remove _bw_subs so cleanup doesn't call them
+    // (children's subs will still be cleaned up normally)
+    delete targetEl._bw_subs;
+
     bw.cleanup(targetEl);
-    
+
+    // Restore the target's own state/render/subs after cleanup
+    if (savedState !== undefined) targetEl._bw_state = savedState;
+    if (savedRender) targetEl._bw_render = savedRender;
+    if (savedBwId) targetEl.setAttribute('data-bw-id', savedBwId);
+    if (savedSubs) targetEl._bw_subs = savedSubs;
+
     // Clear and mount new content
     targetEl.innerHTML = '';
     
@@ -4509,23 +4547,30 @@
    */
   bw.cleanup = function(element) {
     if (bw._isNode || !element) return;
-    
+
     // Find all elements with data-bw-id
     const elements = element.querySelectorAll('[data-bw-id]');
-    
+
     elements.forEach(el => {
       const id = el.getAttribute('data-bw-id');
       const callback = bw._unmountCallbacks.get(id);
-      
+
       if (callback) {
         callback();
         bw._unmountCallbacks.delete(id);
       }
-      
-      // Clean up state
+
+      // Clean up pub/sub subscriptions tied to this element
+      if (el._bw_subs) {
+        el._bw_subs.forEach(function(unsub) { unsub(); });
+        delete el._bw_subs;
+      }
+
+      // Clean up state and render
       delete el._bw_state;
+      delete el._bw_render;
     });
-    
+
     // Check element itself
     const id = element.getAttribute('data-bw-id');
     if (id) {
@@ -4534,8 +4579,199 @@
         callback();
         bw._unmountCallbacks.delete(id);
       }
+      // Clean up pub/sub subscriptions tied to element itself
+      if (element._bw_subs) {
+        element._bw_subs.forEach(function(unsub) { unsub(); });
+        delete element._bw_subs;
+      }
       delete element._bw_state;
+      delete element._bw_render;
     }
+  };
+
+  // ===================================================================================
+  // State Management: update, patch, emit/on
+  // ===================================================================================
+
+  /**
+   * Trigger re-render of a component by calling its stored render function.
+   * Emits 'bw:statechange' after re-render so listeners can react.
+   * @param {string|Element} target - CSS selector or DOM element with _bw_render
+   * @returns {Element|null} - The element, or null if not found / no render function
+   */
+  bw.update = function(target) {
+    var el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (el && el._bw_render) {
+      el._bw_render(el, el._bw_state || {});
+      bw.emit(el, 'statechange', el._bw_state);
+    }
+    return el || null;
+  };
+
+  /**
+   * Targeted DOM update by UUID — change one element's content or attribute
+   * without rebuilding the component tree.
+   *
+   * @param {string|Element} id - Element ID string or DOM element
+   * @param {string|Object} content - New text content, or TACO object to replace children
+   * @param {string} [attr] - If provided, sets this attribute instead of content
+   * @returns {Element|null} - The patched element, or null if not found
+   */
+  bw.patch = function(id, content, attr) {
+    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!el) return null;
+
+    if (attr) {
+      // Patch an attribute
+      el.setAttribute(attr, String(content));
+    } else if (typeof content === 'object' && content !== null && content.t) {
+      // Patch with a TACO — replace children
+      el.innerHTML = '';
+      el.appendChild(bw.createDOM(content));
+    } else {
+      // Patch text content
+      el.textContent = String(content);
+    }
+    return el;
+  };
+
+  /**
+   * Batch version of bw.patch — update multiple elements by UUID in one call.
+   * @param {Object} patches - Map of { elementId: newContent, ... }
+   * @returns {Object} - Map of { elementId: patchedElement|null, ... }
+   */
+  bw.patchAll = function(patches) {
+    var results = {};
+    for (var id in patches) {
+      if (patches.hasOwnProperty(id)) {
+        results[id] = bw.patch(id, patches[id]);
+      }
+    }
+    return results;
+  };
+
+  /**
+   * Emit a custom event on a DOM element.
+   * Events are prefixed with 'bw:' to avoid collision with native events.
+   * Events bubble by default so ancestors can listen.
+   *
+   * @param {string|Element} target - CSS selector or DOM element
+   * @param {string} eventName - Event name (will be prefixed with 'bw:')
+   * @param {*} [detail] - Data to pass with the event
+   */
+  bw.emit = function(target, eventName, detail) {
+    var el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (el) {
+      el.dispatchEvent(new CustomEvent('bw:' + eventName, {
+        bubbles: true,
+        detail: detail || {}
+      }));
+    }
+  };
+
+  /**
+   * Listen for a custom bitwrench event on a DOM element.
+   * Handler receives (detail, event) for convenience.
+   *
+   * @param {string|Element} target - CSS selector or DOM element
+   * @param {string} eventName - Event name (will be prefixed with 'bw:')
+   * @param {Function} handler - Called with (detail, event)
+   * @returns {Element|null} - The element (for chaining), or null if not found
+   */
+  bw.on = function(target, eventName, handler) {
+    var el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (el) {
+      el.addEventListener('bw:' + eventName, function(e) {
+        handler(e.detail, e);
+      });
+    }
+    return el || null;
+  };
+
+  // ===================================================================================
+  // Topic-Based Pub/Sub: bw.pub(), bw.sub(), bw.unsub()
+  //
+  // Separate from emit/on (DOM-scoped CustomEvents). Pub/sub is application-scoped,
+  // topic-based, and decoupled from the DOM tree. Try/catch per subscriber so one
+  // bad handler can't break others.
+  // ===================================================================================
+
+  /**
+   * Publish to a topic. Calls all subscribers in registration order.
+   * Try/catch per subscriber — errors are console.warned, not thrown.
+   *
+   * @param {string} topic - Topic name (plain string, no prefix)
+   * @param {*} [detail] - Data to pass to subscribers
+   * @returns {number} - Count of successfully called subscribers
+   */
+  bw.pub = function(topic, detail) {
+    var subs = bw._topics[topic];
+    if (!subs || subs.length === 0) return 0;
+    var snapshot = subs.slice(); // safe against unsub during iteration
+    var called = 0;
+    for (var i = 0; i < snapshot.length; i++) {
+      try {
+        snapshot[i].handler(detail);
+        called++;
+      } catch (err) {
+        console.warn('bw.pub: subscriber error on topic "' + topic + '":', err);
+      }
+    }
+    return called;
+  };
+
+  /**
+   * Subscribe to a topic. Returns an unsub() function.
+   * Optional 3rd arg ties the subscription to an element's lifecycle —
+   * when bw.cleanup() is called on that element, the subscription is removed.
+   *
+   * @param {string} topic - Topic name
+   * @param {Function} handler - Called with (detail) on each publish
+   * @param {Element} [el] - Optional element to tie lifecycle to
+   * @returns {Function} - Call to unsubscribe
+   */
+  bw.sub = function(topic, handler, el) {
+    var id = ++bw._subIdCounter;
+    if (!bw._topics[topic]) bw._topics[topic] = [];
+    bw._topics[topic].push({ handler: handler, id: id });
+
+    var unsub = function() {
+      var subs = bw._topics[topic];
+      if (!subs) return;
+      bw._topics[topic] = subs.filter(function(s) { return s.id !== id; });
+      if (bw._topics[topic].length === 0) delete bw._topics[topic];
+    };
+
+    // Tie to element lifecycle if provided
+    if (el) {
+      if (!el._bw_subs) el._bw_subs = [];
+      el._bw_subs.push(unsub);
+      // Ensure element has data-bw-id so bw.cleanup() finds it
+      if (!el.getAttribute('data-bw-id')) {
+        var bwId = 'bw_sub_' + id;
+        el.setAttribute('data-bw-id', bwId);
+      }
+    }
+
+    return unsub;
+  };
+
+  /**
+   * Unsubscribe by handler reference. Removes ALL instances of the handler
+   * on the given topic.
+   *
+   * @param {string} topic - Topic name
+   * @param {Function} handler - The handler to remove (by reference equality)
+   * @returns {number} - Count of removed subscriptions
+   */
+  bw.unsub = function(topic, handler) {
+    var subs = bw._topics[topic];
+    if (!subs) return 0;
+    var before = subs.length;
+    bw._topics[topic] = subs.filter(function(s) { return s.handler !== handler; });
+    var removed = before - bw._topics[topic].length;
+    if (bw._topics[topic].length === 0) delete bw._topics[topic];
+    return removed;
   };
 
   /**
@@ -4613,6 +4849,128 @@
     }
     
     return styleEl;
+  };
+
+  /**
+   * Merge multiple style objects into one. Filters null/undefined args.
+   * Works for both inline style objects and CSS rule objects.
+   * @param {...Object} styles - Style objects to merge (left-to-right)
+   * @returns {Object} - Merged style object
+   */
+  bw.s = function() {
+    var result = {};
+    for (var i = 0; i < arguments.length; i++) {
+      var arg = arguments[i];
+      if (arg && typeof arg === 'object') Object.assign(result, arg);
+    }
+    return result;
+  };
+
+  /**
+   * Pre-built CSS utility objects (like Tailwind utilities, but in JS).
+   * Use with bw.s() to compose: bw.s(bw.u.flex, bw.u.gap4, bw.u.p4)
+   */
+  bw.u = {
+    // Display
+    flex: { display: 'flex' },
+    flexCol: { display: 'flex', flexDirection: 'column' },
+    flexRow: { display: 'flex', flexDirection: 'row' },
+    flexWrap: { display: 'flex', flexWrap: 'wrap' },
+    block: { display: 'block' },
+    inline: { display: 'inline' },
+    hidden: { display: 'none' },
+
+    // Flex alignment
+    justifyCenter: { justifyContent: 'center' },
+    justifyBetween: { justifyContent: 'space-between' },
+    justifyEnd: { justifyContent: 'flex-end' },
+    alignCenter: { alignItems: 'center' },
+    alignStart: { alignItems: 'flex-start' },
+    alignEnd: { alignItems: 'flex-end' },
+
+    // Gap (0.25rem increments)
+    gap1: { gap: '0.25rem' },
+    gap2: { gap: '0.5rem' },
+    gap3: { gap: '0.75rem' },
+    gap4: { gap: '1rem' },
+    gap6: { gap: '1.5rem' },
+    gap8: { gap: '2rem' },
+
+    // Padding
+    p0: { padding: '0' },
+    p1: { padding: '0.25rem' },
+    p2: { padding: '0.5rem' },
+    p3: { padding: '0.75rem' },
+    p4: { padding: '1rem' },
+    p6: { padding: '1.5rem' },
+    p8: { padding: '2rem' },
+    px4: { paddingLeft: '1rem', paddingRight: '1rem' },
+    py2: { paddingTop: '0.5rem', paddingBottom: '0.5rem' },
+    py4: { paddingTop: '1rem', paddingBottom: '1rem' },
+
+    // Margin (same scale)
+    m0: { margin: '0' },
+    m4: { margin: '1rem' },
+    mt2: { marginTop: '0.5rem' },
+    mt4: { marginTop: '1rem' },
+    mb2: { marginBottom: '0.5rem' },
+    mb4: { marginBottom: '1rem' },
+    mx_auto: { marginLeft: 'auto', marginRight: 'auto' },
+
+    // Typography
+    textSm: { fontSize: '0.875rem' },
+    textBase: { fontSize: '1rem' },
+    textLg: { fontSize: '1.125rem' },
+    textXl: { fontSize: '1.25rem' },
+    text2xl: { fontSize: '1.5rem' },
+    text3xl: { fontSize: '1.875rem' },
+    bold: { fontWeight: '700' },
+    semibold: { fontWeight: '600' },
+    italic: { fontStyle: 'italic' },
+    textCenter: { textAlign: 'center' },
+    textRight: { textAlign: 'right' },
+
+    // Colors (from design tokens)
+    bgWhite: { background: '#ffffff' },
+    bgTeal: { background: '#006666', color: '#ffffff' },
+    textWhite: { color: '#ffffff' },
+    textTeal: { color: '#006666' },
+    textMuted: { color: '#888' },
+
+    // Borders
+    rounded: { borderRadius: '0.375rem' },
+    roundedLg: { borderRadius: '0.5rem' },
+    roundedFull: { borderRadius: '9999px' },
+    border: { border: '1px solid #d8d8d8' },
+
+    // Sizing
+    wFull: { width: '100%' },
+    hFull: { height: '100%' },
+
+    // Transitions
+    transition: { transition: 'all 0.2s ease' }
+  };
+
+  /**
+   * Generate responsive CSS with media query breakpoints.
+   * @param {string} selector - CSS selector
+   * @param {Object} breakpoints - Object with keys: base, sm, md, lg, xl
+   * @returns {string} - Generated CSS string (pass to bw.injectCSS)
+   */
+  bw.responsive = function(selector, breakpoints) {
+    var sizes = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
+    var parts = [];
+    Object.keys(breakpoints).forEach(function(key) {
+      var rules = {};
+      if (key === 'base') {
+        rules[selector] = breakpoints[key];
+        parts.push(bw.css(rules));
+      } else if (sizes[key]) {
+        rules[selector] = breakpoints[key];
+        parts.push('@media (min-width: ' + sizes[key] + ') {\n' + bw.css(rules) + '\n}');
+      }
+    });
+    return parts.join('\n');
   };
 
   /**
