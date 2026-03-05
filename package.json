@@ -12,6 +12,9 @@
 	],
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
+	"bin": {
+		"bitwrench": "./bin/bitwrench.js"
+	},
 	"type": "module",
 	"module": "./dist/bitwrench.esm.js",
 	"exports": {
@@ -24,6 +27,7 @@
 	"types": "./dist/bitwrench.d.ts",
 	"files": [
 		"dist/",
+		"bin/",
 		"src/",
 		"README.md",
 		"LICENSE.txt"
@@ -69,7 +73,7 @@
 		"prebuild": "npm run generate-version",
 		"build": "rollup --config && npm run build:css",
 		"build:css": "node src/generate-css.js",
-		"build:index": "node tools/build-index.js",
+		"build:index": "node bin/bitwrench.js README.md -o index.html --standalone --title 'bitwrench.js - Lightweight JavaScript UI Library' --favicon images/favicon.ico",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
@@ -87,13 +91,12 @@
 		"instrument-bw": "echo 'deprecated: use c8 instead'",
 		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser",
 		"generate-sri": "node tools/generate-sri.js",
+		"test:cli": "mocha ./test/bitwrench_test_cli.js",
 		"test:e2e": "playwright test",
 		"test:e2e:headed": "playwright test --headed",
 		"test:e2e:debug": "playwright test --debug",
 		"test:examples": "playwright test tests/examples.spec.js",
-		"test:all": "node run-all-tests.js",
 		"test:coverage": "c8 --reporter=html --reporter=text mocha ./test/bitwrench_ci.js -r jsdom-global/",
-		"test:summary": "node test-results-summary.js",
 		"build:api-reference": "node tools/build-api-reference.js",
 		"build:builds": "node tools/build-builds-manifest.js",
 		"build:release": "node tools/build-release.js"

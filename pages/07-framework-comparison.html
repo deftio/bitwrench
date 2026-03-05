@@ -220,21 +220,24 @@
       </div>
     </div>
 
-    <!-- Honest summary -->
+    <!-- Common concerns demonstrated -->
     <div class="demo-section">
-      <h2>Honest Assessment</h2>
+      <h2>Common Concerns, Demonstrated</h2>
       <div class="demo-section-body">
+        <p class="intro-text">
+          Developers coming from other frameworks often ask how bitwrench handles these topics.
+          Rather than make claims, here are code examples showing the bitwrench approach.
+        </p>
         <div id="honest-summary"></div>
       </div>
     </div>
 
-    <!-- Where bitwrench fits -->
+    <!-- Example use cases -->
     <div class="demo-section">
-      <h2>Where Bitwrench Fits</h2>
+      <h2>Example Use Cases</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          Bitwrench works best in situations where a full framework would add unnecessary
-          complexity. Here are some specific scenarios:
+          Bitwrench is used in a range of contexts. Here are some examples.
         </p>
         <div id="use-cases"></div>
       </div>
@@ -1765,67 +1768,167 @@
       bw.DOM('#table-comparison', codeComparison(examples));
     })();
 
-    // ---- Honest Assessment ----
+    // ---- Common Concerns, Demonstrated ----
     (function() {
+      var demos = [
+        {
+          title: 'Architecture Enforcement',
+          desc: 'TACO objects are plain data — validate them with functions, lint rules, or schemas. Here\'s a simple validator that restricts allowed tags:',
+          code: [
+            '// TACO objects are data — validate with plain functions',
+            'function validatePage(taco) {',
+            '  var allowed = ["div", "h1", "h2", "p", "ul", "li", "span", "table"];',
+            '  if (taco.t && allowed.indexOf(taco.t) === -1) {',
+            '    throw new Error("Tag not allowed: " + taco.t);',
+            '  }',
+            '  if (Array.isArray(taco.c)) {',
+            '    taco.c.forEach(function(child) {',
+            '      if (child && child.t) validatePage(child);',
+            '    });',
+            '  }',
+            '  return taco;',
+            '}',
+            '',
+            '// Use at render time or as a build-step check',
+            'bw.DOM("#app", validatePage(myPageTaco));'
+          ].join('\n')
+        },
+        {
+          title: 'TypeScript',
+          desc: 'TACO objects are plain interfaces — TypeScript works natively with no special tooling:',
+          code: [
+            '// TACO objects are already TypeScript-friendly',
+            'interface Taco {',
+            '  t: string;',
+            '  a?: Record<string, string | Function>;',
+            '  c?: string | Taco | (string | Taco)[];',
+            '  o?: {',
+            '    mounted?: (el: HTMLElement) => void;',
+            '    unmount?: (el: HTMLElement) => void;',
+            '    state?: Record<string, any>;',
+            '  };',
+            '}',
+            '',
+            'function makeGreeting(name: string): Taco {',
+            '  return {',
+            '    t: "div",',
+            '    a: { class: "bw-card" },',
+            '    c: [',
+            '      { t: "h3", c: "Hello, " + name },',
+            '      { t: "p", c: "Welcome to the dashboard." }',
+            '    ]',
+            '  };',
+            '}'
+          ].join('\n')
+        },
+        {
+          title: 'State &amp; Reactivity',
+          desc: 'bitwrench uses explicit updates. Here\'s the same counter in React and bitwrench — same outcome, different mechanism:',
+          code: null  // will use codeComparison tabs
+        },
+        {
+          title: 'Static Site Generation',
+          desc: 'Use bw.html() in Node.js to emit complete HTML pages from data — no template engine needed:',
+          code: [
+            '// generate-page.js — run with: node generate-page.js',
+            'var bw = require("bitwrench");',
+            'var fs = require("fs");',
+            '',
+            'var posts = [',
+            '  { title: "First Post", date: "2026-01-15", body: "Hello world." },',
+            '  { title: "Second Post", date: "2026-02-01", body: "More content." }',
+            '];',
+            '',
+            'var page = {',
+            '  t: "html", c: [',
+            '    { t: "head", c: { t: "title", c: "My Blog" } },',
+            '    { t: "body", c: [',
+            '      { t: "h1", c: "Blog" },',
+            '      { t: "div", c: posts.map(function(p) {',
+            '        return {',
+            '          t: "article", c: [',
+            '            { t: "h2", c: p.title },',
+            '            { t: "time", c: p.date },',
+            '            { t: "p", c: p.body }',
+            '          ]',
+            '        };',
+            '      })}',
+            '    ]}',
+            '  ]',
+            '};',
+            '',
+            'fs.writeFileSync("blog.html", "<!DOCTYPE html>" + bw.html(page));',
+            '// Output: a complete, static HTML file — no runtime needed'
+          ].join('\n')
+        }
+      ];
+
+      // Build the reactivity comparison tabs (demo index 2)
+      var reactivityTabs = codeComparison([
+        {
+          label: 'React',
+          code: [
+            'import { useState } from "react";',
+            '',
+            'function Counter() {',
+            '  const [count, setCount] = useState(0);',
+            '  return (',
+            '    <div>',
+            '      <h4>Count: {count}</h4>',
+            '      <button onClick={() => setCount(c => c + 1)}>',
+            '        Increment',
+            '      </button>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            'var count = 0;',
+            '',
+            'function render() {',
+            '  bw.DOM("#counter", {',
+            '    t: "div",',
+            '    c: [',
+            '      { t: "h4", c: "Count: " + count },',
+            '      bw.makeButton({',
+            '        text: "Increment",',
+            '        variant: "primary",',
+            '        onclick: function() { count++; render(); }',
+            '      })',
+            '    ]',
+            '  });',
+            '}',
+            'render();'
+          ].join('\n')
+        }
+      ]);
+
+      var cards = demos.map(function(demo) {
+        var content = [
+          { t: 'h4', c: demo.title },
+          { t: 'p', a: { style: 'margin-bottom: 0.75rem;' }, c: demo.desc }
+        ];
+
+        if (demo.code) {
+          content.push({ t: 'pre', c: { t: 'code', c: demo.code } });
+        } else {
+          content.push(reactivityTabs);
+        }
+
+        return {
+          t: 'div',
+          a: { class: 'callout callout-concept' },
+          c: content
+        };
+      });
+
       bw.DOM('#honest-summary', {
         t: 'div',
-        c: [
-          {
-            t: 'div',
-            a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;' },
-            c: [
-              {
-                t: 'div',
-                a: { class: 'callout callout-concept' },
-                c: [
-                  { t: 'h4', a: { style: 'color: var(--bw-teal-dark);' }, c: 'Where bitwrench wins' },
-                  {
-                    t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
-                    c: [
-                      { t: 'li', c: 'Server-driven UI (unique capability — no other framework does this)' },
-                      { t: 'li', c: 'Table/component rendering from data (fewer function calls)' },
-                      { t: 'li', c: 'Runtime CSS generation (no build step, styles as JS objects)' },
-                      { t: 'li', c: 'Zero tooling setup (paste a script tag, start coding)' },
-                      { t: 'li', c: 'Embedded/IoT devices (any language generates JSON UI)' }
-                    ]
-                  }
-                ]
-              },
-              {
-                t: 'div',
-                a: { class: 'callout callout-concept' },
-                c: [
-                  { t: 'h4', a: { style: 'color: var(--bw-text-secondary);' }, c: 'Where it\'s similar' },
-                  {
-                    t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
-                    c: [
-                      { t: 'li', c: 'List rendering (.map() pattern = JSX .map())' },
-                      { t: 'li', c: 'Simple interactivity (counter, toggle — similar line counts)' },
-                      { t: 'li', c: 'Dynamic styling (inline styles work the same way)' }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            t: 'div',
-            a: { class: 'callout callout-tip' },
-            c: [
-              { t: 'h4', c: 'Where others win' },
-              {
-                t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
-                c: [
-                  { t: 'li', c: 'Complex state management (React hooks, Vue reactivity, Svelte stores)' },
-                  { t: 'li', c: 'Large-scale applications (ecosystem, routing, devtools, community)' },
-                  { t: 'li', c: 'Type safety (TypeScript integration is deeper in React/Vue/Svelte)' },
-                  { t: 'li', c: 'Automatic re-rendering (bitwrench requires manual render() calls)' },
-                  { t: 'li', c: 'IDE support (autocomplete, refactoring tools, extensions)' }
-                ]
-              }
-            ]
-          }
-        ]
+        a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;' },
+        c: cards
       });
     })();
 
@@ -1873,7 +1976,7 @@
       });
     })();
 
-    // ---- Where bitwrench fits ----
+    // ---- Example use cases ----
     (function() {
       var useCases = [
         { title: 'Embedded & IoT',      desc: 'ESP32, Raspberry Pi, and similar devices can serve bitwrench objects as JSON. The device generates data; the browser renders the UI. No templating engine needed on the device.' },

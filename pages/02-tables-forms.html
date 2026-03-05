@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <script src="shared-tryit.js"></script>
   <style>
     /* Page-specific overrides (shared-theme.css handles the rest) */
@@ -58,9 +59,61 @@
   </div>
 
   <div class="content-container wide">
+    <!-- Introduction -->
+    <div class="demo-section">
+      <h2>Data In, Table Out</h2>
+      <div class="demo-content">
+        <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
+          Bitwrench treats tables as <em>data</em>. Hand <code>bw.makeTable()</code> a JavaScript array
+          and it returns a complete, sortable, styled table &mdash; no <code>&lt;table&gt;&lt;tr&gt;&lt;td&gt;</code>
+          boilerplate required. You control columns, formatting, and sorting with plain objects.
+        </p>
+        <p style="line-height: 1.8;">
+          The table below was generated from a single function call. Scroll down to see how it was built,
+          step by step.
+        </p>
+      </div>
+    </div>
+
+    <!-- Showcase Table (hero — rendered first, no code) -->
+    <div class="demo-section">
+      <h2>Showcase</h2>
+      <div id="showcase-table" class="table-card"></div>
+      <p class="table-info" style="border-top: none; margin-top: 0.5rem; font-style: italic;">
+        This table was generated from a JavaScript array with one function call.
+        Click any column header to sort.
+      </p>
+    </div>
+
     <div id="style-origin-callout"></div>
 
-    <!-- Pipeline Demo -->
+    <!-- Step-by-step build-up -->
+    <div class="demo-section">
+      <h2>Building Up &mdash; From Data to Table</h2>
+      <p>Let's rebuild that showcase table from scratch, adding one feature at a time.</p>
+
+      <h3>Step 1: Minimal Table</h3>
+      <p>Pass an array of objects. Columns are auto-detected from the keys.</p>
+      <div id="step1-demo"></div>
+
+      <h3 style="margin-top: 2rem;">Step 2: Custom Columns</h3>
+      <p>Specify which fields to show, their order, and their labels.</p>
+      <div id="step2-demo"></div>
+
+      <h3 style="margin-top: 2rem;">Step 3: Formatting with <code>render</code></h3>
+      <p>Each column can have a <code>render</code> function that transforms cell values &mdash; add badges, format numbers, or return nested TACO objects.</p>
+      <div id="step3-demo"></div>
+
+      <h3 style="margin-top: 2rem;">Step 4: Controlled Sorting</h3>
+      <p>Sorting is on by default. Use <code>onSort</code> to control state externally and re-render.</p>
+      <div id="step4-demo"></div>
+
+      <h3 style="margin-top: 2rem;">Step 5: Styling</h3>
+      <p>Add CSS classes for stripes and hover. Use <code>bw.css()</code> + <code>bw.injectCSS()</code> to customise header colours or any other rule.</p>
+      <div id="step5-demo"></div>
+    </div>
+
+    <!-- Pipeline Demo (moved down) -->
     <div class="demo-section">
       <h2>How bw.makeTable() Works</h2>
       <p>One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.</p>
@@ -99,6 +152,240 @@
     // Mount the shared navigation
     mountExampleNav('#example-nav', '02-tables-forms.html');
     bw.DOM('#style-origin-callout', makeStyleOrigin());
+
+    // ── Showcase data (programming languages) ──────────────────────
+    const languages = [
+      { name: 'JavaScript', year: 1995, creator: 'Brendan Eich',      paradigm: 'Multi-paradigm', typing: 'Dynamic',  popularity: 1 },
+      { name: 'Python',     year: 1991, creator: 'Guido van Rossum',  paradigm: 'Multi-paradigm', typing: 'Dynamic',  popularity: 2 },
+      { name: 'Rust',       year: 2010, creator: 'Graydon Hoare',     paradigm: 'Systems',        typing: 'Static',   popularity: 6 },
+      { name: 'TypeScript', year: 2012, creator: 'Anders Hejlsberg',  paradigm: 'Multi-paradigm', typing: 'Static',   popularity: 4 },
+      { name: 'Go',         year: 2009, creator: 'Rob Pike et al.',   paradigm: 'Concurrent',     typing: 'Static',   popularity: 7 },
+      { name: 'Java',       year: 1995, creator: 'James Gosling',     paradigm: 'OOP',            typing: 'Static',   popularity: 3 },
+      { name: 'C',          year: 1972, creator: 'Dennis Ritchie',    paradigm: 'Procedural',     typing: 'Static',   popularity: 5 },
+      { name: 'Swift',      year: 2014, creator: 'Chris Lattner',     paradigm: 'Multi-paradigm', typing: 'Static',   popularity: 8 }
+    ];
+
+    // ── Showcase hero table ────────────────────────────────────────
+    function rankBadge(v) {
+      var colours = { 1: '#28a745', 2: '#218838', 3: '#17a2b8', 4: '#007bff', 5: '#6c757d', 6: '#fd7e14', 7: '#e83e8c', 8: '#6610f2' };
+      return {
+        t: 'span',
+        a: {
+          style: {
+            display: 'inline-block', padding: '0.15em 0.55em', borderRadius: '0.75em',
+            fontSize: '0.85em', fontWeight: '600', color: '#fff',
+            background: colours[v] || '#6c757d'
+          }
+        },
+        c: '#' + v
+      };
+    }
+
+    bw.DOM('#showcase-table', bw.makeTable({
+      data: languages,
+      className: 'table table-striped table-hover',
+      columns: [
+        { key: 'name',       label: 'Language' },
+        { key: 'year',       label: 'Year' },
+        { key: 'creator',    label: 'Creator' },
+        { key: 'paradigm',   label: 'Paradigm' },
+        { key: 'typing',     label: 'Typing' },
+        { key: 'popularity', label: 'Rank', render: rankBadge }
+      ]
+    }));
+
+    // ── Step 1: Minimal table ──────────────────────────────────────
+    var step1Code = `// Just pass an array — columns are auto-detected
+bw.DOM(target, bw.makeTable({
+  data: [
+    { name: 'JavaScript', year: 1995, creator: 'Brendan Eich' },
+    { name: 'Python',     year: 1991, creator: 'Guido van Rossum' },
+    { name: 'Rust',       year: 2010, creator: 'Graydon Hoare' }
+  ]
+}));`;
+    bw.DOM('#step1-demo', bw.makeCodeDemo({
+      title: 'Minimal Table',
+      result: bw.makeTable({
+        data: languages.slice(0, 3).map(function(r) { return { name: r.name, year: r.year, creator: r.creator }; })
+      }),
+      code: step1Code
+    }));
+
+    // ── Step 2: Custom columns ─────────────────────────────────────
+    var step2Code = `// Choose which fields to show and set labels
+bw.DOM(target, bw.makeTable({
+  data: languages,
+  columns: [
+    { key: 'name',    label: 'Language' },
+    { key: 'year',    label: 'First Released' },
+    { key: 'paradigm', label: 'Paradigm' }
+  ]
+}));`;
+    bw.DOM('#step2-demo', bw.makeCodeDemo({
+      title: 'Custom Columns',
+      result: bw.makeTable({
+        data: languages,
+        columns: [
+          { key: 'name',     label: 'Language' },
+          { key: 'year',     label: 'First Released' },
+          { key: 'paradigm', label: 'Paradigm' }
+        ]
+      }),
+      code: step2Code
+    }));
+
+    // ── Step 3: Formatting with render ─────────────────────────────
+    var step3Code = `// render functions transform cell values
+bw.DOM(target, bw.makeTable({
+  data: languages,
+  columns: [
+    { key: 'name', label: 'Language' },
+    { key: 'year', label: 'Year' },
+    { key: 'typing', label: 'Typing',
+      render: function(v) {
+        var color = v === 'Static' ? '#007bff' : '#28a745';
+        return {
+          t: 'span',
+          a: { style: {
+            padding: '0.15em 0.5em', borderRadius: '0.5em',
+            fontSize: '0.85em', color: '#fff', background: color
+          }},
+          c: v
+        };
+      }
+    },
+    { key: 'popularity', label: 'Rank',
+      render: function(v) { return '#' + v; }
+    }
+  ]
+}));`;
+    bw.DOM('#step3-demo', bw.makeCodeDemo({
+      title: 'Formatting with render',
+      result: bw.makeTable({
+        data: languages,
+        columns: [
+          { key: 'name', label: 'Language' },
+          { key: 'year', label: 'Year' },
+          { key: 'typing', label: 'Typing',
+            render: function(v) {
+              var color = v === 'Static' ? '#007bff' : '#28a745';
+              return {
+                t: 'span',
+                a: { style: {
+                  padding: '0.15em 0.5em', borderRadius: '0.5em',
+                  fontSize: '0.85em', color: '#fff', background: color
+                }},
+                c: v
+              };
+            }
+          },
+          { key: 'popularity', label: 'Rank', render: function(v) { return '#' + v; } }
+        ]
+      }),
+      code: step3Code
+    }));
+
+    // ── Step 4: Controlled sorting ─────────────────────────────────
+    var step4Code = `// Sorting is on by default — click any header.
+// Use onSort + sortColumn/sortDirection for
+// controlled state (e.g. server-side sorting).
+var sortCol = 'year';
+var sortDir = 'asc';
+
+function renderTable() {
+  bw.DOM('#my-table', bw.makeTable({
+    data: languages,
+    sortable: true,
+    sortColumn: sortCol,
+    sortDirection: sortDir,
+    onSort: function(col, dir) {
+      sortCol = col;
+      sortDir = dir;
+      renderTable();
+    },
+    columns: [
+      { key: 'name', label: 'Language' },
+      { key: 'year', label: 'Year' },
+      { key: 'creator', label: 'Creator' }
+    ]
+  }));
+}
+renderTable();`;
+
+    // Build a live controlled-sort demo
+    var step4SortCol = 'year';
+    var step4SortDir = 'asc';
+    function renderStep4() {
+      bw.DOM('#step4-live-table', bw.makeTable({
+        data: languages,
+        sortable: true,
+        sortColumn: step4SortCol,
+        sortDirection: step4SortDir,
+        onSort: function(col, dir) {
+          step4SortCol = col;
+          step4SortDir = dir;
+          renderStep4();
+        },
+        columns: [
+          { key: 'name', label: 'Language' },
+          { key: 'year', label: 'Year' },
+          { key: 'creator', label: 'Creator' }
+        ]
+      }));
+    }
+    var step4Result = { t: 'div', a: { id: 'step4-live-table' }, c: '' };
+    bw.DOM('#step4-demo', bw.makeCodeDemo({
+      title: 'Controlled Sorting',
+      result: step4Result,
+      code: step4Code
+    }));
+    setTimeout(renderStep4, 0);
+
+    // ── Step 5: Styling ────────────────────────────────────────────
+    var step5Code = `// Add table-striped and table-hover via className.
+// Customise header colours with bw.css() + bw.injectCSS().
+bw.injectCSS(bw.css({
+  '.custom-header thead th': {
+    background: '#1a5276',
+    color: '#fff',
+    borderBottom: '2px solid #2980b9'
+  }
+}));
+
+bw.DOM(target, bw.makeTable({
+  data: languages,
+  className: 'table table-striped table-hover custom-header',
+  columns: [
+    { key: 'name',    label: 'Language' },
+    { key: 'year',    label: 'Year' },
+    { key: 'paradigm', label: 'Paradigm' },
+    { key: 'typing',  label: 'Typing' }
+  ]
+}));`;
+
+    // Inject the custom-header style for the live demo
+    bw.injectCSS(bw.css({
+      '.custom-header thead th': {
+        background: '#1a5276',
+        color: '#fff',
+        borderBottom: '2px solid #2980b9'
+      }
+    }));
+
+    bw.DOM('#step5-demo', bw.makeCodeDemo({
+      title: 'Styling',
+      result: bw.makeTable({
+        data: languages,
+        className: 'table table-striped table-hover custom-header',
+        columns: [
+          { key: 'name',    label: 'Language' },
+          { key: 'year',    label: 'Year' },
+          { key: 'paradigm', label: 'Paradigm' },
+          { key: 'typing',  label: 'Typing' }
+        ]
+      }),
+      code: step5Code
+    }));
 
     // Pipeline demo for bw.makeTable()
     bw.DOM('#pipeline-table', showPipeline({

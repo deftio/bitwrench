@@ -4,156 +4,182 @@
 
 [![bitwrench](./images/bitwrench-logo-med.png)](http://www.deftio.com/bitwrench)
 
-Welcome to **bitwrench.js** — a lightweight JavaScript library designed for rapid prototyping of web components with minimal dependencies. It allows developers to create HTML structures, style elements, and add event handlers using plain JavaScript objects or JSON, without relying on complex frameworks. bitwrench.js includes handy functions for generating placeholder content, manipulating colors, and handling random data generation, making it ideal for quick web demos or visualizing data, especially in constrained environments like embedded system projects.
+**bitwrench.js** is a lightweight JavaScript UI library that builds HTML from plain objects — no JSX, no virtual DOM, no build step. Define UI with the TACO format (`{t, a, c, o}` — Tag, Attributes, Content, Options), render to strings or live DOM, and ship under 45 KB gzipped with zero dependencies. Works in browsers (IE11+) and Node.js.
 
-Whether you're debugging embedded C/C++ projects or building lightweight web apps, bitwrench.js offers powerful, no-frills tools to help you work efficiently.
+## Quick Example
+
+```javascript
+// Define a component as a plain object
+const card = {
+  t: 'div', a: { class: 'bw-card' },
+  c: [
+    { t: 'h3', c: 'Hello bitwrench' },
+    { t: 'p',  c: 'UI as native JavaScript objects.' }
+  ]
+};
+
+// Render to live DOM
+bw.DOM('#app', card);
+
+// Or render to an HTML string (server-side, emails, etc.)
+const html = bw.html(card);
+```
 
 ## Key Features
 
-- **Dynamic HTML Generation**: Create complex HTML elements and structures directly from JSON objects, making it easy to dynamically generate web content.
-  - Example:
+- **TACO format** — `{ t, a, c, o }` objects describe UI; nest them, loop them, compose them with plain JS
+- **Zero dependencies** — under 45 KB gzipped, IE11+ compatible
+- **Batteries-included components** — grid, buttons, cards, forms, tables, alerts, badges, tabs, navbars
+- **Server & client rendering** — `bw.html()` returns strings, `bw.DOM()` mounts to the DOM
+- **Dynamic CSS & theming** — `bw.css()` generates stylesheets from objects, `bw.generateTheme()` builds full themes from seed colors, dark mode toggle included
+- **State management** — `bw.patch()` for targeted DOM updates, `bw.update()` for re-renders, `bw.pub()`/`bw.sub()` for app-wide messaging
+- **CLI tool** — the `bitwrench` command converts Markdown, HTML, and JSON files into styled pages
+- **Utilities** — color functions, random data, lorem ipsum, cookies, URL params, file I/O
 
-    ```javascript
-    bw.html(["div", { class: "container", onclick: "myFunction(this)" }, "This is the content"]);
-    ```
+## Installation
 
-  - Support for deep hierarchical structures and arrays.
-  - Select and modify DOM elements via CSS selectors:
-
-    ```javascript
-    bw.DOM("h3", "Updated content");
-    bw.DOM(".myClass", function(el) { /* apply actions */ });
-    ```
-
-  - Function registration to bind JavaScript functions to HTML elements.
-
-- **Color Manipulation**: Convert between RGB, RGBA, HSL, and HSLA formats, and interpolate colors. Generate themed colors as both numerical values and CSS-compatible strings.
-
-- **Cookie Handling**: Easily set and retrieve browser cookies.
-
-- **JSON Pretty Printing**: Format and display JSON data for better readability.
-
-- **File Handling (Node and Browser)**: Save and load files as raw data or JSON objects. Useful for quick local storage of application data.
-
-- **URL Parameter Handling**: Parse URL query parameters with defaults. This also works for command-line scripts, and you can pack dictionaries back into URLs.
-
-- **Random Data Functions**: Generate random numbers within a range, including multidimensional arrays of random values for use in data visualization or testing.
-  - Example:
-
-    ```javascript
-    bw.random(4, 11); // returns a random number between 4 and 11
-    ```
-
-- **Logging Utility**: A simple logging system with timestamping, message formatting, and pretty-printing options for raw, HTML, or text-based output. Includes auto-dissolve functionality to streamline logs in production environments.
-
-- **Self-Documenting Code**: Extract function documentation at runtime using `bw.docString("functionName")` to get docstrings for specific functions.
-
-- **Browser Compatibility**: Designed to work in older browsers (e.g., Internet Explorer 7 and later). The generated content is fully compatible with legacy environments where modern frameworks may not be usable.
-
-### Installation
-
-#### Node.js
-
-You can install bitwrench via npm:
+### npm
 
 ```bash
-npm install bitwrench --save
+npm install bitwrench
 ```
-
-Use bitwrench in your Node.js applications as follows:
 
 ```javascript
+// ES module
+import bw from 'bitwrench';
+
+// CommonJS
 const bw = require('bitwrench');
-const htmlContent = bw.html(["div", { "class": "example" }, "Hello, bitwrench!"]);
-// htmlContent will contain: <div class='example'>Hello, bitwrench!</div>
 ```
 
-#### Browser
-
-In the browser, include bitwrench.js like any standard script library:
+### Browser
 
 ```html
-<script src="path/to/bitwrench.js"></script>
+<script src="dist/bitwrench.umd.js"></script>
 ```
 
-Bitwrench generates default CSS from JavaScript, though you can also include `bitwrench.css` separately if needed. Here’s a simple example:
+### CDN
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js"></script>
+```
+
+## Getting Started
+
+### Browser
 
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="bitwrench.js"></script>
+  <title>bitwrench app</title>
+  <script src="dist/bitwrench.umd.js"></script>
 </head>
-<body class="bw-def-page-setup bw-font-sans-serif">
-    <script>
-        const htmlData = [
-            ["h1", { class: "bw-h1" }, "Welcome to Bitwrench"],
-            ["div", { class: "content" }, "This content is generated using bitwrench.js."]
-        ];
-        bw.DOMInsertElement("body", bw.html(htmlData), true);
-    </script>
+<body>
+  <div id="app"></div>
+  <script>
+    bw.loadDefaultStyles();
+
+    bw.DOM('#app', {
+      t: 'div', a: { class: 'bw-container' },
+      c: [
+        { t: 'h1', c: 'My App' },
+        { t: 'button', a: { class: 'bw-btn bw-btn-primary' }, c: 'Click me' }
+      ]
+    });
+  </script>
 </body>
 </html>
 ```
 
-### Example Features
+### Node.js
 
-- **HTML Components**: Create and manipulate HTML components entirely from JSON-like objects.
-- **Lorem Ipsum Generator**: Generate placeholder text for layouts and prototypes.
-- **Color Interpolation**: Dynamically generate gradients or theme-based color schemes.
-- **Sortable Tables**: Quickly generate sortable tables from JSON data.
+```javascript
+import bw from 'bitwrench';
 
-  ```javascript
-  bw.htmlTable([
-    ["Name", "Age", "Profession", "Favorite Color"],
-    ["Alice", 30, "Engineer", { a: { style: "color: red" }, c: "red" }],
-    ["Bob", 35, "Teacher", { a: { style: "color: green" }, c: "green" }]
-  ], { sortable: true });
-  ```
+const page = bw.html({
+  t: 'div', a: { class: 'bw-container' },
+  c: [
+    { t: 'h1', c: 'Server-rendered page' },
+    { t: 'p',  c: 'Generated with bw.html() in Node.js.' }
+  ]
+});
 
-### Running Tests
-
-To ensure the library works as expected, bitwrench uses the Mocha framework with Chai for assertions. Install the test dependencies:
-
-```bash
-npm install mocha --save-dev
-npm install chai --save-dev
+console.log(page);
 ```
 
-Run the tests:
+## Core API
+
+| Function | Description |
+|---|---|
+| `bw.html(taco)` | Convert a TACO object to an HTML string |
+| `bw.DOM(selector, taco)` | Mount a TACO object to a DOM element |
+| `bw.css(rules)` | Generate a CSS string from a JS object |
+| `bw.loadDefaultStyles()` | Inject the built-in component stylesheet |
+| `bw.generateTheme(name, config)` | Generate a scoped theme from seed colors |
+| `bw.patch(uuid, content)` | Update a specific element's content by UUID |
+| `bw.update(el)` | Re-render an element using its `o.render` function |
+| `bw.pub(topic, detail)` | Publish a message to all subscribers |
+| `bw.sub(topic, handler)` | Subscribe to a topic; returns an unsubscribe function |
+| `bw.makeTable(data, opts)` | Create a sortable table (returns TACO) |
+| `bw.makeCard(opts)` | Create a card component (returns TACO) |
+| `bw.colorInterp(x, in0, in1, colors)` | Interpolate between colors |
+
+See the full [API Reference](./pages/08-api-reference.html) for all functions.
+
+## Examples
+
+| Page | Description |
+|---|---|
+| [Quick Start](./pages/00-quick-start.html) | First steps with TACO and `bw.DOM()` |
+| [Components](./pages/01-components.html) | Buttons, cards, alerts, badges, navbars |
+| [Tables & Forms](./pages/02-tables-forms.html) | Sortable tables, form inputs, validation |
+| [Styling](./pages/03-styling.html) | CSS generation, inline styles, theming strategies |
+| [Dashboard](./pages/04-dashboard.html) | Full-page app with grid layout and charts |
+| [State & Interactivity](./pages/05-state.html) | `bw.patch()`, `bw.update()`, pub/sub |
+| [Tic Tac Toe Tutorial](./pages/06-tic-tac-toe-tutorial.html) | Step-by-step game built with bitwrench |
+| [Framework Comparison](./pages/07-framework-comparison.html) | bitwrench vs React, Vue, Svelte, jQuery |
+| [API Reference](./pages/08-api-reference.html) | Full function listing with signatures |
+| [Builds & Downloads](./pages/09-builds.html) | All dist formats, bundle sizes, SRI hashes |
+| [Themes](./pages/10-themes.html) | Theme generator, presets, dark mode |
+
+## CLI
+
+The `bitwrench` command converts Markdown, HTML, and JSON files into styled standalone pages.
 
 ```bash
-npm run test
+# Install globally
+npm install -g bitwrench
+
+# Convert a Markdown file to a styled HTML page
+bitwrench README.md -o index.html --standalone
+
+# Use a theme preset
+bitwrench doc.md -o doc.html --standalone --theme ocean
+
+# Custom colors (primary, secondary)
+bitwrench doc.md -o doc.html --standalone --theme "#336699,#cc6633"
 ```
 
-### Linting
+**Flags:** `--output/-o`, `--standalone/-s` (inline bitwrench), `--cdn` (CDN link), `--theme/-t`, `--css/-c`, `--title`, `--favicon/-f`, `--highlight`, `--verbose/-v`
 
-Bitwrench uses ESLint for static code analysis. Install the linting dependencies and initialize ESLint:
+## Development
 
 ```bash
-npm install eslint --save-dev
-./node_modules/.bin/eslint --init
+npm install          # install dev dependencies
+npm run build        # build all dist formats
+npm test             # run unit tests (251 tests)
+npm run test:cli     # run CLI tests (49 tests)
+npm run test:e2e     # run Playwright browser tests
+npm run cleanbuild   # full production build
 ```
 
-Then, run the lint tests:
+## License
 
-```bash
-npm run lint
-```
+[BSD-2-Clause](./LICENSE.txt)
 
-### Release History
+## Links
 
-- **1.2.x**: Initial release
-
-### License
-
-bitwrench is licensed under the OSI-approved BSD 2-Clause License. For more details, refer to the `LICENSE.txt` file in the repository.
-
-## Further Documentation
-
-- [Quick Docs](./quick-docs.html)
-- [Examples](./examples)
-
-### GitHub Repository
-
-Explore the full source code on GitHub: [bitwrench on GitHub](http://github.com/deftio/bitwrench)
+- [GitHub](https://github.com/deftio/bitwrench)
+- [npm](https://www.npmjs.com/package/bitwrench)
+- [Homepage](http://deftio.com/bitwrench)

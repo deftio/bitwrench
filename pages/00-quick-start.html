@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
 <body>
@@ -115,12 +116,48 @@
         <div id="tryit-counter"></div>
 
         <div class="callout callout-tip" style="margin-top: 1rem;">
-          <h4>Honest trade-off</h4>
+          <h4>This is the simplest pattern</h4>
           <p>
-            This is manual re-rendering. React and Vue do this automatically via hooks and
-            reactivity. Bitwrench trades convenience for simplicity &mdash; no virtual DOM,
-            no magic, just "call render again." You always know exactly when and why your
-            UI updates.
+            A closure variable and a render function is all you need for simple components.
+            You decide when to re-render by calling the function &mdash; every update is an
+            explicit call you can see and step through.
+          </p>
+        </div>
+
+        <div class="callout callout-concept" style="margin-top: 0.75rem;">
+          <h4>There's more when you need it</h4>
+          <p>
+            For real applications, bitwrench provides a full state management toolkit:
+          </p>
+          <ul>
+            <li><strong>Component state</strong> &mdash; <code>o.state</code> and <code>o.render</code>
+              store state and render logic directly on the DOM element. Multiple instances
+              each carry their own independent state.</li>
+            <li><strong>Targeted updates</strong> &mdash; <code>bw.patch(id, value)</code> updates
+              a single element by UUID without rebuilding the component tree. Update one value
+              in a list of 1,000 items without touching the rest.</li>
+            <li><strong>Pub/sub</strong> &mdash; <code>bw.pub()</code> / <code>bw.sub()</code>
+              provide decoupled cross-component messaging, independent of DOM hierarchy.
+              Subscriptions can be tied to element lifecycle for automatic cleanup.</li>
+            <li><strong>DOM events</strong> &mdash; <code>bw.emit()</code> / <code>bw.on()</code>
+              wrap CustomEvents for scoped, bubbling communication between parent and child components.</li>
+            <li><strong>Lifecycle</strong> &mdash; <code>o.mounted(el)</code> runs after the element
+              is in the DOM. <code>o.unmount(el)</code> runs on cleanup for timers, subscriptions,
+              or anything that needs teardown.</li>
+          </ul>
+          <p>
+            When <code>bw.DOM()</code> replaces content, old DOM nodes and their event listeners are
+            removed by the browser's garbage collector &mdash; no manual listener cleanup needed.
+            State lives on the element, so there's nothing external to leak.
+          </p>
+          <p style="margin-top: 0.5rem;">
+            <strong>Debugging:</strong> all state is visible in the browser inspector.
+            Select any bitwrench component, then check <code>$0._bw_state</code> in the console
+            to see its current state. No special devtools extension required.
+          </p>
+          <p style="margin-top: 0.5rem;">
+            See the <a href="05-state.html"><strong>State &amp; Interactivity</strong></a> page
+            for the full picture, including working examples of each pattern.
           </p>
         </div>
       </div>

@@ -118,4 +118,30 @@ const babelConfig = {
         babel(babelConfig),
       ],
     },
+
+    // Code editor addon (standalone, loads after bitwrench)
+    {
+      input: 'src/bitwrench-code-edit.js',
+      output: [
+        {
+          file: 'dist/bitwrench-code-edit.umd.js',
+          format: 'umd',
+          name: 'bwCodeEdit',
+          banner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-code-edit.umd.min.js',
+          format: 'umd',
+          name: 'bwCodeEdit',
+          banner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+      ],
+    },
   ];

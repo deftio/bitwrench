@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <script src="shared-tryit.js"></script>
   <style>
     /* Page-specific styles */
@@ -210,10 +211,89 @@
 
   <div class="content-container wide">
 
-    <!-- State philosophy callout -->
+    <!-- Gentle intro for framework developers -->
     <div class="demo-section">
-      <div class="callout callout-tip">
-        <strong>Explicit state management:</strong> Bitwrench gives you <code>o.render</code> for re-rendering, <code>bw.update()</code> for triggering renders, <code>bw.patch()</code> for targeted DOM updates, and <code>bw.pub/sub</code> for decoupled communication. You always know exactly when and why your UI updates &mdash; no hidden reactivity, no virtual DOM diffing, no compiler magic. State lives in your JavaScript objects; the DOM is the view.
+      <h2>Bitwrench's Approach to State</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Frameworks like React, Solid, and Svelte each have their own approach to state management &mdash;
+          virtual DOMs, reactive signals, compiler-generated update code. They work well for the
+          problems they were designed to solve.
+        </p>
+        <p class="intro-text">
+          Bitwrench takes a different approach. State is a plain JavaScript object stored directly on
+          the DOM element it belongs to. Updates are explicit function calls rather than automatic reactions.
+          There is no virtual DOM, no dependency tracking, no compiler step. A component re-renders
+          when &mdash; and only when &mdash; <code>bw.update(el)</code> is called.
+        </p>
+
+        <div class="callout callout-concept">
+          <h4>Coming from another framework?</h4>
+          <table class="event-table">
+            <thead>
+              <tr>
+                <th>Concept</th>
+                <th>How bitwrench does it</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Component (JSX / .svelte file)</td><td>Factory function returning a TACO object</td></tr>
+              <tr><td><code>useState</code> / <code>createSignal</code> / <code>$state</code></td><td><code>o.state</code> &rarr; stored as <code>el._bw_state</code></td></tr>
+              <tr><td><code>render()</code> / reactive template</td><td><code>o.render(el)</code> &mdash; called explicitly via <code>bw.update(el)</code></td></tr>
+              <tr><td>Virtual DOM diff / fine-grained reactivity</td><td>Direct DOM writes via <code>bw.DOM()</code>; targeted patches via <code>bw.patch()</code></td></tr>
+              <tr><td><code>useEffect</code> / <code>onMount</code></td><td><code>o.mounted(el)</code> lifecycle hook</td></tr>
+              <tr><td>Context / stores / global signals</td><td><code>bw.pub()</code> / <code>bw.sub()</code> (application-scoped pub/sub)</td></tr>
+              <tr><td><code>useRef</code></td><td>The element itself &mdash; state and DOM are the same object</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="intro-text">
+          The tradeoff: bitwrench requires the developer to say <em>when</em> to update, rather
+          than detecting changes automatically. In return, every state change is an explicit function
+          call you can see and step through in a debugger.
+          The sections below walk through each pattern from simplest to most complex.
+        </p>
+
+        <div class="callout callout-tip">
+          <h4>The toolkit at a glance</h4>
+          <p>
+            <code>o.state</code> &mdash; initial state object, stored as <code>el._bw_state</code> on mount<br>
+            <code>o.render(el)</code> &mdash; render function, stored as <code>el._bw_render</code>, called on mount and on <code>bw.update()</code><br>
+            <code>bw.update(el)</code> &mdash; re-run the render function and emit <code>bw:statechange</code><br>
+            <code>bw.patch(id, content)</code> &mdash; targeted update of a single element (no full re-render)<br>
+            <code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> &mdash; decoupled cross-component messaging<br>
+            <code>o.mounted(el)</code> &mdash; lifecycle hook, runs after the element is in the DOM<br>
+            <code>o.unmount(el)</code> &mdash; cleanup hook, runs when the element is removed
+          </p>
+        </div>
+
+        <div class="callout callout-concept">
+          <h4>Memory and cleanup</h4>
+          <p>
+            When <code>bw.DOM()</code> replaces an element's children, the old DOM nodes and any
+            event listeners attached to them are removed by the browser's garbage collector.
+            There is no manual listener cleanup step &mdash; replacing the DOM <em>is</em> the cleanup.
+          </p>
+          <p>
+            For resources that live outside the DOM (timers, WebSocket connections, pub/sub
+            subscriptions), use the <code>o.unmount(el)</code> lifecycle hook. Bitwrench calls it
+            automatically via <code>bw.cleanup()</code> before replacing content.
+            Pub/sub subscriptions can also be tied to an element's lifecycle by passing the element
+            to <code>bw.sub()</code> &mdash; when the element is cleaned up, its subscriptions
+            are removed automatically.
+          </p>
+        </div>
+
+        <div class="callout callout-concept">
+          <h4>Debugging</h4>
+          <p>
+            All component state is visible in the browser's built-in inspector. Select any bitwrench
+            component in the Elements panel, then type <code>$0._bw_state</code> in the console
+            to see its current state object. You can modify it directly and call
+            <code>bw.update($0)</code> to see the result. No browser extension required.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -234,9 +314,9 @@
       <div class="demo-section-body">
         <p class="intro-text">
           In bitwrench, you build components by writing functions that return plain JavaScript
-          objects describing what to render. State lives <strong>on the DOM element itself</strong>,
-          not in separate variables or stores. When an element is removed from the page, its state
-          goes with it. This avoids orphaned closures, stale references, and memory leaks.
+          objects describing what to render. State lives <strong>on the DOM element itself</strong>.
+          When an element is removed from the page, its state goes with it. When you create three
+          instances of a component, each one carries its own independent state.
         </p>
 
         <div class="state-diagram">
@@ -272,11 +352,10 @@
         <div class="callout callout-concept">
           <h4>Why state lives on the element</h4>
           <p>
-            If state were in a closure or global variable, removing the element from the DOM
-            would leave the state floating in memory. By storing state on <code>el._bw_state</code>,
-            the state is tied to the element's lifecycle. Delete the element &rarr; state is gone.
+            Storing state on <code>el._bw_state</code> ties the state to the element's lifecycle.
+            Delete the element &rarr; state is gone.
             Create three instances of a component &rarr; each has its own state on its own element.
-            No registry to manage, no cleanup to remember.
+            It's a simple model: the DOM element <em>is</em> the component.
           </p>
         </div>
 
@@ -828,9 +907,20 @@ bw.DOM('#themes', makeThemeSwitcher());</code></pre>
       <h2>Performance</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          Bitwrench renders directly to the DOM with no virtual DOM diffing. This test creates
+          Bitwrench renders directly to the DOM. This test creates
           and mounts 1,000 elements in a single <code>bw.DOM()</code> call.
         </p>
+        <div class="callout callout-concept">
+          <h4>Two update strategies</h4>
+          <p>
+            <code>bw.DOM()</code> replaces all children &mdash; straightforward for full re-renders.
+            But updating one value in a list of 1,000 items doesn't require rebuilding the other 999.
+            That's what <code>bw.patch(id, value)</code> is for: it finds a single element by UUID
+            and updates its content directly. Use <code>bw.DOM()</code> for structural changes
+            (add/remove items) and <code>bw.patch()</code> for value changes (counters, labels, status text).
+            The <a href="#list-demo">dynamic list</a> above demonstrates both in combination.
+          </p>
+        </div>
         <div class="bw-grid-2col">
           <div>
             <div class="bw-code-label">Source</div>

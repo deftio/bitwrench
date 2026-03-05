@@ -614,6 +614,40 @@
                   bw.makeBadge({ text: 'Badge 3', variant: 'danger' })
                 ]
               }
+            },
+            // Progress bar
+            {
+              t: 'div', a: { style: 'margin-top: 0.75rem;' }, c:
+                bw.makeProgress({ value: 65, variant: 'primary' })
+            },
+            // Compact inline form
+            {
+              t: 'div', a: { style: 'margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;' }, c: [
+                bw.makeInput({ placeholder: 'Email' }),
+                bw.makeButton({ text: 'Go', variant: 'primary', size: 'sm' })
+              ]
+            },
+            // Mini table
+            {
+              t: 'div', a: { style: 'margin-top: 0.75rem;' }, c:
+                bw.makeTable({
+                  data: [
+                    { task: 'Deploy',  status: 'Done' },
+                    { task: 'Review',  status: 'Pending' },
+                    { task: 'Testing', status: 'Active' }
+                  ],
+                  columns: [
+                    { key: 'task', label: 'Task' },
+                    {
+                      key: 'status', label: 'Status',
+                      render: function(v) {
+                        var variant = v === 'Done' ? 'success' : v === 'Active' ? 'primary' : 'warning';
+                        return bw.makeBadge({ text: v, variant: variant });
+                      }
+                    }
+                  ],
+                  striped: true
+                })
             }
           ]
         };

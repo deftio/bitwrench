@@ -29,8 +29,8 @@
     const items = navItems.map(item => {
       let href = item.href;
       if (baseHref) {
-        // When loaded from a different directory (e.g. root), rewrite paths:
-        // '../index.html' → 'index.html', '00-quick-start.html' → 'pages/00-quick-start.html'
+        // When loaded from a different directory (e.g. root), prefix paths:
+        // '00-quick-start.html' → 'pages/00-quick-start.html'
         href = item.href.startsWith('../') ? item.href.slice(3) : baseHref + item.href;
       }
       return { ...item, href: href, active: item.href === currentPage || href === currentPage };

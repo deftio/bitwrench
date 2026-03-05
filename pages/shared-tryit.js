@@ -19,23 +19,48 @@
     var code = opts.code || '';
     var height = opts.height || '180px';
     var label = opts.label || 'Edit & Run';
+    var lang = opts.lang || 'js';
+
+    // Use syntax-highlighted editor if bw.codeEditor is available, else fallback to textarea
+    var useCE = typeof bw.codeEditor === 'function';
+
+    var editorTACO = useCE
+      ? bw.codeEditor({ code: code, lang: lang, height: height })
+      : {
+          t: 'textarea',
+          a: {
+            class: 'tryit-textarea',
+            spellcheck: 'false',
+            style: 'height:' + height
+          },
+          c: code
+        };
 
     return {
       t: 'div',
       a: { class: 'tryit-container', id: id },
       o: {
         mounted: function(el) {
-          var textarea = el.querySelector('.tryit-textarea');
           var output = el.querySelector('.tryit-output');
           var errorEl = el.querySelector('.tryit-error');
           var runBtn = el.querySelector('.tryit-run');
+
+          // Get code from either code editor or textarea
+          var ceEl = el.querySelector('.bw-ce');
+          var textarea = el.querySelector('.tryit-textarea');
+
+          function getCode() {
+            if (ceEl && ceEl._bwCodeEdit) return ceEl._bwCodeEdit.getValue();
+            if (textarea) return textarea.value;
+            return '';
+          }
 
           function runCode() {
             errorEl.textContent = '';
             errorEl.style.display = 'none';
             output.innerHTML = '';
             try {
-              var fn = new Function('bw', 'target', textarea.value);
+              var fn = new Function('bw', 'target', getCode());
               fn(bw, output);
             } catch (e) {
               errorEl.textContent = e.message;
@@ -58,15 +83,7 @@
               a: { class: 'tryit-editor-col' },
               c: [
                 { t: 'div', a: { class: 'tryit-label' }, c: label },
-                {
-                  t: 'textarea',
-                  a: {
-                    class: 'tryit-textarea',
-                    spellcheck: 'false',
-                    style: 'height:' + height
-                  },
-                  c: code
-                },
+                editorTACO,
                 {
                   t: 'div',
                   a: { class: 'tryit-controls' },

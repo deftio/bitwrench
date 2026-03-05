@@ -11,11 +11,6 @@
   <script src="shared-nav.js"></script>
   <style>
     /* Dashboard layout */
-    .dashboard-wrap {
-      max-width: var(--bw-content-wide);
-      margin: 0 auto;
-      padding: 1.25rem 2rem 2.5rem;
-    }
     .dashboard {
       display: flex;
       min-height: 600px;
@@ -59,6 +54,12 @@
       border-radius: var(--bw-radius, 8px);
       border: 1px solid var(--bw-card-border, #e5e5e5);
       box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .stat-value {
       font-size: 1.5rem;
@@ -98,6 +99,10 @@
       background: rgba(255,255,255,0.15);
       color: white !important;
     }
+    @media (max-width: 768px) {
+      .dashboard { flex-direction: column; min-height: auto; }
+      .sidebar { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -111,43 +116,14 @@
     </div>
   </div>
 
-  <div class="dashboard-wrap">
-    <div class="dashboard">
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <h3>Dashboard</h3>
-        <nav id="sidebar-nav"></nav>
-      </div>
-
-      <!-- Main Content -->
-      <div class="main-content">
-        <h1>Dashboard Application</h1>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid" id="stats-grid"></div>
-
-        <!-- Charts Section -->
-        <div class="chart-container">
-          <h3>Sales Overview</h3>
-          <div id="chart-placeholder">
-            <p style="color: var(--bw-text-secondary); text-align: center; padding: 3rem;">
-              Chart visualization would go here. This example focuses on layout and components.
-            </p>
-          </div>
-        </div>
-
-        <!-- Recent Activity Table -->
-        <div id="activity-section"></div>
-      </div>
-    </div>
-  </div>
+  <div id="dashboard-app" class="content-container wide"></div>
 
   <script>
     // Mount the shared navigation
     mountExampleNav('#example-nav', '04-dashboard.html');
-    
-    // Dashboard State Management
-    const dashboardState = {
+
+    // Dashboard State
+    var dashboardState = {
       currentView: 'overview',
       stats: [
         { id: 'revenue', label: 'Total Revenue', value: 45231, format: 'currency', change: 12.5 },
@@ -156,277 +132,113 @@
         { id: 'conversion', label: 'Conversion Rate', value: 3.2, format: 'percent', change: 0.8 }
       ],
       activities: [
-        { id: 1, user: 'John Doe', action: 'Placed order #1234', time: new Date(Date.now() - 5 * 60000), status: 'success' },
-        { id: 2, user: 'Jane Smith', action: 'Updated profile', time: new Date(Date.now() - 10 * 60000), status: 'info' },
-        { id: 3, user: 'Bob Johnson', action: 'Cancelled order #1233', time: new Date(Date.now() - 15 * 60000), status: 'danger' },
-        { id: 4, user: 'Alice Brown', action: 'Added product review', time: new Date(Date.now() - 20 * 60000), status: 'success' },
-        { id: 5, user: 'Charlie Wilson', action: 'Changed password', time: new Date(Date.now() - 25 * 60000), status: 'warning' }
+        { id: 1, user: 'John Doe', action: 'Placed order #1234', time: Date.now() - 5 * 60000, status: 'success' },
+        { id: 2, user: 'Jane Smith', action: 'Updated profile', time: Date.now() - 10 * 60000, status: 'info' },
+        { id: 3, user: 'Bob Johnson', action: 'Cancelled order #1233', time: Date.now() - 15 * 60000, status: 'danger' },
+        { id: 4, user: 'Alice Brown', action: 'Added product review', time: Date.now() - 20 * 60000, status: 'success' },
+        { id: 5, user: 'Charlie Wilson', action: 'Changed password', time: Date.now() - 25 * 60000, status: 'warning' }
       ]
     };
 
     // Utility Functions
     function formatValue(value, format) {
       switch (format) {
-        case 'currency':
-          return `$${value.toLocaleString()}`;
-        case 'percent':
-          return `${value}%`;
-        default:
-          return value.toLocaleString();
+        case 'currency': return '$' + value.toLocaleString();
+        case 'percent':  return value + '%';
+        default:         return value.toLocaleString();
       }
     }
 
-    function formatTime(date) {
-      const minutes = Math.floor((Date.now() - date) / 60000);
-      if (minutes < 60) return `${minutes} minutes ago`;
-      const hours = Math.floor(minutes / 60);
-      if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-      return `${Math.floor(hours / 24)} days ago`;
+    function formatTime(ts) {
+      var minutes = Math.floor((Date.now() - ts) / 60000);
+      if (minutes < 60) return minutes + ' minutes ago';
+      var hours = Math.floor(minutes / 60);
+      if (hours < 24) return hours + ' hour' + (hours > 1 ? 's' : '') + ' ago';
+      return Math.floor(hours / 24) + ' days ago';
     }
 
-    // Interactive Stats Cards
-    function createStatsCard(stat) {
+    // ---- Render functions (all return TACO) ----
+
+    function renderStatCard(stat) {
       return {
         t: 'div',
-        a: { 
+        a: {
           class: 'stat-card',
-          style: 'cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;',
-          onmouseover: (e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-          },
-          onmouseout: (e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-          },
-          onclick: () => {
-            // Simulate real-time update
-            const newChange = (Math.random() - 0.5) * 10;
-            stat.change = Math.round(newChange * 10) / 10;
-            stat.value = Math.round(stat.value * (1 + newChange / 100));
-            renderStats();
+          onclick: function() {
+            var c = (Math.random() - 0.5) * 10;
+            stat.change = Math.round(c * 10) / 10;
+            stat.value = Math.round(stat.value * (1 + c / 100));
+            renderDashboard();
           }
         },
         c: [
+          { t: 'div', a: { class: 'stat-value' }, c: formatValue(stat.value, stat.format) },
+          { t: 'div', a: { class: 'stat-label' }, c: stat.label },
           {
             t: 'div',
-            a: { class: 'stat-value' },
-            c: formatValue(stat.value, stat.format)
-          },
-          {
-            t: 'div',
-            a: { class: 'stat-label' },
-            c: stat.label
-          },
-          {
-            t: 'div',
-            a: { 
-              class: `bw-text-${stat.change >= 0 ? 'success' : 'danger'}`,
-              style: 'margin-top: 0.25rem; font-size: 0.875rem;'
+            a: {
+              style: 'margin-top:0.25rem;font-size:0.875rem;color:' +
+                (stat.change >= 0 ? 'var(--bw-teal)' : '#c62828')
             },
-            c: `${stat.change >= 0 ? '+' : ''}${stat.change}%`
+            c: (stat.change >= 0 ? '+' : '') + stat.change + '%'
           }
         ]
       };
     }
 
-    function renderStats() {
-      const statsCards = dashboardState.stats.map(stat => createStatsCard(stat));
-      bw.DOM('#stats-grid', { t: 'div', c: statsCards });
-    }
-
-    // Sidebar Navigation with Active State
-    function renderSidebar() {
-      const sidebarItems = [
-        { text: 'Overview', href: '#overview' },
-        { text: 'Analytics', href: '#analytics' },
-        { text: 'Customers', href: '#customers' },
-        { text: 'Products', href: '#products' },
-        { text: 'Orders', href: '#orders' },
-        { text: 'Settings', href: '#settings' }
-      ];
-
-      // Update active state
-      sidebarItems.forEach(item => {
-        item.active = item.href === `#${dashboardState.currentView}`;
-      });
-
-      const sidebar = bw.makeNav({
-        items: sidebarItems,
-        vertical: true
-      });
-
-      bw.DOM('#sidebar-nav', sidebar);
-
-      // Re-attach event handlers
-      setTimeout(() => {
-        bw.$('#sidebar-nav .bw-nav-link').forEach(link => {
-          link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const view = e.target.getAttribute('href').substring(1);
-            dashboardState.currentView = view;
-            renderSidebar();
-            updateMainContent(view);
-          });
-        });
-      }, 0);
-    }
-
-    // Update Main Content Based on View
-    function updateMainContent(view) {
-      const mainContent = bw.$('.main-content')[0];
-      const title = mainContent.querySelector('h1');
-      
-      // Update title with fade effect
-      title.style.opacity = '0';
-      setTimeout(() => {
-        title.textContent = `${view.charAt(0).toUpperCase() + view.slice(1)} Dashboard`;
-        title.style.opacity = '1';
-      }, 200);
-
-      // Simulate different content for different views
-      if (view === 'analytics') {
-        renderAnalyticsView();
-      } else if (view === 'customers') {
-        renderCustomersView();
-      } else {
-        renderStats();
-        renderActivityTable();
-      }
-    }
-
-    // Analytics View
-    function renderAnalyticsView() {
-      const chartContainer = bw.$('.chart-container')[0];
-      
-      const analyticsContent = {
-        t: 'div',
-        c: [
-          { t: 'h3', c: 'Analytics Overview' },
-          { 
-            t: 'p', 
-            c: 'Select a time range:',
-            style: 'margin-bottom: 1rem;'
-          },
-          {
-            t: 'div',
-            a: { style: 'display: flex; gap: 0.5rem; margin-bottom: 1rem;' },
-            c: ['Today', 'This Week', 'This Month', 'This Year'].map(range => 
-              bw.makeButton({
-                text: range,
-                variant: range === 'This Week' ? 'primary' : 'secondary',
-                onclick: () => {
-                  console.log(`Selected range: ${range}`);
-                  // Update analytics data based on selection
-                }
-              })
-            )
-          },
-          {
-            t: 'div',
-            a: { style: 'background: #f8f9fa; padding: 3rem; text-align: center; border-radius: 4px;' },
-            c: 'Analytics charts would appear here based on selected time range.'
-          }
-        ]
+    function renderStatsGrid() {
+      return {
+        t: 'div', a: { class: 'stats-grid' },
+        c: dashboardState.stats.map(renderStatCard)
       };
-      
-      bw.DOM(chartContainer, analyticsContent);
     }
 
-    // Customers View
-    function renderCustomersView() {
-      const statsGrid = bw.$('#stats-grid')[0];
-      
-      const customers = [
-        { id: 1, name: 'Acme Corp', contact: 'john@acme.com', value: 125000, status: 'active' },
-        { id: 2, name: 'Beta Inc', contact: 'jane@beta.com', value: 87000, status: 'active' },
-        { id: 3, name: 'Gamma LLC', contact: 'bob@gamma.com', value: 45000, status: 'inactive' },
-        { id: 4, name: 'Delta Co', contact: 'alice@delta.com', value: 92000, status: 'active' }
-      ];
-      
-      const customersTable = bw.makeTable({
-        data: customers,
-        columns: [
-          { key: 'name', label: 'Company' },
-          { key: 'contact', label: 'Contact' },
-          { 
-            key: 'value', 
-            label: 'Total Value',
-            render: (value) => `$${value.toLocaleString()}`
-          },
-          { 
-            key: 'status', 
-            label: 'Status',
-            render: (value) => bw.makeBadge({ 
-              text: value, 
-              variant: value === 'active' ? 'success' : 'secondary' 
-            })
-          }
-        ],
-        striped: true,
-        hover: true
-      });
-      
-      bw.DOM(statsGrid, {
-        t: 'div',
-        a: { class: 'chart-container' },
-        c: [
-          { t: 'h3', c: 'Customer List' },
-          customersTable
-        ]
-      });
-    }
-
-    // Interactive Activity Table with Real-time Updates
     function renderActivityTable() {
-      const activitySection = {
-        t: 'div',
-        a: { class: 'chart-container' },
-        c: [
+      return {
+        t: 'div', a: { class: 'chart-container' }, c: [
           {
             t: 'div',
-            a: { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;' },
+            a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;' },
             c: [
               { t: 'h3', c: 'Recent Activity' },
               bw.makeButton({
                 text: 'Add Activity',
                 variant: 'primary',
                 size: 'sm',
-                onclick: () => {
-                  const actions = ['Placed order', 'Updated profile', 'Added review', 'Changed settings'];
-                  const users = ['New User', 'Test User', 'Demo User'];
-                  const statuses = ['success', 'info', 'warning'];
-                  
-                  const newActivity = {
+                onclick: function() {
+                  var actions = ['Placed order', 'Updated profile', 'Added review', 'Changed settings'];
+                  var users = ['New User', 'Test User', 'Demo User'];
+                  var statuses = ['success', 'info', 'warning'];
+                  dashboardState.activities.unshift({
                     id: dashboardState.activities.length + 1,
                     user: users[Math.floor(Math.random() * users.length)],
-                    action: actions[Math.floor(Math.random() * actions.length)] + ` #${Math.floor(Math.random() * 9999)}`,
-                    time: new Date(),
+                    action: actions[Math.floor(Math.random() * actions.length)] + ' #' + Math.floor(Math.random() * 9999),
+                    time: Date.now(),
                     status: statuses[Math.floor(Math.random() * statuses.length)]
-                  };
-                  
-                  dashboardState.activities.unshift(newActivity);
-                  renderActivityTable();
+                  });
+                  renderDashboard();
                 }
               })
             ]
           },
           bw.makeTable({
-            data: dashboardState.activities.map(a => ({
-              ...a,
-              time: formatTime(a.time)
-            })),
+            data: dashboardState.activities.map(function(a) {
+              return {
+                user: a.user,
+                action: a.action,
+                time: formatTime(a.time),
+                status: a.status
+              };
+            }),
             columns: [
               { key: 'user', label: 'User' },
               { key: 'action', label: 'Action' },
               { key: 'time', label: 'Time' },
-              { 
-                key: 'status', 
-                label: 'Status',
-                render: (value) => bw.makeBadge({ 
-                  text: value, 
-                  variant: value 
-                })
+              {
+                key: 'status', label: 'Status',
+                render: function(value) {
+                  return bw.makeBadge({ text: value, variant: value });
+                }
               }
             ],
             striped: true,
@@ -434,36 +246,150 @@
           })
         ]
       };
-
-      bw.DOM('#activity-section', activitySection);
     }
 
-    // Initialize Dashboard
-    renderSidebar();
-    renderStats();
-    renderActivityTable();
+    function renderChartPlaceholder() {
+      return {
+        t: 'div', a: { class: 'chart-container' }, c: [
+          { t: 'h3', c: 'Sales Overview' },
+          {
+            t: 'p',
+            a: { style: 'color:var(--bw-text-secondary);text-align:center;padding:3rem;' },
+            c: 'Chart visualization would go here. This example focuses on layout and components.'
+          }
+        ]
+      };
+    }
+
+    function renderAnalyticsView() {
+      return {
+        t: 'div', a: { class: 'chart-container' }, c: [
+          { t: 'h3', c: 'Analytics Overview' },
+          { t: 'p', a: { style: 'margin-bottom:1rem;' }, c: 'Select a time range:' },
+          {
+            t: 'div',
+            a: { style: 'display:flex;gap:0.5rem;margin-bottom:1rem;' },
+            c: ['Today', 'This Week', 'This Month', 'This Year'].map(function(range) {
+              return bw.makeButton({
+                text: range,
+                variant: range === 'This Week' ? 'primary' : 'secondary',
+                onclick: function() { console.log('Selected range: ' + range); }
+              });
+            })
+          },
+          {
+            t: 'div',
+            a: { style: 'background:var(--bw-teal-bg);padding:3rem;text-align:center;border-radius:4px;' },
+            c: 'Analytics charts would appear here based on selected time range.'
+          }
+        ]
+      };
+    }
+
+    function renderCustomersView() {
+      var customers = [
+        { id: 1, name: 'Acme Corp', contact: 'john@acme.com', value: 125000, status: 'active' },
+        { id: 2, name: 'Beta Inc', contact: 'jane@beta.com', value: 87000, status: 'active' },
+        { id: 3, name: 'Gamma LLC', contact: 'bob@gamma.com', value: 45000, status: 'inactive' },
+        { id: 4, name: 'Delta Co', contact: 'alice@delta.com', value: 92000, status: 'active' }
+      ];
+
+      return {
+        t: 'div', a: { class: 'chart-container' }, c: [
+          { t: 'h3', c: 'Customer List' },
+          bw.makeTable({
+            data: customers,
+            columns: [
+              { key: 'name', label: 'Company' },
+              { key: 'contact', label: 'Contact' },
+              { key: 'value', label: 'Total Value', render: function(v) { return '$' + v.toLocaleString(); } },
+              { key: 'status', label: 'Status', render: function(v) {
+                return bw.makeBadge({ text: v, variant: v === 'active' ? 'success' : 'secondary' });
+              }}
+            ],
+            striped: true,
+            hover: true
+          })
+        ]
+      };
+    }
+
+    function renderMainContent() {
+      var view = dashboardState.currentView;
+      var title = view.charAt(0).toUpperCase() + view.slice(1) + ' Dashboard';
+      var body;
+
+      if (view === 'analytics') {
+        body = [renderAnalyticsView()];
+      } else if (view === 'customers') {
+        body = [renderCustomersView()];
+      } else {
+        body = [renderStatsGrid(), renderChartPlaceholder(), renderActivityTable()];
+      }
+
+      return {
+        t: 'div', a: { class: 'main-content' },
+        c: [{ t: 'h1', c: title }].concat(body)
+      };
+    }
+
+    function renderSidebar() {
+      var sidebarItems = [
+        { text: 'Overview', view: 'overview' },
+        { text: 'Analytics', view: 'analytics' },
+        { text: 'Customers', view: 'customers' },
+        { text: 'Products', view: 'products' },
+        { text: 'Orders', view: 'orders' },
+        { text: 'Settings', view: 'settings' }
+      ];
+
+      return {
+        t: 'div', a: { class: 'sidebar' }, c: [
+          { t: 'h3', c: 'Dashboard' },
+          {
+            t: 'nav', c: sidebarItems.map(function(item) {
+              var isActive = item.view === dashboardState.currentView;
+              return {
+                t: 'a',
+                a: {
+                  href: '#' + item.view,
+                  class: 'bw-nav-link' + (isActive ? ' active' : ''),
+                  style: 'display:block;',
+                  onclick: function(e) {
+                    e.preventDefault();
+                    dashboardState.currentView = item.view;
+                    renderDashboard();
+                  }
+                },
+                c: item.text
+              };
+            })
+          }
+        ]
+      };
+    }
+
+    function renderDashboard() {
+      bw.DOM('#dashboard-app', {
+        t: 'div', a: { class: 'dashboard' },
+        c: [renderSidebar(), renderMainContent()]
+      });
+    }
+
+    // Initialize
+    renderDashboard();
 
     // Auto-refresh stats every 5 seconds
-    setInterval(() => {
-      // Simulate real-time updates
-      dashboardState.stats.forEach(stat => {
-        const change = (Math.random() - 0.5) * 2;
+    setInterval(function() {
+      dashboardState.stats.forEach(function(stat) {
+        var change = (Math.random() - 0.5) * 2;
         stat.value = Math.round(stat.value * (1 + change / 100));
         stat.change = Math.round((stat.change + change) * 10) / 10;
       });
-      
       if (dashboardState.currentView === 'overview') {
-        renderStats();
+        renderDashboard();
       }
     }, 5000);
-
-    // Add CSS transition for title
-    // Add transition styles
-    bw.injectCSS(`
-      .main-content h1 {
-        transition: opacity 0.2s ease;
-      }
-    `);
   </script>
 </body>
 </html>

@@ -20,7 +20,7 @@
   --bw-text-secondary: #555;
   --bw-text-muted: #888;
 
-  --bw-header-bg: var(--bw-teal);
+  --bw-header-bg: #006666;
   --bw-header-text: #ffffff;
 
   --bw-code-bg: #1e293b;
@@ -28,7 +28,7 @@
 
   --bw-radius: 8px;
   --bw-content-max: 1200px;
-  --bw-content-wide: 1600px;
+  --bw-content-wide: 1280px;
 
   --bw-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --bw-font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
@@ -74,7 +74,7 @@
 .bw-site-nav-inner {
   max-width: var(--bw-content-wide);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 3rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -111,7 +111,7 @@
   text-decoration: none;
   padding: 0.7rem 0.85rem;
   border-radius: 5px;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   white-space: nowrap;
   transition: color 0.12s, background 0.12s;
@@ -231,7 +231,7 @@ body {
 .page-header {
   background: var(--bw-header-bg);
   color: var(--bw-header-text);
-  padding: 2rem 2.5rem 1.75rem;
+  padding: 2rem 0 1.75rem;
 }
 .page-header h1 {
   margin: 0 0 0.25rem;
@@ -671,7 +671,7 @@ a:hover { color: var(--bw-teal-dark); }
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
-  .page-header { padding: 1.5rem 1rem; }
+  .page-header { padding: 1.5rem 0; }
   .page-header h1 { font-size: 1.35rem; }
   .content-container { padding: 1rem 0.75rem 2rem; }
   .demo-content { padding: 1rem; }
