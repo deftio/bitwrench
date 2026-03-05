@@ -18,6 +18,7 @@
     { text: 'Tables & Data', href: '02-tables-forms.html' },
     { text: 'State', href: '05-state.html' },
     { text: 'Dashboard', href: '04-dashboard.html' },
+    { text: 'Themes', href: '10-themes.html' },
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
     { text: 'Comparison', href: '07-framework-comparison.html' },
     { text: 'API Reference', href: '08-api-reference.html' },

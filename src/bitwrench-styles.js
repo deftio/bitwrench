@@ -9,6 +9,8 @@
  * - {@link defaultStyles} - All style categories as a structured object
  * - {@link getAllStyles} - Merges all categories into a flat CSS rules object
  * - {@link theme} - Design token configuration (colors, breakpoints, spacing, typography)
+ * - {@link generateThemedCSS} - Generate scoped themed CSS from a palette
+ * - {@link derivePalette} - Re-export from color-utils for convenience
  *
  * Style categories: root (CSS variables), reset, typography, grid, buttons,
  * cards, forms, navigation, tables, alerts, badges, progress, tabs, listGroups,
@@ -19,6 +21,360 @@
  * @license BSD-2-Clause
  * @author M A Chatterjee <deftio [at] deftio [dot] com>
  */
+
+import { derivePalette, deriveShades, adjustLightness, mixColor, textOnColor } from './bitwrench-color-utils.js';
+
+// Re-export for use by bitwrench.js
+export { derivePalette };
+
+// =========================================================================
+// Layout presets
+// =========================================================================
+
+export var SPACING_PRESETS = {
+  compact:  { btn: '0.3rem 0.8rem',  card: '0.875rem 1rem', alert: '0.625rem 1rem', cell: '0.5rem 0.75rem', input: '0.375rem 0.7rem' },
+  normal:   { btn: '0.5rem 1.125rem', card: '1.25rem 1.5rem', alert: '0.875rem 1.25rem', cell: '0.75rem 1rem', input: '0.5rem 0.875rem' },
+  spacious: { btn: '0.75rem 1.5rem',  card: '1.75rem 2rem', alert: '1.125rem 1.5rem', cell: '1rem 1.25rem', input: '0.75rem 1.125rem' }
+};
+
+export var RADIUS_PRESETS = {
+  none: { btn: '0', card: '0', badge: '0', alert: '0', input: '0' },
+  sm:   { btn: '4px', card: '4px', badge: '.25rem', alert: '4px', input: '4px' },
+  md:   { btn: '6px', card: '8px', badge: '.375rem', alert: '8px', input: '6px' },
+  lg:   { btn: '10px', card: '12px', badge: '.5rem', alert: '12px', input: '10px' },
+  pill: { btn: '50rem', card: '1rem', badge: '50rem', alert: '1rem', input: '50rem' }
+};
+
+/**
+ * Default palette config — matches existing hardcoded colors
+ */
+export var DEFAULT_PALETTE_CONFIG = {
+  primary: '#006666',
+  secondary: '#6c757d',
+  tertiary: '#006666',
+  success: '#198754',
+  danger: '#dc3545',
+  warning: '#ffc107',
+  info: '#0dcaf0',
+  light: '#f8f9fa',
+  dark: '#212529'
+};
+
+/**
+ * Resolve layout config to spacing + radius objects
+ * @param {Object} config - { spacing, radius, fontSize }
+ * @returns {Object} { spacing, radius, fontSize }
+ */
+export function resolveLayout(config) {
+  var sp = (config && config.spacing) || 'normal';
+  var rd = (config && config.radius) || 'md';
+  var fs = (config && config.fontSize) || 1.0;
+  return {
+    spacing: typeof sp === 'string' ? (SPACING_PRESETS[sp] || SPACING_PRESETS.normal) : sp,
+    radius: typeof rd === 'string' ? (RADIUS_PRESETS[rd] || RADIUS_PRESETS.md) : rd,
+    fontSize: fs
+  };
+}
+
+// =========================================================================
+// Scoping helper
+// =========================================================================
+
+/**
+ * Prefix a CSS selector with a scope class name.
+ * @param {string} name - Scope class (e.g. 'ocean'). Empty = no scoping.
+ * @param {string} sel - CSS selector(s)
+ * @returns {string} Scoped selector
+ */
+function scopeSelector(name, sel) {
+  if (!name) return sel;
+  if (sel.includes(',')) return sel.split(',').map(function(s) { return '.' + name + ' ' + s.trim(); }).join(', ');
+  return '.' + name + ' ' + sel;
+}
+
+// =========================================================================
+// Themed CSS generators
+// =========================================================================
+
+function generateTypographyThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, 'a')] = {
+    'color': palette.primary.base,
+    'text-decoration': 'none',
+    'transition': 'color 0.15s'
+  };
+  rules[scopeSelector(scope, 'a:hover')] = {
+    'color': palette.primary.hover,
+    'text-decoration': 'underline'
+  };
+  return rules;
+}
+
+function generateButtons(scope, palette, layout) {
+  var rules = {};
+  var sp = layout.spacing;
+  var rd = layout.radius;
+
+  // Base button (only when scoped — unscoped uses defaultStyles)
+  rules[scopeSelector(scope, '.bw-btn')] = {
+    'padding': sp.btn,
+    'border-radius': rd.btn
+  };
+  rules[scopeSelector(scope, '.bw-btn:focus-visible')] = {
+    'outline': '0',
+    'box-shadow': '0 0 0 3px ' + palette.primary.focus
+  };
+
+  // Variants
+  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+  variants.forEach(function(v) {
+    var p = palette[v];
+    rules[scopeSelector(scope, '.bw-btn-' + v)] = {
+      'color': p.textOn,
+      'background-color': p.base,
+      'border-color': p.base
+    };
+    rules[scopeSelector(scope, '.bw-btn-' + v + ':hover')] = {
+      'color': p.textOn,
+      'background-color': p.hover,
+      'border-color': p.active
+    };
+    // Outline
+    rules[scopeSelector(scope, '.bw-btn-outline-' + v)] = {
+      'color': p.base,
+      'border-color': p.base,
+      'background-color': 'transparent'
+    };
+    rules[scopeSelector(scope, '.bw-btn-outline-' + v + ':hover')] = {
+      'color': p.textOn,
+      'background-color': p.base,
+      'border-color': p.base
+    };
+  });
+
+  // Size variants (structural, reuse layout radius)
+  rules[scopeSelector(scope, '.bw-btn-lg')] = {
+    'padding': '0.625rem 1.5rem',
+    'font-size': '1rem',
+    'border-radius': rd.btn === '50rem' ? '50rem' : (parseInt(rd.btn) + 2) + 'px'
+  };
+  rules[scopeSelector(scope, '.bw-btn-sm')] = {
+    'padding': '0.25rem 0.75rem',
+    'font-size': '0.8125rem',
+    'border-radius': rd.btn === '50rem' ? '50rem' : (Math.max(parseInt(rd.btn) - 1, 0)) + 'px'
+  };
+
+  return rules;
+}
+
+function generateAlerts(scope, palette, layout) {
+  var rules = {};
+  var sp = layout.spacing;
+  var rd = layout.radius;
+
+  rules[scopeSelector(scope, '.bw-alert')] = {
+    'padding': sp.alert,
+    'border-radius': rd.alert
+  };
+
+  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+  variants.forEach(function(v) {
+    var p = palette[v];
+    rules[scopeSelector(scope, '.bw-alert-' + v)] = {
+      'color': p.darkText,
+      'background-color': p.light,
+      'border-color': p.border
+    };
+    rules[scopeSelector(scope, '.bw-alert-' + v + ' .alert-link')] = {
+      'color': adjustLightness(p.darkText, -10)
+    };
+  });
+
+  return rules;
+}
+
+function generateBadges(scope, palette) {
+  var rules = {};
+  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+  variants.forEach(function(v) {
+    var p = palette[v];
+    rules[scopeSelector(scope, '.bw-badge-' + v)] = {
+      'color': p.textOn,
+      'background-color': p.base
+    };
+  });
+  return rules;
+}
+
+function generateCards(scope, palette, layout) {
+  var rules = {};
+  var sp = layout.spacing;
+  var rd = layout.radius;
+
+  rules[scopeSelector(scope, '.bw-card')] = {
+    'border-radius': rd.card
+  };
+  rules[scopeSelector(scope, '.bw-card-body')] = {
+    'padding': sp.card
+  };
+  rules[scopeSelector(scope, '.bw-card-header')] = {
+    'padding': sp.card.split(' ').map(function(v) { return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem'; }).join(' ')
+  };
+
+  return rules;
+}
+
+function generateForms(scope, palette, layout) {
+  var rules = {};
+  var sp = layout.spacing;
+  var rd = layout.radius;
+
+  rules[scopeSelector(scope, '.bw-form-control')] = {
+    'padding': sp.input,
+    'border-radius': rd.input
+  };
+  rules[scopeSelector(scope, '.bw-form-control:focus')] = {
+    'border-color': palette.primary.border,
+    'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+  };
+
+  return rules;
+}
+
+function generateNavigation(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link.active')] = {
+    'color': palette.primary.base,
+    'background-color': palette.primary.focus
+  };
+  return rules;
+}
+
+function generateTables(scope, palette, layout) {
+  var rules = {};
+  var sp = layout.spacing;
+
+  rules[scopeSelector(scope, '.bw-table > :not(caption) > * > *')] = {
+    'padding': sp.cell
+  };
+  rules[scopeSelector(scope, '.bw-table-hover > tbody > tr:hover > *')] = {
+    'background-color': palette.primary.focus
+  };
+
+  return rules;
+}
+
+function generateTabs(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-nav-tabs .bw-nav-link.active')] = {
+    'color': palette.primary.base,
+    'border-bottom': '2px solid ' + palette.primary.base
+  };
+  return rules;
+}
+
+function generateListGroups(scope, palette, layout) {
+  var rules = {};
+  var sp = layout.spacing;
+
+  rules[scopeSelector(scope, '.bw-list-group-item')] = {
+    'padding': sp.cell
+  };
+  rules[scopeSelector(scope, '.bw-list-group-item.active')] = {
+    'color': palette.primary.textOn,
+    'background-color': palette.primary.base,
+    'border-color': palette.primary.base
+  };
+
+  return rules;
+}
+
+function generatePagination(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-page-link')] = {
+    'color': palette.primary.base
+  };
+  rules[scopeSelector(scope, '.bw-page-link:hover')] = {
+    'color': palette.primary.hover
+  };
+  rules[scopeSelector(scope, '.bw-page-link:focus')] = {
+    'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+  };
+  rules[scopeSelector(scope, '.bw-page-item.bw-active .bw-page-link')] = {
+    'color': palette.primary.textOn,
+    'background-color': palette.primary.base,
+    'border-color': palette.primary.base
+  };
+  return rules;
+}
+
+function generateProgress(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-progress-bar')] = {
+    'background-color': palette.primary.base
+  };
+  return rules;
+}
+
+function generateHero(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-hero-primary')] = {
+    'background': 'linear-gradient(135deg, ' + palette.primary.base + ' 0%, ' + palette.primary.hover + ' 100%)',
+    'color': palette.primary.textOn
+  };
+  rules[scopeSelector(scope, '.bw-hero-secondary')] = {
+    'background': 'linear-gradient(135deg, ' + palette.secondary.base + ' 0%, ' + palette.secondary.hover + ' 100%)',
+    'color': palette.secondary.textOn
+  };
+  rules[scopeSelector(scope, '.bw-hero-dark')] = {
+    'background': 'linear-gradient(135deg, ' + palette.dark.base + ' 0%, ' + palette.dark.hover + ' 100%)',
+    'color': palette.dark.textOn
+  };
+  return rules;
+}
+
+function generateUtilityColors(scope, palette) {
+  var rules = {};
+  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+  variants.forEach(function(v) {
+    var p = palette[v];
+    rules[scopeSelector(scope, '.bw-text-' + v)] = { 'color': p.base };
+    rules[scopeSelector(scope, '.bw-bg-' + v)] = { 'background-color': p.base };
+  });
+  return rules;
+}
+
+/**
+ * Generate all themed CSS rules from a palette and layout.
+ * Returns a flat CSS rules object (selector → declarations).
+ *
+ * @param {string} scopeName - CSS scope class ('' for global)
+ * @param {Object} palette - From derivePalette()
+ * @param {Object} layout - From resolveLayout()
+ * @returns {Object} CSS rules object
+ */
+export function generateThemedCSS(scopeName, palette, layout) {
+  return Object.assign({},
+    generateTypographyThemed(scopeName, palette),
+    generateButtons(scopeName, palette, layout),
+    generateAlerts(scopeName, palette, layout),
+    generateBadges(scopeName, palette),
+    generateCards(scopeName, palette, layout),
+    generateForms(scopeName, palette, layout),
+    generateNavigation(scopeName, palette),
+    generateTables(scopeName, palette, layout),
+    generateTabs(scopeName, palette),
+    generateListGroups(scopeName, palette, layout),
+    generatePagination(scopeName, palette),
+    generateProgress(scopeName, palette),
+    generateHero(scopeName, palette),
+    generateUtilityColors(scopeName, palette)
+  );
+}
+
+// =========================================================================
+// Static structural styles (unchanged, color-independent)
+// =========================================================================
 
 /**
  * Complete default style definitions organized by component category
@@ -32,9 +388,6 @@
 export const defaultStyles = {
   /**
    * CSS custom properties (variables) on :root
-   *
-   * Defines the full color palette, typography, border, and shadow tokens
-   * used by all other style categories via var() references.
    */
   root: {
     ':root': {
@@ -94,9 +447,6 @@ export const defaultStyles = {
   },
   /**
    * CSS reset and base element styles
-   *
-   * Provides box-sizing reset, body defaults, page layout helpers
-   * (.bw-page, .bw-page-content), and hr normalization.
    */
   reset: {
     '*': {
@@ -153,9 +503,6 @@ export const defaultStyles = {
 
   /**
    * Typography styles for headings, paragraphs, links, and small text
-   *
-   * Headings use responsive font sizes with clamp-like calc() values.
-   * Links default to primary color with underline decoration.
    */
   typography: {
     'h1, h2, h3, h4, h5, h6': {
@@ -166,25 +513,25 @@ export const defaultStyles = {
       'letter-spacing': '-0.01em',
       'color': '#1a1a1a'
     },
-    'h1': { 
+    'h1': {
       'font-size': 'calc(1.375rem + 1.5vw)'
     },
     '@media (min-width: 1200px)': {
       'h1': { 'font-size': '2.5rem' }
     },
-    'h2': { 
+    'h2': {
       'font-size': 'calc(1.325rem + .9vw)'
     },
     '@media (min-width: 1200px)': {
       'h2': { 'font-size': '2rem' }
     },
-    'h3': { 
+    'h3': {
       'font-size': 'calc(1.3rem + .6vw)'
     },
     '@media (min-width: 1200px)': {
       'h3': { 'font-size': '1.75rem' }
     },
-    'h4': { 
+    'h4': {
       'font-size': 'calc(1.275rem + .3vw)'
     },
     '@media (min-width: 1200px)': {
@@ -192,16 +539,16 @@ export const defaultStyles = {
     },
     'h5': { 'font-size': '1.25rem' },
     'h6': { 'font-size': '1rem' },
-    
+
     'p': {
       'margin-top': '0',
       'margin-bottom': '1rem'
     },
-    
+
     'small': {
       'font-size': '0.875rem'
     },
-    
+
     'a': {
       'color': '#006666',
       'text-decoration': 'none',
@@ -215,10 +562,6 @@ export const defaultStyles = {
 
   /**
    * 12-column flexbox grid system
-   *
-   * Classes: .bw-container (responsive max-widths), .bw-container-fluid,
-   * .bw-row, .bw-col, .bw-col-{1-12}. Breakpoint-specific columns
-   * are in the responsive category.
    */
   grid: {
     '.bw-container': {
@@ -247,14 +590,14 @@ export const defaultStyles = {
       'margin-right': 'auto',
       'margin-left': 'auto'
     },
-    
+
     '.bw-row': {
       'display': 'flex',
       'flex-wrap': 'wrap',
       'margin-right': 'calc(var(--bw-gutter-x, 0.75rem) * -0.5)',
       'margin-left': 'calc(var(--bw-gutter-x, 0.75rem) * -0.5)'
     },
-    
+
     // Column system
     '.col, [class*="col-"]': {
       'position': 'relative',
@@ -270,7 +613,7 @@ export const defaultStyles = {
       'flex-grow': '1',
       'max-width': '100%'
     },
-    
+
     // Column sizes
     '.bw-col-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
     '.bw-col-2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
@@ -288,10 +631,6 @@ export const defaultStyles = {
 
   /**
    * Button styles - all variants, sizes, outlines, and states
-   *
-   * Classes: .bw-btn (base), .bw-btn-{variant} (filled), .bw-btn-outline-{variant},
-   * .bw-btn-sm, .bw-btn-lg. States: :hover, :active, :focus, :disabled.
-   * Variants: primary, secondary, success, danger, warning, info, light, dark.
    */
   buttons: {
     '.bw-btn': {
@@ -334,7 +673,7 @@ export const defaultStyles = {
       'cursor': 'not-allowed',
       'pointer-events': 'none'
     },
-    
+
     // Button variants
     '.bw-btn-primary': {
       'color': '#fff',
@@ -346,7 +685,7 @@ export const defaultStyles = {
       'background-color': '#005555',
       'border-color': '#004d4d'
     },
-    
+
     '.bw-btn-secondary': {
       'color': '#fff',
       'background-color': '#6c757d',
@@ -357,7 +696,7 @@ export const defaultStyles = {
       'background-color': '#5c636a',
       'border-color': '#565e64'
     },
-    
+
     '.bw-btn-success': {
       'color': '#fff',
       'background-color': '#198754',
@@ -368,7 +707,7 @@ export const defaultStyles = {
       'background-color': '#157347',
       'border-color': '#146c43'
     },
-    
+
     '.bw-btn-danger': {
       'color': '#fff',
       'background-color': '#dc3545',
@@ -379,7 +718,7 @@ export const defaultStyles = {
       'background-color': '#bb2d3b',
       'border-color': '#b02a37'
     },
-    
+
     '.bw-btn-warning': {
       'color': '#000',
       'background-color': '#ffc107',
@@ -390,7 +729,7 @@ export const defaultStyles = {
       'background-color': '#ffca2c',
       'border-color': '#ffc720'
     },
-    
+
     '.bw-btn-info': {
       'color': '#000',
       'background-color': '#0dcaf0',
@@ -401,7 +740,7 @@ export const defaultStyles = {
       'background-color': '#31d2f2',
       'border-color': '#25cff2'
     },
-    
+
     '.bw-btn-light': {
       'color': '#000',
       'background-color': '#f8f9fa',
@@ -412,7 +751,7 @@ export const defaultStyles = {
       'background-color': '#f9fafb',
       'border-color': '#f9fafb'
     },
-    
+
     '.bw-btn-dark': {
       'color': '#fff',
       'background-color': '#212529',
@@ -423,7 +762,7 @@ export const defaultStyles = {
       'background-color': '#1c1f23',
       'border-color': '#1a1e21'
     },
-    
+
     // Outline variants
     '.bw-btn-outline-primary': {
       'color': '#006666',
@@ -435,7 +774,7 @@ export const defaultStyles = {
       'background-color': '#006666',
       'border-color': '#006666'
     },
-    
+
     '.bw-btn-outline-secondary': {
       'color': '#6c757d',
       'border-color': '#6c757d',
@@ -446,7 +785,7 @@ export const defaultStyles = {
       'background-color': '#6c757d',
       'border-color': '#6c757d'
     },
-    
+
     '.bw-btn-outline-success': {
       'color': '#198754',
       'border-color': '#198754',
@@ -457,7 +796,7 @@ export const defaultStyles = {
       'background-color': '#198754',
       'border-color': '#198754'
     },
-    
+
     '.bw-btn-outline-danger': {
       'color': '#dc3545',
       'border-color': '#dc3545',
@@ -468,7 +807,7 @@ export const defaultStyles = {
       'background-color': '#dc3545',
       'border-color': '#dc3545'
     },
-    
+
     '.bw-btn-outline-warning': {
       'color': '#ffc107',
       'border-color': '#ffc107',
@@ -479,7 +818,7 @@ export const defaultStyles = {
       'background-color': '#ffc107',
       'border-color': '#ffc107'
     },
-    
+
     '.bw-btn-outline-info': {
       'color': '#0dcaf0',
       'border-color': '#0dcaf0',
@@ -490,7 +829,7 @@ export const defaultStyles = {
       'background-color': '#0dcaf0',
       'border-color': '#0dcaf0'
     },
-    
+
     '.bw-btn-outline-light': {
       'color': '#f8f9fa',
       'border-color': '#f8f9fa',
@@ -501,7 +840,7 @@ export const defaultStyles = {
       'background-color': '#f8f9fa',
       'border-color': '#f8f9fa'
     },
-    
+
     '.bw-btn-outline-dark': {
       'color': '#212529',
       'border-color': '#212529',
@@ -512,7 +851,7 @@ export const defaultStyles = {
       'background-color': '#212529',
       'border-color': '#212529'
     },
-    
+
     // Button sizes
     '.bw-btn-lg': {
       'padding': '0.625rem 1.5rem',
@@ -528,10 +867,6 @@ export const defaultStyles = {
 
   /**
    * Card component styles
-   *
-   * Classes: .bw-card, .bw-card-body, .bw-card-title, .bw-card-text,
-   * .bw-card-header, .bw-card-footer, .card-img-top, .card-subtitle.
-   * Cards include hover lift animation by default.
    */
   cards: {
     '.bw-card': {
@@ -604,9 +939,6 @@ export const defaultStyles = {
 
   /**
    * Form control styles
-   *
-   * Classes: .bw-form-control (inputs, selects, textareas),
-   * .bw-form-label, .bw-form-group. Includes focus ring styling.
    */
   forms: {
     '.bw-form-control': {
@@ -666,9 +998,6 @@ export const defaultStyles = {
 
   /**
    * Navbar and navigation link styles
-   *
-   * Classes: .bw-navbar, .bw-navbar-dark, .bw-navbar-light,
-   * .bw-navbar-brand, .bw-navbar-nav, .bw-nav-link (with :hover and .active).
    */
   navigation: {
     '.bw-navbar': {
@@ -749,9 +1078,6 @@ export const defaultStyles = {
 
   /**
    * Table styles with striped and hover variants
-   *
-   * Classes: .bw-table, .bw-table-striped, .bw-table-hover,
-   * .bw-table-bordered. Applies to thead, tbody, th, td.
    */
   tables: {
     '.bw-table': {
@@ -804,12 +1130,9 @@ export const defaultStyles = {
       'caption-side': 'bottom'
     }
   },
-  
+
   /**
    * Alert/notification styles for all color variants
-   *
-   * Classes: .bw-alert, .bw-alert-{variant}, .bw-alert-dismissible.
-   * Variants: primary, secondary, success, info, warning, danger, light, dark.
    */
   alerts: {
     '.bw-alert': {
@@ -902,12 +1225,9 @@ export const defaultStyles = {
       'color': '#101214'
     }
   },
-  
+
   /**
    * Inline badge/label styles
-   *
-   * Classes: .bw-badge, .bw-badge-{variant}.
-   * Variants: primary, secondary, success, info, warning, danger, light, dark.
    */
   badges: {
     '.bw-badge': {
@@ -962,12 +1282,9 @@ export const defaultStyles = {
       'background-color': '#212529'
     }
   },
-  
+
   /**
-   * Progress bar styles with striped and animated variants
-   *
-   * Classes: .bw-progress, .bw-progress-bar, .bw-progress-bar-striped,
-   * .bw-progress-bar-animated. Includes @keyframes for stripe animation.
+   * Progress bar styles
    */
   progress: {
     '.bw-progress': {
@@ -1003,12 +1320,9 @@ export const defaultStyles = {
       '0%': { 'background-position-x': '1rem' }
     }
   },
-  
+
   /**
-   * Tab navigation and content pane styles
-   *
-   * Classes: .bw-nav, .bw-nav-tabs, .bw-nav-item, .bw-nav-link (.active, :hover),
-   * .bw-tab-content, .bw-tab-pane (.active). Inactive panes use display:none.
+   * Tab navigation styles
    */
   tabs: {
     '.bw-nav': {
@@ -1067,12 +1381,9 @@ export const defaultStyles = {
       'display': 'block'
     }
   },
-  
+
   /**
-   * List group styles for vertical lists of items
-   *
-   * Classes: .bw-list-group, .bw-list-group-item (.active, .disabled),
-   * .bw-list-group-flush. Supports anchor tags for interactive items.
+   * List group styles
    */
   listGroups: {
     '.bw-list-group': {
@@ -1134,12 +1445,9 @@ export const defaultStyles = {
       'border-bottom-width': '0'
     }
   },
-  
+
   /**
    * Pagination control styles
-   *
-   * Classes: .bw-pagination, .bw-page-item (.bw-active, .bw-disabled),
-   * .bw-page-link (:hover, :focus). First/last items get rounded corners.
    */
   pagination: {
     '.bw-pagination': {
@@ -1199,12 +1507,9 @@ export const defaultStyles = {
       'border-color': '#dee2e6'
     }
   },
-  
+
   /**
    * Breadcrumb navigation styles
-   *
-   * Classes: .bw-breadcrumb, .bw-breadcrumb-item (.active).
-   * Uses "/" separator via ::before pseudo-element.
    */
   breadcrumb: {
     '.bw-breadcrumb': {
@@ -1233,11 +1538,7 @@ export const defaultStyles = {
   },
 
   /**
-   * Hero section styles for landing page headers
-   *
-   * Classes: .bw-hero, .bw-hero-{variant} (gradient backgrounds),
-   * .bw-hero-overlay, .bw-hero-content, .bw-hero-title.
-   * Also includes .bw-display-4, .bw-lead, and .bw-py-{3-6} spacing.
+   * Hero section styles
    */
   hero: {
     '.bw-hero': {
@@ -1297,8 +1598,6 @@ export const defaultStyles = {
 
   /**
    * Feature grid item styles
-   *
-   * Classes: .bw-feature, .bw-feature-icon, .bw-feature-title, .bw-g-4.
    */
   features: {
     '.bw-feature': {
@@ -1318,10 +1617,7 @@ export const defaultStyles = {
   },
 
   /**
-   * Enhanced card styles with hover effects and horizontal image support
-   *
-   * Classes: .bw-card-hoverable (lift on hover), .bw-card-img-left,
-   * .bw-card-img-right, .bw-h5, .bw-h6.
+   * Enhanced card styles
    */
   enhancedCards: {
     '.bw-card-hoverable': {
@@ -1348,10 +1644,7 @@ export const defaultStyles = {
   },
 
   /**
-   * Page section styles with header and subtitle
-   *
-   * Classes: .bw-section, .bw-section-header, .bw-section-title,
-   * .bw-section-subtitle. Responsive title sizing included.
+   * Page section styles
    */
   sections: {
     '.bw-section': {
@@ -1376,9 +1669,6 @@ export const defaultStyles = {
 
   /**
    * Call-to-action section styles
-   *
-   * Classes: .bw-cta, .bw-cta-content, .bw-cta-title, .bw-cta-actions.
-   * Content is centered with max-width constraint.
    */
   cta: {
     '.bw-cta': {
@@ -1400,17 +1690,7 @@ export const defaultStyles = {
   },
 
   /**
-   * Utility classes for spacing, text, display, flexbox, colors, borders, etc.
-   *
-   * Spacing: .bw-m-{0-5}, .bw-mt-{0-5}, .bw-mb-{0-5}, .bw-ms-{0-5}, .bw-me-{0-5},
-   *          .bw-p-{0-5}, .pt-{0-5}, .pb-{0-5}, .ps-{0-5}, .pe-{0-5}
-   * Text: .bw-text-{left,right,center}, .bw-text-{variant}, .fw-{weight}, .fs-{1-6}
-   * Display: .bw-d-{none,block,inline,inline-block,flex}
-   * Background: .bw-bg-{variant}
-   * Borders: .bw-border, .bw-border-0, .bw-rounded, .bw-rounded-circle
-   * Shadows: .bw-shadow, .bw-shadow-sm, .bw-shadow-lg
-   * Sizing: .w-{25,50,75,100,auto}, .h-{25,50,75,100,auto}
-   * Position: .position-{static,relative,absolute,fixed,sticky}
+   * Utility classes
    */
   utilities: {
     // Spacing
@@ -1421,93 +1701,93 @@ export const defaultStyles = {
     '.bw-m-4': { 'margin': '1.5rem !important' },
     '.bw-m-5': { 'margin': '3rem !important' },
     '.m-auto': { 'margin': 'auto !important' },
-    
+
     '.bw-mt-0': { 'margin-top': '0 !important' },
     '.bw-mt-1': { 'margin-top': '.25rem !important' },
     '.bw-mt-2': { 'margin-top': '.5rem !important' },
     '.bw-mt-3': { 'margin-top': '1rem !important' },
     '.bw-mt-4': { 'margin-top': '1.5rem !important' },
     '.bw-mt-5': { 'margin-top': '3rem !important' },
-    
+
     '.bw-mb-0': { 'margin-bottom': '0 !important' },
     '.bw-mb-1': { 'margin-bottom': '.25rem !important' },
     '.bw-mb-2': { 'margin-bottom': '.5rem !important' },
     '.bw-mb-3': { 'margin-bottom': '1rem !important' },
     '.bw-mb-4': { 'margin-bottom': '1.5rem !important' },
     '.bw-mb-5': { 'margin-bottom': '3rem !important' },
-    
+
     '.bw-ms-0': { 'margin-left': '0 !important' },
     '.bw-ms-1': { 'margin-left': '.25rem !important' },
     '.bw-ms-2': { 'margin-left': '.5rem !important' },
     '.bw-ms-3': { 'margin-left': '1rem !important' },
     '.bw-ms-4': { 'margin-left': '1.5rem !important' },
     '.bw-ms-5': { 'margin-left': '3rem !important' },
-    
+
     '.bw-me-0': { 'margin-right': '0 !important' },
     '.bw-me-1': { 'margin-right': '.25rem !important' },
     '.bw-me-2': { 'margin-right': '.5rem !important' },
     '.bw-me-3': { 'margin-right': '1rem !important' },
     '.bw-me-4': { 'margin-right': '1.5rem !important' },
     '.bw-me-5': { 'margin-right': '3rem !important' },
-    
+
     '.bw-p-0': { 'padding': '0 !important' },
     '.bw-p-1': { 'padding': '.25rem !important' },
     '.bw-p-2': { 'padding': '.5rem !important' },
     '.bw-p-3': { 'padding': '1rem !important' },
     '.bw-p-4': { 'padding': '1.5rem !important' },
     '.bw-p-5': { 'padding': '3rem !important' },
-    
+
     '.pt-0': { 'padding-top': '0 !important' },
     '.pt-1': { 'padding-top': '.25rem !important' },
     '.pt-2': { 'padding-top': '.5rem !important' },
     '.pt-3': { 'padding-top': '1rem !important' },
     '.pt-4': { 'padding-top': '1.5rem !important' },
     '.pt-5': { 'padding-top': '3rem !important' },
-    
+
     '.pb-0': { 'padding-bottom': '0 !important' },
     '.pb-1': { 'padding-bottom': '.25rem !important' },
     '.pb-2': { 'padding-bottom': '.5rem !important' },
     '.pb-3': { 'padding-bottom': '1rem !important' },
     '.pb-4': { 'padding-bottom': '1.5rem !important' },
     '.pb-5': { 'padding-bottom': '3rem !important' },
-    
+
     '.ps-0': { 'padding-left': '0 !important' },
     '.ps-1': { 'padding-left': '.25rem !important' },
     '.ps-2': { 'padding-left': '.5rem !important' },
     '.ps-3': { 'padding-left': '1rem !important' },
     '.ps-4': { 'padding-left': '1.5rem !important' },
     '.ps-5': { 'padding-left': '3rem !important' },
-    
+
     '.pe-0': { 'padding-right': '0 !important' },
     '.pe-1': { 'padding-right': '.25rem !important' },
     '.pe-2': { 'padding-right': '.5rem !important' },
     '.pe-3': { 'padding-right': '1rem !important' },
     '.pe-4': { 'padding-right': '1.5rem !important' },
     '.pe-5': { 'padding-right': '3rem !important' },
-    
+
     // Text alignment
     '.bw-text-left': { 'text-align': 'left' },
     '.bw-text-right': { 'text-align': 'right' },
     '.bw-text-center': { 'text-align': 'center' },
-    
+
     // Display
     '.bw-d-none': { 'display': 'none' },
     '.bw-d-block': { 'display': 'block' },
     '.bw-d-inline': { 'display': 'inline' },
     '.bw-d-inline-block': { 'display': 'inline-block' },
     '.bw-d-flex': { 'display': 'flex' },
-    
+
     // Flexbox
     '.justify-content-start': { 'justify-content': 'flex-start' },
     '.justify-content-end': { 'justify-content': 'flex-end' },
     '.justify-content-center': { 'justify-content': 'center' },
     '.justify-content-between': { 'justify-content': 'space-between' },
     '.justify-content-around': { 'justify-content': 'space-around' },
-    
+
     '.align-items-start': { 'align-items': 'flex-start' },
     '.align-items-end': { 'align-items': 'flex-end' },
     '.align-items-center': { 'align-items': 'center' },
-    
+
     // Colors
     '.bw-text-primary': { 'color': '#006666' },
     '.bw-text-secondary': { 'color': '#6c757d' },
@@ -1518,7 +1798,7 @@ export const defaultStyles = {
     '.bw-text-light': { 'color': '#f8f9fa' },
     '.bw-text-dark': { 'color': '#212529' },
     '.bw-text-muted': { 'color': '#6c757d' },
-    
+
     '.bw-bg-primary': { 'background-color': '#006666' },
     '.bw-bg-secondary': { 'background-color': '#6c757d' },
     '.bw-bg-success': { 'background-color': '#198754' },
@@ -1527,7 +1807,7 @@ export const defaultStyles = {
     '.bw-bg-info': { 'background-color': '#0dcaf0' },
     '.bw-bg-light': { 'background-color': '#f8f9fa' },
     '.bw-bg-dark': { 'background-color': '#212529' },
-    
+
     // Borders
     '.bw-border': { 'border': '1px solid #dee2e6 !important' },
     '.bw-border-0': { 'border': '0 !important' },
@@ -1535,7 +1815,7 @@ export const defaultStyles = {
     '.border-end-0': { 'border-right': '0 !important' },
     '.border-bottom-0': { 'border-bottom': '0 !important' },
     '.border-start-0': { 'border-left': '0 !important' },
-    
+
     '.bw-rounded': { 'border-radius': '.375rem !important' },
     '.bw-rounded-0': { 'border-radius': '0 !important' },
     '.rounded-1': { 'border-radius': '.25rem !important' },
@@ -1543,36 +1823,36 @@ export const defaultStyles = {
     '.rounded-3': { 'border-radius': '.5rem !important' },
     '.bw-rounded-circle': { 'border-radius': '50% !important' },
     '.rounded-pill': { 'border-radius': '50rem !important' },
-    
+
     // Shadows
     '.bw-shadow': { 'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important' },
     '.bw-shadow-sm': { 'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important' },
     '.bw-shadow-lg': { 'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important' },
     '.shadow-none': { 'box-shadow': 'none !important' },
-    
+
     // Width/Height
     '.w-25': { 'width': '25% !important' },
     '.w-50': { 'width': '50% !important' },
     '.w-75': { 'width': '75% !important' },
     '.w-100': { 'width': '100% !important' },
     '.w-auto': { 'width': 'auto !important' },
-    
+
     '.h-25': { 'height': '25% !important' },
     '.h-50': { 'height': '50% !important' },
     '.h-75': { 'height': '75% !important' },
     '.h-100': { 'height': '100% !important' },
     '.h-auto': { 'height': 'auto !important' },
-    
+
     '.mw-100': { 'max-width': '100% !important' },
     '.mh-100': { 'max-height': '100% !important' },
-    
+
     // Positioning
     '.position-static': { 'position': 'static !important' },
     '.position-relative': { 'position': 'relative !important' },
     '.position-absolute': { 'position': 'absolute !important' },
     '.position-fixed': { 'position': 'fixed !important' },
     '.position-sticky': { 'position': 'sticky !important' },
-    
+
     '.top-0': { 'top': '0 !important' },
     '.top-50': { 'top': '50% !important' },
     '.top-100': { 'top': '100% !important' },
@@ -1585,15 +1865,15 @@ export const defaultStyles = {
     '.end-0': { 'right': '0 !important' },
     '.end-50': { 'right': '50% !important' },
     '.end-100': { 'right': '100% !important' },
-    
+
     '.translate-middle': { 'transform': 'translate(-50%, -50%) !important' },
-    
+
     // Overflow
     '.overflow-auto': { 'overflow': 'auto !important' },
     '.overflow-hidden': { 'overflow': 'hidden !important' },
     '.overflow-visible': { 'overflow': 'visible !important' },
     '.overflow-scroll': { 'overflow': 'scroll !important' },
-    
+
     // Typography utilities
     '.fs-1': { 'font-size': 'calc(1.375rem + 1.5vw) !important' },
     '.fs-2': { 'font-size': 'calc(1.325rem + .9vw) !important' },
@@ -1601,59 +1881,59 @@ export const defaultStyles = {
     '.fs-4': { 'font-size': 'calc(1.275rem + .3vw) !important' },
     '.fs-5': { 'font-size': '1.25rem !important' },
     '.fs-6': { 'font-size': '1rem !important' },
-    
+
     '.fw-light': { 'font-weight': '300 !important' },
     '.fw-lighter': { 'font-weight': 'lighter !important' },
     '.fw-normal': { 'font-weight': '400 !important' },
     '.fw-bold': { 'font-weight': '700 !important' },
     '.fw-bolder': { 'font-weight': 'bolder !important' },
-    
+
     '.fst-italic': { 'font-style': 'italic !important' },
     '.fst-normal': { 'font-style': 'normal !important' },
-    
+
     '.text-decoration-none': { 'text-decoration': 'none !important' },
     '.text-decoration-underline': { 'text-decoration': 'underline !important' },
     '.text-decoration-line-through': { 'text-decoration': 'line-through !important' },
-    
+
     '.text-lowercase': { 'text-transform': 'lowercase !important' },
     '.text-uppercase': { 'text-transform': 'uppercase !important' },
     '.text-capitalize': { 'text-transform': 'capitalize !important' },
-    
+
     '.text-wrap': { 'white-space': 'normal !important' },
     '.text-nowrap': { 'white-space': 'nowrap !important' },
-    
+
     // List utilities
     '.list-unstyled': {
       'padding-left': '0',
       'list-style': 'none'
     },
-    
+
     '.list-inline': {
       'padding-left': '0',
       'list-style': 'none'
     },
-    
+
     '.list-inline-item': {
       'display': 'inline-block'
     },
-    
+
     '.list-inline-item:not(:last-child)': {
       'margin-right': '.5rem'
     },
-    
+
     // Visibility
     '.visible': { 'visibility': 'visible !important' },
     '.invisible': { 'visibility': 'hidden !important' },
-    
+
     // User select
     '.user-select-all': { 'user-select': 'all !important' },
     '.user-select-auto': { 'user-select': 'auto !important' },
     '.user-select-none': { 'user-select': 'none !important' },
-    
+
     // Pointer events
     '.pe-none': { 'pointer-events': 'none !important' },
     '.pe-auto': { 'pointer-events': 'auto !important' },
-    
+
     // Opacity
     '.opacity-0': { 'opacity': '0 !important' },
     '.opacity-25': { 'opacity': '.25 !important' },
@@ -1663,10 +1943,7 @@ export const defaultStyles = {
   },
 
   /**
-   * Responsive grid columns for sm, md, and lg breakpoints
-   *
-   * Classes: .bw-col-sm-{1-12} (>=576px), .bw-col-md-{1-12} (>=768px),
-   * .bw-col-lg-{1-12} (>=992px). Applied via @media min-width queries.
+   * Responsive grid columns
    */
   responsive: {
     '@media (min-width: 576px)': {
@@ -1714,30 +1991,19 @@ export const defaultStyles = {
   }
 };
 
-/**
- * Merge all style categories into a single flat CSS rules object
- *
- * Returns an object suitable for passing directly to bw.css() or
- * bw.injectCSS(). All category objects are merged via Object.assign,
- * so later categories override earlier ones if selectors collide.
- *
- * @returns {Object} Merged CSS rules object with all selectors
- * @example
- * const allRules = getAllStyles();
- * const cssString = bw.css(allRules);
- * bw.injectCSS(cssString);
- */
+// =========================================================================
+// getAllStyles — backwards compatible
+// =========================================================================
+
 /**
  * Add underscore aliases for all bw- selectors
- * For each selector containing .bw-, adds a duplicate with .bw_ so both work in CSS
  * @param {Object} rules - CSS rules object
  * @returns {Object} - Rules with underscore aliases added
  */
-function addUnderscoreAliases(rules) {
+export function addUnderscoreAliases(rules) {
   const result = {};
   for (const [selector, styles] of Object.entries(rules)) {
     result[selector] = styles;
-    // If selector contains .bw-, add underscore variant
     if (selector.includes('.bw-')) {
       const underscoreSelector = selector.replace(/\.bw-/g, '.bw_');
       result[underscoreSelector] = styles;
@@ -1775,30 +2041,10 @@ export function getAllStyles() {
   return addUnderscoreAliases(merged);
 }
 
-/**
- * Default theme design tokens
- *
- * Provides programmatic access to the design system values used in
- * the CSS. Useful for dynamic styling, color interpolation, and
- * building custom theme overrides.
- *
- * @type {Object}
- * @property {Object} colors - Named color values (primary, secondary, success, etc.)
- * @property {Object} breakpoints - Responsive breakpoint widths in pixels (xs, sm, md, lg, xl, xxl)
- * @property {Object} spacing - Spacing scale (0-5) mapped to rem values
- * @property {Object} typography - Font family and font size scale
- * @property {string} typography.fontFamily - Default sans-serif font stack
- * @property {Object} typography.fontSize - Named size scale (xs through 5xl)
- */
-/**
- * Default theme design tokens
- *
- * Provides programmatic access to the design system values used in
- * the CSS. Useful for dynamic styling, color interpolation, and
- * building custom theme overrides.
- *
- * @type {Object}
- */
+// =========================================================================
+// Theme tokens (backwards compatible)
+// =========================================================================
+
 export let theme = {
   colors: {
     primary: '#006666',
@@ -1845,10 +2091,6 @@ export let theme = {
   darkMode: false
 };
 
-/**
- * Dark mode color overrides applied to :root via CSS custom properties
- * @type {Object}
- */
 export const darkModeColors = {
   '--bw-body-color': '#e9ecef',
   '--bw-body-bg': '#1a1a2e',
@@ -1860,10 +2102,6 @@ export const darkModeColors = {
   '--bw-gray-900': '#f8f9fa'
 };
 
-/**
- * Get dark mode CSS rules
- * @returns {Object} - CSS rules for dark mode
- */
 export function getDarkModeStyles() {
   return {
     ':root.bw-dark': {
@@ -1913,12 +2151,6 @@ export function getDarkModeStyles() {
   };
 }
 
-/**
- * Deep merge two objects (target is mutated)
- * @param {Object} target
- * @param {Object} source
- * @returns {Object}
- */
 export function deepMerge(target, source) {
   for (const key of Object.keys(source)) {
     if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])
@@ -1931,10 +2163,6 @@ export function deepMerge(target, source) {
   return target;
 }
 
-/**
- * Update the theme with new values (deep merge)
- * @param {Object} overrides - Partial theme object to merge
- */
 export function updateTheme(overrides) {
   deepMerge(theme, overrides);
 }

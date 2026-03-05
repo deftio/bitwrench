@@ -21,7 +21,7 @@ Bitwrench.js is a lightweight JavaScript UI utility library designed for rapid p
 - `npm run lint` - Run ESLint on bitwrench.js
 
 ### Other Important Commands
-- `npm run generate-sri` - Generate Subresource Integrity hashes for security
+- `npm run generate-sri` - Generate SHA-384 SRI hashes for dist files into `dist/sri.json`
 - `npm run clean` - Remove build artifacts
 
 ## Architecture & Key Components
@@ -113,9 +113,21 @@ Bitwrench v2 is a counter-thesis to modern JavaScript frameworks. Instead of JSX
 - `bw.DOM(selector, taco, options)` - Mount TACO to DOM
 
 #### CSS Generation
-- `bw.css(rules, options)` - Generate CSS from JS objects
+- `bw.css(rules, options)` - Generate CSS from JS objects (supports `@media`/`@keyframes` recursion)
 - `bw.injectCSS(css, options)` - Inject CSS into document
-- `bw.loadDefaultStyles()` - Load Bootstrap-like defaults
+- `bw.loadDefaultStyles()` - Load Bootstrap-like defaults (accepts optional `palette` in options)
+- `bw.generateTheme(name, config)` - Generate scoped theme CSS from seed colors. Returns `{ css, palette, name }`. Config requires `primary` and `secondary` hex colors; optional `tertiary`, `spacing` (`'compact'`/`'normal'`/`'spacious'`), `radius` (`'none'`/`'sm'`/`'md'`/`'lg'`/`'pill'`), `inject` (default `true`)
+- `bw.setTheme()` - **Deprecated** — use `bw.generateTheme()` instead
+
+#### Color Utilities (new)
+- `bw.hexToHsl(hex)` - Convert hex to [h, s, l]
+- `bw.hslToHex(hsl)` - Convert [h, s, l] to hex
+- `bw.adjustLightness(hex, amount)` - Shift HSL lightness
+- `bw.mixColor(hex1, hex2, ratio)` - RGB linear interpolation
+- `bw.relativeLuminance(hex)` - WCAG 2.0 luminance
+- `bw.textOnColor(hex)` - Returns `'#fff'` or `'#000'` for contrast
+- `bw.deriveShades(hex)` - Derive 8 shade variants (base, hover, active, light, darkText, border, focus, textOn)
+- `bw.derivePalette(config)` - Full palette from seed colors
 
 #### Utilities
 - `bw.typeOf(x)` - Enhanced type detection

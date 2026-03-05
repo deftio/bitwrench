@@ -8,7 +8,13 @@
  */
 
 import { VERSION_INFO } from './version.js';
-import { getAllStyles, theme, updateTheme, getDarkModeStyles, deepMerge } from './bitwrench-styles.js';
+import { getAllStyles, theme, updateTheme, getDarkModeStyles, deepMerge,
+         generateThemedCSS, derivePalette as _derivePalette,
+         DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS,
+         resolveLayout, addUnderscoreAliases } from './bitwrench-styles.js';
+import { hexToHsl, hslToHex, adjustLightness, mixColor,
+         relativeLuminance, textOnColor, deriveShades,
+         derivePalette } from './bitwrench-color-utils.js';
 
 // Environment-aware module loader for optional Node.js built-ins (fs).
 // Strategy: try require() first (CJS/UMD), fall back to import() (ESM).
@@ -1183,19 +1189,27 @@ bw.unsub = function(topic, handler) {
  */
 bw.css = function(rules, options = {}) {
   const { minify = false, pretty = !minify } = options;
-  
+
   if (typeof rules === 'string') return rules;
-  
+
   let css = '';
   const indent = pretty ? '  ' : '';
   const newline = pretty ? '\n' : '';
   const space = pretty ? ' ' : '';
-  
+
   if (Array.isArray(rules)) {
     css = rules.map(rule => bw.css(rule, options)).join(newline);
   } else if (typeof rules === 'object') {
     Object.entries(rules).forEach(([selector, styles]) => {
       if (typeof styles === 'object' && !Array.isArray(styles)) {
+        // Handle @media, @keyframes, @supports — recurse into nested block
+        if (selector.charAt(0) === '@') {
+          const inner = bw.css(styles, options);
+          if (inner) {
+            css += `${selector}${space}{${newline}${inner}${newline}}${newline}`;
+          }
+          return;
+        }
         const declarations = Object.entries(styles)
           .filter(([_, value]) => value != null)
           .map(([prop, value]) => {
@@ -1204,14 +1218,14 @@ bw.css = function(rules, options = {}) {
             return `${indent}${kebabProp}:${space}${value};`;
           })
           .join(newline);
-          
+
         if (declarations) {
           css += `${selector}${space}{${newline}${declarations}${newline}}${newline}`;
         }
       }
     });
   }
-  
+
   return css.trim();
 };
 
@@ -1541,7 +1555,12 @@ if (bw._isBrowser) {
  * bw.loadDefaultStyles();  // inject all default CSS
  */
 bw.loadDefaultStyles = function(options = {}) {
-  const { minify = true } = options;
+  const { minify = true, palette } = options;
+  if (palette) {
+    // Use generateTheme with empty scope for global default
+    const result = bw.generateTheme('', Object.assign({}, DEFAULT_PALETTE_CONFIG, palette, { inject: true }));
+    return result;
+  }
   const styles = getAllStyles();
   return bw.injectCSS(styles, { ...options, minify });
 };
@@ -1554,6 +1573,9 @@ bw.loadDefaultStyles = function(options = {}) {
  * @see bw.setTheme
  */
 bw.getTheme = function() {
+  if (typeof console !== 'undefined' && console.warn) {
+    console.warn('bw.getTheme() is deprecated. Use bw.generateTheme() instead.');
+  }
   return JSON.parse(JSON.stringify(theme));
 };
 
@@ -1574,6 +1596,9 @@ bw.getTheme = function() {
  * bw.setTheme({ colors: { primary: '#ff6600' } });
  */
 bw.setTheme = function(overrides, options = {}) {
+  if (typeof console !== 'undefined' && console.warn) {
+    console.warn('bw.setTheme() is deprecated. Use bw.generateTheme() instead.');
+  }
   const { inject = true } = options;
   updateTheme(overrides);
 
@@ -1626,6 +1651,109 @@ bw.toggleDarkMode = function(force) {
 
   return isDark;
 };
+
+/**
+ * Generate a complete, scoped theme from seed colors.
+ *
+ * Produces CSS for all themed components (buttons, alerts, badges, cards,
+ * forms, nav, tables, tabs, list groups, pagination, progress, hero, utilities)
+ * scoped under `.name` class. Multiple themes can coexist in the stylesheet.
+ * Swap themes by changing the class on a container element.
+ *
+ * @param {string} name - CSS scope class (e.g. 'ocean'). Empty string = unscoped global.
+ * @param {Object} config - Theme configuration
+ * @param {string} config.primary - Primary brand color hex
+ * @param {string} config.secondary - Secondary color hex
+ * @param {string} [config.tertiary] - Tertiary/accent color hex (defaults to primary)
+ * @param {string} [config.success='#198754'] - Success color hex
+ * @param {string} [config.danger='#dc3545'] - Danger color hex
+ * @param {string} [config.warning='#ffc107'] - Warning color hex
+ * @param {string} [config.info='#0dcaf0'] - Info color hex
+ * @param {string} [config.light='#f8f9fa'] - Light color hex
+ * @param {string} [config.dark='#212529'] - Dark color hex
+ * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
+ * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
+ * @param {number} [config.fontSize=1.0] - Base font size scale factor
+ * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
+ * @returns {Object} { css, palette, name }
+ * @category CSS & Styling
+ * @see bw.loadDefaultStyles
+ * @example
+ * // Generate and inject an ocean theme
+ * bw.generateTheme('ocean', {
+ *   primary: '#0077b6',
+ *   secondary: '#90e0ef',
+ *   tertiary: '#00b4d8'
+ * });
+ *
+ * // Apply to a container
+ * document.getElementById('app').classList.add('ocean');
+ *
+ * // Generate CSS for static export (Node.js)
+ * var result = bw.generateTheme('sunset', {
+ *   primary: '#e76f51',
+ *   secondary: '#264653',
+ *   tertiary: '#e9c46a',
+ *   inject: false
+ * });
+ * fs.writeFileSync('sunset.css', result.css);
+ */
+bw.generateTheme = function(name, config) {
+  if (!config || !config.primary || !config.secondary) {
+    throw new Error('bw.generateTheme requires config.primary and config.secondary');
+  }
+
+  // Merge with defaults; if user didn't supply tertiary, default to their primary
+  var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
+  if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
+
+  // Derive palette
+  var palette = derivePalette(fullConfig);
+
+  // Resolve layout
+  var layout = resolveLayout(fullConfig);
+
+  // Generate themed CSS rules
+  var themedRules = generateThemedCSS(name, palette, layout);
+
+  // Add underscore aliases
+  var aliasedRules = addUnderscoreAliases(themedRules);
+
+  // Convert to CSS string
+  var cssStr = bw.css(aliasedRules);
+
+  // Inject into DOM if requested and in browser
+  var shouldInject = config.inject !== false;
+  if (shouldInject && bw._isBrowser) {
+    var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
+    bw.injectCSS(cssStr, { id: styleId, append: false });
+  }
+
+  // Update bw.u color entries to reflect the palette
+  if (!name) {
+    bw.u.bgTeal = { background: palette.primary.base, color: palette.primary.textOn };
+    bw.u.textTeal = { color: palette.primary.base };
+    bw.u.bgWhite = { background: '#ffffff' };
+    bw.u.textWhite = { color: '#ffffff' };
+  }
+
+  return { css: cssStr, palette: palette, name: name };
+};
+
+// Expose color utility functions on bw namespace
+bw.hexToHsl = hexToHsl;
+bw.hslToHex = hslToHex;
+bw.adjustLightness = adjustLightness;
+bw.mixColor = mixColor;
+bw.relativeLuminance = relativeLuminance;
+bw.textOnColor = textOnColor;
+bw.deriveShades = deriveShades;
+bw.derivePalette = derivePalette;
+
+// Expose layout presets
+bw.SPACING_PRESETS = SPACING_PRESETS;
+bw.RADIUS_PRESETS = RADIUS_PRESETS;
+bw.DEFAULT_PALETTE_CONFIG = DEFAULT_PALETTE_CONFIG;
 
 // ===================================================================================
 // Legacy v1 Functions - Useful utilities retained from bitwrench v1

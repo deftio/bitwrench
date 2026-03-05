@@ -11,37 +11,6 @@
   <script src="shared-nav.js"></script>
   <script src="shared-tryit.js"></script>
   <style>
-    /* Page-specific styles */
-    .color-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 0.5rem;
-      margin: 1rem 0;
-    }
-    .color-box {
-      padding: 1rem 0.5rem;
-      text-align: center;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.8125rem;
-      transition: transform 0.2s;
-    }
-    .color-box:hover { transform: translateY(-2px); }
-    .color-box small { font-size: 0.6875rem; opacity: 0.8; }
-    .theme-switcher {
-      position: fixed;
-      top: 66px;
-      right: 12px;
-      z-index: 999;
-      background: var(--bw-card-bg);
-      padding: 0.75rem 1rem;
-      border-radius: var(--bw-radius);
-      border: 1px solid var(--bw-card-border);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-      font-size: 0.875rem;
-    }
-    .theme-switcher h4 { font-size: 0.8125rem; font-weight: 600; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.05em; color: var(--bw-text-secondary); }
-    .theme-btn { font-size: 0.8rem; padding: 0.25rem 0.5rem; }
     @media (max-width: 768px) {
       .demo-grid { grid-template-columns: 1fr !important; }
     }
@@ -51,12 +20,6 @@
   <!-- Shared Navigation -->
   <div id="example-nav"></div>
   
-  <!-- Theme Switcher -->
-  <div class="theme-switcher">
-    <h4>Theme Selector</h4>
-    <div id="theme-buttons"></div>
-  </div>
-
   <div class="page-header">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
       <h1>Styling</h1>
@@ -157,32 +120,23 @@
         </div>
       </div>
       <p>Both produce the same <code>bw-btn</code>, <code>bw-card</code>, <code>bw-table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.</p>
+      <div class="callout callout-tip" style="margin-top: 1rem;">
+        <strong>Custom palettes:</strong> Need different colors? <code>bw.generateTheme()</code> derives a complete palette from just 2-3 seed colors &mdash; buttons, alerts, badges, hover states, and contrast text, all scoped to a CSS class. See the <a href="10-themes.html">Themes page</a> for an interactive generator, presets, multi-theme demos, and code export.
+      </div>
     </div>
 
     <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--bw-card-border);">
 
-    <!-- Theme Colors Demo (existing content) -->
+    <!-- Section 8: Theming — Generate Complete Palettes -->
     <div class="demo-section">
-      <h2>Theme Color Palette</h2>
-      <div id="colors-tabs"></div>
-    </div>
-
-    <!-- Dynamic Styling Demo -->
-    <div class="demo-section">
-      <h2>Dynamic CSS Generation</h2>
-      <div id="css-tabs"></div>
-    </div>
-
-    <!-- Themed Components Demo -->
-    <div class="demo-section">
-      <h2>Themed Components</h2>
-      <div id="components-tabs"></div>
-    </div>
-
-    <!-- Custom Theme Builder Demo -->
-    <div class="demo-section">
-      <h2>Custom Theme Builder</h2>
-      <div id="builder-tabs"></div>
+      <h2>Theming &mdash; Generate Complete Palettes</h2>
+      <p><code>bw.generateTheme(name, config)</code> replaces manual color wrangling. Give it 2-3 seed colors and it derives hover states, active states, light backgrounds, border colors, focus rings, and contrast text for every component.</p>
+      <div id="tryit-theme"></div>
+      <div id="theme-preview-area" style="margin-top: 1rem;"></div>
+      <div class="callout callout-concept" style="margin-top: 1rem;">
+        <h4>Full theme studio</h4>
+        <p>The <a href="10-themes.html">Themes page</a> has a full interactive generator with preset gallery, multi-theme switching, dark mode, and copy-to-clipboard CSS export. This section shows just the basics.</p>
+      </div>
     </div>
   </div>
 
@@ -309,610 +263,105 @@
       height: '380px'
     }));
 
-    // Helper function to create demo tabs
-    function createDemoTabs(title, resultContent, codeContent) {
-      return bw.makeTabs({
-        tabs: [
-          {
-            label: 'Result',
-            content: resultContent,
-            active: true
-          },
-          {
-            label: 'Code',
-            content: {
-              t: 'pre',
-              c: {
-                t: 'code',
-                c: codeContent
-              }
-            }
-          }
-        ]
-      });
-    }
+    // ── Section 8: Theming — Generate Complete Palettes ──
+    bw.DOM('#tryit-theme', makeTryIt({
+      code: '// Generate a complete theme from 2 seed colors\n' +
+        'var result = bw.generateTheme(\'demo\', {\n' +
+        '  primary:   \'#2196f3\',\n' +
+        '  secondary: \'#607d8b\',\n' +
+        '  inject: false  // don\\\'t inject, just preview\n' +
+        '});\n' +
+        '\n' +
+        '// Show the derived palette as color swatches\n' +
+        'var keys = [\'primary\', \'secondary\', \'success\', \'danger\', \'warning\', \'info\'];\n' +
+        'bw.DOM(target, {\n' +
+        '  t: \'div\', a: { style: bw.s(bw.u.flex, { flexWrap: \'wrap\', gap: \'0.5rem\' }) },\n' +
+        '  c: keys.map(function(k) {\n' +
+        '    var color = result.palette[k].base;\n' +
+        '    return {\n' +
+        '      t: \'div\',\n' +
+        '      a: { style: bw.s(bw.u.p3, bw.u.rounded, bw.u.textCenter, bw.u.bold,\n' +
+        '        { background: color, color: bw.textOnColor(color),\n' +
+        '          minWidth: \'100px\', fontSize: \'0.85rem\' }) },\n' +
+        '      c: k + \'\\n\' + color\n' +
+        '    };\n' +
+        '  })\n' +
+        '});',
+      height: '340px'
+    }));
 
-    // Theme definitions
-    const themes = {
-      default: {
-        name: 'Default',
-        primary: '#006666',
-        secondary: '#6c757d',
-        success: '#28a745',
-        danger: '#dc3545',
-        warning: '#ffc107',
-        info: '#17a2b8',
-        light: '#f8f9fa',
-        dark: '#343a40'
-      },
-      dark: {
-        name: 'Dark',
-        primary: '#008080',
-        secondary: '#6c757d',
-        success: '#198754',
-        danger: '#dc3545',
-        warning: '#ffc107',
-        info: '#0dcaf0',
-        light: '#f8f9fa',
-        dark: '#212529'
-      },
-      ocean: {
-        name: 'Ocean',
-        primary: '#2196f3',
-        secondary: '#607d8b',
-        success: '#00bcd4',
-        danger: '#f44336',
-        warning: '#ff9800',
-        info: '#00acc1',
-        light: '#e3f2fd',
-        dark: '#0d47a1'
-      },
-      sunset: {
-        name: 'Sunset',
-        primary: '#ff9800',
-        secondary: '#795548',
-        success: '#8bc34a',
-        danger: '#ff5252',
-        warning: '#ffc107',
-        info: '#03a9f4',
-        light: '#fff3e0',
-        dark: '#5d4037'
-      },
-      forest: {
-        name: 'Forest',
-        primary: '#4caf50',
-        secondary: '#795548',
-        success: '#8bc34a',
-        danger: '#f44336',
-        warning: '#ff9800',
-        info: '#00bcd4',
-        light: '#e8f5e9',
-        dark: '#1b5e20'
-      }
-    };
+    // Live mini-demo: 3 color pickers + Generate → preview
+    (function() {
+      var colors = { primary: '#006666', secondary: '#6c757d', tertiary: '#17a2b8' };
 
-    // Apply theme
-    function applyTheme(themeName) {
-      const theme = themes[themeName];
-      if (!theme) return;
+      function renderPreview() {
+        var result = bw.generateTheme('styling-preview', {
+          primary: colors.primary,
+          secondary: colors.secondary,
+          tertiary: colors.tertiary,
+          inject: false
+        });
+        var pal = result.palette;
 
-      // Generate CSS variables and component styles
-      const css = `
-        :root {
-          --bw-primary: ${theme.primary};
-          --bw-secondary: ${theme.secondary};
-          --bw-success: ${theme.success};
-          --bw-danger: ${theme.danger};
-          --bw-warning: ${theme.warning};
-          --bw-info: ${theme.info};
-          --bw-light: ${theme.light};
-          --bw-dark: ${theme.dark};
-        }
-        
-        /* Button variants */
-        .bw-btn-primary {
-          background-color: ${theme.primary} !important;
-          border-color: ${theme.primary} !important;
-        }
-        .bw-btn-primary:hover {
-          background-color: ${adjustColor(theme.primary, -20)} !important;
-          border-color: ${adjustColor(theme.primary, -20)} !important;
-        }
-        .bw-btn-secondary {
-          background-color: ${theme.secondary} !important;
-          border-color: ${theme.secondary} !important;
-        }
-        .bw-btn-secondary:hover {
-          background-color: ${adjustColor(theme.secondary, -20)} !important;
-          border-color: ${adjustColor(theme.secondary, -20)} !important;
-        }
-        .bw-btn-success {
-          background-color: ${theme.success} !important;
-          border-color: ${theme.success} !important;
-        }
-        .bw-btn-success:hover {
-          background-color: ${adjustColor(theme.success, -20)} !important;
-          border-color: ${adjustColor(theme.success, -20)} !important;
-        }
-        .bw-btn-danger {
-          background-color: ${theme.danger} !important;
-          border-color: ${theme.danger} !important;
-        }
-        .bw-btn-danger:hover {
-          background-color: ${adjustColor(theme.danger, -20)} !important;
-          border-color: ${adjustColor(theme.danger, -20)} !important;
-        }
-        .bw-btn-warning {
-          background-color: ${theme.warning} !important;
-          border-color: ${theme.warning} !important;
-          color: ${isColorLight(theme.warning) ? '#000' : '#fff'} !important;
-        }
-        .bw-btn-warning:hover {
-          background-color: ${adjustColor(theme.warning, -20)} !important;
-          border-color: ${adjustColor(theme.warning, -20)} !important;
-        }
-        .bw-btn-info {
-          background-color: ${theme.info} !important;
-          border-color: ${theme.info} !important;
-        }
-        .bw-btn-info:hover {
-          background-color: ${adjustColor(theme.info, -20)} !important;
-          border-color: ${adjustColor(theme.info, -20)} !important;
-        }
-        
-        /* Alert variants */
-        .bw-alert-primary {
-          background-color: ${adjustColor(theme.primary, 80)} !important;
-          border-color: ${adjustColor(theme.primary, 60)} !important;
-          color: ${adjustColor(theme.primary, -40)} !important;
-        }
-        .bw-alert-success {
-          background-color: ${adjustColor(theme.success, 80)} !important;
-          border-color: ${adjustColor(theme.success, 60)} !important;
-          color: ${adjustColor(theme.success, -40)} !important;
-        }
-        .bw-alert-danger {
-          background-color: ${adjustColor(theme.danger, 80)} !important;
-          border-color: ${adjustColor(theme.danger, 60)} !important;
-          color: ${adjustColor(theme.danger, -40)} !important;
-        }
-        .bw-alert-warning {
-          background-color: ${adjustColor(theme.warning, 80)} !important;
-          border-color: ${adjustColor(theme.warning, 60)} !important;
-          color: ${adjustColor(theme.warning, -40)} !important;
-        }
-        .bw-alert-info {
-          background-color: ${adjustColor(theme.info, 80)} !important;
-          border-color: ${adjustColor(theme.info, 60)} !important;
-          color: ${adjustColor(theme.info, -40)} !important;
-        }
-        
-        /* Badge variants */
-        .bw-badge-primary { background-color: ${theme.primary} !important; }
-        .bw-badge-secondary { background-color: ${theme.secondary} !important; }
-        .bw-badge-success { background-color: ${theme.success} !important; }
-        .bw-badge-danger { background-color: ${theme.danger} !important; }
-        .bw-badge-warning { 
-          background-color: ${theme.warning} !important;
-          color: ${isColorLight(theme.warning) ? '#000' : '#fff'} !important;
-        }
-        .bw-badge-info { background-color: ${theme.info} !important; }
-        
-        /* Background utilities */
-        .bw-bg-primary { background-color: ${theme.primary} !important; }
-        .bw-bg-secondary { background-color: ${theme.secondary} !important; }
-        .bw-bg-success { background-color: ${theme.success} !important; }
-        .bw-bg-danger { background-color: ${theme.danger} !important; }
-        .bw-bg-warning { background-color: ${theme.warning} !important; }
-        .bw-bg-info { background-color: ${theme.info} !important; }
-        
-        /* Text utilities */
-        .bw-text-primary { color: ${theme.primary} !important; }
-        .bw-text-secondary { color: ${theme.secondary} !important; }
-        .bw-text-success { color: ${theme.success} !important; }
-        .bw-text-danger { color: ${theme.danger} !important; }
-        .bw-text-warning { color: ${theme.warning} !important; }
-        .bw-text-info { color: ${theme.info} !important; }
-        
-        /* Progress bars */
-        .bw-progress-bar { background-color: ${theme.primary} !important; }
-        .bw-progress-bar.bw-bg-success { background-color: ${theme.success} !important; }
-        .bw-progress-bar.bw-bg-warning { background-color: ${theme.warning} !important; }
-        .bw-progress-bar.bw-bg-danger { background-color: ${theme.danger} !important; }
-        .bw-progress-bar.bw-bg-info { background-color: ${theme.info} !important; }
-      `;
-
-      bw.injectCSS(css, { id: 'theme-styles' });
-
-      // Toggle dark theme class
-      if (themeName === 'dark') {
-        document.body.classList.add('dark-theme');
-      } else {
-        document.body.classList.remove('dark-theme');
-      }
-
-      // Update active button
-      bw.$('.theme-btn').forEach(btn => {
-        btn.classList.remove('bw-active');
-      });
-      const activeBtn = bw.$(`[data-theme="${themeName}"]`)[0];
-      if (activeBtn) activeBtn.classList.add('bw-active');
-    }
-
-    // Helper function to adjust color brightness
-    function adjustColor(color, percent) {
-      const num = parseInt(color.slice(1), 16);
-      const amt = Math.round(2.55 * percent);
-      const R = (num >> 16) + amt;
-      const G = (num >> 8 & 0x00FF) + amt;
-      const B = (num & 0x0000FF) + amt;
-      return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-        (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-        (B < 255 ? B < 1 ? 0 : B : 255))
-        .toString(16).slice(1);
-    }
-
-    // Initialize theme buttons
-    const themeBtns = Object.keys(themes).map(key => 
-      bw.makeButton({
-        text: themes[key].name,
-        variant: 'secondary',
-        className: 'theme-btn bw-btn-block bw-mb-2',
-        'data-theme': key,
-        onclick: () => applyTheme(key)
-      })
-    );
-    bw.DOM('#theme-buttons', { t: 'div', c: themeBtns });
-
-    // 1. Theme Colors Demo
-    const colorsDemo = {
-      t: 'div',
-      c: [
-        {
-          t: 'div',
-          a: { class: 'color-grid' },
-          c: Object.entries(themes.default).filter(([key]) => key !== 'name').map(([name, color]) => ({
-            t: 'div',
-            a: { 
-              class: 'color-box',
-              style: `background-color: ${color}; color: ${isColorLight(color) ? '#000' : '#fff'};`
-            },
-            c: [
-              { t: 'div', c: name },
-              { t: 'small', c: color }
-            ]
-          }))
-        }
-      ]
-    };
-
-    function isColorLight(color) {
-      const hex = color.replace('#', '');
-      const r = parseInt(hex.substr(0, 2), 16);
-      const g = parseInt(hex.substr(2, 2), 16);
-      const b = parseInt(hex.substr(4, 2), 16);
-      const brightness = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-      return brightness > 155;
-    }
-
-    const colorsCode = `// Define theme colors
-const theme = {
-  primary: '#006666',
-  secondary: '#6c757d',
-  success: '#28a745',
-  danger: '#dc3545',
-  warning: '#ffc107',
-  info: '#17a2b8'
-};
-
-// Apply theme with CSS variables
-const css = \`:root {
-  --bw-primary: \${theme.primary};
-  --bw-secondary: \${theme.secondary};
-  // ... more variables
-}\`;
-
-bw.injectCSS(css, { id: 'theme-styles' });`;
-
-    bw.DOM('#colors-tabs',
-      createDemoTabs('Theme Colors', colorsDemo, colorsCode)
-    );
-
-    // 2. Dynamic CSS Demo
-    const cssDemo = {
-      t: 'div',
-      c: [
-        {
-          t: 'div',
-          a: { class: 'bw-row' },
+        bw.DOM('#theme-preview-area', {
+          t: 'div', a: { class: 'bw-card' },
           c: [
-            {
-              t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
+            { t: 'div', a: { class: 'bw-card-header' }, c: 'Live Preview' },
+            { t: 'div', a: { class: 'bw-card-body' },
               c: [
-                { t: 'h4', c: 'CSS Generation Example' },
+                // Color pickers row
                 {
-                  t: 'div',
-                  a: { id: 'dynamic-css-target', class: 'bw-p-3 bw-mb-3', style: 'border: 2px solid #006666; border-radius: 8px;' },
-                  c: 'This element has dynamically generated styles'
+                  t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.mb3, { alignItems: 'center' }) },
+                  c: ['primary', 'secondary', 'tertiary'].map(function(key) {
+                    return {
+                      t: 'label', a: { style: bw.s(bw.u.flex, { alignItems: 'center', gap: '0.5rem' }) },
+                      c: [
+                        { t: 'span', c: key.charAt(0).toUpperCase() + key.slice(1) },
+                        { t: 'input', a: {
+                          type: 'color', value: colors[key], style: 'width:40px;height:32px;border:none;cursor:pointer;',
+                          onchange: function(e) { colors[key] = e.target.value; renderPreview(); }
+                        }}
+                      ]
+                    };
+                  })
                 },
-                bw.makeButton({
-                  text: 'Change Styles',
-                  variant: 'primary',
-                  onclick: () => {
-                    const colors = ['#006666', '#28a745', '#dc3545', '#ffc107', '#17a2b8'];
-                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                    const css = `
-                      #dynamic-css-target {
-                        background-color: ${randomColor}20;
-                        border-color: ${randomColor};
-                        color: ${randomColor};
-                        transform: scale(1.05);
-                        transition: all 0.3s ease;
-                      }
-                    `;
-                    bw.injectCSS(css, { id: 'dynamic-styles' });
-                    
-                    // Reset after animation
-                    setTimeout(() => {
-                      const resetCss = `
-                        #dynamic-css-target {
-                          transform: scale(1);
-                        }
-                      `;
-                      bw.injectCSS(resetCss, { id: 'dynamic-styles' });
-                    }, 300);
-                  }
-                })
-              ]
-            },
-            {
-              t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
-              c: [
-                { t: 'h4', c: 'Generated CSS' },
+                // Buttons preview
                 {
-                  t: 'pre',
-                  c: {
-                    t: 'code',
-                    c: `/* Dynamically injected CSS */
-#dynamic-css-target {
-  background-color: rgba(0, 102, 102, 0.1);
-  border-color: #006666;
-  color: #006666;
-  transform: scale(1);
-  transition: all 0.3s ease;
-}`
-                  }
+                  t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap2, bw.u.mb3, { flexWrap: 'wrap' }) },
+                  c: ['primary', 'secondary', 'success', 'danger', 'warning', 'info'].map(function(v) {
+                    var base = pal[v].base;
+                    return {
+                      t: 'button',
+                      a: { style: bw.s(bw.u.p2, bw.u.rounded, bw.u.bold, {
+                        background: base, color: bw.textOnColor(base),
+                        border: 'none', cursor: 'pointer', fontSize: '0.85rem', padding: '0.4rem 0.9rem'
+                      }) },
+                      c: v
+                    };
+                  })
+                },
+                // Alerts preview
+                {
+                  t: 'div', a: { style: bw.s(bw.u.flexCol, bw.u.gap2) },
+                  c: ['success', 'danger', 'warning'].map(function(v) {
+                    return {
+                      t: 'div',
+                      a: { style: bw.s(bw.u.p3, bw.u.rounded, {
+                        background: pal[v].light,
+                        border: '1px solid ' + pal[v].border,
+                        color: pal[v].darkText
+                      }) },
+                      c: v.charAt(0).toUpperCase() + v.slice(1) + ' alert using derived palette colors'
+                    };
+                  })
                 }
               ]
             }
           ]
-        }
-      ]
-    };
-
-    const cssCode = `// Generate and inject CSS dynamically
-const randomColor = '#006666';
-const css = \`
-  #my-element {
-    background-color: \${randomColor}20;
-    border-color: \${randomColor};
-    color: \${randomColor};
-    transform: scale(1.05);
-    transition: all 0.3s ease;
-  }
-\`;
-
-// Inject CSS with an ID for easy updates
-bw.injectCSS(css, { id: 'dynamic-styles' });`;
-
-    bw.DOM('#css-tabs',
-      createDemoTabs('Dynamic CSS', cssDemo, cssCode)
-    );
-
-    // 3. Themed Components Demo
-    const componentsDemo = {
-      t: 'div',
-      c: [
-        { t: 'h4', c: 'Buttons' },
-        {
-          t: 'div',
-          a: { class: 'bw-mb-3' },
-          c: ['primary', 'secondary', 'success', 'danger', 'warning', 'info'].map(variant =>
-            [bw.makeButton({ text: variant.charAt(0).toUpperCase() + variant.slice(1), variant }), ' ']
-          ).flat()
-        },
-        
-        { t: 'h4', c: 'Cards' },
-        {
-          t: 'div',
-          a: { class: 'bw-row bw-mb-3' },
-          c: ['primary', 'success', 'warning'].map(variant =>
-            bw.makeCol({
-              size: 4,
-              content: bw.makeCard({
-                header: `${variant.charAt(0).toUpperCase() + variant.slice(1)} Card`,
-                content: 'This card uses the current theme colors.',
-                footer: bw.makeButton({ text: 'Action', variant, size: 'sm' })
-              })
-            })
-          )
-        },
-        
-        { t: 'h4', c: 'Alerts' },
-        {
-          t: 'div',
-          c: ['info', 'success', 'warning', 'danger'].map(variant =>
-            bw.makeAlert({
-              content: `This is a ${variant} alert using theme colors.`,
-              variant
-            })
-          )
-        }
-      ]
-    };
-
-    const componentsCode = `// Components automatically use theme colors
-bw.makeButton({ 
-  text: 'Primary Button', 
-  variant: 'primary' 
-})
-
-bw.makeCard({
-  header: 'Themed Card',
-  content: 'Uses CSS variables for colors',
-  footer: bw.makeButton({ 
-    text: 'Action', 
-    variant: 'success' 
-  })
-})
-
-bw.makeAlert({
-  content: 'Themed alert message',
-  variant: 'warning'
-})`;
-
-    bw.DOM('#components-tabs',
-      createDemoTabs('Themed Components', componentsDemo, componentsCode)
-    );
-
-    // 4. Custom Theme Builder Demo
-    let customTheme = { ...themes.default };
-
-    const builderDemo = {
-      t: 'div',
-      c: [
-        {
-          t: 'div',
-          a: { class: 'bw-row' },
-          c: [
-            {
-              t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
-              c: [
-                { t: 'h4', c: 'Theme Settings' },
-                bw.makeForm({
-                  children: [
-                    ...Object.entries(themes.default).filter(([key]) => key !== 'name').map(([name, color]) =>
-                      bw.makeFormGroup({
-                        label: name.charAt(0).toUpperCase() + name.slice(1),
-                        input: {
-                          t: 'input',
-                          a: {
-                            type: 'color',
-                            class: 'bw-form-control',
-                            value: color,
-                            id: `color-${name}`,
-                            style: 'height: 40px;',
-                            onchange: (e) => {
-                              customTheme[name] = e.target.value;
-                              updateCustomThemePreview();
-                            }
-                          }
-                        }
-                      })
-                    ),
-                    bw.makeButton({
-                      text: 'Apply Custom Theme',
-                      variant: 'primary',
-                      onclick: () => {
-                        themes.custom = { ...customTheme, name: 'Custom' };
-                        applyTheme('custom');
-                      }
-                    }),
-                    ' ',
-                    bw.makeButton({
-                      text: 'Export Theme',
-                      variant: 'secondary',
-                      onclick: () => {
-                        bw.saveClientJSON('bitwrench-theme.json', customTheme);
-                      }
-                    })
-                  ]
-                })
-              ]
-            },
-            {
-              t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
-              c: [
-                { t: 'h4', c: 'Preview' },
-                {
-                  t: 'div',
-                  a: { id: 'theme-preview', class: 'bw-p-3', style: 'background: #f8f9fa; border-radius: 8px;' },
-                  c: ''
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-
-    function updateCustomThemePreview() {
-      const preview = {
-        t: 'div',
-        c: [
-          {
-            t: 'div',
-            a: { class: 'bw-mb-3' },
-            c: Object.entries(customTheme).filter(([key]) => key !== 'name').map(([name]) =>
-              [
-                {
-                  t: 'span',
-                  a: { 
-                    class: 'bw-badge',
-                    style: `background-color: ${customTheme[name]}; color: ${isColorLight(customTheme[name]) ? '#000' : '#fff'}; margin-right: 0.5rem;`
-                  },
-                  c: name
-                },
-                ' '
-              ]
-            ).flat()
-          },
-          bw.makeButton({ text: 'Preview Button', variant: 'primary' }),
-          ' ',
-          bw.makeButton({ text: 'Secondary', variant: 'secondary' })
-        ]
-      };
-      
-      bw.DOM('#theme-preview', preview);
-    }
-
-    const builderCode = `// Create custom theme
-const customTheme = {
-  primary: '#006666',
-  secondary: '#6c757d',
-  success: '#28a745',
-  // ... more colors
-};
-
-// Apply custom theme
-function applyCustomTheme() {
-  const css = \`:root {
-    --bw-primary: \${customTheme.primary};
-    --bw-secondary: \${customTheme.secondary};
-    // ... more variables
-  }\`;
-  
-  bw.injectCSS(css, { id: 'custom-theme' });
-}
-
-// Export theme
-const data = JSON.stringify(customTheme, null, 2);
-const blob = new Blob([data], { type: 'application/json' });
-// ... download logic`;
-
-    bw.DOM('#builder-tabs',
-      createDemoTabs('Theme Builder', builderDemo, builderCode)
-    );
-    
-    // Initialize preview after tabs are mounted
-    setTimeout(() => updateCustomThemePreview(), 0);
-
-    // Initialize with default theme
-    applyTheme('default');
+        });
+      }
+      renderPreview();
+    })();
   </script>
 </body>
 </html>

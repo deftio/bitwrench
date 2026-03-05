@@ -96,12 +96,22 @@ Tags are created manually as part of the release process, not automated.
 
 ## SRI (Subresource Integrity)
 
-**Status**: Needs reimplementation for v2.
+**Status**: Implemented.
 
-The v1 SRI generation (`generate-sri` script) hashed root-level files that no longer exist. A new implementation should:
+`npm run generate-sri` hashes each `.js` and `.css` file in `dist/` using SHA-384 and writes `dist/sri.json`:
 
-1. Hash each file in `dist/` using SHA-384
-2. Output to `dist/sri.json` (machine-readable) rather than individual `.txt` files
-3. Optionally print integrity attributes for `<script>` tags
+```json
+{
+  "version": "2.0.4",
+  "algorithm": "sha384",
+  "generated": "2026-03-04",
+  "files": {
+    "bitwrench.umd.min.js": "sha384-...",
+    ...
+  }
+}
+```
 
-This is tracked as a separate future task.
+The `build:builds` script reads `sri.json` and adds an `integrity` field to each entry in `builds.json`. The builds page (`pages/09-builds.html`) displays SRI hashes with copy-to-clipboard for `<script>` and `<link>` tags.
+
+SRI runs as part of `npm run cleanbuild` (after `build`, before `build:builds`).

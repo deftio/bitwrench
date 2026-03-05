@@ -18,8 +18,312 @@
     homepage: 'http://deftio.com/bitwrench',
     repository: 'git://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-05T06:16:48.079Z'
+    buildDate: '2026-03-05T08:50:35.723Z'
   };
+
+  /**
+   * Bitwrench Color Utilities
+   *
+   * Standalone color math helpers used by both bitwrench.js and bitwrench-styles.js.
+   * Extracted to avoid circular dependencies. bitwrench.js re-exports these as
+   * bw.colorParse, bw.colorRgbToHsl, etc.
+   *
+   * @module bitwrench-color-utils
+   * @license BSD-2-Clause
+   */
+
+  /**
+   * Clamp a value between min and max.
+   * @param {number} val
+   * @param {number} min
+   * @param {number} max
+   * @returns {number}
+   */
+  function clip(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+  }
+
+  /**
+   * Parse a CSS color string to [r, g, b, a, "rgb"].
+   * Handles #hex, rgb(), rgba(), hsl(), hsla(), and bitwrench color arrays.
+   * @param {string|Array} s - Color string or array
+   * @param {number} [defAlpha=255] - Default alpha
+   * @returns {Array} [r, g, b, a, "rgb"]
+   */
+  function colorParse(s, defAlpha) {
+    if (defAlpha === undefined) defAlpha = 255;
+    var r = [0, 0, 0, defAlpha, "rgb"];
+
+    if (Array.isArray(s)) {
+      var df = [0, 0, 0, 255, "rgb"];
+      for (var p = 0; p < s.length && p < df.length; p++) {
+        df[p] = s[p];
+      }
+      return df;
+    }
+
+    s = String(s).replace(/\s/g, "");
+
+    if (s[0] === "#") {
+      var hex = s.slice(1);
+      if (hex.length === 3 || hex.length === 4) {
+        for (var i = 0; i < hex.length; i++) {
+          r[i] = parseInt(hex[i] + hex[i], 16);
+        }
+      } else if (hex.length === 6 || hex.length === 8) {
+        for (var j = 0; j < hex.length; j += 2) {
+          r[j / 2] = parseInt(hex.substring(j, j + 2), 16);
+        }
+      }
+    } else {
+      var match = s.match(/^(rgb|hsl)a?\(([^)]+)\)$/i);
+      if (match) {
+        var type = match[1].toLowerCase();
+        var values = match[2].split(",").map(function(v) { return parseFloat(v); });
+
+        if (type === "rgb") {
+          r[0] = values[0] || 0;
+          r[1] = values[1] || 0;
+          r[2] = values[2] || 0;
+          r[3] = values[3] !== undefined ? values[3] * 255 : defAlpha;
+          r[4] = "rgb";
+        } else if (type === "hsl") {
+          var rgb = colorHslToRgb(values[0] || 0, values[1] || 0, values[2] || 0,
+                                  values[3] !== undefined ? values[3] * 255 : defAlpha);
+          return rgb;
+        }
+      }
+    }
+
+    return r;
+  }
+
+  /**
+   * Convert RGB to HSL.
+   * @param {number|Array} r - Red 0-255, or [r,g,b,a] array
+   * @param {number} [g] - Green 0-255
+   * @param {number} [b] - Blue 0-255
+   * @param {number} [a=255] - Alpha 0-255
+   * @param {boolean} [rnd=true] - Round results
+   * @returns {Array} [h, s, l, a, "hsl"]
+   */
+  function colorRgbToHsl(r, g, b, a, rnd) {
+    if (a === undefined) a = 255;
+    if (Array.isArray(r)) {
+      g = r[1]; b = r[2]; a = r[3] !== undefined ? r[3] : 255; r = r[0];
+    }
+
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var h, s, l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+
+    h *= 360;
+    s *= 100;
+    l *= 100;
+
+    return [h, s, l, a, "hsl"];
+  }
+
+  /**
+   * Convert HSL to RGB.
+   * @param {number|Array} h - Hue 0-360, or [h,s,l,a] array
+   * @param {number} [s] - Saturation 0-100
+   * @param {number} [l] - Lightness 0-100
+   * @param {number} [a=255] - Alpha 0-255
+   * @param {boolean} [rnd=true] - Round results
+   * @returns {Array} [r, g, b, a, "rgb"]
+   */
+  function colorHslToRgb(h, s, l, a, rnd) {
+    if (a === undefined) a = 255;
+    if (rnd === undefined) rnd = true;
+    if (Array.isArray(h)) {
+      s = h[1]; l = h[2]; a = h[3] !== undefined ? h[3] : 255; h = h[0];
+    }
+
+    var hNorm = h / 360;
+    var sNorm = s / 100;
+    var lNorm = l / 100;
+
+    var r, g, b;
+
+    if (sNorm === 0) {
+      r = g = b = lNorm * 255;
+    } else {
+      var hue2rgb = function(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+
+      var q = lNorm < 0.5 ? lNorm * (1 + sNorm) : lNorm + sNorm - lNorm * sNorm;
+      var p = 2 * lNorm - q;
+
+      r = hue2rgb(p, q, hNorm + 1/3) * 255;
+      g = hue2rgb(p, q, hNorm) * 255;
+      b = hue2rgb(p, q, hNorm - 1/3) * 255;
+    }
+
+    if (rnd) {
+      r = Math.round(r);
+      g = Math.round(g);
+      b = Math.round(b);
+      a = Math.round(a);
+    }
+
+    return [r, g, b, a, "rgb"];
+  }
+
+  // =========================================================================
+  // New theme derivation helpers
+  // =========================================================================
+
+  /**
+   * Convert hex color to HSL array [h, s, l].
+   * @param {string} hex - Hex color e.g. '#006666'
+   * @returns {Array} [h, s, l] where h=0-360, s=0-100, l=0-100
+   */
+  function hexToHsl(hex) {
+    var rgb = colorParse(hex);
+    var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255);
+    return [hsl[0], hsl[1], hsl[2]];
+  }
+
+  /**
+   * Convert HSL array to hex color string.
+   * @param {Array} hsl - [h, s, l] where h=0-360, s=0-100, l=0-100
+   * @returns {string} Hex color e.g. '#006666'
+   */
+  function hslToHex(hsl) {
+    var rgb = colorHslToRgb(hsl[0], hsl[1], hsl[2], 255, true);
+    return '#' +
+      ('0' + rgb[0].toString(16)).slice(-2) +
+      ('0' + rgb[1].toString(16)).slice(-2) +
+      ('0' + rgb[2].toString(16)).slice(-2);
+  }
+
+  /**
+   * Adjust lightness of a hex color by a percentage amount.
+   * Positive = lighten, negative = darken.
+   * @param {string} hex - Hex color
+   * @param {number} amount - Lightness change in percentage points (-100 to 100)
+   * @returns {string} Adjusted hex color
+   */
+  function adjustLightness(hex, amount) {
+    var hsl = hexToHsl(hex);
+    hsl[2] = clip(hsl[2] + amount, 0, 100);
+    return hslToHex(hsl);
+  }
+
+  /**
+   * Mix two hex colors via RGB linear interpolation.
+   * @param {string} hex1 - First hex color
+   * @param {string} hex2 - Second hex color (e.g. '#ffffff' for tinting)
+   * @param {number} ratio - 0 = all hex1, 1 = all hex2
+   * @returns {string} Mixed hex color
+   */
+  function mixColor(hex1, hex2, ratio) {
+    var c1 = colorParse(hex1);
+    var c2 = colorParse(hex2);
+    var r = Math.round(c1[0] + (c2[0] - c1[0]) * ratio);
+    var g = Math.round(c1[1] + (c2[1] - c1[1]) * ratio);
+    var b = Math.round(c1[2] + (c2[2] - c1[2]) * ratio);
+    return '#' +
+      ('0' + r.toString(16)).slice(-2) +
+      ('0' + g.toString(16)).slice(-2) +
+      ('0' + b.toString(16)).slice(-2);
+  }
+
+  /**
+   * Compute WCAG 2.0 relative luminance of a hex color.
+   * @param {string} hex - Hex color
+   * @returns {number} Relative luminance 0-1
+   */
+  function relativeLuminance(hex) {
+    var rgb = colorParse(hex);
+    var vals = [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255].map(function(v) {
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * vals[0] + 0.7152 * vals[1] + 0.0722 * vals[2];
+  }
+
+  /**
+   * Return '#fff' or '#000' for readable text on a given background color.
+   * Uses WCAG luminance threshold.
+   * @param {string} hex - Background hex color
+   * @returns {string} '#fff' or '#000'
+   */
+  function textOnColor(hex) {
+    return relativeLuminance(hex) > 0.179 ? '#000' : '#fff';
+  }
+
+  /**
+   * Derive a full shade palette for a single semantic color.
+   * @param {string} hex - Base color hex
+   * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
+   */
+  function deriveShades(hex) {
+    var rgb = colorParse(hex);
+    return {
+      base: hex,
+      hover: adjustLightness(hex, -10),
+      active: adjustLightness(hex, -15),
+      light: mixColor(hex, '#ffffff', 0.85),
+      darkText: adjustLightness(hex, -40),
+      border: mixColor(hex, '#ffffff', 0.60),
+      focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
+      textOn: textOnColor(hex)
+    };
+  }
+
+  /**
+   * Derive complete palette from a theme config object.
+   * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
+   * @returns {Object} Full palette with shades for all 8 semantic colors + tertiary
+   */
+  function derivePalette(config) {
+    var defaults = {
+      success: '#198754',
+      danger: '#dc3545',
+      warning: '#ffc107',
+      info: '#0dcaf0',
+      light: '#f8f9fa',
+      dark: '#212529'
+    };
+
+    var palette = {
+      primary: deriveShades(config.primary),
+      secondary: deriveShades(config.secondary),
+      tertiary: deriveShades(config.tertiary),
+      success: deriveShades(config.success || defaults.success),
+      danger: deriveShades(config.danger || defaults.danger),
+      warning: deriveShades(config.warning || defaults.warning),
+      info: deriveShades(config.info || defaults.info),
+      light: deriveShades(config.light || defaults.light),
+      dark: deriveShades(config.dark || defaults.dark)
+    };
+
+    return palette;
+  }
 
   /**
    * Bitwrench v2 Default Styles
@@ -32,6 +336,8 @@
    * - {@link defaultStyles} - All style categories as a structured object
    * - {@link getAllStyles} - Merges all categories into a flat CSS rules object
    * - {@link theme} - Design token configuration (colors, breakpoints, spacing, typography)
+   * - {@link generateThemedCSS} - Generate scoped themed CSS from a palette
+   * - {@link derivePalette} - Re-export from color-utils for convenience
    *
    * Style categories: root (CSS variables), reset, typography, grid, buttons,
    * cards, forms, navigation, tables, alerts, badges, progress, tabs, listGroups,
@@ -42,6 +348,356 @@
    * @license BSD-2-Clause
    * @author M A Chatterjee <deftio [at] deftio [dot] com>
    */
+
+
+  // =========================================================================
+  // Layout presets
+  // =========================================================================
+
+  var SPACING_PRESETS = {
+    compact:  { btn: '0.3rem 0.8rem',  card: '0.875rem 1rem', alert: '0.625rem 1rem', cell: '0.5rem 0.75rem', input: '0.375rem 0.7rem' },
+    normal:   { btn: '0.5rem 1.125rem', card: '1.25rem 1.5rem', alert: '0.875rem 1.25rem', cell: '0.75rem 1rem', input: '0.5rem 0.875rem' },
+    spacious: { btn: '0.75rem 1.5rem',  card: '1.75rem 2rem', alert: '1.125rem 1.5rem', cell: '1rem 1.25rem', input: '0.75rem 1.125rem' }
+  };
+
+  var RADIUS_PRESETS = {
+    none: { btn: '0', card: '0', badge: '0', alert: '0', input: '0' },
+    sm:   { btn: '4px', card: '4px', badge: '.25rem', alert: '4px', input: '4px' },
+    md:   { btn: '6px', card: '8px', badge: '.375rem', alert: '8px', input: '6px' },
+    lg:   { btn: '10px', card: '12px', badge: '.5rem', alert: '12px', input: '10px' },
+    pill: { btn: '50rem', card: '1rem', badge: '50rem', alert: '1rem', input: '50rem' }
+  };
+
+  /**
+   * Default palette config — matches existing hardcoded colors
+   */
+  var DEFAULT_PALETTE_CONFIG = {
+    primary: '#006666',
+    secondary: '#6c757d',
+    tertiary: '#006666',
+    success: '#198754',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#0dcaf0',
+    light: '#f8f9fa',
+    dark: '#212529'
+  };
+
+  /**
+   * Resolve layout config to spacing + radius objects
+   * @param {Object} config - { spacing, radius, fontSize }
+   * @returns {Object} { spacing, radius, fontSize }
+   */
+  function resolveLayout(config) {
+    var sp = (config && config.spacing) || 'normal';
+    var rd = (config && config.radius) || 'md';
+    var fs = (config && config.fontSize) || 1.0;
+    return {
+      spacing: typeof sp === 'string' ? (SPACING_PRESETS[sp] || SPACING_PRESETS.normal) : sp,
+      radius: typeof rd === 'string' ? (RADIUS_PRESETS[rd] || RADIUS_PRESETS.md) : rd,
+      fontSize: fs
+    };
+  }
+
+  // =========================================================================
+  // Scoping helper
+  // =========================================================================
+
+  /**
+   * Prefix a CSS selector with a scope class name.
+   * @param {string} name - Scope class (e.g. 'ocean'). Empty = no scoping.
+   * @param {string} sel - CSS selector(s)
+   * @returns {string} Scoped selector
+   */
+  function scopeSelector(name, sel) {
+    if (!name) return sel;
+    if (sel.includes(',')) return sel.split(',').map(function(s) { return '.' + name + ' ' + s.trim(); }).join(', ');
+    return '.' + name + ' ' + sel;
+  }
+
+  // =========================================================================
+  // Themed CSS generators
+  // =========================================================================
+
+  function generateTypographyThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, 'a')] = {
+      'color': palette.primary.base,
+      'text-decoration': 'none',
+      'transition': 'color 0.15s'
+    };
+    rules[scopeSelector(scope, 'a:hover')] = {
+      'color': palette.primary.hover,
+      'text-decoration': 'underline'
+    };
+    return rules;
+  }
+
+  function generateButtons(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+
+    // Base button (only when scoped — unscoped uses defaultStyles)
+    rules[scopeSelector(scope, '.bw-btn')] = {
+      'padding': sp.btn,
+      'border-radius': rd.btn
+    };
+    rules[scopeSelector(scope, '.bw-btn:focus-visible')] = {
+      'outline': '0',
+      'box-shadow': '0 0 0 3px ' + palette.primary.focus
+    };
+
+    // Variants
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function(v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-btn-' + v)] = {
+        'color': p.textOn,
+        'background-color': p.base,
+        'border-color': p.base
+      };
+      rules[scopeSelector(scope, '.bw-btn-' + v + ':hover')] = {
+        'color': p.textOn,
+        'background-color': p.hover,
+        'border-color': p.active
+      };
+      // Outline
+      rules[scopeSelector(scope, '.bw-btn-outline-' + v)] = {
+        'color': p.base,
+        'border-color': p.base,
+        'background-color': 'transparent'
+      };
+      rules[scopeSelector(scope, '.bw-btn-outline-' + v + ':hover')] = {
+        'color': p.textOn,
+        'background-color': p.base,
+        'border-color': p.base
+      };
+    });
+
+    // Size variants (structural, reuse layout radius)
+    rules[scopeSelector(scope, '.bw-btn-lg')] = {
+      'padding': '0.625rem 1.5rem',
+      'font-size': '1rem',
+      'border-radius': rd.btn === '50rem' ? '50rem' : (parseInt(rd.btn) + 2) + 'px'
+    };
+    rules[scopeSelector(scope, '.bw-btn-sm')] = {
+      'padding': '0.25rem 0.75rem',
+      'font-size': '0.8125rem',
+      'border-radius': rd.btn === '50rem' ? '50rem' : (Math.max(parseInt(rd.btn) - 1, 0)) + 'px'
+    };
+
+    return rules;
+  }
+
+  function generateAlerts(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+
+    rules[scopeSelector(scope, '.bw-alert')] = {
+      'padding': sp.alert,
+      'border-radius': rd.alert
+    };
+
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function(v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-alert-' + v)] = {
+        'color': p.darkText,
+        'background-color': p.light,
+        'border-color': p.border
+      };
+      rules[scopeSelector(scope, '.bw-alert-' + v + ' .alert-link')] = {
+        'color': adjustLightness(p.darkText, -10)
+      };
+    });
+
+    return rules;
+  }
+
+  function generateBadges(scope, palette) {
+    var rules = {};
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function(v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-badge-' + v)] = {
+        'color': p.textOn,
+        'background-color': p.base
+      };
+    });
+    return rules;
+  }
+
+  function generateCards(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+
+    rules[scopeSelector(scope, '.bw-card')] = {
+      'border-radius': rd.card
+    };
+    rules[scopeSelector(scope, '.bw-card-body')] = {
+      'padding': sp.card
+    };
+    rules[scopeSelector(scope, '.bw-card-header')] = {
+      'padding': sp.card.split(' ').map(function(v) { return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem'; }).join(' ')
+    };
+
+    return rules;
+  }
+
+  function generateForms(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+
+    rules[scopeSelector(scope, '.bw-form-control')] = {
+      'padding': sp.input,
+      'border-radius': rd.input
+    };
+    rules[scopeSelector(scope, '.bw-form-control:focus')] = {
+      'border-color': palette.primary.border,
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+
+    return rules;
+  }
+
+  function generateNavigation(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link.active')] = {
+      'color': palette.primary.base,
+      'background-color': palette.primary.focus
+    };
+    return rules;
+  }
+
+  function generateTables(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+
+    rules[scopeSelector(scope, '.bw-table > :not(caption) > * > *')] = {
+      'padding': sp.cell
+    };
+    rules[scopeSelector(scope, '.bw-table-hover > tbody > tr:hover > *')] = {
+      'background-color': palette.primary.focus
+    };
+
+    return rules;
+  }
+
+  function generateTabs(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-nav-tabs .bw-nav-link.active')] = {
+      'color': palette.primary.base,
+      'border-bottom': '2px solid ' + palette.primary.base
+    };
+    return rules;
+  }
+
+  function generateListGroups(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+
+    rules[scopeSelector(scope, '.bw-list-group-item')] = {
+      'padding': sp.cell
+    };
+    rules[scopeSelector(scope, '.bw-list-group-item.active')] = {
+      'color': palette.primary.textOn,
+      'background-color': palette.primary.base,
+      'border-color': palette.primary.base
+    };
+
+    return rules;
+  }
+
+  function generatePagination(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-page-link')] = {
+      'color': palette.primary.base
+    };
+    rules[scopeSelector(scope, '.bw-page-link:hover')] = {
+      'color': palette.primary.hover
+    };
+    rules[scopeSelector(scope, '.bw-page-link:focus')] = {
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    rules[scopeSelector(scope, '.bw-page-item.bw-active .bw-page-link')] = {
+      'color': palette.primary.textOn,
+      'background-color': palette.primary.base,
+      'border-color': palette.primary.base
+    };
+    return rules;
+  }
+
+  function generateProgress(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-progress-bar')] = {
+      'background-color': palette.primary.base
+    };
+    return rules;
+  }
+
+  function generateHero(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-hero-primary')] = {
+      'background': 'linear-gradient(135deg, ' + palette.primary.base + ' 0%, ' + palette.primary.hover + ' 100%)',
+      'color': palette.primary.textOn
+    };
+    rules[scopeSelector(scope, '.bw-hero-secondary')] = {
+      'background': 'linear-gradient(135deg, ' + palette.secondary.base + ' 0%, ' + palette.secondary.hover + ' 100%)',
+      'color': palette.secondary.textOn
+    };
+    rules[scopeSelector(scope, '.bw-hero-dark')] = {
+      'background': 'linear-gradient(135deg, ' + palette.dark.base + ' 0%, ' + palette.dark.hover + ' 100%)',
+      'color': palette.dark.textOn
+    };
+    return rules;
+  }
+
+  function generateUtilityColors(scope, palette) {
+    var rules = {};
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function(v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-text-' + v)] = { 'color': p.base };
+      rules[scopeSelector(scope, '.bw-bg-' + v)] = { 'background-color': p.base };
+    });
+    return rules;
+  }
+
+  /**
+   * Generate all themed CSS rules from a palette and layout.
+   * Returns a flat CSS rules object (selector → declarations).
+   *
+   * @param {string} scopeName - CSS scope class ('' for global)
+   * @param {Object} palette - From derivePalette()
+   * @param {Object} layout - From resolveLayout()
+   * @returns {Object} CSS rules object
+   */
+  function generateThemedCSS(scopeName, palette, layout) {
+    return Object.assign({},
+      generateTypographyThemed(scopeName, palette),
+      generateButtons(scopeName, palette, layout),
+      generateAlerts(scopeName, palette, layout),
+      generateBadges(scopeName, palette),
+      generateCards(scopeName, palette, layout),
+      generateForms(scopeName, palette, layout),
+      generateNavigation(scopeName, palette),
+      generateTables(scopeName, palette, layout),
+      generateTabs(scopeName, palette),
+      generateListGroups(scopeName, palette, layout),
+      generatePagination(scopeName, palette),
+      generateProgress(scopeName, palette),
+      generateHero(scopeName, palette),
+      generateUtilityColors(scopeName, palette)
+    );
+  }
+
+  // =========================================================================
+  // Static structural styles (unchanged, color-independent)
+  // =========================================================================
 
   /**
    * Complete default style definitions organized by component category
@@ -55,9 +711,6 @@
   const defaultStyles = {
     /**
      * CSS custom properties (variables) on :root
-     *
-     * Defines the full color palette, typography, border, and shadow tokens
-     * used by all other style categories via var() references.
      */
     root: {
       ':root': {
@@ -117,9 +770,6 @@
     },
     /**
      * CSS reset and base element styles
-     *
-     * Provides box-sizing reset, body defaults, page layout helpers
-     * (.bw-page, .bw-page-content), and hr normalization.
      */
     reset: {
       '*': {
@@ -176,9 +826,6 @@
 
     /**
      * Typography styles for headings, paragraphs, links, and small text
-     *
-     * Headings use responsive font sizes with clamp-like calc() values.
-     * Links default to primary color with underline decoration.
      */
     typography: {
       'h1, h2, h3, h4, h5, h6': {
@@ -189,25 +836,25 @@
         'letter-spacing': '-0.01em',
         'color': '#1a1a1a'
       },
-      'h1': { 
+      'h1': {
         'font-size': 'calc(1.375rem + 1.5vw)'
       },
       '@media (min-width: 1200px)': {
         'h1': { 'font-size': '2.5rem' }
       },
-      'h2': { 
+      'h2': {
         'font-size': 'calc(1.325rem + .9vw)'
       },
       '@media (min-width: 1200px)': {
         'h2': { 'font-size': '2rem' }
       },
-      'h3': { 
+      'h3': {
         'font-size': 'calc(1.3rem + .6vw)'
       },
       '@media (min-width: 1200px)': {
         'h3': { 'font-size': '1.75rem' }
       },
-      'h4': { 
+      'h4': {
         'font-size': 'calc(1.275rem + .3vw)'
       },
       '@media (min-width: 1200px)': {
@@ -215,16 +862,16 @@
       },
       'h5': { 'font-size': '1.25rem' },
       'h6': { 'font-size': '1rem' },
-      
+
       'p': {
         'margin-top': '0',
         'margin-bottom': '1rem'
       },
-      
+
       'small': {
         'font-size': '0.875rem'
       },
-      
+
       'a': {
         'color': '#006666',
         'text-decoration': 'none',
@@ -238,10 +885,6 @@
 
     /**
      * 12-column flexbox grid system
-     *
-     * Classes: .bw-container (responsive max-widths), .bw-container-fluid,
-     * .bw-row, .bw-col, .bw-col-{1-12}. Breakpoint-specific columns
-     * are in the responsive category.
      */
     grid: {
       '.bw-container': {
@@ -270,14 +913,14 @@
         'margin-right': 'auto',
         'margin-left': 'auto'
       },
-      
+
       '.bw-row': {
         'display': 'flex',
         'flex-wrap': 'wrap',
         'margin-right': 'calc(var(--bw-gutter-x, 0.75rem) * -0.5)',
         'margin-left': 'calc(var(--bw-gutter-x, 0.75rem) * -0.5)'
       },
-      
+
       // Column system
       '.col, [class*="col-"]': {
         'position': 'relative',
@@ -293,7 +936,7 @@
         'flex-grow': '1',
         'max-width': '100%'
       },
-      
+
       // Column sizes
       '.bw-col-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
       '.bw-col-2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
@@ -311,10 +954,6 @@
 
     /**
      * Button styles - all variants, sizes, outlines, and states
-     *
-     * Classes: .bw-btn (base), .bw-btn-{variant} (filled), .bw-btn-outline-{variant},
-     * .bw-btn-sm, .bw-btn-lg. States: :hover, :active, :focus, :disabled.
-     * Variants: primary, secondary, success, danger, warning, info, light, dark.
      */
     buttons: {
       '.bw-btn': {
@@ -357,7 +996,7 @@
         'cursor': 'not-allowed',
         'pointer-events': 'none'
       },
-      
+
       // Button variants
       '.bw-btn-primary': {
         'color': '#fff',
@@ -369,7 +1008,7 @@
         'background-color': '#005555',
         'border-color': '#004d4d'
       },
-      
+
       '.bw-btn-secondary': {
         'color': '#fff',
         'background-color': '#6c757d',
@@ -380,7 +1019,7 @@
         'background-color': '#5c636a',
         'border-color': '#565e64'
       },
-      
+
       '.bw-btn-success': {
         'color': '#fff',
         'background-color': '#198754',
@@ -391,7 +1030,7 @@
         'background-color': '#157347',
         'border-color': '#146c43'
       },
-      
+
       '.bw-btn-danger': {
         'color': '#fff',
         'background-color': '#dc3545',
@@ -402,7 +1041,7 @@
         'background-color': '#bb2d3b',
         'border-color': '#b02a37'
       },
-      
+
       '.bw-btn-warning': {
         'color': '#000',
         'background-color': '#ffc107',
@@ -413,7 +1052,7 @@
         'background-color': '#ffca2c',
         'border-color': '#ffc720'
       },
-      
+
       '.bw-btn-info': {
         'color': '#000',
         'background-color': '#0dcaf0',
@@ -424,7 +1063,7 @@
         'background-color': '#31d2f2',
         'border-color': '#25cff2'
       },
-      
+
       '.bw-btn-light': {
         'color': '#000',
         'background-color': '#f8f9fa',
@@ -435,7 +1074,7 @@
         'background-color': '#f9fafb',
         'border-color': '#f9fafb'
       },
-      
+
       '.bw-btn-dark': {
         'color': '#fff',
         'background-color': '#212529',
@@ -446,7 +1085,7 @@
         'background-color': '#1c1f23',
         'border-color': '#1a1e21'
       },
-      
+
       // Outline variants
       '.bw-btn-outline-primary': {
         'color': '#006666',
@@ -458,7 +1097,7 @@
         'background-color': '#006666',
         'border-color': '#006666'
       },
-      
+
       '.bw-btn-outline-secondary': {
         'color': '#6c757d',
         'border-color': '#6c757d',
@@ -469,7 +1108,7 @@
         'background-color': '#6c757d',
         'border-color': '#6c757d'
       },
-      
+
       '.bw-btn-outline-success': {
         'color': '#198754',
         'border-color': '#198754',
@@ -480,7 +1119,7 @@
         'background-color': '#198754',
         'border-color': '#198754'
       },
-      
+
       '.bw-btn-outline-danger': {
         'color': '#dc3545',
         'border-color': '#dc3545',
@@ -491,7 +1130,7 @@
         'background-color': '#dc3545',
         'border-color': '#dc3545'
       },
-      
+
       '.bw-btn-outline-warning': {
         'color': '#ffc107',
         'border-color': '#ffc107',
@@ -502,7 +1141,7 @@
         'background-color': '#ffc107',
         'border-color': '#ffc107'
       },
-      
+
       '.bw-btn-outline-info': {
         'color': '#0dcaf0',
         'border-color': '#0dcaf0',
@@ -513,7 +1152,7 @@
         'background-color': '#0dcaf0',
         'border-color': '#0dcaf0'
       },
-      
+
       '.bw-btn-outline-light': {
         'color': '#f8f9fa',
         'border-color': '#f8f9fa',
@@ -524,7 +1163,7 @@
         'background-color': '#f8f9fa',
         'border-color': '#f8f9fa'
       },
-      
+
       '.bw-btn-outline-dark': {
         'color': '#212529',
         'border-color': '#212529',
@@ -535,7 +1174,7 @@
         'background-color': '#212529',
         'border-color': '#212529'
       },
-      
+
       // Button sizes
       '.bw-btn-lg': {
         'padding': '0.625rem 1.5rem',
@@ -551,10 +1190,6 @@
 
     /**
      * Card component styles
-     *
-     * Classes: .bw-card, .bw-card-body, .bw-card-title, .bw-card-text,
-     * .bw-card-header, .bw-card-footer, .card-img-top, .card-subtitle.
-     * Cards include hover lift animation by default.
      */
     cards: {
       '.bw-card': {
@@ -627,9 +1262,6 @@
 
     /**
      * Form control styles
-     *
-     * Classes: .bw-form-control (inputs, selects, textareas),
-     * .bw-form-label, .bw-form-group. Includes focus ring styling.
      */
     forms: {
       '.bw-form-control': {
@@ -689,9 +1321,6 @@
 
     /**
      * Navbar and navigation link styles
-     *
-     * Classes: .bw-navbar, .bw-navbar-dark, .bw-navbar-light,
-     * .bw-navbar-brand, .bw-navbar-nav, .bw-nav-link (with :hover and .active).
      */
     navigation: {
       '.bw-navbar': {
@@ -772,9 +1401,6 @@
 
     /**
      * Table styles with striped and hover variants
-     *
-     * Classes: .bw-table, .bw-table-striped, .bw-table-hover,
-     * .bw-table-bordered. Applies to thead, tbody, th, td.
      */
     tables: {
       '.bw-table': {
@@ -827,12 +1453,9 @@
         'caption-side': 'bottom'
       }
     },
-    
+
     /**
      * Alert/notification styles for all color variants
-     *
-     * Classes: .bw-alert, .bw-alert-{variant}, .bw-alert-dismissible.
-     * Variants: primary, secondary, success, info, warning, danger, light, dark.
      */
     alerts: {
       '.bw-alert': {
@@ -925,12 +1548,9 @@
         'color': '#101214'
       }
     },
-    
+
     /**
      * Inline badge/label styles
-     *
-     * Classes: .bw-badge, .bw-badge-{variant}.
-     * Variants: primary, secondary, success, info, warning, danger, light, dark.
      */
     badges: {
       '.bw-badge': {
@@ -985,12 +1605,9 @@
         'background-color': '#212529'
       }
     },
-    
+
     /**
-     * Progress bar styles with striped and animated variants
-     *
-     * Classes: .bw-progress, .bw-progress-bar, .bw-progress-bar-striped,
-     * .bw-progress-bar-animated. Includes @keyframes for stripe animation.
+     * Progress bar styles
      */
     progress: {
       '.bw-progress': {
@@ -1026,12 +1643,9 @@
         '0%': { 'background-position-x': '1rem' }
       }
     },
-    
+
     /**
-     * Tab navigation and content pane styles
-     *
-     * Classes: .bw-nav, .bw-nav-tabs, .bw-nav-item, .bw-nav-link (.active, :hover),
-     * .bw-tab-content, .bw-tab-pane (.active). Inactive panes use display:none.
+     * Tab navigation styles
      */
     tabs: {
       '.bw-nav': {
@@ -1090,12 +1704,9 @@
         'display': 'block'
       }
     },
-    
+
     /**
-     * List group styles for vertical lists of items
-     *
-     * Classes: .bw-list-group, .bw-list-group-item (.active, .disabled),
-     * .bw-list-group-flush. Supports anchor tags for interactive items.
+     * List group styles
      */
     listGroups: {
       '.bw-list-group': {
@@ -1157,12 +1768,9 @@
         'border-bottom-width': '0'
       }
     },
-    
+
     /**
      * Pagination control styles
-     *
-     * Classes: .bw-pagination, .bw-page-item (.bw-active, .bw-disabled),
-     * .bw-page-link (:hover, :focus). First/last items get rounded corners.
      */
     pagination: {
       '.bw-pagination': {
@@ -1222,12 +1830,9 @@
         'border-color': '#dee2e6'
       }
     },
-    
+
     /**
      * Breadcrumb navigation styles
-     *
-     * Classes: .bw-breadcrumb, .bw-breadcrumb-item (.active).
-     * Uses "/" separator via ::before pseudo-element.
      */
     breadcrumb: {
       '.bw-breadcrumb': {
@@ -1256,11 +1861,7 @@
     },
 
     /**
-     * Hero section styles for landing page headers
-     *
-     * Classes: .bw-hero, .bw-hero-{variant} (gradient backgrounds),
-     * .bw-hero-overlay, .bw-hero-content, .bw-hero-title.
-     * Also includes .bw-display-4, .bw-lead, and .bw-py-{3-6} spacing.
+     * Hero section styles
      */
     hero: {
       '.bw-hero': {
@@ -1320,8 +1921,6 @@
 
     /**
      * Feature grid item styles
-     *
-     * Classes: .bw-feature, .bw-feature-icon, .bw-feature-title, .bw-g-4.
      */
     features: {
       '.bw-feature': {
@@ -1341,10 +1940,7 @@
     },
 
     /**
-     * Enhanced card styles with hover effects and horizontal image support
-     *
-     * Classes: .bw-card-hoverable (lift on hover), .bw-card-img-left,
-     * .bw-card-img-right, .bw-h5, .bw-h6.
+     * Enhanced card styles
      */
     enhancedCards: {
       '.bw-card-hoverable': {
@@ -1371,10 +1967,7 @@
     },
 
     /**
-     * Page section styles with header and subtitle
-     *
-     * Classes: .bw-section, .bw-section-header, .bw-section-title,
-     * .bw-section-subtitle. Responsive title sizing included.
+     * Page section styles
      */
     sections: {
       '.bw-section': {
@@ -1399,9 +1992,6 @@
 
     /**
      * Call-to-action section styles
-     *
-     * Classes: .bw-cta, .bw-cta-content, .bw-cta-title, .bw-cta-actions.
-     * Content is centered with max-width constraint.
      */
     cta: {
       '.bw-cta': {
@@ -1423,17 +2013,7 @@
     },
 
     /**
-     * Utility classes for spacing, text, display, flexbox, colors, borders, etc.
-     *
-     * Spacing: .bw-m-{0-5}, .bw-mt-{0-5}, .bw-mb-{0-5}, .bw-ms-{0-5}, .bw-me-{0-5},
-     *          .bw-p-{0-5}, .pt-{0-5}, .pb-{0-5}, .ps-{0-5}, .pe-{0-5}
-     * Text: .bw-text-{left,right,center}, .bw-text-{variant}, .fw-{weight}, .fs-{1-6}
-     * Display: .bw-d-{none,block,inline,inline-block,flex}
-     * Background: .bw-bg-{variant}
-     * Borders: .bw-border, .bw-border-0, .bw-rounded, .bw-rounded-circle
-     * Shadows: .bw-shadow, .bw-shadow-sm, .bw-shadow-lg
-     * Sizing: .w-{25,50,75,100,auto}, .h-{25,50,75,100,auto}
-     * Position: .position-{static,relative,absolute,fixed,sticky}
+     * Utility classes
      */
     utilities: {
       // Spacing
@@ -1444,93 +2024,93 @@
       '.bw-m-4': { 'margin': '1.5rem !important' },
       '.bw-m-5': { 'margin': '3rem !important' },
       '.m-auto': { 'margin': 'auto !important' },
-      
+
       '.bw-mt-0': { 'margin-top': '0 !important' },
       '.bw-mt-1': { 'margin-top': '.25rem !important' },
       '.bw-mt-2': { 'margin-top': '.5rem !important' },
       '.bw-mt-3': { 'margin-top': '1rem !important' },
       '.bw-mt-4': { 'margin-top': '1.5rem !important' },
       '.bw-mt-5': { 'margin-top': '3rem !important' },
-      
+
       '.bw-mb-0': { 'margin-bottom': '0 !important' },
       '.bw-mb-1': { 'margin-bottom': '.25rem !important' },
       '.bw-mb-2': { 'margin-bottom': '.5rem !important' },
       '.bw-mb-3': { 'margin-bottom': '1rem !important' },
       '.bw-mb-4': { 'margin-bottom': '1.5rem !important' },
       '.bw-mb-5': { 'margin-bottom': '3rem !important' },
-      
+
       '.bw-ms-0': { 'margin-left': '0 !important' },
       '.bw-ms-1': { 'margin-left': '.25rem !important' },
       '.bw-ms-2': { 'margin-left': '.5rem !important' },
       '.bw-ms-3': { 'margin-left': '1rem !important' },
       '.bw-ms-4': { 'margin-left': '1.5rem !important' },
       '.bw-ms-5': { 'margin-left': '3rem !important' },
-      
+
       '.bw-me-0': { 'margin-right': '0 !important' },
       '.bw-me-1': { 'margin-right': '.25rem !important' },
       '.bw-me-2': { 'margin-right': '.5rem !important' },
       '.bw-me-3': { 'margin-right': '1rem !important' },
       '.bw-me-4': { 'margin-right': '1.5rem !important' },
       '.bw-me-5': { 'margin-right': '3rem !important' },
-      
+
       '.bw-p-0': { 'padding': '0 !important' },
       '.bw-p-1': { 'padding': '.25rem !important' },
       '.bw-p-2': { 'padding': '.5rem !important' },
       '.bw-p-3': { 'padding': '1rem !important' },
       '.bw-p-4': { 'padding': '1.5rem !important' },
       '.bw-p-5': { 'padding': '3rem !important' },
-      
+
       '.pt-0': { 'padding-top': '0 !important' },
       '.pt-1': { 'padding-top': '.25rem !important' },
       '.pt-2': { 'padding-top': '.5rem !important' },
       '.pt-3': { 'padding-top': '1rem !important' },
       '.pt-4': { 'padding-top': '1.5rem !important' },
       '.pt-5': { 'padding-top': '3rem !important' },
-      
+
       '.pb-0': { 'padding-bottom': '0 !important' },
       '.pb-1': { 'padding-bottom': '.25rem !important' },
       '.pb-2': { 'padding-bottom': '.5rem !important' },
       '.pb-3': { 'padding-bottom': '1rem !important' },
       '.pb-4': { 'padding-bottom': '1.5rem !important' },
       '.pb-5': { 'padding-bottom': '3rem !important' },
-      
+
       '.ps-0': { 'padding-left': '0 !important' },
       '.ps-1': { 'padding-left': '.25rem !important' },
       '.ps-2': { 'padding-left': '.5rem !important' },
       '.ps-3': { 'padding-left': '1rem !important' },
       '.ps-4': { 'padding-left': '1.5rem !important' },
       '.ps-5': { 'padding-left': '3rem !important' },
-      
+
       '.pe-0': { 'padding-right': '0 !important' },
       '.pe-1': { 'padding-right': '.25rem !important' },
       '.pe-2': { 'padding-right': '.5rem !important' },
       '.pe-3': { 'padding-right': '1rem !important' },
       '.pe-4': { 'padding-right': '1.5rem !important' },
       '.pe-5': { 'padding-right': '3rem !important' },
-      
+
       // Text alignment
       '.bw-text-left': { 'text-align': 'left' },
       '.bw-text-right': { 'text-align': 'right' },
       '.bw-text-center': { 'text-align': 'center' },
-      
+
       // Display
       '.bw-d-none': { 'display': 'none' },
       '.bw-d-block': { 'display': 'block' },
       '.bw-d-inline': { 'display': 'inline' },
       '.bw-d-inline-block': { 'display': 'inline-block' },
       '.bw-d-flex': { 'display': 'flex' },
-      
+
       // Flexbox
       '.justify-content-start': { 'justify-content': 'flex-start' },
       '.justify-content-end': { 'justify-content': 'flex-end' },
       '.justify-content-center': { 'justify-content': 'center' },
       '.justify-content-between': { 'justify-content': 'space-between' },
       '.justify-content-around': { 'justify-content': 'space-around' },
-      
+
       '.align-items-start': { 'align-items': 'flex-start' },
       '.align-items-end': { 'align-items': 'flex-end' },
       '.align-items-center': { 'align-items': 'center' },
-      
+
       // Colors
       '.bw-text-primary': { 'color': '#006666' },
       '.bw-text-secondary': { 'color': '#6c757d' },
@@ -1541,7 +2121,7 @@
       '.bw-text-light': { 'color': '#f8f9fa' },
       '.bw-text-dark': { 'color': '#212529' },
       '.bw-text-muted': { 'color': '#6c757d' },
-      
+
       '.bw-bg-primary': { 'background-color': '#006666' },
       '.bw-bg-secondary': { 'background-color': '#6c757d' },
       '.bw-bg-success': { 'background-color': '#198754' },
@@ -1550,7 +2130,7 @@
       '.bw-bg-info': { 'background-color': '#0dcaf0' },
       '.bw-bg-light': { 'background-color': '#f8f9fa' },
       '.bw-bg-dark': { 'background-color': '#212529' },
-      
+
       // Borders
       '.bw-border': { 'border': '1px solid #dee2e6 !important' },
       '.bw-border-0': { 'border': '0 !important' },
@@ -1558,7 +2138,7 @@
       '.border-end-0': { 'border-right': '0 !important' },
       '.border-bottom-0': { 'border-bottom': '0 !important' },
       '.border-start-0': { 'border-left': '0 !important' },
-      
+
       '.bw-rounded': { 'border-radius': '.375rem !important' },
       '.bw-rounded-0': { 'border-radius': '0 !important' },
       '.rounded-1': { 'border-radius': '.25rem !important' },
@@ -1566,36 +2146,36 @@
       '.rounded-3': { 'border-radius': '.5rem !important' },
       '.bw-rounded-circle': { 'border-radius': '50% !important' },
       '.rounded-pill': { 'border-radius': '50rem !important' },
-      
+
       // Shadows
       '.bw-shadow': { 'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important' },
       '.bw-shadow-sm': { 'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important' },
       '.bw-shadow-lg': { 'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important' },
       '.shadow-none': { 'box-shadow': 'none !important' },
-      
+
       // Width/Height
       '.w-25': { 'width': '25% !important' },
       '.w-50': { 'width': '50% !important' },
       '.w-75': { 'width': '75% !important' },
       '.w-100': { 'width': '100% !important' },
       '.w-auto': { 'width': 'auto !important' },
-      
+
       '.h-25': { 'height': '25% !important' },
       '.h-50': { 'height': '50% !important' },
       '.h-75': { 'height': '75% !important' },
       '.h-100': { 'height': '100% !important' },
       '.h-auto': { 'height': 'auto !important' },
-      
+
       '.mw-100': { 'max-width': '100% !important' },
       '.mh-100': { 'max-height': '100% !important' },
-      
+
       // Positioning
       '.position-static': { 'position': 'static !important' },
       '.position-relative': { 'position': 'relative !important' },
       '.position-absolute': { 'position': 'absolute !important' },
       '.position-fixed': { 'position': 'fixed !important' },
       '.position-sticky': { 'position': 'sticky !important' },
-      
+
       '.top-0': { 'top': '0 !important' },
       '.top-50': { 'top': '50% !important' },
       '.top-100': { 'top': '100% !important' },
@@ -1608,15 +2188,15 @@
       '.end-0': { 'right': '0 !important' },
       '.end-50': { 'right': '50% !important' },
       '.end-100': { 'right': '100% !important' },
-      
+
       '.translate-middle': { 'transform': 'translate(-50%, -50%) !important' },
-      
+
       // Overflow
       '.overflow-auto': { 'overflow': 'auto !important' },
       '.overflow-hidden': { 'overflow': 'hidden !important' },
       '.overflow-visible': { 'overflow': 'visible !important' },
       '.overflow-scroll': { 'overflow': 'scroll !important' },
-      
+
       // Typography utilities
       '.fs-1': { 'font-size': 'calc(1.375rem + 1.5vw) !important' },
       '.fs-2': { 'font-size': 'calc(1.325rem + .9vw) !important' },
@@ -1624,59 +2204,59 @@
       '.fs-4': { 'font-size': 'calc(1.275rem + .3vw) !important' },
       '.fs-5': { 'font-size': '1.25rem !important' },
       '.fs-6': { 'font-size': '1rem !important' },
-      
+
       '.fw-light': { 'font-weight': '300 !important' },
       '.fw-lighter': { 'font-weight': 'lighter !important' },
       '.fw-normal': { 'font-weight': '400 !important' },
       '.fw-bold': { 'font-weight': '700 !important' },
       '.fw-bolder': { 'font-weight': 'bolder !important' },
-      
+
       '.fst-italic': { 'font-style': 'italic !important' },
       '.fst-normal': { 'font-style': 'normal !important' },
-      
+
       '.text-decoration-none': { 'text-decoration': 'none !important' },
       '.text-decoration-underline': { 'text-decoration': 'underline !important' },
       '.text-decoration-line-through': { 'text-decoration': 'line-through !important' },
-      
+
       '.text-lowercase': { 'text-transform': 'lowercase !important' },
       '.text-uppercase': { 'text-transform': 'uppercase !important' },
       '.text-capitalize': { 'text-transform': 'capitalize !important' },
-      
+
       '.text-wrap': { 'white-space': 'normal !important' },
       '.text-nowrap': { 'white-space': 'nowrap !important' },
-      
+
       // List utilities
       '.list-unstyled': {
         'padding-left': '0',
         'list-style': 'none'
       },
-      
+
       '.list-inline': {
         'padding-left': '0',
         'list-style': 'none'
       },
-      
+
       '.list-inline-item': {
         'display': 'inline-block'
       },
-      
+
       '.list-inline-item:not(:last-child)': {
         'margin-right': '.5rem'
       },
-      
+
       // Visibility
       '.visible': { 'visibility': 'visible !important' },
       '.invisible': { 'visibility': 'hidden !important' },
-      
+
       // User select
       '.user-select-all': { 'user-select': 'all !important' },
       '.user-select-auto': { 'user-select': 'auto !important' },
       '.user-select-none': { 'user-select': 'none !important' },
-      
+
       // Pointer events
       '.pe-none': { 'pointer-events': 'none !important' },
       '.pe-auto': { 'pointer-events': 'auto !important' },
-      
+
       // Opacity
       '.opacity-0': { 'opacity': '0 !important' },
       '.opacity-25': { 'opacity': '.25 !important' },
@@ -1686,10 +2266,7 @@
     },
 
     /**
-     * Responsive grid columns for sm, md, and lg breakpoints
-     *
-     * Classes: .bw-col-sm-{1-12} (>=576px), .bw-col-md-{1-12} (>=768px),
-     * .bw-col-lg-{1-12} (>=992px). Applied via @media min-width queries.
+     * Responsive grid columns
      */
     responsive: {
       '@media (min-width: 576px)': {
@@ -1737,22 +2314,12 @@
     }
   };
 
-  /**
-   * Merge all style categories into a single flat CSS rules object
-   *
-   * Returns an object suitable for passing directly to bw.css() or
-   * bw.injectCSS(). All category objects are merged via Object.assign,
-   * so later categories override earlier ones if selectors collide.
-   *
-   * @returns {Object} Merged CSS rules object with all selectors
-   * @example
-   * const allRules = getAllStyles();
-   * const cssString = bw.css(allRules);
-   * bw.injectCSS(cssString);
-   */
+  // =========================================================================
+  // getAllStyles — backwards compatible
+  // =========================================================================
+
   /**
    * Add underscore aliases for all bw- selectors
-   * For each selector containing .bw-, adds a duplicate with .bw_ so both work in CSS
    * @param {Object} rules - CSS rules object
    * @returns {Object} - Rules with underscore aliases added
    */
@@ -1760,7 +2327,6 @@
     const result = {};
     for (const [selector, styles] of Object.entries(rules)) {
       result[selector] = styles;
-      // If selector contains .bw-, add underscore variant
       if (selector.includes('.bw-')) {
         const underscoreSelector = selector.replace(/\.bw-/g, '.bw_');
         result[underscoreSelector] = styles;
@@ -1798,30 +2364,10 @@
     return addUnderscoreAliases(merged);
   }
 
-  /**
-   * Default theme design tokens
-   *
-   * Provides programmatic access to the design system values used in
-   * the CSS. Useful for dynamic styling, color interpolation, and
-   * building custom theme overrides.
-   *
-   * @type {Object}
-   * @property {Object} colors - Named color values (primary, secondary, success, etc.)
-   * @property {Object} breakpoints - Responsive breakpoint widths in pixels (xs, sm, md, lg, xl, xxl)
-   * @property {Object} spacing - Spacing scale (0-5) mapped to rem values
-   * @property {Object} typography - Font family and font size scale
-   * @property {string} typography.fontFamily - Default sans-serif font stack
-   * @property {Object} typography.fontSize - Named size scale (xs through 5xl)
-   */
-  /**
-   * Default theme design tokens
-   *
-   * Provides programmatic access to the design system values used in
-   * the CSS. Useful for dynamic styling, color interpolation, and
-   * building custom theme overrides.
-   *
-   * @type {Object}
-   */
+  // =========================================================================
+  // Theme tokens (backwards compatible)
+  // =========================================================================
+
   let theme = {
     colors: {
       primary: '#006666',
@@ -1868,10 +2414,6 @@
     darkMode: false
   };
 
-  /**
-   * Get dark mode CSS rules
-   * @returns {Object} - CSS rules for dark mode
-   */
   function getDarkModeStyles() {
     return {
       ':root.bw-dark': {
@@ -1921,12 +2463,6 @@
     };
   }
 
-  /**
-   * Deep merge two objects (target is mutated)
-   * @param {Object} target
-   * @param {Object} source
-   * @returns {Object}
-   */
   function deepMerge(target, source) {
     for (const key of Object.keys(source)) {
       if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])
@@ -1939,10 +2475,6 @@
     return target;
   }
 
-  /**
-   * Update the theme with new values (deep merge)
-   * @param {Object} overrides - Partial theme object to merge
-   */
   function updateTheme(overrides) {
     deepMerge(theme, overrides);
   }
@@ -5111,19 +5643,27 @@
    */
   bw.css = function(rules, options = {}) {
     const { minify = false, pretty = !minify } = options;
-    
+
     if (typeof rules === 'string') return rules;
-    
+
     let css = '';
     const indent = pretty ? '  ' : '';
     const newline = pretty ? '\n' : '';
     const space = pretty ? ' ' : '';
-    
+
     if (Array.isArray(rules)) {
       css = rules.map(rule => bw.css(rule, options)).join(newline);
     } else if (typeof rules === 'object') {
       Object.entries(rules).forEach(([selector, styles]) => {
         if (typeof styles === 'object' && !Array.isArray(styles)) {
+          // Handle @media, @keyframes, @supports — recurse into nested block
+          if (selector.charAt(0) === '@') {
+            const inner = bw.css(styles, options);
+            if (inner) {
+              css += `${selector}${space}{${newline}${inner}${newline}}${newline}`;
+            }
+            return;
+          }
           const declarations = Object.entries(styles)
             .filter(([_, value]) => value != null)
             .map(([prop, value]) => {
@@ -5132,14 +5672,14 @@
               return `${indent}${kebabProp}:${space}${value};`;
             })
             .join(newline);
-            
+
           if (declarations) {
             css += `${selector}${space}{${newline}${declarations}${newline}}${newline}`;
           }
         }
       });
     }
-    
+
     return css.trim();
   };
 
@@ -5469,7 +6009,12 @@
    * bw.loadDefaultStyles();  // inject all default CSS
    */
   bw.loadDefaultStyles = function(options = {}) {
-    const { minify = true } = options;
+    const { minify = true, palette } = options;
+    if (palette) {
+      // Use generateTheme with empty scope for global default
+      const result = bw.generateTheme('', Object.assign({}, DEFAULT_PALETTE_CONFIG, palette, { inject: true }));
+      return result;
+    }
     const styles = getAllStyles();
     return bw.injectCSS(styles, { ...options, minify });
   };
@@ -5482,6 +6027,9 @@
    * @see bw.setTheme
    */
   bw.getTheme = function() {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('bw.getTheme() is deprecated. Use bw.generateTheme() instead.');
+    }
     return JSON.parse(JSON.stringify(theme));
   };
 
@@ -5502,6 +6050,9 @@
    * bw.setTheme({ colors: { primary: '#ff6600' } });
    */
   bw.setTheme = function(overrides, options = {}) {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('bw.setTheme() is deprecated. Use bw.generateTheme() instead.');
+    }
     const { inject = true } = options;
     updateTheme(overrides);
 
@@ -5554,6 +6105,109 @@
 
     return isDark;
   };
+
+  /**
+   * Generate a complete, scoped theme from seed colors.
+   *
+   * Produces CSS for all themed components (buttons, alerts, badges, cards,
+   * forms, nav, tables, tabs, list groups, pagination, progress, hero, utilities)
+   * scoped under `.name` class. Multiple themes can coexist in the stylesheet.
+   * Swap themes by changing the class on a container element.
+   *
+   * @param {string} name - CSS scope class (e.g. 'ocean'). Empty string = unscoped global.
+   * @param {Object} config - Theme configuration
+   * @param {string} config.primary - Primary brand color hex
+   * @param {string} config.secondary - Secondary color hex
+   * @param {string} [config.tertiary] - Tertiary/accent color hex (defaults to primary)
+   * @param {string} [config.success='#198754'] - Success color hex
+   * @param {string} [config.danger='#dc3545'] - Danger color hex
+   * @param {string} [config.warning='#ffc107'] - Warning color hex
+   * @param {string} [config.info='#0dcaf0'] - Info color hex
+   * @param {string} [config.light='#f8f9fa'] - Light color hex
+   * @param {string} [config.dark='#212529'] - Dark color hex
+   * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
+   * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
+   * @param {number} [config.fontSize=1.0] - Base font size scale factor
+   * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
+   * @returns {Object} { css, palette, name }
+   * @category CSS & Styling
+   * @see bw.loadDefaultStyles
+   * @example
+   * // Generate and inject an ocean theme
+   * bw.generateTheme('ocean', {
+   *   primary: '#0077b6',
+   *   secondary: '#90e0ef',
+   *   tertiary: '#00b4d8'
+   * });
+   *
+   * // Apply to a container
+   * document.getElementById('app').classList.add('ocean');
+   *
+   * // Generate CSS for static export (Node.js)
+   * var result = bw.generateTheme('sunset', {
+   *   primary: '#e76f51',
+   *   secondary: '#264653',
+   *   tertiary: '#e9c46a',
+   *   inject: false
+   * });
+   * fs.writeFileSync('sunset.css', result.css);
+   */
+  bw.generateTheme = function(name, config) {
+    if (!config || !config.primary || !config.secondary) {
+      throw new Error('bw.generateTheme requires config.primary and config.secondary');
+    }
+
+    // Merge with defaults; if user didn't supply tertiary, default to their primary
+    var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
+    if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
+
+    // Derive palette
+    var palette = derivePalette(fullConfig);
+
+    // Resolve layout
+    var layout = resolveLayout(fullConfig);
+
+    // Generate themed CSS rules
+    var themedRules = generateThemedCSS(name, palette, layout);
+
+    // Add underscore aliases
+    var aliasedRules = addUnderscoreAliases(themedRules);
+
+    // Convert to CSS string
+    var cssStr = bw.css(aliasedRules);
+
+    // Inject into DOM if requested and in browser
+    var shouldInject = config.inject !== false;
+    if (shouldInject && bw._isBrowser) {
+      var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
+      bw.injectCSS(cssStr, { id: styleId, append: false });
+    }
+
+    // Update bw.u color entries to reflect the palette
+    if (!name) {
+      bw.u.bgTeal = { background: palette.primary.base, color: palette.primary.textOn };
+      bw.u.textTeal = { color: palette.primary.base };
+      bw.u.bgWhite = { background: '#ffffff' };
+      bw.u.textWhite = { color: '#ffffff' };
+    }
+
+    return { css: cssStr, palette: palette, name: name };
+  };
+
+  // Expose color utility functions on bw namespace
+  bw.hexToHsl = hexToHsl;
+  bw.hslToHex = hslToHex;
+  bw.adjustLightness = adjustLightness;
+  bw.mixColor = mixColor;
+  bw.relativeLuminance = relativeLuminance;
+  bw.textOnColor = textOnColor;
+  bw.deriveShades = deriveShades;
+  bw.derivePalette = derivePalette;
+
+  // Expose layout presets
+  bw.SPACING_PRESETS = SPACING_PRESETS;
+  bw.RADIUS_PRESETS = RADIUS_PRESETS;
+  bw.DEFAULT_PALETTE_CONFIG = DEFAULT_PALETTE_CONFIG;
 
   // ===================================================================================
   // Legacy v1 Functions - Useful utilities retained from bitwrench v1

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Themes</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    /* Theme page layout */
+    .theme-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .theme-control-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      margin-bottom: 0.375rem;
+      color: var(--bw-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .theme-control-group input[type="color"] {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--bw-card-border);
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .theme-control-group select {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--bw-card-border);
+      border-radius: 6px;
+      background: var(--bw-card-bg);
+      color: var(--bw-text);
+      font-size: 0.875rem;
+    }
+    .preview-area {
+      border: 2px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      padding: 1.5rem;
+      background: var(--bw-card-bg);
+      margin-top: 1rem;
+    }
+    .preview-section {
+      margin-bottom: 1.5rem;
+    }
+    .preview-section:last-child {
+      margin-bottom: 0;
+    }
+    .preview-section h4 {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--bw-text-secondary);
+      margin: 0 0 0.75rem 0;
+      padding-bottom: 0.375rem;
+      border-bottom: 1px solid var(--bw-card-border);
+    }
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.25rem;
+    }
+    .preset-card {
+      border: 2px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .preset-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+    .preset-card-colors {
+      display: flex;
+      height: 48px;
+    }
+    .preset-card-colors > div {
+      flex: 1;
+    }
+    .preset-card-body {
+      padding: 0.875rem 1rem;
+    }
+    .preset-card-body h4 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1rem;
+    }
+    .preset-card-body p {
+      margin: 0;
+      font-size: 0.8125rem;
+      color: var(--bw-text-secondary);
+    }
+    .multi-theme-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .multi-theme-panel {
+      border: 2px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      padding: 1.25rem;
+      background: var(--bw-card-bg);
+    }
+    .multi-theme-panel h4 {
+      margin: 0 0 1rem 0;
+      font-size: 0.9375rem;
+    }
+    .code-export-block {
+      background: var(--bw-code-bg);
+      color: var(--bw-code-text);
+      border-radius: var(--bw-radius);
+      padding: 1rem 1.25rem;
+      font-family: var(--bw-font-mono);
+      font-size: 0.8125rem;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
+    }
+    .css-output-area {
+      width: 100%;
+      min-height: 200px;
+      background: var(--bw-code-bg);
+      color: var(--bw-code-text);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      padding: 1rem;
+      font-family: var(--bw-font-mono);
+      font-size: 0.75rem;
+      line-height: 1.5;
+      resize: vertical;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .multi-theme-row {
+        grid-template-columns: 1fr;
+      }
+      .theme-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Themes</h1>
+      <p class="subtitle">Generate complete, scoped themes from seed colors with <code>bw.generateTheme()</code>.</p>
+    </div>
+  </div>
+
+  <div class="content-container wide">
+
+    <!-- ====== Section 1: Theme Generator ====== -->
+    <div class="demo-section">
+      <h2>Theme Generator</h2>
+      <div class="demo-content">
+        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
+          Pick three seed colors, choose spacing and border-radius presets, then click
+          <strong>Generate</strong>. The preview below updates live with fully themed
+          buttons, alerts, badges, cards, forms, and a table.
+        </p>
+        <div id="theme-generator"></div>
+      </div>
+    </div>
+
+    <!-- ====== Section 2: Pre-built Gallery ====== -->
+    <div class="demo-section">
+      <h2>Pre-built Theme Gallery</h2>
+      <div class="demo-content">
+        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
+          Click any preset to apply it to the preview area above. Each theme is generated
+          from just three seed colors using <code>bw.generateTheme()</code>.
+        </p>
+        <div id="preset-gallery"></div>
+      </div>
+    </div>
+
+    <!-- ====== Section 3: Multi-theme Demo ====== -->
+    <div class="demo-section">
+      <h2>Multi-theme Demo</h2>
+      <div class="demo-content">
+        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
+          Multiple themes can coexist on the same page. Each container gets a CSS scope
+          class and renders the same components with different palettes.
+        </p>
+        <div id="multi-theme-demo"></div>
+      </div>
+    </div>
+
+    <!-- ====== Section 4: Code Export ====== -->
+    <div class="demo-section">
+      <h2>Code Export</h2>
+      <div class="demo-content">
+        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
+          The JavaScript call and generated CSS for your current theme. Copy the CSS
+          to use in production without any runtime cost.
+        </p>
+        <div id="code-export"></div>
+      </div>
+    </div>
+
+  </div><!-- /content-container -->
+
+  <script>
+    // Mount nav
+    mountExampleNav('#example-nav', '10-themes.html');
+
+    // Load default styles so bw-* classes work
+    bw.loadDefaultStyles();
+
+    // ---------------------------------------------------------------
+    // State
+    // ---------------------------------------------------------------
+    var state = {
+      primary:   '#0077b6',
+      secondary: '#90e0ef',
+      tertiary:  '#00b4d8',
+      spacing:   'normal',
+      radius:    'md',
+      themeName: 'custom',
+      lastResult: null
+    };
+
+    // Preset themes
+    var presets = {
+      ocean: {
+        label: 'Ocean',
+        desc: 'Cool blues and teals for a calm, professional look.',
+        primary: '#0077b6',
+        secondary: '#90e0ef',
+        tertiary: '#00b4d8'
+      },
+      sunset: {
+        label: 'Sunset',
+        desc: 'Warm oranges and deep earth tones for a bold feel.',
+        primary: '#e76f51',
+        secondary: '#264653',
+        tertiary: '#e9c46a'
+      },
+      forest: {
+        label: 'Forest',
+        desc: 'Natural greens and browns for an organic vibe.',
+        primary: '#2d6a4f',
+        secondary: '#95d5b2',
+        tertiary: '#52b788'
+      },
+      monochrome: {
+        label: 'Monochrome',
+        desc: 'Elegant grays for a minimal, modern interface.',
+        primary: '#343a40',
+        secondary: '#adb5bd',
+        tertiary: '#6c757d'
+      }
+    };
+
+    // ---------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------
+    function generateCurrentTheme() {
+      var result = bw.generateTheme(state.themeName, {
+        primary:   state.primary,
+        secondary: state.secondary,
+        tertiary:  state.tertiary,
+        spacing:   state.spacing,
+        radius:    state.radius,
+        inject:    true
+      });
+      state.lastResult = result;
+      return result;
+    }
+
+    // Build the preview component set (reused in preview area and multi-theme)
+    function buildPreviewTaco() {
+      var sampleData = [
+        { name: 'Alice',   role: 'Engineer',  status: 'Active' },
+        { name: 'Bob',     role: 'Designer',  status: 'Away' },
+        { name: 'Carol',   role: 'Manager',   status: 'Active' },
+        { name: 'Dave',    role: 'Analyst',   status: 'Offline' }
+      ];
+
+      return {
+        t: 'div', c: [
+          // Buttons
+          {
+            t: 'div', a: { class: 'preview-section' }, c: [
+              { t: 'h4', c: 'Buttons' },
+              {
+                t: 'div', a: { class: 'btn-row' }, c: [
+                  bw.makeButton({ text: 'Primary',   variant: 'primary' }),
+                  bw.makeButton({ text: 'Secondary', variant: 'secondary' }),
+                  bw.makeButton({ text: 'Success',   variant: 'success' }),
+                  bw.makeButton({ text: 'Danger',    variant: 'danger' }),
+                  bw.makeButton({ text: 'Warning',   variant: 'warning' }),
+                  bw.makeButton({ text: 'Info',      variant: 'info' })
+                ]
+              }
+            ]
+          },
+          // Alerts
+          {
+            t: 'div', a: { class: 'preview-section' }, c: [
+              { t: 'h4', c: 'Alerts' },
+              bw.makeAlert({ content: 'This is a primary alert demonstrating the theme.',   variant: 'primary' }),
+              bw.makeAlert({ content: 'Success! Your changes have been saved.',             variant: 'success' }),
+              bw.makeAlert({ content: 'Warning: please review before continuing.',          variant: 'warning' }),
+              bw.makeAlert({ content: 'Error: something went wrong.',                       variant: 'danger' })
+            ]
+          },
+          // Badges
+          {
+            t: 'div', a: { class: 'preview-section' }, c: [
+              { t: 'h4', c: 'Badges' },
+              {
+                t: 'div', a: { class: 'btn-row' }, c: [
+                  bw.makeBadge({ text: 'Primary',   variant: 'primary' }),
+                  bw.makeBadge({ text: 'Secondary', variant: 'secondary' }),
+                  bw.makeBadge({ text: 'Success',   variant: 'success' }),
+                  bw.makeBadge({ text: 'Danger',    variant: 'danger' }),
+                  bw.makeBadge({ text: 'Warning',   variant: 'warning' }),
+                  bw.makeBadge({ text: 'Info',      variant: 'info' }),
+                  bw.makeBadge({ text: 'Pill badge', variant: 'primary', pill: true })
+                ]
+              }
+            ]
+          },
+          // Cards
+          {
+            t: 'div', a: { class: 'preview-section' }, c: [
+              { t: 'h4', c: 'Cards' },
+              {
+                t: 'div', a: { style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;' }, c: [
+                  bw.makeCard({
+                    title: 'Card Title',
+                    content: 'This card inherits the generated theme colors for borders, headings, and button styling.',
+                    footer: bw.makeButton({ text: 'Action', variant: 'primary', size: 'sm' })
+                  }),
+                  bw.makeCard({
+                    title: 'Another Card',
+                    content: 'Cards adapt to the spacing and radius presets chosen in the generator.',
+                    footer: bw.makeButton({ text: 'Details', variant: 'secondary', size: 'sm' })
+                  })
+                ]
+              }
+            ]
+          },
+          // Form
+          {
+            t: 'div', a: { class: 'preview-section' }, c: [
+              { t: 'h4', c: 'Form Elements' },
+              {
+                t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 500px;' }, c: [
+                  bw.makeFormGroup({
+                    label: 'Name',
+                    input: bw.makeInput({ placeholder: 'Enter your name' })
+                  }),
+                  bw.makeFormGroup({
+                    label: 'Email',
+                    input: bw.makeInput({ type: 'email', placeholder: 'user@example.com' })
+                  }),
+                  {
+                    t: 'div', a: { style: 'grid-column: span 2;' }, c:
+                      bw.makeFormGroup({
+                        label: 'Department',
+                        input: bw.makeSelect({
+                          options: [
+                            { value: '', text: 'Select...' },
+                            { value: 'eng',  text: 'Engineering' },
+                            { value: 'des',  text: 'Design' },
+                            { value: 'mkt',  text: 'Marketing' }
+                          ]
+                        })
+                      })
+                  }
+                ]
+              }
+            ]
+          },
+          // Table
+          {
+            t: 'div', a: { class: 'preview-section' }, c: [
+              { t: 'h4', c: 'Table' },
+              bw.makeTable({
+                data: sampleData,
+                columns: [
+                  { key: 'name',   label: 'Name' },
+                  { key: 'role',   label: 'Role' },
+                  {
+                    key: 'status', label: 'Status',
+                    render: function(v) {
+                      var variant = v === 'Active' ? 'success' : v === 'Away' ? 'warning' : 'secondary';
+                      return bw.makeBadge({ text: v, variant: variant });
+                    }
+                  }
+                ],
+                striped: true,
+                hover: true
+              })
+            ]
+          }
+        ]
+      };
+    }
+
+    // ---------------------------------------------------------------
+    // Section 1: Theme Generator
+    // ---------------------------------------------------------------
+    function renderGenerator() {
+      var generatorTaco = {
+        t: 'div', c: [
+          // Controls
+          {
+            t: 'div', a: { class: 'theme-controls' }, c: [
+              // Primary
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: 'Primary' },
+                  {
+                    t: 'input', a: {
+                      type: 'color',
+                      value: state.primary,
+                      onchange: function(e) { state.primary = e.target.value; }
+                    }
+                  }
+                ]
+              },
+              // Secondary
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: 'Secondary' },
+                  {
+                    t: 'input', a: {
+                      type: 'color',
+                      value: state.secondary,
+                      onchange: function(e) { state.secondary = e.target.value; }
+                    }
+                  }
+                ]
+              },
+              // Tertiary
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: 'Tertiary' },
+                  {
+                    t: 'input', a: {
+                      type: 'color',
+                      value: state.tertiary,
+                      onchange: function(e) { state.tertiary = e.target.value; }
+                    }
+                  }
+                ]
+              },
+              // Spacing
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: 'Spacing' },
+                  {
+                    t: 'select', a: {
+                      onchange: function(e) { state.spacing = e.target.value; }
+                    },
+                    c: ['compact', 'normal', 'spacious'].map(function(s) {
+                      return { t: 'option', a: { value: s, selected: s === state.spacing ? '' : undefined }, c: s.charAt(0).toUpperCase() + s.slice(1) };
+                    })
+                  }
+                ]
+              },
+              // Radius
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: 'Radius' },
+                  {
+                    t: 'select', a: {
+                      onchange: function(e) { state.radius = e.target.value; }
+                    },
+                    c: ['none', 'sm', 'md', 'lg', 'pill'].map(function(r) {
+                      return { t: 'option', a: { value: r, selected: r === state.radius ? '' : undefined }, c: r.charAt(0).toUpperCase() + r.slice(1) };
+                    })
+                  }
+                ]
+              },
+              // Generate button
+              {
+                t: 'div', a: { class: 'theme-control-group', style: 'display: flex; align-items: flex-end;' }, c: [
+                  bw.makeButton({
+                    text: 'Generate',
+                    variant: 'primary',
+                    onclick: function() {
+                      state.themeName = 'custom';
+                      generateCurrentTheme();
+                      renderPreview();
+                      renderCodeExport();
+                    }
+                  })
+                ]
+              }
+            ]
+          },
+          // Preview area
+          { t: 'div', a: { id: 'theme-preview' } }
+        ]
+      };
+
+      bw.DOM('#theme-generator', generatorTaco);
+      // Generate initial theme and render preview
+      generateCurrentTheme();
+      renderPreview();
+    }
+
+    function renderPreview() {
+      var scope = state.themeName;
+      bw.DOM('#theme-preview', {
+        t: 'div', a: { class: 'preview-area ' + scope }, c: [
+          { t: 'h3', a: { style: 'margin: 0 0 1rem 0;' }, c: 'Live Preview' },
+          buildPreviewTaco()
+        ]
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Section 2: Pre-built Gallery
+    // ---------------------------------------------------------------
+    function renderGallery() {
+      var cards = Object.keys(presets).map(function(key) {
+        var p = presets[key];
+        return {
+          t: 'div', a: {
+            class: 'preset-card',
+            onclick: function() {
+              state.primary   = p.primary;
+              state.secondary = p.secondary;
+              state.tertiary  = p.tertiary;
+              state.themeName = key;
+              generateCurrentTheme();
+              renderGenerator();
+              renderCodeExport();
+            }
+          },
+          c: [
+            // Color strip
+            {
+              t: 'div', a: { class: 'preset-card-colors' }, c: [
+                { t: 'div', a: { style: 'background:' + p.primary + ';' } },
+                { t: 'div', a: { style: 'background:' + p.secondary + ';' } },
+                { t: 'div', a: { style: 'background:' + p.tertiary + ';' } }
+              ]
+            },
+            // Body
+            {
+              t: 'div', a: { class: 'preset-card-body' }, c: [
+                { t: 'h4', c: p.label },
+                { t: 'p', c: p.desc }
+              ]
+            }
+          ]
+        };
+      });
+
+      bw.DOM('#preset-gallery', {
+        t: 'div', a: { class: 'preset-grid' }, c: cards
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Section 3: Multi-theme Demo
+    // ---------------------------------------------------------------
+    function renderMultiTheme() {
+      // Generate two scoped themes side by side
+      var themeA = bw.generateTheme('demo-ocean', {
+        primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8',
+        inject: true
+      });
+      var themeB = bw.generateTheme('demo-sunset', {
+        primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a',
+        inject: true
+      });
+
+      // Shared component set for both panels
+      function panelContent() {
+        return {
+          t: 'div', c: [
+            {
+              t: 'div', a: { class: 'btn-row', style: 'margin-bottom: 1rem;' }, c: [
+                bw.makeButton({ text: 'Primary',   variant: 'primary' }),
+                bw.makeButton({ text: 'Secondary', variant: 'secondary' }),
+                bw.makeButton({ text: 'Success',   variant: 'success' })
+              ]
+            },
+            bw.makeAlert({ content: 'This alert uses the scoped theme colors.', variant: 'primary' }),
+            bw.makeCard({
+              title: 'Themed Card',
+              content: 'The same bw.makeCard() call renders differently depending on the scope class on the container.'
+            }),
+            {
+              t: 'div', a: { style: 'margin-top: 0.75rem;' }, c: {
+                t: 'div', a: { class: 'btn-row' }, c: [
+                  bw.makeBadge({ text: 'Badge 1', variant: 'primary' }),
+                  bw.makeBadge({ text: 'Badge 2', variant: 'success' }),
+                  bw.makeBadge({ text: 'Badge 3', variant: 'danger' })
+                ]
+              }
+            }
+          ]
+        };
+      }
+
+      bw.DOM('#multi-theme-demo', {
+        t: 'div', c: [
+          {
+            t: 'div', a: { class: 'multi-theme-row' }, c: [
+              {
+                t: 'div', a: { class: 'multi-theme-panel demo-ocean' }, c: [
+                  { t: 'h4', c: 'Ocean Theme (.demo-ocean)' },
+                  panelContent()
+                ]
+              },
+              {
+                t: 'div', a: { class: 'multi-theme-panel demo-sunset' }, c: [
+                  { t: 'h4', c: 'Sunset Theme (.demo-sunset)' },
+                  panelContent()
+                ]
+              }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 1.25rem;' }, c: [
+              { t: 'h4', c: 'How scoped themes work' },
+              {
+                t: 'p', c: [
+                  'Each call to ',
+                  { t: 'code', c: 'bw.generateTheme(name, config)' },
+                  ' scopes all generated CSS rules under the ',
+                  { t: 'code', c: '.name' },
+                  ' class. Add that class to any container element and every bw-* component inside inherits the theme. Multiple themes coexist without conflicts.'
+                ]
+              }
+            ]
+          }
+        ]
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Section 4: Code Export
+    // ---------------------------------------------------------------
+    function renderCodeExport() {
+      var result = state.lastResult;
+      if (!result) {
+        result = generateCurrentTheme();
+      }
+
+      var jsCall = "bw.generateTheme('" + state.themeName + "', {\n" +
+        "  primary:   '" + state.primary + "',\n" +
+        "  secondary: '" + state.secondary + "',\n" +
+        "  tertiary:  '" + state.tertiary + "',\n" +
+        "  spacing:   '" + state.spacing + "',\n" +
+        "  radius:    '" + state.radius + "'\n" +
+        "});";
+
+      var cssText = result.css || '/* Generate a theme first */';
+
+      bw.DOM('#code-export', {
+        t: 'div', c: [
+          // JS call
+          { t: 'h3', a: { style: 'margin: 0 0 0.75rem 0; font-size: 1rem;' }, c: 'JavaScript Call' },
+          { t: 'div', a: { class: 'code-export-block', style: 'margin-bottom: 1.5rem;' }, c: jsCall },
+
+          // CSS output
+          {
+            t: 'div', a: { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;' }, c: [
+              { t: 'h3', a: { style: 'margin: 0; font-size: 1rem;' }, c: 'Generated CSS' },
+              bw.makeButton({
+                text: 'Copy CSS',
+                variant: 'secondary',
+                size: 'sm',
+                onclick: function() {
+                  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(cssText);
+                  }
+                }
+              })
+            ]
+          },
+          {
+            t: 'textarea', a: {
+              class: 'css-output-area',
+              readonly: '',
+              rows: 14,
+              onclick: function(e) { e.target.select(); }
+            }, c: cssText
+          },
+
+          // Explanation
+          {
+            t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1.25rem;' }, c: [
+              { t: 'h4', c: 'Static export' },
+              {
+                t: 'p', c: [
+                  'Copy the CSS above into a ',
+                  { t: 'code', c: '.css' },
+                  ' file to use the theme without any runtime JavaScript. Or run ',
+                  { t: 'code', c: "bw.generateTheme(name, { inject: false })" },
+                  ' in Node.js and write ',
+                  { t: 'code', c: 'result.css' },
+                  ' to disk during your build step.'
+                ]
+              }
+            ]
+          }
+        ]
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Initialize everything
+    // ---------------------------------------------------------------
+    renderGenerator();
+    renderGallery();
+    renderMultiTheme();
+    renderCodeExport();
+  </script>
+</body>
+</html>

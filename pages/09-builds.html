@@ -25,6 +25,11 @@
 .table-card .bw-table { margin-bottom: 0; }
 .table-card .bw-table > thead > tr > * { background: var(--bw-teal-dark, #004d4d); color: #fff; border-bottom-color: var(--bw-teal, #006666); }
 .table-card .bw-table > tbody > tr:nth-of-type(odd) > * { background-color: rgba(0, 0, 0, 0.025); }
+.sri-hash { font-family: "SF Mono", Monaco, Consolas, monospace; font-size: 0.7rem; word-break: break-all; color: #555; max-width: 320px; }
+.copy-btn { display: inline-block; padding: 0.2rem 0.5rem; font-size: 0.75rem; cursor: pointer; background: var(--bw-teal, #006666); color: #fff; border: none; border-radius: 3px; }
+.copy-btn:hover { background: var(--bw-teal-dark, #004d4d); }
+.copy-btn.copied { background: #28a745; }
+.sri-tag-block { background: #1a1a1a; color: #e0e0e0; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.75rem; line-height: 1.4; overflow-x: auto; margin-top: 0.25rem; font-family: "SF Mono", Monaco, Consolas, monospace; white-space: pre-wrap; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -61,6 +66,13 @@
       <div class="demo-section builds-section">
         <h2>All Distribution Files</h2>
         <div id="builds-all" style="overflow-x:auto">Loading...</div>
+      </div>
+
+      <!-- SRI Hashes -->
+      <div class="demo-section builds-section">
+        <h2>Subresource Integrity (SRI)</h2>
+        <p>SRI hashes allow browsers to verify that fetched resources haven't been tampered with. Use them when loading bitwrench from a CDN.</p>
+        <div id="builds-sri" style="overflow-x:auto">Loading...</div>
       </div>
 
       <!-- Installation -->
@@ -264,6 +276,55 @@
           ];
         });
         bw.DOM('#builds-all', sizeTable(allHeaders, allRows));
+      }
+
+      // SRI hashes — check if any files have integrity fields
+      var sriFiles = manifest.files.filter(function(f) { return f.integrity; });
+      if (sriFiles.length > 0) {
+        var sriHeaders = [
+          { label: 'File', sz: false },
+          { label: 'Integrity Hash', sz: false },
+          { label: 'Script Tag', sz: false }
+        ];
+        var sriRows = sriFiles.map(function(f) {
+          var isCSS = f.file.endsWith('.css');
+          var tag = isCSS
+            ? '<link rel="stylesheet" href="dist/' + f.file + '"\n      integrity="' + f.integrity + '"\n      crossorigin="anonymous">'
+            : '<script src="dist/' + f.file + '"\n        integrity="' + f.integrity + '"\n        crossorigin="anonymous"><\/script>';
+          return [
+            f.file,
+            { t: 'span', a: { class: 'sri-hash' }, c: f.integrity },
+            {
+              t: 'div', c: [
+                {
+                  t: 'button', a: { class: 'copy-btn', 'data-tag': tag },
+                  c: 'Copy tag',
+                  o: {
+                    mounted: function(el) {
+                      el.addEventListener('click', function() {
+                        var text = el.getAttribute('data-tag');
+                        navigator.clipboard.writeText(text).then(function() {
+                          el.textContent = 'Copied!';
+                          el.classList.add('copied');
+                          setTimeout(function() {
+                            el.textContent = 'Copy tag';
+                            el.classList.remove('copied');
+                          }, 1500);
+                        });
+                      });
+                    }
+                  }
+                }
+              ]
+            }
+          ];
+        });
+        bw.DOM('#builds-sri', sizeTable(sriHeaders, sriRows));
+      } else {
+        bw.DOM('#builds-sri', {
+          t: 'p', a: { class: 'coming-soon' },
+          c: 'No SRI hashes found. Run: npm run generate-sri'
+        });
       }
 
     });
