@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe('State on DOM element (o.state pattern)', () => {
 
   test('counters render and have state on el._bw_state', async ({ page }) => {
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     // Should find 3 counter cards
@@ -32,7 +32,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
   });
 
   test('counters are independent — clicking one does not affect others', async ({ page }) => {
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     const values = page.locator('.counter-value');
@@ -72,7 +72,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
   });
 
   test('reset returns counter to its start value', async ({ page }) => {
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     const values = page.locator('.counter-value');
@@ -90,7 +90,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
   });
 
   test('todo list works with state on element', async ({ page }) => {
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     // Should have 3 initial items
@@ -129,7 +129,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
   });
 
   test('state survives re-render (bw.DOM preserves _bw_state)', async ({ page }) => {
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     // Click + 5 times on the first counter
@@ -157,7 +157,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
   });
 
   test('theme switcher works with state on element', async ({ page }) => {
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     // Click Sunset button
@@ -185,7 +185,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
     const jsErrors = [];
     page.on('pageerror', err => jsErrors.push(err.message));
 
-    await page.goto('/05-advanced-features.html');
+    await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
     expect(jsErrors).toEqual([]);

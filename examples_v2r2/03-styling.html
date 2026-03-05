@@ -66,85 +66,97 @@
 
   <div class="content-container wide">
 
-    <!-- Section 1: The CSS Origin Story -->
+    <!-- Section 1: Bitwrench Is CSS-Agnostic -->
     <div class="demo-section">
-      <h2>The CSS Origin Story</h2>
-      <p>Bitwrench includes ~22 component styles (buttons, cards, tables, forms, alerts, badges, tabs, and more). You get them two ways:</p>
-      <div class="demo-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0;">
+      <h2>Three Ways to Style Bitwrench Elements</h2>
+      <p style="padding: 0 0.25rem;">Bitwrench generates DOM elements with <code>class</code> and <code>style</code> attributes. Whatever CSS you use &mdash; your own stylesheet, Bootstrap, Tailwind, <code>bitwrench.css</code>, or no CSS file at all &mdash; it just works. You can mix all three approaches on the same element:</p>
+      <div class="demo-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin: 1.5rem 0;">
         <div class="callout callout-concept">
-          <h4>Option 1: CSS File</h4>
-          <pre><code>&lt;link href="bitwrench.css" rel="stylesheet"&gt;</code></pre>
-          <p>Pre-built CSS file. Include it like Bootstrap or any other stylesheet. This is what these example pages use.</p>
+          <h4>1. Inline Styles</h4>
+          <p>No CSS file needed. Use <code>bw.s()</code> and <code>bw.u</code> to compose style objects directly on elements. JavaScript IS your style system.</p>
+          <pre><code>a: { style: bw.s(bw.u.flex, bw.u.p4) }</code></pre>
         </div>
         <div class="callout callout-concept">
-          <h4>Option 2: Runtime Generation</h4>
-          <pre><code>bw.loadDefaultStyles();</code></pre>
-          <p>Generate styles from JavaScript objects at runtime. No CSS file needed &mdash; useful for embedded widgets or when you want full JS control.</p>
+          <h4>2. Generated Classes</h4>
+          <p>Use <code>bw.css()</code> to create CSS rules from JS objects when you need <code>:hover</code>, <code>:focus</code>, or media queries.</p>
+          <pre><code>bw.injectCSS(bw.css({
+  '.card:hover': { ... }
+}))</code></pre>
+        </div>
+        <div class="callout callout-concept">
+          <h4>3. Any CSS File</h4>
+          <p>Bring your own classes. <code>bitwrench.css</code> is a convenience starter kit &mdash; or use Bootstrap, Tailwind, your own stylesheet, or nothing.</p>
+          <pre><code>a: { class: 'my-class' }</code></pre>
         </div>
       </div>
-      <p>Both produce the same <code>bw-btn</code>, <code>bw-card</code>, <code>bw-table</code>, and other classes. The difference is just delivery: static file vs. runtime injection.</p>
       <div class="callout callout-tip">
-        <strong>Why this matters:</strong> Because bitwrench styles are JavaScript objects internally, you can compose them, compute them, override them, and send them from a server. This is the foundation for everything else on this page.
+        <strong>History note:</strong> In bitwrench 1.x, the library auto-generated its CSS at runtime if it detected no stylesheet was loaded. In 2.x, this is more &agrave; la carte &mdash; you choose what to load and when. The DNA has always been "CSS from JS."
       </div>
     </div>
 
-    <!-- Section 2: Styles as JavaScript Objects -->
+    <!-- Section 2: Inline Styles — No CSS File Needed -->
     <div class="demo-section">
-      <h2>Styles as JavaScript Objects</h2>
-      <p>In bitwrench, styles are plain objects. <code>bw.s()</code> merges them (like <code>Object.assign</code>), and <code>bw.u</code> provides pre-built utilities:</p>
+      <h2>Inline Styles &mdash; No CSS File Needed</h2>
+      <p style="padding: 0 0.25rem;"><code>bw.s()</code> merges style objects (like <code>Object.assign</code>). <code>bw.u</code> provides ~50 pre-built utilities. Together they replace CSS variables, preprocessors, and utility class frameworks &mdash; because <strong>JavaScript variables ARE your variables</strong>.</p>
       <div id="tryit-style-objects"></div>
       <div class="callout callout-concept" style="margin-top: 1.5rem;">
-        <h4>How it works</h4>
-        <p><code>bw.u</code> contains ~50 utility style objects (like Tailwind classes, but as JS). <code>bw.s()</code> merges them left-to-right, last one wins. Unlike Tailwind, there is no build step &mdash; your styles ARE your code.</p>
-        <p>Available utilities: <code>bw.u.flex</code>, <code>bw.u.flexCol</code>, <code>bw.u.gap4</code>, <code>bw.u.p4</code>, <code>bw.u.rounded</code>, <code>bw.u.bold</code>, <code>bw.u.textCenter</code>, <code>bw.u.bgTeal</code>, <code>bw.u.wFull</code>, <code>bw.u.transition</code>, and more.</p>
+        <h4>Why CSS variables aren't needed</h4>
+        <p>CSS variables (<code>:root { --accent: teal }</code>) exist to share values between rules. But in bitwrench, JS variables already do that &mdash; <code>var accent = '#006666'</code> and you use it in inline styles, generated classes, or both. The <code>? :</code> ternary operator replaces <code>@media</code> and conditional class toggling. No <code>:root</code> declarations needed.</p>
       </div>
     </div>
 
-    <!-- Section 3: bw.css() — Generate CSS Classes from Objects -->
+    <!-- Section 3: Computed Classes — Classes Are Just Strings -->
     <div class="demo-section">
-      <h2>bw.css() &mdash; Generate CSS Classes from Objects</h2>
-      <p>For pseudo-classes (<code>:hover</code>, <code>:focus</code>) and media queries, you need actual CSS classes. <code>bw.css()</code> generates CSS strings from JS objects, and <code>bw.injectCSS()</code> adds them to the page:</p>
+      <h2>Computed Classes &mdash; Classes Are Just Strings</h2>
+      <p>Class names in bitwrench are just strings in the <code>a: { class: ... }</code> attribute. You can compute them with JavaScript &mdash; concatenation, ternary operators, <code>.map()</code> &mdash; no special directive syntax needed. The classes can come from bitwrench.css, your own stylesheet, Bootstrap, Tailwind, or anything.</p>
+      <div id="tryit-computed-classes"></div>
+      <div class="callout callout-concept" style="margin-top: 1rem;">
+        <h4>Bring any CSS framework</h4>
+        <p>Since bitwrench just sets the <code>class</code> attribute, you can use <strong>any</strong> CSS classes: <code>'btn btn-primary'</code> (Bootstrap), <code>'flex gap-4 p-4'</code> (Tailwind), or your own. You could even use bitwrench's <code>bw.css()</code> to generate Tailwind-equivalent styles at runtime &mdash; turning class name strings into real CSS without Tailwind's build pipeline.</p>
+      </div>
+    </div>
+
+    <!-- Section 4: Generated Classes — :hover, :focus, Media Queries -->
+    <div class="demo-section">
+      <h2>Generated Classes &mdash; When You Need :hover or Media Queries</h2>
+      <p>Inline styles can't express <code>:hover</code>, <code>:focus</code>, or <code>@media</code>. For those, generate CSS at runtime with <code>bw.css()</code> + <code>bw.injectCSS()</code>:</p>
       <div id="tryit-css-classes"></div>
       <div class="callout callout-tip" style="margin-top: 1rem;">
         <strong>Key insight:</strong> <code>bw.css()</code> turns <code>{ '.my-btn': { background: 'teal' } }</code> into the CSS string <code>.my-btn { background: teal; }</code>. You write styles as data, bitwrench handles the syntax.
       </div>
     </div>
 
-    <!-- Section 4: Responsive Styles -->
+    <!-- Section 5: Responsive Styles -->
     <div class="demo-section">
       <h2>Responsive Styles</h2>
       <p><code>bw.responsive()</code> generates mobile-first media query CSS from a single object. Breakpoints: <code>sm</code> (640px), <code>md</code> (768px), <code>lg</code> (1024px), <code>xl</code> (1280px).</p>
       <div id="tryit-responsive"></div>
     </div>
 
-    <!-- Section 5: Inline vs Classes — When to Use Which -->
+    <!-- Section 6: Mixing Strategies -->
     <div class="demo-section">
-      <h2>Inline vs Classes &mdash; When to Use Which</h2>
+      <h2>Mixing All Three on One Element</h2>
+      <p>The real power: use a global class for base layout, a generated class for hover behavior, and an inline style for the dynamic part. All on the same element.</p>
+      <div id="tryit-mixing"></div>
+    </div>
+
+    <!-- Section 7: Global Styles — The Convenience Option -->
+    <div class="demo-section">
+      <h2>Global Styles &mdash; The Convenience Option</h2>
+      <p>Bitwrench ships with <code>bitwrench.css</code> &mdash; ~22 component styles (buttons, cards, tables, forms, alerts, badges, tabs). It's a convenience starter kit, not a requirement. You get them two ways:</p>
       <div class="demo-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0;">
         <div class="callout callout-concept">
-          <h4>Inline Styles (bw.s + bw.u)</h4>
-          <ul>
-            <li>Simple, no name collisions</li>
-            <li>Great for computed/dynamic styles</li>
-            <li>Work with TACO <code>a: { style: ... }</code></li>
-            <li>Can be sent from a server as JSON</li>
-          </ul>
-          <p><strong>Use for:</strong> one-off styles, runtime-computed values, server-driven UI</p>
+          <h4>Static CSS file</h4>
+          <pre><code>&lt;link href="bitwrench.css" rel="stylesheet"&gt;</code></pre>
+          <p>Include it like any stylesheet. These example pages use this approach.</p>
         </div>
         <div class="callout callout-concept">
-          <h4>CSS Classes (bw.css + bw.injectCSS)</h4>
-          <ul>
-            <li>Required for <code>:hover</code>, <code>:focus</code>, <code>:active</code></li>
-            <li>Required for media queries / responsiveness</li>
-            <li>Reusable across many elements</li>
-            <li>Can be inspected in DevTools by name</li>
-          </ul>
-          <p><strong>Use for:</strong> pseudo-classes, responsive layouts, shared component styles</p>
+          <h4>Runtime generation</h4>
+          <pre><code>bw.loadDefaultStyles();</code></pre>
+          <p>Generate the same styles from JS at runtime. Useful for embedded widgets or single-file deployments.</p>
         </div>
       </div>
-      <div class="callout callout-tip">
-        <strong>Honest trade-off:</strong> Bitwrench's CSS approach is genuinely powerful &mdash; styles are composable JS objects, computable at runtime, and sendable from any backend. What it cannot match: Tailwind's IDE autocomplete, tree-shaking, and community ecosystem.
-      </div>
+      <p>Both produce the same <code>bw-btn</code>, <code>bw-card</code>, <code>bw-table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.</p>
     </div>
 
     <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--bw-card-border);">
@@ -178,27 +190,57 @@
     // Mount the shared navigation
     mountExampleNav('#example-nav', '03-styling.html');
 
-    // ── Section 2: Styles as JavaScript Objects (try-it editor) ──
+    // ── Section 2: Inline Styles — JS variables replace CSS variables ──
     bw.DOM('#tryit-style-objects', makeTryIt({
-      code: '// Compose utility styles — just JavaScript\n' +
+      code: '// JS variables replace CSS variables. No :root needed.\n' +
+        'var accent = \'#006666\';\n' +
+        'var isDark = false;\n' +
+        '\n' +
         'bw.DOM(target, {\n' +
         '  t: \'div\', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.p4) },\n' +
         '  c: [\n' +
         '    { t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.bgTeal, bw.u.p4, bw.u.rounded, bw.u.textCenter) },\n' +
-        '      c: \'Card A\' },\n' +
+        '      a: { style: bw.s(bw.u.p4, bw.u.rounded, bw.u.textCenter,\n' +
+        '        { background: accent, color: \'#fff\' }) },\n' +
+        '      c: \'Uses accent var\' },\n' +
         '    { t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.border, bw.u.p4, bw.u.rounded, bw.u.textCenter) },\n' +
-        '      c: \'Card B\' },\n' +
+        '      a: { style: bw.s(bw.u.p4, bw.u.rounded, bw.u.textCenter, bw.u.border,\n' +
+        '        { background: isDark ? \'#333\' : \'#fff\',\n' +
+        '          color: isDark ? \'#fff\' : \'#333\' }) },\n' +
+        '      c: \'Ternary = conditional style\' },\n' +
         '    { t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.bgTeal, bw.u.p4, bw.u.rounded, bw.u.textCenter, { opacity: \'0.7\' }) },\n' +
-        '      c: \'Card C (custom)\'}\n' +
+        '      a: { style: bw.s(bw.u.bgTeal, bw.u.p4, bw.u.rounded,\n' +
+        '        bw.u.textCenter, { opacity: \'0.7\' }) },\n' +
+        '      c: \'bw.u utilities\'}\n' +
         '  ]\n' +
         '});',
-      height: '260px'
+      height: '300px'
     }));
 
-    // ── Section 3: bw.css() — Generate CSS Classes (try-it editor) ──
+    // ── Section 3: Computed Classes ──
+    bw.DOM('#tryit-computed-classes', makeTryIt({
+      code: '// Classes are just strings — compute them with JS\n' +
+        'var items = [\n' +
+        '  { text: \'All good\', status: \'success\' },\n' +
+        '  { text: \'Watch out\', status: \'warning\' },\n' +
+        '  { text: \'Problem!\', status: \'danger\' }\n' +
+        '];\n' +
+        '\n' +
+        'bw.DOM(target, {\n' +
+        '  t: \'div\', a: { style: bw.s(bw.u.flex, bw.u.flexCol, bw.u.gap2) },\n' +
+        '  c: items.map(function(item) {\n' +
+        '    // String concatenation builds the class name\n' +
+        '    return {\n' +
+        '      t: \'div\',\n' +
+        '      a: { class: \'bw-alert bw-alert-\' + item.status },\n' +
+        '      c: item.text + \' (class: bw-alert-\' + item.status + \')\'\n' +
+        '    };\n' +
+        '  })\n' +
+        '});',
+      height: '280px'
+    }));
+
+    // ── Section 4: Generated Classes — :hover, :focus, media queries ──
     bw.DOM('#tryit-css-classes', makeTryIt({
       code: '// Generate a CSS class with :hover\n' +
         'bw.injectCSS(bw.css({\n' +
@@ -217,7 +259,7 @@
       height: '260px'
     }));
 
-    // ── Section 4: Responsive Styles (try-it editor) ──
+    // ── Section 5: Responsive Styles ──
     bw.DOM('#tryit-responsive', makeTryIt({
       code: '// Responsive box — resize your browser to see it change\n' +
         'bw.injectCSS(bw.responsive(\'.responsive-demo\', {\n' +
@@ -232,6 +274,39 @@
         '  c: \'Resize your browser! base=gray, md(768px)=green, lg(1024px)=blue\'\n' +
         '});',
       height: '220px'
+    }));
+
+    // ── Section 6: Mixing all three strategies ──
+    bw.DOM('#tryit-mixing', makeTryIt({
+      code: '// Mix global class + generated class + inline style\n' +
+        'var isOnline = true;\n' +
+        '\n' +
+        '// Generated class for :hover (can\\\'t do this inline)\n' +
+        'bw.injectCSS(bw.css({\n' +
+        '  \'.status-card:hover\': {\n' +
+        '    transform: \'translateY(-2px)\',\n' +
+        '    boxShadow: \'0 4px 12px rgba(0,0,0,0.15)\'\n' +
+        '  }\n' +
+        '}));\n' +
+        '\n' +
+        'bw.DOM(target, {\n' +
+        '  t: \'div\',\n' +
+        '  a: {\n' +
+        '    // Global class (from bitwrench.css) for base card styling\n' +
+        '    // + generated class for :hover\n' +
+        '    class: \'bw-card status-card\',\n' +
+        '    // Inline style for the dynamic part (computed from JS)\n' +
+        '    style: bw.s(bw.u.p4, bw.u.transition, {\n' +
+        '      borderLeft: \'4px solid \' + (isOnline ? \'#28a745\' : \'#dc3545\'),\n' +
+        '      cursor: \'pointer\'\n' +
+        '    })\n' +
+        '  },\n' +
+        '  c: [\n' +
+        '    { t: \'h4\', c: \'Server Status\' },\n' +
+        '    { t: \'p\', c: isOnline ? \'Online\' : \'Offline\' }\n' +
+        '  ]\n' +
+        '});',
+      height: '380px'
     }));
 
     // Helper function to create demo tabs

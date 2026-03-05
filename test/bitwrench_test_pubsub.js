@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import bw from "../src/bitwrench_v2.js";
+import bw from "../src/bitwrench.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 

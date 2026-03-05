@@ -30,6 +30,7 @@
  * @param {Object} [props.style] - Inline style object
  * @param {Object} [props.state] - Component state object
  * @returns {Object} TACO object representing a card component
+ * @category Component Builders
  * @example
  * const card = makeCard({
  *   title: "Status",
@@ -95,6 +96,7 @@ export function makeCard(props = {}) {
  * @param {string} [props.className] - Additional CSS classes
  * @param {Object} [props.style] - Inline style object
  * @returns {Object} TACO object representing a button element
+ * @category Component Builders
  * @example
  * const btn = makeButton({
  *   text: "Save",
@@ -143,6 +145,7 @@ export function makeButton(props = {}) {
  * @param {Array|Object|string} [props.children] - Child content
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a container div
+ * @category Component Builders
  * @example
  * const container = makeContainer({
  *   fluid: true,
@@ -167,6 +170,7 @@ export function makeContainer(props = {}) {
  * @param {string} [props.className] - Additional CSS classes
  * @param {number} [props.gap] - Gap size (1-5) applied via bw-g-{gap} class
  * @returns {Object} TACO object representing a grid row
+ * @category Component Builders
  * @example
  * const row = makeRow({
  *   gap: 4,
@@ -200,6 +204,7 @@ export function makeRow(props = {}) {
  * @param {Array|Object|string} [props.children] - Column content
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a grid column
+ * @category Component Builders
  * @example
  * const col = makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
  */
@@ -247,6 +252,7 @@ export function makeCol(props = {}) {
  * @param {boolean} [props.vertical=false] - Stack items vertically
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a nav element
+ * @category Component Builders
  * @example
  * const nav = makeNav({
  *   pills: true,
@@ -297,6 +303,7 @@ export function makeNav(props = {}) {
  * @param {boolean} [props.dark=true] - Use dark theme styling
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a navbar element
+ * @category Component Builders
  * @example
  * const navbar = makeNavbar({
  *   brand: "MyApp",
@@ -365,6 +372,7 @@ export function makeNavbar(props = {}) {
  * @param {boolean} [props.tabs[].active] - Whether this tab is initially active
  * @param {number} [props.activeIndex=0] - Default active tab index (overridden by tab.active)
  * @returns {Object} TACO object representing a tabbed interface
+ * @category Component Builders
  * @example
  * const tabs = makeTabs({
  *   tabs: [
@@ -453,6 +461,7 @@ export function makeTabs(props = {}) {
  * @param {boolean} [props.dismissible=false] - Show a close button to dismiss the alert
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing an alert element
+ * @category Component Builders
  * @example
  * const alert = makeAlert({
  *   content: "Operation completed successfully!",
@@ -498,6 +507,7 @@ export function makeAlert(props = {}) {
  * @param {boolean} [props.pill=false] - Use pill (rounded) shape
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a badge span
+ * @category Component Builders
  * @example
  * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
  */
@@ -530,6 +540,7 @@ export function makeBadge(props = {}) {
  * @param {string} [props.label] - Custom label text (defaults to percentage)
  * @param {number} [props.height] - Custom height in pixels
  * @returns {Object} TACO object representing a progress bar
+ * @category Component Builders
  * @example
  * const progress = makeProgress({
  *   value: 75,
@@ -594,6 +605,7 @@ export function makeProgress(props = {}) {
  * @param {boolean} [props.flush=false] - Remove borders for use inside cards
  * @param {boolean} [props.interactive=false] - Make all items interactive (anchor tags)
  * @returns {Object} TACO object representing a list group
+ * @category Component Builders
  * @example
  * const list = makeListGroup({
  *   interactive: true,
@@ -666,6 +678,7 @@ export function makeListGroup(props = {}) {
  * @param {string} [props.items[].href="#"] - Item link URL
  * @param {boolean} [props.items[].active] - Whether this is the current page
  * @returns {Object} TACO object representing a breadcrumb nav
+ * @category Component Builders
  * @example
  * const crumbs = makeBreadcrumb({
  *   items: [
@@ -708,6 +721,7 @@ export function makeBreadcrumb(props = {}) {
  * @param {Function} [props.onsubmit] - Submit handler (defaults to preventDefault)
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a form element
+ * @category Component Builders
  * @example
  * const form = makeForm({
  *   onsubmit: (e) => { e.preventDefault(); handleSubmit(); },
@@ -739,6 +753,7 @@ export function makeForm(props = {}) {
  * @param {string} [props.help] - Help text displayed below the input
  * @param {string} [props.id] - Input ID (links label to input via for/id)
  * @returns {Object} TACO object representing a form group
+ * @category Component Builders
  * @example
  * const group = makeFormGroup({
  *   label: "Email",
@@ -787,6 +802,7 @@ export function makeFormGroup(props = {}) {
  * @param {string} [props.className] - Additional CSS classes
  * @param {Object} [props.style] - Inline style object
  * @returns {Object} TACO object representing an input element
+ * @category Component Builders
  * @example
  * const input = makeInput({
  *   type: "email",
@@ -842,6 +858,7 @@ export function makeInput(props = {}) {
  * @param {boolean} [props.required=false] - Whether the textarea is required
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a textarea element
+ * @category Component Builders
  * @example
  * const textarea = makeTextarea({
  *   rows: 5,
@@ -894,6 +911,7 @@ export function makeTextarea(props = {}) {
  * @param {boolean} [props.required=false] - Whether the select is required
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a select element
+ * @category Component Builders
  * @example
  * const select = makeSelect({
  *   value: "b",
@@ -948,6 +966,7 @@ export function makeSelect(props = {}) {
  * @param {boolean} [props.disabled=false] - Whether the checkbox is disabled
  * @param {string} [props.value] - Checkbox value attribute
  * @returns {Object} TACO object representing a checkbox form group
+ * @category Component Builders
  * @example
  * const checkbox = makeCheckbox({
  *   label: "I agree to the terms",
@@ -999,6 +1018,7 @@ export function makeCheckbox(props = {}) {
  * @param {number} [props.gap=3] - Gap size (0-5)
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a stack layout
+ * @category Component Builders
  * @example
  * const stack = makeStack({
  *   direction: "horizontal",
@@ -1034,6 +1054,7 @@ export function makeStack(props = {}) {
  * @param {string} [props.size="md"] - Spinner size ("sm", "md", "lg")
  * @param {string} [props.type="border"] - Spinner type ("border" or "grow")
  * @returns {Object} TACO object representing a spinner with screen-reader text
+ * @category Component Builders
  * @example
  * const spinner = makeSpinner({ variant: "info", size: "sm" });
  */
@@ -1076,6 +1097,7 @@ export function makeSpinner(props = {}) {
  * @param {Array|Object} [props.actions] - Call-to-action buttons
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a hero section
+ * @category Component Builders
  * @example
  * const hero = makeHero({
  *   title: "Welcome to Bitwrench",
@@ -1165,6 +1187,7 @@ export function makeHero(props = {}) {
  * @param {string} [props.iconSize="3rem"] - Icon font size
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a feature grid
+ * @category Component Builders
  * @example
  * const features = makeFeatureGrid({
  *   columns: 3,
@@ -1252,6 +1275,7 @@ export function makeFeatureGrid(props = {}) {
  * @param {string} [props.footerClass] - Additional footer CSS classes
  * @param {Object} [props.state] - Component state object
  * @returns {Object} TACO object representing an enhanced card
+ * @category Component Builders
  * @example
  * const card = makeCardV2({
  *   title: "Project Alpha",
@@ -1373,6 +1397,7 @@ export function makeCardV2(props = {}) {
  * @param {boolean} [props.centered=true] - Center-align content
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a CTA section
+ * @category Component Builders
  * @example
  * const cta = makeCTA({
  *   title: "Ready to get started?",
@@ -1426,6 +1451,7 @@ export function makeCTA(props = {}) {
  * @param {string} [props.spacing="md"] - Vertical padding ("sm", "md", "lg", "xl")
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a content section
+ * @category Component Builders
  * @example
  * const section = makeSection({
  *   title: "Features",
@@ -1488,6 +1514,8 @@ export function makeSection(props = {}) {
  * Provides methods to update card title, content, and CSS classes
  * without re-rendering the entire component. Created automatically
  * when using bw.createCard().
+ *
+ * @category Component Handles
  */
 export class CardHandle {
   /**
@@ -1580,6 +1608,8 @@ export class CardHandle {
  * Provides methods for data updates and column sorting. Caches
  * thead/tbody/header references for efficient DOM updates.
  * Created automatically when using bw.createTable().
+ *
+ * @category Component Handles
  */
 export class TableHandle {
   /**
@@ -1685,6 +1715,8 @@ export class TableHandle {
  *
  * Provides methods to update the active navigation link.
  * Created automatically when using bw.createNavbar().
+ *
+ * @category Component Handles
  */
 export class NavbarHandle {
   /**
@@ -1726,6 +1758,8 @@ export class NavbarHandle {
  * Provides programmatic tab switching. Sets up click handlers
  * on tab buttons and manages active states on both buttons and panes.
  * Created automatically when using bw.createTabs().
+ *
+ * @category Component Handles
  */
 export class TabsHandle {
   /**
@@ -1799,6 +1833,7 @@ export class TabsHandle {
  * @param {string|Object|Array} [props.result] - Live result content for the "Result" tab
  * @param {string} [props.language="javascript"] - Code language for syntax class
  * @returns {Object} TACO object representing a code demo with tabbed Result/Code views
+ * @category Component Builders
  * @example
  * const demo = makeCodeDemo({
  *   title: "Button Example",

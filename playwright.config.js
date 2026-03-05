@@ -62,7 +62,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'cd examples_v2r2 && python3 -m http.server 8081',
+    command: 'python3 -m http.server 8081',
     port: 8081,
     reuseExistingServer: !process.env.CI,
   },

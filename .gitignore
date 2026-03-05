@@ -15,6 +15,7 @@ node_modules/
 # Ignore any IDE-specific files
 .vscode/
 .idea/
+.feedback/
 
 # Ignore any compiled binaries
 *.exe

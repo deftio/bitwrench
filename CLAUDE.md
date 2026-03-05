@@ -161,9 +161,10 @@ Bitwrench v2 is a counter-thesis to modern JavaScript frameworks. Instead of JSX
 - `bw.naturalCompare(a, b)` - Natural sort comparison
 
 ### v2 Development Files
-- `/src/bitwrench_v2.js` - Main v2 implementation
+- `/src/bitwrench.js` - Main v2 source (renamed from bitwrench_v2.js)
 - `/src/bitwrench-styles.js` - Default Bootstrap-inspired styles
-- `/examples_v2/` - v2 specific examples
+- `/src/bitwrench-components-v2.js` - Component helpers
+- `/src_1x/bitwrench.js` - Legacy v1 source (archived)
 - `/dev/bitwrench_v2_design.md` - v2 design philosophy
 - `/dev/bitwrench_v2_components.md` - Component examples
 - `/dev/bitwrench_v2_examples.md` - Full page examples

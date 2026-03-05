@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Framework Comparison</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    /* Page-specific styles */
+    .intro-text {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: var(--bw-text);
+      margin: 0 0 1rem;
+      max-width: 720px;
+    }
+    .intro-text:last-child { margin-bottom: 0; }
+    .preview-box {
+      background: var(--bw-card-bg);
+      border: 2px solid var(--bw-teal);
+      border-radius: var(--bw-radius);
+      padding: var(--bw-space-lg);
+      margin-bottom: 1.25rem;
+    }
+    .preview-label {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--bw-teal);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .cmp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+    .cmp-table th, .cmp-table td {
+      padding: 0.65rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--bw-card-border);
+    }
+    .cmp-table th {
+      background: var(--bw-teal-bg);
+      font-weight: 600;
+      color: var(--bw-text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .cmp-table tr:hover { background: var(--bw-teal-bg); }
+    .todo-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .todo-input-row input {
+      flex: 1;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      font-size: 0.875rem;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--bw-card-border);
+      font-size: 0.875rem;
+    }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item.done span { text-decoration: line-through; color: var(--bw-text-secondary); }
+    .todo-item span { flex: 1; }
+    .theme-card {
+      padding: 1.25rem;
+      border-radius: var(--bw-radius);
+      border: 1px solid var(--bw-card-border);
+      transition: all 0.3s;
+    }
+    .theme-card h4 { margin: 0 0 0.35rem; }
+    .theme-card p { margin: 0; font-size: 0.875rem; opacity: 0.85; }
+    .theme-btns { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Framework Comparison</h1>
+      <p class="subtitle">The same tasks solved different ways. Every approach has trade-offs.</p>
+    </div>
+  </div>
+
+  <div class="content-container wide">
+
+    <!-- Intro -->
+    <div class="demo-section">
+      <h2>About This Comparison</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          There are many good tools for building web UIs. Each makes different trade-offs
+          around complexity, bundle size, developer experience, and ecosystem. This page shows
+          the same tasks implemented in several approaches so you can compare them directly.
+        </p>
+        <p class="intro-text">
+          We lead with the areas where bitwrench has genuine, unique strengths. The later
+          comparisons show areas where bitwrench is competitive but not necessarily better.
+        </p>
+      </div>
+    </div>
+
+    <!-- Comparison 1: Server-side JSON (was 6 — bitwrench's strongest differentiator) -->
+    <div class="demo-section">
+      <h2>Comparison 1: Server-Driven UI</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Bitwrench's most unique capability: a backend in <strong>any language</strong> can generate UI
+          as JSON. The browser receives JSON and bitwrench renders it &mdash; no JavaScript
+          templating on the server. No other major framework does this. This is especially useful
+          for embedded devices and polyglot backends.
+        </p>
+        <div id="json-preview"></div>
+        <div id="json-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 2: Table from data (NEW — genuine win) -->
+    <div class="demo-section">
+      <h2>Comparison 2: Table from Data</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Given an array of objects, render a sortable, styled table. One function call in bitwrench
+          vs. 20+ lines of vanilla JS or 10+ lines in React. This is a genuine productivity win.
+        </p>
+        <div id="table-preview"></div>
+        <div id="table-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 3: Dynamic theming (was 5 — competitive advantage) -->
+    <div class="demo-section">
+      <h2>Comparison 3: Dynamic Theming</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Generate and apply a complete color theme at runtime. This is where bitwrench's
+          <code>bw.css()</code> and <code>bw.injectCSS()</code> shine &mdash; you can generate
+          entire stylesheets from JavaScript objects with no build step.
+        </p>
+        <div id="theme-preview"></div>
+        <div id="theme-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 4: Data-driven list (was 2 — competitive) -->
+    <div class="demo-section">
+      <h2>Comparison 4: Rendering a List from Data</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Given this data: three users with names and roles. Render a styled list where each
+          item shows the name and a badge for the role. All code below produces this output:
+        </p>
+        <div id="list-preview"></div>
+        <div id="list-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 5: Counter (was 1 — honest: similar line count) -->
+    <div class="demo-section">
+      <h2>Comparison 5: A Counter</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          The simplest interactive component: a heading that shows a number, and a button
+          that increments it. Honest note: line counts are similar across all frameworks here.
+          This is included for completeness, not as a selling point.
+        </p>
+        <div id="counter-preview"></div>
+        <div id="counter-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 6: Todo (was 4 — honest: bitwrench is more verbose) -->
+    <div class="demo-section">
+      <h2>Comparison 6: State Management (Todo List)</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          A realistic component: a todo list where you can add items and mark them done.
+          Honest note: bitwrench requires more code than React/Vue/Svelte for complex stateful
+          components. Manual re-rendering trades convenience for transparency.
+        </p>
+        <div id="todo-preview"></div>
+        <div id="todo-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Dynamic styling (was 3 — removed from numbered list, still present) -->
+    <div class="demo-section">
+      <h2>Bonus: Dynamic Styling</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          A box that toggles between two color states when a button is clicked. Each framework
+          changes background and text color on the same element. Try the preview:
+        </p>
+        <div id="style-preview"></div>
+        <div id="style-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Summary table -->
+    <div class="demo-section">
+      <h2>Feature Comparison</h2>
+      <div class="demo-section-body">
+        <div id="summary-table"></div>
+      </div>
+    </div>
+
+    <!-- Honest summary -->
+    <div class="demo-section">
+      <h2>Honest Assessment</h2>
+      <div class="demo-section-body">
+        <div id="honest-summary"></div>
+      </div>
+    </div>
+
+    <!-- Where bitwrench fits -->
+    <div class="demo-section">
+      <h2>Where Bitwrench Fits</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Bitwrench works best in situations where a full framework would add unnecessary
+          complexity. Here are some specific scenarios:
+        </p>
+        <div id="use-cases"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '07-framework-comparison.html');
+
+    // ---- Reusable helpers ----
+
+    // Preview label
+    var previewLabel = { t: 'div', a: { class: 'preview-label' }, c: 'What we\'re building (live)' };
+
+    // Build a tabbed code comparison from an array of { label, code } objects
+    var codeComparison = function(examples) {
+      return bw.makeTabs({
+        tabs: examples.map(function(ex) {
+          return {
+            label: ex.label,
+            content: {
+              t: 'div',
+              a: { style: 'position: relative;' },
+              c: { t: 'pre', c: { t: 'code', c: ex.code } }
+            }
+          };
+        })
+      });
+    };
+
+    // ---- Comparison 1: Counter ----
+    // Live preview — an actual working counter
+    (function() {
+      var count = 0;
+
+      function renderPreview() {
+        bw.DOM('#counter-preview', {
+          t: 'div',
+          a: { class: 'preview-box' },
+          c: [
+            previewLabel,
+            {
+              t: 'div',
+              c: [
+                { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' }, c: 'Count: ' + count },
+                bw.makeButton({
+                  text: 'Increment',
+                  variant: 'primary',
+                  onclick: function() { count++; renderPreview(); }
+                })
+              ]
+            }
+          ]
+        });
+      }
+      renderPreview();
+
+      // All frameworks produce: <div><h4>Count: N</h4><button>Increment</button></div>
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '<!-- All examples produce the same UI: -->',
+            '<!-- <div><h4>Count: 0</h4><button>Increment</button></div> -->',
+            '',
+            '<div id="counter">',
+            '  <h4>Count: <span id="value">0</span></h4>',
+            '  <button id="btn">Increment</button>',
+            '</div>',
+            '',
+            '<script>',
+            '  var count = 0;',
+            '  var span = document.getElementById("value");',
+            '  document.getElementById("btn")',
+            '    .addEventListener("click", function() {',
+            '      count++;',
+            '      span.textContent = count;',
+            '    });',
+            '<\/script>'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React (JSX) — requires npm + bundler',
+            '// Renders: <div><h4>Count: N</h4><button>Increment</button></div>',
+            '',
+            'import { useState } from "react";',
+            '',
+            'function Counter() {',
+            '  const [count, setCount] = useState(0);',
+            '  return (',
+            '    <div>',
+            '      <h4>Count: {count}</h4>',
+            '      <button onClick={() => setCount(c => c + 1)}>',
+            '        Increment',
+            '      </button>',
+            '    </div>',
+            '  );',
+            '}',
+            '',
+            '// Mount: ReactDOM.render(<Counter />, root);'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Vue SFC — renders same <div>/<h4>/<button> structure -->',
+            '',
+            '<script setup>',
+            'import { ref } from "vue";',
+            'const count = ref(0);',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div>',
+            '    <h4>Count: {{ count }}</h4>',
+            '    <button @click="count++">Increment</button>',
+            '  </div>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Svelte — renders same <div>/<h4>/<button> structure -->',
+            '',
+            '<script>',
+            '  let count = 0;',
+            '<\/script>',
+            '',
+            '<div>',
+            '  <h4>Count: {count}</h4>',
+            '  <button on:click={() => count++}>Increment</button>',
+            '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Bitwrench — no build step, same output',
+            '// Renders: <div><h4>Count: N</h4><button>Increment</button></div>',
+            '',
+            'var count = 0;',
+            '',
+            'function render() {',
+            '  bw.DOM("#counter", {',
+            '    t: "div",',
+            '    c: [',
+            '      { t: "h4", c: "Count: " + count },',
+            '      bw.makeButton({',
+            '        text: "Increment",',
+            '        variant: "primary",',
+            '        onclick: function() { count++; render(); }',
+            '      })',
+            '    ]',
+            '  });',
+            '}',
+            'render();'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#counter-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 2: List from data ----
+    (function() {
+      // The exact data all frameworks use
+      var users = [
+        { name: 'Alice', role: 'admin' },
+        { name: 'Bob', role: 'editor' },
+        { name: 'Carol', role: 'viewer' }
+      ];
+
+      // Live preview — rendered with bitwrench
+      bw.DOM('#list-preview', {
+        t: 'div',
+        a: { class: 'preview-box' },
+        c: [
+          previewLabel,
+          {
+            t: 'ul',
+            a: { class: 'bw-list-group' },
+            c: users.map(function(u) {
+              return {
+                t: 'li',
+                a: {
+                  class: 'bw-list-group-item',
+                  style: 'display: flex; justify-content: space-between; align-items: center;'
+                },
+                c: [
+                  { t: 'span', c: u.name },
+                  bw.makeBadge({ text: u.role, variant: 'primary' })
+                ]
+              };
+            })
+          }
+        ]
+      });
+
+      // All frameworks render: <ul><li>Name <span class="badge">role</span></li>...</ul>
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Data: same array used by every framework',
+            'var users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob",   role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '',
+            '// Build: <ul class="list-group">',
+            '//          <li>Alice <span class="badge">admin</span></li>...',
+            '//        </ul>',
+            '',
+            'var ul = document.createElement("ul");',
+            'ul.className = "list-group";',
+            '',
+            'users.forEach(function(u) {',
+            '  var li = document.createElement("li");',
+            '  li.className = "list-group-item";',
+            '  li.textContent = u.name;',
+            '  var badge = document.createElement("span");',
+            '  badge.className = "badge";',
+            '  badge.textContent = u.role;',
+            '  li.appendChild(badge);',
+            '  ul.appendChild(li);',
+            '});',
+            '',
+            'document.getElementById("app").appendChild(ul);'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// Same data, same output: <ul><li>Name <badge/></li>...</ul>',
+            '',
+            'const users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob",   role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '',
+            'function UserList() {',
+            '  return (',
+            '    <ul className="list-group">',
+            '      {users.map(u => (',
+            '        <li key={u.name} className="list-group-item">',
+            '          {u.name}',
+            '          <span className="badge badge-primary">',
+            '            {u.role}',
+            '          </span>',
+            '        </li>',
+            '      ))}',
+            '    </ul>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Same data, same output: <ul><li>Name <badge/></li>...</ul> -->',
+            '',
+            '<script setup>',
+            'const users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob",   role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <ul class="list-group">',
+            '    <li v-for="u in users" :key="u.name"',
+            '        class="list-group-item">',
+            '      {{ u.name }}',
+            '      <span class="badge badge-primary">{{ u.role }}</span>',
+            '    </li>',
+            '  </ul>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Same data, same output: <ul><li>Name <badge/></li>...</ul> -->',
+            '',
+            '<script>',
+            '  let users = [',
+            '    { name: "Alice", role: "admin" },',
+            '    { name: "Bob",   role: "editor" },',
+            '    { name: "Carol", role: "viewer" }',
+            '  ];',
+            '<\/script>',
+            '',
+            '<ul class="list-group">',
+            '  {#each users as u (u.name)}',
+            '    <li class="list-group-item">',
+            '      {u.name}',
+            '      <span class="badge badge-primary">{u.role}</span>',
+            '    </li>',
+            '  {/each}',
+            '</ul>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Same data, same output: <ul><li>Name <badge/></li>...</ul>',
+            '',
+            'var users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob",   role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '',
+            'bw.DOM("#app", {',
+            '  t: "ul",',
+            '  a: { class: "bw-list-group" },',
+            '  c: users.map(function(u) {',
+            '    return {',
+            '      t: "li",',
+            '      a: { class: "bw-list-group-item" },',
+            '      c: [',
+            '        u.name, " ",',
+            '        bw.makeBadge({ text: u.role, variant: "primary" })',
+            '      ]',
+            '    };',
+            '  })',
+            '});'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#list-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 3: Dynamic styling ----
+    (function() {
+      // Live preview — toggling style
+      var active = false;
+
+      function renderStylePreview() {
+        var bg = active ? '#006666' : '#fff';
+        var fg = active ? '#fff' : '#1a1a1a';
+
+        bw.DOM('#style-preview', {
+          t: 'div',
+          a: { class: 'preview-box' },
+          c: [
+            previewLabel,
+            {
+              t: 'div',
+              a: {
+                style: 'padding: 1rem; border-radius: 8px; border: 1px solid var(--bw-card-border); ' +
+                  'transition: all 0.3s; margin-bottom: 0.75rem; ' +
+                  'background:' + bg + '; color:' + fg
+              },
+              c: 'Click "Toggle" to switch this box between white and teal.'
+            },
+            bw.makeButton({
+              text: 'Toggle',
+              variant: 'primary',
+              onclick: function() { active = !active; renderStylePreview(); }
+            })
+          ]
+        });
+      }
+      renderStylePreview();
+
+      // All frameworks toggle: background #006666/#fff, color #fff/#1a1a1a
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Toggle box between bg:#006666/color:#fff and bg:#fff/color:#1a1a1a',
+            '',
+            '<div id="box" style="padding:1rem; border-radius:8px;',
+            '  transition:all 0.3s; background:#fff; color:#1a1a1a">',
+            '  Styled box',
+            '</div>',
+            '<button id="toggle">Toggle</button>',
+            '',
+            '<script>',
+            '  var active = false;',
+            '  var box = document.getElementById("box");',
+            '  document.getElementById("toggle")',
+            '    .addEventListener("click", function() {',
+            '      active = !active;',
+            '      box.style.background = active ? "#006666" : "#fff";',
+            '      box.style.color = active ? "#fff" : "#1a1a1a";',
+            '    });',
+            '<\/script>'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// Toggle: bg:#006666/color:#fff <-> bg:#fff/color:#1a1a1a',
+            '',
+            'import { useState } from "react";',
+            '',
+            'function StyledBox() {',
+            '  const [active, setActive] = useState(false);',
+            '  const bg = active ? "#006666" : "#fff";',
+            '  const fg = active ? "#fff" : "#1a1a1a";',
+            '',
+            '  return (',
+            '    <div>',
+            '      <div style={{',
+            '        padding: "1rem",',
+            '        borderRadius: "8px",',
+            '        transition: "all 0.3s",',
+            '        background: bg, color: fg',
+            '      }}>',
+            '        Styled box',
+            '      </div>',
+            '      <button onClick={() => setActive(a => !a)}>',
+            '        Toggle',
+            '      </button>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Toggle box between bg:#006666/color:#fff and bg:#fff/color:#1a1a1a -->',
+            '',
+            '<script setup>',
+            'import { ref } from "vue";',
+            'const active = ref(false);',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div>',
+            '    <div :style="{',
+            '      padding: \'1rem\',',
+            '      borderRadius: \'8px\',',
+            '      transition: \'all 0.3s\',',
+            '      background: active ? \'#006666\' : \'#fff\',',
+            '      color: active ? \'#fff\' : \'#1a1a1a\'',
+            '    }">',
+            '      Styled box',
+            '    </div>',
+            '    <button @click="active = !active">Toggle</button>',
+            '  </div>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Toggle box between bg:#006666/color:#fff and bg:#fff/color:#1a1a1a -->',
+            '',
+            '<script>',
+            '  let active = false;',
+            '<\/script>',
+            '',
+            '<div>',
+            '  <div style="',
+            '    padding: 1rem;',
+            '    border-radius: 8px;',
+            '    transition: all 0.3s;',
+            '    background: {active ? \'#006666\' : \'#fff\'};',
+            '    color: {active ? \'#fff\' : \'#1a1a1a\'}',
+            '  ">',
+            '    Styled box',
+            '  </div>',
+            '  <button on:click={() => active = !active}>Toggle</button>',
+            '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Toggle box between bg:#006666/color:#fff and bg:#fff/color:#1a1a1a',
+            '',
+            'var active = false;',
+            '',
+            'function render() {',
+            '  var bg = active ? "#006666" : "#fff";',
+            '  var fg = active ? "#fff" : "#1a1a1a";',
+            '',
+            '  bw.DOM("#app", {',
+            '    t: "div",',
+            '    c: [',
+            '      {',
+            '        t: "div",',
+            '        a: {',
+            '          style: "padding:1rem; border-radius:8px; " +',
+            '            "transition:all 0.3s; " +',
+            '            "background:" + bg + "; color:" + fg',
+            '        },',
+            '        c: "Styled box"',
+            '      },',
+            '      bw.makeButton({',
+            '        text: "Toggle",',
+            '        variant: "primary",',
+            '        onclick: function() { active = !active; render(); }',
+            '      })',
+            '    ]',
+            '  });',
+            '}',
+            'render();'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#style-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 4: Todo List (State Management) ----
+    (function() {
+      var todos = [
+        { id: 1, text: 'Learn bitwrench', done: true },
+        { id: 2, text: 'Build a dashboard', done: false },
+        { id: 3, text: 'Deploy to production', done: false }
+      ];
+      var nextId = 4;
+
+      function renderTodo() {
+        var todoItem = function(item) {
+          return {
+            t: 'div',
+            a: { class: 'todo-item' + (item.done ? ' done' : '') },
+            c: [
+              {
+                t: 'input',
+                a: {
+                  type: 'checkbox',
+                  checked: item.done ? 'checked' : undefined,
+                  onchange: function() {
+                    item.done = !item.done;
+                    renderTodo();
+                  }
+                }
+              },
+              { t: 'span', c: item.text },
+              bw.makeButton({
+                text: '\u00D7',
+                variant: 'secondary',
+                size: 'sm',
+                onclick: function() {
+                  todos = todos.filter(function(t) { return t.id !== item.id; });
+                  renderTodo();
+                }
+              })
+            ]
+          };
+        };
+
+        bw.DOM('#todo-preview', {
+          t: 'div',
+          a: { class: 'preview-box' },
+          c: [
+            previewLabel,
+            {
+              t: 'div',
+              a: { class: 'todo-input-row' },
+              c: [
+                {
+                  t: 'input',
+                  a: {
+                    type: 'text',
+                    placeholder: 'Add a todo...',
+                    id: 'todo-input',
+                    onkeydown: function(e) {
+                      if (e.key === 'Enter') addTodo();
+                    }
+                  }
+                },
+                bw.makeButton({
+                  text: 'Add',
+                  variant: 'primary',
+                  onclick: addTodo
+                })
+              ]
+            },
+            { t: 'div', c: todos.map(todoItem) },
+            {
+              t: 'div',
+              a: { style: 'margin-top: 0.5rem; font-size: 0.8125rem; color: var(--bw-text-secondary);' },
+              c: todos.filter(function(t) { return !t.done; }).length + ' remaining'
+            }
+          ]
+        });
+      }
+
+      function addTodo() {
+        var input = bw.$('#todo-input')[0];
+        if (!input) return;
+        var text = input.value.trim();
+        if (!text) return;
+        todos.push({ id: nextId++, text: text, done: false });
+        renderTodo();
+      }
+
+      renderTodo();
+
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Todo list with add, check, and delete',
+            'var todos = [',
+            '  { id: 1, text: "Learn bitwrench", done: true },',
+            '  { id: 2, text: "Build a dashboard", done: false }',
+            '];',
+            'var nextId = 3;',
+            '',
+            'function render() {',
+            '  var list = document.getElementById("todo-list");',
+            '  list.innerHTML = "";',
+            '  todos.forEach(function(todo) {',
+            '    var div = document.createElement("div");',
+            '    div.className = "todo-item" + (todo.done ? " done" : "");',
+            '',
+            '    var cb = document.createElement("input");',
+            '    cb.type = "checkbox";',
+            '    cb.checked = todo.done;',
+            '    cb.addEventListener("change", function() {',
+            '      todo.done = !todo.done;',
+            '      render();',
+            '    });',
+            '',
+            '    var span = document.createElement("span");',
+            '    span.textContent = todo.text;',
+            '',
+            '    var del = document.createElement("button");',
+            '    del.textContent = "\\u00D7";',
+            '    del.addEventListener("click", function() {',
+            '      todos = todos.filter(function(t) { return t.id !== todo.id; });',
+            '      render();',
+            '    });',
+            '',
+            '    div.appendChild(cb);',
+            '    div.appendChild(span);',
+            '    div.appendChild(del);',
+            '    list.appendChild(div);',
+            '  });',
+            '  document.getElementById("remaining").textContent =',
+            '    todos.filter(function(t) { return !t.done; }).length + " remaining";',
+            '}',
+            '',
+            'document.getElementById("add-btn")',
+            '  .addEventListener("click", function() {',
+            '    var input = document.getElementById("todo-input");',
+            '    if (input.value.trim()) {',
+            '      todos.push({ id: nextId++, text: input.value.trim(), done: false });',
+            '      input.value = "";',
+            '      render();',
+            '    }',
+            '  });',
+            '',
+            'render();'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React: Todo list with hooks for state management',
+            'import { useState } from "react";',
+            '',
+            'function TodoApp() {',
+            '  const [todos, setTodos] = useState([',
+            '    { id: 1, text: "Learn bitwrench", done: true },',
+            '    { id: 2, text: "Build a dashboard", done: false }',
+            '  ]);',
+            '  const [text, setText] = useState("");',
+            '  const [nextId, setNextId] = useState(3);',
+            '',
+            '  function addTodo() {',
+            '    if (!text.trim()) return;',
+            '    setTodos([...todos, { id: nextId, text: text.trim(), done: false }]);',
+            '    setNextId(nextId + 1);',
+            '    setText("");',
+            '  }',
+            '',
+            '  return (',
+            '    <div>',
+            '      <div className="todo-input-row">',
+            '        <input value={text}',
+            '          onChange={e => setText(e.target.value)}',
+            '          onKeyDown={e => e.key === "Enter" && addTodo()}',
+            '          placeholder="Add a todo..." />',
+            '        <button onClick={addTodo}>Add</button>',
+            '      </div>',
+            '      {todos.map(todo => (',
+            '        <div key={todo.id}',
+            '          className={"todo-item" + (todo.done ? " done" : "")}>',
+            '          <input type="checkbox" checked={todo.done}',
+            '            onChange={() =>',
+            '              setTodos(todos.map(t =>',
+            '                t.id === todo.id ? {...t, done: !t.done} : t',
+            '              ))',
+            '            } />',
+            '          <span>{todo.text}</span>',
+            '          <button onClick={() =>',
+            '            setTodos(todos.filter(t => t.id !== todo.id))}>',
+            '            \\u00D7',
+            '          </button>',
+            '        </div>',
+            '      ))}',
+            '      <div>{todos.filter(t => !t.done).length} remaining</div>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Vue: Todo list with reactive state -->',
+            '<script setup>',
+            'import { ref, computed } from "vue";',
+            '',
+            'const todos = ref([',
+            '  { id: 1, text: "Learn bitwrench", done: true },',
+            '  { id: 2, text: "Build a dashboard", done: false }',
+            ']);',
+            'const text = ref("");',
+            'let nextId = 3;',
+            '',
+            'const remaining = computed(() =>',
+            '  todos.value.filter(t => !t.done).length',
+            ');',
+            '',
+            'function addTodo() {',
+            '  if (!text.value.trim()) return;',
+            '  todos.value.push({ id: nextId++, text: text.value.trim(), done: false });',
+            '  text.value = "";',
+            '}',
+            '',
+            'function removeTodo(id) {',
+            '  todos.value = todos.value.filter(t => t.id !== id);',
+            '}',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div>',
+            '    <div class="todo-input-row">',
+            '      <input v-model="text" @keydown.enter="addTodo"',
+            '        placeholder="Add a todo..." />',
+            '      <button @click="addTodo">Add</button>',
+            '    </div>',
+            '    <div v-for="todo in todos" :key="todo.id"',
+            '      :class="[\'todo-item\', { done: todo.done }]">',
+            '      <input type="checkbox" v-model="todo.done" />',
+            '      <span>{{ todo.text }}</span>',
+            '      <button @click="removeTodo(todo.id)">\\u00D7</button>',
+            '    </div>',
+            '    <div>{{ remaining }} remaining</div>',
+            '  </div>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Svelte: Todo list with reactive assignments -->',
+            '<script>',
+            '  let todos = [',
+            '    { id: 1, text: "Learn bitwrench", done: true },',
+            '    { id: 2, text: "Build a dashboard", done: false }',
+            '  ];',
+            '  let text = "";',
+            '  let nextId = 3;',
+            '',
+            '  $: remaining = todos.filter(t => !t.done).length;',
+            '',
+            '  function addTodo() {',
+            '    if (!text.trim()) return;',
+            '    todos = [...todos, { id: nextId++, text: text.trim(), done: false }];',
+            '    text = "";',
+            '  }',
+            '',
+            '  function removeTodo(id) {',
+            '    todos = todos.filter(t => t.id !== id);',
+            '  }',
+            '<\/script>',
+            '',
+            '<div>',
+            '  <div class="todo-input-row">',
+            '    <input bind:value={text}',
+            '      on:keydown={e => e.key === "Enter" && addTodo()}',
+            '      placeholder="Add a todo..." />',
+            '    <button on:click={addTodo}>Add</button>',
+            '  </div>',
+            '  {#each todos as todo (todo.id)}',
+            '    <div class="todo-item" class:done={todo.done}>',
+            '      <input type="checkbox" bind:checked={todo.done} />',
+            '      <span>{todo.text}</span>',
+            '      <button on:click={() => removeTodo(todo.id)}>\\u00D7</button>',
+            '    </div>',
+            '  {/each}',
+            '  <div>{remaining} remaining</div>',
+            '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Bitwrench: Todo list — state + render cycle, no build step',
+            'var todos = [',
+            '  { id: 1, text: "Learn bitwrench", done: true },',
+            '  { id: 2, text: "Build a dashboard", done: false }',
+            '];',
+            'var nextId = 3;',
+            '',
+            'var todoItem = function(item) {',
+            '  return {',
+            '    t: "div",',
+            '    a: { class: "todo-item" + (item.done ? " done" : "") },',
+            '    c: [',
+            '      { t: "input", a: {',
+            '        type: "checkbox",',
+            '        checked: item.done ? "checked" : undefined,',
+            '        onchange: function() { item.done = !item.done; render(); }',
+            '      }},',
+            '      { t: "span", c: item.text },',
+            '      bw.makeButton({',
+            '        text: "\\u00D7", variant: "secondary", size: "sm",',
+            '        onclick: function() {',
+            '          todos = todos.filter(function(t) { return t.id !== item.id; });',
+            '          render();',
+            '        }',
+            '      })',
+            '    ]',
+            '  };',
+            '};',
+            '',
+            'function render() {',
+            '  var remaining = todos.filter(function(t) { return !t.done; }).length;',
+            '  bw.DOM("#app", {',
+            '    t: "div",',
+            '    c: [',
+            '      { t: "div", a: { class: "todo-input-row" }, c: [',
+            '        { t: "input", a: {',
+            '          type: "text", placeholder: "Add a todo...", id: "todo-input",',
+            '          onkeydown: function(e) { if (e.key === "Enter") addTodo(); }',
+            '        }},',
+            '        bw.makeButton({ text: "Add", variant: "primary", onclick: addTodo })',
+            '      ]},',
+            '      { t: "div", c: todos.map(todoItem) },',
+            '      { t: "div", c: remaining + " remaining" }',
+            '    ]',
+            '  });',
+            '}',
+            '',
+            'function addTodo() {',
+            '  var input = bw.$("#todo-input")[0];',
+            '  if (input && input.value.trim()) {',
+            '    todos.push({ id: nextId++, text: input.value.trim(), done: false });',
+            '    render();',
+            '  }',
+            '}',
+            '',
+            'render();'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#todo-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 5: Dynamic Theming ----
+    (function() {
+      var themes = {
+        ocean:  { bg: '#e0f7fa', fg: '#004d40', accent: '#00796b', name: 'Ocean' },
+        sunset: { bg: '#fff3e0', fg: '#bf360c', accent: '#e65100', name: 'Sunset' },
+        forest: { bg: '#e8f5e9', fg: '#1b5e20', accent: '#2e7d32', name: 'Forest' }
+      };
+      var current = 'ocean';
+
+      function renderThemePreview() {
+        var theme = themes[current];
+
+        var themeBtn = function(key) {
+          return bw.makeButton({
+            text: themes[key].name,
+            variant: key === current ? 'primary' : 'secondary',
+            onclick: function() { current = key; renderThemePreview(); }
+          });
+        };
+
+        bw.DOM('#theme-preview', {
+          t: 'div',
+          a: { class: 'preview-box' },
+          c: [
+            previewLabel,
+            {
+              t: 'div',
+              a: { class: 'theme-btns' },
+              c: Object.keys(themes).map(themeBtn)
+            },
+            {
+              t: 'div',
+              a: {
+                class: 'theme-card',
+                style: 'background:' + theme.bg + '; color:' + theme.fg +
+                  '; border-color:' + theme.accent
+              },
+              c: [
+                { t: 'h4', a: { style: 'color:' + theme.accent }, c: theme.name + ' Theme' },
+                { t: 'p', c: 'Background, text, and accent colors are all generated from a JavaScript object and applied at runtime.' },
+                {
+                  t: 'div',
+                  a: { style: 'margin-top: 0.75rem;' },
+                  c: bw.makeButton({
+                    text: 'Accent Button',
+                    variant: 'primary',
+                    onclick: function() {}
+                  })
+                }
+              ]
+            },
+            {
+              t: 'div',
+              a: { style: 'margin-top: 0.75rem;' },
+              c: {
+                t: 'pre',
+                a: { style: 'font-size: 0.8125rem; margin: 0; padding: 0.75rem; background: #f4f4f4; border-radius: 4px; border: 1px solid var(--bw-card-border);' },
+                c: 'bw.css({\n  ".themed": {\n    background: "' + theme.bg + '",\n    color: "' + theme.fg + '",\n    borderColor: "' + theme.accent + '"\n  }\n})'
+              }
+            }
+          ]
+        });
+      }
+      renderThemePreview();
+
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Dynamic theming: switch colors at runtime',
+            'var themes = {',
+            '  ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '  sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '  forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '};',
+            '',
+            'function applyTheme(name) {',
+            '  var t = themes[name];',
+            '  var card = document.getElementById("themed-card");',
+            '  card.style.background = t.bg;',
+            '  card.style.color = t.fg;',
+            '  card.style.borderColor = t.accent;',
+            '',
+            '  // Must update every themed element manually',
+            '  card.querySelector("h4").style.color = t.accent;',
+            '  card.querySelector("button").style.background = t.accent;',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React: theming via context + CSS variables or styled-components',
+            'import { useState, createContext, useContext } from "react";',
+            '',
+            'const themes = {',
+            '  ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '  sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '  forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '};',
+            '',
+            'const ThemeCtx = createContext();',
+            '',
+            'function ThemeProvider({ children }) {',
+            '  const [name, setName] = useState("ocean");',
+            '  return (',
+            '    <ThemeCtx.Provider value={{ ...themes[name], setName }}>',
+            '      {children}',
+            '    </ThemeCtx.Provider>',
+            '  );',
+            '}',
+            '',
+            'function ThemedCard() {',
+            '  const { bg, fg, accent } = useContext(ThemeCtx);',
+            '  return (',
+            '    <div style={{ background: bg, color: fg, borderColor: accent }}>',
+            '      <h4 style={{ color: accent }}>Themed Card</h4>',
+            '      <p>Styled via React context.</p>',
+            '    </div>',
+            '  );',
+            '}',
+            '',
+            '// Requires ThemeProvider wrapping the app,',
+            '// plus styled-components or CSS-in-JS for deeper theming.'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Vue: theming with provide/inject + CSS variables -->',
+            '<script setup>',
+            'import { ref, computed, provide } from "vue";',
+            '',
+            'const themes = {',
+            '  ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '  sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '  forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '};',
+            '',
+            'const current = ref("ocean");',
+            'const theme = computed(() => themes[current.value]);',
+            'provide("theme", theme);',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div>',
+            '    <button v-for="(t, key) in themes" @click="current = key">',
+            '      {{ key }}',
+            '    </button>',
+            '    <div :style="{',
+            '      background: theme.bg,',
+            '      color: theme.fg,',
+            '      borderColor: theme.accent',
+            '    }">',
+            '      <h4 :style="{ color: theme.accent }">Themed Card</h4>',
+            '      <p>Styled via Vue computed + provide/inject.</p>',
+            '    </div>',
+            '  </div>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Svelte: theming with stores + CSS variables -->',
+            '<script>',
+            '  let themes = {',
+            '    ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '    sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '    forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '  };',
+            '  let current = "ocean";',
+            '  $: theme = themes[current];',
+            '<\/script>',
+            '',
+            '<div>',
+            '  {#each Object.keys(themes) as key}',
+            '    <button on:click={() => current = key}>{key}</button>',
+            '  {/each}',
+            '  <div style="',
+            '    background: {theme.bg};',
+            '    color: {theme.fg};',
+            '    border-color: {theme.accent}">',
+            '    <h4 style="color: {theme.accent}">Themed Card</h4>',
+            '    <p>Styled via Svelte reactive declarations.</p>',
+            '  </div>',
+            '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Bitwrench: theming with bw.css() — generate CSS from JS objects',
+            'var themes = {',
+            '  ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '  sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '  forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '};',
+            'var current = "ocean";',
+            '',
+            'function render() {',
+            '  var t = themes[current];',
+            '',
+            '  // Generate and inject a complete CSS stylesheet from a JS object',
+            '  bw.injectCSS(bw.css({',
+            '    ".themed-card": {',
+            '      background: t.bg,',
+            '      color: t.fg,',
+            '      "border-color": t.accent',
+            '    },',
+            '    ".themed-card h4": { color: t.accent },',
+            '    ".themed-card .bw-btn": {',
+            '      background: t.accent,',
+            '      "border-color": t.accent,',
+            '      color: "#fff"',
+            '    }',
+            '  }));',
+            '',
+            '  bw.DOM("#app", {',
+            '    t: "div", c: [',
+            '      { t: "div", a: { class: "theme-btns" },',
+            '        c: Object.keys(themes).map(function(key) {',
+            '          return bw.makeButton({',
+            '            text: key,',
+            '            variant: key === current ? "primary" : "secondary",',
+            '            onclick: function() { current = key; render(); }',
+            '          });',
+            '        })',
+            '      },',
+            '      { t: "div", a: { class: "themed-card" }, c: [',
+            '        { t: "h4", c: themes[current].name + " Theme" },',
+            '        { t: "p", c: "Colors generated from JS objects." }',
+            '      ]}',
+            '    ]',
+            '  });',
+            '}',
+            'render();',
+            '',
+            '// bw.css() converts JS objects to CSS strings.',
+            '// bw.injectCSS() inserts them into the document.',
+            '// No CSS-in-JS library, no build step, no runtime overhead.'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#theme-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison 6: Server-Side JSON ----
+    (function() {
+      // Simulated JSON payload from any backend (Python, Go, Rust, ESP32, etc.)
+      var serverPayload = {
+        t: 'div',
+        a: { class: 'bw-card', style: 'padding: 1rem;' },
+        c: [
+          { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' }, c: 'Sensor Reading' },
+          {
+            t: 'table',
+            a: { class: 'bw-table bw-table-striped', style: 'margin: 0;' },
+            c: {
+              t: 'tbody',
+              c: [
+                { t: 'tr', c: [
+                  { t: 'td', c: { t: 'strong', c: 'Temperature' } },
+                  { t: 'td', c: '23.5 \u00B0C' }
+                ]},
+                { t: 'tr', c: [
+                  { t: 'td', c: { t: 'strong', c: 'Humidity' } },
+                  { t: 'td', c: '48%' }
+                ]},
+                { t: 'tr', c: [
+                  { t: 'td', c: { t: 'strong', c: 'Pressure' } },
+                  { t: 'td', c: '1013 hPa' }
+                ]}
+              ]
+            }
+          },
+          {
+            t: 'div',
+            a: { style: 'margin-top: 0.75rem; font-size: 0.8125rem; color: var(--bw-text-secondary);' },
+            c: 'Last updated: just now'
+          }
+        ]
+      };
+
+      var jsonStr = JSON.stringify(serverPayload, null, 2);
+
+      bw.DOM('#json-preview', {
+        t: 'div',
+        a: { class: 'preview-box' },
+        c: [
+          previewLabel,
+          {
+            t: 'div',
+            a: { class: 'bw-grid-2col' },
+            c: [
+              {
+                t: 'div',
+                c: [
+                  { t: 'div', a: { class: 'bw-code-label' }, c: 'JSON from server (any language)' },
+                  { t: 'pre', c: jsonStr }
+                ]
+              },
+              {
+                t: 'div',
+                c: [
+                  { t: 'div', a: { class: 'bw-code-label' }, c: 'Rendered by bitwrench' },
+                  serverPayload
+                ]
+              }
+            ]
+          }
+        ]
+      });
+
+      var examples = [
+        {
+          label: 'Traditional',
+          code: [
+            '// Traditional approach: server returns raw data,',
+            '// client must know how to render it.',
+            '',
+            '// Server (any language) — returns data only:',
+            '// GET /api/sensors',
+            '// { "temperature": 23.5, "humidity": 48, "pressure": 1013 }',
+            '',
+            '// Client must contain rendering logic:',
+            'fetch("/api/sensors")',
+            '  .then(r => r.json())',
+            '  .then(data => {',
+            '    var html = "<div class=\'card\'>";',
+            '    html += "<h4>Sensor Reading</h4>";',
+            '    html += "<table>";',
+            '    html += "<tr><td>Temperature</td><td>" + data.temperature + " \\u00B0C</td></tr>";',
+            '    html += "<tr><td>Humidity</td><td>" + data.humidity + "%</td></tr>";',
+            '    html += "<tr><td>Pressure</td><td>" + data.pressure + " hPa</td></tr>";',
+            '    html += "</table>";',
+            '    html += "</div>";',
+            '    document.getElementById("app").innerHTML = html;',
+            '  });',
+            '',
+            '// The client must match the server\'s data structure.',
+            '// Change the API? Update the client too.'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React: server returns data, client has components to render it',
+            '',
+            '// Server (Node.js/Express):',
+            '// app.get("/api/sensors", (req, res) => {',
+            '//   res.json({ temperature: 23.5, humidity: 48, pressure: 1013 });',
+            '// });',
+            '',
+            '// Client must define matching components:',
+            'function SensorDashboard() {',
+            '  const [data, setData] = useState(null);',
+            '  useEffect(() => {',
+            '    fetch("/api/sensors").then(r => r.json()).then(setData);',
+            '  }, []);',
+            '',
+            '  if (!data) return <div>Loading...</div>;',
+            '  return (',
+            '    <div className="card">',
+            '      <h4>Sensor Reading</h4>',
+            '      <table>',
+            '        <tr><td>Temperature</td><td>{data.temperature} \\u00B0C</td></tr>',
+            '        <tr><td>Humidity</td><td>{data.humidity}%</td></tr>',
+            '        <tr><td>Pressure</td><td>{data.pressure} hPa</td></tr>',
+            '      </table>',
+            '    </div>',
+            '  );',
+            '}',
+            '',
+            '// Server sends data, client has the UI templates.',
+            '// Both sides must agree on the data contract.'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Bitwrench: server sends COMPLETE UI as JSON.',
+            '// Client has ZERO knowledge of what it\'s rendering.',
+            '',
+            '// Server (Python Flask — no JavaScript needed):',
+            '# @app.route("/ui/sensors")',
+            '# def sensors():',
+            '#     return jsonify({',
+            '#         "t": "div",',
+            '#         "a": { "class": "bw-card" },',
+            '#         "c": [',
+            '#             { "t": "h4", "c": "Sensor Reading" },',
+            '#             { "t": "table", "a": { "class": "bw-table" },',
+            '#               "c": { "t": "tbody", "c": [',
+            '#                 { "t": "tr", "c": [',
+            '#                   { "t": "td", "c": "Temperature" },',
+            '#                   { "t": "td", "c": str(read_temp()) + " \\u00B0C" }',
+            '#                 ]}',
+            '#               ]}',
+            '#             }',
+            '#         ]',
+            '#     })',
+            '',
+            '// Client — generic, works with ANY server response:',
+            'fetch("/ui/sensors")',
+            '  .then(function(r) { return r.json(); })',
+            '  .then(function(taco) { bw.DOM("#app", taco); });',
+            '',
+            '// The client is just 2 lines. It doesn\'t know or care',
+            '// what the server sends — it renders whatever arrives.',
+            '// Change the UI? Update only the server.',
+            '// Works from Python, Go, Rust, C, ESP32 — any language.'
+          ].join('\n')
+        },
+        {
+          label: 'Go Server',
+          code: [
+            '// Go: server generates the same UI as JSON',
+            '// No templates, no JavaScript on the server',
+            '',
+            'package main',
+            '',
+            'import (',
+            '    "encoding/json"',
+            '    "fmt"',
+            '    "net/http"',
+            ')',
+            '',
+            'func sensorsHandler(w http.ResponseWriter, r *http.Request) {',
+            '    temp := readSensor("temp")',
+            '    ui := map[string]interface{}{',
+            '        "t": "div",',
+            '        "a": map[string]string{"class": "bw-card"},',
+            '        "c": []interface{}{',
+            '            map[string]interface{}{',
+            '                "t": "h4",',
+            '                "c": "Sensor Reading",',
+            '            },',
+            '            map[string]interface{}{',
+            '                "t": "table",',
+            '                "a": map[string]string{"class": "bw-table"},',
+            '                "c": map[string]interface{}{',
+            '                    "t": "tbody",',
+            '                    "c": []interface{}{',
+            '                        map[string]interface{}{',
+            '                            "t":  "tr",',
+            '                            "c": []interface{}{',
+            '                                map[string]string{"t": "td", "c": "Temperature"},',
+            '                                map[string]string{"t": "td", "c": fmt.Sprintf("%.1f \\u00B0C", temp)},',
+            '                            },',
+            '                        },',
+            '                    },',
+            '                },',
+            '            },',
+            '        },',
+            '    }',
+            '    w.Header().Set("Content-Type", "application/json")',
+            '    json.NewEncoder(w).Encode(ui)',
+            '}',
+            '',
+            '// Same 2-line client renders it:',
+            '// fetch("/ui/sensors").then(r => r.json())',
+            '//   .then(taco => bw.DOM("#app", taco));'
+          ].join('\n')
+        },
+        {
+          label: 'ESP32 (C)',
+          code: [
+            '// ESP32 / Arduino: serve UI as JSON from a microcontroller',
+            '// No JavaScript runtime, no templates — just string formatting',
+            '',
+            '#include <WiFi.h>',
+            '#include <WebServer.h>',
+            '',
+            'WebServer server(80);',
+            '',
+            '// Write JSON with single quotes (readable), swap to double before sending',
+            'String q(const char* s) {',
+            '  String out(s);',
+            '  out.replace(\'\\\'\',' + ' \'"\');',
+            '  return out;',
+            '}',
+            '',
+            'void handleSensors() {',
+            '  float temp = readDHT22();',
+            '  float humidity = readHumidity();',
+            '',
+            '  // Single-quoted JSON — easy to read, easy to edit',
+            '  String json = q("{"',
+            '    "  \'t\': \'div\',"',
+            '    "  \'a\': { \'class\': \'bw-card\' },"',
+            '    "  \'c\': ["',
+            '    "    { \'t\': \'h4\', \'c\': \'Sensor Reading\' },"',
+            '    "    { \'t\': \'table\', \'a\': { \'class\': \'bw-table\' },"',
+            '    "      \'c\': { \'t\': \'tbody\', \'c\': ["',
+            '    "        { \'t\': \'tr\', \'c\': ["',
+            '    "          { \'t\': \'td\', \'c\': \'Temperature\' },"',
+            '    "          { \'t\': \'td\', \'c\': \'" + String(temp, 1) + " \\u00B0C\' }"',
+            '    "        ]},"',
+            '    "        { \'t\': \'tr\', \'c\': ["',
+            '    "          { \'t\': \'td\', \'c\': \'Humidity\' },"',
+            '    "          { \'t\': \'td\', \'c\': \'" + String(humidity, 0) + "%\' }"',
+            '    "        ]}"',
+            '    "      ]}}"',
+            '    "  ]"',
+            '    "}");',
+            '',
+            '  server.send(200, "application/json", json);',
+            '}',
+            '',
+            '// The browser loads one HTML file with bitwrench.',
+            '// fetch("/ui/sensors").then(r => r.json())',
+            '//   .then(taco => bw.DOM("#app", taco));',
+            '// That\'s it. The ESP32 controls the entire UI.'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#json-comparison', codeComparison(examples));
+    })();
+
+    // ---- Comparison: Table from Data (NEW) ----
+    (function() {
+      var products = [
+        { name: 'Widget A', price: 29.99, stock: 142 },
+        { name: 'Widget B', price: 49.99, stock: 38 },
+        { name: 'Widget C', price: 19.99, stock: 256 }
+      ];
+
+      // Live preview
+      bw.DOM('#table-preview', {
+        t: 'div',
+        a: { class: 'preview-box' },
+        c: [
+          previewLabel,
+          bw.makeTable({
+            data: products,
+            columns: [
+              { key: 'name', label: 'Product' },
+              { key: 'price', label: 'Price', render: function(v) { return '$' + v.toFixed(2); } },
+              { key: 'stock', label: 'In Stock' }
+            ],
+            striped: true,
+            hover: true
+          })
+        ]
+      });
+
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Build a styled table from data — vanilla JS',
+            'var products = [',
+            '  { name: "Widget A", price: 29.99, stock: 142 },',
+            '  { name: "Widget B", price: 49.99, stock: 38 },',
+            '  { name: "Widget C", price: 19.99, stock: 256 }',
+            '];',
+            '',
+            'var table = document.createElement("table");',
+            'table.className = "table table-striped";',
+            '',
+            '// Header',
+            'var thead = document.createElement("thead");',
+            'var headerRow = document.createElement("tr");',
+            '["Product", "Price", "In Stock"].forEach(function(h) {',
+            '  var th = document.createElement("th");',
+            '  th.textContent = h;',
+            '  headerRow.appendChild(th);',
+            '});',
+            'thead.appendChild(headerRow);',
+            'table.appendChild(thead);',
+            '',
+            '// Body',
+            'var tbody = document.createElement("tbody");',
+            'products.forEach(function(p) {',
+            '  var tr = document.createElement("tr");',
+            '  [p.name, "$" + p.price.toFixed(2), p.stock].forEach(function(val) {',
+            '    var td = document.createElement("td");',
+            '    td.textContent = val;',
+            '    tr.appendChild(td);',
+            '  });',
+            '  tbody.appendChild(tr);',
+            '});',
+            'table.appendChild(tbody);',
+            '',
+            'document.getElementById("app").appendChild(table);',
+            '',
+            '// 25+ lines of DOM manipulation'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React: table from data',
+            'const products = [',
+            '  { name: "Widget A", price: 29.99, stock: 142 },',
+            '  { name: "Widget B", price: 49.99, stock: 38 },',
+            '  { name: "Widget C", price: 19.99, stock: 256 }',
+            '];',
+            '',
+            'function ProductTable() {',
+            '  return (',
+            '    <table className="table table-striped">',
+            '      <thead>',
+            '        <tr>',
+            '          <th>Product</th>',
+            '          <th>Price</th>',
+            '          <th>In Stock</th>',
+            '        </tr>',
+            '      </thead>',
+            '      <tbody>',
+            '        {products.map(p => (',
+            '          <tr key={p.name}>',
+            '            <td>{p.name}</td>',
+            '            <td>${p.price.toFixed(2)}</td>',
+            '            <td>{p.stock}</td>',
+            '          </tr>',
+            '        ))}',
+            '      </tbody>',
+            '    </table>',
+            '  );',
+            '}',
+            '',
+            '// ~20 lines, plus you need sorting/hover/striping yourself'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Bitwrench: ONE function call',
+            'var products = [',
+            '  { name: "Widget A", price: 29.99, stock: 142 },',
+            '  { name: "Widget B", price: 49.99, stock: 38 },',
+            '  { name: "Widget C", price: 19.99, stock: 256 }',
+            '];',
+            '',
+            'bw.DOM("#app", bw.makeTable({',
+            '  data: products,',
+            '  columns: [',
+            '    { key: "name",  label: "Product" },',
+            '    { key: "price", label: "Price",',
+            '      render: function(v) { return "$" + v.toFixed(2); } },',
+            '    { key: "stock", label: "In Stock" }',
+            '  ],',
+            '  striped: true,',
+            '  hover: true',
+            '}));',
+            '',
+            '// 1 function call. Sortable, styled, and hover-highlighted.',
+            '// The helper returns a TACO object — you can modify it before rendering.'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#table-comparison', codeComparison(examples));
+    })();
+
+    // ---- Honest Assessment ----
+    (function() {
+      bw.DOM('#honest-summary', {
+        t: 'div',
+        c: [
+          {
+            t: 'div',
+            a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;' },
+            c: [
+              {
+                t: 'div',
+                a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', a: { style: 'color: var(--bw-teal-dark);' }, c: 'Where bitwrench wins' },
+                  {
+                    t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
+                    c: [
+                      { t: 'li', c: 'Server-driven UI (unique capability — no other framework does this)' },
+                      { t: 'li', c: 'Table/component rendering from data (fewer function calls)' },
+                      { t: 'li', c: 'Runtime CSS generation (no build step, styles as JS objects)' },
+                      { t: 'li', c: 'Zero tooling setup (paste a script tag, start coding)' },
+                      { t: 'li', c: 'Embedded/IoT devices (any language generates JSON UI)' }
+                    ]
+                  }
+                ]
+              },
+              {
+                t: 'div',
+                a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', a: { style: 'color: var(--bw-text-secondary);' }, c: 'Where it\'s similar' },
+                  {
+                    t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
+                    c: [
+                      { t: 'li', c: 'List rendering (.map() pattern = JSX .map())' },
+                      { t: 'li', c: 'Simple interactivity (counter, toggle — similar line counts)' },
+                      { t: 'li', c: 'Dynamic styling (inline styles work the same way)' }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            t: 'div',
+            a: { class: 'callout callout-tip' },
+            c: [
+              { t: 'h4', c: 'Where others win' },
+              {
+                t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
+                c: [
+                  { t: 'li', c: 'Complex state management (React hooks, Vue reactivity, Svelte stores)' },
+                  { t: 'li', c: 'Large-scale applications (ecosystem, routing, devtools, community)' },
+                  { t: 'li', c: 'Type safety (TypeScript integration is deeper in React/Vue/Svelte)' },
+                  { t: 'li', c: 'Automatic re-rendering (bitwrench requires manual render() calls)' },
+                  { t: 'li', c: 'IDE support (autocomplete, refactoring tools, extensions)' }
+                ]
+              }
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ---- Summary table ----
+    (function() {
+      var rows = [
+        { feature: 'Build step',       htmljs: 'None',             react: 'Required',           vue: 'Recommended',    svelte: 'Required',        bitwrench: 'None' },
+        { feature: 'HTML in JS?',      htmljs: 'Strings',          react: 'JSX (compiled)',     vue: 'Templates',      svelte: 'Templates',       bitwrench: 'Objects (native)' },
+        { feature: 'Attribute names',   htmljs: 'class, for',       react: 'className, htmlFor', vue: 'class, for',     svelte: 'class, for',     bitwrench: 'class, for' },
+        { feature: 'Event handlers',    htmljs: 'addEventListener', react: 'onClick (synthetic)', vue: '@click',        svelte: 'on:click',       bitwrench: 'onclick (function ref)' },
+        { feature: 'State management', htmljs: 'Manual variables', react: 'useState / Redux',   vue: 'ref / Pinia',    svelte: 'let / stores',   bitwrench: 'Plain variables + render()' },
+        { feature: 'CSS generation',   htmljs: 'Manual / SASS',    react: 'CSS-in-JS / styled', vue: 'Scoped <style>', svelte: 'Scoped <style>', bitwrench: 'bw.css() from JS objects' },
+        { feature: 'Data to UI',        htmljs: 'Manual DOM ops',   react: '.map() in JSX',     vue: 'v-for directive', svelte: '{#each} block',  bitwrench: '.map() in objects' },
+        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~40 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bitwrench: '~20 KB' },
+        { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bitwrench: 'Yes — any language' }
+      ];
+
+      var headers = ['', 'HTML/JS', 'React', 'Vue', 'Svelte', 'Bitwrench'];
+      var headerRow = {
+        t: 'tr',
+        c: headers.map(function(h) { return { t: 'th', c: h }; })
+      };
+
+      var dataRow = function(row) {
+        return {
+          t: 'tr',
+          c: [
+            { t: 'td', c: { t: 'strong', c: row.feature } },
+            { t: 'td', c: row.htmljs },
+            { t: 'td', c: row.react },
+            { t: 'td', c: row.vue },
+            { t: 'td', c: row.svelte },
+            { t: 'td', c: row.bitwrench }
+          ]
+        };
+      };
+
+      bw.DOM('#summary-table', {
+        t: 'table',
+        a: { class: 'cmp-table' },
+        c: [
+          { t: 'thead', c: headerRow },
+          { t: 'tbody', c: rows.map(dataRow) }
+        ]
+      });
+    })();
+
+    // ---- Where bitwrench fits ----
+    (function() {
+      var useCases = [
+        { title: 'Embedded & IoT',      desc: 'ESP32, Raspberry Pi, and similar devices can serve bitwrench objects as JSON. The device generates data; the browser renders the UI. No templating engine needed on the device.' },
+        { title: 'Prototyping',          desc: 'No project setup, no npm install, no configuration files. Include one script tag and start building. When the prototype matures, you can always migrate.' },
+        { title: 'Polyglot Backends',    desc: 'Any server that can produce JSON can generate bitwrench UIs. A Python Flask app, a Go HTTP server, a Rust CLI tool — they all emit JSON, and bitwrench renders it.' },
+        { title: 'Single-File Tools',    desc: 'Dashboards, admin panels, configuration UIs, documentation pages — anything where a single HTML file is the right delivery format.' },
+        { title: 'Learning & Teaching',  desc: 'The entire bitwrench model fits in your head: objects describe elements, functions transform data into objects, bw.DOM() renders them. No concepts to unlearn.' },
+        { title: 'Server-Rendered UIs',  desc: 'Generate UI definitions on the server, send as JSON, render on the client. Update specific parts by sending partial JSON. No server-side JavaScript required.' }
+      ];
+
+      var useCaseCard = function(uc) {
+        return {
+          t: 'div',
+          a: { class: 'bw-feature-card' },
+          c: [
+            { t: 'h4', c: uc.title },
+            { t: 'p', c: uc.desc }
+          ]
+        };
+      };
+
+      bw.DOM('#use-cases', {
+        t: 'div',
+        a: { class: 'bw-feature-grid' },
+        c: useCases.map(useCaseCard)
+      });
+    })();
+  </script>
+</body>
+</html>

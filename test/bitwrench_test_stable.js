@@ -26,7 +26,7 @@ describe("Core Type Functions", function() {
       assert.equal(bw.typeOf(undefined), "undefined");
       assert.equal(bw.typeOf(null), "null");
       assert.equal(bw.typeOf(new Date()), "Date");
-      assert.equal(bw.typeOf(function(){}), "Function");
+      assert.equal(bw.typeOf(function(){}), "function");
     });
   });
 });

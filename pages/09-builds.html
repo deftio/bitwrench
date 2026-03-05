@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Builds &amp; Downloads</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <style>
+.builds-header { margin-bottom: 0.5rem; }
+.builds-header .build-meta { font-size: 0.85rem; color: #888; margin: 0.25rem 0 0; }
+.builds-section { margin-top: 2rem; }
+.builds-section h2 { border-bottom: 2px solid #006666; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.builds-section h3 { margin: 1.5rem 0 0.75rem; }
+.install-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.install-card { background: var(--bw-bg-alt, #fafafa); border: 1px solid var(--bw-border, #ddd); border-radius: 6px; padding: 1rem 1.25rem; }
+.install-card h4 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+.install-card pre { background: #1a1a1a; color: #e0e0e0; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto; margin: 0; font-family: "SF Mono", Monaco, Consolas, monospace; }
+.coming-soon { padding: 1.5rem; background: var(--bw-bg-alt, #f5f5f5); border-radius: 6px; color: #666; font-style: italic; }
+.sz { text-align: right; font-variant-numeric: tabular-nums; }
+.table-card { background: var(--bw-card-bg, #fff); border: 1px solid var(--bw-card-border, #e0e0e0); border-radius: var(--bw-radius, 6px); box-shadow: var(--bw-card-shadow, 0 1px 3px rgba(0,0,0,0.08)); overflow: hidden; }
+.table-card .bw-table { margin-bottom: 0; }
+.table-card .bw-table > thead > tr > * { background: var(--bw-teal-dark, #004d4d); color: #fff; border-bottom-color: var(--bw-teal, #006666); }
+.table-card .bw-table > tbody > tr:nth-of-type(odd) > * { background-color: rgba(0, 0, 0, 0.025); }
+  </style>
+</head>
+<body>
+  <div>
+    <div id="example-nav"></div>
+
+    <div class="page-header">
+      <div class="content-container wide" style="padding-top:0;padding-bottom:0">
+        <h1>Builds &amp; Downloads</h1>
+        <p class="subtitle">Distribution files, sizes, and installation instructions</p>
+      </div>
+    </div>
+
+    <div class="content-container wide">
+      <!-- Intro -->
+      <div class="demo-section builds-header">
+        <p>Bitwrench ships in multiple formats so you can pick the one that fits your environment. All builds are generated from the same source by Rollup.</p>
+        <p class="build-meta" id="build-meta">Loading build info...</p>
+      </div>
+
+      <!-- v2.x JS Builds -->
+      <div class="demo-section builds-section">
+        <h2>v2.x JavaScript Builds</h2>
+        <div id="builds-v2" style="overflow-x:auto">Loading...</div>
+      </div>
+
+      <!-- CSS -->
+      <div class="demo-section builds-section">
+        <h2>CSS</h2>
+        <div id="builds-css" style="overflow-x:auto">Loading...</div>
+      </div>
+
+      <!-- All Files -->
+      <div class="demo-section builds-section">
+        <h2>All Distribution Files</h2>
+        <div id="builds-all" style="overflow-x:auto">Loading...</div>
+      </div>
+
+      <!-- Installation -->
+      <div class="demo-section builds-section">
+        <h2>Installation</h2>
+        <div class="install-grid">
+          <div class="install-card">
+            <h4>npm</h4>
+            <pre><code>npm install bitwrench</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>Browser (script tag)</h4>
+            <pre><code>&lt;script src="dist/bitwrench.umd.min.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="dist/bitwrench.css"&gt;</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>ES Module import</h4>
+            <pre><code>import bw from 'bitwrench';</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>CommonJS require</h4>
+            <pre><code>const bw = require('bitwrench');</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>GitHub</h4>
+            <pre><code>git clone https://github.com/deftio/bitwrench.git</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>ES5 (legacy browsers)</h4>
+            <pre><code>&lt;script src="dist/bitwrench.es5.min.js"&gt;&lt;/script&gt;</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- CDN -->
+      <div class="demo-section builds-section">
+        <h2>CDN</h2>
+        <p>Use bitwrench directly from a CDN &mdash; no install, no build step. Just add a script tag.</p>
+        <div class="install-grid">
+          <div class="install-card">
+            <h4>unpkg</h4>
+            <pre><code>&lt;script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.min.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css"&gt;</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>jsdelivr</h4>
+            <pre><code>&lt;script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.css"&gt;</code></pre>
+          </div>
+          <div class="install-card">
+            <h4>ES Module via CDN</h4>
+            <pre><code>import bw from 'https://unpkg.com/bitwrench@2/dist/bitwrench.esm.min.js';</code></pre>
+          </div>
+        </div>
+        <div class="callout callout-tip" style="margin-top: 1rem;">
+          <h4>Version pinning</h4>
+          <p>
+            <code>@2</code> &mdash; latest 2.x release (recommended)<br>
+            <code>@2.0.3</code> &mdash; exact version<br>
+            <code>@latest</code> &mdash; latest release (may include breaking changes across major versions)
+          </p>
+        </div>
+      </div>
+
+      <!-- Other Languages -->
+      <div class="demo-section builds-section">
+        <h2>Other Languages</h2>
+        <div class="coming-soon">Coming soon: Python, C/C++, Go bindings</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '09-builds.html');
+
+    function fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      var kb = bytes / 1024;
+      if (kb < 1024) return kb.toFixed(1) + ' KB';
+      return (kb / 1024).toFixed(2) + ' MB';
+    }
+
+    // Build a TACO table with left-aligned text columns and right-aligned size columns
+    function sizeTable(headers, rows) {
+      return {
+        t: 'div', a: { class: 'table-card' },
+        c: {
+          t: 'table', a: { class: 'bw-table' },
+          c: [
+            { t: 'thead', c: { t: 'tr', c: headers.map(function(h) {
+              return { t: 'th', a: h.sz ? { class: 'sz' } : {}, c: h.label };
+            })}},
+            { t: 'tbody', c: rows.map(function(row) {
+              return { t: 'tr', c: row.map(function(cell, i) {
+                return { t: 'td', a: headers[i].sz ? { class: 'sz' } : {}, c: cell };
+              })};
+            })}
+          ]
+        }
+      };
+    }
+
+    // Group files by format, pairing minified with non-minified
+    function groupByFormat(files) {
+      var byFormat = {};
+      files.forEach(function(f) {
+        if (!byFormat[f.format]) byFormat[f.format] = {};
+        byFormat[f.format][f.minified ? 'min' : 'full'] = f;
+      });
+      // Return ordered array of { format, full, min }
+      var order = Object.keys(byFormat);
+      return order.map(function(fmt) {
+        return { format: fmt, full: byFormat[fmt].full, min: byFormat[fmt].min };
+      });
+    }
+
+    bw.loadClientFile('../dist/builds.json', function(raw, err) {
+      if (err) {
+        bw.DOM('#builds-v2', { t: 'p', a: { style: 'color:red' }, c: 'Failed to load build manifest. Run: npm run build:builds' });
+        return;
+      }
+      var manifest = JSON.parse(raw);
+
+      // Set header meta
+      bw.DOM('#build-meta', {
+        t: 'span',
+        c: 'bitwrench v' + manifest.version + ' \u2014 built ' + manifest.buildDate + ' \u2014 ' + manifest.files.length + ' distribution files'
+      });
+
+      // Separate v2 files by category (v1.x excluded — deprecated)
+      var v2js = [], css = [];
+      manifest.files.forEach(function(f) {
+        if (f.ver === '1.x') return;
+        if (f.format === 'CSS') {
+          css.push(f);
+        } else {
+          v2js.push(f);
+        }
+      });
+
+      // v2 JS — grouped by format: Format | Raw | Minified | Min+Gzip
+      if (v2js.length > 0) {
+        var headers = [
+          { label: 'Format', sz: false },
+          { label: 'Raw', sz: true },
+          { label: 'Minified', sz: true },
+          { label: 'Min+Gzip', sz: true }
+        ];
+        var rows = groupByFormat(v2js).map(function(g) {
+          return [
+            g.format,
+            g.full ? fmtSize(g.full.raw) : '\u2014',
+            g.min  ? fmtSize(g.min.raw)  : '\u2014',
+            g.min  ? fmtSize(g.min.gzipped) : '\u2014'
+          ];
+        });
+        bw.DOM('#builds-v2', sizeTable(headers, rows));
+      } else {
+        bw.DOM('#builds-v2', { t: 'p', c: 'No v2.x JavaScript builds found.' });
+      }
+
+      // CSS — no min/max pairing, just File | Raw | Gzipped
+      if (css.length > 0) {
+        var cssHeaders = [
+          { label: 'File', sz: false },
+          { label: 'Raw', sz: true },
+          { label: 'Gzipped', sz: true }
+        ];
+        var cssRows = css.map(function(f) {
+          return [f.file, fmtSize(f.raw), fmtSize(f.gzipped)];
+        });
+        bw.DOM('#builds-css', sizeTable(cssHeaders, cssRows));
+      } else {
+        bw.DOM('#builds-css', { t: 'p', c: 'No CSS builds found.' });
+      }
+
+      // All files — download table with links and descriptions
+      var descriptions = {
+        'bitwrench.umd.js':      'UMD build for browsers and Node.js',
+        'bitwrench.umd.min.js':  'UMD build, minified',
+        'bitwrench.esm.js':      'ES module for modern bundlers',
+        'bitwrench.esm.min.js':  'ES module, minified',
+        'bitwrench.cjs.js':      'CommonJS build for Node.js require()',
+        'bitwrench.cjs.min.js':  'CommonJS build, minified',
+        'bitwrench.es5.js':      'ES5 build for legacy browsers (IE11+)',
+        'bitwrench.es5.min.js':  'ES5 build, minified',
+        'bitwrench.css':         'Default styles (Bootstrap-inspired)'
+      };
+      var allV2 = v2js.concat(css);
+      if (allV2.length > 0) {
+        var allHeaders = [
+          { label: 'File', sz: false },
+          { label: 'Description', sz: false },
+          { label: 'Size', sz: true }
+        ];
+        var allRows = allV2.map(function(f) {
+          return [
+            { t: 'a', a: { href: '../dist/' + f.file }, c: f.file },
+            descriptions[f.file] || f.format,
+            fmtSize(f.raw)
+          ];
+        });
+        bw.DOM('#builds-all', sizeTable(allHeaders, allRows));
+      }
+
+    });
+  </script>
+</body>
+</html>

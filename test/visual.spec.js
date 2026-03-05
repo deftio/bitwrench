@@ -4,13 +4,13 @@ import { test, expect } from '@playwright/test';
 const BASE_URL = 'http://localhost:8081';
 const EXAMPLES = [
   { path: '/index.html', name: 'Index Page' },
-  { path: '/00-quick-start.html', name: 'Quick Start' },
-  { path: '/01-components.html', name: 'Components' },
-  { path: '/02-tables-forms.html', name: 'Tables & Forms' },
-  { path: '/03-styling.html', name: 'Styling' },
-  { path: '/04-dashboard.html', name: 'Dashboard' },
-  { path: '/05-state.html', name: 'State' },
-  { path: '/06-tic-tac-toe-tutorial.html', name: 'Tic Tac Toe Tutorial' }
+  { path: '/pages/00-quick-start.html', name: 'Quick Start' },
+  { path: '/pages/01-components.html', name: 'Components' },
+  { path: '/pages/02-tables-forms.html', name: 'Tables & Forms' },
+  { path: '/pages/03-styling.html', name: 'Styling' },
+  { path: '/pages/04-dashboard.html', name: 'Dashboard' },
+  { path: '/pages/05-state.html', name: 'State' },
+  { path: '/pages/06-tic-tac-toe-tutorial.html', name: 'Tic Tac Toe Tutorial' }
 ];
 
 // Visual regression test for each page
@@ -129,7 +129,7 @@ EXAMPLES.forEach(({ path, name }) => {
 // Specific functional tests for interactive components
 test.describe('Interactive Components', () => {
   test('Tic Tac Toe game should be fully functional', async ({ page }) => {
-    await page.goto(`${BASE_URL}/06-tic-tac-toe-tutorial.html`);
+    await page.goto(`${BASE_URL}/pages/06-tic-tac-toe-tutorial.html`);
     
     // Find the final game implementation
     const gameBoard = page.locator('#final-game .game-board').first();
@@ -156,7 +156,7 @@ test.describe('Interactive Components', () => {
   });
 
   test('Table sorting should work correctly', async ({ page }) => {
-    await page.goto(`${BASE_URL}/02-tables-forms.html`);
+    await page.goto(`${BASE_URL}/pages/02-tables-forms.html`);
     
     // Find sortable table
     const table = page.locator('.bw-table').first();
@@ -182,7 +182,7 @@ test.describe('Interactive Components', () => {
   });
 
   test('Theme switcher should apply themes correctly', async ({ page }) => {
-    await page.goto(`${BASE_URL}/03-styling.html`);
+    await page.goto(`${BASE_URL}/pages/03-styling.html`);
     
     // Find theme buttons
     const darkThemeBtn = page.locator('[data-theme="dark"]');
@@ -199,7 +199,7 @@ test.describe('Interactive Components', () => {
   });
 
   test('Copy buttons should work', async ({ page }) => {
-    await page.goto(`${BASE_URL}/00-taco-srmc-fundamentals.html`);
+    await page.goto(`${BASE_URL}/pages/00-quick-start.html`);
     
     // Grant clipboard permissions
     await page.context().grantPermissions(['clipboard-write', 'clipboard-read']);
@@ -248,7 +248,7 @@ test.describe('Performance', () => {
   });
 
   test('DOM updates should be efficient', async ({ page }) => {
-    await page.goto(`${BASE_URL}/06-tic-tac-toe-tutorial.html`);
+    await page.goto(`${BASE_URL}/pages/06-tic-tac-toe-tutorial.html`);
     
     // Measure render performance
     const renderMetrics = await page.evaluate(async () => {
@@ -290,7 +290,7 @@ test.describe('Accessibility', () => {
   });
 
   test('Forms should have proper labels', async ({ page }) => {
-    await page.goto(`${BASE_URL}/02-tables-forms.html`);
+    await page.goto(`${BASE_URL}/pages/02-tables-forms.html`);
     
     const inputsWithoutLabels = await page.evaluate(() => {
       const inputs = Array.from(document.querySelectorAll('input, select, textarea'));
@@ -306,7 +306,7 @@ test.describe('Accessibility', () => {
   });
 
   test('Interactive elements should be keyboard accessible', async ({ page }) => {
-    await page.goto(`${BASE_URL}/01-components.html`);
+    await page.goto(`${BASE_URL}/pages/01-components.html`);
     
     // Tab through page
     await page.keyboard.press('Tab');
@@ -344,7 +344,7 @@ test.describe('CSS and Styling', () => {
   });
 
   test('Components should have consistent spacing', async ({ page }) => {
-    await page.goto(`${BASE_URL}/01-components.html`);
+    await page.goto(`${BASE_URL}/pages/01-components.html`);
     
     const spacings = await page.evaluate(() => {
       const cards = Array.from(document.querySelectorAll('.bw-card'));

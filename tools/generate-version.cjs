@@ -3,7 +3,7 @@
 /**
  * Generate version.js from package.json
  * This script reads the version from package.json and creates a version.js file
- * that can be imported by bitwrench_v2.js
+ * that can be imported by bitwrench.js
  */
 
 const fs = require('fs');

@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Tic Tac Toe Tutorial</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <style>
+    /* Tutorial header */
+    .tutorial-header {
+      background: var(--bw-teal, #006666);
+      color: white;
+      padding: 2.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+    .tutorial-header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .tutorial-header p {
+      margin: 0 auto;
+      opacity: 0.85;
+      font-size: 1.05rem;
+      max-width: 600px;
+    }
+
+    /* Main content container */
+    .tutorial-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* Step body paragraph styling */
+    .bw-step-body > p {
+      margin: 0 0 1rem;
+      color: var(--bw-text-secondary, #555);
+      font-size: 0.95rem;
+    }
+
+    /* Tic Tac Toe game styles */
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      gap: 4px;
+      background: var(--bw-teal-dark, #004d4d);
+      padding: 4px;
+      border-radius: 6px;
+      margin: 0 auto;
+      width: fit-content;
+    }
+    .square {
+      width: 90px;
+      height: 90px;
+      background: white;
+      border: none;
+      cursor: pointer;
+      font-size: 2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      border-radius: 3px;
+      color: var(--bw-text-primary, #1a1a1a);
+      font-family: inherit;
+    }
+    .square:hover:not(:disabled) { background: #f0f0f0; }
+    .square:disabled { cursor: default; }
+    .square.winning { background: #b2dfdb; }
+    .x-mark { color: var(--bw-teal, #006666); }
+    .o-mark { color: #c62828; }
+
+    .status-bar {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: var(--bw-radius, 8px);
+      margin-bottom: 1rem;
+      background: #f5f5f5;
+      color: var(--bw-text-primary, #1a1a1a);
+    }
+    .status-bar.winner {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-bar.draw {
+      background: #fce4ec;
+      color: #c62828;
+    }
+
+    .new-game-btn {
+      display: block;
+      margin: 1rem auto 0;
+      padding: 0.5rem 1.25rem;
+      background: var(--bw-teal, #006666);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .new-game-btn:hover { background: var(--bw-teal-dark, #004d4d); }
+
+    /* Game layout for steps 4-5 */
+    .game-layout {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .game-sidebar {
+      min-width: 200px;
+      max-width: 260px;
+    }
+    .game-sidebar h4 {
+      margin: 0 0 0.5rem;
+      font-size: 0.9rem;
+      color: var(--bw-text-secondary, #555);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .history-btn {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+      border-radius: 4px;
+      background: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .history-btn:hover { background: #f5f5f5; border-color: var(--bw-teal, #006666); }
+    .history-btn.current {
+      background: var(--bw-teal, #006666);
+      color: white;
+      border-color: var(--bw-teal, #006666);
+    }
+    .game-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .game-options label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .sort-btn {
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+      border-radius: 4px;
+      background: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .sort-btn:hover { background: #f5f5f5; }
+
+    /* Scoreboard */
+    .scoreboard {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+      padding: 0.75rem 1.25rem;
+      background: #f8f8f8;
+      border-radius: var(--bw-radius, 8px);
+      border: 1px solid var(--bw-card-border, #e0e0e0);
+    }
+    .score-item {
+      text-align: center;
+      min-width: 60px;
+    }
+    .score-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+    .score-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--bw-text-secondary, #555);
+      margin-top: 0.15rem;
+    }
+    .score-x .score-value { color: var(--bw-teal, #006666); }
+    .score-o .score-value { color: #c62828; }
+    .score-draw .score-value { color: #777; }
+    .score-total .score-value { color: var(--bw-text-primary, #1a1a1a); }
+
+    /* Step overview table */
+    .step-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+    .step-table th {
+      text-align: left;
+      padding: 0.4rem 0.75rem;
+      border-bottom: 2px solid var(--bw-teal, #006666);
+      color: var(--bw-teal-dark, #004d4d);
+      font-weight: 600;
+    }
+    .step-table td {
+      padding: 0.35rem 0.75rem;
+      border-bottom: 1px solid var(--bw-card-border, #e0e0e0);
+    }
+    .step-table code {
+      background: rgba(0,100,100,0.08);
+      padding: 0.1em 0.3em;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    /* Congratulations */
+    .congrats {
+      background: linear-gradient(135deg, var(--bw-teal-light, #e0f2f1) 0%, #b2dfdb 100%);
+      border: 1px solid #80cbc4;
+      border-radius: var(--bw-radius, 8px);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .congrats h2 { color: var(--bw-teal-dark, #004d4d); margin: 0 0 0.75rem; }
+    .congrats p { color: var(--bw-text-secondary, #555); margin: 0.5rem 0; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .tutorial-header h1 { font-size: 1.5rem; }
+      .bw-step-body { padding: 1rem; }
+      .game-board {
+        grid-template-columns: repeat(3, 70px);
+      }
+      .square { width: 70px; height: 70px; font-size: 1.5rem; }
+      .game-layout { flex-direction: column; align-items: center; }
+      .game-sidebar { max-width: 100%; min-width: auto; width: 100%; }
+      .demo-tab-panel { padding: 1rem; }
+      .scoreboard { gap: 0.75rem; padding: 0.5rem 0.75rem; }
+      .score-value { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="tutorial-header">
+    <h1>Build Tic Tac Toe with Bitwrench</h1>
+    <p>Learn state management step by step by building a complete game. Each step adds one concept.</p>
+  </div>
+
+  <div class="tutorial-content">
+    <!-- Step 0: What You'll Learn -->
+    <div class="bw-step">
+      <div class="bw-step-header">
+        <div class="bw-step-num" style="background: #555;">?</div>
+        <h2>What You'll Learn</h2>
+      </div>
+      <div class="bw-step-body">
+        <p>This tutorial builds a tic tac toe game in 5 steps. Each step introduces a bitwrench concept:</p>
+        <table class="step-table">
+          <thead>
+            <tr><th>Step</th><th>Concept</th><th>API</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>UI as data</td><td><code>bw.DOM()</code>, Array.map()</td></tr>
+            <tr><td>2</td><td>State management</td><td><code>o.state</code>, <code>o.render</code>, <code>bw.update()</code></td></tr>
+            <tr><td>3</td><td>Game logic</td><td>Pure functions, conditional rendering</td></tr>
+            <tr><td>4</td><td>Time travel</td><td>Immutable state with <code>.slice()</code></td></tr>
+            <tr><td>5</td><td>Topic-based events</td><td><code>bw.pub()</code>, <code>bw.sub()</code>, <code>bw.patch()</code></td></tr>
+          </tbody>
+        </table>
+        <div class="callout callout-concept" style="margin-top: 1.25rem;">
+          <h4>TACO Format</h4>
+          <p>Bitwrench describes HTML using plain JavaScript objects called <strong>TACOs</strong>:</p>
+          <pre style="background: var(--bw-code-bg, #1e293b); color: var(--bw-code-text, #e2e8f0); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0 0; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto;"><code>{ t: 'div', a: { class: 'card' }, c: 'Hello' }
+//  Tag       Attributes            Content</code></pre>
+        </div>
+        <div class="callout callout-concept">
+          <h4>The Render Pattern</h4>
+          <ol>
+            <li><strong>o.state</strong> &mdash; declare initial state inside the TACO</li>
+            <li><strong>o.render</strong> &mdash; function that builds UI from <code>el._bw_state</code></li>
+            <li><strong>Event handler</strong> &mdash; mutate state, then call <code>bw.update(el)</code></li>
+            <li><strong>bw.DOM()</strong> &mdash; mount the TACO to the page</li>
+          </ol>
+          <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--bw-text-secondary, #555);">No virtual DOM, no JSX, no build step. Just JavaScript.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="bw-step" id="step-1"></div>
+    <!-- Step 2 -->
+    <div class="bw-step" id="step-2"></div>
+    <!-- Step 3 -->
+    <div class="bw-step" id="step-3"></div>
+    <!-- Step 4 -->
+    <div class="bw-step" id="step-4"></div>
+    <!-- Step 5 -->
+    <div class="bw-step" id="step-5"></div>
+    <!-- Congrats -->
+    <div id="congrats-section"></div>
+    <!-- Complete Example -->
+    <div id="complete-example"></div>
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '06-tic-tac-toe-tutorial.html');
+
+    // ---- Utility: create a tabbed Result/Code/Styles demo ----
+    // tabs = array of { label, content, isCode }
+    function stepTabs(containerId, resultTaco, codeStr, stylesStr) {
+      var id = containerId.replace('#','');
+
+      // Build tab definitions
+      var tabs = [
+        { label: 'Result', content: resultTaco, isCode: false },
+        { label: 'Code', content: codeStr, isCode: true }
+      ];
+      if (stylesStr) {
+        tabs.push({ label: 'Styles', content: stylesStr, isCode: true });
+      }
+
+      var tabIds = tabs.map(function(_, i) { return id + '-tab-' + i; });
+
+      function makeCopyBtn(text) {
+        return {
+          t: 'button',
+          a: {
+            class: 'copy-btn',
+            onclick: function(e) {
+              navigator.clipboard.writeText(text).then(function() {
+                e.target.textContent = 'Copied!';
+                e.target.classList.add('copied');
+                setTimeout(function() {
+                  e.target.textContent = 'Copy';
+                  e.target.classList.remove('copied');
+                }, 1500);
+              });
+            }
+          },
+          c: 'Copy'
+        };
+      }
+
+      return {
+        t: 'div', a: { class: 'demo-tabs' },
+        c: [
+          {
+            t: 'div', a: { class: 'demo-tab-bar' },
+            c: tabs.map(function(tab, i) {
+              return {
+                t: 'button',
+                a: {
+                  class: 'demo-tab-btn' + (i === 0 ? ' active' : ''),
+                  onclick: function(e) { switchTab(e, tabIds[i]); }
+                },
+                c: tab.label
+              };
+            })
+          }
+        ].concat(tabs.map(function(tab, i) {
+          if (tab.isCode) {
+            return {
+              t: 'div', a: { id: tabIds[i], class: 'demo-tab-panel code-panel' + (i === 0 ? ' active' : '') },
+              c: [
+                makeCopyBtn(tab.content),
+                { t: 'pre', c: { t: 'code', c: tab.content } }
+              ]
+            };
+          }
+          return {
+            t: 'div', a: { id: tabIds[i], class: 'demo-tab-panel' + (i === 0 ? ' active' : '') },
+            c: tab.content
+          };
+        }))
+      };
+    }
+
+    function switchTab(e, showId) {
+      var container = e.target.closest('.demo-tabs');
+      var btns = container.querySelectorAll('.demo-tab-btn');
+      var panels = container.querySelectorAll('.demo-tab-panel');
+      btns.forEach(function(b) { b.classList.remove('active'); });
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      e.target.classList.add('active');
+      document.getElementById(showId).classList.add('active');
+    }
+
+    // ---- Shared: winner detection (used by steps 3-5) ----
+    function calcWinner(sq) {
+      var lines = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      for (var i = 0; i < lines.length; i++) {
+        var a = lines[i][0], b = lines[i][1], c = lines[i][2];
+        if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])
+          return { winner: sq[a], line: lines[i] };
+      }
+      return null;
+    }
+
+    // ---- Shared: render a square TACO ----
+    function squareTaco(val, extraClass, disabled, onclick) {
+      var cls = 'square' + (extraClass ? ' ' + extraClass : '');
+      return {
+        t: 'button',
+        a: { class: cls, disabled: disabled, onclick: onclick },
+        c: val ? { t: 'span', a: { class: val === 'X' ? 'x-mark' : 'o-mark' }, c: val } : ''
+      };
+    }
+
+    // ================================================================
+    // STEP 1: Draw the Board
+    // ================================================================
+    (function() {
+      var board = {
+        t: 'div', a: { class: 'game-board' },
+        c: Array(9).fill(null).map(function(_, i) {
+          return squareTaco('', '', false, function() {
+            alert('You clicked square ' + i);
+          });
+        })
+      };
+
+      var code = [
+        '// Step 1: Draw the board',
+        '// Each square is a TACO object. Array.map() generates all 9.',
+        '',
+        'var board = {',
+        '  t: "div", a: { class: "game-board" },',
+        '  c: Array(9).fill(null).map(function(_, i) {',
+        '    return {',
+        '      t: "button",',
+        '      a: {',
+        '        class: "square",',
+        '        onclick: function() { alert("Clicked " + i); }',
+        '      },',
+        '      c: ""',
+        '    };',
+        '  })',
+        '};',
+        '',
+        'bw.DOM("#game", board);'
+      ].join('\n');
+
+      var styles = [
+        '/* Include bitwrench.css for base component styles */',
+        '',
+        '.game-board {',
+        '  display: grid;',
+        '  grid-template-columns: repeat(3, 90px);',
+        '  gap: 4px;',
+        '  background: #004d4d;',
+        '  padding: 4px;',
+        '  border-radius: 6px;',
+        '  margin: 0 auto;',
+        '  width: fit-content;',
+        '}',
+        '.square {',
+        '  width: 90px;',
+        '  height: 90px;',
+        '  background: white;',
+        '  border: none;',
+        '  cursor: pointer;',
+        '  font-size: 2rem;',
+        '  font-weight: 700;',
+        '  display: flex;',
+        '  align-items: center;',
+        '  justify-content: center;',
+        '  border-radius: 3px;',
+        '  transition: background 0.15s;',
+        '}',
+        '.square:hover:not(:disabled) { background: #f0f0f0; }'
+      ].join('\n');
+
+      bw.DOM('#step-1', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'bw-step-header' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-num' }, c: '1' },
+              { t: 'h2', c: 'Draw the Board' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw-step-body' },
+            c: [
+              { t: 'p', c: 'We start by creating 9 squares with Array.map(). Each square is a TACO button. Click any square to see the handler fire.' },
+              {
+                t: 'div', a: { class: 'callout callout-tip' },
+                c: [
+                  { t: 'h4', c: 'Key idea' },
+                  { t: 'p', c: 'Array.map() is the workhorse of bitwrench. Map your data to TACO objects and bitwrench renders them. No templates needed.' }
+                ]
+              },
+              stepTabs('#step1', { t: 'div', c: board }, code, styles)
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ================================================================
+    // STEP 2: State with o.render
+    // ================================================================
+    (function() {
+      // The game TACO — state and rendering in one place
+      var gameTaco = {
+        t: 'div',
+        o: {
+          state: { squares: Array(9).fill(null), xIsNext: true },
+          render: function(el) {
+            var s = el._bw_state;
+
+            bw.DOM(el, {
+              t: 'div',
+              c: [
+                { t: 'div', a: { class: 'status-bar' },
+                  c: 'Next: ' + (s.xIsNext ? 'X' : 'O') },
+                {
+                  t: 'div', a: { class: 'game-board' },
+                  c: s.squares.map(function(sq, i) {
+                    return squareTaco(sq, '', sq !== null, function() {
+                      if (s.squares[i]) return;
+                      s.squares[i] = s.xIsNext ? 'X' : 'O';
+                      s.xIsNext = !s.xIsNext;
+                      bw.update(el);
+                    });
+                  })
+                },
+                {
+                  t: 'button',
+                  a: {
+                    class: 'new-game-btn',
+                    onclick: function() {
+                      s.squares = Array(9).fill(null);
+                      s.xIsNext = true;
+                      bw.update(el);
+                    }
+                  },
+                  c: 'Reset'
+                }
+              ]
+            });
+          }
+        }
+      };
+
+      var code = [
+        '// Step 2: State with o.render',
+        '// State and rendering live inside the TACO.',
+        '// bw.update(el) re-renders the component.',
+        '',
+        'bw.DOM("#game", {',
+        '  t: "div",',
+        '  o: {',
+        '    state: { squares: Array(9).fill(null), xIsNext: true },',
+        '    render: function(el) {',
+        '      var s = el._bw_state;',
+        '',
+        '      bw.DOM(el, {',
+        '        t: "div", c: [',
+        '          { t: "div", a: { class: "status-bar" },',
+        '            c: "Next: " + (s.xIsNext ? "X" : "O") },',
+        '          { t: "div", a: { class: "game-board" },',
+        '            c: s.squares.map(function(sq, i) {',
+        '              return {',
+        '                t: "button",',
+        '                a: {',
+        '                  class: "square",',
+        '                  disabled: sq !== null,',
+        '                  onclick: function() {',
+        '                    if (s.squares[i]) return;',
+        '                    s.squares[i] = s.xIsNext ? "X" : "O";',
+        '                    s.xIsNext = !s.xIsNext;',
+        '                    bw.update(el);   // re-render',
+        '                  }',
+        '                },',
+        '                c: sq || ""',
+        '              };',
+        '            })',
+        '          },',
+        '          { t: "button", a: { class: "new-game-btn",',
+        '              onclick: function() {',
+        '                s.squares = Array(9).fill(null);',
+        '                s.xIsNext = true;',
+        '                bw.update(el);',
+        '              }',
+        '            }, c: "Reset"',
+        '          }',
+        '        ]',
+        '      });',
+        '    }',
+        '  }',
+        '});'
+      ].join('\n');
+
+      var styles = [
+        '.status-bar {',
+        '  text-align: center;',
+        '  font-size: 1.1rem;',
+        '  font-weight: 600;',
+        '  padding: 0.75rem 1rem;',
+        '  border-radius: 8px;',
+        '  margin-bottom: 1rem;',
+        '  background: #f5f5f5;',
+        '}',
+        '.new-game-btn {',
+        '  display: block;',
+        '  margin: 1rem auto 0;',
+        '  padding: 0.5rem 1.25rem;',
+        '  background: #006666;',
+        '  color: white;',
+        '  border: none;',
+        '  border-radius: 6px;',
+        '  font-size: 0.875rem;',
+        '  font-weight: 600;',
+        '  cursor: pointer;',
+        '}',
+        '.new-game-btn:hover { background: #004d4d; }'
+      ].join('\n');
+
+      bw.DOM('#step-2', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'bw-step-header' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-num' }, c: '2' },
+              { t: 'h2', c: 'State with o.render' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw-step-body' },
+            c: [
+              { t: 'p', c: 'Now we add state management. Declare initial state in o.state, define the render function in o.render, and call bw.update(el) when state changes. That\'s the entire pattern.' },
+              {
+                t: 'div', a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', c: 'The o.render pattern' },
+                  { t: 'p', c: [
+                    { t: 'code', c: 'o.state' }, ' declares initial state (stored at ',
+                    { t: 'code', c: 'el._bw_state' }, ').',
+                    { t: 'br' },
+                    { t: 'code', c: 'o.render' }, ' defines the render function (stored at ',
+                    { t: 'code', c: 'el._bw_render' }, ').',
+                    { t: 'br' },
+                    { t: 'code', c: 'bw.update(el)' }, ' calls the render function and emits a ',
+                    { t: 'code', c: 'bw:statechange' }, ' event.'
+                  ]}
+                ]
+              },
+              stepTabs('#step2', gameTaco, code, styles)
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ================================================================
+    // STEP 3: Detect the Winner
+    // ================================================================
+    (function() {
+      var gameTaco = {
+        t: 'div',
+        o: {
+          state: { squares: Array(9).fill(null), xIsNext: true },
+          render: function(el) {
+            var s = el._bw_state;
+            var info = calcWinner(s.squares);
+            var winner = info ? info.winner : null;
+            var winLine = info ? info.line : [];
+            var isDraw = !winner && s.squares.every(function(v) { return v !== null; });
+
+            var statusClass = 'status-bar';
+            var statusText = 'Next: ' + (s.xIsNext ? 'X' : 'O');
+            if (winner) { statusClass += ' winner'; statusText = 'Winner: ' + winner + '!'; }
+            if (isDraw) { statusClass += ' draw'; statusText = 'Draw!'; }
+
+            var parts = [
+              { t: 'div', a: { class: statusClass }, c: statusText },
+              {
+                t: 'div', a: { class: 'game-board' },
+                c: s.squares.map(function(sq, i) {
+                  var isWin = winLine.indexOf(i) >= 0;
+                  return squareTaco(sq, isWin ? 'winning' : '', sq !== null || winner !== null, function() {
+                    if (calcWinner(s.squares) || s.squares[i]) return;
+                    s.squares[i] = s.xIsNext ? 'X' : 'O';
+                    s.xIsNext = !s.xIsNext;
+                    bw.update(el);
+                  });
+                })
+              }
+            ];
+
+            if (winner || isDraw) {
+              parts.push({
+                t: 'button',
+                a: {
+                  class: 'new-game-btn',
+                  onclick: function() {
+                    s.squares = Array(9).fill(null);
+                    s.xIsNext = true;
+                    bw.update(el);
+                  }
+                },
+                c: 'New Game'
+              });
+            }
+
+            bw.DOM(el, { t: 'div', c: parts });
+          }
+        }
+      };
+
+      var code = [
+        '// Step 3: Winner detection',
+        '// calcWinner() is a pure function — no side effects.',
+        '// Render uses its result for status text and square highlights.',
+        '',
+        'function calcWinner(sq) {',
+        '  var lines = [',
+        '    [0,1,2], [3,4,5], [6,7,8],  // rows',
+        '    [0,3,6], [1,4,7], [2,5,8],  // columns',
+        '    [0,4,8], [2,4,6]            // diagonals',
+        '  ];',
+        '  for (var i = 0; i < lines.length; i++) {',
+        '    var a = lines[i][0], b = lines[i][1], c = lines[i][2];',
+        '    if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])',
+        '      return { winner: sq[a], line: lines[i] };',
+        '  }',
+        '  return null;',
+        '}',
+        '',
+        '// Inside o.render:',
+        'render: function(el) {',
+        '  var s = el._bw_state;',
+        '  var info = calcWinner(s.squares);',
+        '  var winner = info ? info.winner : null;',
+        '  var winLine = info ? info.line : [];',
+        '  var isDraw = !winner && s.squares.every(function(v) {',
+        '    return v !== null;',
+        '  });',
+        '',
+        '  // Highlight winning squares:',
+        '  class: "square" + (winLine.indexOf(i) >= 0 ? " winning" : "")',
+        '',
+        '  // Conditionally show New Game button:',
+        '  var parts = [statusBar, board];',
+        '  if (winner || isDraw) parts.push(newGameBtn);',
+        '  bw.DOM(el, { t: "div", c: parts });',
+        '}'
+      ].join('\n');
+
+      var styles = [
+        '.square.winning { background: #b2dfdb; }',
+        '.x-mark { color: #006666; }',
+        '.o-mark { color: #c62828; }',
+        '',
+        '.status-bar.winner {',
+        '  background: #e8f5e9;',
+        '  color: #2e7d32;',
+        '}',
+        '.status-bar.draw {',
+        '  background: #fce4ec;',
+        '  color: #c62828;',
+        '}'
+      ].join('\n');
+
+      bw.DOM('#step-3', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'bw-step-header' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-num' }, c: '3' },
+              { t: 'h2', c: 'Detect the Winner' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw-step-body' },
+            c: [
+              { t: 'p', c: 'We add a calcWinner() function that checks all 8 winning lines. When someone wins, the winning squares highlight and a New Game button appears.' },
+              {
+                t: 'div', a: { class: 'callout callout-tip' },
+                c: [
+                  { t: 'h4', c: 'Conditional rendering' },
+                  { t: 'p', c: 'Build an array of TACO parts, conditionally push items into it, and pass the array as content. This is just regular JavaScript.' }
+                ]
+              },
+              stepTabs('#step3', gameTaco, code, styles)
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ================================================================
+    // STEP 4: Move History (Time Travel)
+    // ================================================================
+    (function() {
+      var gameTaco = {
+        t: 'div',
+        o: {
+          state: {
+            history: [{ squares: Array(9).fill(null) }],
+            stepNumber: 0,
+            xIsNext: true
+          },
+          render: function(el) {
+            var s = el._bw_state;
+            var current = s.history[s.stepNumber];
+            var winner = calcWinner(current.squares);
+            var winnerMark = winner ? winner.winner : null;
+            var winLine = winner ? winner.line : [];
+            var isDraw = !winnerMark && current.squares.every(function(v) { return v !== null; });
+
+            function handleClick(i) {
+              var hist = s.history.slice(0, s.stepNumber + 1);
+              var sq = hist[hist.length - 1].squares.slice();
+              if (calcWinner(sq) || sq[i]) return;
+              sq[i] = s.xIsNext ? 'X' : 'O';
+              s.history = hist.concat([{ squares: sq, lastMove: i }]);
+              s.stepNumber = hist.length;
+              s.xIsNext = !s.xIsNext;
+              bw.update(el);
+            }
+
+            function jumpTo(step) {
+              s.stepNumber = step;
+              s.xIsNext = (step % 2) === 0;
+              bw.update(el);
+            }
+
+            var statusClass = 'status-bar';
+            var statusText = 'Next: ' + (s.xIsNext ? 'X' : 'O');
+            if (winnerMark) { statusClass += ' winner'; statusText = 'Winner: ' + winnerMark + '!'; }
+            if (isDraw) { statusClass += ' draw'; statusText = 'Draw!'; }
+
+            var moves = s.history.map(function(step, move) {
+              var label = move === 0 ? 'Start' : 'Move ' + move;
+              if (move > 0 && step.lastMove !== undefined) {
+                var r = Math.floor(step.lastMove / 3) + 1;
+                var c = (step.lastMove % 3) + 1;
+                label += ' (' + r + ',' + c + ')';
+              }
+              return {
+                t: 'button',
+                a: {
+                  class: 'history-btn' + (move === s.stepNumber ? ' current' : ''),
+                  onclick: (function(m) { return function() { jumpTo(m); }; })(move)
+                },
+                c: label
+              };
+            });
+
+            bw.DOM(el, {
+              t: 'div', a: { class: 'game-layout' },
+              c: [
+                {
+                  t: 'div',
+                  c: [
+                    { t: 'div', a: { class: statusClass }, c: statusText },
+                    {
+                      t: 'div', a: { class: 'game-board' },
+                      c: current.squares.map(function(sq, i) {
+                        var isWin = winLine.indexOf(i) >= 0;
+                        return squareTaco(sq, isWin ? 'winning' : '', sq !== null || winnerMark !== null, function() {
+                          handleClick(i);
+                        });
+                      })
+                    },
+                    {
+                      t: 'button',
+                      a: {
+                        class: 'new-game-btn',
+                        onclick: function() {
+                          s.history = [{ squares: Array(9).fill(null) }];
+                          s.stepNumber = 0;
+                          s.xIsNext = true;
+                          bw.update(el);
+                        }
+                      },
+                      c: 'New Game'
+                    }
+                  ]
+                },
+                {
+                  t: 'div', a: { class: 'game-sidebar' },
+                  c: [
+                    { t: 'h4', c: 'History' },
+                    { t: 'div', a: { class: 'history-list' }, c: moves }
+                  ]
+                }
+              ]
+            });
+          }
+        }
+      };
+
+      var code = [
+        '// Step 4: Time travel with immutable history',
+        '// Each move copies the squares array with .slice().',
+        '// The full history lives in el._bw_state.',
+        '',
+        'o: {',
+        '  state: {',
+        '    history: [{ squares: Array(9).fill(null) }],',
+        '    stepNumber: 0,',
+        '    xIsNext: true',
+        '  },',
+        '  render: function(el) {',
+        '    var s = el._bw_state;',
+        '    var current = s.history[s.stepNumber];',
+        '',
+        '    function handleClick(i) {',
+        '      // Slice history to current step (discard "future")',
+        '      var hist = s.history.slice(0, s.stepNumber + 1);',
+        '      var sq = hist[hist.length - 1].squares.slice();',
+        '      if (calcWinner(sq) || sq[i]) return;',
+        '      sq[i] = s.xIsNext ? "X" : "O";',
+        '      s.history = hist.concat([{ squares: sq, lastMove: i }]);',
+        '      s.stepNumber = hist.length;',
+        '      s.xIsNext = !s.xIsNext;',
+        '      bw.update(el);',
+        '    }',
+        '',
+        '    function jumpTo(step) {',
+        '      s.stepNumber = step;',
+        '      s.xIsNext = (step % 2) === 0;',
+        '      bw.update(el);',
+        '    }',
+        '',
+        '    // History buttons',
+        '    var moves = s.history.map(function(step, move) {',
+        '      return {',
+        '        t: "button",',
+        '        a: {',
+        '          class: "history-btn"',
+        '            + (move === s.stepNumber ? " current" : ""),',
+        '          onclick: function() { jumpTo(move); }',
+        '        },',
+        '        c: move === 0 ? "Start" : "Move " + move',
+        '      };',
+        '    });',
+        '',
+        '    bw.DOM(el, { t: "div", a: { class: "game-layout" },',
+        '      c: [boardSection, sidebarSection]',
+        '    });',
+        '  }',
+        '}'
+      ].join('\n');
+
+      var styles = [
+        '.game-layout {',
+        '  display: flex;',
+        '  gap: 2rem;',
+        '  align-items: flex-start;',
+        '  justify-content: center;',
+        '  flex-wrap: wrap;',
+        '}',
+        '.game-sidebar {',
+        '  min-width: 200px;',
+        '  max-width: 260px;',
+        '}',
+        '.game-sidebar h4 {',
+        '  margin: 0 0 0.5rem;',
+        '  font-size: 0.9rem;',
+        '  color: #555;',
+        '  text-transform: uppercase;',
+        '  letter-spacing: 0.5px;',
+        '}',
+        '.history-list {',
+        '  display: flex;',
+        '  flex-direction: column;',
+        '  gap: 0.25rem;',
+        '  max-height: 280px;',
+        '  overflow-y: auto;',
+        '}',
+        '.history-btn {',
+        '  padding: 0.4rem 0.75rem;',
+        '  border: 1px solid #e0e0e0;',
+        '  border-radius: 4px;',
+        '  background: white;',
+        '  font-size: 0.8rem;',
+        '  cursor: pointer;',
+        '  text-align: left;',
+        '}',
+        '.history-btn:hover { background: #f5f5f5; border-color: #006666; }',
+        '.history-btn.current {',
+        '  background: #006666;',
+        '  color: white;',
+        '  border-color: #006666;',
+        '}'
+      ].join('\n');
+
+      bw.DOM('#step-4', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'bw-step-header' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-num' }, c: '4' },
+              { t: 'h2', c: 'Add Move History' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw-step-body' },
+            c: [
+              { t: 'p', c: 'Instead of mutating the squares array, we copy it with .slice() before each move. The full history lives in state, so we can jump to any past board.' },
+              {
+                t: 'div', a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', c: 'Immutable updates' },
+                  { t: 'p', c: [
+                    'Use ', { t: 'code', c: '.slice()' },
+                    ' to copy arrays before modifying them. The old data stays in the history. ',
+                    { t: 'code', c: 'jumpTo()' }, ' just sets ',
+                    { t: 'code', c: 's.stepNumber' }, ' and calls ',
+                    { t: 'code', c: 'bw.update(el)' }, '.'
+                  ]}
+                ]
+              },
+              stepTabs('#step4', gameTaco, code, styles)
+            ]
+          }
+        ]
+      });
+    })();
+
+    // ================================================================
+    // STEP 5: Complete Game + Scoreboard
+    // ================================================================
+    (function() {
+      // Scoreboard — static TACO with IDs, updated via bw.patch()
+      var scoreboard = {
+        t: 'div', a: { class: 'scoreboard', id: 's5-scoreboard' },
+        c: [
+          { t: 'div', a: { class: 'score-item score-x' }, c: [
+            { t: 'div', a: { class: 'score-value', id: 's5-score-x' }, c: '0' },
+            { t: 'div', a: { class: 'score-label' }, c: 'X Wins' }
+          ]},
+          { t: 'div', a: { class: 'score-item score-draw' }, c: [
+            { t: 'div', a: { class: 'score-value', id: 's5-score-d' }, c: '0' },
+            { t: 'div', a: { class: 'score-label' }, c: 'Draws' }
+          ]},
+          { t: 'div', a: { class: 'score-item score-o' }, c: [
+            { t: 'div', a: { class: 'score-value', id: 's5-score-o' }, c: '0' },
+            { t: 'div', a: { class: 'score-label' }, c: 'O Wins' }
+          ]},
+          { t: 'div', a: { class: 'score-item score-total' }, c: [
+            { t: 'div', a: { class: 'score-value', id: 's5-score-t' }, c: '0' },
+            { t: 'div', a: { class: 'score-label' }, c: 'Games' }
+          ]}
+        ]
+      };
+
+      // Game component — emits bw:gameover when a game ends
+      var gameTaco = {
+        t: 'div', a: { id: 's5-game-el' },
+        o: {
+          state: {
+            history: [{ squares: Array(9).fill(null) }],
+            stepNumber: 0,
+            xIsNext: true,
+            sortAsc: true,
+            showCoords: true
+          },
+          render: function(el) {
+            var s = el._bw_state;
+            var current = s.history[s.stepNumber];
+            var info = calcWinner(current.squares);
+            var winnerMark = info ? info.winner : null;
+            var winLine = info ? info.line : [];
+            var isDraw = !winnerMark && current.squares.every(function(v) { return v !== null; });
+
+            function handleClick(i) {
+              var hist = s.history.slice(0, s.stepNumber + 1);
+              var sq = hist[hist.length - 1].squares.slice();
+              if (calcWinner(sq) || sq[i]) return;
+              sq[i] = s.xIsNext ? 'X' : 'O';
+              s.history = hist.concat([{ squares: sq, lastMove: i }]);
+              s.stepNumber = hist.length;
+              s.xIsNext = !s.xIsNext;
+              bw.update(el);
+
+              // Publish gameover if this move ended the game
+              var result = calcWinner(sq);
+              var draw = !result && sq.every(function(v) { return v !== null; });
+              if (result) bw.pub('gameover', { winner: result.winner });
+              else if (draw) bw.pub('gameover', { winner: null, isDraw: true });
+            }
+
+            function jumpTo(step) {
+              s.stepNumber = step;
+              s.xIsNext = (step % 2) === 0;
+              bw.update(el);
+            }
+
+            var statusClass = 'status-bar';
+            var statusText = 'Next: ' + (s.xIsNext ? 'X' : 'O');
+            if (winnerMark) { statusClass += ' winner'; statusText = 'Winner: ' + winnerMark + '!'; }
+            if (isDraw) { statusClass += ' draw'; statusText = 'Draw!'; }
+
+            var moves = s.history.map(function(step, move) {
+              var label = move === 0 ? 'Start' : 'Move ' + move;
+              if (s.showCoords && move > 0 && step.lastMove !== undefined) {
+                var r = Math.floor(step.lastMove / 3) + 1;
+                var c = (step.lastMove % 3) + 1;
+                label += ' (' + r + ',' + c + ')';
+              }
+              return {
+                t: 'button',
+                a: {
+                  class: 'history-btn' + (move === s.stepNumber ? ' current' : ''),
+                  onclick: (function(m) { return function() { jumpTo(m); }; })(move)
+                },
+                c: label
+              };
+            });
+
+            if (!s.sortAsc) moves = moves.slice().reverse();
+
+            bw.DOM(el, {
+              t: 'div', a: { class: 'game-layout' },
+              c: [
+                {
+                  t: 'div',
+                  c: [
+                    { t: 'div', a: { class: statusClass }, c: statusText },
+                    {
+                      t: 'div', a: { class: 'game-board' },
+                      c: current.squares.map(function(sq, i) {
+                        var isWin = winLine.indexOf(i) >= 0;
+                        return squareTaco(sq, isWin ? 'winning' : '', sq !== null || winnerMark !== null, function() {
+                          handleClick(i);
+                        });
+                      })
+                    },
+                    {
+                      t: 'button',
+                      a: {
+                        class: 'new-game-btn',
+                        onclick: function() {
+                          s.history = [{ squares: Array(9).fill(null) }];
+                          s.stepNumber = 0;
+                          s.xIsNext = true;
+                          bw.update(el);
+                        }
+                      },
+                      c: 'New Game'
+                    }
+                  ]
+                },
+                {
+                  t: 'div', a: { class: 'game-sidebar' },
+                  c: [
+                    { t: 'h4', c: 'Options' },
+                    {
+                      t: 'div', a: { class: 'game-options' },
+                      c: [
+                        {
+                          t: 'label',
+                          c: [
+                            {
+                              t: 'input',
+                              a: {
+                                type: 'checkbox',
+                                checked: s.showCoords,
+                                onchange: function(e) {
+                                  s.showCoords = e.target.checked;
+                                  bw.update(el);
+                                }
+                              }
+                            },
+                            ' Show coordinates'
+                          ]
+                        },
+                        {
+                          t: 'button',
+                          a: {
+                            class: 'sort-btn',
+                            onclick: function() {
+                              s.sortAsc = !s.sortAsc;
+                              bw.update(el);
+                            }
+                          },
+                          c: s.sortAsc ? 'Sort: Oldest first' : 'Sort: Newest first'
+                        }
+                      ]
+                    },
+                    { t: 'h4', c: 'History' },
+                    { t: 'div', a: { class: 'history-list' }, c: moves }
+                  ]
+                }
+              ]
+            });
+          }
+        }
+      };
+
+      var code = [
+        '// Step 5: Topic-based events + targeted updates',
+        '// Game publishes to "gameover" topic. Scoreboard subscribes.',
+        '// No DOM coupling — pub/sub is application-scoped.',
+        '',
+        '// 1. Static scoreboard — IDs on the value elements',
+        'var scoreboard = {',
+        '  t: "div", a: { class: "scoreboard" },',
+        '  c: [',
+        '    { t: "div", c: [',
+        '      { t: "div", a: { id: "score-x" }, c: "0" },',
+        '      { t: "div", c: "X Wins" }',
+        '    ]},',
+        '    // ... draws, O wins, total',
+        '  ]',
+        '};',
+        '',
+        '// 2. Game component publishes "gameover" on win/draw',
+        'var game = {',
+        '  t: "div", a: { id: "game" },',
+        '  o: {',
+        '    state: { history: [...], stepNumber: 0, xIsNext: true },',
+        '    render: function(el) {',
+        '      var s = el._bw_state;',
+        '      // ... build board, detect winner ...',
+        '',
+        '      function handleClick(i) {',
+        '        // ... make the move, bw.update(el) ...',
+        '',
+        '        // Publish if game just ended:',
+        '        var result = calcWinner(sq);',
+        '        if (result)',
+        '          bw.pub("gameover", { winner: result.winner });',
+        '        else if (isDraw)',
+        '          bw.pub("gameover", { isDraw: true });',
+        '      }',
+        '    }',
+        '  }',
+        '};',
+        '',
+        '// 3. Mount both',
+        'bw.DOM("#mount", {',
+        '  t: "div", c: [scoreboard, game]',
+        '});',
+        '',
+        '// 4. Scoreboard subscribes and patches',
+        'var scores = { x: 0, o: 0, draws: 0 };',
+        'bw.sub("gameover", function(detail) {',
+        '  if (detail.isDraw) scores.draws++;',
+        '  else if (detail.winner === "X") scores.x++;',
+        '  else scores.o++;',
+        '',
+        '  // Targeted updates — no rebuild needed',
+        '  bw.patchAll({',
+        '    "score-x": String(scores.x),',
+        '    "score-o": String(scores.o),',
+        '    "score-d": String(scores.draws),',
+        '    "score-t": String(scores.x + scores.o + scores.draws)',
+        '  });',
+        '});',
+        '',
+        '// Two event systems:',
+        '// bw.emit/on  = DOM-scoped (bubbles, parent-child)',
+        '// bw.pub/sub  = app-scoped (topic, any component)'
+      ].join('\n');
+
+      var styles = [
+        '.scoreboard {',
+        '  display: flex;',
+        '  gap: 1.5rem;',
+        '  justify-content: center;',
+        '  margin-bottom: 1.25rem;',
+        '  padding: 0.75rem 1.25rem;',
+        '  background: #f8f8f8;',
+        '  border-radius: 8px;',
+        '  border: 1px solid #e0e0e0;',
+        '}',
+        '.score-item { text-align: center; min-width: 60px; }',
+        '.score-value {',
+        '  font-size: 1.75rem;',
+        '  font-weight: 700;',
+        '  font-variant-numeric: tabular-nums;',
+        '  line-height: 1.2;',
+        '}',
+        '.score-label {',
+        '  font-size: 0.7rem;',
+        '  text-transform: uppercase;',
+        '  letter-spacing: 0.05em;',
+        '  color: #555;',
+        '}',
+        '.score-x .score-value { color: #006666; }',
+        '.score-o .score-value { color: #c62828; }',
+        '.score-draw .score-value { color: #777; }',
+        '',
+        '.game-options {',
+        '  display: flex;',
+        '  flex-direction: column;',
+        '  gap: 0.5rem;',
+        '  margin-bottom: 1rem;',
+        '}',
+        '.game-options label {',
+        '  display: flex;',
+        '  align-items: center;',
+        '  gap: 0.4rem;',
+        '  font-size: 0.85rem;',
+        '  cursor: pointer;',
+        '}',
+        '.sort-btn {',
+        '  padding: 0.35rem 0.75rem;',
+        '  border: 1px solid #e0e0e0;',
+        '  border-radius: 4px;',
+        '  background: white;',
+        '  font-size: 0.8rem;',
+        '  cursor: pointer;',
+        '}',
+        '.sort-btn:hover { background: #f5f5f5; }'
+      ].join('\n');
+
+      // Mount step 5 with scoreboard + game
+      bw.DOM('#step-5', {
+        t: 'div',
+        c: [
+          {
+            t: 'div', a: { class: 'bw-step-header' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-num' }, c: '5' },
+              { t: 'h2', c: 'The Complete Game' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw-step-body' },
+            c: [
+              { t: 'p', c: 'The finished game adds a scoreboard that tracks wins across games. The game publishes to a topic with bw.pub(). The scoreboard subscribes with bw.sub() and updates individual values with bw.patch(). No coupling between components.' },
+              {
+                t: 'div', a: { class: 'callout callout-concept' },
+                c: [
+                  { t: 'h4', c: 'Two event systems' },
+                  { t: 'p', c: [
+                    { t: 'strong', c: 'DOM-scoped (emit/on):' }, ' ',
+                    { t: 'code', c: 'bw.emit(el, name, data)' }, ' + ',
+                    { t: 'code', c: 'bw.on(el, name, fn)' },
+                    ' \u2014 CustomEvent, bubbles up the DOM tree. Best for parent\u2013child coordination. ',
+                    { t: 'code', c: 'bw.update()' }, ' emits ', { t: 'code', c: 'bw:statechange' }, ' this way.',
+                    { t: 'br' }, { t: 'br' },
+                    { t: 'strong', c: 'Application-scoped (pub/sub):' }, ' ',
+                    { t: 'code', c: 'bw.pub(topic, data)' }, ' + ',
+                    { t: 'code', c: 'bw.sub(topic, fn)' },
+                    ' \u2014 topic-based, decoupled from DOM tree. Best for cross-component communication and composite conditions.',
+                    { t: 'br' }, { t: 'br' },
+                    { t: 'code', c: 'bw.patch(id, value)' }, ' \u2014 update one DOM element by ID. No rebuild.'
+                  ]}
+                ]
+              },
+              stepTabs('#step5', {
+                t: 'div', a: { id: 's5-area' },
+                c: [scoreboard, gameTaco]
+              }, code, styles)
+            ]
+          }
+        ]
+      });
+
+      // Wire scoreboard via pub/sub — no DOM mount order dependency
+      var scores = { x: 0, o: 0, draws: 0 };
+      bw.sub('gameover', function(detail) {
+        if (detail.isDraw) scores.draws++;
+        else if (detail.winner === 'X') scores.x++;
+        else scores.o++;
+
+        bw.patchAll({
+          's5-score-x': String(scores.x),
+          's5-score-o': String(scores.o),
+          's5-score-d': String(scores.draws),
+          's5-score-t': String(scores.x + scores.o + scores.draws)
+        });
+      });
+    })();
+
+    // ================================================================
+    // Congratulations
+    // ================================================================
+    bw.DOM('#congrats-section', {
+      t: 'div', a: { class: 'congrats' },
+      c: [
+        { t: 'h2', c: 'You did it!' },
+        { t: 'p', c: 'You built a complete tic tac toe game with bitwrench. Along the way you learned:' },
+        {
+          t: 'div', a: { style: 'text-align: left; max-width: 500px; margin: 1rem auto;' },
+          c: {
+            t: 'ul', a: { style: 'list-style: none; padding: 0;' },
+            c: [
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO objects' }, ' \u2014 describe HTML with plain JS objects'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.update()' }, ' \u2014 state management, no boilerplate'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, ' \u2014 just JavaScript (ternaries, arrays, .filter)'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable history' }, ' \u2014 .slice() for time travel'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.pub() + bw.sub()' }, ' \u2014 topic-based events, decoupled from DOM'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.emit() + bw.on()' }, ' \u2014 DOM-scoped events for parent\u2013child coordination'] },
+              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.patch()' }, ' \u2014 targeted DOM updates without rebuilding'] }
+            ]
+          }
+        },
+        {
+          t: 'div', a: { class: 'callout callout-challenge', style: 'text-align: left; max-width: 500px; margin: 1.5rem auto 0;' },
+          c: [
+            { t: 'h4', c: 'Challenge yourself' },
+            {
+              t: 'ul',
+              c: [
+                { t: 'li', c: 'Add a simple AI opponent (random or minimax)' },
+                { t: 'li', c: 'Save/load games with localStorage' },
+                { t: 'li', c: 'Use bw.patch() to update individual squares instead of rebuilding the board' },
+                { t: 'li', c: 'Make a 4x4 variant by changing the board size in state' }
+              ]
+            }
+          ]
+        },
+        {
+          t: 'div', a: { style: 'margin-top: 1.5rem;' },
+          c: {
+            t: 'a',
+            a: {
+              href: 'index.html',
+              style: 'display: inline-block; padding: 0.6rem 1.5rem; background: var(--bw-teal, #006666); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem;'
+            },
+            c: 'Back to Examples'
+          }
+        }
+      ]
+    });
+
+    // ================================================================
+    // Complete Example (collapsible)
+    // ================================================================
+    var completeExampleCode = [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head>',
+      '  <meta charset="UTF-8">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      '  <title>Tic Tac Toe - Bitwrench</title>',
+      '  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"><\/script>',
+      '  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">',
+      '  <style>',
+      '    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; background: #f5f5f5; }',
+      '    h1 { text-align: center; color: #006666; }',
+      '    .game-board { display: grid; grid-template-columns: repeat(3, 90px); gap: 4px; background: #004d4d; padding: 4px; border-radius: 6px; margin: 0 auto; width: fit-content; }',
+      '    .square { width: 90px; height: 90px; background: white; border: none; cursor: pointer; font-size: 2rem; font-weight: 700; display: flex; align-items: center; justify-content: center; border-radius: 3px; transition: background 0.15s; font-family: inherit; }',
+      '    .square:hover:not(:disabled) { background: #f0f0f0; }',
+      '    .square:disabled { cursor: default; }',
+      '    .square.winning { background: #b2dfdb; }',
+      '    .x-mark { color: #006666; }',
+      '    .o-mark { color: #c62828; }',
+      '    .status-bar { text-align: center; font-size: 1.1rem; font-weight: 600; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; background: #f5f5f5; }',
+      '    .status-bar.winner { background: #e8f5e9; color: #2e7d32; }',
+      '    .status-bar.draw { background: #fce4ec; color: #c62828; }',
+      '    .new-game-btn { display: block; margin: 1rem auto 0; padding: 0.5rem 1.25rem; background: #006666; color: white; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: inherit; }',
+      '    .new-game-btn:hover { background: #004d4d; }',
+      '    .game-layout { display: flex; gap: 2rem; align-items: flex-start; justify-content: center; flex-wrap: wrap; }',
+      '    .game-sidebar { min-width: 200px; max-width: 260px; }',
+      '    .game-sidebar h4 { margin: 0 0 0.5rem; font-size: 0.9rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }',
+      '    .history-list { display: flex; flex-direction: column; gap: 0.25rem; max-height: 280px; overflow-y: auto; }',
+      '    .history-btn { padding: 0.4rem 0.75rem; border: 1px solid #e0e0e0; border-radius: 4px; background: white; font-size: 0.8rem; cursor: pointer; text-align: left; font-family: inherit; }',
+      '    .history-btn:hover { background: #f5f5f5; border-color: #006666; }',
+      '    .history-btn.current { background: #006666; color: white; border-color: #006666; }',
+      '    .scoreboard { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1.25rem; padding: 0.75rem 1.25rem; background: #f8f8f8; border-radius: 8px; border: 1px solid #e0e0e0; }',
+      '    .score-item { text-align: center; min-width: 60px; }',
+      '    .score-value { font-size: 1.75rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }',
+      '    .score-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #555; }',
+      '    .score-x .score-value { color: #006666; }',
+      '    .score-o .score-value { color: #c62828; }',
+      '    .score-draw .score-value { color: #777; }',
+      '    .game-options { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }',
+      '    .game-options label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer; }',
+      '    .sort-btn { padding: 0.35rem 0.75rem; border: 1px solid #e0e0e0; border-radius: 4px; background: white; font-size: 0.8rem; cursor: pointer; font-family: inherit; }',
+      '    .sort-btn:hover { background: #f5f5f5; }',
+      '  </style>',
+      '</head>',
+      '<body>',
+      '  <h1>Tic Tac Toe</h1>',
+      '  <div id="app"></div>',
+      '',
+      '  <script>',
+      '    function calcWinner(sq) {',
+      '      var lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];',
+      '      for (var i = 0; i < lines.length; i++) {',
+      '        var a = lines[i][0], b = lines[i][1], c = lines[i][2];',
+      '        if (sq[a] && sq[a] === sq[b] && sq[a] === sq[c])',
+      '          return { winner: sq[a], line: lines[i] };',
+      '      }',
+      '      return null;',
+      '    }',
+      '',
+      '    var scoreboard = {',
+      '      t: "div", a: { class: "scoreboard" },',
+      '      c: [',
+      '        { t: "div", a: { class: "score-item score-x" }, c: [',
+      '          { t: "div", a: { class: "score-value", id: "score-x" }, c: "0" },',
+      '          { t: "div", a: { class: "score-label" }, c: "X Wins" }',
+      '        ]},',
+      '        { t: "div", a: { class: "score-item score-draw" }, c: [',
+      '          { t: "div", a: { class: "score-value", id: "score-d" }, c: "0" },',
+      '          { t: "div", a: { class: "score-label" }, c: "Draws" }',
+      '        ]},',
+      '        { t: "div", a: { class: "score-item score-o" }, c: [',
+      '          { t: "div", a: { class: "score-value", id: "score-o" }, c: "0" },',
+      '          { t: "div", a: { class: "score-label" }, c: "O Wins" }',
+      '        ]}',
+      '      ]',
+      '    };',
+      '',
+      '    var game = {',
+      '      t: "div",',
+      '      o: {',
+      '        state: {',
+      '          history: [{ squares: Array(9).fill(null) }],',
+      '          stepNumber: 0,',
+      '          xIsNext: true,',
+      '          sortAsc: true,',
+      '          showCoords: true',
+      '        },',
+      '        render: function(el) {',
+      '          var s = el._bw_state;',
+      '          var current = s.history[s.stepNumber];',
+      '          var info = calcWinner(current.squares);',
+      '          var winnerMark = info ? info.winner : null;',
+      '          var winLine = info ? info.line : [];',
+      '          var isDraw = !winnerMark && current.squares.every(function(v) { return v !== null; });',
+      '',
+      '          function handleClick(i) {',
+      '            var hist = s.history.slice(0, s.stepNumber + 1);',
+      '            var sq = hist[hist.length - 1].squares.slice();',
+      '            if (calcWinner(sq) || sq[i]) return;',
+      '            sq[i] = s.xIsNext ? "X" : "O";',
+      '            s.history = hist.concat([{ squares: sq, lastMove: i }]);',
+      '            s.stepNumber = hist.length;',
+      '            s.xIsNext = !s.xIsNext;',
+      '            bw.update(el);',
+      '            var result = calcWinner(sq);',
+      '            var draw = !result && sq.every(function(v) { return v !== null; });',
+      '            if (result) bw.pub("gameover", { winner: result.winner });',
+      '            else if (draw) bw.pub("gameover", { isDraw: true });',
+      '          }',
+      '',
+      '          function jumpTo(step) {',
+      '            s.stepNumber = step;',
+      '            s.xIsNext = (step % 2) === 0;',
+      '            bw.update(el);',
+      '          }',
+      '',
+      '          var statusClass = "status-bar";',
+      '          var statusText = "Next: " + (s.xIsNext ? "X" : "O");',
+      '          if (winnerMark) { statusClass += " winner"; statusText = "Winner: " + winnerMark + "!"; }',
+      '          if (isDraw) { statusClass += " draw"; statusText = "Draw!"; }',
+      '',
+      '          var moves = s.history.map(function(step, move) {',
+      '            var label = move === 0 ? "Start" : "Move " + move;',
+      '            if (s.showCoords && move > 0 && step.lastMove !== undefined) {',
+      '              var r = Math.floor(step.lastMove / 3) + 1;',
+      '              var c = (step.lastMove % 3) + 1;',
+      '              label += " (" + r + "," + c + ")";',
+      '            }',
+      '            return {',
+      '              t: "button",',
+      '              a: {',
+      '                class: "history-btn" + (move === s.stepNumber ? " current" : ""),',
+      '                onclick: (function(m) { return function() { jumpTo(m); }; })(move)',
+      '              },',
+      '              c: label',
+      '            };',
+      '          });',
+      '          if (!s.sortAsc) moves = moves.slice().reverse();',
+      '',
+      '          bw.DOM(el, {',
+      '            t: "div", a: { class: "game-layout" },',
+      '            c: [',
+      '              { t: "div", c: [',
+      '                { t: "div", a: { class: statusClass }, c: statusText },',
+      '                { t: "div", a: { class: "game-board" },',
+      '                  c: current.squares.map(function(sq, i) {',
+      '                    var isWin = winLine.indexOf(i) >= 0;',
+      '                    return {',
+      '                      t: "button",',
+      '                      a: {',
+      '                        class: "square" + (isWin ? " winning" : ""),',
+      '                        disabled: sq !== null || winnerMark !== null,',
+      '                        onclick: function() { handleClick(i); }',
+      '                      },',
+      '                      c: sq ? { t: "span", a: { class: sq === "X" ? "x-mark" : "o-mark" }, c: sq } : ""',
+      '                    };',
+      '                  })',
+      '                },',
+      '                { t: "button", a: { class: "new-game-btn", onclick: function() {',
+      '                    s.history = [{ squares: Array(9).fill(null) }];',
+      '                    s.stepNumber = 0; s.xIsNext = true; bw.update(el);',
+      '                  } }, c: "New Game" }',
+      '              ]},',
+      '              { t: "div", a: { class: "game-sidebar" }, c: [',
+      '                { t: "h4", c: "Options" },',
+      '                { t: "div", a: { class: "game-options" }, c: [',
+      '                  { t: "label", c: [',
+      '                    { t: "input", a: { type: "checkbox", checked: s.showCoords,',
+      '                      onchange: function(e) { s.showCoords = e.target.checked; bw.update(el); }',
+      '                    }}, " Show coordinates"',
+      '                  ]},',
+      '                  { t: "button", a: { class: "sort-btn",',
+      '                    onclick: function() { s.sortAsc = !s.sortAsc; bw.update(el); }',
+      '                  }, c: s.sortAsc ? "Sort: Oldest first" : "Sort: Newest first" }',
+      '                ]},',
+      '                { t: "h4", c: "History" },',
+      '                { t: "div", a: { class: "history-list" }, c: moves }',
+      '              ]}',
+      '            ]',
+      '          });',
+      '        }',
+      '      }',
+      '    };',
+      '',
+      '    bw.DOM("#app", { t: "div", c: [scoreboard, game] });',
+      '',
+      '    var scores = { x: 0, o: 0, draws: 0 };',
+      '    bw.sub("gameover", function(detail) {',
+      '      if (detail.isDraw) scores.draws++;',
+      '      else if (detail.winner === "X") scores.x++;',
+      '      else scores.o++;',
+      '      bw.patchAll({',
+      '        "score-x": String(scores.x),',
+      '        "score-o": String(scores.o),',
+      '        "score-d": String(scores.draws)',
+      '      });',
+      '    });',
+      '  <\/script>',
+      '</body>',
+      '</html>'
+    ].join('\n');
+
+    bw.DOM('#complete-example', {
+      t: 'div', a: { class: 'bw-step', style: 'margin-bottom: 2rem;' },
+      c: [
+        {
+          t: 'div', a: { class: 'bw-step-header', style: 'cursor: pointer;' },
+          c: [
+            { t: 'div', a: { class: 'bw-step-num', style: 'background: #7b1fa2; font-size: 0.85rem;' }, c: '{}' },
+            { t: 'h2', c: 'Complete Standalone Example' },
+            { t: 'span', a: { id: 'complete-toggle', style: 'margin-left: auto; font-size: 1.25rem; transition: transform 0.2s;' }, c: '\u25B6' }
+          ],
+          o: {
+            mounted: function(el) {
+              el.addEventListener('click', function() {
+                var body = document.getElementById('complete-body');
+                var toggle = document.getElementById('complete-toggle');
+                if (body.style.display === 'none') {
+                  body.style.display = 'block';
+                  toggle.style.transform = 'rotate(90deg)';
+                } else {
+                  body.style.display = 'none';
+                  toggle.style.transform = 'rotate(0deg)';
+                }
+              });
+            }
+          }
+        },
+        {
+          t: 'div', a: { id: 'complete-body', style: 'display: none;' },
+          c: [
+            {
+              t: 'div', a: { class: 'bw-step-body' },
+              c: [
+                { t: 'p', c: 'Copy this complete HTML file, save it, and open it in your browser. It includes all the game code, styles, and bitwrench loaded from a CDN.' },
+                {
+                  t: 'div', a: { class: 'demo-tabs' },
+                  c: [
+                    {
+                      t: 'div', a: { class: 'demo-tab-panel code-panel active' },
+                      c: [
+                        {
+                          t: 'button',
+                          a: {
+                            class: 'copy-btn',
+                            onclick: function(e) {
+                              navigator.clipboard.writeText(completeExampleCode).then(function() {
+                                e.target.textContent = 'Copied!';
+                                e.target.classList.add('copied');
+                                setTimeout(function() {
+                                  e.target.textContent = 'Copy';
+                                  e.target.classList.remove('copied');
+                                }, 1500);
+                              });
+                            }
+                          },
+                          c: 'Copy'
+                        },
+                        { t: 'pre', a: { style: 'max-height: 500px; overflow-y: auto;' }, c: { t: 'code', c: completeExampleCode } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+  </script>
+</body>
+</html>

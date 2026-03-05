@@ -4,7 +4,7 @@
  * Demonstrates dog-fooding: the project website is built WITH bitwrench
  */
 
-import bw from '../src/bitwrench_v2.js';
+import bw from '../src/bitwrench.js';
 import { getAllStyles } from '../src/bitwrench-styles.js';
 import { writeFileSync } from 'fs';
 import { join, dirname } from 'path';

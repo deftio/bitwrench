@@ -1,0 +1,87 @@
+{
+  "version": "2.0.4",
+  "buildDate": "2026-03-05",
+  "files": [
+    {
+      "file": "bitwrench.cjs.js",
+      "format": "CJS",
+      "ver": "2.x",
+      "minified": false,
+      "raw": 213377,
+      "gzipped": 52027,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.cjs.min.js",
+      "format": "CJS",
+      "ver": "2.x",
+      "minified": true,
+      "raw": 82038,
+      "gzipped": 22399,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.css",
+      "format": "CSS",
+      "ver": "2.x",
+      "minified": false,
+      "raw": 64429,
+      "gzipped": 9120,
+      "sourceMap": false
+    },
+    {
+      "file": "bitwrench.es5.js",
+      "format": "ES5 (UMD)",
+      "ver": "2.x",
+      "minified": false,
+      "raw": 259747,
+      "gzipped": 57903,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.es5.min.js",
+      "format": "ES5 (UMD)",
+      "ver": "2.x",
+      "minified": true,
+      "raw": 93445,
+      "gzipped": 24978,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.esm.js",
+      "format": "ESM",
+      "ver": "2.x",
+      "minified": false,
+      "raw": 213367,
+      "gzipped": 52024,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.esm.min.js",
+      "format": "ESM",
+      "ver": "2.x",
+      "minified": true,
+      "raw": 82029,
+      "gzipped": 22393,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.umd.js",
+      "format": "UMD",
+      "ver": "2.x",
+      "minified": false,
+      "raw": 227461,
+      "gzipped": 52845,
+      "sourceMap": true
+    },
+    {
+      "file": "bitwrench.umd.min.js",
+      "format": "UMD",
+      "ver": "2.x",
+      "minified": true,
+      "raw": 82335,
+      "gzipped": 22499,
+      "sourceMap": true
+    }
+  ]
+}

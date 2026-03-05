@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Component Library</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="shared-tryit.js"></script>
+  <!-- No page-specific styles needed; shared-theme.css handles everything -->
+</head>
+<body>
+  <!-- Shared Navigation -->
+  <div id="example-nav"></div>
+  
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Component Library</h1>
+      <p class="subtitle">All bitwrench UI components with live demos and code</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-container wide">
+    <!-- Introduction Section -->
+    <div class="demo-section">
+      <h2>About the BCCL</h2>
+      <div class="demo-content">
+        <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
+          Bitwrench includes a comprehensive set of UI components similar to Bootstrap or shadcn/ui to help you 
+          get started quickly. The Bitwrench Core Components Library (BCCL) is entirely optional - you can create 
+          components from scratch using TACO objects, extend existing components, or mix both approaches.
+        </p>
+        
+        <h3>Using BCCL Components</h3>
+        <p style="line-height: 1.8; margin-bottom: 1rem;">
+          All BCCL components are available as <code>bw.makeXxx()</code> functions that return TACO objects. 
+          You can use them in three ways:
+        </p>
+        <ol style="line-height: 1.8; margin-bottom: 1.5rem;">
+          <li><strong>Direct rendering</strong>: <code>bw.DOM('#target', bw.makeCard({ title: 'Hello' }))</code></li>
+          <li><strong>Composition</strong>: Include components within other TACO structures</li>
+          <li><strong>Extension</strong>: Use the returned TACO as a base and modify it</li>
+        </ol>
+        
+        <p style="line-height: 1.8;">
+          This page demonstrates every component family in the BCCL with live examples and code. 
+          Use it as a reference while building your applications.
+        </p>
+      </div>
+      <div id="style-origin-callout"></div>
+    </div>
+
+    <!-- Pipeline Demos -->
+    <div class="demo-section">
+      <h2>How bw.make*() Works</h2>
+      <p>Every <code>bw.make*()</code> function is just a helper that returns a JavaScript object (TACO). <code>bw.DOM()</code> renders it. There is no magic &mdash; you can inspect, modify, or compose these objects however you like.</p>
+      <div id="pipeline-card"></div>
+      <div id="pipeline-button" style="margin-top: 1.5rem;"></div>
+      <div id="pipeline-alert" style="margin-top: 1.5rem;"></div>
+      <div id="pipeline-badge" style="margin-top: 1.5rem;"></div>
+    </div>
+
+    <!-- Cards Demo -->
+    <div class="demo-section">
+      <h2>Cards</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Cards are flexible content containers with multiple optional parts including header, body, and footer. 
+          They're perfect for displaying related information in a clean, organized way. Cards can contain text, 
+          images, buttons, or any other components.
+        </p>
+        <div id="cards-demo"></div>
+      </div>
+    </div>
+
+    <!-- Buttons Demo -->
+    <div class="demo-section">
+      <h2>Buttons</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Buttons are interactive elements that trigger actions. Bitwrench provides various button styles 
+          (primary, secondary, success, danger, warning, info) and sizes (small, normal, large). Buttons 
+          can be disabled and include click handlers for interactivity.
+        </p>
+        <div id="buttons-demo"></div>
+      </div>
+    </div>
+
+    <!-- Grid Demo -->
+    <div class="demo-section">
+      <h2>Grid System</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          The grid system provides a flexible 12-column layout for creating responsive designs. Columns can 
+          have different widths at different breakpoints, making it easy to create layouts that work on all 
+          screen sizes. Use makeContainer, makeRow, and makeCol to build your layouts.
+        </p>
+        <div id="grid-demo"></div>
+      </div>
+    </div>
+
+    <!-- Navigation Demo -->
+    <div class="demo-section">
+      <h2>Navigation</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Navigation components help users move through your application. Create horizontal or vertical 
+          navigation bars, breadcrumbs, and navbar components. Items can be marked as active to show the 
+          current page or section.
+        </p>
+        <div id="nav-demo"></div>
+      </div>
+    </div>
+
+    <!-- Alerts Demo -->
+    <div class="demo-section">
+      <h2>Alerts</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Alerts provide contextual feedback messages for typical user actions. They come in several variants 
+          (primary, success, danger, warning, info) and can be made dismissible. Use alerts to show important 
+          messages, confirmations, or warnings to users.
+        </p>
+        <div id="alerts-demo"></div>
+      </div>
+    </div>
+
+    <!-- Badges Demo -->
+    <div class="demo-section">
+      <h2>Badges</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Badges are small count and labeling components. Use them to add context to just about any content. 
+          They're commonly used for notifications, status indicators, or highlighting new/important items.
+        </p>
+        <div id="badges-demo"></div>
+      </div>
+    </div>
+
+    <!-- Progress Demo -->
+    <div class="demo-section">
+      <h2>Progress Bars</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Progress bars show the completion status of a task or process. They can be styled with different 
+          colors, made striped or animated, and include labels. Use them for file uploads, form completion, 
+          or any multi-step process.
+        </p>
+        <div id="progress-demo"></div>
+      </div>
+    </div>
+
+    <!-- Lists Demo -->
+    <div class="demo-section">
+      <h2>List Groups</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          List groups are flexible components for displaying a series of content. They can be used for 
+          simple lists, navigation menus, or complex content lists. Items can be marked as active or disabled 
+          to show state.
+        </p>
+        <div id="lists-demo"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mount the shared navigation
+    mountExampleNav('#example-nav', '01-components.html');
+    bw.DOM('#style-origin-callout', makeStyleOrigin());
+
+    // Pipeline demos — show what bw.make*() returns
+    bw.DOM('#pipeline-card', showPipeline({
+      label: 'Card',
+      helperCode: "bw.makeCard({\n  title: 'Hello',\n  content: 'Card body',\n  footer: 'Footer text'\n})",
+      taco: bw.makeCard({ title: 'Hello', content: 'Card body', footer: 'Footer text' })
+    }));
+
+    bw.DOM('#pipeline-button', showPipeline({
+      label: 'Button',
+      helperCode: "bw.makeButton({\n  text: 'Click Me',\n  variant: 'primary'\n})",
+      taco: bw.makeButton({ text: 'Click Me', variant: 'primary' })
+    }));
+
+    bw.DOM('#pipeline-alert', showPipeline({
+      label: 'Alert',
+      helperCode: "bw.makeAlert({\n  content: 'Saved!',\n  variant: 'success'\n})",
+      taco: bw.makeAlert({ content: 'Saved!', variant: 'success' })
+    }));
+
+    bw.DOM('#pipeline-badge', showPipeline({
+      label: 'Badge',
+      helperCode: "bw.makeBadge({\n  text: 'New',\n  variant: 'primary'\n})",
+      taco: bw.makeBadge({ text: 'New', variant: 'primary' })
+    }));
+
+    // Helper function to create tabbed demos with copy button
+    function createTabbedDemo(resultContent, codeContent) {
+      return bw.makeTabs({
+        tabs: [
+          {
+            label: 'Result',
+            active: true,
+            content: resultContent
+          },
+          {
+            label: 'Code',
+            content: {
+              t: 'div',
+              a: { style: 'position: relative;' },
+              c: [
+                {
+                  t: 'button',
+                  a: {
+                    class: 'copy-btn',
+                    onclick: (e) => {
+                      navigator.clipboard.writeText(codeContent).then(() => {
+                        e.target.textContent = 'Copied!';
+                        e.target.classList.add('copied');
+                        setTimeout(() => {
+                          e.target.textContent = 'Copy';
+                          e.target.classList.remove('copied');
+                        }, 2000);
+                      });
+                    }
+                  },
+                  c: 'Copy'
+                },
+                {
+                  t: 'pre',
+                  c: {
+                    t: 'code',
+                    c: codeContent
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      });
+    }
+    
+    // 1. Cards Demo
+    const cardsDemo = {
+      t: 'div',
+      a: { class: 'bw-grid-auto' },
+      c: [
+        bw.makeCard({
+          title: 'Basic Card',
+          content: 'This is a simple card with title and content. Cards are flexible content containers.',
+          footer: 'Card footer'
+        }),
+        bw.makeCard({
+          header: 'Featured',
+          title: 'Card with Header',
+          content: 'This card has a header section. Headers are great for categories or status.',
+          footer: bw.makeButton({ text: 'Action', variant: 'primary' })
+        }),
+        bw.makeCard({
+          title: 'Interactive Card',
+          content: 'Cards can contain any content including buttons and forms.',
+          footer: {
+            t: 'div',
+            c: [
+              bw.makeButton({ text: 'Primary', variant: 'primary' }),
+              ' ',
+              bw.makeButton({ text: 'Secondary', variant: 'secondary' })
+            ]
+          }
+        })
+      ]
+    };
+    
+    const cardsCode = `// Basic card
+const basicCard = bw.makeCard({
+  title: 'Basic Card',
+  content: 'This is a simple card with title and content.',
+  footer: 'Card footer'
+});
+
+// Card with header and button
+const featuredCard = bw.makeCard({
+  header: 'Featured',
+  title: 'Card with Header',
+  content: 'This card has a header section.',
+  footer: bw.makeButton({ text: 'Action', variant: 'primary' })
+});
+
+// Card with multiple buttons
+const interactiveCard = bw.makeCard({
+  title: 'Interactive Card',
+  content: 'Cards can contain any content.',
+  footer: {
+    t: 'div',
+    c: [
+      bw.makeButton({ text: 'Primary', variant: 'primary' }),
+      ' ',
+      bw.makeButton({ text: 'Secondary', variant: 'secondary' })
+    ]
+  }
+});
+
+// Mount cards in a grid
+bw.DOM('#cards-container', {
+  t: 'div',
+  a: { class: 'bw-grid-auto' },
+  c: [basicCard, featuredCard, interactiveCard]
+});`;
+
+    bw.DOM('#cards-demo', createTabbedDemo(cardsDemo, cardsCode));
+
+    // 2. Buttons Demo
+    const buttonsDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'bw-mb-md' },
+          c: [
+            { t: 'h4', c: 'Button Variants' },
+            bw.makeButton({ text: 'Primary', variant: 'primary' }),
+            ' ',
+            bw.makeButton({ text: 'Secondary', variant: 'secondary' }),
+            ' ',
+            bw.makeButton({ text: 'Success', variant: 'success' }),
+            ' ',
+            bw.makeButton({ text: 'Danger', variant: 'danger' }),
+            ' ',
+            bw.makeButton({ text: 'Warning', variant: 'warning' }),
+            ' ',
+            bw.makeButton({ text: 'Info', variant: 'info' })
+          ]
+        },
+        {
+          t: 'div',
+          a: { class: 'bw-mb-md' },
+          c: [
+            { t: 'h4', c: 'Button Sizes' },
+            bw.makeButton({ text: 'Small', size: 'sm' }),
+            ' ',
+            bw.makeButton({ text: 'Normal' }),
+            ' ',
+            bw.makeButton({ text: 'Large', size: 'lg' })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Button States' },
+            bw.makeButton({ text: 'Disabled', disabled: true }),
+            ' ',
+            bw.makeButton({ 
+              text: 'Click Me!', 
+              onclick: () => alert('Button clicked!') 
+            })
+          ]
+        }
+      ]
+    };
+    
+    const buttonsCode = `// Button variants
+bw.makeButton({ text: 'Primary', variant: 'primary' })
+bw.makeButton({ text: 'Secondary', variant: 'secondary' })
+bw.makeButton({ text: 'Success', variant: 'success' })
+bw.makeButton({ text: 'Danger', variant: 'danger' })
+bw.makeButton({ text: 'Warning', variant: 'warning' })
+bw.makeButton({ text: 'Info', variant: 'info' })
+
+// Button sizes
+bw.makeButton({ text: 'Small', size: 'sm' })
+bw.makeButton({ text: 'Normal' }) // default size
+bw.makeButton({ text: 'Large', size: 'lg' })
+
+// Button states
+bw.makeButton({ text: 'Disabled', disabled: true })
+
+// Button with click handler
+bw.makeButton({ 
+  text: 'Click Me!', 
+  variant: 'primary',
+  onclick: () => alert('Button clicked!') 
+})`;
+
+    bw.DOM('#buttons-demo', createTabbedDemo(buttonsDemo, buttonsCode));
+
+    // 3. Grid Demo
+    // Helper: create a colored grid cell -- define once, use everywhere
+    function gridCell(label, bg, opts) {
+      const needsWhite = (bg || '').match(/^#[0-4]/); // dark colors need white text
+      return {
+        t: 'div',
+        a: { style: `background:${bg}; color:${needsWhite ? '#fff' : '#1a1a1a'}; padding:${opts?.pad || '1rem'}; text-align:center; border-radius:6px; font-size:${opts?.fs || '0.875rem'};${opts?.mb ? ' margin-bottom:0.5rem;' : ''}` },
+        c: label
+      };
+    }
+
+    // Color palettes for demos
+    const tealScale = ['#e0f2f1','#b2dfdb','#80cbc4','#4db6ac','#26a69a','#009688','#00897b','#00796b','#00695c','#004d40','#37474f','#263238'];
+    const warmScale = ['#fff3e0','#ffe0b2','#ffcc80','#ffb74d','#ffa726','#ff9800'];
+
+    const gridDemo = {
+      t: 'div',
+      c: [
+        bw.makeContainer({
+          children: [
+            // Basic 3-column grid
+            { t: 'h4', c: 'Equal Columns' },
+            bw.makeRow({
+              children: ['#e0f2f1', '#b2dfdb', '#80cbc4'].map((bg, i) =>
+                bw.makeCol({ size: 4, content: gridCell(`Column ${i+1} (4/12)`, bg) })
+              )
+            }),
+            { t: 'div', a: { style: 'height: 1rem;' } },
+
+            // Unequal columns
+            bw.makeRow({
+              children: [
+                bw.makeCol({ size: 8, content: gridCell('Wide Column (8/12)', '#fff3e0') }),
+                bw.makeCol({ size: 4, content: gridCell('Narrow (4/12)', '#ffe0b2') })
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 1rem;' } },
+
+            // Responsive grid -- same config, just iterate
+            { t: 'h4', c: 'Responsive Grid' },
+            bw.makeRow({
+              children: ['#e0f2f1','#b2dfdb','#80cbc4','#fff3e0'].map((bg, i) =>
+                bw.makeCol({
+                  size: { xs: 12, md: 6, lg: 3 },
+                  content: gridCell(`Responsive ${i+1}`, bg, { mb: true })
+                })
+              )
+            }),
+            { t: 'div', a: { style: 'height: 2rem;' } },
+
+            // Magazine layout
+            { t: 'h4', c: 'Magazine Layout' },
+            bw.makeRow({
+              children: [bw.makeCol({ size: 12, content: gridCell('Header (12/12)', '#00695c', { pad: '2rem', fs: '1.1rem' }) })]
+            }),
+            { t: 'div', a: { style: 'height: 0.5rem;' } },
+            bw.makeRow({
+              children: [
+                bw.makeCol({ size: 8, content: gridCell('Main Article (8/12)', '#ff9800', { pad: '3rem' }) }),
+                bw.makeCol({ size: 4, content: {
+                  t: 'div',
+                  c: [
+                    gridCell('Sidebar Top', '#4db6ac', { mb: true }),
+                    gridCell('Sidebar Bottom', '#26a69a')
+                  ]
+                }})
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 0.5rem;' } },
+            bw.makeRow({
+              children: ['Feature 1','Feature 2','Feature 3'].map((label, i) =>
+                bw.makeCol({ size: 4, content: gridCell(label, ['#009688','#00897b','#00796b'][i]) })
+              )
+            }),
+            { t: 'div', a: { style: 'height: 2rem;' } },
+
+            // Dashboard layout with nested grid
+            { t: 'h4', c: 'Dashboard Layout' },
+            bw.makeRow({
+              children: [
+                bw.makeCol({ size: 3, content: gridCell('Sidebar', '#37474f', { pad: '6rem 1rem' }) }),
+                bw.makeCol({ size: 9, content: {
+                  t: 'div',
+                  c: [
+                    bw.makeRow({
+                      children: ['Widget 1','Widget 2','Widget 3'].map((w, i) =>
+                        bw.makeCol({ size: 4, content: gridCell(w, warmScale[i], { mb: true }) })
+                      )
+                    }),
+                    bw.makeRow({
+                      children: [bw.makeCol({ size: 12, content: gridCell('Main Content', '#4db6ac', { pad: '2rem' }) })]
+                    })
+                  ]
+                }})
+              ]
+            }),
+            { t: 'div', a: { style: 'height: 2rem;' } },
+
+            // 12-column demo -- one .map() call, zero repetition
+            { t: 'h4', c: '12-Column Grid' },
+            bw.makeRow({
+              children: tealScale.map((bg, i) =>
+                bw.makeCol({ size: 1, content: gridCell(String(i+1), bg, { pad: '1rem 0', fs: '0.75rem' }) })
+              )
+            })
+          ]
+        })
+      ]
+    };
+
+    const gridCode = `// Helper: define a reusable cell factory
+function gridCell(label, bg) {
+  return {
+    t: 'div',
+    a: { style: \`background:\${bg}; padding:1rem; text-align:center; border-radius:6px;\` },
+    c: label
+  };
+}
+
+// Equal columns -- just .map() over the data
+bw.makeRow({
+  children: ['#e0f2f1','#b2dfdb','#80cbc4'].map((bg, i) =>
+    bw.makeCol({ size: 4, content: gridCell('Col ' + (i+1), bg) })
+  )
+})
+
+// Responsive: full on mobile, half on tablet, quarter on desktop
+const colors = ['#e0f2f1','#b2dfdb','#80cbc4','#fff3e0'];
+bw.makeRow({
+  children: colors.map((bg, i) =>
+    bw.makeCol({
+      size: { xs: 12, md: 6, lg: 3 },
+      content: gridCell('Responsive ' + (i+1), bg)
+    })
+  )
+})
+
+// 12-column demo: one line, zero repetition
+const scale = ['#e0f2f1','#b2dfdb','#80cbc4','#4db6ac',
+  '#26a69a','#009688','#00897b','#00796b',
+  '#00695c','#004d40','#37474f','#263238'];
+
+bw.makeRow({
+  children: scale.map((bg, i) =>
+    bw.makeCol({ size: 1, content: gridCell(String(i+1), bg) })
+  )
+})
+
+// Nested dashboard layout
+bw.makeRow({
+  children: [
+    bw.makeCol({ size: 3, content: 'Sidebar' }),
+    bw.makeCol({ size: 9, content: bw.makeRow({
+      children: ['Widget 1','Widget 2','Widget 3'].map(w =>
+        bw.makeCol({ size: 4, content: w })
+      )
+    })})
+  ]
+})`;
+
+    bw.DOM('#grid-demo', createTabbedDemo(gridDemo, gridCode));
+
+    // 4. Navigation Demo
+    const navDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'bw-mb-lg' },
+          c: [
+            { t: 'h4', c: 'Horizontal Navigation (makeNav)' },
+            bw.makeNav({
+              items: [
+                { text: 'Home', href: '#', active: true },
+                { text: 'Products', href: '#products' },
+                { text: 'Services', href: '#services' },
+                { text: 'About', href: '#about' },
+                { text: 'Contact', href: '#contact' }
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          a: { class: 'bw-mb-lg' },
+          c: [
+            { t: 'h4', c: 'Navbar Component' },
+            bw.makeNavbar({
+              brand: 'My Brand',
+              brandHref: '#',
+              items: [
+                { text: 'Dashboard', href: '#', active: true },
+                { text: 'Projects', href: '#' },
+                { text: 'Team', href: '#' },
+                { text: 'Settings', href: '#' }
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Breadcrumb Navigation' },
+            bw.makeBreadcrumb({
+              items: [
+                { text: 'Home', href: '#' },
+                { text: 'Products', href: '#products' },
+                { text: 'Electronics', href: '#electronics' },
+                { text: 'Laptops', active: true }
+              ]
+            })
+          ]
+        }
+      ]
+    };
+    
+    const navCode = `// Basic navigation
+bw.makeNav({
+  items: [
+    { text: 'Home', href: '#', active: true },
+    { text: 'Products', href: '#products' },
+    { text: 'Services', href: '#services' },
+    { text: 'About', href: '#about' }
+  ]
+})
+
+// Navbar with brand
+bw.makeNavbar({
+  brand: 'My Brand',
+  brandHref: '#',
+  items: [
+    { text: 'Dashboard', href: '#', active: true },
+    { text: 'Projects', href: '#' },
+    { text: 'Team', href: '#' }
+  ]
+})
+
+// Breadcrumb navigation
+bw.makeBreadcrumb({
+  items: [
+    { text: 'Home', href: '#' },
+    { text: 'Products', href: '#products' },
+    { text: 'Laptops', active: true }
+  ]
+})`;
+
+    bw.DOM('#nav-demo', createTabbedDemo(navDemo, navCode));
+
+    // 5. Alerts Demo
+    const alertsDemo = {
+      t: 'div',
+      c: [
+        bw.makeAlert({ content: 'This is a primary alert — check it out!', variant: 'primary' }),
+        bw.makeAlert({ content: 'This is a success alert — your action was successful!', variant: 'success' }),
+        bw.makeAlert({ content: 'This is a danger alert — something went wrong!', variant: 'danger' }),
+        bw.makeAlert({ content: 'This is a warning alert — please be careful!', variant: 'warning' }),
+        bw.makeAlert({ content: 'This is an info alert — here\'s some information!', variant: 'info' }),
+        bw.makeAlert({ 
+          content: 'This is a dismissible alert — you can close it!', 
+          variant: 'secondary',
+          dismissible: true 
+        })
+      ]
+    };
+    
+    const alertsCode = `// Basic alerts
+bw.makeAlert({ 
+  content: 'This is a primary alert!', 
+  variant: 'primary' 
+})
+
+bw.makeAlert({ 
+  content: 'Success! Your action was completed.', 
+  variant: 'success' 
+})
+
+bw.makeAlert({ 
+  content: 'Error! Something went wrong.', 
+  variant: 'danger' 
+})
+
+// Dismissible alert
+bw.makeAlert({ 
+  content: 'This alert can be closed!', 
+  variant: 'info',
+  dismissible: true 
+})`;
+
+    bw.DOM('#alerts-demo', createTabbedDemo(alertsDemo, alertsCode));
+
+    // 6. Badges Demo
+    const badgesDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'bw-mb-md' },
+          c: [
+            { t: 'h4', c: 'Badge Variants' },
+            bw.makeBadge({ text: 'Primary', variant: 'primary' }),
+            ' ',
+            bw.makeBadge({ text: 'Secondary', variant: 'secondary' }),
+            ' ',
+            bw.makeBadge({ text: 'Success', variant: 'success' }),
+            ' ',
+            bw.makeBadge({ text: 'Danger', variant: 'danger' }),
+            ' ',
+            bw.makeBadge({ text: 'Warning', variant: 'warning' }),
+            ' ',
+            bw.makeBadge({ text: 'Info', variant: 'info' }),
+            ' ',
+            bw.makeBadge({ text: 'Light', variant: 'light' }),
+            ' ',
+            bw.makeBadge({ text: 'Dark', variant: 'dark' })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Badges in Context' },
+            {
+              t: 'h3',
+              c: [
+                'Notifications ',
+                bw.makeBadge({ text: '99+', variant: 'danger' })
+              ]
+            },
+            {
+              t: 'p',
+              c: [
+                'You have ',
+                bw.makeBadge({ text: '5', variant: 'primary' }),
+                ' new messages and ',
+                bw.makeBadge({ text: '2', variant: 'warning' }),
+                ' warnings.'
+              ]
+            }
+          ]
+        }
+      ]
+    };
+    
+    const badgesCode = `// Badge variants
+bw.makeBadge({ text: 'Primary', variant: 'primary' })
+bw.makeBadge({ text: 'Success', variant: 'success' })
+bw.makeBadge({ text: 'Danger', variant: 'danger' })
+bw.makeBadge({ text: 'Warning', variant: 'warning' })
+
+// Badges in headings
+{
+  t: 'h3',
+  c: [
+    'Notifications ',
+    bw.makeBadge({ text: '99+', variant: 'danger' })
+  ]
+}
+
+// Badges in text
+{
+  t: 'p',
+  c: [
+    'You have ',
+    bw.makeBadge({ text: '5', variant: 'primary' }),
+    ' new messages'
+  ]
+}`;
+
+    bw.DOM('#badges-demo', createTabbedDemo(badgesDemo, badgesCode));
+
+    // 7. Progress Bars Demo
+    const progressDemo = {
+      t: 'div',
+      c: [
+        { t: 'div', a: { class: 'bw-mb-md' }, c: [
+          { t: 'h4', c: 'Basic Progress Bars' },
+          bw.makeProgress({ value: 0 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 25 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 50 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 75 }),
+          { t: 'br' },
+          bw.makeProgress({ value: 100 })
+        ]},
+        { t: 'div', a: { class: 'bw-mb-md' }, c: [
+          { t: 'h4', c: 'Colored Progress Bars' },
+          bw.makeProgress({ value: 25, variant: 'success' }),
+          { t: 'br' },
+          bw.makeProgress({ value: 50, variant: 'warning' }),
+          { t: 'br' },
+          bw.makeProgress({ value: 75, variant: 'danger' })
+        ]},
+        { t: 'div', c: [
+          { t: 'h4', c: 'Striped & Animated' },
+          bw.makeProgress({ value: 60, variant: 'info', striped: true }),
+          { t: 'br' },
+          bw.makeProgress({ value: 80, variant: 'success', striped: true, animated: true })
+        ]}
+      ]
+    };
+    
+    const progressCode = `// Basic progress bar
+bw.makeProgress({ value: 50 })
+
+// Colored progress bars
+bw.makeProgress({ value: 25, variant: 'success' })
+bw.makeProgress({ value: 50, variant: 'warning' })
+bw.makeProgress({ value: 75, variant: 'danger' })
+
+// Striped progress bar
+bw.makeProgress({ 
+  value: 60, 
+  variant: 'info', 
+  striped: true 
+})
+
+// Animated progress bar
+bw.makeProgress({ 
+  value: 80, 
+  variant: 'success', 
+  striped: true, 
+  animated: true 
+})`;
+
+    bw.DOM('#progress-demo', createTabbedDemo(progressDemo, progressCode));
+
+    // 8. List Groups Demo
+    const listsDemo = {
+      t: 'div',
+      a: { class: 'bw-grid-auto' },
+      c: [
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Basic List' },
+            bw.makeListGroup({
+              items: [
+                'First item',
+                'Second item',
+                'Third item',
+                'Fourth item',
+                'Fifth item'
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Interactive List' },
+            bw.makeListGroup({
+              interactive: true,
+              items: [
+                { text: 'Active item', active: true, onclick: () => console.log('Active clicked') },
+                { text: 'Regular item', onclick: () => console.log('Regular clicked') },
+                { text: 'Another item', onclick: () => console.log('Another clicked') },
+                { text: 'Disabled item', disabled: true },
+                { text: 'Link item', href: '#link' }
+              ]
+            })
+          ]
+        },
+        {
+          t: 'div',
+          c: [
+            { t: 'h4', c: 'Flush List (no borders)' },
+            bw.makeListGroup({
+              flush: true,
+              items: [
+                'Clean item 1',
+                'Clean item 2',
+                'Clean item 3',
+                'Clean item 4'
+              ]
+            })
+          ]
+        }
+      ]
+    };
+    
+    const listsCode = `// Basic list group
+bw.makeListGroup({
+  items: [
+    'First item',
+    'Second item',
+    'Third item'
+  ]
+})
+
+// Interactive list with click handlers
+bw.makeListGroup({
+  interactive: true,
+  items: [
+    { text: 'Active item', active: true, onclick: () => console.log('Clicked!') },
+    { text: 'Regular item', onclick: () => console.log('Clicked!') },
+    { text: 'Disabled item', disabled: true },
+    { text: 'Link item', href: '#link' }
+  ]
+})
+
+// Flush list (no borders)
+bw.makeListGroup({
+  flush: true,
+  items: [
+    'Clean item 1',
+    'Clean item 2',
+    'Clean item 3'
+  ]
+})`;
+
+    bw.DOM('#lists-demo', createTabbedDemo(listsDemo, listsCode));
+  </script>
+</body>
+</html>

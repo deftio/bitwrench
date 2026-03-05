@@ -6,15 +6,25 @@ The Bitwrench v2 test suite is organized into multiple files to ensure stable CI
 
 ## Test Files
 
-### 1. `bitwrench_v2_ci.js` (CI Tests - All Pass)
+### 1. `bitwrench_ci.js` (CI Tests - All Pass)
 - **Purpose**: Continuous Integration tests that must always pass
-- **Status**: ✅ 28 tests, 100% passing
+- **Status**: 45 tests, 100% passing
 - **Usage**: `npm test` (default for CI/CD)
 - **Coverage**: Core functionality that is stable and production-ready
 
-### 2. `bitwrench_v2_test_pending.js` (Future Tests - Currently Failing)
+### 2. `bitwrench_test_coverage.js` (Coverage Tests)
+- **Purpose**: Extended coverage tests for v2 APIs
+- **Status**: 110 tests
+- **Usage**: `npm test` (included in default test run)
+
+### 3. `bitwrench_test_pubsub.js` (Pub/Sub Tests)
+- **Purpose**: Tests for bw.pub/bw.sub/bw.unsub messaging system
+- **Status**: 23 tests
+- **Usage**: `npm test` (included in default test run)
+
+### 4. `bitwrench_test_pending.js` (Future Tests - Currently Failing)
 - **Purpose**: Document tests that need fixes with explanations
-- **Status**: ⏳ 9 test categories pending implementation
+- **Status**: 9 test categories pending implementation
 - **Usage**: `npm run test:pending` (skipped by default)
 - **Categories**:
   - Cookie Operations (Low priority)
@@ -27,9 +37,9 @@ The Bitwrench v2 test suite is organized into multiple files to ensure stable CI
   - Event System (High priority)
   - Performance (Low priority)
 
-### 3. `bitwrench_test.js` (Legacy v1 Tests)
+### 5. `bitwrench_test.js` (Legacy v1 Tests)
 - **Purpose**: Original v1 test suite
-- **Status**: ❌ Incompatible with v2 API
+- **Status**: Incompatible with v2 API
 - **Usage**: `npm run test:v1`
 - **Note**: Kept for reference during migration
 
@@ -64,18 +74,19 @@ npm run test:summary
 
 ## Coverage
 
-Current coverage is low (0%) because the test environment doesn't properly instrument the ES modules. This is a known issue that will be addressed when we implement proper build tooling for v2.
+Tests use c8 for coverage reporting. The `npm test` command includes coverage via c8.
 
 ## E2E Tests
 
-Playwright E2E tests validate all example pages:
-- 151 total tests
-- 83 passing, 67 failing
-- Tests check for visual regression and functionality
+Playwright E2E tests validate all example pages and the state-debug page:
+- `tests/examples.spec.js` - Example page tests
+- `test/state-debug.spec.js` - State management tests
+- `test/mounted-pattern.spec.js` - Mounted pattern tests
+- `test/visual.spec.js` - Visual regression tests
 
 ## Future Improvements
 
 1. Fix high-priority pending tests (Event System, DOM Manipulation, Legacy API)
-2. Improve coverage instrumentation for ES modules
+2. Improve coverage percentages
 3. Add performance benchmarks
 4. Implement integration tests for component interactions

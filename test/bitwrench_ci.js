@@ -5,7 +5,8 @@
  */
 
 import assert from "assert";
-import bw from "../src/bitwrench_v2.js";
+import { readFileSync } from "fs";
+import bw from "../src/bitwrench.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -36,7 +37,7 @@ describe("Core Type Functions", function() {
     });
     
     it("should identify functions", function() {
-      assert.equal(bw.typeOf(function(){}), "Function");
+      assert.equal(bw.typeOf(function(){}), "function");
     });
   });
 });
@@ -397,5 +398,23 @@ describe("Environment Detection", function() {
       const result = bw.isNodeJS();
       assert.equal(typeof result, "boolean");
     });
+  });
+});
+
+describe("Version Consistency", function() {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+
+  it("bw.version matches package.json", function() {
+    assert.equal(bw.version, pkg.version);
+  });
+
+  it("bw.getVersion() returns correct version and name", function() {
+    const info = bw.getVersion();
+    assert.equal(info.version, pkg.version);
+    assert.equal(info.name, pkg.name);
+  });
+
+  it("bw.versionInfo is consistent with bw.version", function() {
+    assert.equal(bw.versionInfo.version, bw.version);
   });
 });

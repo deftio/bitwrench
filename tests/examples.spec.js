@@ -25,7 +25,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('01-basic-components.html loads without errors', async ({ page }) => {
-    await page.goto('/01-components.html');
+    await page.goto('/pages/01-components.html');
     
     // Check page loaded
     await expect(page.locator('h1').first()).toContainText('Component Library');
@@ -60,7 +60,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('02-interactive-tables-forms.html loads without errors', async ({ page }) => {
-    await page.goto('/02-tables-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
     
     // Check page loaded
     await expect(page.locator('h1').first()).toContainText('Tables & Forms');
@@ -139,7 +139,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('03-themes-styling.html loads without errors', async ({ page }) => {
-    await page.goto('/03-styling.html');
+    await page.goto('/pages/03-styling.html');
     
     // Check page loaded
     await expect(page.locator('h1')).toContainText('Styling');
@@ -193,7 +193,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('04-dashboard-app.html loads without errors', async ({ page }) => {
-    await page.goto('/04-dashboard.html');
+    await page.goto('/pages/04-dashboard.html');
 
     // Check page loaded
     await expect(page.locator('h1').first()).toContainText('Dashboard');
@@ -215,7 +215,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('05-advanced-features.html loads without errors', async ({ page }) => {
-    await page.goto('/05-state.html');
+    await page.goto('/pages/05-state.html');
 
     // Check page loaded
     await expect(page.locator('h1').first()).toContainText('State');
@@ -238,7 +238,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('Component interactivity works correctly', async ({ page }) => {
-    await page.goto('/01-components.html');
+    await page.goto('/pages/01-components.html');
 
     // Test dismissible alert exists with close button
     const dismissibleAlert = page.locator('.bw-alert:has-text("dismissible")');
@@ -257,7 +257,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('Tables are properly styled and sortable', async ({ page }) => {
-    await page.goto('/02-tables-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
 
     // Wait for table to be rendered
     await page.waitForSelector('#interactive-table-container table');
@@ -278,7 +278,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('Forms handle validation and submission', async ({ page }) => {
-    await page.goto('/02-tables-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
 
     // Check form section is rendered
     const formTabs = page.locator('#form-tabs');
@@ -295,7 +295,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('Theme builder color pickers work', async ({ page }) => {
-    await page.goto('/03-styling.html');
+    await page.goto('/pages/03-styling.html');
     
     // Test color picker interaction
     const primaryColorPicker = page.locator('#color-primary');
@@ -320,7 +320,7 @@ test.describe('Bitwrench v2 Examples', () => {
 
 test.describe('Performance Tests', () => {
   test('Large table rendering performance', async ({ page }) => {
-    await page.goto('/02-tables-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
     
     // Measure time to render pagination table with 50 items
     const startTime = Date.now();
@@ -336,7 +336,7 @@ test.describe('Performance Tests', () => {
   });
 
   test('Theme switching performance', async ({ page }) => {
-    await page.goto('/03-styling.html');
+    await page.goto('/pages/03-styling.html');
     
     const themeSwitcher = page.locator('.theme-switcher');
     const themes = ['Default', 'Dark', 'Ocean', 'Sunset', 'Forest'];
@@ -358,7 +358,7 @@ test.describe('Performance Tests', () => {
 
 test.describe('Accessibility Tests', () => {
   test('Components have proper ARIA attributes', async ({ page }) => {
-    await page.goto('/01-components.html');
+    await page.goto('/pages/01-components.html');
     
     // Check tabs have proper ARIA
     const tabList = page.locator('[role="tablist"]').first();
@@ -372,7 +372,7 @@ test.describe('Accessibility Tests', () => {
     await expect(activeTab).toHaveAttribute('aria-selected', 'true');
     
     // Check forms have labels
-    await page.goto('/02-tables-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
     const formGroups = page.locator('.bw-form-group');
     const firstGroup = formGroups.first();
     const label = firstGroup.locator('label');
@@ -380,7 +380,7 @@ test.describe('Accessibility Tests', () => {
   });
 
   test('Keyboard navigation works', async ({ page }) => {
-    await page.goto('/01-components.html');
+    await page.goto('/pages/01-components.html');
 
     // Check tabs are keyboard-focusable
     const firstTab = page.locator('[role="tab"]').first();

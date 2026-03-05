@@ -30,8 +30,8 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   console.log(`${req.method} ${req.url}`);
   
-  // Default to examples_v2r2 index
-  let requestPath = req.url === '/' ? '/examples_v2r2/index.html' : req.url;
+  // Default to root index
+  let requestPath = req.url === '/' ? '/index.html' : req.url;
   
   // Parse URL
   let filePath = path.join(__dirname, requestPath);
@@ -81,10 +81,10 @@ server.listen(PORT, () => {
   console.log(`============================`);
   console.log(`Server running at http://localhost:${PORT}/`);
   console.log(`\nExample pages:`);
-  console.log(`  http://localhost:${PORT}/examples_v2r2/`);
-  console.log(`  http://localhost:${PORT}/examples_v2r2/01-basic-components.html`);
-  console.log(`  http://localhost:${PORT}/examples_v2r2/02-interactive-tables-forms.html`);
-  console.log(`  http://localhost:${PORT}/examples_v2r2/03-themes-styling.html`);
-  console.log(`  http://localhost:${PORT}/examples_v2r2/04-dashboard-app.html`);
+  console.log(`  http://localhost:${PORT}/pages/00-quick-start.html`);
+  console.log(`  http://localhost:${PORT}/pages/01-components.html`);
+  console.log(`  http://localhost:${PORT}/pages/02-tables-forms.html`);
+  console.log(`  http://localhost:${PORT}/pages/03-styling.html`);
+  console.log(`  http://localhost:${PORT}/pages/04-dashboard.html`);
   console.log(`\nPress Ctrl+C to stop`);
 });

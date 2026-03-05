@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 test.describe('State Management Debug Page', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/state-debug.html');
+    await page.goto('/pages/state-debug.html');
     await page.waitForTimeout(600); // wait for mounted callbacks
   });
 
@@ -226,7 +226,7 @@ test.describe('State Management Debug Page', () => {
     const jsErrors = [];
     page.on('pageerror', err => jsErrors.push(err.message));
 
-    await page.goto('/state-debug.html');
+    await page.goto('/pages/state-debug.html');
     await page.waitForTimeout(600);
 
     expect(jsErrors).toEqual([]);
@@ -596,7 +596,7 @@ test.describe('State Management Debug Page', () => {
     const jsErrors = [];
     page.on('pageerror', err => jsErrors.push(err.message));
 
-    await page.goto('/state-debug.html');
+    await page.goto('/pages/state-debug.html');
     await page.waitForTimeout(600);
 
     // Interact with pub/sub demos

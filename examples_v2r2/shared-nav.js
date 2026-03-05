@@ -7,15 +7,17 @@
   'use strict';
 
   const navItems = [
-    { text: 'Home', href: 'index.html' },
-    { text: 'Quick Start', href: '00-quick-start.html' },
-    { text: 'Styling', href: '03-styling.html' },
-    { text: 'Components', href: '01-components.html' },
-    { text: 'Tables & Data', href: '02-tables-forms.html' },
-    { text: 'State', href: '05-state.html' },
-    { text: 'Dashboard', href: '04-dashboard.html' },
-    { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
-    { text: 'Comparison', href: '07-framework-comparison.html' }
+    { text: 'Home', href: '../index.html' },
+    { text: 'Quick Start', href: '../pages/00-quick-start.html' },
+    { text: 'Styling', href: '../pages/03-styling.html' },
+    { text: 'Components', href: '../pages/01-components.html' },
+    { text: 'Tables & Data', href: '../pages/02-tables-forms.html' },
+    { text: 'State', href: '../pages/05-state.html' },
+    { text: 'Dashboard', href: '../pages/04-dashboard.html' },
+    { text: 'Tic Tac Toe', href: '../pages/06-tic-tac-toe-tutorial.html' },
+    { text: 'Comparison', href: '../pages/07-framework-comparison.html' },
+    { text: 'API Reference', href: '../pages/08-api-reference.html' },
+    { text: 'Builds', href: '../pages/09-builds.html' }
   ];
 
   function createExampleNav(currentPage) {
@@ -40,7 +42,7 @@
             {
               t: 'a',
               a: {
-                href: 'index.html',
+                href: '../index.html',
                 class: 'bw-site-nav-brand'
               },
               c: [
