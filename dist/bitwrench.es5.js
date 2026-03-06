@@ -210,7 +210,7 @@
     homepage: 'http://deftio.com/bitwrench',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-06T17:43:43.403Z'
+    buildDate: '2026-03-06T17:48:24.600Z'
   };
 
   /**
@@ -3683,8 +3683,8 @@
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var children = props.children,
       onsubmit = props.onsubmit,
-      _props$className10 = props.className,
-      className = _props$className10 === void 0 ? '' : _props$className10;
+      _props$className0 = props.className,
+      className = _props$className0 === void 0 ? '' : _props$className0;
     return {
       t: 'form',
       a: {
@@ -3784,8 +3784,8 @@
       readonly = _props$readonly === void 0 ? false : _props$readonly,
       _props$required = props.required,
       required = _props$required === void 0 ? false : _props$required,
-      _props$className11 = props.className,
-      className = _props$className11 === void 0 ? '' : _props$className11,
+      _props$className1 = props.className,
+      className = _props$className1 === void 0 ? '' : _props$className1,
       style = props.style,
       eventHandlers = _objectWithoutProperties(props, _excluded$1);
     return {
@@ -3841,8 +3841,8 @@
       readonly = _props$readonly2 === void 0 ? false : _props$readonly2,
       _props$required2 = props.required,
       required = _props$required2 === void 0 ? false : _props$required2,
-      _props$className12 = props.className,
-      className = _props$className12 === void 0 ? '' : _props$className12,
+      _props$className10 = props.className,
+      className = _props$className10 === void 0 ? '' : _props$className10,
       eventHandlers = _objectWithoutProperties(props, _excluded2);
     return {
       t: 'textarea',
@@ -3896,8 +3896,8 @@
       disabled = _props$disabled4 === void 0 ? false : _props$disabled4,
       _props$required3 = props.required,
       required = _props$required3 === void 0 ? false : _props$required3,
-      _props$className13 = props.className,
-      className = _props$className13 === void 0 ? '' : _props$className13,
+      _props$className11 = props.className,
+      className = _props$className11 === void 0 ? '' : _props$className11,
       eventHandlers = _objectWithoutProperties(props, _excluded3);
     return {
       t: 'select',
@@ -4004,8 +4004,8 @@
       direction = _props$direction === void 0 ? 'vertical' : _props$direction,
       _props$gap = props.gap,
       gap = _props$gap === void 0 ? 3 : _props$gap,
-      _props$className14 = props.className,
-      className = _props$className14 === void 0 ? '' : _props$className14;
+      _props$className12 = props.className,
+      className = _props$className12 === void 0 ? '' : _props$className12;
     return {
       t: 'div',
       a: {
@@ -4096,8 +4096,8 @@
       overlay = _props$overlay === void 0 ? false : _props$overlay,
       backgroundImage = props.backgroundImage,
       actions = props.actions,
-      _props$className15 = props.className,
-      className = _props$className15 === void 0 ? '' : _props$className15;
+      _props$className13 = props.className,
+      className = _props$className13 === void 0 ? '' : _props$className13;
     var sizeClasses = {
       sm: 'bw-py-3',
       md: 'bw-py-4',
@@ -4186,8 +4186,8 @@
       centered = _props$centered2 === void 0 ? true : _props$centered2,
       _props$iconSize = props.iconSize,
       iconSize = _props$iconSize === void 0 ? '3rem' : _props$iconSize,
-      _props$className16 = props.className,
-      className = _props$className16 === void 0 ? '' : _props$className16;
+      _props$className14 = props.className,
+      className = _props$className14 === void 0 ? '' : _props$className14;
     var colClass = "bw-col-md-".concat(12 / columns);
     return {
       t: 'div',
@@ -4267,8 +4267,8 @@
       variant = _props$variant7 === void 0 ? 'light' : _props$variant7,
       _props$centered3 = props.centered,
       centered = _props$centered3 === void 0 ? true : _props$centered3,
-      _props$className17 = props.className,
-      className = _props$className17 === void 0 ? '' : _props$className17;
+      _props$className15 = props.className,
+      className = _props$className15 === void 0 ? '' : _props$className15;
     return {
       t: 'section',
       a: {
@@ -4337,8 +4337,8 @@
       variant = _props$variant8 === void 0 ? 'default' : _props$variant8,
       _props$spacing = props.spacing,
       spacing = _props$spacing === void 0 ? 'md' : _props$spacing,
-      _props$className18 = props.className,
-      className = _props$className18 === void 0 ? '' : _props$className18;
+      _props$className16 = props.className,
+      className = _props$className16 === void 0 ? '' : _props$className16;
     var spacingClasses = {
       sm: 'bw-py-3',
       md: 'bw-py-4',
@@ -6094,9 +6094,9 @@
               value = _ref8[1];
             return value != null;
           }).map(function (_ref9) {
-            var _ref10 = _slicedToArray(_ref9, 2),
-              prop = _ref10[0],
-              value = _ref10[1];
+            var _ref0 = _slicedToArray(_ref9, 2),
+              prop = _ref0[0],
+              value = _ref0[1];
             // Convert camelCase to kebab-case
             var kebabProp = prop.replace(/[A-Z]/g, function (m) {
               return '-' + m.toLowerCase();
@@ -8378,10 +8378,10 @@
   };
 
   // Register all make functions
-  Object.entries(components).forEach(function (_ref11) {
-    var _ref12 = _slicedToArray(_ref11, 2),
-      name = _ref12[0],
-      fn = _ref12[1];
+  Object.entries(components).forEach(function (_ref1) {
+    var _ref10 = _slicedToArray(_ref1, 2),
+      name = _ref10[0],
+      fn = _ref10[1];
     if (name.startsWith('make')) {
       bw[name] = fn;
     }
@@ -8391,10 +8391,10 @@
   bw._componentHandles = componentHandles || {};
 
   // Create functions that return handles
-  Object.entries(components).forEach(function (_ref13) {
-    var _ref14 = _slicedToArray(_ref13, 2),
-      name = _ref14[0],
-      fn = _ref14[1];
+  Object.entries(components).forEach(function (_ref11) {
+    var _ref12 = _slicedToArray(_ref11, 2),
+      name = _ref12[0],
+      fn = _ref12[1];
     if (name.startsWith('make')) {
       var componentType = name.substring(4).toLowerCase(); // Remove 'make' prefix
       var createName = 'create' + name.substring(4); // createCard, createTable, etc.

@@ -105,6 +105,12 @@
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js"
 	},
 	"homepage": "http://deftio.com/bitwrench",
+	"overrides": {
+		"mocha": {
+			"serialize-javascript": "^7.0.3",
+			"diff": "^8.0.3"
+		}
+	},
 	"c8": {
 		"include": [
 			"src/**"
