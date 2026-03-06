@@ -43,13 +43,14 @@ jobs:
           path: coverage/
           retention-days: 14
 
-  release:
+  release-and-publish:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +60,7 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -93,3 +95,17 @@ jobs:
             --title "bitwrench $VERSION" \
             --generate-notes \
             dist/*.js dist/*.js.map dist/*.css
+
+      - name: Check if already on npm
+        id: check_npm
+        run: |
+          PKG_VERSION="$(node -p 'require("./package.json").version')"
+          if npm view "bitwrench@$PKG_VERSION" version 2>/dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.check_npm.outputs.published == 'false'
+        run: npm publish --provenance --access public
