@@ -3,6 +3,7 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -35,10 +36,19 @@ jobs:
         run: npm test
 
       - name: Verify version matches release tag
+        if: github.event_name == 'release'
         run: |
           PKG_VERSION="v$(node -p 'require("./package.json").version')"
           if [ "$PKG_VERSION" != "${{ github.event.release.tag_name }}" ]; then
             echo "::error::package.json version ($PKG_VERSION) does not match release tag (${{ github.event.release.tag_name }})"
+            exit 1
+          fi
+
+      - name: Verify not already published
+        run: |
+          PKG_VERSION="$(node -p 'require("./package.json").version')"
+          if npm view "bitwrench@$PKG_VERSION" version 2>/dev/null; then
+            echo "::error::v$PKG_VERSION is already published to npm"
             exit 1
           fi
 
