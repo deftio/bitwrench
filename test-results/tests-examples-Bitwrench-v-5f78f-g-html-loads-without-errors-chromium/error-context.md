@@ -1,0 +1,212 @@
+# Page snapshot
+
+```yaml
+- navigation:
+  - link "bitwrench v2.0.4":
+    - /url: index.html
+    - img "bitwrench"
+    - text: v2.0.4
+  - list:
+    - listitem:
+      - link "Home":
+        - /url: index.html
+    - listitem:
+      - link "Quick Start":
+        - /url: 00-quick-start.html
+    - listitem:
+      - link "Components":
+        - /url: 01-components.html
+    - listitem:
+      - link "Styling":
+        - /url: 03-styling.html
+    - listitem:
+      - link "Themes":
+        - /url: 10-themes.html
+    - listitem:
+      - link "State":
+        - /url: 05-state.html
+    - listitem:
+      - button "Examples ▾"
+    - listitem:
+      - link "API Reference":
+        - /url: 08-api-reference.html
+  - button "☽"
+- heading "Styling" [level=1]
+- paragraph: Where bitwrench styles come from, utility CSS as JavaScript objects, and dynamic theming.
+- heading "Three Ways to Style Bitwrench Elements" [level=2]
+- paragraph:
+  - text: Bitwrench generates DOM elements with
+  - code: class
+  - text: and
+  - code: style
+  - text: attributes. Whatever CSS you use — your own stylesheet, Bootstrap, Tailwind,
+  - code: bitwrench.css
+  - text: ", or no CSS file at all — it just works. You can mix all three approaches on the same element:"
+- heading "1. Inline Styles" [level=4]
+- paragraph:
+  - text: No CSS file needed. Use
+  - code: bw.s()
+  - text: and
+  - code: bw.u
+  - text: to compose style objects directly on elements. JavaScript IS your style system.
+- code: "a: { style: bw.s(bw.u.flex, bw.u.p4) }"
+- heading "2. Generated Classes" [level=4]
+- paragraph:
+  - text: Use
+  - code: bw.css()
+  - text: to create CSS rules from JS objects when you need
+  - code: :hover
+  - text: ","
+  - code: :focus
+  - text: ", or media queries."
+- code: "bw.injectCSS(bw.css({ '.card:hover': { ... } }))"
+- heading "3. Any CSS File" [level=4]
+- paragraph:
+  - text: Bring your own classes.
+  - code: bitwrench.css
+  - text: is a convenience starter kit — or use Bootstrap, Tailwind, your own stylesheet, or nothing.
+- code: "a: { class: 'my-class' }"
+- strong: "History note:"
+- text: In bitwrench 1.x, the library auto-generated its CSS at runtime if it detected no stylesheet was loaded. In 2.x, this is more à la carte — you choose what to load and when. The DNA has always been "CSS from JS."
+- heading "Inline Styles — No CSS File Needed" [level=2]
+- paragraph:
+  - code: bw.s()
+  - text: merges style objects (like
+  - code: Object.assign
+  - text: ).
+  - code: bw.u
+  - text: provides ~50 pre-built utilities. Together they replace CSS variables, preprocessors, and utility class frameworks — because
+  - strong: JavaScript variables ARE your variables
+  - text: .
+- heading "Why CSS variables aren't needed" [level=4]
+- paragraph:
+  - text: CSS variables (
+  - code: ":root { --accent: teal }"
+  - text: ) exist to share values between rules. But in bitwrench, JS variables already do that —
+  - code: var accent = '#006666'
+  - text: and you use it in inline styles, generated classes, or both. The
+  - code: "? :"
+  - text: ternary operator replaces
+  - code: "@media"
+  - text: and conditional class toggling. No
+  - code: :root
+  - text: declarations needed.
+- heading "Computed Classes — Classes Are Just Strings" [level=2]
+- paragraph:
+  - text: Class names in bitwrench are just strings in the
+  - code: "a: { class: ... }"
+  - text: attribute. You can compute them with JavaScript — concatenation, ternary operators,
+  - code: .map()
+  - text: — no special directive syntax needed. The classes can come from bitwrench.css, your own stylesheet, Bootstrap, Tailwind, or anything.
+- heading "Bring any CSS framework" [level=4]
+- paragraph:
+  - text: Since bitwrench just sets the
+  - code: class
+  - text: attribute, you can use
+  - strong: any
+  - text: "CSS classes:"
+  - code: "'btn btn-primary'"
+  - text: (Bootstrap),
+  - code: "'flex gap-4 p-4'"
+  - text: (Tailwind), or your own. You could even use bitwrench's
+  - code: bw.css()
+  - text: to generate Tailwind-equivalent styles at runtime — turning class name strings into real CSS without Tailwind's build pipeline.
+- heading "Generated Classes — When You Need :hover or Media Queries" [level=2]
+- paragraph:
+  - text: Inline styles can't express
+  - code: :hover
+  - text: ","
+  - code: :focus
+  - text: ", or"
+  - code: "@media"
+  - text: . For those, generate CSS at runtime with
+  - code: bw.css()
+  - text: +
+  - code: bw.injectCSS()
+  - text: ":"
+- strong: "Key insight:"
+- code: bw.css()
+- text: turns
+- code: "{ '.my-btn': { background: 'teal' } }"
+- text: into the CSS string
+- code: ".my-btn { background: teal; }"
+- text: . You write styles as data, bitwrench handles the syntax.
+- heading "Responsive Styles" [level=2]
+- paragraph:
+  - code: bw.responsive()
+  - text: "generates mobile-first media query CSS from a single object. Breakpoints:"
+  - code: sm
+  - text: (640px),
+  - code: md
+  - text: (768px),
+  - code: lg
+  - text: (1024px),
+  - code: xl
+  - text: (1280px).
+- heading "Mixing All Three on One Element" [level=2]
+- paragraph: "The real power: use a global class for base layout, a generated class for hover behavior, and an inline style for the dynamic part. All on the same element."
+- heading "Global Styles — The Convenience Option" [level=2]
+- paragraph:
+  - text: Bitwrench ships with
+  - code: bitwrench.css
+  - text: "— ~22 component styles (buttons, cards, tables, forms, alerts, badges, tabs). It's a convenience starter kit, not a requirement. You get them two ways:"
+- heading "Static CSS file" [level=4]
+- code: <link href="bitwrench.css" rel="stylesheet">
+- paragraph: Include it like any stylesheet. These example pages use this approach.
+- heading "Runtime generation" [level=4]
+- code: bw.loadDefaultStyles();
+- paragraph: Generate the same styles from JS at runtime. Useful for embedded widgets or single-file deployments.
+- paragraph:
+  - text: Both produce the same
+  - code: bw-btn
+  - text: ","
+  - code: bw-card
+  - text: ","
+  - code: bw-table
+  - text: classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.
+- strong: "Custom palettes:"
+- text: Need different colors?
+- code: bw.generateTheme()
+- text: derives a complete palette from just 2-3 seed colors — buttons, alerts, badges, hover states, and contrast text, all scoped to a CSS class. See the
+- link "Themes page":
+  - /url: 10-themes.html
+- text: for an interactive generator, presets, multi-theme demos, and code export.
+- separator
+- heading "Theming — Generate Complete Palettes" [level=2]
+- paragraph:
+  - code: bw.generateTheme(name, config)
+  - text: replaces manual color wrangling. Give it 2-3 seed colors and it derives hover states, active states, light backgrounds, border colors, focus rings, and contrast text for every component.
+- heading "Full theme studio" [level=4]
+- paragraph:
+  - text: The
+  - link "Themes page":
+    - /url: 10-themes.html
+  - text: has a full interactive generator with preset gallery, multi-theme switching, dark mode, and copy-to-clipboard CSS export. This section shows just the basics.
+- separator
+- 'heading "Under the Hood: Structural vs Cosmetic CSS" [level=2]'
+- paragraph: Bitwrench's built-in styles are split into two layers. Understanding the split helps you theme effectively.
+- heading "Structural (layout)" [level=4]
+- paragraph:
+  - text: Display, flex, sizing, spacing, cursor, font metrics. These
+  - strong: never change
+  - text: with themes. A button is always
+  - code: "display: inline-block"
+  - text: and
+  - code: "cursor: pointer"
+  - text: regardless of color.
+- code: // Loaded once, never changes bw.loadDefaultStyles(); // injects structural CSS (id="bw-structural")
+- heading "Cosmetic (theme)" [level=4]
+- paragraph:
+  - text: Colors, backgrounds, shadows, border-colors, border-radius. These are
+  - strong: derived from your palette
+  - text: by
+  - code: bw.generateTheme()
+  - text: . Swap palettes without touching layout.
+- code: "// Theme generates only cosmetic CSS bw.generateTheme('ocean', { primary: '#0077b6', secondary: '#90e0ef' }); // injects themed CSS (id=\"bw-theme-ocean\")"
+- paragraph:
+  - text: When you call
+  - code: bw.loadDefaultStyles()
+  - text: ", both layers are injected automatically — structural CSS plus the default palette. Call"
+  - code: bw.generateTheme()
+  - text: to swap just the cosmetic layer while keeping the same structural foundation.
+```

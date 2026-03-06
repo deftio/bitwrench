@@ -1,0 +1,268 @@
+# Page snapshot
+
+```yaml
+- heading "State & Interactivity" [level=1]
+- paragraph: How bitwrench manages state, from simple closures to component factories and pub/sub.
+- heading "Bitwrench's Approach to State" [level=2]
+- paragraph: Frameworks like React, Solid, and Svelte each have their own approach to state management — virtual DOMs, reactive signals, compiler-generated update code. They work well for the problems they were designed to solve.
+- paragraph:
+  - text: Bitwrench takes a different approach. State is a plain JavaScript object stored directly on the DOM element it belongs to. Updates are explicit function calls rather than automatic reactions. There is no virtual DOM, no dependency tracking, no compiler step. A component re-renders when — and only when —
+  - code: bw.update(el)
+  - text: is called.
+- heading "Coming from another framework?" [level=4]
+- table:
+  - rowgroup:
+    - row "Concept How bitwrench does it":
+      - cell "Concept"
+      - cell "How bitwrench does it"
+  - rowgroup:
+    - row "Component (JSX / .svelte file) Factory function returning a TACO object":
+      - cell "Component (JSX / .svelte file)"
+      - cell "Factory function returning a TACO object"
+    - row "useState / createSignal / $state o.state → stored as el._bw_state":
+      - cell "useState / createSignal / $state":
+        - code: useState
+        - text: /
+        - code: createSignal
+        - text: /
+        - code: $state
+      - cell "o.state → stored as el._bw_state":
+        - code: o.state
+        - text: → stored as
+        - code: el._bw_state
+    - row "render() / reactive template o.render(el) — called explicitly via bw.update(el)":
+      - cell "render() / reactive template":
+        - code: render()
+        - text: / reactive template
+      - cell "o.render(el) — called explicitly via bw.update(el)":
+        - code: o.render(el)
+        - text: — called explicitly via
+        - code: bw.update(el)
+    - row "Virtual DOM diff / fine-grained reactivity Direct DOM writes via bw.DOM(); targeted patches via bw.patch()":
+      - cell "Virtual DOM diff / fine-grained reactivity"
+      - cell "Direct DOM writes via bw.DOM(); targeted patches via bw.patch()":
+        - text: Direct DOM writes via
+        - code: bw.DOM()
+        - text: ; targeted patches via
+        - code: bw.patch()
+    - row "useEffect / onMount o.mounted(el) lifecycle hook":
+      - cell "useEffect / onMount":
+        - code: useEffect
+        - text: /
+        - code: onMount
+      - cell "o.mounted(el) lifecycle hook":
+        - code: o.mounted(el)
+        - text: lifecycle hook
+    - row "Context / stores / global signals bw.pub() / bw.sub() (application-scoped pub/sub)":
+      - cell "Context / stores / global signals"
+      - cell "bw.pub() / bw.sub() (application-scoped pub/sub)":
+        - code: bw.pub()
+        - text: /
+        - code: bw.sub()
+        - text: (application-scoped pub/sub)
+    - row "useRef The element itself — state and DOM are the same object":
+      - cell "useRef":
+        - code: useRef
+      - cell "The element itself — state and DOM are the same object"
+- paragraph:
+  - text: "The tradeoff: bitwrench requires the developer to say"
+  - emphasis: when
+  - text: to update, rather than detecting changes automatically. In return, every state change is an explicit function call you can see and step through in a debugger. The sections below walk through each pattern from simplest to most complex.
+- heading "The toolkit at a glance" [level=4]
+- paragraph:
+  - code: o.state
+  - text: — initial state object, stored as
+  - code: el._bw_state
+  - text: on mount
+  - code: o.render(el)
+  - text: — render function, stored as
+  - code: el._bw_render
+  - text: ", called on mount and on"
+  - code: bw.update()
+  - code: bw.update(el)
+  - text: — re-run the render function and emit
+  - code: bw:statechange
+  - code: bw.patch(id, content)
+  - text: — targeted update of a single element (no full re-render)
+  - code: bw.pub(topic, detail)
+  - text: /
+  - code: bw.sub(topic, handler)
+  - text: — decoupled cross-component messaging
+  - code: o.mounted(el)
+  - text: — lifecycle hook, runs after the element is in the DOM
+  - code: o.unmount(el)
+  - text: — cleanup hook, runs when the element is removed
+- heading "Memory and cleanup" [level=4]
+- paragraph:
+  - text: When
+  - code: bw.DOM()
+  - text: replaces an element's children, the old DOM nodes and any event listeners attached to them are removed by the browser's garbage collector. There is no manual listener cleanup step — replacing the DOM
+  - emphasis: is
+  - text: the cleanup.
+- paragraph:
+  - text: For resources that live outside the DOM (timers, WebSocket connections, pub/sub subscriptions), use the
+  - code: o.unmount(el)
+  - text: lifecycle hook. Bitwrench calls it automatically via
+  - code: bw.cleanup()
+  - text: before replacing content. Pub/sub subscriptions can also be tied to an element's lifecycle by passing the element to
+  - code: bw.sub()
+  - text: — when the element is cleaned up, its subscriptions are removed automatically.
+- heading "Debugging" [level=4]
+- paragraph:
+  - text: All component state is visible in the browser's built-in inspector. Select any bitwrench component in the Elements panel, then type
+  - code: $0._bw_state
+  - text: in the console to see its current state object. You can modify it directly and call
+  - code: bw.update($0)
+  - text: to see the result. No browser extension required.
+- heading "The Simplest State Pattern" [level=2]
+- paragraph: "The most basic approach: a closure variable and a render function. When state changes, call render again. This works well for simple, standalone components."
+- heading "How State Works in Bitwrench" [level=2]
+- paragraph:
+  - text: In bitwrench, you build components by writing functions that return plain JavaScript objects describing what to render. State lives
+  - strong: on the DOM element itself
+  - text: . When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.
+- strong: 1. Define
+- code: "o: { state, render }"
+- text: →
+- strong: 2. Mount
+- code: render(el) auto-called
+- text: →
+- strong: 3. Update
+- code: bw.update(el)
+- heading "The pattern" [level=4]
+- paragraph:
+  - text: A component factory returns a JavaScript object with
+  - code: o.state
+  - text: and
+  - code: o.render
+  - text: . When bitwrench creates the DOM element, it stores state as
+  - code: el._bw_state
+  - text: and the render function as
+  - code: el._bw_render
+  - text: ", then calls"
+  - code: render(el)
+  - text: automatically once the element is in the DOM. To re-render, call
+  - code: bw.update(el)
+  - text: — it re-runs
+  - code: el._bw_render(el)
+  - text: and emits a
+  - code: bw:statechange
+  - text: event so other components can react.
+- heading "Why state lives on the element" [level=4]
+- paragraph:
+  - text: Storing state on
+  - code: el._bw_state
+  - text: "ties the state to the element's lifecycle. Delete the element → state is gone. Create three instances of a component → each has its own state on its own element. It's a simple model: the DOM element"
+  - emphasis: is
+  - text: the component.
+- text: The complete pattern
+- code: "// 1. Factory function — returns an object with TACO + API function makeCounter(opts) { var id = bw.uuid('ctr'); var taco = { t: 'div', a: { id: id }, o: { state: { count: opts.start || 0 }, // initial state render: function(el) { // stored as el._bw_render var s = el._bw_state; // read state from the element bw.DOM(el, { // re-render into self t: 'div', a: { class: 'counter-card' }, c: [ { t: 'h4', c: opts.label }, { t: 'div', c: String(s.count) }, bw.makeButton({ text: '+', onclick: function() { s.count++; bw.update(el); // re-renders + emits event } }) ] }); } } }; // 2. Return TACO + getter/setter API return { taco: taco, id: id, getCount: function() { /* read el._bw_state */ }, setCount: function(n) { /* write + bw.update(el) */ } }; } // 3. Use it — each instance is independent var a = makeCounter({ label: 'A', start: 0 }); var b = makeCounter({ label: 'B', start: 10 }); bw.DOM('#app', { t: 'div', c: [a.taco, b.taco] });"
+- text: What happens at runtime
+- code: "// bw.createDOM processes the TACO: // 1. Creates <div id=\"ctr-abc123\"> // 2. Stores state: el._bw_state = { count: 0 } // 3. Stores render: el._bw_render = o.render // 4. Queues render via requestAnimationFrame // // After the element is in the DOM: // 5. el._bw_render(el) fires automatically // 6. render reads el._bw_state.count (= 0) // 7. bw.DOM(el, newContent) replaces children // but preserves el._bw_state and el._bw_render // // On button click: // 8. s.count++ modifies el._bw_state.count // 9. bw.update(el) calls el._bw_render(el) // 10. bw.update also emits bw:statechange // so other components can listen and react // // If the element is removed: // 11. el._bw_state goes away with the element // 12. No cleanup needed — nothing external to clean up // // Key insight: // - opts (label, start) is configuration — fixed at creation // - state (count) is mutable — lives on the element // - bw.update(el) = re-render + notify listeners"
+- heading "Encapsulated Components" [level=2]
+- paragraph: Three counters from the same factory. Each has its own state on its own DOM element. Click any counter — the others don't change. The factory returns a getter/setter API alongside the TACO, enabling cross-component coordination (next section).
+- text: Source
+- code: "function makeCounter(opts) { var id = bw.uuid('ctr'); var name = opts.label; var taco = { t: 'div', a: { id: id }, o: { state: { count: opts.start || 0 }, render: function(el) { var s = el._bw_state; bw.DOM(el, { t: 'div', a: { class: 'counter-card' }, c: [ { t: 'h4', c: name }, { t: 'div', a: { class: 'counter-value' }, c: String(s.count) }, { t: 'div', a: { class: 'counter-btns' }, c: [ bw.makeButton({ text: '+', variant: 'primary', onclick: function() { s.count++; bw.update(el); } }), bw.makeButton({ text: '\\u2013', variant: 'secondary', onclick: function() { s.count--; bw.update(el); } }), bw.makeButton({ text: 'Reset', variant: 'secondary', onclick: function() { s.count = opts.start || 0; bw.update(el); } }) ]} ] }); } } }; return { taco: taco, name: name, id: id, getCount: function() { var el = document.getElementById(id); return el && el._bw_state ? el._bw_state.count : null; }, setCount: function(n) { var el = document.getElementById(id); if (el && el._bw_state) { el._bw_state.count = n; bw.update(el); } } }; } var cardA = makeCounter( { label: 'Visitors', start: 42 }); var cardB = makeCounter( { label: 'Orders', start: 7 }); var cardC = makeCounter( { label: 'Errors', start: 0 }); var allCards = [cardA, cardB, cardC]; bw.DOM('#counters', { t: 'div', a: { class: 'counters-row' }, c: allCards.map(function(c) { return c.taco; }) });"
+- text: Live result (try it)
+- heading "Cross-Component Coordination" [level=2]
+- paragraph:
+  - text: The global panel reads and modifies all three counters via the getter/setter API. It auto-updates whenever any counter changes, because
+  - code: bw.update()
+  - text: emits a
+  - code: bw:statechange
+  - text: event that bubbles up. The global panel listens with
+  - code: bw.on()
+  - text: — no tight coupling.
+- text: Source
+- code: "// Listen for statechange from any counter bw.on('#counter-demo', 'statechange', function() { renderGlobal(); } ); function renderGlobal() { var counts = allCards.map(function(c) { return c.getCount() || 0; }); var sum = counts.reduce( function(a, b) { return a + b; }, 0 ); var breakdown = allCards.map(function(c, i) { return c.name + '(' + counts[i] + ')'; }).join(' + '); bw.DOM('#global-demo', { t: 'div', a: { class: 'global-panel' }, c: [ { t: 'h4', c: 'Cross-Component Controls' }, { t: 'div', a: { class: 'global-btns' }, c: [ bw.makeButton({ text: 'Inc All (+1)', variant: 'primary', onclick: function() { allCards.forEach(function(c) { c.setCount(c.getCount() + 1); }); renderGlobal(); } }), bw.makeButton({ text: 'Dec All (\\u20131)', variant: 'primary', onclick: function() { allCards.forEach(function(c) { c.setCount(c.getCount() - 1); }); renderGlobal(); } }), bw.makeButton({ text: 'Reset All', variant: 'secondary', onclick: function() { allCards.forEach(function(c) { c.setCount(0); }); renderGlobal(); } }) ]}, { t: 'div', a: { class: 'sum-display' }, c: breakdown + ' = ' + sum } ] }); }"
+- text: Live result
+- 'heading "Targeted Updates: bw.patch()" [level=2]'
+- paragraph:
+  - code: bw.patch(id, content)
+  - text: updates a single element by its UUID without rebuilding the entire component tree. Use it for value-only changes (counters, labels). Use
+  - code: bw.update()
+  - text: for structural changes (add/remove items).
+- text: Source
+- code: "// Each list item has a stable UUID for its value var item = { id: bw.uuid('item'), // row UUID valId: bw.uuid('val'), // value UUID name: 'Counter #1', count: 0 }; // Value change: targeted, no rebuild bw.makeButton({ text: '+', onclick: function() { item.count++; bw.patch(item.valId, String(item.count)); } }); // Structural change: full re-render function addItem() { listItems.push(newItem); renderList(); // rebuilds via bw.DOM() }"
+- text: Live result
+- 'heading "Event Systems: emit/on & pub/sub" [level=2]'
+- paragraph:
+  - text: Bitwrench provides two event systems.
+  - strong: emit/on
+  - text: wraps DOM CustomEvents (scoped to an element subtree, bubbles up).
+  - strong: pub/sub
+  - text: is application-scoped (topic-based, decoupled from the DOM tree). Both coexist.
+- heading "Comparison" [level=4]
+- table:
+  - rowgroup:
+    - row "Aspect emit/on pub/sub":
+      - cell "Aspect"
+      - cell "emit/on":
+        - code: emit/on
+      - cell "pub/sub":
+        - code: pub/sub
+  - rowgroup:
+    - row "Scope DOM subtree (bubbles) Application-wide (topic)":
+      - cell "Scope"
+      - cell "DOM subtree (bubbles)"
+      - cell "Application-wide (topic)"
+    - row "Trigger 1:1 with DOM action Composite / logic":
+      - cell "Trigger"
+      - cell "1:1 with DOM action"
+      - cell "Composite / logic"
+    - row "Cleanup Automatic (DOM GC) unsub() or element-tied":
+      - cell "Cleanup"
+      - cell "Automatic (DOM GC)"
+      - cell "unsub() or element-tied"
+    - row "Coupling Spatial (ancestor) None (any component)":
+      - cell "Coupling"
+      - cell "Spatial (ancestor)"
+      - cell "None (any component)"
+    - row "Error Native DOM throws Try/catch, log, continue":
+      - cell "Error"
+      - cell "Native DOM throws"
+      - cell "Try/catch, log, continue"
+- text: Source
+- code: "// Publish a message to a topic bw.pub('notification', { text: msg }); // Subscribe — returns unsub function var unsub = bw.sub('notification', function(detail) { messages.push(detail.text); renderPanel(); } ); // Later: remove the subscription unsub();"
+- text: Live result
+- 'heading "Stateful Component: Todo List" [level=2]'
+- paragraph:
+  - text: "A more complex component with array state, conditional rendering, and multiple interactions. The same pattern scales: state on the element,"
+  - code: o.render
+  - text: reads it,
+  - code: bw.update(el)
+  - text: re-renders.
+- text: Source
+- code: "function makeTodoList(opts) { var id = bw.uuid('todo'); var todoItem = function(item, el) { var s = el._bw_state; return { t: 'div', a: { class: 'todo-item' + (item.done ? ' done' : '') }, c: [ { t: 'input', a: { type: 'checkbox', checked: item.done ? 'checked' : undefined, onchange: function() { item.done = !item.done; bw.update(el); } }}, { t: 'span', c: item.text }, bw.makeButton({ text: '\\u00D7', variant: 'secondary', size: 'sm', onclick: function() { s.todos = s.todos.filter(function(t) { return t.id !== item.id; }); bw.update(el); } }) ] }; }; function addTodo(el) { var s = el._bw_state; var input = bw.$('#' + id + ' input[type=\"text\"]')[0]; if (!input || !input.value.trim()) return; s.todos.push({ id: s.nextId++, text: input.value.trim(), done: false }); bw.update(el); } var initial = (opts.initial || []).map( function(text, i) { return { id: i + 1, text: text, done: false }; } ); return { t: 'div', a: { id: id }, o: { state: { todos: initial, nextId: initial.length + 1 }, render: function(el) { var s = el._bw_state; var remaining = s.todos.filter( function(t) { return !t.done; } ).length; bw.DOM(el, { t: 'div', c: [ { t: 'div', a: { class: 'todo-input-row' }, c: [ { t: 'input', a: { type: 'text', placeholder: opts.placeholder || 'Add item...', onkeydown: function(e) { if (e.key === 'Enter') addTodo(el); } }}, bw.makeButton({ text: 'Add', variant: 'primary', onclick: function() { addTodo(el); } }) ]}, { t: 'div', c: s.todos.map(function(item) { return todoItem(item, el); })}, { t: 'div', a: { style: 'margin-top:0.5rem; ' + 'font-size:0.8125rem; ' + 'color:var(--bw-text-secondary);' }, c: remaining + ' of ' + s.todos.length + ' remaining' } ]}); } } }; } bw.DOM('#todo', makeTodoList({ initial: ['Read the docs', 'Build a prototype', 'Ship it'], placeholder: 'What needs doing?' }));"
+- text: Live result (try it)
+- heading "Dynamic CSS Generation" [level=2]
+- paragraph:
+  - code: bw.css()
+  - text: converts JavaScript objects to CSS strings.
+  - code: bw.injectCSS()
+  - text: inserts them into the document. Together they let you generate entire stylesheets at runtime from data.
+- text: Source
+- code: "function makeThemeSwitcher() { var themes = { ocean: { bg: '#e0f7fa', fg: '#004d40', accent: '#00796b' }, sunset: { bg: '#fff3e0', fg: '#bf360c', accent: '#e65100' }, forest: { bg: '#e8f5e9', fg: '#1b5e20', accent: '#2e7d32' } }; var id = bw.uuid('theme'); function render(el) { var s = el._bw_state; var t = themes[s.current]; // Generate CSS from a JS object and inject it bw.injectCSS(bw.css({ ['#' + id + ' .themed']: { background: t.bg, color: t.fg, 'border-color': t.accent, padding: '1.25rem', 'border-radius': '8px', border: '2px solid', transition: 'all 0.3s' }, ['#' + id + ' .themed h4']: { color: t.accent, margin: '0 0 0.35rem' } }), { id: id + '-css' }); bw.DOM(el, { t: 'div', c: [ { t: 'div', a: { style: 'display:flex; gap:0.5rem; margin-bottom:0.75rem;' }, c: Object.keys(themes).map(function(key) { return bw.makeButton({ text: key.charAt(0).toUpperCase() + key.slice(1), variant: key === s.current ? 'primary' : 'secondary', onclick: function() { s.current = key; render(el); } }); }) }, { t: 'div', a: { class: 'themed' }, c: [ { t: 'h4', c: s.current.charAt(0).toUpperCase() + s.current.slice(1) + ' Theme' }, { t: 'p', a: { style: 'margin:0; font-size:0.875rem;' }, c: 'Colors generated from a JS object via bw.css().' } ]} ]}); } return { t: 'div', a: { id: id }, o: { state: { current: 'ocean' }, mounted: function(el) { render(el); } } }; } bw.DOM('#themes', makeThemeSwitcher());"
+- text: Live result (try it)
+- heading "Performance" [level=2]
+- paragraph:
+  - text: Bitwrench renders directly to the DOM. This test creates and mounts 1,000 elements in a single
+  - code: bw.DOM()
+  - text: call.
+- heading "Two update strategies" [level=4]
+- paragraph:
+  - code: bw.DOM()
+  - text: replaces all children — straightforward for full re-renders. But updating one value in a list of 1,000 items doesn't require rebuilding the other 999. That's what
+  - code: bw.patch(id, value)
+  - text: "is for: it finds a single element by UUID and updates its content directly. Use"
+  - code: bw.DOM()
+  - text: for structural changes (add/remove items) and
+  - code: bw.patch()
+  - text: for value changes (counters, labels, status text). The
+  - link "dynamic list":
+    - /url: "#list-demo"
+  - text: above demonstrates both in combination.
+- text: Source
+- code: "function makePerfTest() { var id = bw.uuid('perf'); function run(el) { var start = performance.now(); var items = []; for (var i = 0; i < 1000; i++) { items.push({ t: 'span', a: { class: 'bw-badge bw-badge-primary', style: 'margin:2px;' }, c: 'Item ' + (i + 1) }); } bw.DOM('#' + id + '-items', { t: 'div', c: items }); var ms = (performance.now() - start).toFixed(2); bw.DOM('#' + id + '-time', { t: 'div', a: { class: 'bw-alert bw-alert-success' }, c: 'Rendered 1,000 items in ' + ms + ' ms' }); } return { t: 'div', a: { id: id }, o: { mounted: function(el) { bw.DOM(el, { t: 'div', c: [ bw.makeButton({ text: 'Render 1,000 Items', variant: 'primary', onclick: function() { run(el); } }), { t: 'div', a: { id: id + '-time', style: 'margin-top:0.75rem;' }, c: '' }, { t: 'div', a: { id: id + '-items', style: 'margin-top:0.75rem; max-height:200px; ' + 'overflow-y:auto;' }, c: '' } ] }); } } }; } bw.DOM('#perf', makePerfTest());"
+- text: Live result (try it)
+```

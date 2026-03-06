@@ -9,33 +9,9 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <style>
-    /* Tutorial header */
-    .tutorial-header {
-      background: var(--bw-teal, #006666);
-      color: white;
-      padding: 2.5rem 1.5rem 2rem;
-      text-align: center;
-    }
-    .tutorial-header h1 {
-      margin: 0 0 0.5rem;
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-    .tutorial-header p {
-      margin: 0 auto;
-      opacity: 0.85;
-      font-size: 1.05rem;
-      max-width: 600px;
-    }
-
-    /* Main content container */
-    .tutorial-content {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem 3rem;
-    }
+    /* Tutorial header — inherits .page-header from shared-theme.css */
 
     /* Step body paragraph styling */
     .bw-step-body > p {
@@ -237,21 +213,33 @@
       font-size: 0.8rem;
     }
 
-    /* Congratulations */
+    /* Summary */
     .congrats {
       background: linear-gradient(135deg, var(--bw-teal-light, #e0f2f1) 0%, #b2dfdb 100%);
       border: 1px solid #80cbc4;
       border-radius: var(--bw-radius, 8px);
       padding: 2rem;
-      text-align: center;
+      text-align: left;
       margin-bottom: 2rem;
     }
     .congrats h2 { color: var(--bw-teal-dark, #004d4d); margin: 0 0 0.75rem; }
-    .congrats p { color: var(--bw-text-secondary, #555); margin: 0.5rem 0; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .congrats p { color: var(--bw-text-secondary, #555); margin: 0.5rem 0; }
+
+    /* Complete example tabs */
+    .complete-tabs { display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 0; }
+    .complete-tab { padding: 0.5rem 1.25rem; border: none; background: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; }
+    .complete-tab.active { color: #006666; border-bottom-color: #006666; }
+    .complete-tab:hover:not(.active) { color: #333; }
+    .complete-tab-panel { display: none; }
+    .complete-tab-panel.active { display: block; }
+    .complete-run-bar { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem 0; }
+    .complete-run-btn { padding: 0.4rem 1.25rem; background: #006666; color: white; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .complete-run-btn:hover { background: #004d4d; }
+    .complete-iframe { width: 100%; min-height: 600px; border: 1px solid #e0e0e0; border-radius: 6px; background: white; }
 
     /* Responsive */
     @media (max-width: 640px) {
-      .tutorial-header h1 { font-size: 1.5rem; }
+      .page-header h1 { font-size: 1.5rem; }
       .bw-step-body { padding: 1rem; }
       .game-board {
         grid-template-columns: repeat(3, 70px);
@@ -268,12 +256,14 @@
 <body>
   <div id="example-nav"></div>
 
-  <div class="tutorial-header">
-    <h1>Build Tic Tac Toe with Bitwrench</h1>
-    <p>Learn state management step by step by building a complete game. Each step adds one concept.</p>
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Build Tic Tac Toe with Bitwrench</h1>
+      <p class="subtitle">Learn state management step by step by building a complete game</p>
+    </div>
   </div>
 
-  <div class="tutorial-content">
+  <div class="content-container wide">
     <!-- Step 0: What You'll Learn -->
     <div class="bw-step">
       <div class="bw-step-header">
@@ -281,7 +271,14 @@
         <h2>What You'll Learn</h2>
       </div>
       <div class="bw-step-body">
-        <p>This tutorial builds a tic tac toe game in 5 steps. Each step introduces a bitwrench concept:</p>
+        <p>
+          In this tutorial you will build a fully working tic tac toe game from scratch using bitwrench.
+          You will start with a static 3&times;3 board, add click handling and turn-based state, wire up
+          win detection and draw detection, bolt on time-travel (undo any move), and finish with a
+          decoupled scoreboard powered by pub/sub messaging. Each step adds exactly one concept so you
+          can see how the pieces fit together.
+        </p>
+        <p>Here is what each step covers:</p>
         <table class="step-table">
           <thead>
             <tr><th>Step</th><th>Concept</th><th>API</th></tr>
@@ -386,11 +383,17 @@
           }
         ].concat(tabs.map(function(tab, i) {
           if (tab.isCode) {
+            var lang = tab.label === 'Styles' ? 'css' : 'js';
+            var lines = tab.content.split('\n').length;
+            var h = Math.max(180, Math.min(lines * 19, 600)) + 'px';
+            var editorTaco = typeof bw.codeEditor === 'function'
+              ? bw.codeEditor({ code: tab.content, lang: lang, readOnly: true, height: h })
+              : { t: 'pre', c: { t: 'code', c: tab.content } };
             return {
               t: 'div', a: { id: tabIds[i], class: 'demo-tab-panel code-panel' + (i === 0 ? ' active' : '') },
               c: [
                 makeCopyBtn(tab.content),
-                { t: 'pre', c: { t: 'code', c: tab.content } }
+                editorTaco
               ]
             };
           }
@@ -1412,34 +1415,31 @@
     bw.DOM('#congrats-section', {
       t: 'div', a: { class: 'congrats' },
       c: [
-        { t: 'h2', c: 'You did it!' },
-        { t: 'p', c: 'You built a complete tic tac toe game with bitwrench. Along the way you learned:' },
+        { t: 'h2', c: 'Summary' },
+        { t: 'p', c: 'This tutorial built a complete tic tac toe game from scratch. The concepts covered along the way:' },
         {
-          t: 'div', a: { style: 'text-align: left; max-width: 500px; margin: 1rem auto;' },
-          c: {
-            t: 'ul', a: { style: 'list-style: none; padding: 0;' },
-            c: [
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO objects' }, ' \u2014 describe HTML with plain JS objects'] },
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.update()' }, ' \u2014 state management, no boilerplate'] },
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, ' \u2014 just JavaScript (ternaries, arrays, .filter)'] },
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable history' }, ' \u2014 .slice() for time travel'] },
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.pub() + bw.sub()' }, ' \u2014 topic-based events, decoupled from DOM'] },
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.emit() + bw.on()' }, ' \u2014 DOM-scoped events for parent\u2013child coordination'] },
-              { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.patch()' }, ' \u2014 targeted DOM updates without rebuilding'] }
-            ]
-          }
+          t: 'ul', a: { style: 'list-style: none; padding: 0; margin: 1rem 0;' },
+          c: [
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO objects' }, ' \u2014 describing HTML with plain JS objects'] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.update()' }, ' \u2014 state management without boilerplate'] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, ' \u2014 standard JavaScript (ternaries, arrays, .filter)'] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable history' }, ' \u2014 .slice() for time travel'] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.pub() + bw.sub()' }, ' \u2014 topic-based events, decoupled from DOM'] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.emit() + bw.on()' }, ' \u2014 DOM-scoped events for parent\u2013child coordination'] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.patch()' }, ' \u2014 targeted DOM updates without rebuilding'] }
+          ]
         },
         {
-          t: 'div', a: { class: 'callout callout-challenge', style: 'text-align: left; max-width: 500px; margin: 1.5rem auto 0;' },
+          t: 'div', a: { class: 'callout callout-challenge' },
           c: [
-            { t: 'h4', c: 'Challenge yourself' },
+            { t: 'h4', c: 'Ideas to extend this project' },
             {
               t: 'ul',
               c: [
                 { t: 'li', c: 'Add a simple AI opponent (random or minimax)' },
-                { t: 'li', c: 'Save/load games with localStorage' },
+                { t: 'li', c: 'Save and load games with localStorage' },
                 { t: 'li', c: 'Use bw.patch() to update individual squares instead of rebuilding the board' },
-                { t: 'li', c: 'Make a 4x4 variant by changing the board size in state' }
+                { t: 'li', c: 'Make a 4\u00d74 variant by changing the board size in state' }
               ]
             }
           ]
@@ -1663,73 +1663,126 @@
       '</html>'
     ].join('\n');
 
-    bw.DOM('#complete-example', {
-      t: 'div', a: { class: 'bw-step', style: 'margin-bottom: 2rem;' },
-      c: [
-        {
-          t: 'div', a: { class: 'bw-step-header', style: 'cursor: pointer;' },
-          c: [
-            { t: 'div', a: { class: 'bw-step-num', style: 'background: #7b1fa2; font-size: 0.85rem;' }, c: '{}' },
-            { t: 'h2', c: 'Complete Standalone Example' },
-            { t: 'span', a: { id: 'complete-toggle', style: 'margin-left: auto; font-size: 1.25rem; transition: transform 0.2s;' }, c: '\u25B6' }
-          ],
-          o: {
-            mounted: function(el) {
-              el.addEventListener('click', function() {
-                var body = document.getElementById('complete-body');
-                var toggle = document.getElementById('complete-toggle');
-                if (body.style.display === 'none') {
-                  body.style.display = 'block';
-                  toggle.style.transform = 'rotate(90deg)';
-                } else {
-                  body.style.display = 'none';
-                  toggle.style.transform = 'rotate(0deg)';
-                }
-              });
-            }
-          }
-        },
-        {
-          t: 'div', a: { id: 'complete-body', style: 'display: none;' },
-          c: [
-            {
-              t: 'div', a: { class: 'bw-step-body' },
-              c: [
-                { t: 'p', c: 'Copy this complete HTML file, save it, and open it in your browser. It includes all the game code, styles, and bitwrench loaded from a CDN.' },
-                {
-                  t: 'div', a: { class: 'demo-tabs' },
-                  c: [
-                    {
-                      t: 'div', a: { class: 'demo-tab-panel code-panel active' },
-                      c: [
-                        {
-                          t: 'button',
-                          a: {
-                            class: 'copy-btn',
-                            onclick: function(e) {
-                              navigator.clipboard.writeText(completeExampleCode).then(function() {
-                                e.target.textContent = 'Copied!';
-                                e.target.classList.add('copied');
-                                setTimeout(function() {
-                                  e.target.textContent = 'Copy';
-                                  e.target.classList.remove('copied');
-                                }, 1500);
-                              });
-                            }
-                          },
-                          c: 'Copy'
-                        },
-                        { t: 'pre', a: { style: 'max-height: 500px; overflow-y: auto;' }, c: { t: 'code', c: completeExampleCode } }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+    (function() {
+      function getEditorCode() {
+        var editorEl = document.querySelector('#complete-code-panel .bw-ce');
+        if (editorEl && editorEl._bwCodeEdit) {
+          return editorEl._bwCodeEdit.getValue();
         }
-      ]
-    });
+        return completeExampleCode;
+      }
+
+      function updateIframe() {
+        var iframe = document.getElementById('complete-preview-iframe');
+        if (!iframe) return;
+        var code = getEditorCode();
+        // Replace CDN URLs with local paths for preview
+        var base = window.location.origin;
+        code = code.replace(
+          'https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js',
+          base + '/dist/bitwrench.umd.js'
+        ).replace(
+          'https://unpkg.com/bitwrench@2/dist/bitwrench.css',
+          base + '/dist/bitwrench.css'
+        );
+        iframe.srcdoc = code;
+      }
+
+      function switchTab(tab) {
+        var codePanel = document.getElementById('complete-code-panel');
+        var previewPanel = document.getElementById('complete-preview-panel');
+        var codeTab = document.getElementById('complete-tab-code');
+        var previewTab = document.getElementById('complete-tab-preview');
+        if (!codePanel) return;
+        if (tab === 'code') {
+          codePanel.classList.add('active');
+          previewPanel.classList.remove('active');
+          codeTab.classList.add('active');
+          previewTab.classList.remove('active');
+        } else {
+          previewPanel.classList.add('active');
+          codePanel.classList.remove('active');
+          previewTab.classList.add('active');
+          codeTab.classList.remove('active');
+          updateIframe();
+        }
+      }
+
+      bw.DOM('#complete-example', {
+        t: 'div', a: { class: 'bw-step', style: 'margin-bottom: 2rem;' },
+        c: [
+          {
+            t: 'div', a: { class: 'bw-step-header' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-num', style: 'background: #7b1fa2; font-size: 0.85rem;' }, c: '{}' },
+              { t: 'h2', c: 'Complete Standalone Example' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw-step-body' },
+            c: [
+              { t: 'p', c: 'The complete game as a single HTML file. Edit the code and click Run to see changes in the Preview tab.' },
+              {
+                t: 'div', a: { class: 'complete-tabs' },
+                c: [
+                  { t: 'button', a: { id: 'complete-tab-code', class: 'complete-tab active', onclick: function() { switchTab('code'); } }, c: 'Code' },
+                  { t: 'button', a: { id: 'complete-tab-preview', class: 'complete-tab', onclick: function() { switchTab('preview'); } }, c: 'Preview' }
+                ]
+              },
+              {
+                t: 'div', a: { id: 'complete-code-panel', class: 'complete-tab-panel active' },
+                c: [
+                  {
+                    t: 'div', a: { class: 'complete-run-bar' },
+                    c: [
+                      {
+                        t: 'button',
+                        a: { class: 'complete-run-btn', onclick: function() { switchTab('preview'); } },
+                        c: 'Run \u25B6'
+                      },
+                      {
+                        t: 'button',
+                        a: {
+                          class: 'copy-btn',
+                          style: 'position: static;',
+                          onclick: function(e) {
+                            var code = getEditorCode();
+                            navigator.clipboard.writeText(code).then(function() {
+                              e.target.textContent = 'Copied!';
+                              e.target.classList.add('copied');
+                              setTimeout(function() {
+                                e.target.textContent = 'Copy';
+                                e.target.classList.remove('copied');
+                              }, 1500);
+                            });
+                          }
+                        },
+                        c: 'Copy'
+                      }
+                    ]
+                  },
+                  (typeof bw.codeEditor === 'function'
+                    ? bw.codeEditor({ code: completeExampleCode, lang: 'html', readOnly: false, height: '500px' })
+                    : { t: 'pre', a: { style: 'max-height: 500px; overflow-y: auto;' }, c: { t: 'code', c: completeExampleCode } })
+                ]
+              },
+              {
+                t: 'div', a: { id: 'complete-preview-panel', class: 'complete-tab-panel' },
+                c: {
+                  t: 'iframe',
+                  a: {
+                    id: 'complete-preview-iframe',
+                    class: 'complete-iframe',
+                    sandbox: 'allow-scripts',
+                    title: 'Tic Tac Toe preview'
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      });
+    })();
   </script>
 </body>
 </html>

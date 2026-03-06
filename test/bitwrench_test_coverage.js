@@ -203,11 +203,18 @@ describe("DOM Selector (bw.$)", function() {
 describe("Default Styles (bw.loadDefaultStyles)", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should inject a style element", function() {
-    const el = bw.loadDefaultStyles();
-    assert.ok(el);
-    assert.equal(el.tagName, 'STYLE');
-    assert.ok(el.textContent.length > 100);
+  it("should inject styles and return theme result", function() {
+    const result = bw.loadDefaultStyles();
+    assert.ok(result);
+    assert.ok('css' in result, 'should have css');
+    assert.ok('palette' in result, 'should have palette');
+    assert.ok(result.css.length > 100, 'css should have content');
+    // Check structural styles were injected
+    const structEl = document.getElementById('bw-structural');
+    assert.ok(structEl !== null, 'structural style element should exist');
+    // Check themed styles were injected
+    const themeEl = document.getElementById('bw-theme-default');
+    assert.ok(themeEl !== null, 'theme style element should exist');
   });
 });
 
@@ -1062,5 +1069,120 @@ describe("mapScale with expScale", function() {
     assert.equal(linear, 50);
     assert.ok(exp < 50); // exponential curve bends below linear at midpoint
     assert.equal(exp, 25); // 0.5^2 * 100 = 25
+  });
+});
+
+// =========================================================================
+// Merged makeCard (formerly makeCardV2 features)
+// =========================================================================
+describe("Merged makeCard", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should create basic card", function() {
+    const taco = bw.makeCard({ title: 'Test', content: 'Content' });
+    assert.strictEqual(taco.t, 'div');
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-card'), 'should have bw-card class');
+    assert.ok(html.includes('Test'), 'should include title');
+    assert.ok(html.includes('Content'), 'should include content');
+  });
+
+  it("should support subtitle prop", function() {
+    const taco = bw.makeCard({ title: 'Main', subtitle: 'Sub', content: 'Content' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('Sub'), 'should include subtitle');
+    assert.ok(html.includes('bw-card-subtitle'), 'should have subtitle class');
+  });
+
+  it("should support image prop", function() {
+    const taco = bw.makeCard({ title: 'Img', content: 'Content', image: { src: 'test.jpg', alt: 'Test' } });
+    const html = bw.html(taco);
+    assert.ok(html.includes('test.jpg'), 'should include image src');
+    assert.ok(html.includes('bw-card-img-top'), 'should have img-top class by default');
+  });
+
+  it("should support imagePosition bottom", function() {
+    const taco = bw.makeCard({ title: 'Img', content: 'Content', image: { src: 'test.jpg', alt: 'Test' }, imagePosition: 'bottom' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-card-img-bottom'), 'should have img-bottom class');
+  });
+
+  it("should support shadow prop", function() {
+    const taco = bw.makeCard({ title: 'Shadow', content: 'Content', shadow: 'md' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-shadow'), 'should have shadow class');
+  });
+
+  it("should support hoverable prop", function() {
+    const taco = bw.makeCard({ title: 'Hover', content: 'Content', hoverable: true });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-card-hoverable'), 'should have hoverable class');
+  });
+
+  it("should not have makeCardV2 (removed)", function() {
+    assert.strictEqual(bw.makeCardV2, undefined, 'makeCardV2 should not exist');
+  });
+});
+
+// =========================================================================
+// makeSpinner
+// =========================================================================
+describe("makeSpinner", function() {
+  it("should create a spinner element", function() {
+    const taco = bw.makeSpinner();
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-spinner'), 'should have spinner class');
+  });
+
+  it("should support type prop", function() {
+    const taco = bw.makeSpinner({ type: 'grow' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-spinner-grow'), 'should have spinner-grow class');
+  });
+});
+
+// =========================================================================
+// makeStack
+// =========================================================================
+describe("makeStack", function() {
+  it("should create a vstack by default", function() {
+    const taco = bw.makeStack({ children: ['A', 'B'] });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-vstack'), 'should have vstack class');
+  });
+
+  it("should create an hstack with direction horizontal", function() {
+    const taco = bw.makeStack({ children: ['A', 'B'], direction: 'horizontal' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-hstack'), 'should have hstack class');
+  });
+});
+
+// =========================================================================
+// makeCheckbox
+// =========================================================================
+describe("makeCheckbox", function() {
+  it("should create a checkbox element", function() {
+    const taco = bw.makeCheckbox({ label: 'Accept', name: 'terms' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-form-check'), 'should have form-check class');
+    assert.ok(html.includes('Accept'), 'should include label');
+  });
+});
+
+// =========================================================================
+// makeCodeDemo
+// =========================================================================
+describe("makeCodeDemo", function() {
+  it("should use bw-code-demo class", function() {
+    const taco = bw.makeCodeDemo({ code: 'var x = 1;', language: 'javascript' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-code-demo'), 'should have bw-code-demo class');
+  });
+
+  it("should use bw-copy-btn class for copy button", function() {
+    const taco = bw.makeCodeDemo({ code: 'var x = 1;', language: 'javascript' });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw-copy-btn'), 'should have bw-copy-btn class');
   });
 });

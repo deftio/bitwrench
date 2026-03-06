@@ -7,20 +7,9 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, extname, basename, dirname } from 'node:path';
 import quikdown from '../vendor/quikdown.js';
 import bw from '../bitwrench.js';
-import { getAllStyles } from '../bitwrench-styles.js';
+import { getAllStyles, THEME_PRESETS } from '../bitwrench-styles.js';
 import { getInjectionHead, getInjectionBodyEnd } from './inject.js';
 import { makePageLayout } from './layout-default.js';
-
-/**
- * Theme presets — named color combinations
- */
-const THEME_PRESETS = {
-    ocean: { primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8' },
-    sunset: { primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a' },
-    forest: { primary: '#2d6a4f', secondary: '#95d5b2', tertiary: '#52b788' },
-    slate: { primary: '#343a40', secondary: '#adb5bd', tertiary: '#6c757d' },
-    monochrome: { primary: '#343a40', secondary: '#adb5bd', tertiary: '#6c757d' }
-};
 
 /**
  * Extract title from the first # heading in markdown

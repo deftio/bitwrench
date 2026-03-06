@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Code Editor</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Code Editor</h1>
+      <p class="subtitle">Lightweight syntax highlighting and editable code blocks</p>
+    </div>
+  </div>
+
+  <div class="content-container wide">
+
+    <!-- Overview -->
+    <div class="demo-section">
+      <h2>Overview</h2>
+      <div class="demo-content">
+        <p>
+          <code>bitwrench-code-edit</code> is an optional addon that provides syntax highlighting
+          for JavaScript, CSS, and HTML. It ships as a separate file (~11 KB min) and attaches
+          <code>bw.highlight()</code> and <code>bw.codeEditor()</code> to the bitwrench namespace.
+        </p>
+        <div class="callout callout-concept">
+          <h4>Scope</h4>
+          <p>
+            This is a lightweight utility for rendering readable code snippets in bitwrench apps.
+            It is <strong>not</strong> a replacement for full-featured libraries like
+            Prism.js or highlight.js. If you need broad language support, line numbers,
+            or advanced editor features, use one of those instead. bitwrench-code-edit covers
+            the common case: JS, CSS, and HTML with zero dependencies.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Installation -->
+    <div class="demo-section">
+      <h2>Installation</h2>
+      <div class="demo-content">
+        <h3>Browser (script tag)</h3>
+        <p>Load after <code>bitwrench.umd.js</code>. It auto-attaches to <code>window.bw</code>.</p>
+        <div id="install-browser"></div>
+
+        <h3 style="margin-top: 1.5rem;">ES Module</h3>
+        <div id="install-esm"></div>
+
+        <h3 style="margin-top: 1.5rem;">Available Formats</h3>
+        <div id="formats-table"></div>
+      </div>
+    </div>
+
+    <!-- bw.highlight() -->
+    <div class="demo-section">
+      <h2>bw.highlight(code, lang)</h2>
+      <div class="demo-content">
+        <p>
+          Tokenizes a code string and returns an array of TACO objects with syntax-colored
+          <code>&lt;span&gt;</code> elements. Supported languages: <code>'js'</code>,
+          <code>'css'</code>, <code>'html'</code>.
+        </p>
+        <h3>JavaScript</h3>
+        <div id="demo-highlight-js"></div>
+        <h3 style="margin-top: 1.5rem;">CSS</h3>
+        <div id="demo-highlight-css"></div>
+        <h3 style="margin-top: 1.5rem;">HTML</h3>
+        <div id="demo-highlight-html"></div>
+      </div>
+    </div>
+
+    <!-- bw.codeEditor() -->
+    <div class="demo-section">
+      <h2>bw.codeEditor(opts)</h2>
+      <div class="demo-content">
+        <p>
+          Creates a contenteditable code block with live syntax highlighting.
+          Returns a TACO object that can be mounted with <code>bw.DOM()</code>.
+        </p>
+        <h3>Editable Editor</h3>
+        <p>Type in the editor below &mdash; syntax highlighting updates as you type.</p>
+        <div id="demo-editor-editable"></div>
+        <div id="demo-editor-editable-code" style="margin-top: 1rem;"></div>
+
+        <h3 style="margin-top: 1.5rem;">Read-Only Display</h3>
+        <p>Use <code>readOnly: true</code> for non-editable code display.</p>
+        <div id="demo-editor-readonly"></div>
+        <div id="demo-editor-readonly-code" style="margin-top: 1rem;"></div>
+
+        <h3 style="margin-top: 1.5rem;">Light Theme</h3>
+        <p>Pass <code>className: 'bw-ce-light'</code> for a light background.</p>
+        <div id="demo-editor-light"></div>
+
+        <h3 style="margin-top: 1.5rem;">CSS Highlighting</h3>
+        <div id="demo-editor-css"></div>
+
+        <h3 style="margin-top: 1.5rem;">HTML Highlighting</h3>
+        <div id="demo-editor-html"></div>
+      </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="demo-section">
+      <h2>API Reference</h2>
+      <div class="demo-content">
+        <div id="api-table"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '11-code-editor.html');
+    bw.loadDefaultStyles();
+
+    // -- Installation code samples --
+    bw.DOM('#install-browser', bw.codeEditor({
+      lang: 'html',
+      code: '<script src="dist/bitwrench.umd.js"><\/script>\n<script src="dist/bitwrench-code-edit.umd.js"><\/script>',
+      readOnly: true,
+      height: '80px'
+    }));
+
+    bw.DOM('#install-esm', bw.codeEditor({
+      lang: 'js',
+      code: "import { highlight, codeEditor } from 'bitwrench-code-edit';",
+      readOnly: true,
+      height: '60px'
+    }));
+
+    // Formats table
+    bw.DOM('#formats-table', bw.makeTable({
+      data: [
+        { format: 'UMD', file: 'bitwrench-code-edit.umd.min.js', use: 'Browsers + Node' },
+        { format: 'ESM', file: 'bitwrench-code-edit.esm.min.js', use: 'Modern bundlers' },
+        { format: 'CJS', file: 'bitwrench-code-edit.cjs.js', use: 'Node require()' },
+        { format: 'ES5', file: 'bitwrench-code-edit.es5.min.js', use: 'Legacy browsers (IE11)' }
+      ],
+      columns: ['format', 'file', 'use'],
+      headers: ['Format', 'File', 'Use Case'],
+      striped: true
+    }));
+
+    // -- highlight() demos --
+    var jsCode = 'function greet(name) {\n  const msg = `Hello, ${name}!`;\n  console.log(msg);\n  return msg;\n}';
+    bw.DOM('#demo-highlight-js', bw.codeEditor({
+      code: jsCode, lang: 'js', readOnly: true, height: '140px'
+    }));
+
+    var cssCode = '.bw-card {\n  background: #ffffff;\n  border: 1px solid #dee2e6;\n  border-radius: 8px;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n  padding: 1.25rem;\n}';
+    bw.DOM('#demo-highlight-css', bw.codeEditor({
+      code: cssCode, lang: 'css', readOnly: true, height: '160px'
+    }));
+
+    var htmlCode = '<div class="bw-card">\n  <h3 class="bw-card-title">Hello</h3>\n  <p>Content here</p>\n  <button class="bw-btn bw-btn-primary">Click</button>\n</div>';
+    bw.DOM('#demo-highlight-html', bw.codeEditor({
+      code: htmlCode, lang: 'html', readOnly: true, height: '140px'
+    }));
+
+    // -- codeEditor() demos --
+    var editableCode = '// Try editing this code\nvar items = [1, 2, 3];\n\nitems.forEach(function(item) {\n  console.log("Item:", item);\n});\n\nfunction add(a, b) {\n  return a + b;\n}';
+    bw.DOM('#demo-editor-editable', bw.codeEditor({
+      code: editableCode, lang: 'js', height: '220px'
+    }));
+    bw.DOM('#demo-editor-editable-code', bw.codeEditor({
+      lang: 'js', readOnly: true, height: '120px',
+      code: "bw.DOM('#editor', bw.codeEditor({\n  code: myCode,\n  lang: 'js',\n  height: '220px',\n  onChange: function(newCode) { /* ... */ }\n}));"
+    }));
+
+    bw.DOM('#demo-editor-readonly', bw.codeEditor({
+      code: 'const PI = 3.14159;\nconst area = (r) => PI * r * r;\nconsole.log(area(5)); // 78.54',
+      lang: 'js', readOnly: true, height: '100px'
+    }));
+    bw.DOM('#demo-editor-readonly-code', bw.codeEditor({
+      lang: 'js', readOnly: true, height: '80px',
+      code: "bw.DOM('#display', bw.codeEditor({\n  code: snippet,\n  lang: 'js',\n  readOnly: true\n}));"
+    }));
+
+    bw.DOM('#demo-editor-light', bw.codeEditor({
+      code: jsCode, lang: 'js', readOnly: true, height: '140px',
+      className: 'bw-ce-light'
+    }));
+
+    bw.DOM('#demo-editor-css', bw.codeEditor({
+      code: cssCode, lang: 'css', height: '160px'
+    }));
+
+    bw.DOM('#demo-editor-html', bw.codeEditor({
+      code: htmlCode, lang: 'html', height: '140px'
+    }));
+
+    // -- API table --
+    bw.DOM('#api-table', bw.makeTable({
+      data: [
+        { fn: 'bw.highlight(code, lang)', returns: 'TACO[]', desc: 'Tokenize code string into syntax-colored TACO spans' },
+        { fn: 'bw.codeEditor(opts)', returns: 'TACO', desc: 'Create an editable code block with live highlighting' },
+        { fn: 'opts.code', returns: 'string', desc: 'Initial code content' },
+        { fn: 'opts.lang', returns: 'string', desc: 'Language: "js", "css", or "html" (default: "js")' },
+        { fn: 'opts.height', returns: 'string', desc: 'Max height CSS value (default: "180px")' },
+        { fn: 'opts.readOnly', returns: 'boolean', desc: 'If true, editor is not editable (default: false)' },
+        { fn: 'opts.className', returns: 'string', desc: 'Extra CSS class (e.g. "bw-ce-light" for light theme)' },
+        { fn: 'opts.onChange', returns: 'function', desc: 'Callback called with new code on each edit' },
+        { fn: 'el._bwCodeEdit.getValue()', returns: 'string', desc: 'Get current code from mounted editor element' },
+        { fn: 'el._bwCodeEdit.setValue(code)', returns: 'void', desc: 'Set code and re-highlight' }
+      ],
+      columns: ['fn', 'returns', 'desc'],
+      headers: ['Function / Option', 'Returns', 'Description']
+    }));
+  </script>
+</body>
+</html>

@@ -73,11 +73,11 @@
 		"prebuild": "npm run generate-version",
 		"build": "rollup --config && npm run build:css",
 		"build:css": "node src/generate-css.js",
-		"build:index": "node bin/bitwrench.js README.md -o index.html --standalone --title 'bitwrench.js - Lightweight JavaScript UI Library' --favicon images/favicon.ico",
+		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
-		"cleanbuild": "npm run clean && npm run build && npm run generate-sri && npm run build:builds && npm run build:index && npm run build:api-reference",
+		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js -r jsdom-global/",
 		"test:v1": "c8 --reporter=text mocha ./test/bitwrench_test.js -r jsdom-global/",
@@ -99,7 +99,8 @@
 		"test:coverage": "c8 --reporter=html --reporter=text mocha ./test/bitwrench_ci.js -r jsdom-global/",
 		"build:api-reference": "node tools/build-api-reference.js",
 		"build:builds": "node tools/build-builds-manifest.js",
-		"build:release": "node tools/build-release.js"
+		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference",
+		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js"
 	},
 	"homepage": "http://deftio.com/bitwrench",
 	"c8": {

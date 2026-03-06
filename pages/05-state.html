@@ -15,7 +15,7 @@
     /* Page-specific styles */
     .counters-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: var(--bw-space-md);
     }
     .counter-card {
@@ -1463,6 +1463,29 @@ bw.DOM('#perf', makePerfTest());</code></pre>
             });
           }
         }
+      });
+    })();
+
+    // ============================================================
+    //  Upgrade source <pre> blocks to syntax-highlighted editors
+    // ============================================================
+    (function() {
+      if (typeof bw.codeEditor !== 'function') return;
+      var pres = bw.$('.demo-section-body .bw-grid-2col pre');
+      pres.forEach(function(pre) {
+        var code = pre.querySelector('code');
+        if (!code) return;
+        var text = code.textContent;
+        var lines = text.split('\n').length;
+        var h = Math.max(180, Math.min(lines * 19, 700)) + 'px';
+        var div = document.createElement('div');
+        pre.parentNode.replaceChild(div, pre);
+        bw.DOM(div, bw.codeEditor({
+          code: text,
+          lang: 'js',
+          readOnly: true,
+          height: h
+        }));
       });
     })();
 

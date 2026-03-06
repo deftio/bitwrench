@@ -119,7 +119,7 @@ const babelConfig = {
       ],
     },
 
-    // Code editor addon (standalone, loads after bitwrench)
+    // Code editor addon — modern builds (UMD, CJS, ESM)
     {
       input: 'src/bitwrench-code-edit.js',
       output: [
@@ -127,6 +127,7 @@ const babelConfig = {
           file: 'dist/bitwrench-code-edit.umd.js',
           format: 'umd',
           name: 'bwCodeEdit',
+          exports: 'named',
           banner,
           sourcemap: true,
         },
@@ -134,6 +135,27 @@ const babelConfig = {
           file: 'dist/bitwrench-code-edit.umd.min.js',
           format: 'umd',
           name: 'bwCodeEdit',
+          exports: 'named',
+          banner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-code-edit.cjs.js',
+          format: 'cjs',
+          exports: 'named',
+          banner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-code-edit.esm.js',
+          format: 'esm',
+          banner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-code-edit.esm.min.js',
+          format: 'esm',
           banner,
           plugins: [terser()],
           sourcemap: true,
@@ -142,6 +164,35 @@ const babelConfig = {
       plugins: [
         resolve(),
         commonjs(),
+      ],
+    },
+
+    // Code editor addon — ES5 build (legacy browsers)
+    {
+      input: 'src/bitwrench-code-edit.js',
+      output: [
+        {
+          file: 'dist/bitwrench-code-edit.es5.js',
+          format: 'umd',
+          name: 'bwCodeEdit',
+          exports: 'named',
+          banner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-code-edit.es5.min.js',
+          format: 'umd',
+          name: 'bwCodeEdit',
+          exports: 'named',
+          banner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+        babel(babelConfig),
       ],
     },
   ];

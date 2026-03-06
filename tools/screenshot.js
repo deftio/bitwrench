@@ -32,20 +32,23 @@ const DEFAULTS = {
   viewports: [{ w: 1280, h: 800, label: '1280x800' }],
 };
 
-// All site pages (matches shared-nav.js navItems)
-const ALL_PAGES = [
-  'index.html',
-  'pages/00-quick-start.html',
-  'pages/01-components.html',
-  'pages/02-tables-forms.html',
-  'pages/03-styling.html',
-  'pages/04-dashboard.html',
-  'pages/05-state.html',
-  'pages/06-tic-tac-toe-tutorial.html',
-  'pages/07-framework-comparison.html',
-  'pages/08-api-reference.html',
-  'pages/09-builds.html',
-];
+// Discover all pages dynamically from pages/*.html
+function discoverPages() {
+  var pagesDir = path.join(__dirname, '..', 'pages');
+  var files = [];
+  try {
+    files = fs.readdirSync(pagesDir)
+      .filter(function(f) { return f.endsWith('.html'); })
+      .sort()
+      .map(function(f) { return 'pages/' + f; });
+  } catch (e) {
+    // fallback if pages dir doesn't exist
+  }
+  // Always include root index.html first
+  return ['index.html'].concat(files);
+}
+
+var ALL_PAGES = discoverPages();
 
 // ── Argument parsing ────────────────────────────────────────────────────────
 

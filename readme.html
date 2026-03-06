@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="bitwrench v2.0.4">
+  <title>bitwrench.js - README</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  <script src="dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="dist/bitwrench.css">
+  <link rel="stylesheet" href="pages/shared-theme.css">
+  <script src="pages/shared-nav.js"></script>
+  <style>
+.quikdown-h1 { font-size:2em;font-weight:600;margin:.67em 0;text-align:left;color:#333 }
+.quikdown-h2 { font-size:1.5em;font-weight:600;margin:.83em 0;color:#333 }
+.quikdown-h3 { font-size:1.25em;font-weight:600;margin:1em 0;color:#333 }
+.quikdown-h4 { font-size:1em;font-weight:600;margin:1.33em 0;color:#333 }
+.quikdown-h5 { font-size:.875em;font-weight:600;margin:1.67em 0;color:#333 }
+.quikdown-h6 { font-size:.85em;font-weight:600;margin:2em 0;color:#333 }
+.quikdown-pre { background:#f4f4f4;padding:10px;border-radius:4px;overflow-x:auto;margin:1em 0 }
+.quikdown-code { background:#f0f0f0;padding:2px 4px;border-radius:3px;font-family:monospace }
+.quikdown-blockquote { border-left:4px solid #ddd;margin-left:0;padding-left:1em;color:#333 }
+.quikdown-table { border-collapse:collapse;width:100%;margin:1em 0 }
+.quikdown-th { border:1px solid #ddd;padding:8px;background-color:#f2f2f2;font-weight:bold;text-align:left }
+.quikdown-td { border:1px solid #ddd;padding:8px;text-align:left;color:#333 }
+.quikdown-hr { border:none;border-top:1px solid #ddd;margin:1em 0 }
+.quikdown-img { max-width:100%;height:auto }
+.quikdown-a { color:#06c;text-decoration:underline }
+.quikdown-strong { font-weight:bold }
+.quikdown-em { font-style:italic }
+.quikdown-del { text-decoration:line-through }
+.quikdown-ul { margin:.5em 0;padding-left:2em }
+.quikdown-ol { margin:.5em 0;padding-left:2em }
+.quikdown-li { margin:.25em 0;color:#333 }
+.quikdown-task-item { list-style:none }
+.quikdown-task-checkbox { margin-right:.5em }
+
+/* README-specific overrides to match pages/ look */
+.readme-body {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 0;
+  line-height: 1.6;
+}
+.readme-body img { max-width: 100%; height: auto; }
+.readme-body table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+.readme-body th, .readme-body td { border: 1px solid var(--bw-card-border); padding: 0.5em 0.75em; text-align: left; }
+.readme-body th { background: var(--bw-teal-bg); font-weight: 600; }
+.readme-body h2 { border-bottom: 1px solid var(--bw-card-border); padding-bottom: 0.3em; }
+.readme-body a { color: var(--bw-teal); }
+.readme-body a:hover { color: var(--bw-teal-dark); }
+.readme-body pre { background: var(--bw-code-bg); border-radius: 6px; overflow-x: auto; border: 1px solid rgba(0,0,0,0.1); }
+.readme-body pre code { display: block; padding: 1rem; color: var(--bw-code-text); font-family: var(--bw-font-mono); font-size: 0.8125rem; line-height: 1.6; background: transparent; border: none; }
+.readme-body code:not(pre code) { background: var(--bw-teal-light); color: var(--bw-teal-dark); padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; font-family: var(--bw-font-mono); }
+.readme-body blockquote { border-left: 4px solid var(--bw-teal); margin-left: 0; padding-left: 1em; color: var(--bw-text-secondary); }
+  </style>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>README</h1>
+      <p class="subtitle">The project README rendered with bitwrench site styling.</p>
+    </div>
+  </div>
+
+  <div class="content-container">
+    <div class="demo-section">
+      <div class="demo-content">
+        <div class="readme-body">
+<h1 class="quikdown-h1">bitwrench.js</h1>
+<img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License"> <img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version"> <img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI"></p><p><a class="quikdown-a" href="http://www.deftio.com/bitwrench" rel="noopener noreferrer"><img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench"></a></p><p><strong class="quikdown-strong">bitwrench.js</strong> is a lightweight JavaScript UI library that builds HTML from plain objects — no JSX, no virtual DOM, no build step. Define UI with the TACO format (<code class="quikdown-code">{t, a, c, o}</code> — Tag, Attributes, Content, Options), render to strings or live DOM, and ship under 45 KB gzipped with zero dependencies. Works in browsers (IE11+) and Node.js.</p><h2 class="quikdown-h2">Quick Example</h2>
+<p><pre class="quikdown-pre"><code class="language-javascript">// Define a component as a plain object
+const card = {
+  t: &#39;div&#39;, a: { class: &#39;bw-card&#39; },
+  c: [
+    { t: &#39;h3&#39;, c: &#39;Hello bitwrench&#39; },
+    { t: &#39;p&#39;,  c: &#39;UI as native JavaScript objects.&#39; }
+  ]
+};
+
+// Render to live DOM
+bw.DOM(&#39;#app&#39;, card);
+
+// Or render to an HTML string (server-side, emails, etc.)
+const html = bw.html(card);</code></pre></p><h2 class="quikdown-h2">Key Features</h2>
+<ul class="quikdown-ul">
+<li class="quikdown-li"><strong class="quikdown-strong">TACO format</strong> — <code class="quikdown-code">{ t, a, c, o }</code> objects describe UI; nest them, loop them, compose them with plain JS</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Zero dependencies</strong> — under 45 KB gzipped, IE11+ compatible</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Batteries-included components</strong> — grid, buttons, cards, forms, tables, alerts, badges, tabs, navbars</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Server &amp; client rendering</strong> — <code class="quikdown-code">bw.html()</code> returns strings, <code class="quikdown-code">bw.DOM()</code> mounts to the DOM</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Dynamic CSS &amp; theming</strong> — <code class="quikdown-code">bw.css()</code> generates stylesheets from objects, <code class="quikdown-code">bw.generateTheme()</code> builds full themes from seed colors, dark mode toggle included</li>
+<li class="quikdown-li"><strong class="quikdown-strong">State management</strong> — <code class="quikdown-code">bw.patch()</code> for targeted DOM updates, <code class="quikdown-code">bw.update()</code> for re-renders, <code class="quikdown-code">bw.pub()</code>/<code class="quikdown-code">bw.sub()</code> for app-wide messaging</li>
+<li class="quikdown-li"><strong class="quikdown-strong">CLI tool</strong> — the <code class="quikdown-code">bitwrench</code> command converts Markdown, HTML, and JSON files into styled pages</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Utilities</strong> — color functions, random data, lorem ipsum, cookies, URL params, file I/O</li>
+</ul><h2 class="quikdown-h2">Installation</h2>
+<h3 class="quikdown-h3">npm</h3>
+<p><pre class="quikdown-pre"><code class="language-bash">npm install bitwrench</code></pre></p><pre class="quikdown-pre"><code class="language-javascript">// ES module
+import bw from &#39;bitwrench&#39;;
+
+// CommonJS
+const bw = require(&#39;bitwrench&#39;);</code></pre><h3 class="quikdown-h3">Browser</h3>
+<p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;dist/bitwrench.umd.js&quot;&gt;&lt;/script&gt;</code></pre></p><h3 class="quikdown-h3">CDN</h3>
+<p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js&quot;&gt;&lt;/script&gt;</code></pre></p><h2 class="quikdown-h2">Getting Started</h2>
+<h3 class="quikdown-h3">Browser</h3>
+<p><pre class="quikdown-pre"><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+  &lt;title&gt;bitwrench app&lt;/title&gt;
+  &lt;script src=&quot;dist/bitwrench.umd.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div id=&quot;app&quot;&gt;&lt;/div&gt;
+  &lt;script&gt;
+    bw.loadDefaultStyles();
+
+    bw.DOM(&#39;#app&#39;, {
+      t: &#39;div&#39;, a: { class: &#39;bw-container&#39; },
+      c: [
+        { t: &#39;h1&#39;, c: &#39;My App&#39; },
+        { t: &#39;button&#39;, a: { class: &#39;bw-btn bw-btn-primary&#39; }, c: &#39;Click me&#39; }
+      ]
+    });
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre></p><h3 class="quikdown-h3">Node.js</h3>
+<p><pre class="quikdown-pre"><code class="language-javascript">import bw from &#39;bitwrench&#39;;
+
+const page = bw.html({
+  t: &#39;div&#39;, a: { class: &#39;bw-container&#39; },
+  c: [
+    { t: &#39;h1&#39;, c: &#39;Server-rendered page&#39; },
+    { t: &#39;p&#39;,  c: &#39;Generated with bw.html() in Node.js.&#39; }
+  ]
+});
+
+console.log(page);</code></pre></p><h2 class="quikdown-h2">Core API</h2>
+<table class="quikdown-table">
+<thead class="quikdown-thead">
+<tr class="quikdown-tr">
+<th class="quikdown-th">Function</th>
+<th class="quikdown-th">Description</th>
+</tr>
+</thead>
+<tbody class="quikdown-tbody">
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.html(taco)</code></td>
+<td class="quikdown-td">Convert a TACO object to an HTML string</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.DOM(selector, taco)</code></td>
+<td class="quikdown-td">Mount a TACO object to a DOM element</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.css(rules)</code></td>
+<td class="quikdown-td">Generate a CSS string from a JS object</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.loadDefaultStyles()</code></td>
+<td class="quikdown-td">Inject the built-in component stylesheet</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.generateTheme(name, config)</code></td>
+<td class="quikdown-td">Generate a scoped theme from seed colors</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.patch(uuid, content)</code></td>
+<td class="quikdown-td">Update a specific element&#39;s content by UUID</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.update(el)</code></td>
+<td class="quikdown-td">Re-render an element using its <code class="quikdown-code">o.render</code> function</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.pub(topic, detail)</code></td>
+<td class="quikdown-td">Publish a message to all subscribers</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.sub(topic, handler)</code></td>
+<td class="quikdown-td">Subscribe to a topic; returns an unsubscribe function</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.makeTable(data, opts)</code></td>
+<td class="quikdown-td">Create a sortable table (returns TACO)</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.makeCard(opts)</code></td>
+<td class="quikdown-td">Create a card component (returns TACO)</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.colorInterp(x, in0, in1, colors)</code></td>
+<td class="quikdown-td">Interpolate between colors</td>
+</tr>
+</tbody>
+</table><p>See the full <a class="quikdown-a" href="./pages/08-api-reference.html">API Reference</a> for all functions.</p><h2 class="quikdown-h2">Examples</h2>
+<table class="quikdown-table">
+<thead class="quikdown-thead">
+<tr class="quikdown-tr">
+<th class="quikdown-th">Page</th>
+<th class="quikdown-th">Description</th>
+</tr>
+</thead>
+<tbody class="quikdown-tbody">
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/00-quick-start.html">Quick Start</a></td>
+<td class="quikdown-td">First steps with TACO and <code class="quikdown-code">bw.DOM()</code></td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/01-components.html">Components</a></td>
+<td class="quikdown-td">Buttons, cards, alerts, badges, navbars</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/02-tables-forms.html">Tables &amp; Forms</a></td>
+<td class="quikdown-td">Sortable tables, form inputs, validation</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/03-styling.html">Styling</a></td>
+<td class="quikdown-td">CSS generation, inline styles, theming strategies</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/04-dashboard.html">Dashboard</a></td>
+<td class="quikdown-td">Full-page app with grid layout and charts</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/05-state.html">State &amp; Interactivity</a></td>
+<td class="quikdown-td"><code class="quikdown-code">bw.patch()</code>, <code class="quikdown-code">bw.update()</code>, pub/sub</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/06-tic-tac-toe-tutorial.html">Tic Tac Toe Tutorial</a></td>
+<td class="quikdown-td">Step-by-step game built with bitwrench</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/07-framework-comparison.html">Framework Comparison</a></td>
+<td class="quikdown-td">bitwrench vs React, Vue, Svelte, jQuery</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/08-api-reference.html">API Reference</a></td>
+<td class="quikdown-td">Full function listing with signatures</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/09-builds.html">Builds &amp; Downloads</a></td>
+<td class="quikdown-td">All dist formats, bundle sizes, SRI hashes</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><a class="quikdown-a" href="./pages/10-themes.html">Themes</a></td>
+<td class="quikdown-td">Theme generator, presets, dark mode</td>
+</tr>
+</tbody>
+</table><h2 class="quikdown-h2">CLI</h2>
+<p>The <code class="quikdown-code">bitwrench</code> command converts Markdown, HTML, and JSON files into styled standalone pages.</p><pre class="quikdown-pre"><code class="language-bash"># Install globally
+npm install -g bitwrench
+
+# Convert a Markdown file to a styled HTML page
+bitwrench README.md -o index.html --standalone
+
+# Use a theme preset
+bitwrench doc.md -o doc.html --standalone --theme ocean
+
+# Custom colors (primary, secondary)
+bitwrench doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</code></pre><p><strong class="quikdown-strong">Flags:</strong> <code class="quikdown-code">--output/-o</code>, <code class="quikdown-code">--standalone/-s</code> (inline bitwrench), <code class="quikdown-code">--cdn</code> (CDN link), <code class="quikdown-code">--theme/-t</code>, <code class="quikdown-code">--css/-c</code>, <code class="quikdown-code">--title</code>, <code class="quikdown-code">--favicon/-f</code>, <code class="quikdown-code">--highlight</code>, <code class="quikdown-code">--verbose/-v</code></p><h2 class="quikdown-h2">Development</h2>
+<p><pre class="quikdown-pre"><code class="language-bash">npm install          # install dev dependencies
+npm run build        # build all dist formats
+npm test             # run unit tests (251 tests)
+npm run test:cli     # run CLI tests (49 tests)
+npm run test:e2e     # run Playwright browser tests
+npm run cleanbuild   # full production build</code></pre></p><h2 class="quikdown-h2">License</h2>
+<a class="quikdown-a" href="./LICENSE.txt">BSD-2-Clause</a></p><h2 class="quikdown-h2">Documentation</h2>
+<ul class="quikdown-ul">
+<li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/" rel="noopener noreferrer">Interactive Docs &amp; Demos</a> — full tutorial site with live examples</li>
+<li class="quikdown-li"><a class="quikdown-a" href="./pages/index.html">Local Docs</a> — browse the docs locally if you&#39;ve cloned the repo</li>
+</ul><h2 class="quikdown-h2">Links</h2>
+<ul class="quikdown-ul">
+<li class="quikdown-li"><a class="quikdown-a" href="https://github.com/deftio/bitwrench" rel="noopener noreferrer">GitHub</a></li>
+<li class="quikdown-li"><a class="quikdown-a" href="https://www.npmjs.com/package/bitwrench" rel="noopener noreferrer">npm</a></li>
+<li class="quikdown-li"><a class="quikdown-a" href="http://deftio.com/bitwrench" rel="noopener noreferrer">Homepage</a></li>
+</ul>
+</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '', 'pages/');
+  </script>
+</body>
+</html>

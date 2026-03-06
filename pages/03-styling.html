@@ -139,6 +139,34 @@
         <p>The <a href="10-themes.html">Themes page</a> has a full interactive generator with preset gallery, multi-theme switching, dark mode, and copy-to-clipboard CSS export. This section shows just the basics.</p>
       </div>
     </div>
+
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--bw-card-border);">
+
+    <!-- Section 9: Structural vs Cosmetic CSS Architecture -->
+    <div class="demo-section">
+      <h2>Under the Hood: Structural vs Cosmetic CSS</h2>
+      <p>Bitwrench's built-in styles are split into two layers. Understanding the split helps you theme effectively.</p>
+      <div class="demo-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0;">
+        <div class="callout callout-concept">
+          <h4>Structural (layout)</h4>
+          <p>Display, flex, sizing, spacing, cursor, font metrics. These <strong>never change</strong> with themes. A button is always <code>display: inline-block</code> and <code>cursor: pointer</code> regardless of color.</p>
+          <pre><code>// Loaded once, never changes
+bw.loadDefaultStyles();
+// injects structural CSS (id="bw-structural")</code></pre>
+        </div>
+        <div class="callout callout-concept">
+          <h4>Cosmetic (theme)</h4>
+          <p>Colors, backgrounds, shadows, border-colors, border-radius. These are <strong>derived from your palette</strong> by <code>bw.generateTheme()</code>. Swap palettes without touching layout.</p>
+          <pre><code>// Theme generates only cosmetic CSS
+bw.generateTheme('ocean', {
+  primary: '#0077b6',
+  secondary: '#90e0ef'
+});
+// injects themed CSS (id="bw-theme-ocean")</code></pre>
+        </div>
+      </div>
+      <p>When you call <code>bw.loadDefaultStyles()</code>, both layers are injected automatically &mdash; structural CSS plus the default palette. Call <code>bw.generateTheme()</code> to swap just the cosmetic layer while keeping the same structural foundation.</p>
+    </div>
   </div>
 
   <script>

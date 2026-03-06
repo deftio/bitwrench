@@ -178,6 +178,11 @@ npm run cleanbuild   # full production build
 
 [BSD-2-Clause](./LICENSE.txt)
 
+## Documentation
+
+- [Interactive Docs & Demos](https://deftio.github.io/bitwrench/pages/) — full tutorial site with live examples
+- [Local Docs](./pages/index.html) — browse the docs locally if you've cloned the repo
+
 ## Links
 
 - [GitHub](https://github.com/deftio/bitwrench)

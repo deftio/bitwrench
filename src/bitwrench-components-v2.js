@@ -18,16 +18,31 @@
  */
 
 /**
- * Create a card component with optional header, body, and footer
+ * Create a card component with optional header, body, footer, and image support
+ *
+ * Supports images (top, bottom, left, right), shadow levels, subtitle,
+ * hover animation, and custom section class overrides. For horizontal
+ * image layouts (left/right), content is wrapped in a row grid.
  *
  * @param {Object} [props] - Card configuration
  * @param {string} [props.title] - Card title displayed in the body
+ * @param {string} [props.subtitle] - Card subtitle (muted text below title)
  * @param {string|Object|Array} [props.content] - Card body content (string, TACO, or array)
  * @param {string|Object} [props.footer] - Card footer content
  * @param {string|Object} [props.header] - Card header content
+ * @param {Object} [props.image] - Card image configuration
+ * @param {string} props.image.src - Image source URL
+ * @param {string} [props.image.alt] - Image alt text
+ * @param {string} [props.imagePosition="top"] - Image position ("top", "bottom", "left", "right")
  * @param {string} [props.variant] - Color variant (e.g. "primary", "danger")
+ * @param {boolean} [props.bordered=true] - Show card border
+ * @param {string} [props.shadow] - Shadow level ("none", "sm", "md", "lg")
+ * @param {boolean} [props.hoverable=false] - Enable hover lift animation
  * @param {string} [props.className] - Additional CSS classes
  * @param {Object} [props.style] - Inline style object
+ * @param {string} [props.headerClass] - Additional header CSS classes
+ * @param {string} [props.bodyClass] - Additional body CSS classes
+ * @param {string} [props.footerClass] - Additional footer CSS classes
  * @param {Object} [props.state] - Component state object
  * @returns {Object} TACO object representing a card component
  * @category Component Builders
@@ -42,40 +57,98 @@
 export function makeCard(props = {}) {
   const {
     title,
+    subtitle,
     content,
     footer,
     header,
+    image,
+    imagePosition = 'top',
     variant,
+    bordered = true,
+    shadow,
+    hoverable = false,
     className = '',
-    style
+    style,
+    headerClass = '',
+    bodyClass = '',
+    footerClass = ''
   } = props;
+
+  const shadowClasses = {
+    none: '',
+    sm: 'bw-shadow-sm',
+    md: 'bw-shadow',
+    lg: 'bw-shadow-lg'
+  };
+
+  const cardClasses = [
+    'bw-card',
+    variant ? `bw-card-${variant}` : '',
+    shadow ? (shadowClasses[shadow] || '') : '',
+    !bordered ? 'bw-border-0' : '',
+    hoverable ? 'bw-card-hoverable' : '',
+    className
+  ].filter(Boolean).join(' ').trim();
+
+  const cardContent = [
+    header && {
+      t: 'div',
+      a: { class: `bw-card-header ${headerClass}`.trim() },
+      c: header
+    },
+    image && (imagePosition === 'top' || imagePosition === 'left') && {
+      t: 'img',
+      a: {
+        class: `bw-card-img-${imagePosition}`,
+        src: image.src,
+        alt: image.alt || ''
+      }
+    },
+    {
+      t: 'div',
+      a: { class: `bw-card-body ${bodyClass}`.trim() },
+      c: [
+        title && { t: 'h5', a: { class: 'bw-card-title' }, c: title },
+        subtitle && { t: 'h6', a: { class: 'bw-card-subtitle bw-mb-2 bw-text-muted' }, c: subtitle },
+        content && (Array.isArray(content) ? content : [content])
+      ].flat().filter(Boolean)
+    },
+    image && (imagePosition === 'bottom' || imagePosition === 'right') && {
+      t: 'img',
+      a: {
+        class: `bw-card-img-${imagePosition}`,
+        src: image.src,
+        alt: image.alt || ''
+      }
+    },
+    footer && {
+      t: 'div',
+      a: { class: `bw-card-footer ${footerClass}`.trim() },
+      c: footer
+    }
+  ].filter(Boolean);
+
+  // Handle horizontal layout for left/right images
+  if (image && (imagePosition === 'left' || imagePosition === 'right')) {
+    return {
+      t: 'div',
+      a: { class: cardClasses, style },
+      c: {
+        t: 'div',
+        a: { class: 'bw-row bw-g-0' },
+        c: cardContent
+      },
+      o: {
+        type: 'card',
+        state: props.state || {}
+      }
+    };
+  }
 
   return {
     t: 'div',
-    a: {
-      class: `bw-card ${variant ? `bw-card-${variant}` : ''} ${className}`.trim(),
-      style
-    },
-    c: [
-      header && {
-        t: 'div',
-        a: { class: 'bw-card-header' },
-        c: header
-      },
-      {
-        t: 'div',
-        a: { class: 'bw-card-body' },
-        c: [
-          title && { t: 'h5', a: { class: 'bw-card-title' }, c: title },
-          content && (Array.isArray(content) ? content : [content])
-        ].flat().filter(Boolean)
-      },
-      footer && {
-        t: 'div',
-        a: { class: 'bw-card-footer' },
-        c: footer
-      }
-    ].filter(Boolean),
+    a: { class: cardClasses, style },
+    c: cardContent,
     o: {
       type: 'card',
       state: props.state || {}
@@ -1247,144 +1320,6 @@ export function makeFeatureGrid(props = {}) {
   };
 }
 
-/**
- * Create an enhanced card with image support, shadows, and hover effects
- *
- * Extended version of makeCard with support for images (top, bottom, left, right),
- * shadow levels, subtitle, hover animation, and custom section class overrides.
- * For horizontal image layouts (left/right), content is wrapped in a row grid.
- *
- * @param {Object} [props] - Enhanced card configuration
- * @param {string} [props.title] - Card title
- * @param {string} [props.subtitle] - Card subtitle (muted text below title)
- * @param {string|Object|Array} [props.content] - Card body content
- * @param {string|Object} [props.footer] - Card footer content
- * @param {string|Object} [props.header] - Card header content
- * @param {Object} [props.image] - Card image configuration
- * @param {string} props.image.src - Image source URL
- * @param {string} [props.image.alt] - Image alt text
- * @param {string} [props.imagePosition="top"] - Image position ("top", "bottom", "left", "right")
- * @param {string} [props.variant] - Color variant
- * @param {boolean} [props.bordered=true] - Show card border
- * @param {string} [props.shadow="sm"] - Shadow level ("none", "sm", "md", "lg")
- * @param {boolean} [props.hoverable=false] - Enable hover lift animation
- * @param {string} [props.className] - Additional CSS classes
- * @param {Object} [props.style] - Inline style object
- * @param {string} [props.headerClass] - Additional header CSS classes
- * @param {string} [props.bodyClass] - Additional body CSS classes
- * @param {string} [props.footerClass] - Additional footer CSS classes
- * @param {Object} [props.state] - Component state object
- * @returns {Object} TACO object representing an enhanced card
- * @category Component Builders
- * @example
- * const card = makeCardV2({
- *   title: "Project Alpha",
- *   subtitle: "v2.0 Release",
- *   content: "Major performance improvements.",
- *   image: { src: "/img/alpha.jpg", alt: "Alpha" },
- *   imagePosition: "top",
- *   shadow: "lg",
- *   hoverable: true
- * });
- */
-export function makeCardV2(props = {}) {
-  const {
-    title,
-    subtitle,
-    content,
-    footer,
-    header,
-    image,
-    imagePosition = 'top', // top, bottom, left, right
-    variant,
-    bordered = true,
-    shadow = 'sm',
-    hoverable = false,
-    className = '',
-    style,
-    headerClass = '',
-    bodyClass = '',
-    footerClass = ''
-  } = props;
-
-  const shadowClasses = {
-    none: '',
-    sm: 'bw-shadow-sm',
-    md: 'bw-shadow',
-    lg: 'bw-shadow-lg'
-  };
-
-  const cardContent = [
-    header && {
-      t: 'div',
-      a: { class: `bw-card-header ${headerClass}`.trim() },
-      c: header
-    },
-    image && (imagePosition === 'top' || imagePosition === 'left') && {
-      t: 'img',
-      a: {
-        class: `bw-card-img-${imagePosition}`,
-        src: image.src,
-        alt: image.alt || ''
-      }
-    },
-    {
-      t: 'div',
-      a: { class: `bw-card-body ${bodyClass}`.trim() },
-      c: [
-        title && { t: 'h5', a: { class: 'bw-card-title' }, c: title },
-        subtitle && { t: 'h6', a: { class: 'bw-card-subtitle bw-mb-2 bw-text-muted' }, c: subtitle },
-        content && (Array.isArray(content) ? content : [content])
-      ].flat().filter(Boolean)
-    },
-    image && (imagePosition === 'bottom' || imagePosition === 'right') && {
-      t: 'img',
-      a: {
-        class: `bw-card-img-${imagePosition}`,
-        src: image.src,
-        alt: image.alt || ''
-      }
-    },
-    footer && {
-      t: 'div',
-      a: { class: `bw-card-footer ${footerClass}`.trim() },
-      c: footer
-    }
-  ].filter(Boolean);
-
-  // Handle horizontal layout for left/right images
-  if (image && (imagePosition === 'left' || imagePosition === 'right')) {
-    return {
-      t: 'div',
-      a: {
-        class: `bw-card ${variant ? `bw-card-${variant}` : ''} ${!bordered ? 'bw-border-0' : ''} ${shadowClasses[shadow]} ${hoverable ? 'bw-card-hoverable' : ''} ${className}`.trim(),
-        style
-      },
-      c: {
-        t: 'div',
-        a: { class: 'bw-row bw-g-0' },
-        c: cardContent
-      },
-      o: {
-        type: 'card',
-        state: props.state || {}
-      }
-    };
-  }
-
-  return {
-    t: 'div',
-    a: {
-      class: `bw-card ${variant ? `bw-card-${variant}` : ''} ${!bordered ? 'bw-border-0' : ''} ${shadowClasses[shadow]} ${hoverable ? 'bw-card-hoverable' : ''} ${className}`.trim(),
-      style
-    },
-    c: cardContent,
-    o: {
-      type: 'card',
-      state: props.state || {}
-    }
-  };
-}
 
 /**
  * Create a call-to-action section with title, description, and action buttons
@@ -1873,7 +1808,7 @@ export function makeCodeDemo(props = {}) {
           {
             t: 'button',
             a: {
-              class: 'copy-btn',
+              class: 'bw-copy-btn',
               style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.6875rem; background: rgba(255,255,255,0.12); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s;',
               onclick: (e) => {
                 navigator.clipboard.writeText(code).then(() => {
@@ -1923,7 +1858,7 @@ export function makeCodeDemo(props = {}) {
 
   return {
     t: 'div',
-    a: { class: 'code-demo', style: 'margin-bottom: 2rem;' },
+    a: { class: 'bw-code-demo' },
     c: content
   };
 }

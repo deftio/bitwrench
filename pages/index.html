@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>bitwrench.js - Lightweight JavaScript UI Library</title>
+  <meta name="description" content="Build HTML from plain JavaScript objects. No JSX, no virtual DOM, no build step. Under 25KB gzipped.">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <!-- Hero -->
+  <div style="background: linear-gradient(135deg, #006666 0%, #004d4d 100%); color: #fff; padding: 4rem 0 3.5rem;">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1 style="font-size: 2.25rem; font-weight: 700; margin: 0 0 0.75rem; letter-spacing: -0.5px; color: inherit;">
+        Build UI from plain JavaScript objects
+      </h1>
+      <p style="font-size: 1.125rem; opacity: 0.85; max-width: 640px; margin: 0 0 2rem; line-height: 1.6;">
+        A lightweight library for generating HTML from native JS objects. No JSX, no virtual DOM, no build step. Ships under 25 KB gzipped with zero dependencies.
+      </p>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="00-quick-start.html" class="bw-btn bw-btn-light" style="font-size: 1rem; padding: 0.65rem 1.75rem; font-weight: 600; text-decoration: none;">
+          Get Started
+        </a>
+        <a href="https://github.com/deftio/bitwrench" class="bw-btn bw-btn-outline-light" style="font-size: 1rem; padding: 0.65rem 1.75rem; font-weight: 600; text-decoration: none; border-color: rgba(255,255,255,0.4); color: #fff;">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install strip -->
+  <div style="background: #1a1a1a; padding: 0.875rem 0;">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <code style="color: #e2e8f0; font-size: 0.9375rem; background: transparent; padding: 0;">npm install bitwrench</code>
+    </div>
+  </div>
+
+  <div class="content-container wide">
+
+    <!-- How it works -->
+    <div class="demo-section">
+      <h2>How It Works</h2>
+      <div class="demo-content">
+        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1.25rem;">
+          Describe your UI as plain JavaScript objects using the TACO format &mdash;
+          <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions.
+          Nest them, loop over them, compose them. Then render to an HTML string with <code>bw.html()</code>
+          or mount directly to the DOM with <code>bw.DOM()</code>.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <div class="bw-code-block">
+              <pre><code style="color: var(--bw-code-text);">const card = {
+  t: 'div', a: { class: 'bw-card' },
+  c: [
+    { t: 'h3', a: { class: 'bw-card-title' },
+      c: 'Hello bitwrench' },
+    { t: 'p', c: 'UI as native JS objects.' }
+  ]
+};
+
+bw.DOM('#app', card);</code></pre>
+            </div>
+          </div>
+          <div>
+            <div id="taco-demo-output" style="padding: 1rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What you get -->
+    <div class="demo-section">
+      <h2>What You Get</h2>
+      <div class="demo-content">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+
+          <div class="callout callout-concept">
+            <h4>30+ Ready-Made Components</h4>
+            <p>Cards, buttons, tables, forms, alerts, badges, navbars, spinners, progress bars, and more. Each one is a single function call that returns a TACO object you can customize or compose.</p>
+          </div>
+
+          <div class="callout callout-concept">
+            <h4>Palette-Driven Theming</h4>
+            <p>Pick 2&ndash;3 seed colors and <code>bw.generateTheme()</code> derives a complete palette: buttons, alerts, badges, hover states, focus rings, and dark mode. Choose from 12 built-in presets or create your own.</p>
+          </div>
+
+          <div class="callout callout-concept">
+            <h4>Server + Client Rendering</h4>
+            <p><code>bw.html()</code> renders TACO objects to HTML strings for SSR, emails, or static pages. <code>bw.DOM()</code> mounts them as live DOM. Same objects work on both sides.</p>
+          </div>
+
+          <div class="callout callout-concept">
+            <h4>State Management Built In</h4>
+            <p>Use <code>bw.patch()</code> for targeted DOM updates, <code>bw.update()</code> for re-renders, and <code>bw.pub()</code>/<code>bw.sub()</code> for decoupled event communication between components.</p>
+          </div>
+
+          <div class="callout callout-concept">
+            <h4>CLI for Markdown &amp; HTML</h4>
+            <p>Convert Markdown or HTML files to styled, self-contained pages with one command. Apply themes, inject bitwrench for interactivity, or generate plain static output.</p>
+          </div>
+
+          <div class="callout callout-concept">
+            <h4>Works Everywhere</h4>
+            <p>Under 25 KB gzipped. Zero runtime dependencies. Runs in modern browsers, IE11, Node.js, and embedded environments. Include one script tag and start building.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick example -->
+    <div class="demo-section">
+      <h2>At a Glance</h2>
+      <div class="demo-content">
+        <div id="live-demo"></div>
+      </div>
+    </div>
+
+    <!-- Explore the Docs -->
+    <div class="demo-section">
+      <h2>Explore the Docs</h2>
+      <div class="demo-content">
+        <div id="page-index"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 2rem 0 1rem; color: var(--bw-text-muted); font-size: 0.8125rem;">
+      <p>
+        <a href="https://github.com/deftio/bitwrench">GitHub</a> &middot;
+        <a href="https://www.npmjs.com/package/bitwrench">npm</a> &middot;
+        <a href="http://deftio.com/bitwrench">Homepage</a> &middot;
+        BSD-2-Clause License
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    // Mount nav
+    mountExampleNav('#example-nav', 'index.html');
+
+    // ---- TACO demo output ----
+    bw.DOM('#taco-demo-output', {
+      t: 'div', a: { class: 'bw-card' },
+      c: [
+        {
+          t: 'div', a: { class: 'bw-card-body' },
+          c: [
+            { t: 'h5', a: { class: 'bw-card-title' }, c: 'Hello bitwrench' },
+            { t: 'p', c: 'UI as native JS objects.' }
+          ]
+        }
+      ]
+    });
+
+    // ---- At a Glance ----
+    (function() {
+      var stats = [
+        { label: 'Bundle Size', value: '25 KB', sub: 'gzipped UMD' },
+        { label: 'Components', value: '30+', sub: 'make* helpers' },
+        { label: 'Dependencies', value: '0', sub: 'zero runtime deps' },
+        { label: 'Build Formats', value: '4', sub: 'UMD, ESM, CJS, ES5' }
+      ];
+
+      var statCards = stats.map(function(s) {
+        return {
+          t: 'div', a: { class: 'bw-col-6 bw-col-md-3' },
+          c: bw.makeCard({
+            content: [
+              { t: 'div', a: { style: 'font-size: 1.75rem; font-weight: 700; color: #006666;' }, c: s.value },
+              { t: 'div', a: { style: 'font-weight: 600; margin-top: 0.25rem;' }, c: s.label },
+              { t: 'div', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-muted);' }, c: s.sub }
+            ]
+          })
+        };
+      });
+
+      var sampleTable = bw.makeTable({
+        data: [
+          { format: 'UMD', file: 'bitwrench.umd.min.js', use: 'Browsers + Node' },
+          { format: 'ESM', file: 'bitwrench.esm.min.js', use: 'Modern bundlers' },
+          { format: 'CJS', file: 'bitwrench.cjs.min.js', use: 'Node require()' },
+          { format: 'ES5', file: 'bitwrench.es5.min.js', use: 'Legacy browsers (IE11)' }
+        ],
+        columns: ['format', 'file', 'use'],
+        headers: ['Format', 'File', 'Use Case'],
+        striped: true
+      });
+
+      bw.DOM('#live-demo', {
+        t: 'div', c: [
+          { t: 'div', a: { class: 'bw-row bw-g-3', style: 'margin-bottom: 1.5rem;' }, c: statCards },
+          sampleTable
+        ]
+      });
+    })();
+
+    // ---- Page index ----
+    (function() {
+      var pages = [
+        { title: 'Quick Start', href: '00-quick-start.html', desc: 'First steps with TACO and bw.DOM()' },
+        { title: 'Components', href: '01-components.html', desc: 'Buttons, cards, alerts, badges, spinners, stacks' },
+        { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' },
+        { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, 12 presets, dark mode' },
+        { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },
+        { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, form inputs, validation' },
+        { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with grid layout' },
+        { title: 'Code Editor', href: '11-code-editor.html', desc: 'Lightweight syntax highlighting for JS, CSS, HTML' },
+        { title: 'Tic Tac Toe Tutorial', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game built with bitwrench' },
+        { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'bitwrench vs React, Vue, Svelte, jQuery' },
+        { title: 'API Reference', href: '08-api-reference.html', desc: 'Full function listing with signatures' },
+        { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' }
+      ];
+
+      var cards = pages.map(function(p) {
+        return {
+          t: 'a', a: { href: p.href, style: 'text-decoration: none; color: inherit;' },
+          c: bw.makeCard({
+            title: p.title,
+            content: { t: 'p', a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary); margin: 0;' }, c: p.desc },
+            hoverable: true
+          })
+        };
+      });
+
+      bw.DOM('#page-index', {
+        t: 'div',
+        a: { style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;' },
+        c: cards
+      });
+    })();
+  </script>
+</body>
+</html>

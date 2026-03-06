@@ -168,6 +168,36 @@
         <div id="lists-demo"></div>
       </div>
     </div>
+
+    <div class="demo-section">
+      <h2>Spinners</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Loading indicators in border or grow styles. Sizes range from small to large. Color follows the variant system.
+        </p>
+        <div id="spinners-demo"></div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>Stacks</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Vertical and horizontal flex stacks with configurable gap. A quick way to lay out groups of elements without writing CSS.
+        </p>
+        <div id="stacks-demo"></div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <h2>Checkboxes</h2>
+      <div class="demo-content">
+        <p class="demo-description">
+          Form check inputs with labels. Part of the form component family.
+        </p>
+        <div id="checkboxes-demo"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -901,6 +931,132 @@ bw.makeListGroup({
 })`;
 
     bw.DOM('#lists-demo', createTabbedDemo(listsDemo, listsCode));
+
+    // =========================================================================
+    // Spinners
+    // =========================================================================
+    var spinnersDemo = {
+      t: 'div', c: [
+        {
+          t: 'div', a: { style: 'display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;' },
+          c: [
+            bw.makeSpinner({ variant: 'primary' }),
+            bw.makeSpinner({ variant: 'secondary' }),
+            bw.makeSpinner({ variant: 'success' }),
+            bw.makeSpinner({ variant: 'danger' }),
+            bw.makeSpinner({ type: 'grow', variant: 'info' }),
+            bw.makeSpinner({ type: 'grow', variant: 'warning' })
+          ]
+        },
+        {
+          t: 'div', a: { style: 'display: flex; gap: 1.5rem; align-items: center;' },
+          c: [
+            bw.makeSpinner({ size: 'sm', variant: 'primary' }),
+            bw.makeSpinner({ variant: 'primary' }),
+            bw.makeSpinner({ type: 'grow', size: 'sm', variant: 'primary' }),
+            bw.makeSpinner({ type: 'grow', variant: 'primary' })
+          ]
+        }
+      ]
+    };
+    var spinnersCode = `// Border spinners (default)
+bw.makeSpinner({ variant: 'primary' })
+bw.makeSpinner({ variant: 'success' })
+
+// Grow spinners
+bw.makeSpinner({ type: 'grow', variant: 'info' })
+
+// Small size
+bw.makeSpinner({ size: 'sm', variant: 'primary' })`;
+
+    bw.DOM('#spinners-demo', createTabbedDemo(spinnersDemo, spinnersCode));
+
+    // =========================================================================
+    // Stacks
+    // =========================================================================
+    var stacksDemo = {
+      t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;' }, c: [
+        {
+          t: 'div', c: [
+            { t: 'h5', c: 'Vertical Stack' },
+            bw.makeStack({
+              children: [
+                bw.makeButton({ text: 'First', variant: 'primary' }),
+                bw.makeButton({ text: 'Second', variant: 'secondary' }),
+                bw.makeButton({ text: 'Third', variant: 'success' })
+              ],
+              gap: 2
+            })
+          ]
+        },
+        {
+          t: 'div', c: [
+            { t: 'h5', c: 'Horizontal Stack' },
+            bw.makeStack({
+              direction: 'horizontal',
+              children: [
+                bw.makeBadge({ text: 'HTML', variant: 'primary' }),
+                bw.makeBadge({ text: 'CSS', variant: 'info' }),
+                bw.makeBadge({ text: 'JS', variant: 'warning' })
+              ],
+              gap: 2
+            })
+          ]
+        }
+      ]
+    };
+    var stacksCode = `// Vertical stack (default)
+bw.makeStack({
+  children: [
+    bw.makeButton({ text: 'First', variant: 'primary' }),
+    bw.makeButton({ text: 'Second', variant: 'secondary' })
+  ],
+  gap: 2
+})
+
+// Horizontal stack
+bw.makeStack({
+  direction: 'horizontal',
+  children: [
+    bw.makeBadge({ text: 'HTML', variant: 'primary' }),
+    bw.makeBadge({ text: 'CSS', variant: 'info' })
+  ],
+  gap: 2
+})`;
+
+    bw.DOM('#stacks-demo', createTabbedDemo(stacksDemo, stacksCode));
+
+    // =========================================================================
+    // Checkboxes
+    // =========================================================================
+    var checkboxesDemo = {
+      t: 'div', c: [
+        bw.makeCheckbox({ label: 'Accept terms and conditions', name: 'terms', id: 'cb-terms' }),
+        bw.makeCheckbox({ label: 'Subscribe to newsletter', name: 'news', id: 'cb-news', checked: true }),
+        bw.makeCheckbox({ label: 'Disabled option', name: 'disabled', id: 'cb-disabled', disabled: true })
+      ]
+    };
+    var checkboxesCode = `bw.makeCheckbox({
+  label: 'Accept terms and conditions',
+  name: 'terms',
+  id: 'cb-terms'
+})
+
+bw.makeCheckbox({
+  label: 'Subscribe to newsletter',
+  name: 'news',
+  id: 'cb-news',
+  checked: true
+})
+
+bw.makeCheckbox({
+  label: 'Disabled option',
+  name: 'disabled',
+  id: 'cb-disabled',
+  disabled: true
+})`;
+
+    bw.DOM('#checkboxes-demo', createTabbedDemo(checkboxesDemo, checkboxesCode));
   </script>
 </body>
 </html>

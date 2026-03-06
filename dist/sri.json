@@ -1,16 +1,18 @@
 {
   "version": "2.0.4",
   "algorithm": "sha384",
-  "generated": "2026-03-05",
+  "generated": "2026-03-06",
   "files": {
-    "bitwrench.cjs.js": "sha384-6IAt7qhs2D8iIQdHure1N6PM6zeqTWETYbN7xvQ6HrM47q4oXB7ojq6F4L0qXHx0",
-    "bitwrench.cjs.min.js": "sha384-5XirnzOOahVTQrsiCD/pZy4ADORet8uMI1d1c17a4DneUMe5oo0kCLiRKQzhoEHp",
-    "bitwrench.css": "sha384-RrS+SYDhJoDMruTXnBzQyLEWzBqiT0iXNPg28K36TRWwUZiTwt/DFBcyNum6CDMp",
-    "bitwrench.es5.js": "sha384-W0wL8JZPc4UuN4o78hmzF0Or72WwndoJ9PQKBTYJeQSipM6wNkCFILQY4yVtBE/E",
-    "bitwrench.es5.min.js": "sha384-SZYkkc50jaghc7LRvPFgHIf80nYaOeySOi46+cr1t4Y4bTccMbQDWQ944KNtaY9I",
-    "bitwrench.esm.js": "sha384-Q6XOFPqer82gpU8nfJrWYbcSLAVZ8Mm2QC1tWLPzL2Jrn+ApAZzwCPyRrEduH5wl",
-    "bitwrench.esm.min.js": "sha384-WFe4SEav36lg3+I0pstS2kNkVzeBTztMYyZuO4yCzKsEBtTj7jAQ9ARPFd9Y80L/",
-    "bitwrench.umd.js": "sha384-A2/u0qBjG0ntvwCc/sto4378TNrX17yfd9hQO6R1aMEioDT+lMrytkJPOFGjZEtz",
-    "bitwrench.umd.min.js": "sha384-M5oBXdQYzrenmT9jaxXL1hLgkQzrxsZOA7hJrOY1poewjbTrPfAQtr+qyCSn5MbK"
+    "bitwrench-code-edit.umd.js": "sha384-UVBHurSmO9N8a8weF5U0ORBSj6qysesCFCayLBwOUgaUnTKAFWBZAh/lZISFFjoG",
+    "bitwrench-code-edit.umd.min.js": "sha384-duHFLtdCs6duGOKw6O4+zl4Aebh3MC/TFiuXo8bDWZPy0f44JT/Z1wvhSN+KvErq",
+    "bitwrench.cjs.js": "sha384-dvg14VpGt2EHZGc0WHAnXritMH0Y5Y3iPd8lowyCGEl5fzK5/AWDF/OKGgSi+ALS",
+    "bitwrench.cjs.min.js": "sha384-nV3/Sf4ASuqlFVXzvs5DuW0+yXwMxbWy2lVCs8Gb8Dekd0IoF4sPvL7oPoLl+1PN",
+    "bitwrench.css": "sha384-dEPy+0GGtrozVasm9ZPP9V7pRp/ZmmLH5tZU5UF/kYTtu1RNkOeRu+3jS2Jm7Aq/",
+    "bitwrench.es5.js": "sha384-C1weInfmQBVU9idm405MlhDII7cTf+DMf4ycGa1r+jfkkEiaGvwHsa1UWWMFuUTt",
+    "bitwrench.es5.min.js": "sha384-mrFKKj4850QCRMsR13RWJ6FQfH+4fs1Jfg/HRbIHt/huRuanNPSL6tyhKlfzGQIz",
+    "bitwrench.esm.js": "sha384-y9Dljd/I+nBl67Mx/yccfaNrPNpsyK479ff2q8mh59LOydUxAWfS+THf5zly6rNZ",
+    "bitwrench.esm.min.js": "sha384-S3OpunS9NDrDfIDd/w5o/Db4WOgMJ5xio85671IIdLWe/Hjt83gKAhqSGg/ZaU4c",
+    "bitwrench.umd.js": "sha384-M02DFr3+UOD6H+t9TU1dnXd6Z0q2iX+mAcq8bOxm0qx3mVIrOX8hUNZ/9qHQv8Q0",
+    "bitwrench.umd.min.js": "sha384-7fofprOS7Tb+lG2w0gGPojs39ouVhi3dD9THDyXMOqXsxbY+vpi1nPyKvxAxuZix"
   }
 }

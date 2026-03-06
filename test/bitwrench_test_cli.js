@@ -345,17 +345,20 @@ describe('CLI: utility functions', function () {
     });
 
     describe('THEME_PRESETS', function () {
-        it('should have ocean, sunset, forest, slate presets', function () {
-            assert.ok(THEME_PRESETS.ocean);
-            assert.ok(THEME_PRESETS.sunset);
-            assert.ok(THEME_PRESETS.forest);
-            assert.ok(THEME_PRESETS.slate);
+        it('should have all 12 built-in presets', function () {
+            const expected = ['teal', 'ocean', 'sunset', 'forest', 'slate', 'rose', 'indigo', 'amber', 'emerald', 'nord', 'coral', 'midnight'];
+            for (const name of expected) {
+                assert.ok(THEME_PRESETS[name], `missing preset: ${name}`);
+            }
+            assert.equal(Object.keys(THEME_PRESETS).length, 12);
         });
 
-        it('each preset should have primary and secondary', function () {
+        it('each preset should have primary, secondary, label, and desc', function () {
             for (const [name, preset] of Object.entries(THEME_PRESETS)) {
                 assert.ok(preset.primary, `${name} missing primary`);
                 assert.ok(preset.secondary, `${name} missing secondary`);
+                assert.ok(preset.label, `${name} missing label`);
+                assert.ok(preset.desc, `${name} missing desc`);
             }
         });
     });

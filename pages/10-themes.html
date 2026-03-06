@@ -67,8 +67,8 @@
     }
     .preset-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1.25rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
     }
     .preset-card {
       border: 2px solid var(--bw-card-border);
@@ -216,6 +216,18 @@
       </div>
     </div>
 
+    <!-- ====== Section 5: Dark Mode ====== -->
+    <div class="demo-section">
+      <h2>Dark Mode + Theme Interaction</h2>
+      <div class="demo-content">
+        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
+          <code>bw.toggleDarkMode()</code> derives dark colors from your <em>active palette</em>.
+          Generate a custom theme, then toggle dark mode &mdash; the dark variant uses your theme's hues, not generic grays.
+        </p>
+        <div id="dark-mode-demo"></div>
+      </div>
+    </div>
+
   </div><!-- /content-container -->
 
   <script>
@@ -238,37 +250,8 @@
       lastResult: null
     };
 
-    // Preset themes
-    var presets = {
-      ocean: {
-        label: 'Ocean',
-        desc: 'Cool blues and teals for a calm, professional look.',
-        primary: '#0077b6',
-        secondary: '#90e0ef',
-        tertiary: '#00b4d8'
-      },
-      sunset: {
-        label: 'Sunset',
-        desc: 'Warm oranges and deep earth tones for a bold feel.',
-        primary: '#e76f51',
-        secondary: '#264653',
-        tertiary: '#e9c46a'
-      },
-      forest: {
-        label: 'Forest',
-        desc: 'Natural greens and browns for an organic vibe.',
-        primary: '#2d6a4f',
-        secondary: '#95d5b2',
-        tertiary: '#52b788'
-      },
-      monochrome: {
-        label: 'Monochrome',
-        desc: 'Elegant grays for a minimal, modern interface.',
-        primary: '#343a40',
-        secondary: '#adb5bd',
-        tertiary: '#6c757d'
-      }
-    };
+    // Preset themes — read from bw.THEME_PRESETS (canonical source)
+    var presets = bw.THEME_PRESETS;
 
     // ---------------------------------------------------------------
     // Helpers
@@ -761,12 +744,55 @@
     }
 
     // ---------------------------------------------------------------
+    // Dark mode demo
+    // ---------------------------------------------------------------
+    function renderDarkModeDemo() {
+      var isDark = false;
+
+      function buildDarkDemo() {
+        return {
+          t: 'div', c: [
+            {
+              t: 'div',
+              a: { style: 'display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;' },
+              c: [
+                bw.makeButton({
+                  text: isDark ? 'Switch to Light' : 'Switch to Dark',
+                  variant: 'primary',
+                  onClick: function() {
+                    bw.toggleDarkMode();
+                    isDark = !isDark;
+                    bw.DOM('#dark-mode-demo', buildDarkDemo());
+                  }
+                }),
+                { t: 'span', a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary);' },
+                  c: isDark ? 'Dark mode ON — colors derived from active theme palette' : 'Light mode — click to toggle'
+                }
+              ]
+            },
+            {
+              t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 0.5rem;' },
+              c: [
+                { t: 'h4', c: 'How it works' },
+                { t: 'p', c: 'When you call bw.generateTheme(), the palette is stored internally. toggleDarkMode() then derives dark backgrounds, surface colors, and text from those palette hues — not hardcoded grays.' },
+                { t: 'pre', c: { t: 'code', c: '// Generate a theme first\nbw.generateTheme("ocean", { primary: "#0077b6", secondary: "#90e0ef" });\n// Dark mode uses ocean hues for backgrounds\nbw.toggleDarkMode();' } }
+              ]
+            }
+          ]
+        };
+      }
+
+      bw.DOM('#dark-mode-demo', buildDarkDemo());
+    }
+
+    // ---------------------------------------------------------------
     // Initialize everything
     // ---------------------------------------------------------------
     renderGenerator();
     renderGallery();
     renderMultiTheme();
     renderCodeExport();
+    renderDarkModeDemo();
   </script>
 </body>
 </html>

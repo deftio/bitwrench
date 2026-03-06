@@ -1,6 +1,8 @@
 /**
- * Shared navigation component for bitwrench examples
- * Includes hamburger menu for mobile/tablet breakpoints
+ * Shared navigation component for bitwrench docs site.
+ * Two-tier nav: primary bar (dark) + conditional secondary sub-nav.
+ * Sub-nav only appears when viewing an example page.
+ * Collapses to a single hamburger menu on mobile.
  *
  * @param {string} currentPage - filename of the current page for active highlighting
  * @param {string} [baseHref] - prefix for page links when loaded from a different directory
@@ -10,141 +12,218 @@
 (function() {
   'use strict';
 
-  const navItems = [
-    { text: 'Home', href: '../index.html' },
+  // Primary nav items (main dark bar)
+  var primaryItems = [
+    { text: 'Home', href: 'index.html' },
     { text: 'Quick Start', href: '00-quick-start.html' },
-    { text: 'Styling', href: '03-styling.html' },
     { text: 'Components', href: '01-components.html' },
-    { text: 'Tables & Data', href: '02-tables-forms.html' },
-    { text: 'State', href: '05-state.html' },
-    { text: 'Dashboard', href: '04-dashboard.html' },
+    { text: 'Styling', href: '03-styling.html' },
     { text: 'Themes', href: '10-themes.html' },
-    { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
-    { text: 'Comparison', href: '07-framework-comparison.html' },
+    { text: 'State', href: '05-state.html' },
+    { text: 'Examples', href: '02-tables-forms.html' },
     { text: 'API Reference', href: '08-api-reference.html' },
     { text: 'Builds', href: '09-builds.html' }
   ];
 
+  // Secondary nav items (sub-nav bar, shown only on example pages)
+  var secondaryItems = [
+    { text: 'Tables & Data', href: '02-tables-forms.html' },
+    { text: 'Dashboard', href: '04-dashboard.html' },
+    { text: 'Code Editor', href: '11-code-editor.html' },
+    { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
+    { text: 'Comparison', href: '07-framework-comparison.html' }
+  ];
+
+  // Set of secondary hrefs for quick lookup
+  var secondaryHrefs = {};
+  secondaryItems.forEach(function(item) { secondaryHrefs[item.href] = true; });
+
+  function resolveHref(href, baseHref) {
+    if (!baseHref) return href;
+    return href.startsWith('../') ? href.slice(3) : baseHref + href;
+  }
+
+  function isActive(itemHref, currentPage, resolvedHref) {
+    return itemHref === currentPage || resolvedHref === currentPage;
+  }
+
+  function isExamplePage(currentPage) {
+    for (var href in secondaryHrefs) {
+      if (currentPage === href) return true;
+    }
+    return false;
+  }
+
   function createExampleNav(currentPage, baseHref) {
-    const items = navItems.map(item => {
-      let href = item.href;
-      if (baseHref) {
-        // When loaded from a different directory (e.g. root), prefix paths:
-        // '00-quick-start.html' → 'pages/00-quick-start.html'
-        href = item.href.startsWith('../') ? item.href.slice(3) : baseHref + item.href;
+    var homeHref = resolveHref(primaryItems[0].href, baseHref);
+    var ver = window.bw && window.bw.version || '2.0.4';
+    var onExamplePage = isExamplePage(currentPage);
+
+    // Build primary link items
+    var primaryLinks = primaryItems.map(function(item) {
+      var rh = resolveHref(item.href, baseHref);
+      var active;
+      if (item.text === 'Examples') {
+        // "Examples" highlights when any secondary page is active
+        active = onExamplePage;
+      } else {
+        active = isActive(item.href, currentPage, rh);
       }
-      return { ...item, href: href, active: item.href === currentPage || href === currentPage };
+      return {
+        t: 'li',
+        c: {
+          t: 'a',
+          a: {
+            href: rh,
+            class: 'bw-site-nav-link' + (active ? ' active' : '')
+          },
+          c: item.text
+        }
+      };
     });
 
-    // Home link for brand (first navItem)
-    const homeHref = items[0].href;
+    // Build secondary link items
+    var secondaryLinks = secondaryItems.map(function(item) {
+      var rh = resolveHref(item.href, baseHref);
+      var active = isActive(item.href, currentPage, rh);
+      return {
+        t: 'a',
+        a: {
+          href: rh,
+          class: 'bw-site-subnav-link' + (active ? ' active' : '')
+        },
+        c: item.text
+      };
+    });
 
-    const ver = window.bw && window.bw.version || '2.0.3';
+    // Build mobile menu (all items, flat)
+    var allItems = primaryItems.concat(secondaryItems.filter(function(s) {
+      // Skip duplicates — "Examples" in primary already links to first secondary
+      return s.href !== primaryItems.filter(function(p) { return p.text === 'Examples'; })[0].href;
+    }));
+    var mobileLinks = allItems.map(function(item) {
+      var rh = resolveHref(item.href, baseHref);
+      var active = isActive(item.href, currentPage, rh);
+      return {
+        t: 'a',
+        a: {
+          href: rh,
+          class: active ? 'active' : ''
+        },
+        c: item.text
+      };
+    });
+
+    // Wrapper children: primary nav + mobile menu, conditionally + subnav
+    var wrapperChildren = [
+      // Primary nav (dark bar)
+      {
+        t: 'nav',
+        a: { class: 'bw-site-nav' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-site-nav-inner' },
+            c: [
+              // Left: logo + version
+              {
+                t: 'a',
+                a: {
+                  href: homeHref,
+                  class: 'bw-site-nav-brand'
+                },
+                c: [
+                  {
+                    t: 'img',
+                    a: {
+                      src: '/images/bitwrench-thick-logo.svg',
+                      alt: 'bitwrench',
+                      class: 'bw-site-nav-logo'
+                    }
+                  },
+                  {
+                    t: 'span',
+                    a: { class: 'bw-site-nav-ver' },
+                    c: 'v' + ver
+                  }
+                ]
+              },
+              // Center: primary links (desktop)
+              {
+                t: 'ul',
+                a: { class: 'bw-site-nav-links' },
+                c: primaryLinks
+              },
+              // Right: controls
+              {
+                t: 'div',
+                a: { class: 'bw-site-nav-controls' },
+                c: [
+                  {
+                    t: 'button',
+                    a: {
+                      class: 'bw-site-nav-toggle',
+                      title: 'Toggle dark mode',
+                      onclick: function() {
+                        var html = document.documentElement;
+                        var isDark = html.getAttribute('data-theme') === 'dark';
+                        html.setAttribute('data-theme', isDark ? '' : 'dark');
+                        this.textContent = isDark ? '\u263D' : '\u2600';
+                      }
+                    },
+                    c: '\u263D'
+                  },
+                  {
+                    t: 'button',
+                    a: {
+                      class: 'bw-site-nav-hamburger',
+                      title: 'Toggle menu',
+                      'aria-label': 'Toggle navigation menu',
+                      onclick: function() {
+                        var wrapper = this.closest('.bw-site-nav-wrapper');
+                        var mobile = wrapper && wrapper.querySelector('.bw-site-nav-mobile');
+                        if (mobile) {
+                          mobile.classList.toggle('open');
+                          this.textContent = mobile.classList.contains('open') ? '\u2715' : '\u2630';
+                        }
+                      }
+                    },
+                    c: '\u2630'
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // Only add sub-nav when on an example page
+    if (onExamplePage) {
+      wrapperChildren.push({
+        t: 'div',
+        a: { class: 'bw-site-subnav' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-site-subnav-inner' },
+            c: secondaryLinks
+          }
+        ]
+      });
+    }
+
+    // Mobile menu (always present, toggled by hamburger)
+    wrapperChildren.push({
+      t: 'div',
+      a: { class: 'bw-site-nav-mobile' },
+      c: mobileLinks
+    });
 
     return {
-      t: 'nav',
-      a: {
-        class: 'bw-site-nav',
-      },
-      c: [
-        {
-          t: 'div',
-          a: { class: 'bw-site-nav-inner' },
-          c: [
-            // Left: logo image + version
-            {
-              t: 'a',
-              a: {
-                href: homeHref,
-                class: 'bw-site-nav-brand'
-              },
-              c: [
-                {
-                  t: 'img',
-                  a: {
-                    src: '/images/bitwrench-thick-logo.svg',
-                    alt: 'bitwrench',
-                    class: 'bw-site-nav-logo'
-                  }
-                },
-                {
-                  t: 'span',
-                  a: { class: 'bw-site-nav-ver' },
-                  c: 'v' + ver
-                }
-              ]
-            },
-            // Center: nav links (desktop)
-            {
-              t: 'ul',
-              a: { class: 'bw-site-nav-links' },
-              c: items.map(item => ({
-                t: 'li',
-                c: {
-                  t: 'a',
-                  a: {
-                    href: item.href,
-                    class: 'bw-site-nav-link' + (item.active ? ' active' : '')
-                  },
-                  c: item.text
-                }
-              }))
-            },
-            // Right: controls group
-            {
-              t: 'div',
-              a: { class: 'bw-site-nav-controls' },
-              c: [
-                // Dark mode toggle
-                {
-                  t: 'button',
-                  a: {
-                    class: 'bw-site-nav-toggle',
-                    title: 'Toggle dark mode',
-                    onclick: function() {
-                      var html = document.documentElement;
-                      var isDark = html.getAttribute('data-theme') === 'dark';
-                      html.setAttribute('data-theme', isDark ? '' : 'dark');
-                      this.textContent = isDark ? '\u263D' : '\u2600';
-                    }
-                  },
-                  c: '\u263D'
-                },
-                // Hamburger button (visible on mobile/tablet)
-                {
-                  t: 'button',
-                  a: {
-                    class: 'bw-site-nav-hamburger',
-                    title: 'Toggle menu',
-                    'aria-label': 'Toggle navigation menu',
-                    onclick: function() {
-                      var mobile = this.closest('.bw-site-nav').querySelector('.bw-site-nav-mobile');
-                      if (mobile) {
-                        mobile.classList.toggle('open');
-                        this.textContent = mobile.classList.contains('open') ? '\u2715' : '\u2630';
-                      }
-                    }
-                  },
-                  c: '\u2630'
-                }
-              ]
-            }
-          ]
-        },
-        // Mobile menu (hidden by default, toggled by hamburger)
-        {
-          t: 'div',
-          a: { class: 'bw-site-nav-mobile' },
-          c: items.map(item => ({
-            t: 'a',
-            a: {
-              href: item.href,
-              class: item.active ? 'active' : ''
-            },
-            c: item.text
-          }))
-        }
-      ]
+      t: 'div',
+      a: { class: 'bw-site-nav-wrapper' },
+      c: wrapperChildren
     };
   }
 

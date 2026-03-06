@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- heading "Tables & Forms" [level=1]
+- paragraph: Interactive data tables, sortable columns, forms with validation, and pagination.
+- heading "Data In, Table Out" [level=2]
+- paragraph:
+  - text: Bitwrench treats tables as
+  - emphasis: data
+  - text: . Hand
+  - code: bw.makeTable()
+  - text: a JavaScript array and it returns a complete, sortable, styled table — no
+  - code: <table><tr><td>
+  - text: boilerplate required. You control columns, formatting, and sorting with plain objects.
+- paragraph: The table below was generated from a single function call. Scroll down to see how it was built, step by step.
+- heading "Showcase" [level=2]
+- paragraph: This table was generated from a JavaScript array with one function call. Click any column header to sort.
+- heading "Building Up — From Data to Table" [level=2]
+- paragraph: Let's rebuild that showcase table from scratch, adding one feature at a time.
+- 'heading "Step 1: Minimal Table" [level=3]'
+- paragraph: Pass an array of objects. Columns are auto-detected from the keys.
+- 'heading "Step 2: Custom Columns" [level=3]'
+- paragraph: Specify which fields to show, their order, and their labels.
+- 'heading "Step 3: Formatting with render" [level=3]':
+  - text: "Step 3: Formatting with"
+  - code: render
+- paragraph:
+  - text: Each column can have a
+  - code: render
+  - text: function that transforms cell values — add badges, format numbers, or return nested TACO objects.
+- 'heading "Step 4: Controlled Sorting" [level=3]'
+- paragraph:
+  - text: Sorting is on by default. Use
+  - code: onSort
+  - text: to control state externally and re-render.
+- 'heading "Step 5: Styling" [level=3]'
+- paragraph:
+  - text: Add CSS classes for stripes and hover. Use
+  - code: bw.css()
+  - text: +
+  - code: bw.injectCSS()
+  - text: to customise header colours or any other rule.
+- heading "How bw.makeTable() Works" [level=2]
+- paragraph: One function call produces a sortable, styled table. The helper returns a TACO object — you can inspect it, modify it, or compose it with other components.
+- strong: "Compare:"
+- text: The vanilla JS equivalent would require 20+ lines of
+- code: createElement
+- text: /
+- code: appendChild
+- text: calls. Here it is one function call that returns a data object.
+- heading "Interactive Sortable Table" [level=2]
+- heading "Form Components" [level=2]
+- heading "Tabbed Form Interface" [level=2]
+- heading "Table with Pagination" [level=2]
+```

@@ -8,9 +8,9 @@
  */
 
 import { VERSION_INFO } from './version.js';
-import { getAllStyles, theme, updateTheme, getDarkModeStyles, deepMerge,
+import { getAllStyles, getStructuralStyles, theme, updateTheme, getDarkModeStyles, generateDarkModeCSS, deepMerge,
          generateThemedCSS, derivePalette as _derivePalette,
-         DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS,
+         DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS, THEME_PRESETS,
          resolveLayout, addUnderscoreAliases } from './bitwrench-styles.js';
 import { hexToHsl, hslToHex, adjustLightness, mixColor,
          relativeLuminance, textOnColor, deriveShades,
@@ -1556,13 +1556,17 @@ if (bw._isBrowser) {
  */
 bw.loadDefaultStyles = function(options = {}) {
   const { minify = true, palette } = options;
-  if (palette) {
-    // Use generateTheme with empty scope for global default
-    const result = bw.generateTheme('', Object.assign({}, DEFAULT_PALETTE_CONFIG, palette, { inject: true }));
-    return result;
+
+  // 1. Inject structural CSS (layout, sizing — never changes with theme)
+  if (bw._isBrowser) {
+    var structuralCSS = bw.css(getStructuralStyles());
+    bw.injectCSS(structuralCSS, { id: 'bw-structural', append: false, minify: minify });
   }
-  const styles = getAllStyles();
-  return bw.injectCSS(styles, { ...options, minify });
+
+  // 2. Inject cosmetic CSS via generateTheme (colors, shadows, radii)
+  var paletteConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, palette || {});
+  var result = bw.generateTheme('', Object.assign({}, paletteConfig, { inject: true }));
+  return result;
 };
 
 /**
@@ -1636,16 +1640,24 @@ bw.toggleDarkMode = function(force) {
     const root = document.documentElement;
     if (isDark) {
       root.classList.add('bw-dark');
-      // Inject dark mode styles if not already present
-      if (!document.getElementById('bw-dark-styles')) {
-        const darkCSS = bw.css(getDarkModeStyles());
-        const styleEl = document.createElement('style');
-        styleEl.id = 'bw-dark-styles';
-        styleEl.textContent = darkCSS;
-        document.head.appendChild(styleEl);
-      }
+      // Generate palette-aware dark mode CSS, or fall back to default
+      var palette = bw._activePalette || derivePalette(DEFAULT_PALETTE_CONFIG);
+      var darkRules = generateDarkModeCSS(palette);
+      var darkCSS = bw.css(darkRules);
+
+      // Remove existing dark styles to allow regeneration
+      var existing = document.getElementById('bw-dark-styles');
+      if (existing) existing.remove();
+
+      var styleEl = document.createElement('style');
+      styleEl.id = 'bw-dark-styles';
+      styleEl.textContent = darkCSS;
+      document.head.appendChild(styleEl);
     } else {
       root.classList.remove('bw-dark');
+      // Remove dark mode styles when switching to light
+      var darkEl = document.getElementById('bw-dark-styles');
+      if (darkEl) darkEl.remove();
     }
   }
 
@@ -1710,6 +1722,9 @@ bw.generateTheme = function(name, config) {
   // Derive palette
   var palette = derivePalette(fullConfig);
 
+  // Store active palette for dark mode
+  bw._activePalette = palette;
+
   // Resolve layout
   var layout = resolveLayout(fullConfig);
 
@@ -1750,10 +1765,11 @@ bw.textOnColor = textOnColor;
 bw.deriveShades = deriveShades;
 bw.derivePalette = derivePalette;
 
-// Expose layout presets
+// Expose layout and theme presets
 bw.SPACING_PRESETS = SPACING_PRESETS;
 bw.RADIUS_PRESETS = RADIUS_PRESETS;
 bw.DEFAULT_PALETTE_CONFIG = DEFAULT_PALETTE_CONFIG;
+bw.THEME_PRESETS = THEME_PRESETS;
 
 // ===================================================================================
 // Legacy v1 Functions - Useful utilities retained from bitwrench v1

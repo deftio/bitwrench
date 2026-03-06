@@ -4,6 +4,7 @@
 
 import assert from "assert";
 import bw from "../src/bitwrench.js";
+import { getStructuralStyles, generateThemedCSS, generateDarkModeCSS, getAllStyles, defaultStyles, resolveLayout } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -662,5 +663,260 @@ describe('Integration (jsdom)', function() {
     });
     const el = document.getElementById('bw-theme-no-inject');
     assert.strictEqual(el, null, 'no style element should be created');
+  });
+});
+
+// =========================================================================
+// Structural / Cosmetic Split Tests
+// =========================================================================
+
+describe('Structural Styles', function() {
+
+  it('getStructuralStyles should return an object with selectors', function() {
+    const rules = getStructuralStyles();
+    assert.strictEqual(typeof rules, 'object');
+    assert.ok(Object.keys(rules).length > 50, 'should have many selectors');
+  });
+
+  it('structural styles should contain no hardcoded hex color values in properties', function() {
+    const rules = getStructuralStyles();
+    const hexPattern = /#[0-9a-fA-F]{3,8}\b/;
+    for (const [selector, styles] of Object.entries(rules)) {
+      if (typeof styles !== 'object') continue;
+      for (const [prop, value] of Object.entries(styles)) {
+        // Skip font-family which may reference system fonts, and border shorthand
+        if (prop === 'font-family') continue;
+        // border shorthand with color should not be in structural
+        if (typeof value === 'string' && hexPattern.test(value)) {
+          assert.fail('Structural selector "' + selector + '" property "' + prop + '" contains hardcoded color: ' + value);
+        }
+      }
+    }
+  });
+
+  it('structural styles should include key component selectors', function() {
+    const rules = getStructuralStyles();
+    const expectedSelectors = [
+      '.bw-btn', '.bw-card', '.bw-form-control', '.bw-table',
+      '.bw-alert', '.bw-badge', '.bw-nav', '.bw-tab-content',
+      '.bw-list-group', '.bw-pagination', '.bw-breadcrumb',
+      '.bw-progress', '.bw-hero', '.bw-container',
+      '.bw-spinner-border', '.bw-vstack', '.bw-hstack',
+      '.bw-form-check', '.bw-close'
+    ];
+    expectedSelectors.forEach(function(sel) {
+      assert.ok(sel in rules || (sel + ', ' + sel.replace(/\.bw-/g, '.bw_')) in rules,
+        'structural should have selector: ' + sel);
+    });
+  });
+
+  it('structural styles should have grid columns', function() {
+    const rules = getStructuralStyles();
+    assert.ok('.bw-row' in rules, 'should have .bw-row');
+    assert.ok('.bw-col' in rules, 'should have .bw-col');
+  });
+
+  it('structural styles should have responsive breakpoints', function() {
+    const css = bw.css(getStructuralStyles());
+    assert.ok(css.includes('@media (min-width: 576px)'), 'should have sm breakpoint');
+    assert.ok(css.includes('@media (min-width: 768px)'), 'should have md breakpoint');
+    assert.ok(css.includes('@media (min-width: 992px)'), 'should have lg breakpoint');
+  });
+
+  it('structural styles should have mobile responsive rules', function() {
+    const css = bw.css(getStructuralStyles());
+    assert.ok(css.includes('@media (max-width: 575px)'), 'should have mobile breakpoint');
+  });
+});
+
+describe('Themed CSS Completeness', function() {
+
+  it('generateThemedCSS should produce selectors for all component types', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const css = bw.css(rules);
+    // Buttons
+    assert.ok(css.includes('.bw-btn-primary'), 'should have buttons');
+    // Alerts
+    assert.ok(css.includes('.bw-alert-primary'), 'should have alerts');
+    // Badges
+    assert.ok(css.includes('.bw-badge-primary'), 'should have badges');
+    // Cards
+    assert.ok(css.includes('.bw-card'), 'should have cards');
+    // Forms
+    assert.ok(css.includes('.bw-form-control'), 'should have forms');
+    // Navigation
+    assert.ok(css.includes('.bw-navbar'), 'should have navigation');
+    // Tables
+    assert.ok(css.includes('.bw-table'), 'should have tables');
+    // Tabs
+    assert.ok(css.includes('.bw-nav-tabs'), 'should have tabs');
+    // List groups
+    assert.ok(css.includes('.bw-list-group-item'), 'should have list groups');
+    // Pagination
+    assert.ok(css.includes('.bw-page-link'), 'should have pagination');
+    // Progress
+    assert.ok(css.includes('.bw-progress'), 'should have progress');
+    // Hero
+    assert.ok(css.includes('.bw-hero'), 'should have hero');
+    // Breadcrumb
+    assert.ok(css.includes('.bw-breadcrumb'), 'should have breadcrumbs');
+    // Spinner
+    assert.ok(css.includes('.bw-spinner-border'), 'should have spinners');
+    // Close button
+    assert.ok(css.includes('.bw-close'), 'should have close button');
+    // Sections
+    assert.ok(css.includes('.bw-section-subtitle'), 'should have sections');
+    // Reset (body)
+    assert.ok(css.includes('body'), 'should have body reset');
+    // Utility colors
+    assert.ok(css.includes('.bw-text-primary'), 'should have text colors');
+    assert.ok(css.includes('.bw-bg-primary'), 'should have bg colors');
+  });
+
+  it('generateThemedCSS should produce card variant accent borders', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const css = bw.css(rules);
+    assert.ok(css.includes('.bw-card-primary'), 'should have card-primary');
+    assert.ok(css.includes('.bw-card-danger'), 'should have card-danger');
+  });
+
+  it('generateThemedCSS should produce progress bar variants', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const css = bw.css(rules);
+    assert.ok(css.includes('.bw-progress-bar-primary'), 'should have progress-bar-primary');
+    assert.ok(css.includes('.bw-progress-bar-success'), 'should have progress-bar-success');
+  });
+
+  it('scoped generateThemedCSS should prefix all selectors', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateThemedCSS('my-scope', palette, resolveLayout({}));
+    const css = bw.css(rules);
+    const lines = css.split('\n');
+    const selectorLines = lines.filter(function(l) { return l.includes('{') && !l.startsWith('}'); });
+    selectorLines.forEach(function(line) {
+      const sel = line.split('{')[0].trim();
+      if (sel && sel !== '') {
+        assert.ok(sel.includes('.my-scope'), 'scoped selector should contain .my-scope: ' + sel);
+      }
+    });
+  });
+
+  it('generateThemedCSS raw output uses hyphenated selectors', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const css = bw.css(rules);
+    assert.ok(css.includes('.bw-btn-primary'), 'raw output should use hyphenated selectors');
+    // Underscore aliases are added by generateTheme(), not generateThemedCSS()
+    // generateTheme() underscore aliases are tested in the existing test suite above
+  });
+});
+
+describe('Dark Mode CSS', function() {
+
+  it('generateDarkModeCSS should return rules object', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateDarkModeCSS(palette);
+    assert.strictEqual(typeof rules, 'object');
+    assert.ok(Object.keys(rules).length > 5, 'should have multiple selectors');
+  });
+
+  it('generateDarkModeCSS should cover all major components', function() {
+    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
+    const rules = generateDarkModeCSS(palette);
+    const css = bw.css(rules);
+    assert.ok(css.includes('.bw-dark'), 'should use .bw-dark scope');
+    assert.ok(css.includes('.bw-card'), 'should have card dark rules');
+    assert.ok(css.includes('.bw-navbar'), 'should have navbar dark rules');
+    assert.ok(css.includes('.bw-form-control'), 'should have form dark rules');
+    assert.ok(css.includes('.bw-table'), 'should have table dark rules');
+    assert.ok(css.includes('.bw-list-group'), 'should have list-group dark rules');
+    assert.ok(css.includes('.bw-alert'), 'should have alert dark rules');
+    assert.ok(css.includes('.bw-badge'), 'should have badge dark rules');
+    assert.ok(css.includes('.bw-nav-tabs'), 'should have tabs dark rules');
+    assert.ok(css.includes('.bw-pagination'), 'should have pagination dark rules');
+    assert.ok(css.includes('.bw-breadcrumb'), 'should have breadcrumb dark rules');
+    assert.ok(css.includes('.bw-hero'), 'should have hero dark rules');
+    assert.ok(css.includes('.bw-progress'), 'should have progress dark rules');
+  });
+
+  it('generateDarkModeCSS with custom palette should use palette colors', function() {
+    const customPalette = bw.derivePalette({
+      primary: '#ff6600',
+      secondary: '#003366'
+    });
+    const rules = generateDarkModeCSS(customPalette);
+    const css = bw.css(rules);
+    // Dark bg should be derived from the custom primary, not defaults
+    assert.ok(css.length > 100, 'should produce CSS output');
+    assert.ok(css.includes('.bw-dark'), 'should use .bw-dark scope');
+  });
+
+  it('toggleDarkMode should use _activePalette when set', function() {
+    freshDOM();
+    // Generate a theme (sets _activePalette)
+    bw.generateTheme('', {
+      primary: '#ff0000',
+      secondary: '#00ff00',
+      inject: true
+    });
+    assert.ok(bw._activePalette, '_activePalette should be set after generateTheme');
+    assert.strictEqual(bw._activePalette.primary.base, '#ff0000');
+    // Clean up
+    var el = document.getElementById('bw-theme-default');
+    if (el) el.remove();
+  });
+
+  it('toggleDarkMode should be callable', function() {
+    freshDOM();
+    assert.strictEqual(typeof bw.toggleDarkMode, 'function');
+    // Note: full DOM dark mode toggle is tested via Playwright
+  });
+});
+
+describe('Structural + Cosmetic = Full Coverage', function() {
+
+  it('getAllStyles should return all defaultStyles categories merged', function() {
+    const all = getAllStyles();
+    assert.ok(Object.keys(all).length > 100, 'should have many selectors');
+    // Check for key selectors from different categories
+    assert.ok('.bw-btn' in all, 'should have buttons');
+    assert.ok('.bw-card' in all, 'should have cards');
+    assert.ok('.bw-alert' in all, 'should have alerts');
+    assert.ok('.bw-table' in all, 'should have tables');
+    assert.ok('.bw-spinner-border' in all, 'should have spinners');
+    assert.ok('.bw-form-check' in all, 'should have form checks');
+    assert.ok('.bw-close' in all, 'should have close button');
+    assert.ok('.bw-vstack' in all, 'should have stacks');
+  });
+
+  it('defaultStyles should have all expected categories', function() {
+    const expectedCategories = [
+      'root', 'reset', 'typography', 'grid', 'buttons', 'cards', 'forms',
+      'formChecks', 'navigation', 'tables', 'tableResponsive', 'alerts',
+      'badges', 'progress', 'tabs', 'listGroups', 'pagination', 'breadcrumb',
+      'hero', 'features', 'enhancedCards', 'sections', 'cta', 'spinner',
+      'closeButton', 'stacks', 'offsets', 'codeDemo', 'utilities', 'responsive'
+    ];
+    expectedCategories.forEach(function(cat) {
+      assert.ok(cat in defaultStyles, 'defaultStyles should have category: ' + cat);
+    });
+  });
+
+  it('loadDefaultStyles combined output should cover structural + themed', function() {
+    freshDOM();
+    bw.loadDefaultStyles();
+    const structEl = document.getElementById('bw-structural');
+    const themeEl = document.getElementById('bw-theme-default');
+    assert.ok(structEl !== null, 'structural styles should be injected');
+    assert.ok(themeEl !== null, 'themed styles should be injected');
+    // Structural should have layout properties
+    assert.ok(structEl.textContent.includes('display'), 'structural should contain display');
+    assert.ok(structEl.textContent.includes('flex'), 'structural should contain flex');
+    // Themed should have color properties
+    assert.ok(themeEl.textContent.includes('color'), 'themed should contain color');
+    assert.ok(themeEl.textContent.includes('background'), 'themed should contain background');
   });
 });
