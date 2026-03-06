@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master, bw_v2_design]
+    branches: [main]
   pull_request:
-    branches: [master, bw_v2_design]
+    branches: [main]
 
 jobs:
   build-and-test:
@@ -46,7 +46,7 @@ jobs:
   tag-version:
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     permissions:
       contents: write
