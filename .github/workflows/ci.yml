@@ -43,30 +43,16 @@ jobs:
           path: coverage/
           retention-days: 14
 
-  release-and-publish:
+  tag-version:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     permissions:
       contents: write
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
 
       - name: Get version
         id: version
@@ -81,31 +67,8 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create tag and release
+      - name: Push version tag
         if: steps.check_tag.outputs.exists == 'false'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          git tag "$VERSION"
-          git push origin "$VERSION"
-
-          gh release create "$VERSION" \
-            --title "bitwrench $VERSION" \
-            --generate-notes \
-            dist/*.js dist/*.js.map dist/*.css
-
-      - name: Check if already on npm
-        id: check_npm
-        run: |
-          PKG_VERSION="$(node -p 'require("./package.json").version')"
-          if npm view "bitwrench@$PKG_VERSION" version 2>/dev/null; then
-            echo "published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish to npm
-        if: steps.check_npm.outputs.published == 'false'
-        run: npm publish --provenance --access public
+          git tag "${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.version.outputs.version }}"

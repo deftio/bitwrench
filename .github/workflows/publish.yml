@@ -1,6 +1,8 @@
-name: Publish to npm (manual)
+name: Publish to npm
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
@@ -8,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -33,13 +35,27 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Verify not already published
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          gh release create "$TAG" \
+            --title "bitwrench $TAG" \
+            --generate-notes \
+            dist/*.js dist/*.js.map dist/*.css
+
+      - name: Check if already on npm
+        id: check_npm
         run: |
           PKG_VERSION="$(node -p 'require("./package.json").version')"
           if npm view "bitwrench@$PKG_VERSION" version 2>/dev/null; then
-            echo "::error::v$PKG_VERSION is already published to npm"
-            exit 1
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish to npm
+        if: steps.check_npm.outputs.published == 'false'
         run: npm publish --provenance --access public
