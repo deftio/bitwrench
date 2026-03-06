@@ -2,26 +2,30 @@
     "env": {
         "browser": true,
         "node": true,
-        "amd" : true
+        "amd": true,
+        "es6": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 2020,
+        "sourceType": "module"
     },
     "extends": "eslint:recommended",
     "rules": {
-        //"indent": [
-        //    "error",
-        //    "tab"
-        //],
         "linebreak-style": [
             "error",
             "unix"
-        ],
-        "quotes": [
-            "error",
-            "double"
         ],
         "semi": [
             "error",
             "always"
         ],
-        "allowEmptyCatch": true
+        "no-empty": [
+            "error",
+            { "allowEmptyCatch": true }
+        ],
+        "no-unused-vars": [
+            "warn",
+            { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
+        ]
     }
 }

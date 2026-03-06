@@ -136,7 +136,7 @@
                   {
                     t: 'img',
                     a: {
-                      src: '/images/bitwrench-thick-logo.svg',
+                      src: '../images/bitwrench-thick-logo.svg',
                       alt: 'bitwrench',
                       class: 'bw-site-nav-logo'
                     }

@@ -8,7 +8,7 @@
  */
 
 import { VERSION_INFO } from './version.js';
-import { getAllStyles, getStructuralStyles, theme, updateTheme, getDarkModeStyles, generateDarkModeCSS, deepMerge,
+import { getStructuralStyles, theme, updateTheme, generateDarkModeCSS,
          generateThemedCSS, derivePalette as _derivePalette,
          DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS, THEME_PRESETS,
          resolveLayout, addUnderscoreAliases } from './bitwrench-styles.js';
@@ -300,7 +300,7 @@ bw.escapeHTML = function(str) {
     '/': '&#x2F;'
   };
   
-  return str.replace(/[&<>"'\/]/g, (char) => escapeMap[char]);
+  return str.replace(/[&<>"'/]/g, (char) => escapeMap[char]);
 };
 
 /**
@@ -379,7 +379,7 @@ bw.html = function(taco, options = {}) {
     if (key === 'style' && typeof value === 'object') {
       // Convert style object to string
       const styleStr = Object.entries(value)
-        .filter(([_, v]) => v != null)
+        .filter(([, v]) => v != null)
         .map(([k, v]) => `${k}:${v}`)
         .join(';');
       if (styleStr) {
@@ -407,8 +407,7 @@ bw.html = function(taco, options = {}) {
   // Add bw-id as a class if lifecycle hooks present
   if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw-id-')) {
     const id = opts.bw_id || bw.uuid();
-    const existingClass = attrs.class || '';
-    attrStr = attrStr.replace(/class="([^"]*)"/, (match, classes) => {
+    attrStr = attrStr.replace(/class="([^"]*)"/, (_match, classes) => {
       return `class="${classes} bw-id-${id}"`.trim();
     });
     if (!attrStr.includes('class=')) {
@@ -778,7 +777,7 @@ bw.renderComponent = function(taco, options = {}) {
      * @param {*} newValue - New property value
      * @param {*} oldValue - Previous property value
      */
-    onPropChange(key, newValue, oldValue) {
+    onPropChange(_key, _newValue, _oldValue) {
       // Auto re-render on prop change by default
       this.render();
     },
@@ -999,7 +998,7 @@ bw.patch = function(id, content, attr) {
 bw.patchAll = function(patches) {
   var results = {};
   for (var id in patches) {
-    if (patches.hasOwnProperty(id)) {
+    if (Object.prototype.hasOwnProperty.call(patches, id)) {
       results[id] = bw.patch(id, patches[id]);
     }
   }
@@ -1211,7 +1210,7 @@ bw.css = function(rules, options = {}) {
           return;
         }
         const declarations = Object.entries(styles)
-          .filter(([_, value]) => value != null)
+          .filter(([, value]) => value != null)
           .map(([prop, value]) => {
             // Convert camelCase to kebab-case
             const kebabProp = prop.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
@@ -2367,8 +2366,6 @@ bw.loremIpsum = function(numChars, startSpot, startWithCapitalLetter = true) {
   
   // Track how many characters we skip to honor numChars
   let skippedChars = 0;
-  const originalStartSpot = startSpot;
-  
   // Move startSpot to the next non-whitespace and non-punctuation character
   while (lorem[startSpot] === ' ' || /[.,:;!?]/.test(lorem[startSpot])) {
     startSpot = (startSpot + 1) % lorem.length;
@@ -3126,7 +3123,6 @@ bw.render = function(element, position, taco) {
       if (!this._mounted || !this.element) return this;
       
       const parent = this.element.parentNode;
-      const nextSibling = this.element.nextSibling;
       
       // Update TACO with current state
       if (this._taco.o) {
