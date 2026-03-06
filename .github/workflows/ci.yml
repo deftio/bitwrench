@@ -92,4 +92,4 @@ jobs:
           gh release create "$VERSION" \
             --title "bitwrench $VERSION" \
             --generate-notes \
-            dist/*.js dist/*.js.map dist/*.css dist/*.css.map
+            dist/*.js dist/*.js.map dist/*.css
