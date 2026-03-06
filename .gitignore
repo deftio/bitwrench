@@ -1,5 +1,6 @@
 # testing
 .nyc_output
+test-results/
 *~
 *.log
 *.tgz
