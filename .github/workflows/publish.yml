@@ -1,13 +1,19 @@
 name: Publish to npm
 
 on:
-  push:
-    tags: ['v*']
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
 
     permissions:
       contents: write
@@ -29,25 +35,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
       - name: Build
         run: npm run build
 
       - name: Test
         run: npm test
-
-      - name: Create GitHub Release
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ github.ref_name }}"
-          gh release create "$TAG" \
-            --title "bitwrench $TAG" \
-            --generate-notes \
-            dist/*.js dist/*.js.map dist/*.css
 
       - name: Check if already on npm
         id: check_npm
@@ -57,6 +49,23 @@ jobs:
             echo "published=true" >> "$GITHUB_OUTPUT"
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag and GitHub Release
+        if: steps.check_npm.outputs.published == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="v$(node -p 'require("./package.json").version')"
+          if ! git ls-remote --tags origin "$VERSION" | grep -q .; then
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi
+          if ! gh release view "$VERSION" > /dev/null 2>&1; then
+            gh release create "$VERSION" \
+              --title "bitwrench $VERSION" \
+              --generate-notes \
+              dist/*.js dist/*.js.map dist/*.css
           fi
 
       - name: Publish to npm

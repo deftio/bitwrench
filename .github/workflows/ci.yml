@@ -42,33 +42,3 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 14
-
-  tag-version:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Get version
-        id: version
-        run: echo "version=v$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
-
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          if git ls-remote --tags origin "${{ steps.version.outputs.version }}" | grep -q .; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Push version tag
-        if: steps.check_tag.outputs.exists == 'false'
-        run: |
-          git tag "${{ steps.version.outputs.version }}"
-          git push origin "${{ steps.version.outputs.version }}"
