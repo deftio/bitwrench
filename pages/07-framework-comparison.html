@@ -10,252 +10,348 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
-  <style>
-    /* Page-specific styles */
-    .intro-text {
-      font-size: 0.9375rem;
-      line-height: 1.7;
-      color: var(--bw-text);
-      margin: 0 0 1rem;
-      max-width: 720px;
-    }
-    .intro-text:last-child { margin-bottom: 0; }
-    .preview-box {
-      background: var(--bw-card-bg);
-      border: 2px solid var(--bw-teal);
-      border-radius: var(--bw-radius);
-      padding: var(--bw-space-lg);
-      margin-bottom: 1.25rem;
-    }
-    .preview-label {
-      font-size: 0.6875rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--bw-teal);
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-    }
-    .cmp-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0;
-      font-size: 0.875rem;
-    }
-    .cmp-table th, .cmp-table td {
-      padding: 0.65rem 1rem;
-      text-align: left;
-      border-bottom: 1px solid var(--bw-card-border);
-    }
-    .cmp-table th {
-      background: var(--bw-teal-bg);
-      font-weight: 600;
-      color: var(--bw-text-secondary);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .cmp-table tr:hover { background: var(--bw-teal-bg); }
-    .todo-input-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-    .todo-input-row input {
-      flex: 1;
-      padding: 0.4rem 0.75rem;
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      font-size: 0.875rem;
-    }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid var(--bw-card-border);
-      font-size: 0.875rem;
-    }
-    .todo-item:last-child { border-bottom: none; }
-    .todo-item.done span { text-decoration: line-through; color: var(--bw-text-secondary); }
-    .todo-item span { flex: 1; }
-    .theme-card {
-      padding: 1.25rem;
-      border-radius: var(--bw-radius);
-      border: 1px solid var(--bw-card-border);
-      transition: all 0.3s;
-    }
-    .theme-card h4 { margin: 0 0 0.35rem; }
-    .theme-card p { margin: 0; font-size: 0.875rem; opacity: 0.85; }
-    .theme-btns { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-
-    /* Scrollable tabs for 7-framework comparisons on narrow viewports */
-    .demo-section-body .bw-nav-tabs {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .demo-section-body .bw-nav-tabs::-webkit-scrollbar { display: none; }
-    .demo-section-body .bw-nav-tabs .bw-nav-link { white-space: nowrap; }
-  </style>
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Framework Comparison</h1>
-      <p class="subtitle">Map your domain knowledge from React, Vue, Svelte, Bootstrap, SolidJS, and other frameworks to bitwrench patterns.</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-
-    <!-- Intro -->
-    <div class="demo-section">
-      <h2>About This Page</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          If you already know React, Vue, Svelte, Bootstrap, SolidJS, or vanilla JavaScript, this page shows how
-          the same tasks are expressed in bitwrench. Use it as a translation guide to map
-          familiar patterns to bitwrench's TACO-based approach.
-        </p>
-      </div>
-    </div>
-
-    <!-- Comparison 1: Table from data -->
-    <div class="demo-section">
-      <h2>Comparison 1: Table from Data</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Given an array of objects, render a styled table. In bitwrench, <code>bw.makeTable()</code>
-          takes a data array and column definitions and returns a TACO object with built-in sorting, striping, and hover.
-        </p>
-        <div id="table-preview"></div>
-        <div id="table-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Comparison 2: Dynamic theming -->
-    <div class="demo-section">
-      <h2>Comparison 2: Dynamic Theming</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Generate and apply a complete color theme at runtime. Using bitwrench's
-          <code>bw.css()</code> and <code>bw.injectCSS()</code> allows themes to be modified at
-          runtime without a build step. For more on themes see <a href="10-themes.html">Themes</a>
-          and on styles see <a href="03-styling.html">Styling</a>.
-        </p>
-        <div id="theme-preview"></div>
-        <div id="theme-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Comparison 3: Data-driven list -->
-    <div class="demo-section">
-      <h2>Comparison 3: Rendering a List from Data</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Given this data: three users with names and roles. Render a styled list where each
-          item shows the name and a badge for the role. All code below produces this output:
-        </p>
-        <div id="list-preview"></div>
-        <div id="list-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Comparison 4: Counter -->
-    <div class="demo-section">
-      <h2>Comparison 4: Counter with Controls</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          A counter with increment, decrement, and reset buttons. The simplest interactive
-          component — a good baseline for comparing each framework's approach to state and
-          event handling.
-        </p>
-        <div id="counter-preview"></div>
-        <div id="counter-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Comparison 5: Cross-Component Coordination -->
-    <div class="demo-section">
-      <h2>Comparison 5: Cross-Component Coordination</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Three independent counters share a global summary panel that auto-updates when
-          any counter changes. This shows how each framework handles cross-component
-          communication — the core challenge of any real application.
-        </p>
-        <div id="cross-preview"></div>
-        <div id="cross-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Comparison 6: Todo -->
-    <div class="demo-section">
-      <h2>Comparison 6: State Management (Todo List)</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          A realistic component: a todo list where you can add items and mark them done.
-          Bitwrench uses manual re-rendering rather than automatic reactivity, trading
-          convenience for transparency and control.
-        </p>
-        <div id="todo-preview"></div>
-        <div id="todo-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Dynamic styling (was 3 — removed from numbered list, still present) -->
-    <div class="demo-section">
-      <h2>Bonus: Dynamic Styling</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          A box that toggles between two color states when a button is clicked. Each framework
-          changes background and text color on the same element. Try the preview:
-        </p>
-        <div id="style-preview"></div>
-        <div id="style-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Summary table -->
-    <div class="demo-section">
-      <h2>Feature Comparison</h2>
-      <div class="demo-section-body">
-        <div id="summary-table"></div>
-      </div>
-    </div>
-
-    <!-- Common concerns demonstrated -->
-    <div class="demo-section">
-      <h2>Common Concerns, Demonstrated</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Developers coming from other frameworks often ask how bitwrench handles these topics.
-          Rather than make claims, here are code examples showing the bitwrench approach.
-        </p>
-        <div id="honest-summary"></div>
-      </div>
-    </div>
-
-    <!-- Example use cases -->
-    <div class="demo-section">
-      <h2>Example Use Cases</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Bitwrench is used in a range of contexts. Here are some examples.
-        </p>
-        <div id="use-cases"></div>
-      </div>
-    </div>
-
-  </div>
+  <div id="app"></div>
 
   <script>
     mountExampleNav('#example-nav', '07-framework-comparison.html');
 
-    // ---- Reusable helpers ----
+    // =========================================================================
+    // Page-specific CSS via bw.css() + bw.injectCSS()
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.intro-text': {
+        'font-size': '0.9375rem',
+        'line-height': '1.7',
+        'color': 'var(--bw-text)',
+        'margin': '0 0 1rem',
+        'max-width': '720px'
+      },
+      '.intro-text:last-child': {
+        'margin-bottom': '0'
+      },
+      '.preview-box': {
+        'background': 'var(--bw-card-bg)',
+        'border': '2px solid var(--bw-teal)',
+        'border-radius': 'var(--bw-radius)',
+        'padding': 'var(--bw-space-lg)',
+        'margin-bottom': '1.25rem'
+      },
+      '.preview-label': {
+        'font-size': '0.6875rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.06em',
+        'color': 'var(--bw-teal)',
+        'font-weight': '700',
+        'margin-bottom': '0.75rem'
+      },
+      '.cmp-table': {
+        'width': '100%',
+        'border-collapse': 'collapse',
+        'margin': '1rem 0',
+        'font-size': '0.875rem'
+      },
+      '.cmp-table th, .cmp-table td': {
+        'padding': '0.65rem 1rem',
+        'text-align': 'left',
+        'border-bottom': '1px solid var(--bw-card-border)'
+      },
+      '.cmp-table th': {
+        'background': 'var(--bw-teal-bg)',
+        'font-weight': '600',
+        'color': 'var(--bw-text-secondary)',
+        'font-size': '0.75rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.04em'
+      },
+      '.cmp-table tr:hover': {
+        'background': 'var(--bw-teal-bg)'
+      },
+      '.todo-input-row': {
+        'display': 'flex',
+        'gap': '0.5rem',
+        'margin-bottom': '0.75rem'
+      },
+      '.todo-input-row input': {
+        'flex': '1',
+        'padding': '0.4rem 0.75rem',
+        'border': '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'font-size': '0.875rem'
+      },
+      '.todo-item': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.5rem',
+        'padding': '0.5rem 0',
+        'border-bottom': '1px solid var(--bw-card-border)',
+        'font-size': '0.875rem'
+      },
+      '.todo-item:last-child': {
+        'border-bottom': 'none'
+      },
+      '.todo-item.done span': {
+        'text-decoration': 'line-through',
+        'color': 'var(--bw-text-secondary)'
+      },
+      '.todo-item span': {
+        'flex': '1'
+      },
+      '.theme-card': {
+        'padding': '1.25rem',
+        'border-radius': 'var(--bw-radius)',
+        'border': '1px solid var(--bw-card-border)',
+        'transition': 'all 0.3s'
+      },
+      '.theme-card h4': {
+        'margin': '0 0 0.35rem'
+      },
+      '.theme-card p': {
+        'margin': '0',
+        'font-size': '0.875rem',
+        'opacity': '0.85'
+      },
+      '.theme-btns': {
+        'display': 'flex',
+        'gap': '0.5rem',
+        'margin-bottom': '1rem'
+      },
+      '.demo-section-body .bw-nav-tabs': {
+        'flex-wrap': 'nowrap',
+        'overflow-x': 'auto',
+        '-webkit-overflow-scrolling': 'touch',
+        'scrollbar-width': 'none'
+      },
+      '.demo-section-body .bw-nav-tabs::-webkit-scrollbar': {
+        'display': 'none'
+      },
+      '.demo-section-body .bw-nav-tabs .bw-nav-link': {
+        'white-space': 'nowrap'
+      }
+    }));
+
+    // =========================================================================
+    // Build page structure as TACO objects
+    // =========================================================================
+
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', c: 'Framework Comparison' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Map your domain knowledge from React, Vue, Svelte, Bootstrap, SolidJS, and other frameworks to bitwrench patterns.' }
+        ]
+      }
+    };
+
+    // -- Intro section --
+    var introSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'About This Page' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('If you already know React, Vue, Svelte, Bootstrap, SolidJS, or vanilla JavaScript, this page shows how the same tasks are expressed in bitwrench. Use it as a translation guide to map familiar patterns to bitwrench\'s TACO-based approach.') }
+        }
+      ]
+    };
+
+    // -- Comparison 1: Table from data --
+    var tableSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Comparison 1: Table from Data' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: [
+                'Given an array of objects, render a styled table. In bitwrench, ',
+                { t: 'code', c: 'bw.makeTable()' },
+                ' takes a data array and column definitions and returns a TACO object with built-in sorting, striping, and hover.'
+              ] },
+            { t: 'div', a: { id: 'table-preview' } },
+            { t: 'div', a: { id: 'table-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Comparison 2: Dynamic theming --
+    var themeSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Comparison 2: Dynamic Theming' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: [
+                'Generate and apply a complete color theme at runtime. Using bitwrench\'s ',
+                { t: 'code', c: 'bw.css()' },
+                ' and ',
+                { t: 'code', c: 'bw.injectCSS()' },
+                ' allows themes to be modified at runtime without a build step. For more on themes see ',
+                { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' },
+                ' and on styles see ',
+                { t: 'a', a: { href: '03-styling.html' }, c: 'Styling' },
+                '.'
+              ] },
+            { t: 'div', a: { id: 'theme-preview' } },
+            { t: 'div', a: { id: 'theme-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Comparison 3: Data-driven list --
+    var listSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Comparison 3: Rendering a List from Data' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: 'Given this data: three users with names and roles. Render a styled list where each item shows the name and a badge for the role. All code below produces this output:' },
+            { t: 'div', a: { id: 'list-preview' } },
+            { t: 'div', a: { id: 'list-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Comparison 4: Counter --
+    var counterSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Comparison 4: Counter with Controls' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: bw.raw('A counter with increment, decrement, and reset buttons. The simplest interactive component &mdash; a good baseline for comparing each framework\'s approach to state and event handling.') },
+            { t: 'div', a: { id: 'counter-preview' } },
+            { t: 'div', a: { id: 'counter-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Comparison 5: Cross-Component Coordination --
+    var crossSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Comparison 5: Cross-Component Coordination' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: bw.raw('Three independent counters share a global summary panel that auto-updates when any counter changes. This shows how each framework handles cross-component communication &mdash; the core challenge of any real application.') },
+            { t: 'div', a: { id: 'cross-preview' } },
+            { t: 'div', a: { id: 'cross-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Comparison 6: Todo --
+    var todoSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Comparison 6: State Management (Todo List)' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: 'A realistic component: a todo list where you can add items and mark them done. Bitwrench uses manual re-rendering rather than automatic reactivity, trading convenience for transparency and control.' },
+            { t: 'div', a: { id: 'todo-preview' } },
+            { t: 'div', a: { id: 'todo-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Bonus: Dynamic styling --
+    var styleSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Bonus: Dynamic Styling' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: 'A box that toggles between two color states when a button is clicked. Each framework changes background and text color on the same element. Try the preview:' },
+            { t: 'div', a: { id: 'style-preview' } },
+            { t: 'div', a: { id: 'style-comparison' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Summary table --
+    var summarySection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Feature Comparison' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: { t: 'div', a: { id: 'summary-table' } }
+        }
+      ]
+    };
+
+    // -- Common concerns --
+    var concernsSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Common Concerns, Demonstrated' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: 'Developers coming from other frameworks often ask how bitwrench handles these topics. Rather than make claims, here are code examples showing the bitwrench approach.' },
+            { t: 'div', a: { id: 'honest-summary' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Example use cases --
+    var useCasesSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Example Use Cases' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: 'Bitwrench is used in a range of contexts. Here are some examples.' },
+            { t: 'div', a: { id: 'use-cases' } }
+          ]
+        }
+      ]
+    };
+
+    // -- Content wrapper --
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [
+        introSection,
+        tableSection,
+        themeSection,
+        listSection,
+        counterSection,
+        crossSection,
+        todoSection,
+        styleSection,
+        summarySection,
+        concernsSection,
+        useCasesSection
+      ]
+    };
+
+    // =========================================================================
+    // Mount page structure
+    // =========================================================================
+    bw.DOM('#app', [pageHeader, contentWrapper]);
+
+    // =========================================================================
+    // Reusable helpers
+    // =========================================================================
 
     // Preview label
     var previewLabel = { t: 'div', a: { class: 'preview-label' }, c: 'What we\'re building (live)' };
@@ -2276,7 +2372,7 @@
       var demos = [
         {
           title: 'Architecture Enforcement',
-          desc: 'TACO objects are plain data — validate them with functions, lint rules, or schemas. Here\'s a simple validator that restricts allowed tags:',
+          desc: bw.raw('TACO objects are plain data &mdash; validate them with functions, lint rules, or schemas. Here\'s a simple validator that restricts allowed tags:'),
           code: [
             '// TACO objects are data — validate with plain functions',
             'function validatePage(taco) {',
@@ -2298,7 +2394,7 @@
         },
         {
           title: 'TypeScript',
-          desc: 'TACO objects are plain interfaces — TypeScript works natively with no special tooling:',
+          desc: bw.raw('TACO objects are plain interfaces &mdash; TypeScript works natively with no special tooling:'),
           code: [
             '// TACO objects are already TypeScript-friendly',
             'interface Taco {',
@@ -2325,13 +2421,13 @@
           ].join('\n')
         },
         {
-          title: 'State &amp; Reactivity',
-          desc: 'bitwrench uses explicit updates. Here\'s the same counter in React and bitwrench — same outcome, different mechanism:',
+          title: bw.raw('State &amp; Reactivity'),
+          desc: bw.raw('bitwrench uses explicit updates. Here\'s the same counter in React and bitwrench &mdash; same outcome, different mechanism:'),
           code: null  // will use codeComparison tabs
         },
         {
           title: 'Static Site Generation',
-          desc: 'Use bw.html() in Node.js to emit complete HTML pages from data — no template engine needed:',
+          desc: bw.raw('Use bw.html() in Node.js to emit complete HTML pages from data &mdash; no template engine needed:'),
           code: [
             '// generate-page.js — run with: node generate-page.js',
             'var bw = require("bitwrench");',
@@ -2446,7 +2542,7 @@
         { feature: 'CSS generation',   htmljs: 'Manual / SASS',    react: 'CSS-in-JS / styled', vue: 'Scoped <style>', svelte: 'Scoped <style>', bootstrap: 'Utility classes',   solidjs: 'CSS-in-JS / styled',  bitwrench: 'bw.css() from JS objects' },
         { feature: 'Data to UI',        htmljs: 'Manual DOM ops',   react: '.map() in JSX',     vue: 'v-for directive', svelte: '{#each} block',  bootstrap: 'Manual DOM ops',    solidjs: '<For> component',     bitwrench: '.map() in objects' },
         { feature: 'Bundle size',       htmljs: '0 KB',             react: '~40 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bootstrap: '~25 KB CSS',       solidjs: '~7 KB',               bitwrench: '~20 KB' },
-        { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bootstrap: 'No',                solidjs: 'No',                  bitwrench: 'Yes — any language' }
+        { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bootstrap: 'No',                solidjs: 'No',                  bitwrench: bw.raw('Yes &mdash; any language') }
       ];
 
       var headers = ['', 'HTML/JS', 'React', 'Vue', 'Svelte', 'Bootstrap', 'SolidJS', 'Bitwrench'];
@@ -2487,8 +2583,8 @@
         { title: 'Embedded & IoT',      desc: 'ESP32, Raspberry Pi, and similar devices can serve bitwrench objects as JSON. The device generates data; the browser renders the UI. No templating engine needed on the device.' },
         { title: 'Prototyping',          desc: 'No project setup, no npm install, no configuration files. Include one script tag and start building. When the prototype matures, you can always migrate.' },
         { title: 'Polyglot Backends',    desc: 'Any server that can produce JSON can generate bitwrench UIs. A Python Flask app, a Go HTTP server, a Rust CLI tool — they all emit JSON, and bitwrench renders it.' },
-        { title: 'Single-File Tools',    desc: 'Dashboards, admin panels, configuration UIs, documentation pages — anything where a single HTML file is the right delivery format.' },
-        { title: 'Learning & Teaching',  desc: 'The entire bitwrench model fits in your head: objects describe elements, functions transform data into objects, bw.DOM() renders them. No concepts to unlearn.' },
+        { title: 'Single-File Tools',    desc: bw.raw('Dashboards, admin panels, configuration UIs, documentation pages &mdash; anything where a single HTML file is the right delivery format.') },
+        { title: 'Learning & Teaching',  desc: bw.raw('The entire bitwrench model fits in your head: objects describe elements, functions transform data into objects, bw.DOM() renders them. No concepts to unlearn.') },
         { title: 'Server-Rendered UIs',  desc: 'Generate UI definitions on the server, send as JSON, render on the client. Update specific parts by sending partial JSON. No server-side JavaScript required.' }
       ];
 

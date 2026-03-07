@@ -12,7 +12,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-07T18:25:14.462Z'
+  buildDate: '2026-03-07T22:06:15.575Z'
 };
 
 /**
@@ -4928,7 +4928,7 @@ function makeCarousel(props = {}) {
           goToSlide(carousel, idx - 1);
         }
       },
-      c: { t: 'img', a: { src: prevArrow, alt: '' } }
+      c: { t: 'img', a: { src: prevArrow, alt: '', role: 'presentation' } }
     });
     children.push({
       t: 'button',
@@ -4942,7 +4942,7 @@ function makeCarousel(props = {}) {
           goToSlide(carousel, idx + 1);
         }
       },
-      c: { t: 'img', a: { src: nextArrow, alt: '' } }
+      c: { t: 'img', a: { src: nextArrow, alt: '', role: 'presentation' } }
     });
   }
 
@@ -5473,6 +5473,26 @@ bw.escapeHTML = function(str) {
 };
 
 /**
+ * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM().
+ *
+ * By default, bitwrench escapes all text content to prevent XSS. Use bw.raw()
+ * when you need to embed pre-sanitized HTML, entities, or inline markup.
+ *
+ * @param {string} str - HTML string to mark as raw
+ * @returns {Object} Marked object recognized by bw.html() and bw.createDOM()
+ * @category DOM Generation
+ * @see bw.escapeHTML
+ * @see bw.html
+ * @example
+ * bw.raw('Hello &mdash; World')
+ * // Used in TACO content:
+ * { t: 'p', c: bw.raw('Price: <strong>$9.99</strong>') }
+ */
+bw.raw = function(str) {
+  return { __bw_raw: true, v: String(str) };
+};
+
+/**
  * Normalize CSS class names by converting underscores to hyphens for bw-prefixed classes.
  *
  * Allows users to write either `bw_card` or `bw-card` and get consistent
@@ -5523,6 +5543,11 @@ bw.html = function(taco, options = {}) {
     return taco.map(t => bw.html(t, options)).join('');
   }
   
+  // Handle bw.raw() marked content
+  if (taco && taco.__bw_raw) {
+    return taco.v;
+  }
+
   // Handle primitives and non-TACO objects
   if (typeof taco !== 'object' || !taco.t) {
     return options.raw ? String(taco) : bw.escapeHTML(String(taco));
@@ -5623,12 +5648,21 @@ bw.createDOM = function(taco, options = {}) {
   
   // Handle null/undefined
   if (taco == null) return document.createTextNode('');
-  
+
+  // Handle bw.raw() marked content — inject as HTML
+  if (taco && taco.__bw_raw) {
+    var frag = document.createDocumentFragment();
+    var tmp = document.createElement('span');
+    tmp.innerHTML = taco.v;
+    while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+    return frag;
+  }
+
   // Handle text nodes
   if (typeof taco !== 'object' || !taco.t) {
     return document.createTextNode(String(taco));
   }
-  
+
   const { t: tag, a: attrs = {}, c: content, o: opts = {} } = taco;
   
   // Create element
@@ -5693,6 +5727,9 @@ bw.createDOM = function(taco, options = {}) {
           }
         }
       });
+    } else if (typeof content === 'object' && content.__bw_raw) {
+      // Raw HTML content — inject via innerHTML
+      el.innerHTML = content.v;
     } else if (typeof content === 'object' && content.t) {
       var childEl = bw.createDOM(content, options);
       el.appendChild(childEl);

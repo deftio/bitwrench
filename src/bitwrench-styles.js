@@ -2125,7 +2125,7 @@ export const defaultStyles = {
     },
     '.bw-cta-description': {
       'font-size': '1.125rem',
-      'color': '#6c757d',
+      'color': '#555b62',
       'max-width': '36rem',
       'margin-left': 'auto',
       'margin-right': 'auto'

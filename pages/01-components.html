@@ -323,11 +323,30 @@
                         children: ['#e0f2f1','#b2dfdb','#80cbc4','#fff3e0'].map(function(bg, i) {
                           return bw.makeCol({ size: { xs: 12, md: 6, lg: 3 }, content: gridCell('Resp ' + (i+1), bg, { mb: true }) });
                         })
+                      }),
+                      { t: 'div', a: { style: 'height: 0.75rem;' } },
+                      subheading('Half + Quarter + Quarter (6-3-3)'),
+                      bw.makeRow({
+                        children: [
+                          bw.makeCol({ size: 6, content: gridCell('bw-col-6', '#e3f2fd') }),
+                          bw.makeCol({ size: 3, content: gridCell('bw-col-3', '#bbdefb') }),
+                          bw.makeCol({ size: 3, content: gridCell('bw-col-3', '#90caf9') })
+                        ]
+                      }),
+                      { t: 'div', a: { style: 'height: 0.75rem;' } },
+                      subheading('Half + Quarter + Sixth + Twelfth (6-3-2-1)'),
+                      bw.makeRow({
+                        children: [
+                          bw.makeCol({ size: 6, content: gridCell('bw-col-6', '#f3e5f5') }),
+                          bw.makeCol({ size: 3, content: gridCell('bw-col-3', '#e1bee7') }),
+                          bw.makeCol({ size: 2, content: gridCell('bw-col-2', '#ce93d8') }),
+                          bw.makeCol({ size: 1, content: gridCell('bw-col-1', '#ba68c8') })
+                        ]
                       })
                     ]})
                   ]
                 },
-                "bw.makeRow({\n  children: ['#e0f2f1', '#b2dfdb', '#80cbc4'].map((bg, i) =>\n    bw.makeCol({ size: 4, content: gridCell('Col ' + (i+1), bg) })\n  )\n})\n\n// Responsive: 12 on mobile, 6 on tablet, 3 on desktop\nbw.makeCol({ size: { xs: 12, md: 6, lg: 3 }, content: '...' })"
+                "bw.makeRow({\n  children: ['#e0f2f1', '#b2dfdb', '#80cbc4'].map((bg, i) =>\n    bw.makeCol({ size: 4, content: gridCell('Col ' + (i+1), bg) })\n  )\n})\n\n// Responsive: 12 on mobile, 6 on tablet, 3 on desktop\nbw.makeCol({ size: { xs: 12, md: 6, lg: 3 }, content: '...' })\n\n// Half + Quarter + Quarter (6-3-3)\nbw.makeRow({\n  children: [\n    bw.makeCol({ size: 6, content: 'Half' }),\n    bw.makeCol({ size: 3, content: 'Quarter' }),\n    bw.makeCol({ size: 3, content: 'Quarter' })\n  ]\n})\n\n// Half + Quarter + Sixth + Twelfth (6-3-2-1)\nbw.makeRow({\n  children: [\n    bw.makeCol({ size: 6, content: 'Half' }),\n    bw.makeCol({ size: 3, content: 'Quarter' }),\n    bw.makeCol({ size: 2, content: 'Sixth' }),\n    bw.makeCol({ size: 1, content: 'Twelfth' })\n  ]\n})"
               )
             ),
 
@@ -358,6 +377,76 @@
                   ]
                 },
                 "bw.makeStack({\n  children: [\n    bw.makeButton({ text: 'First', variant: 'primary' }),\n    bw.makeButton({ text: 'Second', variant: 'secondary' })\n  ],\n  gap: 2\n})\n\nbw.makeStack({\n  direction: 'horizontal',\n  children: [...],\n  gap: 2\n})"
+              )
+            ),
+
+            // =================================================================
+            // 5b. Text Alignment & Vertical Centering
+            // =================================================================
+            demoSection('section-alignment', 'Text Alignment & Vertical Centering',
+              'Horizontal text alignment using bw-text-left, bw-text-center, and bw-text-right utility classes. Vertical centering uses flexbox inline styles for top, middle, and bottom alignment within a container.',
+              createTabbedDemo(
+                {
+                  t: 'div', c: [
+                    // --- Horizontal text alignment ---
+                    subheading('Horizontal Text Alignment'),
+                    {
+                      t: 'div',
+                      a: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;' },
+                      c: [
+                        {
+                          t: 'div',
+                          a: { class: 'bw-text-left', style: 'background: #e0f2f1; padding: 1rem; border-radius: 6px; border: 1px solid #b2dfdb;' },
+                          c: [
+                            { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Left Aligned' },
+                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text flows to the left edge using bw-text-left.' }
+                          ]
+                        },
+                        {
+                          t: 'div',
+                          a: { class: 'bw-text-center', style: 'background: #e3f2fd; padding: 1rem; border-radius: 6px; border: 1px solid #bbdefb;' },
+                          c: [
+                            { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Center Aligned' },
+                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text is centered using bw-text-center.' }
+                          ]
+                        },
+                        {
+                          t: 'div',
+                          a: { class: 'bw-text-right', style: 'background: #fff3e0; padding: 1rem; border-radius: 6px; border: 1px solid #ffe0b2;' },
+                          c: [
+                            { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Right Aligned' },
+                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text flows to the right edge using bw-text-right.' }
+                          ]
+                        }
+                      ]
+                    },
+
+                    // --- Vertical centering ---
+                    subheading('Vertical Centering'),
+                    {
+                      t: 'div',
+                      a: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;' },
+                      c: [
+                        {
+                          t: 'div',
+                          a: { style: 'display: flex; align-items: flex-start; justify-content: center; height: 150px; background: #f3e5f5; padding: 1rem; border-radius: 6px; border: 1px solid #ce93d8;' },
+                          c: { t: 'div', a: { style: 'font-weight: 600; font-size: 0.9rem;' }, c: 'Top' }
+                        },
+                        {
+                          t: 'div',
+                          a: { style: 'display: flex; align-items: center; justify-content: center; height: 150px; background: #e8f5e9; padding: 1rem; border-radius: 6px; border: 1px solid #a5d6a7;' },
+                          c: { t: 'div', a: { style: 'font-weight: 600; font-size: 0.9rem;' }, c: 'Middle' }
+                        },
+                        {
+                          t: 'div',
+                          a: { style: 'display: flex; align-items: flex-end; justify-content: center; height: 150px; background: #fce4ec; padding: 1rem; border-radius: 6px; border: 1px solid #ef9a9a;' },
+                          c: { t: 'div', a: { style: 'font-weight: 600; font-size: 0.9rem;' }, c: 'Bottom' }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "// Horizontal text alignment using utility classes\n{ t: 'div', a: { class: 'bw-text-left' },\n  c: 'Left aligned text' }\n\n{ t: 'div', a: { class: 'bw-text-center' },\n  c: 'Center aligned text' }\n\n{ t: 'div', a: { class: 'bw-text-right' },\n  c: 'Right aligned text' }\n\n// Vertical centering using flexbox inline styles\n// Top-aligned\n{ t: 'div',\n  a: { style: 'display: flex; align-items: flex-start; justify-content: center; height: 150px;' },\n  c: 'Top' }\n\n// Middle-aligned (vertically centered)\n{ t: 'div',\n  a: { style: 'display: flex; align-items: center; justify-content: center; height: 150px;' },\n  c: 'Middle' }\n\n// Bottom-aligned\n{ t: 'div',\n  a: { style: 'display: flex; align-items: flex-end; justify-content: center; height: 150px;' },\n  c: 'Bottom' }"
               )
             ),
 
@@ -1037,7 +1126,7 @@
               createTabbedDemo(
                 bw.makeCTA({
                   title: 'Ready to Get Started?',
-                  description: 'Join thousands of developers building with bitwrench.',
+                  description: 'Join handfuls of developers building with bitwrench.',
                   actions: [
                     bw.makeButton({ text: 'Sign Up Free', variant: 'primary', size: 'lg' }),
                     { t: 'span', c: ' ' },

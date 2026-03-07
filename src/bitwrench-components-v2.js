@@ -2825,7 +2825,7 @@ export function makeCarousel(props = {}) {
           goToSlide(carousel, idx - 1);
         }
       },
-      c: { t: 'img', a: { src: prevArrow, alt: '' } }
+      c: { t: 'img', a: { src: prevArrow, alt: '', role: 'presentation' } }
     });
     children.push({
       t: 'button',
@@ -2839,7 +2839,7 @@ export function makeCarousel(props = {}) {
           goToSlide(carousel, idx + 1);
         }
       },
-      c: { t: 'img', a: { src: nextArrow, alt: '' } }
+      c: { t: 'img', a: { src: nextArrow, alt: '', role: 'presentation' } }
     });
   }
 

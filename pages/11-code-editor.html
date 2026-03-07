@@ -13,115 +13,206 @@
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Code Editor</h1>
-      <p class="subtitle">Lightweight syntax highlighting and editable code blocks</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-
-    <!-- Overview -->
-    <div class="demo-section">
-      <h2>Overview</h2>
-      <div class="demo-content">
-        <p>
-          <code>bitwrench-code-edit</code> is an optional addon that provides syntax highlighting
-          for JavaScript, CSS, and HTML. It ships as a separate file (~11 KB min) and attaches
-          <code>bw.highlight()</code> and <code>bw.codeEditor()</code> to the bitwrench namespace.
-        </p>
-        <div class="callout callout-concept">
-          <h4>Scope</h4>
-          <p>
-            This is a lightweight utility for rendering readable code snippets in bitwrench apps.
-            It is <strong>not</strong> a replacement for full-featured libraries like
-            Prism.js or highlight.js. If you need broad language support, line numbers,
-            or advanced editor features, use one of those instead. bitwrench-code-edit covers
-            the common case: JS, CSS, and HTML with zero dependencies.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Installation -->
-    <div class="demo-section">
-      <h2>Installation</h2>
-      <div class="demo-content">
-        <h3>Browser (script tag)</h3>
-        <p>Load after <code>bitwrench.umd.js</code>. It auto-attaches to <code>window.bw</code>.</p>
-        <div id="install-browser"></div>
-
-        <h3 style="margin-top: 1.5rem;">ES Module</h3>
-        <div id="install-esm"></div>
-
-        <h3 style="margin-top: 1.5rem;">Available Formats</h3>
-        <div id="formats-table"></div>
-      </div>
-    </div>
-
-    <!-- bw.highlight() -->
-    <div class="demo-section">
-      <h2>bw.highlight(code, lang)</h2>
-      <div class="demo-content">
-        <p>
-          Tokenizes a code string and returns an array of TACO objects with syntax-colored
-          <code>&lt;span&gt;</code> elements. Supported languages: <code>'js'</code>,
-          <code>'css'</code>, <code>'html'</code>.
-        </p>
-        <h3>JavaScript</h3>
-        <div id="demo-highlight-js"></div>
-        <h3 style="margin-top: 1.5rem;">CSS</h3>
-        <div id="demo-highlight-css"></div>
-        <h3 style="margin-top: 1.5rem;">HTML</h3>
-        <div id="demo-highlight-html"></div>
-      </div>
-    </div>
-
-    <!-- bw.codeEditor() -->
-    <div class="demo-section">
-      <h2>bw.codeEditor(opts)</h2>
-      <div class="demo-content">
-        <p>
-          Creates a contenteditable code block with live syntax highlighting.
-          Returns a TACO object that can be mounted with <code>bw.DOM()</code>.
-        </p>
-        <h3>Editable Editor</h3>
-        <p>Type in the editor below &mdash; syntax highlighting updates as you type.</p>
-        <div id="demo-editor-editable"></div>
-        <div id="demo-editor-editable-code" style="margin-top: 1rem;"></div>
-
-        <h3 style="margin-top: 1.5rem;">Read-Only Display</h3>
-        <p>Use <code>readOnly: true</code> for non-editable code display.</p>
-        <div id="demo-editor-readonly"></div>
-        <div id="demo-editor-readonly-code" style="margin-top: 1rem;"></div>
-
-        <h3 style="margin-top: 1.5rem;">Light Theme</h3>
-        <p>Pass <code>className: 'bw-ce-light'</code> for a light background.</p>
-        <div id="demo-editor-light"></div>
-
-        <h3 style="margin-top: 1.5rem;">CSS Highlighting</h3>
-        <div id="demo-editor-css"></div>
-
-        <h3 style="margin-top: 1.5rem;">HTML Highlighting</h3>
-        <div id="demo-editor-html"></div>
-      </div>
-    </div>
-
-    <!-- API Reference -->
-    <div class="demo-section">
-      <h2>API Reference</h2>
-      <div class="demo-content">
-        <div id="api-table"></div>
-      </div>
-    </div>
-
-  </div>
+  <div id="app"></div>
 
   <script>
     mountExampleNav('#example-nav', '11-code-editor.html');
     bw.loadDefaultStyles();
+
+    // =========================================================================
+    // Build the page structure as TACO
+    // =========================================================================
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+        c: [
+          { t: 'h1', c: 'Code Editor' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Lightweight syntax highlighting and editable code blocks' }
+        ]
+      }
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [
+        // Overview
+        {
+          t: 'div', a: { class: 'demo-section' },
+          c: [
+            { t: 'h2', c: 'Overview' },
+            {
+              t: 'div', a: { class: 'demo-content' },
+              c: [
+                {
+                  t: 'p',
+                  c: [
+                    { t: 'code', c: 'bitwrench-code-edit' },
+                    ' is an optional addon that provides syntax highlighting for JavaScript, CSS, and HTML. It ships as a separate file (~11 KB min) and attaches ',
+                    { t: 'code', c: 'bw.highlight()' },
+                    ' and ',
+                    { t: 'code', c: 'bw.codeEditor()' },
+                    ' to the bitwrench namespace.'
+                  ]
+                },
+                {
+                  t: 'div', a: { class: 'callout callout-concept' },
+                  c: [
+                    { t: 'h4', c: 'Scope' },
+                    {
+                      t: 'p',
+                      c: [
+                        'This is a lightweight utility for rendering readable code snippets in bitwrench apps. It is ',
+                        { t: 'strong', c: 'not' },
+                        ' a replacement for full-featured libraries like Prism.js or highlight.js. If you need broad language support, line numbers, or advanced editor features, use one of those instead. bitwrench-code-edit covers the common case: JS, CSS, and HTML with zero dependencies.'
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        // Installation
+        {
+          t: 'div', a: { class: 'demo-section' },
+          c: [
+            { t: 'h2', c: 'Installation' },
+            {
+              t: 'div', a: { class: 'demo-content' },
+              c: [
+                { t: 'h3', c: 'Browser (script tag)' },
+                {
+                  t: 'p',
+                  c: [
+                    'Load after ',
+                    { t: 'code', c: 'bitwrench.umd.js' },
+                    '. It auto-attaches to ',
+                    { t: 'code', c: 'window.bw' },
+                    '.'
+                  ]
+                },
+                { t: 'div', a: { id: 'install-browser' } },
+
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'ES Module' },
+                { t: 'div', a: { id: 'install-esm' } },
+
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'Available Formats' },
+                { t: 'div', a: { id: 'formats-table' } }
+              ]
+            }
+          ]
+        },
+
+        // bw.highlight()
+        {
+          t: 'div', a: { class: 'demo-section' },
+          c: [
+            { t: 'h2', c: 'bw.highlight(code, lang)' },
+            {
+              t: 'div', a: { class: 'demo-content' },
+              c: [
+                {
+                  t: 'p',
+                  c: [
+                    'Tokenizes a code string and returns an array of TACO objects with syntax-colored ',
+                    { t: 'code', c: bw.raw('<span>') },
+                    ' elements. Supported languages: ',
+                    { t: 'code', c: "'js'" },
+                    ', ',
+                    { t: 'code', c: "'css'" },
+                    ', ',
+                    { t: 'code', c: "'html'" },
+                    '.'
+                  ]
+                },
+                { t: 'h3', c: 'JavaScript' },
+                { t: 'div', a: { id: 'demo-highlight-js' } },
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'CSS' },
+                { t: 'div', a: { id: 'demo-highlight-css' } },
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'HTML' },
+                { t: 'div', a: { id: 'demo-highlight-html' } }
+              ]
+            }
+          ]
+        },
+
+        // bw.codeEditor()
+        {
+          t: 'div', a: { class: 'demo-section' },
+          c: [
+            { t: 'h2', c: 'bw.codeEditor(opts)' },
+            {
+              t: 'div', a: { class: 'demo-content' },
+              c: [
+                {
+                  t: 'p',
+                  c: [
+                    'Creates a contenteditable code block with live syntax highlighting. Returns a TACO object that can be mounted with ',
+                    { t: 'code', c: 'bw.DOM()' },
+                    '.'
+                  ]
+                },
+                { t: 'h3', c: 'Editable Editor' },
+                { t: 'p', c: bw.raw('Type in the editor below &mdash; syntax highlighting updates as you type.') },
+                { t: 'div', a: { id: 'demo-editor-editable' } },
+                { t: 'div', a: { id: 'demo-editor-editable-code', style: 'margin-top: 1rem' } },
+
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'Read-Only Display' },
+                {
+                  t: 'p',
+                  c: [
+                    'Use ',
+                    { t: 'code', c: 'readOnly: true' },
+                    ' for non-editable code display.'
+                  ]
+                },
+                { t: 'div', a: { id: 'demo-editor-readonly' } },
+                { t: 'div', a: { id: 'demo-editor-readonly-code', style: 'margin-top: 1rem' } },
+
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'Light Theme' },
+                {
+                  t: 'p',
+                  c: [
+                    'Pass ',
+                    { t: 'code', c: "className: 'bw-ce-light'" },
+                    ' for a light background.'
+                  ]
+                },
+                { t: 'div', a: { id: 'demo-editor-light' } },
+
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'CSS Highlighting' },
+                { t: 'div', a: { id: 'demo-editor-css' } },
+
+                { t: 'h3', a: { style: 'margin-top: 1.5rem' }, c: 'HTML Highlighting' },
+                { t: 'div', a: { id: 'demo-editor-html' } }
+              ]
+            }
+          ]
+        },
+
+        // API Reference
+        {
+          t: 'div', a: { class: 'demo-section' },
+          c: [
+            { t: 'h2', c: 'API Reference' },
+            {
+              t: 'div', a: { class: 'demo-content' },
+              c: [
+                { t: 'div', a: { id: 'api-table' } }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
+
+    // =========================================================================
+    // Dynamic content — mount editors and tables into placeholder IDs
+    // =========================================================================
 
     // -- Installation code samples --
     bw.DOM('#install-browser', bw.codeEditor({

@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.11 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench v2.0.12 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 /**
@@ -7,14 +7,14 @@
  */
 
 const VERSION_INFO = {
-  version: '2.0.11',
+  version: '2.0.12',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-07T11:02:53.369Z'
+  buildDate: '2026-03-07T22:06:15.575Z'
 };
 
 /**
@@ -889,11 +889,32 @@ function generateAccordionThemed(scope, palette) {
   rules[scopeSelector(scope, '.bw-accordion-button')] = {
     'color': palette.dark.base
   };
+  rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed)')] = {
+    'color': palette.primary.darkText,
+    'background-color': palette.primary.light
+  };
   rules[scopeSelector(scope, '.bw-accordion-button:hover')] = {
     'background-color': palette.light.light
   };
+  rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed):hover')] = {
+    'background-color': palette.primary.hover
+  };
+  rules[scopeSelector(scope, '.bw-accordion-button:focus-visible')] = {
+    'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+  };
   rules[scopeSelector(scope, '.bw-accordion-body')] = {
     'border-top': '1px solid ' + palette.light.border
+  };
+  return rules;
+}
+
+function generateCarouselThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-carousel')] = {
+    'background-color': palette.light.light
+  };
+  rules[scopeSelector(scope, '.bw-carousel-indicator.active')] = {
+    'background-color': palette.primary.base
   };
   return rules;
 }
@@ -978,7 +999,7 @@ function generateSwitchThemed(scope, palette) {
 function generateSkeletonThemed(scope, palette) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-skeleton')] = {
-    'background-color': palette.light.border
+    'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
   };
   return rules;
 }
@@ -1025,6 +1046,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
     generateAccordionThemed(scopeName, palette),
+    generateCarouselThemed(scopeName, palette),
     generateModalThemed(scopeName, palette),
     generateToastThemed(scopeName, palette),
     generateDropdownThemed(scopeName, palette),
@@ -1384,6 +1406,8 @@ function getStructuralStyles() {
   rules['.bw-tab-content'] = { 'padding': '1.25rem 0' };
   rules['.bw-tab-pane'] = { 'display': 'none' };
   rules['.bw-tab-pane.active'] = { 'display': 'block' };
+  rules['.bw-nav-scrollable'] = { 'flex-wrap': 'nowrap', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch', 'scrollbar-width': 'none' };
+  rules['.bw-nav-scrollable .bw-nav-link'] = { 'white-space': 'nowrap' };
 
   // List groups (structural)
   rules['.bw-list-group'] = { 'display': 'flex', 'flex-direction': 'column', 'padding-left': '0', 'margin-bottom': '0', 'border-radius': '0.375rem' };
@@ -1550,6 +1574,29 @@ function getStructuralStyles() {
   rules['.bw-modal-body'] = { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1.5rem' };
   rules['.bw-modal-footer'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'padding': '0.75rem 1.5rem', 'gap': '0.5rem' };
 
+  // Carousel (structural)
+  rules['.bw-carousel'] = { 'position': 'relative', 'overflow': 'hidden', 'border-radius': '8px' };
+  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.4s ease', 'height': '100%' };
+  rules['.bw-carousel-slide'] = { 'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden', 'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
+  rules['.bw-carousel-slide img'] = { 'width': '100%', 'height': '100%', 'object-fit': 'cover' };
+  rules['.bw-carousel-caption'] = { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem' };
+  rules['.bw-carousel-control'] = {
+    'position': 'absolute', 'top': '50%', 'transform': 'translateY(-50%)', 'width': '40px', 'height': '40px',
+    'border': 'none', 'border-radius': '50%', 'cursor': 'pointer', 'display': 'flex', 'align-items': 'center',
+    'justify-content': 'center', 'z-index': '2', 'padding': '0', 'transition': 'background-color 0.2s ease'
+  };
+  rules['.bw-carousel-control img'] = { 'width': '20px', 'height': '20px', 'pointer-events': 'none' };
+  rules['.bw-carousel-control-prev'] = { 'left': '10px' };
+  rules['.bw-carousel-control-next'] = { 'right': '10px' };
+  rules['.bw-carousel-indicators'] = {
+    'position': 'absolute', 'bottom': '12px', 'left': '50%', 'transform': 'translateX(-50%)',
+    'display': 'flex', 'gap': '6px', 'z-index': '2'
+  };
+  rules['.bw-carousel-indicator'] = {
+    'width': '10px', 'height': '10px', 'border-radius': '50%', 'border': '2px solid transparent',
+    'padding': '0', 'cursor': 'pointer', 'transition': 'opacity 0.2s ease, background-color 0.2s ease'
+  };
+
   // Toast (structural)
   rules['.bw-toast-container'] = {
     'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
@@ -1599,12 +1646,12 @@ function getStructuralStyles() {
   rules['.bw-form-switch .bw-switch-input:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
 
   // Skeleton (structural)
-  rules['.bw-skeleton'] = { 'border-radius': '4px', 'animation': 'bw-skeleton-pulse 1.5s ease-in-out infinite' };
+  rules['.bw-skeleton'] = { 'border-radius': '4px', 'background-size': '400% 100%', 'animation': 'bw-skeleton-shimmer 1.4s ease infinite' };
   rules['.bw-skeleton-text'] = { 'height': '1em', 'margin-bottom': '0.5rem' };
   rules['.bw-skeleton-circle'] = { 'border-radius': '50%' };
   rules['.bw-skeleton-rect'] = { 'border-radius': '8px' };
   rules['.bw-skeleton-group'] = { 'display': 'flex', 'flex-direction': 'column' };
-  rules['@keyframes bw-skeleton-pulse'] = { '0%': { 'opacity': '1' }, '50%': { 'opacity': '0.4' }, '100%': { 'opacity': '1' } };
+  rules['@keyframes bw-skeleton-shimmer'] = { '0%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0 50%' } };
 
   // Avatar (structural)
   rules['.bw-avatar'] = {
@@ -1966,11 +2013,30 @@ function generateDarkModeCSS(palette) {
     '.bw-dark .bw-accordion-button': {
       'color': textColor
     },
+    '.bw-dark .bw-accordion-button:not(.bw-collapsed)': {
+      'color': '#7dd3e0',
+      'background-color': 'rgba(125, 211, 224, 0.1)'
+    },
     '.bw-dark .bw-accordion-button:hover': {
       'background-color': bodyBg
     },
+    '.bw-dark .bw-accordion-button:not(.bw-collapsed):hover': {
+      'background-color': 'rgba(125, 211, 224, 0.15)'
+    },
+    '.bw-dark .bw-accordion-button:focus-visible': {
+      'box-shadow': '0 0 0 0.2rem rgba(125, 211, 224, 0.3)'
+    },
     '.bw-dark .bw-accordion-body': {
       'border-top-color': borderColor
+    },
+    '.bw-dark .bw-carousel': {
+      'background-color': bodyBg
+    },
+    '.bw-dark .bw-carousel-control': {
+      'background-color': 'rgba(255,255,255,0.15)'
+    },
+    '.bw-dark .bw-carousel-control:hover': {
+      'background-color': 'rgba(255,255,255,0.25)'
     },
     '.bw-dark .bw-modal-content': {
       'background-color': surfaceBg,
@@ -2007,7 +2073,7 @@ function generateDarkModeCSS(palette) {
       'border-top-color': borderColor
     },
     '.bw-dark .bw-skeleton': {
-      'background-color': borderColor
+      'background': 'linear-gradient(90deg, ' + borderColor + ' 25%, ' + surfaceBg + ' 37%, ' + borderColor + ' 63%)'
     },
     '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
       'color': textColor
@@ -4757,6 +4823,182 @@ function makeAvatar(props = {}) {
   };
 }
 
+/**
+ * Create a carousel/slideshow component with slide transitions
+ *
+ * Supports image slides, TACO content slides, captions, prev/next controls,
+ * dot indicators, and optional auto-play. Uses CSS translateX transitions.
+ *
+ * @param {Object} [props] - Carousel configuration
+ * @param {Array<Object>} [props.items=[]] - Slide items
+ * @param {string|Object} props.items[].content - Slide content (TACO, string, or img element)
+ * @param {string} [props.items[].caption] - Caption text shown at bottom of slide
+ * @param {boolean} [props.showControls=true] - Show prev/next arrow buttons
+ * @param {boolean} [props.showIndicators=true] - Show dot navigation
+ * @param {boolean} [props.autoPlay=false] - Auto-advance slides
+ * @param {number} [props.interval=5000] - Auto-advance interval in ms
+ * @param {string} [props.height='300px'] - Carousel height
+ * @param {number} [props.startIndex=0] - Initial slide index
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a carousel
+ * @category Component Builders
+ * @example
+ * const carousel = makeCarousel({
+ *   items: [
+ *     { content: { t: 'img', a: { src: 'photo.jpg' } }, caption: 'Photo 1' },
+ *     { content: { t: 'div', c: 'Text slide' } }
+ *   ],
+ *   autoPlay: true,
+ *   interval: 3000
+ * });
+ */
+function makeCarousel(props = {}) {
+  const {
+    items = [],
+    showControls = true,
+    showIndicators = true,
+    autoPlay = false,
+    interval = 5000,
+    height = '300px',
+    startIndex = 0,
+    className = ''
+  } = props;
+
+  // Shared navigation logic
+  function goToSlide(carouselEl, index) {
+    var total = carouselEl.querySelectorAll('.bw-carousel-slide').length;
+    if (index < 0) index = total - 1;
+    if (index >= total) index = 0;
+    carouselEl.setAttribute('data-carousel-index', index);
+    var track = carouselEl.querySelector('.bw-carousel-track');
+    track.style.transform = 'translateX(-' + (index * 100) + '%)';
+    // Update indicators
+    var indicators = carouselEl.querySelectorAll('.bw-carousel-indicator');
+    for (var i = 0; i < indicators.length; i++) {
+      if (i === index) {
+        indicators[i].classList.add('active');
+      } else {
+        indicators[i].classList.remove('active');
+      }
+    }
+  }
+
+  // Arrow SVGs (inline data URIs, same pattern as accordion chevrons)
+  var prevArrow = "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3e%3c/svg%3e";
+  var nextArrow = "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e";
+
+  var slides = items.map(function(item) {
+    var slideContent = [
+      item.content,
+      item.caption && {
+        t: 'div',
+        a: { class: 'bw-carousel-caption' },
+        c: item.caption
+      }
+    ].filter(Boolean);
+
+    return {
+      t: 'div',
+      a: { class: 'bw-carousel-slide' },
+      c: slideContent.length === 1 ? slideContent[0] : slideContent
+    };
+  });
+
+  var children = [
+    // Track
+    {
+      t: 'div',
+      a: {
+        class: 'bw-carousel-track',
+        style: 'transform: translateX(-' + (startIndex * 100) + '%)'
+      },
+      c: slides
+    }
+  ];
+
+  // Prev/Next controls
+  if (showControls && items.length > 1) {
+    children.push({
+      t: 'button',
+      a: {
+        class: 'bw-carousel-control bw-carousel-control-prev',
+        type: 'button',
+        'aria-label': 'Previous slide',
+        onclick: function(e) {
+          var carousel = e.target.closest('.bw-carousel');
+          var idx = parseInt(carousel.getAttribute('data-carousel-index') || '0');
+          goToSlide(carousel, idx - 1);
+        }
+      },
+      c: { t: 'img', a: { src: prevArrow, alt: '', role: 'presentation' } }
+    });
+    children.push({
+      t: 'button',
+      a: {
+        class: 'bw-carousel-control bw-carousel-control-next',
+        type: 'button',
+        'aria-label': 'Next slide',
+        onclick: function(e) {
+          var carousel = e.target.closest('.bw-carousel');
+          var idx = parseInt(carousel.getAttribute('data-carousel-index') || '0');
+          goToSlide(carousel, idx + 1);
+        }
+      },
+      c: { t: 'img', a: { src: nextArrow, alt: '', role: 'presentation' } }
+    });
+  }
+
+  // Indicators
+  if (showIndicators && items.length > 1) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-carousel-indicators' },
+      c: items.map(function(_, i) {
+        return {
+          t: 'button',
+          a: {
+            class: 'bw-carousel-indicator' + (i === startIndex ? ' active' : ''),
+            type: 'button',
+            'aria-label': 'Go to slide ' + (i + 1),
+            'data-slide-index': i,
+            onclick: function(e) {
+              var carousel = e.target.closest('.bw-carousel');
+              var idx = parseInt(e.target.getAttribute('data-slide-index'));
+              goToSlide(carousel, idx);
+            }
+          }
+        };
+      })
+    });
+  }
+
+  return {
+    t: 'div',
+    a: {
+      class: ('bw-carousel ' + className).trim(),
+      style: 'height: ' + height,
+      'data-carousel-index': startIndex
+    },
+    c: children,
+    o: {
+      type: 'carousel',
+      state: { activeIndex: startIndex, autoPlay: autoPlay, interval: interval },
+      mounted: autoPlay ? function(el) {
+        var intervalId = setInterval(function() {
+          var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+          goToSlide(el, idx + 1);
+        }, interval);
+        el._bw_carouselInterval = intervalId;
+      } : undefined,
+      unmount: autoPlay ? function(el) {
+        if (el._bw_carouselInterval) {
+          clearInterval(el._bw_carouselInterval);
+        }
+      } : undefined
+    }
+  };
+}
+
 const componentHandles = {
   card: CardHandle,
   table: TableHandle,
@@ -4782,6 +5024,7 @@ var components = /*#__PURE__*/Object.freeze({
   makeButtonGroup: makeButtonGroup,
   makeCTA: makeCTA,
   makeCard: makeCard,
+  makeCarousel: makeCarousel,
   makeCheckbox: makeCheckbox,
   makeCodeDemo: makeCodeDemo,
   makeCol: makeCol,
@@ -5232,6 +5475,26 @@ bw.escapeHTML = function(str) {
 };
 
 /**
+ * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM().
+ *
+ * By default, bitwrench escapes all text content to prevent XSS. Use bw.raw()
+ * when you need to embed pre-sanitized HTML, entities, or inline markup.
+ *
+ * @param {string} str - HTML string to mark as raw
+ * @returns {Object} Marked object recognized by bw.html() and bw.createDOM()
+ * @category DOM Generation
+ * @see bw.escapeHTML
+ * @see bw.html
+ * @example
+ * bw.raw('Hello &mdash; World')
+ * // Used in TACO content:
+ * { t: 'p', c: bw.raw('Price: <strong>$9.99</strong>') }
+ */
+bw.raw = function(str) {
+  return { __bw_raw: true, v: String(str) };
+};
+
+/**
  * Normalize CSS class names by converting underscores to hyphens for bw-prefixed classes.
  *
  * Allows users to write either `bw_card` or `bw-card` and get consistent
@@ -5282,6 +5545,11 @@ bw.html = function(taco, options = {}) {
     return taco.map(t => bw.html(t, options)).join('');
   }
   
+  // Handle bw.raw() marked content
+  if (taco && taco.__bw_raw) {
+    return taco.v;
+  }
+
   // Handle primitives and non-TACO objects
   if (typeof taco !== 'object' || !taco.t) {
     return options.raw ? String(taco) : bw.escapeHTML(String(taco));
@@ -5382,12 +5650,21 @@ bw.createDOM = function(taco, options = {}) {
   
   // Handle null/undefined
   if (taco == null) return document.createTextNode('');
-  
+
+  // Handle bw.raw() marked content — inject as HTML
+  if (taco && taco.__bw_raw) {
+    var frag = document.createDocumentFragment();
+    var tmp = document.createElement('span');
+    tmp.innerHTML = taco.v;
+    while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+    return frag;
+  }
+
   // Handle text nodes
   if (typeof taco !== 'object' || !taco.t) {
     return document.createTextNode(String(taco));
   }
-  
+
   const { t: tag, a: attrs = {}, c: content, o: opts = {} } = taco;
   
   // Create element
@@ -5452,6 +5729,9 @@ bw.createDOM = function(taco, options = {}) {
           }
         }
       });
+    } else if (typeof content === 'object' && content.__bw_raw) {
+      // Raw HTML content — inject via innerHTML
+      el.innerHTML = content.v;
     } else if (typeof content === 'object' && content.t) {
       var childEl = bw.createDOM(content, options);
       el.appendChild(childEl);

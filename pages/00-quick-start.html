@@ -37,24 +37,84 @@
     // =========================================================================
     var helloCode = '<!DOCTYPE html>\n<html>\n<head>\n  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"><\/script>\n  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n    bw.DOM(\'#app\', { t: \'h1\', c: \'Hello bitwrench!\' });\n  <\/script>\n</body>\n</html>';
 
+    var livePageId = 'live-page-' + (bw._idCounter++);
+
     var section1 = {
       t: 'div', a: { class: 'demo-section', id: 'section-first-page' },
       c: [
         { t: 'h2', c: { t: 'a', a: { href: '#section-first-page' }, c: 'Your First Bitwrench Page' } },
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' },
-            c: 'This is the complete code for a bitwrench page. One script tag, one function call:' },
-          bw.codeEditor
-            ? bw.codeEditor({ code: helloCode, lang: 'html', readOnly: true, height: 'auto' })
-            : { t: 'pre', a: { class: 'bw-code-block', style: 'margin-bottom: 1.25rem;' },
-                c: { t: 'code', c: helloCode } },
-          { t: 'p', a: { style: 'font-size: 0.9375rem; margin: 0 0 1rem;' }, c: [
-            'Try editing the code below and click ', { t: 'strong', c: 'Run' }, ':'
-          ]},
-          makeTryIt({
-            code: 'bw.DOM(target, { t: \'h1\', c: \'Hello bitwrench!\' });',
-            height: '60px',
-            label: 'Edit & Run'
+            c: 'This is the complete code for a bitwrench page. Edit the code and click Run to see the result:' },
+          {
+            t: 'div', a: { class: 'tryit-container', id: livePageId },
+            o: {
+              mounted: function(el) {
+                var iframe = el.querySelector('.live-page-iframe');
+                var errorEl = el.querySelector('.tryit-error');
+                var runBtn = el.querySelector('.tryit-run');
+                var ceEl = el.querySelector('.bw-ce');
+                var textarea = el.querySelector('.tryit-textarea');
+
+                function getCode() {
+                  if (ceEl && ceEl._bwCodeEdit) return ceEl._bwCodeEdit.getValue();
+                  if (textarea) return textarea.value;
+                  return '';
+                }
+
+                function runPage() {
+                  errorEl.textContent = '';
+                  errorEl.style.display = 'none';
+                  iframe.srcdoc = getCode();
+                }
+
+                runBtn.addEventListener('click', runPage);
+                // Auto-run on mount
+                runPage();
+              }
+            },
+            c: [{
+              t: 'div', a: { class: 'tryit-grid' },
+              c: [
+                {
+                  t: 'div', a: { class: 'tryit-editor-col' },
+                  c: [
+                    { t: 'div', a: { class: 'tryit-label' }, c: 'HTML' },
+                    bw.codeEditor
+                      ? bw.codeEditor({ code: helloCode, lang: 'html', height: '280px' })
+                      : { t: 'textarea', a: { class: 'tryit-textarea', spellcheck: 'false', style: 'height:280px' }, c: helloCode },
+                    {
+                      t: 'div', a: { class: 'tryit-controls' },
+                      c: [bw.makeButton({ text: 'Run', variant: 'primary', size: 'sm', className: 'tryit-run' })]
+                    },
+                    { t: 'div', a: { class: 'tryit-error' }, c: '' }
+                  ]
+                },
+                {
+                  t: 'div', a: { class: 'tryit-output-col' },
+                  c: [
+                    { t: 'div', a: { class: 'tryit-label tryit-label-result' }, c: 'Preview' },
+                    { t: 'iframe', a: {
+                      class: 'live-page-iframe',
+                      sandbox: 'allow-scripts',
+                      style: 'width: 100%; min-height: 280px; border: 2px dashed var(--bw-card-border, #d8d8d8); border-radius: var(--bw-radius, 8px); background: #fff;'
+                    }}
+                  ]
+                }
+              ]
+            }]
+          },
+          callout('concept', 'What just happened?', {
+            t: 'p', c: [
+              { t: 'code', c: 'bw.DOM(\'#app\', taco)' },
+              ' mounts a TACO object into any CSS selector. The TACO ',
+              { t: 'code', c: '{ t: \'h1\', c: \'Hello bitwrench!\' }' },
+              ' becomes an ',
+              { t: 'code', c: '<h1>' },
+              ' element. Try changing the text, tag, or adding attributes like ',
+              { t: 'code', c: "a: { style: 'color: teal;' }" },
+              '.'
+            ]
           })
         ]}
       ]
@@ -270,9 +330,9 @@
         { t: 'h2', c: { t: 'a', a: { href: '#section-data-driven' }, c: 'Data-Driven UI' } },
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' }, c: [
-            'This is a genuine strength: your data IS your UI. No template directives, no ',
-            { t: 'code', c: 'v-for' }, ', no ', { t: 'code', c: '{#each}' },
-            '. Just ', { t: 'code', c: '.map()' }, '.'
+            'In bitwrench, your data is the UI. As a result, template constructs such as ',
+            { t: 'code', c: 'v-for' }, ' and ', { t: 'code', c: '{#each}' },
+            ' are achieved with JavaScript\'s built-in ', { t: 'code', c: '.map()' }, ' function.'
           ]},
           makeTryIt({
             code: [

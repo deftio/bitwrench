@@ -10,226 +10,10 @@
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.js"></script>
-  <style>
-    /* Theme page layout */
-    .theme-controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .theme-control-group label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.8125rem;
-      margin-bottom: 0.375rem;
-      color: var(--bw-text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .theme-control-group input[type="color"] {
-      width: 100%;
-      height: 42px;
-      border: 1px solid var(--bw-card-border);
-      border-radius: 6px;
-      cursor: pointer;
-      padding: 2px;
-    }
-    .theme-control-group select {
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--bw-card-border);
-      border-radius: 6px;
-      background: var(--bw-card-bg);
-      color: var(--bw-text);
-      font-size: 0.875rem;
-    }
-    .preview-area {
-      border: 2px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1.5rem;
-      background: var(--bw-card-bg);
-      margin-top: 1rem;
-    }
-    .preview-section {
-      margin-bottom: 1.5rem;
-    }
-    .preview-section:last-child {
-      margin-bottom: 0;
-    }
-    .preview-section h4 {
-      font-size: 0.875rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--bw-text-secondary);
-      margin: 0 0 0.75rem 0;
-      padding-bottom: 0.375rem;
-      border-bottom: 1px solid var(--bw-card-border);
-    }
-    .preset-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-    .preset-card {
-      border: 2px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .preset-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-    }
-    .preset-card-colors {
-      display: flex;
-      height: 48px;
-    }
-    .preset-card-colors > div {
-      flex: 1;
-    }
-    .preset-card-body {
-      padding: 0.875rem 1rem;
-    }
-    .preset-card-body h4 {
-      margin: 0 0 0.25rem 0;
-      font-size: 1rem;
-    }
-    .preset-card-body p {
-      margin: 0;
-      font-size: 0.8125rem;
-      color: var(--bw-text-secondary);
-    }
-    .multi-theme-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    .multi-theme-panel {
-      border: 2px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1.25rem;
-      background: var(--bw-card-bg);
-    }
-    .multi-theme-panel h4 {
-      margin: 0 0 1rem 0;
-      font-size: 0.9375rem;
-    }
-    .code-export-block {
-      background: var(--bw-code-bg);
-      color: var(--bw-code-text);
-      border-radius: var(--bw-radius);
-      padding: 1rem 1.25rem;
-      font-family: var(--bw-font-mono);
-      font-size: 0.8125rem;
-      overflow-x: auto;
-      white-space: pre;
-      line-height: 1.6;
-    }
-    .css-output-area {
-      width: 100%;
-      min-height: 200px;
-      background: var(--bw-code-bg);
-      color: var(--bw-code-text);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1rem;
-      font-family: var(--bw-font-mono);
-      font-size: 0.75rem;
-      line-height: 1.5;
-      resize: vertical;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      align-items: center;
-    }
-    @media (max-width: 768px) {
-      .multi-theme-row {
-        grid-template-columns: 1fr;
-      }
-      .theme-controls {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-  </style>
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Themes</h1>
-      <p class="subtitle">Generate complete, scoped themes from seed colors with <code>bw.generateTheme()</code>.</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-
-    <!-- ====== Section 1: Theme Generator ====== -->
-    <div class="demo-section">
-      <h2>Theme Generator</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          Pick three seed colors, choose spacing and border-radius presets, then click
-          <strong>Generate</strong>. The preview below updates live with fully themed
-          buttons, alerts, badges, cards, forms, and a table.
-        </p>
-        <div id="theme-generator"></div>
-      </div>
-    </div>
-
-    <!-- ====== Section 2: Pre-built Gallery ====== -->
-    <div class="demo-section">
-      <h2>Pre-built Theme Gallery</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          Click any preset to apply it to the preview area above. Each theme is generated
-          from just three seed colors using <code>bw.generateTheme()</code>.
-        </p>
-        <div id="preset-gallery"></div>
-      </div>
-    </div>
-
-    <!-- ====== Section 3: Multi-theme Demo ====== -->
-    <div class="demo-section">
-      <h2>Multi-theme Demo</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          Multiple themes can coexist on the same page. Each container gets a CSS scope
-          class and renders the same components with different palettes.
-        </p>
-        <div id="multi-theme-demo"></div>
-      </div>
-    </div>
-
-    <!-- ====== Section 4: Code Export ====== -->
-    <div class="demo-section">
-      <h2>Code Export</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          The JavaScript call and generated CSS for your current theme. Copy the CSS
-          to use in production without any runtime cost.
-        </p>
-        <div id="code-export"></div>
-      </div>
-    </div>
-
-    <!-- ====== Section 5: Dark Mode ====== -->
-    <div class="demo-section">
-      <h2>Dark Mode + Theme Interaction</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          <code>bw.toggleDarkMode()</code> derives dark colors from your <em>active palette</em>.
-          Generate a custom theme, then toggle dark mode &mdash; the dark variant uses your theme's hues, not generic grays.
-        </p>
-        <div id="dark-mode-demo"></div>
-      </div>
-    </div>
-
-  </div><!-- /content-container -->
+  <div id="app"></div>
 
   <script>
     // Mount nav
@@ -237,6 +21,267 @@
 
     // Load default styles so bw-* classes work
     bw.loadDefaultStyles();
+
+    // ---------------------------------------------------------------
+    // Page CSS (injected via bw.css)
+    // ---------------------------------------------------------------
+    bw.injectCSS(bw.css({
+      '.theme-controls': {
+        'display': 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(180px, 1fr))',
+        'gap': '1rem',
+        'margin-bottom': '1.5rem'
+      },
+      '.theme-control-group label': {
+        'display': 'block',
+        'font-weight': '600',
+        'font-size': '0.8125rem',
+        'margin-bottom': '0.375rem',
+        'color': 'var(--bw-text-secondary)',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.03em'
+      },
+      '.theme-control-group input[type="color"]': {
+        'width': '100%',
+        'height': '42px',
+        'border': '1px solid var(--bw-card-border)',
+        'border-radius': '6px',
+        'cursor': 'pointer',
+        'padding': '2px'
+      },
+      '.theme-control-group select': {
+        'width': '100%',
+        'padding': '0.5rem 0.75rem',
+        'border': '1px solid var(--bw-card-border)',
+        'border-radius': '6px',
+        'background': 'var(--bw-card-bg)',
+        'color': 'var(--bw-text)',
+        'font-size': '0.875rem'
+      },
+      '.preview-area': {
+        'border': '2px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'padding': '1.5rem',
+        'background': 'var(--bw-card-bg)',
+        'margin-top': '1rem'
+      },
+      '.preview-section': {
+        'margin-bottom': '1.5rem'
+      },
+      '.preview-section:last-child': {
+        'margin-bottom': '0'
+      },
+      '.preview-section h4': {
+        'font-size': '0.875rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.05em',
+        'color': 'var(--bw-text-secondary)',
+        'margin': '0 0 0.75rem 0',
+        'padding-bottom': '0.375rem',
+        'border-bottom': '1px solid var(--bw-card-border)'
+      },
+      '.preset-grid': {
+        'display': 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(200px, 1fr))',
+        'gap': '1rem'
+      },
+      '.preset-card': {
+        'border': '2px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'overflow': 'hidden',
+        'cursor': 'pointer',
+        'transition': 'transform 0.2s, box-shadow 0.2s'
+      },
+      '.preset-card:hover': {
+        'transform': 'translateY(-3px)',
+        'box-shadow': '0 6px 16px rgba(0,0,0,0.12)'
+      },
+      '.preset-card-colors': {
+        'display': 'flex',
+        'height': '48px'
+      },
+      '.preset-card-colors > div': {
+        'flex': '1'
+      },
+      '.preset-card-body': {
+        'padding': '0.875rem 1rem'
+      },
+      '.preset-card-body h4': {
+        'margin': '0 0 0.25rem 0',
+        'font-size': '1rem'
+      },
+      '.preset-card-body p': {
+        'margin': '0',
+        'font-size': '0.8125rem',
+        'color': 'var(--bw-text-secondary)'
+      },
+      '.multi-theme-row': {
+        'display': 'grid',
+        'grid-template-columns': '1fr 1fr',
+        'gap': '1.5rem'
+      },
+      '.multi-theme-panel': {
+        'border': '2px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'padding': '1.25rem',
+        'background': 'var(--bw-card-bg)'
+      },
+      '.multi-theme-panel h4': {
+        'margin': '0 0 1rem 0',
+        'font-size': '0.9375rem'
+      },
+      '.code-export-block': {
+        'background': 'var(--bw-code-bg)',
+        'color': 'var(--bw-code-text)',
+        'border-radius': 'var(--bw-radius)',
+        'padding': '1rem 1.25rem',
+        'font-family': 'var(--bw-font-mono)',
+        'font-size': '0.8125rem',
+        'overflow-x': 'auto',
+        'white-space': 'pre',
+        'line-height': '1.6'
+      },
+      '.css-output-area': {
+        'width': '100%',
+        'min-height': '200px',
+        'background': 'var(--bw-code-bg)',
+        'color': 'var(--bw-code-text)',
+        'border': '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'padding': '1rem',
+        'font-family': 'var(--bw-font-mono)',
+        'font-size': '0.75rem',
+        'line-height': '1.5',
+        'resize': 'vertical'
+      },
+      '.btn-row': {
+        'display': 'flex',
+        'flex-wrap': 'wrap',
+        'gap': '0.5rem',
+        'align-items': 'center'
+      },
+      '@media (max-width: 768px)': {
+        '.multi-theme-row': {
+          'grid-template-columns': '1fr'
+        },
+        '.theme-controls': {
+          'grid-template-columns': '1fr 1fr'
+        }
+      }
+    }));
+
+    // ---------------------------------------------------------------
+    // Page structure (TACO)
+    // ---------------------------------------------------------------
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' }, c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' }, c: [
+          { t: 'h1', c: 'Themes' },
+          { t: 'p', a: { class: 'subtitle' }, c: [
+            'Generate complete, scoped themes from seed colors with ',
+            { t: 'code', c: 'bw.generateTheme()' },
+            '.'
+          ]}
+        ]
+      }
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' }, c: [
+
+        // Section 1: Theme Generator
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Theme Generator' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' }, c: [
+                    'Pick three seed colors, choose spacing and border-radius presets, then click ',
+                    { t: 'strong', c: 'Generate' },
+                    '. The preview below updates live with fully themed buttons, alerts, badges, cards, forms, and a table.'
+                  ]
+                },
+                { t: 'div', a: { id: 'theme-generator' } }
+              ]
+            }
+          ]
+        },
+
+        // Section 2: Pre-built Gallery
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Pre-built Theme Gallery' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' }, c: [
+                    'Click any preset to apply it to the preview area above. Each theme is generated from just three seed colors using ',
+                    { t: 'code', c: 'bw.generateTheme()' },
+                    '.'
+                  ]
+                },
+                { t: 'div', a: { id: 'preset-gallery' } }
+              ]
+            }
+          ]
+        },
+
+        // Section 3: Multi-theme Demo
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Multi-theme Demo' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' }, c:
+                    'Multiple themes can coexist on the same page. Each container gets a CSS scope class and renders the same components with different palettes.'
+                },
+                { t: 'div', a: { id: 'multi-theme-demo' } }
+              ]
+            }
+          ]
+        },
+
+        // Section 4: Code Export
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Code Export' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' }, c:
+                    'The JavaScript call and generated CSS for your current theme. Copy the CSS to use in production without any runtime cost.'
+                },
+                { t: 'div', a: { id: 'code-export' } }
+              ]
+            }
+          ]
+        },
+
+        // Section 5: Dark Mode
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: bw.raw('Dark Mode + Theme Interaction') },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' }, c: [
+                    { t: 'code', c: 'bw.toggleDarkMode()' },
+                    ' derives dark colors from your ',
+                    { t: 'em', c: 'active palette' },
+                    bw.raw('. Generate a custom theme, then toggle dark mode &mdash; the dark variant uses your theme\'s hues, not generic grays.')
+                  ]
+                },
+                { t: 'div', a: { id: 'dark-mode-demo' } }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
 
     // ---------------------------------------------------------------
     // State
@@ -805,7 +850,7 @@
                   }
                 }),
                 { t: 'span', a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary);' },
-                  c: isDark ? 'Dark mode ON — colors derived from active theme palette' : 'Light mode — click to toggle'
+                  c: isDark ? bw.raw('Dark mode ON &mdash; colors derived from active theme palette') : bw.raw('Light mode &mdash; click to toggle')
                 }
               ]
             },
@@ -813,7 +858,7 @@
               t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 0.5rem;' },
               c: [
                 { t: 'h4', c: 'How it works' },
-                { t: 'p', c: 'Dark mode is toggled via the data-theme="dark" attribute on <html>. The default CSS includes dark mode overrides that invert backgrounds, surfaces, and text colors while respecting the active theme\'s hues.' },
+                { t: 'p', c: bw.raw('Dark mode is toggled via the data-theme="dark" attribute on &lt;html&gt;. The default CSS includes dark mode overrides that invert backgrounds, surfaces, and text colors while respecting the active theme\'s hues.') },
                 (function() {
                   var darkCode = '// Toggle dark mode\ndocument.documentElement.setAttribute("data-theme", "dark");\n\n// Or use the nav bar toggle (top-right crescent icon)\n// Dark mode works with any generated theme';
                   var ceClass = state.codeTheme === 'light' ? 'bw-ce-light' : '';

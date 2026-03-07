@@ -10,179 +10,172 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
-  <style>
-    /* Dashboard layout */
-    .dashboard {
-      display: flex;
-      min-height: 600px;
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      box-shadow: var(--bw-card-shadow);
-      overflow: hidden;
-      background: var(--bw-card-bg);
-    }
-    .sidebar {
-      width: 200px;
-      color: white;
-      padding: 0.75rem;
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-    .sidebar h3 {
-      font-size: 1.1rem;
-      margin: 0 0 0.75rem 0;
-      font-weight: 600;
-    }
-    .main-content {
-      flex: 1;
-      padding: 1.25rem;
-      overflow-y: auto;
-    }
-    .main-content h1 {
-      font-size: 1.5rem;
-      margin: 0 0 1rem 0;
-      transition: color 0.3s;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: var(--bw-space-md);
-      margin-bottom: var(--bw-space-md);
-    }
-    .stat-card {
-      background: var(--bw-card-bg, #fff);
-      padding: 1rem;
-      border-radius: var(--bw-radius, 8px);
-      border: 1px solid var(--bw-card-border, #e5e5e5);
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s, border-left-color 0.3s;
-      border-left: 4px solid transparent;
-    }
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      transition: color 0.3s;
-    }
-    .stat-label {
-      color: var(--bw-text-secondary, #555);
-      margin-top: 0.25rem;
-      font-size: 0.875rem;
-    }
-    .chart-container {
-      background: var(--bw-card-bg, #fff);
-      padding: 1rem;
-      border-radius: var(--bw-radius, 8px);
-      border: 1px solid var(--bw-card-border, #e5e5e5);
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
-      margin-bottom: 1rem;
-    }
-    .chart-container h3 {
-      font-size: 1.1rem;
-      margin: 0 0 0.75rem 0;
-    }
-    .sidebar .bw-nav-link {
-      color: rgba(255,255,255,0.85) !important;
-      margin-bottom: 0.25rem;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
-      border-radius: 4px;
-      transition: all 0.15s;
-    }
-    .sidebar .bw-nav-link:hover {
-      color: white !important;
-      background: rgba(255,255,255,0.1);
-    }
-    .sidebar .bw-nav-link.active {
-      background: rgba(255,255,255,0.2);
-      color: white !important;
-      font-weight: 600;
-    }
-    /* Bar chart overrides (uses bw-bar-chart-* from bitwrench CSS) */
-    .bw-bar-chart-container {
-      background: var(--bw-card-bg, #fff);
-      border-color: var(--bw-card-border, #e5e5e5);
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
-      margin-bottom: 1rem;
-    }
-    .bw-bar-value {
-      color: var(--bw-text-secondary, #555);
-    }
-    .bw-bar-label {
-      color: var(--bw-text-secondary, #555);
-    }
-    /* Theme picker */
-    .theme-picker {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-    .theme-dot {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 3px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s;
-      outline: none;
-    }
-    .theme-dot:hover { transform: scale(1.15); }
-    .theme-dot.active {
-      border-color: #333;
-      box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
-    }
-    /* Page tabs */
-    .page-tab-bar {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid var(--bw-card-border, #e0e0e0);
-      margin-bottom: 1.25rem;
-    }
-    .page-tab-btn {
-      padding: 0.625rem 1.25rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      cursor: pointer;
-      color: var(--bw-text-secondary, #666);
-      transition: all 0.15s;
-    }
-    .page-tab-btn:hover { color: var(--bw-teal-dark, #004d4d); }
-    .page-tab-btn.active {
-      color: var(--bw-teal-dark, #004d4d);
-      border-bottom-color: var(--bw-teal, #006666);
-      font-weight: 600;
-    }
-    @media (max-width: 768px) {
-      .dashboard { flex-direction: column; min-height: auto; }
-      .sidebar { width: 100%; }
-    }
-  </style>
 </head>
 <body>
-  <!-- Shared Navigation -->
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Dashboard</h1>
-      <p class="subtitle">Full application layout with sidebar navigation, stat cards, charts, tables, and live theme switching.</p>
-    </div>
-  </div>
-
-  <div id="dashboard-app" class="content-container wide"></div>
+  <div id="app"></div>
 
   <script>
     // Mount the shared navigation
     mountExampleNav('#example-nav', '04-dashboard.html');
+
+    // ── Dashboard CSS (injected via bw.css / bw.injectCSS) ──────────
+    bw.injectCSS(bw.css({
+      '.dashboard': {
+        'display': 'flex',
+        'min-height': '600px',
+        'border': '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'box-shadow': 'var(--bw-card-shadow)',
+        'overflow': 'hidden',
+        'background': 'var(--bw-card-bg)'
+      },
+      '.sidebar': {
+        'width': '200px',
+        'color': 'white',
+        'padding': '0.75rem',
+        'flex-shrink': '0',
+        'transition': 'background 0.3s'
+      },
+      '.sidebar h3': {
+        'font-size': '1.1rem',
+        'margin': '0 0 0.75rem 0',
+        'font-weight': '600'
+      },
+      '.main-content': {
+        'flex': '1',
+        'padding': '1.25rem',
+        'overflow-y': 'auto'
+      },
+      '.main-content h1': {
+        'font-size': '1.5rem',
+        'margin': '0 0 1rem 0',
+        'transition': 'color 0.3s'
+      },
+      '.stats-grid': {
+        'display': 'grid',
+        'grid-template-columns': 'repeat(auto-fit, minmax(200px, 1fr))',
+        'gap': 'var(--bw-space-md)',
+        'margin-bottom': 'var(--bw-space-md)'
+      },
+      '.stat-card': {
+        'background': 'var(--bw-card-bg, #fff)',
+        'padding': '1rem',
+        'border-radius': 'var(--bw-radius, 8px)',
+        'border': '1px solid var(--bw-card-border, #e5e5e5)',
+        'box-shadow': '0 1px 3px rgba(0,0,0,.06)',
+        'cursor': 'pointer',
+        'transition': 'transform 0.2s, box-shadow 0.2s, border-left-color 0.3s',
+        'border-left': '4px solid transparent'
+      },
+      '.stat-card:hover': {
+        'transform': 'translateY(-2px)',
+        'box-shadow': '0 4px 8px rgba(0,0,0,0.15)'
+      },
+      '.stat-value': {
+        'font-size': '1.5rem',
+        'font-weight': '700',
+        'transition': 'color 0.3s'
+      },
+      '.stat-label': {
+        'color': 'var(--bw-text-secondary, #555)',
+        'margin-top': '0.25rem',
+        'font-size': '0.875rem'
+      },
+      '.chart-container': {
+        'background': 'var(--bw-card-bg, #fff)',
+        'padding': '1rem',
+        'border-radius': 'var(--bw-radius, 8px)',
+        'border': '1px solid var(--bw-card-border, #e5e5e5)',
+        'box-shadow': '0 1px 3px rgba(0,0,0,.06)',
+        'margin-bottom': '1rem'
+      },
+      '.chart-container h3': {
+        'font-size': '1.1rem',
+        'margin': '0 0 0.75rem 0'
+      },
+      '.sidebar .bw-nav-link': {
+        'color': 'rgba(255,255,255,0.85) !important',
+        'margin-bottom': '0.25rem',
+        'padding': '0.5rem 0.75rem',
+        'font-size': '0.875rem',
+        'border-radius': '4px',
+        'transition': 'all 0.15s'
+      },
+      '.sidebar .bw-nav-link:hover': {
+        'color': 'white !important',
+        'background': 'rgba(255,255,255,0.1)'
+      },
+      '.sidebar .bw-nav-link.active': {
+        'background': 'rgba(255,255,255,0.2)',
+        'color': 'white !important',
+        'font-weight': '600'
+      },
+      '.bw-bar-chart-container': {
+        'background': 'var(--bw-card-bg, #fff)',
+        'border-color': 'var(--bw-card-border, #e5e5e5)',
+        'box-shadow': '0 1px 3px rgba(0,0,0,.06)',
+        'margin-bottom': '1rem'
+      },
+      '.bw-bar-value': {
+        'color': 'var(--bw-text-secondary, #555)'
+      },
+      '.bw-bar-label': {
+        'color': 'var(--bw-text-secondary, #555)'
+      },
+      '.theme-picker': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.75rem',
+        'flex-wrap': 'wrap'
+      },
+      '.theme-dot': {
+        'width': '28px',
+        'height': '28px',
+        'border-radius': '50%',
+        'border': '3px solid transparent',
+        'cursor': 'pointer',
+        'transition': 'all 0.2s',
+        'outline': 'none'
+      },
+      '.theme-dot:hover': {
+        'transform': 'scale(1.15)'
+      },
+      '.theme-dot.active': {
+        'border-color': '#333',
+        'box-shadow': '0 0 0 2px white, 0 0 0 4px #333'
+      },
+      '.page-tab-bar': {
+        'display': 'flex',
+        'gap': '0',
+        'border-bottom': '2px solid var(--bw-card-border, #e0e0e0)',
+        'margin-bottom': '1.25rem'
+      },
+      '.page-tab-btn': {
+        'padding': '0.625rem 1.25rem',
+        'font-size': '0.9rem',
+        'font-weight': '500',
+        'background': 'transparent',
+        'border': 'none',
+        'border-bottom': '2px solid transparent',
+        'margin-bottom': '-2px',
+        'cursor': 'pointer',
+        'color': 'var(--bw-text-secondary, #666)',
+        'transition': 'all 0.15s'
+      },
+      '.page-tab-btn:hover': {
+        'color': 'var(--bw-teal-dark, #004d4d)'
+      },
+      '.page-tab-btn.active': {
+        'color': 'var(--bw-teal-dark, #004d4d)',
+        'border-bottom-color': 'var(--bw-teal, #006666)',
+        'font-weight': '600'
+      },
+      '@media (max-width: 768px)': {
+        '.dashboard': { 'flex-direction': 'column', 'min-height': 'auto' },
+        '.sidebar': { 'width': '100%' }
+      }
+    }));
 
     // ── Theme Presets ──────────────────────────────────────────────
     var themePresets = [
@@ -640,6 +633,18 @@
         : { t: 'pre', a: { style: 'background:#1a1a1a;color:#e0e0e0;padding:1rem;border-radius:4px;font-size:0.8125rem;max-height:600px;overflow:auto;' }, c: { t: 'code', c: DASHBOARD_CODE } };
     }
 
+    // ── Page Header (TACO) ────────────────────────────────────────
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', c: 'Dashboard' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Full application layout with sidebar navigation, stat cards, charts, tables, and live theme switching.' }
+        ]
+      }
+    };
+
     // ── Master Render ────────────────────────────────────────────
     function renderAll() {
       var content;
@@ -652,14 +657,17 @@
         };
       }
 
-      bw.DOM('#dashboard-app', {
-        t: 'div', c: [
+      var dashboardContainer = {
+        t: 'div', a: { id: 'dashboard-app', class: 'content-container wide' },
+        c: [
           renderThemePicker(),
           { t: 'div', a: { style: 'height:1rem;' } },
           renderTabBar(),
           content
         ]
-      });
+      };
+
+      bw.DOM('#app', [pageHeader, dashboardContainer]);
     }
 
     // Initialize

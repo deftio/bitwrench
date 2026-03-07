@@ -352,12 +352,9 @@ const content = {
   }))
 };
 
-// Full page body
-const pageBody = {
+// App content TACO (mounted client-side via bw.DOM)
+const appContent = {
   t: 'div', c: [
-    // Nav placeholder
-    { t: 'div', a: { id: 'example-nav' }, c: '' },
-
     // Header
     { t: 'div', a: { class: 'page-header' }, c: {
       t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' }, c: [
@@ -390,97 +387,78 @@ const pageBody = {
   ]
 };
 
-const bodyHTML = bw.html(pageBody, { raw: true });
+// Serialize the TACO for client-side embedding
+const appContentJSON = JSON.stringify(appContent);
 
-// ─── Page CSS ────────────────────────────────────────────────────────────────
+// ─── Page CSS (as bw.css object for dogfooding) ─────────────────────────────
 
-const pageCss = `
-/* Search */
-.api-search-wrap { margin: 1.5rem 0; }
-.api-search-input {
-  width: 100%; padding: 0.6rem 1rem; font-size: 0.95rem;
-  border: 2px solid #d0d0d0; border-radius: 8px; outline: none;
-  font-family: inherit; transition: border-color 0.15s;
-}
-.api-search-input:focus { border-color: #006666; }
-
-/* TOC */
-.api-toc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem 2rem; margin: 1rem 0 2rem; }
-.api-toc-group h4 { margin: 0 0 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: #888; }
-.api-toc-link { display: block; padding: 0.15rem 0; color: #006666; text-decoration: none; font-size: 0.85rem; font-family: 'SF Mono', 'Fira Code', monospace; }
-.api-toc-link:hover { text-decoration: underline; }
-.api-toc-link.hidden { display: none; }
-
-/* Cards */
-.api-entry {
-  background: #fff; border: 1px solid #e4e4e4; border-radius: 8px;
-  padding: 1.25rem 1.5rem; margin-bottom: 1rem;
-  transition: box-shadow 0.15s;
-}
-.api-entry:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.api-entry.hidden { display: none; }
-
-/* Signature */
-.api-sig {
-  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 1rem;
-  font-weight: 600; color: #006666; margin: 0 0 0.5rem;
-  display: flex; align-items: baseline; gap: 0.5rem;
-}
-.api-anchor { color: #ccc; text-decoration: none; font-size: 0.85rem; }
-.api-anchor:hover { color: #006666; }
-
-/* Description */
-.api-desc { margin: 0 0 0.4rem; line-height: 1.6; color: #333; }
-.api-usedfor {
-  background: #e8f5f3; border-left: 3px solid #006666;
-  padding: 0.5rem 0.75rem; margin: 0.5rem 0; font-size: 0.9rem;
-  color: #444; border-radius: 0 4px 4px 0; line-height: 1.5;
-}
-
-/* Parameters */
-.api-params { margin: 0.75rem 0; }
-.api-param-row { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.2rem 0; flex-wrap: wrap; }
-.api-param-name { font-weight: 600; font-size: 0.85rem; color: #333; background: #f3f3f3; padding: 0.1em 0.4em; border-radius: 3px; }
-.api-param-type {
-  font-size: 0.8rem; color: #006666; background: #e8f5f3;
-  padding: 0.1em 0.4em; border-radius: 3px; font-family: 'SF Mono', monospace;
-}
-.api-param-desc { font-size: 0.875rem; color: #555; }
-
-/* Returns */
-.api-returns { font-size: 0.875rem; color: #555; margin: 0.5rem 0; }
-.api-returns-type {
-  background: #e8f5f3; color: #006666; padding: 0.1em 0.4em;
-  border-radius: 3px; font-weight: 600; font-size: 0.8rem;
-}
-
-/* Example */
-.api-example { margin: 0.75rem 0 0; }
-.api-example pre {
-  background: #1e293b; color: #e2e8f0; padding: 1rem 1.25rem;
-  border-radius: 6px; overflow-x: auto; margin: 0;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace;
-  font-size: 0.8125rem; line-height: 1.6;
-}
-
-/* See also */
-.api-see { font-size: 0.85rem; color: #888; margin-top: 0.5rem; }
-.api-see a { color: #006666; }
-
-/* Category headers */
-.api-category { margin-top: 2.5rem; }
-.api-category > h2 { border-bottom: 2px solid #006666; padding-bottom: 0.5rem; color: #333; }
-.api-category.hidden { display: none; }
-
-@media (max-width: 768px) {
-  .api-toc { grid-template-columns: repeat(2, 1fr); }
-  .api-entry { padding: 1rem; }
-  .api-param-row { flex-direction: column; gap: 0.15rem; }
-}
-@media (max-width: 480px) {
-  .api-toc { grid-template-columns: 1fr; }
-}
-`;
+const pageCssObj = `{
+      '.api-search-wrap': { 'margin': '1.5rem 0' },
+      '.api-search-input': {
+        'width': '100%', 'padding': '0.6rem 1rem', 'font-size': '0.95rem',
+        'border': '2px solid #d0d0d0', 'border-radius': '8px', 'outline': 'none',
+        'font-family': 'inherit', 'transition': 'border-color 0.15s'
+      },
+      '.api-search-input:focus': { 'border-color': '#006666' },
+      '.api-toc': { 'display': 'grid', 'grid-template-columns': 'repeat(3, 1fr)', 'gap': '0.75rem 2rem', 'margin': '1rem 0 2rem' },
+      '.api-toc-group h4': { 'margin': '0 0 0.25rem', 'font-size': '0.75rem', 'text-transform': 'uppercase', 'letter-spacing': '0.06em', 'color': '#888' },
+      '.api-toc-link': { 'display': 'block', 'padding': '0.15rem 0', 'color': '#006666', 'text-decoration': 'none', 'font-size': '0.85rem', 'font-family': "'SF Mono', 'Fira Code', monospace" },
+      '.api-toc-link:hover': { 'text-decoration': 'underline' },
+      '.api-toc-link.hidden': { 'display': 'none' },
+      '.api-entry': {
+        'background': '#fff', 'border': '1px solid #e4e4e4', 'border-radius': '8px',
+        'padding': '1.25rem 1.5rem', 'margin-bottom': '1rem',
+        'transition': 'box-shadow 0.15s'
+      },
+      '.api-entry:hover': { 'box-shadow': '0 2px 8px rgba(0,0,0,0.06)' },
+      '.api-entry.hidden': { 'display': 'none' },
+      '.api-sig': {
+        'font-family': "'SF Mono', 'Fira Code', monospace", 'font-size': '1rem',
+        'font-weight': '600', 'color': '#006666', 'margin': '0 0 0.5rem',
+        'display': 'flex', 'align-items': 'baseline', 'gap': '0.5rem'
+      },
+      '.api-anchor': { 'color': '#ccc', 'text-decoration': 'none', 'font-size': '0.85rem' },
+      '.api-anchor:hover': { 'color': '#006666' },
+      '.api-desc': { 'margin': '0 0 0.4rem', 'line-height': '1.6', 'color': '#333' },
+      '.api-usedfor': {
+        'background': '#e8f5f3', 'border-left': '3px solid #006666',
+        'padding': '0.5rem 0.75rem', 'margin': '0.5rem 0', 'font-size': '0.9rem',
+        'color': '#444', 'border-radius': '0 4px 4px 0', 'line-height': '1.5'
+      },
+      '.api-params': { 'margin': '0.75rem 0' },
+      '.api-param-row': { 'display': 'flex', 'align-items': 'baseline', 'gap': '0.5rem', 'padding': '0.2rem 0', 'flex-wrap': 'wrap' },
+      '.api-param-name': { 'font-weight': '600', 'font-size': '0.85rem', 'color': '#333', 'background': '#f3f3f3', 'padding': '0.1em 0.4em', 'border-radius': '3px' },
+      '.api-param-type': {
+        'font-size': '0.8rem', 'color': '#006666', 'background': '#e8f5f3',
+        'padding': '0.1em 0.4em', 'border-radius': '3px', 'font-family': "'SF Mono', monospace"
+      },
+      '.api-param-desc': { 'font-size': '0.875rem', 'color': '#555' },
+      '.api-returns': { 'font-size': '0.875rem', 'color': '#555', 'margin': '0.5rem 0' },
+      '.api-returns-type': {
+        'background': '#e8f5f3', 'color': '#006666', 'padding': '0.1em 0.4em',
+        'border-radius': '3px', 'font-weight': '600', 'font-size': '0.8rem'
+      },
+      '.api-example': { 'margin': '0.75rem 0 0' },
+      '.api-example pre': {
+        'background': '#1e293b', 'color': '#e2e8f0', 'padding': '1rem 1.25rem',
+        'border-radius': '6px', 'overflow-x': 'auto', 'margin': '0',
+        'font-family': "'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace",
+        'font-size': '0.8125rem', 'line-height': '1.6'
+      },
+      '.api-see': { 'font-size': '0.85rem', 'color': '#888', 'margin-top': '0.5rem' },
+      '.api-see a': { 'color': '#006666' },
+      '.api-category': { 'margin-top': '2.5rem' },
+      '.api-category > h2': { 'border-bottom': '2px solid #006666', 'padding-bottom': '0.5rem', 'color': '#333' },
+      '.api-category.hidden': { 'display': 'none' },
+      '@media (max-width: 768px)': {
+        '.api-toc': { 'grid-template-columns': 'repeat(2, 1fr)' },
+        '.api-entry': { 'padding': '1rem' },
+        '.api-param-row': { 'flex-direction': 'column', 'gap': '0.15rem' }
+      },
+      '@media (max-width: 480px)': {
+        '.api-toc': { 'grid-template-columns': '1fr' }
+      }
+    }`;
 
 // ─── Client-side search script ───────────────────────────────────────────────
 
@@ -538,12 +516,19 @@ const html = `<!DOCTYPE html>
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"><\/script>
-  <style>${pageCss}</style>
 </head>
 <body>
-${bodyHTML}
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
   <script>
     mountExampleNav('#example-nav', '08-api-reference.html');
+
+    bw.injectCSS(bw.css(${pageCssObj}));
+
+    var appContent = ${appContentJSON};
+    bw.DOM('#app', appContent, { raw: true });
+
     ${searchScript}
   <\/script>
 </body>

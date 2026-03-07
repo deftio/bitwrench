@@ -11,400 +11,426 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
-  <style>
-    /* Hero gradient */
-    .bw-hero-landing {
-      background: linear-gradient(135deg, #006666 0%, #003d3d 100%);
-      color: #fff;
-      padding: 5rem 0 4rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .bw-hero-landing::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .bw-hero-tagline {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin: 0 0 1rem;
-      letter-spacing: -0.5px;
-      line-height: 1.2;
-      max-width: 700px;
-    }
-    .bw-hero-sub {
-      font-size: 1.125rem;
-      opacity: 0.85;
-      max-width: 580px;
-      margin: 0 0 2rem;
-      line-height: 1.65;
-    }
-    .bw-hero-actions {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .bw-hero-actions a {
-      text-decoration: none;
-      font-size: 1rem;
-      padding: 0.7rem 1.75rem;
-      font-weight: 600;
-      border-radius: 6px;
-      transition: all 0.15s;
-    }
-    .bw-hero-primary {
-      background: #fff;
-      color: #006666;
-    }
-    .bw-hero-primary:hover {
-      background: #e0f2f1;
-      color: #004d4d;
-    }
-    .bw-hero-secondary {
-      background: transparent;
-      color: #fff;
-      border: 1.5px solid rgba(255,255,255,0.4);
-    }
-    .bw-hero-secondary:hover {
-      border-color: rgba(255,255,255,0.7);
-      background: rgba(255,255,255,0.08);
-    }
-    .bw-hero-version {
-      font-size: 0.8125rem;
-      opacity: 0.5;
-      margin-left: 0.5rem;
-    }
-
-    /* Install strip */
-    .bw-install-strip {
-      background: #222;
-      padding: 0.65rem 0;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .bw-install-inner {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .bw-install-label {
-      font-size: 0.8125rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: rgba(255,255,255,0.7);
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .bw-install-cmd {
-      color: #fff;
-      font-size: 1rem;
-      font-family: var(--bw-font-mono);
-      background: rgba(255,255,255,0.08);
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.15);
-    }
-    .bw-install-or {
-      color: rgba(255,255,255,0.45);
-      font-size: 0.875rem;
-    }
-    .bw-install-cdn {
-      color: rgba(255,255,255,0.85);
-      font-size: 0.9375rem;
-      font-family: var(--bw-font-mono);
-      background: rgba(255,255,255,0.08);
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      border: 1px solid rgba(255,255,255,0.15);
-    }
-
-    /* Stat strip */
-    .bw-stat-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
-      margin: 0;
-      padding: 0;
-    }
-    .bw-stat-item {
-      text-align: center;
-      padding: 0.75rem 0.5rem;
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-    }
-    .bw-stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--bw-teal);
-      line-height: 1;
-    }
-    .bw-stat-label {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      margin-top: 0.25rem;
-      color: var(--bw-text);
-    }
-    .bw-stat-sub {
-      font-size: 0.6875rem;
-      color: var(--bw-text-muted);
-      margin-top: 0.1rem;
-    }
-    @media (max-width: 600px) {
-      .bw-stat-strip { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-      .bw-stat-item { padding: 0.5rem; }
-      .bw-stat-value { font-size: 1.25rem; }
-    }
-
-    /* How It Works side-by-side */
-    .bw-how-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      align-items: start;
-    }
-    .bw-how-arrow {
-      text-align: center;
-      color: var(--bw-teal);
-      font-size: 1.5rem;
-      padding: 1rem 0;
-      display: none;
-    }
-    @media (max-width: 768px) {
-      .bw-how-grid { grid-template-columns: 1fr; }
-      .bw-how-arrow { display: block; }
-    }
-
-    /* Feature highlight cards */
-    .bw-feature-highlight {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.25rem;
-    }
-    .bw-fh-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1.25rem 1.5rem;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .bw-fh-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .bw-fh-icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-      display: block;
-    }
-    .bw-fh-card h4 {
-      margin: 0 0 0.4rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--bw-text);
-    }
-    .bw-fh-card p {
-      margin: 0;
-      font-size: 0.875rem;
-      color: var(--bw-text-secondary);
-      line-height: 1.55;
-    }
-    @media (max-width: 900px) {
-      .bw-feature-highlight { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 600px) {
-      .bw-feature-highlight { grid-template-columns: 1fr; }
-    }
-
-    /* Live demo section */
-    .bw-live-demo-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    @media (max-width: 768px) {
-      .bw-live-demo-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Page index */
-    .bw-page-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1rem;
-    }
-    .bw-page-link {
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }
-    .bw-page-link .bw-card {
-      height: 100%;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .bw-page-link:hover .bw-card {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .bw-page-category {
-      font-size: 0.6875rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 600;
-      color: var(--bw-teal);
-      margin-bottom: 0.75rem;
-    }
-
-    /* Footer */
-    .bw-site-footer {
-      text-align: center;
-      padding: 2.5rem 0 1.5rem;
-      color: var(--bw-text-muted);
-      font-size: 0.8125rem;
-    }
-    .bw-site-footer a {
-      color: var(--bw-text-secondary);
-      text-decoration: none;
-    }
-    .bw-site-footer a:hover {
-      color: var(--bw-teal);
-    }
-    .bw-footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 0.75rem;
-    }
-
-    /* Hero responsive */
-    @media (max-width: 768px) {
-      .bw-hero-landing { padding: 3rem 0 2.5rem; }
-      .bw-hero-tagline { font-size: 1.75rem; }
-      .bw-hero-sub { font-size: 1rem; }
-    }
-  </style>
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <!-- Hero -->
-  <div class="bw-hero-landing">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1 class="bw-hero-tagline">Build UI from plain JavaScript objects</h1>
-      <p class="bw-hero-sub">
-        Describe your interface as native JS objects. Render to HTML strings or mount to the DOM.
-        No JSX, no virtual DOM, no build step. Zero dependencies.
-      </p>
-      <div class="bw-hero-actions">
-        <a href="00-quick-start.html" class="bw-hero-primary">Get Started</a>
-        <a href="https://github.com/deftio/bitwrench" class="bw-hero-secondary">GitHub</a>
-        <span class="bw-hero-version" id="hero-ver"></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Install strip -->
-  <div class="bw-install-strip">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <div class="bw-install-inner">
-        <span class="bw-install-label">Install</span>
-        <code class="bw-install-cmd">npm install bitwrench</code>
-        <span class="bw-install-or">or</span>
-        <code class="bw-install-cdn">&lt;script src="bitwrench.umd.min.js"&gt;&lt;/script&gt;</code>
-        <span class="bw-install-or" style="margin-left: auto;"><a href="09-builds.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Downloads &amp; CDN &rarr;</a></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-
-    <!-- Stats -->
-    <div class="demo-section">
-      <div class="demo-content">
-        <div class="bw-stat-strip" id="stat-strip"></div>
-      </div>
-    </div>
-
-    <!-- How It Works -->
-    <div class="demo-section">
-      <h2>How It Works</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1.25rem;">
-          Describe your UI as plain objects using the <strong>TACO</strong> format &mdash;
-          <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions.
-          Nest them, loop over them, compose them with regular JS.
-          Then render with <code>bw.html()</code> or mount with <code>bw.DOM()</code>.
-        </p>
-        <div class="bw-how-grid">
-          <div>
-            <div class="bw-code-label">JavaScript</div>
-            <div id="how-code"></div>
-          </div>
-          <div>
-            <div class="bw-code-label" style="color: var(--bw-teal);">Result</div>
-            <div id="how-result" class="bw-demo-result"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Key Features -->
-    <div class="demo-section">
-      <h2>What You Get</h2>
-      <div class="demo-content">
-        <div class="bw-feature-highlight" id="features"></div>
-      </div>
-    </div>
-
-    <!-- Live Demos -->
-    <div class="demo-section">
-      <h2>Live Examples</h2>
-      <div class="demo-content">
-        <div class="bw-live-demo-grid" id="live-demos"></div>
-      </div>
-    </div>
-
-    <!-- Explore the Docs -->
-    <div class="demo-section">
-      <h2>Explore the Docs</h2>
-      <div class="demo-content">
-        <div id="page-index"></div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="bw-site-footer">
-      <div class="bw-footer-links">
-        <a href="https://github.com/deftio/bitwrench">GitHub</a>
-        <a href="https://www.npmjs.com/package/bitwrench">npm</a>
-        <a href="08-api-reference.html">API Reference</a>
-        <a href="09-builds.html">Downloads</a>
-      </div>
-      <p style="margin: 0;">
-        BSD-2-Clause License &middot; Created by <a href="https://deftio.com">Manu Chatterjee</a>
-      </p>
-    </div>
-
-  </div>
+  <div id="app"></div>
 
   <script>
     // Mount nav
     mountExampleNav('#example-nav', 'index.html');
 
-    // Version badge
-    (function() {
-      var el = document.getElementById('hero-ver');
-      if (el && bw.version) el.textContent = 'v' + bw.version;
-    })();
+    // ---- Page CSS via bw.injectCSS ----
+    bw.injectCSS(bw.css({
+      '.bw-hero-landing': {
+        background: 'linear-gradient(135deg, #006666 0%, #003d3d 100%)',
+        color: '#fff',
+        padding: '5rem 0 4rem',
+        position: 'relative',
+        overflow: 'hidden'
+      },
+      '.bw-hero-landing::before': {
+        content: "''",
+        position: 'absolute',
+        top: '-50%',
+        right: '-20%',
+        width: '600px',
+        height: '600px',
+        'border-radius': '50%',
+        background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)',
+        'pointer-events': 'none'
+      },
+      '.bw-hero-tagline': {
+        'font-size': '2.5rem',
+        'font-weight': '700',
+        margin: '0 0 1rem',
+        'letter-spacing': '-0.5px',
+        'line-height': '1.2',
+        'max-width': '700px'
+      },
+      '.bw-hero-sub': {
+        'font-size': '1.125rem',
+        opacity: '0.85',
+        'max-width': '580px',
+        margin: '0 0 2rem',
+        'line-height': '1.65'
+      },
+      '.bw-hero-actions': {
+        display: 'flex',
+        gap: '1rem',
+        'flex-wrap': 'wrap',
+        'align-items': 'center',
+        'justify-content': 'flex-start'
+      },
+      '.bw-hero-actions a': {
+        'text-decoration': 'none',
+        'font-size': '1rem',
+        padding: '0.7rem 1.75rem',
+        'font-weight': '600',
+        'border-radius': '6px',
+        transition: 'all 0.15s'
+      },
+      '.bw-hero-primary': {
+        background: '#fff',
+        color: '#006666'
+      },
+      '.bw-hero-primary:hover': {
+        background: '#e0f2f1',
+        color: '#004d4d'
+      },
+      '.bw-hero-secondary': {
+        background: 'transparent',
+        color: '#fff',
+        border: '1.5px solid rgba(255,255,255,0.4)'
+      },
+      '.bw-hero-secondary:hover': {
+        'border-color': 'rgba(255,255,255,0.7)',
+        background: 'rgba(255,255,255,0.08)'
+      },
+      '.bw-hero-version': {
+        'font-size': '0.8125rem',
+        opacity: '0.5',
+        'margin-left': '0.5rem'
+      },
+      '.bw-install-strip': {
+        background: '#222',
+        padding: '0.65rem 0',
+        'border-top': '1px solid rgba(255,255,255,0.08)',
+        'border-bottom': '1px solid rgba(255,255,255,0.08)'
+      },
+      '.bw-install-inner': {
+        display: 'flex',
+        'align-items': 'center',
+        gap: '1rem',
+        'flex-wrap': 'wrap'
+      },
+      '.bw-install-label': {
+        'font-size': '0.8125rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em',
+        color: 'rgba(255,255,255,0.7)',
+        'font-weight': '700',
+        'white-space': 'nowrap'
+      },
+      '.bw-install-cmd': {
+        color: '#fff',
+        'font-size': '1rem',
+        'font-family': 'var(--bw-font-mono)',
+        background: 'rgba(255,255,255,0.08)',
+        padding: '0.2rem 0.6rem',
+        'border-radius': '4px',
+        border: '1px solid rgba(255,255,255,0.15)'
+      },
+      '.bw-install-or': {
+        color: 'rgba(255,255,255,0.45)',
+        'font-size': '0.875rem'
+      },
+      '.bw-install-cdn': {
+        color: 'rgba(255,255,255,0.85)',
+        'font-size': '0.9375rem',
+        'font-family': 'var(--bw-font-mono)',
+        background: 'rgba(255,255,255,0.08)',
+        padding: '0.2rem 0.6rem',
+        'border-radius': '4px',
+        border: '1px solid rgba(255,255,255,0.15)'
+      },
+      '.bw-stat-strip': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(4, 1fr)',
+        gap: '0.75rem',
+        margin: '0',
+        padding: '0'
+      },
+      '.bw-stat-item': {
+        'text-align': 'center',
+        padding: '0.75rem 0.5rem',
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)'
+      },
+      '.bw-stat-value': {
+        'font-size': '1.5rem',
+        'font-weight': '700',
+        color: 'var(--bw-teal)',
+        'line-height': '1'
+      },
+      '.bw-stat-label': {
+        'font-size': '0.8125rem',
+        'font-weight': '600',
+        'margin-top': '0.25rem',
+        color: 'var(--bw-text)'
+      },
+      '.bw-stat-sub': {
+        'font-size': '0.6875rem',
+        color: 'var(--bw-text-muted)',
+        'margin-top': '0.1rem'
+      },
+      '@media (max-width: 600px)': {
+        '.bw-stat-strip': { 'grid-template-columns': 'repeat(2, 1fr)', gap: '0.5rem' },
+        '.bw-stat-item': { padding: '0.5rem' },
+        '.bw-stat-value': { 'font-size': '1.25rem' }
+      },
+      '.bw-how-grid': {
+        display: 'grid',
+        'grid-template-columns': '1fr 1fr',
+        gap: '1.5rem',
+        'align-items': 'start'
+      },
+      '.bw-how-arrow': {
+        'text-align': 'center',
+        color: 'var(--bw-teal)',
+        'font-size': '1.5rem',
+        padding: '1rem 0',
+        display: 'none'
+      },
+      '@media (max-width: 768px)': {
+        '.bw-how-grid': { 'grid-template-columns': '1fr' },
+        '.bw-how-arrow': { display: 'block' },
+        '.bw-hero-landing': { padding: '3rem 0 2.5rem' },
+        '.bw-hero-tagline': { 'font-size': '1.75rem' },
+        '.bw-hero-sub': { 'font-size': '1rem' }
+      },
+      '.bw-feature-highlight': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(3, 1fr)',
+        gap: '1.25rem'
+      },
+      '.bw-fh-card': {
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '1.25rem 1.5rem',
+        transition: 'transform 0.15s, box-shadow 0.15s'
+      },
+      '.bw-fh-card:hover': {
+        transform: 'translateY(-2px)',
+        'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
+      },
+      '.bw-fh-icon': {
+        'font-size': '1.5rem',
+        'margin-bottom': '0.5rem',
+        display: 'block'
+      },
+      '.bw-fh-card h4': {
+        margin: '0 0 0.4rem',
+        'font-size': '1rem',
+        'font-weight': '600',
+        color: 'var(--bw-text)'
+      },
+      '.bw-fh-card p': {
+        margin: '0',
+        'font-size': '0.875rem',
+        color: 'var(--bw-text-secondary)',
+        'line-height': '1.55'
+      },
+      '@media (max-width: 900px)': {
+        '.bw-feature-highlight': { 'grid-template-columns': 'repeat(2, 1fr)' }
+      },
+      '@media (max-width: 600px) ': {
+        '.bw-feature-highlight': { 'grid-template-columns': '1fr' }
+      },
+      '.bw-live-demo-grid': {
+        display: 'grid',
+        'grid-template-columns': '1fr 1fr',
+        gap: '1.5rem'
+      },
+      '@media (max-width: 768px) ': {
+        '.bw-live-demo-grid': { 'grid-template-columns': '1fr' }
+      },
+      '.bw-page-grid': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(260px, 1fr))',
+        gap: '1rem'
+      },
+      '.bw-page-link': {
+        'text-decoration': 'none',
+        color: 'inherit',
+        display: 'block'
+      },
+      '.bw-page-link .bw-card': {
+        height: '100%',
+        transition: 'transform 0.15s, box-shadow 0.15s'
+      },
+      '.bw-page-link:hover .bw-card': {
+        transform: 'translateY(-2px)',
+        'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
+      },
+      '.bw-page-category': {
+        'font-size': '0.6875rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em',
+        'font-weight': '600',
+        color: 'var(--bw-teal)',
+        'margin-bottom': '0.75rem'
+      },
+      '.bw-site-footer': {
+        'text-align': 'center',
+        padding: '2.5rem 0 1.5rem',
+        color: 'var(--bw-text-muted)',
+        'font-size': '0.8125rem'
+      },
+      '.bw-site-footer a': {
+        color: 'var(--bw-text-secondary)',
+        'text-decoration': 'none'
+      },
+      '.bw-site-footer a:hover': {
+        color: 'var(--bw-teal)'
+      },
+      '.bw-footer-links': {
+        display: 'flex',
+        'justify-content': 'center',
+        gap: '1.5rem',
+        'flex-wrap': 'wrap',
+        'margin-bottom': '0.75rem'
+      }
+    }), { id: 'index-page-styles' });
+
+    // ---- Build page structure as TACO ----
+    var hero = {
+      t: 'div', a: { class: 'bw-hero-landing' },
+      c: [{
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', a: { class: 'bw-hero-tagline' }, c: 'Build UI from plain JavaScript objects' },
+          {
+            t: 'p', a: { class: 'bw-hero-sub' },
+            c: 'Describe your interface as native JS objects. Render to HTML strings or mount to the DOM. No JSX, no virtual DOM, no build step. Zero dependencies.'
+          },
+          {
+            t: 'div', a: { class: 'bw-hero-actions' },
+            c: [
+              { t: 'a', a: { href: '00-quick-start.html', class: 'bw-hero-primary' }, c: 'Get Started' },
+              { t: 'a', a: { href: 'https://github.com/deftio/bitwrench', class: 'bw-hero-secondary' }, c: 'GitHub' }
+            ]
+          }
+        ]
+      }]
+    };
+
+    var installStrip = {
+      t: 'div', a: { class: 'bw-install-strip' },
+      c: [{
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [{
+          t: 'div', a: { class: 'bw-install-inner' },
+          c: [
+            { t: 'span', a: { class: 'bw-install-label' }, c: 'Install' },
+            { t: 'code', a: { class: 'bw-install-cmd' }, c: 'npm install bitwrench' },
+            { t: 'span', a: { class: 'bw-install-or' }, c: 'or' },
+            { t: 'code', a: { class: 'bw-install-cdn' }, c: '<script src="bitwrench.umd.min.js"><\/script>' },
+            {
+              t: 'span', a: { class: 'bw-install-or', style: 'margin-left: auto;' },
+              c: {
+                t: 'a',
+                a: { href: '09-builds.html', style: 'color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; font-weight: 500;' },
+                c: bw.raw('Downloads &amp; CDN &rarr;')
+              }
+            }
+          ]
+        }]
+      }]
+    };
+
+    var statsSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [{
+        t: 'div', a: { class: 'demo-content' },
+        c: [{ t: 'div', a: { class: 'bw-stat-strip', id: 'stat-strip' } }]
+      }]
+    };
+
+    var howItWorksSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'How It Works' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            {
+              t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1.25rem;' },
+              c: bw.raw('Describe your UI as plain objects using the <strong>TACO</strong> format &mdash; <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions. Nest them, loop over them, compose them with regular JS. Then render with <code>bw.html()</code> or mount with <code>bw.DOM()</code>.')
+            },
+            {
+              t: 'div', a: { class: 'bw-how-grid' },
+              c: [
+                {
+                  t: 'div', c: [
+                    { t: 'div', a: { class: 'bw-code-label' }, c: 'JavaScript' },
+                    { t: 'div', a: { id: 'how-code' } }
+                  ]
+                },
+                {
+                  t: 'div', c: [
+                    { t: 'div', a: { class: 'bw-code-label', style: 'color: var(--bw-teal);' }, c: 'Result' },
+                    { t: 'div', a: { id: 'how-result', class: 'bw-demo-result' } }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    var featuresSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'What You Get' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [{ t: 'div', a: { class: 'bw-feature-highlight', id: 'features' } }]
+        }
+      ]
+    };
+
+    var liveDemosSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Live Examples' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [{ t: 'div', a: { class: 'bw-live-demo-grid', id: 'live-demos' } }]
+        }
+      ]
+    };
+
+    var pageIndexSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Explore the Docs' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [{ t: 'div', a: { id: 'page-index' } }]
+        }
+      ]
+    };
+
+    var footer = {
+      t: 'div', a: { class: 'bw-site-footer' },
+      c: [
+        {
+          t: 'div', a: { class: 'bw-footer-links' },
+          c: [
+            { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'GitHub' },
+            { t: 'a', a: { href: 'https://www.npmjs.com/package/bitwrench' }, c: 'npm' },
+            { t: 'a', a: { href: '08-api-reference.html' }, c: 'API Reference' },
+            { t: 'a', a: { href: '09-builds.html' }, c: 'Downloads' }
+          ]
+        },
+        {
+          t: 'p', a: { style: 'margin: 0;' },
+          c: bw.raw('BSD-2-Clause License &middot; Created by <a href="https://deftio.com">Manu Chatterjee</a>')
+        }
+      ]
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [statsSection, howItWorksSection, featuresSection, liveDemosSection, pageIndexSection, footer]
+    };
+
+    // Mount the full page
+    bw.DOM('#app', [hero, installStrip, contentWrapper]);
 
     // ---- Stat strip ----
     (function() {
@@ -566,37 +592,38 @@
       };
 
       // Right: data table + chart
-      var tableData = [
-        { format: 'UMD', file: 'bitwrench.umd.min.js', use: 'Browsers + Node' },
-        { format: 'ESM', file: 'bitwrench.esm.min.js', use: 'Modern bundlers' },
-        { format: 'CJS', file: 'bitwrench.cjs.min.js', use: 'Node require()' },
-        { format: 'ES5', file: 'bitwrench.es5.min.js', use: 'Legacy (IE11)' }
-      ];
-
       var dataDemo = {
         t: 'div', c: [
-          { t: 'h4', a: { style: 'margin: 0 0 1rem; font-size: 1rem; font-weight: 600;' }, c: 'Tables & Charts' },
+          { t: 'h4', a: { style: 'margin: 0 0 1rem; font-size: 1rem; font-weight: 600;' }, c: 'Data Tables & Charts' },
           bw.makeTable({
-            data: tableData,
-            columns: ['format', 'file', 'use'],
-            headers: ['Format', 'File', 'Use Case'],
+            data: [
+              { format: 'UMD', file: 'bitwrench.umd.min.js', use: 'Browsers + Node' },
+              { format: 'ESM', file: 'bitwrench.esm.min.js', use: 'Modern bundlers' },
+              { format: 'CJS', file: 'bitwrench.cjs.min.js', use: 'Node require()' },
+              { format: 'ES5', file: 'bitwrench.es5.min.js', use: 'Legacy (IE11)' }
+            ],
+            columns: [
+              { key: 'format', label: 'Format' },
+              { key: 'file', label: 'File' },
+              { key: 'use', label: 'Use Case' }
+            ],
             striped: true,
-            size: 'sm'
+            sortable: false
           }),
           {
             t: 'div', a: { style: 'margin-top: 1rem;' },
             c: bw.makeBarChart({
               data: [
-                { label: 'UMD', value: 93 },
-                { label: 'ESM', value: 87 },
-                { label: 'CJS', value: 91 },
-                { label: 'ES5', value: 96 }
+                { label: 'Layout', value: 12 },
+                { label: 'Forms', value: 8 },
+                { label: 'Data', value: 6 },
+                { label: 'Nav', value: 5 },
+                { label: 'Feedback', value: 5 }
               ],
-              title: 'Browser Compatibility Score',
+              title: 'Components by Category',
               color: '#006666',
               height: '120px',
-              showValues: true,
-              formatValue: function(v) { return v + '%'; }
+              showValues: true
             })
           }
         ]
