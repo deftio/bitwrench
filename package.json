@@ -104,7 +104,8 @@
 		"build:builds": "node tools/build-builds-manifest.js",
 		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference",
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
-		"release": "node tools/release.js"
+		"release": "node tools/release.js",
+		"start-release": "node tools/start-release.js"
 	},
 	"homepage": "http://deftio.com/bitwrench",
 	"overrides": {
