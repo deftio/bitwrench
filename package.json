@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.0.9",
+	"version": "2.0.10",
 	"description": "A library for javascript UI functions.",
 	"main": "./dist/bitwrench.umd.js",
 	"repository": {
@@ -103,7 +103,8 @@
 		"build:api-reference": "node tools/build-api-reference.js",
 		"build:builds": "node tools/build-builds-manifest.js",
 		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference",
-		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js"
+		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
+		"release": "node tools/release.js"
 	},
 	"homepage": "http://deftio.com/bitwrench",
 	"overrides": {
