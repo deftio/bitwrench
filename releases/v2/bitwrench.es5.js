@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.4 | BSD-2-Clause | http://deftio.com/bitwrench */
+/*! bitwrench v2.0.10 | BSD-2-Clause | http://deftio.com/bitwrench */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -22,12 +22,12 @@
   function _defineProperties(e, r) {
     for (var t = 0; t < r.length; t++) {
       var o = r[t];
-      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
+      o.enumerable = o.enumerable || false, o.configurable = true, "value" in o && (o.writable = true), Object.defineProperty(e, _toPropertyKey(o.key), o);
     }
   }
   function _createClass(e, r, t) {
     return r && _defineProperties(e.prototype, r), Object.defineProperty(e, "prototype", {
-      writable: !1
+      writable: false
     }), e;
   }
   function _createForOfIteratorHelper(r, e) {
@@ -41,9 +41,9 @@
           s: F,
           n: function () {
             return n >= r.length ? {
-              done: !0
+              done: true
             } : {
-              done: !1,
+              done: false,
               value: r[n++]
             };
           },
@@ -56,8 +56,8 @@
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
     var o,
-      a = !0,
-      u = !1;
+      a = true,
+      u = false;
     return {
       s: function () {
         t = t.call(r);
@@ -67,7 +67,7 @@
         return a = r.done, r;
       },
       e: function (r) {
-        u = !0, o = r;
+        u = true, o = r;
       },
       f: function () {
         try {
@@ -81,9 +81,9 @@
   function _defineProperty(e, r, t) {
     return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
       value: t,
-      enumerable: !0,
-      configurable: !0,
-      writable: !0
+      enumerable: true,
+      configurable: true,
+      writable: true
     }) : e[r] = t, e;
   }
   function _iterableToArray(r) {
@@ -97,12 +97,12 @@
         i,
         u,
         a = [],
-        f = !0,
-        o = !1;
+        f = true,
+        o = false;
       try {
         if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
       } catch (r) {
-        o = !0, n = r;
+        o = true, n = r;
       } finally {
         try {
           if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
@@ -132,7 +132,7 @@
   function _objectSpread2(e) {
     for (var r = 1; r < arguments.length; r++) {
       var t = null != arguments[r] ? arguments[r] : {};
-      r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
+      r % 2 ? ownKeys(Object(t), true).forEach(function (r) {
         _defineProperty(e, r, t[r]);
       }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
         Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
@@ -146,8 +146,8 @@
       r,
       i = _objectWithoutPropertiesLoose(e, t);
     if (Object.getOwnPropertySymbols) {
-      var s = Object.getOwnPropertySymbols(e);
-      for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
+      var n = Object.getOwnPropertySymbols(e);
+      for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
     }
     return i;
   }
@@ -155,7 +155,7 @@
     if (null == r) return {};
     var t = {};
     for (var n in r) if ({}.hasOwnProperty.call(r, n)) {
-      if (e.includes(n)) continue;
+      if (-1 !== e.indexOf(n)) continue;
       t[n] = r[n];
     }
     return t;
@@ -170,7 +170,7 @@
     if ("object" != typeof t || !t) return t;
     var e = t[Symbol.toPrimitive];
     if (void 0 !== e) {
-      var i = e.call(t, r || "default");
+      var i = e.call(t, r);
       if ("object" != typeof i) return i;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
@@ -203,38 +203,962 @@
    */
 
   var VERSION_INFO = {
-    version: '2.0.4',
+    version: '2.0.10',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'http://deftio.com/bitwrench',
-    repository: 'git://github.com/deftio/bitwrench.git',
+    repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-05T06:16:48.079Z'
+    buildDate: '2026-03-07T03:13:33.261Z'
   };
 
-  var _typography, _grid;
   /**
-   * Bitwrench v2 Default Styles
+   * Bitwrench Color Utilities
    *
-   * CSS-in-JS style definitions providing a complete, Bootstrap-inspired
-   * design system. Styles are defined as nested JavaScript objects that
-   * bw.css() converts to CSS strings and bw.injectCSS() injects into the DOM.
+   * Standalone color math helpers used by both bitwrench.js and bitwrench-styles.js.
+   * Extracted to avoid circular dependencies. bitwrench.js re-exports these as
+   * bw.colorParse, bw.colorRgbToHsl, etc.
    *
-   * The module exports:
-   * - {@link defaultStyles} - All style categories as a structured object
-   * - {@link getAllStyles} - Merges all categories into a flat CSS rules object
-   * - {@link theme} - Design token configuration (colors, breakpoints, spacing, typography)
-   *
-   * Style categories: root (CSS variables), reset, typography, grid, buttons,
-   * cards, forms, navigation, tables, alerts, badges, progress, tabs, listGroups,
-   * pagination, breadcrumb, hero, features, enhancedCards, sections, cta,
-   * utilities, responsive.
-   *
-   * @module bitwrench-styles
+   * @module bitwrench-color-utils
    * @license BSD-2-Clause
-   * @author M A Chatterjee <deftio [at] deftio [dot] com>
    */
+
+  /**
+   * Clamp a value between min and max.
+   * @param {number} val
+   * @param {number} min
+   * @param {number} max
+   * @returns {number}
+   */
+  function clip(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+  }
+
+  /**
+   * Parse a CSS color string to [r, g, b, a, "rgb"].
+   * Handles #hex, rgb(), rgba(), hsl(), hsla(), and bitwrench color arrays.
+   * @param {string|Array} s - Color string or array
+   * @param {number} [defAlpha=255] - Default alpha
+   * @returns {Array} [r, g, b, a, "rgb"]
+   */
+  function colorParse(s, defAlpha) {
+    if (defAlpha === undefined) defAlpha = 255;
+    var r = [0, 0, 0, defAlpha, "rgb"];
+    if (Array.isArray(s)) {
+      var df = [0, 0, 0, 255, "rgb"];
+      for (var p = 0; p < s.length && p < df.length; p++) {
+        df[p] = s[p];
+      }
+      return df;
+    }
+    s = String(s).replace(/\s/g, "");
+    if (s[0] === "#") {
+      var hex = s.slice(1);
+      if (hex.length === 3 || hex.length === 4) {
+        for (var i = 0; i < hex.length; i++) {
+          r[i] = parseInt(hex[i] + hex[i], 16);
+        }
+      } else if (hex.length === 6 || hex.length === 8) {
+        for (var j = 0; j < hex.length; j += 2) {
+          r[j / 2] = parseInt(hex.substring(j, j + 2), 16);
+        }
+      }
+    } else {
+      var match = s.match(/^(rgb|hsl)a?\(([^)]+)\)$/i);
+      if (match) {
+        var type = match[1].toLowerCase();
+        var values = match[2].split(",").map(function (v) {
+          return parseFloat(v);
+        });
+        if (type === "rgb") {
+          r[0] = values[0] || 0;
+          r[1] = values[1] || 0;
+          r[2] = values[2] || 0;
+          r[3] = values[3] !== undefined ? values[3] * 255 : defAlpha;
+          r[4] = "rgb";
+        } else if (type === "hsl") {
+          var rgb = colorHslToRgb(values[0] || 0, values[1] || 0, values[2] || 0, values[3] !== undefined ? values[3] * 255 : defAlpha);
+          return rgb;
+        }
+      }
+    }
+    return r;
+  }
+
+  /**
+   * Convert RGB to HSL.
+   * @param {number|Array} r - Red 0-255, or [r,g,b,a] array
+   * @param {number} [g] - Green 0-255
+   * @param {number} [b] - Blue 0-255
+   * @param {number} [a=255] - Alpha 0-255
+   * @param {boolean} [rnd=true] - Round results
+   * @returns {Array} [h, s, l, a, "hsl"]
+   */
+  function colorRgbToHsl(r, g, b, a, rnd) {
+    if (a === undefined) a = 255;
+    if (Array.isArray(r)) {
+      g = r[1];
+      b = r[2];
+      a = r[3] !== undefined ? r[3] : 255;
+      r = r[0];
+    }
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var h,
+      s,
+      l = (max + min) / 2;
+    if (max === min) {
+      h = s = 0;
+    } else {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r:
+          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+          break;
+        case g:
+          h = ((b - r) / d + 2) / 6;
+          break;
+        case b:
+          h = ((r - g) / d + 4) / 6;
+          break;
+      }
+    }
+    h *= 360;
+    s *= 100;
+    l *= 100;
+    return [h, s, l, a, "hsl"];
+  }
+
+  /**
+   * Convert HSL to RGB.
+   * @param {number|Array} h - Hue 0-360, or [h,s,l,a] array
+   * @param {number} [s] - Saturation 0-100
+   * @param {number} [l] - Lightness 0-100
+   * @param {number} [a=255] - Alpha 0-255
+   * @param {boolean} [rnd=true] - Round results
+   * @returns {Array} [r, g, b, a, "rgb"]
+   */
+  function colorHslToRgb(h, s, l, a, rnd) {
+    if (a === undefined) a = 255;
+    if (rnd === undefined) rnd = true;
+    if (Array.isArray(h)) {
+      s = h[1];
+      l = h[2];
+      a = h[3] !== undefined ? h[3] : 255;
+      h = h[0];
+    }
+    var hNorm = h / 360;
+    var sNorm = s / 100;
+    var lNorm = l / 100;
+    var r, g, b;
+    if (sNorm === 0) {
+      r = g = b = lNorm * 255;
+    } else {
+      var hue2rgb = function hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      var q = lNorm < 0.5 ? lNorm * (1 + sNorm) : lNorm + sNorm - lNorm * sNorm;
+      var p = 2 * lNorm - q;
+      r = hue2rgb(p, q, hNorm + 1 / 3) * 255;
+      g = hue2rgb(p, q, hNorm) * 255;
+      b = hue2rgb(p, q, hNorm - 1 / 3) * 255;
+    }
+    if (rnd) {
+      r = Math.round(r);
+      g = Math.round(g);
+      b = Math.round(b);
+      a = Math.round(a);
+    }
+    return [r, g, b, a, "rgb"];
+  }
+
+  // =========================================================================
+  // New theme derivation helpers
+  // =========================================================================
+
+  /**
+   * Convert hex color to HSL array [h, s, l].
+   * @param {string} hex - Hex color e.g. '#006666'
+   * @returns {Array} [h, s, l] where h=0-360, s=0-100, l=0-100
+   */
+  function hexToHsl(hex) {
+    var rgb = colorParse(hex);
+    var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255);
+    return [hsl[0], hsl[1], hsl[2]];
+  }
+
+  /**
+   * Convert HSL array to hex color string.
+   * @param {Array} hsl - [h, s, l] where h=0-360, s=0-100, l=0-100
+   * @returns {string} Hex color e.g. '#006666'
+   */
+  function hslToHex(hsl) {
+    var rgb = colorHslToRgb(hsl[0], hsl[1], hsl[2], 255, true);
+    return '#' + ('0' + rgb[0].toString(16)).slice(-2) + ('0' + rgb[1].toString(16)).slice(-2) + ('0' + rgb[2].toString(16)).slice(-2);
+  }
+
+  /**
+   * Adjust lightness of a hex color by a percentage amount.
+   * Positive = lighten, negative = darken.
+   * @param {string} hex - Hex color
+   * @param {number} amount - Lightness change in percentage points (-100 to 100)
+   * @returns {string} Adjusted hex color
+   */
+  function adjustLightness(hex, amount) {
+    var hsl = hexToHsl(hex);
+    hsl[2] = clip(hsl[2] + amount, 0, 100);
+    return hslToHex(hsl);
+  }
+
+  /**
+   * Mix two hex colors via RGB linear interpolation.
+   * @param {string} hex1 - First hex color
+   * @param {string} hex2 - Second hex color (e.g. '#ffffff' for tinting)
+   * @param {number} ratio - 0 = all hex1, 1 = all hex2
+   * @returns {string} Mixed hex color
+   */
+  function mixColor(hex1, hex2, ratio) {
+    var c1 = colorParse(hex1);
+    var c2 = colorParse(hex2);
+    var r = Math.round(c1[0] + (c2[0] - c1[0]) * ratio);
+    var g = Math.round(c1[1] + (c2[1] - c1[1]) * ratio);
+    var b = Math.round(c1[2] + (c2[2] - c1[2]) * ratio);
+    return '#' + ('0' + r.toString(16)).slice(-2) + ('0' + g.toString(16)).slice(-2) + ('0' + b.toString(16)).slice(-2);
+  }
+
+  /**
+   * Compute WCAG 2.0 relative luminance of a hex color.
+   * @param {string} hex - Hex color
+   * @returns {number} Relative luminance 0-1
+   */
+  function relativeLuminance(hex) {
+    var rgb = colorParse(hex);
+    var vals = [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255].map(function (v) {
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * vals[0] + 0.7152 * vals[1] + 0.0722 * vals[2];
+  }
+
+  /**
+   * Return '#fff' or '#000' for readable text on a given background color.
+   * Uses WCAG luminance threshold.
+   * @param {string} hex - Background hex color
+   * @returns {string} '#fff' or '#000'
+   */
+  function textOnColor(hex) {
+    return relativeLuminance(hex) > 0.179 ? '#000' : '#fff';
+  }
+
+  /**
+   * Derive a full shade palette for a single semantic color.
+   * @param {string} hex - Base color hex
+   * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
+   */
+  function deriveShades(hex) {
+    var rgb = colorParse(hex);
+    return {
+      base: hex,
+      hover: adjustLightness(hex, -10),
+      active: adjustLightness(hex, -15),
+      light: mixColor(hex, '#ffffff', 0.85),
+      darkText: adjustLightness(hex, -40),
+      border: mixColor(hex, '#ffffff', 0.60),
+      focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
+      textOn: textOnColor(hex)
+    };
+  }
+
+  /**
+   * Derive complete palette from a theme config object.
+   * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
+   * @returns {Object} Full palette with shades for all 8 semantic colors + tertiary
+   */
+  function derivePalette(config) {
+    var defaults = {
+      success: '#198754',
+      danger: '#dc3545',
+      warning: '#ffc107',
+      info: '#0dcaf0',
+      light: '#f8f9fa',
+      dark: '#212529'
+    };
+    var palette = {
+      primary: deriveShades(config.primary),
+      secondary: deriveShades(config.secondary),
+      tertiary: deriveShades(config.tertiary),
+      success: deriveShades(config.success || defaults.success),
+      danger: deriveShades(config.danger || defaults.danger),
+      warning: deriveShades(config.warning || defaults.warning),
+      info: deriveShades(config.info || defaults.info),
+      light: deriveShades(config.light || defaults.light),
+      dark: deriveShades(config.dark || defaults.dark)
+    };
+    return palette;
+  }
+
+  var _typography, _grid;
+
+  // =========================================================================
+  // Layout presets
+  // =========================================================================
+
+  var SPACING_PRESETS = {
+    compact: {
+      btn: '0.3rem 0.8rem',
+      card: '0.875rem 1rem',
+      alert: '0.625rem 1rem',
+      cell: '0.5rem 0.75rem',
+      input: '0.375rem 0.7rem'
+    },
+    normal: {
+      btn: '0.5rem 1.125rem',
+      card: '1.25rem 1.5rem',
+      alert: '0.875rem 1.25rem',
+      cell: '0.75rem 1rem',
+      input: '0.5rem 0.875rem'
+    },
+    spacious: {
+      btn: '0.75rem 1.5rem',
+      card: '1.75rem 2rem',
+      alert: '1.125rem 1.5rem',
+      cell: '1rem 1.25rem',
+      input: '0.75rem 1.125rem'
+    }
+  };
+  var RADIUS_PRESETS = {
+    none: {
+      btn: '0',
+      card: '0',
+      badge: '0',
+      alert: '0',
+      input: '0'
+    },
+    sm: {
+      btn: '4px',
+      card: '4px',
+      badge: '.25rem',
+      alert: '4px',
+      input: '4px'
+    },
+    md: {
+      btn: '6px',
+      card: '8px',
+      badge: '.375rem',
+      alert: '8px',
+      input: '6px'
+    },
+    lg: {
+      btn: '10px',
+      card: '12px',
+      badge: '.5rem',
+      alert: '12px',
+      input: '10px'
+    },
+    pill: {
+      btn: '50rem',
+      card: '1rem',
+      badge: '50rem',
+      alert: '1rem',
+      input: '50rem'
+    }
+  };
+
+  /**
+   * Default palette config — matches existing hardcoded colors
+   */
+  var DEFAULT_PALETTE_CONFIG = {
+    primary: '#006666',
+    secondary: '#6c757d',
+    tertiary: '#006666',
+    success: '#198754',
+    danger: '#dc3545',
+    warning: '#ffc107',
+    info: '#0dcaf0',
+    light: '#f8f9fa',
+    dark: '#212529'
+  };
+
+  /**
+   * Built-in theme presets — named color combinations
+   * Each preset provides primary, secondary, and tertiary seed colors.
+   */
+  var THEME_PRESETS = {
+    teal: {
+      primary: '#006666',
+      secondary: '#6c757d',
+      tertiary: '#006666',
+      label: 'Teal',
+      desc: 'The signature bitwrench palette — professional teal and neutral gray.'
+    },
+    ocean: {
+      primary: '#0077b6',
+      secondary: '#90e0ef',
+      tertiary: '#00b4d8',
+      label: 'Ocean',
+      desc: 'Cool blues and teals for a calm, professional look.'
+    },
+    sunset: {
+      primary: '#e76f51',
+      secondary: '#264653',
+      tertiary: '#e9c46a',
+      label: 'Sunset',
+      desc: 'Warm oranges and deep earth tones for a bold feel.'
+    },
+    forest: {
+      primary: '#2d6a4f',
+      secondary: '#95d5b2',
+      tertiary: '#52b788',
+      label: 'Forest',
+      desc: 'Natural greens for an organic, earthy vibe.'
+    },
+    slate: {
+      primary: '#343a40',
+      secondary: '#adb5bd',
+      tertiary: '#6c757d',
+      label: 'Slate',
+      desc: 'Elegant grays for a minimal, modern interface.'
+    },
+    rose: {
+      primary: '#e11d48',
+      secondary: '#fda4af',
+      tertiary: '#fb7185',
+      label: 'Rose',
+      desc: 'Vibrant pinks and reds for a bold, energetic design.'
+    },
+    indigo: {
+      primary: '#4f46e5',
+      secondary: '#a5b4fc',
+      tertiary: '#818cf8',
+      label: 'Indigo',
+      desc: 'Deep purples and soft lavenders for a creative palette.'
+    },
+    amber: {
+      primary: '#d97706',
+      secondary: '#fbbf24',
+      tertiary: '#f59e0b',
+      label: 'Amber',
+      desc: 'Warm golds and yellows for a sunny, welcoming feel.'
+    },
+    emerald: {
+      primary: '#059669',
+      secondary: '#6ee7b7',
+      tertiary: '#34d399',
+      label: 'Emerald',
+      desc: 'Bright greens and mints for a fresh, modern look.'
+    },
+    nord: {
+      primary: '#5e81ac',
+      secondary: '#88c0d0',
+      tertiary: '#81a1c1',
+      label: 'Nord',
+      desc: 'Muted arctic blues inspired by the Nord color scheme.'
+    },
+    coral: {
+      primary: '#ef6461',
+      secondary: '#4a7c7e',
+      tertiary: '#e8a87c',
+      label: 'Coral',
+      desc: 'Warm coral and teal for a balanced, approachable design.'
+    },
+    midnight: {
+      primary: '#1e3a5f',
+      secondary: '#7c8db5',
+      tertiary: '#3d5a80',
+      label: 'Midnight',
+      desc: 'Deep navy and steel blue for a sophisticated, authoritative feel.'
+    }
+  };
+
+  /**
+   * Resolve layout config to spacing + radius objects
+   * @param {Object} config - { spacing, radius, fontSize }
+   * @returns {Object} { spacing, radius, fontSize }
+   */
+  function resolveLayout(config) {
+    var sp = config && config.spacing || 'normal';
+    var rd = config && config.radius || 'md';
+    var fs = config && config.fontSize || 1.0;
+    return {
+      spacing: typeof sp === 'string' ? SPACING_PRESETS[sp] || SPACING_PRESETS.normal : sp,
+      radius: typeof rd === 'string' ? RADIUS_PRESETS[rd] || RADIUS_PRESETS.md : rd,
+      fontSize: fs
+    };
+  }
+
+  // =========================================================================
+  // Scoping helper
+  // =========================================================================
+
+  /**
+   * Prefix a CSS selector with a scope class name.
+   * @param {string} name - Scope class (e.g. 'ocean'). Empty = no scoping.
+   * @param {string} sel - CSS selector(s)
+   * @returns {string} Scoped selector
+   */
+  function scopeSelector(name, sel) {
+    if (!name) return sel;
+    if (sel.includes(',')) return sel.split(',').map(function (s) {
+      return '.' + name + ' ' + s.trim();
+    }).join(', ');
+    return '.' + name + ' ' + sel;
+  }
+
+  // =========================================================================
+  // Themed CSS generators
+  // =========================================================================
+
+  function generateTypographyThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, 'a')] = {
+      'color': palette.primary.base,
+      'text-decoration': 'none',
+      'transition': 'color 0.15s'
+    };
+    rules[scopeSelector(scope, 'a:hover')] = {
+      'color': palette.primary.hover,
+      'text-decoration': 'underline'
+    };
+    return rules;
+  }
+  function generateButtons(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+
+    // Base button (only when scoped — unscoped uses defaultStyles)
+    rules[scopeSelector(scope, '.bw-btn')] = {
+      'padding': sp.btn,
+      'border-radius': rd.btn
+    };
+    rules[scopeSelector(scope, '.bw-btn:focus-visible')] = {
+      'outline': '0',
+      'box-shadow': '0 0 0 3px ' + palette.primary.focus
+    };
+
+    // Variants
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function (v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-btn-' + v)] = {
+        'color': p.textOn,
+        'background-color': p.base,
+        'border-color': p.base
+      };
+      rules[scopeSelector(scope, '.bw-btn-' + v + ':hover')] = {
+        'color': p.textOn,
+        'background-color': p.hover,
+        'border-color': p.active
+      };
+      // Outline
+      rules[scopeSelector(scope, '.bw-btn-outline-' + v)] = {
+        'color': p.base,
+        'border-color': p.base,
+        'background-color': 'transparent'
+      };
+      rules[scopeSelector(scope, '.bw-btn-outline-' + v + ':hover')] = {
+        'color': p.textOn,
+        'background-color': p.base,
+        'border-color': p.base
+      };
+    });
+
+    // Size variants (structural, reuse layout radius)
+    rules[scopeSelector(scope, '.bw-btn-lg')] = {
+      'padding': '0.625rem 1.5rem',
+      'font-size': '1rem',
+      'border-radius': rd.btn === '50rem' ? '50rem' : parseInt(rd.btn) + 2 + 'px'
+    };
+    rules[scopeSelector(scope, '.bw-btn-sm')] = {
+      'padding': '0.25rem 0.75rem',
+      'font-size': '0.8125rem',
+      'border-radius': rd.btn === '50rem' ? '50rem' : Math.max(parseInt(rd.btn) - 1, 0) + 'px'
+    };
+    return rules;
+  }
+  function generateAlerts(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+    rules[scopeSelector(scope, '.bw-alert')] = {
+      'padding': sp.alert,
+      'border-radius': rd.alert
+    };
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function (v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-alert-' + v)] = {
+        'color': p.darkText,
+        'background-color': p.light,
+        'border-color': p.border
+      };
+      rules[scopeSelector(scope, '.bw-alert-' + v + ' .alert-link')] = {
+        'color': adjustLightness(p.darkText, -10)
+      };
+    });
+    return rules;
+  }
+  function generateBadges(scope, palette) {
+    var rules = {};
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function (v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-badge-' + v)] = {
+        'color': p.textOn,
+        'background-color': p.base
+      };
+    });
+    return rules;
+  }
+  function generateCards(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+    rules[scopeSelector(scope, '.bw-card')] = {
+      'background-color': '#fff',
+      'border': '1px solid ' + palette.light.border,
+      'border-radius': rd.card,
+      'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)'
+    };
+    rules[scopeSelector(scope, '.bw-card:hover')] = {
+      'box-shadow': '0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06)'
+    };
+    rules[scopeSelector(scope, '.bw-card-body')] = {
+      'padding': sp.card
+    };
+    rules[scopeSelector(scope, '.bw-card-header')] = {
+      'padding': sp.card.split(' ').map(function (v) {
+        return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem';
+      }).join(' '),
+      'background-color': palette.light.light,
+      'border-bottom': '1px solid ' + palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-card-footer')] = {
+      'background-color': palette.light.light,
+      'border-top': '1px solid ' + palette.light.border,
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-card-title')] = {
+      'color': palette.dark.base
+    };
+    rules[scopeSelector(scope, '.bw-card-subtitle')] = {
+      'color': palette.secondary.base
+    };
+
+    // Card variant accent borders
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function (v) {
+      rules[scopeSelector(scope, '.bw-card-' + v)] = {
+        'border-left': '4px solid ' + palette[v].base
+      };
+    });
+    return rules;
+  }
+  function generateForms(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    var rd = layout.radius;
+    rules[scopeSelector(scope, '.bw-form-control')] = {
+      'padding': sp.input,
+      'border-radius': rd.input,
+      'color': palette.dark.base,
+      'background-color': '#fff',
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-form-control:focus')] = {
+      'border-color': palette.primary.border,
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    rules[scopeSelector(scope, '.bw-form-control::placeholder')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-form-label')] = {
+      'color': palette.dark.base
+    };
+    rules[scopeSelector(scope, '.bw-form-text')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-form-check-input:checked')] = {
+      'background-color': palette.primary.base,
+      'border-color': palette.primary.base
+    };
+    rules[scopeSelector(scope, '.bw-form-check-input:focus')] = {
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    return rules;
+  }
+  function generateNavigation(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-navbar')] = {
+      'background-color': palette.light.light,
+      'border-bottom-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-navbar-brand')] = {
+      'color': palette.dark.base
+    };
+    rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link:hover')] = {
+      'color': palette.dark.base
+    };
+    rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link.active')] = {
+      'color': palette.primary.base,
+      'background-color': palette.primary.focus
+    };
+    rules[scopeSelector(scope, '.bw-navbar-dark')] = {
+      'background-color': palette.dark.base,
+      'border-bottom-color': palette.dark.hover
+    };
+    rules[scopeSelector(scope, '.bw-navbar-dark .bw-navbar-brand')] = {
+      'color': palette.light.base
+    };
+    rules[scopeSelector(scope, '.bw-navbar-dark .bw-nav-link')] = {
+      'color': 'rgba(255,255,255,.65)'
+    };
+    rules[scopeSelector(scope, '.bw-navbar-dark .bw-nav-link:hover')] = {
+      'color': '#fff'
+    };
+    rules[scopeSelector(scope, '.bw-navbar-dark .bw-nav-link.active')] = {
+      'color': '#fff',
+      'font-weight': '600'
+    };
+    rules[scopeSelector(scope, '.bw-nav-pills .bw-nav-link.active')] = {
+      'color': palette.primary.textOn,
+      'background-color': palette.primary.base
+    };
+    return rules;
+  }
+  function generateTables(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    rules[scopeSelector(scope, '.bw-table')] = {
+      'color': palette.dark.base,
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-table > :not(caption) > * > *')] = {
+      'padding': sp.cell,
+      'border-bottom-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-table > thead > tr > *')] = {
+      'color': palette.secondary.base,
+      'border-bottom-color': palette.light.border,
+      'background-color': palette.light.light
+    };
+    rules[scopeSelector(scope, '.bw-table-striped > tbody > tr:nth-of-type(odd) > *')] = {
+      'background-color': 'rgba(0, 0, 0, 0.025)'
+    };
+    rules[scopeSelector(scope, '.bw-table-hover > tbody > tr:hover > *')] = {
+      'background-color': palette.primary.focus
+    };
+    rules[scopeSelector(scope, '.bw-table-bordered')] = {
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-table caption')] = {
+      'color': palette.secondary.base
+    };
+    return rules;
+  }
+  function generateTabs(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-nav-tabs')] = {
+      'border-bottom-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-nav-link')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-nav-tabs .bw-nav-link:hover')] = {
+      'color': palette.dark.base,
+      'border-bottom-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-nav-tabs .bw-nav-link.active')] = {
+      'color': palette.primary.base,
+      'border-bottom': '2px solid ' + palette.primary.base
+    };
+    return rules;
+  }
+  function generateListGroups(scope, palette, layout) {
+    var rules = {};
+    var sp = layout.spacing;
+    rules[scopeSelector(scope, '.bw-list-group-item')] = {
+      'padding': sp.cell,
+      'color': palette.dark.base,
+      'background-color': '#fff',
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, 'a.bw-list-group-item:hover')] = {
+      'background-color': palette.light.light,
+      'color': palette.dark.hover
+    };
+    rules[scopeSelector(scope, '.bw-list-group-item.active')] = {
+      'color': palette.primary.textOn,
+      'background-color': palette.primary.base,
+      'border-color': palette.primary.base
+    };
+    rules[scopeSelector(scope, '.bw-list-group-item.disabled')] = {
+      'color': palette.secondary.base,
+      'background-color': '#fff'
+    };
+    return rules;
+  }
+  function generatePagination(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-page-link')] = {
+      'color': palette.primary.base,
+      'background-color': '#fff',
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-page-link:hover')] = {
+      'color': palette.primary.hover,
+      'background-color': palette.light.light,
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-page-link:focus')] = {
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    rules[scopeSelector(scope, '.bw-page-item.bw-active .bw-page-link')] = {
+      'color': palette.primary.textOn,
+      'background-color': palette.primary.base,
+      'border-color': palette.primary.base
+    };
+    rules[scopeSelector(scope, '.bw-page-item.bw-disabled .bw-page-link')] = {
+      'color': palette.secondary.base,
+      'background-color': '#fff',
+      'border-color': palette.light.border
+    };
+    return rules;
+  }
+  function generateProgress(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-progress')] = {
+      'background-color': palette.light.light,
+      'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
+    };
+    rules[scopeSelector(scope, '.bw-progress-bar')] = {
+      'color': '#fff',
+      'background-color': palette.primary.base,
+      'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
+    };
+    // Variant progress bars
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info'];
+    variants.forEach(function (v) {
+      rules[scopeSelector(scope, '.bw-progress-bar-' + v)] = {
+        'background-color': palette[v].base
+      };
+    });
+    return rules;
+  }
+  function generateHero(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-hero-primary')] = {
+      'background': 'linear-gradient(135deg, ' + palette.primary.base + ' 0%, ' + palette.primary.hover + ' 100%)',
+      'color': palette.primary.textOn
+    };
+    rules[scopeSelector(scope, '.bw-hero-secondary')] = {
+      'background': 'linear-gradient(135deg, ' + palette.secondary.base + ' 0%, ' + palette.secondary.hover + ' 100%)',
+      'color': palette.secondary.textOn
+    };
+    rules[scopeSelector(scope, '.bw-hero-dark')] = {
+      'background': 'linear-gradient(135deg, ' + palette.dark.base + ' 0%, ' + palette.dark.hover + ' 100%)',
+      'color': palette.dark.textOn
+    };
+    return rules;
+  }
+  function generateUtilityColors(scope, palette) {
+    var rules = {};
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function (v) {
+      var p = palette[v];
+      rules[scopeSelector(scope, '.bw-text-' + v)] = {
+        'color': p.base
+      };
+      rules[scopeSelector(scope, '.bw-bg-' + v)] = {
+        'background-color': p.base
+      };
+    });
+    return rules;
+  }
+  function generateResetThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, 'body')] = {
+      'color': palette.dark.base,
+      'background-color': '#f5f5f5'
+    };
+    return rules;
+  }
+  function generateBreadcrumbThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-breadcrumb-item + .bw-breadcrumb-item::before')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-breadcrumb-item.active')] = {
+      'color': palette.secondary.base
+    };
+    return rules;
+  }
+  function generateSpinnerThemed(scope, palette) {
+    var rules = {};
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function (v) {
+      rules[scopeSelector(scope, '.bw-spinner-border.bw-text-' + v)] = {
+        'color': palette[v].base
+      };
+      rules[scopeSelector(scope, '.bw-spinner-grow.bw-text-' + v)] = {
+        'color': palette[v].base
+      };
+    });
+    return rules;
+  }
+  function generateCloseButtonThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-close')] = {
+      'color': palette.dark.base,
+      'opacity': '0.5'
+    };
+    rules[scopeSelector(scope, '.bw-close:focus')] = {
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    return rules;
+  }
+  function generateSectionsThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-section-subtitle')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-feature-description')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-cta-description')] = {
+      'color': palette.secondary.base
+    };
+    return rules;
+  }
+
+  /**
+   * Generate all themed CSS rules from a palette and layout.
+   * Returns a flat CSS rules object (selector → declarations).
+   *
+   * @param {string} scopeName - CSS scope class ('' for global)
+   * @param {Object} palette - From derivePalette()
+   * @param {Object} layout - From resolveLayout()
+   * @returns {Object} CSS rules object
+   */
+  function generateThemedCSS(scopeName, palette, layout) {
+    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateBadges(scopeName, palette), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette), generateProgress(scopeName, palette), generateHero(scopeName, palette), generateBreadcrumbThemed(scopeName, palette), generateSpinnerThemed(scopeName, palette), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateUtilityColors(scopeName, palette));
+  }
+
+  // =========================================================================
+  // Static structural styles (unchanged, color-independent)
+  // =========================================================================
 
   /**
    * Complete default style definitions organized by component category
@@ -247,130 +1171,7 @@
    */
   var defaultStyles = {
     /**
-     * CSS custom properties (variables) on :root
-     *
-     * Defines the full color palette, typography, border, and shadow tokens
-     * used by all other style categories via var() references.
-     */
-    root: {
-      ':root': {
-        '--bw-blue': '#006666',
-        '--bw-indigo': '#6610f2',
-        '--bw-purple': '#6f42c1',
-        '--bw-pink': '#d63384',
-        '--bw-red': '#dc3545',
-        '--bw-orange': '#fd7e14',
-        '--bw-yellow': '#ffc107',
-        '--bw-green': '#198754',
-        '--bw-teal': '#20c997',
-        '--bw-cyan': '#0dcaf0',
-        '--bw-black': '#000',
-        '--bw-white': '#fff',
-        '--bw-gray': '#6c757d',
-        '--bw-gray-dark': '#343a40',
-        '--bw-gray-100': '#f8f9fa',
-        '--bw-gray-200': '#e9ecef',
-        '--bw-gray-300': '#dee2e6',
-        '--bw-gray-400': '#ced4da',
-        '--bw-gray-500': '#adb5bd',
-        '--bw-gray-600': '#6c757d',
-        '--bw-gray-700': '#495057',
-        '--bw-gray-800': '#343a40',
-        '--bw-gray-900': '#212529',
-        '--bw-primary': '#006666',
-        '--bw-secondary': '#6c757d',
-        '--bw-success': '#198754',
-        '--bw-info': '#0dcaf0',
-        '--bw-warning': '#ffc107',
-        '--bw-danger': '#dc3545',
-        '--bw-light': '#f8f9fa',
-        '--bw-dark': '#212529',
-        '--bw-font-sans-serif': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        '--bw-font-monospace': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", "Courier New", monospace',
-        '--bw-body-font-family': 'var(--bw-font-sans-serif)',
-        '--bw-body-font-size': '1rem',
-        '--bw-body-font-weight': '400',
-        '--bw-body-line-height': '1.5',
-        '--bw-body-color': '#212529',
-        '--bw-body-bg': '#fff',
-        '--bw-border-width': '1px',
-        '--bw-border-style': 'solid',
-        '--bw-border-color': '#dee2e6',
-        '--bw-border-radius': '.375rem',
-        '--bw-border-radius-sm': '.25rem',
-        '--bw-border-radius-lg': '.5rem',
-        '--bw-border-radius-xl': '1rem',
-        '--bw-border-radius-2xl': '2rem',
-        '--bw-border-radius-pill': '50rem',
-        '--bw-box-shadow': '0 .5rem 1rem rgba(0, 0, 0, .15)',
-        '--bw-box-shadow-sm': '0 .125rem .25rem rgba(0, 0, 0, .075)',
-        '--bw-box-shadow-lg': '0 1rem 3rem rgba(0, 0, 0, .175)',
-        '--bw-box-shadow-inset': 'inset 0 1px 2px rgba(0, 0, 0, .075)'
-      }
-    },
-    /**
-     * CSS reset and base element styles
-     *
-     * Provides box-sizing reset, body defaults, page layout helpers
-     * (.bw-page, .bw-page-content), and hr normalization.
-     */
-    reset: {
-      '*': {
-        'box-sizing': 'border-box',
-        'margin': '0',
-        'padding': '0'
-      },
-      'html': {
-        'font-size': '16px',
-        'line-height': '1.5',
-        '-webkit-text-size-adjust': '100%',
-        '-webkit-font-smoothing': 'antialiased',
-        '-moz-osx-font-smoothing': 'grayscale'
-      },
-      'body': {
-        'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        'font-size': '1rem',
-        'font-weight': '400',
-        'line-height': '1.6',
-        'color': '#1a1a1a',
-        'background-color': '#f5f5f5',
-        'margin': '0',
-        'padding': '0',
-        '-webkit-font-smoothing': 'antialiased',
-        '-moz-osx-font-smoothing': 'grayscale'
-      },
-      // Standard page layout
-      '.bw-page': {
-        'min-height': '100vh',
-        'display': 'flex',
-        'flex-direction': 'column'
-      },
-      '.bw-page-content': {
-        'flex': '1',
-        'padding': '2rem 0'
-      },
-      'main': {
-        'display': 'block'
-      },
-      'hr': {
-        'box-sizing': 'content-box',
-        'height': '0',
-        'overflow': 'visible',
-        'margin': '1rem 0',
-        'color': 'inherit',
-        'background-color': 'currentColor',
-        'border': '0',
-        'opacity': '.25'
-      },
-      'hr:not([size])': {
-        'height': '1px'
-      }
-    },
-    /**
      * Typography styles for headings, paragraphs, links, and small text
-     *
-     * Headings use responsive font sizes with clamp-like calc() values.
-     * Links default to primary color with underline decoration.
      */
     typography: (_typography = {
       'h1, h2, h3, h4, h5, h6': {
@@ -427,10 +1228,6 @@
     })),
     /**
      * 12-column flexbox grid system
-     *
-     * Classes: .bw-container (responsive max-widths), .bw-container-fluid,
-     * .bw-row, .bw-col, .bw-col-{1-12}. Breakpoint-specific columns
-     * are in the responsive category.
      */
     grid: (_grid = {
       '.bw-container': {
@@ -525,1686 +1322,7 @@
       'max-width': '100%'
     })),
     /**
-     * Button styles - all variants, sizes, outlines, and states
-     *
-     * Classes: .bw-btn (base), .bw-btn-{variant} (filled), .bw-btn-outline-{variant},
-     * .bw-btn-sm, .bw-btn-lg. States: :hover, :active, :focus, :disabled.
-     * Variants: primary, secondary, success, danger, warning, info, light, dark.
-     */
-    buttons: {
-      '.bw-btn': {
-        'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'font-weight': '500',
-        'line-height': '1.5',
-        'color': '#1a1a1a',
-        'text-align': 'center',
-        'text-decoration': 'none',
-        'vertical-align': 'middle',
-        'cursor': 'pointer',
-        'user-select': 'none',
-        'background-color': 'transparent',
-        'border': '1px solid transparent',
-        'padding': '0.5rem 1.125rem',
-        'font-size': '0.875rem',
-        'font-family': 'inherit',
-        'border-radius': '6px',
-        'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-        'box-shadow': '0 1px 2px rgba(0,0,0,.05)',
-        'gap': '0.5rem'
-      },
-      '.bw-btn:hover': {
-        'text-decoration': 'none',
-        'transform': 'translateY(-1px)',
-        'box-shadow': '0 4px 6px rgba(0,0,0,.07)'
-      },
-      '.bw-btn:active': {
-        'transform': 'translateY(0)',
-        'box-shadow': '0 1px 2px rgba(0,0,0,.05)'
-      },
-      '.bw-btn:focus-visible': {
-        'outline': '0',
-        'box-shadow': '0 0 0 3px rgba(0, 102, 102, 0.3)'
-      },
-      '.bw-btn:disabled': {
-        'opacity': '0.5',
-        'cursor': 'not-allowed',
-        'pointer-events': 'none'
-      },
-      // Button variants
-      '.bw-btn-primary': {
-        'color': '#fff',
-        'background-color': '#006666',
-        'border-color': '#006666'
-      },
-      '.bw-btn-primary:hover': {
-        'color': '#fff',
-        'background-color': '#005555',
-        'border-color': '#004d4d'
-      },
-      '.bw-btn-secondary': {
-        'color': '#fff',
-        'background-color': '#6c757d',
-        'border-color': '#6c757d'
-      },
-      '.bw-btn-secondary:hover': {
-        'color': '#fff',
-        'background-color': '#5c636a',
-        'border-color': '#565e64'
-      },
-      '.bw-btn-success': {
-        'color': '#fff',
-        'background-color': '#198754',
-        'border-color': '#198754'
-      },
-      '.bw-btn-success:hover': {
-        'color': '#fff',
-        'background-color': '#157347',
-        'border-color': '#146c43'
-      },
-      '.bw-btn-danger': {
-        'color': '#fff',
-        'background-color': '#dc3545',
-        'border-color': '#dc3545'
-      },
-      '.bw-btn-danger:hover': {
-        'color': '#fff',
-        'background-color': '#bb2d3b',
-        'border-color': '#b02a37'
-      },
-      '.bw-btn-warning': {
-        'color': '#000',
-        'background-color': '#ffc107',
-        'border-color': '#ffc107'
-      },
-      '.bw-btn-warning:hover': {
-        'color': '#000',
-        'background-color': '#ffca2c',
-        'border-color': '#ffc720'
-      },
-      '.bw-btn-info': {
-        'color': '#000',
-        'background-color': '#0dcaf0',
-        'border-color': '#0dcaf0'
-      },
-      '.bw-btn-info:hover': {
-        'color': '#000',
-        'background-color': '#31d2f2',
-        'border-color': '#25cff2'
-      },
-      '.bw-btn-light': {
-        'color': '#000',
-        'background-color': '#f8f9fa',
-        'border-color': '#f8f9fa'
-      },
-      '.bw-btn-light:hover': {
-        'color': '#000',
-        'background-color': '#f9fafb',
-        'border-color': '#f9fafb'
-      },
-      '.bw-btn-dark': {
-        'color': '#fff',
-        'background-color': '#212529',
-        'border-color': '#212529'
-      },
-      '.bw-btn-dark:hover': {
-        'color': '#fff',
-        'background-color': '#1c1f23',
-        'border-color': '#1a1e21'
-      },
-      // Outline variants
-      '.bw-btn-outline-primary': {
-        'color': '#006666',
-        'border-color': '#006666',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-primary:hover': {
-        'color': '#fff',
-        'background-color': '#006666',
-        'border-color': '#006666'
-      },
-      '.bw-btn-outline-secondary': {
-        'color': '#6c757d',
-        'border-color': '#6c757d',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-secondary:hover': {
-        'color': '#fff',
-        'background-color': '#6c757d',
-        'border-color': '#6c757d'
-      },
-      '.bw-btn-outline-success': {
-        'color': '#198754',
-        'border-color': '#198754',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-success:hover': {
-        'color': '#fff',
-        'background-color': '#198754',
-        'border-color': '#198754'
-      },
-      '.bw-btn-outline-danger': {
-        'color': '#dc3545',
-        'border-color': '#dc3545',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-danger:hover': {
-        'color': '#fff',
-        'background-color': '#dc3545',
-        'border-color': '#dc3545'
-      },
-      '.bw-btn-outline-warning': {
-        'color': '#ffc107',
-        'border-color': '#ffc107',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-warning:hover': {
-        'color': '#000',
-        'background-color': '#ffc107',
-        'border-color': '#ffc107'
-      },
-      '.bw-btn-outline-info': {
-        'color': '#0dcaf0',
-        'border-color': '#0dcaf0',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-info:hover': {
-        'color': '#000',
-        'background-color': '#0dcaf0',
-        'border-color': '#0dcaf0'
-      },
-      '.bw-btn-outline-light': {
-        'color': '#f8f9fa',
-        'border-color': '#f8f9fa',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-light:hover': {
-        'color': '#000',
-        'background-color': '#f8f9fa',
-        'border-color': '#f8f9fa'
-      },
-      '.bw-btn-outline-dark': {
-        'color': '#212529',
-        'border-color': '#212529',
-        'background-color': 'transparent'
-      },
-      '.bw-btn-outline-dark:hover': {
-        'color': '#fff',
-        'background-color': '#212529',
-        'border-color': '#212529'
-      },
-      // Button sizes
-      '.bw-btn-lg': {
-        'padding': '0.625rem 1.5rem',
-        'font-size': '1rem',
-        'border-radius': '8px'
-      },
-      '.bw-btn-sm': {
-        'padding': '0.25rem 0.75rem',
-        'font-size': '0.8125rem',
-        'border-radius': '5px'
-      }
-    },
-    /**
-     * Card component styles
-     *
-     * Classes: .bw-card, .bw-card-body, .bw-card-title, .bw-card-text,
-     * .bw-card-header, .bw-card-footer, .card-img-top, .card-subtitle.
-     * Cards include hover lift animation by default.
-     */
-    cards: {
-      '.bw-card': {
-        'position': 'relative',
-        'display': 'flex',
-        'flex-direction': 'column',
-        'min-width': '0',
-        'height': '100%',
-        'word-wrap': 'break-word',
-        'background-color': '#fff',
-        'background-clip': 'border-box',
-        'border': '1px solid #e5e5e5',
-        'border-radius': '8px',
-        'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
-        'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
-        'margin-bottom': '1.5rem',
-        'overflow': 'hidden'
-      },
-      '.bw-card:hover': {
-        'box-shadow': '0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06)',
-        'transform': 'translateY(-2px)'
-      },
-      '.bw-card-body': {
-        'flex': '1 1 auto',
-        'padding': '1.25rem 1.5rem'
-      },
-      '.bw-card-body > *:last-child': {
-        'margin-bottom': '0'
-      },
-      '.bw-card-title': {
-        'margin-bottom': '0.5rem',
-        'font-size': '1.125rem',
-        'font-weight': '600',
-        'line-height': '1.3',
-        'color': '#1a1a1a'
-      },
-      '.card-subtitle': {
-        'margin-top': '-0.25rem',
-        'margin-bottom': '0.5rem',
-        'color': '#777',
-        'font-size': '0.875rem'
-      },
-      '.bw-card-text': {
-        'margin-bottom': '0',
-        'color': '#555',
-        'font-size': '0.9375rem',
-        'line-height': '1.6'
-      },
-      '.bw-card-header': {
-        'padding': '0.875rem 1.5rem',
-        'margin-bottom': '0',
-        'background-color': '#fafafa',
-        'border-bottom': '1px solid #e5e5e5',
-        'font-weight': '600',
-        'font-size': '0.875rem'
-      },
-      '.bw-card-footer': {
-        'padding': '0.75rem 1.5rem',
-        'background-color': '#fafafa',
-        'border-top': '1px solid #e5e5e5',
-        'font-size': '0.875rem',
-        'color': '#777'
-      },
-      '.card-img-top': {
-        'width': '100%',
-        'border-top-left-radius': '7px',
-        'border-top-right-radius': '7px'
-      }
-    },
-    /**
-     * Form control styles
-     *
-     * Classes: .bw-form-control (inputs, selects, textareas),
-     * .bw-form-label, .bw-form-group. Includes focus ring styling.
-     */
-    forms: {
-      '.bw-form-control': {
-        'display': 'block',
-        'width': '100%',
-        'padding': '0.5rem 0.875rem',
-        'font-size': '0.9375rem',
-        'font-weight': '400',
-        'line-height': '1.5',
-        'color': '#1a1a1a',
-        'background-color': '#fff',
-        'background-clip': 'padding-box',
-        'border': '1px solid #ccc',
-        'appearance': 'none',
-        'border-radius': '6px',
-        'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
-        'font-family': 'inherit'
-      },
-      '.bw-form-control:focus': {
-        'color': '#1a1a1a',
-        'background-color': '#fff',
-        'border-color': '#80cccc',
-        'outline': '0',
-        'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
-      },
-      '.bw-form-control::placeholder': {
-        'color': '#999',
-        'opacity': '1'
-      },
-      '.bw-form-label': {
-        'display': 'block',
-        'margin-bottom': '0.375rem',
-        'font-size': '0.875rem',
-        'font-weight': '600',
-        'color': '#333'
-      },
-      '.bw-form-group': {
-        'margin-bottom': '1.25rem'
-      },
-      '.bw-form-text': {
-        'margin-top': '0.25rem',
-        'font-size': '0.8125rem',
-        'color': '#777'
-      },
-      'select.bw-form-control': {
-        'padding-right': '2.25rem',
-        'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
-        'background-repeat': 'no-repeat',
-        'background-position': 'right 0.75rem center',
-        'background-size': '16px 12px'
-      },
-      'textarea.bw-form-control': {
-        'min-height': '5rem',
-        'resize': 'vertical'
-      }
-    },
-    /**
-     * Navbar and navigation link styles
-     *
-     * Classes: .bw-navbar, .bw-navbar-dark, .bw-navbar-light,
-     * .bw-navbar-brand, .bw-navbar-nav, .bw-nav-link (with :hover and .active).
-     */
-    navigation: {
-      '.bw-navbar': {
-        'position': 'relative',
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-        'align-items': 'center',
-        'justify-content': 'space-between',
-        'padding': '0.5rem 1.5rem',
-        'background-color': '#fafafa',
-        'border-bottom': '1px solid #e5e5e5'
-      },
-      '.bw-navbar > .container': {
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-        'align-items': 'center',
-        'justify-content': 'space-between'
-      },
-      '.bw-navbar-dark': {
-        'background-color': '#1a1a1a',
-        'border-bottom-color': '#333'
-      },
-      '.bw-navbar-dark .bw-navbar-brand': {
-        'color': '#fff'
-      },
-      '.bw-navbar-dark .bw-nav-link': {
-        'color': 'rgba(255,255,255,.65)'
-      },
-      '.bw-navbar-dark .bw-nav-link:hover': {
-        'color': '#fff'
-      },
-      '.bw-navbar-dark .bw-nav-link.active': {
-        'color': '#fff',
-        'font-weight': '600'
-      },
-      '.bw-navbar-brand': {
-        'display': 'inline-flex',
-        'align-items': 'center',
-        'gap': '0.5rem',
-        'padding-top': '0.25rem',
-        'padding-bottom': '0.25rem',
-        'margin-right': '1.5rem',
-        'font-size': '1.125rem',
-        'font-weight': '600',
-        'line-height': 'inherit',
-        'white-space': 'nowrap',
-        'text-decoration': 'none',
-        'color': '#1a1a1a'
-      },
-      '.bw-navbar-nav': {
-        'display': 'flex',
-        'flex-direction': 'row',
-        'padding-left': '0',
-        'margin-bottom': '0',
-        'list-style': 'none',
-        'gap': '0.25rem'
-      },
-      '.bw-navbar-nav .bw-nav-link': {
-        'display': 'block',
-        'padding': '0.5rem 0.875rem',
-        'color': '#555',
-        'text-decoration': 'none',
-        'font-size': '0.875rem',
-        'font-weight': '500',
-        'border-radius': '6px',
-        'transition': 'color 0.15s, background-color 0.15s'
-      },
-      '.bw-navbar-nav .bw-nav-link:hover': {
-        'color': '#1a1a1a',
-        'background-color': 'rgba(0,0,0,.04)'
-      },
-      '.bw-navbar-nav .bw-nav-link.active': {
-        'color': '#006666',
-        'font-weight': '600',
-        'background-color': 'rgba(0, 102, 102, 0.06)'
-      }
-    },
-    /**
-     * Table styles with striped and hover variants
-     *
-     * Classes: .bw-table, .bw-table-striped, .bw-table-hover,
-     * .bw-table-bordered. Applies to thead, tbody, th, td.
-     */
-    tables: {
-      '.bw-table': {
-        'width': '100%',
-        'margin-bottom': '1.5rem',
-        'color': '#1a1a1a',
-        'vertical-align': 'top',
-        'border-color': '#e0e0e0',
-        'border-collapse': 'collapse',
-        'font-size': '0.9375rem',
-        'line-height': '1.5'
-      },
-      '.bw-table > :not(caption) > * > *': {
-        'padding': '0.75rem 1rem',
-        'background-color': 'transparent',
-        'border-bottom': '1px solid #e0e0e0'
-      },
-      '.bw-table > tbody': {
-        'vertical-align': 'inherit'
-      },
-      '.bw-table > thead': {
-        'vertical-align': 'bottom'
-      },
-      '.bw-table > thead > tr > *': {
-        'padding': '0.625rem 1rem',
-        'font-size': '0.8125rem',
-        'font-weight': '600',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.04em',
-        'color': '#555',
-        'border-bottom': '2px solid #ccc',
-        'background-color': '#f8f8f8'
-      },
-      '.bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
-        'background-color': 'rgba(0, 0, 0, 0.025)'
-      },
-      '.bw-table-hover > tbody > tr:hover > *': {
-        'background-color': 'rgba(0, 102, 102, 0.05)'
-      },
-      '.bw-table-bordered': {
-        'border': '1px solid #e0e0e0'
-      },
-      '.bw-table-bordered > :not(caption) > * > *': {
-        'border': '1px solid #e0e0e0'
-      },
-      '.bw-table caption': {
-        'padding': '0.5rem 1rem',
-        'font-size': '0.875rem',
-        'color': '#777',
-        'caption-side': 'bottom'
-      }
-    },
-    /**
-     * Alert/notification styles for all color variants
-     *
-     * Classes: .bw-alert, .bw-alert-{variant}, .bw-alert-dismissible.
-     * Variants: primary, secondary, success, info, warning, danger, light, dark.
-     */
-    alerts: {
-      '.bw-alert': {
-        'position': 'relative',
-        'padding': '0.875rem 1.25rem',
-        'margin-bottom': '1rem',
-        'border': '1px solid transparent',
-        'border-radius': '8px',
-        'font-size': '0.9375rem',
-        'line-height': '1.6'
-      },
-      '.alert-heading': {
-        'color': 'inherit'
-      },
-      '.alert-link': {
-        'font-weight': '700'
-      },
-      '.bw-alert-dismissible': {
-        'padding-right': '3rem'
-      },
-      '.bw-alert-dismissible .btn-close': {
-        'position': 'absolute',
-        'top': '0',
-        'right': '0',
-        'z-index': '2',
-        'padding': '1.25rem 1rem'
-      },
-      '.bw-alert-primary': {
-        'color': '#004d4d',
-        'background-color': '#e0f2f1',
-        'border-color': '#b2dfdb'
-      },
-      '.bw-alert-primary .alert-link': {
-        'color': '#003d3d'
-      },
-      '.bw-alert-secondary': {
-        'color': '#41464b',
-        'background-color': '#e2e3e5',
-        'border-color': '#d3d6d8'
-      },
-      '.bw-alert-secondary .alert-link': {
-        'color': '#34383c'
-      },
-      '.bw-alert-success': {
-        'color': '#0f5132',
-        'background-color': '#d1e7dd',
-        'border-color': '#badbcc'
-      },
-      '.bw-alert-success .alert-link': {
-        'color': '#0c4128'
-      },
-      '.bw-alert-info': {
-        'color': '#055160',
-        'background-color': '#cff4fc',
-        'border-color': '#b6effb'
-      },
-      '.bw-alert-info .alert-link': {
-        'color': '#04414d'
-      },
-      '.bw-alert-warning': {
-        'color': '#664d03',
-        'background-color': '#fff3cd',
-        'border-color': '#ffecb5'
-      },
-      '.bw-alert-warning .alert-link': {
-        'color': '#523e02'
-      },
-      '.bw-alert-danger': {
-        'color': '#842029',
-        'background-color': '#f8d7da',
-        'border-color': '#f5c2c7'
-      },
-      '.bw-alert-danger .alert-link': {
-        'color': '#6a1a21'
-      },
-      '.bw-alert-light': {
-        'color': '#636464',
-        'background-color': '#fefefe',
-        'border-color': '#fdfdfe'
-      },
-      '.bw-alert-light .alert-link': {
-        'color': '#4f5050'
-      },
-      '.bw-alert-dark': {
-        'color': '#141619',
-        'background-color': '#d3d3d4',
-        'border-color': '#bcbebf'
-      },
-      '.bw-alert-dark .alert-link': {
-        'color': '#101214'
-      }
-    },
-    /**
-     * Inline badge/label styles
-     *
-     * Classes: .bw-badge, .bw-badge-{variant}.
-     * Variants: primary, secondary, success, info, warning, danger, light, dark.
-     */
-    badges: {
-      '.bw-badge': {
-        'display': 'inline-block',
-        'padding': '.35em .65em',
-        'font-size': '.75em',
-        'font-weight': '700',
-        'line-height': '1',
-        'color': '#fff',
-        'text-align': 'center',
-        'white-space': 'nowrap',
-        'vertical-align': 'baseline',
-        'border-radius': '.375rem'
-      },
-      '.bw-badge:empty': {
-        'display': 'none'
-      },
-      '.btn .badge': {
-        'position': 'relative',
-        'top': '-1px'
-      },
-      '.bw-badge-primary': {
-        'color': '#fff',
-        'background-color': '#006666'
-      },
-      '.bw-badge-secondary': {
-        'color': '#fff',
-        'background-color': '#6c757d'
-      },
-      '.bw-badge-success': {
-        'color': '#fff',
-        'background-color': '#198754'
-      },
-      '.bw-badge-info': {
-        'color': '#000',
-        'background-color': '#0dcaf0'
-      },
-      '.bw-badge-warning': {
-        'color': '#000',
-        'background-color': '#ffc107'
-      },
-      '.bw-badge-danger': {
-        'color': '#fff',
-        'background-color': '#dc3545'
-      },
-      '.bw-badge-light': {
-        'color': '#000',
-        'background-color': '#f8f9fa'
-      },
-      '.bw-badge-dark': {
-        'color': '#fff',
-        'background-color': '#212529'
-      }
-    },
-    /**
-     * Progress bar styles with striped and animated variants
-     *
-     * Classes: .bw-progress, .bw-progress-bar, .bw-progress-bar-striped,
-     * .bw-progress-bar-animated. Includes @keyframes for stripe animation.
-     */
-    progress: {
-      '.bw-progress': {
-        'display': 'flex',
-        'height': '1.25rem',
-        'overflow': 'hidden',
-        'font-size': '.875rem',
-        'background-color': '#e9ecef',
-        'border-radius': '.5rem',
-        'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
-      },
-      '.bw-progress-bar': {
-        'display': 'flex',
-        'flex-direction': 'column',
-        'justify-content': 'center',
-        'overflow': 'hidden',
-        'color': '#fff',
-        'text-align': 'center',
-        'white-space': 'nowrap',
-        'background-color': '#006666',
-        'transition': 'width .6s ease',
-        'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)',
-        'font-weight': '600'
-      },
-      '.bw-progress-bar-striped': {
-        'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
-        'background-size': '1rem 1rem'
-      },
-      '.bw-progress-bar-animated': {
-        'animation': 'progress-bar-stripes 1s linear infinite'
-      },
-      '@keyframes progress-bar-stripes': {
-        '0%': {
-          'background-position-x': '1rem'
-        }
-      }
-    },
-    /**
-     * Tab navigation and content pane styles
-     *
-     * Classes: .bw-nav, .bw-nav-tabs, .bw-nav-item, .bw-nav-link (.active, :hover),
-     * .bw-tab-content, .bw-tab-pane (.active). Inactive panes use display:none.
-     */
-    tabs: {
-      '.bw-nav': {
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-        'padding-left': '0',
-        'margin-bottom': '0',
-        'list-style': 'none',
-        'gap': '0'
-      },
-      '.bw-nav-tabs': {
-        'border-bottom': '2px solid #e5e5e5'
-      },
-      '.bw-nav-item': {
-        'display': 'block'
-      },
-      '.bw-nav-tabs .bw-nav-item': {
-        'margin-bottom': '-2px'
-      },
-      '.bw-nav-link': {
-        'display': 'block',
-        'padding': '0.625rem 1rem',
-        'font-size': '0.875rem',
-        'font-weight': '500',
-        'color': '#777',
-        'text-decoration': 'none',
-        'cursor': 'pointer',
-        'border': 'none',
-        'background': 'transparent',
-        'transition': 'color 0.15s, border-color 0.15s',
-        'font-family': 'inherit'
-      },
-      '.bw-nav-tabs .bw-nav-link': {
-        'border': 'none',
-        'border-bottom': '2px solid transparent',
-        'border-radius': '0',
-        'background-color': 'transparent'
-      },
-      '.bw-nav-tabs .bw-nav-link:hover': {
-        'color': '#1a1a1a',
-        'border-bottom-color': '#ccc'
-      },
-      '.bw-nav-tabs .bw-nav-link.active': {
-        'color': '#006666',
-        'background-color': 'transparent',
-        'border-bottom': '2px solid #006666',
-        'font-weight': '600'
-      },
-      '.bw-tab-content': {
-        'padding': '1.25rem 0'
-      },
-      '.bw-tab-pane': {
-        'display': 'none'
-      },
-      '.bw-tab-pane.active': {
-        'display': 'block'
-      }
-    },
-    /**
-     * List group styles for vertical lists of items
-     *
-     * Classes: .bw-list-group, .bw-list-group-item (.active, .disabled),
-     * .bw-list-group-flush. Supports anchor tags for interactive items.
-     */
-    listGroups: {
-      '.bw-list-group': {
-        'display': 'flex',
-        'flex-direction': 'column',
-        'padding-left': '0',
-        'margin-bottom': '0',
-        'border-radius': '0.375rem'
-      },
-      '.bw-list-group-item': {
-        'position': 'relative',
-        'display': 'block',
-        'padding': '0.75rem 1.25rem',
-        'color': '#1a1a1a',
-        'text-decoration': 'none',
-        'background-color': '#fff',
-        'border': '1px solid #e5e5e5',
-        'font-size': '0.9375rem'
-      },
-      '.bw-list-group-item:first-child': {
-        'border-top-left-radius': 'inherit',
-        'border-top-right-radius': 'inherit'
-      },
-      '.bw-list-group-item:last-child': {
-        'border-bottom-right-radius': 'inherit',
-        'border-bottom-left-radius': 'inherit'
-      },
-      '.bw-list-group-item + .bw-list-group-item': {
-        'border-top-width': '0'
-      },
-      '.bw-list-group-item.active': {
-        'z-index': '2',
-        'color': '#fff',
-        'background-color': '#006666',
-        'border-color': '#006666'
-      },
-      '.bw-list-group-item.disabled': {
-        'color': '#6c757d',
-        'pointer-events': 'none',
-        'background-color': '#fff'
-      },
-      'a.bw-list-group-item': {
-        'cursor': 'pointer'
-      },
-      'a.bw-list-group-item:hover': {
-        'z-index': '1',
-        'color': '#495057',
-        'text-decoration': 'none',
-        'background-color': '#f8f9fa'
-      },
-      '.bw-list-group-flush': {
-        'border-radius': '0'
-      },
-      '.bw-list-group-flush > .bw-list-group-item': {
-        'border-width': '0 0 1px',
-        'border-radius': '0'
-      },
-      '.bw-list-group-flush > .bw-list-group-item:last-child': {
-        'border-bottom-width': '0'
-      }
-    },
-    /**
-     * Pagination control styles
-     *
-     * Classes: .bw-pagination, .bw-page-item (.bw-active, .bw-disabled),
-     * .bw-page-link (:hover, :focus). First/last items get rounded corners.
-     */
-    pagination: {
-      '.bw-pagination': {
-        'display': 'flex',
-        'padding-left': '0',
-        'list-style': 'none',
-        'margin-bottom': '0'
-      },
-      '.bw-page-item': {
-        'display': 'list-item',
-        'list-style': 'none'
-      },
-      '.bw-page-link': {
-        'position': 'relative',
-        'display': 'block',
-        'padding': '0.375rem 0.75rem',
-        'margin-left': '-1px',
-        'line-height': '1.25',
-        'color': '#006666',
-        'text-decoration': 'none',
-        'background-color': '#fff',
-        'border': '1px solid #dee2e6',
-        'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out'
-      },
-      '.bw-page-link:hover': {
-        'z-index': '2',
-        'color': '#004d4d',
-        'background-color': '#e9ecef',
-        'border-color': '#dee2e6'
-      },
-      '.bw-page-link:focus': {
-        'z-index': '3',
-        'color': '#004d4d',
-        'background-color': '#e9ecef',
-        'outline': '0',
-        'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
-      },
-      '.bw-page-item:first-child .bw-page-link': {
-        'margin-left': '0',
-        'border-top-left-radius': '0.375rem',
-        'border-bottom-left-radius': '0.375rem'
-      },
-      '.bw-page-item:last-child .bw-page-link': {
-        'border-top-right-radius': '0.375rem',
-        'border-bottom-right-radius': '0.375rem'
-      },
-      '.bw-page-item.bw-active .bw-page-link': {
-        'z-index': '3',
-        'color': '#fff',
-        'background-color': '#006666',
-        'border-color': '#006666'
-      },
-      '.bw-page-item.bw-disabled .bw-page-link': {
-        'color': '#6c757d',
-        'pointer-events': 'none',
-        'background-color': '#fff',
-        'border-color': '#dee2e6'
-      }
-    },
-    /**
-     * Breadcrumb navigation styles
-     *
-     * Classes: .bw-breadcrumb, .bw-breadcrumb-item (.active).
-     * Uses "/" separator via ::before pseudo-element.
-     */
-    breadcrumb: {
-      '.bw-breadcrumb': {
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-        'padding': '0 0',
-        'margin-bottom': '1rem',
-        'list-style': 'none',
-        'background-color': 'transparent'
-      },
-      '.bw-breadcrumb-item': {
-        'display': 'flex'
-      },
-      '.bw-breadcrumb-item + .bw-breadcrumb-item': {
-        'padding-left': '0.5rem'
-      },
-      '.bw-breadcrumb-item + .bw-breadcrumb-item::before': {
-        'float': 'left',
-        'padding-right': '0.5rem',
-        'color': '#6c757d',
-        'content': '"/"'
-      },
-      '.bw-breadcrumb-item.active': {
-        'color': '#6c757d'
-      }
-    },
-    /**
-     * Hero section styles for landing page headers
-     *
-     * Classes: .bw-hero, .bw-hero-{variant} (gradient backgrounds),
-     * .bw-hero-overlay, .bw-hero-content, .bw-hero-title.
-     * Also includes .bw-display-4, .bw-lead, and .bw-py-{3-6} spacing.
-     */
-    hero: {
-      '.bw-hero': {
-        'position': 'relative',
-        'overflow': 'hidden'
-      },
-      '.bw-hero-primary': {
-        'background': 'linear-gradient(135deg, #006666 0%, #004d4d 100%)',
-        'color': '#fff'
-      },
-      '.bw-hero-secondary': {
-        'background': 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)',
-        'color': '#fff'
-      },
-      '.bw-hero-light': {
-        'background': '#f8f9fa',
-        'color': '#212529'
-      },
-      '.bw-hero-dark': {
-        'background': 'linear-gradient(135deg, #212529 0%, #16181b 100%)',
-        'color': '#fff'
-      },
-      '.bw-hero-overlay': {
-        'position': 'absolute',
-        'top': '0',
-        'left': '0',
-        'right': '0',
-        'bottom': '0',
-        'background': 'rgba(0,0,0,0.5)',
-        'z-index': '1'
-      },
-      '.bw-hero-content': {
-        'position': 'relative',
-        'z-index': '2'
-      },
-      '.bw-hero-title': {
-        'font-weight': '300',
-        'letter-spacing': '-0.05rem'
-      },
-      '.bw-display-4': {
-        'font-size': 'calc(1.475rem + 2.7vw)',
-        'font-weight': '300',
-        'line-height': '1.2'
-      },
-      '@media (min-width: 1200px)': {
-        '.bw-display-4': {
-          'font-size': '3.5rem'
-        }
-      },
-      '.bw-lead': {
-        'font-size': '1.25rem',
-        'font-weight': '300'
-      },
-      '.bw-py-3': {
-        'padding-top': '1rem !important',
-        'padding-bottom': '1rem !important'
-      },
-      '.bw-py-4': {
-        'padding-top': '1.5rem !important',
-        'padding-bottom': '1.5rem !important'
-      },
-      '.bw-py-5': {
-        'padding-top': '3rem !important',
-        'padding-bottom': '3rem !important'
-      },
-      '.bw-py-6': {
-        'padding-top': '4rem !important',
-        'padding-bottom': '4rem !important'
-      }
-    },
-    /**
-     * Feature grid item styles
-     *
-     * Classes: .bw-feature, .bw-feature-icon, .bw-feature-title, .bw-g-4.
-     */
-    features: {
-      '.bw-feature': {
-        'padding': '1rem'
-      },
-      '.bw-feature-icon': {
-        'display': 'inline-block',
-        'margin-bottom': '1rem'
-      },
-      '.bw-feature-title': {
-        'margin-bottom': '0.5rem'
-      },
-      '.bw-g-4': {
-        '--bw-gutter-x': '1.5rem',
-        '--bw-gutter-y': '1.5rem'
-      }
-    },
-    /**
-     * Enhanced card styles with hover effects and horizontal image support
-     *
-     * Classes: .bw-card-hoverable (lift on hover), .bw-card-img-left,
-     * .bw-card-img-right, .bw-h5, .bw-h6.
-     */
-    enhancedCards: {
-      '.bw-card-hoverable': {
-        'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-      },
-      '.bw-card-hoverable:hover': {
-        'transform': 'translateY(-4px)',
-        'box-shadow': '0 1rem 2rem rgba(0,0,0,.15)'
-      },
-      '.bw-card-img-left': {
-        'width': '40%',
-        'object-fit': 'cover'
-      },
-      '.bw-card-img-right': {
-        'width': '40%',
-        'object-fit': 'cover'
-      },
-      '.bw-h5': {
-        'font-size': '1.25rem'
-      },
-      '.bw-h6': {
-        'font-size': '1rem'
-      }
-    },
-    /**
-     * Page section styles with header and subtitle
-     *
-     * Classes: .bw-section, .bw-section-header, .bw-section-title,
-     * .bw-section-subtitle. Responsive title sizing included.
-     */
-    sections: {
-      '.bw-section': {
-        'position': 'relative'
-      },
-      '.bw-section-header': {
-        'margin-bottom': '3rem'
-      },
-      '.bw-section-title': {
-        'margin-bottom': '1rem',
-        'font-weight': '300',
-        'font-size': 'calc(1.325rem + .9vw)'
-      },
-      '@media (min-width: 1200px)': {
-        '.bw-section-title': {
-          'font-size': '2rem'
-        }
-      },
-      '.bw-section-subtitle': {
-        'font-size': '1.125rem',
-        'color': '#6c757d'
-      }
-    },
-    /**
-     * Call-to-action section styles
-     *
-     * Classes: .bw-cta, .bw-cta-content, .bw-cta-title, .bw-cta-actions.
-     * Content is centered with max-width constraint.
-     */
-    cta: {
-      '.bw-cta': {
-        'position': 'relative'
-      },
-      '.bw-cta-content': {
-        'max-width': '48rem',
-        'margin': '0 auto'
-      },
-      '.bw-cta-title': {
-        'font-weight': '300'
-      },
-      '.bw-cta-actions': {
-        'display': 'flex',
-        'gap': '1rem',
-        'justify-content': 'center',
-        'flex-wrap': 'wrap'
-      }
-    },
-    /**
-     * Utility classes for spacing, text, display, flexbox, colors, borders, etc.
-     *
-     * Spacing: .bw-m-{0-5}, .bw-mt-{0-5}, .bw-mb-{0-5}, .bw-ms-{0-5}, .bw-me-{0-5},
-     *          .bw-p-{0-5}, .pt-{0-5}, .pb-{0-5}, .ps-{0-5}, .pe-{0-5}
-     * Text: .bw-text-{left,right,center}, .bw-text-{variant}, .fw-{weight}, .fs-{1-6}
-     * Display: .bw-d-{none,block,inline,inline-block,flex}
-     * Background: .bw-bg-{variant}
-     * Borders: .bw-border, .bw-border-0, .bw-rounded, .bw-rounded-circle
-     * Shadows: .bw-shadow, .bw-shadow-sm, .bw-shadow-lg
-     * Sizing: .w-{25,50,75,100,auto}, .h-{25,50,75,100,auto}
-     * Position: .position-{static,relative,absolute,fixed,sticky}
-     */
-    utilities: {
-      // Spacing
-      '.bw-m-0': {
-        'margin': '0 !important'
-      },
-      '.bw-m-1': {
-        'margin': '.25rem !important'
-      },
-      '.bw-m-2': {
-        'margin': '.5rem !important'
-      },
-      '.bw-m-3': {
-        'margin': '1rem !important'
-      },
-      '.bw-m-4': {
-        'margin': '1.5rem !important'
-      },
-      '.bw-m-5': {
-        'margin': '3rem !important'
-      },
-      '.m-auto': {
-        'margin': 'auto !important'
-      },
-      '.bw-mt-0': {
-        'margin-top': '0 !important'
-      },
-      '.bw-mt-1': {
-        'margin-top': '.25rem !important'
-      },
-      '.bw-mt-2': {
-        'margin-top': '.5rem !important'
-      },
-      '.bw-mt-3': {
-        'margin-top': '1rem !important'
-      },
-      '.bw-mt-4': {
-        'margin-top': '1.5rem !important'
-      },
-      '.bw-mt-5': {
-        'margin-top': '3rem !important'
-      },
-      '.bw-mb-0': {
-        'margin-bottom': '0 !important'
-      },
-      '.bw-mb-1': {
-        'margin-bottom': '.25rem !important'
-      },
-      '.bw-mb-2': {
-        'margin-bottom': '.5rem !important'
-      },
-      '.bw-mb-3': {
-        'margin-bottom': '1rem !important'
-      },
-      '.bw-mb-4': {
-        'margin-bottom': '1.5rem !important'
-      },
-      '.bw-mb-5': {
-        'margin-bottom': '3rem !important'
-      },
-      '.bw-ms-0': {
-        'margin-left': '0 !important'
-      },
-      '.bw-ms-1': {
-        'margin-left': '.25rem !important'
-      },
-      '.bw-ms-2': {
-        'margin-left': '.5rem !important'
-      },
-      '.bw-ms-3': {
-        'margin-left': '1rem !important'
-      },
-      '.bw-ms-4': {
-        'margin-left': '1.5rem !important'
-      },
-      '.bw-ms-5': {
-        'margin-left': '3rem !important'
-      },
-      '.bw-me-0': {
-        'margin-right': '0 !important'
-      },
-      '.bw-me-1': {
-        'margin-right': '.25rem !important'
-      },
-      '.bw-me-2': {
-        'margin-right': '.5rem !important'
-      },
-      '.bw-me-3': {
-        'margin-right': '1rem !important'
-      },
-      '.bw-me-4': {
-        'margin-right': '1.5rem !important'
-      },
-      '.bw-me-5': {
-        'margin-right': '3rem !important'
-      },
-      '.bw-p-0': {
-        'padding': '0 !important'
-      },
-      '.bw-p-1': {
-        'padding': '.25rem !important'
-      },
-      '.bw-p-2': {
-        'padding': '.5rem !important'
-      },
-      '.bw-p-3': {
-        'padding': '1rem !important'
-      },
-      '.bw-p-4': {
-        'padding': '1.5rem !important'
-      },
-      '.bw-p-5': {
-        'padding': '3rem !important'
-      },
-      '.pt-0': {
-        'padding-top': '0 !important'
-      },
-      '.pt-1': {
-        'padding-top': '.25rem !important'
-      },
-      '.pt-2': {
-        'padding-top': '.5rem !important'
-      },
-      '.pt-3': {
-        'padding-top': '1rem !important'
-      },
-      '.pt-4': {
-        'padding-top': '1.5rem !important'
-      },
-      '.pt-5': {
-        'padding-top': '3rem !important'
-      },
-      '.pb-0': {
-        'padding-bottom': '0 !important'
-      },
-      '.pb-1': {
-        'padding-bottom': '.25rem !important'
-      },
-      '.pb-2': {
-        'padding-bottom': '.5rem !important'
-      },
-      '.pb-3': {
-        'padding-bottom': '1rem !important'
-      },
-      '.pb-4': {
-        'padding-bottom': '1.5rem !important'
-      },
-      '.pb-5': {
-        'padding-bottom': '3rem !important'
-      },
-      '.ps-0': {
-        'padding-left': '0 !important'
-      },
-      '.ps-1': {
-        'padding-left': '.25rem !important'
-      },
-      '.ps-2': {
-        'padding-left': '.5rem !important'
-      },
-      '.ps-3': {
-        'padding-left': '1rem !important'
-      },
-      '.ps-4': {
-        'padding-left': '1.5rem !important'
-      },
-      '.ps-5': {
-        'padding-left': '3rem !important'
-      },
-      '.pe-0': {
-        'padding-right': '0 !important'
-      },
-      '.pe-1': {
-        'padding-right': '.25rem !important'
-      },
-      '.pe-2': {
-        'padding-right': '.5rem !important'
-      },
-      '.pe-3': {
-        'padding-right': '1rem !important'
-      },
-      '.pe-4': {
-        'padding-right': '1.5rem !important'
-      },
-      '.pe-5': {
-        'padding-right': '3rem !important'
-      },
-      // Text alignment
-      '.bw-text-left': {
-        'text-align': 'left'
-      },
-      '.bw-text-right': {
-        'text-align': 'right'
-      },
-      '.bw-text-center': {
-        'text-align': 'center'
-      },
-      // Display
-      '.bw-d-none': {
-        'display': 'none'
-      },
-      '.bw-d-block': {
-        'display': 'block'
-      },
-      '.bw-d-inline': {
-        'display': 'inline'
-      },
-      '.bw-d-inline-block': {
-        'display': 'inline-block'
-      },
-      '.bw-d-flex': {
-        'display': 'flex'
-      },
-      // Flexbox
-      '.justify-content-start': {
-        'justify-content': 'flex-start'
-      },
-      '.justify-content-end': {
-        'justify-content': 'flex-end'
-      },
-      '.justify-content-center': {
-        'justify-content': 'center'
-      },
-      '.justify-content-between': {
-        'justify-content': 'space-between'
-      },
-      '.justify-content-around': {
-        'justify-content': 'space-around'
-      },
-      '.align-items-start': {
-        'align-items': 'flex-start'
-      },
-      '.align-items-end': {
-        'align-items': 'flex-end'
-      },
-      '.align-items-center': {
-        'align-items': 'center'
-      },
-      // Colors
-      '.bw-text-primary': {
-        'color': '#006666'
-      },
-      '.bw-text-secondary': {
-        'color': '#6c757d'
-      },
-      '.bw-text-success': {
-        'color': '#198754'
-      },
-      '.bw-text-danger': {
-        'color': '#dc3545'
-      },
-      '.bw-text-warning': {
-        'color': '#ffc107'
-      },
-      '.bw-text-info': {
-        'color': '#0dcaf0'
-      },
-      '.bw-text-light': {
-        'color': '#f8f9fa'
-      },
-      '.bw-text-dark': {
-        'color': '#212529'
-      },
-      '.bw-text-muted': {
-        'color': '#6c757d'
-      },
-      '.bw-bg-primary': {
-        'background-color': '#006666'
-      },
-      '.bw-bg-secondary': {
-        'background-color': '#6c757d'
-      },
-      '.bw-bg-success': {
-        'background-color': '#198754'
-      },
-      '.bw-bg-danger': {
-        'background-color': '#dc3545'
-      },
-      '.bw-bg-warning': {
-        'background-color': '#ffc107'
-      },
-      '.bw-bg-info': {
-        'background-color': '#0dcaf0'
-      },
-      '.bw-bg-light': {
-        'background-color': '#f8f9fa'
-      },
-      '.bw-bg-dark': {
-        'background-color': '#212529'
-      },
-      // Borders
-      '.bw-border': {
-        'border': '1px solid #dee2e6 !important'
-      },
-      '.bw-border-0': {
-        'border': '0 !important'
-      },
-      '.border-top-0': {
-        'border-top': '0 !important'
-      },
-      '.border-end-0': {
-        'border-right': '0 !important'
-      },
-      '.border-bottom-0': {
-        'border-bottom': '0 !important'
-      },
-      '.border-start-0': {
-        'border-left': '0 !important'
-      },
-      '.bw-rounded': {
-        'border-radius': '.375rem !important'
-      },
-      '.bw-rounded-0': {
-        'border-radius': '0 !important'
-      },
-      '.rounded-1': {
-        'border-radius': '.25rem !important'
-      },
-      '.rounded-2': {
-        'border-radius': '.375rem !important'
-      },
-      '.rounded-3': {
-        'border-radius': '.5rem !important'
-      },
-      '.bw-rounded-circle': {
-        'border-radius': '50% !important'
-      },
-      '.rounded-pill': {
-        'border-radius': '50rem !important'
-      },
-      // Shadows
-      '.bw-shadow': {
-        'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important'
-      },
-      '.bw-shadow-sm': {
-        'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important'
-      },
-      '.bw-shadow-lg': {
-        'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important'
-      },
-      '.shadow-none': {
-        'box-shadow': 'none !important'
-      },
-      // Width/Height
-      '.w-25': {
-        'width': '25% !important'
-      },
-      '.w-50': {
-        'width': '50% !important'
-      },
-      '.w-75': {
-        'width': '75% !important'
-      },
-      '.w-100': {
-        'width': '100% !important'
-      },
-      '.w-auto': {
-        'width': 'auto !important'
-      },
-      '.h-25': {
-        'height': '25% !important'
-      },
-      '.h-50': {
-        'height': '50% !important'
-      },
-      '.h-75': {
-        'height': '75% !important'
-      },
-      '.h-100': {
-        'height': '100% !important'
-      },
-      '.h-auto': {
-        'height': 'auto !important'
-      },
-      '.mw-100': {
-        'max-width': '100% !important'
-      },
-      '.mh-100': {
-        'max-height': '100% !important'
-      },
-      // Positioning
-      '.position-static': {
-        'position': 'static !important'
-      },
-      '.position-relative': {
-        'position': 'relative !important'
-      },
-      '.position-absolute': {
-        'position': 'absolute !important'
-      },
-      '.position-fixed': {
-        'position': 'fixed !important'
-      },
-      '.position-sticky': {
-        'position': 'sticky !important'
-      },
-      '.top-0': {
-        'top': '0 !important'
-      },
-      '.top-50': {
-        'top': '50% !important'
-      },
-      '.top-100': {
-        'top': '100% !important'
-      },
-      '.bottom-0': {
-        'bottom': '0 !important'
-      },
-      '.bottom-50': {
-        'bottom': '50% !important'
-      },
-      '.bottom-100': {
-        'bottom': '100% !important'
-      },
-      '.start-0': {
-        'left': '0 !important'
-      },
-      '.start-50': {
-        'left': '50% !important'
-      },
-      '.start-100': {
-        'left': '100% !important'
-      },
-      '.end-0': {
-        'right': '0 !important'
-      },
-      '.end-50': {
-        'right': '50% !important'
-      },
-      '.end-100': {
-        'right': '100% !important'
-      },
-      '.translate-middle': {
-        'transform': 'translate(-50%, -50%) !important'
-      },
-      // Overflow
-      '.overflow-auto': {
-        'overflow': 'auto !important'
-      },
-      '.overflow-hidden': {
-        'overflow': 'hidden !important'
-      },
-      '.overflow-visible': {
-        'overflow': 'visible !important'
-      },
-      '.overflow-scroll': {
-        'overflow': 'scroll !important'
-      },
-      // Typography utilities
-      '.fs-1': {
-        'font-size': 'calc(1.375rem + 1.5vw) !important'
-      },
-      '.fs-2': {
-        'font-size': 'calc(1.325rem + .9vw) !important'
-      },
-      '.fs-3': {
-        'font-size': 'calc(1.3rem + .6vw) !important'
-      },
-      '.fs-4': {
-        'font-size': 'calc(1.275rem + .3vw) !important'
-      },
-      '.fs-5': {
-        'font-size': '1.25rem !important'
-      },
-      '.fs-6': {
-        'font-size': '1rem !important'
-      },
-      '.fw-light': {
-        'font-weight': '300 !important'
-      },
-      '.fw-lighter': {
-        'font-weight': 'lighter !important'
-      },
-      '.fw-normal': {
-        'font-weight': '400 !important'
-      },
-      '.fw-bold': {
-        'font-weight': '700 !important'
-      },
-      '.fw-bolder': {
-        'font-weight': 'bolder !important'
-      },
-      '.fst-italic': {
-        'font-style': 'italic !important'
-      },
-      '.fst-normal': {
-        'font-style': 'normal !important'
-      },
-      '.text-decoration-none': {
-        'text-decoration': 'none !important'
-      },
-      '.text-decoration-underline': {
-        'text-decoration': 'underline !important'
-      },
-      '.text-decoration-line-through': {
-        'text-decoration': 'line-through !important'
-      },
-      '.text-lowercase': {
-        'text-transform': 'lowercase !important'
-      },
-      '.text-uppercase': {
-        'text-transform': 'uppercase !important'
-      },
-      '.text-capitalize': {
-        'text-transform': 'capitalize !important'
-      },
-      '.text-wrap': {
-        'white-space': 'normal !important'
-      },
-      '.text-nowrap': {
-        'white-space': 'nowrap !important'
-      },
-      // List utilities
-      '.list-unstyled': {
-        'padding-left': '0',
-        'list-style': 'none'
-      },
-      '.list-inline': {
-        'padding-left': '0',
-        'list-style': 'none'
-      },
-      '.list-inline-item': {
-        'display': 'inline-block'
-      },
-      '.list-inline-item:not(:last-child)': {
-        'margin-right': '.5rem'
-      },
-      // Visibility
-      '.visible': {
-        'visibility': 'visible !important'
-      },
-      '.invisible': {
-        'visibility': 'hidden !important'
-      },
-      // User select
-      '.user-select-all': {
-        'user-select': 'all !important'
-      },
-      '.user-select-auto': {
-        'user-select': 'auto !important'
-      },
-      '.user-select-none': {
-        'user-select': 'none !important'
-      },
-      // Pointer events
-      '.pe-none': {
-        'pointer-events': 'none !important'
-      },
-      '.pe-auto': {
-        'pointer-events': 'auto !important'
-      },
-      // Opacity
-      '.opacity-0': {
-        'opacity': '0 !important'
-      },
-      '.opacity-25': {
-        'opacity': '.25 !important'
-      },
-      '.opacity-50': {
-        'opacity': '.5 !important'
-      },
-      '.opacity-75': {
-        'opacity': '.75 !important'
-      },
-      '.opacity-100': {
-        'opacity': '1 !important'
-      }
-    },
-    /**
-     * Responsive grid columns for sm, md, and lg breakpoints
-     *
-     * Classes: .bw-col-sm-{1-12} (>=576px), .bw-col-md-{1-12} (>=768px),
-     * .bw-col-lg-{1-12} (>=992px). Applied via @media min-width queries.
+     * Responsive grid columns
      */
     responsive: {
       '@media (min-width: 576px)': {
@@ -2356,26 +1474,1115 @@
           'flex': '0 0 100%',
           'max-width': '100%'
         }
+      },
+      '@media (max-width: 575px)': {
+        '.bw-card-img-left, .bw_card-img-left': {
+          'width': '100%'
+        },
+        '.bw-card-img-right, .bw_card-img-right': {
+          'width': '100%'
+        },
+        '.bw-hero, .bw_hero': {
+          'padding': '2rem 1rem'
+        },
+        '.bw-cta-actions, .bw_cta-actions': {
+          'flex-direction': 'column'
+        },
+        '.bw-hstack, .bw_hstack': {
+          'flex-direction': 'column'
+        },
+        '.bw-feature-grid, .bw_feature-grid': {
+          'grid-template-columns': '1fr'
+        }
       }
     }
   };
 
+  // =========================================================================
+  // Structural styles — color-independent layout/behavior CSS
+  // =========================================================================
+
   /**
-   * Merge all style categories into a single flat CSS rules object
+   * Structural styles contain only layout, sizing, spacing, and behavior
+   * properties. No colors, backgrounds, shadows, or border-colors.
+   * These never change with themes.
    *
-   * Returns an object suitable for passing directly to bw.css() or
-   * bw.injectCSS(). All category objects are merged via Object.assign,
-   * so later categories override earlier ones if selectors collide.
-   *
-   * @returns {Object} Merged CSS rules object with all selectors
-   * @example
-   * const allRules = getAllStyles();
-   * const cssString = bw.css(allRules);
-   * bw.injectCSS(cssString);
+   * @returns {Object} CSS rules object
    */
+  function getStructuralStyles() {
+    var rules = {};
+
+    // Reset (structural portion)
+    rules['*'] = {
+      'box-sizing': 'border-box',
+      'margin': '0',
+      'padding': '0'
+    };
+    rules['html'] = {
+      'font-size': '16px',
+      'line-height': '1.5',
+      '-webkit-text-size-adjust': '100%',
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale'
+    };
+    rules['body'] = {
+      'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      'font-size': '1rem',
+      'font-weight': '400',
+      'line-height': '1.6',
+      'margin': '0',
+      'padding': '0',
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale'
+    };
+    rules['.bw-page'] = {
+      'min-height': '100vh',
+      'display': 'flex',
+      'flex-direction': 'column'
+    };
+    rules['.bw-page-content'] = {
+      'flex': '1',
+      'padding': '2rem 0'
+    };
+    rules['main'] = {
+      'display': 'block'
+    };
+    rules['hr'] = {
+      'box-sizing': 'content-box',
+      'height': '0',
+      'overflow': 'visible',
+      'margin': '1rem 0',
+      'border': '0'
+    };
+    rules['hr:not([size])'] = {
+      'height': '1px'
+    };
+
+    // Typography (structural)
+    rules['h1, h2, h3, h4, h5, h6'] = {
+      'margin-top': '0',
+      'margin-bottom': '.5rem',
+      'font-weight': '600',
+      'line-height': '1.25',
+      'letter-spacing': '-0.01em'
+    };
+    rules['h1'] = {
+      'font-size': 'calc(1.375rem + 1.5vw)'
+    };
+    rules['h2'] = {
+      'font-size': 'calc(1.325rem + .9vw)'
+    };
+    rules['h3'] = {
+      'font-size': 'calc(1.3rem + .6vw)'
+    };
+    rules['h4'] = {
+      'font-size': 'calc(1.275rem + .3vw)'
+    };
+    rules['h5'] = {
+      'font-size': '1.25rem'
+    };
+    rules['h6'] = {
+      'font-size': '1rem'
+    };
+    rules['p'] = {
+      'margin-top': '0',
+      'margin-bottom': '1rem'
+    };
+    rules['small'] = {
+      'font-size': '0.875rem'
+    };
+    rules['a'] = {
+      'text-decoration': 'none',
+      'transition': 'color 0.15s'
+    };
+
+    // Grid (all structural)
+    Object.assign(rules, defaultStyles.grid);
+
+    // Button (structural)
+    rules['.bw-btn'] = {
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'font-weight': '500',
+      'line-height': '1.5',
+      'text-align': 'center',
+      'text-decoration': 'none',
+      'vertical-align': 'middle',
+      'cursor': 'pointer',
+      'user-select': 'none',
+      'border': '1px solid transparent',
+      'padding': '0.5rem 1.125rem',
+      'font-size': '0.875rem',
+      'font-family': 'inherit',
+      'border-radius': '6px',
+      'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+      'gap': '0.5rem'
+    };
+    rules['.bw-btn:hover'] = {
+      'text-decoration': 'none',
+      'transform': 'translateY(-1px)'
+    };
+    rules['.bw-btn:active'] = {
+      'transform': 'translateY(0)'
+    };
+    rules['.bw-btn:focus-visible'] = {
+      'outline': '0'
+    };
+    rules['.bw-btn:disabled'] = {
+      'opacity': '0.5',
+      'cursor': 'not-allowed',
+      'pointer-events': 'none'
+    };
+    rules['.bw-btn-lg'] = {
+      'padding': '0.625rem 1.5rem',
+      'font-size': '1rem',
+      'border-radius': '8px'
+    };
+    rules['.bw-btn-sm'] = {
+      'padding': '0.25rem 0.75rem',
+      'font-size': '0.8125rem',
+      'border-radius': '5px'
+    };
+
+    // Card (structural)
+    rules['.bw-card'] = {
+      'position': 'relative',
+      'display': 'flex',
+      'flex-direction': 'column',
+      'min-width': '0',
+      'height': '100%',
+      'word-wrap': 'break-word',
+      'background-clip': 'border-box',
+      'border': '1px solid transparent',
+      'border-radius': '8px',
+      'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+      'margin-bottom': '1.5rem',
+      'overflow': 'hidden'
+    };
+    rules['.bw-card-body'] = {
+      'flex': '1 1 auto',
+      'padding': '1.25rem 1.5rem'
+    };
+    rules['.bw-card-body > *:last-child'] = {
+      'margin-bottom': '0'
+    };
+    rules['.bw-card-title'] = {
+      'margin-bottom': '0.5rem',
+      'font-size': '1.125rem',
+      'font-weight': '600',
+      'line-height': '1.3'
+    };
+    rules['.bw-card-text'] = {
+      'margin-bottom': '0',
+      'font-size': '0.9375rem',
+      'line-height': '1.6'
+    };
+    rules['.bw-card-header'] = {
+      'padding': '0.875rem 1.5rem',
+      'margin-bottom': '0',
+      'font-weight': '600',
+      'font-size': '0.875rem'
+    };
+    rules['.bw-card-footer'] = {
+      'padding': '0.75rem 1.5rem',
+      'font-size': '0.875rem'
+    };
+    rules['.bw-card-hoverable'] = {
+      'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    };
+    rules['.bw-card-img-top'] = {
+      'width': '100%',
+      'border-top-left-radius': '7px',
+      'border-top-right-radius': '7px'
+    };
+    rules['.bw-card-img-bottom'] = {
+      'width': '100%',
+      'border-bottom-left-radius': '7px',
+      'border-bottom-right-radius': '7px'
+    };
+    rules['.bw-card-img-left'] = {
+      'width': '40%',
+      'object-fit': 'cover'
+    };
+    rules['.bw-card-img-right'] = {
+      'width': '40%',
+      'object-fit': 'cover'
+    };
+    rules['.bw-card-subtitle'] = {
+      'margin-top': '-0.25rem',
+      'margin-bottom': '0.5rem',
+      'font-size': '0.875rem'
+    };
+
+    // Forms (structural)
+    rules['.bw-form-control'] = {
+      'display': 'block',
+      'width': '100%',
+      'padding': '0.5rem 0.875rem',
+      'font-size': '0.9375rem',
+      'font-weight': '400',
+      'line-height': '1.5',
+      'background-clip': 'padding-box',
+      'appearance': 'none',
+      'border': '1px solid transparent',
+      'border-radius': '6px',
+      'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+      'font-family': 'inherit'
+    };
+    rules['.bw-form-control:focus'] = {
+      'outline': '0'
+    };
+    rules['.bw-form-control::placeholder'] = {
+      'opacity': '1'
+    };
+    rules['.bw-form-label'] = {
+      'display': 'block',
+      'margin-bottom': '0.375rem',
+      'font-size': '0.875rem',
+      'font-weight': '600'
+    };
+    rules['.bw-form-group'] = {
+      'margin-bottom': '1.25rem'
+    };
+    rules['.bw-form-text'] = {
+      'margin-top': '0.25rem',
+      'font-size': '0.8125rem'
+    };
+    rules['select.bw-form-control'] = {
+      'padding-right': '2.25rem',
+      'background-repeat': 'no-repeat',
+      'background-position': 'right 0.75rem center',
+      'background-size': '16px 12px'
+    };
+    rules['textarea.bw-form-control'] = {
+      'min-height': '5rem',
+      'resize': 'vertical'
+    };
+
+    // Form checks (structural)
+    Object.assign(rules, {
+      '.bw-form-check': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.5rem',
+        'min-height': '1.5rem',
+        'margin-bottom': '0.25rem'
+      },
+      '.bw-form-check-input': {
+        'width': '1rem',
+        'height': '1rem',
+        'margin': '0',
+        'cursor': 'pointer',
+        'flex-shrink': '0',
+        'border-radius': '0.25rem',
+        'appearance': 'auto'
+      },
+      '.bw-form-check-input:disabled': {
+        'opacity': '0.5',
+        'cursor': 'not-allowed'
+      },
+      '.bw-form-check-label': {
+        'cursor': 'pointer',
+        'user-select': 'none',
+        'font-size': '0.9375rem'
+      }
+    });
+
+    // Navigation (structural)
+    rules['.bw-navbar'] = {
+      'position': 'relative',
+      'display': 'flex',
+      'flex-wrap': 'wrap',
+      'align-items': 'center',
+      'justify-content': 'space-between',
+      'padding': '0.5rem 1.5rem'
+    };
+    rules['.bw-navbar > .container'] = {
+      'display': 'flex',
+      'flex-wrap': 'wrap',
+      'align-items': 'center',
+      'justify-content': 'space-between'
+    };
+    rules['.bw-navbar-brand'] = {
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'gap': '0.5rem',
+      'padding-top': '0.25rem',
+      'padding-bottom': '0.25rem',
+      'margin-right': '1.5rem',
+      'font-size': '1.125rem',
+      'font-weight': '600',
+      'line-height': 'inherit',
+      'white-space': 'nowrap',
+      'text-decoration': 'none'
+    };
+    rules['.bw-navbar-nav'] = {
+      'display': 'flex',
+      'flex-direction': 'row',
+      'padding-left': '0',
+      'margin-bottom': '0',
+      'list-style': 'none',
+      'gap': '0.25rem'
+    };
+    rules['.bw-navbar-nav .bw-nav-link'] = {
+      'display': 'block',
+      'padding': '0.5rem 0.875rem',
+      'text-decoration': 'none',
+      'font-size': '0.875rem',
+      'font-weight': '500',
+      'border-radius': '6px',
+      'transition': 'color 0.15s, background-color 0.15s'
+    };
+
+    // Tables (structural)
+    rules['.bw-table'] = {
+      'width': '100%',
+      'margin-bottom': '1.5rem',
+      'vertical-align': 'top',
+      'border-collapse': 'collapse',
+      'font-size': '0.9375rem',
+      'line-height': '1.5'
+    };
+    rules['.bw-table > :not(caption) > * > *'] = {
+      'padding': '0.75rem 1rem'
+    };
+    rules['.bw-table > tbody'] = {
+      'vertical-align': 'inherit'
+    };
+    rules['.bw-table > thead'] = {
+      'vertical-align': 'bottom'
+    };
+    rules['.bw-table > thead > tr > *'] = {
+      'padding': '0.625rem 1rem',
+      'font-size': '0.8125rem',
+      'font-weight': '600',
+      'text-transform': 'uppercase',
+      'letter-spacing': '0.04em'
+    };
+    rules['.bw-table caption'] = {
+      'padding': '0.5rem 1rem',
+      'font-size': '0.875rem',
+      'caption-side': 'bottom'
+    };
+    rules['.bw-table-responsive'] = {
+      'overflow-x': 'auto',
+      '-webkit-overflow-scrolling': 'touch'
+    };
+
+    // Alerts (structural)
+    rules['.bw-alert'] = {
+      'position': 'relative',
+      'padding': '0.875rem 1.25rem',
+      'margin-bottom': '1rem',
+      'border': '1px solid transparent',
+      'border-radius': '8px',
+      'font-size': '0.9375rem',
+      'line-height': '1.6'
+    };
+    rules['.bw-alert-heading, .alert-heading'] = {
+      'color': 'inherit'
+    };
+    rules['.bw-alert-link, .alert-link'] = {
+      'font-weight': '700'
+    };
+    rules['.bw-alert-dismissible'] = {
+      'padding-right': '3rem'
+    };
+    rules['.bw-alert-dismissible .btn-close'] = {
+      'position': 'absolute',
+      'top': '0',
+      'right': '0',
+      'z-index': '2',
+      'padding': '1.25rem 1rem'
+    };
+
+    // Badges (structural)
+    rules['.bw-badge'] = {
+      'display': 'inline-block',
+      'padding': '.35em .65em',
+      'font-size': '.75em',
+      'font-weight': '700',
+      'line-height': '1',
+      'text-align': 'center',
+      'white-space': 'nowrap',
+      'vertical-align': 'baseline',
+      'border-radius': '.375rem'
+    };
+    rules['.bw-badge:empty'] = {
+      'display': 'none'
+    };
+    rules['.bw-badge-pill'] = {
+      'border-radius': '50rem'
+    };
+
+    // Progress (structural)
+    rules['.bw-progress'] = {
+      'display': 'flex',
+      'height': '1.25rem',
+      'overflow': 'hidden',
+      'font-size': '.875rem',
+      'border-radius': '.5rem'
+    };
+    rules['.bw-progress-bar'] = {
+      'display': 'flex',
+      'flex-direction': 'column',
+      'justify-content': 'center',
+      'overflow': 'hidden',
+      'text-align': 'center',
+      'white-space': 'nowrap',
+      'transition': 'width .6s ease',
+      'font-weight': '600'
+    };
+    rules['.bw-progress-bar-striped'] = {
+      'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
+      'background-size': '1rem 1rem'
+    };
+    rules['.bw-progress-bar-animated'] = {
+      'animation': 'progress-bar-stripes 1s linear infinite'
+    };
+    rules['@keyframes progress-bar-stripes'] = {
+      '0%': {
+        'background-position-x': '1rem'
+      }
+    };
+
+    // Tabs (structural)
+    rules['.bw-nav'] = {
+      'display': 'flex',
+      'flex-wrap': 'wrap',
+      'padding-left': '0',
+      'margin-bottom': '0',
+      'list-style': 'none',
+      'gap': '0'
+    };
+    rules['.bw-nav-item'] = {
+      'display': 'block'
+    };
+    rules['.bw-nav-tabs .bw-nav-item'] = {
+      'margin-bottom': '-2px'
+    };
+    rules['.bw-nav-link'] = {
+      'display': 'block',
+      'padding': '0.625rem 1rem',
+      'font-size': '0.875rem',
+      'font-weight': '500',
+      'text-decoration': 'none',
+      'cursor': 'pointer',
+      'border': 'none',
+      'background': 'transparent',
+      'transition': 'color 0.15s, border-color 0.15s',
+      'font-family': 'inherit'
+    };
+    rules['.bw-nav-tabs .bw-nav-link'] = {
+      'border': 'none',
+      'border-bottom': '2px solid transparent',
+      'border-radius': '0',
+      'background-color': 'transparent'
+    };
+    rules['.bw-nav-pills .bw-nav-link'] = {
+      'border-radius': '6px'
+    };
+    rules['.bw-nav-vertical'] = {
+      'flex-direction': 'column'
+    };
+    rules['.bw-tab-content'] = {
+      'padding': '1.25rem 0'
+    };
+    rules['.bw-tab-pane'] = {
+      'display': 'none'
+    };
+    rules['.bw-tab-pane.active'] = {
+      'display': 'block'
+    };
+
+    // List groups (structural)
+    rules['.bw-list-group'] = {
+      'display': 'flex',
+      'flex-direction': 'column',
+      'padding-left': '0',
+      'margin-bottom': '0',
+      'border-radius': '0.375rem'
+    };
+    rules['.bw-list-group-item'] = {
+      'position': 'relative',
+      'display': 'block',
+      'padding': '0.75rem 1.25rem',
+      'text-decoration': 'none',
+      'font-size': '0.9375rem'
+    };
+    rules['.bw-list-group-item:first-child'] = {
+      'border-top-left-radius': 'inherit',
+      'border-top-right-radius': 'inherit'
+    };
+    rules['.bw-list-group-item:last-child'] = {
+      'border-bottom-right-radius': 'inherit',
+      'border-bottom-left-radius': 'inherit'
+    };
+    rules['.bw-list-group-item + .bw-list-group-item'] = {
+      'border-top-width': '0'
+    };
+    rules['.bw-list-group-item.disabled'] = {
+      'pointer-events': 'none'
+    };
+    rules['a.bw-list-group-item'] = {
+      'cursor': 'pointer'
+    };
+    rules['.bw-list-group-flush'] = {
+      'border-radius': '0'
+    };
+    rules['.bw-list-group-flush > .bw-list-group-item'] = {
+      'border-width': '0 0 1px',
+      'border-radius': '0'
+    };
+    rules['.bw-list-group-flush > .bw-list-group-item:last-child'] = {
+      'border-bottom-width': '0'
+    };
+
+    // Pagination (structural)
+    rules['.bw-pagination'] = {
+      'display': 'flex',
+      'padding-left': '0',
+      'list-style': 'none',
+      'margin-bottom': '0'
+    };
+    rules['.bw-page-item'] = {
+      'display': 'list-item',
+      'list-style': 'none'
+    };
+    rules['.bw-page-link'] = {
+      'position': 'relative',
+      'display': 'block',
+      'padding': '0.375rem 0.75rem',
+      'margin-left': '-1px',
+      'line-height': '1.25',
+      'text-decoration': 'none',
+      'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out'
+    };
+    rules['.bw-page-item:first-child .bw-page-link'] = {
+      'margin-left': '0',
+      'border-top-left-radius': '0.375rem',
+      'border-bottom-left-radius': '0.375rem'
+    };
+    rules['.bw-page-item:last-child .bw-page-link'] = {
+      'border-top-right-radius': '0.375rem',
+      'border-bottom-right-radius': '0.375rem'
+    };
+
+    // Breadcrumb (structural)
+    rules['.bw-breadcrumb'] = {
+      'display': 'flex',
+      'flex-wrap': 'wrap',
+      'padding': '0 0',
+      'margin-bottom': '1rem',
+      'list-style': 'none'
+    };
+    rules['.bw-breadcrumb-item'] = {
+      'display': 'flex'
+    };
+    rules['.bw-breadcrumb-item + .bw-breadcrumb-item'] = {
+      'padding-left': '0.5rem'
+    };
+    rules['.bw-breadcrumb-item + .bw-breadcrumb-item::before'] = {
+      'float': 'left',
+      'padding-right': '0.5rem',
+      'content': '"/"'
+    };
+
+    // Hero (structural)
+    rules['.bw-hero'] = {
+      'position': 'relative',
+      'overflow': 'hidden'
+    };
+    rules['.bw-hero-overlay'] = {
+      'position': 'absolute',
+      'top': '0',
+      'left': '0',
+      'right': '0',
+      'bottom': '0',
+      'z-index': '1'
+    };
+    rules['.bw-hero-content'] = {
+      'position': 'relative',
+      'z-index': '2'
+    };
+    rules['.bw-hero-title'] = {
+      'font-weight': '300',
+      'letter-spacing': '-0.05rem'
+    };
+    rules['.bw-hero-actions'] = {
+      'display': 'flex',
+      'gap': '1rem',
+      'justify-content': 'center',
+      'flex-wrap': 'wrap'
+    };
+    rules['.bw-display-4'] = {
+      'font-size': 'calc(1.475rem + 2.7vw)',
+      'font-weight': '300',
+      'line-height': '1.2'
+    };
+    rules['.bw-lead'] = {
+      'font-size': '1.25rem',
+      'font-weight': '300'
+    };
+
+    // Features (structural)
+    rules['.bw-feature'] = {
+      'padding': '1rem'
+    };
+    rules['.bw-feature-icon'] = {
+      'display': 'inline-block',
+      'margin-bottom': '1rem'
+    };
+    rules['.bw-feature-title'] = {
+      'margin-bottom': '0.5rem'
+    };
+    rules['.bw-feature-grid'] = {
+      'width': '100%'
+    };
+    rules['.bw-g-4'] = {
+      '--bw-gutter-x': '1.5rem',
+      '--bw-gutter-y': '1.5rem'
+    };
+
+    // Sections (structural)
+    rules['.bw-section'] = {
+      'position': 'relative'
+    };
+    rules['.bw-section-header'] = {
+      'margin-bottom': '3rem'
+    };
+    rules['.bw-section-title'] = {
+      'margin-bottom': '1rem',
+      'font-weight': '300',
+      'font-size': 'calc(1.325rem + .9vw)'
+    };
+
+    // CTA (structural)
+    rules['.bw-cta'] = {
+      'position': 'relative'
+    };
+    rules['.bw-cta-content'] = {
+      'max-width': '48rem',
+      'margin': '0 auto'
+    };
+    rules['.bw-cta-title'] = {
+      'font-weight': '300'
+    };
+    rules['.bw-cta-actions'] = {
+      'display': 'flex',
+      'gap': '1rem',
+      'justify-content': 'center',
+      'flex-wrap': 'wrap'
+    };
+
+    // Spinner (structural)
+    rules['.bw-spinner-border'] = {
+      'display': 'inline-block',
+      'width': '2rem',
+      'height': '2rem',
+      'vertical-align': '-0.125em',
+      'border': '0.25em solid currentcolor',
+      'border-right-color': 'transparent',
+      'border-radius': '50%',
+      'animation': 'bw-spinner-border 0.75s linear infinite'
+    };
+    rules['.bw-spinner-border-sm'] = {
+      'width': '1rem',
+      'height': '1rem',
+      'border-width': '0.2em'
+    };
+    rules['.bw-spinner-border-lg'] = {
+      'width': '3rem',
+      'height': '3rem',
+      'border-width': '0.3em'
+    };
+    rules['.bw-spinner-grow'] = {
+      'display': 'inline-block',
+      'width': '2rem',
+      'height': '2rem',
+      'vertical-align': '-0.125em',
+      'border-radius': '50%',
+      'opacity': '0',
+      'animation': 'bw-spinner-grow 0.75s linear infinite'
+    };
+    rules['.bw-spinner-grow-sm'] = {
+      'width': '1rem',
+      'height': '1rem'
+    };
+    rules['.bw-spinner-grow-lg'] = {
+      'width': '3rem',
+      'height': '3rem'
+    };
+    rules['@keyframes bw-spinner-border'] = {
+      '100%': {
+        'transform': 'rotate(360deg)'
+      }
+    };
+    rules['@keyframes bw-spinner-grow'] = {
+      '0%': {
+        'transform': 'scale(0)'
+      },
+      '50%': {
+        'opacity': '1',
+        'transform': 'none'
+      }
+    };
+    rules['.bw-visually-hidden'] = {
+      'position': 'absolute',
+      'width': '1px',
+      'height': '1px',
+      'padding': '0',
+      'margin': '-1px',
+      'overflow': 'hidden',
+      'clip': 'rect(0, 0, 0, 0)',
+      'white-space': 'nowrap',
+      'border': '0'
+    };
+
+    // Close button (structural)
+    rules['.bw-close'] = {
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'width': '1.5rem',
+      'height': '1.5rem',
+      'padding': '0',
+      'font-size': '1.25rem',
+      'font-weight': '700',
+      'line-height': '1',
+      'background': 'transparent',
+      'border': '0',
+      'border-radius': '0.25rem',
+      'cursor': 'pointer'
+    };
+
+    // Stacks (structural)
+    rules['.bw-vstack'] = {
+      'display': 'flex',
+      'flex-direction': 'column'
+    };
+    rules['.bw-hstack'] = {
+      'display': 'flex',
+      'flex-direction': 'row',
+      'align-items': 'center'
+    };
+    rules['.bw-gap-0'] = {
+      'gap': '0'
+    };
+    rules['.bw-gap-1'] = {
+      'gap': '0.25rem'
+    };
+    rules['.bw-gap-2'] = {
+      'gap': '0.5rem'
+    };
+    rules['.bw-gap-3'] = {
+      'gap': '1rem'
+    };
+    rules['.bw-gap-4'] = {
+      'gap': '1.5rem'
+    };
+    rules['.bw-gap-5'] = {
+      'gap': '3rem'
+    };
+
+    // Offsets (structural)
+    for (var i = 1; i <= 11; i++) {
+      rules['.bw-offset-' + i] = {
+        'margin-left': (i / 12 * 100).toFixed(6).replace(/\.?0+$/, '') + '%'
+      };
+    }
+
+    // Code demo (structural)
+    rules['.bw-code-demo'] = {
+      'margin-bottom': '2rem'
+    };
+
+    // Spacing utilities (structural)
+    var spacingValues = {
+      '0': '0',
+      '1': '.25rem',
+      '2': '.5rem',
+      '3': '1rem',
+      '4': '1.5rem',
+      '5': '3rem'
+    };
+    for (var k in spacingValues) {
+      var v = spacingValues[k];
+      rules['.bw-m-' + k] = {
+        'margin': v + ' !important'
+      };
+      rules['.bw-mt-' + k] = {
+        'margin-top': v + ' !important'
+      };
+      rules['.bw-mb-' + k] = {
+        'margin-bottom': v + ' !important'
+      };
+      rules['.bw-ms-' + k] = {
+        'margin-left': v + ' !important'
+      };
+      rules['.bw-me-' + k] = {
+        'margin-right': v + ' !important'
+      };
+      rules['.bw-p-' + k] = {
+        'padding': v + ' !important'
+      };
+      rules['.bw-pt-' + k + ', .pt-' + k] = {
+        'padding-top': v + ' !important'
+      };
+      rules['.bw-pb-' + k + ', .pb-' + k] = {
+        'padding-bottom': v + ' !important'
+      };
+      rules['.bw-ps-' + k + ', .ps-' + k] = {
+        'padding-left': v + ' !important'
+      };
+      rules['.bw-pe-' + k + ', .pe-' + k] = {
+        'padding-right': v + ' !important'
+      };
+    }
+    rules['.bw-m-auto, .m-auto'] = {
+      'margin': 'auto !important'
+    };
+    rules['.bw-py-3'] = {
+      'padding-top': '1rem !important',
+      'padding-bottom': '1rem !important'
+    };
+    rules['.bw-py-4'] = {
+      'padding-top': '1.5rem !important',
+      'padding-bottom': '1.5rem !important'
+    };
+    rules['.bw-py-5'] = {
+      'padding-top': '3rem !important',
+      'padding-bottom': '3rem !important'
+    };
+    rules['.bw-py-6'] = {
+      'padding-top': '4rem !important',
+      'padding-bottom': '4rem !important'
+    };
+
+    // Display utilities (structural)
+    rules['.bw-d-none'] = {
+      'display': 'none'
+    };
+    rules['.bw-d-block'] = {
+      'display': 'block'
+    };
+    rules['.bw-d-inline'] = {
+      'display': 'inline'
+    };
+    rules['.bw-d-inline-block'] = {
+      'display': 'inline-block'
+    };
+    rules['.bw-d-flex'] = {
+      'display': 'flex'
+    };
+    rules['.bw-text-left'] = {
+      'text-align': 'left'
+    };
+    rules['.bw-text-right'] = {
+      'text-align': 'right'
+    };
+    rules['.bw-text-center'] = {
+      'text-align': 'center'
+    };
+
+    // Flexbox utilities (structural)
+    var jc = {
+      start: 'flex-start',
+      end: 'flex-end',
+      center: 'center',
+      between: 'space-between',
+      around: 'space-around'
+    };
+    for (var jk in jc) {
+      rules['.bw-justify-content-' + jk + ', .justify-content-' + jk] = {
+        'justify-content': jc[jk]
+      };
+    }
+    var ai = {
+      start: 'flex-start',
+      end: 'flex-end',
+      center: 'center'
+    };
+    for (var ak in ai) {
+      rules['.bw-align-items-' + ak + ', .align-items-' + ak] = {
+        'align-items': ai[ak]
+      };
+    }
+
+    // Size utilities (structural)
+    ['25', '50', '75', '100'].forEach(function (n) {
+      rules['.bw-w-' + n + ', .w-' + n] = {
+        'width': n + '% !important'
+      };
+      rules['.bw-h-' + n + ', .h-' + n] = {
+        'height': n + '% !important'
+      };
+    });
+    rules['.bw-w-auto, .w-auto'] = {
+      'width': 'auto !important'
+    };
+    rules['.bw-h-auto, .h-auto'] = {
+      'height': 'auto !important'
+    };
+    rules['.bw-mw-100, .mw-100'] = {
+      'max-width': '100% !important'
+    };
+    rules['.bw-mh-100, .mh-100'] = {
+      'max-height': '100% !important'
+    };
+
+    // Position utilities (structural)
+    ['static', 'relative', 'absolute', 'fixed', 'sticky'].forEach(function (p) {
+      rules['.bw-position-' + p + ', .position-' + p] = {
+        'position': p + ' !important'
+      };
+    });
+    rules['.bw-translate-middle, .translate-middle'] = {
+      'transform': 'translate(-50%, -50%) !important'
+    };
+
+    // Overflow utilities (structural)
+    ['auto', 'hidden', 'visible', 'scroll'].forEach(function (o) {
+      rules['.bw-overflow-' + o + ', .overflow-' + o] = {
+        'overflow': o + ' !important'
+      };
+    });
+
+    // Visibility utilities (structural)
+    rules['.bw-visible, .visible'] = {
+      'visibility': 'visible !important'
+    };
+    rules['.bw-invisible, .invisible'] = {
+      'visibility': 'hidden !important'
+    };
+
+    // User select utilities (structural)
+    ['all', 'auto', 'none'].forEach(function (u) {
+      rules['.bw-user-select-' + u + ', .user-select-' + u] = {
+        'user-select': u + ' !important'
+      };
+    });
+
+    // Pointer events
+    rules['.pe-none'] = {
+      'pointer-events': 'none !important'
+    };
+    rules['.pe-auto'] = {
+      'pointer-events': 'auto !important'
+    };
+
+    // Typography utilities (structural)
+    rules['.fw-light'] = {
+      'font-weight': '300 !important'
+    };
+    rules['.fw-lighter'] = {
+      'font-weight': 'lighter !important'
+    };
+    rules['.fw-normal'] = {
+      'font-weight': '400 !important'
+    };
+    rules['.fw-bold'] = {
+      'font-weight': '700 !important'
+    };
+    rules['.fw-bolder'] = {
+      'font-weight': 'bolder !important'
+    };
+    rules['.fst-italic'] = {
+      'font-style': 'italic !important'
+    };
+    rules['.fst-normal'] = {
+      'font-style': 'normal !important'
+    };
+    rules['.text-decoration-none'] = {
+      'text-decoration': 'none !important'
+    };
+    rules['.text-decoration-underline'] = {
+      'text-decoration': 'underline !important'
+    };
+    rules['.text-decoration-line-through'] = {
+      'text-decoration': 'line-through !important'
+    };
+    rules['.text-lowercase'] = {
+      'text-transform': 'lowercase !important'
+    };
+    rules['.text-uppercase'] = {
+      'text-transform': 'uppercase !important'
+    };
+    rules['.text-capitalize'] = {
+      'text-transform': 'capitalize !important'
+    };
+    rules['.text-wrap'] = {
+      'white-space': 'normal !important'
+    };
+    rules['.text-nowrap'] = {
+      'white-space': 'nowrap !important'
+    };
+
+    // Font-size utilities (structural)
+    rules['.fs-1'] = {
+      'font-size': 'calc(1.375rem + 1.5vw) !important'
+    };
+    rules['.fs-2'] = {
+      'font-size': 'calc(1.325rem + .9vw) !important'
+    };
+    rules['.fs-3'] = {
+      'font-size': 'calc(1.3rem + .6vw) !important'
+    };
+    rules['.fs-4'] = {
+      'font-size': 'calc(1.275rem + .3vw) !important'
+    };
+    rules['.fs-5'] = {
+      'font-size': '1.25rem !important'
+    };
+    rules['.fs-6'] = {
+      'font-size': '1rem !important'
+    };
+
+    // List utilities (structural)
+    rules['.list-unstyled'] = {
+      'padding-left': '0',
+      'list-style': 'none'
+    };
+    rules['.list-inline'] = {
+      'padding-left': '0',
+      'list-style': 'none'
+    };
+    rules['.list-inline-item'] = {
+      'display': 'inline-block'
+    };
+    rules['.list-inline-item:not(:last-child)'] = {
+      'margin-right': '.5rem'
+    };
+
+    // Opacity utilities (structural)
+    rules['.opacity-0'] = {
+      'opacity': '0 !important'
+    };
+    rules['.opacity-25'] = {
+      'opacity': '.25 !important'
+    };
+    rules['.opacity-50'] = {
+      'opacity': '.5 !important'
+    };
+    rules['.opacity-75'] = {
+      'opacity': '.75 !important'
+    };
+    rules['.opacity-100'] = {
+      'opacity': '1 !important'
+    };
+
+    // Responsive grid
+    Object.assign(rules, defaultStyles.responsive);
+    return addUnderscoreAliases(rules);
+  }
+
+  // =========================================================================
+  // getAllStyles — backwards compatible
+  // =========================================================================
+
   /**
    * Add underscore aliases for all bw- selectors
-   * For each selector containing .bw-, adds a duplicate with .bw_ so both work in CSS
    * @param {Object} rules - CSS rules object
    * @returns {Object} - Rules with underscore aliases added
    */
@@ -2386,7 +2593,6 @@
         selector = _Object$entries$_i[0],
         styles = _Object$entries$_i[1];
       result[selector] = styles;
-      // If selector contains .bw-, add underscore variant
       if (selector.includes('.bw-')) {
         var underscoreSelector = selector.replace(/\.bw-/g, '.bw_');
         result[underscoreSelector] = styles;
@@ -2394,35 +2600,11 @@
     }
     return result;
   }
-  function getAllStyles() {
-    var merged = Object.assign({}, defaultStyles.root, defaultStyles.reset, defaultStyles.typography, defaultStyles.grid, defaultStyles.buttons, defaultStyles.cards, defaultStyles.forms, defaultStyles.navigation, defaultStyles.tables, defaultStyles.alerts, defaultStyles.badges, defaultStyles.progress, defaultStyles.tabs, defaultStyles.listGroups, defaultStyles.pagination, defaultStyles.breadcrumb, defaultStyles.hero, defaultStyles.features, defaultStyles.enhancedCards, defaultStyles.sections, defaultStyles.cta, defaultStyles.utilities, defaultStyles.responsive);
-    return addUnderscoreAliases(merged);
-  }
 
-  /**
-   * Default theme design tokens
-   *
-   * Provides programmatic access to the design system values used in
-   * the CSS. Useful for dynamic styling, color interpolation, and
-   * building custom theme overrides.
-   *
-   * @type {Object}
-   * @property {Object} colors - Named color values (primary, secondary, success, etc.)
-   * @property {Object} breakpoints - Responsive breakpoint widths in pixels (xs, sm, md, lg, xl, xxl)
-   * @property {Object} spacing - Spacing scale (0-5) mapped to rem values
-   * @property {Object} typography - Font family and font size scale
-   * @property {string} typography.fontFamily - Default sans-serif font stack
-   * @property {Object} typography.fontSize - Named size scale (xs through 5xl)
-   */
-  /**
-   * Default theme design tokens
-   *
-   * Provides programmatic access to the design system values used in
-   * the CSS. Useful for dynamic styling, color interpolation, and
-   * building custom theme overrides.
-   *
-   * @type {Object}
-   */
+  // =========================================================================
+  // Theme tokens (backwards compatible)
+  // =========================================================================
+
   var theme = {
     colors: {
       primary: '#006666',
@@ -2470,64 +2652,141 @@
   };
 
   /**
-   * Get dark mode CSS rules
-   * @returns {Object} - CSS rules for dark mode
+   * Generate theme-aware dark mode CSS from a palette.
+   * Derives dark variants from the palette colors instead of using hardcoded values.
+   *
+   * @param {Object} palette - From derivePalette()
+   * @returns {Object} CSS rules object for dark mode
    */
-  function getDarkModeStyles() {
+  function generateDarkModeCSS(palette) {
+    var darkBg = adjustLightness(palette.primary.base, -15);
+    var darkBgHsl = hexToHsl(darkBg);
+    // Make it very dark (lightness 8-12%)
+    var bodyBg = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 30), 10]);
+    var surfaceBg = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 25), 15]);
+    var textColor = adjustLightness(palette.light.base, 5);
+    var borderColor = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 15), 30]);
     return {
       ':root.bw-dark': {
-        '--bw-body-color': '#e9ecef',
-        '--bw-body-bg': '#1a1a2e'
+        '--bw-body-color': textColor,
+        '--bw-body-bg': bodyBg
       },
       '.bw-dark body, :root.bw-dark body': {
-        'color': '#e9ecef',
-        'background-color': '#1a1a2e'
+        'color': textColor,
+        'background-color': bodyBg
       },
       '.bw-dark .bw-card': {
-        'background-color': '#16213e',
-        'border-color': '#495057',
-        'color': '#e9ecef'
+        'background-color': surfaceBg,
+        'border-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-card-header': {
+        'background-color': bodyBg,
+        'border-bottom-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-card-footer': {
+        'background-color': bodyBg,
+        'border-top-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-card-title': {
+        'color': textColor
       },
       '.bw-dark .bw-navbar': {
-        'background-color': '#0f3460'
+        'background-color': surfaceBg,
+        'border-bottom-color': borderColor
+      },
+      '.bw-dark .bw-navbar-brand': {
+        'color': textColor
+      },
+      '.bw-dark .bw-navbar-nav .bw-nav-link': {
+        'color': adjustLightness(textColor, -15)
+      },
+      '.bw-dark .bw-navbar-nav .bw-nav-link:hover': {
+        'color': textColor
       },
       '.bw-dark .bw-form-control': {
-        'background-color': '#16213e',
-        'border-color': '#495057',
-        'color': '#e9ecef'
+        'background-color': surfaceBg,
+        'border-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-form-label': {
+        'color': textColor
+      },
+      '.bw-dark .bw-form-text': {
+        'color': adjustLightness(textColor, -20)
       },
       '.bw-dark .bw-table': {
-        'color': '#e9ecef'
+        'color': textColor
       },
       '.bw-dark .bw-table > :not(caption) > * > *': {
-        'border-bottom-color': '#495057'
+        'border-bottom-color': borderColor
+      },
+      '.bw-dark .bw-table > thead > tr > *': {
+        'background-color': bodyBg,
+        'color': adjustLightness(textColor, -10),
+        'border-bottom-color': borderColor
       },
       '.bw-dark .bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
         'background-color': 'rgba(255, 255, 255, 0.05)'
       },
       '.bw-dark .bw-alert': {
-        'border-color': '#495057'
+        'border-color': borderColor
       },
       '.bw-dark .bw-list-group-item': {
-        'background-color': '#16213e',
-        'border-color': '#495057',
-        'color': '#e9ecef'
+        'background-color': surfaceBg,
+        'border-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-badge': {
+        'color': textColor
+      },
+      '.bw-dark .bw-nav-tabs': {
+        'border-bottom-color': borderColor
+      },
+      '.bw-dark .bw-nav-link': {
+        'color': adjustLightness(textColor, -15)
+      },
+      '.bw-dark .bw-nav-tabs .bw-nav-link:hover': {
+        'color': textColor,
+        'border-bottom-color': borderColor
+      },
+      '.bw-dark .bw-pagination .bw-page-link': {
+        'background-color': surfaceBg,
+        'border-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-breadcrumb-item + .bw-breadcrumb-item::before': {
+        'color': adjustLightness(textColor, -20)
+      },
+      '.bw-dark .bw-breadcrumb-item.active': {
+        'color': adjustLightness(textColor, -10)
+      },
+      '.bw-dark .bw-hero-light': {
+        'background': surfaceBg,
+        'color': textColor
+      },
+      '.bw-dark .bw-progress': {
+        'background-color': surfaceBg
+      },
+      '.bw-dark .bw-section-subtitle': {
+        'color': adjustLightness(textColor, -15)
+      },
+      '.bw-dark .bw-close': {
+        'color': textColor
+      },
+      '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
+        'color': textColor
       },
       '@media (prefers-color-scheme: dark)': {
         ':root.bw-auto-dark body': {
-          'color': '#e9ecef',
-          'background-color': '#1a1a2e'
+          'color': textColor,
+          'background-color': bodyBg
         }
       }
     };
   }
-
-  /**
-   * Deep merge two objects (target is mutated)
-   * @param {Object} target
-   * @param {Object} source
-   * @returns {Object}
-   */
   function deepMerge(target, source) {
     for (var _i2 = 0, _Object$keys = Object.keys(source); _i2 < _Object$keys.length; _i2++) {
       var key = _Object$keys[_i2];
@@ -2539,11 +2798,6 @@
     }
     return target;
   }
-
-  /**
-   * Update the theme with new values (deep merge)
-   * @param {Object} overrides - Partial theme object to merge
-   */
   function updateTheme(overrides) {
     deepMerge(theme, overrides);
   }
@@ -2571,16 +2825,31 @@
    */
 
   /**
-   * Create a card component with optional header, body, and footer
+   * Create a card component with optional header, body, footer, and image support
+   *
+   * Supports images (top, bottom, left, right), shadow levels, subtitle,
+   * hover animation, and custom section class overrides. For horizontal
+   * image layouts (left/right), content is wrapped in a row grid.
    *
    * @param {Object} [props] - Card configuration
    * @param {string} [props.title] - Card title displayed in the body
+   * @param {string} [props.subtitle] - Card subtitle (muted text below title)
    * @param {string|Object|Array} [props.content] - Card body content (string, TACO, or array)
    * @param {string|Object} [props.footer] - Card footer content
    * @param {string|Object} [props.header] - Card header content
+   * @param {Object} [props.image] - Card image configuration
+   * @param {string} props.image.src - Image source URL
+   * @param {string} [props.image.alt] - Image alt text
+   * @param {string} [props.imagePosition="top"] - Image position ("top", "bottom", "left", "right")
    * @param {string} [props.variant] - Color variant (e.g. "primary", "danger")
+   * @param {boolean} [props.bordered=true] - Show card border
+   * @param {string} [props.shadow] - Shadow level ("none", "sm", "md", "lg")
+   * @param {boolean} [props.hoverable=false] - Enable hover lift animation
    * @param {string} [props.className] - Additional CSS classes
    * @param {Object} [props.style] - Inline style object
+   * @param {string} [props.headerClass] - Additional header CSS classes
+   * @param {string} [props.bodyClass] - Additional body CSS classes
+   * @param {string} [props.footerClass] - Additional footer CSS classes
    * @param {Object} [props.state] - Component state object
    * @returns {Object} TACO object representing a card component
    * @category Component Builders
@@ -2595,44 +2864,109 @@
   function makeCard() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var title = props.title,
+      subtitle = props.subtitle,
       content = props.content,
       footer = props.footer,
       header = props.header,
+      image = props.image,
+      _props$imagePosition = props.imagePosition,
+      imagePosition = _props$imagePosition === void 0 ? 'top' : _props$imagePosition,
       variant = props.variant,
+      _props$bordered = props.bordered,
+      bordered = _props$bordered === void 0 ? true : _props$bordered,
+      shadow = props.shadow,
+      _props$hoverable = props.hoverable,
+      hoverable = _props$hoverable === void 0 ? false : _props$hoverable,
       _props$className = props.className,
       className = _props$className === void 0 ? '' : _props$className,
-      style = props.style;
+      style = props.style,
+      _props$headerClass = props.headerClass,
+      headerClass = _props$headerClass === void 0 ? '' : _props$headerClass,
+      _props$bodyClass = props.bodyClass,
+      bodyClass = _props$bodyClass === void 0 ? '' : _props$bodyClass,
+      _props$footerClass = props.footerClass,
+      footerClass = _props$footerClass === void 0 ? '' : _props$footerClass;
+    var shadowClasses = {
+      none: '',
+      sm: 'bw-shadow-sm',
+      md: 'bw-shadow',
+      lg: 'bw-shadow-lg'
+    };
+    var cardClasses = ['bw-card', variant ? "bw-card-".concat(variant) : '', shadow ? shadowClasses[shadow] || '' : '', !bordered ? 'bw-border-0' : '', hoverable ? 'bw-card-hoverable' : '', className].filter(Boolean).join(' ').trim();
+    var cardContent = [header && {
+      t: 'div',
+      a: {
+        "class": "bw-card-header ".concat(headerClass).trim()
+      },
+      c: header
+    }, image && (imagePosition === 'top' || imagePosition === 'left') && {
+      t: 'img',
+      a: {
+        "class": "bw-card-img-".concat(imagePosition),
+        src: image.src,
+        alt: image.alt || ''
+      }
+    }, {
+      t: 'div',
+      a: {
+        "class": "bw-card-body ".concat(bodyClass).trim()
+      },
+      c: [title && {
+        t: 'h5',
+        a: {
+          "class": 'bw-card-title'
+        },
+        c: title
+      }, subtitle && {
+        t: 'h6',
+        a: {
+          "class": 'bw-card-subtitle bw-mb-2 bw-text-muted'
+        },
+        c: subtitle
+      }, content && (Array.isArray(content) ? content : [content])].flat().filter(Boolean)
+    }, image && (imagePosition === 'bottom' || imagePosition === 'right') && {
+      t: 'img',
+      a: {
+        "class": "bw-card-img-".concat(imagePosition),
+        src: image.src,
+        alt: image.alt || ''
+      }
+    }, footer && {
+      t: 'div',
+      a: {
+        "class": "bw-card-footer ".concat(footerClass).trim()
+      },
+      c: footer
+    }].filter(Boolean);
+
+    // Handle horizontal layout for left/right images
+    if (image && (imagePosition === 'left' || imagePosition === 'right')) {
+      return {
+        t: 'div',
+        a: {
+          "class": cardClasses,
+          style: style
+        },
+        c: {
+          t: 'div',
+          a: {
+            "class": 'bw-row bw-g-0'
+          },
+          c: cardContent
+        },
+        o: {
+          type: 'card',
+          state: props.state || {}
+        }
+      };
+    }
     return {
       t: 'div',
       a: {
-        "class": "bw-card ".concat(variant ? "bw-card-".concat(variant) : '', " ").concat(className).trim(),
+        "class": cardClasses,
         style: style
       },
-      c: [header && {
-        t: 'div',
-        a: {
-          "class": 'bw-card-header'
-        },
-        c: header
-      }, {
-        t: 'div',
-        a: {
-          "class": 'bw-card-body'
-        },
-        c: [title && {
-          t: 'h5',
-          a: {
-            "class": 'bw-card-title'
-          },
-          c: title
-        }, content && (Array.isArray(content) ? content : [content])].flat().filter(Boolean)
-      }, footer && {
-        t: 'div',
-        a: {
-          "class": 'bw-card-footer'
-        },
-        c: footer
-      }].filter(Boolean),
+      c: cardContent,
       o: {
         type: 'card',
         state: props.state || {}
@@ -3349,8 +3683,8 @@
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var children = props.children,
       onsubmit = props.onsubmit,
-      _props$className10 = props.className,
-      className = _props$className10 === void 0 ? '' : _props$className10;
+      _props$className0 = props.className,
+      className = _props$className0 === void 0 ? '' : _props$className0;
     return {
       t: 'form',
       a: {
@@ -3450,8 +3784,8 @@
       readonly = _props$readonly === void 0 ? false : _props$readonly,
       _props$required = props.required,
       required = _props$required === void 0 ? false : _props$required,
-      _props$className11 = props.className,
-      className = _props$className11 === void 0 ? '' : _props$className11,
+      _props$className1 = props.className,
+      className = _props$className1 === void 0 ? '' : _props$className1,
       style = props.style,
       eventHandlers = _objectWithoutProperties(props, _excluded$1);
     return {
@@ -3507,8 +3841,8 @@
       readonly = _props$readonly2 === void 0 ? false : _props$readonly2,
       _props$required2 = props.required,
       required = _props$required2 === void 0 ? false : _props$required2,
-      _props$className12 = props.className,
-      className = _props$className12 === void 0 ? '' : _props$className12,
+      _props$className10 = props.className,
+      className = _props$className10 === void 0 ? '' : _props$className10,
       eventHandlers = _objectWithoutProperties(props, _excluded2);
     return {
       t: 'textarea',
@@ -3562,8 +3896,8 @@
       disabled = _props$disabled4 === void 0 ? false : _props$disabled4,
       _props$required3 = props.required,
       required = _props$required3 === void 0 ? false : _props$required3,
-      _props$className13 = props.className,
-      className = _props$className13 === void 0 ? '' : _props$className13,
+      _props$className11 = props.className,
+      className = _props$className11 === void 0 ? '' : _props$className11,
       eventHandlers = _objectWithoutProperties(props, _excluded3);
     return {
       t: 'select',
@@ -3670,8 +4004,8 @@
       direction = _props$direction === void 0 ? 'vertical' : _props$direction,
       _props$gap = props.gap,
       gap = _props$gap === void 0 ? 3 : _props$gap,
-      _props$className14 = props.className,
-      className = _props$className14 === void 0 ? '' : _props$className14;
+      _props$className12 = props.className,
+      className = _props$className12 === void 0 ? '' : _props$className12;
     return {
       t: 'div',
       a: {
@@ -3762,8 +4096,8 @@
       overlay = _props$overlay === void 0 ? false : _props$overlay,
       backgroundImage = props.backgroundImage,
       actions = props.actions,
-      _props$className15 = props.className,
-      className = _props$className15 === void 0 ? '' : _props$className15;
+      _props$className13 = props.className,
+      className = _props$className13 === void 0 ? '' : _props$className13;
     var sizeClasses = {
       sm: 'bw-py-3',
       md: 'bw-py-4',
@@ -3852,8 +4186,8 @@
       centered = _props$centered2 === void 0 ? true : _props$centered2,
       _props$iconSize = props.iconSize,
       iconSize = _props$iconSize === void 0 ? '3rem' : _props$iconSize,
-      _props$className16 = props.className,
-      className = _props$className16 === void 0 ? '' : _props$className16;
+      _props$className14 = props.className,
+      className = _props$className14 === void 0 ? '' : _props$className14;
     var colClass = "bw-col-md-".concat(12 / columns);
     return {
       t: 'div',
@@ -3904,159 +4238,6 @@
   }
 
   /**
-   * Create an enhanced card with image support, shadows, and hover effects
-   *
-   * Extended version of makeCard with support for images (top, bottom, left, right),
-   * shadow levels, subtitle, hover animation, and custom section class overrides.
-   * For horizontal image layouts (left/right), content is wrapped in a row grid.
-   *
-   * @param {Object} [props] - Enhanced card configuration
-   * @param {string} [props.title] - Card title
-   * @param {string} [props.subtitle] - Card subtitle (muted text below title)
-   * @param {string|Object|Array} [props.content] - Card body content
-   * @param {string|Object} [props.footer] - Card footer content
-   * @param {string|Object} [props.header] - Card header content
-   * @param {Object} [props.image] - Card image configuration
-   * @param {string} props.image.src - Image source URL
-   * @param {string} [props.image.alt] - Image alt text
-   * @param {string} [props.imagePosition="top"] - Image position ("top", "bottom", "left", "right")
-   * @param {string} [props.variant] - Color variant
-   * @param {boolean} [props.bordered=true] - Show card border
-   * @param {string} [props.shadow="sm"] - Shadow level ("none", "sm", "md", "lg")
-   * @param {boolean} [props.hoverable=false] - Enable hover lift animation
-   * @param {string} [props.className] - Additional CSS classes
-   * @param {Object} [props.style] - Inline style object
-   * @param {string} [props.headerClass] - Additional header CSS classes
-   * @param {string} [props.bodyClass] - Additional body CSS classes
-   * @param {string} [props.footerClass] - Additional footer CSS classes
-   * @param {Object} [props.state] - Component state object
-   * @returns {Object} TACO object representing an enhanced card
-   * @category Component Builders
-   * @example
-   * const card = makeCardV2({
-   *   title: "Project Alpha",
-   *   subtitle: "v2.0 Release",
-   *   content: "Major performance improvements.",
-   *   image: { src: "/img/alpha.jpg", alt: "Alpha" },
-   *   imagePosition: "top",
-   *   shadow: "lg",
-   *   hoverable: true
-   * });
-   */
-  function makeCardV2() {
-    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
-      subtitle = props.subtitle,
-      content = props.content,
-      footer = props.footer,
-      header = props.header,
-      image = props.image,
-      _props$imagePosition = props.imagePosition,
-      imagePosition = _props$imagePosition === void 0 ? 'top' : _props$imagePosition,
-      variant = props.variant,
-      _props$bordered = props.bordered,
-      bordered = _props$bordered === void 0 ? true : _props$bordered,
-      _props$shadow = props.shadow,
-      shadow = _props$shadow === void 0 ? 'sm' : _props$shadow,
-      _props$hoverable = props.hoverable,
-      hoverable = _props$hoverable === void 0 ? false : _props$hoverable,
-      _props$className17 = props.className,
-      className = _props$className17 === void 0 ? '' : _props$className17,
-      style = props.style,
-      _props$headerClass = props.headerClass,
-      headerClass = _props$headerClass === void 0 ? '' : _props$headerClass,
-      _props$bodyClass = props.bodyClass,
-      bodyClass = _props$bodyClass === void 0 ? '' : _props$bodyClass,
-      _props$footerClass = props.footerClass,
-      footerClass = _props$footerClass === void 0 ? '' : _props$footerClass;
-    var shadowClasses = {
-      none: '',
-      sm: 'bw-shadow-sm',
-      md: 'bw-shadow',
-      lg: 'bw-shadow-lg'
-    };
-    var cardContent = [header && {
-      t: 'div',
-      a: {
-        "class": "bw-card-header ".concat(headerClass).trim()
-      },
-      c: header
-    }, image && (imagePosition === 'top' || imagePosition === 'left') && {
-      t: 'img',
-      a: {
-        "class": "bw-card-img-".concat(imagePosition),
-        src: image.src,
-        alt: image.alt || ''
-      }
-    }, {
-      t: 'div',
-      a: {
-        "class": "bw-card-body ".concat(bodyClass).trim()
-      },
-      c: [title && {
-        t: 'h5',
-        a: {
-          "class": 'bw-card-title'
-        },
-        c: title
-      }, subtitle && {
-        t: 'h6',
-        a: {
-          "class": 'bw-card-subtitle bw-mb-2 bw-text-muted'
-        },
-        c: subtitle
-      }, content && (Array.isArray(content) ? content : [content])].flat().filter(Boolean)
-    }, image && (imagePosition === 'bottom' || imagePosition === 'right') && {
-      t: 'img',
-      a: {
-        "class": "bw-card-img-".concat(imagePosition),
-        src: image.src,
-        alt: image.alt || ''
-      }
-    }, footer && {
-      t: 'div',
-      a: {
-        "class": "bw-card-footer ".concat(footerClass).trim()
-      },
-      c: footer
-    }].filter(Boolean);
-
-    // Handle horizontal layout for left/right images
-    if (image && (imagePosition === 'left' || imagePosition === 'right')) {
-      return {
-        t: 'div',
-        a: {
-          "class": "bw-card ".concat(variant ? "bw-card-".concat(variant) : '', " ").concat(!bordered ? 'bw-border-0' : '', " ").concat(shadowClasses[shadow], " ").concat(hoverable ? 'bw-card-hoverable' : '', " ").concat(className).trim(),
-          style: style
-        },
-        c: {
-          t: 'div',
-          a: {
-            "class": 'bw-row bw-g-0'
-          },
-          c: cardContent
-        },
-        o: {
-          type: 'card',
-          state: props.state || {}
-        }
-      };
-    }
-    return {
-      t: 'div',
-      a: {
-        "class": "bw-card ".concat(variant ? "bw-card-".concat(variant) : '', " ").concat(!bordered ? 'bw-border-0' : '', " ").concat(shadowClasses[shadow], " ").concat(hoverable ? 'bw-card-hoverable' : '', " ").concat(className).trim(),
-        style: style
-      },
-      c: cardContent,
-      o: {
-        type: 'card',
-        state: props.state || {}
-      }
-    };
-  }
-
-  /**
    * Create a call-to-action section with title, description, and action buttons
    *
    * @param {Object} [props] - CTA configuration
@@ -4086,8 +4267,8 @@
       variant = _props$variant7 === void 0 ? 'light' : _props$variant7,
       _props$centered3 = props.centered,
       centered = _props$centered3 === void 0 ? true : _props$centered3,
-      _props$className18 = props.className,
-      className = _props$className18 === void 0 ? '' : _props$className18;
+      _props$className15 = props.className,
+      className = _props$className15 === void 0 ? '' : _props$className15;
     return {
       t: 'section',
       a: {
@@ -4156,8 +4337,8 @@
       variant = _props$variant8 === void 0 ? 'default' : _props$variant8,
       _props$spacing = props.spacing,
       spacing = _props$spacing === void 0 ? 'md' : _props$spacing,
-      _props$className19 = props.className,
-      className = _props$className19 === void 0 ? '' : _props$className19;
+      _props$className16 = props.className,
+      className = _props$className16 === void 0 ? '' : _props$className16;
     var spacingClasses = {
       sm: 'bw-py-3',
       md: 'bw-py-4',
@@ -4602,7 +4783,7 @@
           c: [{
             t: 'button',
             a: {
-              "class": 'copy-btn',
+              "class": 'bw-copy-btn',
               style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.6875rem; background: rgba(255,255,255,0.12); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s;',
               onclick: function onclick(e) {
                 navigator.clipboard.writeText(code).then(function () {
@@ -4653,8 +4834,7 @@
     return {
       t: 'div',
       a: {
-        "class": 'code-demo',
-        style: 'margin-bottom: 2rem;'
+        "class": 'bw-code-demo'
       },
       c: content
     };
@@ -4688,7 +4868,6 @@
     makeButton: makeButton,
     makeCTA: makeCTA,
     makeCard: makeCard,
-    makeCardV2: makeCardV2,
     makeCheckbox: makeCheckbox,
     makeCodeDemo: makeCodeDemo,
     makeCol: makeCol,
@@ -4742,6 +4921,26 @@
     _subIdCounter: 0,
     // monotonic ID for subscriptions
 
+    // ── Node reference cache ──────────────────────────────────────────────
+    // Fast O(1) lookup for elements by bw_id, id attribute, or bw_uuid.
+    //
+    // Populated by bw.createDOM() when elements have:
+    //   - data-bw-id attribute (user-declared addressable elements)
+    //   - id attribute (standard HTML id)
+    //   - bw_uuid (internal, for lifecycle-managed elements)
+    //
+    // Cleaned up by bw.cleanup() when elements are destroyed via bitwrench APIs.
+    // On cache miss, falls back to querySelector/getElementById — never fails,
+    // just slower. Stale entries (refs to detached nodes) are removed on miss
+    // via parentNode === null check (IE11-safe, unlike el.isConnected).
+    //
+    // Elements created via bw.createDOM() also get el._bw_refs — a local map of
+    // child bw_id → DOM node ref for fast parent→child access in o.render.
+    // This is the bitwrench equivalent of React's compiled template "holes".
+    //
+    // Contract: if you remove elements outside of bitwrench APIs (raw el.remove()),
+    // map entries may linger until the next lookup attempt cleans them.
+    _nodeMap: {},
     // Monkey patch for testing (same as v1)
     __monkey_patch_is_nodejs__: {
       _value: 'ignore',
@@ -4967,6 +5166,107 @@
   };
 
   /**
+   * Look up a DOM element by ID string, using the node cache for O(1) access.
+   *
+   * Resolution order:
+   * 1. Check `bw._nodeMap[id]` — if found and still attached (parentNode !== null), return it
+   * 2. If cached ref is detached (parentNode === null), remove stale entry
+   * 3. Fall back to `document.getElementById(id)` then `document.querySelector(...)`
+   * 4. If fallback finds the element, cache it for next time
+   * 5. If not found anywhere, return null
+   *
+   * Accepts a DOM element directly (pass-through) or a string identifier.
+   * String identifiers are tried as: direct map key, getElementById,
+   * querySelector (for CSS selectors starting with . or #), and
+   * data-bw-id attribute selector.
+   *
+   * @param {string|Element} id - Element ID, CSS selector, data-bw-id value, or DOM element
+   * @returns {Element|null} The DOM element, or null if not found
+   * @category Internal
+   */
+  bw._el = function (id) {
+    // Pass-through for DOM elements
+    if (typeof id !== 'string') return id || null;
+    if (!id) return null;
+    if (!bw._isBrowser) return null;
+
+    // 1. Check cache
+    var cached = bw._nodeMap[id];
+    if (cached) {
+      // Verify not detached (parentNode check is IE11-safe)
+      if (cached.parentNode !== null) {
+        return cached;
+      }
+      // Stale — remove and fall through
+      delete bw._nodeMap[id];
+    }
+
+    // 2. DOM fallback: try getElementById first (fastest native lookup)
+    var el = document.getElementById(id);
+
+    // 3. Try querySelector for CSS selectors (starts with # or .)
+    if (!el && (id.charAt(0) === '#' || id.charAt(0) === '.')) {
+      el = document.querySelector(id);
+    }
+
+    // 4. Try data-bw-id attribute (for bw.uuid-generated IDs)
+    if (!el) {
+      el = document.querySelector('[data-bw-id="' + id + '"]');
+    }
+
+    // 5. Cache the result for next time
+    if (el) {
+      bw._nodeMap[id] = el;
+    }
+    return el;
+  };
+
+  /**
+   * Register a DOM element in the node cache under one or more keys.
+   *
+   * Called internally by `bw.createDOM()`. Registers elements that have
+   * id attributes, data-bw-id attributes, or both.
+   *
+   * @param {Element} el - DOM element to register
+   * @param {string} [bwId] - data-bw-id value to register under
+   * @category Internal
+   */
+  bw._registerNode = function (el, bwId) {
+    if (!el) return;
+    // Register under data-bw-id
+    if (bwId) {
+      bw._nodeMap[bwId] = el;
+    }
+    // Register under id attribute
+    var htmlId = el.getAttribute ? el.getAttribute('id') : null;
+    if (htmlId) {
+      bw._nodeMap[htmlId] = el;
+    }
+  };
+
+  /**
+   * Remove a DOM element from the node cache.
+   *
+   * Called internally by `bw.cleanup()` when elements are destroyed
+   * through bitwrench APIs.
+   *
+   * @param {Element} el - DOM element to deregister
+   * @param {string} [bwId] - data-bw-id value to remove
+   * @category Internal
+   */
+  bw._deregisterNode = function (el, bwId) {
+    // Remove data-bw-id entry
+    if (bwId) {
+      delete bw._nodeMap[bwId];
+    }
+    // Remove id attribute entry
+    var htmlId = el && el.getAttribute ? el.getAttribute('id') : null;
+    if (htmlId) {
+      delete bw._nodeMap[htmlId];
+    }
+  };
+
+  /**
    * Escape HTML special characters to prevent XSS.
    *
    * Converts &, <, >, ", ', and / to their HTML entity equivalents.
@@ -4990,7 +5290,7 @@
       "'": '&#39;',
       '/': '&#x2F;'
     };
-    return str.replace(/[&<>"'\/]/g, function (_char) {
+    return str.replace(/[&<>"'/]/g, function (_char) {
       return escapeMap[_char];
     });
   };
@@ -5079,9 +5379,8 @@
       if (key === 'style' && _typeof(value) === 'object') {
         // Convert style object to string
         var styleStr = Object.entries(value).filter(function (_ref) {
-          var _ref2 = _slicedToArray(_ref, 2);
-            _ref2[0];
-            var v = _ref2[1];
+          var _ref2 = _slicedToArray(_ref, 2),
+            v = _ref2[1];
           return v != null;
         }).map(function (_ref3) {
           var _ref4 = _slicedToArray(_ref3, 2),
@@ -5110,8 +5409,7 @@
     // Add bw-id as a class if lifecycle hooks present
     if ((opts.mounted || opts.unmount) && !((_attrs$class = attrs["class"]) !== null && _attrs$class !== void 0 && _attrs$class.includes('bw-id-'))) {
       var id = opts.bw_id || bw.uuid();
-      attrs["class"] || '';
-      attrStr = attrStr.replace(/class="([^"]*)"/, function (match, classes) {
+      attrStr = attrStr.replace(/class="([^"]*)"/, function (_match, classes) {
         return "class=\"".concat(classes, " bw-id-").concat(id, "\"").trim();
       });
       if (!attrStr.includes('class=')) {
@@ -5204,25 +5502,65 @@
       }
     }
 
-    // Add children
+    // Add children, building _bw_refs for fast parent→child access.
+    // Children with data-bw-id or id attributes get local refs on the parent,
+    // so o.render functions can access them without any DOM lookup.
     if (content != null) {
       if (Array.isArray(content)) {
         content.forEach(function (child) {
           if (child != null) {
-            el.appendChild(bw.createDOM(child, options));
+            var childEl = bw.createDOM(child, options);
+            el.appendChild(childEl);
+            // Build local refs for addressable children
+            var childBwId = child && child.a ? child.a['data-bw-id'] || child.a.id : null;
+            if (childBwId) {
+              if (!el._bw_refs) el._bw_refs = {};
+              el._bw_refs[childBwId] = childEl;
+            }
+            // Bubble up grandchild refs (flatten one level)
+            if (childEl._bw_refs) {
+              if (!el._bw_refs) el._bw_refs = {};
+              for (var rk in childEl._bw_refs) {
+                if (Object.prototype.hasOwnProperty.call(childEl._bw_refs, rk)) {
+                  el._bw_refs[rk] = childEl._bw_refs[rk];
+                }
+              }
+            }
           }
         });
       } else if (_typeof(content) === 'object' && content.t) {
-        el.appendChild(bw.createDOM(content, options));
+        var childEl = bw.createDOM(content, options);
+        el.appendChild(childEl);
+        var childBwId = content.a ? content.a['data-bw-id'] || content.a.id : null;
+        if (childBwId) {
+          if (!el._bw_refs) el._bw_refs = {};
+          el._bw_refs[childBwId] = childEl;
+        }
+        if (childEl._bw_refs) {
+          if (!el._bw_refs) el._bw_refs = {};
+          for (var rk in childEl._bw_refs) {
+            if (Object.prototype.hasOwnProperty.call(childEl._bw_refs, rk)) {
+              el._bw_refs[rk] = childEl._bw_refs[rk];
+            }
+          }
+        }
       } else {
         el.textContent = String(content);
       }
+    }
+
+    // Register element in node cache if it has an id attribute
+    if (attrs.id) {
+      bw._registerNode(el, null);
     }
 
     // Handle lifecycle hooks and state
     if (opts.mounted || opts.unmount || opts.render || opts.state) {
       var id = attrs['data-bw-id'] || bw.uuid();
       el.setAttribute('data-bw-id', id);
+
+      // Register in node cache under data-bw-id
+      bw._registerNode(el, id);
 
       // Store state
       if (opts.state) {
@@ -5265,6 +5603,9 @@
           opts.unmount(el, el._bw_state || {});
         });
       }
+    } else if (attrs['data-bw-id']) {
+      // Element has explicit data-bw-id but no lifecycle hooks — still register it
+      bw._registerNode(el, attrs['data-bw-id']);
     }
     return el;
   };
@@ -5299,8 +5640,8 @@
       throw new Error('bw.DOM requires a DOM environment (document/window). Use bw.html() instead.');
     }
 
-    // Get target element
-    var targetEl = typeof target === 'string' ? document.querySelector(target) : target;
+    // Get target element (use cache-backed lookup)
+    var targetEl = bw._el(target);
     if (!targetEl) {
       console.error('bw.DOM: Target element not found:', target);
       return null;
@@ -5321,7 +5662,11 @@
     // Restore the target's own state/render/subs after cleanup
     if (savedState !== undefined) targetEl._bw_state = savedState;
     if (savedRender) targetEl._bw_render = savedRender;
-    if (savedBwId) targetEl.setAttribute('data-bw-id', savedBwId);
+    if (savedBwId) {
+      targetEl.setAttribute('data-bw-id', savedBwId);
+      // Re-register mount point in node cache (cleanup deregistered it)
+      bw._registerNode(targetEl, savedBwId);
+    }
     if (savedSubs) targetEl._bw_subs = savedSubs;
 
     // Clear and mount new content
@@ -5475,7 +5820,7 @@
        * @param {*} newValue - New property value
        * @param {*} oldValue - Previous property value
        */
-      onPropChange: function onPropChange(key, newValue, oldValue) {
+      onPropChange: function onPropChange(_key, _newValue, _oldValue) {
         // Auto re-render on prop change by default
         this.render();
       },
@@ -5572,6 +5917,9 @@
         bw._unmountCallbacks["delete"](id);
       }
 
+      // Deregister from node cache
+      bw._deregisterNode(el, id);
+
       // Clean up pub/sub subscriptions tied to this element
       if (el._bw_subs) {
         el._bw_subs.forEach(function (unsub) {
@@ -5580,9 +5928,10 @@
         delete el._bw_subs;
       }
 
-      // Clean up state and render
+      // Clean up state, render, and local refs
       delete el._bw_state;
       delete el._bw_render;
+      delete el._bw_refs;
     });
 
     // Check element itself
@@ -5593,6 +5942,10 @@
         callback();
         bw._unmountCallbacks["delete"](id);
       }
+
+      // Deregister from node cache
+      bw._deregisterNode(element, id);
+
       // Clean up pub/sub subscriptions tied to element itself
       if (element._bw_subs) {
         element._bw_subs.forEach(function (unsub) {
@@ -5602,6 +5955,7 @@
       }
       delete element._bw_state;
       delete element._bw_render;
+      delete element._bw_refs;
     }
   };
 
@@ -5616,7 +5970,7 @@
    * Calls `el._bw_render(el, state)` and emits `bw:statechange` so other
    * components can react without tight coupling.
    *
-   * @param {string|Element} target - CSS selector or DOM element with _bw_render
+   * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element
    * @returns {Element|null} The element, or null if not found / no render function
    * @category State Management
    * @see bw.patch
@@ -5626,7 +5980,7 @@
    * bw.update(el);  // re-renders, emits bw:statechange
    */
   bw.update = function (target) {
-    var el = typeof target === 'string' ? document.querySelector(target) : target;
+    var el = bw._el(target);
     if (el && el._bw_render) {
       el._bw_render(el, el._bw_state || {});
       bw.emit(el, 'statechange', el._bw_state);
@@ -5641,7 +5995,8 @@
    * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
    * and `bw.update()` for full structural re-renders.
    *
-   * @param {string|Element} id - Element ID string or DOM element
+   * @param {string|Element} id - Element ID, data-bw-id, CSS selector, or DOM element.
+   *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string|Object} content - New text content, or TACO object to replace children
    * @param {string} [attr] - If provided, sets this attribute instead of content
    * @returns {Element|null} The patched element, or null if not found
@@ -5654,7 +6009,7 @@
    * bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
    */
   bw.patch = function (id, content, attr) {
-    var el = typeof id === 'string' ? document.getElementById(id) : id;
+    var el = bw._el(id);
     if (!el) return null;
     if (attr) {
       // Patch an attribute
@@ -5690,7 +6045,7 @@
   bw.patchAll = function (patches) {
     var results = {};
     for (var id in patches) {
-      if (patches.hasOwnProperty(id)) {
+      if (Object.prototype.hasOwnProperty.call(patches, id)) {
         results[id] = bw.patch(id, patches[id]);
       }
     }
@@ -5704,7 +6059,8 @@
    * bubble by default so ancestor elements can listen. Use with `bw.on()` for
    * DOM-scoped communication between components.
    *
-   * @param {string|Element} target - CSS selector or DOM element
+   * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+   *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string} eventName - Event name (will be prefixed with 'bw:')
    * @param {*} [detail] - Data to pass with the event
    * @category Events (DOM)
@@ -5714,7 +6070,7 @@
    * // Dispatches CustomEvent 'bw:statechange' on the element
    */
   bw.emit = function (target, eventName, detail) {
-    var el = typeof target === 'string' ? document.querySelector(target) : target;
+    var el = bw._el(target);
     if (el) {
       el.dispatchEvent(new CustomEvent('bw:' + eventName, {
         bubbles: true,
@@ -5730,7 +6086,8 @@
    * is the first argument so you don't need to destructure `e.detail`.
    * Events bubble, so you can listen on an ancestor element.
    *
-   * @param {string|Element} target - CSS selector or DOM element
+   * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+   *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string} eventName - Event name (will be prefixed with 'bw:')
    * @param {Function} handler - Called with (detail, event)
    * @returns {Element|null} The element (for chaining), or null if not found
@@ -5742,7 +6099,7 @@
    * });
    */
   bw.on = function (target, eventName, handler) {
-    var el = typeof target === 'string' ? document.querySelector(target) : target;
+    var el = bw._el(target);
     if (el) {
       el.addEventListener('bw:' + eventName, function (e) {
         handler(e.detail, e);
@@ -5904,15 +6261,22 @@
           selector = _ref6[0],
           styles = _ref6[1];
         if (_typeof(styles) === 'object' && !Array.isArray(styles)) {
+          // Handle @media, @keyframes, @supports — recurse into nested block
+          if (selector.charAt(0) === '@') {
+            var inner = bw.css(styles, options);
+            if (inner) {
+              css += "".concat(selector).concat(space, "{").concat(newline).concat(inner).concat(newline, "}").concat(newline);
+            }
+            return;
+          }
           var declarations = Object.entries(styles).filter(function (_ref7) {
-            var _ref8 = _slicedToArray(_ref7, 2);
-              _ref8[0];
-              var value = _ref8[1];
+            var _ref8 = _slicedToArray(_ref7, 2),
+              value = _ref8[1];
             return value != null;
           }).map(function (_ref9) {
-            var _ref10 = _slicedToArray(_ref9, 2),
-              prop = _ref10[0],
-              value = _ref10[1];
+            var _ref0 = _slicedToArray(_ref9, 2),
+              prop = _ref0[0],
+              value = _ref0[1];
             // Convert camelCase to kebab-case
             var kebabProp = prop.replace(/[A-Z]/g, function (m) {
               return '-' + m.toLowerCase();
@@ -6381,11 +6745,25 @@
   bw.loadDefaultStyles = function () {
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var _options$minify2 = options.minify,
-      minify = _options$minify2 === void 0 ? true : _options$minify2;
-    var styles = getAllStyles();
-    return bw.injectCSS(styles, _objectSpread2(_objectSpread2({}, options), {}, {
-      minify: minify
+      minify = _options$minify2 === void 0 ? true : _options$minify2,
+      palette = options.palette;
+
+    // 1. Inject structural CSS (layout, sizing — never changes with theme)
+    if (bw._isBrowser) {
+      var structuralCSS = bw.css(getStructuralStyles());
+      bw.injectCSS(structuralCSS, {
+        id: 'bw-structural',
+        append: false,
+        minify: minify
+      });
+    }
+
+    // 2. Inject cosmetic CSS via generateTheme (colors, shadows, radii)
+    var paletteConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, palette || {});
+    var result = bw.generateTheme('', Object.assign({}, paletteConfig, {
+      inject: true
     }));
+    return result;
   };
 
   /**
@@ -6396,6 +6774,9 @@
    * @see bw.setTheme
    */
   bw.getTheme = function () {
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('bw.getTheme() is deprecated. Use bw.generateTheme() instead.');
+    }
     return JSON.parse(JSON.stringify(theme));
   };
 
@@ -6417,6 +6798,9 @@
    */
   bw.setTheme = function (overrides) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('bw.setTheme() is deprecated. Use bw.generateTheme() instead.');
+    }
     var _options$inject = options.inject,
       inject = _options$inject === void 0 ? true : _options$inject;
     updateTheme(overrides);
@@ -6456,20 +6840,149 @@
       var root = document.documentElement;
       if (isDark) {
         root.classList.add('bw-dark');
-        // Inject dark mode styles if not already present
-        if (!document.getElementById('bw-dark-styles')) {
-          var darkCSS = bw.css(getDarkModeStyles());
-          var styleEl = document.createElement('style');
-          styleEl.id = 'bw-dark-styles';
-          styleEl.textContent = darkCSS;
-          document.head.appendChild(styleEl);
-        }
+        // Generate palette-aware dark mode CSS, or fall back to default
+        var palette = bw._activePalette || derivePalette(DEFAULT_PALETTE_CONFIG);
+        var darkRules = generateDarkModeCSS(palette);
+        var darkCSS = bw.css(darkRules);
+
+        // Remove existing dark styles to allow regeneration
+        var existing = document.getElementById('bw-dark-styles');
+        if (existing) existing.remove();
+        var styleEl = document.createElement('style');
+        styleEl.id = 'bw-dark-styles';
+        styleEl.textContent = darkCSS;
+        document.head.appendChild(styleEl);
       } else {
         root.classList.remove('bw-dark');
+        // Remove dark mode styles when switching to light
+        var darkEl = document.getElementById('bw-dark-styles');
+        if (darkEl) darkEl.remove();
       }
     }
     return isDark;
   };
+
+  /**
+   * Generate a complete, scoped theme from seed colors.
+   *
+   * Produces CSS for all themed components (buttons, alerts, badges, cards,
+   * forms, nav, tables, tabs, list groups, pagination, progress, hero, utilities)
+   * scoped under `.name` class. Multiple themes can coexist in the stylesheet.
+   * Swap themes by changing the class on a container element.
+   *
+   * @param {string} name - CSS scope class (e.g. 'ocean'). Empty string = unscoped global.
+   * @param {Object} config - Theme configuration
+   * @param {string} config.primary - Primary brand color hex
+   * @param {string} config.secondary - Secondary color hex
+   * @param {string} [config.tertiary] - Tertiary/accent color hex (defaults to primary)
+   * @param {string} [config.success='#198754'] - Success color hex
+   * @param {string} [config.danger='#dc3545'] - Danger color hex
+   * @param {string} [config.warning='#ffc107'] - Warning color hex
+   * @param {string} [config.info='#0dcaf0'] - Info color hex
+   * @param {string} [config.light='#f8f9fa'] - Light color hex
+   * @param {string} [config.dark='#212529'] - Dark color hex
+   * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
+   * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
+   * @param {number} [config.fontSize=1.0] - Base font size scale factor
+   * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
+   * @returns {Object} { css, palette, name }
+   * @category CSS & Styling
+   * @see bw.loadDefaultStyles
+   * @example
+   * // Generate and inject an ocean theme
+   * bw.generateTheme('ocean', {
+   *   primary: '#0077b6',
+   *   secondary: '#90e0ef',
+   *   tertiary: '#00b4d8'
+   * });
+   *
+   * // Apply to a container
+   * document.getElementById('app').classList.add('ocean');
+   *
+   * // Generate CSS for static export (Node.js)
+   * var result = bw.generateTheme('sunset', {
+   *   primary: '#e76f51',
+   *   secondary: '#264653',
+   *   tertiary: '#e9c46a',
+   *   inject: false
+   * });
+   * fs.writeFileSync('sunset.css', result.css);
+   */
+  bw.generateTheme = function (name, config) {
+    if (!config || !config.primary || !config.secondary) {
+      throw new Error('bw.generateTheme requires config.primary and config.secondary');
+    }
+
+    // Merge with defaults; if user didn't supply tertiary, default to their primary
+    var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
+    if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
+
+    // Derive palette
+    var palette = derivePalette(fullConfig);
+
+    // Store active palette for dark mode
+    bw._activePalette = palette;
+
+    // Resolve layout
+    var layout = resolveLayout(fullConfig);
+
+    // Generate themed CSS rules
+    var themedRules = generateThemedCSS(name, palette, layout);
+
+    // Add underscore aliases
+    var aliasedRules = addUnderscoreAliases(themedRules);
+
+    // Convert to CSS string
+    var cssStr = bw.css(aliasedRules);
+
+    // Inject into DOM if requested and in browser
+    var shouldInject = config.inject !== false;
+    if (shouldInject && bw._isBrowser) {
+      var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
+      bw.injectCSS(cssStr, {
+        id: styleId,
+        append: false
+      });
+    }
+
+    // Update bw.u color entries to reflect the palette
+    if (!name) {
+      bw.u.bgTeal = {
+        background: palette.primary.base,
+        color: palette.primary.textOn
+      };
+      bw.u.textTeal = {
+        color: palette.primary.base
+      };
+      bw.u.bgWhite = {
+        background: '#ffffff'
+      };
+      bw.u.textWhite = {
+        color: '#ffffff'
+      };
+    }
+    return {
+      css: cssStr,
+      palette: palette,
+      name: name
+    };
+  };
+
+  // Expose color utility functions on bw namespace
+  bw.hexToHsl = hexToHsl;
+  bw.hslToHex = hslToHex;
+  bw.adjustLightness = adjustLightness;
+  bw.mixColor = mixColor;
+  bw.relativeLuminance = relativeLuminance;
+  bw.textOnColor = textOnColor;
+  bw.deriveShades = deriveShades;
+  bw.derivePalette = derivePalette;
+
+  // Expose layout and theme presets
+  bw.SPACING_PRESETS = SPACING_PRESETS;
+  bw.RADIUS_PRESETS = RADIUS_PRESETS;
+  bw.DEFAULT_PALETTE_CONFIG = DEFAULT_PALETTE_CONFIG;
+  bw.THEME_PRESETS = THEME_PRESETS;
 
   // ===================================================================================
   // Legacy v1 Functions - Useful utilities retained from bitwrench v1
@@ -7091,7 +7604,6 @@
 
     // Track how many characters we skip to honor numChars
     var skippedChars = 0;
-
     // Move startSpot to the next non-whitespace and non-punctuation character
     while (lorem[startSpot] === ' ' || /[.,:;!?]/.test(lorem[startSpot])) {
       startSpot = (startSpot + 1) % lorem.length;
@@ -7881,7 +8393,6 @@
         var _this$_taco$o2;
         if (!this._mounted || !this.element) return this;
         var parent = this.element.parentNode;
-        this.element.nextSibling;
 
         // Update TACO with current state
         if (this._taco.o) {
@@ -8047,23 +8558,23 @@
   };
 
   // Register all make functions
-  Object.entries(components).forEach(function (_ref11) {
-    var _ref12 = _slicedToArray(_ref11, 2),
-      name = _ref12[0],
-      fn = _ref12[1];
+  Object.entries(components).forEach(function (_ref1) {
+    var _ref10 = _slicedToArray(_ref1, 2),
+      name = _ref10[0],
+      fn = _ref10[1];
     if (name.startsWith('make')) {
       bw[name] = fn;
     }
   });
 
   // Register component handles
-  bw._componentHandles = componentHandles;
+  bw._componentHandles = componentHandles || {};
 
   // Create functions that return handles
-  Object.entries(components).forEach(function (_ref13) {
-    var _ref14 = _slicedToArray(_ref13, 2),
-      name = _ref14[0],
-      fn = _ref14[1];
+  Object.entries(components).forEach(function (_ref11) {
+    var _ref12 = _slicedToArray(_ref11, 2),
+      name = _ref12[0],
+      fn = _ref12[1];
     if (name.startsWith('make')) {
       var componentType = name.substring(4).toLowerCase(); // Remove 'make' prefix
       var createName = 'create' + name.substring(4); // createCard, createTable, etc.
