@@ -44,6 +44,27 @@ const bw = {
   _unmountCallbacks: new Map(),
   _topics: {},          // topic → [{handler, id}]  (plain object for IE11 compat)
   _subIdCounter: 0,     // monotonic ID for subscriptions
+
+  // ── Node reference cache ──────────────────────────────────────────────
+  // Fast O(1) lookup for elements by bw_id, id attribute, or bw_uuid.
+  //
+  // Populated by bw.createDOM() when elements have:
+  //   - data-bw-id attribute (user-declared addressable elements)
+  //   - id attribute (standard HTML id)
+  //   - bw_uuid (internal, for lifecycle-managed elements)
+  //
+  // Cleaned up by bw.cleanup() when elements are destroyed via bitwrench APIs.
+  // On cache miss, falls back to querySelector/getElementById — never fails,
+  // just slower. Stale entries (refs to detached nodes) are removed on miss
+  // via parentNode === null check (IE11-safe, unlike el.isConnected).
+  //
+  // Elements created via bw.createDOM() also get el._bw_refs — a local map of
+  // child bw_id → DOM node ref for fast parent→child access in o.render.
+  // This is the bitwrench equivalent of React's compiled template "holes".
+  //
+  // Contract: if you remove elements outside of bitwrench APIs (raw el.remove()),
+  // map entries may linger until the next lookup attempt cleans them.
+  _nodeMap: {},
   
   // Monkey patch for testing (same as v1)
   __monkey_patch_is_nodejs__: {
@@ -275,6 +296,108 @@ bw.uuid = function(prefix) {
 };
 
 /**
+ * Look up a DOM element by ID string, using the node cache for O(1) access.
+ *
+ * Resolution order:
+ * 1. Check `bw._nodeMap[id]` — if found and still attached (parentNode !== null), return it
+ * 2. If cached ref is detached (parentNode === null), remove stale entry
+ * 3. Fall back to `document.getElementById(id)` then `document.querySelector(...)`
+ * 4. If fallback finds the element, cache it for next time
+ * 5. If not found anywhere, return null
+ *
+ * Accepts a DOM element directly (pass-through) or a string identifier.
+ * String identifiers are tried as: direct map key, getElementById,
+ * querySelector (for CSS selectors starting with . or #), and
+ * data-bw-id attribute selector.
+ *
+ * @param {string|Element} id - Element ID, CSS selector, data-bw-id value, or DOM element
+ * @returns {Element|null} The DOM element, or null if not found
+ * @category Internal
+ */
+bw._el = function(id) {
+  // Pass-through for DOM elements
+  if (typeof id !== 'string') return id || null;
+  if (!id) return null;
+  if (!bw._isBrowser) return null;
+
+  // 1. Check cache
+  var cached = bw._nodeMap[id];
+  if (cached) {
+    // Verify not detached (parentNode check is IE11-safe)
+    if (cached.parentNode !== null) {
+      return cached;
+    }
+    // Stale — remove and fall through
+    delete bw._nodeMap[id];
+  }
+
+  // 2. DOM fallback: try getElementById first (fastest native lookup)
+  var el = document.getElementById(id);
+
+  // 3. Try querySelector for CSS selectors (starts with # or .)
+  if (!el && (id.charAt(0) === '#' || id.charAt(0) === '.')) {
+    el = document.querySelector(id);
+  }
+
+  // 4. Try data-bw-id attribute (for bw.uuid-generated IDs)
+  if (!el) {
+    el = document.querySelector('[data-bw-id="' + id + '"]');
+  }
+
+  // 5. Cache the result for next time
+  if (el) {
+    bw._nodeMap[id] = el;
+  }
+
+  return el;
+};
+
+/**
+ * Register a DOM element in the node cache under one or more keys.
+ *
+ * Called internally by `bw.createDOM()`. Registers elements that have
+ * id attributes, data-bw-id attributes, or both.
+ *
+ * @param {Element} el - DOM element to register
+ * @param {string} [bwId] - data-bw-id value to register under
+ * @category Internal
+ */
+bw._registerNode = function(el, bwId) {
+  if (!el) return;
+  // Register under data-bw-id
+  if (bwId) {
+    bw._nodeMap[bwId] = el;
+  }
+  // Register under id attribute
+  var htmlId = el.getAttribute ? el.getAttribute('id') : null;
+  if (htmlId) {
+    bw._nodeMap[htmlId] = el;
+  }
+};
+
+/**
+ * Remove a DOM element from the node cache.
+ *
+ * Called internally by `bw.cleanup()` when elements are destroyed
+ * through bitwrench APIs.
+ *
+ * @param {Element} el - DOM element to deregister
+ * @param {string} [bwId] - data-bw-id value to remove
+ * @category Internal
+ */
+bw._deregisterNode = function(el, bwId) {
+  // Remove data-bw-id entry
+  if (bwId) {
+    delete bw._nodeMap[bwId];
+  }
+  // Remove id attribute entry
+  var htmlId = el && el.getAttribute ? el.getAttribute('id') : null;
+  if (htmlId) {
+    delete bw._nodeMap[htmlId];
+  }
+};
+
+/**
  * Escape HTML special characters to prevent XSS.
  *
  * Converts &, <, >, ", ', and / to their HTML entity equivalents.
@@ -498,25 +621,65 @@ bw.createDOM = function(taco, options = {}) {
     }
   }
   
-  // Add children
+  // Add children, building _bw_refs for fast parent→child access.
+  // Children with data-bw-id or id attributes get local refs on the parent,
+  // so o.render functions can access them without any DOM lookup.
   if (content != null) {
     if (Array.isArray(content)) {
       content.forEach(child => {
         if (child != null) {
-          el.appendChild(bw.createDOM(child, options));
+          var childEl = bw.createDOM(child, options);
+          el.appendChild(childEl);
+          // Build local refs for addressable children
+          var childBwId = (child && child.a) ? (child.a['data-bw-id'] || child.a.id) : null;
+          if (childBwId) {
+            if (!el._bw_refs) el._bw_refs = {};
+            el._bw_refs[childBwId] = childEl;
+          }
+          // Bubble up grandchild refs (flatten one level)
+          if (childEl._bw_refs) {
+            if (!el._bw_refs) el._bw_refs = {};
+            for (var rk in childEl._bw_refs) {
+              if (Object.prototype.hasOwnProperty.call(childEl._bw_refs, rk)) {
+                el._bw_refs[rk] = childEl._bw_refs[rk];
+              }
+            }
+          }
         }
       });
     } else if (typeof content === 'object' && content.t) {
-      el.appendChild(bw.createDOM(content, options));
+      var childEl = bw.createDOM(content, options);
+      el.appendChild(childEl);
+      var childBwId = content.a ? (content.a['data-bw-id'] || content.a.id) : null;
+      if (childBwId) {
+        if (!el._bw_refs) el._bw_refs = {};
+        el._bw_refs[childBwId] = childEl;
+      }
+      if (childEl._bw_refs) {
+        if (!el._bw_refs) el._bw_refs = {};
+        for (var rk in childEl._bw_refs) {
+          if (Object.prototype.hasOwnProperty.call(childEl._bw_refs, rk)) {
+            el._bw_refs[rk] = childEl._bw_refs[rk];
+          }
+        }
+      }
     } else {
       el.textContent = String(content);
     }
   }
-  
+
+  // Register element in node cache if it has an id attribute
+  if (attrs.id) {
+    bw._registerNode(el, null);
+  }
+
   // Handle lifecycle hooks and state
   if (opts.mounted || opts.unmount || opts.render || opts.state) {
     const id = attrs['data-bw-id'] || bw.uuid();
     el.setAttribute('data-bw-id', id);
+
+    // Register in node cache under data-bw-id
+    bw._registerNode(el, id);
 
     // Store state
     if (opts.state) {
@@ -560,8 +723,11 @@ bw.createDOM = function(taco, options = {}) {
         opts.unmount(el, el._bw_state || {});
       });
     }
+  } else if (attrs['data-bw-id']) {
+    // Element has explicit data-bw-id but no lifecycle hooks — still register it
+    bw._registerNode(el, attrs['data-bw-id']);
   }
-  
+
   return el;
 };
 
@@ -594,10 +760,8 @@ bw.DOM = function(target, taco, options = {}) {
     throw new Error('bw.DOM requires a DOM environment (document/window). Use bw.html() instead.');
   }
   
-  // Get target element
-  const targetEl = typeof target === 'string'
-    ? document.querySelector(target)
-    : target;
+  // Get target element (use cache-backed lookup)
+  const targetEl = bw._el(target);
     
   if (!targetEl) {
     console.error('bw.DOM: Target element not found:', target);
@@ -620,7 +784,11 @@ bw.DOM = function(target, taco, options = {}) {
   // Restore the target's own state/render/subs after cleanup
   if (savedState !== undefined) targetEl._bw_state = savedState;
   if (savedRender) targetEl._bw_render = savedRender;
-  if (savedBwId) targetEl.setAttribute('data-bw-id', savedBwId);
+  if (savedBwId) {
+    targetEl.setAttribute('data-bw-id', savedBwId);
+    // Re-register mount point in node cache (cleanup deregistered it)
+    bw._registerNode(targetEl, savedBwId);
+  }
   if (savedSubs) targetEl._bw_subs = savedSubs;
 
   // Clear and mount new content
@@ -883,15 +1051,19 @@ bw.cleanup = function(element) {
       bw._unmountCallbacks.delete(id);
     }
 
+    // Deregister from node cache
+    bw._deregisterNode(el, id);
+
     // Clean up pub/sub subscriptions tied to this element
     if (el._bw_subs) {
       el._bw_subs.forEach(function(unsub) { unsub(); });
       delete el._bw_subs;
     }
 
-    // Clean up state and render
+    // Clean up state, render, and local refs
     delete el._bw_state;
     delete el._bw_render;
+    delete el._bw_refs;
   });
 
   // Check element itself
@@ -902,6 +1074,10 @@ bw.cleanup = function(element) {
       callback();
       bw._unmountCallbacks.delete(id);
     }
+
+    // Deregister from node cache
+    bw._deregisterNode(element, id);
+
     // Clean up pub/sub subscriptions tied to element itself
     if (element._bw_subs) {
       element._bw_subs.forEach(function(unsub) { unsub(); });
@@ -909,6 +1085,7 @@ bw.cleanup = function(element) {
     }
     delete element._bw_state;
     delete element._bw_render;
+    delete element._bw_refs;
   }
 };
 
@@ -923,7 +1100,7 @@ bw.cleanup = function(element) {
  * Calls `el._bw_render(el, state)` and emits `bw:statechange` so other
  * components can react without tight coupling.
  *
- * @param {string|Element} target - CSS selector or DOM element with _bw_render
+ * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element
  * @returns {Element|null} The element, or null if not found / no render function
  * @category State Management
  * @see bw.patch
@@ -933,7 +1110,7 @@ bw.cleanup = function(element) {
  * bw.update(el);  // re-renders, emits bw:statechange
  */
 bw.update = function(target) {
-  var el = typeof target === 'string' ? document.querySelector(target) : target;
+  var el = bw._el(target);
   if (el && el._bw_render) {
     el._bw_render(el, el._bw_state || {});
     bw.emit(el, 'statechange', el._bw_state);
@@ -948,7 +1125,8 @@ bw.update = function(target) {
  * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
  * and `bw.update()` for full structural re-renders.
  *
- * @param {string|Element} id - Element ID string or DOM element
+ * @param {string|Element} id - Element ID, data-bw-id, CSS selector, or DOM element.
+ *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string|Object} content - New text content, or TACO object to replace children
  * @param {string} [attr] - If provided, sets this attribute instead of content
  * @returns {Element|null} The patched element, or null if not found
@@ -961,7 +1139,7 @@ bw.update = function(target) {
  * bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
  */
 bw.patch = function(id, content, attr) {
-  var el = typeof id === 'string' ? document.getElementById(id) : id;
+  var el = bw._el(id);
   if (!el) return null;
 
   if (attr) {
@@ -1012,7 +1190,8 @@ bw.patchAll = function(patches) {
  * bubble by default so ancestor elements can listen. Use with `bw.on()` for
  * DOM-scoped communication between components.
  *
- * @param {string|Element} target - CSS selector or DOM element
+ * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+ *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {*} [detail] - Data to pass with the event
  * @category Events (DOM)
@@ -1022,7 +1201,7 @@ bw.patchAll = function(patches) {
  * // Dispatches CustomEvent 'bw:statechange' on the element
  */
 bw.emit = function(target, eventName, detail) {
-  var el = typeof target === 'string' ? document.querySelector(target) : target;
+  var el = bw._el(target);
   if (el) {
     el.dispatchEvent(new CustomEvent('bw:' + eventName, {
       bubbles: true,
@@ -1038,7 +1217,8 @@ bw.emit = function(target, eventName, detail) {
  * is the first argument so you don't need to destructure `e.detail`.
  * Events bubble, so you can listen on an ancestor element.
  *
- * @param {string|Element} target - CSS selector or DOM element
+ * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+ *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {Function} handler - Called with (detail, event)
  * @returns {Element|null} The element (for chaining), or null if not found
@@ -1050,7 +1230,7 @@ bw.emit = function(target, eventName, detail) {
  * });
  */
 bw.on = function(target, eventName, handler) {
-  var el = typeof target === 'string' ? document.querySelector(target) : target;
+  var el = bw._el(target);
   if (el) {
     el.addEventListener('bw:' + eventName, function(e) {
       handler(e.detail, e);
