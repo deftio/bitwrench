@@ -1145,6 +1145,16 @@ bw.patch = function(id, content, attr) {
   if (attr) {
     // Patch an attribute
     el.setAttribute(attr, String(content));
+  } else if (Array.isArray(content)) {
+    // Patch with array of children (strings and/or TACOs)
+    el.innerHTML = '';
+    content.forEach(function(item) {
+      if (typeof item === 'string' || typeof item === 'number') {
+        el.appendChild(document.createTextNode(String(item)));
+      } else if (item && item.t) {
+        el.appendChild(bw.createDOM(item));
+      }
+    });
   } else if (typeof content === 'object' && content !== null && content.t) {
     // Patch with a TACO — replace children
     el.innerHTML = '';
@@ -2341,6 +2351,7 @@ bw.getURLParam = function(key, defaultValue) {
  * @see bw.makeTable
  */
 bw.htmlTable = function(data, opts = {}) {
+  console.warn('bw.htmlTable() is deprecated. Use bw.makeTableFromArray() for TACO output or bw.makeTable() for object-array data.');
   if (bw.typeOf(data) !== "array" || data.length < 1) return "";
   
   const dopts = {
@@ -2440,6 +2451,7 @@ bw._attrsToStr = function(attrs) {
  * @see bw.makeTabs
  */
 bw.htmlTabs = function(tabData, opts = {}) {
+  console.warn('bw.htmlTabs() is deprecated. Use bw.makeTabs() instead.');
   if (bw.typeOf(tabData) !== "array" || tabData.length < 1) return "";
   
   const dopts = {
@@ -2486,6 +2498,7 @@ bw.htmlTabs = function(tabData, opts = {}) {
  * @category Legacy (v1)
  */
 bw.selectTabContent = function(tabElement) {
+  console.warn('bw.selectTabContent() is deprecated. Use bw.makeTabs() instead.');
   if (!bw._isBrowser || !tabElement) return;
   
   const container = tabElement.closest(".bw-tab-container");
@@ -3118,6 +3131,171 @@ bw.makeTable = function(config) {
     t: 'table',
     a: { class: cls },
     c: [thead, tbody]
+  };
+};
+
+/**
+ * Create a table from a 2D array.
+ *
+ * Converts a 2D array into the object-array format that `bw.makeTable()`
+ * expects, then delegates. By default, the first row is used as column
+ * headers. All standard `makeTable` props (striped, hover, sortable,
+ * columns, onSort, etc.) are passed through.
+ *
+ * @param {Object} config - Configuration object
+ * @param {Array<Array>} config.data - 2D array of values
+ * @param {boolean} [config.headerRow=true] - Treat first row as column headers
+ * @param {boolean} [config.striped=false] - Striped rows
+ * @param {boolean} [config.hover=false] - Hover highlight
+ * @param {boolean} [config.sortable=true] - Enable sort
+ * @param {Array<Object>} [config.columns] - Override auto-generated column defs
+ * @param {string} [config.className=''] - Additional CSS classes
+ * @param {Function} [config.onSort] - Sort callback
+ * @param {string} [config.sortColumn] - Currently sorted column key
+ * @param {string} [config.sortDirection='asc'] - Sort direction
+ * @returns {Object} TACO object for table
+ * @category Component Builders
+ * @see bw.makeTable
+ * @example
+ * bw.makeTableFromArray({
+ *   data: [
+ *     ['Name', 'Role', 'Status'],
+ *     ['Alice', 'Engineer', 'Active'],
+ *     ['Bob', 'Designer', 'Away']
+ *   ],
+ *   striped: true,
+ *   hover: true
+ * });
+ */
+bw.makeTableFromArray = function(config) {
+  const { data = [], headerRow = true, columns, ...rest } = config;
+
+  if (!Array.isArray(data) || data.length === 0) {
+    return bw.makeTable({ data: [], columns: columns || [], ...rest });
+  }
+
+  // Determine headers
+  let headers;
+  let rows;
+  if (headerRow && data.length > 0) {
+    headers = data[0].map(function(h) { return String(h); });
+    rows = data.slice(1);
+  } else {
+    // Generate col0, col1, ... headers
+    const width = data[0].length;
+    headers = [];
+    for (let i = 0; i < width; i++) {
+      headers.push('col' + i);
+    }
+    rows = data;
+  }
+
+  // Convert rows to object arrays
+  const objData = rows.map(function(row) {
+    const obj = {};
+    headers.forEach(function(key, i) {
+      obj[key] = row[i] !== undefined ? row[i] : '';
+    });
+    return obj;
+  });
+
+  // Auto-generate column defs if not provided
+  const cols = columns || headers.map(function(key) {
+    return { key: key, label: key };
+  });
+
+  return bw.makeTable({ data: objData, columns: cols, ...rest });
+};
+
+/**
+ * Create a vertical bar chart from data.
+ *
+ * Renders a pure-CSS bar chart using flexbox and percentage heights.
+ * No canvas, SVG, or external charting library required.
+ *
+ * @param {Object} config - Chart configuration
+ * @param {Array<Object>} config.data - Array of data objects
+ * @param {string} [config.labelKey='label'] - Key for bar labels
+ * @param {string} [config.valueKey='value'] - Key for bar values
+ * @param {string} [config.title] - Chart title
+ * @param {string} [config.color='#006666'] - Bar color (hex or CSS color)
+ * @param {string} [config.height='200px'] - Height of the chart area
+ * @param {Function} [config.formatValue] - Value label formatter: (value) => string
+ * @param {boolean} [config.showValues=true] - Show value labels above bars
+ * @param {boolean} [config.showLabels=true] - Show labels below bars
+ * @param {string} [config.className=''] - Additional CSS classes
+ * @returns {Object} TACO object
+ * @category Component Builders
+ * @example
+ * bw.makeBarChart({
+ *   data: [
+ *     { label: 'Jan', value: 12400 },
+ *     { label: 'Feb', value: 15800 },
+ *     { label: 'Mar', value: 9200 }
+ *   ],
+ *   title: 'Monthly Revenue',
+ *   color: '#0077b6',
+ *   formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k'
+ * });
+ */
+bw.makeBarChart = function(config) {
+  const {
+    data = [],
+    labelKey = 'label',
+    valueKey = 'value',
+    title,
+    color = '#006666',
+    height = '200px',
+    formatValue,
+    showValues = true,
+    showLabels = true,
+    className = ''
+  } = config;
+
+  if (!Array.isArray(data) || data.length === 0) {
+    return { t: 'div', a: { class: ('bw-bar-chart-container ' + className).trim() }, c: '' };
+  }
+
+  const values = data.map(function(d) { return Number(d[valueKey]) || 0; });
+  const maxVal = Math.max.apply(null, values);
+
+  const bars = data.map(function(d, i) {
+    const val = values[i];
+    const pct = maxVal > 0 ? (val / maxVal * 100) : 0;
+    const formatted = formatValue ? formatValue(val) : String(val);
+
+    const children = [];
+    if (showValues) {
+      children.push({ t: 'div', a: { class: 'bw-bar-value' }, c: formatted });
+    }
+    children.push({
+      t: 'div',
+      a: {
+        class: 'bw-bar',
+        style: 'height:' + pct + '%;background:' + color + ';'
+      }
+    });
+    if (showLabels) {
+      children.push({ t: 'div', a: { class: 'bw-bar-label' }, c: String(d[labelKey] || '') });
+    }
+
+    return { t: 'div', a: { class: 'bw-bar-group' }, c: children };
+  });
+
+  const chartChildren = [];
+  if (title) {
+    chartChildren.push({ t: 'h3', a: { class: 'bw-bar-chart-title' }, c: title });
+  }
+  chartChildren.push({
+    t: 'div',
+    a: { class: 'bw-bar-chart', style: 'height:' + height + ';' },
+    c: bars
+  });
+
+  return {
+    t: 'div',
+    a: { class: ('bw-bar-chart-container ' + className).trim() },
+    c: chartChildren
   };
 };
 

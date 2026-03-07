@@ -102,40 +102,18 @@
       color: white !important;
       font-weight: 600;
     }
-    /* Bar chart */
-    .bar-chart {
-      display: flex;
-      align-items: flex-end;
-      gap: 6px;
-      height: 180px;
-      padding: 0 0.5rem;
+    /* Bar chart overrides (uses bw-bar-chart-* from bitwrench CSS) */
+    .bw-bar-chart-container {
+      background: var(--bw-card-bg, #fff);
+      border-color: var(--bw-card-border, #e5e5e5);
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      margin-bottom: 1rem;
     }
-    .bar-group {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100%;
-      justify-content: flex-end;
-    }
-    .bar {
-      width: 100%;
-      border-radius: 3px 3px 0 0;
-      transition: height 0.5s ease, background 0.3s;
-      min-height: 4px;
-      position: relative;
-    }
-    .bar:hover { opacity: 0.85; }
-    .bar-val {
-      font-size: 0.65rem;
-      font-weight: 600;
-      margin-bottom: 2px;
+    .bw-bar-value {
       color: var(--bw-text-secondary, #555);
     }
-    .bar-label {
-      font-size: 0.7rem;
+    .bw-bar-label {
       color: var(--bw-text-secondary, #555);
-      margin-top: 4px;
     }
     /* Theme picker */
     .theme-picker {
@@ -359,26 +337,15 @@
 
     // ── Render: Bar Chart ────────────────────────────────────────
     function renderBarChart() {
-      var data = dashboardState.monthlyRevenue;
-      var maxVal = Math.max.apply(null, data.map(function(d) { return d.value; }));
-      return {
-        t: 'div', a: { class: 'chart-container' }, c: [
-          { t: 'h3', c: 'Monthly Revenue' },
-          {
-            t: 'div', a: { class: 'bar-chart' },
-            c: data.map(function(d) {
-              var pct = (d.value / maxVal * 100);
-              return {
-                t: 'div', a: { class: 'bar-group' }, c: [
-                  { t: 'div', a: { class: 'bar-val' }, c: '$' + (d.value / 1000).toFixed(1) + 'k' },
-                  { t: 'div', a: { class: 'bar', style: 'height:' + pct + '%;background:' + currentTheme.accent + ';' } },
-                  { t: 'div', a: { class: 'bar-label' }, c: d.month }
-                ]
-              };
-            })
-          }
-        ]
-      };
+      return bw.makeBarChart({
+        data: dashboardState.monthlyRevenue,
+        labelKey: 'month',
+        valueKey: 'value',
+        title: 'Monthly Revenue',
+        color: currentTheme.accent,
+        height: '180px',
+        formatValue: function(v) { return '$' + (v / 1000).toFixed(1) + 'k'; }
+      });
     }
 
     // ── Render: Activity Table ────────────────────────────────────
@@ -599,27 +566,17 @@
       '  };',
       '}',
       '',
-      '// ---- CSS Bar Chart ----',
+      '// ---- Bar Chart (uses bw.makeBarChart) ----',
       'function renderBarChart() {',
-      '  var data = dashboardState.monthlyRevenue;',
-      '  var maxVal = Math.max.apply(null, data.map(function(d) { return d.value; }));',
-      '  return {',
-      '    t: "div", a: { class: "chart-container" }, c: [',
-      '      { t: "h3", c: "Monthly Revenue" },',
-      '      {',
-      '        t: "div", a: { class: "bar-chart" },',
-      '        c: data.map(function(d) {',
-      '          return {',
-      '            t: "div", a: { class: "bar-group" }, c: [',
-      '              { t: "div", a: { class: "bar-val" }, c: "$" + (d.value / 1000).toFixed(1) + "k" },',
-      '              { t: "div", a: { class: "bar", style: "height:" + (d.value / maxVal * 100) + "%;background:" + currentTheme.accent } },',
-      '              { t: "div", a: { class: "bar-label" }, c: d.month }',
-      '            ]',
-      '          };',
-      '        })',
-      '      }',
-      '    ]',
-      '  };',
+      '  return bw.makeBarChart({',
+      '    data: dashboardState.monthlyRevenue,',
+      '    labelKey: "month",',
+      '    valueKey: "value",',
+      '    title: "Monthly Revenue",',
+      '    color: currentTheme.accent,',
+      '    height: "180px",',
+      '    formatValue: function(v) { return "$" + (v / 1000).toFixed(1) + "k"; }',
+      '  });',
       '}',
       '',
       '// ---- Activity Table with Badges ----',

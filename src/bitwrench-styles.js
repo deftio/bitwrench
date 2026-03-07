@@ -3544,6 +3544,32 @@ export function getStructuralStyles() {
   rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
   rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
 
+  // Bar chart (structural)
+  rules['.bw-bar-chart-container'] = {
+    'padding': '1rem', 'border': '1px solid transparent', 'border-radius': '8px'
+  };
+  rules['.bw-bar-chart'] = {
+    'display': 'flex', 'align-items': 'flex-end', 'gap': '6px', 'padding': '0 0.5rem'
+  };
+  rules['.bw-bar-group'] = {
+    'flex': '1', 'display': 'flex', 'flex-direction': 'column',
+    'align-items': 'center', 'height': '100%', 'justify-content': 'flex-end'
+  };
+  rules['.bw-bar'] = {
+    'width': '100%', 'border-radius': '3px 3px 0 0',
+    'transition': 'height 0.5s ease', 'min-height': '4px'
+  };
+  rules['.bw-bar:hover'] = { 'opacity': '0.85' };
+  rules['.bw-bar-value'] = {
+    'font-size': '0.65rem', 'font-weight': '600', 'margin-bottom': '2px', 'text-align': 'center'
+  };
+  rules['.bw-bar-label'] = {
+    'font-size': '0.7rem', 'margin-top': '4px', 'text-align': 'center'
+  };
+  rules['.bw-bar-chart-title'] = {
+    'font-size': '1.1rem', 'font-weight': '600', 'margin': '0 0 0.75rem 0'
+  };
+
   // Spacing utilities (structural)
   var spacingValues = { '0': '0', '1': '.25rem', '2': '.5rem', '3': '1rem', '4': '1.5rem', '5': '3rem' };
   for (var k in spacingValues) {

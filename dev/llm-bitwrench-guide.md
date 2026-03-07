@@ -163,11 +163,39 @@ bw.makeTable({
   className: 'table'
 })
 
+// From 2D arrays (CSV, Object.entries(), spreadsheet data)
+bw.makeTableFromArray({
+  data: [
+    ['Name', 'Age'],       // first row = headers (headerRow: true, default)
+    ['Alice', 30],
+    ['Bob', 25]
+  ],
+  headerRow: true,         // default true; false → auto-generates col0, col1, ...
+  striped: true, hover: true, sortable: true  // all makeTable props pass through
+})
+
 bw.makeDataTable({
   title: 'Users',
   data: [...],
   columns: [...],
   responsive: true     // wraps in scrollable div
+})
+
+// Bar chart from data
+bw.makeBarChart({
+  data: [
+    { label: 'Jan', value: 4200 },
+    { label: 'Feb', value: 5100 }
+  ],
+  labelKey: 'label',     // default 'label'
+  valueKey: 'value',     // default 'value'
+  title: 'Monthly Revenue',
+  color: '#006666',      // bar color
+  height: '200px',       // chart area height
+  formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k',
+  showValues: true,      // labels above bars
+  showLabels: true,      // labels below bars
+  className: ''          // extra CSS classes
 })
 ```
 

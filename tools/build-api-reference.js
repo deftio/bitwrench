@@ -188,7 +188,7 @@ const categoryOrder = [
   'State Management', 'Events (DOM)', 'Pub/Sub',
   'CSS & Styling', 'Component Builders',
   'Color', 'Math', 'Array Utilities', 'Text Generation',
-  'Timing', 'Browser Utilities', 'File I/O', 'Legacy (v1)',
+  'Timing', 'Browser Utilities', 'File I/O',
   'Component Handles'
 ];
 

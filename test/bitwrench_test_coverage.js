@@ -736,6 +736,123 @@ describe("Table Builder (bw.makeTable)", function() {
 });
 
 // =========================================================================
+// bw.makeTableFromArray()
+// =========================================================================
+describe("Table From Array (bw.makeTableFromArray)", function() {
+  it("should create a table from a 2D array with header row", function() {
+    const taco = bw.makeTableFromArray({
+      data: [
+        ['Name', 'Age'],
+        ['Alice', 30],
+        ['Bob', 25]
+      ]
+    });
+    assert.equal(taco.t, 'table');
+    // thead should have Name, Age
+    const ths = taco.c[0].c.c; // thead > tr > [th, th]
+    assert.equal(ths.length, 2);
+    // First th contains [label, ...] or just label
+    const label0 = Array.isArray(ths[0].c) ? ths[0].c[0] : ths[0].c;
+    assert.equal(label0, 'Name');
+    // tbody should have 2 rows
+    assert.equal(taco.c[1].c.length, 2);
+  });
+
+  it("should handle headerRow: false", function() {
+    const taco = bw.makeTableFromArray({
+      data: [
+        ['Alice', 30],
+        ['Bob', 25]
+      ],
+      headerRow: false
+    });
+    // Should auto-generate col0, col1 headers
+    const ths = taco.c[0].c.c;
+    const label0 = Array.isArray(ths[0].c) ? ths[0].c[0] : ths[0].c;
+    assert.equal(label0, 'col0');
+    // All rows should be in tbody (no header row consumed)
+    assert.equal(taco.c[1].c.length, 2);
+  });
+
+  it("should pass through striped and hover", function() {
+    const taco = bw.makeTableFromArray({
+      data: [['A'], ['B']],
+      striped: true,
+      hover: true
+    });
+    assert.ok(taco.a.class.includes('bw-table-striped'));
+    assert.ok(taco.a.class.includes('bw-table-hover'));
+  });
+
+  it("should handle empty data", function() {
+    const taco = bw.makeTableFromArray({ data: [] });
+    assert.equal(taco.t, 'table');
+  });
+
+  it("should handle data with only header row", function() {
+    const taco = bw.makeTableFromArray({
+      data: [['Name', 'Age']]
+    });
+    assert.equal(taco.t, 'table');
+    // tbody should have 0 rows
+    assert.equal(taco.c[1].c.length, 0);
+  });
+
+  it("should support custom columns override", function() {
+    const taco = bw.makeTableFromArray({
+      data: [
+        ['Name', 'Age', 'Role'],
+        ['Alice', 30, 'Eng']
+      ],
+      columns: [
+        { key: 'Name', label: 'Full Name' },
+        { key: 'Role', label: 'Position' }
+      ]
+    });
+    const ths = taco.c[0].c.c;
+    assert.equal(ths.length, 2);
+    const label0 = Array.isArray(ths[0].c) ? ths[0].c[0] : ths[0].c;
+    assert.equal(label0, 'Full Name');
+  });
+
+  it("should handle missing values in rows", function() {
+    const taco = bw.makeTableFromArray({
+      data: [
+        ['A', 'B', 'C'],
+        [1, 2]  // missing third value
+      ]
+    });
+    const cells = taco.c[1].c[0].c; // tbody > first tr > [td, td, td]
+    assert.equal(cells.length, 3);
+    assert.equal(cells[2].c, ''); // missing value becomes empty string
+  });
+
+  it("should support sortable", function() {
+    const taco = bw.makeTableFromArray({
+      data: [
+        ['Name', 'Score'],
+        ['Alice', 90],
+        ['Bob', 80]
+      ],
+      sortable: true,
+      sortColumn: 'Score',
+      sortDirection: 'asc'
+    });
+    // Should sort: Bob (80) before Alice (90)
+    const firstRow = taco.c[1].c[0].c; // tbody > first tr > cells
+    assert.equal(firstRow[1].c, '80');
+  });
+
+  it("should pass through className", function() {
+    const taco = bw.makeTableFromArray({
+      data: [['X'], [1]],
+      className: 'my-custom-table'
+    });
+    assert.ok(taco.a.class.includes('my-custom-table'));
+  });
+});
+
+// =========================================================================
 // bw.makeDataTable()
 // =========================================================================
 describe("Data Table (bw.makeDataTable)", function() {
@@ -772,6 +889,121 @@ describe("Data Table (bw.makeDataTable)", function() {
     });
     const lastChild = taco.c[taco.c.length - 1];
     assert.equal(lastChild.t, 'table');
+  });
+});
+
+// =========================================================================
+// bw.makeBarChart()
+// =========================================================================
+describe("Bar Chart (bw.makeBarChart)", function() {
+  it("should return empty container for no data", function() {
+    const taco = bw.makeBarChart({ data: [] });
+    assert.equal(taco.t, 'div');
+    assert.ok(taco.a.class.includes('bw-bar-chart-container'));
+    assert.equal(taco.c, '');
+  });
+
+  it("should build bars from data", function() {
+    const taco = bw.makeBarChart({
+      data: [
+        { label: 'Jan', value: 100 },
+        { label: 'Feb', value: 200 }
+      ]
+    });
+    assert.equal(taco.t, 'div');
+    // Should have bw-bar-chart div (no title, so 1 child)
+    assert.equal(taco.c.length, 1);
+    const chart = taco.c[0];
+    assert.ok(chart.a.class.includes('bw-bar-chart'));
+    assert.equal(chart.c.length, 2); // 2 bar groups
+  });
+
+  it("should add title when provided", function() {
+    const taco = bw.makeBarChart({
+      data: [{ label: 'X', value: 10 }],
+      title: 'Revenue'
+    });
+    assert.equal(taco.c.length, 2);
+    assert.equal(taco.c[0].t, 'h3');
+    assert.equal(taco.c[0].c, 'Revenue');
+  });
+
+  it("should use custom labelKey and valueKey", function() {
+    const taco = bw.makeBarChart({
+      data: [{ month: 'Jan', revenue: 500 }],
+      labelKey: 'month',
+      valueKey: 'revenue'
+    });
+    const barGroup = taco.c[0].c[0]; // first bar group
+    const label = barGroup.c[2]; // value, bar, label
+    assert.equal(label.c, 'Jan');
+  });
+
+  it("should use formatValue when provided", function() {
+    const taco = bw.makeBarChart({
+      data: [{ label: 'A', value: 1500 }],
+      formatValue: function(v) { return '$' + v; }
+    });
+    const barGroup = taco.c[0].c[0];
+    const valueDiv = barGroup.c[0]; // first child is value
+    assert.equal(valueDiv.c, '$1500');
+  });
+
+  it("should hide values when showValues is false", function() {
+    const taco = bw.makeBarChart({
+      data: [{ label: 'A', value: 10 }],
+      showValues: false
+    });
+    const barGroup = taco.c[0].c[0];
+    // Should have 2 children (bar + label), no value div
+    assert.equal(barGroup.c.length, 2);
+    assert.ok(barGroup.c[0].a.class.includes('bw-bar'));
+  });
+
+  it("should hide labels when showLabels is false", function() {
+    const taco = bw.makeBarChart({
+      data: [{ label: 'A', value: 10 }],
+      showLabels: false
+    });
+    const barGroup = taco.c[0].c[0];
+    // Should have 2 children (value + bar), no label div
+    assert.equal(barGroup.c.length, 2);
+    assert.ok(barGroup.c[0].a.class.includes('bw-bar-value'));
+  });
+
+  it("should apply custom color and height", function() {
+    const taco = bw.makeBarChart({
+      data: [{ label: 'A', value: 100 }],
+      color: '#ff0000',
+      height: '300px'
+    });
+    const chart = taco.c[0];
+    assert.ok(chart.a.style.includes('300px'));
+    const bar = chart.c[0].c[1]; // bar element
+    assert.ok(bar.a.style.includes('#ff0000'));
+  });
+
+  it("should calculate bar heights as percentages", function() {
+    const taco = bw.makeBarChart({
+      data: [
+        { label: 'A', value: 50 },
+        { label: 'B', value: 100 }
+      ]
+    });
+    const barGroups = taco.c[0].c;
+    const bar0 = barGroups[0].c[1]; // first bar
+    const bar1 = barGroups[1].c[1]; // second bar (max)
+    assert.ok(bar0.a.style.includes('50%'));
+    assert.ok(bar1.a.style.includes('100%'));
+  });
+
+  it("should apply className", function() {
+    const taco = bw.makeBarChart({
+      data: [{ label: 'A', value: 10 }],
+      className: 'my-chart'
+    });
+    assert.ok(taco.a.class.includes('bw-bar-chart-container'));
+    assert.ok(taco.a.class.includes('my-chart'));
   });
 });
 

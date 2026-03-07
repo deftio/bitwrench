@@ -155,9 +155,9 @@ Bitwrench v2 is a counter-thesis to modern JavaScript frameworks. Instead of JSX
 - `bw.loremIpsum(numChars)` - Generate Lorem Ipsum text
 - `bw.multiArray(value, dims)` - Create multidimensional arrays
 
-#### HTML Generation
-- `bw.htmlTable(data, opts)` - Create HTML table from array
-- `bw.htmlTabs(tabData, opts)` - Create tab interface
+#### HTML Generation (Deprecated)
+- `bw.htmlTable(data, opts)` - **Deprecated** — use `bw.makeTableFromArray()` or `bw.makeTable()`
+- `bw.htmlTabs(tabData, opts)` - **Deprecated** — use `bw.makeTabs()`
 
 #### Browser Utilities
 - `bw.setCookie(name, value, days, options)` - Set cookie with options

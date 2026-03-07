@@ -6,6 +6,7 @@
   <title>Bitwrench - Framework Comparison</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
@@ -94,7 +95,7 @@
   <div class="page-header">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
       <h1>Framework Comparison</h1>
-      <p class="subtitle">The same tasks solved different ways. Every approach has trade-offs.</p>
+      <p class="subtitle">Map your domain knowledge from React, Vue, Svelte, and other frameworks to bitwrench patterns.</p>
     </div>
   </div>
 
@@ -102,38 +103,19 @@
 
     <!-- Intro -->
     <div class="demo-section">
-      <h2>About This Comparison</h2>
+      <h2>About This Page</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          There are many good tools for building web UIs. Each makes different trade-offs
-          around complexity, bundle size, developer experience, and ecosystem. This page shows
-          the same tasks implemented in several approaches so you can compare them directly.
-        </p>
-        <p class="intro-text">
-          We lead with the areas where bitwrench has genuine, unique strengths. The later
-          comparisons show areas where bitwrench is competitive but not necessarily better.
+          If you already know React, Vue, Svelte, or vanilla JavaScript, this page shows how
+          the same tasks are expressed in bitwrench. Use it as a translation guide to map
+          familiar patterns to bitwrench's TACO-based approach.
         </p>
       </div>
     </div>
 
-    <!-- Comparison 1: Server-side JSON (was 6 — bitwrench's strongest differentiator) -->
+    <!-- Comparison 1: Table from data -->
     <div class="demo-section">
-      <h2>Comparison 1: Server-Driven UI</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Bitwrench's most unique capability: a backend in <strong>any language</strong> can generate UI
-          as JSON. The browser receives JSON and bitwrench renders it &mdash; no JavaScript
-          templating on the server. No other major framework does this. This is especially useful
-          for embedded devices and polyglot backends.
-        </p>
-        <div id="json-preview"></div>
-        <div id="json-comparison"></div>
-      </div>
-    </div>
-
-    <!-- Comparison 2: Table from data (NEW — genuine win) -->
-    <div class="demo-section">
-      <h2>Comparison 2: Table from Data</h2>
+      <h2>Comparison 1: Table from Data</h2>
       <div class="demo-section-body">
         <p class="intro-text">
           Given an array of objects, render a sortable, styled table. One function call in bitwrench
@@ -144,9 +126,9 @@
       </div>
     </div>
 
-    <!-- Comparison 3: Dynamic theming (was 5 — competitive advantage) -->
+    <!-- Comparison 2: Dynamic theming -->
     <div class="demo-section">
-      <h2>Comparison 3: Dynamic Theming</h2>
+      <h2>Comparison 2: Dynamic Theming</h2>
       <div class="demo-section-body">
         <p class="intro-text">
           Generate and apply a complete color theme at runtime. This is where bitwrench's
@@ -158,9 +140,9 @@
       </div>
     </div>
 
-    <!-- Comparison 4: Data-driven list (was 2 — competitive) -->
+    <!-- Comparison 3: Data-driven list -->
     <div class="demo-section">
-      <h2>Comparison 4: Rendering a List from Data</h2>
+      <h2>Comparison 3: Rendering a List from Data</h2>
       <div class="demo-section-body">
         <p class="intro-text">
           Given this data: three users with names and roles. Render a styled list where each
@@ -171,28 +153,28 @@
       </div>
     </div>
 
-    <!-- Comparison 5: Counter (was 1 — honest: similar line count) -->
+    <!-- Comparison 4: Counter -->
     <div class="demo-section">
-      <h2>Comparison 5: A Counter</h2>
+      <h2>Comparison 4: A Counter</h2>
       <div class="demo-section-body">
         <p class="intro-text">
           The simplest interactive component: a heading that shows a number, and a button
-          that increments it. Honest note: line counts are similar across all frameworks here.
-          This is included for completeness, not as a selling point.
+          that increments it. Line counts are similar across all frameworks here, so this
+          is a good baseline for understanding each approach's syntax.
         </p>
         <div id="counter-preview"></div>
         <div id="counter-comparison"></div>
       </div>
     </div>
 
-    <!-- Comparison 6: Todo (was 4 — honest: bitwrench is more verbose) -->
+    <!-- Comparison 5: Todo -->
     <div class="demo-section">
-      <h2>Comparison 6: State Management (Todo List)</h2>
+      <h2>Comparison 5: State Management (Todo List)</h2>
       <div class="demo-section-body">
         <p class="intro-text">
           A realistic component: a todo list where you can add items and mark them done.
-          Honest note: bitwrench requires more code than React/Vue/Svelte for complex stateful
-          components. Manual re-rendering trades convenience for transparency.
+          Bitwrench uses manual re-rendering rather than automatic reactivity, trading
+          convenience for transparency and control.
         </p>
         <div id="todo-preview"></div>
         <div id="todo-comparison"></div>
@@ -254,15 +236,19 @@
     var previewLabel = { t: 'div', a: { class: 'preview-label' }, c: 'What we\'re building (live)' };
 
     // Build a tabbed code comparison from an array of { label, code } objects
+    var useCE = typeof bw.codeEditor === 'function';
     var codeComparison = function(examples) {
       return bw.makeTabs({
         tabs: examples.map(function(ex) {
+          var codeBlock = useCE
+            ? bw.codeEditor({ code: ex.code, lang: 'js', readOnly: true, height: 'auto' })
+            : { t: 'pre', c: { t: 'code', c: ex.code } };
           return {
             label: ex.label,
             content: {
               t: 'div',
               a: { style: 'position: relative;' },
-              c: { t: 'pre', c: { t: 'code', c: ex.code } }
+              c: codeBlock
             }
           };
         })
@@ -1357,281 +1343,7 @@
       bw.DOM('#theme-comparison', codeComparison(examples));
     })();
 
-    // ---- Comparison 6: Server-Side JSON ----
-    (function() {
-      // Simulated JSON payload from any backend (Python, Go, Rust, ESP32, etc.)
-      var serverPayload = {
-        t: 'div',
-        a: { class: 'bw-card', style: 'padding: 1rem;' },
-        c: [
-          { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' }, c: 'Sensor Reading' },
-          {
-            t: 'table',
-            a: { class: 'bw-table bw-table-striped', style: 'margin: 0;' },
-            c: {
-              t: 'tbody',
-              c: [
-                { t: 'tr', c: [
-                  { t: 'td', c: { t: 'strong', c: 'Temperature' } },
-                  { t: 'td', c: '23.5 \u00B0C' }
-                ]},
-                { t: 'tr', c: [
-                  { t: 'td', c: { t: 'strong', c: 'Humidity' } },
-                  { t: 'td', c: '48%' }
-                ]},
-                { t: 'tr', c: [
-                  { t: 'td', c: { t: 'strong', c: 'Pressure' } },
-                  { t: 'td', c: '1013 hPa' }
-                ]}
-              ]
-            }
-          },
-          {
-            t: 'div',
-            a: { style: 'margin-top: 0.75rem; font-size: 0.8125rem; color: var(--bw-text-secondary);' },
-            c: 'Last updated: just now'
-          }
-        ]
-      };
-
-      var jsonStr = JSON.stringify(serverPayload, null, 2);
-
-      bw.DOM('#json-preview', {
-        t: 'div',
-        a: { class: 'preview-box' },
-        c: [
-          previewLabel,
-          {
-            t: 'div',
-            a: { class: 'bw-grid-2col' },
-            c: [
-              {
-                t: 'div',
-                c: [
-                  { t: 'div', a: { class: 'bw-code-label' }, c: 'JSON from server (any language)' },
-                  { t: 'pre', c: jsonStr }
-                ]
-              },
-              {
-                t: 'div',
-                c: [
-                  { t: 'div', a: { class: 'bw-code-label' }, c: 'Rendered by bitwrench' },
-                  serverPayload
-                ]
-              }
-            ]
-          }
-        ]
-      });
-
-      var examples = [
-        {
-          label: 'Traditional',
-          code: [
-            '// Traditional approach: server returns raw data,',
-            '// client must know how to render it.',
-            '',
-            '// Server (any language) — returns data only:',
-            '// GET /api/sensors',
-            '// { "temperature": 23.5, "humidity": 48, "pressure": 1013 }',
-            '',
-            '// Client must contain rendering logic:',
-            'fetch("/api/sensors")',
-            '  .then(r => r.json())',
-            '  .then(data => {',
-            '    var html = "<div class=\'card\'>";',
-            '    html += "<h4>Sensor Reading</h4>";',
-            '    html += "<table>";',
-            '    html += "<tr><td>Temperature</td><td>" + data.temperature + " \\u00B0C</td></tr>";',
-            '    html += "<tr><td>Humidity</td><td>" + data.humidity + "%</td></tr>";',
-            '    html += "<tr><td>Pressure</td><td>" + data.pressure + " hPa</td></tr>";',
-            '    html += "</table>";',
-            '    html += "</div>";',
-            '    document.getElementById("app").innerHTML = html;',
-            '  });',
-            '',
-            '// The client must match the server\'s data structure.',
-            '// Change the API? Update the client too.'
-          ].join('\n')
-        },
-        {
-          label: 'React',
-          code: [
-            '// React: server returns data, client has components to render it',
-            '',
-            '// Server (Node.js/Express):',
-            '// app.get("/api/sensors", (req, res) => {',
-            '//   res.json({ temperature: 23.5, humidity: 48, pressure: 1013 });',
-            '// });',
-            '',
-            '// Client must define matching components:',
-            'function SensorDashboard() {',
-            '  const [data, setData] = useState(null);',
-            '  useEffect(() => {',
-            '    fetch("/api/sensors").then(r => r.json()).then(setData);',
-            '  }, []);',
-            '',
-            '  if (!data) return <div>Loading...</div>;',
-            '  return (',
-            '    <div className="card">',
-            '      <h4>Sensor Reading</h4>',
-            '      <table>',
-            '        <tr><td>Temperature</td><td>{data.temperature} \\u00B0C</td></tr>',
-            '        <tr><td>Humidity</td><td>{data.humidity}%</td></tr>',
-            '        <tr><td>Pressure</td><td>{data.pressure} hPa</td></tr>',
-            '      </table>',
-            '    </div>',
-            '  );',
-            '}',
-            '',
-            '// Server sends data, client has the UI templates.',
-            '// Both sides must agree on the data contract.'
-          ].join('\n')
-        },
-        {
-          label: 'Bitwrench',
-          code: [
-            '// Bitwrench: server sends COMPLETE UI as JSON.',
-            '// Client has ZERO knowledge of what it\'s rendering.',
-            '',
-            '// Server (Python Flask — no JavaScript needed):',
-            '# @app.route("/ui/sensors")',
-            '# def sensors():',
-            '#     return jsonify({',
-            '#         "t": "div",',
-            '#         "a": { "class": "bw-card" },',
-            '#         "c": [',
-            '#             { "t": "h4", "c": "Sensor Reading" },',
-            '#             { "t": "table", "a": { "class": "bw-table" },',
-            '#               "c": { "t": "tbody", "c": [',
-            '#                 { "t": "tr", "c": [',
-            '#                   { "t": "td", "c": "Temperature" },',
-            '#                   { "t": "td", "c": str(read_temp()) + " \\u00B0C" }',
-            '#                 ]}',
-            '#               ]}',
-            '#             }',
-            '#         ]',
-            '#     })',
-            '',
-            '// Client — generic, works with ANY server response:',
-            'fetch("/ui/sensors")',
-            '  .then(function(r) { return r.json(); })',
-            '  .then(function(taco) { bw.DOM("#app", taco); });',
-            '',
-            '// The client is just 2 lines. It doesn\'t know or care',
-            '// what the server sends — it renders whatever arrives.',
-            '// Change the UI? Update only the server.',
-            '// Works from Python, Go, Rust, C, ESP32 — any language.'
-          ].join('\n')
-        },
-        {
-          label: 'Go Server',
-          code: [
-            '// Go: server generates the same UI as JSON',
-            '// No templates, no JavaScript on the server',
-            '',
-            'package main',
-            '',
-            'import (',
-            '    "encoding/json"',
-            '    "fmt"',
-            '    "net/http"',
-            ')',
-            '',
-            'func sensorsHandler(w http.ResponseWriter, r *http.Request) {',
-            '    temp := readSensor("temp")',
-            '    ui := map[string]interface{}{',
-            '        "t": "div",',
-            '        "a": map[string]string{"class": "bw-card"},',
-            '        "c": []interface{}{',
-            '            map[string]interface{}{',
-            '                "t": "h4",',
-            '                "c": "Sensor Reading",',
-            '            },',
-            '            map[string]interface{}{',
-            '                "t": "table",',
-            '                "a": map[string]string{"class": "bw-table"},',
-            '                "c": map[string]interface{}{',
-            '                    "t": "tbody",',
-            '                    "c": []interface{}{',
-            '                        map[string]interface{}{',
-            '                            "t":  "tr",',
-            '                            "c": []interface{}{',
-            '                                map[string]string{"t": "td", "c": "Temperature"},',
-            '                                map[string]string{"t": "td", "c": fmt.Sprintf("%.1f \\u00B0C", temp)},',
-            '                            },',
-            '                        },',
-            '                    },',
-            '                },',
-            '            },',
-            '        },',
-            '    }',
-            '    w.Header().Set("Content-Type", "application/json")',
-            '    json.NewEncoder(w).Encode(ui)',
-            '}',
-            '',
-            '// Same 2-line client renders it:',
-            '// fetch("/ui/sensors").then(r => r.json())',
-            '//   .then(taco => bw.DOM("#app", taco));'
-          ].join('\n')
-        },
-        {
-          label: 'ESP32 (C)',
-          code: [
-            '// ESP32 / Arduino: serve UI as JSON from a microcontroller',
-            '// No JavaScript runtime, no templates — just string formatting',
-            '',
-            '#include <WiFi.h>',
-            '#include <WebServer.h>',
-            '',
-            'WebServer server(80);',
-            '',
-            '// Write JSON with single quotes (readable), swap to double before sending',
-            'String q(const char* s) {',
-            '  String out(s);',
-            '  out.replace(\'\\\'\',' + ' \'"\');',
-            '  return out;',
-            '}',
-            '',
-            'void handleSensors() {',
-            '  float temp = readDHT22();',
-            '  float humidity = readHumidity();',
-            '',
-            '  // Single-quoted JSON — easy to read, easy to edit',
-            '  String json = q("{"',
-            '    "  \'t\': \'div\',"',
-            '    "  \'a\': { \'class\': \'bw-card\' },"',
-            '    "  \'c\': ["',
-            '    "    { \'t\': \'h4\', \'c\': \'Sensor Reading\' },"',
-            '    "    { \'t\': \'table\', \'a\': { \'class\': \'bw-table\' },"',
-            '    "      \'c\': { \'t\': \'tbody\', \'c\': ["',
-            '    "        { \'t\': \'tr\', \'c\': ["',
-            '    "          { \'t\': \'td\', \'c\': \'Temperature\' },"',
-            '    "          { \'t\': \'td\', \'c\': \'" + String(temp, 1) + " \\u00B0C\' }"',
-            '    "        ]},"',
-            '    "        { \'t\': \'tr\', \'c\': ["',
-            '    "          { \'t\': \'td\', \'c\': \'Humidity\' },"',
-            '    "          { \'t\': \'td\', \'c\': \'" + String(humidity, 0) + "%\' }"',
-            '    "        ]}"',
-            '    "      ]}}"',
-            '    "  ]"',
-            '    "}");',
-            '',
-            '  server.send(200, "application/json", json);',
-            '}',
-            '',
-            '// The browser loads one HTML file with bitwrench.',
-            '// fetch("/ui/sensors").then(r => r.json())',
-            '//   .then(taco => bw.DOM("#app", taco));',
-            '// That\'s it. The ESP32 controls the entire UI.'
-          ].join('\n')
-        }
-      ];
-
-      bw.DOM('#json-comparison', codeComparison(examples));
-    })();
-
-    // ---- Comparison: Table from Data (NEW) ----
+    // ---- Comparison 1: Table from Data ----
     (function() {
       var products = [
         { name: 'Widget A', price: 29.99, stock: 142 },

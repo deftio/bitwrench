@@ -826,7 +826,31 @@
             ),
 
             // =================================================================
-            // 22. Hero
+            // 22. Bar Chart
+            // =================================================================
+            demoSection('section-bar-chart', 'Bar Chart',
+              'Pure-CSS bar charts from data arrays. Supports custom colors, value formatting, and configurable labels.',
+              createTabbedDemo(
+                bw.makeBarChart({
+                  data: [
+                    { label: 'Jan', value: 4200 },
+                    { label: 'Feb', value: 5100 },
+                    { label: 'Mar', value: 4800 },
+                    { label: 'Apr', value: 6300 },
+                    { label: 'May', value: 5900 },
+                    { label: 'Jun', value: 7200 }
+                  ],
+                  title: 'Monthly Revenue',
+                  color: '#006666',
+                  height: '180px',
+                  formatValue: function(v) { return '$' + (v / 1000).toFixed(1) + 'k'; }
+                }),
+                "bw.makeBarChart({\n  data: [\n    { label: 'Jan', value: 4200 },\n    { label: 'Feb', value: 5100 },\n    { label: 'Mar', value: 4800 },\n    { label: 'Apr', value: 6300 },\n    { label: 'May', value: 5900 },\n    { label: 'Jun', value: 7200 }\n  ],\n  title: 'Monthly Revenue',\n  color: '#006666',\n  height: '180px',\n  formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k'\n})"
+              )
+            ),
+
+            // =================================================================
+            // 23. Hero
             // =================================================================
             demoSection('section-hero', 'Hero',
               'Full-width hero sections with gradient backgrounds, titles, subtitles, and call-to-action buttons.',

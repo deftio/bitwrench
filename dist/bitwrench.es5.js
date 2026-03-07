@@ -210,7 +210,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-07T10:01:07.340Z'
+    buildDate: '2026-03-07T10:38:22.776Z'
   };
 
   /**
@@ -2802,6 +2802,52 @@
       'font-size': '1.5rem'
     };
 
+    // Bar chart (structural)
+    rules['.bw-bar-chart-container'] = {
+      'padding': '1rem',
+      'border': '1px solid transparent',
+      'border-radius': '8px'
+    };
+    rules['.bw-bar-chart'] = {
+      'display': 'flex',
+      'align-items': 'flex-end',
+      'gap': '6px',
+      'padding': '0 0.5rem'
+    };
+    rules['.bw-bar-group'] = {
+      'flex': '1',
+      'display': 'flex',
+      'flex-direction': 'column',
+      'align-items': 'center',
+      'height': '100%',
+      'justify-content': 'flex-end'
+    };
+    rules['.bw-bar'] = {
+      'width': '100%',
+      'border-radius': '3px 3px 0 0',
+      'transition': 'height 0.5s ease',
+      'min-height': '4px'
+    };
+    rules['.bw-bar:hover'] = {
+      'opacity': '0.85'
+    };
+    rules['.bw-bar-value'] = {
+      'font-size': '0.65rem',
+      'font-weight': '600',
+      'margin-bottom': '2px',
+      'text-align': 'center'
+    };
+    rules['.bw-bar-label'] = {
+      'font-size': '0.7rem',
+      'margin-top': '4px',
+      'text-align': 'center'
+    };
+    rules['.bw-bar-chart-title'] = {
+      'font-size': '1.1rem',
+      'font-weight': '600',
+      'margin': '0 0 0.75rem 0'
+    };
+
     // Spacing utilities (structural)
     var spacingValues = {
       '0': '0',
@@ -3357,7 +3403,7 @@
   }
 
   var _excluded$1 = ["type", "placeholder", "value", "id", "name", "disabled", "readonly", "required", "className", "style"],
-    _excluded2 = ["placeholder", "value", "rows", "id", "name", "disabled", "readonly", "required", "className"],
+    _excluded2$1 = ["placeholder", "value", "rows", "id", "name", "disabled", "readonly", "required", "className"],
     _excluded3 = ["options", "value", "id", "name", "disabled", "required", "className"],
     _excluded4 = ["label", "checked", "id", "name", "disabled", "value", "className"],
     _excluded5 = ["label", "name", "value", "checked", "id", "disabled", "className"],
@@ -4410,7 +4456,7 @@
       required = _props$required2 === void 0 ? false : _props$required2,
       _props$className10 = props.className,
       className = _props$className10 === void 0 ? '' : _props$className10,
-      eventHandlers = _objectWithoutProperties(props, _excluded2);
+      eventHandlers = _objectWithoutProperties(props, _excluded2$1);
     return {
       t: 'textarea',
       a: _objectSpread2({
@@ -6388,7 +6434,8 @@
     makeToast: makeToast
   });
 
-  var _excluded = ["title", "data", "columns", "className", "striped", "hover", "responsive"];
+  var _excluded = ["data", "headerRow", "columns"],
+    _excluded2 = ["title", "data", "columns", "className", "striped", "hover", "responsive"];
 
   // Environment-aware module loader for optional Node.js built-ins (fs).
   // Strategy: try require() first (CJS/UMD), fall back to import() (ESM).
@@ -7512,6 +7559,16 @@
     if (attr) {
       // Patch an attribute
       el.setAttribute(attr, String(content));
+    } else if (Array.isArray(content)) {
+      // Patch with array of children (strings and/or TACOs)
+      el.innerHTML = '';
+      content.forEach(function (item) {
+        if (typeof item === 'string' || typeof item === 'number') {
+          el.appendChild(document.createTextNode(String(item)));
+        } else if (item && item.t) {
+          el.appendChild(bw.createDOM(item));
+        }
+      });
     } else if (_typeof(content) === 'object' && content !== null && content.t) {
       // Patch with a TACO — replace children
       el.innerHTML = '';
@@ -8893,6 +8950,7 @@
    */
   bw.htmlTable = function (data) {
     var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    console.warn('bw.htmlTable() is deprecated. Use bw.makeTableFromArray() for TACO output or bw.makeTable() for object-array data.');
     if (bw.typeOf(data) !== "array" || data.length < 1) return "";
     var dopts = {
       useFirstRowAsHeaders: true,
@@ -8983,6 +9041,7 @@
    */
   bw.htmlTabs = function (tabData) {
     var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    console.warn('bw.htmlTabs() is deprecated. Use bw.makeTabs() instead.');
     if (bw.typeOf(tabData) !== "array" || tabData.length < 1) return "";
     var dopts = {
       atr: {
@@ -9043,6 +9102,7 @@
    * @category Legacy (v1)
    */
   bw.selectTabContent = function (tabElement) {
+    console.warn('bw.selectTabContent() is deprecated. Use bw.makeTabs() instead.');
     if (!bw._isBrowser || !tabElement) return;
     var container = tabElement.closest(".bw-tab-container");
     if (!container) return;
@@ -9718,6 +9778,221 @@
   };
 
   /**
+   * Create a table from a 2D array.
+   *
+   * Converts a 2D array into the object-array format that `bw.makeTable()`
+   * expects, then delegates. By default, the first row is used as column
+   * headers. All standard `makeTable` props (striped, hover, sortable,
+   * columns, onSort, etc.) are passed through.
+   *
+   * @param {Object} config - Configuration object
+   * @param {Array<Array>} config.data - 2D array of values
+   * @param {boolean} [config.headerRow=true] - Treat first row as column headers
+   * @param {boolean} [config.striped=false] - Striped rows
+   * @param {boolean} [config.hover=false] - Hover highlight
+   * @param {boolean} [config.sortable=true] - Enable sort
+   * @param {Array<Object>} [config.columns] - Override auto-generated column defs
+   * @param {string} [config.className=''] - Additional CSS classes
+   * @param {Function} [config.onSort] - Sort callback
+   * @param {string} [config.sortColumn] - Currently sorted column key
+   * @param {string} [config.sortDirection='asc'] - Sort direction
+   * @returns {Object} TACO object for table
+   * @category Component Builders
+   * @see bw.makeTable
+   * @example
+   * bw.makeTableFromArray({
+   *   data: [
+   *     ['Name', 'Role', 'Status'],
+   *     ['Alice', 'Engineer', 'Active'],
+   *     ['Bob', 'Designer', 'Away']
+   *   ],
+   *   striped: true,
+   *   hover: true
+   * });
+   */
+  bw.makeTableFromArray = function (config) {
+    var _config$data2 = config.data,
+      data = _config$data2 === void 0 ? [] : _config$data2,
+      _config$headerRow = config.headerRow,
+      headerRow = _config$headerRow === void 0 ? true : _config$headerRow,
+      columns = config.columns,
+      rest = _objectWithoutProperties(config, _excluded);
+    if (!Array.isArray(data) || data.length === 0) {
+      return bw.makeTable(_objectSpread2({
+        data: [],
+        columns: columns || []
+      }, rest));
+    }
+
+    // Determine headers
+    var headers;
+    var rows;
+    if (headerRow && data.length > 0) {
+      headers = data[0].map(function (h) {
+        return String(h);
+      });
+      rows = data.slice(1);
+    } else {
+      // Generate col0, col1, ... headers
+      var width = data[0].length;
+      headers = [];
+      for (var i = 0; i < width; i++) {
+        headers.push('col' + i);
+      }
+      rows = data;
+    }
+
+    // Convert rows to object arrays
+    var objData = rows.map(function (row) {
+      var obj = {};
+      headers.forEach(function (key, i) {
+        obj[key] = row[i] !== undefined ? row[i] : '';
+      });
+      return obj;
+    });
+
+    // Auto-generate column defs if not provided
+    var cols = columns || headers.map(function (key) {
+      return {
+        key: key,
+        label: key
+      };
+    });
+    return bw.makeTable(_objectSpread2({
+      data: objData,
+      columns: cols
+    }, rest));
+  };
+
+  /**
+   * Create a vertical bar chart from data.
+   *
+   * Renders a pure-CSS bar chart using flexbox and percentage heights.
+   * No canvas, SVG, or external charting library required.
+   *
+   * @param {Object} config - Chart configuration
+   * @param {Array<Object>} config.data - Array of data objects
+   * @param {string} [config.labelKey='label'] - Key for bar labels
+   * @param {string} [config.valueKey='value'] - Key for bar values
+   * @param {string} [config.title] - Chart title
+   * @param {string} [config.color='#006666'] - Bar color (hex or CSS color)
+   * @param {string} [config.height='200px'] - Height of the chart area
+   * @param {Function} [config.formatValue] - Value label formatter: (value) => string
+   * @param {boolean} [config.showValues=true] - Show value labels above bars
+   * @param {boolean} [config.showLabels=true] - Show labels below bars
+   * @param {string} [config.className=''] - Additional CSS classes
+   * @returns {Object} TACO object
+   * @category Component Builders
+   * @example
+   * bw.makeBarChart({
+   *   data: [
+   *     { label: 'Jan', value: 12400 },
+   *     { label: 'Feb', value: 15800 },
+   *     { label: 'Mar', value: 9200 }
+   *   ],
+   *   title: 'Monthly Revenue',
+   *   color: '#0077b6',
+   *   formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k'
+   * });
+   */
+  bw.makeBarChart = function (config) {
+    var _config$data3 = config.data,
+      data = _config$data3 === void 0 ? [] : _config$data3,
+      _config$labelKey = config.labelKey,
+      labelKey = _config$labelKey === void 0 ? 'label' : _config$labelKey,
+      _config$valueKey = config.valueKey,
+      valueKey = _config$valueKey === void 0 ? 'value' : _config$valueKey,
+      title = config.title,
+      _config$color = config.color,
+      color = _config$color === void 0 ? '#006666' : _config$color,
+      _config$height = config.height,
+      height = _config$height === void 0 ? '200px' : _config$height,
+      formatValue = config.formatValue,
+      _config$showValues = config.showValues,
+      showValues = _config$showValues === void 0 ? true : _config$showValues,
+      _config$showLabels = config.showLabels,
+      showLabels = _config$showLabels === void 0 ? true : _config$showLabels,
+      _config$className2 = config.className,
+      className = _config$className2 === void 0 ? '' : _config$className2;
+    if (!Array.isArray(data) || data.length === 0) {
+      return {
+        t: 'div',
+        a: {
+          "class": ('bw-bar-chart-container ' + className).trim()
+        },
+        c: ''
+      };
+    }
+    var values = data.map(function (d) {
+      return Number(d[valueKey]) || 0;
+    });
+    var maxVal = Math.max.apply(null, values);
+    var bars = data.map(function (d, i) {
+      var val = values[i];
+      var pct = maxVal > 0 ? val / maxVal * 100 : 0;
+      var formatted = formatValue ? formatValue(val) : String(val);
+      var children = [];
+      if (showValues) {
+        children.push({
+          t: 'div',
+          a: {
+            "class": 'bw-bar-value'
+          },
+          c: formatted
+        });
+      }
+      children.push({
+        t: 'div',
+        a: {
+          "class": 'bw-bar',
+          style: 'height:' + pct + '%;background:' + color + ';'
+        }
+      });
+      if (showLabels) {
+        children.push({
+          t: 'div',
+          a: {
+            "class": 'bw-bar-label'
+          },
+          c: String(d[labelKey] || '')
+        });
+      }
+      return {
+        t: 'div',
+        a: {
+          "class": 'bw-bar-group'
+        },
+        c: children
+      };
+    });
+    var chartChildren = [];
+    if (title) {
+      chartChildren.push({
+        t: 'h3',
+        a: {
+          "class": 'bw-bar-chart-title'
+        },
+        c: title
+      });
+    }
+    chartChildren.push({
+      t: 'div',
+      a: {
+        "class": 'bw-bar-chart',
+        style: 'height:' + height + ';'
+      },
+      c: bars
+    });
+    return {
+      t: 'div',
+      a: {
+        "class": ('bw-bar-chart-container ' + className).trim()
+      },
+      c: chartChildren
+    };
+  };
+
+  /**
    * Create a responsive data table with title and optional wrapper
    *
    * Wraps bw.makeTable() output in a responsive container div.
@@ -9743,15 +10018,15 @@
     var title = config.title,
       data = config.data,
       columns = config.columns,
-      _config$className2 = config.className,
-      className = _config$className2 === void 0 ? '' : _config$className2,
+      _config$className3 = config.className,
+      className = _config$className3 === void 0 ? '' : _config$className3,
       _config$striped2 = config.striped,
       striped = _config$striped2 === void 0 ? true : _config$striped2,
       _config$hover2 = config.hover,
       hover = _config$hover2 === void 0 ? true : _config$hover2,
       _config$responsive = config.responsive,
       responsive = _config$responsive === void 0 ? true : _config$responsive,
-      tableConfig = _objectWithoutProperties(config, _excluded);
+      tableConfig = _objectWithoutProperties(config, _excluded2);
     var table = bw.makeTable(_objectSpread2({
       data: data,
       columns: columns,
