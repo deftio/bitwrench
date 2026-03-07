@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.11 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.12 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -189,14 +189,14 @@
    */
 
   var VERSION_INFO = {
-    version: '2.0.11',
+    version: '2.0.12',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-07T11:02:53.369Z'
+    buildDate: '2026-03-07T22:31:03.129Z'
   };
 
   /**
@@ -1137,11 +1137,31 @@
     rules[scopeSelector(scope, '.bw-accordion-button')] = {
       'color': palette.dark.base
     };
+    rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed)')] = {
+      'color': palette.primary.darkText,
+      'background-color': palette.primary.light
+    };
     rules[scopeSelector(scope, '.bw-accordion-button:hover')] = {
       'background-color': palette.light.light
     };
+    rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed):hover')] = {
+      'background-color': palette.primary.hover
+    };
+    rules[scopeSelector(scope, '.bw-accordion-button:focus-visible')] = {
+      'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+    };
     rules[scopeSelector(scope, '.bw-accordion-body')] = {
       'border-top': '1px solid ' + palette.light.border
+    };
+    return rules;
+  }
+  function generateCarouselThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-carousel')] = {
+      'background-color': palette.light.light
+    };
+    rules[scopeSelector(scope, '.bw-carousel-indicator.active')] = {
+      'background-color': palette.primary.base
     };
     return rules;
   }
@@ -1221,7 +1241,7 @@
   function generateSkeletonThemed(scope, palette) {
     var rules = {};
     rules[scopeSelector(scope, '.bw-skeleton')] = {
-      'background-color': palette.light.border
+      'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
     };
     return rules;
   }
@@ -1247,7 +1267,7 @@
    * @returns {Object} CSS rules object
    */
   function generateThemedCSS(scopeName, palette, layout) {
-    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateBadges(scopeName, palette), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette), generateProgress(scopeName, palette), generateHero(scopeName, palette), generateBreadcrumbThemed(scopeName, palette), generateSpinnerThemed(scopeName, palette), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette), generateModalThemed(scopeName, palette), generateToastThemed(scopeName, palette), generateDropdownThemed(scopeName, palette), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateAvatarThemed(scopeName, palette), generateUtilityColors(scopeName, palette));
+    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateBadges(scopeName, palette), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette), generateProgress(scopeName, palette), generateHero(scopeName, palette), generateBreadcrumbThemed(scopeName, palette), generateSpinnerThemed(scopeName, palette), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette), generateToastThemed(scopeName, palette), generateDropdownThemed(scopeName, palette), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateAvatarThemed(scopeName, palette), generateUtilityColors(scopeName, palette));
   }
 
   // =========================================================================
@@ -1274,7 +1294,7 @@
         'font-weight': '600',
         'line-height': '1.25',
         'letter-spacing': '-0.01em',
-        'color': '#1a1a1a'
+        'color': 'inherit'
       },
       'h1': {
         'font-size': 'calc(1.375rem + 1.5vw)'
@@ -2097,6 +2117,15 @@
     rules['.bw-tab-pane.active'] = {
       'display': 'block'
     };
+    rules['.bw-nav-scrollable'] = {
+      'flex-wrap': 'nowrap',
+      'overflow-x': 'auto',
+      '-webkit-overflow-scrolling': 'touch',
+      'scrollbar-width': 'none'
+    };
+    rules['.bw-nav-scrollable .bw-nav-link'] = {
+      'white-space': 'nowrap'
+    };
 
     // List groups (structural)
     rules['.bw-list-group'] = {
@@ -2605,6 +2634,84 @@
       'gap': '0.5rem'
     };
 
+    // Carousel (structural)
+    rules['.bw-carousel'] = {
+      'position': 'relative',
+      'overflow': 'hidden',
+      'border-radius': '8px'
+    };
+    rules['.bw-carousel-track'] = {
+      'display': 'flex',
+      'transition': 'transform 0.4s ease',
+      'height': '100%'
+    };
+    rules['.bw-carousel-slide'] = {
+      'min-width': '100%',
+      'flex-shrink': '0',
+      'overflow': 'hidden',
+      'position': 'relative',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center'
+    };
+    rules['.bw-carousel-slide img'] = {
+      'width': '100%',
+      'height': '100%',
+      'object-fit': 'cover'
+    };
+    rules['.bw-carousel-caption'] = {
+      'position': 'absolute',
+      'bottom': '0',
+      'left': '0',
+      'right': '0',
+      'padding': '0.75rem 1rem'
+    };
+    rules['.bw-carousel-control'] = {
+      'position': 'absolute',
+      'top': '50%',
+      'transform': 'translateY(-50%)',
+      'width': '40px',
+      'height': '40px',
+      'border': 'none',
+      'border-radius': '50%',
+      'cursor': 'pointer',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'z-index': '2',
+      'padding': '0',
+      'transition': 'background-color 0.2s ease'
+    };
+    rules['.bw-carousel-control img'] = {
+      'width': '20px',
+      'height': '20px',
+      'pointer-events': 'none'
+    };
+    rules['.bw-carousel-control-prev'] = {
+      'left': '10px'
+    };
+    rules['.bw-carousel-control-next'] = {
+      'right': '10px'
+    };
+    rules['.bw-carousel-indicators'] = {
+      'position': 'absolute',
+      'bottom': '12px',
+      'left': '50%',
+      'transform': 'translateX(-50%)',
+      'display': 'flex',
+      'gap': '6px',
+      'z-index': '2'
+    };
+    rules['.bw-carousel-indicator'] = {
+      'width': '10px',
+      'height': '10px',
+      'border-radius': '50%',
+      'border': '2px solid transparent',
+      'padding': '0',
+      'cursor': 'pointer',
+      'transition': 'opacity 0.2s ease, background-color 0.2s ease'
+    };
+
     // Toast (structural)
     rules['.bw-toast-container'] = {
       'position': 'fixed',
@@ -2727,7 +2834,8 @@
     // Skeleton (structural)
     rules['.bw-skeleton'] = {
       'border-radius': '4px',
-      'animation': 'bw-skeleton-pulse 1.5s ease-in-out infinite'
+      'background-size': '400% 100%',
+      'animation': 'bw-skeleton-shimmer 1.4s ease infinite'
     };
     rules['.bw-skeleton-text'] = {
       'height': '1em',
@@ -2743,15 +2851,12 @@
       'display': 'flex',
       'flex-direction': 'column'
     };
-    rules['@keyframes bw-skeleton-pulse'] = {
+    rules['@keyframes bw-skeleton-shimmer'] = {
       '0%': {
-        'opacity': '1'
-      },
-      '50%': {
-        'opacity': '0.4'
+        'background-position': '100% 50%'
       },
       '100%': {
-        'opacity': '1'
+        'background-position': '0 50%'
       }
     };
 
@@ -3319,11 +3424,30 @@
       '.bw-dark .bw-accordion-button': {
         'color': textColor
       },
+      '.bw-dark .bw-accordion-button:not(.bw-collapsed)': {
+        'color': '#7dd3e0',
+        'background-color': 'rgba(125, 211, 224, 0.1)'
+      },
       '.bw-dark .bw-accordion-button:hover': {
         'background-color': bodyBg
       },
+      '.bw-dark .bw-accordion-button:not(.bw-collapsed):hover': {
+        'background-color': 'rgba(125, 211, 224, 0.15)'
+      },
+      '.bw-dark .bw-accordion-button:focus-visible': {
+        'box-shadow': '0 0 0 0.2rem rgba(125, 211, 224, 0.3)'
+      },
       '.bw-dark .bw-accordion-body': {
         'border-top-color': borderColor
+      },
+      '.bw-dark .bw-carousel': {
+        'background-color': bodyBg
+      },
+      '.bw-dark .bw-carousel-control': {
+        'background-color': 'rgba(255,255,255,0.15)'
+      },
+      '.bw-dark .bw-carousel-control:hover': {
+        'background-color': 'rgba(255,255,255,0.25)'
       },
       '.bw-dark .bw-modal-content': {
         'background-color': surfaceBg,
@@ -3360,7 +3484,7 @@
         'border-top-color': borderColor
       },
       '.bw-dark .bw-skeleton': {
-        'background-color': borderColor
+        'background': 'linear-gradient(90deg, ' + borderColor + ' 25%, ' + surfaceBg + ' 37%, ' + borderColor + ' 63%)'
       },
       '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
         'color': textColor
@@ -3806,6 +3930,29 @@
   };
 
   /**
+   * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM().
+   *
+   * By default, bitwrench escapes all text content to prevent XSS. Use bw.raw()
+   * when you need to embed pre-sanitized HTML, entities, or inline markup.
+   *
+   * @param {string} str - HTML string to mark as raw
+   * @returns {Object} Marked object recognized by bw.html() and bw.createDOM()
+   * @category DOM Generation
+   * @see bw.escapeHTML
+   * @see bw.html
+   * @example
+   * bw.raw('Hello &mdash; World')
+   * // Used in TACO content:
+   * { t: 'p', c: bw.raw('Price: <strong>$9.99</strong>') }
+   */
+  bw.raw = function (str) {
+    return {
+      __bw_raw: true,
+      v: String(str)
+    };
+  };
+
+  /**
    * Normalize CSS class names by converting underscores to hyphens for bw-prefixed classes.
    *
    * Allows users to write either `bw_card` or `bw-card` and get consistent
@@ -3858,6 +4005,11 @@
       return taco.map(function (t) {
         return bw.html(t, options);
       }).join('');
+    }
+
+    // Handle bw.raw() marked content
+    if (taco && taco.__bw_raw) {
+      return taco.v;
     }
 
     // Handle primitives and non-TACO objects
@@ -3967,6 +4119,15 @@
     // Handle null/undefined
     if (taco == null) return document.createTextNode('');
 
+    // Handle bw.raw() marked content — inject as HTML
+    if (taco && taco.__bw_raw) {
+      var frag = document.createDocumentFragment();
+      var tmp = document.createElement('span');
+      tmp.innerHTML = taco.v;
+      while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+      return frag;
+    }
+
     // Handle text nodes
     if (_typeof(taco) !== 'object' || !taco.t) {
       return document.createTextNode(String(taco));
@@ -4038,6 +4199,9 @@
             }
           }
         });
+      } else if (_typeof(content) === 'object' && content.__bw_raw) {
+        // Raw HTML content — inject via innerHTML
+        el.innerHTML = content.v;
       } else if (_typeof(content) === 'object' && content.t) {
         var childEl = bw.createDOM(content, options);
         el.appendChild(childEl);

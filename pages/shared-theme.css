@@ -18,7 +18,7 @@
 
   --bw-text: #1a1a1a;
   --bw-text-secondary: #555;
-  --bw-text-muted: #888;
+  --bw-text-muted: #666;
 
   --bw-header-bg: #006666;
   --bw-header-text: #ffffff;
@@ -89,8 +89,8 @@
   filter: brightness(0) invert(1);
 }
 .bw-site-nav-ver {
-  font-size: 0.6875rem;
-  color: #666;
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.85);
   align-self: flex-end;
   margin-bottom: 3px;
 }
@@ -343,6 +343,14 @@ body {
   padding: 1rem 1.5rem;
   background: var(--bw-teal-bg);
   border-bottom: 1px solid var(--bw-card-border);
+}
+.demo-section > h3,
+.demo-section > h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--bw-text);
+  margin: 0;
+  padding: 0.75rem 1.5rem 0.5rem;
 }
 
 .demo-content {

@@ -10,324 +10,238 @@
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.js"></script>
-  <style>
-    /* Tutorial header — inherits .page-header from shared-theme.css */
-
-    /* Step body paragraph styling */
-    .bw-step-body > p {
-      margin: 0 0 1rem;
-      color: var(--bw-text-secondary, #555);
-      font-size: 0.95rem;
-    }
-
-    /* Tic Tac Toe game styles */
-    .game-board {
-      display: grid;
-      grid-template-columns: repeat(3, 90px);
-      gap: 4px;
-      background: var(--bw-teal-dark, #004d4d);
-      padding: 4px;
-      border-radius: 6px;
-      margin: 0 auto;
-      width: fit-content;
-    }
-    .square {
-      width: 90px;
-      height: 90px;
-      background: white;
-      border: none;
-      cursor: pointer;
-      font-size: 2rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s;
-      border-radius: 3px;
-      color: var(--bw-text-primary, #1a1a1a);
-      font-family: inherit;
-    }
-    .square:hover:not(:disabled) { background: #f0f0f0; }
-    .square:disabled { cursor: default; }
-    .square.winning { background: #b2dfdb; }
-    .x-mark { color: var(--bw-teal, #006666); }
-    .o-mark { color: #c62828; }
-
-    .status-bar {
-      text-align: center;
-      font-size: 1.1rem;
-      font-weight: 600;
-      padding: 0.75rem 1rem;
-      border-radius: var(--bw-radius, 8px);
-      margin-bottom: 1rem;
-      background: #f5f5f5;
-      color: var(--bw-text-primary, #1a1a1a);
-    }
-    .status-bar.winner {
-      background: #e8f5e9;
-      color: #2e7d32;
-    }
-    .status-bar.draw {
-      background: #fce4ec;
-      color: #c62828;
-    }
-
-    .new-game-btn {
-      display: block;
-      margin: 1rem auto 0;
-      padding: 0.5rem 1.25rem;
-      background: var(--bw-teal, #006666);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.15s;
-    }
-    .new-game-btn:hover { background: var(--bw-teal-dark, #004d4d); }
-
-    /* Game layout for steps 4-5 */
-    .game-layout {
-      display: flex;
-      gap: 2rem;
-      align-items: flex-start;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .game-sidebar {
-      min-width: 200px;
-      max-width: 260px;
-    }
-    .game-sidebar h4 {
-      margin: 0 0 0.5rem;
-      font-size: 0.9rem;
-      color: var(--bw-text-secondary, #555);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      max-height: 280px;
-      overflow-y: auto;
-    }
-    .history-btn {
-      padding: 0.4rem 0.75rem;
-      border: 1px solid var(--bw-card-border, #e0e0e0);
-      border-radius: 4px;
-      background: white;
-      font-size: 0.8rem;
-      cursor: pointer;
-      text-align: left;
-      font-family: inherit;
-      transition: all 0.15s;
-    }
-    .history-btn:hover { background: #f5f5f5; border-color: var(--bw-teal, #006666); }
-    .history-btn.current {
-      background: var(--bw-teal, #006666);
-      color: white;
-      border-color: var(--bw-teal, #006666);
-    }
-    .game-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .game-options label {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .sort-btn {
-      padding: 0.35rem 0.75rem;
-      border: 1px solid var(--bw-card-border, #e0e0e0);
-      border-radius: 4px;
-      background: white;
-      font-size: 0.8rem;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .sort-btn:hover { background: #f5f5f5; }
-
-    /* Scoreboard */
-    .scoreboard {
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
-      margin-bottom: 1.25rem;
-      padding: 0.75rem 1.25rem;
-      background: #f8f8f8;
-      border-radius: var(--bw-radius, 8px);
-      border: 1px solid var(--bw-card-border, #e0e0e0);
-    }
-    .score-item {
-      text-align: center;
-      min-width: 60px;
-    }
-    .score-value {
-      font-size: 1.75rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.2;
-    }
-    .score-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--bw-text-secondary, #555);
-      margin-top: 0.15rem;
-    }
-    .score-x .score-value { color: var(--bw-teal, #006666); }
-    .score-o .score-value { color: #c62828; }
-    .score-draw .score-value { color: #777; }
-    .score-total .score-value { color: var(--bw-text-primary, #1a1a1a); }
-
-    /* Step overview table */
-    .step-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 0.75rem;
-    }
-    .step-table th {
-      text-align: left;
-      padding: 0.4rem 0.75rem;
-      border-bottom: 2px solid var(--bw-teal, #006666);
-      color: var(--bw-teal-dark, #004d4d);
-      font-weight: 600;
-    }
-    .step-table td {
-      padding: 0.35rem 0.75rem;
-      border-bottom: 1px solid var(--bw-card-border, #e0e0e0);
-    }
-    .step-table code {
-      background: rgba(0,100,100,0.08);
-      padding: 0.1em 0.3em;
-      border-radius: 3px;
-      font-size: 0.8rem;
-    }
-
-    /* Summary */
-    .congrats {
-      background: linear-gradient(135deg, var(--bw-teal-light, #e0f2f1) 0%, #b2dfdb 100%);
-      border: 1px solid #80cbc4;
-      border-radius: var(--bw-radius, 8px);
-      padding: 2rem;
-      text-align: left;
-      margin-bottom: 2rem;
-    }
-    .congrats h2 { color: var(--bw-teal-dark, #004d4d); margin: 0 0 0.75rem; }
-    .congrats p { color: var(--bw-text-secondary, #555); margin: 0.5rem 0; }
-
-    /* Complete example tabs */
-    .complete-tabs { display: flex; gap: 0; border-bottom: 2px solid #e0e0e0; margin-bottom: 0; }
-    .complete-tab { padding: 0.5rem 1.25rem; border: none; background: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: inherit; }
-    .complete-tab.active { color: #006666; border-bottom-color: #006666; }
-    .complete-tab:hover:not(.active) { color: #333; }
-    .complete-tab-panel { display: none; }
-    .complete-tab-panel.active { display: block; }
-    .complete-run-bar { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem 0; }
-    .complete-run-btn { padding: 0.4rem 1.25rem; background: #006666; color: white; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .complete-run-btn:hover { background: #004d4d; }
-    .complete-iframe { width: 100%; min-height: 800px; border: 1px solid #e0e0e0; border-radius: 6px; background: white; }
-
-    /* Responsive */
-    @media (max-width: 640px) {
-      .page-header h1 { font-size: 1.5rem; }
-      .bw-step-body { padding: 1rem; }
-      .game-board {
-        grid-template-columns: repeat(3, 70px);
-      }
-      .square { width: 70px; height: 70px; font-size: 1.5rem; }
-      .game-layout { flex-direction: column; align-items: center; }
-      .game-sidebar { max-width: 100%; min-width: auto; width: 100%; }
-      .demo-tab-panel { padding: 1rem; }
-      .scoreboard { gap: 0.75rem; padding: 0.5rem 0.75rem; }
-      .score-value { font-size: 1.25rem; }
-    }
-  </style>
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Build Tic Tac Toe with Bitwrench</h1>
-      <p class="subtitle">Learn state management step by step by building a complete game</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-    <!-- Step 0: What You'll Learn -->
-    <div class="bw-step">
-      <div class="bw-step-header">
-        <div class="bw-step-num" style="background: #555;">?</div>
-        <h2>What You'll Learn</h2>
-      </div>
-      <div class="bw-step-body">
-        <p>
-          In this tutorial you will build a fully working tic tac toe game from scratch using bitwrench.
-          You will start with a static 3&times;3 board, add click handling and turn-based state, wire up
-          win detection and draw detection, bolt on time-travel (undo any move), and finish with a
-          decoupled scoreboard powered by pub/sub messaging. Each step adds exactly one concept so you
-          can see how the pieces fit together.
-        </p>
-        <p>Here is what each step covers:</p>
-        <table class="step-table">
-          <thead>
-            <tr><th>Step</th><th>Concept</th><th>API</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>1</td><td>UI as data</td><td><code>bw.DOM()</code>, Array.map()</td></tr>
-            <tr><td>2</td><td>State management</td><td><code>o.state</code>, <code>o.render</code>, <code>bw.update()</code></td></tr>
-            <tr><td>3</td><td>Game logic</td><td>Pure functions, conditional rendering</td></tr>
-            <tr><td>4</td><td>Time travel</td><td>Immutable state with <code>.slice()</code></td></tr>
-            <tr><td>5</td><td>Topic-based events</td><td><code>bw.pub()</code>, <code>bw.sub()</code>, <code>bw.patch()</code></td></tr>
-          </tbody>
-        </table>
-        <div class="callout callout-concept" style="margin-top: 1.25rem;">
-          <h4>TACO Format</h4>
-          <p>Bitwrench describes HTML using plain JavaScript objects called <strong>TACOs</strong>:</p>
-          <pre style="background: var(--bw-code-bg, #1e293b); color: var(--bw-code-text, #e2e8f0); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0 0; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto;"><code>{ t: 'div', a: { class: 'card' }, c: 'Hello' }
-//  Tag       Attributes            Content</code></pre>
-        </div>
-        <div class="callout callout-concept">
-          <h4>The Render Pattern</h4>
-          <ol>
-            <li><strong>o.state</strong> &mdash; declare initial state inside the TACO</li>
-            <li><strong>o.render</strong> &mdash; function that builds UI from <code>el._bw_state</code></li>
-            <li><strong>Event handler</strong> &mdash; mutate state, then call <code>bw.update(el)</code></li>
-            <li><strong>bw.DOM()</strong> &mdash; mount the TACO to the page</li>
-          </ol>
-          <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--bw-text-secondary, #555);">No virtual DOM, no JSX, no build step. Just JavaScript.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 1 -->
-    <div class="bw-step" id="step-1"></div>
-    <!-- Step 2 -->
-    <div class="bw-step" id="step-2"></div>
-    <!-- Step 3 -->
-    <div class="bw-step" id="step-3"></div>
-    <!-- Step 4 -->
-    <div class="bw-step" id="step-4"></div>
-    <!-- Step 5 -->
-    <div class="bw-step" id="step-5"></div>
-    <!-- Congrats -->
-    <div id="congrats-section"></div>
-    <!-- Complete Example -->
-    <div id="complete-example"></div>
-  </div>
+  <div id="app"></div>
 
   <script>
     mountExampleNav('#example-nav', '06-tic-tac-toe-tutorial.html');
+
+    // =========================================================================
+    // Inject page CSS via bw.css() + bw.injectCSS()
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.bw-step-body > p': {
+        'margin': '0 0 1rem',
+        'color': 'var(--bw-text-secondary, #555)',
+        'font-size': '0.95rem'
+      },
+      '.game-board': {
+        'display': 'grid',
+        'grid-template-columns': 'repeat(3, 90px)',
+        'gap': '4px',
+        'background': 'var(--bw-teal-dark, #004d4d)',
+        'padding': '4px',
+        'border-radius': '6px',
+        'margin': '0 auto',
+        'width': 'fit-content'
+      },
+      '.square': {
+        'width': '90px',
+        'height': '90px',
+        'background': 'white',
+        'border': 'none',
+        'cursor': 'pointer',
+        'font-size': '2rem',
+        'font-weight': '700',
+        'display': 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'transition': 'background 0.15s',
+        'border-radius': '3px',
+        'color': 'var(--bw-text-primary, #1a1a1a)',
+        'font-family': 'inherit'
+      },
+      '.square:hover:not(:disabled)': { 'background': '#f0f0f0' },
+      '.square:disabled': { 'cursor': 'default' },
+      '.square.winning': { 'background': '#b2dfdb' },
+      '.x-mark': { 'color': 'var(--bw-teal, #006666)' },
+      '.o-mark': { 'color': '#c62828' },
+      '.status-bar': {
+        'text-align': 'center',
+        'font-size': '1.1rem',
+        'font-weight': '600',
+        'padding': '0.75rem 1rem',
+        'border-radius': 'var(--bw-radius, 8px)',
+        'margin-bottom': '1rem',
+        'background': '#f5f5f5',
+        'color': 'var(--bw-text-primary, #1a1a1a)'
+      },
+      '.status-bar.winner': {
+        'background': '#e8f5e9',
+        'color': '#2e7d32'
+      },
+      '.status-bar.draw': {
+        'background': '#fce4ec',
+        'color': '#c62828'
+      },
+      '.new-game-btn': {
+        'display': 'block',
+        'margin': '1rem auto 0',
+        'padding': '0.5rem 1.25rem',
+        'background': 'var(--bw-teal, #006666)',
+        'color': 'white',
+        'border': 'none',
+        'border-radius': '6px',
+        'font-size': '0.875rem',
+        'font-weight': '600',
+        'cursor': 'pointer',
+        'font-family': 'inherit',
+        'transition': 'background 0.15s'
+      },
+      '.new-game-btn:hover': { 'background': 'var(--bw-teal-dark, #004d4d)' },
+      '.game-layout': {
+        'display': 'flex',
+        'gap': '2rem',
+        'align-items': 'flex-start',
+        'justify-content': 'center',
+        'flex-wrap': 'wrap'
+      },
+      '.game-sidebar': {
+        'min-width': '200px',
+        'max-width': '260px'
+      },
+      '.game-sidebar h4': {
+        'margin': '0 0 0.5rem',
+        'font-size': '0.9rem',
+        'color': 'var(--bw-text-secondary, #555)',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.5px'
+      },
+      '.history-list': {
+        'display': 'flex',
+        'flex-direction': 'column',
+        'gap': '0.25rem',
+        'max-height': '400px',
+        'overflow-y': 'auto'
+      },
+      '.history-btn': {
+        'padding': '0.4rem 0.75rem',
+        'border': '1px solid var(--bw-card-border, #e0e0e0)',
+        'border-radius': '4px',
+        'background': 'white',
+        'font-size': '0.8rem',
+        'cursor': 'pointer',
+        'text-align': 'left',
+        'font-family': 'inherit',
+        'transition': 'all 0.15s'
+      },
+      '.history-btn:hover': { 'background': '#f5f5f5', 'border-color': 'var(--bw-teal, #006666)' },
+      '.history-btn.current': {
+        'background': 'var(--bw-teal, #006666)',
+        'color': 'white',
+        'border-color': 'var(--bw-teal, #006666)'
+      },
+      '.game-options': {
+        'display': 'flex',
+        'flex-direction': 'column',
+        'gap': '0.5rem',
+        'margin-bottom': '1rem'
+      },
+      '.game-options label': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.4rem',
+        'font-size': '0.85rem',
+        'cursor': 'pointer'
+      },
+      '.sort-btn': {
+        'padding': '0.35rem 0.75rem',
+        'border': '1px solid var(--bw-card-border, #e0e0e0)',
+        'border-radius': '4px',
+        'background': 'white',
+        'font-size': '0.8rem',
+        'cursor': 'pointer',
+        'font-family': 'inherit'
+      },
+      '.sort-btn:hover': { 'background': '#f5f5f5' },
+      '.scoreboard': {
+        'display': 'flex',
+        'gap': '1.5rem',
+        'justify-content': 'center',
+        'margin-bottom': '1.25rem',
+        'padding': '0.75rem 1.25rem',
+        'background': '#f8f8f8',
+        'border-radius': 'var(--bw-radius, 8px)',
+        'border': '1px solid var(--bw-card-border, #e0e0e0)'
+      },
+      '.score-item': {
+        'text-align': 'center',
+        'min-width': '60px'
+      },
+      '.score-value': {
+        'font-size': '1.75rem',
+        'font-weight': '700',
+        'font-variant-numeric': 'tabular-nums',
+        'line-height': '1.2'
+      },
+      '.score-label': {
+        'font-size': '0.7rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.05em',
+        'color': 'var(--bw-text-secondary, #555)',
+        'margin-top': '0.15rem'
+      },
+      '.score-x .score-value': { 'color': 'var(--bw-teal, #006666)' },
+      '.score-o .score-value': { 'color': '#c62828' },
+      '.score-draw .score-value': { 'color': '#777' },
+      '.score-total .score-value': { 'color': 'var(--bw-text-primary, #1a1a1a)' },
+      '.step-table': {
+        'width': '100%',
+        'border-collapse': 'collapse',
+        'font-size': '0.85rem',
+        'margin-top': '0.75rem'
+      },
+      '.step-table th': {
+        'text-align': 'left',
+        'padding': '0.4rem 0.75rem',
+        'border-bottom': '2px solid var(--bw-teal, #006666)',
+        'color': 'var(--bw-teal-dark, #004d4d)',
+        'font-weight': '600'
+      },
+      '.step-table td': {
+        'padding': '0.35rem 0.75rem',
+        'border-bottom': '1px solid var(--bw-card-border, #e0e0e0)'
+      },
+      '.step-table code': {
+        'background': 'rgba(0,100,100,0.08)',
+        'padding': '0.1em 0.3em',
+        'border-radius': '3px',
+        'font-size': '0.8rem'
+      },
+      '.congrats': {
+        'background': 'linear-gradient(135deg, var(--bw-teal-light, #e0f2f1) 0%, #b2dfdb 100%)',
+        'border': '1px solid #80cbc4',
+        'border-radius': 'var(--bw-radius, 8px)',
+        'padding': '2rem',
+        'text-align': 'left',
+        'margin-bottom': '2rem'
+      },
+      '.congrats h2': { 'color': 'var(--bw-teal-dark, #004d4d)', 'margin': '0 0 0.75rem' },
+      '.congrats p': { 'color': 'var(--bw-text-secondary, #555)', 'margin': '0.5rem 0' },
+      '.complete-tabs': { 'display': 'flex', 'gap': '0', 'border-bottom': '2px solid #e0e0e0', 'margin-bottom': '0' },
+      '.complete-tab': { 'padding': '0.5rem 1.25rem', 'border': 'none', 'background': 'none', 'font-size': '0.9rem', 'font-weight': '600', 'cursor': 'pointer', 'color': '#666', 'border-bottom': '2px solid transparent', 'margin-bottom': '-2px', 'font-family': 'inherit' },
+      '.complete-tab.active': { 'color': '#006666', 'border-bottom-color': '#006666' },
+      '.complete-tab:hover:not(.active)': { 'color': '#333' },
+      '.complete-tab-panel': { 'display': 'none' },
+      '.complete-tab-panel.active': { 'display': 'block' },
+      '.complete-run-bar': { 'display': 'flex', 'gap': '0.75rem', 'align-items': 'center', 'padding': '0.75rem 0' },
+      '.complete-run-btn': { 'padding': '0.4rem 1.25rem', 'background': '#006666', 'color': 'white', 'border': 'none', 'border-radius': '6px', 'font-size': '0.85rem', 'font-weight': '600', 'cursor': 'pointer', 'font-family': 'inherit' },
+      '.complete-run-btn:hover': { 'background': '#004d4d' },
+      '.complete-iframe': { 'width': '100%', 'min-height': '800px', 'border': '1px solid #e0e0e0', 'border-radius': '6px', 'background': 'white' },
+      '@media (max-width: 640px)': {
+        '.page-header h1': { 'font-size': '1.5rem' },
+        '.bw-step-body': { 'padding': '1rem' },
+        '.game-board': { 'grid-template-columns': 'repeat(3, 70px)' },
+        '.square': { 'width': '70px', 'height': '70px', 'font-size': '1.5rem' },
+        '.game-layout': { 'flex-direction': 'column', 'align-items': 'center' },
+        '.game-sidebar': { 'max-width': '100%', 'min-width': 'auto', 'width': '100%' },
+        '.demo-tab-panel': { 'padding': '1rem' },
+        '.scoreboard': { 'gap': '0.75rem', 'padding': '0.5rem 0.75rem' },
+        '.score-value': { 'font-size': '1.25rem' }
+      }
+    }));
 
     // ---- Utility: create a tabbed Result/Code/Styles demo ----
     // tabs = array of { label, content, isCode }
@@ -440,10 +354,112 @@
       };
     }
 
-    // ================================================================
-    // STEP 1: Draw the Board
-    // ================================================================
-    (function() {
+    // =========================================================================
+    // Step 0: What You'll Learn
+    // =========================================================================
+    var step0 = {
+      t: 'div', a: { class: 'bw-step' },
+      c: [
+        {
+          t: 'div', a: { class: 'bw-step-header' },
+          c: [
+            { t: 'div', a: { class: 'bw-step-num', style: 'background: #555;' }, c: '?' },
+            { t: 'h2', c: 'What You\'ll Learn' }
+          ]
+        },
+        {
+          t: 'div', a: { class: 'bw-step-body' },
+          c: [
+            {
+              t: 'p',
+              c: bw.raw(
+                'In this tutorial you will build a fully working tic tac toe game from scratch using bitwrench. ' +
+                'You will start with a static 3&times;3 board, add click handling and turn-based state, wire up ' +
+                'win detection and draw detection, bolt on time-travel (undo any move), and finish with a ' +
+                'decoupled scoreboard powered by pub/sub messaging. Each step adds exactly one concept so you ' +
+                'can see how the pieces fit together.'
+              )
+            },
+            { t: 'p', c: 'Here is what each step covers:' },
+            {
+              t: 'table', a: { class: 'step-table' },
+              c: [
+                {
+                  t: 'thead',
+                  c: { t: 'tr', c: [
+                    { t: 'th', c: 'Step' },
+                    { t: 'th', c: 'Concept' },
+                    { t: 'th', c: 'API' }
+                  ]}
+                },
+                {
+                  t: 'tbody',
+                  c: [
+                    { t: 'tr', c: [
+                      { t: 'td', c: '1' },
+                      { t: 'td', c: 'UI as data' },
+                      { t: 'td', c: bw.raw('<code>bw.DOM()</code>, Array.map()') }
+                    ]},
+                    { t: 'tr', c: [
+                      { t: 'td', c: '2' },
+                      { t: 'td', c: 'State management' },
+                      { t: 'td', c: bw.raw('<code>o.state</code>, <code>o.render</code>, <code>bw.update()</code>') }
+                    ]},
+                    { t: 'tr', c: [
+                      { t: 'td', c: '3' },
+                      { t: 'td', c: 'Game logic' },
+                      { t: 'td', c: 'Pure functions, conditional rendering' }
+                    ]},
+                    { t: 'tr', c: [
+                      { t: 'td', c: '4' },
+                      { t: 'td', c: 'Time travel' },
+                      { t: 'td', c: bw.raw('Immutable state with <code>.slice()</code>') }
+                    ]},
+                    { t: 'tr', c: [
+                      { t: 'td', c: '5' },
+                      { t: 'td', c: 'Topic-based events' },
+                      { t: 'td', c: bw.raw('<code>bw.pub()</code>, <code>bw.sub()</code>, <code>bw.patch()</code>') }
+                    ]}
+                  ]
+                }
+              ]
+            },
+            {
+              t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 1.25rem;' },
+              c: [
+                { t: 'h4', c: 'TACO Format' },
+                { t: 'p', c: bw.raw('Bitwrench describes HTML using plain JavaScript objects called <strong>TACOs</strong>:') },
+                {
+                  t: 'pre', a: { style: 'background: var(--bw-code-bg, #1e293b); color: var(--bw-code-text, #e2e8f0); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0 0; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto;' },
+                  c: { t: 'code', c: '{ t: \'div\', a: { class: \'card\' }, c: \'Hello\' }\n//  Tag       Attributes            Content' }
+                }
+              ]
+            },
+            {
+              t: 'div', a: { class: 'callout callout-concept' },
+              c: [
+                { t: 'h4', c: 'The Render Pattern' },
+                {
+                  t: 'ol',
+                  c: [
+                    { t: 'li', c: bw.raw('<strong>o.state</strong> &mdash; declare initial state inside the TACO') },
+                    { t: 'li', c: bw.raw('<strong>o.render</strong> &mdash; function that builds UI from <code>el._bw_state</code>') },
+                    { t: 'li', c: bw.raw('<strong>Event handler</strong> &mdash; mutate state, then call <code>bw.update(el)</code>') },
+                    { t: 'li', c: bw.raw('<strong>bw.DOM()</strong> &mdash; mount the TACO to the page') }
+                  ]
+                },
+                { t: 'p', a: { style: 'margin-top: 0.5rem; font-size: 0.85rem; color: var(--bw-text-secondary, #555);' }, c: 'No virtual DOM, no JSX, no build step. Just JavaScript.' }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Step 1: Draw the Board
+    // =========================================================================
+    var step1 = (function() {
       var board = {
         t: 'div', a: { class: 'game-board' },
         c: Array(9).fill(null).map(function(_, i) {
@@ -504,8 +520,8 @@
         '.square:hover:not(:disabled) { background: #f0f0f0; }'
       ].join('\n');
 
-      bw.DOM('#step-1', {
-        t: 'div',
+      return {
+        t: 'div', a: { class: 'bw-step', id: 'step-1' },
         c: [
           {
             t: 'div', a: { class: 'bw-step-header' },
@@ -529,14 +545,13 @@
             ]
           }
         ]
-      });
+      };
     })();
 
-    // ================================================================
-    // STEP 2: State with o.render
-    // ================================================================
-    (function() {
-      // The game TACO — state and rendering in one place
+    // =========================================================================
+    // Step 2: State with o.render
+    // =========================================================================
+    var step2 = (function() {
       var gameTaco = {
         t: 'div',
         o: {
@@ -652,8 +667,8 @@
         '.new-game-btn:hover { background: #004d4d; }'
       ].join('\n');
 
-      bw.DOM('#step-2', {
-        t: 'div',
+      return {
+        t: 'div', a: { class: 'bw-step', id: 'step-2' },
         c: [
           {
             t: 'div', a: { class: 'bw-step-header' },
@@ -686,13 +701,13 @@
             ]
           }
         ]
-      });
+      };
     })();
 
-    // ================================================================
-    // STEP 3: Detect the Winner
-    // ================================================================
-    (function() {
+    // =========================================================================
+    // Step 3: Detect the Winner
+    // =========================================================================
+    var step3 = (function() {
       var gameTaco = {
         t: 'div',
         o: {
@@ -799,8 +814,8 @@
         '}'
       ].join('\n');
 
-      bw.DOM('#step-3', {
-        t: 'div',
+      return {
+        t: 'div', a: { class: 'bw-step', id: 'step-3' },
         c: [
           {
             t: 'div', a: { class: 'bw-step-header' },
@@ -824,13 +839,13 @@
             ]
           }
         ]
-      });
+      };
     })();
 
-    // ================================================================
-    // STEP 4: Move History (Time Travel)
-    // ================================================================
-    (function() {
+    // =========================================================================
+    // Step 4: Move History (Time Travel)
+    // =========================================================================
+    var step4 = (function() {
       var gameTaco = {
         t: 'div',
         o: {
@@ -1026,8 +1041,8 @@
         '}'
       ].join('\n');
 
-      bw.DOM('#step-4', {
-        t: 'div',
+      return {
+        t: 'div', a: { class: 'bw-step', id: 'step-4' },
         c: [
           {
             t: 'div', a: { class: 'bw-step-header' },
@@ -1057,13 +1072,13 @@
             ]
           }
         ]
-      });
+      };
     })();
 
-    // ================================================================
-    // STEP 5: Complete Game + Scoreboard
-    // ================================================================
-    (function() {
+    // =========================================================================
+    // Step 5: Complete Game + Scoreboard
+    // =========================================================================
+    var step5Result = (function() {
       // Scoreboard — static TACO with IDs, updated via bw.patch()
       var scoreboard = {
         t: 'div', a: { class: 'scoreboard', id: 's5-scoreboard' },
@@ -1349,70 +1364,74 @@
         '.sort-btn:hover { background: #f5f5f5; }'
       ].join('\n');
 
-      // Mount step 5 with scoreboard + game
-      bw.DOM('#step-5', {
-        t: 'div',
-        c: [
-          {
-            t: 'div', a: { class: 'bw-step-header' },
-            c: [
-              { t: 'div', a: { class: 'bw-step-num' }, c: '5' },
-              { t: 'h2', c: 'The Complete Game' }
-            ]
-          },
-          {
-            t: 'div', a: { class: 'bw-step-body' },
-            c: [
-              { t: 'p', c: 'The finished game adds a scoreboard that tracks wins across games. The game publishes to a topic with bw.pub(). The scoreboard subscribes with bw.sub() and updates individual values with bw.patch(). No coupling between components.' },
-              {
-                t: 'div', a: { class: 'callout callout-concept' },
-                c: [
-                  { t: 'h4', c: 'Two event systems' },
-                  { t: 'p', c: [
-                    { t: 'strong', c: 'DOM-scoped (emit/on):' }, ' ',
-                    { t: 'code', c: 'bw.emit(el, name, data)' }, ' + ',
-                    { t: 'code', c: 'bw.on(el, name, fn)' },
-                    ' \u2014 CustomEvent, bubbles up the DOM tree. Best for parent\u2013child coordination. ',
-                    { t: 'code', c: 'bw.update()' }, ' emits ', { t: 'code', c: 'bw:statechange' }, ' this way.',
-                    { t: 'br' }, { t: 'br' },
-                    { t: 'strong', c: 'Application-scoped (pub/sub):' }, ' ',
-                    { t: 'code', c: 'bw.pub(topic, data)' }, ' + ',
-                    { t: 'code', c: 'bw.sub(topic, fn)' },
-                    ' \u2014 topic-based, decoupled from DOM tree. Best for cross-component communication and composite conditions.',
-                    { t: 'br' }, { t: 'br' },
-                    { t: 'code', c: 'bw.patch(id, value)' }, ' \u2014 update one DOM element by ID. No rebuild.'
-                  ]}
-                ]
-              },
-              stepTabs('#step5', {
-                t: 'div', a: { id: 's5-area' },
-                c: [scoreboard, gameTaco]
-              }, code, styles)
-            ]
-          }
-        ]
-      });
+      return {
+        taco: {
+          t: 'div', a: { class: 'bw-step', id: 'step-5' },
+          c: [
+            {
+              t: 'div', a: { class: 'bw-step-header' },
+              c: [
+                { t: 'div', a: { class: 'bw-step-num' }, c: '5' },
+                { t: 'h2', c: 'The Complete Game' }
+              ]
+            },
+            {
+              t: 'div', a: { class: 'bw-step-body' },
+              c: [
+                { t: 'p', c: 'The finished game adds a scoreboard that tracks wins across games. The game publishes to a topic with bw.pub(). The scoreboard subscribes with bw.sub() and updates individual values with bw.patch(). No coupling between components.' },
+                {
+                  t: 'div', a: { class: 'callout callout-concept' },
+                  c: [
+                    { t: 'h4', c: 'Two event systems' },
+                    { t: 'p', c: [
+                      { t: 'strong', c: 'DOM-scoped (emit/on):' }, ' ',
+                      { t: 'code', c: 'bw.emit(el, name, data)' }, ' + ',
+                      { t: 'code', c: 'bw.on(el, name, fn)' },
+                      bw.raw(' &mdash; CustomEvent, bubbles up the DOM tree. Best for parent&ndash;child coordination. '),
+                      { t: 'code', c: 'bw.update()' }, ' emits ', { t: 'code', c: 'bw:statechange' }, ' this way.',
+                      { t: 'br' }, { t: 'br' },
+                      { t: 'strong', c: 'Application-scoped (pub/sub):' }, ' ',
+                      { t: 'code', c: 'bw.pub(topic, data)' }, ' + ',
+                      { t: 'code', c: 'bw.sub(topic, fn)' },
+                      bw.raw(' &mdash; topic-based, decoupled from DOM tree. Best for cross-component communication and composite conditions.'),
+                      { t: 'br' }, { t: 'br' },
+                      { t: 'code', c: 'bw.patch(id, value)' }, bw.raw(' &mdash; update one DOM element by ID. No rebuild.')
+                    ]}
+                  ]
+                },
+                stepTabs('#step5', {
+                  t: 'div', a: { id: 's5-area' },
+                  c: [scoreboard, gameTaco]
+                }, code, styles)
+              ]
+            }
+          ]
+        },
+        wireScoreboard: function() {
+          // Wire scoreboard via pub/sub — no DOM mount order dependency
+          var scores = { x: 0, o: 0, draws: 0 };
+          bw.sub('gameover', function(detail) {
+            if (detail.isDraw) scores.draws++;
+            else if (detail.winner === 'X') scores.x++;
+            else scores.o++;
 
-      // Wire scoreboard via pub/sub — no DOM mount order dependency
-      var scores = { x: 0, o: 0, draws: 0 };
-      bw.sub('gameover', function(detail) {
-        if (detail.isDraw) scores.draws++;
-        else if (detail.winner === 'X') scores.x++;
-        else scores.o++;
-
-        bw.patchAll({
-          's5-score-x': String(scores.x),
-          's5-score-o': String(scores.o),
-          's5-score-d': String(scores.draws),
-          's5-score-t': String(scores.x + scores.o + scores.draws)
-        });
-      });
+            bw.patchAll({
+              's5-score-x': String(scores.x),
+              's5-score-o': String(scores.o),
+              's5-score-d': String(scores.draws),
+              's5-score-t': String(scores.x + scores.o + scores.draws)
+            });
+          });
+        }
+      };
     })();
 
-    // ================================================================
+    var step5 = step5Result.taco;
+
+    // =========================================================================
     // Congratulations
-    // ================================================================
-    bw.DOM('#congrats-section', {
+    // =========================================================================
+    var congratsSection = {
       t: 'div', a: { class: 'congrats' },
       c: [
         { t: 'h2', c: 'Summary' },
@@ -1420,13 +1439,13 @@
         {
           t: 'ul', a: { style: 'list-style: none; padding: 0; margin: 1rem 0;' },
           c: [
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO objects' }, ' \u2014 describing HTML with plain JS objects'] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.update()' }, ' \u2014 state management without boilerplate'] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, ' \u2014 standard JavaScript (ternaries, arrays, .filter)'] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable history' }, ' \u2014 .slice() for time travel'] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.pub() + bw.sub()' }, ' \u2014 topic-based events, decoupled from DOM'] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.emit() + bw.on()' }, ' \u2014 DOM-scoped events for parent\u2013child coordination'] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.patch()' }, ' \u2014 targeted DOM updates without rebuilding'] }
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO objects' }, bw.raw(' &mdash; describing HTML with plain JS objects')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.update()' }, bw.raw(' &mdash; state management without boilerplate')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, bw.raw(' &mdash; standard JavaScript (ternaries, arrays, .filter)')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable history' }, bw.raw(' &mdash; .slice() for time travel')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.pub() + bw.sub()' }, bw.raw(' &mdash; topic-based events, decoupled from DOM')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.emit() + bw.on()' }, bw.raw(' &mdash; DOM-scoped events for parent&ndash;child coordination')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.patch()' }, bw.raw(' &mdash; targeted DOM updates without rebuilding')] }
           ]
         },
         {
@@ -1439,7 +1458,7 @@
                 { t: 'li', c: 'Add a simple AI opponent (random or minimax)' },
                 { t: 'li', c: 'Save and load games with localStorage' },
                 { t: 'li', c: 'Use bw.patch() to update individual squares instead of rebuilding the board' },
-                { t: 'li', c: 'Make a 4\u00d74 variant by changing the board size in state' }
+                { t: 'li', c: bw.raw('Make a 4&times;4 variant by changing the board size in state') }
               ]
             }
           ]
@@ -1456,11 +1475,11 @@
           }
         }
       ]
-    });
+    };
 
-    // ================================================================
+    // =========================================================================
     // Complete Example (collapsible)
-    // ================================================================
+    // =========================================================================
     var completeExampleCode = [
       '<!DOCTYPE html>',
       '<html lang="en">',
@@ -1488,7 +1507,7 @@
       '    .game-layout { display: flex; gap: 2rem; align-items: flex-start; justify-content: center; flex-wrap: wrap; }',
       '    .game-sidebar { min-width: 200px; max-width: 260px; }',
       '    .game-sidebar h4 { margin: 0 0 0.5rem; font-size: 0.9rem; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }',
-      '    .history-list { display: flex; flex-direction: column; gap: 0.25rem; max-height: 280px; overflow-y: auto; }',
+      '    .history-list { display: flex; flex-direction: column; gap: 0.25rem; max-height: 400px; overflow-y: auto; }',
       '    .history-btn { padding: 0.4rem 0.75rem; border: 1px solid #e0e0e0; border-radius: 4px; background: white; font-size: 0.8rem; cursor: pointer; text-align: left; font-family: inherit; }',
       '    .history-btn:hover { background: #f5f5f5; border-color: #006666; }',
       '    .history-btn.current { background: #006666; color: white; border-color: #006666; }',
@@ -1663,7 +1682,7 @@
       '</html>'
     ].join('\n');
 
-    (function() {
+    var completeExample = (function() {
       function getEditorCode() {
         var editorEl = document.querySelector('#complete-code-panel .bw-ce');
         if (editorEl && editorEl._bwCodeEdit) {
@@ -1688,7 +1707,7 @@
         iframe.srcdoc = code;
       }
 
-      function switchTab(tab) {
+      function switchCompleteTab(tab) {
         var codePanel = document.getElementById('complete-code-panel');
         var previewPanel = document.getElementById('complete-preview-panel');
         var codeTab = document.getElementById('complete-tab-code');
@@ -1708,7 +1727,7 @@
         }
       }
 
-      bw.DOM('#complete-example', {
+      return {
         t: 'div', a: { class: 'bw-step', style: 'margin-bottom: 2rem;' },
         c: [
           {
@@ -1725,8 +1744,8 @@
               {
                 t: 'div', a: { class: 'complete-tabs' },
                 c: [
-                  { t: 'button', a: { id: 'complete-tab-code', class: 'complete-tab active', onclick: function() { switchTab('code'); } }, c: 'Code' },
-                  { t: 'button', a: { id: 'complete-tab-preview', class: 'complete-tab', onclick: function() { switchTab('preview'); } }, c: 'Preview' }
+                  { t: 'button', a: { id: 'complete-tab-code', class: 'complete-tab active', onclick: function() { switchCompleteTab('code'); } }, c: 'Code' },
+                  { t: 'button', a: { id: 'complete-tab-preview', class: 'complete-tab', onclick: function() { switchCompleteTab('preview'); } }, c: 'Preview' }
                 ]
               },
               {
@@ -1737,8 +1756,8 @@
                     c: [
                       {
                         t: 'button',
-                        a: { class: 'complete-run-btn', onclick: function() { switchTab('preview'); } },
-                        c: 'Run \u25B6'
+                        a: { class: 'complete-run-btn', onclick: function() { switchCompleteTab('preview'); } },
+                        c: bw.raw('Run &#x25B6;')
                       },
                       {
                         t: 'button',
@@ -1781,8 +1800,41 @@
             ]
           }
         ]
-      });
+      };
     })();
+
+    // =========================================================================
+    // Build the entire page as a TACO tree and mount
+    // =========================================================================
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', c: 'Build Tic Tac Toe with Bitwrench' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Learn state management step by step by building a complete game' }
+        ]
+      }
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [
+        step0,
+        step1,
+        step2,
+        step3,
+        step4,
+        step5,
+        congratsSection,
+        completeExample
+      ]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
+
+    // Wire step 5 scoreboard after mount
+    step5Result.wireScoreboard();
   </script>
 </body>
 </html>

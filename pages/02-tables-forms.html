@@ -33,6 +33,12 @@
       overflow: hidden;
     }
     .table-card .bw-table { margin-bottom: 0; }
+    /* Give step-demo tables a visible border so they don't blend into the card */
+    .bw-code-demo .bw-table {
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      overflow: hidden;
+    }
     .table-info {
       padding: 0.625rem 1.25rem;
       background: var(--bw-card-bg);
@@ -75,11 +81,13 @@
     <!-- Showcase Table (hero — rendered first, no code) -->
     <div class="demo-section">
       <h2>Showcase</h2>
-      <div id="showcase-table" class="table-card"></div>
-      <p class="table-info" style="border-top: none; margin-top: 0.5rem; font-style: italic;">
-        This table was generated from a JavaScript array with one function call.
-        Click any column header to sort.
-      </p>
+      <div class="demo-content">
+        <div id="showcase-table" class="table-card"></div>
+        <p class="table-info" style="border-top: none; margin-top: 0.5rem; font-style: italic;">
+          This table was generated from a JavaScript array with one function call.
+          Click any column header to sort.
+        </p>
+      </div>
     </div>
 
     <div id="style-origin-callout"></div>
@@ -87,36 +95,22 @@
     <!-- Step-by-step build-up -->
     <div class="demo-section">
       <h2>Building Up &mdash; From Data to Table</h2>
-      <p>Let's rebuild that showcase table from scratch, adding one feature at a time.</p>
-
-      <h3>Step 1: Minimal Table</h3>
-      <p>Pass an array of objects. Columns are auto-detected from the keys.</p>
-      <div id="step1-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 2: Custom Columns</h3>
-      <p>Specify which fields to show, their order, and their labels.</p>
-      <div id="step2-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 3: Formatting with <code>render</code></h3>
-      <p>Each column can have a <code>render</code> function that transforms cell values &mdash; add badges, format numbers, or return nested TACO objects.</p>
-      <div id="step3-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 4: Controlled Sorting</h3>
-      <p>Sorting is on by default. Use <code>onSort</code> to control state externally and re-render.</p>
-      <div id="step4-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 5: Styling</h3>
-      <p>Add CSS classes for stripes and hover. Use <code>bw.css()</code> + <code>bw.injectCSS()</code> to customise header colours or any other rule.</p>
-      <div id="step5-demo"></div>
+      <div class="demo-content">
+        <p>Let's rebuild that showcase table from scratch, adding one feature at a time.</p>
+        <div id="step1-demo"></div>
+        <div id="step2-demo" style="margin-top: 1.5rem;"></div>
+        <div id="step3-demo" style="margin-top: 1.5rem;"></div>
+        <div id="step4-demo" style="margin-top: 1.5rem;"></div>
+        <div id="step5-demo" style="margin-top: 1.5rem;"></div>
+      </div>
     </div>
 
     <!-- Pipeline Demo (moved down) -->
     <div class="demo-section">
       <h2>How bw.makeTable() Works</h2>
-      <p>One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.</p>
-      <div id="pipeline-table"></div>
-      <div class="callout callout-tip" style="margin-top: 1rem;">
-        <strong>Compare:</strong> The vanilla JS equivalent would require 20+ lines of <code>createElement</code>/<code>appendChild</code> calls. Here it is one function call that returns a data object.
+      <div class="demo-content">
+        <p>One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.</p>
+        <div id="pipeline-table"></div>
       </div>
     </div>
 
@@ -218,6 +212,7 @@ bw.DOM(target, bw.makeTable({
 }));`;
     bw.DOM('#step1-demo', bw.makeCodeDemo({
       title: 'Minimal Table',
+      description: 'Pass an array of objects and bw.makeTable() auto-detects columns from the keys.',
       result: bw.makeTable({
         data: languages.slice(0, 3).map(function(r) { return { name: r.name, year: r.year, creator: r.creator }; }),
         striped: true,
@@ -240,6 +235,7 @@ bw.DOM(target, bw.makeTable({
 }));`;
     bw.DOM('#step2-demo', bw.makeCodeDemo({
       title: 'Custom Columns',
+      description: 'The columns prop controls which fields appear, their order, and display labels.',
       result: bw.makeTable({
         data: languages,
         striped: true,
@@ -281,7 +277,8 @@ bw.DOM(target, bw.makeTable({
   ]
 }));`;
     bw.DOM('#step3-demo', bw.makeCodeDemo({
-      title: 'Formatting with render',
+      title: 'Cell Formatting',
+      description: 'Each column accepts a render function that transforms cell values into badges, formatted text, or nested TACO objects.',
       result: bw.makeTable({
         data: languages,
         striped: true,
@@ -359,6 +356,7 @@ renderTable();`;
     var step4Result = { t: 'div', a: { id: 'step4-live-table' }, c: '' };
     bw.DOM('#step4-demo', bw.makeCodeDemo({
       title: 'Controlled Sorting',
+      description: 'Headers are sortable by default. Use onSort with sortColumn/sortDirection for controlled state.',
       result: step4Result,
       code: step4Code
     }));
@@ -397,7 +395,8 @@ bw.DOM(target, bw.makeTable({
     }));
 
     bw.DOM('#step5-demo', bw.makeCodeDemo({
-      title: 'Styling',
+      title: 'Custom Styling',
+      description: 'Use striped/hover props and bw.css() + bw.injectCSS() to apply custom header colours or any CSS rule.',
       result: bw.makeTable({
         data: languages,
         striped: true,

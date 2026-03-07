@@ -11,128 +11,162 @@
   <script src="shared-nav.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <script src="shared-tryit.js"></script>
-  <style>
-    .controls {
-      margin-bottom: 0;
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      align-items: center;
-      padding: 0.875rem 1.25rem;
-      background: var(--bw-card-bg);
-      border-radius: var(--bw-radius) var(--bw-radius) 0 0;
-      border: 1px solid var(--bw-card-border);
-      border-bottom: none;
-    }
-    .table-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      box-shadow: var(--bw-card-shadow);
-      overflow: hidden;
-    }
-    .table-card .bw-table { margin-bottom: 0; }
-    .table-info {
-      padding: 0.625rem 1.25rem;
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-top: none;
-      border-radius: 0 0 var(--bw-radius) var(--bw-radius);
-      font-size: 0.8125rem;
-      color: var(--bw-text-secondary);
-    }
-  </style>
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Tables & Data</h1>
-      <p class="subtitle">Interactive data tables with sorting, searching, pagination, and custom renderers.</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-    <!-- Introduction -->
-    <div class="demo-section">
-      <h2>Data In, Table Out</h2>
-      <div class="demo-content">
-        <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
-          Bitwrench treats tables as <em>data</em>. Hand <code>bw.makeTable()</code> a JavaScript array
-          and it returns a complete, sortable, styled table &mdash; no <code>&lt;table&gt;&lt;tr&gt;&lt;td&gt;</code>
-          boilerplate required. You control columns, formatting, and sorting with plain objects.
-        </p>
-        <p style="line-height: 1.8;">
-          The table below was generated from a single function call. Scroll down to see how it was built,
-          step by step.
-        </p>
-      </div>
-    </div>
-
-    <!-- Showcase Table -->
-    <div class="demo-section">
-      <h2>Showcase</h2>
-      <div id="showcase-table" class="table-card"></div>
-      <p class="table-info" style="border-top: none; margin-top: 0.5rem; font-style: italic;">
-        This table was generated from a JavaScript array with one function call.
-        Click any column header to sort.
-      </p>
-    </div>
-
-    <div id="style-origin-callout"></div>
-
-    <!-- Step-by-step build-up -->
-    <div class="demo-section">
-      <h2>Building Up &mdash; From Data to Table</h2>
-      <p>Let's rebuild that showcase table from scratch, adding one feature at a time.</p>
-
-      <h3>Step 1: Minimal Table</h3>
-      <p>Pass an array of objects. Columns are auto-detected from the keys.</p>
-      <div id="step1-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 2: Custom Columns</h3>
-      <p>Specify which fields to show, their order, and their labels.</p>
-      <div id="step2-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 3: Formatting with <code>render</code></h3>
-      <p>Each column can have a <code>render</code> function that transforms cell values &mdash; add badges, format numbers, or return nested TACO objects.</p>
-      <div id="step3-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 4: Controlled Sorting</h3>
-      <p>Sorting is on by default. Use <code>onSort</code> to control state externally and re-render.</p>
-      <div id="step4-demo"></div>
-
-      <h3 style="margin-top: 2rem;">Step 5: Styling</h3>
-      <p>Add CSS classes for stripes and hover. Use <code>bw.css()</code> + <code>bw.injectCSS()</code> to customise header colours or any other rule.</p>
-      <div id="step5-demo"></div>
-    </div>
-
-    <!-- Pipeline Demo -->
-    <div class="demo-section">
-      <h2>How bw.makeTable() Works</h2>
-      <p>One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.</p>
-      <div id="pipeline-table"></div>
-      <div class="callout callout-tip" style="margin-top: 1rem;">
-        <strong>Compare:</strong> The vanilla JS equivalent would require 20+ lines of <code>createElement</code>/<code>appendChild</code> calls. Here it is one function call that returns a data object.
-      </div>
-    </div>
-
-    <!-- Interactive Table Demo -->
-    <div class="demo-section">
-      <h2>Interactive Sortable Table with Search</h2>
-      <div id="table-tabs"></div>
-    </div>
-
-    <!-- Table with Pagination Demo -->
-    <div class="demo-section">
-      <h2>Table with Pagination</h2>
-      <div id="pagination-tabs"></div>
-    </div>
-  </div>
+  <div id="app"></div>
 
   <script>
     mountExampleNav('#example-nav', '02-tables.html');
+
+    // ---- Page CSS ----
+    bw.injectCSS(bw.css({
+      '.controls': {
+        'margin-bottom': '0',
+        display: 'flex',
+        gap: '0.5rem',
+        'flex-wrap': 'wrap',
+        'align-items': 'center',
+        padding: '0.875rem 1.25rem',
+        background: 'var(--bw-card-bg)',
+        'border-radius': 'var(--bw-radius) var(--bw-radius) 0 0',
+        border: '1px solid var(--bw-card-border)',
+        'border-bottom': 'none'
+      },
+      '.table-card': {
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'box-shadow': 'var(--bw-card-shadow)',
+        overflow: 'hidden'
+      },
+      '.table-card .bw-table': { 'margin-bottom': '0' },
+      '.table-info': {
+        padding: '0.625rem 1.25rem',
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-top': 'none',
+        'border-radius': '0 0 var(--bw-radius) var(--bw-radius)',
+        'font-size': '0.8125rem',
+        color: 'var(--bw-text-secondary)'
+      }
+    }), { id: 'tables-page-styles' });
+
+    // ---- Page structure as TACO ----
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: [{
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', c: 'Tables & Data' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Interactive data tables with sorting, searching, pagination, and custom renderers.' }
+        ]
+      }]
+    };
+
+    var introSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Data In, Table Out' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            {
+              t: 'p', a: { style: 'font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;' },
+              c: bw.raw('Bitwrench treats tables as <em>data</em>. Hand <code>bw.makeTable()</code> a JavaScript array and it returns a complete, sortable, styled table &mdash; no <code>&lt;table&gt;&lt;tr&gt;&lt;td&gt;</code> boilerplate required. You control columns, formatting, and sorting with plain objects.')
+            },
+            {
+              t: 'p', a: { style: 'line-height: 1.8;' },
+              c: 'The table below was generated from a single function call. Scroll down to see how it was built, step by step.'
+            }
+          ]
+        }
+      ]
+    };
+
+    var showcaseSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Showcase' },
+        { t: 'div', a: { id: 'showcase-table', class: 'table-card' } },
+        {
+          t: 'p', a: { class: 'table-info', style: 'border-top: none; margin-top: 0.5rem; font-style: italic;' },
+          c: 'This table was generated from a JavaScript array with one function call. Click any column header to sort.'
+        }
+      ]
+    };
+
+    var styleOriginCallout = { t: 'div', a: { id: 'style-origin-callout' } };
+
+    var buildUpSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: bw.raw('Building Up &mdash; From Data to Table') },
+        { t: 'p', c: "Let's rebuild that showcase table from scratch, adding one feature at a time." },
+        { t: 'h3', c: 'Step 1: Minimal Table' },
+        { t: 'p', c: 'Pass an array of objects. Columns are auto-detected from the keys.' },
+        { t: 'div', a: { id: 'step1-demo' } },
+        { t: 'h3', a: { style: 'margin-top: 2rem;' }, c: 'Step 2: Custom Columns' },
+        { t: 'p', c: 'Specify which fields to show, their order, and their labels.' },
+        { t: 'div', a: { id: 'step2-demo' } },
+        { t: 'h3', a: { style: 'margin-top: 2rem;' }, c: bw.raw('Step 3: Formatting with <code>render</code>') },
+        { t: 'p', c: bw.raw('Each column can have a <code>render</code> function that transforms cell values &mdash; add badges, format numbers, or return nested TACO objects.') },
+        { t: 'div', a: { id: 'step3-demo' } },
+        { t: 'h3', a: { style: 'margin-top: 2rem;' }, c: 'Step 4: Controlled Sorting' },
+        { t: 'p', c: bw.raw('Sorting is on by default. Use <code>onSort</code> to control state externally and re-render.') },
+        { t: 'div', a: { id: 'step4-demo' } },
+        { t: 'h3', a: { style: 'margin-top: 2rem;' }, c: 'Step 5: Styling' },
+        { t: 'p', c: bw.raw('Add CSS classes for stripes and hover. Use <code>bw.css()</code> + <code>bw.injectCSS()</code> to customise header colours or any other rule.') },
+        { t: 'div', a: { id: 'step5-demo' } }
+      ]
+    };
+
+    var pipelineSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'How bw.makeTable() Works' },
+        { t: 'p', c: bw.raw('One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.') },
+        { t: 'div', a: { id: 'pipeline-table' } },
+        {
+          t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1rem;' },
+          c: bw.raw('<strong>Compare:</strong> The vanilla JS equivalent would require 20+ lines of <code>createElement</code>/<code>appendChild</code> calls. Here it is one function call that returns a data object.')
+        }
+      ]
+    };
+
+    var fromArraySection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Tables from 2D Arrays' },
+        { t: 'p', c: bw.raw('Use <code>bw.makeTableFromArray()</code> when your data is already in a 2D array (CSV rows, spreadsheet data, etc). The first row is treated as column headers by default.') },
+        { t: 'div', a: { id: 'from-array-tabs' } }
+      ]
+    };
+
+    var interactiveSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Interactive Sortable Table with Search' },
+        { t: 'div', a: { id: 'table-tabs' } }
+      ]
+    };
+
+    var paginationSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Table with Pagination' },
+        { t: 'div', a: { id: 'pagination-tabs' } }
+      ]
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [introSection, showcaseSection, styleOriginCallout, buildUpSection, pipelineSection, fromArraySection, interactiveSection, paginationSection]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
+
+    // ---- Dynamic content ----
     bw.DOM('#style-origin-callout', makeStyleOrigin());
 
     // ── Showcase data (programming languages) ──────────────────────
@@ -413,6 +447,74 @@ bw.DOM(target, bw.makeTable({
       })
     }));
 
+    // ── makeTableFromArray() Demo ──────────────────────────────────
+    const arrayData = [
+      ['City', 'Country', 'Population', 'Area (km\u00B2)', 'Founded'],
+      ['Tokyo', 'Japan', '13,960,000', '2,194', '1457'],
+      ['London', 'UK', '8,982,000', '1,572', '43 AD'],
+      ['New York', 'USA', '8,336,000', '783', '1624'],
+      ['Paris', 'France', '2,161,000', '105', '3rd c. BC'],
+      ['Sydney', 'Australia', '5,312,000', '12,368', '1788'],
+      ['Mumbai', 'India', '12,442,000', '603', '1507']
+    ];
+
+    const fromArrayDemo = bw.makeTableFromArray({
+      data: arrayData,
+      striped: true,
+      hover: true,
+      sortable: true
+    });
+
+    const fromArrayCode = `// Build a table directly from a 2D array
+// First row is automatically used as column headers
+
+const cityData = [
+  ['City', 'Country', 'Population', 'Area (km\u00B2)', 'Founded'],
+  ['Tokyo', 'Japan', '13,960,000', '2,194', '1457'],
+  ['London', 'UK', '8,982,000', '1,572', '43 AD'],
+  ['New York', 'USA', '8,336,000', '783', '1624'],
+  ['Paris', 'France', '2,161,000', '105', '3rd c. BC'],
+  ['Sydney', 'Australia', '5,312,000', '12,368', '1788'],
+  ['Mumbai', 'India', '12,442,000', '603', '1507']
+];
+
+// One call - headers extracted from first row
+const table = bw.makeTableFromArray({
+  data: cityData,
+  striped: true,
+  hover: true,
+  sortable: true
+});
+
+bw.DOM('#my-table', table);
+
+// --- Without header row ---
+// Set headerRow: false to auto-generate column names
+const rawData = [
+  [1, 'Alice', 95],
+  [2, 'Bob', 87],
+  [3, 'Carol', 92]
+];
+
+const table2 = bw.makeTableFromArray({
+  data: rawData,
+  headerRow: false,  // generates col0, col1, col2
+  columns: [
+    { key: 'col0', label: 'ID' },
+    { key: 'col1', label: 'Name' },
+    { key: 'col2', label: 'Score' }
+  ]
+});`;
+
+    bw.DOM('#from-array-tabs',
+      bw.makeCodeDemo({
+        title: 'Table from 2D Array',
+        description: 'One function call turns a 2D array into a sortable table. Perfect for CSV data, spreadsheets, or any row-based format.',
+        result: fromArrayDemo,
+        code: fromArrayCode
+      })
+    );
+
     // ── Interactive Table Demo ──────────────────────────────────────
     const employees = [
       { id: 1, name: 'John Smith', position: 'Software Engineer', department: 'Engineering', salary: 95000, startDate: '2021-03-15' },
@@ -579,10 +681,26 @@ bw.DOM(target, bw.makeTable({
                 }
               }),
               bw.makeButton({
-                text: 'Export Data',
+                text: 'Export JSON',
                 variant: 'secondary',
                 onclick: () => {
                   bw.saveClientJSON('employees.json', state.filteredEmployees);
+                }
+              }),
+              bw.makeButton({
+                text: 'Export CSV',
+                variant: 'secondary',
+                onclick: () => {
+                  const cols = ['id', 'name', 'position', 'department', 'salary', 'startDate'];
+                  const header = cols.join(',');
+                  const rows = state.filteredEmployees.map(emp =>
+                    cols.map(c => {
+                      var v = String(emp[c]);
+                      return v.includes(',') ? '"' + v + '"' : v;
+                    }).join(',')
+                  );
+                  var csv = [header].concat(rows).join('\n');
+                  bw.saveClientFile('employees.csv', csv, 'text/csv');
                 }
               }),
               bw.makeInput({

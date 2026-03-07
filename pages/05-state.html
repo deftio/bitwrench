@@ -11,977 +11,1043 @@
   <script src="shared-nav.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <script src="shared-tryit.js"></script>
-  <style>
-    /* Page-specific styles */
-    .counters-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: var(--bw-space-md);
-    }
-    .counter-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: var(--bw-space-md);
-      text-align: center;
-    }
-    .counter-card h4 { margin: 0 0 0.5rem; }
-    .counter-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--bw-teal-dark);
-      margin: 0.5rem 0;
-    }
-    .counter-btns { display: flex; gap: 0.35rem; justify-content: center; }
-    .intro-text {
-      font-size: 0.9375rem;
-      line-height: 1.7;
-      color: var(--bw-text);
-      margin: 0 0 1rem;
-      max-width: 720px;
-    }
-    .todo-input-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-    .todo-input-row input {
-      flex: 1;
-      padding: 0.4rem 0.75rem;
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      font-size: 0.875rem;
-    }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid var(--bw-card-border);
-      font-size: 0.875rem;
-    }
-    .todo-item:last-child { border-bottom: none; }
-    .todo-item.done span { text-decoration: line-through; color: var(--bw-text-secondary); }
-    .todo-item span { flex: 1; }
-    .state-diagram {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr;
-      gap: 0.75rem;
-      align-items: center;
-      margin: 1.25rem 0;
-      text-align: center;
-    }
-    .state-step {
-      background: var(--bw-card-bg);
-      border: 2px solid var(--bw-teal);
-      border-radius: var(--bw-radius);
-      padding: 0.75rem;
-    }
-    .state-step strong { display: block; font-size: 0.8125rem; color: var(--bw-teal-dark); margin-bottom: 0.25rem; }
-    .state-step code { font-size: 0.75rem; }
-    .state-arrow { font-size: 1.5rem; color: var(--bw-teal); }
-
-    /* Global panel (cross-component coordination) */
-    .global-panel {
-      background: var(--bw-teal-bg);
-      border: 2px solid var(--bw-teal);
-      border-radius: var(--bw-radius);
-      padding: 1.25rem;
-      margin: 1.25rem 0;
-    }
-    .global-panel h4 { margin: 0 0 0.75rem; color: var(--bw-teal-dark); font-size: 0.95rem; }
-    .global-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-    .sum-display {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: var(--bw-teal-dark);
-      font-family: var(--bw-font-mono);
-      margin-top: 0.75rem;
-    }
-    .sum-breakdown { color: var(--bw-text-secondary); font-weight: 400; }
-    .sum-total { font-weight: 700; font-size: 1rem; color: var(--bw-teal-dark); }
-
-    /* Dynamic list (bw.patch demo) */
-    .list-panel {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1.25rem;
-      margin: 1.25rem 0;
-    }
-    .list-panel h4 { margin: 0 0 0.75rem; font-size: 0.95rem; color: var(--bw-teal-dark); }
-    .list-controls {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .list-items { display: flex; flex-direction: column; gap: 0.5rem; }
-    .list-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 0.75rem;
-      background: var(--bw-teal-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-    }
-    .list-item-name { font-weight: 600; min-width: 100px; font-size: 0.875rem; }
-    .list-item-val {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--bw-teal-dark);
-      min-width: 40px;
-      text-align: center;
-      font-variant-numeric: tabular-nums;
-    }
-    .list-item-btns { display: flex; gap: 0.25rem; margin-left: auto; }
-    .list-stats {
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--bw-card-border);
-      font-size: 0.8125rem;
-      font-family: var(--bw-font-mono);
-      color: var(--bw-text-secondary);
-    }
-
-    /* Pub/sub demo */
-    .notif-panels {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .notif-panel {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: 1rem;
-      text-align: left;
-    }
-    .notif-panel h4 { margin: 0 0 0.5rem; font-size: 0.9rem; }
-    .notif-log {
-      background: var(--bw-code-bg);
-      color: var(--bw-code-text);
-      border-radius: var(--bw-radius);
-      padding: 0.75rem;
-      max-height: 120px;
-      overflow-y: auto;
-      font-family: var(--bw-font-mono);
-      font-size: 0.75rem;
-      line-height: 1.6;
-    }
-
-    /* Event comparison table */
-    .event-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8125rem;
-      margin-top: 0.5rem;
-    }
-    .event-table th {
-      text-align: left;
-      padding: 0.35rem 0.5rem;
-      border-bottom: 2px solid var(--bw-teal);
-    }
-    .event-table td {
-      padding: 0.3rem 0.5rem;
-      border-bottom: 1px solid var(--bw-card-border);
-    }
-    .event-table tr:last-child td { border-bottom: none; }
-  </style>
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>State & Interactivity</h1>
-      <p class="subtitle">How bitwrench manages state, from simple closures to component factories and pub/sub.</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-
-    <!-- Gentle intro for framework developers -->
-    <div class="demo-section">
-      <h2>Bitwrench's Approach to State</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Frameworks like React, Solid, and Svelte each have their own approach to state management &mdash;
-          virtual DOMs, reactive signals, compiler-generated update code. They work well for the
-          problems they were designed to solve.
-        </p>
-        <p class="intro-text">
-          Bitwrench takes a different approach. State is a plain JavaScript object stored directly on
-          the DOM element it belongs to. Updates are explicit function calls rather than automatic reactions.
-          There is no virtual DOM, no dependency tracking, no compiler step. A component re-renders
-          when &mdash; and only when &mdash; <code>bw.update(el)</code> is called.
-        </p>
-
-        <div class="callout callout-concept">
-          <h4>Coming from another framework?</h4>
-          <table class="event-table">
-            <thead>
-              <tr>
-                <th>Concept</th>
-                <th>How bitwrench does it</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Component (JSX / .svelte file)</td><td>Factory function returning a TACO object</td></tr>
-              <tr><td><code>useState</code> / <code>createSignal</code> / <code>$state</code></td><td><code>o.state</code> &rarr; stored as <code>el._bw_state</code></td></tr>
-              <tr><td><code>render()</code> / reactive template</td><td><code>o.render(el)</code> &mdash; called explicitly via <code>bw.update(el)</code></td></tr>
-              <tr><td>Virtual DOM diff / fine-grained reactivity</td><td>Direct DOM writes via <code>bw.DOM()</code>; targeted patches via <code>bw.patch()</code></td></tr>
-              <tr><td><code>useEffect</code> / <code>onMount</code></td><td><code>o.mounted(el)</code> lifecycle hook</td></tr>
-              <tr><td>Context / stores / global signals</td><td><code>bw.pub()</code> / <code>bw.sub()</code> (application-scoped pub/sub)</td></tr>
-              <tr><td><code>useRef</code></td><td>The element itself &mdash; state and DOM are the same object</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p class="intro-text">
-          The tradeoff: bitwrench requires the developer to say <em>when</em> to update, rather
-          than detecting changes automatically. In return, every state change is an explicit function
-          call you can see and step through in a debugger.
-          The sections below walk through each pattern from simplest to most complex.
-        </p>
-
-        <div class="callout callout-tip">
-          <h4>The toolkit at a glance</h4>
-          <p>
-            <code>o.state</code> &mdash; initial state object, stored as <code>el._bw_state</code> on mount<br>
-            <code>o.render(el)</code> &mdash; render function, stored as <code>el._bw_render</code>, called on mount and on <code>bw.update()</code><br>
-            <code>bw.update(el)</code> &mdash; re-run the render function and emit <code>bw:statechange</code><br>
-            <code>bw.patch(id, content)</code> &mdash; targeted update of a single element (no full re-render)<br>
-            <code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> &mdash; decoupled cross-component messaging<br>
-            <code>o.mounted(el)</code> &mdash; lifecycle hook, runs after the element is in the DOM<br>
-            <code>o.unmount(el)</code> &mdash; cleanup hook, runs when the element is removed
-          </p>
-        </div>
-
-        <div class="callout callout-concept">
-          <h4>Memory and cleanup</h4>
-          <p>
-            When <code>bw.DOM()</code> replaces an element's children, the old DOM nodes and any
-            event listeners attached to them are removed by the browser's garbage collector.
-            There is no manual listener cleanup step &mdash; replacing the DOM <em>is</em> the cleanup.
-          </p>
-          <p>
-            For resources that live outside the DOM (timers, WebSocket connections, pub/sub
-            subscriptions), use the <code>o.unmount(el)</code> lifecycle hook. Bitwrench calls it
-            automatically via <code>bw.cleanup()</code> before replacing content.
-            Pub/sub subscriptions can also be tied to an element's lifecycle by passing the element
-            to <code>bw.sub()</code> &mdash; when the element is cleaned up, its subscriptions
-            are removed automatically.
-          </p>
-        </div>
-
-        <div class="callout callout-concept">
-          <h4>Debugging</h4>
-          <p>
-            All component state is visible in the browser's built-in inspector. Select any bitwrench
-            component in the Elements panel, then type <code>$0._bw_state</code> in the console
-            to see its current state object. You can modify it directly and call
-            <code>bw.update($0)</code> to see the result. No browser extension required.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 1: The Simplest State Pattern -->
-    <div class="demo-section">
-      <h2>The Simplest State Pattern</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          The most basic approach: a closure variable and a render function. When state changes, call render again. This works well for simple, standalone components.
-        </p>
-        <div id="tryit-simple-state"></div>
-      </div>
-    </div>
-
-    <!-- Section 2: How State Works -->
-    <div class="demo-section">
-      <h2>How State Works in Bitwrench</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          In bitwrench, you build components by writing functions that return plain JavaScript
-          objects describing what to render. State lives <strong>on the DOM element itself</strong>.
-          When an element is removed from the page, its state goes with it. When you create three
-          instances of a component, each one carries its own independent state.
-        </p>
-
-        <div class="state-diagram">
-          <div class="state-step">
-            <strong>1. Define</strong>
-            <code>o: { state, render }</code>
-          </div>
-          <div class="state-arrow">&rarr;</div>
-          <div class="state-step">
-            <strong>2. Mount</strong>
-            <code>render(el) auto-called</code>
-          </div>
-          <div class="state-arrow">&rarr;</div>
-          <div class="state-step">
-            <strong>3. Update</strong>
-            <code>bw.update(el)</code>
-          </div>
-        </div>
-
-        <div class="callout callout-concept">
-          <h4>The pattern</h4>
-          <p>
-            A component factory returns a JavaScript object with <code>o.state</code> and
-            <code>o.render</code>. When bitwrench creates the DOM element, it stores state as
-            <code>el._bw_state</code> and the render function as <code>el._bw_render</code>,
-            then calls <code>render(el)</code> automatically once the element is in the DOM.
-            To re-render, call <code>bw.update(el)</code> &mdash; it re-runs
-            <code>el._bw_render(el)</code> and emits a <code>bw:statechange</code> event so
-            other components can react.
-          </p>
-        </div>
-
-        <div class="callout callout-concept">
-          <h4>Why state lives on the element</h4>
-          <p>
-            Storing state on <code>el._bw_state</code> ties the state to the element's lifecycle.
-            Delete the element &rarr; state is gone.
-            Create three instances of a component &rarr; each has its own state on its own element.
-            It's a simple model: the DOM element <em>is</em> the component.
-          </p>
-        </div>
-
-        <div class="bw-grid-2col" style="margin-top: 1.25rem;">
-          <div>
-            <div class="bw-code-label">The complete pattern</div>
-            <pre><code>// 1. Factory function — returns an object with TACO + API
-function makeCounter(opts) {
-  var id = bw.uuid('ctr');
-
-  var taco = {
-    t: 'div', a: { id: id },
-    o: {
-      state: { count: opts.start || 0 },  // initial state
-      render: function(el) {               // stored as el._bw_render
-        var s = el._bw_state;              // read state from the element
-        bw.DOM(el, {                       // re-render into self
-          t: 'div', a: { class: 'counter-card' },
-          c: [
-            { t: 'h4', c: opts.label },
-            { t: 'div', c: String(s.count) },
-            bw.makeButton({ text: '+',
-              onclick: function() {
-                s.count++;
-                bw.update(el);             // re-renders + emits event
-              }
-            })
-          ]
-        });
-      }
-    }
-  };
-
-  // 2. Return TACO + getter/setter API
-  return {
-    taco: taco, id: id,
-    getCount: function() { /* read el._bw_state */ },
-    setCount: function(n) { /* write + bw.update(el) */ }
-  };
-}
-
-// 3. Use it — each instance is independent
-var a = makeCounter({ label: 'A', start: 0 });
-var b = makeCounter({ label: 'B', start: 10 });
-bw.DOM('#app', {
-  t: 'div', c: [a.taco, b.taco]
-});</code></pre>
-          </div>
-          <div>
-            <div class="bw-code-label">What happens at runtime</div>
-            <pre><code>// bw.createDOM processes the TACO:
-//   1. Creates &lt;div id="ctr-abc123"&gt;
-//   2. Stores state: el._bw_state = { count: 0 }
-//   3. Stores render: el._bw_render = o.render
-//   4. Queues render via requestAnimationFrame
-//
-// After the element is in the DOM:
-//   5. el._bw_render(el) fires automatically
-//   6. render reads el._bw_state.count (= 0)
-//   7. bw.DOM(el, newContent) replaces children
-//      but preserves el._bw_state and el._bw_render
-//
-// On button click:
-//   8. s.count++ modifies el._bw_state.count
-//   9. bw.update(el) calls el._bw_render(el)
-//  10. bw.update also emits bw:statechange
-//      so other components can listen and react
-//
-// If the element is removed:
-//  11. el._bw_state goes away with the element
-//  12. No cleanup needed — nothing external to clean up
-//
-// Key insight:
-//   - opts (label, start) is configuration — fixed at creation
-//   - state (count) is mutable — lives on the element
-//   - bw.update(el) = re-render + notify listeners</code></pre>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 3: Encapsulated Components -->
-    <div class="demo-section">
-      <h2>Encapsulated Components</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Three counters from the same factory. Each has its own state on its own DOM element.
-          Click any counter &mdash; the others don't change. The factory returns a getter/setter
-          API alongside the TACO, enabling cross-component coordination (next section).
-        </p>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>function makeCounter(opts) {
-  var id = bw.uuid('ctr');
-  var name = opts.label;
-
-  var taco = {
-    t: 'div', a: { id: id },
-    o: {
-      state: { count: opts.start || 0 },
-      render: function(el) {
-        var s = el._bw_state;
-        bw.DOM(el, {
-          t: 'div', a: { class: 'counter-card' },
-          c: [
-            { t: 'h4', c: name },
-            { t: 'div', a: { class: 'counter-value' },
-              c: String(s.count) },
-            { t: 'div', a: { class: 'counter-btns' }, c: [
-              bw.makeButton({ text: '+', variant: 'primary',
-                onclick: function() {
-                  s.count++; bw.update(el);
-                }
-              }),
-              bw.makeButton({ text: '\u2013', variant: 'secondary',
-                onclick: function() {
-                  s.count--; bw.update(el);
-                }
-              }),
-              bw.makeButton({ text: 'Reset', variant: 'secondary',
-                onclick: function() {
-                  s.count = opts.start || 0;
-                  bw.update(el);
-                }
-              })
-            ]}
-          ]
-        });
-      }
-    }
-  };
-
-  return {
-    taco: taco, name: name, id: id,
-    getCount: function() {
-      var el = document.getElementById(id);
-      return el &amp;&amp; el._bw_state
-        ? el._bw_state.count : null;
-    },
-    setCount: function(n) {
-      var el = document.getElementById(id);
-      if (el &amp;&amp; el._bw_state) {
-        el._bw_state.count = n;
-        bw.update(el);
-      }
-    }
-  };
-}
-
-var cardA = makeCounter(
-  { label: 'Visitors', start: 42 });
-var cardB = makeCounter(
-  { label: 'Orders',   start: 7 });
-var cardC = makeCounter(
-  { label: 'Errors',   start: 0 });
-var allCards = [cardA, cardB, cardC];
-
-bw.DOM('#counters', {
-  t: 'div', a: { class: 'counters-row' },
-  c: allCards.map(function(c) {
-    return c.taco;
-  })
-});</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result (try it)</div>
-            <div class="bw-demo-result" id="counter-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 4: Cross-Component Coordination -->
-    <div class="demo-section">
-      <h2>Cross-Component Coordination</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          The global panel reads and modifies all three counters via the getter/setter API.
-          It auto-updates whenever any counter changes, because <code>bw.update()</code> emits
-          a <code>bw:statechange</code> event that bubbles up. The global panel listens with
-          <code>bw.on()</code> &mdash; no tight coupling.
-        </p>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>// Listen for statechange from any counter
-bw.on('#counter-demo', 'statechange',
-  function() { renderGlobal(); }
-);
-
-function renderGlobal() {
-  var counts = allCards.map(function(c) {
-    return c.getCount() || 0;
-  });
-  var sum = counts.reduce(
-    function(a, b) { return a + b; }, 0
-  );
-  var breakdown = allCards.map(function(c, i) {
-    return c.name + '(' + counts[i] + ')';
-  }).join(' + ');
-
-  bw.DOM('#global-demo', {
-    t: 'div', a: { class: 'global-panel' },
-    c: [
-      { t: 'h4', c: 'Cross-Component Controls' },
-      { t: 'div', a: { class: 'global-btns' }, c: [
-        bw.makeButton({ text: 'Inc All (+1)',
-          variant: 'primary',
-          onclick: function() {
-            allCards.forEach(function(c) {
-              c.setCount(c.getCount() + 1);
-            });
-            renderGlobal();
-          }
-        }),
-        bw.makeButton({ text: 'Dec All (\u20131)',
-          variant: 'primary',
-          onclick: function() {
-            allCards.forEach(function(c) {
-              c.setCount(c.getCount() - 1);
-            });
-            renderGlobal();
-          }
-        }),
-        bw.makeButton({ text: 'Reset All',
-          variant: 'secondary',
-          onclick: function() {
-            allCards.forEach(function(c) {
-              c.setCount(0);
-            });
-            renderGlobal();
-          }
-        })
-      ]},
-      { t: 'div', a: { class: 'sum-display' },
-        c: breakdown + ' = ' + sum }
-    ]
-  });
-}</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result</div>
-            <div class="bw-demo-result" id="global-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 5: Targeted Updates with bw.patch() -->
-    <div class="demo-section">
-      <h2>Targeted Updates: bw.patch()</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          <code>bw.patch(id, content)</code> updates a single element by its UUID without
-          rebuilding the entire component tree. Use it for value-only changes (counters, labels).
-          Use <code>bw.update()</code> for structural changes (add/remove items).
-        </p>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>// Each list item has a stable UUID for its value
-var item = {
-  id:    bw.uuid('item'),   // row UUID
-  valId: bw.uuid('val'),    // value UUID
-  name:  'Counter #1',
-  count: 0
-};
-
-// Value change: targeted, no rebuild
-bw.makeButton({ text: '+',
-  onclick: function() {
-    item.count++;
-    bw.patch(item.valId, String(item.count));
-  }
-});
-
-// Structural change: full re-render
-function addItem() {
-  listItems.push(newItem);
-  renderList();   // rebuilds via bw.DOM()
-}</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result</div>
-            <div class="bw-demo-result" id="list-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 6: Event Systems -->
-    <div class="demo-section">
-      <h2>Event Systems: emit/on &amp; pub/sub</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Bitwrench provides two event systems. <strong>emit/on</strong> wraps DOM CustomEvents
-          (scoped to an element subtree, bubbles up). <strong>pub/sub</strong> is application-scoped
-          (topic-based, decoupled from the DOM tree). Both coexist.
-        </p>
-        <div class="callout callout-concept">
-          <h4>Comparison</h4>
-          <table class="event-table">
-            <thead>
-              <tr>
-                <th>Aspect</th>
-                <th><code>emit/on</code></th>
-                <th><code>pub/sub</code></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Scope</td><td>DOM subtree (bubbles)</td><td>Application-wide (topic)</td></tr>
-              <tr><td>Trigger</td><td>1:1 with DOM action</td><td>Composite / logic</td></tr>
-              <tr><td>Cleanup</td><td>Automatic (DOM GC)</td><td>unsub() or element-tied</td></tr>
-              <tr><td>Coupling</td><td>Spatial (ancestor)</td><td>None (any component)</td></tr>
-              <tr><td>Error</td><td>Native DOM throws</td><td>Try/catch, log, continue</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>// Publish a message to a topic
-bw.pub('notification', { text: msg });
-
-// Subscribe — returns unsub function
-var unsub = bw.sub('notification',
-  function(detail) {
-    messages.push(detail.text);
-    renderPanel();
-  }
-);
-
-// Later: remove the subscription
-unsub();</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result</div>
-            <div class="bw-demo-result" id="pubsub-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 7: Stateful Todo Component -->
-    <div class="demo-section">
-      <h2>Stateful Component: Todo List</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          A more complex component with array state, conditional rendering, and multiple
-          interactions. The same pattern scales: state on the element, <code>o.render</code>
-          reads it, <code>bw.update(el)</code> re-renders.
-        </p>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>function makeTodoList(opts) {
-  var id = bw.uuid('todo');
-
-  var todoItem = function(item, el) {
-    var s = el._bw_state;
-    return {
-      t: 'div',
-      a: { class: 'todo-item'
-        + (item.done ? ' done' : '') },
-      c: [
-        { t: 'input', a: {
-          type: 'checkbox',
-          checked: item.done ? 'checked' : undefined,
-          onchange: function() {
-            item.done = !item.done;
-            bw.update(el);
-          }
-        }},
-        { t: 'span', c: item.text },
-        bw.makeButton({
-          text: '\u00D7', variant: 'secondary',
-          size: 'sm',
-          onclick: function() {
-            s.todos = s.todos.filter(function(t) {
-              return t.id !== item.id;
-            });
-            bw.update(el);
-          }
-        })
-      ]
-    };
-  };
-
-  function addTodo(el) {
-    var s = el._bw_state;
-    var input = bw.$('#' + id
-      + ' input[type="text"]')[0];
-    if (!input || !input.value.trim()) return;
-    s.todos.push({
-      id: s.nextId++,
-      text: input.value.trim(),
-      done: false
-    });
-    bw.update(el);
-  }
-
-  var initial = (opts.initial || []).map(
-    function(text, i) {
-      return { id: i + 1, text: text, done: false };
-    }
-  );
-
-  return {
-    t: 'div', a: { id: id },
-    o: {
-      state: {
-        todos: initial,
-        nextId: initial.length + 1
-      },
-      render: function(el) {
-        var s = el._bw_state;
-        var remaining = s.todos.filter(
-          function(t) { return !t.done; }
-        ).length;
-
-        bw.DOM(el, { t: 'div', c: [
-          { t: 'div', a: { class: 'todo-input-row' },
-            c: [
-            { t: 'input', a: {
-              type: 'text',
-              placeholder: opts.placeholder
-                || 'Add item...',
-              onkeydown: function(e) {
-                if (e.key === 'Enter') addTodo(el);
-              }
-            }},
-            bw.makeButton({
-              text: 'Add', variant: 'primary',
-              onclick: function() { addTodo(el); }
-            })
-          ]},
-          { t: 'div', c: s.todos.map(function(item) {
-            return todoItem(item, el);
-          })},
-          { t: 'div', a: {
-            style: 'margin-top:0.5rem; '
-              + 'font-size:0.8125rem; '
-              + 'color:var(--bw-text-secondary);'
-            },
-            c: remaining + ' of '
-              + s.todos.length + ' remaining'
-          }
-        ]});
-      }
-    }
-  };
-}
-
-bw.DOM('#todo', makeTodoList({
-  initial: ['Read the docs',
-    'Build a prototype', 'Ship it'],
-  placeholder: 'What needs doing?'
-}));</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result (try it)</div>
-            <div class="bw-demo-result" id="todo-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 8: Dynamic CSS -->
-    <div class="demo-section">
-      <h2>Dynamic CSS Generation</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          <code>bw.css()</code> converts JavaScript objects to CSS strings. <code>bw.injectCSS()</code>
-          inserts them into the document. Together they let you generate entire stylesheets
-          at runtime from data.
-        </p>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>function makeThemeSwitcher() {
-  var themes = {
-    ocean:  { bg: '#e0f7fa', fg: '#004d40', accent: '#00796b' },
-    sunset: { bg: '#fff3e0', fg: '#bf360c', accent: '#e65100' },
-    forest: { bg: '#e8f5e9', fg: '#1b5e20', accent: '#2e7d32' }
-  };
-  var id = bw.uuid('theme');
-
-  function render(el) {
-    var s = el._bw_state;
-    var t = themes[s.current];
-
-    // Generate CSS from a JS object and inject it
-    bw.injectCSS(bw.css({
-      ['#' + id + ' .themed']: {
-        background: t.bg, color: t.fg,
-        'border-color': t.accent,
-        padding: '1.25rem', 'border-radius': '8px',
-        border: '2px solid', transition: 'all 0.3s'
-      },
-      ['#' + id + ' .themed h4']: {
-        color: t.accent, margin: '0 0 0.35rem'
-      }
-    }), { id: id + '-css' });
-
-    bw.DOM(el, { t: 'div', c: [
-      { t: 'div',
-        a: { style: 'display:flex; gap:0.5rem; margin-bottom:0.75rem;' },
-        c: Object.keys(themes).map(function(key) {
-          return bw.makeButton({
-            text: key.charAt(0).toUpperCase() + key.slice(1),
-            variant: key === s.current ? 'primary' : 'secondary',
-            onclick: function() {
-              s.current = key; render(el);
-            }
-          });
-        })
-      },
-      { t: 'div', a: { class: 'themed' }, c: [
-        { t: 'h4', c: s.current.charAt(0).toUpperCase()
-          + s.current.slice(1) + ' Theme' },
-        { t: 'p', a: { style: 'margin:0; font-size:0.875rem;' },
-          c: 'Colors generated from a JS object via bw.css().' }
-      ]}
-    ]});
-  }
-
-  return {
-    t: 'div', a: { id: id },
-    o: {
-      state: { current: 'ocean' },
-      mounted: function(el) { render(el); }
-    }
-  };
-}
-
-bw.DOM('#themes', makeThemeSwitcher());</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result (try it)</div>
-            <div class="bw-demo-result" id="css-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 9: Performance -->
-    <div class="demo-section">
-      <h2>Performance</h2>
-      <div class="demo-section-body">
-        <p class="intro-text">
-          Bitwrench renders directly to the DOM. This test creates
-          and mounts 1,000 elements in a single <code>bw.DOM()</code> call.
-        </p>
-        <div class="callout callout-concept">
-          <h4>Two update strategies</h4>
-          <p>
-            <code>bw.DOM()</code> replaces all children &mdash; straightforward for full re-renders.
-            But updating one value in a list of 1,000 items doesn't require rebuilding the other 999.
-            That's what <code>bw.patch(id, value)</code> is for: it finds a single element by UUID
-            and updates its content directly. Use <code>bw.DOM()</code> for structural changes
-            (add/remove items) and <code>bw.patch()</code> for value changes (counters, labels, status text).
-            The <a href="#list-demo">dynamic list</a> above demonstrates both in combination.
-          </p>
-        </div>
-        <div class="bw-grid-2col">
-          <div>
-            <div class="bw-code-label">Source</div>
-            <pre><code>function makePerfTest() {
-  var id = bw.uuid('perf');
-
-  function run(el) {
-    var start = performance.now();
-    var items = [];
-    for (var i = 0; i &lt; 1000; i++) {
-      items.push({
-        t: 'span',
-        a: { class: 'bw-badge bw-badge-primary',
-             style: 'margin:2px;' },
-        c: 'Item ' + (i + 1)
-      });
-    }
-    bw.DOM('#' + id + '-items', { t: 'div', c: items });
-    var ms = (performance.now() - start).toFixed(2);
-    bw.DOM('#' + id + '-time', {
-      t: 'div', a: { class: 'bw-alert bw-alert-success' },
-      c: 'Rendered 1,000 items in ' + ms + ' ms'
-    });
-  }
-
-  return {
-    t: 'div', a: { id: id },
-    o: {
-      mounted: function(el) {
-        bw.DOM(el, {
-          t: 'div', c: [
-            bw.makeButton({ text: 'Render 1,000 Items',
-              variant: 'primary',
-              onclick: function() { run(el); }
-            }),
-            { t: 'div', a: { id: id + '-time',
-              style: 'margin-top:0.75rem;' }, c: '' },
-            { t: 'div', a: { id: id + '-items',
-              style: 'margin-top:0.75rem; max-height:200px; '
-                + 'overflow-y:auto;' }, c: '' }
-          ]
-        });
-      }
-    }
-  };
-}
-
-bw.DOM('#perf', makePerfTest());</code></pre>
-          </div>
-          <div>
-            <div class="bw-demo-result-label">Live result (try it)</div>
-            <div class="bw-demo-result" id="performance-demo"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /content-container -->
+  <div id="app"></div>
 
   <script>
     mountExampleNav('#example-nav', '05-state.html');
+
+    // =========================================================================
+    // Page-specific CSS via bw.css() + bw.injectCSS()
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.intro-text': {
+        'font-size': '0.9375rem',
+        'line-height': '1.7',
+        color: 'var(--bw-text)',
+        margin: '0 0 1rem',
+        'max-width': '720px'
+      },
+      '.todo-input-row': {
+        display: 'flex',
+        gap: '0.5rem',
+        'margin-bottom': '0.75rem'
+      },
+      '.todo-input-row input': {
+        flex: '1',
+        padding: '0.4rem 0.75rem',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        'font-size': '0.875rem'
+      },
+      '.todo-item': {
+        display: 'flex',
+        'align-items': 'center',
+        gap: '0.5rem',
+        padding: '0.5rem 0',
+        'border-bottom': '1px solid var(--bw-card-border)',
+        'font-size': '0.875rem'
+      },
+      '.todo-item:last-child': { 'border-bottom': 'none' },
+      '.todo-item.done span': { 'text-decoration': 'line-through', color: 'var(--bw-text-secondary)' },
+      '.todo-item span': { flex: '1' },
+      '.state-diagram': {
+        display: 'grid',
+        'grid-template-columns': '1fr auto 1fr auto 1fr',
+        gap: '0.75rem',
+        'align-items': 'center',
+        margin: '1.25rem 0',
+        'text-align': 'center'
+      },
+      '.state-step': {
+        background: 'var(--bw-card-bg)',
+        border: '2px solid var(--bw-teal)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '0.75rem'
+      },
+      '.state-step strong': { display: 'block', 'font-size': '0.8125rem', color: 'var(--bw-teal-dark)', 'margin-bottom': '0.25rem' },
+      '.state-step code': { 'font-size': '0.75rem' },
+      '.state-arrow': { 'font-size': '1.5rem', color: 'var(--bw-teal)' },
+      '.global-panel': {
+        background: 'var(--bw-teal-bg)',
+        border: '2px solid var(--bw-teal)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '1.25rem',
+        margin: '1.25rem 0'
+      },
+      '.global-panel h4': { margin: '0 0 0.75rem', color: 'var(--bw-teal-dark)', 'font-size': '0.95rem' },
+      '.global-btns': { display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap', 'align-items': 'center' },
+      '.sum-display': {
+        display: 'inline-flex',
+        'align-items': 'center',
+        gap: '0.5rem',
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '0.5rem 1rem',
+        'font-weight': '600',
+        'font-size': '0.875rem',
+        color: 'var(--bw-teal-dark)',
+        'font-family': 'var(--bw-font-mono)',
+        'margin-top': '0.75rem'
+      },
+      '.sum-breakdown': { color: 'var(--bw-text-secondary)', 'font-weight': '400' },
+      '.sum-total': { 'font-weight': '700', 'font-size': '1rem', color: 'var(--bw-teal-dark)' },
+      '.list-panel': {
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '1.25rem',
+        margin: '1.25rem 0'
+      },
+      '.list-panel h4': { margin: '0 0 0.75rem', 'font-size': '0.95rem', color: 'var(--bw-teal-dark)' },
+      '.list-controls': {
+        display: 'flex',
+        gap: '0.5rem',
+        'margin-bottom': '1rem',
+        'flex-wrap': 'wrap',
+        'align-items': 'center'
+      },
+      '.list-items': { display: 'flex', 'flex-direction': 'column', gap: '0.5rem' },
+      '.list-item': {
+        display: 'flex',
+        'align-items': 'center',
+        gap: '0.75rem',
+        padding: '0.5rem 0.75rem',
+        background: 'var(--bw-teal-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)'
+      },
+      '.list-item-name': { 'font-weight': '600', 'min-width': '100px', 'font-size': '0.875rem' },
+      '.list-item-val': {
+        'font-size': '1.25rem',
+        'font-weight': '700',
+        color: 'var(--bw-teal-dark)',
+        'min-width': '40px',
+        'text-align': 'center',
+        'font-variant-numeric': 'tabular-nums'
+      },
+      '.list-item-btns': { display: 'flex', gap: '0.25rem', 'margin-left': 'auto' },
+      '.list-stats': {
+        'margin-top': '0.75rem',
+        'padding-top': '0.75rem',
+        'border-top': '1px solid var(--bw-card-border)',
+        'font-size': '0.8125rem',
+        'font-family': 'var(--bw-font-mono)',
+        color: 'var(--bw-text-secondary)'
+      },
+      '.notif-panels': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(2, 1fr)',
+        gap: '1rem',
+        'margin-top': '1rem'
+      },
+      '.notif-panel': {
+        background: 'var(--bw-card-bg)',
+        border: '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '1rem',
+        'text-align': 'left'
+      },
+      '.notif-panel h4': { margin: '0 0 0.5rem', 'font-size': '0.9rem' },
+      '.notif-log': {
+        background: 'var(--bw-code-bg)',
+        color: 'var(--bw-code-text)',
+        'border-radius': 'var(--bw-radius)',
+        padding: '0.75rem',
+        'max-height': '120px',
+        'overflow-y': 'auto',
+        'font-family': 'var(--bw-font-mono)',
+        'font-size': '0.75rem',
+        'line-height': '1.6'
+      },
+      '.event-table': {
+        width: '100%',
+        'border-collapse': 'collapse',
+        'font-size': '0.8125rem',
+        'margin-top': '0.5rem'
+      },
+      '.event-table th': {
+        'text-align': 'left',
+        padding: '0.35rem 0.5rem',
+        'border-bottom': '2px solid var(--bw-teal)'
+      },
+      '.event-table td': {
+        padding: '0.3rem 0.5rem',
+        'border-bottom': '1px solid var(--bw-card-border)'
+      },
+      '.event-table tr:last-child td': { 'border-bottom': 'none' }
+    }));
+
+    // =========================================================================
+    // Helper: callout box
+    // =========================================================================
+    function callout(type, title, content) {
+      return {
+        t: 'div', a: { class: 'callout callout-' + type },
+        c: [
+          { t: 'h4', c: title },
+          content
+        ]
+      };
+    }
+
+    // =========================================================================
+    // Section 0: Bitwrench's Approach to State
+    // =========================================================================
+    var frameworkComparisonTable = {
+      t: 'table', a: { class: 'event-table' },
+      c: [
+        { t: 'thead', c: { t: 'tr', c: [
+          { t: 'th', c: 'Concept' },
+          { t: 'th', c: 'How bitwrench does it' }
+        ]}},
+        { t: 'tbody', c: [
+          { t: 'tr', c: [
+            { t: 'td', c: 'Component (JSX / .svelte file)' },
+            { t: 'td', c: 'Factory function returning a TACO object' }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: [{ t: 'code', c: 'useState' }, ' / ', { t: 'code', c: 'createSignal' }, ' / ', { t: 'code', c: '$state' }] },
+            { t: 'td', c: bw.raw('<code>o.state</code> &rarr; stored as <code>el._bw_state</code>') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: bw.raw('<code>render()</code> / reactive template') },
+            { t: 'td', c: bw.raw('<code>o.render(el)</code> &mdash; called explicitly via <code>bw.update(el)</code>') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Virtual DOM diff / fine-grained reactivity' },
+            { t: 'td', c: bw.raw('Direct DOM writes via <code>bw.DOM()</code>; targeted patches via <code>bw.patch()</code>') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: [{ t: 'code', c: 'useEffect' }, ' / ', { t: 'code', c: 'onMount' }] },
+            { t: 'td', c: bw.raw('<code>o.mounted(el)</code> lifecycle hook') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Context / stores / global signals' },
+            { t: 'td', c: bw.raw('<code>bw.pub()</code> / <code>bw.sub()</code> (application-scoped pub/sub)') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: { t: 'code', c: 'useRef' } },
+            { t: 'td', c: bw.raw('The element itself &mdash; state and DOM are the same object') }
+          ]}
+        ]}
+      ]
+    };
+
+    var section0 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: "Bitwrench's Approach to State" },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Frameworks like React, Solid, and Svelte each have their own approach to state management &mdash; virtual DOMs, reactive signals, compiler-generated update code. They work well for the problems they were designed to solve.') },
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Bitwrench takes a different approach. State is a plain JavaScript object stored directly on the DOM element it belongs to. Updates are explicit function calls rather than automatic reactions. There is no virtual DOM, no dependency tracking, no compiler step. A component re-renders when &mdash; and only when &mdash; <code>bw.update(el)</code> is called.') },
+
+          callout('concept', 'Coming from another framework?', frameworkComparisonTable),
+
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('The tradeoff: bitwrench requires the developer to say <em>when</em> to update, rather than detecting changes automatically. In return, every state change is an explicit function call you can see and step through in a debugger. The sections below walk through each pattern from simplest to most complex.') },
+
+          callout('tip', 'The toolkit at a glance', {
+            t: 'p',
+            c: bw.raw(
+              '<code>o.state</code> &mdash; initial state object, stored as <code>el._bw_state</code> on mount<br>' +
+              '<code>o.render(el)</code> &mdash; render function, stored as <code>el._bw_render</code>, called on mount and on <code>bw.update()</code><br>' +
+              '<code>bw.update(el)</code> &mdash; re-run the render function and emit <code>bw:statechange</code><br>' +
+              '<code>bw.patch(id, content)</code> &mdash; targeted update of a single element (no full re-render)<br>' +
+              '<code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> &mdash; decoupled cross-component messaging<br>' +
+              '<code>o.mounted(el)</code> &mdash; lifecycle hook, runs after the element is in the DOM<br>' +
+              '<code>o.unmount(el)</code> &mdash; cleanup hook, runs when the element is removed'
+            )
+          }),
+
+          callout('concept', 'Memory and cleanup', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('When <code>bw.DOM()</code> replaces an element\'s children, the old DOM nodes and any event listeners attached to them are removed by the browser\'s garbage collector. There is no manual listener cleanup step &mdash; replacing the DOM <em>is</em> the cleanup.') },
+              { t: 'p', c: bw.raw('For resources that live outside the DOM (timers, WebSocket connections, pub/sub subscriptions), use the <code>o.unmount(el)</code> lifecycle hook. Bitwrench calls it automatically via <code>bw.cleanup()</code> before replacing content. Pub/sub subscriptions can also be tied to an element\'s lifecycle by passing the element to <code>bw.sub()</code> &mdash; when the element is cleaned up, its subscriptions are removed automatically.') }
+            ]
+          }),
+
+          callout('concept', 'Debugging', {
+            t: 'p',
+            c: bw.raw('All component state is visible in the browser\'s built-in inspector. Select any bitwrench component in the Elements panel, then type <code>$0._bw_state</code> in the console to see its current state object. You can modify it directly and call <code>bw.update($0)</code> to see the result. No browser extension required.')
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 1: The Simplest State Pattern
+    // =========================================================================
+    var section1 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'The Simplest State Pattern' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: 'The most basic approach: a closure variable and a render function. When state changes, call render again. This works well for simple, standalone components.' },
+          { t: 'div', a: { id: 'tryit-simple-state' } }
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 2: How State Works
+    // =========================================================================
+    var completePatternCode =
+      '// 1. Factory function \u2014 returns an object with TACO + API\n' +
+      'function makeCounter(opts) {\n' +
+      '  var id = bw.uuid(\'ctr\');\n' +
+      '\n' +
+      '  var taco = {\n' +
+      '    t: \'div\', a: { id: id },\n' +
+      '    o: {\n' +
+      '      state: { count: opts.start || 0 },  // initial state\n' +
+      '      render: function(el) {               // stored as el._bw_render\n' +
+      '        var s = el._bw_state;              // read state from the element\n' +
+      '        bw.DOM(el, {                       // re-render into self\n' +
+      '          t: \'div\', a: { style: \'background: var(--bw-card-bg, #fff); \'\n' +
+      '            + \'border: 1px solid var(--bw-card-border, #dee2e6); \'\n' +
+      '            + \'border-radius: 8px; padding: 1rem; \'\n' +
+      '            + \'text-align: center;\' },\n' +
+      '          c: [\n' +
+      '            { t: \'h4\', c: opts.label },\n' +
+      '            { t: \'div\', c: String(s.count) },\n' +
+      '            bw.makeButton({ text: \'+\',\n' +
+      '              onclick: function() {\n' +
+      '                s.count++;\n' +
+      '                bw.update(el);             // re-renders + emits event\n' +
+      '              }\n' +
+      '            })\n' +
+      '          ]\n' +
+      '        });\n' +
+      '      }\n' +
+      '    }\n' +
+      '  };\n' +
+      '\n' +
+      '  // 2. Return TACO + getter/setter API\n' +
+      '  return {\n' +
+      '    taco: taco, id: id,\n' +
+      '    getCount: function() { /* read el._bw_state */ },\n' +
+      '    setCount: function(n) { /* write + bw.update(el) */ }\n' +
+      '  };\n' +
+      '}\n' +
+      '\n' +
+      '// 3. Use it \u2014 each instance is independent\n' +
+      'var a = makeCounter({ label: \'A\', start: 0 });\n' +
+      'var b = makeCounter({ label: \'B\', start: 10 });\n' +
+      'bw.DOM(\'#app\', {\n' +
+      '  t: \'div\', c: [a.taco, b.taco]\n' +
+      '});';
+
+    var runtimeCode =
+      '// bw.createDOM processes the TACO:\n' +
+      '//   1. Creates <div id="ctr-abc123">\n' +
+      '//   2. Stores state: el._bw_state = { count: 0 }\n' +
+      '//   3. Stores render: el._bw_render = o.render\n' +
+      '//   4. Queues render via requestAnimationFrame\n' +
+      '//\n' +
+      '// After the element is in the DOM:\n' +
+      '//   5. el._bw_render(el) fires automatically\n' +
+      '//   6. render reads el._bw_state.count (= 0)\n' +
+      '//   7. bw.DOM(el, newContent) replaces children\n' +
+      '//      but preserves el._bw_state and el._bw_render\n' +
+      '//\n' +
+      '// On button click:\n' +
+      '//   8. s.count++ modifies el._bw_state.count\n' +
+      '//   9. bw.update(el) calls el._bw_render(el)\n' +
+      '//  10. bw.update also emits bw:statechange\n' +
+      '//      so other components can listen and react\n' +
+      '//\n' +
+      '// If the element is removed:\n' +
+      '//  11. el._bw_state goes away with the element\n' +
+      '//  12. No cleanup needed \u2014 nothing external to clean up\n' +
+      '//\n' +
+      '// Key insight:\n' +
+      '//   - opts (label, start) is configuration \u2014 fixed at creation\n' +
+      '//   - state (count) is mutable \u2014 lives on the element\n' +
+      '//   - bw.update(el) = re-render + notify listeners';
+
+    var section2 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'How State Works in Bitwrench' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('In bitwrench, you build components by writing functions that return plain JavaScript objects describing what to render. State lives <strong>on the DOM element itself</strong>. When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.') },
+
+          { t: 'div', a: { class: 'state-diagram' }, c: [
+            { t: 'div', a: { class: 'state-step' }, c: [
+              { t: 'strong', c: '1. Define' },
+              { t: 'code', c: 'o: { state, render }' }
+            ]},
+            { t: 'div', a: { class: 'state-arrow' }, c: bw.raw('&rarr;') },
+            { t: 'div', a: { class: 'state-step' }, c: [
+              { t: 'strong', c: '2. Mount' },
+              { t: 'code', c: 'render(el) auto-called' }
+            ]},
+            { t: 'div', a: { class: 'state-arrow' }, c: bw.raw('&rarr;') },
+            { t: 'div', a: { class: 'state-step' }, c: [
+              { t: 'strong', c: '3. Update' },
+              { t: 'code', c: 'bw.update(el)' }
+            ]}
+          ]},
+
+          callout('concept', 'The pattern', {
+            t: 'p',
+            c: bw.raw('A component factory returns a JavaScript object with <code>o.state</code> and <code>o.render</code>. When bitwrench creates the DOM element, it stores state as <code>el._bw_state</code> and the render function as <code>el._bw_render</code>, then calls <code>render(el)</code> automatically once the element is in the DOM. To re-render, call <code>bw.update(el)</code> &mdash; it re-runs <code>el._bw_render(el)</code> and emits a <code>bw:statechange</code> event so other components can react.')
+          }),
+
+          callout('concept', 'Why state lives on the element', {
+            t: 'p',
+            c: bw.raw('Storing state on <code>el._bw_state</code> ties the state to the element\'s lifecycle. Delete the element &rarr; state is gone. Create three instances of a component &rarr; each has its own state on its own element. It\'s a simple model: the DOM element <em>is</em> the component.')
+          }),
+
+          { t: 'div', a: { class: 'bw-grid-2col', style: 'margin-top: 1.25rem;' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'The complete pattern' },
+              { t: 'pre', c: { t: 'code', c: completePatternCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'What happens at runtime' },
+              { t: 'pre', c: { t: 'code', c: runtimeCode } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 3: Encapsulated Components
+    // =========================================================================
+    var counterSourceCode =
+      'function makeCounter(opts) {\n' +
+      '  var id = bw.uuid(\'ctr\');\n' +
+      '  var name = opts.label;\n' +
+      '\n' +
+      '  // Inline styles \u2014 portable, no external CSS needed\n' +
+      '  var cardStyle = \'background: var(--bw-card-bg, #fff); \'\n' +
+      '    + \'border: 1px solid var(--bw-card-border, #dee2e6); \'\n' +
+      '    + \'border-radius: 8px; padding: 1rem 1.25rem; \'\n' +
+      '    + \'text-align: center; min-width: 160px; \'\n' +
+      '    + \'flex: 1 1 160px;\';\n' +
+      '  var valueStyle = \'font-size: 2rem; font-weight: 700; \'\n' +
+      '    + \'color: var(--bw-teal-dark, #00796b); \'\n' +
+      '    + \'margin: 0.5rem 0;\';\n' +
+      '  var btnsStyle = \'display: flex; gap: 0.35rem; \'\n' +
+      '    + \'justify-content: center; flex-wrap: wrap;\';\n' +
+      '\n' +
+      '  var taco = {\n' +
+      '    t: \'div\', a: { id: id },\n' +
+      '    o: {\n' +
+      '      state: { count: opts.start || 0 },\n' +
+      '      render: function(el) {\n' +
+      '        var s = el._bw_state;\n' +
+      '        bw.DOM(el, {\n' +
+      '          t: \'div\', a: { style: cardStyle },\n' +
+      '          c: [\n' +
+      '            { t: \'h4\', a: { style: \'margin: 0 0 0.5rem;\' },\n' +
+      '              c: name },\n' +
+      '            { t: \'div\', a: { style: valueStyle },\n' +
+      '              c: String(s.count) },\n' +
+      '            { t: \'div\', a: { style: btnsStyle }, c: [\n' +
+      '              bw.makeButton({ text: \'+\',\n' +
+      '                variant: \'primary\',\n' +
+      '                onclick: function() {\n' +
+      '                  s.count++; bw.update(el);\n' +
+      '                }\n' +
+      '              }),\n' +
+      '              bw.makeButton({ text: \'\u2013\',\n' +
+      '                variant: \'secondary\',\n' +
+      '                onclick: function() {\n' +
+      '                  s.count--; bw.update(el);\n' +
+      '                }\n' +
+      '              }),\n' +
+      '              bw.makeButton({ text: \'Reset\',\n' +
+      '                variant: \'secondary\',\n' +
+      '                onclick: function() {\n' +
+      '                  s.count = opts.start || 0;\n' +
+      '                  bw.update(el);\n' +
+      '                }\n' +
+      '              })\n' +
+      '            ]}\n' +
+      '          ]\n' +
+      '        });\n' +
+      '      }\n' +
+      '    }\n' +
+      '  };\n' +
+      '\n' +
+      '  return {\n' +
+      '    taco: taco, name: name, id: id,\n' +
+      '    getCount: function() {\n' +
+      '      var el = document.getElementById(id);\n' +
+      '      return el && el._bw_state\n' +
+      '        ? el._bw_state.count : null;\n' +
+      '    },\n' +
+      '    setCount: function(n) {\n' +
+      '      var el = document.getElementById(id);\n' +
+      '      if (el && el._bw_state) {\n' +
+      '        el._bw_state.count = n;\n' +
+      '        bw.update(el);\n' +
+      '      }\n' +
+      '    }\n' +
+      '  };\n' +
+      '}\n' +
+      '\n' +
+      'var cardA = makeCounter(\n' +
+      '  { label: \'Visitors\', start: 42 });\n' +
+      'var cardB = makeCounter(\n' +
+      '  { label: \'Orders\',   start: 7 });\n' +
+      'var cardC = makeCounter(\n' +
+      '  { label: \'Errors\',   start: 0 });\n' +
+      'var allCards = [cardA, cardB, cardC];\n' +
+      '\n' +
+      'bw.DOM(\'#counters\', {\n' +
+      '  t: \'div\',\n' +
+      '  a: { style: \'display: flex; gap: 1rem; \'\n' +
+      '     + \'flex-wrap: wrap;\' },\n' +
+      '  c: allCards.map(function(c) {\n' +
+      '    return c.taco;\n' +
+      '  })\n' +
+      '});';
+
+    var section3 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Encapsulated Components' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Three counters from the same factory. Each has its own state on its own DOM element. Click any counter &mdash; the others don\'t change. The factory returns a getter/setter API alongside the TACO, enabling cross-component coordination (next section).') },
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: counterSourceCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'counter-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 4: Cross-Component Coordination
+    // =========================================================================
+    var crossCompCode =
+      '// Listen for statechange from any counter\n' +
+      'bw.on(\'#counter-demo\', \'statechange\',\n' +
+      '  function() { renderGlobal(); }\n' +
+      ');\n' +
+      '\n' +
+      'function renderGlobal() {\n' +
+      '  var counts = allCards.map(function(c) {\n' +
+      '    return c.getCount() || 0;\n' +
+      '  });\n' +
+      '  var sum = counts.reduce(\n' +
+      '    function(a, b) { return a + b; }, 0\n' +
+      '  );\n' +
+      '  var breakdown = allCards.map(function(c, i) {\n' +
+      '    return c.name + \'(\' + counts[i] + \')\';\n' +
+      '  }).join(\' + \');\n' +
+      '\n' +
+      '  bw.DOM(\'#global-demo\', {\n' +
+      '    t: \'div\', a: { class: \'global-panel\' },\n' +
+      '    c: [\n' +
+      '      { t: \'h4\', c: \'Cross-Component Controls\' },\n' +
+      '      { t: \'div\', a: { class: \'global-btns\' }, c: [\n' +
+      '        bw.makeButton({ text: \'Inc All (+1)\',\n' +
+      '          variant: \'primary\',\n' +
+      '          onclick: function() {\n' +
+      '            allCards.forEach(function(c) {\n' +
+      '              c.setCount(c.getCount() + 1);\n' +
+      '            });\n' +
+      '            renderGlobal();\n' +
+      '          }\n' +
+      '        }),\n' +
+      '        bw.makeButton({ text: \'Dec All (\u20131)\',\n' +
+      '          variant: \'primary\',\n' +
+      '          onclick: function() {\n' +
+      '            allCards.forEach(function(c) {\n' +
+      '              c.setCount(c.getCount() - 1);\n' +
+      '            });\n' +
+      '            renderGlobal();\n' +
+      '          }\n' +
+      '        }),\n' +
+      '        bw.makeButton({ text: \'Reset All\',\n' +
+      '          variant: \'secondary\',\n' +
+      '          onclick: function() {\n' +
+      '            allCards.forEach(function(c) {\n' +
+      '              c.setCount(0);\n' +
+      '            });\n' +
+      '            renderGlobal();\n' +
+      '          }\n' +
+      '        })\n' +
+      '      ]},\n' +
+      '      { t: \'div\', a: { class: \'sum-display\' },\n' +
+      '        c: breakdown + \' = \' + sum }\n' +
+      '    ]\n' +
+      '  });\n' +
+      '}';
+
+    var section4 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Cross-Component Coordination' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('The global panel reads and modifies all three counters via the getter/setter API. It auto-updates whenever any counter changes, because <code>bw.update()</code> emits a <code>bw:statechange</code> event that bubbles up. The global panel listens with <code>bw.on()</code> &mdash; no tight coupling.') },
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: crossCompCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'global-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 5: Targeted Updates with bw.patch()
+    // =========================================================================
+    var patchSourceCode =
+      '// Each list item has a stable UUID for its value\n' +
+      'var item = {\n' +
+      '  id:    bw.uuid(\'item\'),   // row UUID\n' +
+      '  valId: bw.uuid(\'val\'),    // value UUID\n' +
+      '  name:  \'Counter #1\',\n' +
+      '  count: 0\n' +
+      '};\n' +
+      '\n' +
+      '// Value change: targeted, no rebuild\n' +
+      'bw.makeButton({ text: \'+\',\n' +
+      '  onclick: function() {\n' +
+      '    item.count++;\n' +
+      '    bw.patch(item.valId, String(item.count));\n' +
+      '  }\n' +
+      '});\n' +
+      '\n' +
+      '// Structural change: full re-render\n' +
+      'function addItem() {\n' +
+      '  listItems.push(newItem);\n' +
+      '  renderList();   // rebuilds via bw.DOM()\n' +
+      '}';
+
+    var section5 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Targeted Updates: bw.patch()' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('<code>bw.patch(id, content)</code> updates a single element by its UUID without rebuilding the entire component tree. Use it for value-only changes (counters, labels). Use <code>bw.update()</code> for structural changes (add/remove items).') },
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: patchSourceCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'list-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 6: Event Systems
+    // =========================================================================
+    var eventComparisonTable = {
+      t: 'table', a: { class: 'event-table' },
+      c: [
+        { t: 'thead', c: { t: 'tr', c: [
+          { t: 'th', c: 'Aspect' },
+          { t: 'th', c: { t: 'code', c: 'emit/on' } },
+          { t: 'th', c: { t: 'code', c: 'pub/sub' } }
+        ]}},
+        { t: 'tbody', c: [
+          { t: 'tr', c: [
+            { t: 'td', c: 'Scope' },
+            { t: 'td', c: 'DOM subtree (bubbles)' },
+            { t: 'td', c: 'Application-wide (topic)' }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Trigger' },
+            { t: 'td', c: '1:1 with DOM action' },
+            { t: 'td', c: 'Composite / logic' }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Cleanup' },
+            { t: 'td', c: 'Automatic (DOM GC)' },
+            { t: 'td', c: 'unsub() or element-tied' }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Coupling' },
+            { t: 'td', c: 'Spatial (ancestor)' },
+            { t: 'td', c: 'None (any component)' }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Error' },
+            { t: 'td', c: 'Native DOM throws' },
+            { t: 'td', c: 'Try/catch, log, continue' }
+          ]}
+        ]}
+      ]
+    };
+
+    var pubsubSourceCode =
+      '// Publish a message to a topic\n' +
+      'bw.pub(\'notification\', { text: msg });\n' +
+      '\n' +
+      '// Subscribe \u2014 returns unsub function\n' +
+      'var unsub = bw.sub(\'notification\',\n' +
+      '  function(detail) {\n' +
+      '    messages.push(detail.text);\n' +
+      '    renderPanel();\n' +
+      '  }\n' +
+      ');\n' +
+      '\n' +
+      '// Later: remove the subscription\n' +
+      'unsub();';
+
+    var section6 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: bw.raw('Event Systems: emit/on &amp; pub/sub') },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Bitwrench provides two event systems. <strong>emit/on</strong> wraps DOM CustomEvents (scoped to an element subtree, bubbles up). <strong>pub/sub</strong> is application-scoped (topic-based, decoupled from the DOM tree). Both coexist.') },
+          callout('concept', 'Comparison', eventComparisonTable),
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: pubsubSourceCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'pubsub-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 7: Stateful Todo Component
+    // =========================================================================
+    var todoSourceCode =
+      'function makeTodoList(opts) {\n' +
+      '  var id = bw.uuid(\'todo\');\n' +
+      '\n' +
+      '  var todoItem = function(item, el) {\n' +
+      '    var s = el._bw_state;\n' +
+      '    return {\n' +
+      '      t: \'div\',\n' +
+      '      a: { class: \'todo-item\'\n' +
+      '        + (item.done ? \' done\' : \'\') },\n' +
+      '      c: [\n' +
+      '        { t: \'input\', a: {\n' +
+      '          type: \'checkbox\',\n' +
+      '          checked: item.done ? \'checked\' : undefined,\n' +
+      '          onchange: function() {\n' +
+      '            item.done = !item.done;\n' +
+      '            bw.update(el);\n' +
+      '          }\n' +
+      '        }},\n' +
+      '        { t: \'span\', c: item.text },\n' +
+      '        bw.makeButton({\n' +
+      '          text: \'\u00D7\', variant: \'secondary\',\n' +
+      '          size: \'sm\',\n' +
+      '          onclick: function() {\n' +
+      '            s.todos = s.todos.filter(function(t) {\n' +
+      '              return t.id !== item.id;\n' +
+      '            });\n' +
+      '            bw.update(el);\n' +
+      '          }\n' +
+      '        })\n' +
+      '      ]\n' +
+      '    };\n' +
+      '  };\n' +
+      '\n' +
+      '  function addTodo(el) {\n' +
+      '    var s = el._bw_state;\n' +
+      '    var input = bw.$(\'#\' + id\n' +
+      '      + \' input[type="text"]\')[0];\n' +
+      '    if (!input || !input.value.trim()) return;\n' +
+      '    s.todos.push({\n' +
+      '      id: s.nextId++,\n' +
+      '      text: input.value.trim(),\n' +
+      '      done: false\n' +
+      '    });\n' +
+      '    bw.update(el);\n' +
+      '  }\n' +
+      '\n' +
+      '  var initial = (opts.initial || []).map(\n' +
+      '    function(text, i) {\n' +
+      '      return { id: i + 1, text: text, done: false };\n' +
+      '    }\n' +
+      '  );\n' +
+      '\n' +
+      '  return {\n' +
+      '    t: \'div\', a: { id: id },\n' +
+      '    o: {\n' +
+      '      state: {\n' +
+      '        todos: initial,\n' +
+      '        nextId: initial.length + 1\n' +
+      '      },\n' +
+      '      render: function(el) {\n' +
+      '        var s = el._bw_state;\n' +
+      '        var remaining = s.todos.filter(\n' +
+      '          function(t) { return !t.done; }\n' +
+      '        ).length;\n' +
+      '\n' +
+      '        bw.DOM(el, { t: \'div\', c: [\n' +
+      '          { t: \'div\', a: { class: \'todo-input-row\' },\n' +
+      '            c: [\n' +
+      '            { t: \'input\', a: {\n' +
+      '              type: \'text\',\n' +
+      '              placeholder: opts.placeholder\n' +
+      '                || \'Add item...\',\n' +
+      '              onkeydown: function(e) {\n' +
+      '                if (e.key === \'Enter\') addTodo(el);\n' +
+      '              }\n' +
+      '            }},\n' +
+      '            bw.makeButton({\n' +
+      '              text: \'Add\', variant: \'primary\',\n' +
+      '              onclick: function() { addTodo(el); }\n' +
+      '            })\n' +
+      '          ]},\n' +
+      '          { t: \'div\', c: s.todos.map(function(item) {\n' +
+      '            return todoItem(item, el);\n' +
+      '          })},\n' +
+      '          { t: \'div\', a: {\n' +
+      '            style: \'margin-top:0.5rem; \'\n' +
+      '              + \'font-size:0.8125rem; \'\n' +
+      '              + \'color:var(--bw-text-secondary);\'\n' +
+      '            },\n' +
+      '            c: remaining + \' of \'\n' +
+      '              + s.todos.length + \' remaining\'\n' +
+      '          }\n' +
+      '        ]});\n' +
+      '      }\n' +
+      '    }\n' +
+      '  };\n' +
+      '}\n' +
+      '\n' +
+      'bw.DOM(\'#todo\', makeTodoList({\n' +
+      '  initial: [\'Read the docs\',\n' +
+      '    \'Build a prototype\', \'Ship it\'],\n' +
+      '  placeholder: \'What needs doing?\'\n' +
+      '}));';
+
+    var section7 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Stateful Component: Todo List' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('A more complex component with array state, conditional rendering, and multiple interactions. The same pattern scales: state on the element, <code>o.render</code> reads it, <code>bw.update(el)</code> re-renders.') },
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: todoSourceCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'todo-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 8: Dynamic CSS Generation
+    // =========================================================================
+    var cssSourceCode =
+      'function makeThemeSwitcher() {\n' +
+      '  var themes = {\n' +
+      '    ocean:  { bg: \'#e0f7fa\', fg: \'#004d40\', accent: \'#00796b\' },\n' +
+      '    sunset: { bg: \'#fff3e0\', fg: \'#bf360c\', accent: \'#e65100\' },\n' +
+      '    forest: { bg: \'#e8f5e9\', fg: \'#1b5e20\', accent: \'#2e7d32\' }\n' +
+      '  };\n' +
+      '  var id = bw.uuid(\'theme\');\n' +
+      '\n' +
+      '  function render(el) {\n' +
+      '    var s = el._bw_state;\n' +
+      '    var t = themes[s.current];\n' +
+      '\n' +
+      '    // Generate CSS from a JS object and inject it\n' +
+      '    bw.injectCSS(bw.css({\n' +
+      '      [\'#\' + id + \' .themed\']: {\n' +
+      '        background: t.bg, color: t.fg,\n' +
+      '        \'border-color\': t.accent,\n' +
+      '        padding: \'1.25rem\', \'border-radius\': \'8px\',\n' +
+      '        border: \'2px solid\', transition: \'all 0.3s\'\n' +
+      '      },\n' +
+      '      [\'#\' + id + \' .themed h4\']: {\n' +
+      '        color: t.accent, margin: \'0 0 0.35rem\'\n' +
+      '      }\n' +
+      '    }), { id: id + \'-css\' });\n' +
+      '\n' +
+      '    bw.DOM(el, { t: \'div\', c: [\n' +
+      '      { t: \'div\',\n' +
+      '        a: { style: \'display:flex; gap:0.5rem; margin-bottom:0.75rem;\' },\n' +
+      '        c: Object.keys(themes).map(function(key) {\n' +
+      '          return bw.makeButton({\n' +
+      '            text: key.charAt(0).toUpperCase() + key.slice(1),\n' +
+      '            variant: key === s.current ? \'primary\' : \'secondary\',\n' +
+      '            onclick: function() {\n' +
+      '              s.current = key; render(el);\n' +
+      '            }\n' +
+      '          });\n' +
+      '        })\n' +
+      '      },\n' +
+      '      { t: \'div\', a: { class: \'themed\' }, c: [\n' +
+      '        { t: \'h4\', c: s.current.charAt(0).toUpperCase()\n' +
+      '          + s.current.slice(1) + \' Theme\' },\n' +
+      '        { t: \'p\', a: { style: \'margin:0; font-size:0.875rem;\' },\n' +
+      '          c: \'Colors generated from a JS object via bw.css().\' }\n' +
+      '      ]}\n' +
+      '    ]});\n' +
+      '  }\n' +
+      '\n' +
+      '  return {\n' +
+      '    t: \'div\', a: { id: id },\n' +
+      '    o: {\n' +
+      '      state: { current: \'ocean\' },\n' +
+      '      mounted: function(el) { render(el); }\n' +
+      '    }\n' +
+      '  };\n' +
+      '}\n' +
+      '\n' +
+      'bw.DOM(\'#themes\', makeThemeSwitcher());';
+
+    var section8 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Dynamic CSS Generation' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('<code>bw.css()</code> converts JavaScript objects to CSS strings. <code>bw.injectCSS()</code> inserts them into the document. Together they let you generate entire stylesheets at runtime from data.') },
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: cssSourceCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'css-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 9: Performance
+    // =========================================================================
+    var perfSourceCode =
+      'function makePerfTest() {\n' +
+      '  var id = bw.uuid(\'perf\');\n' +
+      '\n' +
+      '  function run(el) {\n' +
+      '    var start = performance.now();\n' +
+      '    var items = [];\n' +
+      '    for (var i = 0; i < 1000; i++) {\n' +
+      '      items.push({\n' +
+      '        t: \'span\',\n' +
+      '        a: { class: \'bw-badge bw-badge-primary\',\n' +
+      '             style: \'margin:2px;\' },\n' +
+      '        c: \'Item \' + (i + 1)\n' +
+      '      });\n' +
+      '    }\n' +
+      '    bw.DOM(\'#\' + id + \'-items\', { t: \'div\', c: items });\n' +
+      '    var ms = (performance.now() - start).toFixed(2);\n' +
+      '    bw.DOM(\'#\' + id + \'-time\', {\n' +
+      '      t: \'div\', a: { class: \'bw-alert bw-alert-success\' },\n' +
+      '      c: \'Rendered 1,000 items in \' + ms + \' ms\'\n' +
+      '    });\n' +
+      '  }\n' +
+      '\n' +
+      '  return {\n' +
+      '    t: \'div\', a: { id: id },\n' +
+      '    o: {\n' +
+      '      mounted: function(el) {\n' +
+      '        bw.DOM(el, {\n' +
+      '          t: \'div\', c: [\n' +
+      '            bw.makeButton({ text: \'Render 1,000 Items\',\n' +
+      '              variant: \'primary\',\n' +
+      '              onclick: function() { run(el); }\n' +
+      '            }),\n' +
+      '            { t: \'div\', a: { id: id + \'-time\',\n' +
+      '              style: \'margin-top:0.75rem;\' }, c: \'\' },\n' +
+      '            { t: \'div\', a: { id: id + \'-items\',\n' +
+      '              style: \'margin-top:0.75rem; max-height:200px; \'\n' +
+      '                + \'overflow-y:auto;\' }, c: \'\' }\n' +
+      '          ]\n' +
+      '        });\n' +
+      '      }\n' +
+      '    }\n' +
+      '  };\n' +
+      '}\n' +
+      '\n' +
+      'bw.DOM(\'#perf\', makePerfTest());';
+
+    var section9 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Performance' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Bitwrench renders directly to the DOM. This test creates and mounts 1,000 elements in a single <code>bw.DOM()</code> call.') },
+          callout('concept', 'Two update strategies', {
+            t: 'p',
+            c: bw.raw('<code>bw.DOM()</code> replaces all children &mdash; straightforward for full re-renders. But updating one value in a list of 1,000 items doesn\'t require rebuilding the other 999. That\'s what <code>bw.patch(id, value)</code> is for: it finds a single element by UUID and updates its content directly. Use <code>bw.DOM()</code> for structural changes (add/remove items) and <code>bw.patch()</code> for value changes (counters, labels, status text). The <a href="#list-demo">dynamic list</a> above demonstrates both in combination.')
+          }),
+          { t: 'div', a: { class: 'bw-grid-2col' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-code-label' }, c: 'Source' },
+              { t: 'pre', c: { t: 'code', c: perfSourceCode } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw-demo-result-label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw-demo-result', id: 'performance-demo' } }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Assemble and mount the full page
+    // =========================================================================
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', c: 'State & Interactivity' },
+          { t: 'p', a: { class: 'subtitle' }, c: "How bitwrench manages state, from simple closures to component factories and pub/sub." }
+        ]
+      }
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [section0, section1, section2, section3, section4, section5, section6, section7, section8, section9]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
 
     // ── The Simplest State Pattern (try-it editor) ──
     bw.DOM('#tryit-simple-state', makeTryIt({
@@ -1015,6 +1081,11 @@ bw.DOM('#perf', makePerfTest());</code></pre>
       var id = bw.uuid('ctr');
       var name = opts.label;
 
+      // Inline styles so this component is fully portable (no external CSS needed)
+      var cardStyle = 'background: var(--bw-card-bg, #fff); border: 1px solid var(--bw-card-border, #dee2e6); border-radius: 8px; padding: 1rem 1.25rem; text-align: center; min-width: 160px; flex: 1 1 160px;';
+      var valueStyle = 'font-size: 2rem; font-weight: 700; color: var(--bw-teal-dark, #00796b); margin: 0.5rem 0;';
+      var btnsStyle = 'display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;';
+
       var taco = {
         t: 'div', a: { id: id },
         o: {
@@ -1022,11 +1093,11 @@ bw.DOM('#perf', makePerfTest());</code></pre>
           render: function(el) {
             var s = el._bw_state;
             bw.DOM(el, {
-              t: 'div', a: { class: 'counter-card' },
+              t: 'div', a: { style: cardStyle },
               c: [
-                { t: 'h4', c: name },
-                { t: 'div', a: { class: 'counter-value' }, c: String(s.count) },
-                { t: 'div', a: { class: 'counter-btns' }, c: [
+                { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' }, c: name },
+                { t: 'div', a: { style: valueStyle }, c: String(s.count) },
+                { t: 'div', a: { style: btnsStyle }, c: [
                   bw.makeButton({ text: '+', variant: 'primary',
                     onclick: function() { s.count++; bw.update(el); } }),
                   bw.makeButton({ text: '\u2013', variant: 'secondary',
@@ -1065,7 +1136,7 @@ bw.DOM('#perf', makePerfTest());</code></pre>
     var allCards = [cardA, cardB, cardC];
 
     bw.DOM('#counter-demo', {
-      t: 'div', a: { class: 'counters-row' },
+      t: 'div', a: { style: 'display: flex; gap: 1rem; flex-wrap: wrap;' },
       c: allCards.map(function(c) { return c.taco; })
     });
 
