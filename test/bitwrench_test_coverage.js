@@ -710,7 +710,19 @@ describe("Table Builder (bw.makeTable)", function() {
       data: [{ x: 1 }],
       className: 'my-table striped'
     });
-    assert.equal(taco.a.class, 'my-table striped');
+    // bw-table is always included as the base class
+    assert.equal(taco.a.class, 'bw-table my-table striped');
+  });
+
+  it("should add striped and hover classes via props", function() {
+    const taco = bw.makeTable({
+      data: [{ x: 1 }],
+      striped: true,
+      hover: true
+    });
+    assert.ok(taco.a.class.includes('bw-table'));
+    assert.ok(taco.a.class.includes('bw-table-striped'));
+    assert.ok(taco.a.class.includes('bw-table-hover'));
   });
 
   it("should support custom column render", function() {

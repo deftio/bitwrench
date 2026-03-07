@@ -197,6 +197,80 @@ bw.makeButton({ text, variant: 'primary', size, disabled, onclick, type: 'button
 // variant: 'primary','secondary','success','danger','warning','info','light','dark'
 // also: 'outline-primary','outline-secondary', etc.
 // size: 'sm' or 'lg'
+
+bw.makeButtonGroup({ children, size, vertical: false, className })
+// Wraps buttons in a flex group with shared border-radius
+```
+
+### Interactive
+
+```javascript
+bw.makeAccordion({
+  items: [{ title, content, open: false }],
+  multiOpen: false,               // allow multiple items open at once
+  className
+})
+
+bw.makeModal({
+  title, content, footer,
+  size,                            // 'sm'|'lg'|'xl'
+  closeButton: true,               // show X button
+  onClose,                         // callback when closed
+  className
+})
+// Show/hide via ModalHandle: handle.show(), handle.hide(), handle.toggle(), handle.destroy()
+
+bw.makeToast({
+  title, content,
+  variant: 'info',                 // 'primary','success','danger','warning','info'
+  autoDismiss: true,
+  delay: 5000,                     // ms before auto-dismiss
+  position: 'top-right',           // 'top-left','top-center','bottom-right', etc.
+  className
+})
+
+bw.makeDropdown({
+  trigger,                         // string or button TACO
+  items: [{ text, href, onclick, divider, disabled }],
+  align: 'start',                  // 'start'|'end'
+  variant: 'primary',
+  className
+})
+```
+
+### Form Controls (additional)
+
+```javascript
+bw.makeRadio({ label, name, value, checked: false, id, disabled, className })
+bw.makeSwitch({ label, checked: false, id, name, disabled, className })
+// Toggle switch — styled checkbox with role="switch"
+
+bw.makePagination({
+  pages, currentPage,
+  onPageChange: (page) => {},      // callback receives page number
+  size,                            // 'sm'|'lg'
+  className
+})
+```
+
+### Loading & Placeholder
+
+```javascript
+bw.makeSkeleton({
+  variant: 'text',                 // 'text'|'circle'|'rect'
+  width, height,
+  count: 1,                        // number of text lines
+  className
+})
+
+bw.makeAvatar({
+  src,                             // image URL — shows img tag
+  alt,
+  initials,                        // fallback — shows colored circle with text
+  size: 'md',                      // 'sm'|'md'|'lg'|'xl'
+  variant: 'primary',              // background color for initials
+  className
+})
 ```
 
 ## Theming

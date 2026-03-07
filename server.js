@@ -83,7 +83,8 @@ server.listen(PORT, () => {
   console.log(`\nExample pages:`);
   console.log(`  http://localhost:${PORT}/pages/00-quick-start.html`);
   console.log(`  http://localhost:${PORT}/pages/01-components.html`);
-  console.log(`  http://localhost:${PORT}/pages/02-tables-forms.html`);
+  console.log(`  http://localhost:${PORT}/pages/02-tables.html`);
+  console.log(`  http://localhost:${PORT}/pages/02-forms.html`);
   console.log(`  http://localhost:${PORT}/pages/03-styling.html`);
   console.log(`  http://localhost:${PORT}/pages/04-dashboard.html`);
   console.log(`\nPress Ctrl+C to stop`);

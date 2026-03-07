@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <style>
     /* Theme page layout */
     .theme-controls {
@@ -247,7 +248,8 @@
       spacing:   'normal',
       radius:    'md',
       themeName: 'custom',
-      lastResult: null
+      lastResult: null,
+      codeTheme: 'dark'  // 'dark' or 'light'
     };
 
     // Preset themes — read from bw.THEME_PRESETS (canonical source)
@@ -256,6 +258,8 @@
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+    var lastPageScope = '';
+
     function generateCurrentTheme() {
       var result = bw.generateTheme(state.themeName, {
         primary:   state.primary,
@@ -266,6 +270,20 @@
         inject:    true
       });
       state.lastResult = result;
+
+      // Apply theme scope to body so the whole page reacts
+      if (lastPageScope) document.body.classList.remove(lastPageScope);
+      lastPageScope = state.themeName;
+      document.body.classList.add(lastPageScope);
+
+      // Re-inject multi-theme CSS so the scoped panels override the page theme
+      bw.generateTheme('demo-ocean', {
+        primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8', inject: true
+      });
+      bw.generateTheme('demo-sunset', {
+        primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a', inject: true
+      });
+
       return result;
     }
 
@@ -691,11 +709,39 @@
 
       var cssText = result.css || '/* Generate a theme first */';
 
+      var useCE = typeof bw.codeEditor === 'function';
+      var ceClass = state.codeTheme === 'light' ? 'bw-ce-light' : '';
+      var jsEditor = useCE
+        ? bw.codeEditor({ code: jsCall, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        : { t: 'div', a: { class: 'code-export-block' }, c: jsCall };
+      var cssEditor = useCE
+        ? bw.codeEditor({ code: cssText, lang: 'css', readOnly: true, height: '300px', className: ceClass })
+        : { t: 'textarea', a: { class: 'css-output-area', readonly: '', rows: 14 }, c: cssText };
+
       bw.DOM('#code-export', {
         t: 'div', c: [
+          // Code theme picker
+          {
+            t: 'div', a: { style: 'display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-bottom: 1rem;' }, c: [
+              { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Code theme:' },
+              {
+                t: 'select', a: {
+                  style: 'padding: 0.25rem 0.5rem; border: 1px solid var(--bw-card-border); border-radius: 4px; font-size: 0.8125rem; background: var(--bw-card-bg); color: var(--bw-text);',
+                  onchange: function(e) {
+                    state.codeTheme = e.target.value;
+                    renderCodeExport();
+                  }
+                },
+                c: [
+                  { t: 'option', a: { value: 'dark', selected: state.codeTheme === 'dark' ? '' : undefined }, c: 'Dark' },
+                  { t: 'option', a: { value: 'light', selected: state.codeTheme === 'light' ? '' : undefined }, c: 'Light' }
+                ]
+              }
+            ]
+          },
           // JS call
           { t: 'h3', a: { style: 'margin: 0 0 0.75rem 0; font-size: 1rem;' }, c: 'JavaScript Call' },
-          { t: 'div', a: { class: 'code-export-block', style: 'margin-bottom: 1.5rem;' }, c: jsCall },
+          { t: 'div', a: { style: 'margin-bottom: 1.5rem;' }, c: jsEditor },
 
           // CSS output
           {
@@ -713,14 +759,7 @@
               })
             ]
           },
-          {
-            t: 'textarea', a: {
-              class: 'css-output-area',
-              readonly: '',
-              rows: 14,
-              onclick: function(e) { e.target.select(); }
-            }, c: cssText
-          },
+          cssEditor,
 
           // Explanation
           {
@@ -759,9 +798,9 @@
                 bw.makeButton({
                   text: isDark ? 'Switch to Light' : 'Switch to Dark',
                   variant: 'primary',
-                  onClick: function() {
-                    bw.toggleDarkMode();
+                  onclick: function() {
                     isDark = !isDark;
+                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
                     bw.DOM('#dark-mode-demo', buildDarkDemo());
                   }
                 }),
@@ -774,8 +813,14 @@
               t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 0.5rem;' },
               c: [
                 { t: 'h4', c: 'How it works' },
-                { t: 'p', c: 'When you call bw.generateTheme(), the palette is stored internally. toggleDarkMode() then derives dark backgrounds, surface colors, and text from those palette hues — not hardcoded grays.' },
-                { t: 'pre', c: { t: 'code', c: '// Generate a theme first\nbw.generateTheme("ocean", { primary: "#0077b6", secondary: "#90e0ef" });\n// Dark mode uses ocean hues for backgrounds\nbw.toggleDarkMode();' } }
+                { t: 'p', c: 'Dark mode is toggled via the data-theme="dark" attribute on <html>. The default CSS includes dark mode overrides that invert backgrounds, surfaces, and text colors while respecting the active theme\'s hues.' },
+                (function() {
+                  var darkCode = '// Toggle dark mode\ndocument.documentElement.setAttribute("data-theme", "dark");\n\n// Or use the nav bar toggle (top-right crescent icon)\n// Dark mode works with any generated theme';
+                  var ceClass = state.codeTheme === 'light' ? 'bw-ce-light' : '';
+                  return typeof bw.codeEditor === 'function'
+                    ? bw.codeEditor({ code: darkCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+                    : { t: 'pre', c: { t: 'code', c: darkCode } };
+                })()
               ]
             }
           ]

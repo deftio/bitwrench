@@ -9,8 +9,28 @@ import terser from '@rollup/plugin-terser'
 import css from 'rollup-plugin-css-only'
 import { execSync } from 'child_process';
 
+import { fileURLToPath } from 'url';
+import { dirname, resolve as pathResolve } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const banner = `/*! bitwrench v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+
+// Inline plugin: redirect component imports to empty stub (for lean build)
+function stubComponents() {
+  const stubPath = pathResolve(__dirname, 'src/bitwrench-components-stub.js');
+  const componentPath = pathResolve(__dirname, 'src/bitwrench-components-v2.js');
+  return {
+    name: 'stub-components',
+    resolveId(source, importer) {
+      if (importer && source.includes('bitwrench-components-v2')) {
+        return stubPath;
+      }
+      return null;
+    }
+  };
+}
 
 // Generate version.js before building
 execSync('node tools/generate-version.cjs', { stdio: 'inherit' });
@@ -190,6 +210,89 @@ const babelConfig = {
         },
       ],
       plugins: [
+        resolve(),
+        commonjs(),
+        babel(babelConfig),
+      ],
+    },
+
+    // Lean build — core library WITHOUT BCCL components (UMD, ESM, CJS)
+    {
+      input: 'src/bitwrench-lean.js',
+      output: [
+        {
+          file: 'dist/bitwrench-lean.umd.js',
+          format: 'umd',
+          name: 'bw',
+          banner: leanBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-lean.umd.min.js',
+          format: 'umd',
+          name: 'bw',
+          banner: leanBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-lean.esm.js',
+          format: 'esm',
+          banner: leanBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-lean.esm.min.js',
+          format: 'esm',
+          banner: leanBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-lean.cjs.js',
+          format: 'cjs',
+          exports: 'auto',
+          banner: leanBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-lean.cjs.min.js',
+          format: 'cjs',
+          exports: 'auto',
+          banner: leanBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        stubComponents(),
+        resolve(),
+        commonjs(),
+      ],
+    },
+
+    // Lean build — ES5 (legacy browsers)
+    {
+      input: 'src/bitwrench-lean.js',
+      output: [
+        {
+          file: 'dist/bitwrench-lean.es5.js',
+          format: 'umd',
+          name: 'bw',
+          banner: leanBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-lean.es5.min.js',
+          format: 'umd',
+          name: 'bw',
+          banner: leanBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        stubComponents(),
         resolve(),
         commonjs(),
         babel(babelConfig),

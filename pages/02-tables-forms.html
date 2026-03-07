@@ -14,15 +14,16 @@
   <style>
     /* Page-specific overrides (shared-theme.css handles the rest) */
     .controls {
-      margin-bottom: 1rem;
+      margin-bottom: 0;
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
       align-items: center;
-      padding: 1rem 1.25rem;
-      background: var(--bw-teal-bg);
+      padding: 0.875rem 1.25rem;
+      background: var(--bw-card-bg);
       border-radius: var(--bw-radius) var(--bw-radius) 0 0;
-      border-bottom: 1px solid var(--bw-card-border);
+      border: 1px solid var(--bw-card-border);
+      border-bottom: none;
     }
     .table-card {
       background: var(--bw-card-bg);
@@ -32,16 +33,12 @@
       overflow: hidden;
     }
     .table-card .bw-table { margin-bottom: 0; }
-    .table-card .bw-table > thead > tr > * {
-      background: var(--bw-teal-dark);
-      color: #fff;
-      border-bottom-color: var(--bw-teal);
-      font-weight: 600;
-    }
     .table-info {
-      padding: 0.75rem 1.25rem;
-      background: var(--bw-teal-bg);
-      border-top: 1px solid var(--bw-card-border);
+      padding: 0.625rem 1.25rem;
+      background: var(--bw-card-bg);
+      border: 1px solid var(--bw-card-border);
+      border-top: none;
+      border-radius: 0 0 var(--bw-radius) var(--bw-radius);
       font-size: 0.8125rem;
       color: var(--bw-text-secondary);
     }
@@ -165,7 +162,7 @@
       { name: 'Swift',      year: 2014, creator: 'Chris Lattner',     paradigm: 'Multi-paradigm', typing: 'Static',   popularity: 8 }
     ];
 
-    // ── Showcase hero table ────────────────────────────────────────
+    // ── Showcase hero table (sortable with re-render) ───────────────
     function rankBadge(v) {
       var colours = { 1: '#28a745', 2: '#218838', 3: '#17a2b8', 4: '#007bff', 5: '#6c757d', 6: '#fd7e14', 7: '#e83e8c', 8: '#6610f2' };
       return {
@@ -181,18 +178,32 @@
       };
     }
 
-    bw.DOM('#showcase-table', bw.makeTable({
-      data: languages,
-      className: 'table table-striped table-hover',
-      columns: [
-        { key: 'name',       label: 'Language' },
-        { key: 'year',       label: 'Year' },
-        { key: 'creator',    label: 'Creator' },
-        { key: 'paradigm',   label: 'Paradigm' },
-        { key: 'typing',     label: 'Typing' },
-        { key: 'popularity', label: 'Rank', render: rankBadge }
-      ]
-    }));
+    var showcaseSortCol = null;
+    var showcaseSortDir = 'asc';
+    function renderShowcase() {
+      bw.DOM('#showcase-table', bw.makeTable({
+        data: languages,
+        striped: true,
+        hover: true,
+        sortable: true,
+        sortColumn: showcaseSortCol,
+        sortDirection: showcaseSortDir,
+        onSort: function(col, dir) {
+          showcaseSortCol = col;
+          showcaseSortDir = dir;
+          renderShowcase();
+        },
+        columns: [
+          { key: 'name',       label: 'Language' },
+          { key: 'year',       label: 'Year' },
+          { key: 'creator',    label: 'Creator' },
+          { key: 'paradigm',   label: 'Paradigm' },
+          { key: 'typing',     label: 'Typing' },
+          { key: 'popularity', label: 'Rank', render: rankBadge }
+        ]
+      }));
+    }
+    renderShowcase();
 
     // ── Step 1: Minimal table ──────────────────────────────────────
     var step1Code = `// Just pass an array — columns are auto-detected
@@ -201,12 +212,16 @@ bw.DOM(target, bw.makeTable({
     { name: 'JavaScript', year: 1995, creator: 'Brendan Eich' },
     { name: 'Python',     year: 1991, creator: 'Guido van Rossum' },
     { name: 'Rust',       year: 2010, creator: 'Graydon Hoare' }
-  ]
+  ],
+  striped: true,
+  hover: true
 }));`;
     bw.DOM('#step1-demo', bw.makeCodeDemo({
       title: 'Minimal Table',
       result: bw.makeTable({
-        data: languages.slice(0, 3).map(function(r) { return { name: r.name, year: r.year, creator: r.creator }; })
+        data: languages.slice(0, 3).map(function(r) { return { name: r.name, year: r.year, creator: r.creator }; }),
+        striped: true,
+        hover: true
       }),
       code: step1Code
     }));
@@ -215,6 +230,8 @@ bw.DOM(target, bw.makeTable({
     var step2Code = `// Choose which fields to show and set labels
 bw.DOM(target, bw.makeTable({
   data: languages,
+  striped: true,
+  hover: true,
   columns: [
     { key: 'name',    label: 'Language' },
     { key: 'year',    label: 'First Released' },
@@ -225,6 +242,8 @@ bw.DOM(target, bw.makeTable({
       title: 'Custom Columns',
       result: bw.makeTable({
         data: languages,
+        striped: true,
+        hover: true,
         columns: [
           { key: 'name',     label: 'Language' },
           { key: 'year',     label: 'First Released' },
@@ -238,6 +257,8 @@ bw.DOM(target, bw.makeTable({
     var step3Code = `// render functions transform cell values
 bw.DOM(target, bw.makeTable({
   data: languages,
+  striped: true,
+  hover: true,
   columns: [
     { key: 'name', label: 'Language' },
     { key: 'year', label: 'Year' },
@@ -263,6 +284,8 @@ bw.DOM(target, bw.makeTable({
       title: 'Formatting with render',
       result: bw.makeTable({
         data: languages,
+        striped: true,
+        hover: true,
         columns: [
           { key: 'name', label: 'Language' },
           { key: 'year', label: 'Year' },
@@ -342,8 +365,7 @@ renderTable();`;
     setTimeout(renderStep4, 0);
 
     // ── Step 5: Styling ────────────────────────────────────────────
-    var step5Code = `// Add table-striped and table-hover via className.
-// Customise header colours with bw.css() + bw.injectCSS().
+    var step5Code = `// Use striped and hover props, plus custom header CSS.
 bw.injectCSS(bw.css({
   '.custom-header thead th': {
     background: '#1a5276',
@@ -354,7 +376,9 @@ bw.injectCSS(bw.css({
 
 bw.DOM(target, bw.makeTable({
   data: languages,
-  className: 'table table-striped table-hover custom-header',
+  striped: true,
+  hover: true,
+  className: 'custom-header',
   columns: [
     { key: 'name',    label: 'Language' },
     { key: 'year',    label: 'Year' },
@@ -376,7 +400,9 @@ bw.DOM(target, bw.makeTable({
       title: 'Styling',
       result: bw.makeTable({
         data: languages,
-        className: 'table table-striped table-hover custom-header',
+        striped: true,
+        hover: true,
+        className: 'custom-header',
         columns: [
           { key: 'name',    label: 'Language' },
           { key: 'year',    label: 'Year' },

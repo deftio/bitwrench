@@ -132,6 +132,16 @@
       tacoStr = tacoStr.substring(0, 400) + '\n  ...';
     }
 
+    // Use bw.codeEditor if available (syntax-highlighted), otherwise fall back to plain pre/code
+    var useCE = typeof bw !== 'undefined' && typeof bw.codeEditor === 'function';
+
+    function codeBlock(code, lang) {
+      if (useCE) {
+        return bw.codeEditor({ code: code, lang: lang || 'js', readOnly: true, height: 'auto' });
+      }
+      return { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: code } } };
+    }
+
     return {
       t: 'div',
       a: { class: 'pipeline-demo' },
@@ -146,7 +156,7 @@
               a: { class: 'pipeline-col' },
               c: [
                 { t: 'div', a: { class: 'pipeline-col-label' }, c: 'Helper Call' },
-                { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: opts.helperCode } } }
+                codeBlock(opts.helperCode, 'js')
               ]
             },
             { t: 'div', a: { class: 'pipeline-arrow' }, c: '\u2192' },
@@ -155,7 +165,7 @@
               a: { class: 'pipeline-col' },
               c: [
                 { t: 'div', a: { class: 'pipeline-col-label' }, c: 'Returns This Object' },
-                { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: tacoStr } } }
+                codeBlock(tacoStr, 'js')
               ]
             },
             { t: 'div', a: { class: 'pipeline-arrow' }, c: '\u2192' },

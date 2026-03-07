@@ -20,16 +20,18 @@
     { text: 'Styling', href: '03-styling.html' },
     { text: 'Themes', href: '10-themes.html' },
     { text: 'State', href: '05-state.html' },
-    { text: 'Examples', href: '02-tables-forms.html' },
+    { text: 'Examples', href: '02-tables.html' },
     { text: 'API Reference', href: '08-api-reference.html' },
     { text: 'Builds', href: '09-builds.html' }
   ];
 
   // Secondary nav items (sub-nav bar, shown only on example pages)
   var secondaryItems = [
-    { text: 'Tables & Data', href: '02-tables-forms.html' },
+    { text: 'Tables', href: '02-tables.html' },
+    { text: 'Forms', href: '02-forms.html' },
     { text: 'Dashboard', href: '04-dashboard.html' },
     { text: 'Code Editor', href: '11-code-editor.html' },
+    { text: 'Digital Clock', href: '06-clock.html' },
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
     { text: 'Comparison', href: '07-framework-comparison.html' }
   ];

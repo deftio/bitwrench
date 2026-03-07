@@ -291,8 +291,8 @@ body {
   color: inherit;
 }
 .page-header .subtitle {
-  opacity: 0.8;
-  font-size: 0.95rem;
+  opacity: 0.85;
+  font-size: 1.1rem;
   margin: 0;
 }
 

@@ -3014,12 +3014,21 @@ bw.makeTable = function(config) {
   const {
     data = [],
     columns,
-    className = "table",
+    className = '',
+    striped = false,
+    hover = false,
     sortable = true,
     onSort,
     sortColumn,
     sortDirection = 'asc'
   } = config;
+
+  // Build class list: always include bw-table, add striped/hover, append user className
+  let cls = 'bw-table';
+  if (striped) cls += ' bw-table-striped';
+  if (hover) cls += ' bw-table-hover';
+  if (className) cls += ' ' + className;
+  cls = cls.trim();
   
   // Auto-detect columns if not provided
   const cols = columns || (data.length > 0 
@@ -3107,7 +3116,7 @@ bw.makeTable = function(config) {
   
   return {
     t: 'table',
-    a: { class: className },
+    a: { class: cls },
     c: [thead, tbody]
   };
 };
@@ -3122,7 +3131,9 @@ bw.makeTable = function(config) {
  * @param {string} [config.title] - Table title heading
  * @param {Array<Object>} config.data - Array of row objects
  * @param {Array<Object>} [config.columns] - Column definitions
- * @param {string} [config.className="table table-striped table-hover"] - Table CSS class
+ * @param {string} [config.className=''] - Additional CSS classes for the table
+ * @param {boolean} [config.striped=true] - Add striped row styling
+ * @param {boolean} [config.hover=true] - Add hover row highlighting
  * @param {boolean} [config.responsive=true] - Wrap table in responsive overflow div
  * @returns {Object} TACO object for table with wrapper
  * @example
@@ -3137,7 +3148,9 @@ bw.makeDataTable = function(config) {
     title,
     data,
     columns,
-    className = "table table-striped table-hover",
+    className = '',
+    striped = true,
+    hover = true,
     responsive = true,
     ...tableConfig
   } = config;
@@ -3146,6 +3159,8 @@ bw.makeDataTable = function(config) {
     data,
     columns,
     className,
+    striped,
+    hover,
     ...tableConfig
   });
   

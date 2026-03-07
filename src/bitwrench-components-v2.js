@@ -581,25 +581,30 @@ export function makeAlert(props = {}) {
  * @param {Object} [props] - Badge configuration
  * @param {string} [props.text] - Badge display text
  * @param {string} [props.variant="primary"] - Color variant
+ * @param {string} [props.size] - Size variant: 'sm' or 'lg' (default is medium)
  * @param {boolean} [props.pill=false] - Use pill (rounded) shape
  * @param {string} [props.className] - Additional CSS classes
  * @returns {Object} TACO object representing a badge span
  * @category Component Builders
  * @example
  * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
+ * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
  */
 export function makeBadge(props = {}) {
   const {
     text,
     variant = 'primary',
+    size,
     pill = false,
     className = ''
   } = props;
 
+  const sizeClass = size === 'sm' ? ' bw-badge-sm' : size === 'lg' ? ' bw-badge-lg' : '';
+
   return {
     t: 'span',
     a: {
-      class: `bw-badge bw-badge-${variant} ${pill ? 'bw-badge-pill' : ''} ${className}`.trim()
+      class: `bw-badge bw-badge-${variant}${sizeClass} ${pill ? 'bw-badge-pill' : ''} ${className}`.trim()
     },
     c: text
   };
@@ -1833,19 +1838,17 @@ export function makeCodeDemo(props = {}) {
             },
             c: 'Copy'
           },
-          {
-            t: 'pre',
-            a: {
-              class: 'bw-code-pre'
-            },
-            c: {
-              t: 'code',
-              a: {
-                class: `bw-code-block language-${language}`
-              },
-              c: code
-            }
-          }
+          (typeof globalThis !== 'undefined' && typeof globalThis.bw !== 'undefined' && typeof globalThis.bw.codeEditor === 'function')
+            ? globalThis.bw.codeEditor({ code: code, lang: language === 'javascript' ? 'js' : language, readOnly: true, height: 'auto' })
+            : {
+                t: 'pre',
+                a: { class: 'bw-code-pre' },
+                c: {
+                  t: 'code',
+                  a: { class: `bw-code-block language-${language}` },
+                  c: code
+                }
+              }
         ]
       }
     });
@@ -1876,9 +1879,849 @@ export function makeCodeDemo(props = {}) {
  *
  * @type {Object.<string, Function>}
  */
+// =========================================================================
+// Phase 1: Quick Wins
+// =========================================================================
+
+/**
+ * Create a pagination navigation component
+ *
+ * @param {Object} [props] - Pagination configuration
+ * @param {number} [props.pages=1] - Total number of pages
+ * @param {number} [props.currentPage=1] - Currently active page (1-based)
+ * @param {Function} [props.onPageChange] - Callback when page changes, receives page number
+ * @param {string} [props.size] - Size variant ("sm" or "lg")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a pagination nav
+ * @category Component Builders
+ * @example
+ * const pager = makePagination({
+ *   pages: 10,
+ *   currentPage: 3,
+ *   onPageChange: (page) => loadPage(page)
+ * });
+ */
+export function makePagination(props = {}) {
+  const {
+    pages = 1,
+    currentPage = 1,
+    onPageChange,
+    size,
+    className = ''
+  } = props;
+
+  function handleClick(page) {
+    return function(e) {
+      e.preventDefault();
+      if (page < 1 || page > pages || page === currentPage) return;
+      if (onPageChange) onPageChange(page);
+    };
+  }
+
+  const items = [];
+
+  // Previous arrow
+  items.push({
+    t: 'li',
+    a: { class: `bw-page-item ${currentPage <= 1 ? 'bw-disabled' : ''}`.trim() },
+    c: {
+      t: 'a',
+      a: { class: 'bw-page-link', href: '#', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous' },
+      c: '\u2039'
+    }
+  });
+
+  // Page numbers
+  for (var i = 1; i <= pages; i++) {
+    (function(pageNum) {
+      items.push({
+        t: 'li',
+        a: { class: `bw-page-item ${pageNum === currentPage ? 'bw-active' : ''}`.trim() },
+        c: {
+          t: 'a',
+          a: { class: 'bw-page-link', href: '#', onclick: handleClick(pageNum) },
+          c: '' + pageNum
+        }
+      });
+    })(i);
+  }
+
+  // Next arrow
+  items.push({
+    t: 'li',
+    a: { class: `bw-page-item ${currentPage >= pages ? 'bw-disabled' : ''}`.trim() },
+    c: {
+      t: 'a',
+      a: { class: 'bw-page-link', href: '#', onclick: handleClick(currentPage + 1), 'aria-label': 'Next' },
+      c: '\u203A'
+    }
+  });
+
+  return {
+    t: 'nav',
+    a: { 'aria-label': 'Pagination' },
+    c: {
+      t: 'ul',
+      a: {
+        class: `bw-pagination ${size ? 'bw-pagination-' + size : ''} ${className}`.trim()
+      },
+      c: items
+    }
+  };
+}
+
+/**
+ * Create a radio button input with label
+ *
+ * @param {Object} [props] - Radio configuration
+ * @param {string} [props.label] - Radio label text
+ * @param {string} [props.name] - Radio group name
+ * @param {string} [props.value] - Radio value attribute
+ * @param {boolean} [props.checked=false] - Whether the radio is selected
+ * @param {string} [props.id] - Element ID (links label to radio)
+ * @param {boolean} [props.disabled=false] - Whether the radio is disabled
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a radio form group
+ * @category Component Builders
+ * @example
+ * const radio = makeRadio({
+ *   label: "Option A",
+ *   name: "choice",
+ *   value: "a",
+ *   checked: true
+ * });
+ */
+export function makeRadio(props = {}) {
+  const {
+    label,
+    name,
+    value,
+    checked = false,
+    id,
+    disabled = false,
+    className = '',
+    ...eventHandlers
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: `bw-form-check ${className}`.trim() },
+    c: [
+      {
+        t: 'input',
+        a: {
+          type: 'radio',
+          class: 'bw-form-check-input',
+          name,
+          value,
+          checked,
+          id,
+          disabled,
+          ...eventHandlers
+        }
+      },
+      label && {
+        t: 'label',
+        a: { class: 'bw-form-check-label', for: id },
+        c: label
+      }
+    ].filter(Boolean)
+  };
+}
+
+/**
+ * Create a button group wrapper
+ *
+ * @param {Object} [props] - Button group configuration
+ * @param {Array} [props.children] - Button TACO objects to group
+ * @param {string} [props.size] - Size variant ("sm" or "lg")
+ * @param {boolean} [props.vertical=false] - Stack buttons vertically
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a button group
+ * @category Component Builders
+ * @example
+ * const group = makeButtonGroup({
+ *   children: [
+ *     makeButton({ text: "Left", variant: "primary" }),
+ *     makeButton({ text: "Middle", variant: "primary" }),
+ *     makeButton({ text: "Right", variant: "primary" })
+ *   ]
+ * });
+ */
+export function makeButtonGroup(props = {}) {
+  const {
+    children,
+    size,
+    vertical = false,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: {
+      class: `${vertical ? 'bw-btn-group-vertical' : 'bw-btn-group'} ${size ? 'bw-btn-group-' + size : ''} ${className}`.trim(),
+      role: 'group'
+    },
+    c: children
+  };
+}
+
+// =========================================================================
+// Phase 2: Core Interactive
+// =========================================================================
+
+/**
+ * Create an accordion component with collapsible items
+ *
+ * @param {Object} [props] - Accordion configuration
+ * @param {Array<Object>} [props.items=[]] - Accordion items
+ * @param {string} props.items[].title - Header text for the accordion item
+ * @param {string|Object|Array} props.items[].content - Collapsible content
+ * @param {boolean} [props.items[].open=false] - Whether the item is initially open
+ * @param {boolean} [props.multiOpen=false] - Allow multiple items open simultaneously
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing an accordion
+ * @category Component Builders
+ * @example
+ * const accordion = makeAccordion({
+ *   items: [
+ *     { title: "Section 1", content: "Content 1", open: true },
+ *     { title: "Section 2", content: "Content 2" }
+ *   ]
+ * });
+ */
+export function makeAccordion(props = {}) {
+  const {
+    items = [],
+    multiOpen = false,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: `bw-accordion ${className}`.trim() },
+    c: items.map(function(item, index) {
+      return {
+        t: 'div',
+        a: { class: 'bw-accordion-item' },
+        c: [
+          {
+            t: 'h2',
+            a: { class: 'bw-accordion-header' },
+            c: {
+              t: 'button',
+              a: {
+                class: `bw-accordion-button ${item.open ? '' : 'bw-collapsed'}`.trim(),
+                type: 'button',
+                'aria-expanded': item.open ? 'true' : 'false',
+                'data-accordion-index': index,
+                onclick: function(e) {
+                  var btn = e.target.closest('.bw-accordion-button');
+                  var accordionEl = btn.closest('.bw-accordion');
+                  var accordionItem = btn.closest('.bw-accordion-item');
+                  var collapse = accordionItem.querySelector('.bw-accordion-collapse');
+                  var isOpen = collapse.classList.contains('bw-collapse-show');
+
+                  if (!multiOpen) {
+                    // Close all siblings
+                    var allCollapses = accordionEl.querySelectorAll('.bw-accordion-collapse');
+                    var allButtons = accordionEl.querySelectorAll('.bw-accordion-button');
+                    for (var j = 0; j < allCollapses.length; j++) {
+                      allCollapses[j].classList.remove('bw-collapse-show');
+                      allCollapses[j].style.maxHeight = null;
+                    }
+                    for (var k = 0; k < allButtons.length; k++) {
+                      allButtons[k].classList.add('bw-collapsed');
+                      allButtons[k].setAttribute('aria-expanded', 'false');
+                    }
+                  }
+
+                  if (isOpen) {
+                    collapse.classList.remove('bw-collapse-show');
+                    collapse.style.maxHeight = null;
+                    btn.classList.add('bw-collapsed');
+                    btn.setAttribute('aria-expanded', 'false');
+                  } else {
+                    collapse.classList.add('bw-collapse-show');
+                    collapse.style.maxHeight = collapse.scrollHeight + 'px';
+                    btn.classList.remove('bw-collapsed');
+                    btn.setAttribute('aria-expanded', 'true');
+                  }
+                }
+              },
+              c: item.title
+            }
+          },
+          {
+            t: 'div',
+            a: { class: `bw-accordion-collapse ${item.open ? 'bw-collapse-show' : ''}`.trim() },
+            c: {
+              t: 'div',
+              a: { class: 'bw-accordion-body' },
+              c: item.content
+            },
+            o: item.open ? {
+              mounted: function(el) {
+                el.style.maxHeight = el.scrollHeight + 'px';
+              }
+            } : undefined
+          }
+        ]
+      };
+    }),
+    o: {
+      type: 'accordion',
+      state: { multiOpen: multiOpen }
+    }
+  };
+}
+
+/**
+ * Imperative handle for a rendered modal component
+ *
+ * Provides `.show()`, `.hide()`, `.toggle()`, and `.destroy()` methods
+ * for controlling the modal programmatically.
+ *
+ * @category Component Handles
+ */
+export class ModalHandle {
+  /**
+   * @param {Element} element - The modal backdrop DOM element
+   * @param {Object} taco - The original TACO object
+   */
+  constructor(element, taco) {
+    this.element = element;
+    this._taco = taco;
+    this._escHandler = null;
+  }
+
+  /** Show the modal */
+  show() {
+    this.element.classList.add('bw-modal-show');
+    document.body.style.overflow = 'hidden';
+    return this;
+  }
+
+  /** Hide the modal */
+  hide() {
+    this.element.classList.remove('bw-modal-show');
+    document.body.style.overflow = '';
+    return this;
+  }
+
+  /** Toggle modal visibility */
+  toggle() {
+    if (this.element.classList.contains('bw-modal-show')) {
+      this.hide();
+    } else {
+      this.show();
+    }
+    return this;
+  }
+
+  /** Remove the modal from DOM and clean up */
+  destroy() {
+    this.hide();
+    if (this._escHandler) {
+      document.removeEventListener('keydown', this._escHandler);
+    }
+    if (this.element.parentNode) {
+      this.element.parentNode.removeChild(this.element);
+    }
+  }
+}
+
+/**
+ * Create a modal dialog overlay
+ *
+ * @param {Object} [props] - Modal configuration
+ * @param {string} [props.title] - Modal title in header
+ * @param {string|Object|Array} [props.content] - Modal body content
+ * @param {string|Object|Array} [props.footer] - Modal footer content
+ * @param {string} [props.size] - Modal size ("sm", "lg", "xl")
+ * @param {boolean} [props.closeButton=true] - Show X close button in header
+ * @param {Function} [props.onClose] - Callback when modal is closed
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a modal
+ * @category Component Builders
+ * @example
+ * const modal = makeModal({
+ *   title: "Confirm",
+ *   content: "Are you sure?",
+ *   footer: makeButton({ text: "OK", variant: "primary" })
+ * });
+ */
+export function makeModal(props = {}) {
+  const {
+    title,
+    content,
+    footer,
+    size,
+    closeButton = true,
+    onClose,
+    className = ''
+  } = props;
+
+  function closeModal(el) {
+    var backdrop = el.closest('.bw-modal');
+    if (backdrop) {
+      backdrop.classList.remove('bw-modal-show');
+      document.body.style.overflow = '';
+    }
+    if (onClose) onClose();
+  }
+
+  return {
+    t: 'div',
+    a: { class: `bw-modal ${className}`.trim() },
+    c: {
+      t: 'div',
+      a: { class: `bw-modal-dialog ${size ? 'bw-modal-' + size : ''}`.trim() },
+      c: {
+        t: 'div',
+        a: { class: 'bw-modal-content' },
+        c: [
+          (title || closeButton) && {
+            t: 'div',
+            a: { class: 'bw-modal-header' },
+            c: [
+              title && { t: 'h5', a: { class: 'bw-modal-title' }, c: title },
+              closeButton && {
+                t: 'button',
+                a: {
+                  type: 'button',
+                  class: 'bw-close',
+                  'aria-label': 'Close',
+                  onclick: function(e) { closeModal(e.target); }
+                },
+                c: '\u00D7'
+              }
+            ].filter(Boolean)
+          },
+          content && {
+            t: 'div',
+            a: { class: 'bw-modal-body' },
+            c: content
+          },
+          footer && {
+            t: 'div',
+            a: { class: 'bw-modal-footer' },
+            c: footer
+          }
+        ].filter(Boolean)
+      }
+    },
+    o: {
+      type: 'modal',
+      mounted: function(el) {
+        // Click backdrop to close
+        el.addEventListener('click', function(e) {
+          if (e.target === el) closeModal(el);
+        });
+        // Escape key to close
+        var escHandler = function(e) {
+          if (e.key === 'Escape' && el.classList.contains('bw-modal-show')) {
+            closeModal(el);
+          }
+        };
+        document.addEventListener('keydown', escHandler);
+        el._bw_escHandler = escHandler;
+      },
+      unmount: function(el) {
+        if (el._bw_escHandler) {
+          document.removeEventListener('keydown', el._bw_escHandler);
+        }
+        document.body.style.overflow = '';
+      }
+    }
+  };
+}
+
+/**
+ * Create a toast notification popup
+ *
+ * @param {Object} [props] - Toast configuration
+ * @param {string} [props.title] - Toast title
+ * @param {string|Object|Array} [props.content] - Toast body content
+ * @param {string} [props.variant="info"] - Color variant ("primary", "success", "danger", "warning", "info")
+ * @param {boolean} [props.autoDismiss=true] - Auto-dismiss after delay
+ * @param {number} [props.delay=5000] - Auto-dismiss delay in ms
+ * @param {string} [props.position="top-right"] - Container position
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a toast
+ * @category Component Builders
+ * @example
+ * const toast = makeToast({
+ *   title: "Success",
+ *   content: "File saved!",
+ *   variant: "success"
+ * });
+ */
+export function makeToast(props = {}) {
+  const {
+    title,
+    content,
+    variant = 'info',
+    autoDismiss = true,
+    delay = 5000,
+    position = 'top-right',
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: {
+      class: `bw-toast bw-toast-${variant} ${className}`.trim(),
+      role: 'alert',
+      'data-position': position
+    },
+    c: [
+      (title) && {
+        t: 'div',
+        a: { class: 'bw-toast-header' },
+        c: [
+          { t: 'strong', c: title },
+          {
+            t: 'button',
+            a: {
+              type: 'button',
+              class: 'bw-close',
+              'aria-label': 'Close',
+              onclick: function(e) {
+                var toast = e.target.closest('.bw-toast');
+                if (toast) {
+                  toast.classList.add('bw-toast-hiding');
+                  setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+                }
+              }
+            },
+            c: '\u00D7'
+          }
+        ]
+      },
+      content && {
+        t: 'div',
+        a: { class: 'bw-toast-body' },
+        c: content
+      }
+    ].filter(Boolean),
+    o: {
+      type: 'toast',
+      mounted: function(el) {
+        // Trigger show animation
+        requestAnimationFrame(function() {
+          el.classList.add('bw-toast-show');
+        });
+        // Auto-dismiss
+        if (autoDismiss) {
+          setTimeout(function() {
+            el.classList.add('bw-toast-hiding');
+            setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+          }, delay);
+        }
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 3: Essential Modern
+// =========================================================================
+
+/**
+ * Create a dropdown menu triggered by a button
+ *
+ * @param {Object} [props] - Dropdown configuration
+ * @param {string|Object} [props.trigger] - Button text or TACO for the trigger
+ * @param {Array<Object>} [props.items=[]] - Menu items
+ * @param {string} [props.items[].text] - Item display text
+ * @param {string} [props.items[].href] - Item link URL
+ * @param {Function} [props.items[].onclick] - Item click handler
+ * @param {boolean} [props.items[].divider] - Render as a divider line
+ * @param {boolean} [props.items[].disabled] - Whether the item is disabled
+ * @param {string} [props.align="start"] - Menu alignment ("start" or "end")
+ * @param {string} [props.variant="primary"] - Trigger button variant
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a dropdown
+ * @category Component Builders
+ * @example
+ * const dropdown = makeDropdown({
+ *   trigger: "Actions",
+ *   items: [
+ *     { text: "Edit", onclick: () => edit() },
+ *     { divider: true },
+ *     { text: "Delete", onclick: () => del() }
+ *   ]
+ * });
+ */
+export function makeDropdown(props = {}) {
+  const {
+    trigger,
+    items = [],
+    align = 'start',
+    variant = 'primary',
+    className = ''
+  } = props;
+
+  var triggerTaco;
+  if (typeof trigger === 'string' || trigger === undefined) {
+    triggerTaco = {
+      t: 'button',
+      a: {
+        class: `bw-btn bw-btn-${variant} bw-dropdown-toggle`,
+        type: 'button',
+        onclick: function(e) {
+          var dropdown = e.target.closest('.bw-dropdown');
+          var menu = dropdown.querySelector('.bw-dropdown-menu');
+          menu.classList.toggle('bw-dropdown-show');
+        }
+      },
+      c: trigger || 'Dropdown'
+    };
+  } else {
+    triggerTaco = trigger;
+  }
+
+  return {
+    t: 'div',
+    a: { class: `bw-dropdown ${className}`.trim() },
+    c: [
+      triggerTaco,
+      {
+        t: 'div',
+        a: { class: `bw-dropdown-menu ${align === 'end' ? 'bw-dropdown-menu-end' : ''}`.trim() },
+        c: items.map(function(item) {
+          if (item.divider) {
+            return { t: 'hr', a: { class: 'bw-dropdown-divider' } };
+          }
+          return {
+            t: 'a',
+            a: {
+              class: `bw-dropdown-item ${item.disabled ? 'disabled' : ''}`.trim(),
+              href: item.href || '#',
+              onclick: item.disabled ? undefined : function(e) {
+                if (!item.href) e.preventDefault();
+                var dropdown = e.target.closest('.bw-dropdown');
+                var menu = dropdown.querySelector('.bw-dropdown-menu');
+                menu.classList.remove('bw-dropdown-show');
+                if (item.onclick) item.onclick(e);
+              }
+            },
+            c: item.text
+          };
+        })
+      }
+    ],
+    o: {
+      type: 'dropdown',
+      mounted: function(el) {
+        // Click outside to close
+        var outsideHandler = function(e) {
+          if (!el.contains(e.target)) {
+            var menu = el.querySelector('.bw-dropdown-menu');
+            if (menu) menu.classList.remove('bw-dropdown-show');
+          }
+        };
+        document.addEventListener('click', outsideHandler);
+        el._bw_outsideHandler = outsideHandler;
+      },
+      unmount: function(el) {
+        if (el._bw_outsideHandler) {
+          document.removeEventListener('click', el._bw_outsideHandler);
+        }
+      }
+    }
+  };
+}
+
+/**
+ * Create a toggle switch (styled checkbox)
+ *
+ * @param {Object} [props] - Switch configuration
+ * @param {string} [props.label] - Switch label text
+ * @param {boolean} [props.checked=false] - Whether the switch is on
+ * @param {string} [props.id] - Element ID (links label to switch)
+ * @param {string} [props.name] - Input name attribute
+ * @param {boolean} [props.disabled=false] - Whether the switch is disabled
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a toggle switch
+ * @category Component Builders
+ * @example
+ * const toggle = makeSwitch({
+ *   label: "Dark mode",
+ *   checked: false,
+ *   onchange: (e) => toggleDark(e.target.checked)
+ * });
+ */
+export function makeSwitch(props = {}) {
+  const {
+    label,
+    checked = false,
+    id,
+    name,
+    disabled = false,
+    className = '',
+    ...eventHandlers
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: `bw-form-check bw-form-switch ${className}`.trim() },
+    c: [
+      {
+        t: 'input',
+        a: {
+          type: 'checkbox',
+          class: 'bw-form-check-input bw-switch-input',
+          role: 'switch',
+          checked,
+          id,
+          name,
+          disabled,
+          ...eventHandlers
+        }
+      },
+      label && {
+        t: 'label',
+        a: { class: 'bw-form-check-label', for: id },
+        c: label
+      }
+    ].filter(Boolean)
+  };
+}
+
+/**
+ * Create a skeleton loading placeholder
+ *
+ * @param {Object} [props] - Skeleton configuration
+ * @param {string} [props.variant="text"] - Shape variant ("text", "circle", "rect")
+ * @param {string} [props.width] - Custom width (e.g. "200px", "100%")
+ * @param {string} [props.height] - Custom height (e.g. "20px")
+ * @param {number} [props.count=1] - Number of skeleton lines (for text variant)
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a skeleton placeholder
+ * @category Component Builders
+ * @example
+ * const skeleton = makeSkeleton({ variant: "text", count: 3, width: "100%" });
+ */
+export function makeSkeleton(props = {}) {
+  const {
+    variant = 'text',
+    width,
+    height,
+    count = 1,
+    className = ''
+  } = props;
+
+  if (variant === 'circle') {
+    var circleSize = width || height || '3rem';
+    return {
+      t: 'div',
+      a: {
+        class: `bw-skeleton bw-skeleton-circle ${className}`.trim(),
+        style: { width: circleSize, height: circleSize }
+      }
+    };
+  }
+
+  if (variant === 'rect') {
+    return {
+      t: 'div',
+      a: {
+        class: `bw-skeleton bw-skeleton-rect ${className}`.trim(),
+        style: {
+          width: width || '100%',
+          height: height || '120px'
+        }
+      }
+    };
+  }
+
+  // Text variant — multiple lines
+  if (count === 1) {
+    return {
+      t: 'div',
+      a: {
+        class: `bw-skeleton bw-skeleton-text ${className}`.trim(),
+        style: {
+          width: width || '100%',
+          height: height || '1em'
+        }
+      }
+    };
+  }
+
+  var lines = [];
+  for (var i = 0; i < count; i++) {
+    lines.push({
+      t: 'div',
+      a: {
+        class: 'bw-skeleton bw-skeleton-text',
+        style: {
+          width: i === count - 1 ? '75%' : (width || '100%'),
+          height: height || '1em'
+        }
+      }
+    });
+  }
+
+  return {
+    t: 'div',
+    a: { class: `bw-skeleton-group ${className}`.trim() },
+    c: lines
+  };
+}
+
+/**
+ * Create a user avatar with image or initials fallback
+ *
+ * @param {Object} [props] - Avatar configuration
+ * @param {string} [props.src] - Image source URL
+ * @param {string} [props.alt] - Image alt text
+ * @param {string} [props.initials] - Fallback initials (e.g. "JD")
+ * @param {string} [props.size="md"] - Size ("sm", "md", "lg", "xl")
+ * @param {string} [props.variant="primary"] - Background color variant for initials
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing an avatar
+ * @category Component Builders
+ * @example
+ * const avatar = makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
+ * const avatarInitials = makeAvatar({ initials: "JD", variant: "success" });
+ */
+export function makeAvatar(props = {}) {
+  const {
+    src,
+    alt = '',
+    initials,
+    size = 'md',
+    variant = 'primary',
+    className = ''
+  } = props;
+
+  if (src) {
+    return {
+      t: 'img',
+      a: {
+        class: `bw-avatar bw-avatar-${size} ${className}`.trim(),
+        src: src,
+        alt: alt
+      }
+    };
+  }
+
+  return {
+    t: 'div',
+    a: {
+      class: `bw-avatar bw-avatar-${size} bw-avatar-${variant} ${className}`.trim()
+    },
+    c: initials || ''
+  };
+}
+
 export const componentHandles = {
   card: CardHandle,
   table: TableHandle,
   navbar: NavbarHandle,
-  tabs: TabsHandle
+  tabs: TabsHandle,
+  modal: ModalHandle
 };

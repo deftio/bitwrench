@@ -14,320 +14,355 @@
 </head>
 <body>
   <div id="example-nav"></div>
-
-  <div class="page-header">
-    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1>Quick Start</h1>
-      <p class="subtitle">From zero to working UI in 2 minutes. Code first, explanations after.</p>
-    </div>
-  </div>
-
-  <div class="content-container wide">
-
-    <!-- ====== Section 1: Your First Bitwrench Page ====== -->
-    <div class="demo-section">
-      <h2>Your First Bitwrench Page</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          This is the complete code for a bitwrench page. One script tag, one function call:
-        </p>
-
-        <div class="bw-code-block" style="margin-bottom: 1.25rem;">
-          <pre><code>&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-&lt;head&gt;
-  &lt;script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"&gt;&lt;/script&gt;
-  &lt;link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css"&gt;
-&lt;/head&gt;
-&lt;body&gt;
-  &lt;div id="app"&gt;&lt;/div&gt;
-  &lt;script&gt;
-    bw.DOM('#app', { t: 'h1', c: 'Hello bitwrench!' });
-  &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
-        </div>
-
-        <p style="font-size: 0.9375rem; margin: 0 0 1rem;">
-          Try editing the code below and click <strong>Run</strong>:
-        </p>
-
-        <div id="tryit-hello"></div>
-      </div>
-    </div>
-
-    <!-- ====== Section 2: Building Blocks ====== -->
-    <div class="demo-section">
-      <h2>Building Blocks</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          Every HTML element is a JavaScript object with a tag, attributes, and content.
-          Build up progressively:
-        </p>
-
-        <div id="tryit-blocks"></div>
-
-        <div class="callout callout-concept" style="margin-top: 1.25rem;">
-          <h4>This is called TACO</h4>
-          <p>
-            <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions.
-            You've just used it. The name comes after you've seen the idea &mdash; it's just
-            a plain JavaScript object that maps directly to HTML. Only <code>t</code> is required;
-            everything else is optional.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== Section 3: Where Do Styles Come From? ====== -->
-    <div class="demo-section">
-      <h2>Where Do Styles Come From?</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; margin: 0 0 1rem;">
-          Bitwrench includes built-in CSS classes (<code>bw-btn</code>, <code>bw-card</code>, etc.)
-          that give you Bootstrap-like styling. You get them by including
-          <code>&lt;link href="bitwrench.css"&gt;</code> in your page.
-        </p>
-
-        <div id="tryit-styles"></div>
-
-        <div id="pipeline-btn"></div>
-
-        <div class="callout callout-concept" style="margin-top: 1rem;">
-          <h4>Helpers return JavaScript objects, not HTML</h4>
-          <p>
-            <code>bw.makeButton()</code> returns a TACO object. <code>bw.DOM()</code> renders it.
-            The helper is just a shortcut for writing the object yourself. See the
-            <a href="03-styling.html">Styling</a> page for the full CSS story.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== Section 4: Making It Interactive ====== -->
-    <div class="demo-section">
-      <h2>Making It Interactive</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          When state changes, call render again. Bitwrench replaces the old content with the new.
-          That's the entire update model.
-        </p>
-
-        <div id="tryit-counter"></div>
-
-        <div class="callout callout-tip" style="margin-top: 1rem;">
-          <h4>This is the simplest pattern</h4>
-          <p>
-            A closure variable and a render function is all you need for simple components.
-            You decide when to re-render by calling the function &mdash; every update is an
-            explicit call you can see and step through.
-          </p>
-        </div>
-
-        <div class="callout callout-concept" style="margin-top: 0.75rem;">
-          <h4>There's more when you need it</h4>
-          <p>
-            For real applications, bitwrench provides a full state management toolkit:
-          </p>
-          <ul>
-            <li><strong>Component state</strong> &mdash; <code>o.state</code> and <code>o.render</code>
-              store state and render logic directly on the DOM element. Multiple instances
-              each carry their own independent state.</li>
-            <li><strong>Targeted updates</strong> &mdash; <code>bw.patch(id, value)</code> updates
-              a single element by UUID without rebuilding the component tree. Update one value
-              in a list of 1,000 items without touching the rest.</li>
-            <li><strong>Pub/sub</strong> &mdash; <code>bw.pub()</code> / <code>bw.sub()</code>
-              provide decoupled cross-component messaging, independent of DOM hierarchy.
-              Subscriptions can be tied to element lifecycle for automatic cleanup.</li>
-            <li><strong>DOM events</strong> &mdash; <code>bw.emit()</code> / <code>bw.on()</code>
-              wrap CustomEvents for scoped, bubbling communication between parent and child components.</li>
-            <li><strong>Lifecycle</strong> &mdash; <code>o.mounted(el)</code> runs after the element
-              is in the DOM. <code>o.unmount(el)</code> runs on cleanup for timers, subscriptions,
-              or anything that needs teardown.</li>
-          </ul>
-          <p>
-            When <code>bw.DOM()</code> replaces content, old DOM nodes and their event listeners are
-            removed by the browser's garbage collector &mdash; no manual listener cleanup needed.
-            State lives on the element, so there's nothing external to leak.
-          </p>
-          <p style="margin-top: 0.5rem;">
-            <strong>Debugging:</strong> all state is visible in the browser inspector.
-            Select any bitwrench component, then check <code>$0._bw_state</code> in the console
-            to see its current state. No special devtools extension required.
-          </p>
-          <p style="margin-top: 0.5rem;">
-            See the <a href="05-state.html"><strong>State &amp; Interactivity</strong></a> page
-            for the full picture, including working examples of each pattern.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== Section 5: Data-Driven UI ====== -->
-    <div class="demo-section">
-      <h2>Data-Driven UI</h2>
-      <div class="demo-content">
-        <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;">
-          This is a genuine strength: your data IS your UI. No template directives, no
-          <code>v-for</code>, no <code>{'{#each}'}</code>. Just <code>.map()</code>.
-        </p>
-
-        <div id="tryit-datalist"></div>
-      </div>
-    </div>
-
-    <!-- ====== Section 6: Next Steps ====== -->
-    <div class="demo-section">
-      <h2>Next Steps</h2>
-      <div class="demo-content">
-        <div class="bw-feature-grid">
-          <div class="bw-feature-card">
-            <h4><a href="03-styling.html" style="text-decoration: none;">Styling</a></h4>
-            <p>Where bw-* classes come from, CSS generation from JavaScript objects, utility system.</p>
-          </div>
-          <div class="bw-feature-card">
-            <h4><a href="01-components.html" style="text-decoration: none;">Components</a></h4>
-            <p>Cards, buttons, alerts, badges, grids &mdash; all built-in components with live demos.</p>
-          </div>
-          <div class="bw-feature-card">
-            <h4><a href="02-tables-forms.html" style="text-decoration: none;">Tables & Data</a></h4>
-            <p>Sortable tables from data in one function call, forms with validation.</p>
-          </div>
-          <div class="bw-feature-card">
-            <h4><a href="05-state.html" style="text-decoration: none;">State Management</a></h4>
-            <p>Component factories, state on elements, pub/sub for cross-component communication.</p>
-          </div>
-          <div class="bw-feature-card">
-            <h4><a href="06-tic-tac-toe-tutorial.html" style="text-decoration: none;">Tic Tac Toe Tutorial</a></h4>
-            <p>Build a complete game step by step. The best hands-on way to learn bitwrench.</p>
-          </div>
-          <div class="bw-feature-card">
-            <h4><a href="07-framework-comparison.html" style="text-decoration: none;">Framework Comparison</a></h4>
-            <p>The same tasks in HTML/JS, React, Vue, Svelte, and bitwrench side by side.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /content-container -->
+  <div id="app"></div>
 
   <script>
     mountExampleNav('#example-nav', '00-quick-start.html');
 
-    // ---- Section 1: Hello world try-it ----
-    bw.DOM('#tryit-hello', makeTryIt({
-      code: 'bw.DOM(target, { t: \'h1\', c: \'Hello bitwrench!\' });',
-      height: '60px',
-      label: 'Edit & Run'
-    }));
+    // =========================================================================
+    // Helper: callout box
+    // =========================================================================
+    function callout(type, title, content) {
+      return {
+        t: 'div', a: { class: 'callout callout-' + type, style: 'margin-top: 1rem;' },
+        c: [
+          { t: 'h4', c: title },
+          content
+        ]
+      };
+    }
 
-    // ---- Section 2: Building blocks try-it ----
-    bw.DOM('#tryit-blocks', makeTryIt({
-      code: [
-        '// Start simple: just a tag and content',
-        'bw.DOM(target, {',
-        '  t: \'div\',',
-        '  c: [',
-        '    // Plain text',
-        '    { t: \'p\', c: \'Just text.\' },',
-        '',
-        '    // Add attributes: style, class, etc.',
-        '    { t: \'p\', a: { style: \'color: teal; font-weight: bold;\' }, c: \'Styled!\' },',
-        '',
-        '    // Nest elements inside each other',
-        '    { t: \'div\', a: { style: \'border: 1px solid #ccc; padding: 0.75rem; border-radius: 6px;\' },',
-        '      c: [',
-        '        { t: \'h3\', a: { style: \'margin: 0 0 0.5rem;\' }, c: \'Nested Card\' },',
-        '        { t: \'p\', a: { style: \'margin: 0;\' }, c: \'Content inside a nested div.\' }',
-        '      ]',
-        '    }',
-        '  ]',
-        '});'
-      ].join('\n'),
-      height: '320px'
-    }));
+    // =========================================================================
+    // Section 1: Your First Bitwrench Page
+    // =========================================================================
+    var helloCode = '<!DOCTYPE html>\n<html>\n<head>\n  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"><\/script>\n  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n    bw.DOM(\'#app\', { t: \'h1\', c: \'Hello bitwrench!\' });\n  <\/script>\n</body>\n</html>';
 
-    // ---- Section 3: Styles and pipeline ----
-    bw.DOM('#tryit-styles', makeTryIt({
-      code: [
-        '// bitwrench includes Bootstrap-like CSS classes',
-        'bw.DOM(target, {',
-        '  t: \'div\', c: [',
-        '    bw.makeButton({ text: \'Primary\', variant: \'primary\' }),',
-        '    \' \',',
-        '    bw.makeButton({ text: \'Success\', variant: \'success\' }),',
-        '    \' \',',
-        '    bw.makeButton({ text: \'Danger\', variant: \'danger\' }),',
-        '    { t: \'div\', a: { style: \'margin-top: 1rem;\' },',
-        '      c: bw.makeAlert({ content: \'This is a bitwrench alert.\', variant: \'info\' })',
-        '    },',
-        '    bw.makeCard({ title: \'Card\', content: \'Built-in card component.\' })',
-        '  ]',
-        '});'
-      ].join('\n'),
-      height: '240px'
-    }));
+    var section1 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-first-page' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-first-page' }, c: 'Your First Bitwrench Page' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' },
+            c: 'This is the complete code for a bitwrench page. One script tag, one function call:' },
+          bw.codeEditor
+            ? bw.codeEditor({ code: helloCode, lang: 'html', readOnly: true, height: 'auto' })
+            : { t: 'pre', a: { class: 'bw-code-block', style: 'margin-bottom: 1.25rem;' },
+                c: { t: 'code', c: helloCode } },
+          { t: 'p', a: { style: 'font-size: 0.9375rem; margin: 0 0 1rem;' }, c: [
+            'Try editing the code below and click ', { t: 'strong', c: 'Run' }, ':'
+          ]},
+          makeTryIt({
+            code: 'bw.DOM(target, { t: \'h1\', c: \'Hello bitwrench!\' });',
+            height: '60px',
+            label: 'Edit & Run'
+          })
+        ]}
+      ]
+    };
 
-    // Pipeline demo: show what makeButton returns
+    // =========================================================================
+    // Section 2: Building Blocks
+    // =========================================================================
+    var section2 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-building-blocks' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-building-blocks' }, c: 'Building Blocks' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' },
+            c: 'Every HTML element is a JavaScript object with a tag, attributes, and content. Build up progressively:' },
+          makeTryIt({
+            code: [
+              '// Start simple: just a tag and content',
+              'bw.DOM(target, {',
+              '  t: \'div\',',
+              '  c: [',
+              '    // Plain text',
+              '    { t: \'p\', c: \'Just text.\' },',
+              '',
+              '    // Add attributes: style, class, etc.',
+              '    { t: \'p\', a: { style: \'color: teal; font-weight: bold;\' }, c: \'Styled!\' },',
+              '',
+              '    // Nest elements inside each other',
+              '    { t: \'div\', a: { style: \'border: 1px solid #ccc; padding: 0.75rem; border-radius: 6px;\' },',
+              '      c: [',
+              '        { t: \'h3\', a: { style: \'margin: 0 0 0.5rem;\' }, c: \'Nested Card\' },',
+              '        { t: \'p\', a: { style: \'margin: 0;\' }, c: \'Content inside a nested div.\' }',
+              '      ]',
+              '    }',
+              '  ]',
+              '});'
+            ].join('\n'),
+            height: '320px'
+          }),
+          callout('concept', 'This is called TACO', {
+            t: 'p', c: [
+              { t: 'strong', c: 'T' }, 'ag, ',
+              { t: 'strong', c: 'A' }, 'ttributes, ',
+              { t: 'strong', c: 'C' }, 'ontent, ',
+              { t: 'strong', c: 'O' }, 'ptions. ',
+              'You\'ve just used it. The name comes after you\'ve seen the idea \u2014 it\'s just ',
+              'a plain JavaScript object that maps directly to HTML. Only ',
+              { t: 'code', c: 't' }, ' is required; everything else is optional.'
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 3: Where Do Styles Come From?
+    // =========================================================================
     var btnTaco = bw.makeButton({ text: 'Click Me', variant: 'primary' });
-    bw.DOM('#pipeline-btn', showPipeline({
-      label: 'What does bw.makeButton() actually return?',
-      helperCode: 'bw.makeButton({\n  text: \'Click Me\',\n  variant: \'primary\'\n})',
-      taco: btnTaco
-    }));
 
-    // ---- Section 4: Counter try-it ----
-    bw.DOM('#tryit-counter', makeTryIt({
-      code: [
-        'var count = 0;',
-        '',
-        'function render() {',
-        '  bw.DOM(target, {',
-        '    t: \'div\', c: [',
-        '      { t: \'h3\', c: \'Count: \' + count },',
-        '      bw.makeButton({',
-        '        text: \'+\', variant: \'primary\',',
-        '        onclick: function() { count++; render(); }',
-        '      }),',
-        '      \' \',',
-        '      bw.makeButton({',
-        '        text: \'\\u2013\', variant: \'secondary\',',
-        '        onclick: function() { count--; render(); }',
-        '      }),',
-        '      \' \',',
-        '      bw.makeButton({',
-        '        text: \'Reset\', variant: \'secondary\',',
-        '        onclick: function() { count = 0; render(); }',
-        '      })',
-        '    ]',
-        '  });',
-        '}',
-        'render();'
-      ].join('\n'),
-      height: '360px'
-    }));
+    var section3 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-styles' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-styles' }, c: 'Where Do Styles Come From?' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            'Bitwrench includes built-in CSS classes (',
+            { t: 'code', c: 'bw-btn' }, ', ', { t: 'code', c: 'bw-card' },
+            ', etc.) that give you Bootstrap-like styling. You get them by including ',
+            { t: 'code', c: '<link href="bitwrench.css">' }, ' in your page.'
+          ]},
+          makeTryIt({
+            code: [
+              '// bitwrench includes Bootstrap-like CSS classes',
+              'bw.DOM(target, {',
+              '  t: \'div\', c: [',
+              '    bw.makeButton({ text: \'Primary\', variant: \'primary\' }),',
+              '    \' \',',
+              '    bw.makeButton({ text: \'Success\', variant: \'success\' }),',
+              '    \' \',',
+              '    bw.makeButton({ text: \'Danger\', variant: \'danger\' }),',
+              '    { t: \'div\', a: { style: \'margin-top: 1rem;\' },',
+              '      c: bw.makeAlert({ content: \'This is a bitwrench alert.\', variant: \'info\' })',
+              '    },',
+              '    bw.makeCard({ title: \'Card\', content: \'Built-in card component.\' })',
+              '  ]',
+              '});'
+            ].join('\n'),
+            height: '240px'
+          }),
+          showPipeline({
+            label: 'What does bw.makeButton() actually return?',
+            helperCode: 'bw.makeButton({\n  text: \'Click Me\',\n  variant: \'primary\'\n})',
+            taco: btnTaco
+          }),
+          callout('concept', 'Helpers return JavaScript objects, not HTML', {
+            t: 'p', c: [
+              { t: 'code', c: 'bw.makeButton()' }, ' returns a TACO object. ',
+              { t: 'code', c: 'bw.DOM()' }, ' renders it. ',
+              'The helper is just a shortcut for writing the object yourself. See the ',
+              { t: 'a', a: { href: '03-styling.html' }, c: 'Styling' },
+              ' page for the full CSS story.'
+            ]
+          })
+        ]}
+      ]
+    };
 
-    // ---- Section 5: Data-driven list try-it ----
-    bw.DOM('#tryit-datalist', makeTryIt({
-      code: [
-        'var fruits = [\'Apple\', \'Banana\', \'Cherry\', \'Date\', \'Elderberry\'];',
-        '',
-        'bw.DOM(target, {',
-        '  t: \'ul\', a: { class: \'bw-list-group\' },',
-        '  c: fruits.map(function(f) {',
-        '    return {',
-        '      t: \'li\',',
-        '      a: { class: \'bw-list-group-item\' },',
-        '      c: f',
-        '    };',
-        '  })',
-        '});',
-        '',
-        '// Try: add more fruits, or change to .filter()',
-        '// to show only fruits starting with a letter.'
-      ].join('\n'),
-      height: '260px'
-    }));
+    // =========================================================================
+    // Section 4: Making It Interactive
+    // =========================================================================
+    var section4 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-interactive' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-interactive' }, c: 'Making It Interactive' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' },
+            c: 'When state changes, call render again. Bitwrench replaces the old content with the new. That\'s the entire update model.' },
+          makeTryIt({
+            code: [
+              'var count = 0;',
+              '',
+              'function render() {',
+              '  bw.DOM(target, {',
+              '    t: \'div\', c: [',
+              '      { t: \'h3\', c: \'Count: \' + count },',
+              '      bw.makeButton({',
+              '        text: \'+\', variant: \'primary\',',
+              '        onclick: function() { count++; render(); }',
+              '      }),',
+              '      \' \',',
+              '      bw.makeButton({',
+              '        text: \'\\u2013\', variant: \'secondary\',',
+              '        onclick: function() { count--; render(); }',
+              '      }),',
+              '      \' \',',
+              '      bw.makeButton({',
+              '        text: \'Reset\', variant: \'secondary\',',
+              '        onclick: function() { count = 0; render(); }',
+              '      })',
+              '    ]',
+              '  });',
+              '}',
+              'render();'
+            ].join('\n'),
+            height: '360px'
+          }),
+          callout('tip', 'This is the simplest pattern', {
+            t: 'p', c: [
+              'A closure variable and a render function is all you need for simple components. ',
+              'You decide when to re-render by calling the function \u2014 every update is an ',
+              'explicit call you can see and step through.'
+            ]
+          }),
+          callout('concept', 'There\'s more when you need it', {
+            t: 'div', c: [
+              { t: 'p', c: 'For real applications, bitwrench provides a full state management toolkit:' },
+              { t: 'ul', c: [
+                { t: 'li', c: [
+                  { t: 'strong', c: 'Component state' }, ' \u2014 ',
+                  { t: 'code', c: 'o.state' }, ' and ', { t: 'code', c: 'o.render' },
+                  ' store state and render logic directly on the DOM element. Multiple instances each carry their own independent state.'
+                ]},
+                { t: 'li', c: [
+                  { t: 'strong', c: 'Targeted updates' }, ' \u2014 ',
+                  { t: 'code', c: 'bw.patch(id, value)' },
+                  ' updates a single element by UUID without rebuilding the component tree. Update one value in a list of 1,000 items without touching the rest.'
+                ]},
+                { t: 'li', c: [
+                  { t: 'strong', c: 'Pub/sub' }, ' \u2014 ',
+                  { t: 'code', c: 'bw.pub()' }, ' / ', { t: 'code', c: 'bw.sub()' },
+                  ' provide decoupled cross-component messaging, independent of DOM hierarchy. Subscriptions can be tied to element lifecycle for automatic cleanup.'
+                ]},
+                { t: 'li', c: [
+                  { t: 'strong', c: 'DOM events' }, ' \u2014 ',
+                  { t: 'code', c: 'bw.emit()' }, ' / ', { t: 'code', c: 'bw.on()' },
+                  ' wrap CustomEvents for scoped, bubbling communication between parent and child components.'
+                ]},
+                { t: 'li', c: [
+                  { t: 'strong', c: 'Lifecycle' }, ' \u2014 ',
+                  { t: 'code', c: 'o.mounted(el)' },
+                  ' runs after the element is in the DOM. ',
+                  { t: 'code', c: 'o.unmount(el)' },
+                  ' runs on cleanup for timers, subscriptions, or anything that needs teardown.'
+                ]}
+              ]},
+              { t: 'p', c: [
+                'When ', { t: 'code', c: 'bw.DOM()' },
+                ' replaces content, old DOM nodes and their event listeners are removed by the browser\'s garbage collector \u2014 no manual listener cleanup needed. State lives on the element, so there\'s nothing external to leak.'
+              ]},
+              { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
+                { t: 'strong', c: 'Debugging:' },
+                ' all state is visible in the browser inspector. Select any bitwrench component, then check ',
+                { t: 'code', c: '$0._bw_state' },
+                ' in the console to see its current state. No special devtools extension required.'
+              ]},
+              { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
+                'See the ',
+                { t: 'a', a: { href: '05-state.html' }, c: { t: 'strong', c: 'State & Interactivity' } },
+                ' page for the full picture, including working examples of each pattern.'
+              ]}
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 5: Data-Driven UI
+    // =========================================================================
+    var section5 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-data-driven' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-data-driven' }, c: 'Data-Driven UI' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            'This is a genuine strength: your data IS your UI. No template directives, no ',
+            { t: 'code', c: 'v-for' }, ', no ', { t: 'code', c: '{#each}' },
+            '. Just ', { t: 'code', c: '.map()' }, '.'
+          ]},
+          makeTryIt({
+            code: [
+              'var fruits = [\'Apple\', \'Banana\', \'Cherry\', \'Date\', \'Elderberry\'];',
+              '',
+              'bw.DOM(target, {',
+              '  t: \'ul\', a: { class: \'bw-list-group\' },',
+              '  c: fruits.map(function(f) {',
+              '    return {',
+              '      t: \'li\',',
+              '      a: { class: \'bw-list-group-item\' },',
+              '      c: f',
+              '    };',
+              '  })',
+              '});',
+              '',
+              '// Try: add more fruits, or change to .filter()',
+              '// to show only fruits starting with a letter.'
+            ].join('\n'),
+            height: '260px'
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 6: Next Steps
+    // =========================================================================
+    var nextSteps = [
+      { href: '03-styling.html', title: 'Styling',
+        desc: 'Where bw-* classes come from, CSS generation from JavaScript objects, utility system.' },
+      { href: '01-components.html', title: 'Components',
+        desc: 'Cards, buttons, alerts, badges, grids \u2014 all built-in components with live demos.' },
+      { href: '02-tables.html', title: 'Tables & Data',
+        desc: 'Sortable tables from data in one function call, pagination, search.' },
+      { href: '02-forms.html', title: 'Forms',
+        desc: 'Inputs, selects, checkboxes, tabbed forms, validation patterns.' },
+      { href: '05-state.html', title: 'State Management',
+        desc: 'Component factories, state on elements, pub/sub for cross-component communication.' },
+      { href: '06-tic-tac-toe-tutorial.html', title: 'Tic Tac Toe Tutorial',
+        desc: 'Build a complete game step by step. The best hands-on way to learn bitwrench.' },
+      { href: '07-framework-comparison.html', title: 'Framework Comparison',
+        desc: 'The same tasks in HTML/JS, React, Vue, Svelte, and bitwrench side by side.' }
+    ];
+
+    var section6 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-next-steps' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-next-steps' }, c: 'Next Steps' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'div', a: { class: 'bw-feature-grid' },
+            c: nextSteps.map(function(item) {
+              return {
+                t: 'div', a: { class: 'bw-feature-card' },
+                c: [
+                  { t: 'h4', c: { t: 'a', a: { href: item.href, style: 'text-decoration: none;' }, c: item.title } },
+                  { t: 'p', c: item.desc }
+                ]
+              };
+            })
+          }
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Assemble and mount the full page
+    // =========================================================================
+    var page = {
+      t: 'div', c: [
+        // Hero header
+        {
+          t: 'div', a: { class: 'page-header' },
+          c: {
+            t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+            c: [
+              { t: 'h1', c: 'Quick Start' },
+              { t: 'p', a: { class: 'subtitle' }, c: 'From zero to working UI in 2 minutes. Code first, explanations after.' }
+            ]
+          }
+        },
+        // Content sections
+        {
+          t: 'div', a: { class: 'content-container wide' },
+          c: [section1, section2, section3, section4, section5, section6]
+        }
+      ]
+    };
+
+    bw.DOM('#app', page);
   </script>
 </body>
 </html>

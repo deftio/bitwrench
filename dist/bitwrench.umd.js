@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.10 | BSD-2-Clause | http://deftio.com/bitwrench */
+/*! bitwrench v2.0.11 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -11,14 +11,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.10',
+    version: '2.0.11',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
-    homepage: 'http://deftio.com/bitwrench',
+    homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-07T03:13:33.261Z'
+    buildDate: '2026-03-07T10:01:07.340Z'
   };
 
   /**
@@ -690,7 +690,7 @@
       'background-color': palette.light.light
     };
     rules[scopeSelector(scope, '.bw-table-striped > tbody > tr:nth-of-type(odd) > *')] = {
-      'background-color': 'rgba(0, 0, 0, 0.025)'
+      'background-color': 'rgba(0, 0, 0, 0.05)'
     };
     rules[scopeSelector(scope, '.bw-table-hover > tbody > tr:hover > *')] = {
       'background-color': palette.primary.focus
@@ -884,6 +884,121 @@
     return rules;
   }
 
+  function generateAccordionThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-accordion-item')] = {
+      'background-color': '#fff',
+      'border-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-accordion-button')] = {
+      'color': palette.dark.base
+    };
+    rules[scopeSelector(scope, '.bw-accordion-button:hover')] = {
+      'background-color': palette.light.light
+    };
+    rules[scopeSelector(scope, '.bw-accordion-body')] = {
+      'border-top': '1px solid ' + palette.light.border
+    };
+    return rules;
+  }
+
+  function generateModalThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-modal-content')] = {
+      'background-color': '#fff',
+      'border-color': palette.light.border,
+      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    };
+    rules[scopeSelector(scope, '.bw-modal-header')] = {
+      'border-bottom-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-modal-footer')] = {
+      'border-top-color': palette.light.border
+    };
+    rules[scopeSelector(scope, '.bw-modal-title')] = {
+      'color': palette.dark.base
+    };
+    return rules;
+  }
+
+  function generateToastThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-toast')] = {
+      'background-color': '#fff',
+      'border-color': 'rgba(0,0,0,0.1)',
+      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    };
+    rules[scopeSelector(scope, '.bw-toast-header')] = {
+      'border-bottom-color': 'rgba(0,0,0,0.05)'
+    };
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info'];
+    variants.forEach(function(v) {
+      rules[scopeSelector(scope, '.bw-toast-' + v)] = {
+        'border-left': '4px solid ' + palette[v].base
+      };
+    });
+    return rules;
+  }
+
+  function generateDropdownThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-dropdown-menu')] = {
+      'background-color': '#fff',
+      'border-color': palette.light.border,
+      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    };
+    rules[scopeSelector(scope, '.bw-dropdown-item')] = {
+      'color': palette.dark.base
+    };
+    rules[scopeSelector(scope, '.bw-dropdown-item:hover')] = {
+      'color': palette.dark.hover,
+      'background-color': palette.light.light
+    };
+    rules[scopeSelector(scope, '.bw-dropdown-item.disabled')] = {
+      'color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-dropdown-divider')] = {
+      'border-top-color': palette.light.border
+    };
+    return rules;
+  }
+
+  function generateSwitchThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-form-switch .bw-switch-input')] = {
+      'background-color': palette.secondary.base,
+      'border-color': palette.secondary.base
+    };
+    rules[scopeSelector(scope, '.bw-form-switch .bw-switch-input:checked')] = {
+      'background-color': palette.primary.base,
+      'border-color': palette.primary.base
+    };
+    rules[scopeSelector(scope, '.bw-form-switch .bw-switch-input:focus')] = {
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    return rules;
+  }
+
+  function generateSkeletonThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-skeleton')] = {
+      'background-color': palette.light.border
+    };
+    return rules;
+  }
+
+  function generateAvatarThemed(scope, palette) {
+    var rules = {};
+    var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+    variants.forEach(function(v) {
+      rules[scopeSelector(scope, '.bw-avatar-' + v)] = {
+        'background-color': palette[v].base,
+        'color': palette[v].textOn
+      };
+    });
+    return rules;
+  }
+
   /**
    * Generate all themed CSS rules from a palette and layout.
    * Returns a flat CSS rules object (selector → declarations).
@@ -913,6 +1028,13 @@
       generateSpinnerThemed(scopeName, palette),
       generateCloseButtonThemed(scopeName, palette),
       generateSectionsThemed(scopeName, palette),
+      generateAccordionThemed(scopeName, palette),
+      generateModalThemed(scopeName, palette),
+      generateToastThemed(scopeName, palette),
+      generateDropdownThemed(scopeName, palette),
+      generateSwitchThemed(scopeName, palette),
+      generateSkeletonThemed(scopeName, palette),
+      generateAvatarThemed(scopeName, palette),
       generateUtilityColors(scopeName, palette)
     );
   }
@@ -1182,7 +1304,7 @@
       'position': 'relative', 'display': 'flex', 'flex-wrap': 'wrap',
       'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 1.5rem'
     };
-    rules['.bw-navbar > .container'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' };
+    rules['.bw-navbar > .bw-container, .bw-navbar > .container'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' };
     rules['.bw-navbar-brand'] = {
       'display': 'inline-flex', 'align-items': 'center', 'gap': '0.5rem',
       'padding-top': '0.25rem', 'padding-bottom': '0.25rem', 'margin-right': '1.5rem',
@@ -1227,11 +1349,13 @@
 
     // Badges (structural)
     rules['.bw-badge'] = {
-      'display': 'inline-block', 'padding': '.35em .65em', 'font-size': '.75em',
-      'font-weight': '700', 'line-height': '1', 'text-align': 'center',
+      'display': 'inline-block', 'padding': '.4em .75em', 'font-size': '.875em',
+      'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
       'white-space': 'nowrap', 'vertical-align': 'baseline', 'border-radius': '.375rem'
     };
     rules['.bw-badge:empty'] = { 'display': 'none' };
+    rules['.bw-badge-sm'] = { 'font-size': '.75em', 'padding': '.25em .5em' };
+    rules['.bw-badge-lg'] = { 'font-size': '1em', 'padding': '.5em .9em' };
     rules['.bw-badge-pill'] = { 'border-radius': '50rem' };
 
     // Progress (structural)
@@ -1298,7 +1422,8 @@
     rules['.bw-hero'] = { 'position': 'relative', 'overflow': 'hidden' };
     rules['.bw-hero-overlay'] = { 'position': 'absolute', 'top': '0', 'left': '0', 'right': '0', 'bottom': '0', 'z-index': '1' };
     rules['.bw-hero-content'] = { 'position': 'relative', 'z-index': '2' };
-    rules['.bw-hero-title'] = { 'font-weight': '300', 'letter-spacing': '-0.05rem' };
+    rules['.bw-hero-title'] = { 'font-weight': '300', 'letter-spacing': '-0.05rem', 'color': 'inherit' };
+    rules['.bw-hero-subtitle'] = { 'color': 'inherit' };
     rules['.bw-hero-actions'] = { 'display': 'flex', 'gap': '1rem', 'justify-content': 'center', 'flex-wrap': 'wrap' };
     rules['.bw-display-4'] = { 'font-size': 'calc(1.475rem + 2.7vw)', 'font-weight': '300', 'line-height': '1.2' };
     rules['.bw-lead'] = { 'font-size': '1.25rem', 'font-weight': '300' };
@@ -1371,6 +1496,130 @@
 
     // Code demo (structural)
     rules['.bw-code-demo'] = { 'margin-bottom': '2rem' };
+    rules['.bw-code-pre'] = { 'margin': '0', 'border': 'none', 'border-radius': '6px', 'overflow-x': 'auto' };
+    rules['.bw-code-block'] = { 'display': 'block', 'padding': '1.25rem', 'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace', 'font-size': '0.8125rem', 'line-height': '1.6' };
+    rules['.bw-code-copy-btn'] = { 'position': 'absolute', 'top': '0.5rem', 'right': '0.5rem', 'padding': '0.25rem 0.625rem', 'font-size': '0.6875rem', 'border-radius': '4px', 'cursor': 'pointer', 'font-family': 'inherit', 'transition': 'all 0.15s' };
+
+    // Button group (structural)
+    rules['.bw-btn-group, .bw-btn-group-vertical'] = { 'position': 'relative', 'display': 'inline-flex', 'vertical-align': 'middle' };
+    rules['.bw-btn-group > .bw-btn, .bw-btn-group-vertical > .bw-btn'] = { 'position': 'relative', 'flex': '1 1 auto', 'border-radius': '0', 'margin-left': '-1px' };
+    rules['.bw-btn-group > .bw-btn:first-child'] = { 'margin-left': '0', 'border-top-left-radius': '6px', 'border-bottom-left-radius': '6px' };
+    rules['.bw-btn-group > .bw-btn:last-child'] = { 'border-top-right-radius': '6px', 'border-bottom-right-radius': '6px' };
+    rules['.bw-btn-group-vertical'] = { 'flex-direction': 'column', 'align-items': 'flex-start', 'justify-content': 'center' };
+    rules['.bw-btn-group-vertical > .bw-btn'] = { 'width': '100%', 'margin-left': '0', 'margin-top': '-1px' };
+    rules['.bw-btn-group-vertical > .bw-btn:first-child'] = { 'margin-top': '0', 'border-top-left-radius': '6px', 'border-top-right-radius': '6px', 'border-bottom-left-radius': '0', 'border-bottom-right-radius': '0' };
+    rules['.bw-btn-group-vertical > .bw-btn:last-child'] = { 'border-top-left-radius': '0', 'border-top-right-radius': '0', 'border-bottom-left-radius': '6px', 'border-bottom-right-radius': '6px' };
+
+    // Accordion (structural)
+    rules['.bw-accordion'] = { 'border-radius': '8px', 'overflow': 'hidden' };
+    rules['.bw-accordion-item'] = { 'border': '1px solid transparent' };
+    rules['.bw-accordion-item + .bw-accordion-item'] = { 'border-top': '0' };
+    rules['.bw-accordion-header'] = { 'margin': '0' };
+    rules['.bw-accordion-button'] = {
+      'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
+      'padding': '1rem 1.25rem', 'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
+      'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
+      'font-family': 'inherit', 'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out'
+    };
+    rules['.bw-accordion-button::after'] = {
+      'flex-shrink': '0', 'width': '1.25rem', 'height': '1.25rem', 'margin-left': 'auto',
+      'content': '""', 'background-repeat': 'no-repeat', 'background-size': '1.25rem',
+      'transition': 'transform 0.2s ease-in-out'
+    };
+    rules['.bw-accordion-button:not(.bw-collapsed)::after'] = { 'transform': 'rotate(-180deg)' };
+    rules['.bw-accordion-collapse'] = { 'max-height': '0', 'overflow': 'hidden', 'transition': 'max-height 0.3s ease' };
+    rules['.bw-accordion-collapse.bw-collapse-show'] = { 'max-height': 'none' };
+    rules['.bw-accordion-body'] = { 'padding': '1rem 1.25rem' };
+
+    // Modal (structural)
+    rules['.bw-modal'] = {
+      'display': 'none', 'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
+      'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto', 'opacity': '0', 'transition': 'opacity 0.15s linear'
+    };
+    rules['.bw-modal.bw-modal-show'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'opacity': '1' };
+    rules['.bw-modal-dialog'] = {
+      'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
+      'pointer-events': 'none', 'transform': 'translateY(-20px)', 'transition': 'transform 0.2s ease-out'
+    };
+    rules['.bw-modal.bw-modal-show .bw-modal-dialog'] = { 'transform': 'translateY(0)' };
+    rules['.bw-modal-sm'] = { 'max-width': '300px' };
+    rules['.bw-modal-lg'] = { 'max-width': '800px' };
+    rules['.bw-modal-xl'] = { 'max-width': '1140px' };
+    rules['.bw-modal-content'] = {
+      'position': 'relative', 'display': 'flex', 'flex-direction': 'column', 'pointer-events': 'auto',
+      'background-clip': 'padding-box', 'border': '1px solid transparent', 'border-radius': '8px', 'outline': '0'
+    };
+    rules['.bw-modal-header'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '1rem 1.5rem' };
+    rules['.bw-modal-title'] = { 'margin': '0', 'font-size': '1.25rem', 'font-weight': '600', 'line-height': '1.3' };
+    rules['.bw-modal-body'] = { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1.5rem' };
+    rules['.bw-modal-footer'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'padding': '0.75rem 1.5rem', 'gap': '0.5rem' };
+
+    // Toast (structural)
+    rules['.bw-toast-container'] = {
+      'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
+      'display': 'flex', 'flex-direction': 'column', 'gap': '0.5rem', 'padding': '1rem'
+    };
+    rules['.bw-toast'] = {
+      'pointer-events': 'auto', 'width': '350px', 'max-width': '100%', 'background-clip': 'padding-box',
+      'border-radius': '8px', 'opacity': '0', 'transform': 'translateY(-10px)',
+      'transition': 'opacity 0.3s ease, transform 0.3s ease'
+    };
+    rules['.bw-toast.bw-toast-show'] = { 'opacity': '1', 'transform': 'translateY(0)' };
+    rules['.bw-toast.bw-toast-hiding'] = { 'opacity': '0', 'transform': 'translateY(-10px)' };
+    rules['.bw-toast-header'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem' };
+    rules['.bw-toast-body'] = { 'padding': '0.75rem', 'font-size': '0.9375rem' };
+
+    // Dropdown (structural)
+    rules['.bw-dropdown'] = { 'position': 'relative', 'display': 'inline-block' };
+    rules['.bw-dropdown-toggle::after'] = {
+      'display': 'inline-block', 'margin-left': '0.255em', 'vertical-align': '0.255em',
+      'content': '""', 'border-top': '0.3em solid', 'border-right': '0.3em solid transparent',
+      'border-bottom': '0', 'border-left': '0.3em solid transparent'
+    };
+    rules['.bw-dropdown-menu'] = {
+      'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'none',
+      'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
+      'background-clip': 'padding-box', 'border-radius': '6px'
+    };
+    rules['.bw-dropdown-menu.bw-dropdown-show'] = { 'display': 'block' };
+    rules['.bw-dropdown-menu-end'] = { 'left': 'auto', 'right': '0' };
+    rules['.bw-dropdown-item'] = {
+      'display': 'block', 'width': '100%', 'padding': '0.375rem 1rem', 'clear': 'both',
+      'font-weight': '400', 'text-align': 'inherit', 'text-decoration': 'none', 'white-space': 'nowrap',
+      'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem',
+      'transition': 'background-color 0.15s, color 0.15s'
+    };
+    rules['.bw-dropdown-divider'] = { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' };
+
+    // Switch (structural)
+    rules['.bw-form-switch'] = { 'padding-left': '2.5em' };
+    rules['.bw-form-switch .bw-switch-input'] = {
+      'width': '2em', 'height': '1.125em', 'margin-left': '-2.5em', 'border-radius': '2em',
+      'appearance': 'none', 'background-position': 'left center', 'background-repeat': 'no-repeat',
+      'background-size': 'contain', 'transition': 'background-position 0.15s ease-in-out, background-color 0.15s ease-in-out',
+      'cursor': 'pointer'
+    };
+    rules['.bw-form-switch .bw-switch-input:checked'] = { 'background-position': 'right center' };
+    rules['.bw-form-switch .bw-switch-input:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
+
+    // Skeleton (structural)
+    rules['.bw-skeleton'] = { 'border-radius': '4px', 'animation': 'bw-skeleton-pulse 1.5s ease-in-out infinite' };
+    rules['.bw-skeleton-text'] = { 'height': '1em', 'margin-bottom': '0.5rem' };
+    rules['.bw-skeleton-circle'] = { 'border-radius': '50%' };
+    rules['.bw-skeleton-rect'] = { 'border-radius': '8px' };
+    rules['.bw-skeleton-group'] = { 'display': 'flex', 'flex-direction': 'column' };
+    rules['@keyframes bw-skeleton-pulse'] = { '0%': { 'opacity': '1' }, '50%': { 'opacity': '0.4' }, '100%': { 'opacity': '1' } };
+
+    // Avatar (structural)
+    rules['.bw-avatar'] = {
+      'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
+      'border-radius': '50%', 'overflow': 'hidden', 'font-weight': '600',
+      'text-transform': 'uppercase', 'vertical-align': 'middle', 'object-fit': 'cover'
+    };
+    rules['.bw-avatar-sm'] = { 'width': '2rem', 'height': '2rem', 'font-size': '0.75rem' };
+    rules['.bw-avatar-md'] = { 'width': '3rem', 'height': '3rem', 'font-size': '1rem' };
+    rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
+    rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
 
     // Spacing utilities (structural)
     var spacingValues = { '0': '0', '1': '.25rem', '2': '.5rem', '3': '1rem', '4': '1.5rem', '5': '3rem' };
@@ -1687,6 +1936,56 @@
       },
       '.bw-dark .bw-close': {
         'color': textColor
+      },
+      '.bw-dark .bw-accordion-item': {
+        'background-color': surfaceBg,
+        'border-color': borderColor
+      },
+      '.bw-dark .bw-accordion-button': {
+        'color': textColor
+      },
+      '.bw-dark .bw-accordion-button:hover': {
+        'background-color': bodyBg
+      },
+      '.bw-dark .bw-accordion-body': {
+        'border-top-color': borderColor
+      },
+      '.bw-dark .bw-modal-content': {
+        'background-color': surfaceBg,
+        'border-color': borderColor
+      },
+      '.bw-dark .bw-modal-header': {
+        'border-bottom-color': borderColor
+      },
+      '.bw-dark .bw-modal-footer': {
+        'border-top-color': borderColor
+      },
+      '.bw-dark .bw-modal-title': {
+        'color': textColor
+      },
+      '.bw-dark .bw-toast': {
+        'background-color': surfaceBg,
+        'border-color': borderColor
+      },
+      '.bw-dark .bw-toast-header': {
+        'border-bottom-color': borderColor,
+        'color': textColor
+      },
+      '.bw-dark .bw-dropdown-menu': {
+        'background-color': surfaceBg,
+        'border-color': borderColor
+      },
+      '.bw-dark .bw-dropdown-item': {
+        'color': textColor
+      },
+      '.bw-dark .bw-dropdown-item:hover': {
+        'background-color': bodyBg
+      },
+      '.bw-dark .bw-dropdown-divider': {
+        'border-top-color': borderColor
+      },
+      '.bw-dark .bw-skeleton': {
+        'background-color': borderColor
       },
       '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
         'color': textColor
@@ -2281,7 +2580,11 @@
           a: {
             type: 'button',
             class: 'bw-close',
-            'aria-label': 'Close'
+            'aria-label': 'Close',
+            onclick: function(e) {
+              var alert = e.target.closest('.bw-alert');
+              if (alert) { alert.remove(); }
+            }
           },
           c: '×'
         }
@@ -2295,25 +2598,30 @@
    * @param {Object} [props] - Badge configuration
    * @param {string} [props.text] - Badge display text
    * @param {string} [props.variant="primary"] - Color variant
+   * @param {string} [props.size] - Size variant: 'sm' or 'lg' (default is medium)
    * @param {boolean} [props.pill=false] - Use pill (rounded) shape
    * @param {string} [props.className] - Additional CSS classes
    * @returns {Object} TACO object representing a badge span
    * @category Component Builders
    * @example
    * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
+   * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
    */
   function makeBadge(props = {}) {
     const {
       text,
       variant = 'primary',
+      size,
       pill = false,
       className = ''
     } = props;
 
+    const sizeClass = size === 'sm' ? ' bw-badge-sm' : size === 'lg' ? ' bw-badge-lg' : '';
+
     return {
       t: 'span',
       a: {
-        class: `bw-badge bw-badge-${variant} ${pill ? 'bw-badge-pill' : ''} ${className}`.trim()
+        class: `bw-badge bw-badge-${variant}${sizeClass} ${pill ? 'bw-badge-pill' : ''} ${className}`.trim()
       },
       c: text
     };
@@ -2772,12 +3080,14 @@
       id,
       name,
       disabled = false,
-      value
+      value,
+      className = '',
+      ...eventHandlers
     } = props;
 
     return {
       t: 'div',
-      a: { class: 'bw-form-check' },
+      a: { class: `bw-form-check ${className}`.trim() },
       c: [
         {
           t: 'input',
@@ -2788,7 +3098,8 @@
             id,
             name,
             disabled,
-            value
+            value,
+            ...eventHandlers
           }
         },
         label && {
@@ -3016,8 +3327,8 @@
               feature.icon && {
                 t: 'div',
                 a: {
-                  class: 'bw-feature-icon bw-mb-3',
-                  style: `font-size: ${iconSize}; color: var(--bw-primary);`
+                  class: 'bw-feature-icon bw-mb-3 bw-text-primary',
+                  style: `font-size: ${iconSize};`
                 },
                 c: feature.icon
               },
@@ -3526,8 +3837,7 @@
             {
               t: 'button',
               a: {
-                class: 'bw-copy-btn',
-                style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.6875rem; background: rgba(255,255,255,0.12); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s;',
+                class: 'bw-copy-btn bw-code-copy-btn',
                 onclick: (e) => {
                   navigator.clipboard.writeText(code).then(() => {
                     const btn = e.target;
@@ -3545,20 +3855,17 @@
               },
               c: 'Copy'
             },
-            {
-              t: 'pre',
-              a: {
-                style: 'margin: 0; background: #1e293b; border: none; border-radius: 6px; overflow-x: auto;'
-              },
-              c: {
-                t: 'code',
-                a: {
-                  class: `language-${language}`,
-                  style: 'display: block; padding: 1.25rem; font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace; font-size: 0.8125rem; line-height: 1.6; color: #e2e8f0;'
-                },
-                c: code
-              }
-            }
+            (typeof globalThis !== 'undefined' && typeof globalThis.bw !== 'undefined' && typeof globalThis.bw.codeEditor === 'function')
+              ? globalThis.bw.codeEditor({ code: code, lang: language === 'javascript' ? 'js' : language, readOnly: true, height: 'auto' })
+              : {
+                  t: 'pre',
+                  a: { class: 'bw-code-pre' },
+                  c: {
+                    t: 'code',
+                    a: { class: `bw-code-block language-${language}` },
+                    c: code
+                  }
+                }
           ]
         }
       });
@@ -3568,7 +3875,7 @@
       title && { t: 'h3', c: title },
       description && {
         t: 'p',
-        a: { style: 'color: #6c757d; margin-bottom: 1rem;' },
+        a: { class: 'bw-text-muted', style: 'margin-bottom: 1rem;' },
         c: description
       },
       makeTabs({ tabs})
@@ -3589,46 +3896,897 @@
    *
    * @type {Object.<string, Function>}
    */
+  // =========================================================================
+  // Phase 1: Quick Wins
+  // =========================================================================
+
+  /**
+   * Create a pagination navigation component
+   *
+   * @param {Object} [props] - Pagination configuration
+   * @param {number} [props.pages=1] - Total number of pages
+   * @param {number} [props.currentPage=1] - Currently active page (1-based)
+   * @param {Function} [props.onPageChange] - Callback when page changes, receives page number
+   * @param {string} [props.size] - Size variant ("sm" or "lg")
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a pagination nav
+   * @category Component Builders
+   * @example
+   * const pager = makePagination({
+   *   pages: 10,
+   *   currentPage: 3,
+   *   onPageChange: (page) => loadPage(page)
+   * });
+   */
+  function makePagination(props = {}) {
+    const {
+      pages = 1,
+      currentPage = 1,
+      onPageChange,
+      size,
+      className = ''
+    } = props;
+
+    function handleClick(page) {
+      return function(e) {
+        e.preventDefault();
+        if (page < 1 || page > pages || page === currentPage) return;
+        if (onPageChange) onPageChange(page);
+      };
+    }
+
+    const items = [];
+
+    // Previous arrow
+    items.push({
+      t: 'li',
+      a: { class: `bw-page-item ${currentPage <= 1 ? 'bw-disabled' : ''}`.trim() },
+      c: {
+        t: 'a',
+        a: { class: 'bw-page-link', href: '#', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous' },
+        c: '\u2039'
+      }
+    });
+
+    // Page numbers
+    for (var i = 1; i <= pages; i++) {
+      (function(pageNum) {
+        items.push({
+          t: 'li',
+          a: { class: `bw-page-item ${pageNum === currentPage ? 'bw-active' : ''}`.trim() },
+          c: {
+            t: 'a',
+            a: { class: 'bw-page-link', href: '#', onclick: handleClick(pageNum) },
+            c: '' + pageNum
+          }
+        });
+      })(i);
+    }
+
+    // Next arrow
+    items.push({
+      t: 'li',
+      a: { class: `bw-page-item ${currentPage >= pages ? 'bw-disabled' : ''}`.trim() },
+      c: {
+        t: 'a',
+        a: { class: 'bw-page-link', href: '#', onclick: handleClick(currentPage + 1), 'aria-label': 'Next' },
+        c: '\u203A'
+      }
+    });
+
+    return {
+      t: 'nav',
+      a: { 'aria-label': 'Pagination' },
+      c: {
+        t: 'ul',
+        a: {
+          class: `bw-pagination ${size ? 'bw-pagination-' + size : ''} ${className}`.trim()
+        },
+        c: items
+      }
+    };
+  }
+
+  /**
+   * Create a radio button input with label
+   *
+   * @param {Object} [props] - Radio configuration
+   * @param {string} [props.label] - Radio label text
+   * @param {string} [props.name] - Radio group name
+   * @param {string} [props.value] - Radio value attribute
+   * @param {boolean} [props.checked=false] - Whether the radio is selected
+   * @param {string} [props.id] - Element ID (links label to radio)
+   * @param {boolean} [props.disabled=false] - Whether the radio is disabled
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a radio form group
+   * @category Component Builders
+   * @example
+   * const radio = makeRadio({
+   *   label: "Option A",
+   *   name: "choice",
+   *   value: "a",
+   *   checked: true
+   * });
+   */
+  function makeRadio(props = {}) {
+    const {
+      label,
+      name,
+      value,
+      checked = false,
+      id,
+      disabled = false,
+      className = '',
+      ...eventHandlers
+    } = props;
+
+    return {
+      t: 'div',
+      a: { class: `bw-form-check ${className}`.trim() },
+      c: [
+        {
+          t: 'input',
+          a: {
+            type: 'radio',
+            class: 'bw-form-check-input',
+            name,
+            value,
+            checked,
+            id,
+            disabled,
+            ...eventHandlers
+          }
+        },
+        label && {
+          t: 'label',
+          a: { class: 'bw-form-check-label', for: id },
+          c: label
+        }
+      ].filter(Boolean)
+    };
+  }
+
+  /**
+   * Create a button group wrapper
+   *
+   * @param {Object} [props] - Button group configuration
+   * @param {Array} [props.children] - Button TACO objects to group
+   * @param {string} [props.size] - Size variant ("sm" or "lg")
+   * @param {boolean} [props.vertical=false] - Stack buttons vertically
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a button group
+   * @category Component Builders
+   * @example
+   * const group = makeButtonGroup({
+   *   children: [
+   *     makeButton({ text: "Left", variant: "primary" }),
+   *     makeButton({ text: "Middle", variant: "primary" }),
+   *     makeButton({ text: "Right", variant: "primary" })
+   *   ]
+   * });
+   */
+  function makeButtonGroup(props = {}) {
+    const {
+      children,
+      size,
+      vertical = false,
+      className = ''
+    } = props;
+
+    return {
+      t: 'div',
+      a: {
+        class: `${vertical ? 'bw-btn-group-vertical' : 'bw-btn-group'} ${size ? 'bw-btn-group-' + size : ''} ${className}`.trim(),
+        role: 'group'
+      },
+      c: children
+    };
+  }
+
+  // =========================================================================
+  // Phase 2: Core Interactive
+  // =========================================================================
+
+  /**
+   * Create an accordion component with collapsible items
+   *
+   * @param {Object} [props] - Accordion configuration
+   * @param {Array<Object>} [props.items=[]] - Accordion items
+   * @param {string} props.items[].title - Header text for the accordion item
+   * @param {string|Object|Array} props.items[].content - Collapsible content
+   * @param {boolean} [props.items[].open=false] - Whether the item is initially open
+   * @param {boolean} [props.multiOpen=false] - Allow multiple items open simultaneously
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing an accordion
+   * @category Component Builders
+   * @example
+   * const accordion = makeAccordion({
+   *   items: [
+   *     { title: "Section 1", content: "Content 1", open: true },
+   *     { title: "Section 2", content: "Content 2" }
+   *   ]
+   * });
+   */
+  function makeAccordion(props = {}) {
+    const {
+      items = [],
+      multiOpen = false,
+      className = ''
+    } = props;
+
+    return {
+      t: 'div',
+      a: { class: `bw-accordion ${className}`.trim() },
+      c: items.map(function(item, index) {
+        return {
+          t: 'div',
+          a: { class: 'bw-accordion-item' },
+          c: [
+            {
+              t: 'h2',
+              a: { class: 'bw-accordion-header' },
+              c: {
+                t: 'button',
+                a: {
+                  class: `bw-accordion-button ${item.open ? '' : 'bw-collapsed'}`.trim(),
+                  type: 'button',
+                  'aria-expanded': item.open ? 'true' : 'false',
+                  'data-accordion-index': index,
+                  onclick: function(e) {
+                    var btn = e.target.closest('.bw-accordion-button');
+                    var accordionEl = btn.closest('.bw-accordion');
+                    var accordionItem = btn.closest('.bw-accordion-item');
+                    var collapse = accordionItem.querySelector('.bw-accordion-collapse');
+                    var isOpen = collapse.classList.contains('bw-collapse-show');
+
+                    if (!multiOpen) {
+                      // Close all siblings
+                      var allCollapses = accordionEl.querySelectorAll('.bw-accordion-collapse');
+                      var allButtons = accordionEl.querySelectorAll('.bw-accordion-button');
+                      for (var j = 0; j < allCollapses.length; j++) {
+                        allCollapses[j].classList.remove('bw-collapse-show');
+                        allCollapses[j].style.maxHeight = null;
+                      }
+                      for (var k = 0; k < allButtons.length; k++) {
+                        allButtons[k].classList.add('bw-collapsed');
+                        allButtons[k].setAttribute('aria-expanded', 'false');
+                      }
+                    }
+
+                    if (isOpen) {
+                      collapse.classList.remove('bw-collapse-show');
+                      collapse.style.maxHeight = null;
+                      btn.classList.add('bw-collapsed');
+                      btn.setAttribute('aria-expanded', 'false');
+                    } else {
+                      collapse.classList.add('bw-collapse-show');
+                      collapse.style.maxHeight = collapse.scrollHeight + 'px';
+                      btn.classList.remove('bw-collapsed');
+                      btn.setAttribute('aria-expanded', 'true');
+                    }
+                  }
+                },
+                c: item.title
+              }
+            },
+            {
+              t: 'div',
+              a: { class: `bw-accordion-collapse ${item.open ? 'bw-collapse-show' : ''}`.trim() },
+              c: {
+                t: 'div',
+                a: { class: 'bw-accordion-body' },
+                c: item.content
+              },
+              o: item.open ? {
+                mounted: function(el) {
+                  el.style.maxHeight = el.scrollHeight + 'px';
+                }
+              } : undefined
+            }
+          ]
+        };
+      }),
+      o: {
+        type: 'accordion',
+        state: { multiOpen: multiOpen }
+      }
+    };
+  }
+
+  /**
+   * Imperative handle for a rendered modal component
+   *
+   * Provides `.show()`, `.hide()`, `.toggle()`, and `.destroy()` methods
+   * for controlling the modal programmatically.
+   *
+   * @category Component Handles
+   */
+  class ModalHandle {
+    /**
+     * @param {Element} element - The modal backdrop DOM element
+     * @param {Object} taco - The original TACO object
+     */
+    constructor(element, taco) {
+      this.element = element;
+      this._taco = taco;
+      this._escHandler = null;
+    }
+
+    /** Show the modal */
+    show() {
+      this.element.classList.add('bw-modal-show');
+      document.body.style.overflow = 'hidden';
+      return this;
+    }
+
+    /** Hide the modal */
+    hide() {
+      this.element.classList.remove('bw-modal-show');
+      document.body.style.overflow = '';
+      return this;
+    }
+
+    /** Toggle modal visibility */
+    toggle() {
+      if (this.element.classList.contains('bw-modal-show')) {
+        this.hide();
+      } else {
+        this.show();
+      }
+      return this;
+    }
+
+    /** Remove the modal from DOM and clean up */
+    destroy() {
+      this.hide();
+      if (this._escHandler) {
+        document.removeEventListener('keydown', this._escHandler);
+      }
+      if (this.element.parentNode) {
+        this.element.parentNode.removeChild(this.element);
+      }
+    }
+  }
+
+  /**
+   * Create a modal dialog overlay
+   *
+   * @param {Object} [props] - Modal configuration
+   * @param {string} [props.title] - Modal title in header
+   * @param {string|Object|Array} [props.content] - Modal body content
+   * @param {string|Object|Array} [props.footer] - Modal footer content
+   * @param {string} [props.size] - Modal size ("sm", "lg", "xl")
+   * @param {boolean} [props.closeButton=true] - Show X close button in header
+   * @param {Function} [props.onClose] - Callback when modal is closed
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a modal
+   * @category Component Builders
+   * @example
+   * const modal = makeModal({
+   *   title: "Confirm",
+   *   content: "Are you sure?",
+   *   footer: makeButton({ text: "OK", variant: "primary" })
+   * });
+   */
+  function makeModal(props = {}) {
+    const {
+      title,
+      content,
+      footer,
+      size,
+      closeButton = true,
+      onClose,
+      className = ''
+    } = props;
+
+    function closeModal(el) {
+      var backdrop = el.closest('.bw-modal');
+      if (backdrop) {
+        backdrop.classList.remove('bw-modal-show');
+        document.body.style.overflow = '';
+      }
+      if (onClose) onClose();
+    }
+
+    return {
+      t: 'div',
+      a: { class: `bw-modal ${className}`.trim() },
+      c: {
+        t: 'div',
+        a: { class: `bw-modal-dialog ${size ? 'bw-modal-' + size : ''}`.trim() },
+        c: {
+          t: 'div',
+          a: { class: 'bw-modal-content' },
+          c: [
+            (title || closeButton) && {
+              t: 'div',
+              a: { class: 'bw-modal-header' },
+              c: [
+                title && { t: 'h5', a: { class: 'bw-modal-title' }, c: title },
+                closeButton && {
+                  t: 'button',
+                  a: {
+                    type: 'button',
+                    class: 'bw-close',
+                    'aria-label': 'Close',
+                    onclick: function(e) { closeModal(e.target); }
+                  },
+                  c: '\u00D7'
+                }
+              ].filter(Boolean)
+            },
+            content && {
+              t: 'div',
+              a: { class: 'bw-modal-body' },
+              c: content
+            },
+            footer && {
+              t: 'div',
+              a: { class: 'bw-modal-footer' },
+              c: footer
+            }
+          ].filter(Boolean)
+        }
+      },
+      o: {
+        type: 'modal',
+        mounted: function(el) {
+          // Click backdrop to close
+          el.addEventListener('click', function(e) {
+            if (e.target === el) closeModal(el);
+          });
+          // Escape key to close
+          var escHandler = function(e) {
+            if (e.key === 'Escape' && el.classList.contains('bw-modal-show')) {
+              closeModal(el);
+            }
+          };
+          document.addEventListener('keydown', escHandler);
+          el._bw_escHandler = escHandler;
+        },
+        unmount: function(el) {
+          if (el._bw_escHandler) {
+            document.removeEventListener('keydown', el._bw_escHandler);
+          }
+          document.body.style.overflow = '';
+        }
+      }
+    };
+  }
+
+  /**
+   * Create a toast notification popup
+   *
+   * @param {Object} [props] - Toast configuration
+   * @param {string} [props.title] - Toast title
+   * @param {string|Object|Array} [props.content] - Toast body content
+   * @param {string} [props.variant="info"] - Color variant ("primary", "success", "danger", "warning", "info")
+   * @param {boolean} [props.autoDismiss=true] - Auto-dismiss after delay
+   * @param {number} [props.delay=5000] - Auto-dismiss delay in ms
+   * @param {string} [props.position="top-right"] - Container position
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a toast
+   * @category Component Builders
+   * @example
+   * const toast = makeToast({
+   *   title: "Success",
+   *   content: "File saved!",
+   *   variant: "success"
+   * });
+   */
+  function makeToast(props = {}) {
+    const {
+      title,
+      content,
+      variant = 'info',
+      autoDismiss = true,
+      delay = 5000,
+      position = 'top-right',
+      className = ''
+    } = props;
+
+    return {
+      t: 'div',
+      a: {
+        class: `bw-toast bw-toast-${variant} ${className}`.trim(),
+        role: 'alert',
+        'data-position': position
+      },
+      c: [
+        (title) && {
+          t: 'div',
+          a: { class: 'bw-toast-header' },
+          c: [
+            { t: 'strong', c: title },
+            {
+              t: 'button',
+              a: {
+                type: 'button',
+                class: 'bw-close',
+                'aria-label': 'Close',
+                onclick: function(e) {
+                  var toast = e.target.closest('.bw-toast');
+                  if (toast) {
+                    toast.classList.add('bw-toast-hiding');
+                    setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+                  }
+                }
+              },
+              c: '\u00D7'
+            }
+          ]
+        },
+        content && {
+          t: 'div',
+          a: { class: 'bw-toast-body' },
+          c: content
+        }
+      ].filter(Boolean),
+      o: {
+        type: 'toast',
+        mounted: function(el) {
+          // Trigger show animation
+          requestAnimationFrame(function() {
+            el.classList.add('bw-toast-show');
+          });
+          // Auto-dismiss
+          if (autoDismiss) {
+            setTimeout(function() {
+              el.classList.add('bw-toast-hiding');
+              setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+            }, delay);
+          }
+        }
+      }
+    };
+  }
+
+  // =========================================================================
+  // Phase 3: Essential Modern
+  // =========================================================================
+
+  /**
+   * Create a dropdown menu triggered by a button
+   *
+   * @param {Object} [props] - Dropdown configuration
+   * @param {string|Object} [props.trigger] - Button text or TACO for the trigger
+   * @param {Array<Object>} [props.items=[]] - Menu items
+   * @param {string} [props.items[].text] - Item display text
+   * @param {string} [props.items[].href] - Item link URL
+   * @param {Function} [props.items[].onclick] - Item click handler
+   * @param {boolean} [props.items[].divider] - Render as a divider line
+   * @param {boolean} [props.items[].disabled] - Whether the item is disabled
+   * @param {string} [props.align="start"] - Menu alignment ("start" or "end")
+   * @param {string} [props.variant="primary"] - Trigger button variant
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a dropdown
+   * @category Component Builders
+   * @example
+   * const dropdown = makeDropdown({
+   *   trigger: "Actions",
+   *   items: [
+   *     { text: "Edit", onclick: () => edit() },
+   *     { divider: true },
+   *     { text: "Delete", onclick: () => del() }
+   *   ]
+   * });
+   */
+  function makeDropdown(props = {}) {
+    const {
+      trigger,
+      items = [],
+      align = 'start',
+      variant = 'primary',
+      className = ''
+    } = props;
+
+    var triggerTaco;
+    if (typeof trigger === 'string' || trigger === undefined) {
+      triggerTaco = {
+        t: 'button',
+        a: {
+          class: `bw-btn bw-btn-${variant} bw-dropdown-toggle`,
+          type: 'button',
+          onclick: function(e) {
+            var dropdown = e.target.closest('.bw-dropdown');
+            var menu = dropdown.querySelector('.bw-dropdown-menu');
+            menu.classList.toggle('bw-dropdown-show');
+          }
+        },
+        c: trigger || 'Dropdown'
+      };
+    } else {
+      triggerTaco = trigger;
+    }
+
+    return {
+      t: 'div',
+      a: { class: `bw-dropdown ${className}`.trim() },
+      c: [
+        triggerTaco,
+        {
+          t: 'div',
+          a: { class: `bw-dropdown-menu ${align === 'end' ? 'bw-dropdown-menu-end' : ''}`.trim() },
+          c: items.map(function(item) {
+            if (item.divider) {
+              return { t: 'hr', a: { class: 'bw-dropdown-divider' } };
+            }
+            return {
+              t: 'a',
+              a: {
+                class: `bw-dropdown-item ${item.disabled ? 'disabled' : ''}`.trim(),
+                href: item.href || '#',
+                onclick: item.disabled ? undefined : function(e) {
+                  if (!item.href) e.preventDefault();
+                  var dropdown = e.target.closest('.bw-dropdown');
+                  var menu = dropdown.querySelector('.bw-dropdown-menu');
+                  menu.classList.remove('bw-dropdown-show');
+                  if (item.onclick) item.onclick(e);
+                }
+              },
+              c: item.text
+            };
+          })
+        }
+      ],
+      o: {
+        type: 'dropdown',
+        mounted: function(el) {
+          // Click outside to close
+          var outsideHandler = function(e) {
+            if (!el.contains(e.target)) {
+              var menu = el.querySelector('.bw-dropdown-menu');
+              if (menu) menu.classList.remove('bw-dropdown-show');
+            }
+          };
+          document.addEventListener('click', outsideHandler);
+          el._bw_outsideHandler = outsideHandler;
+        },
+        unmount: function(el) {
+          if (el._bw_outsideHandler) {
+            document.removeEventListener('click', el._bw_outsideHandler);
+          }
+        }
+      }
+    };
+  }
+
+  /**
+   * Create a toggle switch (styled checkbox)
+   *
+   * @param {Object} [props] - Switch configuration
+   * @param {string} [props.label] - Switch label text
+   * @param {boolean} [props.checked=false] - Whether the switch is on
+   * @param {string} [props.id] - Element ID (links label to switch)
+   * @param {string} [props.name] - Input name attribute
+   * @param {boolean} [props.disabled=false] - Whether the switch is disabled
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a toggle switch
+   * @category Component Builders
+   * @example
+   * const toggle = makeSwitch({
+   *   label: "Dark mode",
+   *   checked: false,
+   *   onchange: (e) => toggleDark(e.target.checked)
+   * });
+   */
+  function makeSwitch(props = {}) {
+    const {
+      label,
+      checked = false,
+      id,
+      name,
+      disabled = false,
+      className = '',
+      ...eventHandlers
+    } = props;
+
+    return {
+      t: 'div',
+      a: { class: `bw-form-check bw-form-switch ${className}`.trim() },
+      c: [
+        {
+          t: 'input',
+          a: {
+            type: 'checkbox',
+            class: 'bw-form-check-input bw-switch-input',
+            role: 'switch',
+            checked,
+            id,
+            name,
+            disabled,
+            ...eventHandlers
+          }
+        },
+        label && {
+          t: 'label',
+          a: { class: 'bw-form-check-label', for: id },
+          c: label
+        }
+      ].filter(Boolean)
+    };
+  }
+
+  /**
+   * Create a skeleton loading placeholder
+   *
+   * @param {Object} [props] - Skeleton configuration
+   * @param {string} [props.variant="text"] - Shape variant ("text", "circle", "rect")
+   * @param {string} [props.width] - Custom width (e.g. "200px", "100%")
+   * @param {string} [props.height] - Custom height (e.g. "20px")
+   * @param {number} [props.count=1] - Number of skeleton lines (for text variant)
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing a skeleton placeholder
+   * @category Component Builders
+   * @example
+   * const skeleton = makeSkeleton({ variant: "text", count: 3, width: "100%" });
+   */
+  function makeSkeleton(props = {}) {
+    const {
+      variant = 'text',
+      width,
+      height,
+      count = 1,
+      className = ''
+    } = props;
+
+    if (variant === 'circle') {
+      var circleSize = width || height || '3rem';
+      return {
+        t: 'div',
+        a: {
+          class: `bw-skeleton bw-skeleton-circle ${className}`.trim(),
+          style: { width: circleSize, height: circleSize }
+        }
+      };
+    }
+
+    if (variant === 'rect') {
+      return {
+        t: 'div',
+        a: {
+          class: `bw-skeleton bw-skeleton-rect ${className}`.trim(),
+          style: {
+            width: width || '100%',
+            height: height || '120px'
+          }
+        }
+      };
+    }
+
+    // Text variant — multiple lines
+    if (count === 1) {
+      return {
+        t: 'div',
+        a: {
+          class: `bw-skeleton bw-skeleton-text ${className}`.trim(),
+          style: {
+            width: width || '100%',
+            height: height || '1em'
+          }
+        }
+      };
+    }
+
+    var lines = [];
+    for (var i = 0; i < count; i++) {
+      lines.push({
+        t: 'div',
+        a: {
+          class: 'bw-skeleton bw-skeleton-text',
+          style: {
+            width: i === count - 1 ? '75%' : (width || '100%'),
+            height: height || '1em'
+          }
+        }
+      });
+    }
+
+    return {
+      t: 'div',
+      a: { class: `bw-skeleton-group ${className}`.trim() },
+      c: lines
+    };
+  }
+
+  /**
+   * Create a user avatar with image or initials fallback
+   *
+   * @param {Object} [props] - Avatar configuration
+   * @param {string} [props.src] - Image source URL
+   * @param {string} [props.alt] - Image alt text
+   * @param {string} [props.initials] - Fallback initials (e.g. "JD")
+   * @param {string} [props.size="md"] - Size ("sm", "md", "lg", "xl")
+   * @param {string} [props.variant="primary"] - Background color variant for initials
+   * @param {string} [props.className] - Additional CSS classes
+   * @returns {Object} TACO object representing an avatar
+   * @category Component Builders
+   * @example
+   * const avatar = makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
+   * const avatarInitials = makeAvatar({ initials: "JD", variant: "success" });
+   */
+  function makeAvatar(props = {}) {
+    const {
+      src,
+      alt = '',
+      initials,
+      size = 'md',
+      variant = 'primary',
+      className = ''
+    } = props;
+
+    if (src) {
+      return {
+        t: 'img',
+        a: {
+          class: `bw-avatar bw-avatar-${size} ${className}`.trim(),
+          src: src,
+          alt: alt
+        }
+      };
+    }
+
+    return {
+      t: 'div',
+      a: {
+        class: `bw-avatar bw-avatar-${size} bw-avatar-${variant} ${className}`.trim()
+      },
+      c: initials || ''
+    };
+  }
+
   const componentHandles = {
     card: CardHandle,
     table: TableHandle,
     navbar: NavbarHandle,
-    tabs: TabsHandle
+    tabs: TabsHandle,
+    modal: ModalHandle
   };
 
   var components = /*#__PURE__*/Object.freeze({
     __proto__: null,
     CardHandle: CardHandle,
+    ModalHandle: ModalHandle,
     NavbarHandle: NavbarHandle,
     TableHandle: TableHandle,
     TabsHandle: TabsHandle,
     componentHandles: componentHandles,
+    makeAccordion: makeAccordion,
     makeAlert: makeAlert,
+    makeAvatar: makeAvatar,
     makeBadge: makeBadge,
     makeBreadcrumb: makeBreadcrumb,
     makeButton: makeButton,
+    makeButtonGroup: makeButtonGroup,
     makeCTA: makeCTA,
     makeCard: makeCard,
     makeCheckbox: makeCheckbox,
     makeCodeDemo: makeCodeDemo,
     makeCol: makeCol,
     makeContainer: makeContainer,
+    makeDropdown: makeDropdown,
     makeFeatureGrid: makeFeatureGrid,
     makeForm: makeForm,
     makeFormGroup: makeFormGroup,
     makeHero: makeHero,
     makeInput: makeInput,
     makeListGroup: makeListGroup,
+    makeModal: makeModal,
     makeNav: makeNav,
     makeNavbar: makeNavbar,
+    makePagination: makePagination,
     makeProgress: makeProgress,
+    makeRadio: makeRadio,
     makeRow: makeRow,
     makeSection: makeSection,
     makeSelect: makeSelect,
+    makeSkeleton: makeSkeleton,
     makeSpinner: makeSpinner,
     makeStack: makeStack,
+    makeSwitch: makeSwitch,
     makeTabs: makeTabs,
-    makeTextarea: makeTextarea
+    makeTextarea: makeTextarea,
+    makeToast: makeToast
   });
 
   /**
@@ -6639,12 +7797,21 @@
     const {
       data = [],
       columns,
-      className = "table",
+      className = '',
+      striped = false,
+      hover = false,
       sortable = true,
       onSort,
       sortColumn,
       sortDirection = 'asc'
     } = config;
+
+    // Build class list: always include bw-table, add striped/hover, append user className
+    let cls = 'bw-table';
+    if (striped) cls += ' bw-table-striped';
+    if (hover) cls += ' bw-table-hover';
+    if (className) cls += ' ' + className;
+    cls = cls.trim();
     
     // Auto-detect columns if not provided
     const cols = columns || (data.length > 0 
@@ -6732,7 +7899,7 @@
     
     return {
       t: 'table',
-      a: { class: className },
+      a: { class: cls },
       c: [thead, tbody]
     };
   };
@@ -6747,7 +7914,9 @@
    * @param {string} [config.title] - Table title heading
    * @param {Array<Object>} config.data - Array of row objects
    * @param {Array<Object>} [config.columns] - Column definitions
-   * @param {string} [config.className="table table-striped table-hover"] - Table CSS class
+   * @param {string} [config.className=''] - Additional CSS classes for the table
+   * @param {boolean} [config.striped=true] - Add striped row styling
+   * @param {boolean} [config.hover=true] - Add hover row highlighting
    * @param {boolean} [config.responsive=true] - Wrap table in responsive overflow div
    * @returns {Object} TACO object for table with wrapper
    * @example
@@ -6762,7 +7931,9 @@
       title,
       data,
       columns,
-      className = "table table-striped table-hover",
+      className = '',
+      striped = true,
+      hover = true,
       responsive = true,
       ...tableConfig
     } = config;
@@ -6771,6 +7942,8 @@
       data,
       columns,
       className,
+      striped,
+      hover,
       ...tableConfig
     });
     

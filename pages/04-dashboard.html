@@ -6,6 +6,7 @@
   <title>Bitwrench - Dashboard</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
@@ -22,10 +23,10 @@
     }
     .sidebar {
       width: 200px;
-      background: var(--bw-teal-dark, #004d4d);
       color: white;
       padding: 0.75rem;
       flex-shrink: 0;
+      transition: background 0.3s;
     }
     .sidebar h3 {
       font-size: 1.1rem;
@@ -40,7 +41,7 @@
     .main-content h1 {
       font-size: 1.5rem;
       margin: 0 0 1rem 0;
-      color: var(--bw-teal-dark, #004d4d);
+      transition: color 0.3s;
     }
     .stats-grid {
       display: grid;
@@ -55,7 +56,8 @@
       border: 1px solid var(--bw-card-border, #e5e5e5);
       box-shadow: 0 1px 3px rgba(0,0,0,.06);
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, border-left-color 0.3s;
+      border-left: 4px solid transparent;
     }
     .stat-card:hover {
       transform: translateY(-2px);
@@ -64,7 +66,7 @@
     .stat-value {
       font-size: 1.5rem;
       font-weight: 700;
-      color: var(--bw-teal-dark, #004d4d);
+      transition: color 0.3s;
     }
     .stat-label {
       color: var(--bw-text-secondary, #555);
@@ -96,8 +98,90 @@
       background: rgba(255,255,255,0.1);
     }
     .sidebar .bw-nav-link.active {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.2);
       color: white !important;
+      font-weight: 600;
+    }
+    /* Bar chart */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 180px;
+      padding: 0 0.5rem;
+    }
+    .bar-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      transition: height 0.5s ease, background 0.3s;
+      min-height: 4px;
+      position: relative;
+    }
+    .bar:hover { opacity: 0.85; }
+    .bar-val {
+      font-size: 0.65rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      color: var(--bw-text-secondary, #555);
+    }
+    .bar-label {
+      font-size: 0.7rem;
+      color: var(--bw-text-secondary, #555);
+      margin-top: 4px;
+    }
+    /* Theme picker */
+    .theme-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .theme-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .theme-dot:hover { transform: scale(1.15); }
+    .theme-dot.active {
+      border-color: #333;
+      box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+    }
+    /* Page tabs */
+    .page-tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--bw-card-border, #e0e0e0);
+      margin-bottom: 1.25rem;
+    }
+    .page-tab-btn {
+      padding: 0.625rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      color: var(--bw-text-secondary, #666);
+      transition: all 0.15s;
+    }
+    .page-tab-btn:hover { color: var(--bw-teal-dark, #004d4d); }
+    .page-tab-btn.active {
+      color: var(--bw-teal-dark, #004d4d);
+      border-bottom-color: var(--bw-teal, #006666);
+      font-weight: 600;
     }
     @media (max-width: 768px) {
       .dashboard { flex-direction: column; min-height: auto; }
@@ -112,7 +196,7 @@
   <div class="page-header">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
       <h1>Dashboard</h1>
-      <p class="subtitle">Full application layout with sidebar navigation, stat cards, tables, and real-time updates.</p>
+      <p class="subtitle">Full application layout with sidebar navigation, stat cards, charts, tables, and live theme switching.</p>
     </div>
   </div>
 
@@ -122,7 +206,19 @@
     // Mount the shared navigation
     mountExampleNav('#example-nav', '04-dashboard.html');
 
-    // Dashboard State
+    // ── Theme Presets ──────────────────────────────────────────────
+    var themePresets = [
+      { name: 'Teal',   primary: '#00695c', secondary: '#004d4d', accent: '#26a69a' },
+      { name: 'Ocean',  primary: '#1565c0', secondary: '#0d47a1', accent: '#42a5f5' },
+      { name: 'Sunset', primary: '#e65100', secondary: '#bf360c', accent: '#ff7043' },
+      { name: 'Forest', primary: '#2e7d32', secondary: '#1b5e20', accent: '#66bb6a' },
+      { name: 'Plum',   primary: '#6a1b9a', secondary: '#4a148c', accent: '#ab47bc' },
+      { name: 'Slate',  primary: '#455a64', secondary: '#263238', accent: '#78909c' }
+    ];
+    var currentTheme = themePresets[0];
+    var activeTab = 'dashboard'; // 'dashboard' or 'code'
+
+    // ── Dashboard State ──────────────────────────────────────────
     var dashboardState = {
       currentView: 'overview',
       stats: [
@@ -137,10 +233,18 @@
         { id: 3, user: 'Bob Johnson', action: 'Cancelled order #1233', time: Date.now() - 15 * 60000, status: 'danger' },
         { id: 4, user: 'Alice Brown', action: 'Added product review', time: Date.now() - 20 * 60000, status: 'success' },
         { id: 5, user: 'Charlie Wilson', action: 'Changed password', time: Date.now() - 25 * 60000, status: 'warning' }
+      ],
+      monthlyRevenue: [
+        { month: 'Jan', value: 4200 }, { month: 'Feb', value: 5100 },
+        { month: 'Mar', value: 4800 }, { month: 'Apr', value: 6300 },
+        { month: 'May', value: 5900 }, { month: 'Jun', value: 7200 },
+        { month: 'Jul', value: 6800 }, { month: 'Aug', value: 8100 },
+        { month: 'Sep', value: 7500 }, { month: 'Oct', value: 9200 },
+        { month: 'Nov', value: 8700 }, { month: 'Dec', value: 10500 }
       ]
     };
 
-    // Utility Functions
+    // ── Utility Functions ─────────────────────────────────────────
     function formatValue(value, format) {
       switch (format) {
         case 'currency': return '$' + value.toLocaleString();
@@ -157,28 +261,88 @@
       return Math.floor(hours / 24) + ' days ago';
     }
 
-    // ---- Render functions (all return TACO) ----
+    // ── Apply Theme ──────────────────────────────────────────────
+    function applyTheme() {
+      bw.generateTheme('dashboard-theme', {
+        primary: currentTheme.primary,
+        secondary: currentTheme.secondary,
+        inject: true
+      });
+    }
+    applyTheme(); // Apply initial theme
 
+    // ── Render: Theme Picker ─────────────────────────────────────
+    function renderThemePicker() {
+      return {
+        t: 'div', a: { class: 'theme-picker' },
+        c: [
+          { t: 'span', a: { style: 'font-size:0.875rem;color:var(--bw-text-secondary);font-weight:500;' }, c: 'Theme:' }
+        ].concat(themePresets.map(function(preset) {
+          var isActive = preset.name === currentTheme.name;
+          return {
+            t: 'button',
+            a: {
+              class: 'theme-dot' + (isActive ? ' active' : ''),
+              style: 'background:' + preset.primary + ';',
+              title: preset.name,
+              onclick: function() {
+                currentTheme = preset;
+                applyTheme();
+                renderAll();
+              }
+            }
+          };
+        }))
+      };
+    }
+
+    // ── Render: Tab Bar ──────────────────────────────────────────
+    function renderTabBar() {
+      return {
+        t: 'div', a: { class: 'page-tab-bar' },
+        c: [
+          {
+            t: 'button',
+            a: {
+              class: 'page-tab-btn' + (activeTab === 'dashboard' ? ' active' : ''),
+              onclick: function() { activeTab = 'dashboard'; renderAll(); }
+            },
+            c: 'Dashboard'
+          },
+          {
+            t: 'button',
+            a: {
+              class: 'page-tab-btn' + (activeTab === 'code' ? ' active' : ''),
+              onclick: function() { activeTab = 'code'; renderAll(); }
+            },
+            c: 'Source Code'
+          }
+        ]
+      };
+    }
+
+    // ── Render: Stat Card ────────────────────────────────────────
     function renderStatCard(stat) {
       return {
         t: 'div',
         a: {
           class: 'stat-card',
+          style: 'border-left-color:' + currentTheme.accent + ';',
           onclick: function() {
             var c = (Math.random() - 0.5) * 10;
             stat.change = Math.round(c * 10) / 10;
             stat.value = Math.round(stat.value * (1 + c / 100));
-            renderDashboard();
+            renderAll();
           }
         },
         c: [
-          { t: 'div', a: { class: 'stat-value' }, c: formatValue(stat.value, stat.format) },
+          { t: 'div', a: { class: 'stat-value', style: 'color:' + currentTheme.primary + ';' }, c: formatValue(stat.value, stat.format) },
           { t: 'div', a: { class: 'stat-label' }, c: stat.label },
           {
             t: 'div',
             a: {
               style: 'margin-top:0.25rem;font-size:0.875rem;color:' +
-                (stat.change >= 0 ? 'var(--bw-teal)' : '#c62828')
+                (stat.change >= 0 ? '#2e7d32' : '#c62828')
             },
             c: (stat.change >= 0 ? '+' : '') + stat.change + '%'
           }
@@ -193,6 +357,31 @@
       };
     }
 
+    // ── Render: Bar Chart ────────────────────────────────────────
+    function renderBarChart() {
+      var data = dashboardState.monthlyRevenue;
+      var maxVal = Math.max.apply(null, data.map(function(d) { return d.value; }));
+      return {
+        t: 'div', a: { class: 'chart-container' }, c: [
+          { t: 'h3', c: 'Monthly Revenue' },
+          {
+            t: 'div', a: { class: 'bar-chart' },
+            c: data.map(function(d) {
+              var pct = (d.value / maxVal * 100);
+              return {
+                t: 'div', a: { class: 'bar-group' }, c: [
+                  { t: 'div', a: { class: 'bar-val' }, c: '$' + (d.value / 1000).toFixed(1) + 'k' },
+                  { t: 'div', a: { class: 'bar', style: 'height:' + pct + '%;background:' + currentTheme.accent + ';' } },
+                  { t: 'div', a: { class: 'bar-label' }, c: d.month }
+                ]
+              };
+            })
+          }
+        ]
+      };
+    }
+
+    // ── Render: Activity Table ────────────────────────────────────
     function renderActivityTable() {
       return {
         t: 'div', a: { class: 'chart-container' }, c: [
@@ -216,30 +405,20 @@
                     time: Date.now(),
                     status: statuses[Math.floor(Math.random() * statuses.length)]
                   });
-                  renderDashboard();
+                  renderAll();
                 }
               })
             ]
           },
           bw.makeTable({
             data: dashboardState.activities.map(function(a) {
-              return {
-                user: a.user,
-                action: a.action,
-                time: formatTime(a.time),
-                status: a.status
-              };
+              return { user: a.user, action: a.action, time: formatTime(a.time), status: a.status };
             }),
             columns: [
               { key: 'user', label: 'User' },
               { key: 'action', label: 'Action' },
               { key: 'time', label: 'Time' },
-              {
-                key: 'status', label: 'Status',
-                render: function(value) {
-                  return bw.makeBadge({ text: value, variant: value });
-                }
-              }
+              { key: 'status', label: 'Status', render: function(v) { return bw.makeBadge({ text: v, variant: v }); } }
             ],
             striped: true,
             hover: true
@@ -248,19 +427,7 @@
       };
     }
 
-    function renderChartPlaceholder() {
-      return {
-        t: 'div', a: { class: 'chart-container' }, c: [
-          { t: 'h3', c: 'Sales Overview' },
-          {
-            t: 'p',
-            a: { style: 'color:var(--bw-text-secondary);text-align:center;padding:3rem;' },
-            c: 'Chart visualization would go here. This example focuses on layout and components.'
-          }
-        ]
-      };
-    }
-
+    // ── Render: Analytics View ────────────────────────────────────
     function renderAnalyticsView() {
       return {
         t: 'div', a: { class: 'chart-container' }, c: [
@@ -277,15 +444,12 @@
               });
             })
           },
-          {
-            t: 'div',
-            a: { style: 'background:var(--bw-teal-bg);padding:3rem;text-align:center;border-radius:4px;' },
-            c: 'Analytics charts would appear here based on selected time range.'
-          }
+          renderBarChart()
         ]
       };
     }
 
+    // ── Render: Customers View ───────────────────────────────────
     function renderCustomersView() {
       var customers = [
         { id: 1, name: 'Acme Corp', contact: 'john@acme.com', value: 125000, status: 'active' },
@@ -314,6 +478,7 @@
       };
     }
 
+    // ── Render: Main Content ─────────────────────────────────────
     function renderMainContent() {
       var view = dashboardState.currentView;
       var title = view.charAt(0).toUpperCase() + view.slice(1) + ' Dashboard';
@@ -324,15 +489,16 @@
       } else if (view === 'customers') {
         body = [renderCustomersView()];
       } else {
-        body = [renderStatsGrid(), renderChartPlaceholder(), renderActivityTable()];
+        body = [renderStatsGrid(), renderBarChart(), renderActivityTable()];
       }
 
       return {
         t: 'div', a: { class: 'main-content' },
-        c: [{ t: 'h1', c: title }].concat(body)
+        c: [{ t: 'h1', a: { style: 'color:' + currentTheme.primary + ';' }, c: title }].concat(body)
       };
     }
 
+    // ── Render: Sidebar ──────────────────────────────────────────
     function renderSidebar() {
       var sidebarItems = [
         { text: 'Overview', view: 'overview' },
@@ -344,7 +510,9 @@
       ];
 
       return {
-        t: 'div', a: { class: 'sidebar' }, c: [
+        t: 'div',
+        a: { class: 'sidebar', style: 'background:' + currentTheme.secondary + ';' },
+        c: [
           { t: 'h3', c: 'Dashboard' },
           {
             t: 'nav', c: sidebarItems.map(function(item) {
@@ -358,7 +526,7 @@
                   onclick: function(e) {
                     e.preventDefault();
                     dashboardState.currentView = item.view;
-                    renderDashboard();
+                    renderAll();
                   }
                 },
                 c: item.text
@@ -369,15 +537,176 @@
       };
     }
 
-    function renderDashboard() {
+    // ── Render: Code Tab ─────────────────────────────────────────
+    var DASHBOARD_CODE = [
+      '// Dashboard Example - Key Code',
+      '// Full source: pages/04-dashboard.html',
+      '',
+      '// ---- Theme Presets ----',
+      'var themePresets = [',
+      '  { name: "Teal",   primary: "#00695c", secondary: "#004d4d", accent: "#26a69a" },',
+      '  { name: "Ocean",  primary: "#1565c0", secondary: "#0d47a1", accent: "#42a5f5" },',
+      '  { name: "Sunset", primary: "#e65100", secondary: "#bf360c", accent: "#ff7043" },',
+      '  { name: "Forest", primary: "#2e7d32", secondary: "#1b5e20", accent: "#66bb6a" },',
+      '  { name: "Plum",   primary: "#6a1b9a", secondary: "#4a148c", accent: "#ab47bc" },',
+      '  { name: "Slate",  primary: "#455a64", secondary: "#263238", accent: "#78909c" }',
+      '];',
+      'var currentTheme = themePresets[0];',
+      '',
+      '// ---- Apply Theme ----',
+      '// bw.generateTheme() creates scoped CSS for all bw-* components.',
+      '// Custom elements use currentTheme colors via inline styles.',
+      'function applyTheme() {',
+      '  bw.generateTheme("dashboard-theme", {',
+      '    primary: currentTheme.primary,',
+      '    secondary: currentTheme.secondary,',
+      '    inject: true',
+      '  });',
+      '}',
+      '',
+      '// ---- Dashboard State ----',
+      'var dashboardState = {',
+      '  currentView: "overview",',
+      '  stats: [',
+      '    { id: "revenue", label: "Total Revenue", value: 45231, format: "currency", change: 12.5 },',
+      '    { id: "users",   label: "Active Users",  value: 2345,  format: "number",   change: 5.3 },',
+      '    // ...',
+      '  ],',
+      '  monthlyRevenue: [',
+      '    { month: "Jan", value: 4200 },',
+      '    { month: "Feb", value: 5100 },',
+      '    // ...',
+      '  ]',
+      '};',
+      '',
+      '// ---- Stat Card (TACO pattern) ----',
+      'function renderStatCard(stat) {',
+      '  return {',
+      '    t: "div",',
+      '    a: {',
+      '      class: "stat-card",',
+      '      style: "border-left-color:" + currentTheme.accent + ";",',
+      '      onclick: function() {',
+      '        stat.value = Math.round(stat.value * 1.02);',
+      '        renderAll();',
+      '      }',
+      '    },',
+      '    c: [',
+      '      { t: "div", a: { class: "stat-value", style: "color:" + currentTheme.primary }, c: formatValue(stat.value, stat.format) },',
+      '      { t: "div", a: { class: "stat-label" }, c: stat.label },',
+      '      { t: "div", c: (stat.change >= 0 ? "+" : "") + stat.change + "%" }',
+      '    ]',
+      '  };',
+      '}',
+      '',
+      '// ---- CSS Bar Chart ----',
+      'function renderBarChart() {',
+      '  var data = dashboardState.monthlyRevenue;',
+      '  var maxVal = Math.max.apply(null, data.map(function(d) { return d.value; }));',
+      '  return {',
+      '    t: "div", a: { class: "chart-container" }, c: [',
+      '      { t: "h3", c: "Monthly Revenue" },',
+      '      {',
+      '        t: "div", a: { class: "bar-chart" },',
+      '        c: data.map(function(d) {',
+      '          return {',
+      '            t: "div", a: { class: "bar-group" }, c: [',
+      '              { t: "div", a: { class: "bar-val" }, c: "$" + (d.value / 1000).toFixed(1) + "k" },',
+      '              { t: "div", a: { class: "bar", style: "height:" + (d.value / maxVal * 100) + "%;background:" + currentTheme.accent } },',
+      '              { t: "div", a: { class: "bar-label" }, c: d.month }',
+      '            ]',
+      '          };',
+      '        })',
+      '      }',
+      '    ]',
+      '  };',
+      '}',
+      '',
+      '// ---- Activity Table with Badges ----',
+      'bw.makeTable({',
+      '  data: activities.map(function(a) {',
+      '    return { user: a.user, action: a.action, time: formatTime(a.time), status: a.status };',
+      '  }),',
+      '  columns: [',
+      '    { key: "user", label: "User" },',
+      '    { key: "action", label: "Action" },',
+      '    { key: "time", label: "Time" },',
+      '    { key: "status", label: "Status",',
+      '      render: function(v) { return bw.makeBadge({ text: v, variant: v }); }',
+      '    }',
+      '  ],',
+      '  striped: true,',
+      '  hover: true',
+      '});',
+      '',
+      '// ---- Sidebar with View Switching ----',
+      'function renderSidebar() {',
+      '  var items = [',
+      '    { text: "Overview", view: "overview" },',
+      '    { text: "Analytics", view: "analytics" },',
+      '    { text: "Customers", view: "customers" }',
+      '  ];',
+      '  return {',
+      '    t: "div",',
+      '    a: { class: "sidebar", style: "background:" + currentTheme.secondary },',
+      '    c: [{',
+      '      t: "nav", c: items.map(function(item) {',
+      '        return {',
+      '          t: "a",',
+      '          a: {',
+      '            class: "bw-nav-link" + (item.view === currentView ? " active" : ""),',
+      '            onclick: function(e) {',
+      '              e.preventDefault();',
+      '              currentView = item.view;',
+      '              renderAll();',
+      '            }',
+      '          },',
+      '          c: item.text',
+      '        };',
+      '      })',
+      '    }]',
+      '  };',
+      '}',
+      '',
+      '// ---- Mount Everything ----',
+      'function renderAll() {',
+      '  bw.DOM("#dashboard-app", {',
+      '    t: "div", a: { class: "dashboard dashboard-theme" },',
+      '    c: [renderSidebar(), renderMainContent()]',
+      '  });',
+      '}'
+    ].join('\n');
+
+    function renderCodeTab() {
+      return bw.codeEditor
+        ? bw.codeEditor({ code: DASHBOARD_CODE, lang: 'js', readOnly: true, height: '600px' })
+        : { t: 'pre', a: { style: 'background:#1a1a1a;color:#e0e0e0;padding:1rem;border-radius:4px;font-size:0.8125rem;max-height:600px;overflow:auto;' }, c: { t: 'code', c: DASHBOARD_CODE } };
+    }
+
+    // ── Master Render ────────────────────────────────────────────
+    function renderAll() {
+      var content;
+      if (activeTab === 'code') {
+        content = renderCodeTab();
+      } else {
+        content = {
+          t: 'div', a: { class: 'dashboard dashboard-theme' },
+          c: [renderSidebar(), renderMainContent()]
+        };
+      }
+
       bw.DOM('#dashboard-app', {
-        t: 'div', a: { class: 'dashboard' },
-        c: [renderSidebar(), renderMainContent()]
+        t: 'div', c: [
+          renderThemePicker(),
+          { t: 'div', a: { style: 'height:1rem;' } },
+          renderTabBar(),
+          content
+        ]
       });
     }
 
     // Initialize
-    renderDashboard();
+    renderAll();
 
     // Auto-refresh stats every 5 seconds
     setInterval(function() {
@@ -386,8 +715,12 @@
         stat.value = Math.round(stat.value * (1 + change / 100));
         stat.change = Math.round((stat.change + change) * 10) / 10;
       });
-      if (dashboardState.currentView === 'overview') {
-        renderDashboard();
+      // Randomize chart data slightly
+      dashboardState.monthlyRevenue.forEach(function(d) {
+        d.value = Math.round(d.value * (1 + (Math.random() - 0.5) * 0.04));
+      });
+      if (dashboardState.currentView === 'overview' && activeTab === 'dashboard') {
+        renderAll();
       }
     }, 5000);
   </script>

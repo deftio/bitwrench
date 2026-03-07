@@ -66,9 +66,10 @@ const files = allFiles.map(file => {
   // Source map?
   const sourceMap = mapFiles.has(file + '.map');
 
-  // Identify component: core library vs addons
+  // Identify component: core library vs addons vs lean
   let component = 'core';
   if (file.startsWith('bitwrench-code-edit')) component = 'code-edit';
+  else if (file.startsWith('bitwrench-lean')) component = 'lean';
 
   const entry = { file, format, ver, component, minified, raw, gzipped, sourceMap };
   if (sriHashes[file]) {

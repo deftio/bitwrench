@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Forms</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+  <script src="shared-tryit.js"></script>
+  <style>
+    .form-showcase {
+      background: var(--bw-card-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      box-shadow: var(--bw-card-shadow);
+      padding: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="example-nav"></div>
+
+  <div class="page-header">
+    <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
+      <h1>Forms</h1>
+      <p class="subtitle">Form inputs, validation patterns, tabbed forms, and composable form groups.</p>
+    </div>
+  </div>
+
+  <div class="content-container wide">
+    <!-- Introduction -->
+    <div class="demo-section">
+      <h2>Forms as Data</h2>
+      <div class="demo-content">
+        <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
+          Bitwrench forms are composed from small helpers: <code>bw.makeInput()</code>,
+          <code>bw.makeSelect()</code>, <code>bw.makeCheckbox()</code>, and <code>bw.makeFormGroup()</code>.
+          Each returns a TACO object. Compose them freely &mdash; wrap in tabs, cards, or grids.
+        </p>
+      </div>
+    </div>
+
+    <div id="style-origin-callout"></div>
+
+    <!-- Form Components Demo -->
+    <div class="demo-section">
+      <h2>Form Components</h2>
+      <div id="form-tabs"></div>
+    </div>
+
+    <!-- Tabbed Forms Demo -->
+    <div class="demo-section">
+      <h2>Tabbed Form Interface</h2>
+      <p>Forms can be composed with <code>bw.makeTabs()</code> for multi-step or categorised input. Each tab is its own form section.</p>
+      <div id="tabbed-form-tabs"></div>
+    </div>
+
+    <!-- Form Validation Demo -->
+    <div class="demo-section">
+      <h2>Form with Validation</h2>
+      <p>Combine <code>bw.makeFormGroup()</code> with event handlers for inline validation feedback.</p>
+      <div id="validation-tabs"></div>
+    </div>
+
+    <!-- Layout Patterns -->
+    <div class="demo-section">
+      <h2>Layout Patterns</h2>
+      <p>Use <code>bw.makeRow()</code> and <code>bw.makeCol()</code> to arrange form fields in responsive grids.</p>
+      <div id="layout-tabs"></div>
+    </div>
+  </div>
+
+  <script>
+    mountExampleNav('#example-nav', '02-forms.html');
+    bw.DOM('#style-origin-callout', makeStyleOrigin());
+
+    // Helper function to create demo tabs with copy button
+    function createDemoTabs(title, resultContent, codeContent) {
+      return bw.makeTabs({
+        tabs: [
+          {
+            label: 'Result',
+            content: resultContent,
+            active: true
+          },
+          {
+            label: 'Code',
+            content: {
+              t: 'div',
+              a: { style: 'position: relative;' },
+              c: [
+                {
+                  t: 'button',
+                  a: {
+                    class: 'copy-btn',
+                    onclick: (e) => {
+                      navigator.clipboard.writeText(codeContent).then(() => {
+                        const btn = e.target;
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        btn.classList.add('copied');
+                        setTimeout(() => {
+                          btn.textContent = originalText;
+                          btn.classList.remove('copied');
+                        }, 2000);
+                      });
+                    }
+                  },
+                  c: 'Copy'
+                },
+                {
+                  t: 'pre',
+                  c: {
+                    t: 'code',
+                    c: codeContent
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      });
+    }
+
+    // ── Form Components Demo ────────────────────────────────────────
+    const formDemo = {
+      t: 'div',
+      c: [
+        {
+          t: 'div',
+          a: { class: 'bw-row' },
+          c: [
+            {
+              t: 'div',
+              a: { class: 'bw-col bw-col-md-6' },
+              c: [
+                { t: 'h4', c: 'Input Types' },
+                bw.makeFormGroup({
+                  label: 'Text Input',
+                  input: bw.makeInput({
+                    type: 'text',
+                    placeholder: 'Enter text...'
+                  })
+                }),
+                bw.makeFormGroup({
+                  label: 'Email Input',
+                  input: bw.makeInput({
+                    type: 'email',
+                    placeholder: 'email@example.com'
+                  }),
+                  help: 'We\'ll never share your email.'
+                }),
+                bw.makeFormGroup({
+                  label: 'Password Input',
+                  input: bw.makeInput({
+                    type: 'password',
+                    placeholder: 'Enter password'
+                  })
+                }),
+                bw.makeFormGroup({
+                  label: 'Number Input',
+                  input: bw.makeInput({
+                    type: 'number',
+                    placeholder: '0',
+                    min: 0,
+                    max: 100
+                  })
+                })
+              ]
+            },
+            {
+              t: 'div',
+              a: { class: 'bw-col bw-col-md-6' },
+              c: [
+                { t: 'h4', c: 'Selection Controls' },
+                bw.makeFormGroup({
+                  label: 'Select Dropdown',
+                  input: bw.makeSelect({
+                    options: [
+                      { value: '', text: 'Choose...' },
+                      { value: 'opt1', text: 'Option 1' },
+                      { value: 'opt2', text: 'Option 2' },
+                      { value: 'opt3', text: 'Option 3' }
+                    ]
+                  })
+                }),
+                bw.makeFormGroup({
+                  label: 'Textarea',
+                  input: bw.makeTextarea({
+                    placeholder: 'Enter long text...',
+                    rows: 3
+                  })
+                }),
+                bw.makeFormGroup({
+                  label: 'Checkboxes',
+                  input: {
+                    t: 'div',
+                    c: [
+                      bw.makeCheckbox({ label: 'Option 1', checked: true }),
+                      bw.makeCheckbox({ label: 'Option 2' }),
+                      bw.makeCheckbox({ label: 'Option 3' })
+                    ]
+                  }
+                })
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    const formCode = `// Form Components — two-column layout
+const formDemo = {
+  t: 'div',
+  c: [{
+    t: 'div',
+    a: { class: 'bw-row' },
+    c: [
+      {
+        t: 'div',
+        a: { class: 'bw-col bw-col-md-6' },
+        c: [
+          { t: 'h4', c: 'Input Types' },
+          bw.makeFormGroup({
+            label: 'Text Input',
+            input: bw.makeInput({ type: 'text', placeholder: 'Enter text...' })
+          }),
+          bw.makeFormGroup({
+            label: 'Email Input',
+            input: bw.makeInput({ type: 'email', placeholder: 'email@example.com' }),
+            help: 'We\\'ll never share your email.'
+          }),
+          bw.makeFormGroup({
+            label: 'Password Input',
+            input: bw.makeInput({ type: 'password', placeholder: 'Enter password' })
+          }),
+          bw.makeFormGroup({
+            label: 'Number Input',
+            input: bw.makeInput({ type: 'number', placeholder: '0', min: 0, max: 100 })
+          })
+        ]
+      },
+      {
+        t: 'div',
+        a: { class: 'bw-col bw-col-md-6' },
+        c: [
+          { t: 'h4', c: 'Selection Controls' },
+          bw.makeFormGroup({
+            label: 'Select Dropdown',
+            input: bw.makeSelect({
+              options: [
+                { value: '', text: 'Choose...' },
+                { value: 'opt1', text: 'Option 1' },
+                { value: 'opt2', text: 'Option 2' },
+                { value: 'opt3', text: 'Option 3' }
+              ]
+            })
+          }),
+          bw.makeFormGroup({
+            label: 'Textarea',
+            input: bw.makeTextarea({ placeholder: 'Enter long text...', rows: 3 })
+          }),
+          bw.makeFormGroup({
+            label: 'Checkboxes',
+            input: {
+              t: 'div',
+              c: [
+                bw.makeCheckbox({ label: 'Option 1', checked: true }),
+                bw.makeCheckbox({ label: 'Option 2' }),
+                bw.makeCheckbox({ label: 'Option 3' })
+              ]
+            }
+          })
+        ]
+      }
+    ]
+  }]
+};
+
+bw.DOM('#form-demo', formDemo);`;
+
+    bw.DOM('#form-tabs',
+      bw.makeCodeDemo({
+        title: 'Form Components',
+        description: 'Text inputs, selects, textareas, and checkboxes arranged in a responsive grid.',
+        result: formDemo,
+        code: formCode
+      })
+    );
+
+    // ── Tabbed Form Interface ───────────────────────────────────────
+    const tabbedFormDemo = {
+      t: 'div',
+      c: [
+        bw.makeTabs({
+          tabs: [
+            {
+              label: 'Personal Info',
+              active: true,
+              content: bw.makeForm({
+                children: [
+                  bw.makeFormGroup({
+                    label: 'Full Name',
+                    input: bw.makeInput({ type: 'text', placeholder: 'Enter your full name', required: true })
+                  }),
+                  bw.makeFormGroup({
+                    label: 'Email Address',
+                    input: bw.makeInput({ type: 'email', placeholder: 'email@example.com', required: true })
+                  }),
+                  bw.makeFormGroup({
+                    label: 'Phone Number',
+                    input: bw.makeInput({ type: 'tel', placeholder: '+1 (555) 123-4567' })
+                  }),
+                  bw.makeButton({ text: 'Save Personal Info', variant: 'primary', type: 'submit' })
+                ]
+              })
+            },
+            {
+              label: 'Address',
+              content: bw.makeForm({
+                children: [
+                  bw.makeFormGroup({
+                    label: 'Street Address',
+                    input: bw.makeInput({ type: 'text', placeholder: '123 Main St' })
+                  }),
+                  bw.makeRow({
+                    children: [
+                      bw.makeCol({
+                        size: 6,
+                        content: bw.makeFormGroup({
+                          label: 'City',
+                          input: bw.makeInput({ type: 'text', placeholder: 'City' })
+                        })
+                      }),
+                      bw.makeCol({
+                        size: 3,
+                        content: bw.makeFormGroup({
+                          label: 'State',
+                          input: bw.makeSelect({
+                            options: [
+                              { value: '', text: 'Choose...' },
+                              { value: 'CA', text: 'California' },
+                              { value: 'NY', text: 'New York' },
+                              { value: 'TX', text: 'Texas' }
+                            ]
+                          })
+                        })
+                      }),
+                      bw.makeCol({
+                        size: 3,
+                        content: bw.makeFormGroup({
+                          label: 'ZIP',
+                          input: bw.makeInput({ type: 'text', placeholder: '12345' })
+                        })
+                      })
+                    ]
+                  }),
+                  bw.makeButton({ text: 'Save Address', variant: 'primary', type: 'submit' })
+                ]
+              })
+            },
+            {
+              label: 'Preferences',
+              content: bw.makeForm({
+                children: [
+                  bw.makeFormGroup({
+                    label: 'Notification Preferences',
+                    input: {
+                      t: 'div',
+                      c: [
+                        bw.makeCheckbox({ label: 'Email notifications', checked: true }),
+                        bw.makeCheckbox({ label: 'SMS notifications' }),
+                        bw.makeCheckbox({ label: 'Push notifications' })
+                      ]
+                    }
+                  }),
+                  bw.makeFormGroup({
+                    label: 'Theme',
+                    input: bw.makeSelect({
+                      options: [
+                        { value: 'light', text: 'Light Theme' },
+                        { value: 'dark', text: 'Dark Theme' },
+                        { value: 'auto', text: 'Auto (System)' }
+                      ]
+                    })
+                  }),
+                  bw.makeButton({ text: 'Save Preferences', variant: 'primary', type: 'submit' })
+                ]
+              })
+            }
+          ]
+        })
+      ]
+    };
+
+    const tabbedFormCode = `// Multi-step form with tabs
+bw.makeTabs({
+  tabs: [
+    {
+      label: 'Personal Info',
+      active: true,
+      content: bw.makeForm({
+        children: [
+          bw.makeFormGroup({
+            label: 'Full Name',
+            input: bw.makeInput({
+              type: 'text',
+              placeholder: 'Enter your full name',
+              required: true
+            })
+          }),
+          bw.makeFormGroup({
+            label: 'Email Address',
+            input: bw.makeInput({
+              type: 'email',
+              placeholder: 'email@example.com',
+              required: true
+            })
+          }),
+          bw.makeFormGroup({
+            label: 'Phone Number',
+            input: bw.makeInput({
+              type: 'tel',
+              placeholder: '+1 (555) 123-4567'
+            })
+          }),
+          bw.makeButton({
+            text: 'Save Personal Info',
+            variant: 'primary',
+            type: 'submit'
+          })
+        ]
+      })
+    },
+    {
+      label: 'Address',
+      content: bw.makeForm({
+        children: [
+          bw.makeFormGroup({
+            label: 'Street Address',
+            input: bw.makeInput({
+              type: 'text',
+              placeholder: '123 Main St'
+            })
+          }),
+          bw.makeRow({
+            children: [
+              bw.makeCol({
+                size: 6,
+                content: bw.makeFormGroup({
+                  label: 'City',
+                  input: bw.makeInput({ type: 'text', placeholder: 'City' })
+                })
+              }),
+              bw.makeCol({
+                size: 3,
+                content: bw.makeFormGroup({
+                  label: 'State',
+                  input: bw.makeSelect({
+                    options: [
+                      { value: '', text: 'Choose...' },
+                      { value: 'CA', text: 'California' },
+                      { value: 'NY', text: 'New York' },
+                      { value: 'TX', text: 'Texas' }
+                    ]
+                  })
+                })
+              }),
+              bw.makeCol({
+                size: 3,
+                content: bw.makeFormGroup({
+                  label: 'ZIP',
+                  input: bw.makeInput({
+                    type: 'text',
+                    placeholder: '12345'
+                  })
+                })
+              })
+            ]
+          }),
+          bw.makeButton({
+            text: 'Save Address',
+            variant: 'primary',
+            type: 'submit'
+          })
+        ]
+      })
+    },
+    {
+      label: 'Preferences',
+      content: bw.makeForm({
+        children: [
+          bw.makeFormGroup({
+            label: 'Notification Preferences',
+            input: {
+              t: 'div',
+              c: [
+                bw.makeCheckbox({ label: 'Email notifications', checked: true }),
+                bw.makeCheckbox({ label: 'SMS notifications' }),
+                bw.makeCheckbox({ label: 'Push notifications' })
+              ]
+            }
+          }),
+          bw.makeFormGroup({
+            label: 'Theme',
+            input: bw.makeSelect({
+              options: [
+                { value: 'light', text: 'Light Theme' },
+                { value: 'dark', text: 'Dark Theme' },
+                { value: 'auto', text: 'Auto (System)' }
+              ]
+            })
+          }),
+          bw.makeButton({
+            text: 'Save Preferences',
+            variant: 'primary',
+            type: 'submit'
+          })
+        ]
+      })
+    }
+  ]
+});`;
+
+    bw.DOM('#tabbed-form-tabs',
+      bw.makeCodeDemo({
+        title: 'Tabbed Form Interface',
+        description: 'A multi-section form with Personal Info, Address, and Preferences tabs.',
+        result: tabbedFormDemo,
+        code: tabbedFormCode
+      })
+    );
+
+    // ── Form with Validation ────────────────────────────────────────
+    function createValidationDemo() {
+      const state = { name: '', email: '', message: '', errors: {} };
+
+      function validate() {
+        state.errors = {};
+        if (!state.name.trim()) state.errors.name = 'Name is required';
+        if (!state.email.trim()) state.errors.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) state.errors.email = 'Invalid email format';
+        if (!state.message.trim()) state.errors.message = 'Message is required';
+        else if (state.message.trim().length < 10) state.errors.message = 'Message must be at least 10 characters';
+        return Object.keys(state.errors).length === 0;
+      }
+
+      function fieldClass(field) {
+        if (state.errors[field]) return 'bw-form-control bw-is-invalid';
+        if (state[field].trim()) return 'bw-form-control bw-is-valid';
+        return 'bw-form-control';
+      }
+
+      function renderForm() {
+        bw.DOM('#validation-form', {
+          t: 'div',
+          a: { class: 'form-showcase' },
+          c: [
+            bw.makeFormGroup({
+              label: 'Name',
+              input: bw.makeInput({
+                type: 'text',
+                placeholder: 'Your name',
+                value: state.name,
+                className: fieldClass('name'),
+                oninput: (e) => { state.name = e.target.value; }
+              }),
+              help: state.errors.name ? state.errors.name : ''
+            }),
+            bw.makeFormGroup({
+              label: 'Email',
+              input: bw.makeInput({
+                type: 'email',
+                placeholder: 'you@example.com',
+                value: state.email,
+                className: fieldClass('email'),
+                oninput: (e) => { state.email = e.target.value; }
+              }),
+              help: state.errors.email ? state.errors.email : ''
+            }),
+            bw.makeFormGroup({
+              label: 'Message',
+              input: bw.makeTextarea({
+                placeholder: 'Tell us something (at least 10 characters)...',
+                rows: 3,
+                value: state.message,
+                className: fieldClass('message'),
+                oninput: (e) => { state.message = e.target.value; }
+              }),
+              help: state.errors.message ? state.errors.message : ''
+            }),
+            {
+              t: 'div',
+              a: { style: 'display: flex; gap: 0.5rem; align-items: center;' },
+              c: [
+                bw.makeButton({
+                  text: 'Submit',
+                  variant: 'primary',
+                  onclick: () => {
+                    if (validate()) {
+                      bw.DOM('#validation-result', {
+                        t: 'div',
+                        a: { class: 'bw-alert bw-alert-success', style: 'margin-top: 1rem;' },
+                        c: 'Form submitted successfully!'
+                      });
+                    }
+                    renderForm();
+                  }
+                }),
+                bw.makeButton({
+                  text: 'Reset',
+                  variant: 'secondary',
+                  onclick: () => {
+                    state.name = '';
+                    state.email = '';
+                    state.message = '';
+                    state.errors = {};
+                    bw.DOM('#validation-result', { t: 'span', c: '' });
+                    renderForm();
+                  }
+                })
+              ]
+            },
+            { t: 'div', a: { id: 'validation-result' }, c: '' }
+          ]
+        });
+      }
+
+      setTimeout(renderForm, 0);
+      return { t: 'div', a: { id: 'validation-form' }, c: '' };
+    }
+
+    const validationCode = `// Form with inline validation
+const state = { name: '', email: '', message: '', errors: {} };
+
+function validate() {
+  state.errors = {};
+  if (!state.name.trim()) state.errors.name = 'Name is required';
+  if (!state.email.trim()) state.errors.email = 'Email is required';
+  else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(state.email))
+    state.errors.email = 'Invalid email format';
+  if (!state.message.trim()) state.errors.message = 'Message is required';
+  else if (state.message.trim().length < 10)
+    state.errors.message = 'At least 10 characters';
+  return Object.keys(state.errors).length === 0;
+}
+
+function fieldClass(field) {
+  if (state.errors[field]) return 'bw-form-control bw-is-invalid';
+  if (state[field].trim()) return 'bw-form-control bw-is-valid';
+  return 'bw-form-control';
+}
+
+function renderForm() {
+  bw.DOM('#form', {
+    t: 'div',
+    c: [
+      bw.makeFormGroup({
+        label: 'Name',
+        input: bw.makeInput({
+          type: 'text',
+          placeholder: 'Your name',
+          value: state.name,
+          className: fieldClass('name'),
+          oninput: (e) => { state.name = e.target.value; }
+        }),
+        help: state.errors.name || ''
+      }),
+      bw.makeFormGroup({
+        label: 'Email',
+        input: bw.makeInput({
+          type: 'email',
+          placeholder: 'you@example.com',
+          value: state.email,
+          className: fieldClass('email'),
+          oninput: (e) => { state.email = e.target.value; }
+        }),
+        help: state.errors.email || ''
+      }),
+      bw.makeFormGroup({
+        label: 'Message',
+        input: bw.makeTextarea({
+          placeholder: 'Tell us something...',
+          rows: 3,
+          value: state.message,
+          className: fieldClass('message'),
+          oninput: (e) => { state.message = e.target.value; }
+        }),
+        help: state.errors.message || ''
+      }),
+      bw.makeButton({
+        text: 'Submit',
+        variant: 'primary',
+        onclick: () => {
+          if (validate()) {
+            alert('Form submitted!');
+          }
+          renderForm();
+        }
+      })
+    ]
+  });
+}
+
+renderForm();`;
+
+    bw.DOM('#validation-tabs',
+      bw.makeCodeDemo({
+        title: 'Form with Validation',
+        description: 'Inline validation with visual feedback on submit. Try submitting with empty fields.',
+        result: createValidationDemo(),
+        code: validationCode
+      })
+    );
+
+    // ── Layout Patterns ────────────────────────────────────────────
+    const layoutDemo = {
+      t: 'div',
+      a: { class: 'form-showcase' },
+      c: [
+        { t: 'h4', c: 'Contact Information', a: { style: 'margin-top: 0;' } },
+        bw.makeRow({
+          children: [
+            bw.makeCol({
+              size: 6,
+              content: bw.makeFormGroup({
+                label: 'First Name',
+                input: bw.makeInput({ type: 'text', placeholder: 'Jane' })
+              })
+            }),
+            bw.makeCol({
+              size: 6,
+              content: bw.makeFormGroup({
+                label: 'Last Name',
+                input: bw.makeInput({ type: 'text', placeholder: 'Doe' })
+              })
+            })
+          ]
+        }),
+        bw.makeFormGroup({
+          label: 'Company',
+          input: bw.makeInput({ type: 'text', placeholder: 'Acme Inc.' })
+        }),
+        bw.makeRow({
+          children: [
+            bw.makeCol({
+              size: 8,
+              content: bw.makeFormGroup({
+                label: 'Email',
+                input: bw.makeInput({ type: 'email', placeholder: 'jane@acme.com' })
+              })
+            }),
+            bw.makeCol({
+              size: 4,
+              content: bw.makeFormGroup({
+                label: 'Phone',
+                input: bw.makeInput({ type: 'tel', placeholder: '(555) 123-4567' })
+              })
+            })
+          ]
+        }),
+        { t: 'h4', c: 'Shipping Address' },
+        bw.makeFormGroup({
+          label: 'Street',
+          input: bw.makeInput({ type: 'text', placeholder: '123 Main St' })
+        }),
+        bw.makeRow({
+          children: [
+            bw.makeCol({
+              size: 5,
+              content: bw.makeFormGroup({
+                label: 'City',
+                input: bw.makeInput({ type: 'text', placeholder: 'Springfield' })
+              })
+            }),
+            bw.makeCol({
+              size: 4,
+              content: bw.makeFormGroup({
+                label: 'State',
+                input: bw.makeSelect({
+                  options: [
+                    { value: '', text: 'Select...' },
+                    { value: 'CA', text: 'California' },
+                    { value: 'NY', text: 'New York' },
+                    { value: 'TX', text: 'Texas' },
+                    { value: 'WA', text: 'Washington' }
+                  ]
+                })
+              })
+            }),
+            bw.makeCol({
+              size: 3,
+              content: bw.makeFormGroup({
+                label: 'ZIP',
+                input: bw.makeInput({ type: 'text', placeholder: '90210' })
+              })
+            })
+          ]
+        }),
+        {
+          t: 'div',
+          a: { style: 'display: flex; gap: 0.5rem; margin-top: 0.5rem;' },
+          c: [
+            bw.makeButton({ text: 'Submit Order', variant: 'primary' }),
+            bw.makeButton({ text: 'Cancel', variant: 'secondary' })
+          ]
+        }
+      ]
+    };
+
+    const layoutCode = `// Responsive form layout with bw.makeRow/makeCol
+bw.makeRow({
+  children: [
+    bw.makeCol({
+      size: 6,
+      content: bw.makeFormGroup({
+        label: 'First Name',
+        input: bw.makeInput({ type: 'text', placeholder: 'Jane' })
+      })
+    }),
+    bw.makeCol({
+      size: 6,
+      content: bw.makeFormGroup({
+        label: 'Last Name',
+        input: bw.makeInput({ type: 'text', placeholder: 'Doe' })
+      })
+    })
+  ]
+});
+
+// Full-width field
+bw.makeFormGroup({
+  label: 'Company',
+  input: bw.makeInput({ type: 'text', placeholder: 'Acme Inc.' })
+});
+
+// 8/4 split
+bw.makeRow({
+  children: [
+    bw.makeCol({
+      size: 8,
+      content: bw.makeFormGroup({
+        label: 'Email',
+        input: bw.makeInput({ type: 'email', placeholder: 'jane@acme.com' })
+      })
+    }),
+    bw.makeCol({
+      size: 4,
+      content: bw.makeFormGroup({
+        label: 'Phone',
+        input: bw.makeInput({ type: 'tel', placeholder: '(555) 123-4567' })
+      })
+    })
+  ]
+});
+
+// City / State / ZIP in 5/4/3 grid
+bw.makeRow({
+  children: [
+    bw.makeCol({ size: 5, content: bw.makeFormGroup({ label: 'City', input: bw.makeInput({ type: 'text', placeholder: 'Springfield' }) }) }),
+    bw.makeCol({ size: 4, content: bw.makeFormGroup({ label: 'State', input: bw.makeSelect({ options: [{ value: '', text: 'Select...' }, { value: 'CA', text: 'California' }] }) }) }),
+    bw.makeCol({ size: 3, content: bw.makeFormGroup({ label: 'ZIP', input: bw.makeInput({ type: 'text', placeholder: '90210' }) }) })
+  ]
+});`;
+
+    bw.DOM('#layout-tabs',
+      bw.makeCodeDemo({
+        title: 'Responsive Form Layout',
+        description: 'A real-world order form using row/column helpers for responsive grid layout.',
+        result: layoutDemo,
+        code: layoutCode
+      })
+    );
+  </script>
+</body>
+</html>

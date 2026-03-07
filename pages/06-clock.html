@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Digital Clock</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+  <script src="shared-tryit.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    // Mount the shared navigation
+    mountExampleNav('#example-nav', '06-clock.html');
+
+    // =========================================================================
+    // Helper: wrap a demo in a section with anchor, title, description, tabs
+    // =========================================================================
+    function createTabbedDemo(resultContent, codeContent) {
+      var codeDisplay = bw.codeEditor
+        ? bw.codeEditor({ code: codeContent, lang: 'js', readOnly: true, height: 'auto' })
+        : { t: 'pre', c: { t: 'code', c: codeContent } };
+
+      return bw.makeTabs({
+        tabs: [
+          { label: 'Result', active: true, content: resultContent },
+          {
+            label: 'Code',
+            content: {
+              t: 'div', a: { style: 'position: relative;' },
+              c: [
+                {
+                  t: 'button',
+                  a: {
+                    class: 'copy-btn',
+                    onclick: function(e) {
+                      navigator.clipboard.writeText(codeContent).then(function() {
+                        e.target.textContent = 'Copied!';
+                        e.target.classList.add('copied');
+                        setTimeout(function() {
+                          e.target.textContent = 'Copy';
+                          e.target.classList.remove('copied');
+                        }, 2000);
+                      });
+                    }
+                  },
+                  c: 'Copy'
+                },
+                codeDisplay
+              ]
+            }
+          }
+        ]
+      });
+    }
+
+    function demoSection(id, title, description, content) {
+      return {
+        t: 'div', a: { class: 'demo-section', id: id },
+        c: [
+          { t: 'h2', c: { t: 'a', a: { href: '#' + id }, c: title } },
+          { t: 'div', a: { class: 'demo-content' }, c: [
+            { t: 'p', a: { class: 'demo-description' }, c: description },
+            content
+          ]}
+        ]
+      };
+    }
+
+    // =========================================================================
+    // Inject custom CSS via bw.css() + bw.injectCSS()
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.clock-display': {
+        'font-family': '"SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace',
+        'font-size': '4rem',
+        'font-weight': '700',
+        'text-align': 'center',
+        'color': '#00e5ff',
+        'background': '#1a1a2e',
+        'border-radius': '12px',
+        'padding': '2rem 2.5rem',
+        'text-shadow': '0 0 20px rgba(0, 229, 255, 0.5), 0 0 40px rgba(0, 229, 255, 0.2)',
+        'letter-spacing': '0.1em',
+        'position': 'relative',
+        'overflow': 'hidden',
+        'margin-bottom': '0'
+      },
+      '.clock-display::before': {
+        'content': '""',
+        'position': 'absolute',
+        'top': '0',
+        'left': '0',
+        'right': '0',
+        'bottom': '0',
+        'background': 'linear-gradient(135deg, rgba(0,229,255,0.03) 0%, transparent 50%, rgba(0,229,255,0.03) 100%)',
+        'pointer-events': 'none'
+      },
+      '.clock-date': {
+        'text-align': 'center',
+        'color': '#7f8c9b',
+        'font-size': '1rem',
+        'font-weight': '500',
+        'background': '#1a1a2e',
+        'padding': '0.5rem 2.5rem 1.25rem',
+        'border-radius': '0 0 12px 12px',
+        'margin-top': '-12px',
+        'letter-spacing': '0.05em'
+      },
+      '.clock-ampm': {
+        'font-size': '1.5rem',
+        'color': '#7f8c9b',
+        'font-weight': '400',
+        'margin-left': '0.5rem',
+        'vertical-align': 'super'
+      },
+      '.clock-separator': {
+        'animation': 'blink-colon 1s step-end infinite'
+      },
+      '@keyframes blink-colon': {
+        '0%, 100%': { 'opacity': '1' },
+        '50%': { 'opacity': '0.3' }
+      },
+      '.stopwatch-display': {
+        'font-family': '"SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace',
+        'font-size': '3rem',
+        'font-weight': '700',
+        'text-align': 'center',
+        'color': '#76ff03',
+        'background': '#1a1a2e',
+        'border-radius': '12px',
+        'padding': '1.5rem 2rem',
+        'text-shadow': '0 0 15px rgba(118, 255, 3, 0.4), 0 0 30px rgba(118, 255, 3, 0.15)',
+        'letter-spacing': '0.08em',
+        'margin-bottom': '1rem'
+      },
+      '.stopwatch-ms': {
+        'font-size': '2rem',
+        'color': '#a0e57c',
+        'font-weight': '400'
+      },
+      '.lap-item': {
+        'display': 'flex',
+        'justify-content': 'space-between',
+        'align-items': 'center',
+        'padding': '0.5rem 0.75rem',
+        'border-bottom': '1px solid var(--bw-card-border)',
+        'font-size': '0.875rem',
+        'font-family': '"SF Mono", "Fira Code", "Consolas", monospace'
+      },
+      '.lap-item:last-child': {
+        'border-bottom': 'none'
+      },
+      '.lap-number': {
+        'color': 'var(--bw-text-secondary)',
+        'font-weight': '600',
+        'min-width': '60px'
+      },
+      '.lap-time': {
+        'color': 'var(--bw-text)',
+        'font-weight': '500'
+      },
+      '.lap-delta': {
+        'color': '#76ff03',
+        'font-weight': '400',
+        'font-size': '0.8125rem'
+      },
+      '.lap-list-container': {
+        'max-height': '200px',
+        'overflow-y': 'auto',
+        'background': 'var(--bw-card-bg)',
+        'border': '1px solid var(--bw-card-border)',
+        'border-radius': '8px'
+      },
+      '.alarm-time-input': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.5rem',
+        'justify-content': 'center',
+        'margin-bottom': '1rem'
+      },
+      '.alarm-time-input select': {
+        'font-family': '"SF Mono", "Fira Code", "Consolas", monospace',
+        'font-size': '1.5rem',
+        'font-weight': '600',
+        'text-align': 'center',
+        'padding': '0.5rem 0.75rem',
+        'border': '2px solid var(--bw-card-border)',
+        'border-radius': '8px',
+        'background': 'var(--bw-card-bg)',
+        'color': 'var(--bw-text)',
+        'min-width': '80px',
+        'cursor': 'pointer'
+      },
+      '.alarm-colon': {
+        'font-size': '2rem',
+        'font-weight': '700',
+        'color': 'var(--bw-text-secondary)'
+      },
+      '.alarm-status': {
+        'text-align': 'center',
+        'padding': '1rem',
+        'border-radius': '8px',
+        'font-size': '0.9375rem',
+        'margin-top': '1rem'
+      },
+      '.alarm-active': {
+        'background': '#fff3e0',
+        'border': '2px solid #ff9800',
+        'color': '#e65100'
+      },
+      '.alarm-inactive': {
+        'background': 'var(--bw-card-bg)',
+        'border': '1px solid var(--bw-card-border)',
+        'color': 'var(--bw-text-secondary)'
+      },
+      '.alarm-ringing': {
+        'animation': 'alarm-pulse 0.5s ease-in-out infinite alternate'
+      },
+      '@keyframes alarm-pulse': {
+        '0%': { 'background': '#fff3e0', 'transform': 'scale(1)' },
+        '100%': { 'background': '#ffcc80', 'transform': 'scale(1.02)' }
+      },
+      '.reactivity-badge': {
+        'display': 'inline-block',
+        'font-size': '0.6875rem',
+        'font-weight': '600',
+        'padding': '0.15rem 0.5rem',
+        'border-radius': '4px',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.05em',
+        'margin-left': '0.5rem',
+        'vertical-align': 'middle'
+      },
+      '.badge-update': {
+        'background': '#e8f5e9',
+        'color': '#2e7d32'
+      },
+      '.badge-patch': {
+        'background': '#e3f2fd',
+        'color': '#1565c0'
+      },
+      '.badge-pubsub': {
+        'background': '#fce4ec',
+        'color': '#c62828'
+      },
+      '.toast-container': {
+        'position': 'fixed',
+        'top': '1rem',
+        'right': '1rem',
+        'z-index': '10000',
+        'display': 'flex',
+        'flex-direction': 'column',
+        'gap': '0.5rem'
+      }
+    }), { id: 'clock-page-styles' });
+
+    // =========================================================================
+    // Utility: pad number to 2 digits
+    // =========================================================================
+    function pad2(n) {
+      return n < 10 ? '0' + n : String(n);
+    }
+
+    // =========================================================================
+    // Section 1: Digital Clock Component
+    // Uses o.render + bw.update() — full re-render every second
+    // =========================================================================
+    function makeDigitalClock() {
+      var clockId = bw.uuid('clock');
+
+      var taco = {
+        t: 'div', a: { id: clockId },
+        o: {
+          state: {
+            timerId: null
+          },
+          render: function(el) {
+            var now = new Date();
+            var hours24 = now.getHours();
+            var hours12 = hours24 % 12 || 12;
+            var minutes = pad2(now.getMinutes());
+            var seconds = pad2(now.getSeconds());
+            var ampm = hours24 < 12 ? 'AM' : 'PM';
+
+            var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            var months = ['January', 'February', 'March', 'April', 'May', 'June',
+              'July', 'August', 'September', 'October', 'November', 'December'];
+            var dateStr = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' +
+              now.getDate() + ', ' + now.getFullYear();
+
+            bw.DOM(el, {
+              t: 'div', c: [
+                {
+                  t: 'div', a: { class: 'clock-display' },
+                  c: [
+                    pad2(hours12),
+                    { t: 'span', a: { class: 'clock-separator' }, c: ':' },
+                    minutes,
+                    { t: 'span', a: { class: 'clock-separator' }, c: ':' },
+                    seconds,
+                    { t: 'span', a: { class: 'clock-ampm' }, c: ampm }
+                  ]
+                },
+                { t: 'div', a: { class: 'clock-date' }, c: dateStr }
+              ]
+            });
+
+            // Publish the current time for alarm checking
+            bw.pub('clock:tick', {
+              hours: hours24,
+              minutes: now.getMinutes(),
+              seconds: now.getSeconds()
+            });
+          },
+          mounted: function(el) {
+            // Render immediately on mount
+            el._bw_render(el);
+            // Set up 1-second interval and store the timer ID
+            el._bw_state.timerId = setInterval(function() {
+              bw.update(el);
+            }, 1000);
+          },
+          unmount: function(el) {
+            // Clean up interval on removal
+            if (el._bw_state.timerId) {
+              clearInterval(el._bw_state.timerId);
+            }
+          }
+        }
+      };
+
+      return taco;
+    }
+
+    // =========================================================================
+    // Section 2: Stopwatch Component
+    // Uses bw.patch() for millisecond display (targeted updates)
+    // Uses bw.update() for structural changes (lap list)
+    // =========================================================================
+    function makeStopwatch() {
+      var swId = bw.uuid('sw');
+      var displayId = bw.uuid('sw-display');
+      var lapsContainerId = bw.uuid('sw-laps');
+
+      var taco = {
+        t: 'div', a: { id: swId },
+        o: {
+          state: {
+            running: false,
+            elapsed: 0,      // ms elapsed
+            startTime: 0,    // timestamp when started
+            laps: [],
+            timerId: null
+          },
+          render: function(el) {
+            var s = el._bw_state;
+
+            // Format elapsed time
+            var totalMs = s.elapsed;
+            var mins = Math.floor(totalMs / 60000);
+            var secs = Math.floor((totalMs % 60000) / 1000);
+            var ms = Math.floor((totalMs % 1000) / 10);
+            var timeStr = pad2(mins) + ':' + pad2(secs);
+            var msStr = '.' + pad2(ms);
+
+            // Build lap items (most recent first)
+            var lapItems = s.laps.slice().reverse().map(function(lap, idx) {
+              var lapNum = s.laps.length - idx;
+              var lapMins = Math.floor(lap.elapsed / 60000);
+              var lapSecs = Math.floor((lap.elapsed % 60000) / 1000);
+              var lapMs = Math.floor((lap.elapsed % 1000) / 10);
+              var lapTimeStr = pad2(lapMins) + ':' + pad2(lapSecs) + '.' + pad2(lapMs);
+
+              var deltaStr = '';
+              if (lap.delta !== undefined) {
+                var dMins = Math.floor(lap.delta / 60000);
+                var dSecs = Math.floor((lap.delta % 60000) / 1000);
+                var dMs = Math.floor((lap.delta % 1000) / 10);
+                deltaStr = '+' + pad2(dMins) + ':' + pad2(dSecs) + '.' + pad2(dMs);
+              }
+
+              return {
+                t: 'div', a: { class: 'lap-item' },
+                c: [
+                  { t: 'span', a: { class: 'lap-number' }, c: 'Lap ' + lapNum },
+                  { t: 'span', a: { class: 'lap-time' }, c: lapTimeStr },
+                  { t: 'span', a: { class: 'lap-delta' }, c: deltaStr }
+                ]
+              };
+            });
+
+            bw.DOM(el, {
+              t: 'div', c: [
+                // Stopwatch display
+                {
+                  t: 'div', a: { id: displayId, class: 'stopwatch-display' },
+                  c: [
+                    timeStr,
+                    { t: 'span', a: { class: 'stopwatch-ms' }, c: msStr }
+                  ]
+                },
+
+                // Button controls
+                {
+                  t: 'div',
+                  a: { style: 'display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap;' },
+                  c: [
+                    !s.running
+                      ? bw.makeButton({
+                          text: s.elapsed > 0 ? 'Resume' : 'Start',
+                          variant: 'primary',
+                          onclick: function() {
+                            s.running = true;
+                            s.startTime = Date.now() - s.elapsed;
+                            s.timerId = setInterval(function() {
+                              s.elapsed = Date.now() - s.startTime;
+                              // Use bw.patch for targeted millisecond updates
+                              var tMs = s.elapsed;
+                              var tMins = Math.floor(tMs / 60000);
+                              var tSecs = Math.floor((tMs % 60000) / 1000);
+                              var tMsVal = Math.floor((tMs % 1000) / 10);
+                              bw.patch(displayId, [
+                                pad2(tMins) + ':' + pad2(tSecs),
+                                { t: 'span', a: { class: 'stopwatch-ms' }, c: '.' + pad2(tMsVal) }
+                              ]);
+                            }, 33); // ~30fps
+                            bw.update(el); // re-render to swap button state
+                          }
+                        })
+                      : bw.makeButton({
+                          text: 'Stop',
+                          variant: 'danger',
+                          onclick: function() {
+                            s.running = false;
+                            if (s.timerId) {
+                              clearInterval(s.timerId);
+                              s.timerId = null;
+                            }
+                            s.elapsed = Date.now() - s.startTime;
+                            bw.update(el);
+                          }
+                        }),
+                    bw.makeButton({
+                      text: 'Lap',
+                      variant: 'success',
+                      disabled: !s.running,
+                      onclick: function() {
+                        var previousTotal = s.laps.length > 0
+                          ? s.laps[s.laps.length - 1].elapsed
+                          : 0;
+                        s.laps.push({
+                          elapsed: s.elapsed,
+                          delta: s.elapsed - previousTotal
+                        });
+                        bw.update(el);
+                      }
+                    }),
+                    bw.makeButton({
+                      text: 'Reset',
+                      variant: 'secondary',
+                      onclick: function() {
+                        if (s.timerId) {
+                          clearInterval(s.timerId);
+                          s.timerId = null;
+                        }
+                        s.running = false;
+                        s.elapsed = 0;
+                        s.startTime = 0;
+                        s.laps = [];
+                        bw.update(el);
+                      }
+                    })
+                  ]
+                },
+
+                // Lap times list
+                s.laps.length > 0
+                  ? {
+                      t: 'div', c: [
+                        { t: 'div', a: { style: 'font-size: 0.8125rem; font-weight: 600; color: var(--bw-text-secondary); margin-bottom: 0.5rem;' },
+                          c: 'Laps (' + s.laps.length + ')' },
+                        {
+                          t: 'div', a: { id: lapsContainerId, class: 'lap-list-container' },
+                          c: lapItems
+                        }
+                      ]
+                    }
+                  : {
+                      t: 'div',
+                      a: { style: 'text-align: center; color: var(--bw-text-secondary); font-size: 0.875rem; padding: 1rem; font-style: italic;' },
+                      c: 'Press Lap while running to record split times'
+                    }
+              ]
+            });
+          },
+          unmount: function(el) {
+            if (el._bw_state.timerId) {
+              clearInterval(el._bw_state.timerId);
+            }
+          }
+        }
+      };
+
+      return taco;
+    }
+
+    // =========================================================================
+    // Section 3: Alarm Component
+    // Uses bw.pub/sub to decouple alarm checking from clock display
+    // =========================================================================
+    function makeAlarm() {
+      var alarmId = bw.uuid('alarm');
+      var statusId = bw.uuid('alarm-status');
+      var toastContainerId = bw.uuid('alarm-toast');
+      var unsubFn = null;
+
+      var taco = {
+        t: 'div', a: { id: alarmId },
+        o: {
+          state: {
+            alarmSet: false,
+            alarmHour: 8,
+            alarmMinute: 0,
+            alarmPeriod: 'AM',
+            ringing: false,
+            ringingTimerId: null
+          },
+          render: function(el) {
+            var s = el._bw_state;
+
+            // Build hour options (1-12)
+            var hourOptions = [];
+            for (var h = 1; h <= 12; h++) {
+              hourOptions.push({ value: String(h), text: pad2(h) });
+            }
+
+            // Build minute options (0-59 in steps of 1)
+            var minuteOptions = [];
+            for (var m = 0; m < 60; m++) {
+              minuteOptions.push({ value: String(m), text: pad2(m) });
+            }
+
+            // Period options
+            var periodOptions = [
+              { value: 'AM', text: 'AM' },
+              { value: 'PM', text: 'PM' }
+            ];
+
+            // Status display
+            var statusContent;
+            if (s.ringing) {
+              statusContent = {
+                t: 'div', a: { class: 'alarm-status alarm-active alarm-ringing' },
+                c: [
+                  { t: 'div', a: { style: 'font-size: 1.5rem; margin-bottom: 0.5rem;' }, c: 'ALARM!' },
+                  { t: 'div', a: { style: 'font-size: 0.875rem; margin-bottom: 0.75rem;' },
+                    c: 'Alarm ringing for ' + pad2(s.alarmHour) + ':' + pad2(s.alarmMinute) + ' ' + s.alarmPeriod },
+                  bw.makeButton({
+                    text: 'Dismiss',
+                    variant: 'warning',
+                    onclick: function() {
+                      s.ringing = false;
+                      s.alarmSet = false;
+                      if (s.ringingTimerId) {
+                        clearTimeout(s.ringingTimerId);
+                        s.ringingTimerId = null;
+                      }
+                      bw.update(el);
+                    }
+                  })
+                ]
+              };
+            } else if (s.alarmSet) {
+              statusContent = {
+                t: 'div', a: { class: 'alarm-status alarm-active' },
+                c: [
+                  { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' },
+                    c: 'Alarm set for ' + pad2(s.alarmHour) + ':' + pad2(s.alarmMinute) + ' ' + s.alarmPeriod },
+                  { t: 'div', a: { style: 'font-size: 0.8125rem; color: #bf360c;' },
+                    c: 'Listening via bw.sub("clock:tick") for the matching time...' }
+                ]
+              };
+            } else {
+              statusContent = {
+                t: 'div', a: { class: 'alarm-status alarm-inactive' },
+                c: 'No alarm set. Choose a time and press Set Alarm.'
+              };
+            }
+
+            bw.DOM(el, {
+              t: 'div', c: [
+                // Time picker row
+                {
+                  t: 'div', a: { class: 'alarm-time-input' },
+                  c: [
+                    bw.makeSelect({
+                      id: alarmId + '-hour',
+                      options: hourOptions,
+                      value: String(s.alarmHour),
+                      onchange: function(e) {
+                        s.alarmHour = parseInt(e.target.value, 10);
+                      }
+                    }),
+                    { t: 'span', a: { class: 'alarm-colon' }, c: ':' },
+                    bw.makeSelect({
+                      id: alarmId + '-min',
+                      options: minuteOptions,
+                      value: String(s.alarmMinute),
+                      onchange: function(e) {
+                        s.alarmMinute = parseInt(e.target.value, 10);
+                      }
+                    }),
+                    bw.makeSelect({
+                      id: alarmId + '-period',
+                      options: periodOptions,
+                      value: s.alarmPeriod,
+                      onchange: function(e) {
+                        s.alarmPeriod = e.target.value;
+                      }
+                    })
+                  ]
+                },
+
+                // Buttons
+                {
+                  t: 'div',
+                  a: { style: 'display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;' },
+                  c: [
+                    bw.makeButton({
+                      text: 'Set Alarm',
+                      variant: 'primary',
+                      disabled: s.alarmSet || s.ringing,
+                      onclick: function() {
+                        s.alarmSet = true;
+                        s.ringing = false;
+                        bw.update(el);
+                      }
+                    }),
+                    bw.makeButton({
+                      text: 'Cancel',
+                      variant: 'secondary',
+                      disabled: !s.alarmSet && !s.ringing,
+                      onclick: function() {
+                        s.alarmSet = false;
+                        s.ringing = false;
+                        if (s.ringingTimerId) {
+                          clearTimeout(s.ringingTimerId);
+                          s.ringingTimerId = null;
+                        }
+                        bw.update(el);
+                      }
+                    })
+                  ]
+                },
+
+                // Alarm status
+                statusContent,
+
+                // Toast container for alarm notifications
+                { t: 'div', a: { id: toastContainerId, class: 'toast-container' } }
+              ]
+            });
+          },
+          mounted: function(el) {
+            // Subscribe to clock ticks to check alarm
+            unsubFn = bw.sub('clock:tick', function(detail) {
+              var s = el._bw_state;
+              if (!s.alarmSet || s.ringing) return;
+
+              // Convert alarm time to 24h for comparison
+              var alarmH24 = s.alarmHour;
+              if (s.alarmPeriod === 'AM') {
+                if (alarmH24 === 12) alarmH24 = 0;
+              } else {
+                if (alarmH24 !== 12) alarmH24 += 12;
+              }
+
+              if (detail.hours === alarmH24 && detail.minutes === s.alarmMinute && detail.seconds === 0) {
+                // Alarm triggered! Publish notification event
+                s.ringing = true;
+                bw.pub('alarm:trigger', {
+                  hour: s.alarmHour,
+                  minute: s.alarmMinute,
+                  period: s.alarmPeriod
+                });
+                bw.update(el);
+
+                // Auto-dismiss after 30 seconds
+                s.ringingTimerId = setTimeout(function() {
+                  if (s.ringing) {
+                    s.ringing = false;
+                    s.alarmSet = false;
+                    bw.update(el);
+                  }
+                }, 30000);
+              }
+            }, el); // tie subscription to element lifecycle
+          },
+          unmount: function(el) {
+            if (unsubFn) unsubFn();
+            if (el._bw_state.ringingTimerId) {
+              clearTimeout(el._bw_state.ringingTimerId);
+            }
+          }
+        }
+      };
+
+      return taco;
+    }
+
+    // =========================================================================
+    // Alarm toast listener (via pub/sub, decoupled from alarm component)
+    // =========================================================================
+    var alarmToastContainerId = bw.uuid('global-alarm-toast');
+
+    bw.sub('alarm:trigger', function(detail) {
+      var timeStr = pad2(detail.hour) + ':' + pad2(detail.minute) + ' ' + detail.period;
+      var container = bw.$('#' + alarmToastContainerId)[0];
+      if (container) {
+        bw.DOM(container, bw.makeToast({
+          title: 'Alarm',
+          content: 'Alarm triggered at ' + timeStr + '!',
+          variant: 'warning',
+          delay: 8000
+        }), { append: true });
+      }
+    });
+
+    // =========================================================================
+    // Build the Code Snippets for Each Section
+    // =========================================================================
+
+    var clockCodeStr = [
+      '// Digital Clock: o.render + bw.update() pattern',
+      '// Re-renders the entire clock face every second',
+      '',
+      'function makeDigitalClock() {',
+      '  var clockId = bw.uuid("clock");',
+      '',
+      '  return {',
+      '    t: "div", a: { id: clockId },',
+      '    o: {',
+      '      state: { timerId: null },',
+      '      render: function(el) {',
+      '        var now = new Date();',
+      '        var h = now.getHours() % 12 || 12;',
+      '        var m = pad2(now.getMinutes());',
+      '        var s = pad2(now.getSeconds());',
+      '        var ampm = now.getHours() < 12 ? "AM" : "PM";',
+      '',
+      '        bw.DOM(el, {',
+      '          t: "div", c: [',
+      '            { t: "div", a: { class: "clock-display" },',
+      '              c: [pad2(h), ":", m, ":", s,',
+      '                   { t: "span", a: { class: "clock-ampm" },',
+      '                     c: ampm }] },',
+      '            { t: "div", a: { class: "clock-date" },',
+      '              c: formatDate(now) }',
+      '          ]',
+      '        });',
+      '',
+      '        // Publish time for other components',
+      '        bw.pub("clock:tick", {',
+      '          hours: now.getHours(),',
+      '          minutes: now.getMinutes(),',
+      '          seconds: now.getSeconds()',
+      '        });',
+      '      },',
+      '      mounted: function(el) {',
+      '        el._bw_render(el); // render immediately',
+      '        el._bw_state.timerId = setInterval(function() {',
+      '          bw.update(el);   // re-render every second',
+      '        }, 1000);',
+      '      },',
+      '      unmount: function(el) {',
+      '        clearInterval(el._bw_state.timerId);',
+      '      }',
+      '    }',
+      '  };',
+      '}'
+    ].join('\n');
+
+    var stopwatchCodeStr = [
+      '// Stopwatch: bw.patch() for high-frequency display,',
+      '// bw.update() for structural changes (lap list)',
+      '',
+      'var displayId = bw.uuid("sw-display");',
+      '',
+      'o: {',
+      '  state: { running: false, elapsed: 0, laps: [] },',
+      '  render: function(el) {',
+      '    var s = el._bw_state;',
+      '',
+      '    bw.DOM(el, { t: "div", c: [',
+      '      { t: "div", a: { id: displayId,',
+      '        class: "stopwatch-display" },',
+      '        c: formatTime(s.elapsed) },',
+      '',
+      '      // Start button starts setInterval',
+      '      bw.makeButton({ text: "Start",',
+      '        variant: "primary",',
+      '        onclick: function() {',
+      '          s.running = true;',
+      '          s.timerId = setInterval(function() {',
+      '            s.elapsed = Date.now() - s.startTime;',
+      '            // Targeted update: only the display',
+      '            bw.patch(displayId, formatTime(s.elapsed));',
+      '          }, 33); // ~30fps',
+      '          bw.update(el);',
+      '        }',
+      '      }),',
+      '',
+      '      // Lap: structural change, full re-render',
+      '      bw.makeButton({ text: "Lap",',
+      '        variant: "success",',
+      '        onclick: function() {',
+      '          s.laps.push({ elapsed: s.elapsed });',
+      '          bw.update(el); // rebuild lap list',
+      '        }',
+      '      })',
+      '    ]});',
+      '  }',
+      '}'
+    ].join('\n');
+
+    var alarmCodeStr = [
+      '// Alarm: bw.pub/sub for decoupled notification',
+      '',
+      '// In the clock component:',
+      'bw.pub("clock:tick", {',
+      '  hours: now.getHours(),',
+      '  minutes: now.getMinutes(),',
+      '  seconds: now.getSeconds()',
+      '});',
+      '',
+      '// In the alarm component (mounted):',
+      'bw.sub("clock:tick", function(detail) {',
+      '  var s = el._bw_state;',
+      '  if (!s.alarmSet || s.ringing) return;',
+      '',
+      '  if (detail.hours === alarmH24 &&',
+      '      detail.minutes === s.alarmMinute &&',
+      '      detail.seconds === 0) {',
+      '    s.ringing = true;',
+      '    // Decouple alarm trigger notification',
+      '    bw.pub("alarm:trigger", {',
+      '      hour: s.alarmHour,',
+      '      minute: s.alarmMinute,',
+      '      period: s.alarmPeriod',
+      '    });',
+      '    bw.update(el);',
+      '  }',
+      '}, el); // tie sub to element lifecycle',
+      '',
+      '// Separate toast listener (completely decoupled):',
+      'bw.sub("alarm:trigger", function(detail) {',
+      '  bw.DOM(container, bw.makeToast({',
+      '    title: "Alarm",',
+      '    content: "Alarm at " + timeStr,',
+      '    variant: "warning",',
+      '    delay: 8000',
+      '  }), { append: true });',
+      '});'
+    ].join('\n');
+
+    // =========================================================================
+    // Build the entire page as a TACO tree
+    // =========================================================================
+    var page = {
+      t: 'div', c: [
+        // Page header
+        {
+          t: 'div', a: { class: 'page-header' },
+          c: {
+            t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+            c: [
+              { t: 'h1', c: 'Digital Clock' },
+              { t: 'p', a: { class: 'subtitle' }, c: 'Live reactivity showcase: timers, targeted updates, and pub/sub event decoupling' }
+            ]
+          }
+        },
+
+        // Main content container
+        {
+          t: 'div', a: { class: 'content-container wide' },
+          c: [
+
+            // =================================================================
+            // Introduction
+            // =================================================================
+            {
+              t: 'div', a: { class: 'demo-section' },
+              c: [
+                { t: 'h2', c: 'Reactivity in Action' },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  {
+                    t: 'p', a: { style: 'font-size: 1.05rem; line-height: 1.7; margin-bottom: 1rem;' },
+                    c: [
+                      'This page demonstrates bitwrench\'s reactivity patterns through a practical application. ',
+                      'A digital clock, stopwatch, and alarm work together using the same techniques ',
+                      'you would use in any real application: component state, targeted DOM updates, ',
+                      'and decoupled event communication.'
+                    ]
+                  },
+                  {
+                    t: 'p', a: { style: 'line-height: 1.7; margin-bottom: 1rem;' },
+                    c: [
+                      'Each section uses a different update strategy, chosen to match its needs. ',
+                      'The clock re-renders fully once per second. The stopwatch uses ',
+                      { t: 'code', c: 'bw.patch()' },
+                      ' for high-frequency display updates. The alarm uses ',
+                      { t: 'code', c: 'bw.pub/sub' },
+                      ' to decouple time-checking from notification display.'
+                    ]
+                  },
+                  {
+                    t: 'div', a: { style: 'display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;' },
+                    c: [
+                      {
+                        t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
+                        c: [
+                          { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' },
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Full re-render (clock face)' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
+                        c: [
+                          { t: 'span', a: { class: 'reactivity-badge badge-patch' }, c: 'bw.patch()' },
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Targeted update (stopwatch ms)' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
+                        c: [
+                          { t: 'span', a: { class: 'reactivity-badge badge-pubsub' }, c: 'pub/sub' },
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Decoupled events (alarm trigger)' }
+                        ]
+                      }
+                    ]
+                  }
+                ]}
+              ]
+            },
+
+            // =================================================================
+            // Section 1: Digital Clock
+            // =================================================================
+            demoSection('section-clock', [
+                'Digital Clock',
+                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' }
+              ],
+              [
+                'A live clock that re-renders every second using ',
+                { t: 'code', c: 'o.render' }, ' + ', { t: 'code', c: 'bw.update()' },
+                '. The ', { t: 'code', c: 'o.mounted' },
+                ' lifecycle hook starts a ', { t: 'code', c: 'setInterval' },
+                ', and ', { t: 'code', c: 'o.unmount' },
+                ' cleans it up. Each tick also publishes the current time via ',
+                { t: 'code', c: 'bw.pub("clock:tick")' },
+                ' for the alarm to subscribe to.'
+              ],
+              createTabbedDemo(
+                { t: 'div', a: { id: 'clock-demo' } },
+                clockCodeStr
+              )
+            ),
+
+            // =================================================================
+            // Section 2: Stopwatch
+            // =================================================================
+            demoSection('section-stopwatch', [
+                'Stopwatch',
+                { t: 'span', a: { class: 'reactivity-badge badge-patch' }, c: 'bw.patch()' },
+                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' }
+              ],
+              [
+                'The stopwatch demonstrates two update strategies. The time display updates at ~30fps using ',
+                { t: 'code', c: 'bw.patch(displayId, content)' },
+                ' for targeted, high-frequency updates without rebuilding the DOM tree. ',
+                'Structural changes (adding laps, toggling buttons) use ',
+                { t: 'code', c: 'bw.update(el)' },
+                ' for a full re-render. This is the recommended pattern: ',
+                { t: 'code', c: 'bw.patch()' },
+                ' for values, ',
+                { t: 'code', c: 'bw.update()' },
+                ' for structure.'
+              ],
+              createTabbedDemo(
+                { t: 'div', a: { id: 'stopwatch-demo' } },
+                stopwatchCodeStr
+              )
+            ),
+
+            // =================================================================
+            // Section 3: Alarm
+            // =================================================================
+            demoSection('section-alarm', [
+                'Alarm',
+                { t: 'span', a: { class: 'reactivity-badge badge-pubsub' }, c: 'pub/sub' }
+              ],
+              [
+                'The alarm showcases decoupled communication via ',
+                { t: 'code', c: 'bw.pub/sub' },
+                '. The alarm component subscribes to ',
+                { t: 'code', c: '"clock:tick"' },
+                ' events published by the clock. When the alarm fires, it publishes ',
+                { t: 'code', c: '"alarm:trigger"' },
+                ' which a completely separate toast listener picks up. Neither component knows ',
+                'about the other directly. The subscription is tied to the element lifecycle via the ',
+                { t: 'code', c: 'el' },
+                ' parameter in ',
+                { t: 'code', c: 'bw.sub()' },
+                ', so it auto-cleans on removal.'
+              ],
+              createTabbedDemo(
+                { t: 'div', a: { id: 'alarm-demo' } },
+                alarmCodeStr
+              )
+            ),
+
+            // =================================================================
+            // Section 4: How It Fits Together
+            // =================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-architecture' },
+              c: [
+                { t: 'h2', c: 'How It Fits Together' },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  {
+                    t: 'p', a: { style: 'line-height: 1.7; margin-bottom: 1rem;' },
+                    c: [
+                      'The three components on this page are independent. They communicate solely ',
+                      'through bitwrench\'s pub/sub system. Here is the event flow:'
+                    ]
+                  },
+                  {
+                    t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.75rem; align-items: center; text-align: center; margin: 1.5rem 0;' },
+                    c: [
+                      {
+                        t: 'div', a: { style: 'background: var(--bw-card-bg); border: 2px solid #00acc1; border-radius: 8px; padding: 1rem;' },
+                        c: [
+                          { t: 'div', a: { style: 'font-weight: 700; color: #00acc1; margin-bottom: 0.25rem;' }, c: 'Clock' },
+                          { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'bw.update(el)' },
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary); margin-top: 0.25rem;' }, c: 'every 1s' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary);' },
+                        c: [
+                          { t: 'div', a: { style: 'font-size: 1.5rem;' }, c: '\u2192' },
+                          { t: 'code', c: 'pub("clock:tick")' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { style: 'background: var(--bw-card-bg); border: 2px solid #ff9800; border-radius: 8px; padding: 1rem;' },
+                        c: [
+                          { t: 'div', a: { style: 'font-weight: 700; color: #ff9800; margin-bottom: 0.25rem;' }, c: 'Alarm' },
+                          { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'sub("clock:tick")' },
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary); margin-top: 0.25rem;' }, c: 'checks match' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary);' },
+                        c: [
+                          { t: 'div', a: { style: 'font-size: 1.5rem;' }, c: '\u2192' },
+                          { t: 'code', c: 'pub("alarm:trigger")' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { style: 'background: var(--bw-card-bg); border: 2px solid #e91e63; border-radius: 8px; padding: 1rem;' },
+                        c: [
+                          { t: 'div', a: { style: 'font-weight: 700; color: #e91e63; margin-bottom: 0.25rem;' }, c: 'Toast Listener' },
+                          { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'sub("alarm:trigger")' },
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary); margin-top: 0.25rem;' }, c: 'shows notification' }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    t: 'div', a: { class: 'callout callout-concept' },
+                    c: [
+                      { t: 'h4', c: 'Choosing an update strategy' },
+                      {
+                        t: 'table', a: { style: 'width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin-top: 0.5rem;' },
+                        c: [
+                          {
+                            t: 'thead', c: {
+                              t: 'tr', c: [
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);' }, c: 'Strategy' },
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);' }, c: 'Use when' },
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);' }, c: 'Example on this page' }
+                              ]
+                            }
+                          },
+                          {
+                            t: 'tbody', c: [
+                              {
+                                t: 'tr', c: [
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: { t: 'code', c: 'bw.update(el)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Structure changes, infrequent updates' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Clock (1/s), lap list changes' }
+                                ]
+                              },
+                              {
+                                t: 'tr', c: [
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: { t: 'code', c: 'bw.patch(id, val)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Value-only changes, high frequency' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Stopwatch display (30fps)' }
+                                ]
+                              },
+                              {
+                                t: 'tr', c: [
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem;' }, c: { t: 'code', c: 'bw.pub/sub' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem;' }, c: 'Cross-component messaging, decoupled' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem;' }, c: 'Clock \u2192 Alarm \u2192 Toast chain' }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1rem;' },
+                    c: [
+                      { t: 'h4', c: 'Try it' },
+                      {
+                        t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
+                        c: [
+                          { t: 'li', c: 'Watch the clock update every second (bw.update re-renders the entire clock face)' },
+                          { t: 'li', c: 'Start the stopwatch and notice how smooth the millisecond display is (bw.patch updates just the number)' },
+                          { t: 'li', c: [
+                            'Set an alarm for the next minute ',
+                            { t: 'em', c: '(tip: set seconds to :00)' },
+                            ' and see the pub/sub chain fire'
+                          ]},
+                          { t: 'li', c: [
+                            'Open the browser console and run ',
+                            { t: 'code', c: 'bw.pub("alarm:trigger", {hour:12, minute:0, period:"PM"})' },
+                            ' to trigger the toast directly'
+                          ]}
+                        ]
+                      }
+                    ]
+                  }
+                ]}
+              ]
+            }
+
+          ] // end content-container children
+        }, // end content-container
+
+        // Global toast container (for alarm notifications, positioned fixed)
+        { t: 'div', a: { id: alarmToastContainerId, class: 'toast-container' } }
+
+      ] // end page children
+    }; // end page
+
+    // Mount the entire page
+    bw.DOM('#app', page);
+
+    // =========================================================================
+    // Mount live components into their placeholder divs
+    // (must happen after bw.DOM('#app', page) so the placeholders exist)
+    // =========================================================================
+    requestAnimationFrame(function() {
+      bw.DOM('#clock-demo', makeDigitalClock());
+      bw.DOM('#stopwatch-demo', makeStopwatch());
+      bw.DOM('#alarm-demo', makeAlarm());
+    });
+  </script>
+</body>
+</html>
