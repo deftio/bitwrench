@@ -70,11 +70,20 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 
 ## Release Process
 
+**Cardinal rule: `npm run build:release` is the LAST step before commit.
+Never commit then build. The committed dist/ artifacts must be exactly
+what `build:release` produced — byte for byte.** SRI hashes and source
+maps change on every build, so stale artifacts mean npm gets a different
+package than what's on GitHub.
+
 1. Bump version in `package.json`
-2. `npm run cleanbuild`
-3. `npm test`
-4. `npm run build:release`
-5. Commit all changes
-6. Tag: `git tag vX.Y.Z`
-7. Push: `git push && git push --tags`
-8. Publish: `npm publish`
+2. Make all source changes and verify they work
+3. `npm run build:release` — runs cleanbuild + tests + copies to releases/v2/
+4. `git status` — verify only expected files changed
+5. **Immediately commit** — no edits between build:release and commit
+6. Merge feature branch to `main` (if on a feature branch)
+7. Tag: `git tag -a vX.Y.Z -m "message"`
+8. Push: `git push origin main && git push origin vX.Y.Z`
+
+**Do NOT run `npm publish` manually.** GH Actions CI publishes to npm
+automatically when a version tag is pushed.

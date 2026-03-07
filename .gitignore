@@ -19,6 +19,7 @@ node_modules/
 .vscode/
 .idea/
 .feedback/
+CLAUDE.md
 
 # Ignore any compiled binaries
 *.exe
