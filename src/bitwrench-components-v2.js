@@ -563,7 +563,11 @@ export function makeAlert(props = {}) {
         a: {
           type: 'button',
           class: 'bw-close',
-          'aria-label': 'Close'
+          'aria-label': 'Close',
+          onclick: function(e) {
+            var alert = e.target.closest('.bw-alert');
+            if (alert) { alert.remove(); }
+          }
         },
         c: '×'
       }
@@ -1054,12 +1058,14 @@ export function makeCheckbox(props = {}) {
     id,
     name,
     disabled = false,
-    value
+    value,
+    className = '',
+    ...eventHandlers
   } = props;
 
   return {
     t: 'div',
-    a: { class: 'bw-form-check' },
+    a: { class: `bw-form-check ${className}`.trim() },
     c: [
       {
         t: 'input',
@@ -1070,7 +1076,8 @@ export function makeCheckbox(props = {}) {
           id,
           name,
           disabled,
-          value
+          value,
+          ...eventHandlers
         }
       },
       label && {
@@ -1298,8 +1305,8 @@ export function makeFeatureGrid(props = {}) {
             feature.icon && {
               t: 'div',
               a: {
-                class: 'bw-feature-icon bw-mb-3',
-                style: `font-size: ${iconSize}; color: var(--bw-primary);`
+                class: 'bw-feature-icon bw-mb-3 bw-text-primary',
+                style: `font-size: ${iconSize};`
               },
               c: feature.icon
             },
@@ -1808,8 +1815,7 @@ export function makeCodeDemo(props = {}) {
           {
             t: 'button',
             a: {
-              class: 'bw-copy-btn',
-              style: 'position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.25rem 0.625rem; font-size: 0.6875rem; background: rgba(255,255,255,0.12); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-family: inherit; transition: all 0.15s;',
+              class: 'bw-copy-btn bw-code-copy-btn',
               onclick: (e) => {
                 navigator.clipboard.writeText(code).then(() => {
                   const btn = e.target;
@@ -1830,13 +1836,12 @@ export function makeCodeDemo(props = {}) {
           {
             t: 'pre',
             a: {
-              style: 'margin: 0; background: #1e293b; border: none; border-radius: 6px; overflow-x: auto;'
+              class: 'bw-code-pre'
             },
             c: {
               t: 'code',
               a: {
-                class: `language-${language}`,
-                style: 'display: block; padding: 1.25rem; font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace; font-size: 0.8125rem; line-height: 1.6; color: #e2e8f0;'
+                class: `bw-code-block language-${language}`
               },
               c: code
             }
@@ -1850,7 +1855,7 @@ export function makeCodeDemo(props = {}) {
     title && { t: 'h3', c: title },
     description && {
       t: 'p',
-      a: { style: 'color: #6c757d; margin-bottom: 1rem;' },
+      a: { class: 'bw-text-muted', style: 'margin-bottom: 1rem;' },
       c: description
     },
     makeTabs({ tabs, id: demoId })

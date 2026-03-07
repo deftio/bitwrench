@@ -1229,7 +1229,7 @@ export const defaultStyles = {
       'background-color': '#fafafa',
       'border-bottom': '1px solid #e5e5e5'
     },
-    '.bw-navbar > .container': {
+    '.bw-navbar > .bw-container, .bw-navbar > .container': {
       'display': 'flex',
       'flex-wrap': 'wrap',
       'align-items': 'center',
@@ -2171,6 +2171,35 @@ export const defaultStyles = {
     '.bw-copy-btn:hover': {
       'background': 'rgba(255,255,255,0.2)',
       'color': '#fff'
+    },
+    '.bw-code-pre': {
+      'margin': '0',
+      'background': '#1e293b',
+      'border': 'none',
+      'border-radius': '6px',
+      'overflow-x': 'auto'
+    },
+    '.bw-code-block': {
+      'display': 'block',
+      'padding': '1.25rem',
+      'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
+      'font-size': '0.8125rem',
+      'line-height': '1.6',
+      'color': '#e2e8f0'
+    },
+    '.bw-code-copy-btn': {
+      'position': 'absolute',
+      'top': '0.5rem',
+      'right': '0.5rem',
+      'padding': '0.25rem 0.625rem',
+      'font-size': '0.6875rem',
+      'background': 'rgba(255,255,255,0.12)',
+      'color': '#aaa',
+      'border': '1px solid rgba(255,255,255,0.15)',
+      'border-radius': '4px',
+      'cursor': 'pointer',
+      'font-family': 'inherit',
+      'transition': 'all 0.15s'
     }
   },
 
@@ -2609,7 +2638,7 @@ export function getStructuralStyles() {
     'position': 'relative', 'display': 'flex', 'flex-wrap': 'wrap',
     'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 1.5rem'
   };
-  rules['.bw-navbar > .container'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' };
+  rules['.bw-navbar > .bw-container, .bw-navbar > .container'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' };
   rules['.bw-navbar-brand'] = {
     'display': 'inline-flex', 'align-items': 'center', 'gap': '0.5rem',
     'padding-top': '0.25rem', 'padding-bottom': '0.25rem', 'margin-right': '1.5rem',
@@ -2798,6 +2827,9 @@ export function getStructuralStyles() {
 
   // Code demo (structural)
   rules['.bw-code-demo'] = { 'margin-bottom': '2rem' };
+  rules['.bw-code-pre'] = { 'margin': '0', 'border': 'none', 'border-radius': '6px', 'overflow-x': 'auto' };
+  rules['.bw-code-block'] = { 'display': 'block', 'padding': '1.25rem', 'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace', 'font-size': '0.8125rem', 'line-height': '1.6' };
+  rules['.bw-code-copy-btn'] = { 'position': 'absolute', 'top': '0.5rem', 'right': '0.5rem', 'padding': '0.25rem 0.625rem', 'font-size': '0.6875rem', 'border-radius': '4px', 'cursor': 'pointer', 'font-family': 'inherit', 'transition': 'all 0.15s' };
 
   // Spacing utilities (structural)
   var spacingValues = { '0': '0', '1': '.25rem', '2': '.5rem', '3': '1rem', '4': '1.5rem', '5': '3rem' };

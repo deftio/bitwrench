@@ -78,7 +78,7 @@ Or include directly in a page:
           title: 'Welcome',
           content: 'Built with plain JavaScript objects.'
         }),
-        bw.makeButton({ label: 'Click me', variant: 'primary' })
+        bw.makeButton({ text: 'Click me', variant: 'primary' })
       ]
     });
   </script>
@@ -186,13 +186,14 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 - [State & Interactivity](https://deftio.github.io/bitwrench/pages/05-state.html) — `bw.patch()`, `bw.update()`, pub/sub
 - [Tic Tac Toe Tutorial](https://deftio.github.io/bitwrench/pages/06-tic-tac-toe-tutorial.html) — step-by-step game with state management
 - [Framework Comparison](https://deftio.github.io/bitwrench/pages/07-framework-comparison.html) — bitwrench vs React, Vue, Svelte
+- [LLM Guide](https://github.com/deftio/bitwrench/blob/main/dev/llm-bitwrench-guide.md) — single-file reference for AI-assisted bitwrench development
 
 ## Development
 
 ```bash
 npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
-npm test             # run unit tests (284 tests)
+npm test             # run unit tests (344 tests)
 npm run test:cli     # run CLI tests (49 tests)
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint
