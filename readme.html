@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.0.10">
+  <meta name="generator" content="bitwrench v2.0.11">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.js"></script>
@@ -117,7 +117,7 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
           title: &#39;Welcome&#39;,
           content: &#39;Built with plain JavaScript objects.&#39;
         }),
-        bw.makeButton({ label: &#39;Click me&#39;, variant: &#39;primary&#39; })
+        bw.makeButton({ text: &#39;Click me&#39;, variant: &#39;primary&#39; })
       ]
     });
   &lt;/script&gt;
@@ -243,10 +243,11 @@ bitwrench doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</c
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/05-state.html" rel="noopener noreferrer">State &amp; Interactivity</a> — <code class="quikdown-code">bw.patch()</code>, <code class="quikdown-code">bw.update()</code>, pub/sub</li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/06-tic-tac-toe-tutorial.html" rel="noopener noreferrer">Tic Tac Toe Tutorial</a> — step-by-step game with state management</li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/07-framework-comparison.html" rel="noopener noreferrer">Framework Comparison</a> — bitwrench vs React, Vue, Svelte</li>
+<li class="quikdown-li"><a class="quikdown-a" href="https://github.com/deftio/bitwrench/blob/main/dev/llm-bitwrench-guide.md" rel="noopener noreferrer">LLM Guide</a> — single-file reference for AI-assisted bitwrench development</li>
 </ul><h2 class="quikdown-h2">Development</h2>
 <p><pre class="quikdown-pre"><code class="language-bash">npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
-npm test             # run unit tests (284 tests)
+npm test             # run unit tests (344 tests)
 npm run test:cli     # run CLI tests (49 tests)
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint
