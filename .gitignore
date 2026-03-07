@@ -1,6 +1,7 @@
 # testing
 .nyc_output
 test-results/
+playwright-report/
 *~
 *.log
 *.tgz
