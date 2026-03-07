@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.8 | BSD-2-Clause | http://deftio.com/bitwrench */
+/*! bitwrench v2.0.9 | BSD-2-Clause | http://deftio.com/bitwrench */
 /**
  * bitwrench-code-edit.js - syntax-highlighted contenteditable code editor addon
  *
