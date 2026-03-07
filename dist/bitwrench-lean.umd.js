@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.11 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.12 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -11,14 +11,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.11',
+    version: '2.0.12',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-07T11:02:53.369Z'
+    buildDate: '2026-03-07T18:25:14.462Z'
   };
 
   /**
@@ -893,11 +893,32 @@
     rules[scopeSelector(scope, '.bw-accordion-button')] = {
       'color': palette.dark.base
     };
+    rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed)')] = {
+      'color': palette.primary.darkText,
+      'background-color': palette.primary.light
+    };
     rules[scopeSelector(scope, '.bw-accordion-button:hover')] = {
       'background-color': palette.light.light
     };
+    rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed):hover')] = {
+      'background-color': palette.primary.hover
+    };
+    rules[scopeSelector(scope, '.bw-accordion-button:focus-visible')] = {
+      'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+    };
     rules[scopeSelector(scope, '.bw-accordion-body')] = {
       'border-top': '1px solid ' + palette.light.border
+    };
+    return rules;
+  }
+
+  function generateCarouselThemed(scope, palette) {
+    var rules = {};
+    rules[scopeSelector(scope, '.bw-carousel')] = {
+      'background-color': palette.light.light
+    };
+    rules[scopeSelector(scope, '.bw-carousel-indicator.active')] = {
+      'background-color': palette.primary.base
     };
     return rules;
   }
@@ -982,7 +1003,7 @@
   function generateSkeletonThemed(scope, palette) {
     var rules = {};
     rules[scopeSelector(scope, '.bw-skeleton')] = {
-      'background-color': palette.light.border
+      'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
     };
     return rules;
   }
@@ -1029,6 +1050,7 @@
       generateCloseButtonThemed(scopeName, palette),
       generateSectionsThemed(scopeName, palette),
       generateAccordionThemed(scopeName, palette),
+      generateCarouselThemed(scopeName, palette),
       generateModalThemed(scopeName, palette),
       generateToastThemed(scopeName, palette),
       generateDropdownThemed(scopeName, palette),
@@ -1388,6 +1410,8 @@
     rules['.bw-tab-content'] = { 'padding': '1.25rem 0' };
     rules['.bw-tab-pane'] = { 'display': 'none' };
     rules['.bw-tab-pane.active'] = { 'display': 'block' };
+    rules['.bw-nav-scrollable'] = { 'flex-wrap': 'nowrap', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch', 'scrollbar-width': 'none' };
+    rules['.bw-nav-scrollable .bw-nav-link'] = { 'white-space': 'nowrap' };
 
     // List groups (structural)
     rules['.bw-list-group'] = { 'display': 'flex', 'flex-direction': 'column', 'padding-left': '0', 'margin-bottom': '0', 'border-radius': '0.375rem' };
@@ -1554,6 +1578,29 @@
     rules['.bw-modal-body'] = { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1.5rem' };
     rules['.bw-modal-footer'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'padding': '0.75rem 1.5rem', 'gap': '0.5rem' };
 
+    // Carousel (structural)
+    rules['.bw-carousel'] = { 'position': 'relative', 'overflow': 'hidden', 'border-radius': '8px' };
+    rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.4s ease', 'height': '100%' };
+    rules['.bw-carousel-slide'] = { 'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden', 'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
+    rules['.bw-carousel-slide img'] = { 'width': '100%', 'height': '100%', 'object-fit': 'cover' };
+    rules['.bw-carousel-caption'] = { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem' };
+    rules['.bw-carousel-control'] = {
+      'position': 'absolute', 'top': '50%', 'transform': 'translateY(-50%)', 'width': '40px', 'height': '40px',
+      'border': 'none', 'border-radius': '50%', 'cursor': 'pointer', 'display': 'flex', 'align-items': 'center',
+      'justify-content': 'center', 'z-index': '2', 'padding': '0', 'transition': 'background-color 0.2s ease'
+    };
+    rules['.bw-carousel-control img'] = { 'width': '20px', 'height': '20px', 'pointer-events': 'none' };
+    rules['.bw-carousel-control-prev'] = { 'left': '10px' };
+    rules['.bw-carousel-control-next'] = { 'right': '10px' };
+    rules['.bw-carousel-indicators'] = {
+      'position': 'absolute', 'bottom': '12px', 'left': '50%', 'transform': 'translateX(-50%)',
+      'display': 'flex', 'gap': '6px', 'z-index': '2'
+    };
+    rules['.bw-carousel-indicator'] = {
+      'width': '10px', 'height': '10px', 'border-radius': '50%', 'border': '2px solid transparent',
+      'padding': '0', 'cursor': 'pointer', 'transition': 'opacity 0.2s ease, background-color 0.2s ease'
+    };
+
     // Toast (structural)
     rules['.bw-toast-container'] = {
       'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
@@ -1603,12 +1650,12 @@
     rules['.bw-form-switch .bw-switch-input:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
 
     // Skeleton (structural)
-    rules['.bw-skeleton'] = { 'border-radius': '4px', 'animation': 'bw-skeleton-pulse 1.5s ease-in-out infinite' };
+    rules['.bw-skeleton'] = { 'border-radius': '4px', 'background-size': '400% 100%', 'animation': 'bw-skeleton-shimmer 1.4s ease infinite' };
     rules['.bw-skeleton-text'] = { 'height': '1em', 'margin-bottom': '0.5rem' };
     rules['.bw-skeleton-circle'] = { 'border-radius': '50%' };
     rules['.bw-skeleton-rect'] = { 'border-radius': '8px' };
     rules['.bw-skeleton-group'] = { 'display': 'flex', 'flex-direction': 'column' };
-    rules['@keyframes bw-skeleton-pulse'] = { '0%': { 'opacity': '1' }, '50%': { 'opacity': '0.4' }, '100%': { 'opacity': '1' } };
+    rules['@keyframes bw-skeleton-shimmer'] = { '0%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0 50%' } };
 
     // Avatar (structural)
     rules['.bw-avatar'] = {
@@ -1970,11 +2017,30 @@
       '.bw-dark .bw-accordion-button': {
         'color': textColor
       },
+      '.bw-dark .bw-accordion-button:not(.bw-collapsed)': {
+        'color': '#7dd3e0',
+        'background-color': 'rgba(125, 211, 224, 0.1)'
+      },
       '.bw-dark .bw-accordion-button:hover': {
         'background-color': bodyBg
       },
+      '.bw-dark .bw-accordion-button:not(.bw-collapsed):hover': {
+        'background-color': 'rgba(125, 211, 224, 0.15)'
+      },
+      '.bw-dark .bw-accordion-button:focus-visible': {
+        'box-shadow': '0 0 0 0.2rem rgba(125, 211, 224, 0.3)'
+      },
       '.bw-dark .bw-accordion-body': {
         'border-top-color': borderColor
+      },
+      '.bw-dark .bw-carousel': {
+        'background-color': bodyBg
+      },
+      '.bw-dark .bw-carousel-control': {
+        'background-color': 'rgba(255,255,255,0.15)'
+      },
+      '.bw-dark .bw-carousel-control:hover': {
+        'background-color': 'rgba(255,255,255,0.25)'
       },
       '.bw-dark .bw-modal-content': {
         'background-color': surfaceBg,
@@ -2011,7 +2077,7 @@
         'border-top-color': borderColor
       },
       '.bw-dark .bw-skeleton': {
-        'background-color': borderColor
+        'background': 'linear-gradient(90deg, ' + borderColor + ' 25%, ' + surfaceBg + ' 37%, ' + borderColor + ' 63%)'
       },
       '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
         'color': textColor

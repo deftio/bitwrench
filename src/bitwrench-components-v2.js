@@ -2718,6 +2718,182 @@ export function makeAvatar(props = {}) {
   };
 }
 
+/**
+ * Create a carousel/slideshow component with slide transitions
+ *
+ * Supports image slides, TACO content slides, captions, prev/next controls,
+ * dot indicators, and optional auto-play. Uses CSS translateX transitions.
+ *
+ * @param {Object} [props] - Carousel configuration
+ * @param {Array<Object>} [props.items=[]] - Slide items
+ * @param {string|Object} props.items[].content - Slide content (TACO, string, or img element)
+ * @param {string} [props.items[].caption] - Caption text shown at bottom of slide
+ * @param {boolean} [props.showControls=true] - Show prev/next arrow buttons
+ * @param {boolean} [props.showIndicators=true] - Show dot navigation
+ * @param {boolean} [props.autoPlay=false] - Auto-advance slides
+ * @param {number} [props.interval=5000] - Auto-advance interval in ms
+ * @param {string} [props.height='300px'] - Carousel height
+ * @param {number} [props.startIndex=0] - Initial slide index
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a carousel
+ * @category Component Builders
+ * @example
+ * const carousel = makeCarousel({
+ *   items: [
+ *     { content: { t: 'img', a: { src: 'photo.jpg' } }, caption: 'Photo 1' },
+ *     { content: { t: 'div', c: 'Text slide' } }
+ *   ],
+ *   autoPlay: true,
+ *   interval: 3000
+ * });
+ */
+export function makeCarousel(props = {}) {
+  const {
+    items = [],
+    showControls = true,
+    showIndicators = true,
+    autoPlay = false,
+    interval = 5000,
+    height = '300px',
+    startIndex = 0,
+    className = ''
+  } = props;
+
+  // Shared navigation logic
+  function goToSlide(carouselEl, index) {
+    var total = carouselEl.querySelectorAll('.bw-carousel-slide').length;
+    if (index < 0) index = total - 1;
+    if (index >= total) index = 0;
+    carouselEl.setAttribute('data-carousel-index', index);
+    var track = carouselEl.querySelector('.bw-carousel-track');
+    track.style.transform = 'translateX(-' + (index * 100) + '%)';
+    // Update indicators
+    var indicators = carouselEl.querySelectorAll('.bw-carousel-indicator');
+    for (var i = 0; i < indicators.length; i++) {
+      if (i === index) {
+        indicators[i].classList.add('active');
+      } else {
+        indicators[i].classList.remove('active');
+      }
+    }
+  }
+
+  // Arrow SVGs (inline data URIs, same pattern as accordion chevrons)
+  var prevArrow = "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3e%3c/svg%3e";
+  var nextArrow = "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e";
+
+  var slides = items.map(function(item) {
+    var slideContent = [
+      item.content,
+      item.caption && {
+        t: 'div',
+        a: { class: 'bw-carousel-caption' },
+        c: item.caption
+      }
+    ].filter(Boolean);
+
+    return {
+      t: 'div',
+      a: { class: 'bw-carousel-slide' },
+      c: slideContent.length === 1 ? slideContent[0] : slideContent
+    };
+  });
+
+  var children = [
+    // Track
+    {
+      t: 'div',
+      a: {
+        class: 'bw-carousel-track',
+        style: 'transform: translateX(-' + (startIndex * 100) + '%)'
+      },
+      c: slides
+    }
+  ];
+
+  // Prev/Next controls
+  if (showControls && items.length > 1) {
+    children.push({
+      t: 'button',
+      a: {
+        class: 'bw-carousel-control bw-carousel-control-prev',
+        type: 'button',
+        'aria-label': 'Previous slide',
+        onclick: function(e) {
+          var carousel = e.target.closest('.bw-carousel');
+          var idx = parseInt(carousel.getAttribute('data-carousel-index') || '0');
+          goToSlide(carousel, idx - 1);
+        }
+      },
+      c: { t: 'img', a: { src: prevArrow, alt: '' } }
+    });
+    children.push({
+      t: 'button',
+      a: {
+        class: 'bw-carousel-control bw-carousel-control-next',
+        type: 'button',
+        'aria-label': 'Next slide',
+        onclick: function(e) {
+          var carousel = e.target.closest('.bw-carousel');
+          var idx = parseInt(carousel.getAttribute('data-carousel-index') || '0');
+          goToSlide(carousel, idx + 1);
+        }
+      },
+      c: { t: 'img', a: { src: nextArrow, alt: '' } }
+    });
+  }
+
+  // Indicators
+  if (showIndicators && items.length > 1) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-carousel-indicators' },
+      c: items.map(function(_, i) {
+        return {
+          t: 'button',
+          a: {
+            class: 'bw-carousel-indicator' + (i === startIndex ? ' active' : ''),
+            type: 'button',
+            'aria-label': 'Go to slide ' + (i + 1),
+            'data-slide-index': i,
+            onclick: function(e) {
+              var carousel = e.target.closest('.bw-carousel');
+              var idx = parseInt(e.target.getAttribute('data-slide-index'));
+              goToSlide(carousel, idx);
+            }
+          }
+        };
+      })
+    });
+  }
+
+  return {
+    t: 'div',
+    a: {
+      class: ('bw-carousel ' + className).trim(),
+      style: 'height: ' + height,
+      'data-carousel-index': startIndex
+    },
+    c: children,
+    o: {
+      type: 'carousel',
+      state: { activeIndex: startIndex, autoPlay: autoPlay, interval: interval },
+      mounted: autoPlay ? function(el) {
+        var intervalId = setInterval(function() {
+          var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+          goToSlide(el, idx + 1);
+        }, interval);
+        el._bw_carouselInterval = intervalId;
+      } : undefined,
+      unmount: autoPlay ? function(el) {
+        if (el._bw_carouselInterval) {
+          clearInterval(el._bw_carouselInterval);
+        }
+      } : undefined
+    }
+  };
+}
+
 export const componentHandles = {
   card: CardHandle,
   table: TableHandle,

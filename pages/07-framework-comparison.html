@@ -87,6 +87,16 @@
     .theme-card h4 { margin: 0 0 0.35rem; }
     .theme-card p { margin: 0; font-size: 0.875rem; opacity: 0.85; }
     .theme-btns { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+
+    /* Scrollable tabs for 7-framework comparisons on narrow viewports */
+    .demo-section-body .bw-nav-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .demo-section-body .bw-nav-tabs::-webkit-scrollbar { display: none; }
+    .demo-section-body .bw-nav-tabs .bw-nav-link { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -95,7 +105,7 @@
   <div class="page-header">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
       <h1>Framework Comparison</h1>
-      <p class="subtitle">Map your domain knowledge from React, Vue, Svelte, and other frameworks to bitwrench patterns.</p>
+      <p class="subtitle">Map your domain knowledge from React, Vue, Svelte, Bootstrap, SolidJS, and other frameworks to bitwrench patterns.</p>
     </div>
   </div>
 
@@ -106,7 +116,7 @@
       <h2>About This Page</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          If you already know React, Vue, Svelte, or vanilla JavaScript, this page shows how
+          If you already know React, Vue, Svelte, Bootstrap, SolidJS, or vanilla JavaScript, this page shows how
           the same tasks are expressed in bitwrench. Use it as a translation guide to map
           familiar patterns to bitwrench's TACO-based approach.
         </p>
@@ -118,8 +128,8 @@
       <h2>Comparison 1: Table from Data</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          Given an array of objects, render a sortable, styled table. One function call in bitwrench
-          vs. 20+ lines of vanilla JS or 10+ lines in React. This is a genuine productivity win.
+          Given an array of objects, render a styled table. In bitwrench, <code>bw.makeTable()</code>
+          takes a data array and column definitions and returns a TACO object with built-in sorting, striping, and hover.
         </p>
         <div id="table-preview"></div>
         <div id="table-comparison"></div>
@@ -131,9 +141,10 @@
       <h2>Comparison 2: Dynamic Theming</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          Generate and apply a complete color theme at runtime. This is where bitwrench's
-          <code>bw.css()</code> and <code>bw.injectCSS()</code> shine &mdash; you can generate
-          entire stylesheets from JavaScript objects with no build step.
+          Generate and apply a complete color theme at runtime. Using bitwrench's
+          <code>bw.css()</code> and <code>bw.injectCSS()</code> allows themes to be modified at
+          runtime without a build step. For more on themes see <a href="10-themes.html">Themes</a>
+          and on styles see <a href="03-styling.html">Styling</a>.
         </p>
         <div id="theme-preview"></div>
         <div id="theme-comparison"></div>
@@ -155,21 +166,35 @@
 
     <!-- Comparison 4: Counter -->
     <div class="demo-section">
-      <h2>Comparison 4: A Counter</h2>
+      <h2>Comparison 4: Counter with Controls</h2>
       <div class="demo-section-body">
         <p class="intro-text">
-          The simplest interactive component: a heading that shows a number, and a button
-          that increments it. Line counts are similar across all frameworks here, so this
-          is a good baseline for understanding each approach's syntax.
+          A counter with increment, decrement, and reset buttons. The simplest interactive
+          component — a good baseline for comparing each framework's approach to state and
+          event handling.
         </p>
         <div id="counter-preview"></div>
         <div id="counter-comparison"></div>
       </div>
     </div>
 
-    <!-- Comparison 5: Todo -->
+    <!-- Comparison 5: Cross-Component Coordination -->
     <div class="demo-section">
-      <h2>Comparison 5: State Management (Todo List)</h2>
+      <h2>Comparison 5: Cross-Component Coordination</h2>
+      <div class="demo-section-body">
+        <p class="intro-text">
+          Three independent counters share a global summary panel that auto-updates when
+          any counter changes. This shows how each framework handles cross-component
+          communication — the core challenge of any real application.
+        </p>
+        <div id="cross-preview"></div>
+        <div id="cross-comparison"></div>
+      </div>
+    </div>
+
+    <!-- Comparison 6: Todo -->
+    <div class="demo-section">
+      <h2>Comparison 6: State Management (Todo List)</h2>
       <div class="demo-section-body">
         <p class="intro-text">
           A realistic component: a todo list where you can add items and mark them done.
@@ -256,7 +281,7 @@
     };
 
     // ---- Comparison 1: Counter ----
-    // Live preview — an actual working counter
+    // Live preview — counter with increment, decrement, reset
     (function() {
       var count = 0;
 
@@ -269,12 +294,19 @@
             {
               t: 'div',
               c: [
-                { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' }, c: 'Count: ' + count },
-                bw.makeButton({
-                  text: 'Increment',
-                  variant: 'primary',
-                  onclick: function() { count++; renderPreview(); }
-                })
+                { t: 'h4', a: { style: 'margin: 0 0 0.75rem;' }, c: 'Count: ' + count },
+                {
+                  t: 'div',
+                  a: { style: 'display: flex; gap: 0.35rem; flex-wrap: wrap;' },
+                  c: [
+                    bw.makeButton({ text: '+', variant: 'primary',
+                      onclick: function() { count++; renderPreview(); } }),
+                    bw.makeButton({ text: '\u2013', variant: 'secondary',
+                      onclick: function() { count--; renderPreview(); } }),
+                    bw.makeButton({ text: 'Reset', variant: 'secondary',
+                      onclick: function() { count = 0; renderPreview(); } })
+                  ]
+                }
               ]
             }
           ]
@@ -282,25 +314,31 @@
       }
       renderPreview();
 
-      // All frameworks produce: <div><h4>Count: N</h4><button>Increment</button></div>
       var examples = [
         {
           label: 'HTML / JS',
           code: [
-            '<!-- All examples produce the same UI: -->',
-            '<!-- <div><h4>Count: 0</h4><button>Increment</button></div> -->',
-            '',
             '<div id="counter">',
             '  <h4>Count: <span id="value">0</span></h4>',
-            '  <button id="btn">Increment</button>',
+            '  <button id="inc">+</button>',
+            '  <button id="dec">\u2013</button>',
+            '  <button id="reset">Reset</button>',
             '</div>',
             '',
             '<script>',
             '  var count = 0;',
             '  var span = document.getElementById("value");',
-            '  document.getElementById("btn")',
+            '  document.getElementById("inc")',
             '    .addEventListener("click", function() {',
-            '      count++;',
+            '      span.textContent = ++count;',
+            '    });',
+            '  document.getElementById("dec")',
+            '    .addEventListener("click", function() {',
+            '      span.textContent = --count;',
+            '    });',
+            '  document.getElementById("reset")',
+            '    .addEventListener("click", function() {',
+            '      count = 0;',
             '      span.textContent = count;',
             '    });',
             '<\/script>'
@@ -309,9 +347,6 @@
         {
           label: 'React',
           code: [
-            '// React (JSX) — requires npm + bundler',
-            '// Renders: <div><h4>Count: N</h4><button>Increment</button></div>',
-            '',
             'import { useState } from "react";',
             '',
             'function Counter() {',
@@ -319,21 +354,17 @@
             '  return (',
             '    <div>',
             '      <h4>Count: {count}</h4>',
-            '      <button onClick={() => setCount(c => c + 1)}>',
-            '        Increment',
-            '      </button>',
+            '      <button onClick={() => setCount(c => c + 1)}>+</button>',
+            '      <button onClick={() => setCount(c => c - 1)}>\u2013</button>',
+            '      <button onClick={() => setCount(0)}>Reset</button>',
             '    </div>',
             '  );',
-            '}',
-            '',
-            '// Mount: ReactDOM.render(<Counter />, root);'
+            '}'
           ].join('\n')
         },
         {
           label: 'Vue',
           code: [
-            '<!-- Vue SFC — renders same <div>/<h4>/<button> structure -->',
-            '',
             '<script setup>',
             'import { ref } from "vue";',
             'const count = ref(0);',
@@ -342,7 +373,9 @@
             '<template>',
             '  <div>',
             '    <h4>Count: {{ count }}</h4>',
-            '    <button @click="count++">Increment</button>',
+            '    <button @click="count++">+</button>',
+            '    <button @click="count--">\u2013</button>',
+            '    <button @click="count = 0">Reset</button>',
             '  </div>',
             '</template>'
           ].join('\n')
@@ -350,24 +383,66 @@
         {
           label: 'Svelte',
           code: [
-            '<!-- Svelte — renders same <div>/<h4>/<button> structure -->',
-            '',
             '<script>',
             '  let count = 0;',
             '<\/script>',
             '',
             '<div>',
             '  <h4>Count: {count}</h4>',
-            '  <button on:click={() => count++}>Increment</button>',
+            '  <button on:click={() => count++}>+</button>',
+            '  <button on:click={() => count--}>\u2013</button>',
+            '  <button on:click={() => count = 0}>Reset</button>',
             '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bootstrap',
+          code: [
+            '<div class="p-3">',
+            '  <h4>Count: <span id="value">0</span></h4>',
+            '  <div class="btn-group">',
+            '    <button class="btn btn-primary" id="inc">+</button>',
+            '    <button class="btn btn-secondary" id="dec">\u2013</button>',
+            '    <button class="btn btn-secondary" id="reset">Reset</button>',
+            '  </div>',
+            '</div>',
+            '',
+            '<script>',
+            '  var count = 0;',
+            '  var span = document.getElementById("value");',
+            '  document.getElementById("inc").onclick = function() {',
+            '    span.textContent = ++count;',
+            '  };',
+            '  document.getElementById("dec").onclick = function() {',
+            '    span.textContent = --count;',
+            '  };',
+            '  document.getElementById("reset").onclick = function() {',
+            '    count = 0; span.textContent = count;',
+            '  };',
+            '<\/script>'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            'import { createSignal } from "solid-js";',
+            '',
+            'function Counter() {',
+            '  const [count, setCount] = createSignal(0);',
+            '  return (',
+            '    <div>',
+            '      <h4>Count: {count()}</h4>',
+            '      <button onClick={() => setCount(c => c + 1)}>+</button>',
+            '      <button onClick={() => setCount(c => c - 1)}>\u2013</button>',
+            '      <button onClick={() => setCount(0)}>Reset</button>',
+            '    </div>',
+            '  );',
+            '}'
           ].join('\n')
         },
         {
           label: 'Bitwrench',
           code: [
-            '// Bitwrench — no build step, same output',
-            '// Renders: <div><h4>Count: N</h4><button>Increment</button></div>',
-            '',
             'var count = 0;',
             '',
             'function render() {',
@@ -375,11 +450,14 @@
             '    t: "div",',
             '    c: [',
             '      { t: "h4", c: "Count: " + count },',
-            '      bw.makeButton({',
-            '        text: "Increment",',
-            '        variant: "primary",',
-            '        onclick: function() { count++; render(); }',
-            '      })',
+            '      { t: "div", a: { style: "display:flex;gap:0.35rem" }, c: [',
+            '        bw.makeButton({ text: "+", variant: "primary",',
+            '          onclick: function() { count++; render(); } }),',
+            '        bw.makeButton({ text: "\\u2013", variant: "secondary",',
+            '          onclick: function() { count--; render(); } }),',
+            '        bw.makeButton({ text: "Reset", variant: "secondary",',
+            '          onclick: function() { count = 0; render(); } })',
+            '      ]}',
             '    ]',
             '  });',
             '}',
@@ -389,6 +467,213 @@
       ];
 
       bw.DOM('#counter-comparison', codeComparison(examples));
+    })();
+
+    // ---- Cross-Component Coordination ----
+    (function() {
+      // Three counters with a global summary that auto-updates
+      var counters = [
+        { label: 'A', count: 0 },
+        { label: 'B', count: 0 },
+        { label: 'C', count: 0 }
+      ];
+
+      function renderCross() {
+        var sum = counters.reduce(function(a, c) { return a + c.count; }, 0);
+        bw.DOM('#cross-preview', {
+          t: 'div', a: { class: 'preview-box' },
+          c: [
+            previewLabel,
+            {
+              t: 'div', a: { style: 'display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;' },
+              c: counters.map(function(ctr) {
+                return {
+                  t: 'div', a: { style: 'border: 1px solid var(--bw-card-border); border-radius: var(--bw-radius); padding: 0.75rem 1rem; text-align: center; min-width: 100px; flex: 1;' },
+                  c: [
+                    { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: ctr.label },
+                    { t: 'div', a: { style: 'font-size: 1.5rem; font-weight: 700; color: var(--bw-teal-dark); margin-bottom: 0.5rem;' }, c: String(ctr.count) },
+                    { t: 'div', a: { style: 'display: flex; gap: 0.25rem; justify-content: center;' }, c: [
+                      bw.makeButton({ text: '+', variant: 'primary', onclick: function() { ctr.count++; renderCross(); } }),
+                      bw.makeButton({ text: '\u2013', variant: 'secondary', onclick: function() { ctr.count--; renderCross(); } })
+                    ]}
+                  ]
+                };
+              })
+            },
+            {
+              t: 'div', a: { style: 'background: var(--bw-teal-bg); border: 1px solid var(--bw-card-border); border-radius: var(--bw-radius); padding: 0.75rem 1rem; text-align: center;' },
+              c: [
+                { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Global Total' },
+                { t: 'div', a: { style: 'font-size: 1.25rem; font-weight: 700;' },
+                  c: counters.map(function(c) { return c.label + '(' + c.count + ')'; }).join(' + ') + ' = ' + sum }
+              ]
+            }
+          ]
+        });
+      }
+      renderCross();
+
+      var examples = [
+        {
+          label: 'HTML / JS',
+          code: [
+            '// Vanilla JS: manual event wiring between components',
+            'var counters = [',
+            '  { label: "A", count: 0, el: null },',
+            '  { label: "B", count: 0, el: null },',
+            '  { label: "C", count: 0, el: null }',
+            '];',
+            '',
+            'function updateGlobal() {',
+            '  var sum = counters.reduce((a, c) => a + c.count, 0);',
+            '  document.getElementById("global").textContent =',
+            '    counters.map(c => c.label + "(" + c.count + ")").join(" + ") + " = " + sum;',
+            '}',
+            '',
+            'counters.forEach(function(ctr) {',
+            '  ctr.el = document.getElementById("counter-" + ctr.label);',
+            '  ctr.el.querySelector(".inc").onclick = function() {',
+            '    ctr.count++;',
+            '    ctr.el.querySelector(".val").textContent = ctr.count;',
+            '    updateGlobal();',
+            '  };',
+            '});'
+          ].join('\n')
+        },
+        {
+          label: 'React',
+          code: [
+            '// React: lift state to parent, pass callbacks as props',
+            'function App() {',
+            '  const [counts, setCounts] = useState([0, 0, 0]);',
+            '  const labels = ["A", "B", "C"];',
+            '  const sum = counts.reduce((a, b) => a + b, 0);',
+            '',
+            '  const inc = (i) => setCounts(c => {',
+            '    const next = [...c]; next[i]++; return next;',
+            '  });',
+            '',
+            '  return (',
+            '    <div>',
+            '      {labels.map((l, i) => (',
+            '        <Counter key={l} label={l} count={counts[i]}',
+            '          onInc={() => inc(i)} />',
+            '      ))}',
+            '      <div>Total: {sum}</div>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Vue: reactive ref array, computed total -->',
+            '<script setup>',
+            'import { ref, computed } from "vue";',
+            'const counts = ref([0, 0, 0]);',
+            'const labels = ["A", "B", "C"];',
+            'const sum = computed(() =>',
+            '  counts.value.reduce((a, b) => a + b, 0)',
+            ');',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <div v-for="(l, i) in labels" :key="l">',
+            '    {{ l }}: {{ counts[i] }}',
+            '    <button @click="counts[i]++">+</button>',
+            '  </div>',
+            '  <div>Total: {{ sum }}</div>',
+            '</template>'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Svelte: reactive assignments, derived store -->',
+            '<script>',
+            '  let counts = [0, 0, 0];',
+            '  const labels = ["A", "B", "C"];',
+            '  $: sum = counts.reduce((a, b) => a + b, 0);',
+            '<\/script>',
+            '',
+            '{#each labels as label, i}',
+            '  <div>',
+            '    {label}: {counts[i]}',
+            '    <button on:click={() => { counts[i]++; counts = counts; }}>+</button>',
+            '  </div>',
+            '{/each}',
+            '<div>Total: {sum}</div>'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            '// SolidJS: createSignal per counter, derived memo',
+            'import { createSignal, createMemo } from "solid-js";',
+            '',
+            'function App() {',
+            '  const labels = ["A", "B", "C"];',
+            '  const signals = labels.map(() => createSignal(0));',
+            '  const sum = createMemo(() =>',
+            '    signals.reduce((a, [get]) => a + get(), 0)',
+            '  );',
+            '',
+            '  return (',
+            '    <div>',
+            '      <For each={labels}>{(l, i) => (',
+            '        <div>{l}: {signals[i()][0]()}',
+            '          <button onClick={() =>',
+            '            signals[i()][1](c => c + 1)}>+</button>',
+            '        </div>',
+            '      )}</For>',
+            '      <div>Total: {sum()}</div>',
+            '    </div>',
+            '  );',
+            '}'
+          ].join('\n')
+        },
+        {
+          label: 'Bitwrench',
+          code: [
+            '// Bitwrench: shared state array, single render function',
+            'var counters = [',
+            '  { label: "A", count: 0 },',
+            '  { label: "B", count: 0 },',
+            '  { label: "C", count: 0 }',
+            '];',
+            '',
+            'function render() {',
+            '  var sum = counters.reduce(function(a, c) {',
+            '    return a + c.count;',
+            '  }, 0);',
+            '',
+            '  bw.DOM("#app", {',
+            '    t: "div", c: [',
+            '      // Counter cards',
+            '      { t: "div", a: { style: "display:flex;gap:1rem" },',
+            '        c: counters.map(function(ctr) {',
+            '          return { t: "div", c: [',
+            '            { t: "div", c: ctr.label + ": " + ctr.count },',
+            '            bw.makeButton({ text: "+",',
+            '              onclick: function() {',
+            '                ctr.count++; render();',
+            '              }',
+            '            })',
+            '          ]};',
+            '        })',
+            '      },',
+            '      // Global summary — auto-updates on render',
+            '      { t: "div", c: "Total: " + sum }',
+            '    ]',
+            '  });',
+            '}',
+            'render();'
+          ].join('\n')
+        }
+      ];
+
+      bw.DOM('#cross-comparison', codeComparison(examples));
     })();
 
     // ---- Comparison 2: List from data ----
@@ -531,6 +816,72 @@
             '    </li>',
             '  {/each}',
             '</ul>'
+          ].join('\n')
+        },
+        {
+          label: 'Bootstrap',
+          code: [
+            '<!-- Bootstrap 5 — list-group classes + vanilla JS -->',
+            '',
+            '<ul id="user-list" class="list-group"></ul>',
+            '',
+            '<script>',
+            '  var users = [',
+            '    { name: "Alice", role: "admin" },',
+            '    { name: "Bob",   role: "editor" },',
+            '    { name: "Carol", role: "viewer" }',
+            '  ];',
+            '',
+            '  var ul = document.getElementById("user-list");',
+            '  users.forEach(function(u) {',
+            '    var li = document.createElement("li");',
+            '    li.className = "list-group-item d-flex ' +
+            'justify-content-between align-items-center";',
+            '    li.textContent = u.name;',
+            '    var badge = document.createElement("span");',
+            '    badge.className = "badge bg-primary rounded-pill";',
+            '    badge.textContent = u.role;',
+            '    li.appendChild(badge);',
+            '    ul.appendChild(li);',
+            '  });',
+            '<\/script>',
+            '',
+            '// Bootstrap provides list-group and badge styling.',
+            '// Interactivity/rendering is vanilla JS.'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            '// SolidJS — <For> component for list rendering',
+            '',
+            'import { For } from "solid-js";',
+            '',
+            'const users = [',
+            '  { name: "Alice", role: "admin" },',
+            '  { name: "Bob",   role: "editor" },',
+            '  { name: "Carol", role: "viewer" }',
+            '];',
+            '',
+            'function UserList() {',
+            '  return (',
+            '    <ul class="list-group">',
+            '      <For each={users}>',
+            '        {u => (',
+            '          <li class="list-group-item">',
+            '            {u.name}',
+            '            <span class="badge badge-primary">',
+            '              {u.role}',
+            '            </span>',
+            '          </li>',
+            '        )}',
+            '      </For>',
+            '    </ul>',
+            '  );',
+            '}',
+            '',
+            '// <For> is SolidJS\'s list primitive — each item',
+            '// updates independently without re-rendering the list.'
           ].join('\n')
         },
         {
@@ -700,6 +1051,66 @@
             '  </div>',
             '  <button on:click={() => active = !active}>Toggle</button>',
             '</div>'
+          ].join('\n')
+        },
+        {
+          label: 'Bootstrap',
+          code: [
+            '<!-- Bootstrap 5 — toggle between custom classes + vanilla JS -->',
+            '',
+            '<div id="box" class="p-3 rounded" style="',
+            '  transition: all 0.3s; background: #fff; color: #1a1a1a">',
+            '  Styled box',
+            '</div>',
+            '<button class="btn btn-primary mt-2" id="toggle">Toggle</button>',
+            '',
+            '<script>',
+            '  var active = false;',
+            '  var box = document.getElementById("box");',
+            '  document.getElementById("toggle")',
+            '    .addEventListener("click", function() {',
+            '      active = !active;',
+            '      box.style.background = active ? "#006666" : "#fff";',
+            '      box.style.color = active ? "#fff" : "#1a1a1a";',
+            '    });',
+            '<\/script>',
+            '',
+            '// Bootstrap provides p-3, rounded, btn classes for structure.',
+            '// Dynamic style changes are vanilla JS — same as HTML/JS.'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            '// SolidJS — reactive style binding',
+            '',
+            'import { createSignal } from "solid-js";',
+            '',
+            'function StyledBox() {',
+            '  const [active, setActive] = createSignal(false);',
+            '  const bg = () => active() ? "#006666" : "#fff";',
+            '  const fg = () => active() ? "#fff" : "#1a1a1a";',
+            '',
+            '  return (',
+            '    <div>',
+            '      <div style={{',
+            '        padding: "1rem",',
+            '        "border-radius": "8px",',
+            '        transition: "all 0.3s",',
+            '        background: bg(),',
+            '        color: fg()',
+            '      }}>',
+            '        Styled box',
+            '      </div>',
+            '      <button onClick={() => setActive(a => !a)}>',
+            '        Toggle',
+            '      </button>',
+            '    </div>',
+            '  );',
+            '}',
+            '',
+            '// SolidJS updates only the style properties that changed —',
+            '// no virtual DOM diff, direct DOM mutation.'
           ].join('\n')
         },
         {
@@ -1030,6 +1441,130 @@
           ].join('\n')
         },
         {
+          label: 'Bootstrap',
+          code: [
+            '<!-- Bootstrap 5: Todo list with list-group + vanilla JS -->',
+            '',
+            '<div class="card p-3">',
+            '  <div class="input-group mb-3">',
+            '    <input type="text" class="form-control" id="todo-input"',
+            '      placeholder="Add a todo...">',
+            '    <button class="btn btn-primary" id="add-btn">Add</button>',
+            '  </div>',
+            '  <ul id="todo-list" class="list-group mb-2"></ul>',
+            '  <small id="remaining" class="text-muted"></small>',
+            '</div>',
+            '',
+            '<script>',
+            '  var todos = [',
+            '    { id: 1, text: "Learn bitwrench", done: true },',
+            '    { id: 2, text: "Build a dashboard", done: false }',
+            '  ];',
+            '  var nextId = 3;',
+            '',
+            '  function render() {',
+            '    var list = document.getElementById("todo-list");',
+            '    list.innerHTML = "";',
+            '    todos.forEach(function(todo) {',
+            '      var li = document.createElement("li");',
+            '      li.className = "list-group-item d-flex align-items-center";',
+            '      var cb = document.createElement("input");',
+            '      cb.type = "checkbox"; cb.className = "form-check-input me-2";',
+            '      cb.checked = todo.done;',
+            '      cb.addEventListener("change", function() {',
+            '        todo.done = !todo.done; render();',
+            '      });',
+            '      var span = document.createElement("span");',
+            '      span.className = "flex-grow-1";',
+            '      span.textContent = todo.text;',
+            '      if (todo.done) span.style.textDecoration = "line-through";',
+            '      var del = document.createElement("button");',
+            '      del.className = "btn btn-sm btn-outline-danger";',
+            '      del.textContent = "\\u00D7";',
+            '      del.addEventListener("click", function() {',
+            '        todos = todos.filter(function(t) { return t.id !== todo.id; });',
+            '        render();',
+            '      });',
+            '      li.appendChild(cb); li.appendChild(span); li.appendChild(del);',
+            '      list.appendChild(li);',
+            '    });',
+            '    document.getElementById("remaining").textContent =',
+            '      todos.filter(function(t) { return !t.done; }).length + " remaining";',
+            '  }',
+            '',
+            '  document.getElementById("add-btn").addEventListener("click", function() {',
+            '    var input = document.getElementById("todo-input");',
+            '    if (input.value.trim()) {',
+            '      todos.push({ id: nextId++, text: input.value.trim(), done: false });',
+            '      input.value = ""; render();',
+            '    }',
+            '  });',
+            '  render();',
+            '<\/script>',
+            '',
+            '// Bootstrap provides form-control, list-group, btn styling.',
+            '// State management and rendering is vanilla JS.'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            '// SolidJS: Todo list with fine-grained reactivity',
+            'import { createSignal, For } from "solid-js";',
+            '',
+            'function TodoApp() {',
+            '  const [todos, setTodos] = createSignal([',
+            '    { id: 1, text: "Learn bitwrench", done: true },',
+            '    { id: 2, text: "Build a dashboard", done: false }',
+            '  ]);',
+            '  const [text, setText] = createSignal("");',
+            '  let nextId = 3;',
+            '',
+            '  const remaining = () => todos().filter(t => !t.done).length;',
+            '',
+            '  function addTodo() {',
+            '    if (!text().trim()) return;',
+            '    setTodos([...todos(),',
+            '      { id: nextId++, text: text().trim(), done: false }]);',
+            '    setText("");',
+            '  }',
+            '',
+            '  return (',
+            '    <div>',
+            '      <div class="todo-input-row">',
+            '        <input value={text()}',
+            '          onInput={e => setText(e.target.value)}',
+            '          onKeyDown={e => e.key === "Enter" && addTodo()}',
+            '          placeholder="Add a todo..." />',
+            '        <button onClick={addTodo}>Add</button>',
+            '      </div>',
+            '      <For each={todos()}>',
+            '        {(todo) => (',
+            '          <div class={"todo-item" + (todo.done ? " done" : "")}>',
+            '            <input type="checkbox" checked={todo.done}',
+            '              onChange={() =>',
+            '                setTodos(todos().map(t =>',
+            '                  t.id === todo.id ? {...t, done: !t.done} : t',
+            '                ))',
+            '              } />',
+            '            <span>{todo.text}</span>',
+            '            <button onClick={() =>',
+            '              setTodos(todos().filter(t => t.id !== todo.id))}>',
+            '              \\u00D7',
+            '            </button>',
+            '          </div>',
+            '        )}',
+            '      </For>',
+            '      <div>{remaining()} remaining</div>',
+            '    </div>',
+            '  );',
+            '}',
+            '',
+            '// SolidJS uses createSignal for state, <For> for lists.',
+            '// Similar to React but with no virtual DOM.'
+          ].join('\n')
+        },
+        {
           label: 'Bitwrench',
           code: [
             '// Bitwrench: Todo list — state + render cycle, no build step',
@@ -1285,6 +1820,87 @@
           ].join('\n')
         },
         {
+          label: 'Bootstrap',
+          code: [
+            '<!-- Bootstrap 5: theming via CSS variables + vanilla JS -->',
+            '',
+            '<div class="d-flex gap-2 mb-3">',
+            '  <button class="btn btn-outline-primary" onclick="applyTheme(\'ocean\')">Ocean</button>',
+            '  <button class="btn btn-outline-primary" onclick="applyTheme(\'sunset\')">Sunset</button>',
+            '  <button class="btn btn-outline-primary" onclick="applyTheme(\'forest\')">Forest</button>',
+            '</div>',
+            '<div id="themed-card" class="card p-3">',
+            '  <h4 id="theme-heading">Themed Card</h4>',
+            '  <p>Styled via Bootstrap card + inline overrides.</p>',
+            '</div>',
+            '',
+            '<script>',
+            '  var themes = {',
+            '    ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '    sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '    forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '  };',
+            '',
+            '  function applyTheme(name) {',
+            '    var t = themes[name];',
+            '    var card = document.getElementById("themed-card");',
+            '    card.style.background = t.bg;',
+            '    card.style.color = t.fg;',
+            '    card.style.borderColor = t.accent;',
+            '    document.getElementById("theme-heading").style.color = t.accent;',
+            '  }',
+            '  applyTheme("ocean");',
+            '<\/script>',
+            '',
+            '// Bootstrap has built-in themes (data-bs-theme="dark"),',
+            '// but custom palettes require manual CSS variable overrides.'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            '// SolidJS: theming with reactive signals',
+            'import { createSignal } from "solid-js";',
+            '',
+            'const themes = {',
+            '  ocean:  { bg: "#e0f7fa", fg: "#004d40", accent: "#00796b" },',
+            '  sunset: { bg: "#fff3e0", fg: "#bf360c", accent: "#e65100" },',
+            '  forest: { bg: "#e8f5e9", fg: "#1b5e20", accent: "#2e7d32" }',
+            '};',
+            '',
+            'function ThemedApp() {',
+            '  const [current, setCurrent] = createSignal("ocean");',
+            '  const theme = () => themes[current()];',
+            '',
+            '  return (',
+            '    <div>',
+            '      <div style={{ display: "flex", gap: "0.5rem" }}>',
+            '        {Object.keys(themes).map(key =>',
+            '          <button onClick={() => setCurrent(key)}>{key}</button>',
+            '        )}',
+            '      </div>',
+            '      <div style={{',
+            '        background: theme().bg,',
+            '        color: theme().fg,',
+            '        "border-color": theme().accent,',
+            '        padding: "1.25rem",',
+            '        "border-radius": "8px",',
+            '        border: "1px solid"',
+            '      }}>',
+            '        <h4 style={{ color: theme().accent }}>',
+            '          Themed Card',
+            '        </h4>',
+            '        <p>Styled via SolidJS reactive signals.</p>',
+            '      </div>',
+            '    </div>',
+            '  );',
+            '}',
+            '',
+            '// SolidJS updates only the style attributes that changed.',
+            '// No context providers needed for simple theming.'
+          ].join('\n')
+        },
+        {
           label: 'Bitwrench',
           code: [
             '// Bitwrench: theming with bw.css() — generate CSS from JS objects',
@@ -1351,24 +1967,37 @@
         { name: 'Widget C', price: 19.99, stock: 256 }
       ];
 
-      // Live preview
-      bw.DOM('#table-preview', {
-        t: 'div',
-        a: { class: 'preview-box' },
-        c: [
-          previewLabel,
-          bw.makeTable({
-            data: products,
-            columns: [
-              { key: 'name', label: 'Product' },
-              { key: 'price', label: 'Price', render: function(v) { return '$' + v.toFixed(2); } },
-              { key: 'stock', label: 'In Stock' }
-            ],
-            striped: true,
-            hover: true
-          })
-        ]
-      });
+      // Live preview — sortable table with controlled state
+      var tableSortCol = null;
+      var tableSortDir = 'asc';
+      function renderTablePreview() {
+        bw.DOM('#table-preview', {
+          t: 'div',
+          a: { class: 'preview-box' },
+          c: [
+            previewLabel,
+            bw.makeTable({
+              data: products,
+              columns: [
+                { key: 'name', label: 'Product' },
+                { key: 'price', label: 'Price', render: function(v) { return '$' + v.toFixed(2); } },
+                { key: 'stock', label: 'In Stock' }
+              ],
+              striped: true,
+              hover: true,
+              sortable: true,
+              sortColumn: tableSortCol,
+              sortDirection: tableSortDir,
+              onSort: function(col, dir) {
+                tableSortCol = col;
+                tableSortDir = dir;
+                renderTablePreview();
+              }
+            })
+          ]
+        });
+      }
+      renderTablePreview();
 
       var examples = [
         {
@@ -1410,7 +2039,7 @@
             '',
             'document.getElementById("app").appendChild(table);',
             '',
-            '// 25+ lines of DOM manipulation'
+            '// Builds the table element-by-element'
           ].join('\n')
         },
         {
@@ -1446,33 +2075,195 @@
             '  );',
             '}',
             '',
-            '// ~20 lines, plus you need sorting/hover/striping yourself'
+            '// JSX table with explicit rows. Sorting/hover is manual.'
+          ].join('\n')
+        },
+        {
+          label: 'Vue',
+          code: [
+            '<!-- Vue: table from data with v-for -->',
+            '',
+            '<script setup>',
+            'const products = [',
+            '  { name: "Widget A", price: 29.99, stock: 142 },',
+            '  { name: "Widget B", price: 49.99, stock: 38 },',
+            '  { name: "Widget C", price: 19.99, stock: 256 }',
+            '];',
+            '<\/script>',
+            '',
+            '<template>',
+            '  <table class="table table-striped">',
+            '    <thead>',
+            '      <tr>',
+            '        <th>Product</th>',
+            '        <th>Price</th>',
+            '        <th>In Stock</th>',
+            '      </tr>',
+            '    </thead>',
+            '    <tbody>',
+            '      <tr v-for="p in products" :key="p.name">',
+            '        <td>{{ p.name }}</td>',
+            '        <td>${{ p.price.toFixed(2) }}</td>',
+            '        <td>{{ p.stock }}</td>',
+            '      </tr>',
+            '    </tbody>',
+            '  </table>',
+            '</template>',
+            '',
+            '// Vue templates read like HTML — clean for tables.'
+          ].join('\n')
+        },
+        {
+          label: 'Svelte',
+          code: [
+            '<!-- Svelte: table from data with {#each} -->',
+            '',
+            '<script>',
+            '  let products = [',
+            '    { name: "Widget A", price: 29.99, stock: 142 },',
+            '    { name: "Widget B", price: 49.99, stock: 38 },',
+            '    { name: "Widget C", price: 19.99, stock: 256 }',
+            '  ];',
+            '<\/script>',
+            '',
+            '<table class="table table-striped">',
+            '  <thead>',
+            '    <tr>',
+            '      <th>Product</th>',
+            '      <th>Price</th>',
+            '      <th>In Stock</th>',
+            '    </tr>',
+            '  </thead>',
+            '  <tbody>',
+            '    {#each products as p (p.name)}',
+            '      <tr>',
+            '        <td>{p.name}</td>',
+            '        <td>${p.price.toFixed(2)}</td>',
+            '        <td>{p.stock}</td>',
+            '      </tr>',
+            '    {/each}',
+            '  </tbody>',
+            '</table>',
+            '',
+            '// Svelte compiles this to efficient DOM operations.'
+          ].join('\n')
+        },
+        {
+          label: 'Bootstrap',
+          code: [
+            '<!-- Bootstrap 5: styled table + vanilla JS -->',
+            '',
+            '<table class="table table-striped table-hover" id="product-table">',
+            '  <thead>',
+            '    <tr>',
+            '      <th>Product</th>',
+            '      <th>Price</th>',
+            '      <th>In Stock</th>',
+            '    </tr>',
+            '  </thead>',
+            '  <tbody id="table-body"></tbody>',
+            '</table>',
+            '',
+            '<script>',
+            '  var products = [',
+            '    { name: "Widget A", price: 29.99, stock: 142 },',
+            '    { name: "Widget B", price: 49.99, stock: 38 },',
+            '    { name: "Widget C", price: 19.99, stock: 256 }',
+            '  ];',
+            '',
+            '  var tbody = document.getElementById("table-body");',
+            '  products.forEach(function(p) {',
+            '    var tr = document.createElement("tr");',
+            '    [p.name, "$" + p.price.toFixed(2), p.stock].forEach(function(val) {',
+            '      var td = document.createElement("td");',
+            '      td.textContent = val;',
+            '      tr.appendChild(td);',
+            '    });',
+            '    tbody.appendChild(tr);',
+            '  });',
+            '<\/script>',
+            '',
+            '// Bootstrap gives you table-striped and table-hover classes.',
+            '// Data rendering is still vanilla JS DOM manipulation.'
+          ].join('\n')
+        },
+        {
+          label: 'SolidJS',
+          code: [
+            '// SolidJS: table from data with <For>',
+            'import { For } from "solid-js";',
+            '',
+            'const products = [',
+            '  { name: "Widget A", price: 29.99, stock: 142 },',
+            '  { name: "Widget B", price: 49.99, stock: 38 },',
+            '  { name: "Widget C", price: 19.99, stock: 256 }',
+            '];',
+            '',
+            'function ProductTable() {',
+            '  return (',
+            '    <table class="table table-striped">',
+            '      <thead>',
+            '        <tr>',
+            '          <th>Product</th>',
+            '          <th>Price</th>',
+            '          <th>In Stock</th>',
+            '        </tr>',
+            '      </thead>',
+            '      <tbody>',
+            '        <For each={products}>',
+            '          {p => (',
+            '            <tr>',
+            '              <td>{p.name}</td>',
+            '              <td>${p.price.toFixed(2)}</td>',
+            '              <td>{p.stock}</td>',
+            '            </tr>',
+            '          )}',
+            '        </For>',
+            '      </tbody>',
+            '    </table>',
+            '  );',
+            '}',
+            '',
+            '// <For> efficiently renders list items.',
+            '// Sorting/hover/striping must be added manually.'
           ].join('\n')
         },
         {
           label: 'Bitwrench',
           code: [
-            '// Bitwrench: ONE function call',
+            '// Bitwrench: table from data with sorting',
             'var products = [',
             '  { name: "Widget A", price: 29.99, stock: 142 },',
             '  { name: "Widget B", price: 49.99, stock: 38 },',
             '  { name: "Widget C", price: 19.99, stock: 256 }',
             '];',
             '',
-            'bw.DOM("#app", bw.makeTable({',
-            '  data: products,',
-            '  columns: [',
-            '    { key: "name",  label: "Product" },',
-            '    { key: "price", label: "Price",',
-            '      render: function(v) { return "$" + v.toFixed(2); } },',
-            '    { key: "stock", label: "In Stock" }',
-            '  ],',
-            '  striped: true,',
-            '  hover: true',
-            '}));',
+            'var sortCol = null, sortDir = "asc";',
             '',
-            '// 1 function call. Sortable, styled, and hover-highlighted.',
-            '// The helper returns a TACO object — you can modify it before rendering.'
+            'function render() {',
+            '  bw.DOM("#app", bw.makeTable({',
+            '    data: products,',
+            '    columns: [',
+            '      { key: "name",  label: "Product" },',
+            '      { key: "price", label: "Price",',
+            '        render: function(v) { return "$" + v.toFixed(2); } },',
+            '      { key: "stock", label: "In Stock" }',
+            '    ],',
+            '    striped: true,',
+            '    hover: true,',
+            '    sortable: true,',
+            '    sortColumn: sortCol,',
+            '    sortDirection: sortDir,',
+            '    onSort: function(col, dir) {',
+            '      sortCol = col; sortDir = dir;',
+            '      render();',
+            '    }',
+            '  }));',
+            '}',
+            'render();',
+            '',
+            '// makeTable returns a TACO object with built-in',
+            '// sorting, striping, and hover highlighting.'
           ].join('\n')
         }
       ];
@@ -1647,18 +2438,18 @@
     // ---- Summary table ----
     (function() {
       var rows = [
-        { feature: 'Build step',       htmljs: 'None',             react: 'Required',           vue: 'Recommended',    svelte: 'Required',        bitwrench: 'None' },
-        { feature: 'HTML in JS?',      htmljs: 'Strings',          react: 'JSX (compiled)',     vue: 'Templates',      svelte: 'Templates',       bitwrench: 'Objects (native)' },
-        { feature: 'Attribute names',   htmljs: 'class, for',       react: 'className, htmlFor', vue: 'class, for',     svelte: 'class, for',     bitwrench: 'class, for' },
-        { feature: 'Event handlers',    htmljs: 'addEventListener', react: 'onClick (synthetic)', vue: '@click',        svelte: 'on:click',       bitwrench: 'onclick (function ref)' },
-        { feature: 'State management', htmljs: 'Manual variables', react: 'useState / Redux',   vue: 'ref / Pinia',    svelte: 'let / stores',   bitwrench: 'Plain variables + render()' },
-        { feature: 'CSS generation',   htmljs: 'Manual / SASS',    react: 'CSS-in-JS / styled', vue: 'Scoped <style>', svelte: 'Scoped <style>', bitwrench: 'bw.css() from JS objects' },
-        { feature: 'Data to UI',        htmljs: 'Manual DOM ops',   react: '.map() in JSX',     vue: 'v-for directive', svelte: '{#each} block',  bitwrench: '.map() in objects' },
-        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~40 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bitwrench: '~20 KB' },
-        { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bitwrench: 'Yes — any language' }
+        { feature: 'Build step',       htmljs: 'None',             react: 'Required',           vue: 'Recommended',    svelte: 'Required',        bootstrap: 'None',              solidjs: 'Required',             bitwrench: 'None' },
+        { feature: 'HTML in JS?',      htmljs: 'Strings',          react: 'JSX (compiled)',     vue: 'Templates',      svelte: 'Templates',       bootstrap: 'HTML + classes',    solidjs: 'JSX (compiled)',       bitwrench: 'Objects (native)' },
+        { feature: 'Attribute names',   htmljs: 'class, for',       react: 'className, htmlFor', vue: 'class, for',     svelte: 'class, for',     bootstrap: 'class, for',        solidjs: 'class, for',           bitwrench: 'class, for' },
+        { feature: 'Event handlers',    htmljs: 'addEventListener', react: 'onClick (synthetic)', vue: '@click',        svelte: 'on:click',       bootstrap: 'addEventListener',  solidjs: 'onClick (native)',     bitwrench: 'onclick (function ref)' },
+        { feature: 'State management', htmljs: 'Manual variables', react: 'useState / Redux',   vue: 'ref / Pinia',    svelte: 'let / stores',   bootstrap: 'Manual variables',  solidjs: 'createSignal / stores', bitwrench: 'Plain variables + render()' },
+        { feature: 'CSS generation',   htmljs: 'Manual / SASS',    react: 'CSS-in-JS / styled', vue: 'Scoped <style>', svelte: 'Scoped <style>', bootstrap: 'Utility classes',   solidjs: 'CSS-in-JS / styled',  bitwrench: 'bw.css() from JS objects' },
+        { feature: 'Data to UI',        htmljs: 'Manual DOM ops',   react: '.map() in JSX',     vue: 'v-for directive', svelte: '{#each} block',  bootstrap: 'Manual DOM ops',    solidjs: '<For> component',     bitwrench: '.map() in objects' },
+        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~40 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bootstrap: '~25 KB CSS',       solidjs: '~7 KB',               bitwrench: '~20 KB' },
+        { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bootstrap: 'No',                solidjs: 'No',                  bitwrench: 'Yes — any language' }
       ];
 
-      var headers = ['', 'HTML/JS', 'React', 'Vue', 'Svelte', 'Bitwrench'];
+      var headers = ['', 'HTML/JS', 'React', 'Vue', 'Svelte', 'Bootstrap', 'SolidJS', 'Bitwrench'];
       var headerRow = {
         t: 'tr',
         c: headers.map(function(h) { return { t: 'th', c: h }; })
@@ -1673,6 +2464,8 @@
             { t: 'td', c: row.react },
             { t: 'td', c: row.vue },
             { t: 'td', c: row.svelte },
+            { t: 'td', c: row.bootstrap },
+            { t: 'td', c: row.solidjs },
             { t: 'td', c: row.bitwrench }
           ]
         };

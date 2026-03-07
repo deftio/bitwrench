@@ -570,11 +570,32 @@ function generateAccordionThemed(scope, palette) {
   rules[scopeSelector(scope, '.bw-accordion-button')] = {
     'color': palette.dark.base
   };
+  rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed)')] = {
+    'color': palette.primary.darkText,
+    'background-color': palette.primary.light
+  };
   rules[scopeSelector(scope, '.bw-accordion-button:hover')] = {
     'background-color': palette.light.light
   };
+  rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed):hover')] = {
+    'background-color': palette.primary.hover
+  };
+  rules[scopeSelector(scope, '.bw-accordion-button:focus-visible')] = {
+    'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+  };
   rules[scopeSelector(scope, '.bw-accordion-body')] = {
     'border-top': '1px solid ' + palette.light.border
+  };
+  return rules;
+}
+
+function generateCarouselThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw-carousel')] = {
+    'background-color': palette.light.light
+  };
+  rules[scopeSelector(scope, '.bw-carousel-indicator.active')] = {
+    'background-color': palette.primary.base
   };
   return rules;
 }
@@ -659,7 +680,7 @@ function generateSwitchThemed(scope, palette) {
 function generateSkeletonThemed(scope, palette) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-skeleton')] = {
-    'background-color': palette.light.border
+    'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
   };
   return rules;
 }
@@ -706,6 +727,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
     generateAccordionThemed(scopeName, palette),
+    generateCarouselThemed(scopeName, palette),
     generateModalThemed(scopeName, palette),
     generateToastThemed(scopeName, palette),
     generateDropdownThemed(scopeName, palette),
@@ -855,7 +877,7 @@ export const defaultStyles = {
       'font-weight': '600',
       'line-height': '1.25',
       'letter-spacing': '-0.01em',
-      'color': '#1a1a1a'
+      'color': 'inherit'
     },
     'h1': {
       'font-size': 'calc(1.375rem + 1.5vw)'
@@ -1747,6 +1769,18 @@ export const defaultStyles = {
     },
     '.bw-tab-pane.active': {
       'display': 'block'
+    },
+    '.bw-nav-scrollable': {
+      'flex-wrap': 'nowrap',
+      'overflow-x': 'auto',
+      '-webkit-overflow-scrolling': 'touch',
+      'scrollbar-width': 'none'
+    },
+    '.bw-nav-scrollable::-webkit-scrollbar': {
+      'display': 'none'
+    },
+    '.bw-nav-scrollable .bw-nav-link': {
+      'white-space': 'nowrap'
     }
   },
 
@@ -2404,7 +2438,7 @@ export const defaultStyles = {
     },
     '.bw-accordion-item': {
       'background-color': '#fff',
-      'border': '1px solid #e5e5e5'
+      'border': '1px solid #d5d5d5'
     },
     '.bw-accordion-item + .bw-accordion-item': {
       'border-top': '0'
@@ -2448,11 +2482,25 @@ export const defaultStyles = {
       'background-size': '1.25rem',
       'transition': 'transform 0.2s ease-in-out'
     },
+    // Expanded header: tinted background + darker text (Bootstrap pattern)
+    '.bw-accordion-button:not(.bw-collapsed)': {
+      'color': '#0a5868',
+      'background-color': '#e8f6f8'
+    },
     '.bw-accordion-button:not(.bw-collapsed)::after': {
-      'transform': 'rotate(-180deg)'
+      'transform': 'rotate(-180deg)',
+      'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230a5868'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")"
     },
     '.bw-accordion-button:hover': {
       'background-color': 'rgba(0,0,0,0.03)'
+    },
+    '.bw-accordion-button:not(.bw-collapsed):hover': {
+      'background-color': '#daf0f3'
+    },
+    '.bw-accordion-button:focus-visible': {
+      'z-index': '3',
+      'outline': '0',
+      'box-shadow': '0 0 0 0.2rem rgba(10, 88, 104, 0.25)'
     },
     '.bw-accordion-collapse': {
       'max-height': '0',
@@ -2463,7 +2511,107 @@ export const defaultStyles = {
       'max-height': 'none'
     },
     '.bw-accordion-body': {
-      'padding': '1rem 1.25rem'
+      'padding': '1rem 1.25rem',
+      'border-top': '1px solid #d5d5d5'
+    }
+  },
+
+  /**
+   * Carousel/slideshow styles
+   */
+  carousel: {
+    '.bw-carousel': {
+      'position': 'relative',
+      'overflow': 'hidden',
+      'border-radius': '8px',
+      'background-color': '#f0f0f0'
+    },
+    '.bw-carousel-track': {
+      'display': 'flex',
+      'transition': 'transform 0.4s ease',
+      'height': '100%'
+    },
+    '.bw-carousel-slide': {
+      'min-width': '100%',
+      'flex-shrink': '0',
+      'overflow': 'hidden',
+      'position': 'relative',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center'
+    },
+    '.bw-carousel-slide img': {
+      'width': '100%',
+      'height': '100%',
+      'object-fit': 'cover'
+    },
+    '.bw-carousel-caption': {
+      'position': 'absolute',
+      'bottom': '0',
+      'left': '0',
+      'right': '0',
+      'padding': '0.75rem 1rem',
+      'background': 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+      'color': '#fff',
+      'font-size': '0.9rem'
+    },
+    '.bw-carousel-control': {
+      'position': 'absolute',
+      'top': '50%',
+      'transform': 'translateY(-50%)',
+      'width': '40px',
+      'height': '40px',
+      'border': 'none',
+      'border-radius': '50%',
+      'background-color': 'rgba(0,0,0,0.4)',
+      'cursor': 'pointer',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'z-index': '2',
+      'padding': '0',
+      'transition': 'background-color 0.2s ease'
+    },
+    '.bw-carousel-control:hover': {
+      'background-color': 'rgba(0,0,0,0.6)'
+    },
+    '.bw-carousel-control img': {
+      'width': '20px',
+      'height': '20px',
+      'pointer-events': 'none'
+    },
+    '.bw-carousel-control-prev': {
+      'left': '10px'
+    },
+    '.bw-carousel-control-next': {
+      'right': '10px'
+    },
+    '.bw-carousel-indicators': {
+      'position': 'absolute',
+      'bottom': '12px',
+      'left': '50%',
+      'transform': 'translateX(-50%)',
+      'display': 'flex',
+      'gap': '6px',
+      'z-index': '2'
+    },
+    '.bw-carousel-indicator': {
+      'width': '10px',
+      'height': '10px',
+      'border-radius': '50%',
+      'border': '2px solid #fff',
+      'background-color': 'transparent',
+      'opacity': '0.6',
+      'cursor': 'pointer',
+      'padding': '0',
+      'transition': 'opacity 0.2s ease, background-color 0.2s ease'
+    },
+    '.bw-carousel-indicator:hover': {
+      'opacity': '0.8'
+    },
+    '.bw-carousel-indicator.active': {
+      'opacity': '1',
+      'background-color': '#fff'
     }
   },
 
@@ -2722,9 +2870,10 @@ export const defaultStyles = {
    */
   skeleton: {
     '.bw-skeleton': {
-      'background-color': '#e9ecef',
+      'background': 'linear-gradient(90deg, #dde0e4 25%, #eceef1 37%, #dde0e4 63%)',
+      'background-size': '400% 100%',
       'border-radius': '4px',
-      'animation': 'bw-skeleton-pulse 1.5s ease-in-out infinite'
+      'animation': 'bw-skeleton-shimmer 1.4s ease infinite'
     },
     '.bw-skeleton-text': {
       'height': '1em',
@@ -2740,10 +2889,9 @@ export const defaultStyles = {
       'display': 'flex',
       'flex-direction': 'column'
     },
-    '@keyframes bw-skeleton-pulse': {
-      '0%': { 'opacity': '1' },
-      '50%': { 'opacity': '0.4' },
-      '100%': { 'opacity': '1' }
+    '@keyframes bw-skeleton-shimmer': {
+      '0%': { 'background-position': '100% 50%' },
+      '100%': { 'background-position': '0 50%' }
     }
   },
 
@@ -3311,6 +3459,8 @@ export function getStructuralStyles() {
   rules['.bw-tab-content'] = { 'padding': '1.25rem 0' };
   rules['.bw-tab-pane'] = { 'display': 'none' };
   rules['.bw-tab-pane.active'] = { 'display': 'block' };
+  rules['.bw-nav-scrollable'] = { 'flex-wrap': 'nowrap', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch', 'scrollbar-width': 'none' };
+  rules['.bw-nav-scrollable .bw-nav-link'] = { 'white-space': 'nowrap' };
 
   // List groups (structural)
   rules['.bw-list-group'] = { 'display': 'flex', 'flex-direction': 'column', 'padding-left': '0', 'margin-bottom': '0', 'border-radius': '0.375rem' };
@@ -3477,6 +3627,29 @@ export function getStructuralStyles() {
   rules['.bw-modal-body'] = { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1.5rem' };
   rules['.bw-modal-footer'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'padding': '0.75rem 1.5rem', 'gap': '0.5rem' };
 
+  // Carousel (structural)
+  rules['.bw-carousel'] = { 'position': 'relative', 'overflow': 'hidden', 'border-radius': '8px' };
+  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.4s ease', 'height': '100%' };
+  rules['.bw-carousel-slide'] = { 'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden', 'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
+  rules['.bw-carousel-slide img'] = { 'width': '100%', 'height': '100%', 'object-fit': 'cover' };
+  rules['.bw-carousel-caption'] = { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem' };
+  rules['.bw-carousel-control'] = {
+    'position': 'absolute', 'top': '50%', 'transform': 'translateY(-50%)', 'width': '40px', 'height': '40px',
+    'border': 'none', 'border-radius': '50%', 'cursor': 'pointer', 'display': 'flex', 'align-items': 'center',
+    'justify-content': 'center', 'z-index': '2', 'padding': '0', 'transition': 'background-color 0.2s ease'
+  };
+  rules['.bw-carousel-control img'] = { 'width': '20px', 'height': '20px', 'pointer-events': 'none' };
+  rules['.bw-carousel-control-prev'] = { 'left': '10px' };
+  rules['.bw-carousel-control-next'] = { 'right': '10px' };
+  rules['.bw-carousel-indicators'] = {
+    'position': 'absolute', 'bottom': '12px', 'left': '50%', 'transform': 'translateX(-50%)',
+    'display': 'flex', 'gap': '6px', 'z-index': '2'
+  };
+  rules['.bw-carousel-indicator'] = {
+    'width': '10px', 'height': '10px', 'border-radius': '50%', 'border': '2px solid transparent',
+    'padding': '0', 'cursor': 'pointer', 'transition': 'opacity 0.2s ease, background-color 0.2s ease'
+  };
+
   // Toast (structural)
   rules['.bw-toast-container'] = {
     'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
@@ -3526,12 +3699,12 @@ export function getStructuralStyles() {
   rules['.bw-form-switch .bw-switch-input:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
 
   // Skeleton (structural)
-  rules['.bw-skeleton'] = { 'border-radius': '4px', 'animation': 'bw-skeleton-pulse 1.5s ease-in-out infinite' };
+  rules['.bw-skeleton'] = { 'border-radius': '4px', 'background-size': '400% 100%', 'animation': 'bw-skeleton-shimmer 1.4s ease infinite' };
   rules['.bw-skeleton-text'] = { 'height': '1em', 'margin-bottom': '0.5rem' };
   rules['.bw-skeleton-circle'] = { 'border-radius': '50%' };
   rules['.bw-skeleton-rect'] = { 'border-radius': '8px' };
   rules['.bw-skeleton-group'] = { 'display': 'flex', 'flex-direction': 'column' };
-  rules['@keyframes bw-skeleton-pulse'] = { '0%': { 'opacity': '1' }, '50%': { 'opacity': '0.4' }, '100%': { 'opacity': '1' } };
+  rules['@keyframes bw-skeleton-shimmer'] = { '0%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0 50%' } };
 
   // Avatar (structural)
   rules['.bw-avatar'] = {
@@ -3742,6 +3915,7 @@ export function getAllStyles() {
     defaultStyles.codeDemo,
     defaultStyles.buttonGroup,
     defaultStyles.accordion,
+    defaultStyles.carousel,
     defaultStyles.modal,
     defaultStyles.toast,
     defaultStyles.dropdown,
@@ -3948,11 +4122,30 @@ export function generateDarkModeCSS(palette) {
     '.bw-dark .bw-accordion-button': {
       'color': textColor
     },
+    '.bw-dark .bw-accordion-button:not(.bw-collapsed)': {
+      'color': '#7dd3e0',
+      'background-color': 'rgba(125, 211, 224, 0.1)'
+    },
     '.bw-dark .bw-accordion-button:hover': {
       'background-color': bodyBg
     },
+    '.bw-dark .bw-accordion-button:not(.bw-collapsed):hover': {
+      'background-color': 'rgba(125, 211, 224, 0.15)'
+    },
+    '.bw-dark .bw-accordion-button:focus-visible': {
+      'box-shadow': '0 0 0 0.2rem rgba(125, 211, 224, 0.3)'
+    },
     '.bw-dark .bw-accordion-body': {
       'border-top-color': borderColor
+    },
+    '.bw-dark .bw-carousel': {
+      'background-color': bodyBg
+    },
+    '.bw-dark .bw-carousel-control': {
+      'background-color': 'rgba(255,255,255,0.15)'
+    },
+    '.bw-dark .bw-carousel-control:hover': {
+      'background-color': 'rgba(255,255,255,0.25)'
     },
     '.bw-dark .bw-modal-content': {
       'background-color': surfaceBg,
@@ -3989,7 +4182,7 @@ export function generateDarkModeCSS(palette) {
       'border-top-color': borderColor
     },
     '.bw-dark .bw-skeleton': {
-      'background-color': borderColor
+      'background': 'linear-gradient(90deg, ' + borderColor + ' 25%, ' + surfaceBg + ' 37%, ' + borderColor + ' 63%)'
     },
     '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
       'color': textColor

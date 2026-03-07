@@ -259,6 +259,211 @@
         'display': 'flex',
         'flex-direction': 'column',
         'gap': '0.5rem'
+      },
+
+      // Combined widget styles
+      '.combo-widget': {
+        'background': '#0f0f1e',
+        'border-radius': '16px',
+        'padding': '1.5rem',
+        'color': '#e0e0e0',
+        'font-family': '"SF Mono", "Fira Code", "Cascadia Code", "Consolas", monospace'
+      },
+      '.combo-tabs': {
+        'display': 'flex',
+        'gap': '0',
+        'margin-bottom': '1.25rem',
+        'background': '#1a1a2e',
+        'border-radius': '10px',
+        'padding': '4px',
+        'overflow': 'hidden'
+      },
+      '.combo-tab': {
+        'flex': '1',
+        'padding': '0.6rem 1rem',
+        'border': 'none',
+        'background': 'transparent',
+        'color': '#7f8c9b',
+        'font-family': 'inherit',
+        'font-size': '0.8125rem',
+        'font-weight': '600',
+        'cursor': 'pointer',
+        'border-radius': '8px',
+        'transition': 'all 0.2s ease',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em'
+      },
+      '.combo-tab:hover': {
+        'color': '#b0bec5'
+      },
+      '.combo-tab.active-clock': {
+        'background': 'rgba(0, 229, 255, 0.15)',
+        'color': '#00e5ff',
+        'box-shadow': '0 0 12px rgba(0, 229, 255, 0.15)'
+      },
+      '.combo-tab.active-stopwatch': {
+        'background': 'rgba(118, 255, 3, 0.12)',
+        'color': '#76ff03',
+        'box-shadow': '0 0 12px rgba(118, 255, 3, 0.12)'
+      },
+      '.combo-tab.active-timer': {
+        'background': 'rgba(255, 152, 0, 0.15)',
+        'color': '#ff9800',
+        'box-shadow': '0 0 12px rgba(255, 152, 0, 0.12)'
+      },
+      '.combo-panel': {
+        'min-height': '220px',
+        'display': 'flex',
+        'flex-direction': 'column',
+        'align-items': 'center',
+        'justify-content': 'center'
+      },
+      '.combo-time': {
+        'font-size': '3.5rem',
+        'font-weight': '700',
+        'text-align': 'center',
+        'letter-spacing': '0.08em',
+        'margin-bottom': '0.25rem'
+      },
+      '.combo-time-clock': {
+        'color': '#00e5ff',
+        'text-shadow': '0 0 20px rgba(0, 229, 255, 0.4)'
+      },
+      '.combo-time-stopwatch': {
+        'color': '#76ff03',
+        'text-shadow': '0 0 20px rgba(118, 255, 3, 0.3)'
+      },
+      '.combo-time-timer': {
+        'color': '#ff9800',
+        'text-shadow': '0 0 20px rgba(255, 152, 0, 0.3)'
+      },
+      '.combo-sub': {
+        'font-size': '0.875rem',
+        'color': '#7f8c9b',
+        'text-align': 'center',
+        'margin-bottom': '1rem',
+        'letter-spacing': '0.04em'
+      },
+      '.combo-ms': {
+        'font-size': '2rem',
+        'font-weight': '400',
+        'opacity': '0.7'
+      },
+      '.combo-ampm': {
+        'font-size': '1.25rem',
+        'font-weight': '400',
+        'opacity': '0.6',
+        'margin-left': '0.4rem',
+        'vertical-align': 'super'
+      },
+      '.combo-separator': {
+        'animation': 'blink-colon 1s step-end infinite'
+      },
+      '.combo-btns': {
+        'display': 'flex',
+        'gap': '0.5rem',
+        'justify-content': 'center',
+        'flex-wrap': 'wrap',
+        'margin-top': '0.5rem'
+      },
+      '.combo-btn': {
+        'padding': '0.45rem 1.1rem',
+        'border': '2px solid',
+        'border-radius': '8px',
+        'background': 'transparent',
+        'font-family': 'inherit',
+        'font-size': '0.8125rem',
+        'font-weight': '600',
+        'cursor': 'pointer',
+        'transition': 'all 0.2s ease',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.06em'
+      },
+      '.combo-btn-primary': {
+        'border-color': '#00e5ff',
+        'color': '#00e5ff'
+      },
+      '.combo-btn-primary:hover': {
+        'background': 'rgba(0, 229, 255, 0.12)'
+      },
+      '.combo-btn-green': {
+        'border-color': '#76ff03',
+        'color': '#76ff03'
+      },
+      '.combo-btn-green:hover': {
+        'background': 'rgba(118, 255, 3, 0.12)'
+      },
+      '.combo-btn-orange': {
+        'border-color': '#ff9800',
+        'color': '#ff9800'
+      },
+      '.combo-btn-orange:hover': {
+        'background': 'rgba(255, 152, 0, 0.12)'
+      },
+      '.combo-btn-danger': {
+        'border-color': '#ff5252',
+        'color': '#ff5252'
+      },
+      '.combo-btn-danger:hover': {
+        'background': 'rgba(255, 82, 82, 0.12)'
+      },
+      '.combo-btn-muted': {
+        'border-color': '#546e7a',
+        'color': '#7f8c9b'
+      },
+      '.combo-btn-muted:hover': {
+        'background': 'rgba(84, 110, 122, 0.15)'
+      },
+      '.combo-btn:disabled': {
+        'opacity': '0.3',
+        'cursor': 'default'
+      },
+      '.combo-btn:disabled:hover': {
+        'background': 'transparent'
+      },
+      '.timer-set-row': {
+        'display': 'flex',
+        'gap': '0.5rem',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'margin-bottom': '1rem'
+      },
+      '.timer-set-row select': {
+        'font-family': '"SF Mono", "Fira Code", "Consolas", monospace',
+        'font-size': '1.25rem',
+        'font-weight': '600',
+        'text-align': 'center',
+        'padding': '0.4rem 0.5rem',
+        'border': '2px solid #37474f',
+        'border-radius': '8px',
+        'background': '#1a1a2e',
+        'color': '#ff9800',
+        'min-width': '70px',
+        'cursor': 'pointer'
+      },
+      '.timer-colon': {
+        'font-size': '1.5rem',
+        'font-weight': '700',
+        'color': '#546e7a'
+      },
+      '.combo-progress': {
+        'width': '100%',
+        'height': '4px',
+        'background': '#1a1a2e',
+        'border-radius': '2px',
+        'margin-top': '1rem',
+        'overflow': 'hidden'
+      },
+      '.combo-progress-bar': {
+        'height': '100%',
+        'background': '#ff9800',
+        'border-radius': '2px',
+        'transition': 'width 0.25s linear'
+      },
+      '@media (max-width: 480px)': {
+        '.combo-time': { 'font-size': '2.5rem' },
+        '.combo-ms': { 'font-size': '1.5rem' },
+        '.combo-ampm': { 'font-size': '1rem' }
       }
     }), { id: 'clock-page-styles' });
 
@@ -735,6 +940,316 @@
     });
 
     // =========================================================================
+    // Section 5: Combined Widget — composition pattern
+    // Composes clock, stopwatch, and timer into one unified UI
+    // =========================================================================
+    function makeCombinedWidget() {
+      var widgetId = bw.uuid('combo');
+      var panelId = bw.uuid('combo-panel');
+
+      var taco = {
+        t: 'div', a: { id: widgetId },
+        o: {
+          state: {
+            mode: 'clock',     // 'clock' | 'stopwatch' | 'timer'
+            // clock
+            clockTimerId: null,
+            // stopwatch
+            swRunning: false,
+            swElapsed: 0,
+            swStartTime: 0,
+            swTimerId: null,
+            // timer
+            tmSetMinutes: 5,
+            tmSetSeconds: 0,
+            tmTotalMs: 0,      // total duration in ms
+            tmRemaining: 0,    // remaining ms
+            tmRunning: false,
+            tmTimerId: null,
+            tmFinished: false
+          },
+          render: function(el) {
+            var s = el._bw_state;
+
+            // --- Tab buttons ---
+            function tabBtn(label, mode) {
+              var cls = 'combo-tab';
+              if (s.mode === mode) cls += ' active-' + mode;
+              return {
+                t: 'button', a: { class: cls, onclick: function() {
+                  s.mode = mode;
+                  bw.update(el);
+                }},
+                c: label
+              };
+            }
+
+            // --- Clock panel ---
+            function clockPanel() {
+              var now = new Date();
+              var h = now.getHours() % 12 || 12;
+              var ampm = now.getHours() < 12 ? 'AM' : 'PM';
+              var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+              var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+              var dateStr = days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+
+              return {
+                t: 'div', a: { class: 'combo-panel' },
+                c: [
+                  { t: 'div', a: { class: 'combo-time combo-time-clock' }, c: [
+                    pad2(h),
+                    { t: 'span', a: { class: 'combo-separator' }, c: ':' },
+                    pad2(now.getMinutes()),
+                    { t: 'span', a: { class: 'combo-separator' }, c: ':' },
+                    pad2(now.getSeconds()),
+                    { t: 'span', a: { class: 'combo-ampm' }, c: ampm }
+                  ]},
+                  { t: 'div', a: { class: 'combo-sub' }, c: dateStr }
+                ]
+              };
+            }
+
+            // --- Stopwatch panel ---
+            function stopwatchPanel() {
+              var ms = s.swElapsed;
+              var mins = Math.floor(ms / 60000);
+              var secs = Math.floor((ms % 60000) / 1000);
+              var centis = Math.floor((ms % 1000) / 10);
+
+              return {
+                t: 'div', a: { class: 'combo-panel' },
+                c: [
+                  { t: 'div', a: { id: panelId, class: 'combo-time combo-time-stopwatch' }, c: [
+                    pad2(mins), ':', pad2(secs),
+                    { t: 'span', a: { class: 'combo-ms' }, c: '.' + pad2(centis) }
+                  ]},
+                  { t: 'div', a: { class: 'combo-sub' }, c: s.swRunning ? 'Running' : (s.swElapsed > 0 ? 'Paused' : 'Ready') },
+                  { t: 'div', a: { class: 'combo-btns' }, c: [
+                    !s.swRunning
+                      ? {
+                          t: 'button',
+                          a: { class: 'combo-btn combo-btn-green', onclick: function() {
+                            s.swRunning = true;
+                            s.swStartTime = Date.now() - s.swElapsed;
+                            s.swTimerId = setInterval(function() {
+                              s.swElapsed = Date.now() - s.swStartTime;
+                              var tMs = s.swElapsed;
+                              var tMins = Math.floor(tMs / 60000);
+                              var tSecs = Math.floor((tMs % 60000) / 1000);
+                              var tC = Math.floor((tMs % 1000) / 10);
+                              bw.patch(panelId, [
+                                pad2(tMins), ':', pad2(tSecs),
+                                { t: 'span', a: { class: 'combo-ms' }, c: '.' + pad2(tC) }
+                              ]);
+                            }, 33);
+                            bw.update(el);
+                          }},
+                          c: s.swElapsed > 0 ? 'Resume' : 'Start'
+                        }
+                      : {
+                          t: 'button',
+                          a: { class: 'combo-btn combo-btn-danger', onclick: function() {
+                            s.swRunning = false;
+                            if (s.swTimerId) { clearInterval(s.swTimerId); s.swTimerId = null; }
+                            s.swElapsed = Date.now() - s.swStartTime;
+                            bw.update(el);
+                          }},
+                          c: 'Stop'
+                        },
+                    {
+                      t: 'button',
+                      a: { class: 'combo-btn combo-btn-muted', disabled: s.swRunning || s.swElapsed === 0,
+                        onclick: function() {
+                          if (s.swTimerId) { clearInterval(s.swTimerId); s.swTimerId = null; }
+                          s.swRunning = false;
+                          s.swElapsed = 0;
+                          s.swStartTime = 0;
+                          bw.update(el);
+                        }
+                      },
+                      c: 'Reset'
+                    }
+                  ]}
+                ]
+              };
+            }
+
+            // --- Timer panel ---
+            function timerPanel() {
+              // If timer not started, show setter
+              if (!s.tmRunning && !s.tmFinished && s.tmRemaining === 0) {
+                var minOpts = [];
+                for (var i = 0; i <= 59; i++) minOpts.push({ t: 'option', a: { value: String(i), selected: i === s.tmSetMinutes ? '' : undefined }, c: pad2(i) });
+                var secOpts = [];
+                for (var j = 0; j <= 59; j++) secOpts.push({ t: 'option', a: { value: String(j), selected: j === s.tmSetSeconds ? '' : undefined }, c: pad2(j) });
+
+                return {
+                  t: 'div', a: { class: 'combo-panel' },
+                  c: [
+                    { t: 'div', a: { class: 'combo-time combo-time-timer' }, c: [
+                      pad2(s.tmSetMinutes), ':', pad2(s.tmSetSeconds)
+                    ]},
+                    { t: 'div', a: { class: 'timer-set-row' }, c: [
+                      { t: 'select', a: { onchange: function(e) { s.tmSetMinutes = parseInt(e.target.value, 10); bw.update(el); } }, c: minOpts },
+                      { t: 'span', a: { class: 'timer-colon' }, c: ':' },
+                      { t: 'select', a: { onchange: function(e) { s.tmSetSeconds = parseInt(e.target.value, 10); bw.update(el); } }, c: secOpts }
+                    ]},
+                    { t: 'div', a: { class: 'combo-sub' }, c: 'Set duration and press Start' },
+                    { t: 'div', a: { class: 'combo-btns' }, c: [
+                      {
+                        t: 'button',
+                        a: { class: 'combo-btn combo-btn-orange',
+                          disabled: s.tmSetMinutes === 0 && s.tmSetSeconds === 0,
+                          onclick: function() {
+                            s.tmTotalMs = (s.tmSetMinutes * 60 + s.tmSetSeconds) * 1000;
+                            s.tmRemaining = s.tmTotalMs;
+                            s.tmRunning = true;
+                            s.tmFinished = false;
+                            var startTs = Date.now();
+                            s.tmTimerId = setInterval(function() {
+                              var elapsed = Date.now() - startTs;
+                              s.tmRemaining = Math.max(0, s.tmTotalMs - elapsed);
+                              if (s.tmRemaining <= 0) {
+                                clearInterval(s.tmTimerId);
+                                s.tmTimerId = null;
+                                s.tmRunning = false;
+                                s.tmFinished = true;
+                                bw.pub('timer:finished', { minutes: s.tmSetMinutes, seconds: s.tmSetSeconds });
+                              }
+                              bw.update(el);
+                            }, 250);
+                            bw.update(el);
+                          }
+                        },
+                        c: 'Start'
+                      }
+                    ]}
+                  ]
+                };
+              }
+
+              // Timer running or finished
+              var rem = s.tmRemaining;
+              var rMins = Math.floor(rem / 60000);
+              var rSecs = Math.floor((rem % 60000) / 1000);
+              var pct = s.tmTotalMs > 0 ? ((s.tmTotalMs - rem) / s.tmTotalMs * 100) : 0;
+
+              return {
+                t: 'div', a: { class: 'combo-panel' },
+                c: [
+                  { t: 'div', a: { class: 'combo-time combo-time-timer' }, c: [
+                    pad2(rMins), ':', pad2(rSecs)
+                  ]},
+                  { t: 'div', a: { class: 'combo-sub' }, c: s.tmFinished ? 'Time\u2019s up!' : 'Counting down\u2026' },
+                  { t: 'div', a: { class: 'combo-progress' }, c: [
+                    { t: 'div', a: { class: 'combo-progress-bar', style: 'width:' + pct.toFixed(1) + '%;' + (s.tmFinished ? 'background:#ff5252;' : '') } }
+                  ]},
+                  { t: 'div', a: { class: 'combo-btns' }, c: [
+                    s.tmRunning
+                      ? {
+                          t: 'button',
+                          a: { class: 'combo-btn combo-btn-danger', onclick: function() {
+                            s.tmRunning = false;
+                            if (s.tmTimerId) { clearInterval(s.tmTimerId); s.tmTimerId = null; }
+                            bw.update(el);
+                          }},
+                          c: 'Pause'
+                        }
+                      : (!s.tmFinished
+                          ? {
+                              t: 'button',
+                              a: { class: 'combo-btn combo-btn-orange', onclick: function() {
+                                s.tmRunning = true;
+                                var startTs = Date.now();
+                                var resumeFrom = s.tmRemaining;
+                                s.tmTimerId = setInterval(function() {
+                                  var elapsed = Date.now() - startTs;
+                                  s.tmRemaining = Math.max(0, resumeFrom - elapsed);
+                                  if (s.tmRemaining <= 0) {
+                                    clearInterval(s.tmTimerId);
+                                    s.tmTimerId = null;
+                                    s.tmRunning = false;
+                                    s.tmFinished = true;
+                                    bw.pub('timer:finished', { minutes: s.tmSetMinutes, seconds: s.tmSetSeconds });
+                                  }
+                                  bw.update(el);
+                                }, 250);
+                                bw.update(el);
+                              }},
+                              c: 'Resume'
+                            }
+                          : ''
+                        ),
+                    {
+                      t: 'button',
+                      a: { class: 'combo-btn combo-btn-muted', onclick: function() {
+                        if (s.tmTimerId) { clearInterval(s.tmTimerId); s.tmTimerId = null; }
+                        s.tmRunning = false;
+                        s.tmFinished = false;
+                        s.tmRemaining = 0;
+                        s.tmTotalMs = 0;
+                        bw.update(el);
+                      }},
+                      c: 'Reset'
+                    }
+                  ]}
+                ]
+              };
+            }
+
+            // --- Render the active panel ---
+            var panel;
+            if (s.mode === 'clock') panel = clockPanel();
+            else if (s.mode === 'stopwatch') panel = stopwatchPanel();
+            else panel = timerPanel();
+
+            bw.DOM(el, {
+              t: 'div', a: { class: 'combo-widget' },
+              c: [
+                { t: 'div', a: { class: 'combo-tabs' }, c: [
+                  tabBtn('\u23f0 Clock', 'clock'),
+                  tabBtn('\u23f1 Stopwatch', 'stopwatch'),
+                  tabBtn('\u23f3 Timer', 'timer')
+                ]},
+                panel
+              ]
+            });
+          },
+          mounted: function(el) {
+            // Start a 1-second tick for the clock face
+            el._bw_render(el);
+            el._bw_state.clockTimerId = setInterval(function() {
+              if (el._bw_state.mode === 'clock') {
+                bw.update(el);
+              }
+            }, 1000);
+          },
+          unmount: function(el) {
+            var s = el._bw_state;
+            if (s.clockTimerId) clearInterval(s.clockTimerId);
+            if (s.swTimerId) clearInterval(s.swTimerId);
+            if (s.tmTimerId) clearInterval(s.tmTimerId);
+          }
+        }
+      };
+
+      return taco;
+    }
+
+    // Timer-finished toast listener
+    bw.sub('timer:finished', function(detail) {
+      var container = bw.$('#' + alarmToastContainerId)[0];
+      if (container) {
+        bw.DOM(container, bw.makeToast({
+          title: 'Timer',
+          content: 'Timer finished! (' + pad2(detail.minutes) + ':' + pad2(detail.seconds) + ')',
+          variant: 'success',
+          delay: 8000
+        }), { append: true });
+      }
+    });
+
+    // =========================================================================
     // Build the Code Snippets for Each Section
     // =========================================================================
 
@@ -869,6 +1384,82 @@
       '    delay: 8000',
       '  }), { append: true });',
       '});'
+    ].join('\n');
+
+    var comboCodeStr = [
+      '// Combined Widget: composition pattern',
+      '// One component manages clock, stopwatch, and timer',
+      '// as sub-panels, sharing a single render function.',
+      '',
+      'function makeCombinedWidget() {',
+      '  var widgetId = bw.uuid("combo");',
+      '  var panelId  = bw.uuid("combo-panel");',
+      '',
+      '  return {',
+      '    t: "div", a: { id: widgetId },',
+      '    o: {',
+      '      state: {',
+      '        mode: "clock",       // "clock"|"stopwatch"|"timer"',
+      '        clockTimerId: null,',
+      '        // stopwatch',
+      '        swRunning: false, swElapsed: 0, swTimerId: null,',
+      '        // timer',
+      '        tmSetMinutes: 5, tmSetSeconds: 0,',
+      '        tmTotalMs: 0, tmRemaining: 0,',
+      '        tmRunning: false, tmTimerId: null, tmFinished: false',
+      '      },',
+      '      render: function(el) {',
+      '        var s = el._bw_state;',
+      '',
+      '        // Tab button factory',
+      '        function tabBtn(label, mode) {',
+      '          var cls = "combo-tab";',
+      '          if (s.mode === mode) cls += " active-" + mode;',
+      '          return { t: "button", a: { class: cls,',
+      '            onclick: function() {',
+      '              s.mode = mode; bw.update(el);',
+      '            }}, c: label };',
+      '        }',
+      '',
+      '        // Each panel is a plain function returning TACO.',
+      '        // clockPanel()     — shows current time',
+      '        // stopwatchPanel() — uses bw.patch() for ms updates',
+      '        // timerPanel()     — countdown with progress bar',
+      '        var panel = ({',
+      '          clock: clockPanel,',
+      '          stopwatch: stopwatchPanel,',
+      '          timer: timerPanel',
+      '        })[s.mode]();',
+      '',
+      '        bw.DOM(el, {',
+      '          t: "div", a: { class: "combo-widget" },',
+      '          c: [',
+      '            { t: "div", a: { class: "combo-tabs" }, c: [',
+      '              tabBtn("Clock", "clock"),',
+      '              tabBtn("Stopwatch", "stopwatch"),',
+      '              tabBtn("Timer", "timer")',
+      '            ]},',
+      '            panel',
+      '          ]',
+      '        });',
+      '      },',
+      '      mounted: function(el) {',
+      '        el._bw_render(el);',
+      '        el._bw_state.clockTimerId = setInterval(',
+      '          function() {',
+      '            if (el._bw_state.mode === "clock")',
+      '              bw.update(el);',
+      '          }, 1000);',
+      '      },',
+      '      unmount: function(el) {',
+      '        var s = el._bw_state;',
+      '        if (s.clockTimerId) clearInterval(s.clockTimerId);',
+      '        if (s.swTimerId) clearInterval(s.swTimerId);',
+      '        if (s.tmTimerId) clearInterval(s.tmTimerId);',
+      '      }',
+      '    }',
+      '  };',
+      '}'
     ].join('\n');
 
     // =========================================================================
@@ -1155,7 +1746,32 @@
                   }
                 ]}
               ]
-            }
+            },
+
+            // =================================================================
+            // Section 5: Combined Widget — composition pattern
+            // =================================================================
+            demoSection('section-combined', [
+                'Combined Widget',
+                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'composition' }
+              ],
+              [
+                'A single component that composes clock, stopwatch, and countdown timer into one ',
+                'tabbed widget. This demonstrates the ',
+                { t: 'strong', c: 'composition pattern' },
+                ': one TACO with a render function that delegates to sub-panel functions based on ',
+                'the current mode. Each panel function returns a TACO object \u2014 plain functions, no ',
+                'framework magic. The stopwatch panel reuses ',
+                { t: 'code', c: 'bw.patch()' },
+                ' for smooth millisecond updates; the timer publishes ',
+                { t: 'code', c: '"timer:finished"' },
+                ' via pub/sub when it reaches zero.'
+              ],
+              createTabbedDemo(
+                { t: 'div', a: { id: 'combined-demo' } },
+                comboCodeStr
+              )
+            )
 
           ] // end content-container children
         }, // end content-container
@@ -1177,6 +1793,7 @@
       bw.DOM('#clock-demo', makeDigitalClock());
       bw.DOM('#stopwatch-demo', makeStopwatch());
       bw.DOM('#alarm-demo', makeAlarm());
+      bw.DOM('#combined-demo', makeCombinedWidget());
     });
   </script>
 </body>

@@ -4,122 +4,372 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>bitwrench.js - Lightweight JavaScript UI Library</title>
-  <meta name="description" content="Build HTML from plain JavaScript objects. No JSX, no virtual DOM, no build step. Under 25KB gzipped.">
+  <meta name="description" content="Build HTML from plain JavaScript objects. No JSX, no virtual DOM, no build step. Under 30KB gzipped.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <style>
+    /* Hero gradient */
+    .bw-hero-landing {
+      background: linear-gradient(135deg, #006666 0%, #003d3d 100%);
+      color: #fff;
+      padding: 5rem 0 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .bw-hero-landing::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .bw-hero-tagline {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0 0 1rem;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      max-width: 700px;
+    }
+    .bw-hero-sub {
+      font-size: 1.125rem;
+      opacity: 0.85;
+      max-width: 580px;
+      margin: 0 0 2rem;
+      line-height: 1.65;
+    }
+    .bw-hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .bw-hero-actions a {
+      text-decoration: none;
+      font-size: 1rem;
+      padding: 0.7rem 1.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .bw-hero-primary {
+      background: #fff;
+      color: #006666;
+    }
+    .bw-hero-primary:hover {
+      background: #e0f2f1;
+      color: #004d4d;
+    }
+    .bw-hero-secondary {
+      background: transparent;
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.4);
+    }
+    .bw-hero-secondary:hover {
+      border-color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.08);
+    }
+    .bw-hero-version {
+      font-size: 0.8125rem;
+      opacity: 0.5;
+      margin-left: 0.5rem;
+    }
+
+    /* Install strip */
+    .bw-install-strip {
+      background: #222;
+      padding: 0.65rem 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .bw-install-inner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .bw-install-label {
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.7);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .bw-install-cmd {
+      color: #fff;
+      font-size: 1rem;
+      font-family: var(--bw-font-mono);
+      background: rgba(255,255,255,0.08);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .bw-install-or {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.875rem;
+    }
+    .bw-install-cdn {
+      color: rgba(255,255,255,0.85);
+      font-size: 0.9375rem;
+      font-family: var(--bw-font-mono);
+      background: rgba(255,255,255,0.08);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* Stat strip */
+    .bw-stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin: 0;
+      padding: 0;
+    }
+    .bw-stat-item {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      background: var(--bw-card-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+    }
+    .bw-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--bw-teal);
+      line-height: 1;
+    }
+    .bw-stat-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-top: 0.25rem;
+      color: var(--bw-text);
+    }
+    .bw-stat-sub {
+      font-size: 0.6875rem;
+      color: var(--bw-text-muted);
+      margin-top: 0.1rem;
+    }
+    @media (max-width: 600px) {
+      .bw-stat-strip { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+      .bw-stat-item { padding: 0.5rem; }
+      .bw-stat-value { font-size: 1.25rem; }
+    }
+
+    /* How It Works side-by-side */
+    .bw-how-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .bw-how-arrow {
+      text-align: center;
+      color: var(--bw-teal);
+      font-size: 1.5rem;
+      padding: 1rem 0;
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .bw-how-grid { grid-template-columns: 1fr; }
+      .bw-how-arrow { display: block; }
+    }
+
+    /* Feature highlight cards */
+    .bw-feature-highlight {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    .bw-fh-card {
+      background: var(--bw-card-bg);
+      border: 1px solid var(--bw-card-border);
+      border-radius: var(--bw-radius);
+      padding: 1.25rem 1.5rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .bw-fh-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .bw-fh-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .bw-fh-card h4 {
+      margin: 0 0 0.4rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--bw-text);
+    }
+    .bw-fh-card p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--bw-text-secondary);
+      line-height: 1.55;
+    }
+    @media (max-width: 900px) {
+      .bw-feature-highlight { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .bw-feature-highlight { grid-template-columns: 1fr; }
+    }
+
+    /* Live demo section */
+    .bw-live-demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .bw-live-demo-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Page index */
+    .bw-page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .bw-page-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .bw-page-link .bw-card {
+      height: 100%;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .bw-page-link:hover .bw-card {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .bw-page-category {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      color: var(--bw-teal);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Footer */
+    .bw-site-footer {
+      text-align: center;
+      padding: 2.5rem 0 1.5rem;
+      color: var(--bw-text-muted);
+      font-size: 0.8125rem;
+    }
+    .bw-site-footer a {
+      color: var(--bw-text-secondary);
+      text-decoration: none;
+    }
+    .bw-site-footer a:hover {
+      color: var(--bw-teal);
+    }
+    .bw-footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Hero responsive */
+    @media (max-width: 768px) {
+      .bw-hero-landing { padding: 3rem 0 2.5rem; }
+      .bw-hero-tagline { font-size: 1.75rem; }
+      .bw-hero-sub { font-size: 1rem; }
+    }
+  </style>
 </head>
 <body>
   <div id="example-nav"></div>
 
   <!-- Hero -->
-  <div style="background: linear-gradient(135deg, #006666 0%, #004d4d 100%); color: #fff; padding: 4rem 0 3.5rem;">
+  <div class="bw-hero-landing">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <h1 style="font-size: 2.25rem; font-weight: 700; margin: 0 0 0.75rem; letter-spacing: -0.5px; color: inherit;">
-        Build UI from plain JavaScript objects
-      </h1>
-      <p style="font-size: 1.125rem; opacity: 0.85; max-width: 640px; margin: 0 0 2rem; line-height: 1.6;">
-        A lightweight library for generating HTML from native JS objects. No JSX, no virtual DOM, no build step. Ships under 25 KB gzipped with zero dependencies.
+      <h1 class="bw-hero-tagline">Build UI from plain JavaScript objects</h1>
+      <p class="bw-hero-sub">
+        Describe your interface as native JS objects. Render to HTML strings or mount to the DOM.
+        No JSX, no virtual DOM, no build step. Zero dependencies.
       </p>
-      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-        <a href="00-quick-start.html" class="bw-btn bw-btn-light" style="font-size: 1rem; padding: 0.65rem 1.75rem; font-weight: 600; text-decoration: none;">
-          Get Started
-        </a>
-        <a href="https://github.com/deftio/bitwrench" class="bw-btn bw-btn-outline-light" style="font-size: 1rem; padding: 0.65rem 1.75rem; font-weight: 600; text-decoration: none; border-color: rgba(255,255,255,0.4); color: #fff;">
-          GitHub
-        </a>
+      <div class="bw-hero-actions">
+        <a href="00-quick-start.html" class="bw-hero-primary">Get Started</a>
+        <a href="https://github.com/deftio/bitwrench" class="bw-hero-secondary">GitHub</a>
+        <span class="bw-hero-version" id="hero-ver"></span>
       </div>
     </div>
   </div>
 
   <!-- Install strip -->
-  <div style="background: #1a1a1a; padding: 0.875rem 0;">
+  <div class="bw-install-strip">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
-      <code style="color: #e2e8f0; font-size: 0.9375rem; background: transparent; padding: 0;">npm install bitwrench</code>
+      <div class="bw-install-inner">
+        <span class="bw-install-label">Install</span>
+        <code class="bw-install-cmd">npm install bitwrench</code>
+        <span class="bw-install-or">or</span>
+        <code class="bw-install-cdn">&lt;script src="bitwrench.umd.min.js"&gt;&lt;/script&gt;</code>
+        <span class="bw-install-or" style="margin-left: auto;"><a href="09-builds.html" style="color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; font-weight: 500;">Downloads &amp; CDN &rarr;</a></span>
+      </div>
     </div>
   </div>
 
   <div class="content-container wide">
 
-    <!-- How it works -->
+    <!-- Stats -->
+    <div class="demo-section">
+      <div class="demo-content">
+        <div class="bw-stat-strip" id="stat-strip"></div>
+      </div>
+    </div>
+
+    <!-- How It Works -->
     <div class="demo-section">
       <h2>How It Works</h2>
       <div class="demo-content">
         <p style="font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1.25rem;">
-          Describe your UI as plain JavaScript objects using the TACO format &mdash;
+          Describe your UI as plain objects using the <strong>TACO</strong> format &mdash;
           <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions.
-          Nest them, loop over them, compose them. Then render to an HTML string with <code>bw.html()</code>
-          or mount directly to the DOM with <code>bw.DOM()</code>.
+          Nest them, loop over them, compose them with regular JS.
+          Then render with <code>bw.html()</code> or mount with <code>bw.DOM()</code>.
         </p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="bw-how-grid">
           <div>
-            <div class="bw-code-block">
-              <pre><code style="color: var(--bw-code-text);">const card = {
-  t: 'div', a: { class: 'bw-card' },
-  c: [
-    { t: 'h3', a: { class: 'bw-card-title' },
-      c: 'Hello bitwrench' },
-    { t: 'p', c: 'UI as native JS objects.' }
-  ]
-};
-
-bw.DOM('#app', card);</code></pre>
-            </div>
+            <div class="bw-code-label">JavaScript</div>
+            <div id="how-code"></div>
           </div>
           <div>
-            <div id="taco-demo-output" style="padding: 1rem;"></div>
+            <div class="bw-code-label" style="color: var(--bw-teal);">Result</div>
+            <div id="how-result" class="bw-demo-result"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- What you get -->
+    <!-- Key Features -->
     <div class="demo-section">
       <h2>What You Get</h2>
       <div class="demo-content">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
-
-          <div class="callout callout-concept">
-            <h4>30+ Ready-Made Components</h4>
-            <p>Cards, buttons, tables, forms, alerts, badges, navbars, spinners, progress bars, and more. Each one is a single function call that returns a TACO object you can customize or compose.</p>
-          </div>
-
-          <div class="callout callout-concept">
-            <h4>Palette-Driven Theming</h4>
-            <p>Pick 2&ndash;3 seed colors and <code>bw.generateTheme()</code> derives a complete palette: buttons, alerts, badges, hover states, focus rings, and dark mode. Choose from 12 built-in presets or create your own.</p>
-          </div>
-
-          <div class="callout callout-concept">
-            <h4>Server + Client Rendering</h4>
-            <p><code>bw.html()</code> renders TACO objects to HTML strings for SSR, emails, or static pages. <code>bw.DOM()</code> mounts them as live DOM. Same objects work on both sides.</p>
-          </div>
-
-          <div class="callout callout-concept">
-            <h4>State Management Built In</h4>
-            <p>Use <code>bw.patch()</code> for targeted DOM updates, <code>bw.update()</code> for re-renders, and <code>bw.pub()</code>/<code>bw.sub()</code> for decoupled event communication between components.</p>
-          </div>
-
-          <div class="callout callout-concept">
-            <h4>CLI for Markdown &amp; HTML</h4>
-            <p>Convert Markdown or HTML files to styled, self-contained pages with one command. Apply themes, inject bitwrench for interactivity, or generate plain static output.</p>
-          </div>
-
-          <div class="callout callout-concept">
-            <h4>Works Everywhere</h4>
-            <p>Under 25 KB gzipped. Zero runtime dependencies. Runs in modern browsers, IE11, Node.js, and embedded environments. Include one script tag and start building.</p>
-          </div>
-
-        </div>
+        <div class="bw-feature-highlight" id="features"></div>
       </div>
     </div>
 
-    <!-- Quick example -->
+    <!-- Live Demos -->
     <div class="demo-section">
-      <h2>At a Glance</h2>
+      <h2>Live Examples</h2>
       <div class="demo-content">
-        <div id="live-demo"></div>
+        <div class="bw-live-demo-grid" id="live-demos"></div>
       </div>
     </div>
 
@@ -132,12 +382,15 @@ bw.DOM('#app', card);</code></pre>
     </div>
 
     <!-- Footer -->
-    <div style="text-align: center; padding: 2rem 0 1rem; color: var(--bw-text-muted); font-size: 0.8125rem;">
-      <p>
-        <a href="https://github.com/deftio/bitwrench">GitHub</a> &middot;
-        <a href="https://www.npmjs.com/package/bitwrench">npm</a> &middot;
-        <a href="http://deftio.com/bitwrench">Homepage</a> &middot;
-        BSD-2-Clause License
+    <div class="bw-site-footer">
+      <div class="bw-footer-links">
+        <a href="https://github.com/deftio/bitwrench">GitHub</a>
+        <a href="https://www.npmjs.com/package/bitwrench">npm</a>
+        <a href="08-api-reference.html">API Reference</a>
+        <a href="09-builds.html">Downloads</a>
+      </div>
+      <p style="margin: 0;">
+        BSD-2-Clause License &middot; Created by <a href="https://deftio.com">Manu Chatterjee</a>
       </p>
     </div>
 
@@ -147,97 +400,273 @@ bw.DOM('#app', card);</code></pre>
     // Mount nav
     mountExampleNav('#example-nav', 'index.html');
 
-    // ---- TACO demo output ----
-    bw.DOM('#taco-demo-output', {
-      t: 'div', a: { class: 'bw-card' },
-      c: [
-        {
-          t: 'div', a: { class: 'bw-card-body' },
-          c: [
-            { t: 'h5', a: { class: 'bw-card-title' }, c: 'Hello bitwrench' },
-            { t: 'p', c: 'UI as native JS objects.' }
-          ]
-        }
-      ]
-    });
-
-    // ---- At a Glance ----
+    // Version badge
     (function() {
-      var stats = [
-        { label: 'Bundle Size', value: '25 KB', sub: 'gzipped UMD' },
-        { label: 'Components', value: '30+', sub: 'make* helpers' },
-        { label: 'Dependencies', value: '0', sub: 'zero runtime deps' },
-        { label: 'Build Formats', value: '4', sub: 'UMD, ESM, CJS, ES5' }
-      ];
-
-      var statCards = stats.map(function(s) {
-        return {
-          t: 'div', a: { class: 'bw-col-6 bw-col-md-3' },
-          c: bw.makeCard({
-            content: [
-              { t: 'div', a: { style: 'font-size: 1.75rem; font-weight: 700; color: #006666;' }, c: s.value },
-              { t: 'div', a: { style: 'font-weight: 600; margin-top: 0.25rem;' }, c: s.label },
-              { t: 'div', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-muted);' }, c: s.sub }
-            ]
-          })
-        };
-      });
-
-      var sampleTable = bw.makeTable({
-        data: [
-          { format: 'UMD', file: 'bitwrench.umd.min.js', use: 'Browsers + Node' },
-          { format: 'ESM', file: 'bitwrench.esm.min.js', use: 'Modern bundlers' },
-          { format: 'CJS', file: 'bitwrench.cjs.min.js', use: 'Node require()' },
-          { format: 'ES5', file: 'bitwrench.es5.min.js', use: 'Legacy browsers (IE11)' }
-        ],
-        columns: ['format', 'file', 'use'],
-        headers: ['Format', 'File', 'Use Case'],
-        striped: true
-      });
-
-      bw.DOM('#live-demo', {
-        t: 'div', c: [
-          { t: 'div', a: { class: 'bw-row bw-g-3', style: 'margin-bottom: 1.5rem;' }, c: statCards },
-          sampleTable
-        ]
-      });
+      var el = document.getElementById('hero-ver');
+      if (el && bw.version) el.textContent = 'v' + bw.version;
     })();
 
-    // ---- Page index ----
+    // ---- Stat strip ----
     (function() {
-      var pages = [
-        { title: 'Quick Start', href: '00-quick-start.html', desc: 'First steps with TACO and bw.DOM()' },
-        { title: 'Components', href: '01-components.html', desc: 'Buttons, cards, alerts, badges, spinners, stacks' },
-        { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' },
-        { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, 12 presets, dark mode' },
-        { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },
-        { title: 'Tables', href: '02-tables.html', desc: 'Sortable tables, search, pagination' },
-        { title: 'Forms', href: '02-forms.html', desc: 'Form inputs, validation, layout patterns' },
-        { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with grid layout' },
-        { title: 'Code Editor', href: '11-code-editor.html', desc: 'Lightweight syntax highlighting for JS, CSS, HTML' },
-        { title: 'Tic Tac Toe Tutorial', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game built with bitwrench' },
-        { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'bitwrench vs React, Vue, Svelte, jQuery' },
-        { title: 'API Reference', href: '08-api-reference.html', desc: 'Full function listing with signatures' },
-        { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' },
-        { title: 'LLM Guide', href: 'https://github.com/deftio/bitwrench/blob/main/dev/llm-bitwrench-guide.md', desc: 'Single-file reference for AI-assisted bitwrench development' }
+      function renderStats(sizeStr) {
+        var stats = [
+          { value: sizeStr, label: 'Gzipped', sub: 'UMD bundle' },
+          { value: '36+', label: 'Components', sub: 'ready to use' },
+          { value: '0', label: 'Dependencies', sub: 'zero runtime deps' },
+          { value: '4', label: 'Formats', sub: 'UMD ESM CJS ES5' }
+        ];
+        bw.DOM('#stat-strip', stats.map(function(s) {
+          return {
+            t: 'div', a: { class: 'bw-stat-item' },
+            c: [
+              { t: 'div', a: { class: 'bw-stat-value' }, c: s.value },
+              { t: 'div', a: { class: 'bw-stat-label' }, c: s.label },
+              { t: 'div', a: { class: 'bw-stat-sub' }, c: s.sub }
+            ]
+          };
+        }));
+      }
+      // Try to load dynamic size from builds.json
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '../dist/builds.json', true);
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            var data = JSON.parse(xhr.responseText);
+            var umdMin = data.files.find(function(f) { return f.file === 'bitwrench.umd.min.js'; });
+            if (umdMin && umdMin.gzipped) {
+              renderStats(Math.round(umdMin.gzipped / 1024) + ' KB');
+              return;
+            }
+          }
+          renderStats('~30 KB');
+        };
+        xhr.onerror = function() { renderStats('~30 KB'); };
+        xhr.send();
+      } catch(e) {
+        renderStats('~30 KB');
+      }
+    })();
+
+    // ---- How It Works ----
+    (function() {
+      var code = 'const card = {\n'
+        + '  t: \'div\', a: { class: \'bw-card\' },\n'
+        + '  c: [{\n'
+        + '    t: \'div\', a: { class: \'bw-card-body\' },\n'
+        + '    c: [\n'
+        + '      { t: \'h5\', a: { class: \'bw-card-title\' },\n'
+        + '        c: \'Hello bitwrench\' },\n'
+        + '      { t: \'p\', c: \'UI as native JS objects.\' },\n'
+        + '      bw.makeButton({ text: \'Click me\',\n'
+        + '        variant: \'primary\' })\n'
+        + '    ]\n'
+        + '  }]\n'
+        + '};\n\n'
+        + 'bw.DOM(\'#app\', card);';
+
+      // Code panel
+      if (typeof bw.codeEditor === 'function') {
+        bw.DOM('#how-code', bw.codeEditor({
+          code: code, lang: 'js', readOnly: true, height: 'auto'
+        }));
+      } else {
+        bw.DOM('#how-code', {
+          t: 'div', a: { class: 'bw-code-block' },
+          c: { t: 'pre', c: { t: 'code', a: { style: 'color: var(--bw-code-text);' }, c: code } }
+        });
+      }
+
+      // Result panel
+      bw.DOM('#how-result', bw.makeCard({
+        title: 'Hello bitwrench',
+        content: [
+          { t: 'p', c: 'UI as native JS objects.' },
+          bw.makeButton({ text: 'Click me', variant: 'primary' })
+        ]
+      }));
+    })();
+
+    // ---- Features ----
+    (function() {
+      var features = [
+        {
+          icon: '\u{1F3D7}', title: '36+ Components',
+          desc: 'Cards, buttons, tables, forms, modals, dropdowns, accordions, toasts, charts. Each returns a composable TACO object.'
+        },
+        {
+          icon: '\u{1F3A8}', title: 'Palette-Driven Theming',
+          desc: 'Pick 2\u20133 colors and generateTheme() derives buttons, alerts, badges, hover states, focus rings, and dark mode.'
+        },
+        {
+          icon: '\u{1F504}', title: 'Server + Client Rendering',
+          desc: 'bw.html() renders to strings for SSR, emails, or static pages. bw.DOM() mounts live DOM. Same objects, both sides.'
+        },
+        {
+          icon: '\u{1F4E1}', title: 'State Management',
+          desc: 'bw.patch() for targeted updates, bw.update() for re-renders, bw.pub()/bw.sub() for decoupled component communication.'
+        },
+        {
+          icon: '\u{2328}', title: 'CLI Tool',
+          desc: 'Convert Markdown or HTML to styled, self-contained pages with one command. Apply themes and inject bitwrench.'
+        },
+        {
+          icon: '\u{26A1}', title: 'Works Everywhere',
+          desc: 'Under 30 KB gzipped. Zero dependencies. Modern browsers, IE11, Node.js, and embedded environments.'
+        }
       ];
 
-      var cards = pages.map(function(p) {
+      bw.DOM('#features', features.map(function(f) {
         return {
-          t: 'a', a: { href: p.href, style: 'text-decoration: none; color: inherit;' },
-          c: bw.makeCard({
-            title: p.title,
-            content: { t: 'p', a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary); margin: 0;' }, c: p.desc },
-            hoverable: true
-          })
+          t: 'div', a: { class: 'bw-fh-card' },
+          c: [
+            { t: 'span', a: { class: 'bw-fh-icon' }, c: f.icon },
+            { t: 'h4', c: f.title },
+            { t: 'p', c: f.desc }
+          ]
+        };
+      }));
+    })();
+
+    // ---- Live Demos ----
+    (function() {
+      // Left: component sampler
+      var componentDemo = {
+        t: 'div', c: [
+          { t: 'h4', a: { style: 'margin: 0 0 1rem; font-size: 1rem; font-weight: 600;' }, c: 'Component Sampler' },
+          // Alert
+          bw.makeAlert({
+            content: 'Alerts, badges, and progress bars \u2014 all from simple function calls.',
+            variant: 'info',
+            dismissible: false
+          }),
+          // Badge row
+          {
+            t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0;' },
+            c: [
+              bw.makeBadge({ text: 'HTML', variant: 'primary' }),
+              bw.makeBadge({ text: 'CSS', variant: 'secondary' }),
+              bw.makeBadge({ text: 'JavaScript', variant: 'success' }),
+              bw.makeBadge({ text: 'Node.js', variant: 'info' }),
+              bw.makeBadge({ text: 'IE11', variant: 'warning' })
+            ]
+          },
+          // Progress
+          bw.makeProgress({ value: 72, label: '72% coverage', variant: 'primary', striped: true }),
+          // Button row
+          {
+            t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;' },
+            c: [
+              bw.makeButton({ text: 'Primary', variant: 'primary', size: 'sm' }),
+              bw.makeButton({ text: 'Secondary', variant: 'secondary', size: 'sm' }),
+              bw.makeButton({ text: 'Outline', variant: 'outline-primary', size: 'sm' })
+            ]
+          }
+        ]
+      };
+
+      // Right: data table + chart
+      var tableData = [
+        { format: 'UMD', file: 'bitwrench.umd.min.js', use: 'Browsers + Node' },
+        { format: 'ESM', file: 'bitwrench.esm.min.js', use: 'Modern bundlers' },
+        { format: 'CJS', file: 'bitwrench.cjs.min.js', use: 'Node require()' },
+        { format: 'ES5', file: 'bitwrench.es5.min.js', use: 'Legacy (IE11)' }
+      ];
+
+      var dataDemo = {
+        t: 'div', c: [
+          { t: 'h4', a: { style: 'margin: 0 0 1rem; font-size: 1rem; font-weight: 600;' }, c: 'Tables & Charts' },
+          bw.makeTable({
+            data: tableData,
+            columns: ['format', 'file', 'use'],
+            headers: ['Format', 'File', 'Use Case'],
+            striped: true,
+            size: 'sm'
+          }),
+          {
+            t: 'div', a: { style: 'margin-top: 1rem;' },
+            c: bw.makeBarChart({
+              data: [
+                { label: 'UMD', value: 93 },
+                { label: 'ESM', value: 87 },
+                { label: 'CJS', value: 91 },
+                { label: 'ES5', value: 96 }
+              ],
+              title: 'Browser Compatibility Score',
+              color: '#006666',
+              height: '120px',
+              showValues: true,
+              formatValue: function(v) { return v + '%'; }
+            })
+          }
+        ]
+      };
+
+      bw.DOM('#live-demos', [componentDemo, dataDemo]);
+    })();
+
+    // ---- Page Index ----
+    (function() {
+      var sections = [
+        {
+          category: 'Getting Started',
+          pages: [
+            { title: 'Quick Start', href: '00-quick-start.html', desc: 'First steps with TACO and bw.DOM()' },
+            { title: 'Components', href: '01-components.html', desc: 'All 36+ UI components with live demos' },
+            { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' }
+          ]
+        },
+        {
+          category: 'Core Features',
+          pages: [
+            { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },
+            { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, presets, dark mode' },
+            { title: 'Tables', href: '02-tables.html', desc: 'Sortable tables, search, pagination' },
+            { title: 'Forms', href: '02-forms.html', desc: 'Form inputs, validation, layout patterns' }
+          ]
+        },
+        {
+          category: 'Examples',
+          pages: [
+            { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and grid layout' },
+            { title: 'Code Editor', href: '11-code-editor.html', desc: 'Lightweight syntax highlighting addon' },
+            { title: 'Digital Clock', href: '06-clock.html', desc: 'Real-time clock with theme switching' },
+            { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' },
+            { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'Map React/Vue/Svelte patterns to bitwrench' }
+          ]
+        },
+        {
+          category: 'Reference',
+          pages: [
+            { title: 'API Reference', href: '08-api-reference.html', desc: 'Full function listing with signatures' },
+            { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' },
+            { title: 'LLM Guide', href: 'https://github.com/deftio/bitwrench/blob/main/dev/llm-bitwrench-guide.md', desc: 'Single-file reference for AI-assisted development' }
+          ]
+        }
+      ];
+
+      var content = sections.map(function(section) {
+        return {
+          t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+          c: [
+            { t: 'div', a: { class: 'bw-page-category' }, c: section.category },
+            {
+              t: 'div', a: { class: 'bw-page-grid' },
+              c: section.pages.map(function(p) {
+                return {
+                  t: 'a', a: { href: p.href, class: 'bw-page-link' },
+                  c: bw.makeCard({
+                    title: p.title,
+                    content: { t: 'p', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary); margin: 0;' }, c: p.desc }
+                  })
+                };
+              })
+            }
+          ]
         };
       });
 
-      bw.DOM('#page-index', {
-        t: 'div',
-        a: { style: 'display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;' },
-        c: cards
-      });
+      bw.DOM('#page-index', content);
     })();
   </script>
 </body>

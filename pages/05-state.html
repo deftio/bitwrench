@@ -13,26 +13,7 @@
   <script src="shared-tryit.js"></script>
   <style>
     /* Page-specific styles */
-    .counters-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: var(--bw-space-md);
-    }
-    .counter-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      padding: var(--bw-space-md);
-      text-align: center;
-    }
-    .counter-card h4 { margin: 0 0 0.5rem; }
-    .counter-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--bw-teal-dark);
-      margin: 0.5rem 0;
-    }
-    .counter-btns { display: flex; gap: 0.35rem; justify-content: center; }
+    /* Counter styles are inline (portable — copy the makeCounter function and it works) */
     .intro-text {
       font-size: 0.9375rem;
       line-height: 1.7;
@@ -373,7 +354,10 @@ function makeCounter(opts) {
       render: function(el) {               // stored as el._bw_render
         var s = el._bw_state;              // read state from the element
         bw.DOM(el, {                       // re-render into self
-          t: 'div', a: { class: 'counter-card' },
+          t: 'div', a: { style: 'background: var(--bw-card-bg, #fff); '
+            + 'border: 1px solid var(--bw-card-border, #dee2e6); '
+            + 'border-radius: 8px; padding: 1rem; '
+            + 'text-align: center;' },
           c: [
             { t: 'h4', c: opts.label },
             { t: 'div', c: String(s.count) },
@@ -453,6 +437,18 @@ bw.DOM('#app', {
   var id = bw.uuid('ctr');
   var name = opts.label;
 
+  // Inline styles &mdash; portable, no external CSS needed
+  var cardStyle = 'background: var(--bw-card-bg, #fff); '
+    + 'border: 1px solid var(--bw-card-border, #dee2e6); '
+    + 'border-radius: 8px; padding: 1rem 1.25rem; '
+    + 'text-align: center; min-width: 160px; '
+    + 'flex: 1 1 160px;';
+  var valueStyle = 'font-size: 2rem; font-weight: 700; '
+    + 'color: var(--bw-teal-dark, #00796b); '
+    + 'margin: 0.5rem 0;';
+  var btnsStyle = 'display: flex; gap: 0.35rem; '
+    + 'justify-content: center; flex-wrap: wrap;';
+
   var taco = {
     t: 'div', a: { id: id },
     o: {
@@ -460,23 +456,27 @@ bw.DOM('#app', {
       render: function(el) {
         var s = el._bw_state;
         bw.DOM(el, {
-          t: 'div', a: { class: 'counter-card' },
+          t: 'div', a: { style: cardStyle },
           c: [
-            { t: 'h4', c: name },
-            { t: 'div', a: { class: 'counter-value' },
+            { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' },
+              c: name },
+            { t: 'div', a: { style: valueStyle },
               c: String(s.count) },
-            { t: 'div', a: { class: 'counter-btns' }, c: [
-              bw.makeButton({ text: '+', variant: 'primary',
+            { t: 'div', a: { style: btnsStyle }, c: [
+              bw.makeButton({ text: '+',
+                variant: 'primary',
                 onclick: function() {
                   s.count++; bw.update(el);
                 }
               }),
-              bw.makeButton({ text: '\u2013', variant: 'secondary',
+              bw.makeButton({ text: '\u2013',
+                variant: 'secondary',
                 onclick: function() {
                   s.count--; bw.update(el);
                 }
               }),
-              bw.makeButton({ text: 'Reset', variant: 'secondary',
+              bw.makeButton({ text: 'Reset',
+                variant: 'secondary',
                 onclick: function() {
                   s.count = opts.start || 0;
                   bw.update(el);
@@ -515,7 +515,9 @@ var cardC = makeCounter(
 var allCards = [cardA, cardB, cardC];
 
 bw.DOM('#counters', {
-  t: 'div', a: { class: 'counters-row' },
+  t: 'div',
+  a: { style: 'display: flex; gap: 1rem; '
+     + 'flex-wrap: wrap;' },
   c: allCards.map(function(c) {
     return c.taco;
   })
@@ -1015,6 +1017,11 @@ bw.DOM('#perf', makePerfTest());</code></pre>
       var id = bw.uuid('ctr');
       var name = opts.label;
 
+      // Inline styles so this component is fully portable (no external CSS needed)
+      var cardStyle = 'background: var(--bw-card-bg, #fff); border: 1px solid var(--bw-card-border, #dee2e6); border-radius: 8px; padding: 1rem 1.25rem; text-align: center; min-width: 160px; flex: 1 1 160px;';
+      var valueStyle = 'font-size: 2rem; font-weight: 700; color: var(--bw-teal-dark, #00796b); margin: 0.5rem 0;';
+      var btnsStyle = 'display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;';
+
       var taco = {
         t: 'div', a: { id: id },
         o: {
@@ -1022,11 +1029,11 @@ bw.DOM('#perf', makePerfTest());</code></pre>
           render: function(el) {
             var s = el._bw_state;
             bw.DOM(el, {
-              t: 'div', a: { class: 'counter-card' },
+              t: 'div', a: { style: cardStyle },
               c: [
-                { t: 'h4', c: name },
-                { t: 'div', a: { class: 'counter-value' }, c: String(s.count) },
-                { t: 'div', a: { class: 'counter-btns' }, c: [
+                { t: 'h4', a: { style: 'margin: 0 0 0.5rem;' }, c: name },
+                { t: 'div', a: { style: valueStyle }, c: String(s.count) },
+                { t: 'div', a: { style: btnsStyle }, c: [
                   bw.makeButton({ text: '+', variant: 'primary',
                     onclick: function() { s.count++; bw.update(el); } }),
                   bw.makeButton({ text: '\u2013', variant: 'secondary',
@@ -1065,7 +1072,7 @@ bw.DOM('#perf', makePerfTest());</code></pre>
     var allCards = [cardA, cardB, cardC];
 
     bw.DOM('#counter-demo', {
-      t: 'div', a: { class: 'counters-row' },
+      t: 'div', a: { style: 'display: flex; gap: 1rem; flex-wrap: wrap;' },
       c: allCards.map(function(c) { return c.taco; })
     });
 

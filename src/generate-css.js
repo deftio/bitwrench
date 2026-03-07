@@ -3,7 +3,7 @@
  * Creates class-based CSS to prevent collisions with other frameworks
  */
 
-import { getAllStyles } from './bitwrench-styles.js';
+import { getAllStyles, getStructuralStyles } from './bitwrench-styles.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -92,8 +92,25 @@ function processRules(rules, indent = '') {
   return css;
 }
 
-// Generate the CSS
-const styles = getAllStyles();
+// Deep-merge themed + structural: structural properties override themed
+// per-property within the same selector (not overwriting entire selectors)
+function deepMergeStyles(base, overrides) {
+  const merged = Object.assign({}, base);
+  for (const [selector, rules] of Object.entries(overrides)) {
+    if (merged[selector] && typeof merged[selector] === 'object' && typeof rules === 'object') {
+      merged[selector] = Object.assign({}, merged[selector], rules);
+    } else {
+      merged[selector] = rules;
+    }
+  }
+  return merged;
+}
+
+// Generate the CSS — merge themed styles + structural styles
+const themed = getAllStyles();
+const structural = getStructuralStyles();
+// Structural properties take precedence; themed properties preserved where structural doesn't override
+const styles = deepMergeStyles(themed, structural);
 const css = stylesToCSS(styles);
 
 // Add additional bitwrench-specific styles

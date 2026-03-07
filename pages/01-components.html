@@ -666,7 +666,80 @@
             ),
 
             // =================================================================
-            // 16. Dropdown
+            // 16. Carousel
+            // =================================================================
+            demoSection('section-carousel', 'Carousel',
+              'Image and content slideshows with CSS transitions, prev/next controls, dot indicators, and optional auto-play.',
+              {
+                t: 'div', c: [
+                  // A) Image carousel
+                  subheading('Image Carousel'),
+                  { t: 'div', a: { style: 'margin-bottom: 1.5rem;' }, c:
+                    bw.makeCarousel({
+                      items: [
+                        { content: { t: 'img', a: { src: 'images/carousel-1.svg', alt: 'Slide 1' } }, caption: 'Ocean Blue' },
+                        { content: { t: 'img', a: { src: 'images/carousel-2.svg', alt: 'Slide 2' } }, caption: 'Forest Green' },
+                        { content: { t: 'img', a: { src: 'images/carousel-3.svg', alt: 'Slide 3' } }, caption: 'Sunset Orange' },
+                        { content: { t: 'img', a: { src: 'images/carousel-4.svg', alt: 'Slide 4' } }, caption: 'Royal Purple' }
+                      ],
+                      height: '300px'
+                    })
+                  },
+
+                  // B) Content cards carousel
+                  subheading('Content Cards'),
+                  { t: 'div', a: { style: 'margin-bottom: 1.5rem;' }, c:
+                    bw.makeCarousel({
+                      items: [
+                        { content: { t: 'div', a: { style: 'display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#e3f2fd; color:#1565c0; font-size:1.5rem; font-weight:600;' }, c: 'First Card' } },
+                        { content: { t: 'div', a: { style: 'display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#e8f5e9; color:#2e7d32; font-size:1.5rem; font-weight:600;' }, c: 'Second Card' } },
+                        { content: { t: 'div', a: { style: 'display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#fff3e0; color:#e65100; font-size:1.5rem; font-weight:600;' }, c: 'Third Card' } }
+                      ],
+                      height: '200px'
+                    })
+                  },
+
+                  // Options reference
+                  subheading('All Options'),
+                  bw.makeTable({
+                    data: [
+                      { option: 'items',           type: 'Array',   default_val: '[]',      description: 'Slide items: { content: TACO, caption?: string }' },
+                      { option: 'showControls',    type: 'boolean', default_val: 'true',    description: 'Show prev/next arrow buttons' },
+                      { option: 'showIndicators',  type: 'boolean', default_val: 'true',    description: 'Show dot navigation indicators' },
+                      { option: 'autoPlay',        type: 'boolean', default_val: 'false',   description: 'Auto-advance slides on a timer' },
+                      { option: 'interval',        type: 'number',  default_val: '5000',    description: 'Auto-advance interval in milliseconds' },
+                      { option: 'height',          type: 'string',  default_val: '"300px"', description: 'Carousel height (CSS value)' },
+                      { option: 'startIndex',      type: 'number',  default_val: '0',       description: 'Initial active slide index' },
+                      { option: 'className',       type: 'string',  default_val: '""',      description: 'Additional CSS classes' }
+                    ],
+                    columns: [
+                      { key: 'option',      label: 'Option' },
+                      { key: 'type',        label: 'Type' },
+                      { key: 'default_val', label: 'Default' },
+                      { key: 'description', label: 'Description' }
+                    ],
+                    striped: true, hover: true
+                  }),
+
+                  // Code example
+                  { t: 'div', a: { style: 'margin-top: 1.25rem;' }, c:
+                    createTabbedDemo(
+                      bw.makeCarousel({
+                        items: [
+                          { content: { t: 'img', a: { src: 'images/carousel-1.svg', alt: 'Slide 1' } }, caption: 'First slide' },
+                          { content: { t: 'img', a: { src: 'images/carousel-2.svg', alt: 'Slide 2' } }, caption: 'Second slide' }
+                        ],
+                        height: '250px'
+                      }),
+                      "// Image carousel with captions\nbw.makeCarousel({\n  items: [\n    { content: { t: 'img', a: { src: 'photo1.jpg' } }, caption: 'First slide' },\n    { content: { t: 'img', a: { src: 'photo2.jpg' } }, caption: 'Second slide' }\n  ],\n  height: '300px'\n})\n\n// Content cards carousel\nbw.makeCarousel({\n  items: [\n    { content: { t: 'div', a: { style: 'padding: 2rem;' }, c: 'Card 1' } },\n    { content: { t: 'div', a: { style: 'padding: 2rem;' }, c: 'Card 2' } }\n  ],\n  height: '200px'\n})\n\n// Auto-playing carousel\nbw.makeCarousel({\n  items: [...],\n  autoPlay: true,\n  interval: 3000    // advance every 3 seconds\n})"
+                    )
+                  }
+                ]
+              }
+            ),
+
+            // =================================================================
+            // 17. Dropdown
             // =================================================================
             demoSection('section-dropdown', 'Dropdown',
               'Click-triggered menus with items, dividers, and click-outside-to-close. Supports start and end alignment.',
@@ -853,19 +926,89 @@
             // 23. Hero
             // =================================================================
             demoSection('section-hero', 'Hero',
-              'Full-width hero sections with gradient backgrounds, titles, subtitles, and call-to-action buttons.',
-              createTabbedDemo(
-                bw.makeHero({
-                  title: 'Build Beautiful UIs', subtitle: 'Zero dependencies. No build step. Pure JavaScript.',
-                  variant: 'primary', size: 'md', centered: true,
-                  actions: [
-                    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),
-                    { t: 'span', c: ' ' },
-                    bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })
-                  ]
-                }),
-                "bw.makeHero({\n  title: 'Build Beautiful UIs',\n  subtitle: 'Zero deps. No build step.',\n  variant: 'primary',\n  size: 'md',\n  actions: [\n    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' })\n  ]\n})"
-              )
+              'Full-width hero sections for landing pages, app headers, and feature callouts. Supports gradient backgrounds, background images with overlays, custom content, and call-to-action buttons.',
+              {
+                t: 'div', c: [
+                  // Variant gallery
+                  subheading('Variants'),
+                  { t: 'div', a: { style: 'display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;' }, c: [
+                    bw.makeHero({
+                      title: 'Primary Hero', subtitle: 'The default look — teal gradient, white text.',
+                      variant: 'primary', size: 'sm', centered: true,
+                      actions: [
+                        bw.makeButton({ text: 'Get Started', variant: 'light' }),
+                        bw.makeButton({ text: 'Learn More', variant: 'outline-light' })
+                      ]
+                    }),
+                    bw.makeHero({
+                      title: 'Dark Variant', subtitle: 'For dramatic headers and dark-themed pages.',
+                      variant: 'dark', size: 'sm', centered: true,
+                      actions: [ bw.makeButton({ text: 'Explore', variant: 'outline-light' }) ]
+                    }),
+                    bw.makeHero({
+                      title: 'Light Variant', subtitle: 'Subtle background for content-heavy pages.',
+                      variant: 'light', size: 'sm', centered: true,
+                      actions: [ bw.makeButton({ text: 'Continue', variant: 'primary' }) ]
+                    }),
+                    bw.makeHero({
+                      title: 'Left-Aligned Hero',
+                      subtitle: 'Set centered: false for left-aligned text — useful for dashboard headers or documentation pages.',
+                      variant: 'secondary', size: 'sm', centered: false
+                    })
+                  ]},
+
+                  // Background image + overlay
+                  subheading('Background Image with Overlay'),
+                  { t: 'div', a: { style: 'margin-bottom: 1.5rem;' }, c:
+                    bw.makeHero({
+                      title: 'Image Background',
+                      subtitle: 'Use backgroundImage + overlay: true to add a dark scrim over any image.',
+                      variant: 'dark', size: 'md', overlay: true,
+                      backgroundImage: 'images/hero-bg.svg',
+                      actions: [ bw.makeButton({ text: 'Call to Action', variant: 'primary', size: 'lg' }) ]
+                    })
+                  },
+
+                  // Options reference
+                  subheading('All Options'),
+                  bw.makeTable({
+                    data: [
+                      { option: 'title',           type: 'string',        default_val: '—',         description: 'Main headline text (rendered as <h1>)' },
+                      { option: 'subtitle',        type: 'string',        default_val: '—',         description: 'Supporting text below the title' },
+                      { option: 'content',         type: 'string|TACO',   default_val: '—',         description: 'Arbitrary content below subtitle (any TACO or string)' },
+                      { option: 'variant',         type: 'string',        default_val: '"primary"', description: '"primary" | "secondary" | "light" | "dark" — controls background gradient and text color' },
+                      { option: 'size',            type: 'string',        default_val: '"lg"',      description: '"sm" | "md" | "lg" | "xl" — vertical padding' },
+                      { option: 'centered',        type: 'boolean',       default_val: 'true',      description: 'Center-align all text and actions' },
+                      { option: 'backgroundImage', type: 'string (URL)',  default_val: '—',         description: 'Background image URL — use with overlay for readability' },
+                      { option: 'overlay',         type: 'boolean',       default_val: 'false',     description: 'Add a dark semi-transparent scrim over the background' },
+                      { option: 'actions',         type: 'Array|TACO',    default_val: '—',         description: 'Call-to-action buttons (any TACO array)' },
+                      { option: 'className',       type: 'string',        default_val: '""',        description: 'Additional CSS classes on the root <section>' }
+                    ],
+                    columns: [
+                      { key: 'option',      label: 'Option' },
+                      { key: 'type',        label: 'Type' },
+                      { key: 'default_val', label: 'Default' },
+                      { key: 'description', label: 'Description' }
+                    ],
+                    striped: true, hover: true
+                  }),
+
+                  // Code example
+                  { t: 'div', a: { style: 'margin-top: 1.25rem;' }, c:
+                    createTabbedDemo(
+                      bw.makeHero({
+                        title: 'Build Beautiful UIs', subtitle: 'Zero dependencies. No build step. Pure JavaScript.',
+                        variant: 'primary', size: 'md', centered: true,
+                        actions: [
+                          bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),
+                          bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })
+                        ]
+                      }),
+                      "// Basic hero with CTA buttons\nbw.makeHero({\n  title: 'Build Beautiful UIs',\n  subtitle: 'Zero deps. No build step.',\n  variant: 'primary',   // 'primary' | 'secondary' | 'light' | 'dark'\n  size: 'md',           // 'sm' | 'md' | 'lg' | 'xl'\n  centered: true,       // false for left-aligned\n  actions: [\n    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),\n    bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })\n  ]\n})\n\n// Hero with background image + overlay\nbw.makeHero({\n  title: 'Image Hero',\n  subtitle: 'Use overlay: true for readability over images.',\n  variant: 'dark',\n  size: 'lg',\n  backgroundImage: 'https://example.com/photo.jpg',\n  overlay: true,\n  actions: [ bw.makeButton({ text: 'CTA', variant: 'primary', size: 'lg' }) ]\n})\n\n// Left-aligned dashboard header\nbw.makeHero({\n  title: 'Dashboard',\n  subtitle: 'Welcome back, user.',\n  variant: 'light',\n  size: 'sm',\n  centered: false\n})"
+                    )
+                  }
+                ]
+              }
             ),
 
             // =================================================================
