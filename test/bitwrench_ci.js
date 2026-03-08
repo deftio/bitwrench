@@ -299,20 +299,18 @@ describe("Theming API", function() {
     });
   });
 
-  describe("#toggleDarkMode()", function() {
-    it("should toggle dark mode state", function() {
-      const wasDark = bw.getTheme().darkMode;
-      const result = bw.toggleDarkMode();
-      assert.equal(result, !wasDark);
-      // Toggle back
-      bw.toggleDarkMode(wasDark);
+  describe("#applyTheme() and #toggleTheme()", function() {
+    it("applyTheme should return mode string", function() {
+      var mode = bw.applyTheme('primary');
+      assert.equal(mode, 'primary');
     });
 
-    it("should force dark/light with boolean arg", function() {
-      bw.toggleDarkMode(true);
-      assert.equal(bw.getTheme().darkMode, true);
-      bw.toggleDarkMode(false);
-      assert.equal(bw.getTheme().darkMode, false);
+    it("toggleTheme should flip between primary and alternate", function() {
+      bw._activeThemeMode = 'primary';
+      var result = bw.toggleTheme();
+      assert.equal(result, 'alternate');
+      result = bw.toggleTheme();
+      assert.equal(result, 'primary');
     });
   });
 });

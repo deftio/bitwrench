@@ -482,6 +482,7 @@ export function makeTabs(props = {}) {
               class: `bw-nav-link ${index === actualActiveIndex ? 'active' : ''}`,
               type: 'button',
               role: 'tab',
+              tabindex: index === actualActiveIndex ? '0' : '-1',
               'aria-selected': index === actualActiveIndex ? 'true' : 'false',
               'data-tab-index': index,
               onclick: (e) => {
@@ -492,11 +493,13 @@ export function makeTabs(props = {}) {
                 allTabs.forEach(t => {
                   t.classList.remove('active');
                   t.setAttribute('aria-selected', 'false');
+                  t.setAttribute('tabindex', '-1');
                 });
                 allPanes.forEach(p => p.classList.remove('active'));
 
                 e.target.classList.add('active');
                 e.target.setAttribute('aria-selected', 'true');
+                e.target.setAttribute('tabindex', '0');
                 const targetIndex = parseInt(e.target.getAttribute('data-tab-index'));
                 allPanes[targetIndex].classList.add('active');
               }
@@ -520,7 +523,39 @@ export function makeTabs(props = {}) {
     ],
     o: {
       type: 'tabs',
-      state: { activeIndex: actualActiveIndex }
+      state: { activeIndex: actualActiveIndex },
+      mounted: function(el) {
+        var tablist = el.querySelector('[role="tablist"]');
+        if (!tablist) return;
+        tablist.addEventListener('keydown', function(e) {
+          var tabButtons = tablist.querySelectorAll('[role="tab"]');
+          var currentIndex = -1;
+          for (var i = 0; i < tabButtons.length; i++) {
+            if (tabButtons[i] === e.target) { currentIndex = i; break; }
+          }
+          if (currentIndex === -1) return;
+
+          var newIndex = -1;
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
+          } else if (e.key === 'Home') {
+            e.preventDefault();
+            newIndex = 0;
+          } else if (e.key === 'End') {
+            e.preventDefault();
+            newIndex = tabButtons.length - 1;
+          }
+
+          if (newIndex >= 0) {
+            tabButtons[newIndex].focus();
+            tabButtons[newIndex].click();
+          }
+        });
+      }
     }
   };
 }
@@ -2123,29 +2158,47 @@ export function makeAccordion(props = {}) {
                   var isOpen = collapse.classList.contains('bw-collapse-show');
 
                   if (!multiOpen) {
-                    // Close all siblings
-                    var allCollapses = accordionEl.querySelectorAll('.bw-accordion-collapse');
-                    var allButtons = accordionEl.querySelectorAll('.bw-accordion-button');
-                    for (var j = 0; j < allCollapses.length; j++) {
-                      allCollapses[j].classList.remove('bw-collapse-show');
-                      allCollapses[j].style.maxHeight = null;
-                    }
-                    for (var k = 0; k < allButtons.length; k++) {
-                      allButtons[k].classList.add('bw-collapsed');
-                      allButtons[k].setAttribute('aria-expanded', 'false');
+                    // Animate-close all other open siblings
+                    var allItems = accordionEl.querySelectorAll('.bw-accordion-item');
+                    for (var j = 0; j < allItems.length; j++) {
+                      if (allItems[j] === accordionItem) continue;
+                      var sibCollapse = allItems[j].querySelector('.bw-accordion-collapse');
+                      var sibBtn = allItems[j].querySelector('.bw-accordion-button');
+                      if (sibCollapse.classList.contains('bw-collapse-show')) {
+                        sibCollapse.style.maxHeight = sibCollapse.scrollHeight + 'px';
+                        sibCollapse.offsetHeight; // force reflow
+                        sibCollapse.style.maxHeight = '0px';
+                        sibCollapse.classList.remove('bw-collapse-show');
+                        sibBtn.classList.add('bw-collapsed');
+                        sibBtn.setAttribute('aria-expanded', 'false');
+                      }
                     }
                   }
 
                   if (isOpen) {
+                    // Animate close
+                    collapse.style.maxHeight = collapse.scrollHeight + 'px';
+                    collapse.offsetHeight; // force reflow
+                    collapse.style.maxHeight = '0px';
                     collapse.classList.remove('bw-collapse-show');
-                    collapse.style.maxHeight = null;
                     btn.classList.add('bw-collapsed');
                     btn.setAttribute('aria-expanded', 'false');
                   } else {
+                    // Animate open
                     collapse.classList.add('bw-collapse-show');
+                    collapse.style.maxHeight = '0px';
+                    collapse.offsetHeight; // force reflow
                     collapse.style.maxHeight = collapse.scrollHeight + 'px';
                     btn.classList.remove('bw-collapsed');
                     btn.setAttribute('aria-expanded', 'true');
+                    // After transition, allow dynamic content sizing
+                    var onEnd = function(ev) {
+                      if (ev.propertyName === 'max-height' && collapse.classList.contains('bw-collapse-show')) {
+                        collapse.style.maxHeight = 'none';
+                      }
+                      collapse.removeEventListener('transitionend', onEnd);
+                    };
+                    collapse.addEventListener('transitionend', onEnd);
                   }
                 }
               },
@@ -2162,7 +2215,7 @@ export function makeAccordion(props = {}) {
             },
             o: item.open ? {
               mounted: function(el) {
-                el.style.maxHeight = el.scrollHeight + 'px';
+                el.style.maxHeight = 'none';
               }
             } : undefined
           }
@@ -2872,24 +2925,50 @@ export function makeCarousel(props = {}) {
     a: {
       class: ('bw-carousel ' + className).trim(),
       style: 'height: ' + height,
+      tabindex: '0',
+      'aria-roledescription': 'carousel',
       'data-carousel-index': startIndex
     },
     c: children,
     o: {
       type: 'carousel',
       state: { activeIndex: startIndex, autoPlay: autoPlay, interval: interval },
-      mounted: autoPlay ? function(el) {
-        var intervalId = setInterval(function() {
+      mounted: function(el) {
+        // Keyboard navigation
+        el.addEventListener('keydown', function(e) {
           var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
-          goToSlide(el, idx + 1);
-        }, interval);
-        el._bw_carouselInterval = intervalId;
-      } : undefined,
-      unmount: autoPlay ? function(el) {
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            goToSlide(el, idx - 1);
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            goToSlide(el, idx + 1);
+          }
+        });
+        // Auto-play
+        if (autoPlay) {
+          var intervalId = setInterval(function() {
+            var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+            goToSlide(el, idx + 1);
+          }, interval);
+          el._bw_carouselInterval = intervalId;
+          // Pause on hover/focus for usability
+          el.addEventListener('mouseenter', function() {
+            if (el._bw_carouselInterval) clearInterval(el._bw_carouselInterval);
+          });
+          el.addEventListener('mouseleave', function() {
+            el._bw_carouselInterval = setInterval(function() {
+              var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+              goToSlide(el, idx + 1);
+            }, interval);
+          });
+        }
+      },
+      unmount: function(el) {
         if (el._bw_carouselInterval) {
           clearInterval(el._bw_carouselInterval);
         }
-      } : undefined
+      }
     }
   };
 }

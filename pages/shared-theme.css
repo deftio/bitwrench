@@ -42,8 +42,8 @@
   --bw-space-2xl: 3rem;
 }
 
-/* ---- Dark Mode ---- */
-[data-theme="dark"] {
+/* ---- Alternate (Dark) Mode ---- */
+.bw-theme-alt {
   --bw-page-bg: #121212;
   --bw-card-bg: #1e1e1e;
   --bw-card-border: #333;
@@ -465,16 +465,16 @@ body {
   padding: 1.25rem;
 }
 /* Ensure tab text is readable in dark mode */
-[data-theme="dark"] .bw-nav-tabs {
+.bw-theme-alt .bw-nav-tabs {
   background: var(--bw-card-bg);
 }
-[data-theme="dark"] .bw-nav-tabs .bw-nav-link {
+.bw-theme-alt .bw-nav-tabs .bw-nav-link {
   color: var(--bw-text-muted);
 }
-[data-theme="dark"] .bw-nav-tabs .bw-nav-link:hover {
+.bw-theme-alt .bw-nav-tabs .bw-nav-link:hover {
   color: var(--bw-text);
 }
-[data-theme="dark"] .bw-nav-tabs .bw-nav-link.active {
+.bw-theme-alt .bw-nav-tabs .bw-nav-link.active {
   color: var(--bw-teal);
   border-bottom-color: var(--bw-teal);
 }
@@ -487,7 +487,7 @@ pre {
   border: 1px solid rgba(0,0,0,0.1);
   position: relative;
 }
-[data-theme="dark"] pre {
+.bw-theme-alt pre {
   border-color: rgba(255,255,255,0.08);
 }
 pre code {
@@ -511,7 +511,7 @@ code:not(pre code) {
   font-size: 0.85em;
   font-family: var(--bw-font-mono);
 }
-[data-theme="dark"] code:not(pre code) {
+.bw-theme-alt code:not(pre code) {
   background: #1a3636;
   color: #80cbc4;
 }
@@ -543,7 +543,7 @@ a:hover { color: var(--bw-teal-dark); }
   border-left: 4px solid #f9a825;
 }
 .callout-tip h4 { color: #e65100; }
-[data-theme="dark"] .callout-tip { background: #2a2200; }
+.bw-theme-alt .callout-tip { background: #2a2200; }
 
 .callout-warning {
   background: #fce4ec;

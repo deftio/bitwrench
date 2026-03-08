@@ -259,21 +259,23 @@
           ]
         },
 
-        // Section 5: Dark Mode
+        // Section 5: Theme Toggle (Primary / Alternate)
         {
           t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: bw.raw('Dark Mode + Theme Interaction') },
+            { t: 'h2', c: bw.raw('Theme Toggle &mdash; Primary / Alternate') },
             {
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
                   t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1rem;' }, c: [
-                    { t: 'code', c: 'bw.toggleDarkMode()' },
-                    ' derives dark colors from your ',
-                    { t: 'em', c: 'active palette' },
-                    bw.raw('. Generate a custom theme, then toggle dark mode &mdash; the dark variant uses your theme\'s hues, not generic grays.')
+                    { t: 'code', c: 'bw.generateTheme()' },
+                    ' always produces two complementary palettes: ',
+                    { t: 'strong', c: 'primary' },
+                    ' (your seed colors) and ',
+                    { t: 'strong', c: 'alternate' },
+                    bw.raw(' (luminance-inverted). Use <code>bw.applyTheme()</code> or <code>bw.toggleTheme()</code> to switch.')
                   ]
                 },
-                { t: 'div', a: { id: 'dark-mode-demo' } }
+                { t: 'div', a: { id: 'theme-toggle-demo' } }
               ]
             }
           ]
@@ -828,12 +830,12 @@
     }
 
     // ---------------------------------------------------------------
-    // Dark mode demo
+    // Theme toggle demo (primary / alternate)
     // ---------------------------------------------------------------
-    function renderDarkModeDemo() {
-      var isDark = false;
+    function renderThemeToggleDemo() {
+      var isAlt = false;
 
-      function buildDarkDemo() {
+      function buildToggleDemo() {
         return {
           t: 'div', c: [
             {
@@ -841,16 +843,25 @@
               a: { style: 'display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;' },
               c: [
                 bw.makeButton({
-                  text: isDark ? 'Switch to Light' : 'Switch to Dark',
+                  text: isAlt ? 'Switch to Primary' : 'Switch to Alternate',
                   variant: 'primary',
                   onclick: function() {
-                    isDark = !isDark;
-                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
-                    bw.DOM('#dark-mode-demo', buildDarkDemo());
+                    isAlt = !isAlt;
+                    bw.applyTheme(isAlt ? 'alternate' : 'primary');
+                    bw.DOM('#theme-toggle-demo', buildToggleDemo());
+                  }
+                }),
+                bw.makeButton({
+                  text: 'Toggle',
+                  variant: 'secondary',
+                  onclick: function() {
+                    isAlt = !isAlt;
+                    bw.toggleTheme();
+                    bw.DOM('#theme-toggle-demo', buildToggleDemo());
                   }
                 }),
                 { t: 'span', a: { style: 'font-size: 0.875rem; color: var(--bw-text-secondary);' },
-                  c: isDark ? bw.raw('Dark mode ON &mdash; colors derived from active theme palette') : bw.raw('Light mode &mdash; click to toggle')
+                  c: isAlt ? bw.raw('Alternate palette active &mdash; luminance-inverted from your seeds') : bw.raw('Primary palette active &mdash; your original seed colors')
                 }
               ]
             },
@@ -858,13 +869,13 @@
               t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 0.5rem;' },
               c: [
                 { t: 'h4', c: 'How it works' },
-                { t: 'p', c: bw.raw('Dark mode is toggled via the data-theme="dark" attribute on &lt;html&gt;. The default CSS includes dark mode overrides that invert backgrounds, surfaces, and text colors while respecting the active theme\'s hues.') },
+                { t: 'p', c: bw.raw('Every theme has two sides: <strong>primary</strong> (your seed colors) and <strong>alternate</strong> (luminance-inverted). If your primary is light, the alternate is dark, and vice versa. Both go through the same derivation pipeline.') },
                 (function() {
-                  var darkCode = '// Toggle dark mode\ndocument.documentElement.setAttribute("data-theme", "dark");\n\n// Or use the nav bar toggle (top-right crescent icon)\n// Dark mode works with any generated theme';
+                  var toggleCode = '// Generate theme (always produces both palettes)\nvar theme = bw.generateTheme(\'ocean\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n\n// Switch modes\nbw.applyTheme(\'alternate\');  // activate alternate\nbw.applyTheme(\'primary\');    // back to primary\nbw.applyTheme(\'dark\');       // whichever is darker\nbw.toggleTheme();            // flip between them';
                   var ceClass = state.codeTheme === 'light' ? 'bw-ce-light' : '';
                   return typeof bw.codeEditor === 'function'
-                    ? bw.codeEditor({ code: darkCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
-                    : { t: 'pre', c: { t: 'code', c: darkCode } };
+                    ? bw.codeEditor({ code: toggleCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+                    : { t: 'pre', c: { t: 'code', c: toggleCode } };
                 })()
               ]
             }
@@ -872,7 +883,7 @@
         };
       }
 
-      bw.DOM('#dark-mode-demo', buildDarkDemo());
+      bw.DOM('#theme-toggle-demo', buildToggleDemo());
     }
 
     // ---------------------------------------------------------------
@@ -882,7 +893,7 @@
     renderGallery();
     renderMultiTheme();
     renderCodeExport();
-    renderDarkModeDemo();
+    renderThemeToggleDemo();
   </script>
 </body>
 </html>

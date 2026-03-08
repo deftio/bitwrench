@@ -4,7 +4,7 @@
 
 import assert from "assert";
 import bw from "../src/bitwrench.js";
-import { getStructuralStyles, generateThemedCSS, generateDarkModeCSS, getAllStyles, defaultStyles, resolveLayout } from "../src/bitwrench-styles.js";
+import { getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -236,16 +236,29 @@ describe('Palette Derivation', function() {
       });
     });
 
-    it('should use default semantic colors when not specified', function() {
+    it('should use default semantic colors when harmonize is 0', function() {
+      const palette = bw.derivePalette({
+        primary: '#006666',
+        secondary: '#6c757d',
+        tertiary: '#20c997',
+        harmonize: 0
+      });
+      assert.strictEqual(palette.success.base, '#198754');
+      assert.strictEqual(palette.danger.base, '#dc3545');
+      assert.strictEqual(palette.warning.base, '#f0ad4e');
+      assert.strictEqual(palette.info.base, '#17a2b8');
+    });
+
+    it('should harmonize semantic colors toward primary by default', function() {
       const palette = bw.derivePalette({
         primary: '#006666',
         secondary: '#6c757d',
         tertiary: '#20c997'
       });
-      assert.strictEqual(palette.success.base, '#198754');
-      assert.strictEqual(palette.danger.base, '#dc3545');
-      assert.strictEqual(palette.warning.base, '#ffc107');
-      assert.strictEqual(palette.info.base, '#0dcaf0');
+      // With default harmonize=0.20, hues shift toward primary (hue 180)
+      // So they should NOT exactly match the defaults
+      assert.notStrictEqual(palette.success.base, '#198754');
+      assert.notStrictEqual(palette.danger.base, '#dc3545');
     });
 
     it('should allow overriding semantic colors', function() {
@@ -253,7 +266,8 @@ describe('Palette Derivation', function() {
         primary: '#006666',
         secondary: '#6c757d',
         tertiary: '#20c997',
-        success: '#00cc00'
+        success: '#00cc00',
+        harmonize: 0
       });
       assert.strictEqual(palette.success.base, '#00cc00');
     });
@@ -404,13 +418,14 @@ describe('Theme Generation', function() {
         'should have underscore alias for buttons');
     });
 
-    it('should use default semantic colors when not specified', function() {
+    it('should use default semantic colors when harmonize is 0', function() {
       const result = bw.generateTheme('t', {
         primary: '#0077b6',
         secondary: '#90e0ef',
+        harmonize: 0,
         inject: false
       });
-      // Success should be default green
+      // Success should be exact default green when harmonize=0
       assert.strictEqual(result.palette.success.base, '#198754');
     });
 
@@ -513,6 +528,207 @@ describe('Layout Presets', function() {
   });
 });
 
+describe('Harmonize', function() {
+
+  it('bw.harmonize should be a function', function() {
+    assert.strictEqual(typeof bw.harmonize, 'function');
+  });
+
+  it('harmonize with amount=0 should return original color', function() {
+    const result = bw.harmonize('#dc3545', '#006666', 0);
+    assert.strictEqual(result, '#dc3545');
+  });
+
+  it('harmonize should shift hue toward target', function() {
+    // Red (hue ~354) should shift toward teal (hue 180)
+    const result = bw.harmonize('#dc3545', '#006666', 0.20);
+    const srcHsl = bw.hexToHsl('#dc3545');
+    const resHsl = bw.hexToHsl(result);
+    // Hue should have moved (not necessarily closer due to circular distance)
+    assert.notStrictEqual(srcHsl[0], resHsl[0]);
+    // Saturation and lightness should be preserved
+    assert.strictEqual(srcHsl[1], resHsl[1]);
+    assert.strictEqual(srcHsl[2], resHsl[2]);
+  });
+
+  it('harmonize should preserve saturation and lightness', function() {
+    const src = '#f0ad4e';
+    const result = bw.harmonize(src, '#0077b6', 0.40);
+    const srcHsl = bw.hexToHsl(src);
+    const resHsl = bw.hexToHsl(result);
+    assert.strictEqual(srcHsl[1], resHsl[1]);
+    assert.strictEqual(srcHsl[2], resHsl[2]);
+  });
+
+  it('harmonize with amount=1 should fully shift to target hue', function() {
+    const result = bw.harmonize('#dc3545', '#006666', 1.0);
+    const resHsl = bw.hexToHsl(result);
+    const tgtHsl = bw.hexToHsl('#006666');
+    assert.strictEqual(resHsl[0], tgtHsl[0]);
+  });
+
+  it('generateTheme should accept harmonize parameter', function() {
+    const result0 = bw.generateTheme('h0', {
+      primary: '#006666', secondary: '#cc6633',
+      harmonize: 0, inject: false
+    });
+    const result40 = bw.generateTheme('h40', {
+      primary: '#006666', secondary: '#cc6633',
+      harmonize: 0.40, inject: false
+    });
+    // Different harmonize amounts produce different palettes
+    assert.notStrictEqual(result0.palette.success.base, result40.palette.success.base);
+  });
+});
+
+describe('Type Scale Presets', function() {
+
+  it('bw.TYPE_RATIO_PRESETS should have tight, normal, relaxed, dramatic', function() {
+    assert.ok('tight' in bw.TYPE_RATIO_PRESETS);
+    assert.ok('normal' in bw.TYPE_RATIO_PRESETS);
+    assert.ok('relaxed' in bw.TYPE_RATIO_PRESETS);
+    assert.ok('dramatic' in bw.TYPE_RATIO_PRESETS);
+  });
+
+  it('TYPE_RATIO_PRESETS values should be numbers', function() {
+    Object.values(bw.TYPE_RATIO_PRESETS).forEach(function(v) {
+      assert.strictEqual(typeof v, 'number');
+      assert.ok(v > 1.0 && v < 2.0, 'ratio should be between 1 and 2');
+    });
+  });
+
+  it('bw.generateTypeScale should produce 8 sizes', function() {
+    const scale = bw.generateTypeScale(16, 1.2);
+    assert.strictEqual(typeof scale, 'object');
+    assert.strictEqual(scale.base, 16);
+    assert.ok(scale.xs < scale.sm);
+    assert.ok(scale.sm < scale.base);
+    assert.ok(scale.base < scale.lg);
+    assert.ok(scale.lg < scale.xl);
+    assert.ok(scale.xl < scale['2xl']);
+    assert.ok(scale['2xl'] < scale['3xl']);
+    assert.ok(scale['3xl'] < scale['4xl']);
+  });
+
+  it('tight ratio should produce smaller spread than dramatic', function() {
+    const tight = bw.generateTypeScale(16, bw.TYPE_RATIO_PRESETS.tight);
+    const dramatic = bw.generateTypeScale(16, bw.TYPE_RATIO_PRESETS.dramatic);
+    assert.ok(tight['4xl'] < dramatic['4xl'], 'tight should have smaller 4xl');
+    assert.ok(tight.xs > dramatic.xs, 'tight should have larger xs');
+  });
+
+  it('resolveLayout should resolve typeRatio by name', function() {
+    const layout = resolveLayout({ typeRatio: 'dramatic' });
+    assert.strictEqual(layout.typeScale.base, 16);
+    const dramatic = bw.generateTypeScale(16, bw.TYPE_RATIO_PRESETS.dramatic);
+    assert.strictEqual(layout.typeScale['4xl'], dramatic['4xl']);
+  });
+
+  it('resolveLayout should accept typeRatio as number', function() {
+    const layout = resolveLayout({ typeRatio: 1.333 });
+    assert.strictEqual(layout.typeScale.base, 16);
+    assert.ok(layout.typeScale['4xl'] > 50, 'dramatic ratio should produce large 4xl');
+  });
+});
+
+describe('Elevation Presets', function() {
+
+  it('bw.ELEVATION_PRESETS should have flat, sm, md, lg', function() {
+    assert.ok('flat' in bw.ELEVATION_PRESETS);
+    assert.ok('sm' in bw.ELEVATION_PRESETS);
+    assert.ok('md' in bw.ELEVATION_PRESETS);
+    assert.ok('lg' in bw.ELEVATION_PRESETS);
+  });
+
+  it('each elevation preset should have sm, md, lg, xl levels', function() {
+    Object.values(bw.ELEVATION_PRESETS).forEach(function(preset) {
+      assert.ok('sm' in preset);
+      assert.ok('md' in preset);
+      assert.ok('lg' in preset);
+      assert.ok('xl' in preset);
+    });
+  });
+
+  it('flat elevation should be all none', function() {
+    Object.values(bw.ELEVATION_PRESETS.flat).forEach(function(v) {
+      assert.strictEqual(v, 'none');
+    });
+  });
+
+  it('resolveLayout should resolve elevation by name', function() {
+    const layout = resolveLayout({ elevation: 'lg' });
+    assert.strictEqual(layout.elevation.sm, bw.ELEVATION_PRESETS.lg.sm);
+  });
+
+  it('resolveLayout should accept elevation as custom object', function() {
+    const custom = { sm: 'none', md: '0 2px 4px black', lg: '0 4px 8px black', xl: '0 8px 16px black' };
+    const layout = resolveLayout({ elevation: custom });
+    assert.strictEqual(layout.elevation.md, '0 2px 4px black');
+  });
+
+  it('elevation should affect generated theme CSS', function() {
+    const flat = bw.generateTheme('elev-flat', {
+      primary: '#006666', secondary: '#6c757d',
+      elevation: 'flat', inject: false
+    });
+    const lg = bw.generateTheme('elev-lg', {
+      primary: '#006666', secondary: '#6c757d',
+      elevation: 'lg', inject: false
+    });
+    assert.notStrictEqual(flat.css, lg.css);
+    assert.ok(flat.css.includes('none'), 'flat theme should contain none shadows');
+  });
+});
+
+describe('Motion Presets', function() {
+
+  it('bw.MOTION_PRESETS should have reduced, standard, expressive', function() {
+    assert.ok('reduced' in bw.MOTION_PRESETS);
+    assert.ok('standard' in bw.MOTION_PRESETS);
+    assert.ok('expressive' in bw.MOTION_PRESETS);
+  });
+
+  it('each motion preset should have fast, normal, slow, easing', function() {
+    Object.values(bw.MOTION_PRESETS).forEach(function(preset) {
+      assert.ok('fast' in preset);
+      assert.ok('normal' in preset);
+      assert.ok('slow' in preset);
+      assert.ok('easing' in preset);
+    });
+  });
+
+  it('reduced motion should be 0ms', function() {
+    assert.strictEqual(bw.MOTION_PRESETS.reduced.fast, '0ms');
+    assert.strictEqual(bw.MOTION_PRESETS.reduced.normal, '0ms');
+    assert.strictEqual(bw.MOTION_PRESETS.reduced.slow, '0ms');
+  });
+
+  it('resolveLayout should resolve motion by name', function() {
+    const layout = resolveLayout({ motion: 'expressive' });
+    assert.strictEqual(layout.motion.fast, bw.MOTION_PRESETS.expressive.fast);
+    assert.ok(layout.motion.easing.includes('cubic-bezier'));
+  });
+
+  it('resolveLayout should accept motion as custom object', function() {
+    const custom = { fast: '50ms', normal: '100ms', slow: '150ms', easing: 'linear' };
+    const layout = resolveLayout({ motion: custom });
+    assert.strictEqual(layout.motion.fast, '50ms');
+  });
+
+  it('motion should affect generated theme CSS', function() {
+    const reduced = bw.generateTheme('mot-reduced', {
+      primary: '#006666', secondary: '#6c757d',
+      motion: 'reduced', inject: false
+    });
+    const expressive = bw.generateTheme('mot-expressive', {
+      primary: '#006666', secondary: '#6c757d',
+      motion: 'expressive', inject: false
+    });
+    assert.notStrictEqual(reduced.css, expressive.css);
+    assert.ok(reduced.css.includes('0ms'), 'reduced theme should contain 0ms transitions');
+  });
+});
+
 describe('Backwards Compatibility', function() {
 
   it('loadDefaultStyles should still be a function', function() {
@@ -534,8 +750,11 @@ describe('Backwards Compatibility', function() {
     bw.setTheme({ colors: { primary: original.colors.primary } }, { inject: false });
   });
 
-  it('toggleDarkMode should still work', function() {
-    assert.strictEqual(typeof bw.toggleDarkMode, 'function');
+  it('applyTheme should be a function', function() {
+    assert.strictEqual(typeof bw.applyTheme, 'function');
+  });
+  it('toggleTheme should be a function', function() {
+    assert.strictEqual(typeof bw.toggleTheme, 'function');
   });
 
   it('bw.css should handle @media queries', function() {
@@ -814,65 +1033,80 @@ describe('Themed CSS Completeness', function() {
   });
 });
 
-describe('Dark Mode CSS', function() {
+describe('Alternate Palette', function() {
 
-  it('generateDarkModeCSS should return rules object', function() {
-    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
-    const rules = generateDarkModeCSS(palette);
-    assert.strictEqual(typeof rules, 'object');
-    assert.ok(Object.keys(rules).length > 5, 'should have multiple selectors');
+  it('deriveAlternateSeed should invert luminance', function() {
+    // Light color → dark alternate
+    var alt = bw.deriveAlternateSeed('#ffffff');
+    var altHsl = bw.hexToHsl(alt);
+    assert.ok(altHsl[2] < 50, 'white should produce dark alternate, got L=' + altHsl[2]);
+
+    // Dark color → light alternate
+    var alt2 = bw.deriveAlternateSeed('#000000');
+    var altHsl2 = bw.hexToHsl(alt2);
+    assert.ok(altHsl2[2] > 50, 'black should produce light alternate, got L=' + altHsl2[2]);
   });
 
-  it('generateDarkModeCSS should cover all major components', function() {
-    const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
-    const rules = generateDarkModeCSS(palette);
-    const css = bw.css(rules);
-    assert.ok(css.includes('.bw-dark'), 'should use .bw-dark scope');
-    assert.ok(css.includes('.bw-card'), 'should have card dark rules');
-    assert.ok(css.includes('.bw-navbar'), 'should have navbar dark rules');
-    assert.ok(css.includes('.bw-form-control'), 'should have form dark rules');
-    assert.ok(css.includes('.bw-table'), 'should have table dark rules');
-    assert.ok(css.includes('.bw-list-group'), 'should have list-group dark rules');
-    assert.ok(css.includes('.bw-alert'), 'should have alert dark rules');
-    assert.ok(css.includes('.bw-badge'), 'should have badge dark rules');
-    assert.ok(css.includes('.bw-nav-tabs'), 'should have tabs dark rules');
-    assert.ok(css.includes('.bw-pagination'), 'should have pagination dark rules');
-    assert.ok(css.includes('.bw-breadcrumb'), 'should have breadcrumb dark rules');
-    assert.ok(css.includes('.bw-hero'), 'should have hero dark rules');
-    assert.ok(css.includes('.bw-progress'), 'should have progress dark rules');
+  it('deriveAlternateSeed should preserve hue', function() {
+    var hsl = bw.hexToHsl('#006666');
+    var alt = bw.deriveAlternateSeed('#006666');
+    var altHsl = bw.hexToHsl(alt);
+    assert.ok(Math.abs(hsl[0] - altHsl[0]) < 2, 'hue should be preserved');
   });
 
-  it('generateDarkModeCSS with custom palette should use palette colors', function() {
-    const customPalette = bw.derivePalette({
-      primary: '#ff6600',
-      secondary: '#003366'
+  it('isLightPalette should classify light vs dark', function() {
+    assert.strictEqual(bw.isLightPalette({ primary: '#ffffff', secondary: '#eeeeee' }), true);
+    assert.strictEqual(bw.isLightPalette({ primary: '#000000', secondary: '#111111' }), false);
+  });
+
+  it('deriveAlternateConfig should produce valid config', function() {
+    var config = { primary: '#006666', secondary: '#cc6633', tertiary: '#339966' };
+    var alt = bw.deriveAlternateConfig(config);
+    assert.ok(alt.primary, 'should have primary');
+    assert.ok(alt.secondary, 'should have secondary');
+    assert.ok(alt.tertiary, 'should have tertiary');
+    assert.ok(alt.light, 'should have light');
+    assert.ok(alt.dark, 'should have dark');
+    assert.ok(alt.success, 'should have success');
+    assert.ok(alt.danger, 'should have danger');
+  });
+
+  it('generateTheme should return alternate property', function() {
+    var result = bw.generateTheme('test-alt', {
+      primary: '#006666',
+      secondary: '#cc6633',
+      inject: false
     });
-    const rules = generateDarkModeCSS(customPalette);
-    const css = bw.css(rules);
-    // Dark bg should be derived from the custom primary, not defaults
-    assert.ok(css.length > 100, 'should produce CSS output');
-    assert.ok(css.includes('.bw-dark'), 'should use .bw-dark scope');
+    assert.ok(result.alternate, 'result should have alternate');
+    assert.ok(result.alternate.css, 'alternate should have css');
+    assert.ok(result.alternate.palette, 'alternate should have palette');
+    assert.ok(result.alternate.css.includes('bw-theme-alt'), 'alt CSS should use .bw-theme-alt scope');
+    assert.strictEqual(typeof result.isLightPrimary, 'boolean', 'should have isLightPrimary');
   });
 
-  it('toggleDarkMode should use _activePalette when set', function() {
-    freshDOM();
-    // Generate a theme (sets _activePalette)
-    bw.generateTheme('', {
-      primary: '#ff0000',
-      secondary: '#00ff00',
-      inject: true
-    });
-    assert.ok(bw._activePalette, '_activePalette should be set after generateTheme');
-    assert.strictEqual(bw._activePalette.primary.base, '#ff0000');
-    // Clean up
-    var el = document.getElementById('bw-theme-default');
-    if (el) el.remove();
+  it('generateAlternateCSS should scope rules under .bw-theme-alt', function() {
+    var config = { primary: '#006666', secondary: '#cc6633' };
+    var altConfig = bw.deriveAlternateConfig(config);
+    var palette = bw.derivePalette(altConfig);
+    var layout = resolveLayout({});
+    var rules = generateAlternateCSS('', palette, layout);
+    var css = bw.css(rules);
+    assert.ok(css.includes('.bw-theme-alt'), 'should scope under .bw-theme-alt');
   });
 
-  it('toggleDarkMode should be callable', function() {
-    freshDOM();
-    assert.strictEqual(typeof bw.toggleDarkMode, 'function');
-    // Note: full DOM dark mode toggle is tested via Playwright
+  it('generateAlternateCSS with named theme should use compound selector', function() {
+    var config = { primary: '#006666', secondary: '#cc6633' };
+    var altConfig = bw.deriveAlternateConfig(config);
+    var palette = bw.derivePalette(altConfig);
+    var layout = resolveLayout({});
+    var rules = generateAlternateCSS('ocean', palette, layout);
+    var css = bw.css(rules);
+    assert.ok(css.includes('.ocean.bw-theme-alt'), 'should use compound selector .ocean.bw-theme-alt');
+  });
+
+  it('applyTheme and toggleTheme should be callable', function() {
+    assert.strictEqual(typeof bw.applyTheme, 'function');
+    assert.strictEqual(typeof bw.toggleTheme, 'function');
   });
 });
 

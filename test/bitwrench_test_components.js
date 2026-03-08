@@ -11,7 +11,7 @@ import {
   makeModal, makeToast, makeDropdown, makeSwitch, makeSkeleton,
   makeAvatar, ModalHandle
 } from "../src/bitwrench-components-v2.js";
-import { defaultStyles, getStructuralStyles, generateThemedCSS, generateDarkModeCSS, getAllStyles } from "../src/bitwrench-styles.js";
+import { defaultStyles, getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, resolveLayout } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -584,14 +584,15 @@ describe('Component CSS', function() {
     assert.ok(structural['.bw_avatar'], 'underscore alias missing for avatar');
   });
 
-  it('generateDarkModeCSS should produce dark rules for new components', function() {
-    const palette = bw.derivePalette({ primary: '#006666', secondary: '#6c757d' });
-    const darkCSS = generateDarkModeCSS(palette);
-    assert.ok(darkCSS['.bw-dark .bw-accordion-item'], 'dark accordion missing');
-    assert.ok(darkCSS['.bw-dark .bw-modal-content'], 'dark modal missing');
-    assert.ok(darkCSS['.bw-dark .bw-toast'], 'dark toast missing');
-    assert.ok(darkCSS['.bw-dark .bw-dropdown-menu'], 'dark dropdown missing');
-    assert.ok(darkCSS['.bw-dark .bw-skeleton'], 'dark skeleton missing');
+  it('generateAlternateCSS should produce alt-scoped rules', function() {
+    const config = { primary: '#006666', secondary: '#cc6633', tertiary: '#006666' };
+    const altConfig = bw.deriveAlternateConfig(config);
+    const altPalette = bw.derivePalette(altConfig);
+    const layout = resolveLayout({});
+    const altRules = generateAlternateCSS('', altPalette, layout);
+    const css = bw.css(altRules);
+    assert.ok(css.includes('.bw-theme-alt'), 'should use .bw-theme-alt scope');
+    assert.ok(css.includes('.bw-btn'), 'should include button rules');
   });
 });
 

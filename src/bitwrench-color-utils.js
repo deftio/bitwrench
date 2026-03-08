@@ -262,6 +262,29 @@ export function textOnColor(hex) {
 }
 
 /**
+ * Shift a color's hue toward a target hue by a given amount.
+ * Uses shortest-arc interpolation on the hue wheel.
+ * @param {string} sourceHex - Color to shift
+ * @param {string} targetHex - Color whose hue to shift toward
+ * @param {number} [amount=0.20] - 0 = no shift, 1 = full shift to target hue
+ * @returns {string} Harmonized hex color
+ */
+export function harmonize(sourceHex, targetHex, amount) {
+  if (amount === undefined) amount = 0.20;
+  if (amount === 0) return sourceHex;
+  var srcHsl = hexToHsl(sourceHex);
+  var tgtHsl = hexToHsl(targetHex);
+
+  // Shortest-arc hue interpolation
+  var diff = tgtHsl[0] - srcHsl[0];
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+
+  var newHue = (srcHsl[0] + diff * amount + 360) % 360;
+  return hslToHex([newHue, srcHsl[1], srcHsl[2]]);
+}
+
+/**
  * Derive a full shade palette for a single semantic color.
  * @param {string} hex - Base color hex
  * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
@@ -281,30 +304,127 @@ export function deriveShades(hex) {
 }
 
 /**
+ * Derive the alternate (luminance-inverted) version of a single seed color.
+ * Preserves hue, mirrors lightness, adjusts saturation for readability.
+ * @param {string} hex - Seed hex color
+ * @returns {string} Alternate hex color
+ */
+export function deriveAlternateSeed(hex) {
+  var hsl = hexToHsl(hex);
+  var h = hsl[0], s = hsl[1], l = hsl[2];
+  var altL, altS;
+
+  if (l > 50) {
+    // Light color → make dark. Map 50-100 → 30-10 range
+    altL = clip(100 - l - 10, 8, 40);
+    // Reduce saturation slightly — vivid colors at low lightness look garish
+    altS = clip(s * 0.85, 0, 100);
+  } else {
+    // Dark color → make light. Map 0-50 → 65-92 range
+    altL = clip(100 - l + 10, 60, 92);
+    // Slightly increase saturation for light variant
+    altS = clip(s * 1.1, 0, 100);
+  }
+
+  return hslToHex([h, altS, altL]);
+}
+
+/**
+ * Determine whether a palette config is "light-flavored" based on
+ * the average luminance of its seed colors.
+ * @param {Object} config - Theme config with primary, secondary hex colors
+ * @returns {boolean} true if the seeds are predominantly light
+ */
+export function isLightPalette(config) {
+  var lum = relativeLuminance(config.primary);
+  if (config.secondary) lum = (lum + relativeLuminance(config.secondary)) / 2;
+  if (config.tertiary) lum = (lum * 2 + relativeLuminance(config.tertiary)) / 3;
+  return lum > 0.179;
+}
+
+/**
+ * Derive a complete alternate config from a primary theme config.
+ * Each seed color is luminance-inverted; semantic colors are adjusted for
+ * the new luminance context.
+ * @param {Object} config - Primary theme config
+ * @returns {Object} Alternate theme config (same shape, inverted lightness)
+ */
+export function deriveAlternateConfig(config) {
+  var alt = {};
+  // Invert the user's seed colors
+  alt.primary = deriveAlternateSeed(config.primary);
+  alt.secondary = deriveAlternateSeed(config.secondary);
+  alt.tertiary = config.tertiary ? deriveAlternateSeed(config.tertiary) : alt.primary;
+
+  // Derive alternate surface colors from primary hue
+  var priHsl = hexToHsl(config.primary);
+  var h = priHsl[0];
+  var isLight = isLightPalette(config);
+
+  if (isLight) {
+    // Primary is light → alternate needs dark surfaces
+    alt.light = hslToHex([h, Math.min(priHsl[1], 15), 15]);
+    alt.dark = hslToHex([h, 5, 88]);
+  } else {
+    // Primary is dark → alternate needs light surfaces
+    alt.light = hslToHex([h, Math.min(priHsl[1], 10), 96]);
+    alt.dark = hslToHex([h, 10, 18]);
+  }
+
+  // Semantic colors: harmonize toward primary, then invert for alternate
+  var amt = config.harmonize !== undefined ? config.harmonize : 0.20;
+  var semanticDefaults = {
+    success: '#198754', danger: '#dc3545',
+    warning: '#f0ad4e', info: '#17a2b8'
+  };
+  var semantics = ['success', 'danger', 'warning', 'info'];
+  for (var i = 0; i < semantics.length; i++) {
+    var key = semantics[i];
+    var seed = config[key] || semanticDefaults[key];
+    var harmonized = harmonize(seed, config.primary, amt);
+    alt[key] = deriveAlternateSeed(harmonized);
+  }
+
+  // Semantic colors are already harmonized+inverted — don't re-harmonize in derivePalette
+  alt.harmonize = 0;
+
+  return alt;
+}
+
+/**
  * Derive complete palette from a theme config object.
+ * Semantic colors are harmonized toward the primary hue (configurable).
+ * Light/dark surface colors are tinted with the primary hue.
  * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
- * @returns {Object} Full palette with shades for all 8 semantic colors + tertiary
+ * @param {number} [config.harmonize=0.20] - Hue shift amount for semantic colors (0-1)
+ * @returns {Object} Full palette with shades for all 9 semantic colors
  */
 export function derivePalette(config) {
-  var defaults = {
-    success: '#198754',
-    danger: '#dc3545',
-    warning: '#ffc107',
-    info: '#0dcaf0',
-    light: '#f8f9fa',
-    dark: '#212529'
-  };
+  var amt = config.harmonize !== undefined ? config.harmonize : 0.20;
+  var pri = config.primary;
+  var priHsl = hexToHsl(pri);
+  var h = priHsl[0];
+
+  // Semantic defaults — harmonized toward primary hue
+  var successBase = harmonize(config.success || '#198754', pri, amt);
+  var dangerBase  = harmonize(config.danger  || '#dc3545', pri, amt);
+  var warningBase = harmonize(config.warning || '#f0ad4e', pri, amt);
+  var infoBase    = harmonize(config.info    || '#17a2b8', pri, amt);
+
+  // Light/dark: derive from primary hue with low saturation (if not user-supplied)
+  var lightBase = config.light || hslToHex([h, 8, 97]);
+  var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
   var palette = {
-    primary: deriveShades(config.primary),
+    primary:   deriveShades(config.primary),
     secondary: deriveShades(config.secondary),
-    tertiary: deriveShades(config.tertiary),
-    success: deriveShades(config.success || defaults.success),
-    danger: deriveShades(config.danger || defaults.danger),
-    warning: deriveShades(config.warning || defaults.warning),
-    info: deriveShades(config.info || defaults.info),
-    light: deriveShades(config.light || defaults.light),
-    dark: deriveShades(config.dark || defaults.dark)
+    tertiary:  deriveShades(config.tertiary),
+    success:   deriveShades(successBase),
+    danger:    deriveShades(dangerBase),
+    warning:   deriveShades(warningBase),
+    info:      deriveShades(infoBase),
+    light:     deriveShades(lightBase),
+    dark:      deriveShades(darkBase)
   };
 
   return palette;

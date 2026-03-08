@@ -1,142 +1,208 @@
-# this serves as running list of things that need attention or fixes
+# QA Todo — feature/pages-polish-round2
 
-* [x] enhance --> 01-components.html Grid System: added 6:3:3 (half+quarter+quarter) and 6:3:2:1 (half+quarter+sixth+twelfth) grid examples with distinct color palettes
-* [x] enhance --> 01-components.html: added "Text Alignment & Vertical Centering" section with horizontal (bw-text-left/center/right) and vertical (flexbox top/middle/bottom) demos + code tab
-* [x] enhance --> 00-quick-start.html "Your First Bitwrench Page": replaced static code + disconnected try-it with editable code editor + live iframe preview (srcdoc, sandbox="allow-scripts"). Reader sees full HTML, edits it, clicks Run, sees result. Added "What just happened?" callout explaining bw.DOM
+## P0: Blocks professional use
 
-### Pending QA for this branch
-(none)
+### Component interactivity gaps
+* [x] fix --> modal backdrop click should close modal (already implemented, verified)
+* [x] fix --> carousel keyboard navigation (left/right arrow keys, tabindex, pause on hover)
+* [x] fix --> accordion collapse/expand CSS transition (smooth maxHeight animation, reflow trick)
+* [x] fix --> dropdown menu fade-in transition (visibility+opacity+transform, no display:none)
+* [x] fix --> modal entrance/exit animation (visibility+opacity, no display:none)
+* [x] fix --> tabs keyboard arrow navigation (Left/Right/Home/End, tabindex roving)
 
+### Accessibility
+* [x] fix --> color contrast: warning badge #b38600 replaces #ffc107 (3.31:1 with white, passes WCAG 1.4.11)
+* [x] fix --> color contrast: info badge #0891b2 replaces #0dcaf0 (3.70:1 with white, passes WCAG 1.4.11)
+* [x] fix --> focus states: buttons now use outline+box-shadow (visible in high-contrast mode)
+* [x] fix --> focus-visible added to dropdown items, list-group items, pagination links
+* [x] fix --> form inputs focus uses outline (2px solid) + box-shadow for stronger visibility
 
-## Fixes completed in feature/bccl-parity-and-polish (v2.0.12)
+### Theme toggle (primary / alternate) — REDESIGNED
+* [x] fix --> `bw.generateTheme()` now always produces two palettes: primary + alternate (luminance-inverted)
+* [x] fix --> Added `bw.applyTheme('primary'|'alternate'|'light'|'dark')` and `bw.toggleTheme()`
+* [x] fix --> Removed hardcoded dark mode: `toggleDarkMode()`, `generateDarkModeCSS()`, `getDarkModeStyles()` deleted
+* [x] fix --> Alternate CSS scoped under `.bw-theme-alt` — both palettes go through same `generateThemedCSS()` pipeline
+* [x] fix --> Design doc: `dev/bw-theme-toggle-design.md`
+* [ ] tune --> alternate derivation curves need tuning with all preset themes (follow-up PR)
+* [ ] tune --> per-component dark appearance depends on alternate palette quality (follow-up)
 
-### Fix: Visual spec tests (`test/visual.spec.js`)
-* [x] Fix `test/visual.spec.js` — 36/38 tests fail pre-existing — FIXED: all 37 tests now passing. Fixes: updated selectors (`.content-container`, `#app`, `.game-board`), gradient bg detection in contrast test, `role="presentation"` on carousel arrows, darkened `--bw-text-muted` (#888→#666) and `.bw-cta-description` (#6c757d→#555b62) for WCAG AA contrast
+## P1: Polish (makes or breaks first impression)
 
-### Fix: Index page hero buttons, version text, install strip
-* [x] fix --> index.html hero buttons left-aligned (added `justify-content: flex-start` to override default styles), removed v2.0.12 text after GitHub button, fixed INSTALL strip CDN script tag (was using `bw.raw()` which injected actual `<script>` element — removed `bw.raw()` so default escaping shows it as visible text)
+### CSS consistency
+* [ ] fix --> no consistent spacing scale — buttons, badges, form inputs all use ad-hoc padding values
+* [x] fix --> font-size scale defined: TYPE_RATIO_PRESETS + generateTypeScale() (tight/normal/relaxed/dramatic)
+* [x] fix --> shadow scale defined: ELEVATION_PRESETS (flat/sm/md/lg) wired into cards, modals, toasts, dropdowns
+* [ ] fix --> line-height inconsistent: tables 1.6, buttons unspecified, forms vary
+* [ ] fix --> font-weight inconsistent: mix of 500 and 600 across components
 
-### Visual checks (verified via Playwright)
-* [x] Visual check: carousel slides, controls, indicators on `01-components.html` — verified: 2 carousels (4 + 3 slides), prev/next controls, indicator dots, captions all render correctly
-* [x] Visual check: sortable table on `07-framework-comparison.html` — verified: table renders with columns, data visible
-* [x] Visual check: scrollable tabs on narrow viewport (<768px) on `07-framework-comparison.html` — verified: overflow-x:auto, scrollWidth(562) > clientWidth(229), tabs scroll horizontally
-* [x] Visual check: hero image renders from local SVG (no external network requests) — verified via Playwright
+### Missing hover/interactive states
+* [ ] fix --> table rows: no hover highlight on interactive tables
+* [ ] fix --> list-group items: no hover feedback
+* [ ] fix --> nav links in shared-theme.css: no background-color transition
 
-### Enhance: Tables page (`pages/02-tables.html`)
-* [x] enhance: `pages/02-tables.html` → added `makeTableFromArray()` demo (cities 2D array, sortable, with code tab), added "Export CSV" button to interactive table
-* [x] enhance: `pages/02-tables.html` → Interactive Sortable Table now uses `bw.makeTable()`, `bw.makeButton()`, `bw.makeInput()`, `bw.makeCodeDemo()`, `bw.saveClientJSON()`, `bw.saveClientFile()` — fully bitwrench-native
+### Component API cleanup
+* [ ] fix --> prop naming inconsistent: some use `content`, some `children`, some both
+* [ ] fix --> `makeTable()` vs `makeDataTable()` — confusing. Document when to use which
+* [ ] fix --> missing string shorthand: `makeButton('OK')` should work as shortcut for `makeButton({ text: 'OK' })`
 
-### Dogfooding & index page
-* [x] fix --> `pages/index.html` blank white page — FIXED: converted to full TACO dogfooding pattern
-* [x] enhance: all pages now use TACO pattern — `<style>` blocks replaced with `bw.injectCSS(bw.css({...}))`, body HTML replaced with `bw.DOM('#app', ...)`
+### Pages polish
+* [ ] fix --> 03-styling.html: sections 5 (responsive) and 6 (mixing approaches) have empty demo areas
+* [ ] fix --> 01-components.html: grid examples use hardcoded hex colors instead of theme tokens
+* [ ] fix --> 01-components.html: no auto-play carousel demo shown
+* [ ] fix --> 01-components.html: dropdown only shows left-aligned; add align:"end" example
+* [ ] fix --> 01-components.html: toast shows static preview but no stacking/auto-dismiss demo
+* [ ] fix --> index.html: feature cards different heights due to text length (no equal-height grid)
+* [ ] fix --> index.html: install strip text wrapping poor on tablet widths
 
-### Fix: Index page hero text, install strip, and stat cards (`pages/index.html`)
-* [x] Hero text black → white: Root cause was `bitwrench-styles.js` hardcoding `color: #1a1a1a` on all headings. Changed to `color: inherit` so headings respect parent container colors. Component-level fix.
-* [x] Install strip readability: Bumped label, command, and CDN text to high-contrast white on dark background. Both `npm install` and `<script>` commands in pill-styled code blocks with subtle border. Added "Downloads & CDN →" link.
-* [x] Stat strip compactified: Reduced padding from 1.5rem to 0.75rem, font sizes scaled down. Each stat item is now a mini card with border and rounded corners.
-* [x] Dynamic bundle size: Fetches `dist/builds.json` at runtime, extracts `bitwrench.umd.min.js` gzipped size. Falls back to "~30 KB" if fetch fails.
-* [x] Hero buttons: Already left-aligned via `display: flex` (defaults to `flex-start`). No change needed.
+## P2: Missing components (framework parity)
 
-### New: Carousel component (`bw.makeCarousel()`)
-* [x] `src/bitwrench-components-v2.js` — added `makeCarousel()` (items, controls, indicators, autoPlay, CSS translateX transitions)
-* [x] `src/bitwrench-styles.js` — added carousel CSS (cosmetic, structural, dark mode, themed indicator colors)
-* [x] `pages/01-components.html` — carousel demo section (image carousel + content cards carousel + options table + code tab)
+### High-value missing components
+* [ ] add --> `makeTooltip()` / `makePopover()` — essential for any component library
+* [ ] add --> `makeStatCard()` — dashboard pages hardcode this pattern; should be a helper
+* [ ] add --> form validation states — error borders, help text, success feedback on inputs
+* [ ] add --> `makeFileUpload()` — styled file input with drag-and-drop zone
+* [ ] add --> `makeSlider()` / `makeRange()` — styled range input
+* [ ] add --> `makeSearchInput()` — input with filter/autocomplete pattern
 
-### New: Local demo images (no external URLs)
-* [x] `pages/images/carousel-1.svg` through `carousel-4.svg` — 800x400 colored slide placeholders
-* [x] `pages/images/hero-bg.svg` — 1200x400 dark gradient for hero background
-* [x] `pages/images/avatar-1.svg` through `avatar-3.svg` — 100x100 circle avatar placeholders
-* [x] `pages/01-components.html` — replaced external `picsum.photos` hero URL with local `images/hero-bg.svg`
+### Medium-value missing components
+* [ ] add --> `makeTimeline()` — chronological event display
+* [ ] add --> `makeStepper()` — multi-step wizard UI
+* [ ] add --> `makeChipInput()` — tag/chip input with removable items
+* [ ] add --> `makeMediaObject()` — image + text side-by-side layout
 
-### New: Combined Clock/Stopwatch/Timer widget (`pages/06-clock.html`)
-* [x] Added `makeCombinedWidget()` — Section 5 "Combined Widget" after "How It Fits Together"
-* [x] Three-tab dark theme widget: Clock (cyan, live time), Stopwatch (green, bw.patch for ms), Timer (orange, countdown with progress bar)
-* [x] Stopwatch uses `bw.patch()` for smooth ~30fps display updates
-* [x] Timer publishes `timer:finished` via `bw.pub/sub`, toast listener shows notification
-* [x] All custom CSS injected via `bw.css()` + `bw.injectCSS()` — no external dependencies
-* [x] Code tab shows composition pattern (sub-panel functions returning TACO)
-* [x] Responsive: font sizes adjust on narrow viewports via `@media (max-width: 480px)`
+### Component completeness
+* [ ] fix --> pagination `onPageChange` not wired in demos — show working example
+* [ ] fix --> breadcrumb active state styling unclear
+* [ ] fix --> `makeCodeDemo()` is 400+ lines for a narrow use case — consider simplifying
 
-### New: Scrollable tabs CSS
-* [x] `src/bitwrench-styles.js` — added `.bw-nav-scrollable` class (cosmetic + structural)
-* [x] `pages/07-framework-comparison.html` — page-specific scrollable overrides for tab bars
+## P3: Theming architecture
 
-### Fix: Navbar version text
-* [x] `pages/shared-theme.css` — `.bw-site-nav-ver` bumped from 0.6875rem/#666 to 0.875rem/rgba(255,255,255,0.85)
+* [ ] fix --> structural vs cosmetic CSS split not enforced in code (documented but not real)
+* [ ] fix --> no CSS custom properties in component rules (hardcoded colors everywhere)
+* [ ] fix --> responsive breakpoint values not documented anywhere user-facing
+* [ ] fix --> underscore vs hyphen class naming still creates confusion (dual selectors)
 
-### Fix: Headings touching left margin (component-level)
-* [x] `pages/shared-theme.css` — added `.demo-section > h3, .demo-section > h4` padding rule (fixes 09-builds.html Addons h3 and any other direct-child sub-headings)
+---
 
-### Fix: Tables & Forms page (`pages/02-tables-forms.html`)
-* [x] Headings were touching parent container — wrapped content in `.demo-content` divs
-* [x] Redundant title text — removed "Step N:" prefix from makeCodeDemo titles, improved descriptions
-* [x] Showcase and Pipeline Demo sections wrapped in `.demo-content` for consistent spacing
-* [x] Added visible border to `.bw-code-demo .bw-table` so step-demo tables don't blend into cards
+## Design explorations (plan before code)
 
-### Fix: Framework Comparison Comparison 2 text
-* [x] "shine" language already removed and replaced with neutral text + links to Themes/Styling pages (verified via grep)
+### Component design system (track MUI / shadcn)
 
-### Fix: Framework Comparison page (`pages/07-framework-comparison.html`)
-* [x] Removed marketing spin from Comparison 1 ("genuine productivity win") — replaced with neutral description
-* [x] Made table preview sortable with controlled state (sortColumn, sortDirection, onSort callback)
-* [x] Updated bitwrench code tab to show sortable table pattern
-* [x] Removed line-count comparison comments ("25+ lines", "~20 lines")
-* [x] Removed "shine" language from Comparison 2 (Dynamic Theming) intro
-* [x] Added links to Themes page and Styling page in Comparison 2 text
-* [x] Added scrollable tabs CSS for narrow viewports (prevents tab overflow)
-* [x] Verified SolidJS present in all 6 comparisons (18 label occurrences confirmed)
+BCCL components should look like they came from a single designer. Currently
+they feel assembled from different CSS snippets — inconsistent spacing, shadows,
+transitions, color usage. Before adding new components, establish shared
+design tokens that ALL components consume:
 
-### Enhance: Framework Comparison counter example
-* [x] Counter now has increment, decrement, reset buttons (was only increment)
-* [x] All 7 framework code tabs updated with +/−/Reset pattern
-* [x] New Comparison 5: Cross-Component Coordination (3 counters + global summary, 6 framework code tabs)
+* [ ] define --> spacing scale (4px base: 4, 8, 12, 16, 24, 32, 48)
+* [x] define --> font-size scale: TYPE_RATIO_PRESETS + generateTypeScale() — modular scale from ratio
+* [x] define --> shadow elevation scale: ELEVATION_PRESETS (flat/sm/md/lg × sm/md/lg/xl)
+* [x] define --> motion/transition curves: MOTION_PRESETS (reduced/standard/expressive × fast/normal/slow+easing)
+* [ ] define --> border-radius scale (none, sm, md, lg, pill) — already in RADIUS_PRESETS, enforce usage
+* [ ] define --> color usage rules: when to use primary vs surface vs muted
 
-### Fix: State page counter button layout (`pages/05-state.html`)
-* [x] Changed `.counters-row` from CSS grid to flexbox with `flex-wrap: wrap`
-* [x] Increased counter card min-width to 160px, added `flex: 1 1 160px`
-* [x] Added smaller button sizing and flex-wrap to `.counter-btns`
+Study MUI's design tokens, shadcn/ui's CSS variables, and Radix's component
+primitives for reference. The theme generator is bitwrench's differentiator —
+no other framework can regenerate an entire design system from 3 seed colors.
+But the base components must be good enough that the generated themes look
+professional, not like skinned Bootstrap 3.
 
-### Enhance: Counter CSS portability (`pages/05-state.html`)
-* [x] Replaced `.counter-card`, `.counter-value`, `.counter-btns`, `.counters-row` CSS classes with inline styles
-* [x] Style vars use CSS custom property fallbacks (e.g. `var(--bw-card-bg, #fff)`) so counters work with or without bitwrench.css
-* [x] Code display updated to show inline-style pattern
+### Automatic reactivity — component-level, not app-level
 
-### Discuss: Performance comparison
-* [x] bitwrench ~2.3ms is competitive (React 3-8ms, Vue 2-5ms, Svelte 1-3ms, SolidJS 0.5-2ms, Vanilla 0.1-0.5ms). Bitwrench sits between Svelte and Vue — impressive for a zero-build library.
+**Design lineage**: Windows MFC, Java Swing, Borland C++ OWL/VCL. In those
+frameworks, a UI control (CButton, JTextField, TEdit) was a self-contained
+object that owned its rendering. You called `SetWindowText()` or `setText()`
+— the control repainted itself. You didn't reach inside and manipulate the
+device context or graphics buffer. The OS/runtime was the assembly language;
+the component API was the programming model.
 
-### New: `bw.raw()` function (`src/bitwrench.js`)
-* [x] Added `bw.raw(str)` — marks a string as pre-sanitized HTML that should not be escaped
-* [x] Returns `{ __bw_raw: true, v: str }` sentinel object
-* [x] `bw.html()` recognizes `__bw_raw` and returns the raw value (no escaping)
-* [x] `bw.createDOM()` recognizes `__bw_raw` — uses `innerHTML` (content child) or `DocumentFragment` (standalone)
-* [x] Used throughout all converted pages for HTML entities (`&mdash;`, `&rarr;`) and inline markup (`<code>`, `<strong>`)
+**Bitwrench BCCL follows this philosophy.** The "assembly language" is
+JS + DOM + CSS. A TACO component definition is the equivalent of a Win32
+window class registration + creation — it declares what the component is,
+how it renders, what state it manages. The `make*()` factory returns a
+component object with methods, just like `new CButton()` returned a control
+with `SetWindowText()`.
 
-### Dogfooding: ALL pages converted to bitwrench TACO pattern
-Every page in `pages/` now follows the dogfooding pattern:
-- Minimal HTML body: `<div id="example-nav"></div><div id="app"></div>`
-- No raw HTML in `<body>` — all structure built as TACO objects
-- No `<style>` blocks — all CSS via `bw.injectCSS(bw.css({...}))`
-- Single mount: `bw.DOM('#app', [pageHeader, contentWrapper])`
+What we have now (`o.render` + manual `bw.update()`) is like writing Win32
+in raw C — `CreateWindowEx()`, `SendMessage(hwnd, WM_SETTEXT, ...)`,
+manually pumping the message loop. That's the low-level layer (and should
+stay available), but BCCL components should encapsulate it completely.
 
-Pages converted:
-* [x] `pages/index.html` — hero, install strip, stats, features, demos, page index, footer
-* [x] `pages/02-tables.html` — interactive table, pagination, data grid demos
-* [x] `pages/02-forms.html` — form showcase, tabbed forms, validation, layout patterns
-* [x] `pages/03-styling.html` — inline styles, generated CSS, external CSS, theme preview
-* [x] `pages/04-dashboard.html` — sidebar, stat cards, bar chart, activity table, theme picker
-* [x] `pages/05-state.html` — counter demos, cross-component, patch, events, todo, dynamic CSS
-* [x] `pages/06-tic-tac-toe-tutorial.html` — 5-step tutorial, congrats, complete example
-* [x] `pages/07-framework-comparison.html` — 6 comparisons, summary table, use cases
-* [x] `pages/08-api-reference.html` — build tool (`tools/build-api-reference.js`) now generates TACO
-* [x] `pages/10-themes.html` — generator, gallery, multi-theme, code export, dark mode
-* [x] `pages/11-code-editor.html` — overview, installation, API reference, demos
+**Core design intent (per Manu)**: A TACO component is a complete component
+specification — not a DOM enhancement object. BCCL `make*()` factories
+should return self-contained components with internal state management.
+The user never calls `bw.update()` for internal state changes. They interact
+through getters/setters and pub/sub at the component boundary.
 
-### Fix: Playwright test selectors after dogfooding
-* [x] fix --> `test/mounted-pattern.spec.js` — updated 4 counter tests: `.counter-card` → `#counter-demo [data-bw-id]`, `.counter-value` → `#counter-demo [data-bw-id] h4 + div` (classes were replaced with inline styles during 05-state.html dogfooding)
-* [x] fix --> removed obsolete `tests/debug-tabs.spec.js` and `tests/tab-click-debug.spec.js` (navigated to `/01-basic-components.html` which no longer exists)
+**How it should work**:
+```javascript
+// Component definition with reactive bindings:
+var card = bw.makeCard({
+  title: 'Users Online',
+  content: '${count}',                        // template binding
+  variant: '${count > 100 ? "success" : "warning"}'  // derived
+});
 
-### QA Results (final)
-* [x] Unit tests: 448 passing (bitwrench.js 88.74% stmt coverage)
-* [x] Playwright chromium: 136/136 passing
-* [x] Playwright firefox/webkit: skipped (browsers not installed locally — CI handles multi-browser)
-* [x] Visual spec: 37/37 passing (all fixed)
+// Component manages its own DOM updates:
+card.set('count', 42);     // card re-renders internally
+card.get('count');          // → 42
+card.on('click', handler); // event interface
+card.sub('data:update', function(d) { card.set('count', d.n); });
+
+// Or via pub/sub for cross-component:
+bw.pub('data:update', { n: 99 }); // card auto-updates
+```
+
+**What this means for implementation**:
+1. `make*()` factories compile template strings (`'${expr}'`) into
+   internal render functions that know which state keys they depend on
+2. State is wrapped in Proxy (or ODP fallback) — mutations auto-trigger
+   only the affected DOM nodes, not a full re-render
+3. Component exposes `.get()`, `.set()`, `.on()`, `.sub()` — no direct
+   DOM access needed by consumer
+4. `o.render` remains available as escape hatch for fully custom components
+5. `bw.update()` and `bw.patch()` remain for manual/perf-critical paths
+
+**Key distinction from my earlier (wrong) framing**:
+- WRONG: "wrap el._bw_state in Proxy, auto-call bw.update()" — this is
+  jQuery thinking. The user shouldn't know about `el._bw_state` at all.
+- RIGHT: the component IS the abstraction. State is internal. The public
+  API is get/set/on/sub. The TACO definition compiles to self-managing
+  DOM code, just like Svelte compiles .svelte files.
+
+**Design questions**:
+- Template syntax: `'${expr}'` is natural JS but conflicts with template
+  literals in ES6. Alternative: `'{{expr}}'` (Mustache-style) or
+  `{ bind: 'count' }` (object form). Need to decide.
+- Nested reactivity: `card.set('user.name', 'Alice')` — dot-path or
+  only top-level keys?
+- Array reactivity: push/pop/splice on state arrays — track mutations
+  or require `card.set('items', newArray)`?
+- IE11: Proxy not available. ODP works for known keys but can't detect
+  new property addition. Accept this limitation for Tier 1?
+- Does `bw.render()` (the existing handle system) become the basis for
+  this? It already has setState, setProp, show/hide, destroy.
+
+**Target**: Design doc first (`dev/bw-reactivity-design.md`). This is the
+most important architectural decision remaining. Get it right before coding.
+
+### LLM UI generation
+
+The killer use case. TACO is uniquely positioned for LLM-generated UIs:
+- JSON-native — LLMs already output JSON fluently, no JSX/template parsing
+- Component vocabulary — `makeCard`, `makeTable` etc. are higher-level
+  than raw HTML, fewer tokens, fewer mistakes
+- Self-contained components with get/set/pub/sub — LLMs don't need to
+  emit manual DOM update boilerplate
+- Server push via bw.remote() — LLM generates TACO on server, pushes
+  to client in real time
+
+**Pipeline**: LLM → TACO JSON → bw.remote() push → client render → compile
+
+**Prerequisites (in order)**:
+1. Components look good out of the box (this round of polish)
+2. Reactivity is component-native (LLMs emit component defs, not render loops)
+3. Server-side rendering works (bw.remote / SSE push)
+4. Compilation works (TACO → optimized production code)
+
+**Deferred until**: reactivity + server + compile are done. But these
+prerequisites ARE the product. Polish them and the LLM story follows.

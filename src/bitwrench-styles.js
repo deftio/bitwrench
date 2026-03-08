@@ -45,6 +45,88 @@ export var RADIUS_PRESETS = {
   pill: { btn: '50rem', card: '1rem', badge: '50rem', alert: '1rem', input: '50rem' }
 };
 
+// ---- Typography scale presets ----
+
+export var TYPE_RATIO_PRESETS = {
+  tight:    1.125,
+  normal:   1.200,
+  relaxed:  1.250,
+  dramatic: 1.333
+};
+
+/**
+ * Generate a modular type scale from a base size and ratio.
+ * @param {number} base - Base font size in px (default 16)
+ * @param {number} ratio - Scale ratio (default 1.200)
+ * @returns {Object} { xs, sm, base, lg, xl, '2xl', '3xl', '4xl' } in px
+ */
+export function generateTypeScale(base, ratio) {
+  if (!base) base = 16;
+  if (!ratio) ratio = 1.200;
+  return {
+    xs:   Math.round(base / (ratio * ratio)),
+    sm:   Math.round(base / ratio),
+    base: base,
+    lg:   Math.round(base * ratio),
+    xl:   Math.round(base * ratio * ratio),
+    '2xl': Math.round(base * Math.pow(ratio, 3)),
+    '3xl': Math.round(base * Math.pow(ratio, 4)),
+    '4xl': Math.round(base * Math.pow(ratio, 5))
+  };
+}
+
+// ---- Elevation (shadow depth) presets ----
+
+export var ELEVATION_PRESETS = {
+  flat: {
+    sm:  'none',
+    md:  'none',
+    lg:  'none',
+    xl:  'none'
+  },
+  sm: {
+    sm:  '0 1px 2px rgba(0,0,0,0.05)',
+    md:  '0 1px 3px rgba(0,0,0,0.08)',
+    lg:  '0 2px 6px rgba(0,0,0,0.10)',
+    xl:  '0 4px 12px rgba(0,0,0,0.12)'
+  },
+  md: {
+    sm:  '0 1px 3px rgba(0,0,0,0.08)',
+    md:  '0 2px 6px rgba(0,0,0,0.12)',
+    lg:  '0 4px 12px rgba(0,0,0,0.16)',
+    xl:  '0 8px 24px rgba(0,0,0,0.20)'
+  },
+  lg: {
+    sm:  '0 2px 4px rgba(0,0,0,0.10)',
+    md:  '0 4px 12px rgba(0,0,0,0.16)',
+    lg:  '0 8px 24px rgba(0,0,0,0.22)',
+    xl:  '0 16px 48px rgba(0,0,0,0.28)'
+  }
+};
+
+// ---- Motion (transition) presets ----
+
+export var MOTION_PRESETS = {
+  reduced: {
+    fast:    '0ms',
+    normal:  '0ms',
+    slow:    '0ms',
+    easing:  'linear'
+  },
+  standard: {
+    fast:    '100ms',
+    normal:  '200ms',
+    slow:    '300ms',
+    easing:  'ease-out'
+  },
+  expressive: {
+    fast:    '150ms',
+    normal:  '300ms',
+    slow:    '500ms',
+    easing:  'cubic-bezier(0.34, 1.56, 0.64, 1)'
+  }
+};
+
 /**
  * Default palette config — matches existing hardcoded colors
  */
@@ -54,8 +136,8 @@ export var DEFAULT_PALETTE_CONFIG = {
   tertiary: '#006666',
   success: '#198754',
   danger: '#dc3545',
-  warning: '#ffc107',
-  info: '#0dcaf0',
+  warning: '#b38600',
+  info: '#0891b2',
   light: '#f8f9fa',
   dark: '#212529'
 };
@@ -80,18 +162,32 @@ export var THEME_PRESETS = {
 };
 
 /**
- * Resolve layout config to spacing + radius objects
- * @param {Object} config - { spacing, radius, fontSize }
- * @returns {Object} { spacing, radius, fontSize }
+ * Resolve layout config to spacing, radius, typeScale, elevation, and motion objects.
+ * @param {Object} config - { spacing, radius, fontSize, typeRatio, elevation, motion }
+ * @returns {Object} { spacing, radius, fontSize, typeScale, elevation, motion }
  */
 export function resolveLayout(config) {
   var sp = (config && config.spacing) || 'normal';
   var rd = (config && config.radius) || 'md';
   var fs = (config && config.fontSize) || 1.0;
+
+  // typeRatio: accept preset name or number
+  var tr = (config && config.typeRatio) || 'normal';
+  var ratioNum = typeof tr === 'string' ? (TYPE_RATIO_PRESETS[tr] || TYPE_RATIO_PRESETS.normal) : tr;
+
+  // elevation: accept preset name or object
+  var el = (config && config.elevation) || 'md';
+
+  // motion: accept preset name or object
+  var mo = (config && config.motion) || 'standard';
+
   return {
     spacing: typeof sp === 'string' ? (SPACING_PRESETS[sp] || SPACING_PRESETS.normal) : sp,
     radius: typeof rd === 'string' ? (RADIUS_PRESETS[rd] || RADIUS_PRESETS.md) : rd,
-    fontSize: fs
+    fontSize: fs,
+    typeScale: generateTypeScale(16, ratioNum),
+    elevation: typeof el === 'string' ? (ELEVATION_PRESETS[el] || ELEVATION_PRESETS.md) : el,
+    motion: typeof mo === 'string' ? (MOTION_PRESETS[mo] || MOTION_PRESETS.standard) : mo
   };
 }
 
@@ -115,12 +211,13 @@ function scopeSelector(name, sel) {
 // Themed CSS generators
 // =========================================================================
 
-function generateTypographyThemed(scope, palette) {
+function generateTypographyThemed(scope, palette, layout) {
+  var mot = layout.motion;
   var rules = {};
   rules[scopeSelector(scope, 'a')] = {
     'color': palette.primary.base,
     'text-decoration': 'none',
-    'transition': 'color 0.15s'
+    'transition': 'color ' + mot.fast + ' ' + mot.easing
   };
   rules[scopeSelector(scope, 'a:hover')] = {
     'color': palette.primary.hover,
@@ -140,7 +237,8 @@ function generateButtons(scope, palette, layout) {
     'border-radius': rd.btn
   };
   rules[scopeSelector(scope, '.bw-btn:focus-visible')] = {
-    'outline': '0',
+    'outline': '2px solid currentColor',
+    'outline-offset': '2px',
     'box-shadow': '0 0 0 3px ' + palette.primary.focus
   };
 
@@ -230,14 +328,15 @@ function generateCards(scope, palette, layout) {
   var sp = layout.spacing;
   var rd = layout.radius;
 
+  var elev = layout.elevation;
   rules[scopeSelector(scope, '.bw-card')] = {
     'background-color': '#fff',
     'border': '1px solid ' + palette.light.border,
     'border-radius': rd.card,
-    'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)'
+    'box-shadow': elev.sm
   };
   rules[scopeSelector(scope, '.bw-card:hover')] = {
-    'box-shadow': '0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06)'
+    'box-shadow': elev.md
   };
   rules[scopeSelector(scope, '.bw-card-body')] = {
     'padding': sp.card
@@ -284,6 +383,8 @@ function generateForms(scope, palette, layout) {
   };
   rules[scopeSelector(scope, '.bw-form-control:focus')] = {
     'border-color': palette.primary.border,
+    'outline': '2px solid ' + palette.primary.base,
+    'outline-offset': '-1px',
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
   };
   rules[scopeSelector(scope, '.bw-form-control::placeholder')] = {
@@ -441,7 +542,8 @@ function generatePagination(scope, palette) {
     'border-color': palette.light.border
   };
   rules[scopeSelector(scope, '.bw-page-link:focus')] = {
-    'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    'outline': '2px solid ' + palette.primary.base,
+    'outline-offset': '-2px'
   };
   rules[scopeSelector(scope, '.bw-page-item.bw-active .bw-page-link')] = {
     'color': palette.primary.textOn,
@@ -600,12 +702,12 @@ function generateCarouselThemed(scope, palette) {
   return rules;
 }
 
-function generateModalThemed(scope, palette) {
+function generateModalThemed(scope, palette, layout) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-modal-content')] = {
     'background-color': '#fff',
     'border-color': palette.light.border,
-    'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    'box-shadow': layout.elevation.lg
   };
   rules[scopeSelector(scope, '.bw-modal-header')] = {
     'border-bottom-color': palette.light.border
@@ -619,12 +721,12 @@ function generateModalThemed(scope, palette) {
   return rules;
 }
 
-function generateToastThemed(scope, palette) {
+function generateToastThemed(scope, palette, layout) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-toast')] = {
     'background-color': '#fff',
     'border-color': 'rgba(0,0,0,0.1)',
-    'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    'box-shadow': layout.elevation.lg
   };
   rules[scopeSelector(scope, '.bw-toast-header')] = {
     'border-bottom-color': 'rgba(0,0,0,0.05)'
@@ -638,12 +740,12 @@ function generateToastThemed(scope, palette) {
   return rules;
 }
 
-function generateDropdownThemed(scope, palette) {
+function generateDropdownThemed(scope, palette, layout) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-dropdown-menu')] = {
     'background-color': '#fff',
     'border-color': palette.light.border,
-    'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    'box-shadow': layout.elevation.md
   };
   rules[scopeSelector(scope, '.bw-dropdown-item')] = {
     'color': palette.dark.base
@@ -709,7 +811,7 @@ function generateAvatarThemed(scope, palette) {
 export function generateThemedCSS(scopeName, palette, layout) {
   return Object.assign({},
     generateResetThemed(scopeName, palette),
-    generateTypographyThemed(scopeName, palette),
+    generateTypographyThemed(scopeName, palette, layout),
     generateButtons(scopeName, palette, layout),
     generateAlerts(scopeName, palette, layout),
     generateBadges(scopeName, palette),
@@ -728,9 +830,9 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateSectionsThemed(scopeName, palette),
     generateAccordionThemed(scopeName, palette),
     generateCarouselThemed(scopeName, palette),
-    generateModalThemed(scopeName, palette),
-    generateToastThemed(scopeName, palette),
-    generateDropdownThemed(scopeName, palette),
+    generateModalThemed(scopeName, palette, layout),
+    generateToastThemed(scopeName, palette, layout),
+    generateDropdownThemed(scopeName, palette, layout),
     generateSwitchThemed(scopeName, palette),
     generateSkeletonThemed(scopeName, palette),
     generateAvatarThemed(scopeName, palette),
@@ -763,10 +865,10 @@ export const defaultStyles = {
       '--bw-pink': '#d63384',
       '--bw-red': '#dc3545',
       '--bw-orange': '#fd7e14',
-      '--bw-yellow': '#ffc107',
+      '--bw-yellow': '#b38600',
       '--bw-green': '#198754',
       '--bw-teal': '#20c997',
-      '--bw-cyan': '#0dcaf0',
+      '--bw-cyan': '#0891b2',
       '--bw-black': '#000',
       '--bw-white': '#fff',
       '--bw-gray': '#6c757d',
@@ -783,8 +885,8 @@ export const defaultStyles = {
       '--bw-primary': '#006666',
       '--bw-secondary': '#6c757d',
       '--bw-success': '#198754',
-      '--bw-info': '#0dcaf0',
-      '--bw-warning': '#ffc107',
+      '--bw-info': '#0891b2',
+      '--bw-warning': '#b38600',
       '--bw-danger': '#dc3545',
       '--bw-light': '#f8f9fa',
       '--bw-dark': '#212529',
@@ -1017,7 +1119,7 @@ export const defaultStyles = {
       'font-size': '0.875rem',
       'font-family': 'inherit',
       'border-radius': '6px',
-      'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+      'transition': 'all 0.15s ease-out',
       'box-shadow': '0 1px 2px rgba(0,0,0,.05)',
       'gap': '0.5rem'
     },
@@ -1031,7 +1133,8 @@ export const defaultStyles = {
       'box-shadow': '0 1px 2px rgba(0,0,0,.05)'
     },
     '.bw-btn:focus-visible': {
-      'outline': '0',
+      'outline': '2px solid currentColor',
+      'outline-offset': '2px',
       'box-shadow': '0 0 0 3px rgba(0, 102, 102, 0.3)'
     },
     '.bw-btn:disabled': {
@@ -1087,8 +1190,8 @@ export const defaultStyles = {
 
     '.bw-btn-warning': {
       'color': '#000',
-      'background-color': '#ffc107',
-      'border-color': '#ffc107'
+      'background-color': '#b38600',
+      'border-color': '#b38600'
     },
     '.bw-btn-warning:hover': {
       'color': '#000',
@@ -1098,8 +1201,8 @@ export const defaultStyles = {
 
     '.bw-btn-info': {
       'color': '#000',
-      'background-color': '#0dcaf0',
-      'border-color': '#0dcaf0'
+      'background-color': '#0891b2',
+      'border-color': '#0891b2'
     },
     '.bw-btn-info:hover': {
       'color': '#000',
@@ -1175,25 +1278,25 @@ export const defaultStyles = {
     },
 
     '.bw-btn-outline-warning': {
-      'color': '#ffc107',
-      'border-color': '#ffc107',
+      'color': '#b38600',
+      'border-color': '#b38600',
       'background-color': 'transparent'
     },
     '.bw-btn-outline-warning:hover': {
       'color': '#000',
-      'background-color': '#ffc107',
-      'border-color': '#ffc107'
+      'background-color': '#b38600',
+      'border-color': '#b38600'
     },
 
     '.bw-btn-outline-info': {
-      'color': '#0dcaf0',
-      'border-color': '#0dcaf0',
+      'color': '#0891b2',
+      'border-color': '#0891b2',
       'background-color': 'transparent'
     },
     '.bw-btn-outline-info:hover': {
       'color': '#000',
-      'background-color': '#0dcaf0',
-      'border-color': '#0dcaf0'
+      'background-color': '#0891b2',
+      'border-color': '#0891b2'
     },
 
     '.bw-btn-outline-light': {
@@ -1247,7 +1350,7 @@ export const defaultStyles = {
       'border': '1px solid #e5e5e5',
       'border-radius': '8px',
       'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)',
-      'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+      'transition': 'box-shadow 0.2s ease-out, transform 0.2s ease-out',
       'margin-bottom': '1.5rem',
       'overflow': 'hidden'
     },
@@ -1317,14 +1420,15 @@ export const defaultStyles = {
       'border': '1px solid #ccc',
       'appearance': 'none',
       'border-radius': '6px',
-      'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+      'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out',
       'font-family': 'inherit'
     },
     '.bw-form-control:focus': {
       'color': '#1a1a1a',
       'background-color': '#fff',
       'border-color': '#80cccc',
-      'outline': '0',
+      'outline': '2px solid #006666',
+      'outline-offset': '-1px',
       'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
     },
     '.bw-form-control::placeholder': {
@@ -1595,8 +1699,8 @@ export const defaultStyles = {
   badges: {
     '.bw-badge': {
       'display': 'inline-block',
-      'padding': '.4em .75em',
-      'font-size': '.875em',
+      'padding': '0.375rem 0.625rem',
+      'font-size': '0.875rem',
       'font-weight': '600',
       'line-height': '1.3',
       'color': '#fff',
@@ -1609,12 +1713,12 @@ export const defaultStyles = {
       'display': 'none'
     },
     '.bw-badge-sm': {
-      'font-size': '.75em',
-      'padding': '.25em .5em'
+      'font-size': '0.75rem',
+      'padding': '0.25rem 0.5rem'
     },
     '.bw-badge-lg': {
-      'font-size': '1em',
-      'padding': '.5em .9em'
+      'font-size': '1rem',
+      'padding': '0.5rem 0.875rem'
     },
     '.bw-badge-pill': {
       'border-radius': '50rem'
@@ -1637,11 +1741,11 @@ export const defaultStyles = {
     },
     '.bw-badge-info': {
       'color': '#000',
-      'background-color': '#0dcaf0'
+      'background-color': '#0891b2'
     },
     '.bw-badge-warning': {
       'color': '#000',
-      'background-color': '#ffc107'
+      'background-color': '#b38600'
     },
     '.bw-badge-danger': {
       'color': '#fff',
@@ -1679,7 +1783,7 @@ export const defaultStyles = {
       'text-align': 'center',
       'white-space': 'nowrap',
       'background-color': '#006666',
-      'transition': 'width .6s ease',
+      'transition': 'width 0.3s ease-out',
       'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)',
       'font-weight': '600'
     },
@@ -1697,8 +1801,8 @@ export const defaultStyles = {
     '.bw-progress-bar-secondary': { 'background-color': '#6c757d' },
     '.bw-progress-bar-success': { 'background-color': '#198754' },
     '.bw-progress-bar-danger': { 'background-color': '#dc3545' },
-    '.bw-progress-bar-warning': { 'background-color': '#ffc107' },
-    '.bw-progress-bar-info': { 'background-color': '#0dcaf0' }
+    '.bw-progress-bar-warning': { 'background-color': '#b38600' },
+    '.bw-progress-bar-info': { 'background-color': '#0891b2' }
   },
 
   /**
@@ -1836,6 +1940,11 @@ export const defaultStyles = {
       'text-decoration': 'none',
       'background-color': '#f8f9fa'
     },
+    'a.bw-list-group-item:focus-visible, .bw-list-group-item:focus-visible': {
+      'z-index': '2',
+      'outline': '2px solid #006666',
+      'outline-offset': '-2px'
+    },
     '.bw-list-group-flush': {
       'border-radius': '0'
     },
@@ -1872,7 +1981,7 @@ export const defaultStyles = {
       'text-decoration': 'none',
       'background-color': '#fff',
       'border': '1px solid #dee2e6',
-      'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out'
+      'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out'
     },
     '.bw-page-link:hover': {
       'z-index': '2',
@@ -1884,8 +1993,8 @@ export const defaultStyles = {
       'z-index': '3',
       'color': '#004d4d',
       'background-color': '#e9ecef',
-      'outline': '0',
-      'box-shadow': '0 0 0 0.25rem rgba(0, 102, 102, 0.25)'
+      'outline': '2px solid #006666',
+      'outline-offset': '-2px'
     },
     '.bw-page-item:first-child .bw-page-link': {
       'margin-left': '0',
@@ -2041,7 +2150,7 @@ export const defaultStyles = {
    */
   enhancedCards: {
     '.bw-card-hoverable': {
-      'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+      'transition': 'all 0.3s ease-out'
     },
     '.bw-card-hoverable:hover': {
       'transform': 'translateY(-4px)',
@@ -2469,7 +2578,7 @@ export const defaultStyles = {
       'overflow-anchor': 'none',
       'cursor': 'pointer',
       'font-family': 'inherit',
-      'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out'
+      'transition': 'color 0.15s ease-out, background-color 0.15s ease-out'
     },
     '.bw-accordion-button::after': {
       'flex-shrink': '0',
@@ -2480,7 +2589,7 @@ export const defaultStyles = {
       'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
       'background-repeat': 'no-repeat',
       'background-size': '1.25rem',
-      'transition': 'transform 0.2s ease-in-out'
+      'transition': 'transform 0.2s ease-out'
     },
     // Expanded header: tinted background + darker text (Bootstrap pattern)
     '.bw-accordion-button:not(.bw-collapsed)': {
@@ -2528,7 +2637,7 @@ export const defaultStyles = {
     },
     '.bw-carousel-track': {
       'display': 'flex',
-      'transition': 'transform 0.4s ease',
+      'transition': 'transform 0.3s ease-out',
       'height': '100%'
     },
     '.bw-carousel-slide': {
@@ -2553,7 +2662,7 @@ export const defaultStyles = {
       'padding': '0.75rem 1rem',
       'background': 'linear-gradient(transparent, rgba(0,0,0,0.6))',
       'color': '#fff',
-      'font-size': '0.9rem'
+      'font-size': '0.875rem'
     },
     '.bw-carousel-control': {
       'position': 'absolute',
@@ -2620,7 +2729,9 @@ export const defaultStyles = {
    */
   modal: {
     '.bw-modal': {
-      'display': 'none',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
       'position': 'fixed',
       'top': '0',
       'left': '0',
@@ -2631,13 +2742,14 @@ export const defaultStyles = {
       'overflow-x': 'hidden',
       'overflow-y': 'auto',
       'opacity': '0',
-      'transition': 'opacity 0.15s linear'
+      'visibility': 'hidden',
+      'pointer-events': 'none',
+      'transition': 'opacity 0.2s ease, visibility 0.2s ease'
     },
     '.bw-modal.bw-modal-show': {
-      'display': 'flex',
-      'align-items': 'center',
-      'justify-content': 'center',
-      'opacity': '1'
+      'opacity': '1',
+      'visibility': 'visible',
+      'pointer-events': 'auto'
     },
     '.bw-modal-dialog': {
       'position': 'relative',
@@ -2778,7 +2890,7 @@ export const defaultStyles = {
       'top': '100%',
       'left': '0',
       'z-index': '1000',
-      'display': 'none',
+      'display': 'block',
       'min-width': '10rem',
       'padding': '0.5rem 0',
       'margin': '0.125rem 0 0',
@@ -2786,10 +2898,18 @@ export const defaultStyles = {
       'background-clip': 'padding-box',
       'border': '1px solid rgba(0,0,0,0.15)',
       'border-radius': '6px',
-      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)',
+      'opacity': '0',
+      'visibility': 'hidden',
+      'transform': 'translateY(-4px)',
+      'pointer-events': 'none',
+      'transition': 'opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease'
     },
     '.bw-dropdown-menu.bw-dropdown-show': {
-      'display': 'block'
+      'opacity': '1',
+      'visibility': 'visible',
+      'transform': 'translateY(0)',
+      'pointer-events': 'auto'
     },
     '.bw-dropdown-menu-end': {
       'left': 'auto',
@@ -2812,6 +2932,11 @@ export const defaultStyles = {
     },
     '.bw-dropdown-item:hover': {
       'color': '#1e2125',
+      'background-color': '#f8f9fa'
+    },
+    '.bw-dropdown-item:focus-visible': {
+      'outline': '2px solid #006666',
+      'outline-offset': '-2px',
       'background-color': '#f8f9fa'
     },
     '.bw-dropdown-item.disabled': {
@@ -2847,7 +2972,7 @@ export const defaultStyles = {
       'background-position': 'left center',
       'background-repeat': 'no-repeat',
       'background-size': 'contain',
-      'transition': 'background-position 0.15s ease-in-out, background-color 0.15s ease-in-out',
+      'transition': 'background-position 0.15s ease-out, background-color 0.15s ease-out',
       'cursor': 'pointer'
     },
     '.bw-form-switch .bw-switch-input:checked': {
@@ -2934,8 +3059,8 @@ export const defaultStyles = {
     '.bw-avatar-secondary': { 'background-color': '#6c757d', 'color': '#fff' },
     '.bw-avatar-success': { 'background-color': '#198754', 'color': '#fff' },
     '.bw-avatar-danger': { 'background-color': '#dc3545', 'color': '#fff' },
-    '.bw-avatar-warning': { 'background-color': '#ffc107', 'color': '#000' },
-    '.bw-avatar-info': { 'background-color': '#0dcaf0', 'color': '#000' },
+    '.bw-avatar-warning': { 'background-color': '#b38600', 'color': '#000' },
+    '.bw-avatar-info': { 'background-color': '#0891b2', 'color': '#000' },
     '.bw-avatar-light': { 'background-color': '#f8f9fa', 'color': '#212529' },
     '.bw-avatar-dark': { 'background-color': '#212529', 'color': '#fff' }
   },
@@ -3044,8 +3169,8 @@ export const defaultStyles = {
     '.bw-text-secondary': { 'color': '#6c757d' },
     '.bw-text-success': { 'color': '#198754' },
     '.bw-text-danger': { 'color': '#dc3545' },
-    '.bw-text-warning': { 'color': '#ffc107' },
-    '.bw-text-info': { 'color': '#0dcaf0' },
+    '.bw-text-warning': { 'color': '#b38600' },
+    '.bw-text-info': { 'color': '#0891b2' },
     '.bw-text-light': { 'color': '#f8f9fa' },
     '.bw-text-dark': { 'color': '#212529' },
     '.bw-text-muted': { 'color': '#6c757d' },
@@ -3054,8 +3179,8 @@ export const defaultStyles = {
     '.bw-bg-secondary': { 'background-color': '#6c757d' },
     '.bw-bg-success': { 'background-color': '#198754' },
     '.bw-bg-danger': { 'background-color': '#dc3545' },
-    '.bw-bg-warning': { 'background-color': '#ffc107' },
-    '.bw-bg-info': { 'background-color': '#0dcaf0' },
+    '.bw-bg-warning': { 'background-color': '#b38600' },
+    '.bw-bg-info': { 'background-color': '#0891b2' },
     '.bw-bg-light': { 'background-color': '#f8f9fa' },
     '.bw-bg-dark': { 'background-color': '#212529' },
 
@@ -3310,12 +3435,12 @@ export function getStructuralStyles() {
     'text-decoration': 'none', 'vertical-align': 'middle', 'cursor': 'pointer',
     'user-select': 'none', 'border': '1px solid transparent',
     'padding': '0.5rem 1.125rem', 'font-size': '0.875rem', 'font-family': 'inherit',
-    'border-radius': '6px', 'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+    'border-radius': '6px', 'transition': 'all 0.15s ease-out',
     'gap': '0.5rem'
   };
   rules['.bw-btn:hover'] = { 'text-decoration': 'none', 'transform': 'translateY(-1px)' };
   rules['.bw-btn:active'] = { 'transform': 'translateY(0)' };
-  rules['.bw-btn:focus-visible'] = { 'outline': '0' };
+  rules['.bw-btn:focus-visible'] = { 'outline': '2px solid currentColor', 'outline-offset': '2px' };
   rules['.bw-btn:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed', 'pointer-events': 'none' };
   rules['.bw-btn-lg'] = { 'padding': '0.625rem 1.5rem', 'font-size': '1rem', 'border-radius': '8px' };
   rules['.bw-btn-sm'] = { 'padding': '0.25rem 0.75rem', 'font-size': '0.8125rem', 'border-radius': '5px' };
@@ -3325,7 +3450,7 @@ export function getStructuralStyles() {
     'position': 'relative', 'display': 'flex', 'flex-direction': 'column',
     'min-width': '0', 'height': '100%', 'word-wrap': 'break-word',
     'background-clip': 'border-box', 'border': '1px solid transparent',
-    'border-radius': '8px', 'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+    'border-radius': '8px', 'transition': 'box-shadow 0.2s ease-out, transform 0.2s ease-out',
     'margin-bottom': '1.5rem', 'overflow': 'hidden'
   };
   rules['.bw-card-body'] = { 'flex': '1 1 auto', 'padding': '1.25rem 1.5rem' };
@@ -3334,7 +3459,7 @@ export function getStructuralStyles() {
   rules['.bw-card-text'] = { 'margin-bottom': '0', 'font-size': '0.9375rem', 'line-height': '1.6' };
   rules['.bw-card-header'] = { 'padding': '0.875rem 1.5rem', 'margin-bottom': '0', 'font-weight': '600', 'font-size': '0.875rem' };
   rules['.bw-card-footer'] = { 'padding': '0.75rem 1.5rem', 'font-size': '0.875rem' };
-  rules['.bw-card-hoverable'] = { 'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' };
+  rules['.bw-card-hoverable'] = { 'transition': 'all 0.3s ease-out' };
   rules['.bw-card-img-top'] = { 'width': '100%', 'border-top-left-radius': '7px', 'border-top-right-radius': '7px' };
   rules['.bw-card-img-bottom'] = { 'width': '100%', 'border-bottom-left-radius': '7px', 'border-bottom-right-radius': '7px' };
   rules['.bw-card-img-left'] = { 'width': '40%', 'object-fit': 'cover' };
@@ -3347,10 +3472,10 @@ export function getStructuralStyles() {
     'font-size': '0.9375rem', 'font-weight': '400', 'line-height': '1.5',
     'background-clip': 'padding-box', 'appearance': 'none',
     'border': '1px solid transparent', 'border-radius': '6px',
-    'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+    'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out',
     'font-family': 'inherit'
   };
-  rules['.bw-form-control:focus'] = { 'outline': '0' };
+  rules['.bw-form-control:focus'] = { 'outline': '2px solid currentColor', 'outline-offset': '-1px' };
   rules['.bw-form-control::placeholder'] = { 'opacity': '1' };
   rules['.bw-form-label'] = { 'display': 'block', 'margin-bottom': '0.375rem', 'font-size': '0.875rem', 'font-weight': '600' };
   rules['.bw-form-group'] = { 'margin-bottom': '1.25rem' };
@@ -3420,13 +3545,13 @@ export function getStructuralStyles() {
 
   // Badges (structural)
   rules['.bw-badge'] = {
-    'display': 'inline-block', 'padding': '.4em .75em', 'font-size': '.875em',
+    'display': 'inline-block', 'padding': '0.375rem 0.625rem', 'font-size': '0.875rem',
     'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
     'white-space': 'nowrap', 'vertical-align': 'baseline', 'border-radius': '.375rem'
   };
   rules['.bw-badge:empty'] = { 'display': 'none' };
-  rules['.bw-badge-sm'] = { 'font-size': '.75em', 'padding': '.25em .5em' };
-  rules['.bw-badge-lg'] = { 'font-size': '1em', 'padding': '.5em .9em' };
+  rules['.bw-badge-sm'] = { 'font-size': '0.75rem', 'padding': '0.25rem 0.5rem' };
+  rules['.bw-badge-lg'] = { 'font-size': '1rem', 'padding': '0.5rem 0.875rem' };
   rules['.bw-badge-pill'] = { 'border-radius': '50rem' };
 
   // Progress (structural)
@@ -3434,7 +3559,7 @@ export function getStructuralStyles() {
   rules['.bw-progress-bar'] = {
     'display': 'flex', 'flex-direction': 'column', 'justify-content': 'center',
     'overflow': 'hidden', 'text-align': 'center', 'white-space': 'nowrap',
-    'transition': 'width .6s ease', 'font-weight': '600'
+    'transition': 'width 0.3s ease-out', 'font-weight': '600'
   };
   rules['.bw-progress-bar-striped'] = {
     'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
@@ -3451,7 +3576,7 @@ export function getStructuralStyles() {
     'display': 'block', 'padding': '0.625rem 1rem', 'font-size': '0.875rem',
     'font-weight': '500', 'text-decoration': 'none', 'cursor': 'pointer',
     'border': 'none', 'background': 'transparent',
-    'transition': 'color 0.15s, border-color 0.15s', 'font-family': 'inherit'
+    'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out', 'font-family': 'inherit'
   };
   rules['.bw-nav-tabs .bw-nav-link'] = { 'border': 'none', 'border-bottom': '2px solid transparent', 'border-radius': '0', 'background-color': 'transparent' };
   rules['.bw-nav-pills .bw-nav-link'] = { 'border-radius': '6px' };
@@ -3469,7 +3594,8 @@ export function getStructuralStyles() {
   rules['.bw-list-group-item:last-child'] = { 'border-bottom-right-radius': 'inherit', 'border-bottom-left-radius': 'inherit' };
   rules['.bw-list-group-item + .bw-list-group-item'] = { 'border-top-width': '0' };
   rules['.bw-list-group-item.disabled'] = { 'pointer-events': 'none' };
-  rules['a.bw-list-group-item'] = { 'cursor': 'pointer' };
+  rules['a.bw-list-group-item'] = { 'cursor': 'pointer', 'transition': 'background-color 0.15s ease-out, color 0.15s ease-out' };
+  rules['a.bw-list-group-item:focus-visible, .bw-list-group-item:focus-visible'] = { 'z-index': '2', 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
   rules['.bw-list-group-flush'] = { 'border-radius': '0' };
   rules['.bw-list-group-flush > .bw-list-group-item'] = { 'border-width': '0 0 1px', 'border-radius': '0' };
   rules['.bw-list-group-flush > .bw-list-group-item:last-child'] = { 'border-bottom-width': '0' };
@@ -3480,10 +3606,11 @@ export function getStructuralStyles() {
   rules['.bw-page-link'] = {
     'position': 'relative', 'display': 'block', 'padding': '0.375rem 0.75rem',
     'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none',
-    'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out'
+    'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out'
   };
   rules['.bw-page-item:first-child .bw-page-link'] = { 'margin-left': '0', 'border-top-left-radius': '0.375rem', 'border-bottom-left-radius': '0.375rem' };
   rules['.bw-page-item:last-child .bw-page-link'] = { 'border-top-right-radius': '0.375rem', 'border-bottom-right-radius': '0.375rem' };
+  rules['.bw-page-link:focus-visible'] = { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
 
   // Breadcrumb (structural)
   rules['.bw-breadcrumb'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'padding': '0 0', 'margin-bottom': '1rem', 'list-style': 'none' };
@@ -3592,12 +3719,12 @@ export function getStructuralStyles() {
     'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
     'padding': '1rem 1.25rem', 'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
     'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
-    'font-family': 'inherit', 'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out'
+    'font-family': 'inherit', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out'
   };
   rules['.bw-accordion-button::after'] = {
     'flex-shrink': '0', 'width': '1.25rem', 'height': '1.25rem', 'margin-left': 'auto',
     'content': '""', 'background-repeat': 'no-repeat', 'background-size': '1.25rem',
-    'transition': 'transform 0.2s ease-in-out'
+    'transition': 'transform 0.2s ease-out'
   };
   rules['.bw-accordion-button:not(.bw-collapsed)::after'] = { 'transform': 'rotate(-180deg)' };
   rules['.bw-accordion-collapse'] = { 'max-height': '0', 'overflow': 'hidden', 'transition': 'max-height 0.3s ease' };
@@ -3606,10 +3733,13 @@ export function getStructuralStyles() {
 
   // Modal (structural)
   rules['.bw-modal'] = {
-    'display': 'none', 'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
-    'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto', 'opacity': '0', 'transition': 'opacity 0.15s linear'
+    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+    'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
+    'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto',
+    'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none',
+    'transition': 'opacity 0.2s ease, visibility 0.2s ease'
   };
-  rules['.bw-modal.bw-modal-show'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'opacity': '1' };
+  rules['.bw-modal.bw-modal-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
   rules['.bw-modal-dialog'] = {
     'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
     'pointer-events': 'none', 'transform': 'translateY(-20px)', 'transition': 'transform 0.2s ease-out'
@@ -3629,7 +3759,7 @@ export function getStructuralStyles() {
 
   // Carousel (structural)
   rules['.bw-carousel'] = { 'position': 'relative', 'overflow': 'hidden', 'border-radius': '8px' };
-  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.4s ease', 'height': '100%' };
+  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.3s ease-out', 'height': '100%' };
   rules['.bw-carousel-slide'] = { 'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden', 'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
   rules['.bw-carousel-slide img'] = { 'width': '100%', 'height': '100%', 'object-fit': 'cover' };
   rules['.bw-carousel-caption'] = { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem' };
@@ -3673,11 +3803,14 @@ export function getStructuralStyles() {
     'border-bottom': '0', 'border-left': '0.3em solid transparent'
   };
   rules['.bw-dropdown-menu'] = {
-    'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'none',
+    'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
     'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
-    'background-clip': 'padding-box', 'border-radius': '6px'
+    'background-clip': 'padding-box', 'border-radius': '6px',
+    'opacity': '0', 'visibility': 'hidden', 'transform': 'translateY(-4px)',
+    'pointer-events': 'none',
+    'transition': 'opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease'
   };
-  rules['.bw-dropdown-menu.bw-dropdown-show'] = { 'display': 'block' };
+  rules['.bw-dropdown-menu.bw-dropdown-show'] = { 'opacity': '1', 'visibility': 'visible', 'transform': 'translateY(0)', 'pointer-events': 'auto' };
   rules['.bw-dropdown-menu-end'] = { 'left': 'auto', 'right': '0' };
   rules['.bw-dropdown-item'] = {
     'display': 'block', 'width': '100%', 'padding': '0.375rem 1rem', 'clear': 'both',
@@ -3685,6 +3818,7 @@ export function getStructuralStyles() {
     'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem',
     'transition': 'background-color 0.15s, color 0.15s'
   };
+  rules['.bw-dropdown-item:focus-visible'] = { 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
   rules['.bw-dropdown-divider'] = { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' };
 
   // Switch (structural)
@@ -3692,7 +3826,7 @@ export function getStructuralStyles() {
   rules['.bw-form-switch .bw-switch-input'] = {
     'width': '2em', 'height': '1.125em', 'margin-left': '-2.5em', 'border-radius': '2em',
     'appearance': 'none', 'background-position': 'left center', 'background-repeat': 'no-repeat',
-    'background-size': 'contain', 'transition': 'background-position 0.15s ease-in-out, background-color 0.15s ease-in-out',
+    'background-size': 'contain', 'transition': 'background-position 0.15s ease-out, background-color 0.15s ease-out',
     'cursor': 'pointer'
   };
   rules['.bw-form-switch .bw-switch-input:checked'] = { 'background-position': 'right center' };
@@ -3730,7 +3864,7 @@ export function getStructuralStyles() {
   };
   rules['.bw-bar'] = {
     'width': '100%', 'border-radius': '3px 3px 0 0',
-    'transition': 'height 0.5s ease', 'min-height': '4px'
+    'transition': 'height 0.3s ease-out', 'min-height': '4px'
   };
   rules['.bw-bar:hover'] = { 'opacity': '0.85' };
   rules['.bw-bar-value'] = {
@@ -3859,6 +3993,16 @@ export function getStructuralStyles() {
   // Responsive grid
   Object.assign(rules, defaultStyles.responsive);
 
+  // Accessibility: reduce motion for users who prefer it
+  rules['@media (prefers-reduced-motion: reduce)'] = {
+    '*, *::before, *::after': {
+      'animation-duration': '0.01ms !important',
+      'animation-iteration-count': '1 !important',
+      'transition-duration': '0.01ms !important',
+      'scroll-behavior': 'auto !important'
+    }
+  };
+
   return addUnderscoreAliases(rules);
 }
 
@@ -3938,8 +4082,8 @@ export let theme = {
     secondary: '#6c757d',
     success: '#198754',
     danger: '#dc3545',
-    warning: '#ffc107',
-    info: '#0dcaf0',
+    warning: '#b38600',
+    info: '#0891b2',
     light: '#f8f9fa',
     dark: '#212529',
     white: '#fff',
@@ -3975,274 +4119,63 @@ export let theme = {
       '5xl': '3rem'
     }
   },
-  darkMode: false
-};
-
-export const darkModeColors = {
-  '--bw-body-color': '#e9ecef',
-  '--bw-body-bg': '#1a1a2e',
-  '--bw-border-color': '#495057',
-  '--bw-gray-100': '#212529',
-  '--bw-gray-200': '#343a40',
-  '--bw-gray-300': '#495057',
-  '--bw-gray-800': '#e9ecef',
-  '--bw-gray-900': '#f8f9fa'
 };
 
 /**
- * Generate theme-aware dark mode CSS from a palette.
- * Derives dark variants from the palette colors instead of using hardcoded values.
+ * Generate alternate-palette CSS scoped under `.bw-theme-alt`.
+ * Uses the same `generateThemedCSS()` pipeline as the primary palette —
+ * both sides go through identical code paths.
  *
- * @param {Object} palette - From derivePalette()
- * @returns {Object} CSS rules object for dark mode
+ * @param {string} name - Theme scope name (e.g. 'ocean'). '' for global.
+ * @param {Object} altPalette - From derivePalette(deriveAlternateConfig(...))
+ * @param {Object} layout - From resolveLayout()
+ * @returns {Object} CSS rules object scoped under .bw-theme-alt (+ optional .name)
  */
-export function generateDarkModeCSS(palette) {
-  var darkBg = adjustLightness(palette.primary.base, -15);
-  var darkBgHsl = hexToHsl(darkBg);
-  // Make it very dark (lightness 8-12%)
-  var bodyBg = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 30), 10]);
-  var surfaceBg = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 25), 15]);
-  var textColor = adjustLightness(palette.light.base, 5);
-  var borderColor = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 15), 30]);
+export function generateAlternateCSS(name, altPalette, layout) {
+  // Generate themed CSS using the same pipeline as primary
+  var rawRules = generateThemedCSS('', altPalette, layout);
 
-  return {
-    ':root.bw-dark': {
-      '--bw-body-color': textColor,
-      '--bw-body-bg': bodyBg
-    },
-    '.bw-dark body, :root.bw-dark body': {
-      'color': textColor,
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-card': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-card-header': {
-      'background-color': bodyBg,
-      'border-bottom-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-card-footer': {
-      'background-color': bodyBg,
-      'border-top-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-card-title': {
-      'color': textColor
-    },
-    '.bw-dark .bw-navbar': {
-      'background-color': surfaceBg,
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-navbar-brand': {
-      'color': textColor
-    },
-    '.bw-dark .bw-navbar-nav .bw-nav-link': {
-      'color': adjustLightness(textColor, -15)
-    },
-    '.bw-dark .bw-navbar-nav .bw-nav-link:hover': {
-      'color': textColor
-    },
-    '.bw-dark .bw-form-control': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-form-label': {
-      'color': textColor
-    },
-    '.bw-dark .bw-form-text': {
-      'color': adjustLightness(textColor, -20)
-    },
-    '.bw-dark .bw-table': {
-      'color': textColor
-    },
-    '.bw-dark .bw-table > :not(caption) > * > *': {
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-table > thead > tr > *': {
-      'background-color': bodyBg,
-      'color': adjustLightness(textColor, -10),
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
-      'background-color': 'rgba(255, 255, 255, 0.05)'
-    },
-    '.bw-dark .bw-alert': {
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-list-group-item': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-badge': {
-      'color': textColor
-    },
-    '.bw-dark .bw-nav-tabs': {
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-nav-link': {
-      'color': adjustLightness(textColor, -15)
-    },
-    '.bw-dark .bw-nav-tabs .bw-nav-link:hover': {
-      'color': textColor,
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-pagination .bw-page-link': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-breadcrumb-item + .bw-breadcrumb-item::before': {
-      'color': adjustLightness(textColor, -20)
-    },
-    '.bw-dark .bw-breadcrumb-item.active': {
-      'color': adjustLightness(textColor, -10)
-    },
-    '.bw-dark .bw-hero-light': {
-      'background': surfaceBg,
-      'color': textColor
-    },
-    '.bw-dark .bw-progress': {
-      'background-color': surfaceBg
-    },
-    '.bw-dark .bw-section-subtitle': {
-      'color': adjustLightness(textColor, -15)
-    },
-    '.bw-dark .bw-close': {
-      'color': textColor
-    },
-    '.bw-dark .bw-accordion-item': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-accordion-button': {
-      'color': textColor
-    },
-    '.bw-dark .bw-accordion-button:not(.bw-collapsed)': {
-      'color': '#7dd3e0',
-      'background-color': 'rgba(125, 211, 224, 0.1)'
-    },
-    '.bw-dark .bw-accordion-button:hover': {
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-accordion-button:not(.bw-collapsed):hover': {
-      'background-color': 'rgba(125, 211, 224, 0.15)'
-    },
-    '.bw-dark .bw-accordion-button:focus-visible': {
-      'box-shadow': '0 0 0 0.2rem rgba(125, 211, 224, 0.3)'
-    },
-    '.bw-dark .bw-accordion-body': {
-      'border-top-color': borderColor
-    },
-    '.bw-dark .bw-carousel': {
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-carousel-control': {
-      'background-color': 'rgba(255,255,255,0.15)'
-    },
-    '.bw-dark .bw-carousel-control:hover': {
-      'background-color': 'rgba(255,255,255,0.25)'
-    },
-    '.bw-dark .bw-modal-content': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-modal-header': {
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-modal-footer': {
-      'border-top-color': borderColor
-    },
-    '.bw-dark .bw-modal-title': {
-      'color': textColor
-    },
-    '.bw-dark .bw-toast': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-toast-header': {
-      'border-bottom-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-dropdown-menu': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-dropdown-item': {
-      'color': textColor
-    },
-    '.bw-dark .bw-dropdown-item:hover': {
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-dropdown-divider': {
-      'border-top-color': borderColor
-    },
-    '.bw-dark .bw-skeleton': {
-      'background': 'linear-gradient(90deg, ' + borderColor + ' 25%, ' + surfaceBg + ' 37%, ' + borderColor + ' 63%)'
-    },
-    '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
-      'color': textColor
-    },
-    '@media (prefers-color-scheme: dark)': {
-      ':root.bw-auto-dark body': {
-        'color': textColor,
-        'background-color': bodyBg
-      }
-    }
-  };
-}
+  // Re-scope every selector under .bw-theme-alt (+ optional theme name)
+  var altPrefix = name ? '.' + name + '.bw-theme-alt' : '.bw-theme-alt';
+  var altRules = {};
 
-export function getDarkModeStyles() {
-  return {
-    ':root.bw-dark': {
-      '--bw-body-color': '#e9ecef',
-      '--bw-body-bg': '#1a1a2e'
-    },
-    '.bw-dark body, :root.bw-dark body': {
-      'color': '#e9ecef',
-      'background-color': '#1a1a2e'
-    },
-    '.bw-dark .bw-card': {
-      'background-color': '#16213e',
-      'border-color': '#495057',
-      'color': '#e9ecef'
-    },
-    '.bw-dark .bw-navbar': {
-      'background-color': '#0f3460'
-    },
-    '.bw-dark .bw-form-control': {
-      'background-color': '#16213e',
-      'border-color': '#495057',
-      'color': '#e9ecef'
-    },
-    '.bw-dark .bw-table': {
-      'color': '#e9ecef'
-    },
-    '.bw-dark .bw-table > :not(caption) > * > *': {
-      'border-bottom-color': '#495057'
-    },
-    '.bw-dark .bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
-      'background-color': 'rgba(255, 255, 255, 0.05)'
-    },
-    '.bw-dark .bw-alert': {
-      'border-color': '#495057'
-    },
-    '.bw-dark .bw-list-group-item': {
-      'background-color': '#16213e',
-      'border-color': '#495057',
-      'color': '#e9ecef'
-    },
-    '@media (prefers-color-scheme: dark)': {
-      ':root.bw-auto-dark body': {
-        'color': '#e9ecef',
-        'background-color': '#1a1a2e'
+  for (var sel in rawRules) {
+    if (!rawRules.hasOwnProperty(sel)) continue;
+
+    if (sel.charAt(0) === '@') {
+      // @media / @keyframes — recurse into the block
+      var innerBlock = rawRules[sel];
+      var altInner = {};
+      for (var innerSel in innerBlock) {
+        if (!innerBlock.hasOwnProperty(innerSel)) continue;
+        altInner[altPrefix + ' ' + innerSel] = innerBlock[innerSel];
       }
+      altRules[sel] = altInner;
+    } else {
+      // Regular selector — prefix with alt scope
+      // Handle comma-separated selectors
+      var parts = sel.split(',');
+      var scopedParts = [];
+      for (var i = 0; i < parts.length; i++) {
+        var s = parts[i].trim();
+        // 'body' selector gets special treatment: .bw-theme-alt body
+        if (s === 'body' || s.indexOf('body') === 0) {
+          scopedParts.push(altPrefix + ' ' + s);
+        } else {
+          scopedParts.push(altPrefix + ' ' + s);
+        }
+      }
+      altRules[scopedParts.join(', ')] = rawRules[sel];
     }
+  }
+
+  // Add body-level overrides for the alternate surface
+  altRules[altPrefix + ' body, :root' + altPrefix + ' body'] = {
+    'color': altPalette.dark.base,
+    'background-color': altPalette.light.base
   };
+
+  return altRules;
 }
 
 export function deepMerge(target, source) {

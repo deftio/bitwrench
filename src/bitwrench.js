@@ -8,13 +8,15 @@
  */
 
 import { VERSION_INFO } from './version.js';
-import { getStructuralStyles, theme, updateTheme, generateDarkModeCSS,
-         generateThemedCSS, derivePalette as _derivePalette,
+import { getStructuralStyles, theme, updateTheme,
+         generateThemedCSS, generateAlternateCSS, derivePalette as _derivePalette,
          DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS, THEME_PRESETS,
+         TYPE_RATIO_PRESETS, ELEVATION_PRESETS, MOTION_PRESETS, generateTypeScale,
          resolveLayout, addUnderscoreAliases } from './bitwrench-styles.js';
 import { hexToHsl, hslToHex, adjustLightness, mixColor,
          relativeLuminance, textOnColor, deriveShades,
-         derivePalette } from './bitwrench-color-utils.js';
+         derivePalette, harmonize, deriveAlternateSeed, deriveAlternateConfig,
+         isLightPalette } from './bitwrench-color-utils.js';
 
 // Environment-aware module loader for optional Node.js built-ins (fs).
 // Strategy: try require() first (CJS/UMD), fall back to import() (ESM).
@@ -1776,7 +1778,8 @@ if (bw._isBrowser) {
  * @returns {Element|null} Style element if in browser, null in Node.js
  * @category CSS & Styling
  * @see bw.setTheme
- * @see bw.toggleDarkMode
+ * @see bw.applyTheme
+ * @see bw.toggleTheme
  * @example
  * bw.loadDefaultStyles();  // inject all default CSS
  */
@@ -1844,53 +1847,6 @@ bw.setTheme = function(overrides, options = {}) {
 };
 
 /**
- * Toggle dark mode on/off.
- *
- * Adds/removes the `bw-dark` class on `<html>` and injects dark mode CSS
- * overrides. Pass `true`/`false` to force a mode, or omit to toggle.
- *
- * @param {boolean} [force] - Force dark (true) or light (false). Omit to toggle.
- * @returns {boolean} Whether dark mode is now active
- * @category CSS & Styling
- * @see bw.setTheme
- * @example
- * bw.toggleDarkMode();        // toggle
- * bw.toggleDarkMode(true);    // force dark
- * bw.toggleDarkMode(false);   // force light
- */
-bw.toggleDarkMode = function(force) {
-  const isDark = force !== undefined ? force : !theme.darkMode;
-  theme.darkMode = isDark;
-
-  if (bw._isBrowser) {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('bw-dark');
-      // Generate palette-aware dark mode CSS, or fall back to default
-      var palette = bw._activePalette || derivePalette(DEFAULT_PALETTE_CONFIG);
-      var darkRules = generateDarkModeCSS(palette);
-      var darkCSS = bw.css(darkRules);
-
-      // Remove existing dark styles to allow regeneration
-      var existing = document.getElementById('bw-dark-styles');
-      if (existing) existing.remove();
-
-      var styleEl = document.createElement('style');
-      styleEl.id = 'bw-dark-styles';
-      styleEl.textContent = darkCSS;
-      document.head.appendChild(styleEl);
-    } else {
-      root.classList.remove('bw-dark');
-      // Remove dark mode styles when switching to light
-      var darkEl = document.getElementById('bw-dark-styles');
-      if (darkEl) darkEl.remove();
-    }
-  }
-
-  return isDark;
-};
-
-/**
  * Generate a complete, scoped theme from seed colors.
  *
  * Produces CSS for all themed components (buttons, alerts, badges, cards,
@@ -1912,13 +1868,19 @@ bw.toggleDarkMode = function(force) {
  * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
  * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
  * @param {number} [config.fontSize=1.0] - Base font size scale factor
+ * @param {string|number} [config.typeRatio='normal'] - 'tight' | 'normal' | 'relaxed' | 'dramatic' or a number
+ * @param {string} [config.elevation='md'] - 'flat' | 'sm' | 'md' | 'lg'
+ * @param {string} [config.motion='standard'] - 'reduced' | 'standard' | 'expressive'
+ * @param {number} [config.harmonize=0.20] - 0-1, semantic color hue shift toward primary
  * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
- * @returns {Object} { css, palette, name }
+ * @returns {Object} { css, palette, name, isLightPrimary, alternate: { css, palette } }
  * @category CSS & Styling
+ * @see bw.applyTheme
+ * @see bw.toggleTheme
  * @see bw.loadDefaultStyles
  * @example
- * // Generate and inject an ocean theme
- * bw.generateTheme('ocean', {
+ * // Generate and inject an ocean theme (primary + alternate)
+ * var theme = bw.generateTheme('ocean', {
  *   primary: '#0077b6',
  *   secondary: '#90e0ef',
  *   tertiary: '#00b4d8'
@@ -1927,14 +1889,16 @@ bw.toggleDarkMode = function(force) {
  * // Apply to a container
  * document.getElementById('app').classList.add('ocean');
  *
+ * // Toggle to alternate palette
+ * bw.toggleTheme();
+ *
  * // Generate CSS for static export (Node.js)
  * var result = bw.generateTheme('sunset', {
  *   primary: '#e76f51',
  *   secondary: '#264653',
- *   tertiary: '#e9c46a',
  *   inject: false
  * });
- * fs.writeFileSync('sunset.css', result.css);
+ * fs.writeFileSync('sunset.css', result.css + result.alternate.css);
  */
 bw.generateTheme = function(name, config) {
   if (!config || !config.primary || !config.secondary) {
@@ -1945,29 +1909,37 @@ bw.generateTheme = function(name, config) {
   var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
   if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
 
-  // Derive palette
+  // Derive primary palette
   var palette = derivePalette(fullConfig);
-
-  // Store active palette for dark mode
-  bw._activePalette = palette;
 
   // Resolve layout
   var layout = resolveLayout(fullConfig);
 
-  // Generate themed CSS rules
+  // Generate primary themed CSS rules
   var themedRules = generateThemedCSS(name, palette, layout);
-
-  // Add underscore aliases
   var aliasedRules = addUnderscoreAliases(themedRules);
-
-  // Convert to CSS string
   var cssStr = bw.css(aliasedRules);
 
-  // Inject into DOM if requested and in browser
+  // Derive alternate palette (luminance-inverted)
+  var altConfig = deriveAlternateConfig(fullConfig);
+  var altPalette = derivePalette(altConfig);
+
+  // Generate alternate CSS scoped under .bw-theme-alt
+  var altRules = generateAlternateCSS(name, altPalette, layout);
+  var aliasedAltRules = addUnderscoreAliases(altRules);
+  var altCssStr = bw.css(aliasedAltRules);
+
+  // Determine if primary is light-flavored
+  var lightPrimary = isLightPalette(fullConfig);
+
+  // Inject both CSS sets into DOM if requested
   var shouldInject = config.inject !== false;
   if (shouldInject && bw._isBrowser) {
     var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
     bw.injectCSS(cssStr, { id: styleId, append: false });
+
+    var altStyleId = name ? 'bw-theme-' + name + '-alt' : 'bw-theme-default-alt';
+    bw.injectCSS(altCssStr, { id: altStyleId, append: false });
   }
 
   // Update bw.u color entries to reflect the palette
@@ -1978,7 +1950,72 @@ bw.generateTheme = function(name, config) {
     bw.u.textWhite = { color: '#ffffff' };
   }
 
-  return { css: cssStr, palette: palette, name: name };
+  // Store active theme state
+  var result = {
+    css: cssStr,
+    palette: palette,
+    name: name,
+    isLightPrimary: lightPrimary,
+    alternate: {
+      css: altCssStr,
+      palette: altPalette
+    }
+  };
+  bw._activeTheme = result;
+  bw._activeThemeMode = 'primary';
+
+  return result;
+};
+
+/**
+ * Apply a theme mode. Switches between primary and alternate palettes
+ * by adding/removing the `bw-theme-alt` class on `<html>`.
+ *
+ * @param {string} mode - 'primary' | 'alternate' | 'light' | 'dark'
+ * @returns {string} Active mode: 'primary' or 'alternate'
+ * @category CSS & Styling
+ * @see bw.generateTheme
+ * @see bw.toggleTheme
+ * @example
+ * bw.applyTheme('alternate');  // switch to alternate palette
+ * bw.applyTheme('dark');       // switch to whichever palette is darker
+ * bw.applyTheme('primary');    // switch back to primary palette
+ */
+bw.applyTheme = function(mode) {
+  if (!bw._isBrowser) return mode || 'primary';
+  var root = document.documentElement;
+  var isLight = bw._activeTheme ? bw._activeTheme.isLightPrimary : true;
+
+  var wantAlt;
+  if (mode === 'primary')        wantAlt = false;
+  else if (mode === 'alternate') wantAlt = true;
+  else if (mode === 'light')     wantAlt = !isLight;
+  else if (mode === 'dark')      wantAlt = isLight;
+  else                           wantAlt = false;
+
+  if (wantAlt) {
+    root.classList.add('bw-theme-alt');
+  } else {
+    root.classList.remove('bw-theme-alt');
+  }
+
+  bw._activeThemeMode = wantAlt ? 'alternate' : 'primary';
+  return bw._activeThemeMode;
+};
+
+/**
+ * Toggle between primary and alternate theme palettes.
+ *
+ * @returns {string} Active mode after toggle: 'primary' or 'alternate'
+ * @category CSS & Styling
+ * @see bw.applyTheme
+ * @see bw.generateTheme
+ * @example
+ * bw.toggleTheme();  // flip between primary and alternate
+ */
+bw.toggleTheme = function() {
+  var current = bw._activeThemeMode || 'primary';
+  return bw.applyTheme(current === 'primary' ? 'alternate' : 'primary');
 };
 
 // Expose color utility functions on bw namespace
@@ -1990,10 +2027,18 @@ bw.relativeLuminance = relativeLuminance;
 bw.textOnColor = textOnColor;
 bw.deriveShades = deriveShades;
 bw.derivePalette = derivePalette;
+bw.harmonize = harmonize;
+bw.deriveAlternateSeed = deriveAlternateSeed;
+bw.deriveAlternateConfig = deriveAlternateConfig;
+bw.isLightPalette = isLightPalette;
 
 // Expose layout and theme presets
 bw.SPACING_PRESETS = SPACING_PRESETS;
 bw.RADIUS_PRESETS = RADIUS_PRESETS;
+bw.TYPE_RATIO_PRESETS = TYPE_RATIO_PRESETS;
+bw.ELEVATION_PRESETS = ELEVATION_PRESETS;
+bw.MOTION_PRESETS = MOTION_PRESETS;
+bw.generateTypeScale = generateTypeScale;
 bw.DEFAULT_PALETTE_CONFIG = DEFAULT_PALETTE_CONFIG;
 bw.THEME_PRESETS = THEME_PRESETS;
 

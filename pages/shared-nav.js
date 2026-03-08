@@ -165,12 +165,10 @@
                     t: 'button',
                     a: {
                       class: 'bw-site-nav-toggle',
-                      title: 'Toggle dark mode',
+                      title: 'Toggle theme palette',
                       onclick: function() {
-                        var html = document.documentElement;
-                        var isDark = html.getAttribute('data-theme') === 'dark';
-                        html.setAttribute('data-theme', isDark ? '' : 'dark');
-                        this.textContent = isDark ? '\u263D' : '\u2600';
+                        var mode = bw.toggleTheme();
+                        this.textContent = mode === 'alternate' ? '\u2600' : '\u263D';
                       }
                     },
                     c: '\u263D'

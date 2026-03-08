@@ -568,3 +568,51 @@ This will be designed separately as part of bitwrench 2.1+.
 4. **PDF output**: Separate concern, deferred to 2.1 or later. Puppeteer is ~400MB — violates zero-dep principle. May become an optional peer dependency.
 
 5. **Config file name**: `bitwrench.config.json` — explicit, unambiguous, consistent with the ecosystem pattern (`eslint.config.json`, `prettier.config.json`, etc.).
+
+---
+
+## Future: TACO Compilation (`bitwrench compile`)
+
+TACO objects are already an AST — they contain the same structural information that React's JSX-to-createElement transform or Svelte's compiler works with. The difference is that TACO is currently interpreted at runtime (`bw.html()`, `bw.createDOM()`). A compile step could produce optimized output for production while preserving the zero-build development experience.
+
+### What compilation would do
+
+1. **Static template extraction** — Any TACO with no dynamic content becomes a cached `cloneNode(true)` template (like Solid's template literals or Svelte's compiled fragments). Instead of building the DOM tree on every render, clone a pre-built template and patch in dynamic values.
+
+2. **Targeted DOM updates** — Since the TACO structure is known at compile time, the compiler can generate direct `textContent`/`setAttribute` assignments for dynamic parts instead of full `innerHTML` replacement via `bw.DOM()`. This eliminates the "no diffing" limitation without adding a virtual DOM.
+
+3. **Dead CSS elimination** — The compiler sees which `bw-*` classes are actually used in TACO objects and tree-shakes unused rules from `bitwrench-styles.js`. A page using only cards and buttons doesn't ship modal/carousel/accordion CSS.
+
+4. **Pre-rendered HTML with hydration** — `bw.html()` already works server-side. A compiler could emit static HTML with hydration markers so the page is visible immediately and becomes interactive once bitwrench loads. This is the SSR story that gets Lighthouse scores up.
+
+### Why this matters for adoption
+
+The zero-build story is bitwrench's philosophical differentiator, but framework evaluators look at Lighthouse scores and bundle sizes of demo apps. Pre-compiled TACO pages that hydrate in 50ms make the credibility argument that gets someone to try the TACO model in the first place.
+
+More importantly, it strengthens the core thesis: TACO is just data. Because it's just data, you can interpret it at runtime OR compile it ahead of time. JSX always needs Babel. TACO gives you the choice. That's a feature, not a limitation.
+
+### Implementation approach
+
+This would be a `bitwrench compile` subcommand (or a flag on `bitwrench build`). It operates on `.js` files containing TACO objects:
+
+```bash
+# Compile a page's TACO for production
+bitwrench compile src/app.js -o dist/app.js
+
+# Build a site with compilation enabled
+bitwrench build docs/ -o site/ --compile
+```
+
+The compiler would:
+- Parse JS files for TACO object literals
+- Separate static structure from dynamic expressions
+- Emit optimized DOM construction code
+- Optionally emit pre-rendered HTML + hydration script
+
+### Relationship to bwserve
+
+Compiled TACO is complementary to `bw.remote()`. A compiled page loads fast (static HTML, minimal JS), then optionally connects to a bwserve backend for live updates via `bw.patch()` over SSE/WS. The compiled code already knows the DOM structure, so patches are surgical.
+
+### Timeline
+
+Not in 2.1.0 (that's site generation). Candidate for 2.2.0 or a standalone `bitwrench-compiler` package. The design should be validated with real-world pages (the `pages/` demo site is a good test corpus) before committing to an API.
