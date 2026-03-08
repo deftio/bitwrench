@@ -68,7 +68,34 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 | `npm run build:index` | Generate index.html using bitwrench |
 | `npm run build:api-reference` | Generate API reference page |
 
-## Release Process
+## Contributing (Pull Requests)
+
+All contributions come through pull requests — no direct commits to `main`.
+
+1. Fork the repo (or create a feature branch if you have write access)
+2. Create a branch from `main`: `git checkout -b feature/my-change`
+3. Make your changes in `src/`, add or update tests in `test/`
+4. Verify locally:
+   ```bash
+   npm run build
+   npm test
+   npm run lint
+   ```
+5. Commit with a clear message describing **what** changed and **why**
+6. Push your branch and open a pull request against `main`
+
+Your PR should include:
+- A description of the change and motivation
+- Any new or updated tests
+- Confirmation that `npm test` and `npm run lint` pass
+
+**Do not** bump the version number, modify `dist/` files, or run `build:release` — the maintainer handles that during the release process.
+
+CI runs automatically on all PRs (lint, build, test across Node 20/22/24).
+
+## Release Process (Maintainers Only)
+
+This section is for the project maintainer. Contributors should follow the PR workflow above.
 
 **Cardinal rule: `npm run build:release` is the LAST step before commit.
 Never commit then build. The committed dist/ artifacts must be exactly
@@ -81,9 +108,14 @@ package than what's on GitHub.
 3. `npm run build:release` — runs cleanbuild + tests + copies to releases/v2/
 4. `git status` — verify only expected files changed
 5. **Immediately commit** — no edits between build:release and commit
-6. Merge feature branch to `main` (if on a feature branch)
-7. Tag: `git tag -a vX.Y.Z -m "message"`
-8. Push: `git push origin main && git push origin vX.Y.Z`
+6. Merge feature branch to `main` and push
 
-**Do NOT run `npm publish` manually.** GH Actions CI publishes to npm
-automatically when a version tag is pushed.
+**Everything after push is automatic.** The CI pipeline (`.github/workflows/publish.yml`) handles the rest:
+
+- CI tests run on push to `main` (`.github/workflows/ci.yml`)
+- On success, `publish.yml` checks if the version is already on npm
+- If not yet published: creates a git tag, pushes it, creates a GitHub Release with dist files, and publishes to npm with provenance
+
+**Do NOT run `npm publish` manually or create tags by hand.** CI handles
+tagging, GitHub Releases, and npm publishing automatically when a new
+version is pushed to `main`.
