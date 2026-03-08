@@ -72,7 +72,7 @@ describe("Responsive CSS (bw.responsive)", function() {
       lg: { padding: '2rem' }
     });
     assert.ok(css.includes('@media (min-width: 768px)'));
-    assert.ok(css.includes('@media (min-width: 1024px)'));
+    assert.ok(css.includes('@media (min-width: 992px)'));
   });
 
   it("should support sm and xl breakpoints", function() {
@@ -80,8 +80,8 @@ describe("Responsive CSS (bw.responsive)", function() {
       sm: { display: 'flex' },
       xl: { display: 'grid' }
     });
-    assert.ok(css.includes('@media (min-width: 640px)'));
-    assert.ok(css.includes('@media (min-width: 1280px)'));
+    assert.ok(css.includes('@media (min-width: 576px)'));
+    assert.ok(css.includes('@media (min-width: 1200px)'));
   });
 
   it("should ignore unknown breakpoint keys", function() {

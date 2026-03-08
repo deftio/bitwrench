@@ -1,18 +1,18 @@
-/*! bitwrench v2.0.13 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench v2.0.14 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 /**
  * Auto-generated version file from package.json
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
 const VERSION_INFO = {
-  version: '2.0.13',
+  version: '2.0.14',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-07T22:33:54.317Z'
+  buildDate: '2026-03-08T07:17:38.437Z'
 };
 
 /**
@@ -271,6 +271,29 @@ function textOnColor(hex) {
 }
 
 /**
+ * Shift a color's hue toward a target hue by a given amount.
+ * Uses shortest-arc interpolation on the hue wheel.
+ * @param {string} sourceHex - Color to shift
+ * @param {string} targetHex - Color whose hue to shift toward
+ * @param {number} [amount=0.20] - 0 = no shift, 1 = full shift to target hue
+ * @returns {string} Harmonized hex color
+ */
+function harmonize(sourceHex, targetHex, amount) {
+  if (amount === undefined) amount = 0.20;
+  if (amount === 0) return sourceHex;
+  var srcHsl = hexToHsl(sourceHex);
+  var tgtHsl = hexToHsl(targetHex);
+
+  // Shortest-arc hue interpolation
+  var diff = tgtHsl[0] - srcHsl[0];
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+
+  var newHue = (srcHsl[0] + diff * amount + 360) % 360;
+  return hslToHex([newHue, srcHsl[1], srcHsl[2]]);
+}
+
+/**
  * Derive a full shade palette for a single semantic color.
  * @param {string} hex - Base color hex
  * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
@@ -290,30 +313,127 @@ function deriveShades(hex) {
 }
 
 /**
+ * Derive the alternate (luminance-inverted) version of a single seed color.
+ * Preserves hue, mirrors lightness, adjusts saturation for readability.
+ * @param {string} hex - Seed hex color
+ * @returns {string} Alternate hex color
+ */
+function deriveAlternateSeed(hex) {
+  var hsl = hexToHsl(hex);
+  var h = hsl[0], s = hsl[1], l = hsl[2];
+  var altL, altS;
+
+  if (l > 50) {
+    // Light color → make dark. Map 50-100 → 30-10 range
+    altL = clip(100 - l - 10, 8, 40);
+    // Reduce saturation slightly — vivid colors at low lightness look garish
+    altS = clip(s * 0.85, 0, 100);
+  } else {
+    // Dark color → make light. Map 0-50 → 65-92 range
+    altL = clip(100 - l + 10, 60, 92);
+    // Slightly increase saturation for light variant
+    altS = clip(s * 1.1, 0, 100);
+  }
+
+  return hslToHex([h, altS, altL]);
+}
+
+/**
+ * Determine whether a palette config is "light-flavored" based on
+ * the average luminance of its seed colors.
+ * @param {Object} config - Theme config with primary, secondary hex colors
+ * @returns {boolean} true if the seeds are predominantly light
+ */
+function isLightPalette(config) {
+  var lum = relativeLuminance(config.primary);
+  if (config.secondary) lum = (lum + relativeLuminance(config.secondary)) / 2;
+  if (config.tertiary) lum = (lum * 2 + relativeLuminance(config.tertiary)) / 3;
+  return lum > 0.179;
+}
+
+/**
+ * Derive a complete alternate config from a primary theme config.
+ * Each seed color is luminance-inverted; semantic colors are adjusted for
+ * the new luminance context.
+ * @param {Object} config - Primary theme config
+ * @returns {Object} Alternate theme config (same shape, inverted lightness)
+ */
+function deriveAlternateConfig(config) {
+  var alt = {};
+  // Invert the user's seed colors
+  alt.primary = deriveAlternateSeed(config.primary);
+  alt.secondary = deriveAlternateSeed(config.secondary);
+  alt.tertiary = config.tertiary ? deriveAlternateSeed(config.tertiary) : alt.primary;
+
+  // Derive alternate surface colors from primary hue
+  var priHsl = hexToHsl(config.primary);
+  var h = priHsl[0];
+  var isLight = isLightPalette(config);
+
+  if (isLight) {
+    // Primary is light → alternate needs dark surfaces
+    alt.light = hslToHex([h, Math.min(priHsl[1], 15), 15]);
+    alt.dark = hslToHex([h, 5, 88]);
+  } else {
+    // Primary is dark → alternate needs light surfaces
+    alt.light = hslToHex([h, Math.min(priHsl[1], 10), 96]);
+    alt.dark = hslToHex([h, 10, 18]);
+  }
+
+  // Semantic colors: harmonize toward primary, then invert for alternate
+  var amt = config.harmonize !== undefined ? config.harmonize : 0.20;
+  var semanticDefaults = {
+    success: '#198754', danger: '#dc3545',
+    warning: '#f0ad4e', info: '#17a2b8'
+  };
+  var semantics = ['success', 'danger', 'warning', 'info'];
+  for (var i = 0; i < semantics.length; i++) {
+    var key = semantics[i];
+    var seed = config[key] || semanticDefaults[key];
+    var harmonized = harmonize(seed, config.primary, amt);
+    alt[key] = deriveAlternateSeed(harmonized);
+  }
+
+  // Semantic colors are already harmonized+inverted — don't re-harmonize in derivePalette
+  alt.harmonize = 0;
+
+  return alt;
+}
+
+/**
  * Derive complete palette from a theme config object.
+ * Semantic colors are harmonized toward the primary hue (configurable).
+ * Light/dark surface colors are tinted with the primary hue.
  * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
- * @returns {Object} Full palette with shades for all 8 semantic colors + tertiary
+ * @param {number} [config.harmonize=0.20] - Hue shift amount for semantic colors (0-1)
+ * @returns {Object} Full palette with shades for all 9 semantic colors
  */
 function derivePalette(config) {
-  var defaults = {
-    success: '#198754',
-    danger: '#dc3545',
-    warning: '#ffc107',
-    info: '#0dcaf0',
-    light: '#f8f9fa',
-    dark: '#212529'
-  };
+  var amt = config.harmonize !== undefined ? config.harmonize : 0.20;
+  var pri = config.primary;
+  var priHsl = hexToHsl(pri);
+  var h = priHsl[0];
+
+  // Semantic defaults — harmonized toward primary hue
+  var successBase = harmonize(config.success || '#198754', pri, amt);
+  var dangerBase  = harmonize(config.danger  || '#dc3545', pri, amt);
+  var warningBase = harmonize(config.warning || '#f0ad4e', pri, amt);
+  var infoBase    = harmonize(config.info    || '#17a2b8', pri, amt);
+
+  // Light/dark: derive from primary hue with low saturation (if not user-supplied)
+  var lightBase = config.light || hslToHex([h, 8, 97]);
+  var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
   var palette = {
-    primary: deriveShades(config.primary),
+    primary:   deriveShades(config.primary),
     secondary: deriveShades(config.secondary),
-    tertiary: deriveShades(config.tertiary),
-    success: deriveShades(config.success || defaults.success),
-    danger: deriveShades(config.danger || defaults.danger),
-    warning: deriveShades(config.warning || defaults.warning),
-    info: deriveShades(config.info || defaults.info),
-    light: deriveShades(config.light || defaults.light),
-    dark: deriveShades(config.dark || defaults.dark)
+    tertiary:  deriveShades(config.tertiary),
+    success:   deriveShades(successBase),
+    danger:    deriveShades(dangerBase),
+    warning:   deriveShades(warningBase),
+    info:      deriveShades(infoBase),
+    light:     deriveShades(lightBase),
+    dark:      deriveShades(darkBase)
   };
 
   return palette;
@@ -362,6 +482,88 @@ var RADIUS_PRESETS = {
   pill: { btn: '50rem', card: '1rem', badge: '50rem', alert: '1rem', input: '50rem' }
 };
 
+// ---- Typography scale presets ----
+
+var TYPE_RATIO_PRESETS = {
+  tight:    1.125,
+  normal:   1.200,
+  relaxed:  1.250,
+  dramatic: 1.333
+};
+
+/**
+ * Generate a modular type scale from a base size and ratio.
+ * @param {number} base - Base font size in px (default 16)
+ * @param {number} ratio - Scale ratio (default 1.200)
+ * @returns {Object} { xs, sm, base, lg, xl, '2xl', '3xl', '4xl' } in px
+ */
+function generateTypeScale(base, ratio) {
+  if (!base) base = 16;
+  if (!ratio) ratio = 1.200;
+  return {
+    xs:   Math.round(base / (ratio * ratio)),
+    sm:   Math.round(base / ratio),
+    base: base,
+    lg:   Math.round(base * ratio),
+    xl:   Math.round(base * ratio * ratio),
+    '2xl': Math.round(base * Math.pow(ratio, 3)),
+    '3xl': Math.round(base * Math.pow(ratio, 4)),
+    '4xl': Math.round(base * Math.pow(ratio, 5))
+  };
+}
+
+// ---- Elevation (shadow depth) presets ----
+
+var ELEVATION_PRESETS = {
+  flat: {
+    sm:  'none',
+    md:  'none',
+    lg:  'none',
+    xl:  'none'
+  },
+  sm: {
+    sm:  '0 1px 2px rgba(0,0,0,0.05)',
+    md:  '0 1px 3px rgba(0,0,0,0.08)',
+    lg:  '0 2px 6px rgba(0,0,0,0.10)',
+    xl:  '0 4px 12px rgba(0,0,0,0.12)'
+  },
+  md: {
+    sm:  '0 1px 3px rgba(0,0,0,0.08)',
+    md:  '0 2px 6px rgba(0,0,0,0.12)',
+    lg:  '0 4px 12px rgba(0,0,0,0.16)',
+    xl:  '0 8px 24px rgba(0,0,0,0.20)'
+  },
+  lg: {
+    sm:  '0 2px 4px rgba(0,0,0,0.10)',
+    md:  '0 4px 12px rgba(0,0,0,0.16)',
+    lg:  '0 8px 24px rgba(0,0,0,0.22)',
+    xl:  '0 16px 48px rgba(0,0,0,0.28)'
+  }
+};
+
+// ---- Motion (transition) presets ----
+
+var MOTION_PRESETS = {
+  reduced: {
+    fast:    '0ms',
+    normal:  '0ms',
+    slow:    '0ms',
+    easing:  'linear'
+  },
+  standard: {
+    fast:    '100ms',
+    normal:  '200ms',
+    slow:    '300ms',
+    easing:  'ease-out'
+  },
+  expressive: {
+    fast:    '150ms',
+    normal:  '300ms',
+    slow:    '500ms',
+    easing:  'cubic-bezier(0.34, 1.56, 0.64, 1)'
+  }
+};
+
 /**
  * Default palette config — matches existing hardcoded colors
  */
@@ -371,8 +573,8 @@ var DEFAULT_PALETTE_CONFIG = {
   tertiary: '#006666',
   success: '#198754',
   danger: '#dc3545',
-  warning: '#ffc107',
-  info: '#0dcaf0',
+  warning: '#b38600',
+  info: '#0891b2',
   light: '#f8f9fa',
   dark: '#212529'
 };
@@ -397,18 +599,32 @@ var THEME_PRESETS = {
 };
 
 /**
- * Resolve layout config to spacing + radius objects
- * @param {Object} config - { spacing, radius, fontSize }
- * @returns {Object} { spacing, radius, fontSize }
+ * Resolve layout config to spacing, radius, typeScale, elevation, and motion objects.
+ * @param {Object} config - { spacing, radius, fontSize, typeRatio, elevation, motion }
+ * @returns {Object} { spacing, radius, fontSize, typeScale, elevation, motion }
  */
 function resolveLayout(config) {
   var sp = (config && config.spacing) || 'normal';
   var rd = (config && config.radius) || 'md';
   var fs = (config && config.fontSize) || 1.0;
+
+  // typeRatio: accept preset name or number
+  var tr = (config && config.typeRatio) || 'normal';
+  var ratioNum = typeof tr === 'string' ? (TYPE_RATIO_PRESETS[tr] || TYPE_RATIO_PRESETS.normal) : tr;
+
+  // elevation: accept preset name or object
+  var el = (config && config.elevation) || 'md';
+
+  // motion: accept preset name or object
+  var mo = (config && config.motion) || 'standard';
+
   return {
     spacing: typeof sp === 'string' ? (SPACING_PRESETS[sp] || SPACING_PRESETS.normal) : sp,
     radius: typeof rd === 'string' ? (RADIUS_PRESETS[rd] || RADIUS_PRESETS.md) : rd,
-    fontSize: fs
+    fontSize: fs,
+    typeScale: generateTypeScale(16, ratioNum),
+    elevation: typeof el === 'string' ? (ELEVATION_PRESETS[el] || ELEVATION_PRESETS.md) : el,
+    motion: typeof mo === 'string' ? (MOTION_PRESETS[mo] || MOTION_PRESETS.standard) : mo
   };
 }
 
@@ -432,12 +648,13 @@ function scopeSelector(name, sel) {
 // Themed CSS generators
 // =========================================================================
 
-function generateTypographyThemed(scope, palette) {
+function generateTypographyThemed(scope, palette, layout) {
+  var mot = layout.motion;
   var rules = {};
   rules[scopeSelector(scope, 'a')] = {
     'color': palette.primary.base,
     'text-decoration': 'none',
-    'transition': 'color 0.15s'
+    'transition': 'color ' + mot.fast + ' ' + mot.easing
   };
   rules[scopeSelector(scope, 'a:hover')] = {
     'color': palette.primary.hover,
@@ -457,7 +674,8 @@ function generateButtons(scope, palette, layout) {
     'border-radius': rd.btn
   };
   rules[scopeSelector(scope, '.bw-btn:focus-visible')] = {
-    'outline': '0',
+    'outline': '2px solid currentColor',
+    'outline-offset': '2px',
     'box-shadow': '0 0 0 3px ' + palette.primary.focus
   };
 
@@ -547,14 +765,15 @@ function generateCards(scope, palette, layout) {
   var sp = layout.spacing;
   var rd = layout.radius;
 
+  var elev = layout.elevation;
   rules[scopeSelector(scope, '.bw-card')] = {
     'background-color': '#fff',
     'border': '1px solid ' + palette.light.border,
     'border-radius': rd.card,
-    'box-shadow': '0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04)'
+    'box-shadow': elev.sm
   };
   rules[scopeSelector(scope, '.bw-card:hover')] = {
-    'box-shadow': '0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.06)'
+    'box-shadow': elev.md
   };
   rules[scopeSelector(scope, '.bw-card-body')] = {
     'padding': sp.card
@@ -601,6 +820,8 @@ function generateForms(scope, palette, layout) {
   };
   rules[scopeSelector(scope, '.bw-form-control:focus')] = {
     'border-color': palette.primary.border,
+    'outline': '2px solid ' + palette.primary.base,
+    'outline-offset': '-1px',
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
   };
   rules[scopeSelector(scope, '.bw-form-control::placeholder')] = {
@@ -758,7 +979,8 @@ function generatePagination(scope, palette) {
     'border-color': palette.light.border
   };
   rules[scopeSelector(scope, '.bw-page-link:focus')] = {
-    'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    'outline': '2px solid ' + palette.primary.base,
+    'outline-offset': '-2px'
   };
   rules[scopeSelector(scope, '.bw-page-item.bw-active .bw-page-link')] = {
     'color': palette.primary.textOn,
@@ -917,12 +1139,12 @@ function generateCarouselThemed(scope, palette) {
   return rules;
 }
 
-function generateModalThemed(scope, palette) {
+function generateModalThemed(scope, palette, layout) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-modal-content')] = {
     'background-color': '#fff',
     'border-color': palette.light.border,
-    'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    'box-shadow': layout.elevation.lg
   };
   rules[scopeSelector(scope, '.bw-modal-header')] = {
     'border-bottom-color': palette.light.border
@@ -936,12 +1158,12 @@ function generateModalThemed(scope, palette) {
   return rules;
 }
 
-function generateToastThemed(scope, palette) {
+function generateToastThemed(scope, palette, layout) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-toast')] = {
     'background-color': '#fff',
     'border-color': 'rgba(0,0,0,0.1)',
-    'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    'box-shadow': layout.elevation.lg
   };
   rules[scopeSelector(scope, '.bw-toast-header')] = {
     'border-bottom-color': 'rgba(0,0,0,0.05)'
@@ -955,12 +1177,12 @@ function generateToastThemed(scope, palette) {
   return rules;
 }
 
-function generateDropdownThemed(scope, palette) {
+function generateDropdownThemed(scope, palette, layout) {
   var rules = {};
   rules[scopeSelector(scope, '.bw-dropdown-menu')] = {
     'background-color': '#fff',
     'border-color': palette.light.border,
-    'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)'
+    'box-shadow': layout.elevation.md
   };
   rules[scopeSelector(scope, '.bw-dropdown-item')] = {
     'color': palette.dark.base
@@ -1026,7 +1248,7 @@ function generateAvatarThemed(scope, palette) {
 function generateThemedCSS(scopeName, palette, layout) {
   return Object.assign({},
     generateResetThemed(scopeName, palette),
-    generateTypographyThemed(scopeName, palette),
+    generateTypographyThemed(scopeName, palette, layout),
     generateButtons(scopeName, palette, layout),
     generateAlerts(scopeName, palette, layout),
     generateBadges(scopeName, palette),
@@ -1045,9 +1267,9 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateSectionsThemed(scopeName, palette),
     generateAccordionThemed(scopeName, palette),
     generateCarouselThemed(scopeName, palette),
-    generateModalThemed(scopeName, palette),
-    generateToastThemed(scopeName, palette),
-    generateDropdownThemed(scopeName, palette),
+    generateModalThemed(scopeName, palette, layout),
+    generateToastThemed(scopeName, palette, layout),
+    generateDropdownThemed(scopeName, palette, layout),
     generateSwitchThemed(scopeName, palette),
     generateSkeletonThemed(scopeName, palette),
     generateAvatarThemed(scopeName, palette),
@@ -1200,11 +1422,23 @@ const defaultStyles = {
 // =========================================================================
 
 /**
- * Structural styles contain only layout, sizing, spacing, and behavior
- * properties. No colors, backgrounds, shadows, or border-colors.
- * These never change with themes.
+ * Structural styles — layout, sizing, spacing, positioning, and behavior.
  *
- * @returns {Object} CSS rules object
+ * POLICY: No colors, backgrounds, shadows, or border-colors in this function.
+ * All cosmetic values belong in `defaultStyles.*` sections (unthemed defaults)
+ * or in `generateThemedCSS()` (theme-driven colors).
+ *
+ * Exception: `.bw-progress-bar-striped` uses rgba(255,255,255,.15) for the
+ * stripe pattern overlay. This is theme-neutral — a semi-transparent white
+ * gradient that creates visible stripes on any background color.
+ *
+ * Architecture:
+ *   getStructuralStyles()  → layout-only rules (never change with themes)
+ *   defaultStyles.*        → cosmetic defaults (colors, shadows, borders)
+ *   generateThemedCSS()    → palette-driven cosmetics from seed colors
+ *   generateAlternateCSS() → alternate palette (luminance-inverted)
+ *
+ * @returns {Object} CSS rules object (layout-only, theme-independent)
  */
 function getStructuralStyles() {
   var rules = {};
@@ -1255,12 +1489,12 @@ function getStructuralStyles() {
     'text-decoration': 'none', 'vertical-align': 'middle', 'cursor': 'pointer',
     'user-select': 'none', 'border': '1px solid transparent',
     'padding': '0.5rem 1.125rem', 'font-size': '0.875rem', 'font-family': 'inherit',
-    'border-radius': '6px', 'transition': 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+    'border-radius': '6px', 'transition': 'all 0.15s ease-out',
     'gap': '0.5rem'
   };
   rules['.bw-btn:hover'] = { 'text-decoration': 'none', 'transform': 'translateY(-1px)' };
   rules['.bw-btn:active'] = { 'transform': 'translateY(0)' };
-  rules['.bw-btn:focus-visible'] = { 'outline': '0' };
+  rules['.bw-btn:focus-visible'] = { 'outline': '2px solid currentColor', 'outline-offset': '2px' };
   rules['.bw-btn:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed', 'pointer-events': 'none' };
   rules['.bw-btn-lg'] = { 'padding': '0.625rem 1.5rem', 'font-size': '1rem', 'border-radius': '8px' };
   rules['.bw-btn-sm'] = { 'padding': '0.25rem 0.75rem', 'font-size': '0.8125rem', 'border-radius': '5px' };
@@ -1270,7 +1504,7 @@ function getStructuralStyles() {
     'position': 'relative', 'display': 'flex', 'flex-direction': 'column',
     'min-width': '0', 'height': '100%', 'word-wrap': 'break-word',
     'background-clip': 'border-box', 'border': '1px solid transparent',
-    'border-radius': '8px', 'transition': 'box-shadow 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+    'border-radius': '8px', 'transition': 'box-shadow 0.2s ease-out, transform 0.2s ease-out',
     'margin-bottom': '1.5rem', 'overflow': 'hidden'
   };
   rules['.bw-card-body'] = { 'flex': '1 1 auto', 'padding': '1.25rem 1.5rem' };
@@ -1279,7 +1513,7 @@ function getStructuralStyles() {
   rules['.bw-card-text'] = { 'margin-bottom': '0', 'font-size': '0.9375rem', 'line-height': '1.6' };
   rules['.bw-card-header'] = { 'padding': '0.875rem 1.5rem', 'margin-bottom': '0', 'font-weight': '600', 'font-size': '0.875rem' };
   rules['.bw-card-footer'] = { 'padding': '0.75rem 1.5rem', 'font-size': '0.875rem' };
-  rules['.bw-card-hoverable'] = { 'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' };
+  rules['.bw-card-hoverable'] = { 'transition': 'all 0.3s ease-out' };
   rules['.bw-card-img-top'] = { 'width': '100%', 'border-top-left-radius': '7px', 'border-top-right-radius': '7px' };
   rules['.bw-card-img-bottom'] = { 'width': '100%', 'border-bottom-left-radius': '7px', 'border-bottom-right-radius': '7px' };
   rules['.bw-card-img-left'] = { 'width': '40%', 'object-fit': 'cover' };
@@ -1292,10 +1526,10 @@ function getStructuralStyles() {
     'font-size': '0.9375rem', 'font-weight': '400', 'line-height': '1.5',
     'background-clip': 'padding-box', 'appearance': 'none',
     'border': '1px solid transparent', 'border-radius': '6px',
-    'transition': 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+    'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out',
     'font-family': 'inherit'
   };
-  rules['.bw-form-control:focus'] = { 'outline': '0' };
+  rules['.bw-form-control:focus'] = { 'outline': '2px solid currentColor', 'outline-offset': '-1px' };
   rules['.bw-form-control::placeholder'] = { 'opacity': '1' };
   rules['.bw-form-label'] = { 'display': 'block', 'margin-bottom': '0.375rem', 'font-size': '0.875rem', 'font-weight': '600' };
   rules['.bw-form-group'] = { 'margin-bottom': '1.25rem' };
@@ -1306,6 +1540,10 @@ function getStructuralStyles() {
     'background-size': '16px 12px'
   };
   rules['textarea.bw-form-control'] = { 'min-height': '5rem', 'resize': 'vertical' };
+
+  // Form validation (structural)
+  rules['.bw-valid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+  rules['.bw-invalid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
 
   // Form checks (structural)
   Object.assign(rules, {
@@ -1365,13 +1603,13 @@ function getStructuralStyles() {
 
   // Badges (structural)
   rules['.bw-badge'] = {
-    'display': 'inline-block', 'padding': '.4em .75em', 'font-size': '.875em',
+    'display': 'inline-block', 'padding': '0.375rem 0.625rem', 'font-size': '0.875rem',
     'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
     'white-space': 'nowrap', 'vertical-align': 'baseline', 'border-radius': '.375rem'
   };
   rules['.bw-badge:empty'] = { 'display': 'none' };
-  rules['.bw-badge-sm'] = { 'font-size': '.75em', 'padding': '.25em .5em' };
-  rules['.bw-badge-lg'] = { 'font-size': '1em', 'padding': '.5em .9em' };
+  rules['.bw-badge-sm'] = { 'font-size': '0.75rem', 'padding': '0.25rem 0.5rem' };
+  rules['.bw-badge-lg'] = { 'font-size': '1rem', 'padding': '0.5rem 0.875rem' };
   rules['.bw-badge-pill'] = { 'border-radius': '50rem' };
 
   // Progress (structural)
@@ -1379,7 +1617,7 @@ function getStructuralStyles() {
   rules['.bw-progress-bar'] = {
     'display': 'flex', 'flex-direction': 'column', 'justify-content': 'center',
     'overflow': 'hidden', 'text-align': 'center', 'white-space': 'nowrap',
-    'transition': 'width .6s ease', 'font-weight': '600'
+    'transition': 'width 0.3s ease-out', 'font-weight': '600'
   };
   rules['.bw-progress-bar-striped'] = {
     'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
@@ -1396,7 +1634,7 @@ function getStructuralStyles() {
     'display': 'block', 'padding': '0.625rem 1rem', 'font-size': '0.875rem',
     'font-weight': '500', 'text-decoration': 'none', 'cursor': 'pointer',
     'border': 'none', 'background': 'transparent',
-    'transition': 'color 0.15s, border-color 0.15s', 'font-family': 'inherit'
+    'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out', 'font-family': 'inherit'
   };
   rules['.bw-nav-tabs .bw-nav-link'] = { 'border': 'none', 'border-bottom': '2px solid transparent', 'border-radius': '0', 'background-color': 'transparent' };
   rules['.bw-nav-pills .bw-nav-link'] = { 'border-radius': '6px' };
@@ -1414,7 +1652,8 @@ function getStructuralStyles() {
   rules['.bw-list-group-item:last-child'] = { 'border-bottom-right-radius': 'inherit', 'border-bottom-left-radius': 'inherit' };
   rules['.bw-list-group-item + .bw-list-group-item'] = { 'border-top-width': '0' };
   rules['.bw-list-group-item.disabled'] = { 'pointer-events': 'none' };
-  rules['a.bw-list-group-item'] = { 'cursor': 'pointer' };
+  rules['a.bw-list-group-item'] = { 'cursor': 'pointer', 'transition': 'background-color 0.15s ease-out, color 0.15s ease-out' };
+  rules['a.bw-list-group-item:focus-visible, .bw-list-group-item:focus-visible'] = { 'z-index': '2', 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
   rules['.bw-list-group-flush'] = { 'border-radius': '0' };
   rules['.bw-list-group-flush > .bw-list-group-item'] = { 'border-width': '0 0 1px', 'border-radius': '0' };
   rules['.bw-list-group-flush > .bw-list-group-item:last-child'] = { 'border-bottom-width': '0' };
@@ -1425,16 +1664,19 @@ function getStructuralStyles() {
   rules['.bw-page-link'] = {
     'position': 'relative', 'display': 'block', 'padding': '0.375rem 0.75rem',
     'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none',
-    'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out'
+    'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out'
   };
   rules['.bw-page-item:first-child .bw-page-link'] = { 'margin-left': '0', 'border-top-left-radius': '0.375rem', 'border-bottom-left-radius': '0.375rem' };
   rules['.bw-page-item:last-child .bw-page-link'] = { 'border-top-right-radius': '0.375rem', 'border-bottom-right-radius': '0.375rem' };
+  rules['.bw-page-link:focus-visible'] = { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
 
   // Breadcrumb (structural)
   rules['.bw-breadcrumb'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'padding': '0 0', 'margin-bottom': '1rem', 'list-style': 'none' };
   rules['.bw-breadcrumb-item'] = { 'display': 'flex' };
   rules['.bw-breadcrumb-item + .bw-breadcrumb-item'] = { 'padding-left': '0.5rem' };
   rules['.bw-breadcrumb-item + .bw-breadcrumb-item::before'] = { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' };
+  rules['.bw-breadcrumb-item a'] = { 'text-decoration': 'none', 'transition': 'color 0.15s ease-out' };
+  rules['.bw-breadcrumb-item.active'] = { 'font-weight': '500' };
 
   // Hero (structural)
   rules['.bw-hero'] = { 'position': 'relative', 'overflow': 'hidden' };
@@ -1537,12 +1779,12 @@ function getStructuralStyles() {
     'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
     'padding': '1rem 1.25rem', 'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
     'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
-    'font-family': 'inherit', 'transition': 'color 0.15s ease-in-out, background-color 0.15s ease-in-out'
+    'font-family': 'inherit', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out'
   };
   rules['.bw-accordion-button::after'] = {
     'flex-shrink': '0', 'width': '1.25rem', 'height': '1.25rem', 'margin-left': 'auto',
     'content': '""', 'background-repeat': 'no-repeat', 'background-size': '1.25rem',
-    'transition': 'transform 0.2s ease-in-out'
+    'transition': 'transform 0.2s ease-out'
   };
   rules['.bw-accordion-button:not(.bw-collapsed)::after'] = { 'transform': 'rotate(-180deg)' };
   rules['.bw-accordion-collapse'] = { 'max-height': '0', 'overflow': 'hidden', 'transition': 'max-height 0.3s ease' };
@@ -1551,10 +1793,13 @@ function getStructuralStyles() {
 
   // Modal (structural)
   rules['.bw-modal'] = {
-    'display': 'none', 'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
-    'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto', 'opacity': '0', 'transition': 'opacity 0.15s linear'
+    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+    'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
+    'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto',
+    'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none',
+    'transition': 'opacity 0.2s ease, visibility 0.2s ease'
   };
-  rules['.bw-modal.bw-modal-show'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'opacity': '1' };
+  rules['.bw-modal.bw-modal-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
   rules['.bw-modal-dialog'] = {
     'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
     'pointer-events': 'none', 'transform': 'translateY(-20px)', 'transition': 'transform 0.2s ease-out'
@@ -1574,7 +1819,7 @@ function getStructuralStyles() {
 
   // Carousel (structural)
   rules['.bw-carousel'] = { 'position': 'relative', 'overflow': 'hidden', 'border-radius': '8px' };
-  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.4s ease', 'height': '100%' };
+  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.3s ease-out', 'height': '100%' };
   rules['.bw-carousel-slide'] = { 'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden', 'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
   rules['.bw-carousel-slide img'] = { 'width': '100%', 'height': '100%', 'object-fit': 'cover' };
   rules['.bw-carousel-caption'] = { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem' };
@@ -1618,11 +1863,14 @@ function getStructuralStyles() {
     'border-bottom': '0', 'border-left': '0.3em solid transparent'
   };
   rules['.bw-dropdown-menu'] = {
-    'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'none',
+    'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
     'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
-    'background-clip': 'padding-box', 'border-radius': '6px'
+    'background-clip': 'padding-box', 'border-radius': '6px',
+    'opacity': '0', 'visibility': 'hidden', 'transform': 'translateY(-4px)',
+    'pointer-events': 'none',
+    'transition': 'opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease'
   };
-  rules['.bw-dropdown-menu.bw-dropdown-show'] = { 'display': 'block' };
+  rules['.bw-dropdown-menu.bw-dropdown-show'] = { 'opacity': '1', 'visibility': 'visible', 'transform': 'translateY(0)', 'pointer-events': 'auto' };
   rules['.bw-dropdown-menu-end'] = { 'left': 'auto', 'right': '0' };
   rules['.bw-dropdown-item'] = {
     'display': 'block', 'width': '100%', 'padding': '0.375rem 1rem', 'clear': 'both',
@@ -1630,6 +1878,7 @@ function getStructuralStyles() {
     'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem',
     'transition': 'background-color 0.15s, color 0.15s'
   };
+  rules['.bw-dropdown-item:focus-visible'] = { 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
   rules['.bw-dropdown-divider'] = { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' };
 
   // Switch (structural)
@@ -1637,7 +1886,7 @@ function getStructuralStyles() {
   rules['.bw-form-switch .bw-switch-input'] = {
     'width': '2em', 'height': '1.125em', 'margin-left': '-2.5em', 'border-radius': '2em',
     'appearance': 'none', 'background-position': 'left center', 'background-repeat': 'no-repeat',
-    'background-size': 'contain', 'transition': 'background-position 0.15s ease-in-out, background-color 0.15s ease-in-out',
+    'background-size': 'contain', 'transition': 'background-position 0.15s ease-out, background-color 0.15s ease-out',
     'cursor': 'pointer'
   };
   rules['.bw-form-switch .bw-switch-input:checked'] = { 'background-position': 'right center' };
@@ -1662,6 +1911,123 @@ function getStructuralStyles() {
   rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
   rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
 
+  // Stat card (structural)
+  rules['.bw-stat-card'] = {
+    'border-radius': '8px', 'padding': '1.25rem',
+    'border-left': '4px solid transparent',
+    'transition': 'box-shadow 0.15s ease-out, transform 0.15s ease-out'
+  };
+  rules['.bw-stat-card:hover'] = { 'transform': 'translateY(-1px)' };
+  rules['.bw-stat-icon'] = { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' };
+  rules['.bw-stat-value'] = { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' };
+  rules['.bw-stat-label'] = { 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+  rules['.bw-stat-change'] = { 'font-size': '0.875rem', 'font-weight': '500', 'margin-top': '0.5rem' };
+
+  // Tooltip (structural)
+  rules['.bw-tooltip-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+  rules['.bw-tooltip'] = {
+    'position': 'absolute', 'z-index': '999',
+    'padding': '0.375rem 0.75rem', 'border-radius': '4px', 'font-size': '0.875rem',
+    'white-space': 'nowrap', 'pointer-events': 'none',
+    'opacity': '0', 'visibility': 'hidden',
+    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+  };
+  rules['.bw-tooltip.bw-tooltip-show'] = { 'opacity': '1', 'visibility': 'visible' };
+  rules['.bw-tooltip-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-4px)', 'margin-bottom': '4px' };
+  rules['.bw-tooltip-top.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-tooltip-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(4px)', 'margin-top': '4px' };
+  rules['.bw-tooltip-bottom.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-tooltip-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-4px)', 'margin-right': '4px' };
+  rules['.bw-tooltip-left.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+  rules['.bw-tooltip-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(4px)', 'margin-left': '4px' };
+  rules['.bw-tooltip-right.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
+  // Search input (structural)
+  rules['.bw-search-input'] = { 'position': 'relative', 'display': 'flex', 'align-items': 'center' };
+  rules['.bw-search-input .bw-search-field'] = { 'padding-right': '2.5rem' };
+  rules['.bw-search-clear'] = {
+    'position': 'absolute', 'right': '0.5rem',
+    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+    'width': '1.5rem', 'height': '1.5rem',
+    'border': 'none', 'background': 'none',
+    'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0',
+    'border-radius': '50%', 'transition': 'color 0.15s ease-out'
+  };
+
+  // Range slider (structural)
+  rules['.bw-range-wrapper'] = { 'margin-bottom': '1rem' };
+  rules['.bw-range-label'] = { 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '0.5rem', 'font-size': '0.875rem', 'font-weight': '500' };
+  rules['.bw-range-value'] = { 'font-weight': '600' };
+  rules['.bw-range'] = { 'width': '100%', 'height': '0.5rem', 'padding': '0', 'appearance': 'none', 'border': 'none', 'border-radius': '0.25rem', 'cursor': 'pointer', 'outline': 'none' };
+  rules['.bw-range:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
+
+  // Media object (structural)
+  rules['.bw-media'] = { 'display': 'flex', 'align-items': 'flex-start', 'gap': '1rem' };
+  rules['.bw-media-reverse'] = { 'flex-direction': 'row-reverse' };
+  rules['.bw-media-img'] = { 'border-radius': '50%', 'object-fit': 'cover', 'flex-shrink': '0' };
+  rules['.bw-media-body'] = { 'flex': '1', 'min-width': '0' };
+  rules['.bw-media-title'] = { 'margin': '0 0 0.25rem 0', 'font-size': '1rem', 'font-weight': '600', 'line-height': '1.3' };
+
+  // File upload (structural)
+  rules['.bw-file-upload'] = {
+    'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center',
+    'padding': '2rem', 'border': '2px dashed transparent', 'border-radius': '8px',
+    'cursor': 'pointer', 'text-align': 'center', 'position': 'relative',
+    'transition': 'border-color 0.15s ease-out, background-color 0.15s ease-out'
+  };
+  rules['.bw-file-upload-icon'] = { 'font-size': '2rem', 'margin-bottom': '0.5rem' };
+  rules['.bw-file-upload-text'] = { 'font-size': '0.875rem' };
+  rules['.bw-file-upload-input'] = {
+    'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
+    'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0,0,0,0)', 'border': '0'
+  };
+
+  // Timeline (structural)
+  rules['.bw-timeline'] = { 'position': 'relative', 'padding-left': '2rem' };
+  rules['.bw-timeline-item'] = { 'position': 'relative', 'padding-bottom': '1.5rem' };
+  rules['.bw-timeline-item:last-child'] = { 'padding-bottom': '0' };
+  rules['.bw-timeline-marker'] = { 'position': 'absolute', 'left': '-1.75rem', 'top': '0.25rem', 'width': '0.75rem', 'height': '0.75rem', 'border-radius': '50%' };
+  rules['.bw-timeline-content'] = { 'padding-left': '0.5rem' };
+  rules['.bw-timeline-date'] = { 'font-size': '0.75rem', 'margin-bottom': '0.25rem', 'font-weight': '500' };
+  rules['.bw-timeline-title'] = { 'font-size': '1rem', 'font-weight': '600', 'margin': '0 0 0.25rem 0', 'line-height': '1.3' };
+  rules['.bw-timeline-text'] = { 'font-size': '0.875rem', 'margin': '0', 'line-height': '1.5' };
+
+  // Stepper (structural)
+  rules['.bw-stepper'] = { 'display': 'flex', 'gap': '0' };
+  rules['.bw-step'] = { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'text-align': 'center', 'position': 'relative' };
+  rules['.bw-step-indicator'] = { 'width': '2rem', 'height': '2rem', 'border-radius': '50%', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '0.875rem', 'font-weight': '600', 'position': 'relative', 'z-index': '1', 'transition': 'background-color 0.2s ease-out, color 0.2s ease-out' };
+  rules['.bw-step-body'] = { 'margin-top': '0.5rem' };
+  rules['.bw-step-label'] = { 'font-size': '0.875rem', 'font-weight': '500' };
+  rules['.bw-step-description'] = { 'font-size': '0.75rem', 'margin-top': '0.125rem' };
+
+  // Chip input (structural)
+  rules['.bw-chip-input'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'gap': '0.375rem', 'padding': '0.375rem 0.5rem', 'border-radius': '6px', 'min-height': '2.5rem', 'cursor': 'text', 'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out' };
+  rules['.bw-chip'] = { 'display': 'inline-flex', 'align-items': 'center', 'gap': '0.25rem', 'padding': '0.125rem 0.5rem', 'border-radius': '1rem', 'font-size': '0.8125rem', 'line-height': '1.5', 'white-space': 'nowrap' };
+  rules['.bw-chip-remove'] = { 'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center', 'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none', 'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out' };
+  rules['.bw-chip-field'] = { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' };
+
+  // Popover (structural)
+  rules['.bw-popover-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+  rules['.bw-popover-trigger'] = { 'cursor': 'pointer' };
+  rules['.bw-popover'] = {
+    'position': 'absolute', 'z-index': '1000',
+    'min-width': '200px', 'max-width': '320px',
+    'border-radius': '8px',
+    'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden',
+    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+  };
+  rules['.bw-popover.bw-popover-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
+  rules['.bw-popover-header'] = { 'padding': '0.625rem 0.875rem', 'font-weight': '600', 'font-size': '0.9375rem' };
+  rules['.bw-popover-body'] = { 'padding': '0.75rem 0.875rem', 'font-size': '0.875rem', 'line-height': '1.5' };
+  rules['.bw-popover-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-8px)', 'margin-bottom': '8px' };
+  rules['.bw-popover-top.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-popover-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(8px)', 'margin-top': '8px' };
+  rules['.bw-popover-bottom.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-popover-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-8px)', 'margin-right': '8px' };
+  rules['.bw-popover-left.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+  rules['.bw-popover-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(8px)', 'margin-left': '8px' };
+  rules['.bw-popover-right.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
   // Bar chart (structural)
   rules['.bw-bar-chart-container'] = {
     'padding': '1rem', 'border': '1px solid transparent', 'border-radius': '8px'
@@ -1675,7 +2041,7 @@ function getStructuralStyles() {
   };
   rules['.bw-bar'] = {
     'width': '100%', 'border-radius': '3px 3px 0 0',
-    'transition': 'height 0.5s ease', 'min-height': '4px'
+    'transition': 'height 0.3s ease-out', 'min-height': '4px'
   };
   rules['.bw-bar:hover'] = { 'opacity': '0.85' };
   rules['.bw-bar-value'] = {
@@ -1804,6 +2170,16 @@ function getStructuralStyles() {
   // Responsive grid
   Object.assign(rules, defaultStyles.responsive);
 
+  // Accessibility: reduce motion for users who prefer it
+  rules['@media (prefers-reduced-motion: reduce)'] = {
+    '*, *::before, *::after': {
+      'animation-duration': '0.01ms !important',
+      'animation-iteration-count': '1 !important',
+      'transition-duration': '0.01ms !important',
+      'scroll-behavior': 'auto !important'
+    }
+  };
+
   return addUnderscoreAliases(rules);
 }
 
@@ -1812,9 +2188,25 @@ function getStructuralStyles() {
 // =========================================================================
 
 /**
- * Add underscore aliases for all bw- selectors
+ * Add underscore aliases for all `.bw-` selectors.
+ *
+ * CSS CLASS NAMING CONVENTION:
+ *
+ * Canonical form:  `.bw-btn`, `.bw-card`, `.bw-table-hover`  (hyphens)
+ * Underscore alias: `.bw_btn`, `.bw_card`, `.bw_table_hover`  (underscores)
+ *
+ * Both forms are valid in HTML and produce identical results. The hyphen
+ * form is canonical (used in docs, generated CSS, component output).
+ * Underscore aliases exist because:
+ *   1. TACO attribute keys use underscores (`bw_id`, `bw_meta`) — no
+ *      quoting needed in JS object literals
+ *   2. Some users prefer underscores for consistency with JS identifiers
+ *
+ * Use `bw.normalizeClass()` to convert underscore classes to canonical
+ * hyphen form at runtime if needed.
+ *
  * @param {Object} rules - CSS rules object
- * @returns {Object} - Rules with underscore aliases added
+ * @returns {Object} Rules with underscore aliases added (both forms work)
  */
 function addUnderscoreAliases(rules) {
   const result = {};
@@ -1831,6 +2223,27 @@ function addUnderscoreAliases(rules) {
 // =========================================================================
 // Theme tokens (backwards compatible)
 // =========================================================================
+//
+// DESIGN NOTE — Why no CSS custom properties (CSS variables)?
+//
+// Bitwrench targets IE11 as Tier 1 (see dev/bw2x-compatibility.md).
+// CSS custom properties (var(--color-primary)) are not supported in IE11.
+//
+// Instead, bitwrench uses class-scoped CSS generation:
+//   1. `defaultStyles.*` provides hardcoded cosmetic defaults
+//   2. `generateTheme(name, config)` generates a complete set of
+//      class-scoped CSS rules from 3 seed colors (primary, secondary,
+//      tertiary) — all components are restyled with the new palette
+//   3. `generateAlternateCSS()` produces the alternate (dark/light)
+//      variant scoped under `.bw-theme-alt`
+//
+// This achieves full theme customization without CSS variables:
+//   bw.generateTheme('ocean', { primary: '#006666', secondary: '#cc6633' })
+//   → generates .ocean .bw-btn-primary { background: #006666; } etc.
+//
+// When IE11 support is dropped, CSS custom properties can be added as
+// an optimization (one rule with var() instead of many scoped rules).
+// The generateTheme() API stays the same — only the output format changes.
 
 let theme = {
   colors: {
@@ -1838,8 +2251,8 @@ let theme = {
     secondary: '#6c757d',
     success: '#198754',
     danger: '#dc3545',
-    warning: '#ffc107',
-    info: '#0dcaf0',
+    warning: '#b38600',
+    info: '#0891b2',
     light: '#f8f9fa',
     dark: '#212529',
     white: '#fff',
@@ -1875,214 +2288,63 @@ let theme = {
       '5xl': '3rem'
     }
   },
-  darkMode: false
 };
 
 /**
- * Generate theme-aware dark mode CSS from a palette.
- * Derives dark variants from the palette colors instead of using hardcoded values.
+ * Generate alternate-palette CSS scoped under `.bw-theme-alt`.
+ * Uses the same `generateThemedCSS()` pipeline as the primary palette —
+ * both sides go through identical code paths.
  *
- * @param {Object} palette - From derivePalette()
- * @returns {Object} CSS rules object for dark mode
+ * @param {string} name - Theme scope name (e.g. 'ocean'). '' for global.
+ * @param {Object} altPalette - From derivePalette(deriveAlternateConfig(...))
+ * @param {Object} layout - From resolveLayout()
+ * @returns {Object} CSS rules object scoped under .bw-theme-alt (+ optional .name)
  */
-function generateDarkModeCSS(palette) {
-  var darkBg = adjustLightness(palette.primary.base, -15);
-  var darkBgHsl = hexToHsl(darkBg);
-  // Make it very dark (lightness 8-12%)
-  var bodyBg = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 30), 10]);
-  var surfaceBg = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 25), 15]);
-  var textColor = adjustLightness(palette.light.base, 5);
-  var borderColor = hslToHex([darkBgHsl[0], Math.min(darkBgHsl[1], 15), 30]);
+function generateAlternateCSS(name, altPalette, layout) {
+  // Generate themed CSS using the same pipeline as primary
+  var rawRules = generateThemedCSS('', altPalette, layout);
 
-  return {
-    ':root.bw-dark': {
-      '--bw-body-color': textColor,
-      '--bw-body-bg': bodyBg
-    },
-    '.bw-dark body, :root.bw-dark body': {
-      'color': textColor,
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-card': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-card-header': {
-      'background-color': bodyBg,
-      'border-bottom-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-card-footer': {
-      'background-color': bodyBg,
-      'border-top-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-card-title': {
-      'color': textColor
-    },
-    '.bw-dark .bw-navbar': {
-      'background-color': surfaceBg,
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-navbar-brand': {
-      'color': textColor
-    },
-    '.bw-dark .bw-navbar-nav .bw-nav-link': {
-      'color': adjustLightness(textColor, -15)
-    },
-    '.bw-dark .bw-navbar-nav .bw-nav-link:hover': {
-      'color': textColor
-    },
-    '.bw-dark .bw-form-control': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-form-label': {
-      'color': textColor
-    },
-    '.bw-dark .bw-form-text': {
-      'color': adjustLightness(textColor, -20)
-    },
-    '.bw-dark .bw-table': {
-      'color': textColor
-    },
-    '.bw-dark .bw-table > :not(caption) > * > *': {
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-table > thead > tr > *': {
-      'background-color': bodyBg,
-      'color': adjustLightness(textColor, -10),
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-table-striped > tbody > tr:nth-of-type(odd) > *': {
-      'background-color': 'rgba(255, 255, 255, 0.05)'
-    },
-    '.bw-dark .bw-alert': {
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-list-group-item': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-badge': {
-      'color': textColor
-    },
-    '.bw-dark .bw-nav-tabs': {
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-nav-link': {
-      'color': adjustLightness(textColor, -15)
-    },
-    '.bw-dark .bw-nav-tabs .bw-nav-link:hover': {
-      'color': textColor,
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-pagination .bw-page-link': {
-      'background-color': surfaceBg,
-      'border-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-breadcrumb-item + .bw-breadcrumb-item::before': {
-      'color': adjustLightness(textColor, -20)
-    },
-    '.bw-dark .bw-breadcrumb-item.active': {
-      'color': adjustLightness(textColor, -10)
-    },
-    '.bw-dark .bw-hero-light': {
-      'background': surfaceBg,
-      'color': textColor
-    },
-    '.bw-dark .bw-progress': {
-      'background-color': surfaceBg
-    },
-    '.bw-dark .bw-section-subtitle': {
-      'color': adjustLightness(textColor, -15)
-    },
-    '.bw-dark .bw-close': {
-      'color': textColor
-    },
-    '.bw-dark .bw-accordion-item': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-accordion-button': {
-      'color': textColor
-    },
-    '.bw-dark .bw-accordion-button:not(.bw-collapsed)': {
-      'color': '#7dd3e0',
-      'background-color': 'rgba(125, 211, 224, 0.1)'
-    },
-    '.bw-dark .bw-accordion-button:hover': {
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-accordion-button:not(.bw-collapsed):hover': {
-      'background-color': 'rgba(125, 211, 224, 0.15)'
-    },
-    '.bw-dark .bw-accordion-button:focus-visible': {
-      'box-shadow': '0 0 0 0.2rem rgba(125, 211, 224, 0.3)'
-    },
-    '.bw-dark .bw-accordion-body': {
-      'border-top-color': borderColor
-    },
-    '.bw-dark .bw-carousel': {
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-carousel-control': {
-      'background-color': 'rgba(255,255,255,0.15)'
-    },
-    '.bw-dark .bw-carousel-control:hover': {
-      'background-color': 'rgba(255,255,255,0.25)'
-    },
-    '.bw-dark .bw-modal-content': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-modal-header': {
-      'border-bottom-color': borderColor
-    },
-    '.bw-dark .bw-modal-footer': {
-      'border-top-color': borderColor
-    },
-    '.bw-dark .bw-modal-title': {
-      'color': textColor
-    },
-    '.bw-dark .bw-toast': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-toast-header': {
-      'border-bottom-color': borderColor,
-      'color': textColor
-    },
-    '.bw-dark .bw-dropdown-menu': {
-      'background-color': surfaceBg,
-      'border-color': borderColor
-    },
-    '.bw-dark .bw-dropdown-item': {
-      'color': textColor
-    },
-    '.bw-dark .bw-dropdown-item:hover': {
-      'background-color': bodyBg
-    },
-    '.bw-dark .bw-dropdown-divider': {
-      'border-top-color': borderColor
-    },
-    '.bw-dark .bw-skeleton': {
-      'background': 'linear-gradient(90deg, ' + borderColor + ' 25%, ' + surfaceBg + ' 37%, ' + borderColor + ' 63%)'
-    },
-    '.bw-dark h1, .bw-dark h2, .bw-dark h3, .bw-dark h4, .bw-dark h5, .bw-dark h6': {
-      'color': textColor
-    },
-    '@media (prefers-color-scheme: dark)': {
-      ':root.bw-auto-dark body': {
-        'color': textColor,
-        'background-color': bodyBg
+  // Re-scope every selector under .bw-theme-alt (+ optional theme name)
+  var altPrefix = name ? '.' + name + '.bw-theme-alt' : '.bw-theme-alt';
+  var altRules = {};
+
+  for (var sel in rawRules) {
+    if (!rawRules.hasOwnProperty(sel)) continue;
+
+    if (sel.charAt(0) === '@') {
+      // @media / @keyframes — recurse into the block
+      var innerBlock = rawRules[sel];
+      var altInner = {};
+      for (var innerSel in innerBlock) {
+        if (!innerBlock.hasOwnProperty(innerSel)) continue;
+        altInner[altPrefix + ' ' + innerSel] = innerBlock[innerSel];
       }
+      altRules[sel] = altInner;
+    } else {
+      // Regular selector — prefix with alt scope
+      // Handle comma-separated selectors
+      var parts = sel.split(',');
+      var scopedParts = [];
+      for (var i = 0; i < parts.length; i++) {
+        var s = parts[i].trim();
+        // 'body' selector gets special treatment: .bw-theme-alt body
+        if (s === 'body' || s.indexOf('body') === 0) {
+          scopedParts.push(altPrefix + ' ' + s);
+        } else {
+          scopedParts.push(altPrefix + ' ' + s);
+        }
+      }
+      altRules[scopedParts.join(', ')] = rawRules[sel];
     }
+  }
+
+  // Add body-level overrides for the alternate surface
+  altRules[altPrefix + ' body, :root' + altPrefix + ' body'] = {
+    'color': altPalette.dark.base,
+    'background-color': altPalette.light.base
   };
+
+  return altRules;
 }
 
 function deepMerge(target, source) {
@@ -2279,8 +2541,11 @@ function makeCard(props = {}) {
  *   variant: "success",
  *   onclick: () => console.log("saved")
  * });
+ * // String shorthand:
+ * const ok = makeButton("OK");
  */
 function makeButton(props = {}) {
+  if (typeof props === 'string') props = { text: props };
   const {
     text,
     variant = 'primary',
@@ -2585,6 +2850,7 @@ function makeTabs(props = {}) {
               class: `bw-nav-link ${index === actualActiveIndex ? 'active' : ''}`,
               type: 'button',
               role: 'tab',
+              tabindex: index === actualActiveIndex ? '0' : '-1',
               'aria-selected': index === actualActiveIndex ? 'true' : 'false',
               'data-tab-index': index,
               onclick: (e) => {
@@ -2595,11 +2861,13 @@ function makeTabs(props = {}) {
                 allTabs.forEach(t => {
                   t.classList.remove('active');
                   t.setAttribute('aria-selected', 'false');
+                  t.setAttribute('tabindex', '-1');
                 });
                 allPanes.forEach(p => p.classList.remove('active'));
 
                 e.target.classList.add('active');
                 e.target.setAttribute('aria-selected', 'true');
+                e.target.setAttribute('tabindex', '0');
                 const targetIndex = parseInt(e.target.getAttribute('data-tab-index'));
                 allPanes[targetIndex].classList.add('active');
               }
@@ -2623,7 +2891,39 @@ function makeTabs(props = {}) {
     ],
     o: {
       type: 'tabs',
-      state: { activeIndex: actualActiveIndex }
+      state: { activeIndex: actualActiveIndex },
+      mounted: function(el) {
+        var tablist = el.querySelector('[role="tablist"]');
+        if (!tablist) return;
+        tablist.addEventListener('keydown', function(e) {
+          var tabButtons = tablist.querySelectorAll('[role="tab"]');
+          var currentIndex = -1;
+          for (var i = 0; i < tabButtons.length; i++) {
+            if (tabButtons[i] === e.target) { currentIndex = i; break; }
+          }
+          if (currentIndex === -1) return;
+
+          var newIndex = -1;
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
+          } else if (e.key === 'Home') {
+            e.preventDefault();
+            newIndex = 0;
+          } else if (e.key === 'End') {
+            e.preventDefault();
+            newIndex = tabButtons.length - 1;
+          }
+
+          if (newIndex >= 0) {
+            tabButtons[newIndex].focus();
+            tabButtons[newIndex].click();
+          }
+        });
+      }
     }
   };
 }
@@ -2644,8 +2944,11 @@ function makeTabs(props = {}) {
  *   variant: "success",
  *   dismissible: true
  * });
+ * // String shorthand:
+ * const msg = makeAlert("Something happened");
  */
 function makeAlert(props = {}) {
+  if (typeof props === 'string') props = { content: props };
   const {
     content,
     variant = 'info',
@@ -2692,8 +2995,11 @@ function makeAlert(props = {}) {
  * @example
  * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
  * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
+ * // String shorthand:
+ * const tag = makeBadge("New");
  */
 function makeBadge(props = {}) {
+  if (typeof props === 'string') props = { text: props };
   const {
     text,
     variant = 'primary',
@@ -2930,13 +3236,16 @@ function makeForm(props = {}) {
 }
 
 /**
- * Create a form group with label, input, and optional help text
+ * Create a form group with label, input, optional help text and validation feedback
  *
  * @param {Object} [props] - Form group configuration
  * @param {string} [props.label] - Label text
  * @param {Object} [props.input] - Input TACO object (from makeInput, makeSelect, etc.)
  * @param {string} [props.help] - Help text displayed below the input
  * @param {string} [props.id] - Input ID (links label to input via for/id)
+ * @param {string} [props.validation] - Validation state ("valid" or "invalid")
+ * @param {string} [props.feedback] - Validation feedback text shown below input
+ * @param {boolean} [props.required=false] - Show required indicator (*) on label
  * @returns {Object} TACO object representing a form group
  * @category Component Builders
  * @example
@@ -2944,11 +3253,22 @@ function makeForm(props = {}) {
  *   label: "Email",
  *   id: "email",
  *   input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }),
- *   help: "We'll never share your email."
+ *   validation: "invalid",
+ *   feedback: "Please enter a valid email address."
  * });
  */
 function makeFormGroup(props = {}) {
-  const { label, input, help, id } = props;
+  var { label, input, help, id, validation, feedback, required } = props;
+
+  // Shallow-clone input TACO to add validation class without mutating original
+  var styledInput = input;
+  if (validation && input && input.a) {
+    styledInput = { t: input.t, a: Object.assign({}, input.a), c: input.c, o: input.o };
+    var validClass = validation === 'valid' ? 'bw-is-valid' : validation === 'invalid' ? 'bw-is-invalid' : '';
+    if (validClass) {
+      styledInput.a.class = ((styledInput.a.class || '') + ' ' + validClass).trim();
+    }
+  }
 
   return {
     t: 'div',
@@ -2957,9 +3277,14 @@ function makeFormGroup(props = {}) {
       label && {
         t: 'label',
         a: { for: id, class: 'bw-form-label' },
-        c: label
+        c: required ? [label, { t: 'span', a: { class: 'bw-text-danger', style: 'margin-left: 0.25rem' }, c: '*' }] : label
       },
-      input,
+      styledInput,
+      feedback && validation && {
+        t: 'div',
+        a: { class: validation === 'valid' ? 'bw-valid-feedback' : 'bw-invalid-feedback' },
+        c: feedback
+      },
       help && {
         t: 'small',
         a: { class: 'bw-form-text bw-text-muted' },
@@ -4226,29 +4551,47 @@ function makeAccordion(props = {}) {
                   var isOpen = collapse.classList.contains('bw-collapse-show');
 
                   if (!multiOpen) {
-                    // Close all siblings
-                    var allCollapses = accordionEl.querySelectorAll('.bw-accordion-collapse');
-                    var allButtons = accordionEl.querySelectorAll('.bw-accordion-button');
-                    for (var j = 0; j < allCollapses.length; j++) {
-                      allCollapses[j].classList.remove('bw-collapse-show');
-                      allCollapses[j].style.maxHeight = null;
-                    }
-                    for (var k = 0; k < allButtons.length; k++) {
-                      allButtons[k].classList.add('bw-collapsed');
-                      allButtons[k].setAttribute('aria-expanded', 'false');
+                    // Animate-close all other open siblings
+                    var allItems = accordionEl.querySelectorAll('.bw-accordion-item');
+                    for (var j = 0; j < allItems.length; j++) {
+                      if (allItems[j] === accordionItem) continue;
+                      var sibCollapse = allItems[j].querySelector('.bw-accordion-collapse');
+                      var sibBtn = allItems[j].querySelector('.bw-accordion-button');
+                      if (sibCollapse.classList.contains('bw-collapse-show')) {
+                        sibCollapse.style.maxHeight = sibCollapse.scrollHeight + 'px';
+                        sibCollapse.offsetHeight; // force reflow
+                        sibCollapse.style.maxHeight = '0px';
+                        sibCollapse.classList.remove('bw-collapse-show');
+                        sibBtn.classList.add('bw-collapsed');
+                        sibBtn.setAttribute('aria-expanded', 'false');
+                      }
                     }
                   }
 
                   if (isOpen) {
+                    // Animate close
+                    collapse.style.maxHeight = collapse.scrollHeight + 'px';
+                    collapse.offsetHeight; // force reflow
+                    collapse.style.maxHeight = '0px';
                     collapse.classList.remove('bw-collapse-show');
-                    collapse.style.maxHeight = null;
                     btn.classList.add('bw-collapsed');
                     btn.setAttribute('aria-expanded', 'false');
                   } else {
+                    // Animate open
                     collapse.classList.add('bw-collapse-show');
+                    collapse.style.maxHeight = '0px';
+                    collapse.offsetHeight; // force reflow
                     collapse.style.maxHeight = collapse.scrollHeight + 'px';
                     btn.classList.remove('bw-collapsed');
                     btn.setAttribute('aria-expanded', 'true');
+                    // After transition, allow dynamic content sizing
+                    var onEnd = function(ev) {
+                      if (ev.propertyName === 'max-height' && collapse.classList.contains('bw-collapse-show')) {
+                        collapse.style.maxHeight = 'none';
+                      }
+                      collapse.removeEventListener('transitionend', onEnd);
+                    };
+                    collapse.addEventListener('transitionend', onEnd);
                   }
                 }
               },
@@ -4265,7 +4608,7 @@ function makeAccordion(props = {}) {
             },
             o: item.open ? {
               mounted: function(el) {
-                el.style.maxHeight = el.scrollHeight + 'px';
+                el.style.maxHeight = 'none';
               }
             } : undefined
           }
@@ -4975,25 +5318,908 @@ function makeCarousel(props = {}) {
     a: {
       class: ('bw-carousel ' + className).trim(),
       style: 'height: ' + height,
+      tabindex: '0',
+      'aria-roledescription': 'carousel',
       'data-carousel-index': startIndex
     },
     c: children,
     o: {
       type: 'carousel',
       state: { activeIndex: startIndex, autoPlay: autoPlay, interval: interval },
-      mounted: autoPlay ? function(el) {
-        var intervalId = setInterval(function() {
+      mounted: function(el) {
+        // Keyboard navigation
+        el.addEventListener('keydown', function(e) {
           var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
-          goToSlide(el, idx + 1);
-        }, interval);
-        el._bw_carouselInterval = intervalId;
-      } : undefined,
-      unmount: autoPlay ? function(el) {
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            goToSlide(el, idx - 1);
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            goToSlide(el, idx + 1);
+          }
+        });
+        // Auto-play
+        if (autoPlay) {
+          var intervalId = setInterval(function() {
+            var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+            goToSlide(el, idx + 1);
+          }, interval);
+          el._bw_carouselInterval = intervalId;
+          // Pause on hover/focus for usability
+          el.addEventListener('mouseenter', function() {
+            if (el._bw_carouselInterval) clearInterval(el._bw_carouselInterval);
+          });
+          el.addEventListener('mouseleave', function() {
+            el._bw_carouselInterval = setInterval(function() {
+              var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+              goToSlide(el, idx + 1);
+            }, interval);
+          });
+        }
+      },
+      unmount: function(el) {
         if (el._bw_carouselInterval) {
           clearInterval(el._bw_carouselInterval);
         }
-      } : undefined
+      }
     }
+  };
+}
+
+// =========================================================================
+// Phase 4: Dashboard & Data Display
+// =========================================================================
+
+/**
+ * Create a stat card for dashboard metrics display
+ *
+ * Shows a large value with a label and optional change indicator.
+ * Designed for dashboard grid layouts with left-border accent.
+ *
+ * @param {Object|string} [props] - Stat card configuration (string shorthand sets label)
+ * @param {string|number} [props.value=0] - The main stat value to display
+ * @param {string} [props.label] - Descriptive label below the value
+ * @param {number} [props.change] - Percentage change indicator (positive = green arrow, negative = red)
+ * @param {string} [props.format] - Value format ("number", "currency", "percent")
+ * @param {string} [props.prefix] - Custom prefix (e.g. "$")
+ * @param {string} [props.suffix] - Custom suffix (e.g. "%")
+ * @param {string} [props.icon] - Icon content (emoji or text) shown above value
+ * @param {string} [props.variant] - Left-border color variant ("primary", "success", "danger", etc.)
+ * @param {string} [props.className] - Additional CSS classes
+ * @param {Object} [props.style] - Inline style object
+ * @returns {Object} TACO object representing a stat card
+ * @category Component Builders
+ * @example
+ * const stat = makeStatCard({
+ *   value: 2345,
+ *   label: 'Active Users',
+ *   change: 5.3,
+ *   format: 'number',
+ *   variant: 'primary'
+ * });
+ */
+function makeStatCard(props = {}) {
+  if (typeof props === 'string') props = { label: props };
+  var {
+    value = 0,
+    label,
+    change,
+    format,
+    prefix,
+    suffix,
+    icon,
+    variant,
+    className = '',
+    style
+  } = props;
+
+  function formatValue(val, fmt) {
+    if (prefix || suffix) return (prefix || '') + val + (suffix || '');
+    switch (fmt) {
+      case 'currency': return '$' + Number(val).toLocaleString();
+      case 'percent': return val + '%';
+      case 'number': return Number(val).toLocaleString();
+      default: return '' + val;
+    }
+  }
+
+  var classes = [
+    'bw-stat-card',
+    variant ? 'bw-stat-card-' + variant : '',
+    className
+  ].filter(Boolean).join(' ').trim();
+
+  var children = [];
+
+  if (icon) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-stat-icon' },
+      c: icon
+    });
+  }
+
+  children.push({
+    t: 'div',
+    a: { class: 'bw-stat-value' },
+    c: formatValue(value, format)
+  });
+
+  if (label) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-stat-label' },
+      c: label
+    });
+  }
+
+  if (change !== undefined && change !== null) {
+    children.push({
+      t: 'div',
+      a: {
+        class: 'bw-stat-change ' + (change >= 0 ? 'bw-stat-change-up' : 'bw-stat-change-down')
+      },
+      c: (change >= 0 ? '\u2191 +' : '\u2193 ') + change + '%'
+    });
+  }
+
+  return {
+    t: 'div',
+    a: { class: classes, style: style },
+    c: children,
+    o: { type: 'stat-card' }
+  };
+}
+
+// =========================================================================
+// Phase 5: Overlays & Popovers
+// =========================================================================
+
+/**
+ * Create a tooltip wrapper around trigger content
+ *
+ * Wraps the trigger element in a container that shows tooltip text
+ * on hover and focus. Pure CSS-driven show/hide with JS lifecycle
+ * for event binding.
+ *
+ * @param {Object} [props] - Tooltip configuration
+ * @param {string|Object|Array} [props.content] - Trigger content (what the user hovers/focuses)
+ * @param {string} [props.text=""] - Tooltip text to display
+ * @param {string} [props.placement="top"] - Tooltip placement ("top", "bottom", "left", "right")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a tooltip wrapper
+ * @category Component Builders
+ * @example
+ * const tip = makeTooltip({
+ *   content: makeButton({ text: 'Hover me' }),
+ *   text: 'This is a tooltip!',
+ *   placement: 'top'
+ * });
+ */
+function makeTooltip(props = {}) {
+  var {
+    content,
+    text = '',
+    placement = 'top',
+    className = ''
+  } = props;
+
+  return {
+    t: 'span',
+    a: { class: ('bw-tooltip-wrapper ' + className).trim() },
+    c: [
+      content,
+      {
+        t: 'span',
+        a: {
+          class: 'bw-tooltip bw-tooltip-' + placement,
+          role: 'tooltip'
+        },
+        c: text
+      }
+    ],
+    o: {
+      type: 'tooltip',
+      mounted: function(el) {
+        var tip = el.querySelector('.bw-tooltip');
+        el.addEventListener('mouseenter', function() {
+          tip.classList.add('bw-tooltip-show');
+        });
+        el.addEventListener('mouseleave', function() {
+          tip.classList.remove('bw-tooltip-show');
+        });
+        el.addEventListener('focusin', function() {
+          tip.classList.add('bw-tooltip-show');
+        });
+        el.addEventListener('focusout', function() {
+          tip.classList.remove('bw-tooltip-show');
+        });
+      }
+    }
+  };
+}
+
+/**
+ * Create a popover wrapper around trigger content
+ *
+ * Like a tooltip but richer — supports title + body content and is
+ * triggered by click rather than hover. Dismisses on click outside.
+ *
+ * @param {Object} [props] - Popover configuration
+ * @param {string|Object|Array} [props.trigger] - Trigger content (what the user clicks)
+ * @param {string} [props.title] - Popover header title
+ * @param {string|Object|Array} [props.content] - Popover body content
+ * @param {string} [props.placement="top"] - Placement ("top", "bottom", "left", "right")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a popover wrapper
+ * @category Component Builders
+ * @example
+ * const pop = makePopover({
+ *   trigger: makeButton({ text: 'Click me' }),
+ *   title: 'Popover Title',
+ *   content: 'Some helpful information here.',
+ *   placement: 'bottom'
+ * });
+ */
+function makePopover(props = {}) {
+  var {
+    trigger,
+    title,
+    content,
+    placement = 'top',
+    className = ''
+  } = props;
+
+  var popoverContent = [
+    title && {
+      t: 'div',
+      a: { class: 'bw-popover-header' },
+      c: title
+    },
+    content && {
+      t: 'div',
+      a: { class: 'bw-popover-body' },
+      c: content
+    }
+  ].filter(Boolean);
+
+  return {
+    t: 'span',
+    a: { class: ('bw-popover-wrapper ' + className).trim() },
+    c: [
+      {
+        t: 'span',
+        a: {
+          class: 'bw-popover-trigger',
+          onclick: function(e) {
+            var wrapper = e.target.closest('.bw-popover-wrapper');
+            var pop = wrapper.querySelector('.bw-popover');
+            pop.classList.toggle('bw-popover-show');
+          }
+        },
+        c: trigger
+      },
+      {
+        t: 'div',
+        a: {
+          class: 'bw-popover bw-popover-' + placement
+        },
+        c: popoverContent
+      }
+    ],
+    o: {
+      type: 'popover',
+      mounted: function(el) {
+        // Click outside to close
+        var outsideHandler = function(e) {
+          if (!el.contains(e.target)) {
+            var pop = el.querySelector('.bw-popover');
+            if (pop) pop.classList.remove('bw-popover-show');
+          }
+        };
+        document.addEventListener('click', outsideHandler);
+        el._bw_outsideHandler = outsideHandler;
+      },
+      unmount: function(el) {
+        if (el._bw_outsideHandler) {
+          document.removeEventListener('click', el._bw_outsideHandler);
+        }
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 6: Form Enhancements & Layout
+// =========================================================================
+
+/**
+ * Create a search input with clear button
+ *
+ * Wraps a text input with a clear (×) button that appears when
+ * the field has content. Calls onSearch on Enter key.
+ *
+ * @param {Object} [props] - Search input configuration
+ * @param {string} [props.placeholder="Search..."] - Placeholder text
+ * @param {string} [props.value] - Initial value
+ * @param {Function} [props.onSearch] - Callback when Enter is pressed, receives value
+ * @param {Function} [props.onInput] - Callback on each keystroke, receives value
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.name] - Input name attribute
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a search input
+ * @category Component Builders
+ * @example
+ * const search = makeSearchInput({
+ *   placeholder: 'Search users...',
+ *   onSearch: (val) => filterUsers(val)
+ * });
+ */
+function makeSearchInput(props = {}) {
+  if (typeof props === 'string') props = { placeholder: props };
+  var {
+    placeholder = 'Search...',
+    value,
+    onSearch,
+    onInput,
+    id,
+    name,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-search-input ' + className).trim() },
+    c: [
+      {
+        t: 'input',
+        a: {
+          type: 'search',
+          class: 'bw-form-control bw-search-field',
+          placeholder: placeholder,
+          value: value,
+          id: id,
+          name: name,
+          onkeydown: function(e) {
+            if (e.key === 'Enter' && onSearch) {
+              e.preventDefault();
+              onSearch(e.target.value);
+            }
+          },
+          oninput: function(e) {
+            var wrapper = e.target.closest('.bw-search-input');
+            var clearBtn = wrapper.querySelector('.bw-search-clear');
+            if (clearBtn) {
+              clearBtn.style.display = e.target.value ? 'flex' : 'none';
+            }
+            if (onInput) onInput(e.target.value);
+          }
+        }
+      },
+      {
+        t: 'button',
+        a: {
+          type: 'button',
+          class: 'bw-search-clear',
+          'aria-label': 'Clear search',
+          style: value ? undefined : 'display: none',
+          onclick: function(e) {
+            var wrapper = e.target.closest('.bw-search-input');
+            var input = wrapper.querySelector('.bw-search-field');
+            input.value = '';
+            e.target.style.display = 'none';
+            input.focus();
+            if (onInput) onInput('');
+            if (onSearch) onSearch('');
+          }
+        },
+        c: '\u00D7'
+      }
+    ],
+    o: { type: 'search-input' }
+  };
+}
+
+/**
+ * Create a styled range slider input
+ *
+ * @param {Object} [props] - Range configuration
+ * @param {number} [props.min=0] - Minimum value
+ * @param {number} [props.max=100] - Maximum value
+ * @param {number} [props.step=1] - Step increment
+ * @param {number} [props.value=50] - Current value
+ * @param {string} [props.label] - Label text
+ * @param {boolean} [props.showValue=false] - Show current value display
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.name] - Input name attribute
+ * @param {boolean} [props.disabled=false] - Whether the slider is disabled
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a range input
+ * @category Component Builders
+ * @example
+ * const slider = makeRange({
+ *   min: 0, max: 100, value: 50,
+ *   label: 'Volume',
+ *   showValue: true,
+ *   oninput: (e) => setVolume(e.target.value)
+ * });
+ */
+function makeRange(props = {}) {
+  var {
+    min = 0,
+    max = 100,
+    step = 1,
+    value = 50,
+    label,
+    showValue = false,
+    id,
+    name,
+    disabled = false,
+    className = '',
+    ...eventHandlers
+  } = props;
+
+  var children = [];
+
+  if (label || showValue) {
+    var labelContent = [];
+    if (label) {
+      labelContent.push({
+        t: 'span',
+        c: label
+      });
+    }
+    if (showValue) {
+      labelContent.push({
+        t: 'span',
+        a: { class: 'bw-range-value' },
+        c: '' + value
+      });
+    }
+    children.push({
+      t: 'div',
+      a: { class: 'bw-range-label' },
+      c: labelContent
+    });
+  }
+
+  // Wrap oninput to update value display
+  var userOnInput = eventHandlers.oninput;
+  if (showValue) {
+    eventHandlers.oninput = function(e) {
+      var wrapper = e.target.closest('.bw-range-wrapper');
+      var valDisplay = wrapper.querySelector('.bw-range-value');
+      if (valDisplay) valDisplay.textContent = e.target.value;
+      if (userOnInput) userOnInput(e);
+    };
+  }
+
+  children.push({
+    t: 'input',
+    a: {
+      type: 'range',
+      class: 'bw-range',
+      min: min,
+      max: max,
+      step: step,
+      value: value,
+      id: id,
+      name: name,
+      disabled: disabled,
+      ...eventHandlers
+    }
+  });
+
+  return {
+    t: 'div',
+    a: { class: ('bw-range-wrapper ' + className).trim() },
+    c: children,
+    o: { type: 'range' }
+  };
+}
+
+/**
+ * Create a media object layout (image + text side-by-side)
+ *
+ * Classic media object pattern: image/icon on one side, text content
+ * on the other, using flexbox. Supports reversed layout.
+ *
+ * @param {Object} [props] - Media object configuration
+ * @param {string} [props.src] - Image source URL
+ * @param {string} [props.alt=""] - Image alt text
+ * @param {string} [props.title] - Title text
+ * @param {string|Object|Array} [props.content] - Body content
+ * @param {boolean} [props.reverse=false] - Put image on the right
+ * @param {string} [props.imageSize="3rem"] - Image width/height
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a media object
+ * @category Component Builders
+ * @example
+ * const media = makeMediaObject({
+ *   src: '/avatar.jpg',
+ *   title: 'Jane Doe',
+ *   content: 'Posted a comment 5 minutes ago.'
+ * });
+ */
+function makeMediaObject(props = {}) {
+  var {
+    src,
+    alt = '',
+    title,
+    content,
+    reverse = false,
+    imageSize = '3rem',
+    className = ''
+  } = props;
+
+  var imgEl = src ? {
+    t: 'img',
+    a: {
+      class: 'bw-media-img',
+      src: src,
+      alt: alt,
+      style: 'width:' + imageSize + ';height:' + imageSize
+    }
+  } : null;
+
+  var bodyEl = {
+    t: 'div',
+    a: { class: 'bw-media-body' },
+    c: [
+      title && { t: 'h5', a: { class: 'bw-media-title' }, c: title },
+      content
+    ].filter(Boolean)
+  };
+
+  return {
+    t: 'div',
+    a: { class: ('bw-media ' + (reverse ? 'bw-media-reverse ' : '') + className).trim() },
+    c: reverse
+      ? [bodyEl, imgEl].filter(Boolean)
+      : [imgEl, bodyEl].filter(Boolean),
+    o: { type: 'media-object' }
+  };
+}
+
+/**
+ * Create a file upload zone with drag-and-drop support
+ *
+ * Styled drop zone with file input. Supports drag-and-drop visuals
+ * and multiple file selection.
+ *
+ * @param {Object} [props] - File upload configuration
+ * @param {string} [props.accept] - Accepted file types (e.g. "image/*", ".pdf,.doc")
+ * @param {boolean} [props.multiple=false] - Allow multiple file selection
+ * @param {Function} [props.onFiles] - Callback when files are selected, receives FileList
+ * @param {string} [props.text="Drop files here or click to browse"] - Zone label text
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a file upload zone
+ * @category Component Builders
+ * @example
+ * const upload = makeFileUpload({
+ *   accept: 'image/*',
+ *   multiple: true,
+ *   onFiles: (files) => uploadFiles(files)
+ * });
+ */
+function makeFileUpload(props = {}) {
+  var {
+    accept,
+    multiple = false,
+    onFiles,
+    text = 'Drop files here or click to browse',
+    id,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: {
+      class: ('bw-file-upload ' + className).trim(),
+      tabindex: '0',
+      role: 'button',
+      'aria-label': text
+    },
+    c: [
+      { t: 'div', a: { class: 'bw-file-upload-icon' }, c: '\uD83D\uDCC1' },
+      { t: 'div', a: { class: 'bw-file-upload-text' }, c: text },
+      {
+        t: 'input',
+        a: {
+          type: 'file',
+          class: 'bw-file-upload-input',
+          accept: accept,
+          multiple: multiple,
+          id: id,
+          onchange: function(e) {
+            if (onFiles && e.target.files.length) onFiles(e.target.files);
+          }
+        }
+      }
+    ],
+    o: {
+      type: 'file-upload',
+      mounted: function(el) {
+        var input = el.querySelector('.bw-file-upload-input');
+
+        // Click zone to trigger file input
+        el.addEventListener('click', function(e) {
+          if (e.target !== input) input.click();
+        });
+
+        // Keyboard activation
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            input.click();
+          }
+        });
+
+        // Drag-and-drop visuals
+        el.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          el.classList.add('bw-file-upload-active');
+        });
+        el.addEventListener('dragleave', function() {
+          el.classList.remove('bw-file-upload-active');
+        });
+        el.addEventListener('drop', function(e) {
+          e.preventDefault();
+          el.classList.remove('bw-file-upload-active');
+          if (onFiles && e.dataTransfer.files.length) onFiles(e.dataTransfer.files);
+        });
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 7: Data Display & Workflow
+// =========================================================================
+
+/**
+ * Create a vertical timeline for chronological event display
+ *
+ * Renders events as a vertical line with markers and content cards.
+ * Each item can have a colored variant marker.
+ *
+ * @param {Object} [props] - Timeline configuration
+ * @param {Array<Object>} [props.items=[]] - Timeline events
+ * @param {string} [props.items[].title] - Event title
+ * @param {string|Object|Array} [props.items[].content] - Event description content
+ * @param {string} [props.items[].date] - Date or time label
+ * @param {string} [props.items[].variant="primary"] - Marker color variant
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a timeline
+ * @category Component Builders
+ * @example
+ * const timeline = makeTimeline({
+ *   items: [
+ *     { title: 'Project Started', date: 'Jan 2026', variant: 'primary' },
+ *     { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' },
+ *     { title: 'Stable Release', date: 'Jun 2026', variant: 'success' }
+ *   ]
+ * });
+ */
+function makeTimeline(props = {}) {
+  var {
+    items = [],
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-timeline ' + className).trim() },
+    c: items.map(function(item) {
+      return {
+        t: 'div',
+        a: { class: 'bw-timeline-item' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-timeline-marker bw-timeline-marker-' + (item.variant || 'primary') }
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-timeline-content' },
+            c: [
+              item.date && {
+                t: 'div',
+                a: { class: 'bw-timeline-date' },
+                c: item.date
+              },
+              item.title && {
+                t: 'h5',
+                a: { class: 'bw-timeline-title' },
+                c: item.title
+              },
+              item.content && (typeof item.content === 'string'
+                ? { t: 'p', a: { class: 'bw-timeline-text' }, c: item.content }
+                : item.content)
+            ].filter(Boolean)
+          }
+        ]
+      };
+    }),
+    o: { type: 'timeline' }
+  };
+}
+
+/**
+ * Create a multi-step wizard/progress indicator
+ *
+ * Displays numbered steps with active and completed states.
+ * Steps before currentStep are marked completed, the currentStep
+ * is active, and subsequent steps are pending.
+ *
+ * @param {Object} [props] - Stepper configuration
+ * @param {Array<Object>} [props.steps=[]] - Step definitions
+ * @param {string} [props.steps[].label] - Step label text
+ * @param {string} [props.steps[].description] - Optional step description
+ * @param {number} [props.currentStep=0] - Zero-based index of the active step
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a stepper
+ * @category Component Builders
+ * @example
+ * const stepper = makeStepper({
+ *   currentStep: 1,
+ *   steps: [
+ *     { label: 'Account', description: 'Create account' },
+ *     { label: 'Profile', description: 'Set up profile' },
+ *     { label: 'Confirm', description: 'Review & submit' }
+ *   ]
+ * });
+ */
+function makeStepper(props = {}) {
+  var {
+    steps = [],
+    currentStep = 0,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-stepper ' + className).trim(), role: 'list' },
+    c: steps.map(function(step, index) {
+      var state = index < currentStep ? 'completed' : index === currentStep ? 'active' : 'pending';
+      return {
+        t: 'div',
+        a: {
+          class: 'bw-step bw-step-' + state,
+          role: 'listitem',
+          'aria-current': state === 'active' ? 'step' : undefined
+        },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-step-indicator' },
+            c: state === 'completed' ? '\u2713' : '' + (index + 1)
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-step-body' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-label' }, c: step.label },
+              step.description && { t: 'div', a: { class: 'bw-step-description' }, c: step.description }
+            ].filter(Boolean)
+          }
+        ]
+      };
+    }),
+    o: { type: 'stepper' }
+  };
+}
+
+/**
+ * Create a chip/tag input for managing a list of items
+ *
+ * Displays existing chips with remove buttons and an input field
+ * for adding new ones. Chips are added on Enter and removed on
+ * clicking the × button.
+ *
+ * @param {Object} [props] - Chip input configuration
+ * @param {Array<string>} [props.chips=[]] - Initial chip values
+ * @param {string} [props.placeholder="Add..."] - Input placeholder text
+ * @param {Function} [props.onAdd] - Callback when a chip is added, receives value
+ * @param {Function} [props.onRemove] - Callback when a chip is removed, receives value
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a chip input
+ * @category Component Builders
+ * @example
+ * const tags = makeChipInput({
+ *   chips: ['JavaScript', 'CSS'],
+ *   placeholder: 'Add tag...',
+ *   onAdd: (val) => addTag(val),
+ *   onRemove: (val) => removeTag(val)
+ * });
+ */
+function makeChipInput(props = {}) {
+  var {
+    chips = [],
+    placeholder = 'Add...',
+    onAdd,
+    onRemove,
+    className = ''
+  } = props;
+
+  function makeChipEl(text) {
+    return {
+      t: 'span',
+      a: { class: 'bw-chip', 'data-chip-value': text },
+      c: [
+        text,
+        {
+          t: 'button',
+          a: {
+            type: 'button',
+            class: 'bw-chip-remove',
+            'aria-label': 'Remove ' + text,
+            onclick: function(e) {
+              var chip = e.target.closest('.bw-chip');
+              var val = chip.getAttribute('data-chip-value');
+              chip.parentNode.removeChild(chip);
+              if (onRemove) onRemove(val);
+            }
+          },
+          c: '\u00D7'
+        }
+      ]
+    };
+  }
+
+  return {
+    t: 'div',
+    a: { class: ('bw-chip-input ' + className).trim() },
+    c: [
+      ...chips.map(makeChipEl),
+      {
+        t: 'input',
+        a: {
+          type: 'text',
+          class: 'bw-chip-field',
+          placeholder: placeholder,
+          onkeydown: function(e) {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+              e.preventDefault();
+              var val = e.target.value.trim();
+              var wrapper = e.target.closest('.bw-chip-input');
+              // Insert chip before the input
+              var chipEl = document.createElement('span');
+              chipEl.className = 'bw-chip';
+              chipEl.setAttribute('data-chip-value', val);
+              chipEl.innerHTML = '';
+              chipEl.textContent = val;
+              var removeBtn = document.createElement('button');
+              removeBtn.type = 'button';
+              removeBtn.className = 'bw-chip-remove';
+              removeBtn.setAttribute('aria-label', 'Remove ' + val);
+              removeBtn.textContent = '\u00D7';
+              removeBtn.onclick = function() {
+                chipEl.parentNode.removeChild(chipEl);
+                if (onRemove) onRemove(val);
+              };
+              chipEl.appendChild(removeBtn);
+              wrapper.insertBefore(chipEl, e.target);
+              e.target.value = '';
+              if (onAdd) onAdd(val);
+            }
+            // Backspace on empty input removes last chip
+            if (e.key === 'Backspace' && !e.target.value) {
+              var wrapper = e.target.closest('.bw-chip-input');
+              var chipEls = wrapper.querySelectorAll('.bw-chip');
+              if (chipEls.length) {
+                var last = chipEls[chipEls.length - 1];
+                var removedVal = last.getAttribute('data-chip-value');
+                last.parentNode.removeChild(last);
+                if (onRemove) onRemove(removedVal);
+              }
+            }
+          }
+        }
+      }
+    ],
+    o: { type: 'chip-input' }
   };
 }
 
@@ -5024,32 +6250,42 @@ var components = /*#__PURE__*/Object.freeze({
   makeCard: makeCard,
   makeCarousel: makeCarousel,
   makeCheckbox: makeCheckbox,
+  makeChipInput: makeChipInput,
   makeCodeDemo: makeCodeDemo,
   makeCol: makeCol,
   makeContainer: makeContainer,
   makeDropdown: makeDropdown,
   makeFeatureGrid: makeFeatureGrid,
+  makeFileUpload: makeFileUpload,
   makeForm: makeForm,
   makeFormGroup: makeFormGroup,
   makeHero: makeHero,
   makeInput: makeInput,
   makeListGroup: makeListGroup,
+  makeMediaObject: makeMediaObject,
   makeModal: makeModal,
   makeNav: makeNav,
   makeNavbar: makeNavbar,
   makePagination: makePagination,
+  makePopover: makePopover,
   makeProgress: makeProgress,
   makeRadio: makeRadio,
+  makeRange: makeRange,
   makeRow: makeRow,
+  makeSearchInput: makeSearchInput,
   makeSection: makeSection,
   makeSelect: makeSelect,
   makeSkeleton: makeSkeleton,
   makeSpinner: makeSpinner,
   makeStack: makeStack,
+  makeStatCard: makeStatCard,
+  makeStepper: makeStepper,
   makeSwitch: makeSwitch,
   makeTabs: makeTabs,
   makeTextarea: makeTextarea,
-  makeToast: makeToast
+  makeTimeline: makeTimeline,
+  makeToast: makeToast,
+  makeTooltip: makeTooltip
 });
 
 /**
@@ -6670,8 +7906,10 @@ bw.u = {
 /**
  * Generate responsive CSS with media query breakpoints.
  *
- * Produces a CSS string with `@media` rules for sm (640px), md (768px),
- * lg (1024px), and xl (1280px) breakpoints. Pass the result to `bw.injectCSS()`.
+ * Produces a CSS string with `@media (min-width)` rules for standard
+ * breakpoints. These match the grid system and theme.breakpoints:
+ *   sm: 576px, md: 768px, lg: 992px, xl: 1200px
+ * Pass the result to `bw.injectCSS()`.
  *
  * @param {string} selector - CSS selector
  * @param {Object} breakpoints - Object with keys: base, sm, md, lg, xl
@@ -6688,7 +7926,7 @@ bw.u = {
  * bw.injectCSS(css);
  */
 bw.responsive = function(selector, breakpoints) {
-  var sizes = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
+  var sizes = { sm: '576px', md: '768px', lg: '992px', xl: '1200px' };
   var parts = [];
   Object.keys(breakpoints).forEach(function(key) {
     var rules = {};
@@ -6822,7 +8060,8 @@ if (bw._isBrowser) {
  * @returns {Element|null} Style element if in browser, null in Node.js
  * @category CSS & Styling
  * @see bw.setTheme
- * @see bw.toggleDarkMode
+ * @see bw.applyTheme
+ * @see bw.toggleTheme
  * @example
  * bw.loadDefaultStyles();  // inject all default CSS
  */
@@ -6890,53 +8129,6 @@ bw.setTheme = function(overrides, options = {}) {
 };
 
 /**
- * Toggle dark mode on/off.
- *
- * Adds/removes the `bw-dark` class on `<html>` and injects dark mode CSS
- * overrides. Pass `true`/`false` to force a mode, or omit to toggle.
- *
- * @param {boolean} [force] - Force dark (true) or light (false). Omit to toggle.
- * @returns {boolean} Whether dark mode is now active
- * @category CSS & Styling
- * @see bw.setTheme
- * @example
- * bw.toggleDarkMode();        // toggle
- * bw.toggleDarkMode(true);    // force dark
- * bw.toggleDarkMode(false);   // force light
- */
-bw.toggleDarkMode = function(force) {
-  const isDark = force !== undefined ? force : !theme.darkMode;
-  theme.darkMode = isDark;
-
-  if (bw._isBrowser) {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('bw-dark');
-      // Generate palette-aware dark mode CSS, or fall back to default
-      var palette = bw._activePalette || derivePalette(DEFAULT_PALETTE_CONFIG);
-      var darkRules = generateDarkModeCSS(palette);
-      var darkCSS = bw.css(darkRules);
-
-      // Remove existing dark styles to allow regeneration
-      var existing = document.getElementById('bw-dark-styles');
-      if (existing) existing.remove();
-
-      var styleEl = document.createElement('style');
-      styleEl.id = 'bw-dark-styles';
-      styleEl.textContent = darkCSS;
-      document.head.appendChild(styleEl);
-    } else {
-      root.classList.remove('bw-dark');
-      // Remove dark mode styles when switching to light
-      var darkEl = document.getElementById('bw-dark-styles');
-      if (darkEl) darkEl.remove();
-    }
-  }
-
-  return isDark;
-};
-
-/**
  * Generate a complete, scoped theme from seed colors.
  *
  * Produces CSS for all themed components (buttons, alerts, badges, cards,
@@ -6958,13 +8150,19 @@ bw.toggleDarkMode = function(force) {
  * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
  * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
  * @param {number} [config.fontSize=1.0] - Base font size scale factor
+ * @param {string|number} [config.typeRatio='normal'] - 'tight' | 'normal' | 'relaxed' | 'dramatic' or a number
+ * @param {string} [config.elevation='md'] - 'flat' | 'sm' | 'md' | 'lg'
+ * @param {string} [config.motion='standard'] - 'reduced' | 'standard' | 'expressive'
+ * @param {number} [config.harmonize=0.20] - 0-1, semantic color hue shift toward primary
  * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
- * @returns {Object} { css, palette, name }
+ * @returns {Object} { css, palette, name, isLightPrimary, alternate: { css, palette } }
  * @category CSS & Styling
+ * @see bw.applyTheme
+ * @see bw.toggleTheme
  * @see bw.loadDefaultStyles
  * @example
- * // Generate and inject an ocean theme
- * bw.generateTheme('ocean', {
+ * // Generate and inject an ocean theme (primary + alternate)
+ * var theme = bw.generateTheme('ocean', {
  *   primary: '#0077b6',
  *   secondary: '#90e0ef',
  *   tertiary: '#00b4d8'
@@ -6973,14 +8171,16 @@ bw.toggleDarkMode = function(force) {
  * // Apply to a container
  * document.getElementById('app').classList.add('ocean');
  *
+ * // Toggle to alternate palette
+ * bw.toggleTheme();
+ *
  * // Generate CSS for static export (Node.js)
  * var result = bw.generateTheme('sunset', {
  *   primary: '#e76f51',
  *   secondary: '#264653',
- *   tertiary: '#e9c46a',
  *   inject: false
  * });
- * fs.writeFileSync('sunset.css', result.css);
+ * fs.writeFileSync('sunset.css', result.css + result.alternate.css);
  */
 bw.generateTheme = function(name, config) {
   if (!config || !config.primary || !config.secondary) {
@@ -6991,29 +8191,37 @@ bw.generateTheme = function(name, config) {
   var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
   if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
 
-  // Derive palette
+  // Derive primary palette
   var palette = derivePalette(fullConfig);
-
-  // Store active palette for dark mode
-  bw._activePalette = palette;
 
   // Resolve layout
   var layout = resolveLayout(fullConfig);
 
-  // Generate themed CSS rules
+  // Generate primary themed CSS rules
   var themedRules = generateThemedCSS(name, palette, layout);
-
-  // Add underscore aliases
   var aliasedRules = addUnderscoreAliases(themedRules);
-
-  // Convert to CSS string
   var cssStr = bw.css(aliasedRules);
 
-  // Inject into DOM if requested and in browser
+  // Derive alternate palette (luminance-inverted)
+  var altConfig = deriveAlternateConfig(fullConfig);
+  var altPalette = derivePalette(altConfig);
+
+  // Generate alternate CSS scoped under .bw-theme-alt
+  var altRules = generateAlternateCSS(name, altPalette, layout);
+  var aliasedAltRules = addUnderscoreAliases(altRules);
+  var altCssStr = bw.css(aliasedAltRules);
+
+  // Determine if primary is light-flavored
+  var lightPrimary = isLightPalette(fullConfig);
+
+  // Inject both CSS sets into DOM if requested
   var shouldInject = config.inject !== false;
   if (shouldInject && bw._isBrowser) {
     var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
     bw.injectCSS(cssStr, { id: styleId, append: false });
+
+    var altStyleId = name ? 'bw-theme-' + name + '-alt' : 'bw-theme-default-alt';
+    bw.injectCSS(altCssStr, { id: altStyleId, append: false });
   }
 
   // Update bw.u color entries to reflect the palette
@@ -7024,7 +8232,72 @@ bw.generateTheme = function(name, config) {
     bw.u.textWhite = { color: '#ffffff' };
   }
 
-  return { css: cssStr, palette: palette, name: name };
+  // Store active theme state
+  var result = {
+    css: cssStr,
+    palette: palette,
+    name: name,
+    isLightPrimary: lightPrimary,
+    alternate: {
+      css: altCssStr,
+      palette: altPalette
+    }
+  };
+  bw._activeTheme = result;
+  bw._activeThemeMode = 'primary';
+
+  return result;
+};
+
+/**
+ * Apply a theme mode. Switches between primary and alternate palettes
+ * by adding/removing the `bw-theme-alt` class on `<html>`.
+ *
+ * @param {string} mode - 'primary' | 'alternate' | 'light' | 'dark'
+ * @returns {string} Active mode: 'primary' or 'alternate'
+ * @category CSS & Styling
+ * @see bw.generateTheme
+ * @see bw.toggleTheme
+ * @example
+ * bw.applyTheme('alternate');  // switch to alternate palette
+ * bw.applyTheme('dark');       // switch to whichever palette is darker
+ * bw.applyTheme('primary');    // switch back to primary palette
+ */
+bw.applyTheme = function(mode) {
+  if (!bw._isBrowser) return mode || 'primary';
+  var root = document.documentElement;
+  var isLight = bw._activeTheme ? bw._activeTheme.isLightPrimary : true;
+
+  var wantAlt;
+  if (mode === 'primary')        wantAlt = false;
+  else if (mode === 'alternate') wantAlt = true;
+  else if (mode === 'light')     wantAlt = !isLight;
+  else if (mode === 'dark')      wantAlt = isLight;
+  else                           wantAlt = false;
+
+  if (wantAlt) {
+    root.classList.add('bw-theme-alt');
+  } else {
+    root.classList.remove('bw-theme-alt');
+  }
+
+  bw._activeThemeMode = wantAlt ? 'alternate' : 'primary';
+  return bw._activeThemeMode;
+};
+
+/**
+ * Toggle between primary and alternate theme palettes.
+ *
+ * @returns {string} Active mode after toggle: 'primary' or 'alternate'
+ * @category CSS & Styling
+ * @see bw.applyTheme
+ * @see bw.generateTheme
+ * @example
+ * bw.toggleTheme();  // flip between primary and alternate
+ */
+bw.toggleTheme = function() {
+  var current = bw._activeThemeMode || 'primary';
+  return bw.applyTheme(current === 'primary' ? 'alternate' : 'primary');
 };
 
 // Expose color utility functions on bw namespace
@@ -7036,10 +8309,18 @@ bw.relativeLuminance = relativeLuminance;
 bw.textOnColor = textOnColor;
 bw.deriveShades = deriveShades;
 bw.derivePalette = derivePalette;
+bw.harmonize = harmonize;
+bw.deriveAlternateSeed = deriveAlternateSeed;
+bw.deriveAlternateConfig = deriveAlternateConfig;
+bw.isLightPalette = isLightPalette;
 
 // Expose layout and theme presets
 bw.SPACING_PRESETS = SPACING_PRESETS;
 bw.RADIUS_PRESETS = RADIUS_PRESETS;
+bw.TYPE_RATIO_PRESETS = TYPE_RATIO_PRESETS;
+bw.ELEVATION_PRESETS = ELEVATION_PRESETS;
+bw.MOTION_PRESETS = MOTION_PRESETS;
+bw.generateTypeScale = generateTypeScale;
 bw.DEFAULT_PALETTE_CONFIG = DEFAULT_PALETTE_CONFIG;
 bw.THEME_PRESETS = THEME_PRESETS;
 
@@ -8081,9 +9362,13 @@ bw.copyToClipboard = function(text) {
 /**
  * Create a sortable TACO table from an array of row objects.
  *
+ * Returns a bare `<table>` TACO — no wrapper, title, or responsive scroll.
+ * Use this when you need full control over table placement, or when embedding
+ * the table inside your own layout. For a ready-to-use table with title,
+ * responsive wrapper, and defaults (striped + hover), use `bw.makeDataTable()`.
+ *
  * Auto-detects columns from data keys if not specified. Supports click-to-sort
- * headers with ascending/descending indicators. Returns a TACO object —
- * render with `bw.DOM()` or `bw.html()`.
+ * headers with ascending/descending indicators.
  *
  * @param {Object} config - Table configuration
  * @param {Array<Object>} config.data - Array of row objects to display
@@ -8383,10 +9668,12 @@ bw.makeBarChart = function(config) {
 };
 
 /**
- * Create a responsive data table with title and optional wrapper
+ * Create a ready-to-use data table with title and responsive wrapper.
  *
- * Wraps bw.makeTable() output in a responsive container div.
- * Adds an optional title heading above the table.
+ * Convenience wrapper around `bw.makeTable()` that adds a title heading,
+ * responsive horizontal scroll container, and defaults to striped + hover.
+ * Use this for the common case; use `bw.makeTable()` when you need a bare
+ * table element with no wrapper.
  *
  * @param {Object} config - Table configuration
  * @param {string} [config.title] - Table title heading

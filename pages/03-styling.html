@@ -126,7 +126,19 @@
       t: 'div', a: { class: 'demo-section' },
       c: [
         { t: 'h2', c: 'Responsive Styles' },
-        { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first media query CSS from a single object. Breakpoints: <code>sm</code> (640px), <code>md</code> (768px), <code>lg</code> (1024px), <code>xl</code> (1280px).') },
+        { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first <code>@media (min-width)</code> CSS from a single object. These breakpoints match the grid system (<code>.bw-col-sm-*</code>, etc.) and <code>theme.breakpoints</code>.') },
+        bw.makeTable({
+          headers: ['Key', 'Min-Width', 'Target'],
+          rows: [
+            ['base', '(none)', 'All devices (no media query)'],
+            ['sm', '576px', 'Small devices (landscape phones)'],
+            ['md', '768px', 'Medium devices (tablets)'],
+            ['lg', '992px', 'Large devices (desktops)'],
+            ['xl', '1200px', 'Extra large devices (wide desktops)']
+          ],
+          className: 'bw-table-sm',
+          style: 'margin-bottom: 1rem;'
+        }),
         { t: 'div', a: { id: 'tryit-responsive' } }
       ]
     };
@@ -227,6 +239,31 @@
     };
 
     // =========================================================================
+    // Section 10: Class Naming Convention
+    // =========================================================================
+    var section10 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Class Naming Convention' },
+        { t: 'p', c: bw.raw('All bitwrench CSS classes use the <code>bw-</code> prefix. Both <strong>hyphens</strong> and <strong>underscores</strong> work interchangeably:') },
+        bw.makeTable({
+          headers: ['Form', 'Example', 'Notes'],
+          rows: [
+            ['Hyphen (canonical)', 'bw-btn, bw-card, bw-table-hover', 'Used in docs, generated CSS, component output'],
+            ['Underscore (alias)', 'bw_btn, bw_card, bw_table_hover', 'Convenient in JS objects (no quoting needed)']
+          ],
+          className: 'bw-table-sm',
+          style: 'margin-bottom: 1rem;'
+        }),
+        { t: 'p', c: bw.raw('TACO attribute keys like <code>bw_id</code> and <code>bw_meta</code> use underscores because they\'re plain JS identifiers. CSS classes support both forms — the generated stylesheet includes both selectors automatically.') },
+        callout('tip', [
+          { t: 'strong', c: 'bw.normalizeClass():' },
+          bw.raw(' Converts underscore classes to canonical hyphen form at runtime. Useful when comparing or concatenating class strings.')
+        ], 'margin-top: 0.5rem;')
+      ]
+    };
+
+    // =========================================================================
     // Assemble and mount the full page
     // =========================================================================
     var page = {
@@ -245,7 +282,7 @@
         // Content sections
         {
           t: 'div', a: { class: 'content-container wide' },
-          c: [section1, section2, section3, section4, section5, section6, section7, separator1, section8, separator2, section9]
+          c: [section1, section2, section3, section4, section5, section6, section7, separator1, section8, separator2, section9, section10]
         }
       ]
     };
@@ -333,7 +370,7 @@
         '\n' +
         'bw.DOM(target, {\n' +
         '  t: \'div\', a: { class: \'responsive-demo\' },\n' +
-        '  c: \'Resize your browser! base=gray, md(768px)=green, lg(1024px)=blue\'\n' +
+        '  c: \'Resize your browser! base=gray, md(768px)=green, lg(992px)=blue\'\n' +
         '});',
       height: '220px'
     }));

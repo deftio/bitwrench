@@ -54,7 +54,7 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 
 - **No direct DOM manipulation** in examples or library code. Use `bw.DOM()`, `bw.createDOM()`, and TACO patterns.
 - **TACO format**: `{ t, a, c, o }` — Tag, Attributes, Content, Options.
-- **CSS classes**: Use `bw_` prefix in JavaScript (e.g., `bw_card`). The library normalizes to `bw-` in HTML output.
+- **CSS classes**: Both `bw-` (canonical) and `bw_` (alias) forms work. Generated CSS includes both selectors. Use `bw.normalizeClass()` to convert underscores to hyphens.
 - **Content escaping**: On by default. Use `bw.raw()` or `o: { raw: true }` to opt out.
 
 ## Build Commands

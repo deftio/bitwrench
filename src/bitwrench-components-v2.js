@@ -871,13 +871,16 @@ export function makeForm(props = {}) {
 }
 
 /**
- * Create a form group with label, input, and optional help text
+ * Create a form group with label, input, optional help text and validation feedback
  *
  * @param {Object} [props] - Form group configuration
  * @param {string} [props.label] - Label text
  * @param {Object} [props.input] - Input TACO object (from makeInput, makeSelect, etc.)
  * @param {string} [props.help] - Help text displayed below the input
  * @param {string} [props.id] - Input ID (links label to input via for/id)
+ * @param {string} [props.validation] - Validation state ("valid" or "invalid")
+ * @param {string} [props.feedback] - Validation feedback text shown below input
+ * @param {boolean} [props.required=false] - Show required indicator (*) on label
  * @returns {Object} TACO object representing a form group
  * @category Component Builders
  * @example
@@ -885,11 +888,22 @@ export function makeForm(props = {}) {
  *   label: "Email",
  *   id: "email",
  *   input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }),
- *   help: "We'll never share your email."
+ *   validation: "invalid",
+ *   feedback: "Please enter a valid email address."
  * });
  */
 export function makeFormGroup(props = {}) {
-  const { label, input, help, id } = props;
+  var { label, input, help, id, validation, feedback, required } = props;
+
+  // Shallow-clone input TACO to add validation class without mutating original
+  var styledInput = input;
+  if (validation && input && input.a) {
+    styledInput = { t: input.t, a: Object.assign({}, input.a), c: input.c, o: input.o };
+    var validClass = validation === 'valid' ? 'bw-is-valid' : validation === 'invalid' ? 'bw-is-invalid' : '';
+    if (validClass) {
+      styledInput.a.class = ((styledInput.a.class || '') + ' ' + validClass).trim();
+    }
+  }
 
   return {
     t: 'div',
@@ -898,9 +912,14 @@ export function makeFormGroup(props = {}) {
       label && {
         t: 'label',
         a: { for: id, class: 'bw-form-label' },
-        c: label
+        c: required ? [label, { t: 'span', a: { class: 'bw-text-danger', style: 'margin-left: 0.25rem' }, c: '*' }] : label
       },
-      input,
+      styledInput,
+      feedback && validation && {
+        t: 'div',
+        a: { class: validation === 'valid' ? 'bw-valid-feedback' : 'bw-invalid-feedback' },
+        c: feedback
+      },
       help && {
         t: 'small',
         a: { class: 'bw-form-text bw-text-muted' },
@@ -2979,6 +2998,863 @@ export function makeCarousel(props = {}) {
         }
       }
     }
+  };
+}
+
+// =========================================================================
+// Phase 4: Dashboard & Data Display
+// =========================================================================
+
+/**
+ * Create a stat card for dashboard metrics display
+ *
+ * Shows a large value with a label and optional change indicator.
+ * Designed for dashboard grid layouts with left-border accent.
+ *
+ * @param {Object|string} [props] - Stat card configuration (string shorthand sets label)
+ * @param {string|number} [props.value=0] - The main stat value to display
+ * @param {string} [props.label] - Descriptive label below the value
+ * @param {number} [props.change] - Percentage change indicator (positive = green arrow, negative = red)
+ * @param {string} [props.format] - Value format ("number", "currency", "percent")
+ * @param {string} [props.prefix] - Custom prefix (e.g. "$")
+ * @param {string} [props.suffix] - Custom suffix (e.g. "%")
+ * @param {string} [props.icon] - Icon content (emoji or text) shown above value
+ * @param {string} [props.variant] - Left-border color variant ("primary", "success", "danger", etc.)
+ * @param {string} [props.className] - Additional CSS classes
+ * @param {Object} [props.style] - Inline style object
+ * @returns {Object} TACO object representing a stat card
+ * @category Component Builders
+ * @example
+ * const stat = makeStatCard({
+ *   value: 2345,
+ *   label: 'Active Users',
+ *   change: 5.3,
+ *   format: 'number',
+ *   variant: 'primary'
+ * });
+ */
+export function makeStatCard(props = {}) {
+  if (typeof props === 'string') props = { label: props };
+  var {
+    value = 0,
+    label,
+    change,
+    format,
+    prefix,
+    suffix,
+    icon,
+    variant,
+    className = '',
+    style
+  } = props;
+
+  function formatValue(val, fmt) {
+    if (prefix || suffix) return (prefix || '') + val + (suffix || '');
+    switch (fmt) {
+      case 'currency': return '$' + Number(val).toLocaleString();
+      case 'percent': return val + '%';
+      case 'number': return Number(val).toLocaleString();
+      default: return '' + val;
+    }
+  }
+
+  var classes = [
+    'bw-stat-card',
+    variant ? 'bw-stat-card-' + variant : '',
+    className
+  ].filter(Boolean).join(' ').trim();
+
+  var children = [];
+
+  if (icon) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-stat-icon' },
+      c: icon
+    });
+  }
+
+  children.push({
+    t: 'div',
+    a: { class: 'bw-stat-value' },
+    c: formatValue(value, format)
+  });
+
+  if (label) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-stat-label' },
+      c: label
+    });
+  }
+
+  if (change !== undefined && change !== null) {
+    children.push({
+      t: 'div',
+      a: {
+        class: 'bw-stat-change ' + (change >= 0 ? 'bw-stat-change-up' : 'bw-stat-change-down')
+      },
+      c: (change >= 0 ? '\u2191 +' : '\u2193 ') + change + '%'
+    });
+  }
+
+  return {
+    t: 'div',
+    a: { class: classes, style: style },
+    c: children,
+    o: { type: 'stat-card' }
+  };
+}
+
+// =========================================================================
+// Phase 5: Overlays & Popovers
+// =========================================================================
+
+/**
+ * Create a tooltip wrapper around trigger content
+ *
+ * Wraps the trigger element in a container that shows tooltip text
+ * on hover and focus. Pure CSS-driven show/hide with JS lifecycle
+ * for event binding.
+ *
+ * @param {Object} [props] - Tooltip configuration
+ * @param {string|Object|Array} [props.content] - Trigger content (what the user hovers/focuses)
+ * @param {string} [props.text=""] - Tooltip text to display
+ * @param {string} [props.placement="top"] - Tooltip placement ("top", "bottom", "left", "right")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a tooltip wrapper
+ * @category Component Builders
+ * @example
+ * const tip = makeTooltip({
+ *   content: makeButton({ text: 'Hover me' }),
+ *   text: 'This is a tooltip!',
+ *   placement: 'top'
+ * });
+ */
+export function makeTooltip(props = {}) {
+  var {
+    content,
+    text = '',
+    placement = 'top',
+    className = ''
+  } = props;
+
+  return {
+    t: 'span',
+    a: { class: ('bw-tooltip-wrapper ' + className).trim() },
+    c: [
+      content,
+      {
+        t: 'span',
+        a: {
+          class: 'bw-tooltip bw-tooltip-' + placement,
+          role: 'tooltip'
+        },
+        c: text
+      }
+    ],
+    o: {
+      type: 'tooltip',
+      mounted: function(el) {
+        var tip = el.querySelector('.bw-tooltip');
+        el.addEventListener('mouseenter', function() {
+          tip.classList.add('bw-tooltip-show');
+        });
+        el.addEventListener('mouseleave', function() {
+          tip.classList.remove('bw-tooltip-show');
+        });
+        el.addEventListener('focusin', function() {
+          tip.classList.add('bw-tooltip-show');
+        });
+        el.addEventListener('focusout', function() {
+          tip.classList.remove('bw-tooltip-show');
+        });
+      }
+    }
+  };
+}
+
+/**
+ * Create a popover wrapper around trigger content
+ *
+ * Like a tooltip but richer — supports title + body content and is
+ * triggered by click rather than hover. Dismisses on click outside.
+ *
+ * @param {Object} [props] - Popover configuration
+ * @param {string|Object|Array} [props.trigger] - Trigger content (what the user clicks)
+ * @param {string} [props.title] - Popover header title
+ * @param {string|Object|Array} [props.content] - Popover body content
+ * @param {string} [props.placement="top"] - Placement ("top", "bottom", "left", "right")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a popover wrapper
+ * @category Component Builders
+ * @example
+ * const pop = makePopover({
+ *   trigger: makeButton({ text: 'Click me' }),
+ *   title: 'Popover Title',
+ *   content: 'Some helpful information here.',
+ *   placement: 'bottom'
+ * });
+ */
+export function makePopover(props = {}) {
+  var {
+    trigger,
+    title,
+    content,
+    placement = 'top',
+    className = ''
+  } = props;
+
+  var popoverContent = [
+    title && {
+      t: 'div',
+      a: { class: 'bw-popover-header' },
+      c: title
+    },
+    content && {
+      t: 'div',
+      a: { class: 'bw-popover-body' },
+      c: content
+    }
+  ].filter(Boolean);
+
+  return {
+    t: 'span',
+    a: { class: ('bw-popover-wrapper ' + className).trim() },
+    c: [
+      {
+        t: 'span',
+        a: {
+          class: 'bw-popover-trigger',
+          onclick: function(e) {
+            var wrapper = e.target.closest('.bw-popover-wrapper');
+            var pop = wrapper.querySelector('.bw-popover');
+            pop.classList.toggle('bw-popover-show');
+          }
+        },
+        c: trigger
+      },
+      {
+        t: 'div',
+        a: {
+          class: 'bw-popover bw-popover-' + placement
+        },
+        c: popoverContent
+      }
+    ],
+    o: {
+      type: 'popover',
+      mounted: function(el) {
+        // Click outside to close
+        var outsideHandler = function(e) {
+          if (!el.contains(e.target)) {
+            var pop = el.querySelector('.bw-popover');
+            if (pop) pop.classList.remove('bw-popover-show');
+          }
+        };
+        document.addEventListener('click', outsideHandler);
+        el._bw_outsideHandler = outsideHandler;
+      },
+      unmount: function(el) {
+        if (el._bw_outsideHandler) {
+          document.removeEventListener('click', el._bw_outsideHandler);
+        }
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 6: Form Enhancements & Layout
+// =========================================================================
+
+/**
+ * Create a search input with clear button
+ *
+ * Wraps a text input with a clear (×) button that appears when
+ * the field has content. Calls onSearch on Enter key.
+ *
+ * @param {Object} [props] - Search input configuration
+ * @param {string} [props.placeholder="Search..."] - Placeholder text
+ * @param {string} [props.value] - Initial value
+ * @param {Function} [props.onSearch] - Callback when Enter is pressed, receives value
+ * @param {Function} [props.onInput] - Callback on each keystroke, receives value
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.name] - Input name attribute
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a search input
+ * @category Component Builders
+ * @example
+ * const search = makeSearchInput({
+ *   placeholder: 'Search users...',
+ *   onSearch: (val) => filterUsers(val)
+ * });
+ */
+export function makeSearchInput(props = {}) {
+  if (typeof props === 'string') props = { placeholder: props };
+  var {
+    placeholder = 'Search...',
+    value,
+    onSearch,
+    onInput,
+    id,
+    name,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-search-input ' + className).trim() },
+    c: [
+      {
+        t: 'input',
+        a: {
+          type: 'search',
+          class: 'bw-form-control bw-search-field',
+          placeholder: placeholder,
+          value: value,
+          id: id,
+          name: name,
+          onkeydown: function(e) {
+            if (e.key === 'Enter' && onSearch) {
+              e.preventDefault();
+              onSearch(e.target.value);
+            }
+          },
+          oninput: function(e) {
+            var wrapper = e.target.closest('.bw-search-input');
+            var clearBtn = wrapper.querySelector('.bw-search-clear');
+            if (clearBtn) {
+              clearBtn.style.display = e.target.value ? 'flex' : 'none';
+            }
+            if (onInput) onInput(e.target.value);
+          }
+        }
+      },
+      {
+        t: 'button',
+        a: {
+          type: 'button',
+          class: 'bw-search-clear',
+          'aria-label': 'Clear search',
+          style: value ? undefined : 'display: none',
+          onclick: function(e) {
+            var wrapper = e.target.closest('.bw-search-input');
+            var input = wrapper.querySelector('.bw-search-field');
+            input.value = '';
+            e.target.style.display = 'none';
+            input.focus();
+            if (onInput) onInput('');
+            if (onSearch) onSearch('');
+          }
+        },
+        c: '\u00D7'
+      }
+    ],
+    o: { type: 'search-input' }
+  };
+}
+
+/**
+ * Create a styled range slider input
+ *
+ * @param {Object} [props] - Range configuration
+ * @param {number} [props.min=0] - Minimum value
+ * @param {number} [props.max=100] - Maximum value
+ * @param {number} [props.step=1] - Step increment
+ * @param {number} [props.value=50] - Current value
+ * @param {string} [props.label] - Label text
+ * @param {boolean} [props.showValue=false] - Show current value display
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.name] - Input name attribute
+ * @param {boolean} [props.disabled=false] - Whether the slider is disabled
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a range input
+ * @category Component Builders
+ * @example
+ * const slider = makeRange({
+ *   min: 0, max: 100, value: 50,
+ *   label: 'Volume',
+ *   showValue: true,
+ *   oninput: (e) => setVolume(e.target.value)
+ * });
+ */
+export function makeRange(props = {}) {
+  var {
+    min = 0,
+    max = 100,
+    step = 1,
+    value = 50,
+    label,
+    showValue = false,
+    id,
+    name,
+    disabled = false,
+    className = '',
+    ...eventHandlers
+  } = props;
+
+  var children = [];
+
+  if (label || showValue) {
+    var labelContent = [];
+    if (label) {
+      labelContent.push({
+        t: 'span',
+        c: label
+      });
+    }
+    if (showValue) {
+      labelContent.push({
+        t: 'span',
+        a: { class: 'bw-range-value' },
+        c: '' + value
+      });
+    }
+    children.push({
+      t: 'div',
+      a: { class: 'bw-range-label' },
+      c: labelContent
+    });
+  }
+
+  // Wrap oninput to update value display
+  var userOnInput = eventHandlers.oninput;
+  if (showValue) {
+    eventHandlers.oninput = function(e) {
+      var wrapper = e.target.closest('.bw-range-wrapper');
+      var valDisplay = wrapper.querySelector('.bw-range-value');
+      if (valDisplay) valDisplay.textContent = e.target.value;
+      if (userOnInput) userOnInput(e);
+    };
+  }
+
+  children.push({
+    t: 'input',
+    a: {
+      type: 'range',
+      class: 'bw-range',
+      min: min,
+      max: max,
+      step: step,
+      value: value,
+      id: id,
+      name: name,
+      disabled: disabled,
+      ...eventHandlers
+    }
+  });
+
+  return {
+    t: 'div',
+    a: { class: ('bw-range-wrapper ' + className).trim() },
+    c: children,
+    o: { type: 'range' }
+  };
+}
+
+/**
+ * Create a media object layout (image + text side-by-side)
+ *
+ * Classic media object pattern: image/icon on one side, text content
+ * on the other, using flexbox. Supports reversed layout.
+ *
+ * @param {Object} [props] - Media object configuration
+ * @param {string} [props.src] - Image source URL
+ * @param {string} [props.alt=""] - Image alt text
+ * @param {string} [props.title] - Title text
+ * @param {string|Object|Array} [props.content] - Body content
+ * @param {boolean} [props.reverse=false] - Put image on the right
+ * @param {string} [props.imageSize="3rem"] - Image width/height
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a media object
+ * @category Component Builders
+ * @example
+ * const media = makeMediaObject({
+ *   src: '/avatar.jpg',
+ *   title: 'Jane Doe',
+ *   content: 'Posted a comment 5 minutes ago.'
+ * });
+ */
+export function makeMediaObject(props = {}) {
+  var {
+    src,
+    alt = '',
+    title,
+    content,
+    reverse = false,
+    imageSize = '3rem',
+    className = ''
+  } = props;
+
+  var imgEl = src ? {
+    t: 'img',
+    a: {
+      class: 'bw-media-img',
+      src: src,
+      alt: alt,
+      style: 'width:' + imageSize + ';height:' + imageSize
+    }
+  } : null;
+
+  var bodyEl = {
+    t: 'div',
+    a: { class: 'bw-media-body' },
+    c: [
+      title && { t: 'h5', a: { class: 'bw-media-title' }, c: title },
+      content
+    ].filter(Boolean)
+  };
+
+  return {
+    t: 'div',
+    a: { class: ('bw-media ' + (reverse ? 'bw-media-reverse ' : '') + className).trim() },
+    c: reverse
+      ? [bodyEl, imgEl].filter(Boolean)
+      : [imgEl, bodyEl].filter(Boolean),
+    o: { type: 'media-object' }
+  };
+}
+
+/**
+ * Create a file upload zone with drag-and-drop support
+ *
+ * Styled drop zone with file input. Supports drag-and-drop visuals
+ * and multiple file selection.
+ *
+ * @param {Object} [props] - File upload configuration
+ * @param {string} [props.accept] - Accepted file types (e.g. "image/*", ".pdf,.doc")
+ * @param {boolean} [props.multiple=false] - Allow multiple file selection
+ * @param {Function} [props.onFiles] - Callback when files are selected, receives FileList
+ * @param {string} [props.text="Drop files here or click to browse"] - Zone label text
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a file upload zone
+ * @category Component Builders
+ * @example
+ * const upload = makeFileUpload({
+ *   accept: 'image/*',
+ *   multiple: true,
+ *   onFiles: (files) => uploadFiles(files)
+ * });
+ */
+export function makeFileUpload(props = {}) {
+  var {
+    accept,
+    multiple = false,
+    onFiles,
+    text = 'Drop files here or click to browse',
+    id,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: {
+      class: ('bw-file-upload ' + className).trim(),
+      tabindex: '0',
+      role: 'button',
+      'aria-label': text
+    },
+    c: [
+      { t: 'div', a: { class: 'bw-file-upload-icon' }, c: '\uD83D\uDCC1' },
+      { t: 'div', a: { class: 'bw-file-upload-text' }, c: text },
+      {
+        t: 'input',
+        a: {
+          type: 'file',
+          class: 'bw-file-upload-input',
+          accept: accept,
+          multiple: multiple,
+          id: id,
+          onchange: function(e) {
+            if (onFiles && e.target.files.length) onFiles(e.target.files);
+          }
+        }
+      }
+    ],
+    o: {
+      type: 'file-upload',
+      mounted: function(el) {
+        var input = el.querySelector('.bw-file-upload-input');
+
+        // Click zone to trigger file input
+        el.addEventListener('click', function(e) {
+          if (e.target !== input) input.click();
+        });
+
+        // Keyboard activation
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            input.click();
+          }
+        });
+
+        // Drag-and-drop visuals
+        el.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          el.classList.add('bw-file-upload-active');
+        });
+        el.addEventListener('dragleave', function() {
+          el.classList.remove('bw-file-upload-active');
+        });
+        el.addEventListener('drop', function(e) {
+          e.preventDefault();
+          el.classList.remove('bw-file-upload-active');
+          if (onFiles && e.dataTransfer.files.length) onFiles(e.dataTransfer.files);
+        });
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 7: Data Display & Workflow
+// =========================================================================
+
+/**
+ * Create a vertical timeline for chronological event display
+ *
+ * Renders events as a vertical line with markers and content cards.
+ * Each item can have a colored variant marker.
+ *
+ * @param {Object} [props] - Timeline configuration
+ * @param {Array<Object>} [props.items=[]] - Timeline events
+ * @param {string} [props.items[].title] - Event title
+ * @param {string|Object|Array} [props.items[].content] - Event description content
+ * @param {string} [props.items[].date] - Date or time label
+ * @param {string} [props.items[].variant="primary"] - Marker color variant
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a timeline
+ * @category Component Builders
+ * @example
+ * const timeline = makeTimeline({
+ *   items: [
+ *     { title: 'Project Started', date: 'Jan 2026', variant: 'primary' },
+ *     { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' },
+ *     { title: 'Stable Release', date: 'Jun 2026', variant: 'success' }
+ *   ]
+ * });
+ */
+export function makeTimeline(props = {}) {
+  var {
+    items = [],
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-timeline ' + className).trim() },
+    c: items.map(function(item) {
+      return {
+        t: 'div',
+        a: { class: 'bw-timeline-item' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-timeline-marker bw-timeline-marker-' + (item.variant || 'primary') }
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-timeline-content' },
+            c: [
+              item.date && {
+                t: 'div',
+                a: { class: 'bw-timeline-date' },
+                c: item.date
+              },
+              item.title && {
+                t: 'h5',
+                a: { class: 'bw-timeline-title' },
+                c: item.title
+              },
+              item.content && (typeof item.content === 'string'
+                ? { t: 'p', a: { class: 'bw-timeline-text' }, c: item.content }
+                : item.content)
+            ].filter(Boolean)
+          }
+        ]
+      };
+    }),
+    o: { type: 'timeline' }
+  };
+}
+
+/**
+ * Create a multi-step wizard/progress indicator
+ *
+ * Displays numbered steps with active and completed states.
+ * Steps before currentStep are marked completed, the currentStep
+ * is active, and subsequent steps are pending.
+ *
+ * @param {Object} [props] - Stepper configuration
+ * @param {Array<Object>} [props.steps=[]] - Step definitions
+ * @param {string} [props.steps[].label] - Step label text
+ * @param {string} [props.steps[].description] - Optional step description
+ * @param {number} [props.currentStep=0] - Zero-based index of the active step
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a stepper
+ * @category Component Builders
+ * @example
+ * const stepper = makeStepper({
+ *   currentStep: 1,
+ *   steps: [
+ *     { label: 'Account', description: 'Create account' },
+ *     { label: 'Profile', description: 'Set up profile' },
+ *     { label: 'Confirm', description: 'Review & submit' }
+ *   ]
+ * });
+ */
+export function makeStepper(props = {}) {
+  var {
+    steps = [],
+    currentStep = 0,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-stepper ' + className).trim(), role: 'list' },
+    c: steps.map(function(step, index) {
+      var state = index < currentStep ? 'completed' : index === currentStep ? 'active' : 'pending';
+      return {
+        t: 'div',
+        a: {
+          class: 'bw-step bw-step-' + state,
+          role: 'listitem',
+          'aria-current': state === 'active' ? 'step' : undefined
+        },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-step-indicator' },
+            c: state === 'completed' ? '\u2713' : '' + (index + 1)
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-step-body' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-label' }, c: step.label },
+              step.description && { t: 'div', a: { class: 'bw-step-description' }, c: step.description }
+            ].filter(Boolean)
+          }
+        ]
+      };
+    }),
+    o: { type: 'stepper' }
+  };
+}
+
+/**
+ * Create a chip/tag input for managing a list of items
+ *
+ * Displays existing chips with remove buttons and an input field
+ * for adding new ones. Chips are added on Enter and removed on
+ * clicking the × button.
+ *
+ * @param {Object} [props] - Chip input configuration
+ * @param {Array<string>} [props.chips=[]] - Initial chip values
+ * @param {string} [props.placeholder="Add..."] - Input placeholder text
+ * @param {Function} [props.onAdd] - Callback when a chip is added, receives value
+ * @param {Function} [props.onRemove] - Callback when a chip is removed, receives value
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a chip input
+ * @category Component Builders
+ * @example
+ * const tags = makeChipInput({
+ *   chips: ['JavaScript', 'CSS'],
+ *   placeholder: 'Add tag...',
+ *   onAdd: (val) => addTag(val),
+ *   onRemove: (val) => removeTag(val)
+ * });
+ */
+export function makeChipInput(props = {}) {
+  var {
+    chips = [],
+    placeholder = 'Add...',
+    onAdd,
+    onRemove,
+    className = ''
+  } = props;
+
+  function makeChipEl(text) {
+    return {
+      t: 'span',
+      a: { class: 'bw-chip', 'data-chip-value': text },
+      c: [
+        text,
+        {
+          t: 'button',
+          a: {
+            type: 'button',
+            class: 'bw-chip-remove',
+            'aria-label': 'Remove ' + text,
+            onclick: function(e) {
+              var chip = e.target.closest('.bw-chip');
+              var val = chip.getAttribute('data-chip-value');
+              chip.parentNode.removeChild(chip);
+              if (onRemove) onRemove(val);
+            }
+          },
+          c: '\u00D7'
+        }
+      ]
+    };
+  }
+
+  return {
+    t: 'div',
+    a: { class: ('bw-chip-input ' + className).trim() },
+    c: [
+      ...chips.map(makeChipEl),
+      {
+        t: 'input',
+        a: {
+          type: 'text',
+          class: 'bw-chip-field',
+          placeholder: placeholder,
+          onkeydown: function(e) {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+              e.preventDefault();
+              var val = e.target.value.trim();
+              var wrapper = e.target.closest('.bw-chip-input');
+              // Insert chip before the input
+              var chipEl = document.createElement('span');
+              chipEl.className = 'bw-chip';
+              chipEl.setAttribute('data-chip-value', val);
+              chipEl.innerHTML = '';
+              chipEl.textContent = val;
+              var removeBtn = document.createElement('button');
+              removeBtn.type = 'button';
+              removeBtn.className = 'bw-chip-remove';
+              removeBtn.setAttribute('aria-label', 'Remove ' + val);
+              removeBtn.textContent = '\u00D7';
+              removeBtn.onclick = function() {
+                chipEl.parentNode.removeChild(chipEl);
+                if (onRemove) onRemove(val);
+              };
+              chipEl.appendChild(removeBtn);
+              wrapper.insertBefore(chipEl, e.target);
+              e.target.value = '';
+              if (onAdd) onAdd(val);
+            }
+            // Backspace on empty input removes last chip
+            if (e.key === 'Backspace' && !e.target.value) {
+              var wrapper = e.target.closest('.bw-chip-input');
+              var chipEls = wrapper.querySelectorAll('.bw-chip');
+              if (chipEls.length) {
+                var last = chipEls[chipEls.length - 1];
+                var removedVal = last.getAttribute('data-chip-value');
+                last.parentNode.removeChild(last);
+                if (onRemove) onRemove(removedVal);
+              }
+            }
+          }
+        }
+      }
+    ],
+    o: { type: 'chip-input' }
   };
 }
 

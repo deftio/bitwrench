@@ -131,8 +131,66 @@ Pages converted:
 * [x] fix --> `test/mounted-pattern.spec.js` — updated 4 counter tests: `.counter-card` → `#counter-demo [data-bw-id]`, `.counter-value` → `#counter-demo [data-bw-id] h4 + div` (classes were replaced with inline styles during 05-state.html dogfooding)
 * [x] fix --> removed obsolete `tests/debug-tabs.spec.js` and `tests/tab-click-debug.spec.js` (navigated to `/01-basic-components.html` which no longer exists)
 
-### QA Results (final)
+### QA Results (v2.0.12/v2.0.13 final)
 * [x] Unit tests: 448 passing (bitwrench.js 88.74% stmt coverage)
 * [x] Playwright chromium: 136/136 passing
 * [x] Playwright firefox/webkit: skipped (browsers not installed locally — CI handles multi-browser)
 * [x] Visual spec: 37/37 passing (all fixed)
+
+---
+
+# QA Completed — feature/pages-polish-round2 (v2.0.14)
+
+## P0: Component interactivity & accessibility
+* [x] fix --> modal backdrop click (already implemented, verified)
+* [x] fix --> carousel keyboard navigation (left/right arrow keys, tabindex, pause on hover)
+* [x] fix --> accordion collapse/expand CSS transition (smooth maxHeight, reflow trick)
+* [x] fix --> dropdown menu fade-in transition (visibility+opacity+transform)
+* [x] fix --> modal entrance/exit animation (visibility+opacity)
+* [x] fix --> tabs keyboard arrow navigation (Left/Right/Home/End, tabindex roving)
+* [x] fix --> color contrast: warning #b38600, info #0891b2 (WCAG 1.4.11 pass)
+* [x] fix --> focus states: outline+box-shadow on buttons, dropdowns, list-group, pagination, form inputs
+
+## P0: Theme toggle redesign
+* [x] fix --> `bw.generateTheme()` dual palettes: primary + alternate (luminance-inverted)
+* [x] fix --> `bw.applyTheme()` / `bw.toggleTheme()` — `.bw-theme-alt` class toggle
+* [x] fix --> Removed hardcoded dark mode: `toggleDarkMode()`, `generateDarkModeCSS()`, `getDarkModeStyles()` deleted
+* [x] fix --> Design doc: `dev/bw-theme-toggle-design.md`
+
+## P1: CSS consistency & polish
+* [x] fix --> font-size scale: TYPE_RATIO_PRESETS + generateTypeScale()
+* [x] fix --> shadow scale: ELEVATION_PRESETS (flat/sm/md/lg)
+* [x] fix --> transitions normalized: 3 tiers (0.15s/0.2s/0.3s) + ease-out
+* [x] fix --> `@media (prefers-reduced-motion: reduce)` in structural CSS
+* [x] fix --> badge em→rem, carousel caption 0.9→0.875rem
+* [x] fix --> list-group item transition, nav link background-color transition
+* [x] fix --> string shorthand: `makeButton('OK')`, `makeBadge('New')`, `makeAlert('msg')`
+* [x] fix --> carousel autoPlay demo, dropdown align:"end" example
+* [x] fix --> toast buttons: createDOM+appendChild for proper stacking
+* [x] fix --> index.html: equal-height feature cards, responsive install strip
+
+## P2: New components (framework parity)
+* [x] add --> `makeTooltip()` — CSS hover/focus, 4 placements, role=tooltip. 7 tests.
+* [x] add --> `makePopover()` — click-triggered, click-outside dismiss, mounted/unmount. 7 tests.
+* [x] add --> `makeStatCard()` — value/label/change/format/icon/variant. 8 tests.
+* [x] add --> form validation — `bw-is-valid`/`bw-is-invalid`, `makeFormGroup()` enhanced. 8 tests.
+* [x] add --> `makeFileUpload()` — drag-and-drop, keyboard accessible. 7 tests.
+* [x] add --> `makeRange()` — styled slider with live value display. 5 tests.
+* [x] add --> `makeSearchInput()` — search + clear button, callbacks. 5 tests.
+* [x] add --> `makeTimeline()` — vertical timeline, variant markers, TACO content. 7 tests.
+* [x] add --> `makeStepper()` — completed/active/pending states, checkmark, aria-current. 7 tests.
+* [x] add --> `makeChipInput()` — Enter to add, Backspace to remove, × buttons. 6 tests.
+* [x] add --> `makeMediaObject()` — image+text flexbox, reverse mode. 5 tests.
+* [x] fix --> breadcrumb active state — link colors, hover underline, font-weight. 3 tests.
+
+## P3: Theming architecture
+* [x] fix --> structural/cosmetic CSS split documented and enforced (policy JSDoc on getStructuralStyles)
+* [x] fix --> CSS custom properties: intentional IE11 omission documented (design note in bitwrench-styles.js)
+* [x] fix --> responsive breakpoints reconciled: bw.responsive() now matches grid/theme (sm=576, md=768, lg=992, xl=1200). Reference table on 03-styling.html.
+* [x] fix --> underscore/hyphen class naming documented: JSDoc on addUnderscoreAliases(), new section on 03-styling.html
+
+### QA Results (v2.0.14 final)
+* [x] Unit tests: 558 passing (bitwrench.js 88.98% stmt coverage)
+* [x] Build: `npm run build:release` passes — 24 dist files, SRI hashes generated
+* [x] Bundle: 35KB gzipped (budget: 45KB)
+* [x] Coverage: bitwrench-styles.js 99.83%, bitwrench.js 88.98%, components 70.83%

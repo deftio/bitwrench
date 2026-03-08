@@ -551,6 +551,16 @@ describe('Component CSS', function() {
     assert.ok(defaultStyles.formSwitch, 'formSwitch missing');
     assert.ok(defaultStyles.skeleton, 'skeleton missing');
     assert.ok(defaultStyles.avatar, 'avatar missing');
+    assert.ok(defaultStyles.statCard, 'statCard missing');
+    assert.ok(defaultStyles.tooltip, 'tooltip missing');
+    assert.ok(defaultStyles.popover, 'popover missing');
+    assert.ok(defaultStyles.searchInput, 'searchInput missing');
+    assert.ok(defaultStyles.range, 'range missing');
+    assert.ok(defaultStyles.mediaObject, 'mediaObject missing');
+    assert.ok(defaultStyles.fileUpload, 'fileUpload missing');
+    assert.ok(defaultStyles.timeline, 'timeline missing');
+    assert.ok(defaultStyles.stepper, 'stepper missing');
+    assert.ok(defaultStyles.chipInput, 'chipInput missing');
   });
 
   it('getAllStyles should include new component selectors', function() {
@@ -563,6 +573,16 @@ describe('Component CSS', function() {
     assert.ok(all['.bw-form-switch'], 'form-switch missing');
     assert.ok(all['.bw-skeleton'], 'skeleton missing');
     assert.ok(all['.bw-avatar'], 'avatar missing');
+    assert.ok(all['.bw-stat-card'], 'stat-card missing');
+    assert.ok(all['.bw-tooltip-wrapper'], 'tooltip missing');
+    assert.ok(all['.bw-popover-wrapper'], 'popover missing');
+    assert.ok(all['.bw-search-input'], 'search-input missing');
+    assert.ok(all['.bw-range'], 'range missing');
+    assert.ok(all['.bw-media'], 'media missing');
+    assert.ok(all['.bw-file-upload'], 'file-upload missing');
+    assert.ok(all['.bw-timeline'], 'timeline missing');
+    assert.ok(all['.bw-stepper'], 'stepper missing');
+    assert.ok(all['.bw-chip-input'], 'chip-input missing');
   });
 
   it('getStructuralStyles should include new component rules', function() {
@@ -575,6 +595,16 @@ describe('Component CSS', function() {
     assert.ok(structural['.bw-form-switch'], 'form-switch structural missing');
     assert.ok(structural['.bw-skeleton'], 'skeleton structural missing');
     assert.ok(structural['.bw-avatar'], 'avatar structural missing');
+    assert.ok(structural['.bw-stat-card'], 'stat-card structural missing');
+    assert.ok(structural['.bw-tooltip-wrapper'], 'tooltip structural missing');
+    assert.ok(structural['.bw-popover-wrapper'], 'popover structural missing');
+    assert.ok(structural['.bw-search-input'], 'search-input structural missing');
+    assert.ok(structural['.bw-range'], 'range structural missing');
+    assert.ok(structural['.bw-media'], 'media structural missing');
+    assert.ok(structural['.bw-file-upload'], 'file-upload structural missing');
+    assert.ok(structural['.bw-timeline'], 'timeline structural missing');
+    assert.ok(structural['.bw-stepper'], 'stepper structural missing');
+    assert.ok(structural['.bw-chip-input'], 'chip-input structural missing');
   });
 
   it('getStructuralStyles should include underscore aliases', function() {
@@ -641,5 +671,624 @@ describe('String shorthand', function() {
     const btn = bw.makeButton({ text: 'Cancel', variant: 'secondary' });
     assert.strictEqual(btn.c, 'Cancel');
     assert.ok(btn.a.class.includes('bw-btn-secondary'));
+  });
+
+  it('makeStatCard should accept string shorthand', function() {
+    const stat = bw.makeStatCard('Users');
+    assert.strictEqual(stat.t, 'div');
+    assert.ok(stat.a.class.includes('bw-stat-card'));
+    assert.ok(stat.c.some(function(child) { return child.c === 'Users' && child.a.class === 'bw-stat-label'; }));
+  });
+});
+
+// =========================================================================
+// makeStatCard
+// =========================================================================
+
+describe('makeStatCard', function() {
+  it('should create basic stat card with value and label', function() {
+    const stat = bw.makeStatCard({ value: 2345, label: 'Active Users' });
+    assert.strictEqual(stat.t, 'div');
+    assert.ok(stat.a.class.includes('bw-stat-card'));
+    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw-stat-value'; }));
+    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw-stat-label' && child.c === 'Active Users'; }));
+  });
+
+  it('should support variant for border color', function() {
+    const stat = bw.makeStatCard({ value: 100, variant: 'success' });
+    assert.ok(stat.a.class.includes('bw-stat-card-success'));
+  });
+
+  it('should show change indicator with up/down class', function() {
+    const up = bw.makeStatCard({ value: 100, change: 5.3 });
+    const changeUp = up.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw-stat-change'); });
+    assert.ok(changeUp);
+    assert.ok(changeUp.a.class.includes('bw-stat-change-up'));
+
+    const down = bw.makeStatCard({ value: 100, change: -2.1 });
+    const changeDown = down.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw-stat-change'); });
+    assert.ok(changeDown);
+    assert.ok(changeDown.a.class.includes('bw-stat-change-down'));
+  });
+
+  it('should format currency values', function() {
+    const stat = bw.makeStatCard({ value: 45231, format: 'currency' });
+    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw-stat-value'; });
+    assert.ok(valueEl.c.startsWith('$'));
+  });
+
+  it('should format percent values', function() {
+    const stat = bw.makeStatCard({ value: 3.2, format: 'percent' });
+    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw-stat-value'; });
+    assert.ok(valueEl.c.includes('%'));
+  });
+
+  it('should support custom prefix and suffix', function() {
+    const stat = bw.makeStatCard({ value: 42, prefix: 'EUR ', suffix: ' avg' });
+    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw-stat-value'; });
+    assert.strictEqual(valueEl.c, 'EUR 42 avg');
+  });
+
+  it('should show icon when provided', function() {
+    const stat = bw.makeStatCard({ value: 100, icon: '📊' });
+    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw-stat-icon' && child.c === '📊'; }));
+  });
+
+  it('should set type to stat-card in options', function() {
+    const stat = bw.makeStatCard({ value: 0 });
+    assert.strictEqual(stat.o.type, 'stat-card');
+  });
+});
+
+// =========================================================================
+// makeTooltip
+// =========================================================================
+
+describe('makeTooltip', function() {
+  it('should create tooltip wrapper with content and tooltip text', function() {
+    const tip = bw.makeTooltip({ content: 'Hover me', text: 'Hello' });
+    assert.strictEqual(tip.t, 'span');
+    assert.ok(tip.a.class.includes('bw-tooltip-wrapper'));
+    assert.strictEqual(tip.c.length, 2);
+    assert.strictEqual(tip.c[0], 'Hover me');
+    assert.strictEqual(tip.c[1].c, 'Hello');
+  });
+
+  it('should default to top placement', function() {
+    const tip = bw.makeTooltip({ text: 'tip' });
+    assert.ok(tip.c[1].a.class.includes('bw-tooltip-top'));
+  });
+
+  it('should support all four placements', function() {
+    ['top', 'bottom', 'left', 'right'].forEach(function(p) {
+      const tip = bw.makeTooltip({ text: 'tip', placement: p });
+      assert.ok(tip.c[1].a.class.includes('bw-tooltip-' + p));
+    });
+  });
+
+  it('should set role=tooltip on tooltip element', function() {
+    const tip = bw.makeTooltip({ text: 'tip' });
+    assert.strictEqual(tip.c[1].a.role, 'tooltip');
+  });
+
+  it('should have mounted lifecycle for event binding', function() {
+    const tip = bw.makeTooltip({ text: 'tip' });
+    assert.strictEqual(typeof tip.o.mounted, 'function');
+  });
+
+  it('should set type to tooltip in options', function() {
+    const tip = bw.makeTooltip({ text: 'tip' });
+    assert.strictEqual(tip.o.type, 'tooltip');
+  });
+
+  it('should accept TACO object as content', function() {
+    const btn = bw.makeButton({ text: 'Click' });
+    const tip = bw.makeTooltip({ content: btn, text: 'Button tooltip' });
+    assert.strictEqual(tip.c[0], btn);
+    assert.strictEqual(tip.c[1].c, 'Button tooltip');
+  });
+});
+
+// =========================================================================
+// makePopover
+// =========================================================================
+
+describe('makePopover', function() {
+  it('should create popover wrapper with trigger and content', function() {
+    const pop = bw.makePopover({ trigger: 'Click', title: 'Title', content: 'Body' });
+    assert.strictEqual(pop.t, 'span');
+    assert.ok(pop.a.class.includes('bw-popover-wrapper'));
+    assert.strictEqual(pop.c.length, 2);
+    // Trigger wrapper
+    assert.ok(pop.c[0].a.class.includes('bw-popover-trigger'));
+    assert.strictEqual(pop.c[0].c, 'Click');
+    // Popover content
+    assert.ok(pop.c[1].a.class.includes('bw-popover'));
+  });
+
+  it('should include header and body in popover', function() {
+    const pop = bw.makePopover({ title: 'T', content: 'C' });
+    const popContent = pop.c[1].c;
+    assert.ok(popContent.some(function(child) { return child.a.class === 'bw-popover-header' && child.c === 'T'; }));
+    assert.ok(popContent.some(function(child) { return child.a.class === 'bw-popover-body' && child.c === 'C'; }));
+  });
+
+  it('should default to top placement', function() {
+    const pop = bw.makePopover({ content: 'C' });
+    assert.ok(pop.c[1].a.class.includes('bw-popover-top'));
+  });
+
+  it('should support all four placements', function() {
+    ['top', 'bottom', 'left', 'right'].forEach(function(p) {
+      const pop = bw.makePopover({ content: 'C', placement: p });
+      assert.ok(pop.c[1].a.class.includes('bw-popover-' + p));
+    });
+  });
+
+  it('should have mounted and unmount lifecycle for click-outside', function() {
+    const pop = bw.makePopover({ content: 'C' });
+    assert.strictEqual(typeof pop.o.mounted, 'function');
+    assert.strictEqual(typeof pop.o.unmount, 'function');
+  });
+
+  it('should set type to popover in options', function() {
+    const pop = bw.makePopover({ content: 'C' });
+    assert.strictEqual(pop.o.type, 'popover');
+  });
+
+  it('should omit header when no title provided', function() {
+    const pop = bw.makePopover({ content: 'Body only' });
+    const popContent = pop.c[1].c;
+    assert.ok(!popContent.some(function(child) { return child.a && child.a.class === 'bw-popover-header'; }));
+  });
+});
+
+// =========================================================================
+// Form validation states
+// =========================================================================
+
+describe('Form validation', function() {
+  it('makeFormGroup should add bw-is-valid class to input when validation=valid', function() {
+    const input = bw.makeInput({ id: 'email', type: 'email' });
+    const group = bw.makeFormGroup({ label: 'Email', input: input, validation: 'valid', feedback: 'Looks good!' });
+    const styledInput = group.c.find(function(child) { return child.t === 'input'; });
+    assert.ok(styledInput.a.class.includes('bw-is-valid'));
+  });
+
+  it('makeFormGroup should add bw-is-invalid class to input when validation=invalid', function() {
+    const input = bw.makeInput({ id: 'email', type: 'email' });
+    const group = bw.makeFormGroup({ label: 'Email', input: input, validation: 'invalid', feedback: 'Invalid email' });
+    const styledInput = group.c.find(function(child) { return child.t === 'input'; });
+    assert.ok(styledInput.a.class.includes('bw-is-invalid'));
+  });
+
+  it('should not mutate original input TACO', function() {
+    const input = bw.makeInput({ id: 'name', className: 'custom' });
+    const originalClass = input.a.class;
+    bw.makeFormGroup({ input: input, validation: 'invalid' });
+    assert.strictEqual(input.a.class, originalClass);
+  });
+
+  it('should show valid feedback text', function() {
+    const group = bw.makeFormGroup({
+      input: bw.makeInput({}),
+      validation: 'valid',
+      feedback: 'Looks good!'
+    });
+    const fb = group.c.find(function(child) { return child.a && child.a.class === 'bw-valid-feedback'; });
+    assert.ok(fb);
+    assert.strictEqual(fb.c, 'Looks good!');
+  });
+
+  it('should show invalid feedback text', function() {
+    const group = bw.makeFormGroup({
+      input: bw.makeInput({}),
+      validation: 'invalid',
+      feedback: 'Required field'
+    });
+    const fb = group.c.find(function(child) { return child.a && child.a.class === 'bw-invalid-feedback'; });
+    assert.ok(fb);
+    assert.strictEqual(fb.c, 'Required field');
+  });
+
+  it('should not show feedback when validation is not set', function() {
+    const group = bw.makeFormGroup({
+      input: bw.makeInput({}),
+      feedback: 'Ignored'
+    });
+    const fb = group.c.find(function(child) { return child.a && (child.a.class === 'bw-valid-feedback' || child.a.class === 'bw-invalid-feedback'); });
+    assert.ok(!fb);
+  });
+
+  it('should show required indicator on label', function() {
+    const group = bw.makeFormGroup({
+      label: 'Name',
+      input: bw.makeInput({}),
+      required: true
+    });
+    const label = group.c.find(function(child) { return child.t === 'label'; });
+    assert.ok(Array.isArray(label.c));
+    assert.ok(label.c.some(function(child) { return child.t === 'span' && child.c === '*'; }));
+  });
+
+  it('validation CSS classes should exist in structural styles', function() {
+    const structural = getStructuralStyles();
+    assert.ok(structural['.bw-valid-feedback'], 'valid-feedback structural missing');
+    assert.ok(structural['.bw-invalid-feedback'], 'invalid-feedback structural missing');
+  });
+});
+
+// =========================================================================
+// makeSearchInput
+// =========================================================================
+
+describe('makeSearchInput', function() {
+  it('should create search input wrapper', function() {
+    const search = bw.makeSearchInput({});
+    assert.strictEqual(search.t, 'div');
+    assert.ok(search.a.class.includes('bw-search-input'));
+  });
+
+  it('should have input with type=search', function() {
+    const search = bw.makeSearchInput({ placeholder: 'Find...' });
+    const input = search.c.find(function(child) { return child.t === 'input'; });
+    assert.strictEqual(input.a.type, 'search');
+    assert.strictEqual(input.a.placeholder, 'Find...');
+  });
+
+  it('should have clear button', function() {
+    const search = bw.makeSearchInput({});
+    const clearBtn = search.c.find(function(child) { return child.t === 'button'; });
+    assert.ok(clearBtn);
+    assert.ok(clearBtn.a.class.includes('bw-search-clear'));
+  });
+
+  it('should accept string shorthand', function() {
+    const search = bw.makeSearchInput('Search users...');
+    const input = search.c.find(function(child) { return child.t === 'input'; });
+    assert.strictEqual(input.a.placeholder, 'Search users...');
+  });
+
+  it('should set type to search-input in options', function() {
+    const search = bw.makeSearchInput({});
+    assert.strictEqual(search.o.type, 'search-input');
+  });
+});
+
+// =========================================================================
+// makeRange
+// =========================================================================
+
+describe('makeRange', function() {
+  it('should create range wrapper with input', function() {
+    const range = bw.makeRange({});
+    assert.strictEqual(range.t, 'div');
+    assert.ok(range.a.class.includes('bw-range-wrapper'));
+    const input = range.c.find(function(child) { return child.t === 'input'; });
+    assert.ok(input);
+    assert.strictEqual(input.a.type, 'range');
+  });
+
+  it('should set min, max, step, value', function() {
+    const range = bw.makeRange({ min: 10, max: 200, step: 5, value: 75 });
+    const input = range.c.find(function(child) { return child.t === 'input'; });
+    assert.strictEqual(input.a.min, 10);
+    assert.strictEqual(input.a.max, 200);
+    assert.strictEqual(input.a.step, 5);
+    assert.strictEqual(input.a.value, 75);
+  });
+
+  it('should show label when provided', function() {
+    const range = bw.makeRange({ label: 'Volume' });
+    const label = range.c.find(function(child) { return child.a && child.a.class === 'bw-range-label'; });
+    assert.ok(label);
+    assert.ok(label.c.some(function(child) { return child.c === 'Volume'; }));
+  });
+
+  it('should show value display when showValue is true', function() {
+    const range = bw.makeRange({ showValue: true, value: 42 });
+    const label = range.c.find(function(child) { return child.a && child.a.class === 'bw-range-label'; });
+    assert.ok(label);
+    const valueDisplay = label.c.find(function(child) { return child.a && child.a.class === 'bw-range-value'; });
+    assert.ok(valueDisplay);
+    assert.strictEqual(valueDisplay.c, '42');
+  });
+
+  it('should set type to range in options', function() {
+    const range = bw.makeRange({});
+    assert.strictEqual(range.o.type, 'range');
+  });
+});
+
+// =========================================================================
+// makeMediaObject
+// =========================================================================
+
+describe('makeMediaObject', function() {
+  it('should create media object with image and body', function() {
+    const media = bw.makeMediaObject({ src: '/photo.jpg', title: 'Jane', content: 'Hello' });
+    assert.strictEqual(media.t, 'div');
+    assert.ok(media.a.class.includes('bw-media'));
+    assert.strictEqual(media.c.length, 2);
+    assert.strictEqual(media.c[0].t, 'img');
+    assert.ok(media.c[1].a.class.includes('bw-media-body'));
+  });
+
+  it('should support reverse layout', function() {
+    const media = bw.makeMediaObject({ src: '/photo.jpg', content: 'Hi', reverse: true });
+    assert.ok(media.a.class.includes('bw-media-reverse'));
+    // Body comes first, image second in reverse
+    assert.ok(media.c[0].a.class.includes('bw-media-body'));
+    assert.strictEqual(media.c[1].t, 'img');
+  });
+
+  it('should render title in body', function() {
+    const media = bw.makeMediaObject({ title: 'John Doe', content: 'A message' });
+    const body = media.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw-media-body'); });
+    assert.ok(body);
+    assert.ok(body.c.some(function(child) { return child.t === 'h5' && child.c === 'John Doe'; }));
+  });
+
+  it('should work without image', function() {
+    const media = bw.makeMediaObject({ title: 'No Image', content: 'Text only' });
+    assert.ok(!media.c.some(function(child) { return child && child.t === 'img'; }));
+  });
+
+  it('should set type to media-object in options', function() {
+    const media = bw.makeMediaObject({});
+    assert.strictEqual(media.o.type, 'media-object');
+  });
+});
+
+// =========================================================================
+// makeFileUpload
+// =========================================================================
+
+describe('makeFileUpload', function() {
+  it('should create file upload zone', function() {
+    const upload = bw.makeFileUpload({});
+    assert.strictEqual(upload.t, 'div');
+    assert.ok(upload.a.class.includes('bw-file-upload'));
+    assert.strictEqual(upload.a.role, 'button');
+  });
+
+  it('should have hidden file input', function() {
+    const upload = bw.makeFileUpload({ accept: 'image/*', multiple: true });
+    const input = upload.c.find(function(child) { return child.t === 'input'; });
+    assert.ok(input);
+    assert.strictEqual(input.a.type, 'file');
+    assert.strictEqual(input.a.accept, 'image/*');
+    assert.strictEqual(input.a.multiple, true);
+  });
+
+  it('should show custom text', function() {
+    const upload = bw.makeFileUpload({ text: 'Upload CSV' });
+    const textEl = upload.c.find(function(child) { return child.a && child.a.class === 'bw-file-upload-text'; });
+    assert.ok(textEl);
+    assert.strictEqual(textEl.c, 'Upload CSV');
+  });
+
+  it('should have icon', function() {
+    const upload = bw.makeFileUpload({});
+    const icon = upload.c.find(function(child) { return child.a && child.a.class === 'bw-file-upload-icon'; });
+    assert.ok(icon);
+  });
+
+  it('should have mounted lifecycle for drag-and-drop', function() {
+    const upload = bw.makeFileUpload({});
+    assert.strictEqual(typeof upload.o.mounted, 'function');
+  });
+
+  it('should set type to file-upload in options', function() {
+    const upload = bw.makeFileUpload({});
+    assert.strictEqual(upload.o.type, 'file-upload');
+  });
+
+  it('should be keyboard accessible', function() {
+    const upload = bw.makeFileUpload({});
+    assert.strictEqual(upload.a.tabindex, '0');
+  });
+});
+
+// =========================================================================
+// makeTimeline
+// =========================================================================
+
+describe('makeTimeline', function() {
+  it('should create timeline container', function() {
+    const tl = bw.makeTimeline({ items: [] });
+    assert.strictEqual(tl.t, 'div');
+    assert.ok(tl.a.class.includes('bw-timeline'));
+  });
+
+  it('should render items with marker and content', function() {
+    const tl = bw.makeTimeline({
+      items: [
+        { title: 'Start', date: 'Jan 2026', content: 'Kickoff' },
+        { title: 'End', date: 'Mar 2026' }
+      ]
+    });
+    assert.strictEqual(tl.c.length, 2);
+    const first = tl.c[0];
+    assert.ok(first.a.class.includes('bw-timeline-item'));
+    const marker = first.c[0];
+    assert.ok(marker.a.class.includes('bw-timeline-marker'));
+    const content = first.c[1];
+    assert.ok(content.a.class.includes('bw-timeline-content'));
+  });
+
+  it('should apply variant to marker', function() {
+    const tl = bw.makeTimeline({ items: [{ title: 'Done', variant: 'success' }] });
+    const marker = tl.c[0].c[0];
+    assert.ok(marker.a.class.includes('bw-timeline-marker-success'));
+  });
+
+  it('should default variant to primary', function() {
+    const tl = bw.makeTimeline({ items: [{ title: 'Event' }] });
+    const marker = tl.c[0].c[0];
+    assert.ok(marker.a.class.includes('bw-timeline-marker-primary'));
+  });
+
+  it('should render date, title, and text content', function() {
+    const tl = bw.makeTimeline({ items: [{ title: 'Launch', date: 'Feb', content: 'Details here' }] });
+    const contentDiv = tl.c[0].c[1]; // timeline-content
+    const date = contentDiv.c.find(function(c) { return c.a && c.a.class === 'bw-timeline-date'; });
+    const title = contentDiv.c.find(function(c) { return c.t === 'h5'; });
+    const text = contentDiv.c.find(function(c) { return c.t === 'p'; });
+    assert.strictEqual(date.c, 'Feb');
+    assert.strictEqual(title.c, 'Launch');
+    assert.strictEqual(text.c, 'Details here');
+  });
+
+  it('should accept TACO content', function() {
+    const custom = { t: 'span', c: 'Custom' };
+    const tl = bw.makeTimeline({ items: [{ content: custom }] });
+    const contentDiv = tl.c[0].c[1];
+    assert.ok(contentDiv.c.some(function(c) { return c.t === 'span' && c.c === 'Custom'; }));
+  });
+
+  it('should set type to timeline in options', function() {
+    const tl = bw.makeTimeline({ items: [] });
+    assert.strictEqual(tl.o.type, 'timeline');
+  });
+});
+
+// =========================================================================
+// makeStepper
+// =========================================================================
+
+describe('makeStepper', function() {
+  it('should create stepper container with role=list', function() {
+    const s = bw.makeStepper({ steps: [] });
+    assert.strictEqual(s.t, 'div');
+    assert.ok(s.a.class.includes('bw-stepper'));
+    assert.strictEqual(s.a.role, 'list');
+  });
+
+  it('should render steps with correct states', function() {
+    const s = bw.makeStepper({
+      currentStep: 1,
+      steps: [
+        { label: 'Account' },
+        { label: 'Profile' },
+        { label: 'Confirm' }
+      ]
+    });
+    assert.strictEqual(s.c.length, 3);
+    assert.ok(s.c[0].a.class.includes('bw-step-completed'));
+    assert.ok(s.c[1].a.class.includes('bw-step-active'));
+    assert.ok(s.c[2].a.class.includes('bw-step-pending'));
+  });
+
+  it('should show checkmark for completed steps', function() {
+    const s = bw.makeStepper({ currentStep: 2, steps: [{ label: 'A' }, { label: 'B' }, { label: 'C' }] });
+    const indicator = s.c[0].c[0]; // first step's indicator
+    assert.strictEqual(indicator.c, '\u2713');
+  });
+
+  it('should show step number for pending/active steps', function() {
+    const s = bw.makeStepper({ currentStep: 0, steps: [{ label: 'First' }, { label: 'Second' }] });
+    assert.strictEqual(s.c[0].c[0].c, '1');
+    assert.strictEqual(s.c[1].c[0].c, '2');
+  });
+
+  it('should set aria-current on active step', function() {
+    const s = bw.makeStepper({ currentStep: 0, steps: [{ label: 'A' }] });
+    assert.strictEqual(s.c[0].a['aria-current'], 'step');
+  });
+
+  it('should render description when provided', function() {
+    const s = bw.makeStepper({ steps: [{ label: 'Setup', description: 'Initial config' }] });
+    const body = s.c[0].c[1]; // step-body
+    const desc = body.c.find(function(c) { return c.a && c.a.class === 'bw-step-description'; });
+    assert.ok(desc);
+    assert.strictEqual(desc.c, 'Initial config');
+  });
+
+  it('should set type to stepper in options', function() {
+    const s = bw.makeStepper({ steps: [] });
+    assert.strictEqual(s.o.type, 'stepper');
+  });
+});
+
+// =========================================================================
+// makeChipInput
+// =========================================================================
+
+describe('makeChipInput', function() {
+  it('should create chip input container', function() {
+    const ci = bw.makeChipInput({});
+    assert.strictEqual(ci.t, 'div');
+    assert.ok(ci.a.class.includes('bw-chip-input'));
+  });
+
+  it('should render initial chips', function() {
+    const ci = bw.makeChipInput({ chips: ['JS', 'CSS', 'HTML'] });
+    const chips = ci.c.filter(function(c) { return c.t === 'span' && c.a.class === 'bw-chip'; });
+    assert.strictEqual(chips.length, 3);
+    assert.strictEqual(chips[0].a['data-chip-value'], 'JS');
+  });
+
+  it('should have text input field', function() {
+    const ci = bw.makeChipInput({ placeholder: 'Add tag...' });
+    const input = ci.c.find(function(c) { return c.t === 'input'; });
+    assert.ok(input);
+    assert.strictEqual(input.a.type, 'text');
+    assert.strictEqual(input.a.placeholder, 'Add tag...');
+  });
+
+  it('should default placeholder to Add...', function() {
+    const ci = bw.makeChipInput({});
+    const input = ci.c.find(function(c) { return c.t === 'input'; });
+    assert.strictEqual(input.a.placeholder, 'Add...');
+  });
+
+  it('each chip should have remove button', function() {
+    const ci = bw.makeChipInput({ chips: ['React'] });
+    const chip = ci.c.find(function(c) { return c.t === 'span' && c.a.class === 'bw-chip'; });
+    const removeBtn = chip.c.find(function(c) { return c.t === 'button'; });
+    assert.ok(removeBtn);
+    assert.ok(removeBtn.a.class.includes('bw-chip-remove'));
+    assert.strictEqual(removeBtn.a['aria-label'], 'Remove React');
+  });
+
+  it('should set type to chip-input in options', function() {
+    const ci = bw.makeChipInput({});
+    assert.strictEqual(ci.o.type, 'chip-input');
+  });
+});
+
+// =========================================================================
+// Breadcrumb active state
+// =========================================================================
+
+describe('Breadcrumb active state', function() {
+  it('active item should have active class', function() {
+    const crumbs = bw.makeBreadcrumb({
+      items: [
+        { text: 'Home', href: '/' },
+        { text: 'Current', active: true }
+      ]
+    });
+    const items = crumbs.c.c;
+    assert.ok(items[1].a.class.includes('active'));
+    assert.strictEqual(items[1].a['aria-current'], 'page');
+  });
+
+  it('active item should render as plain text not link', function() {
+    const crumbs = bw.makeBreadcrumb({
+      items: [
+        { text: 'Home', href: '/' },
+        { text: 'Current', active: true }
+      ]
+    });
+    const items = crumbs.c.c;
+    assert.strictEqual(items[1].c, 'Current');
+    assert.strictEqual(items[0].c.t, 'a');
+  });
+
+  it('breadcrumb link styles should exist', function() {
+    const all = getAllStyles();
+    assert.ok(all['.bw-breadcrumb-item a'], 'breadcrumb link styles missing');
   });
 });

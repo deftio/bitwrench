@@ -18,7 +18,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-08T06:35:41.126Z'
+    buildDate: '2026-03-08T07:17:38.437Z'
   };
 
   /**
@@ -1428,11 +1428,23 @@
   // =========================================================================
 
   /**
-   * Structural styles contain only layout, sizing, spacing, and behavior
-   * properties. No colors, backgrounds, shadows, or border-colors.
-   * These never change with themes.
+   * Structural styles — layout, sizing, spacing, positioning, and behavior.
    *
-   * @returns {Object} CSS rules object
+   * POLICY: No colors, backgrounds, shadows, or border-colors in this function.
+   * All cosmetic values belong in `defaultStyles.*` sections (unthemed defaults)
+   * or in `generateThemedCSS()` (theme-driven colors).
+   *
+   * Exception: `.bw-progress-bar-striped` uses rgba(255,255,255,.15) for the
+   * stripe pattern overlay. This is theme-neutral — a semi-transparent white
+   * gradient that creates visible stripes on any background color.
+   *
+   * Architecture:
+   *   getStructuralStyles()  → layout-only rules (never change with themes)
+   *   defaultStyles.*        → cosmetic defaults (colors, shadows, borders)
+   *   generateThemedCSS()    → palette-driven cosmetics from seed colors
+   *   generateAlternateCSS() → alternate palette (luminance-inverted)
+   *
+   * @returns {Object} CSS rules object (layout-only, theme-independent)
    */
   function getStructuralStyles() {
     var rules = {};
@@ -1534,6 +1546,10 @@
       'background-size': '16px 12px'
     };
     rules['textarea.bw-form-control'] = { 'min-height': '5rem', 'resize': 'vertical' };
+
+    // Form validation (structural)
+    rules['.bw-valid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+    rules['.bw-invalid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
 
     // Form checks (structural)
     Object.assign(rules, {
@@ -1665,6 +1681,8 @@
     rules['.bw-breadcrumb-item'] = { 'display': 'flex' };
     rules['.bw-breadcrumb-item + .bw-breadcrumb-item'] = { 'padding-left': '0.5rem' };
     rules['.bw-breadcrumb-item + .bw-breadcrumb-item::before'] = { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' };
+    rules['.bw-breadcrumb-item a'] = { 'text-decoration': 'none', 'transition': 'color 0.15s ease-out' };
+    rules['.bw-breadcrumb-item.active'] = { 'font-weight': '500' };
 
     // Hero (structural)
     rules['.bw-hero'] = { 'position': 'relative', 'overflow': 'hidden' };
@@ -1899,6 +1917,123 @@
     rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
     rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
 
+    // Stat card (structural)
+    rules['.bw-stat-card'] = {
+      'border-radius': '8px', 'padding': '1.25rem',
+      'border-left': '4px solid transparent',
+      'transition': 'box-shadow 0.15s ease-out, transform 0.15s ease-out'
+    };
+    rules['.bw-stat-card:hover'] = { 'transform': 'translateY(-1px)' };
+    rules['.bw-stat-icon'] = { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' };
+    rules['.bw-stat-value'] = { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' };
+    rules['.bw-stat-label'] = { 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+    rules['.bw-stat-change'] = { 'font-size': '0.875rem', 'font-weight': '500', 'margin-top': '0.5rem' };
+
+    // Tooltip (structural)
+    rules['.bw-tooltip-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+    rules['.bw-tooltip'] = {
+      'position': 'absolute', 'z-index': '999',
+      'padding': '0.375rem 0.75rem', 'border-radius': '4px', 'font-size': '0.875rem',
+      'white-space': 'nowrap', 'pointer-events': 'none',
+      'opacity': '0', 'visibility': 'hidden',
+      'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+    };
+    rules['.bw-tooltip.bw-tooltip-show'] = { 'opacity': '1', 'visibility': 'visible' };
+    rules['.bw-tooltip-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-4px)', 'margin-bottom': '4px' };
+    rules['.bw-tooltip-top.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+    rules['.bw-tooltip-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(4px)', 'margin-top': '4px' };
+    rules['.bw-tooltip-bottom.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+    rules['.bw-tooltip-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-4px)', 'margin-right': '4px' };
+    rules['.bw-tooltip-left.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+    rules['.bw-tooltip-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(4px)', 'margin-left': '4px' };
+    rules['.bw-tooltip-right.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
+    // Search input (structural)
+    rules['.bw-search-input'] = { 'position': 'relative', 'display': 'flex', 'align-items': 'center' };
+    rules['.bw-search-input .bw-search-field'] = { 'padding-right': '2.5rem' };
+    rules['.bw-search-clear'] = {
+      'position': 'absolute', 'right': '0.5rem',
+      'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+      'width': '1.5rem', 'height': '1.5rem',
+      'border': 'none', 'background': 'none',
+      'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0',
+      'border-radius': '50%', 'transition': 'color 0.15s ease-out'
+    };
+
+    // Range slider (structural)
+    rules['.bw-range-wrapper'] = { 'margin-bottom': '1rem' };
+    rules['.bw-range-label'] = { 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '0.5rem', 'font-size': '0.875rem', 'font-weight': '500' };
+    rules['.bw-range-value'] = { 'font-weight': '600' };
+    rules['.bw-range'] = { 'width': '100%', 'height': '0.5rem', 'padding': '0', 'appearance': 'none', 'border': 'none', 'border-radius': '0.25rem', 'cursor': 'pointer', 'outline': 'none' };
+    rules['.bw-range:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
+
+    // Media object (structural)
+    rules['.bw-media'] = { 'display': 'flex', 'align-items': 'flex-start', 'gap': '1rem' };
+    rules['.bw-media-reverse'] = { 'flex-direction': 'row-reverse' };
+    rules['.bw-media-img'] = { 'border-radius': '50%', 'object-fit': 'cover', 'flex-shrink': '0' };
+    rules['.bw-media-body'] = { 'flex': '1', 'min-width': '0' };
+    rules['.bw-media-title'] = { 'margin': '0 0 0.25rem 0', 'font-size': '1rem', 'font-weight': '600', 'line-height': '1.3' };
+
+    // File upload (structural)
+    rules['.bw-file-upload'] = {
+      'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center',
+      'padding': '2rem', 'border': '2px dashed transparent', 'border-radius': '8px',
+      'cursor': 'pointer', 'text-align': 'center', 'position': 'relative',
+      'transition': 'border-color 0.15s ease-out, background-color 0.15s ease-out'
+    };
+    rules['.bw-file-upload-icon'] = { 'font-size': '2rem', 'margin-bottom': '0.5rem' };
+    rules['.bw-file-upload-text'] = { 'font-size': '0.875rem' };
+    rules['.bw-file-upload-input'] = {
+      'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
+      'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0,0,0,0)', 'border': '0'
+    };
+
+    // Timeline (structural)
+    rules['.bw-timeline'] = { 'position': 'relative', 'padding-left': '2rem' };
+    rules['.bw-timeline-item'] = { 'position': 'relative', 'padding-bottom': '1.5rem' };
+    rules['.bw-timeline-item:last-child'] = { 'padding-bottom': '0' };
+    rules['.bw-timeline-marker'] = { 'position': 'absolute', 'left': '-1.75rem', 'top': '0.25rem', 'width': '0.75rem', 'height': '0.75rem', 'border-radius': '50%' };
+    rules['.bw-timeline-content'] = { 'padding-left': '0.5rem' };
+    rules['.bw-timeline-date'] = { 'font-size': '0.75rem', 'margin-bottom': '0.25rem', 'font-weight': '500' };
+    rules['.bw-timeline-title'] = { 'font-size': '1rem', 'font-weight': '600', 'margin': '0 0 0.25rem 0', 'line-height': '1.3' };
+    rules['.bw-timeline-text'] = { 'font-size': '0.875rem', 'margin': '0', 'line-height': '1.5' };
+
+    // Stepper (structural)
+    rules['.bw-stepper'] = { 'display': 'flex', 'gap': '0' };
+    rules['.bw-step'] = { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'text-align': 'center', 'position': 'relative' };
+    rules['.bw-step-indicator'] = { 'width': '2rem', 'height': '2rem', 'border-radius': '50%', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '0.875rem', 'font-weight': '600', 'position': 'relative', 'z-index': '1', 'transition': 'background-color 0.2s ease-out, color 0.2s ease-out' };
+    rules['.bw-step-body'] = { 'margin-top': '0.5rem' };
+    rules['.bw-step-label'] = { 'font-size': '0.875rem', 'font-weight': '500' };
+    rules['.bw-step-description'] = { 'font-size': '0.75rem', 'margin-top': '0.125rem' };
+
+    // Chip input (structural)
+    rules['.bw-chip-input'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'gap': '0.375rem', 'padding': '0.375rem 0.5rem', 'border-radius': '6px', 'min-height': '2.5rem', 'cursor': 'text', 'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out' };
+    rules['.bw-chip'] = { 'display': 'inline-flex', 'align-items': 'center', 'gap': '0.25rem', 'padding': '0.125rem 0.5rem', 'border-radius': '1rem', 'font-size': '0.8125rem', 'line-height': '1.5', 'white-space': 'nowrap' };
+    rules['.bw-chip-remove'] = { 'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center', 'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none', 'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out' };
+    rules['.bw-chip-field'] = { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' };
+
+    // Popover (structural)
+    rules['.bw-popover-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+    rules['.bw-popover-trigger'] = { 'cursor': 'pointer' };
+    rules['.bw-popover'] = {
+      'position': 'absolute', 'z-index': '1000',
+      'min-width': '200px', 'max-width': '320px',
+      'border-radius': '8px',
+      'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden',
+      'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+    };
+    rules['.bw-popover.bw-popover-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
+    rules['.bw-popover-header'] = { 'padding': '0.625rem 0.875rem', 'font-weight': '600', 'font-size': '0.9375rem' };
+    rules['.bw-popover-body'] = { 'padding': '0.75rem 0.875rem', 'font-size': '0.875rem', 'line-height': '1.5' };
+    rules['.bw-popover-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-8px)', 'margin-bottom': '8px' };
+    rules['.bw-popover-top.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+    rules['.bw-popover-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(8px)', 'margin-top': '8px' };
+    rules['.bw-popover-bottom.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+    rules['.bw-popover-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-8px)', 'margin-right': '8px' };
+    rules['.bw-popover-left.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+    rules['.bw-popover-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(8px)', 'margin-left': '8px' };
+    rules['.bw-popover-right.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
     // Bar chart (structural)
     rules['.bw-bar-chart-container'] = {
       'padding': '1rem', 'border': '1px solid transparent', 'border-radius': '8px'
@@ -2059,9 +2194,25 @@
   // =========================================================================
 
   /**
-   * Add underscore aliases for all bw- selectors
+   * Add underscore aliases for all `.bw-` selectors.
+   *
+   * CSS CLASS NAMING CONVENTION:
+   *
+   * Canonical form:  `.bw-btn`, `.bw-card`, `.bw-table-hover`  (hyphens)
+   * Underscore alias: `.bw_btn`, `.bw_card`, `.bw_table_hover`  (underscores)
+   *
+   * Both forms are valid in HTML and produce identical results. The hyphen
+   * form is canonical (used in docs, generated CSS, component output).
+   * Underscore aliases exist because:
+   *   1. TACO attribute keys use underscores (`bw_id`, `bw_meta`) — no
+   *      quoting needed in JS object literals
+   *   2. Some users prefer underscores for consistency with JS identifiers
+   *
+   * Use `bw.normalizeClass()` to convert underscore classes to canonical
+   * hyphen form at runtime if needed.
+   *
    * @param {Object} rules - CSS rules object
-   * @returns {Object} - Rules with underscore aliases added
+   * @returns {Object} Rules with underscore aliases added (both forms work)
    */
   function addUnderscoreAliases(rules) {
     const result = {};
@@ -2078,6 +2229,27 @@
   // =========================================================================
   // Theme tokens (backwards compatible)
   // =========================================================================
+  //
+  // DESIGN NOTE — Why no CSS custom properties (CSS variables)?
+  //
+  // Bitwrench targets IE11 as Tier 1 (see dev/bw2x-compatibility.md).
+  // CSS custom properties (var(--color-primary)) are not supported in IE11.
+  //
+  // Instead, bitwrench uses class-scoped CSS generation:
+  //   1. `defaultStyles.*` provides hardcoded cosmetic defaults
+  //   2. `generateTheme(name, config)` generates a complete set of
+  //      class-scoped CSS rules from 3 seed colors (primary, secondary,
+  //      tertiary) — all components are restyled with the new palette
+  //   3. `generateAlternateCSS()` produces the alternate (dark/light)
+  //      variant scoped under `.bw-theme-alt`
+  //
+  // This achieves full theme customization without CSS variables:
+  //   bw.generateTheme('ocean', { primary: '#006666', secondary: '#cc6633' })
+  //   → generates .ocean .bw-btn-primary { background: #006666; } etc.
+  //
+  // When IE11 support is dropped, CSS custom properties can be added as
+  // an optimization (one rule with var() instead of many scoped rules).
+  // The generateTheme() API stays the same — only the output format changes.
 
   let theme = {
     colors: {
@@ -3826,8 +3998,10 @@
   /**
    * Generate responsive CSS with media query breakpoints.
    *
-   * Produces a CSS string with `@media` rules for sm (640px), md (768px),
-   * lg (1024px), and xl (1280px) breakpoints. Pass the result to `bw.injectCSS()`.
+   * Produces a CSS string with `@media (min-width)` rules for standard
+   * breakpoints. These match the grid system and theme.breakpoints:
+   *   sm: 576px, md: 768px, lg: 992px, xl: 1200px
+   * Pass the result to `bw.injectCSS()`.
    *
    * @param {string} selector - CSS selector
    * @param {Object} breakpoints - Object with keys: base, sm, md, lg, xl
@@ -3844,7 +4018,7 @@
    * bw.injectCSS(css);
    */
   bw.responsive = function(selector, breakpoints) {
-    var sizes = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
+    var sizes = { sm: '576px', md: '768px', lg: '992px', xl: '1200px' };
     var parts = [];
     Object.keys(breakpoints).forEach(function(key) {
       var rules = {};

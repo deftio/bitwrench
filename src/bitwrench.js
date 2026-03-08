@@ -1626,8 +1626,10 @@ bw.u = {
 /**
  * Generate responsive CSS with media query breakpoints.
  *
- * Produces a CSS string with `@media` rules for sm (640px), md (768px),
- * lg (1024px), and xl (1280px) breakpoints. Pass the result to `bw.injectCSS()`.
+ * Produces a CSS string with `@media (min-width)` rules for standard
+ * breakpoints. These match the grid system and theme.breakpoints:
+ *   sm: 576px, md: 768px, lg: 992px, xl: 1200px
+ * Pass the result to `bw.injectCSS()`.
  *
  * @param {string} selector - CSS selector
  * @param {Object} breakpoints - Object with keys: base, sm, md, lg, xl
@@ -1644,7 +1646,7 @@ bw.u = {
  * bw.injectCSS(css);
  */
 bw.responsive = function(selector, breakpoints) {
-  var sizes = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
+  var sizes = { sm: '576px', md: '768px', lg: '992px', xl: '1200px' };
   var parts = [];
   Object.keys(breakpoints).forEach(function(key) {
     var rules = {};

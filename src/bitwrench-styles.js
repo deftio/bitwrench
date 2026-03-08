@@ -1460,6 +1460,33 @@ export const defaultStyles = {
     'textarea.bw-form-control': {
       'min-height': '5rem',
       'resize': 'vertical'
+    },
+    // Validation states
+    '.bw-form-control.bw-is-valid': {
+      'border-color': '#198754'
+    },
+    '.bw-form-control.bw-is-valid:focus': {
+      'border-color': '#198754',
+      'box-shadow': '0 0 0 0.2rem rgba(25, 135, 84, 0.25)'
+    },
+    '.bw-form-control.bw-is-invalid': {
+      'border-color': '#dc3545'
+    },
+    '.bw-form-control.bw-is-invalid:focus': {
+      'border-color': '#dc3545',
+      'box-shadow': '0 0 0 0.2rem rgba(220, 53, 69, 0.25)'
+    },
+    '.bw-valid-feedback': {
+      'display': 'block',
+      'font-size': '0.875rem',
+      'color': '#198754',
+      'margin-top': '0.25rem'
+    },
+    '.bw-invalid-feedback': {
+      'display': 'block',
+      'font-size': '0.875rem',
+      'color': '#dc3545',
+      'margin-top': '0.25rem'
     }
   },
 
@@ -2043,8 +2070,18 @@ export const defaultStyles = {
       'color': '#6c757d',
       'content': '"/"'
     },
+    '.bw-breadcrumb-item a': {
+      'color': '#006666',
+      'text-decoration': 'none',
+      'transition': 'color 0.15s ease-out'
+    },
+    '.bw-breadcrumb-item a:hover': {
+      'color': '#004d4d',
+      'text-decoration': 'underline'
+    },
     '.bw-breadcrumb-item.active': {
-      'color': '#6c757d'
+      'color': '#6c757d',
+      'font-weight': '500'
     }
   },
 
@@ -3066,6 +3103,577 @@ export const defaultStyles = {
   },
 
   /**
+   * Stat card styles
+   */
+  statCard: {
+    '.bw-stat-card': {
+      'background-color': '#fff',
+      'border': '1px solid rgba(0,0,0,0.1)',
+      'border-left': '4px solid #006666',
+      'border-radius': '8px',
+      'padding': '1.25rem',
+      'box-shadow': '0 1px 3px rgba(0,0,0,0.08)',
+      'transition': 'box-shadow 0.15s ease-out, transform 0.15s ease-out'
+    },
+    '.bw-stat-card:hover': {
+      'box-shadow': '0 4px 12px rgba(0,0,0,0.12)',
+      'transform': 'translateY(-1px)'
+    },
+    '.bw-stat-icon': {
+      'font-size': '1.5rem',
+      'margin-bottom': '0.5rem'
+    },
+    '.bw-stat-value': {
+      'font-size': '2rem',
+      'font-weight': '700',
+      'line-height': '1.2',
+      'color': '#212529'
+    },
+    '.bw-stat-label': {
+      'font-size': '0.875rem',
+      'color': '#6c757d',
+      'margin-top': '0.25rem'
+    },
+    '.bw-stat-change': {
+      'font-size': '0.875rem',
+      'font-weight': '500',
+      'margin-top': '0.5rem'
+    },
+    '.bw-stat-change-up': { 'color': '#198754' },
+    '.bw-stat-change-down': { 'color': '#dc3545' },
+    '.bw-stat-card-primary': { 'border-left-color': '#006666' },
+    '.bw-stat-card-secondary': { 'border-left-color': '#6c757d' },
+    '.bw-stat-card-success': { 'border-left-color': '#198754' },
+    '.bw-stat-card-danger': { 'border-left-color': '#dc3545' },
+    '.bw-stat-card-warning': { 'border-left-color': '#b38600' },
+    '.bw-stat-card-info': { 'border-left-color': '#0891b2' }
+  },
+
+  /**
+   * Tooltip styles
+   */
+  tooltip: {
+    '.bw-tooltip-wrapper': {
+      'position': 'relative',
+      'display': 'inline-block'
+    },
+    '.bw-tooltip': {
+      'position': 'absolute',
+      'z-index': '999',
+      'background-color': '#212529',
+      'color': '#fff',
+      'padding': '0.375rem 0.75rem',
+      'border-radius': '4px',
+      'font-size': '0.875rem',
+      'white-space': 'nowrap',
+      'pointer-events': 'none',
+      'opacity': '0',
+      'visibility': 'hidden',
+      'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+    },
+    '.bw-tooltip.bw-tooltip-show': {
+      'opacity': '1',
+      'visibility': 'visible'
+    },
+    '.bw-tooltip-top': {
+      'bottom': '100%',
+      'left': '50%',
+      'transform': 'translateX(-50%) translateY(-4px)',
+      'margin-bottom': '4px'
+    },
+    '.bw-tooltip-top.bw-tooltip-show': {
+      'transform': 'translateX(-50%) translateY(0)'
+    },
+    '.bw-tooltip-bottom': {
+      'top': '100%',
+      'left': '50%',
+      'transform': 'translateX(-50%) translateY(4px)',
+      'margin-top': '4px'
+    },
+    '.bw-tooltip-bottom.bw-tooltip-show': {
+      'transform': 'translateX(-50%) translateY(0)'
+    },
+    '.bw-tooltip-left': {
+      'right': '100%',
+      'top': '50%',
+      'transform': 'translateY(-50%) translateX(-4px)',
+      'margin-right': '4px'
+    },
+    '.bw-tooltip-left.bw-tooltip-show': {
+      'transform': 'translateY(-50%) translateX(0)'
+    },
+    '.bw-tooltip-right': {
+      'left': '100%',
+      'top': '50%',
+      'transform': 'translateY(-50%) translateX(4px)',
+      'margin-left': '4px'
+    },
+    '.bw-tooltip-right.bw-tooltip-show': {
+      'transform': 'translateY(-50%) translateX(0)'
+    }
+  },
+
+  /**
+   * Popover styles
+   */
+  popover: {
+    '.bw-popover-wrapper': {
+      'position': 'relative',
+      'display': 'inline-block'
+    },
+    '.bw-popover-trigger': {
+      'cursor': 'pointer'
+    },
+    '.bw-popover': {
+      'position': 'absolute',
+      'z-index': '1000',
+      'background-color': '#fff',
+      'color': '#212529',
+      'border': '1px solid rgba(0,0,0,0.15)',
+      'border-radius': '8px',
+      'box-shadow': '0 0.5rem 1rem rgba(0,0,0,0.15)',
+      'min-width': '200px',
+      'max-width': '320px',
+      'pointer-events': 'none',
+      'opacity': '0',
+      'visibility': 'hidden',
+      'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+    },
+    '.bw-popover.bw-popover-show': {
+      'opacity': '1',
+      'visibility': 'visible',
+      'pointer-events': 'auto'
+    },
+    '.bw-popover-header': {
+      'padding': '0.625rem 0.875rem',
+      'font-weight': '600',
+      'font-size': '0.9375rem',
+      'border-bottom': '1px solid rgba(0,0,0,0.1)',
+      'border-radius': '8px 8px 0 0',
+      'background-color': '#f8f9fa'
+    },
+    '.bw-popover-body': {
+      'padding': '0.75rem 0.875rem',
+      'font-size': '0.875rem',
+      'line-height': '1.5'
+    },
+    '.bw-popover-top': {
+      'bottom': '100%',
+      'left': '50%',
+      'transform': 'translateX(-50%) translateY(-8px)',
+      'margin-bottom': '8px'
+    },
+    '.bw-popover-top.bw-popover-show': {
+      'transform': 'translateX(-50%) translateY(0)'
+    },
+    '.bw-popover-bottom': {
+      'top': '100%',
+      'left': '50%',
+      'transform': 'translateX(-50%) translateY(8px)',
+      'margin-top': '8px'
+    },
+    '.bw-popover-bottom.bw-popover-show': {
+      'transform': 'translateX(-50%) translateY(0)'
+    },
+    '.bw-popover-left': {
+      'right': '100%',
+      'top': '50%',
+      'transform': 'translateY(-50%) translateX(-8px)',
+      'margin-right': '8px'
+    },
+    '.bw-popover-left.bw-popover-show': {
+      'transform': 'translateY(-50%) translateX(0)'
+    },
+    '.bw-popover-right': {
+      'left': '100%',
+      'top': '50%',
+      'transform': 'translateY(-50%) translateX(8px)',
+      'margin-left': '8px'
+    },
+    '.bw-popover-right.bw-popover-show': {
+      'transform': 'translateY(-50%) translateX(0)'
+    }
+  },
+
+  /**
+   * Search input styles
+   */
+  searchInput: {
+    '.bw-search-input': {
+      'position': 'relative',
+      'display': 'flex',
+      'align-items': 'center'
+    },
+    '.bw-search-input .bw-search-field': {
+      'padding-right': '2.5rem'
+    },
+    '.bw-search-clear': {
+      'position': 'absolute',
+      'right': '0.5rem',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'width': '1.5rem',
+      'height': '1.5rem',
+      'border': 'none',
+      'background': 'none',
+      'color': '#6c757d',
+      'font-size': '1.25rem',
+      'cursor': 'pointer',
+      'padding': '0',
+      'line-height': '1',
+      'border-radius': '50%',
+      'transition': 'color 0.15s ease-out'
+    },
+    '.bw-search-clear:hover': {
+      'color': '#212529'
+    }
+  },
+
+  /**
+   * Range slider styles
+   */
+  range: {
+    '.bw-range-wrapper': {
+      'margin-bottom': '1rem'
+    },
+    '.bw-range-label': {
+      'display': 'flex',
+      'justify-content': 'space-between',
+      'align-items': 'center',
+      'margin-bottom': '0.5rem',
+      'font-size': '0.875rem',
+      'font-weight': '500'
+    },
+    '.bw-range-value': {
+      'font-weight': '600',
+      'color': '#006666'
+    },
+    '.bw-range': {
+      'width': '100%',
+      'height': '0.5rem',
+      'padding': '0',
+      'appearance': 'none',
+      'background-color': '#dee2e6',
+      'border': 'none',
+      'border-radius': '0.25rem',
+      'cursor': 'pointer',
+      'outline': 'none'
+    },
+    '.bw-range:focus': {
+      'outline': 'none'
+    },
+    '.bw-range::-webkit-slider-thumb': {
+      'appearance': 'none',
+      'width': '1.25rem',
+      'height': '1.25rem',
+      'border-radius': '50%',
+      'background-color': '#006666',
+      'border': '2px solid #fff',
+      'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
+      'cursor': 'pointer',
+      'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
+    },
+    '.bw-range::-webkit-slider-thumb:hover': {
+      'transform': 'scale(1.15)'
+    },
+    '.bw-range::-moz-range-thumb': {
+      'width': '1.25rem',
+      'height': '1.25rem',
+      'border-radius': '50%',
+      'background-color': '#006666',
+      'border': '2px solid #fff',
+      'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
+      'cursor': 'pointer'
+    },
+    '.bw-range:disabled': {
+      'opacity': '0.5',
+      'cursor': 'not-allowed'
+    }
+  },
+
+  /**
+   * Media object styles
+   */
+  mediaObject: {
+    '.bw-media': {
+      'display': 'flex',
+      'align-items': 'flex-start',
+      'gap': '1rem'
+    },
+    '.bw-media-reverse': {
+      'flex-direction': 'row-reverse'
+    },
+    '.bw-media-img': {
+      'border-radius': '50%',
+      'object-fit': 'cover',
+      'flex-shrink': '0'
+    },
+    '.bw-media-body': {
+      'flex': '1',
+      'min-width': '0'
+    },
+    '.bw-media-title': {
+      'margin': '0 0 0.25rem 0',
+      'font-size': '1rem',
+      'font-weight': '600',
+      'line-height': '1.3'
+    }
+  },
+
+  /**
+   * File upload styles
+   */
+  fileUpload: {
+    '.bw-file-upload': {
+      'display': 'flex',
+      'flex-direction': 'column',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'padding': '2rem',
+      'border': '2px dashed #dee2e6',
+      'border-radius': '8px',
+      'background-color': '#f8f9fa',
+      'cursor': 'pointer',
+      'text-align': 'center',
+      'transition': 'border-color 0.15s ease-out, background-color 0.15s ease-out',
+      'position': 'relative'
+    },
+    '.bw-file-upload:hover': {
+      'border-color': '#006666',
+      'background-color': '#f0fafa'
+    },
+    '.bw-file-upload.bw-file-upload-active': {
+      'border-color': '#006666',
+      'background-color': '#e6f7f7',
+      'border-style': 'solid'
+    },
+    '.bw-file-upload-icon': {
+      'font-size': '2rem',
+      'margin-bottom': '0.5rem'
+    },
+    '.bw-file-upload-text': {
+      'font-size': '0.875rem',
+      'color': '#6c757d'
+    },
+    '.bw-file-upload-input': {
+      'position': 'absolute',
+      'width': '1px',
+      'height': '1px',
+      'padding': '0',
+      'margin': '-1px',
+      'overflow': 'hidden',
+      'clip': 'rect(0,0,0,0)',
+      'border': '0'
+    },
+    '.bw-file-upload:focus': {
+      'outline': '2px solid #006666',
+      'outline-offset': '2px'
+    }
+  },
+
+  /**
+   * Timeline styles
+   */
+  timeline: {
+    '.bw-timeline': {
+      'position': 'relative',
+      'padding-left': '2rem'
+    },
+    '.bw-timeline::before': {
+      'content': '""',
+      'position': 'absolute',
+      'left': '0.5rem',
+      'top': '0',
+      'bottom': '0',
+      'width': '2px',
+      'background-color': '#dee2e6'
+    },
+    '.bw-timeline-item': {
+      'position': 'relative',
+      'padding-bottom': '1.5rem'
+    },
+    '.bw-timeline-item:last-child': {
+      'padding-bottom': '0'
+    },
+    '.bw-timeline-marker': {
+      'position': 'absolute',
+      'left': '-1.75rem',
+      'top': '0.25rem',
+      'width': '0.75rem',
+      'height': '0.75rem',
+      'border-radius': '50%',
+      'border': '2px solid #fff',
+      'box-shadow': '0 0 0 2px #dee2e6'
+    },
+    '.bw-timeline-marker-primary': { 'background-color': '#006666', 'box-shadow': '0 0 0 2px #006666' },
+    '.bw-timeline-marker-secondary': { 'background-color': '#6c757d', 'box-shadow': '0 0 0 2px #6c757d' },
+    '.bw-timeline-marker-success': { 'background-color': '#198754', 'box-shadow': '0 0 0 2px #198754' },
+    '.bw-timeline-marker-danger': { 'background-color': '#dc3545', 'box-shadow': '0 0 0 2px #dc3545' },
+    '.bw-timeline-marker-warning': { 'background-color': '#b38600', 'box-shadow': '0 0 0 2px #b38600' },
+    '.bw-timeline-marker-info': { 'background-color': '#0891b2', 'box-shadow': '0 0 0 2px #0891b2' },
+    '.bw-timeline-content': {
+      'padding-left': '0.5rem'
+    },
+    '.bw-timeline-date': {
+      'font-size': '0.75rem',
+      'color': '#6c757d',
+      'margin-bottom': '0.25rem',
+      'font-weight': '500'
+    },
+    '.bw-timeline-title': {
+      'font-size': '1rem',
+      'font-weight': '600',
+      'margin': '0 0 0.25rem 0',
+      'line-height': '1.3'
+    },
+    '.bw-timeline-text': {
+      'font-size': '0.875rem',
+      'color': '#495057',
+      'margin': '0',
+      'line-height': '1.5'
+    }
+  },
+
+  /**
+   * Stepper styles
+   */
+  stepper: {
+    '.bw-stepper': {
+      'display': 'flex',
+      'gap': '0',
+      'counter-reset': 'step'
+    },
+    '.bw-step': {
+      'flex': '1',
+      'display': 'flex',
+      'flex-direction': 'column',
+      'align-items': 'center',
+      'text-align': 'center',
+      'position': 'relative'
+    },
+    '.bw-step + .bw-step::before': {
+      'content': '""',
+      'position': 'absolute',
+      'top': '1rem',
+      'left': '-50%',
+      'right': '50%',
+      'height': '2px',
+      'background-color': '#dee2e6'
+    },
+    '.bw-step-completed + .bw-step::before': {
+      'background-color': '#006666'
+    },
+    '.bw-step-indicator': {
+      'width': '2rem',
+      'height': '2rem',
+      'border-radius': '50%',
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'font-size': '0.875rem',
+      'font-weight': '600',
+      'background-color': '#dee2e6',
+      'color': '#6c757d',
+      'position': 'relative',
+      'z-index': '1',
+      'transition': 'background-color 0.2s ease-out, color 0.2s ease-out'
+    },
+    '.bw-step-active .bw-step-indicator': {
+      'background-color': '#006666',
+      'color': '#fff'
+    },
+    '.bw-step-completed .bw-step-indicator': {
+      'background-color': '#006666',
+      'color': '#fff'
+    },
+    '.bw-step-body': {
+      'margin-top': '0.5rem'
+    },
+    '.bw-step-label': {
+      'font-size': '0.875rem',
+      'font-weight': '500',
+      'color': '#6c757d'
+    },
+    '.bw-step-active .bw-step-label': {
+      'color': '#212529',
+      'font-weight': '600'
+    },
+    '.bw-step-completed .bw-step-label': {
+      'color': '#006666'
+    },
+    '.bw-step-description': {
+      'font-size': '0.75rem',
+      'color': '#6c757d',
+      'margin-top': '0.125rem'
+    }
+  },
+
+  /**
+   * Chip input styles
+   */
+  chipInput: {
+    '.bw-chip-input': {
+      'display': 'flex',
+      'flex-wrap': 'wrap',
+      'align-items': 'center',
+      'gap': '0.375rem',
+      'padding': '0.375rem 0.5rem',
+      'border': '1px solid #ced4da',
+      'border-radius': '6px',
+      'background-color': '#fff',
+      'min-height': '2.5rem',
+      'cursor': 'text',
+      'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out'
+    },
+    '.bw-chip-input:focus-within': {
+      'border-color': '#006666',
+      'box-shadow': '0 0 0 0.2rem rgba(0, 102, 102, 0.25)'
+    },
+    '.bw-chip': {
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'gap': '0.25rem',
+      'padding': '0.125rem 0.5rem',
+      'background-color': '#e9ecef',
+      'border-radius': '1rem',
+      'font-size': '0.8125rem',
+      'line-height': '1.5',
+      'color': '#212529',
+      'white-space': 'nowrap'
+    },
+    '.bw-chip-remove': {
+      'display': 'inline-flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'width': '1rem',
+      'height': '1rem',
+      'border': 'none',
+      'background': 'none',
+      'color': '#6c757d',
+      'font-size': '0.875rem',
+      'cursor': 'pointer',
+      'padding': '0',
+      'line-height': '1',
+      'border-radius': '50%',
+      'transition': 'color 0.15s ease-out, background-color 0.15s ease-out'
+    },
+    '.bw-chip-remove:hover': {
+      'color': '#dc3545',
+      'background-color': 'rgba(220, 53, 69, 0.1)'
+    },
+    '.bw-chip-field': {
+      'flex': '1',
+      'min-width': '80px',
+      'border': 'none',
+      'outline': 'none',
+      'font-size': '0.875rem',
+      'padding': '0.125rem 0',
+      'background': 'transparent'
+    }
+  },
+
+  /**
    * Utility classes
    */
   utilities: {
@@ -3380,11 +3988,23 @@ export const defaultStyles = {
 // =========================================================================
 
 /**
- * Structural styles contain only layout, sizing, spacing, and behavior
- * properties. No colors, backgrounds, shadows, or border-colors.
- * These never change with themes.
+ * Structural styles — layout, sizing, spacing, positioning, and behavior.
  *
- * @returns {Object} CSS rules object
+ * POLICY: No colors, backgrounds, shadows, or border-colors in this function.
+ * All cosmetic values belong in `defaultStyles.*` sections (unthemed defaults)
+ * or in `generateThemedCSS()` (theme-driven colors).
+ *
+ * Exception: `.bw-progress-bar-striped` uses rgba(255,255,255,.15) for the
+ * stripe pattern overlay. This is theme-neutral — a semi-transparent white
+ * gradient that creates visible stripes on any background color.
+ *
+ * Architecture:
+ *   getStructuralStyles()  → layout-only rules (never change with themes)
+ *   defaultStyles.*        → cosmetic defaults (colors, shadows, borders)
+ *   generateThemedCSS()    → palette-driven cosmetics from seed colors
+ *   generateAlternateCSS() → alternate palette (luminance-inverted)
+ *
+ * @returns {Object} CSS rules object (layout-only, theme-independent)
  */
 export function getStructuralStyles() {
   var rules = {};
@@ -3486,6 +4106,10 @@ export function getStructuralStyles() {
     'background-size': '16px 12px'
   };
   rules['textarea.bw-form-control'] = { 'min-height': '5rem', 'resize': 'vertical' };
+
+  // Form validation (structural)
+  rules['.bw-valid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+  rules['.bw-invalid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
 
   // Form checks (structural)
   Object.assign(rules, {
@@ -3617,6 +4241,8 @@ export function getStructuralStyles() {
   rules['.bw-breadcrumb-item'] = { 'display': 'flex' };
   rules['.bw-breadcrumb-item + .bw-breadcrumb-item'] = { 'padding-left': '0.5rem' };
   rules['.bw-breadcrumb-item + .bw-breadcrumb-item::before'] = { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' };
+  rules['.bw-breadcrumb-item a'] = { 'text-decoration': 'none', 'transition': 'color 0.15s ease-out' };
+  rules['.bw-breadcrumb-item.active'] = { 'font-weight': '500' };
 
   // Hero (structural)
   rules['.bw-hero'] = { 'position': 'relative', 'overflow': 'hidden' };
@@ -3851,6 +4477,123 @@ export function getStructuralStyles() {
   rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
   rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
 
+  // Stat card (structural)
+  rules['.bw-stat-card'] = {
+    'border-radius': '8px', 'padding': '1.25rem',
+    'border-left': '4px solid transparent',
+    'transition': 'box-shadow 0.15s ease-out, transform 0.15s ease-out'
+  };
+  rules['.bw-stat-card:hover'] = { 'transform': 'translateY(-1px)' };
+  rules['.bw-stat-icon'] = { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' };
+  rules['.bw-stat-value'] = { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' };
+  rules['.bw-stat-label'] = { 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+  rules['.bw-stat-change'] = { 'font-size': '0.875rem', 'font-weight': '500', 'margin-top': '0.5rem' };
+
+  // Tooltip (structural)
+  rules['.bw-tooltip-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+  rules['.bw-tooltip'] = {
+    'position': 'absolute', 'z-index': '999',
+    'padding': '0.375rem 0.75rem', 'border-radius': '4px', 'font-size': '0.875rem',
+    'white-space': 'nowrap', 'pointer-events': 'none',
+    'opacity': '0', 'visibility': 'hidden',
+    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+  };
+  rules['.bw-tooltip.bw-tooltip-show'] = { 'opacity': '1', 'visibility': 'visible' };
+  rules['.bw-tooltip-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-4px)', 'margin-bottom': '4px' };
+  rules['.bw-tooltip-top.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-tooltip-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(4px)', 'margin-top': '4px' };
+  rules['.bw-tooltip-bottom.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-tooltip-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-4px)', 'margin-right': '4px' };
+  rules['.bw-tooltip-left.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+  rules['.bw-tooltip-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(4px)', 'margin-left': '4px' };
+  rules['.bw-tooltip-right.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
+  // Search input (structural)
+  rules['.bw-search-input'] = { 'position': 'relative', 'display': 'flex', 'align-items': 'center' };
+  rules['.bw-search-input .bw-search-field'] = { 'padding-right': '2.5rem' };
+  rules['.bw-search-clear'] = {
+    'position': 'absolute', 'right': '0.5rem',
+    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+    'width': '1.5rem', 'height': '1.5rem',
+    'border': 'none', 'background': 'none',
+    'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0',
+    'border-radius': '50%', 'transition': 'color 0.15s ease-out'
+  };
+
+  // Range slider (structural)
+  rules['.bw-range-wrapper'] = { 'margin-bottom': '1rem' };
+  rules['.bw-range-label'] = { 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '0.5rem', 'font-size': '0.875rem', 'font-weight': '500' };
+  rules['.bw-range-value'] = { 'font-weight': '600' };
+  rules['.bw-range'] = { 'width': '100%', 'height': '0.5rem', 'padding': '0', 'appearance': 'none', 'border': 'none', 'border-radius': '0.25rem', 'cursor': 'pointer', 'outline': 'none' };
+  rules['.bw-range:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
+
+  // Media object (structural)
+  rules['.bw-media'] = { 'display': 'flex', 'align-items': 'flex-start', 'gap': '1rem' };
+  rules['.bw-media-reverse'] = { 'flex-direction': 'row-reverse' };
+  rules['.bw-media-img'] = { 'border-radius': '50%', 'object-fit': 'cover', 'flex-shrink': '0' };
+  rules['.bw-media-body'] = { 'flex': '1', 'min-width': '0' };
+  rules['.bw-media-title'] = { 'margin': '0 0 0.25rem 0', 'font-size': '1rem', 'font-weight': '600', 'line-height': '1.3' };
+
+  // File upload (structural)
+  rules['.bw-file-upload'] = {
+    'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center',
+    'padding': '2rem', 'border': '2px dashed transparent', 'border-radius': '8px',
+    'cursor': 'pointer', 'text-align': 'center', 'position': 'relative',
+    'transition': 'border-color 0.15s ease-out, background-color 0.15s ease-out'
+  };
+  rules['.bw-file-upload-icon'] = { 'font-size': '2rem', 'margin-bottom': '0.5rem' };
+  rules['.bw-file-upload-text'] = { 'font-size': '0.875rem' };
+  rules['.bw-file-upload-input'] = {
+    'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
+    'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0,0,0,0)', 'border': '0'
+  };
+
+  // Timeline (structural)
+  rules['.bw-timeline'] = { 'position': 'relative', 'padding-left': '2rem' };
+  rules['.bw-timeline-item'] = { 'position': 'relative', 'padding-bottom': '1.5rem' };
+  rules['.bw-timeline-item:last-child'] = { 'padding-bottom': '0' };
+  rules['.bw-timeline-marker'] = { 'position': 'absolute', 'left': '-1.75rem', 'top': '0.25rem', 'width': '0.75rem', 'height': '0.75rem', 'border-radius': '50%' };
+  rules['.bw-timeline-content'] = { 'padding-left': '0.5rem' };
+  rules['.bw-timeline-date'] = { 'font-size': '0.75rem', 'margin-bottom': '0.25rem', 'font-weight': '500' };
+  rules['.bw-timeline-title'] = { 'font-size': '1rem', 'font-weight': '600', 'margin': '0 0 0.25rem 0', 'line-height': '1.3' };
+  rules['.bw-timeline-text'] = { 'font-size': '0.875rem', 'margin': '0', 'line-height': '1.5' };
+
+  // Stepper (structural)
+  rules['.bw-stepper'] = { 'display': 'flex', 'gap': '0' };
+  rules['.bw-step'] = { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'text-align': 'center', 'position': 'relative' };
+  rules['.bw-step-indicator'] = { 'width': '2rem', 'height': '2rem', 'border-radius': '50%', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '0.875rem', 'font-weight': '600', 'position': 'relative', 'z-index': '1', 'transition': 'background-color 0.2s ease-out, color 0.2s ease-out' };
+  rules['.bw-step-body'] = { 'margin-top': '0.5rem' };
+  rules['.bw-step-label'] = { 'font-size': '0.875rem', 'font-weight': '500' };
+  rules['.bw-step-description'] = { 'font-size': '0.75rem', 'margin-top': '0.125rem' };
+
+  // Chip input (structural)
+  rules['.bw-chip-input'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'gap': '0.375rem', 'padding': '0.375rem 0.5rem', 'border-radius': '6px', 'min-height': '2.5rem', 'cursor': 'text', 'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out' };
+  rules['.bw-chip'] = { 'display': 'inline-flex', 'align-items': 'center', 'gap': '0.25rem', 'padding': '0.125rem 0.5rem', 'border-radius': '1rem', 'font-size': '0.8125rem', 'line-height': '1.5', 'white-space': 'nowrap' };
+  rules['.bw-chip-remove'] = { 'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center', 'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none', 'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out' };
+  rules['.bw-chip-field'] = { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' };
+
+  // Popover (structural)
+  rules['.bw-popover-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+  rules['.bw-popover-trigger'] = { 'cursor': 'pointer' };
+  rules['.bw-popover'] = {
+    'position': 'absolute', 'z-index': '1000',
+    'min-width': '200px', 'max-width': '320px',
+    'border-radius': '8px',
+    'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden',
+    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+  };
+  rules['.bw-popover.bw-popover-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
+  rules['.bw-popover-header'] = { 'padding': '0.625rem 0.875rem', 'font-weight': '600', 'font-size': '0.9375rem' };
+  rules['.bw-popover-body'] = { 'padding': '0.75rem 0.875rem', 'font-size': '0.875rem', 'line-height': '1.5' };
+  rules['.bw-popover-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-8px)', 'margin-bottom': '8px' };
+  rules['.bw-popover-top.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-popover-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(8px)', 'margin-top': '8px' };
+  rules['.bw-popover-bottom.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-popover-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-8px)', 'margin-right': '8px' };
+  rules['.bw-popover-left.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+  rules['.bw-popover-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(8px)', 'margin-left': '8px' };
+  rules['.bw-popover-right.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
   // Bar chart (structural)
   rules['.bw-bar-chart-container'] = {
     'padding': '1rem', 'border': '1px solid transparent', 'border-radius': '8px'
@@ -4011,9 +4754,25 @@ export function getStructuralStyles() {
 // =========================================================================
 
 /**
- * Add underscore aliases for all bw- selectors
+ * Add underscore aliases for all `.bw-` selectors.
+ *
+ * CSS CLASS NAMING CONVENTION:
+ *
+ * Canonical form:  `.bw-btn`, `.bw-card`, `.bw-table-hover`  (hyphens)
+ * Underscore alias: `.bw_btn`, `.bw_card`, `.bw_table_hover`  (underscores)
+ *
+ * Both forms are valid in HTML and produce identical results. The hyphen
+ * form is canonical (used in docs, generated CSS, component output).
+ * Underscore aliases exist because:
+ *   1. TACO attribute keys use underscores (`bw_id`, `bw_meta`) — no
+ *      quoting needed in JS object literals
+ *   2. Some users prefer underscores for consistency with JS identifiers
+ *
+ * Use `bw.normalizeClass()` to convert underscore classes to canonical
+ * hyphen form at runtime if needed.
+ *
  * @param {Object} rules - CSS rules object
- * @returns {Object} - Rules with underscore aliases added
+ * @returns {Object} Rules with underscore aliases added (both forms work)
  */
 export function addUnderscoreAliases(rules) {
   const result = {};
@@ -4066,6 +4825,16 @@ export function getAllStyles() {
     defaultStyles.formSwitch,
     defaultStyles.skeleton,
     defaultStyles.avatar,
+    defaultStyles.statCard,
+    defaultStyles.tooltip,
+    defaultStyles.popover,
+    defaultStyles.searchInput,
+    defaultStyles.range,
+    defaultStyles.mediaObject,
+    defaultStyles.fileUpload,
+    defaultStyles.timeline,
+    defaultStyles.stepper,
+    defaultStyles.chipInput,
     defaultStyles.utilities,
     defaultStyles.responsive
   );
@@ -4075,6 +4844,27 @@ export function getAllStyles() {
 // =========================================================================
 // Theme tokens (backwards compatible)
 // =========================================================================
+//
+// DESIGN NOTE — Why no CSS custom properties (CSS variables)?
+//
+// Bitwrench targets IE11 as Tier 1 (see dev/bw2x-compatibility.md).
+// CSS custom properties (var(--color-primary)) are not supported in IE11.
+//
+// Instead, bitwrench uses class-scoped CSS generation:
+//   1. `defaultStyles.*` provides hardcoded cosmetic defaults
+//   2. `generateTheme(name, config)` generates a complete set of
+//      class-scoped CSS rules from 3 seed colors (primary, secondary,
+//      tertiary) — all components are restyled with the new palette
+//   3. `generateAlternateCSS()` produces the alternate (dark/light)
+//      variant scoped under `.bw-theme-alt`
+//
+// This achieves full theme customization without CSS variables:
+//   bw.generateTheme('ocean', { primary: '#006666', secondary: '#cc6633' })
+//   → generates .ocean .bw-btn-primary { background: #006666; } etc.
+//
+// When IE11 support is dropped, CSS custom properties can be added as
+// an optimization (one rule with var() instead of many scoped rules).
+// The generateTheme() API stays the same — only the output format changes.
 
 export let theme = {
   colors: {

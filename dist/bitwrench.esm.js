@@ -12,7 +12,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-08T06:35:41.126Z'
+  buildDate: '2026-03-08T07:17:38.437Z'
 };
 
 /**
@@ -1422,11 +1422,23 @@ const defaultStyles = {
 // =========================================================================
 
 /**
- * Structural styles contain only layout, sizing, spacing, and behavior
- * properties. No colors, backgrounds, shadows, or border-colors.
- * These never change with themes.
+ * Structural styles — layout, sizing, spacing, positioning, and behavior.
  *
- * @returns {Object} CSS rules object
+ * POLICY: No colors, backgrounds, shadows, or border-colors in this function.
+ * All cosmetic values belong in `defaultStyles.*` sections (unthemed defaults)
+ * or in `generateThemedCSS()` (theme-driven colors).
+ *
+ * Exception: `.bw-progress-bar-striped` uses rgba(255,255,255,.15) for the
+ * stripe pattern overlay. This is theme-neutral — a semi-transparent white
+ * gradient that creates visible stripes on any background color.
+ *
+ * Architecture:
+ *   getStructuralStyles()  → layout-only rules (never change with themes)
+ *   defaultStyles.*        → cosmetic defaults (colors, shadows, borders)
+ *   generateThemedCSS()    → palette-driven cosmetics from seed colors
+ *   generateAlternateCSS() → alternate palette (luminance-inverted)
+ *
+ * @returns {Object} CSS rules object (layout-only, theme-independent)
  */
 function getStructuralStyles() {
   var rules = {};
@@ -1528,6 +1540,10 @@ function getStructuralStyles() {
     'background-size': '16px 12px'
   };
   rules['textarea.bw-form-control'] = { 'min-height': '5rem', 'resize': 'vertical' };
+
+  // Form validation (structural)
+  rules['.bw-valid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+  rules['.bw-invalid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
 
   // Form checks (structural)
   Object.assign(rules, {
@@ -1659,6 +1675,8 @@ function getStructuralStyles() {
   rules['.bw-breadcrumb-item'] = { 'display': 'flex' };
   rules['.bw-breadcrumb-item + .bw-breadcrumb-item'] = { 'padding-left': '0.5rem' };
   rules['.bw-breadcrumb-item + .bw-breadcrumb-item::before'] = { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' };
+  rules['.bw-breadcrumb-item a'] = { 'text-decoration': 'none', 'transition': 'color 0.15s ease-out' };
+  rules['.bw-breadcrumb-item.active'] = { 'font-weight': '500' };
 
   // Hero (structural)
   rules['.bw-hero'] = { 'position': 'relative', 'overflow': 'hidden' };
@@ -1893,6 +1911,123 @@ function getStructuralStyles() {
   rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
   rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
 
+  // Stat card (structural)
+  rules['.bw-stat-card'] = {
+    'border-radius': '8px', 'padding': '1.25rem',
+    'border-left': '4px solid transparent',
+    'transition': 'box-shadow 0.15s ease-out, transform 0.15s ease-out'
+  };
+  rules['.bw-stat-card:hover'] = { 'transform': 'translateY(-1px)' };
+  rules['.bw-stat-icon'] = { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' };
+  rules['.bw-stat-value'] = { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' };
+  rules['.bw-stat-label'] = { 'font-size': '0.875rem', 'margin-top': '0.25rem' };
+  rules['.bw-stat-change'] = { 'font-size': '0.875rem', 'font-weight': '500', 'margin-top': '0.5rem' };
+
+  // Tooltip (structural)
+  rules['.bw-tooltip-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+  rules['.bw-tooltip'] = {
+    'position': 'absolute', 'z-index': '999',
+    'padding': '0.375rem 0.75rem', 'border-radius': '4px', 'font-size': '0.875rem',
+    'white-space': 'nowrap', 'pointer-events': 'none',
+    'opacity': '0', 'visibility': 'hidden',
+    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+  };
+  rules['.bw-tooltip.bw-tooltip-show'] = { 'opacity': '1', 'visibility': 'visible' };
+  rules['.bw-tooltip-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-4px)', 'margin-bottom': '4px' };
+  rules['.bw-tooltip-top.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-tooltip-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(4px)', 'margin-top': '4px' };
+  rules['.bw-tooltip-bottom.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-tooltip-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-4px)', 'margin-right': '4px' };
+  rules['.bw-tooltip-left.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+  rules['.bw-tooltip-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(4px)', 'margin-left': '4px' };
+  rules['.bw-tooltip-right.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
+  // Search input (structural)
+  rules['.bw-search-input'] = { 'position': 'relative', 'display': 'flex', 'align-items': 'center' };
+  rules['.bw-search-input .bw-search-field'] = { 'padding-right': '2.5rem' };
+  rules['.bw-search-clear'] = {
+    'position': 'absolute', 'right': '0.5rem',
+    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+    'width': '1.5rem', 'height': '1.5rem',
+    'border': 'none', 'background': 'none',
+    'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0',
+    'border-radius': '50%', 'transition': 'color 0.15s ease-out'
+  };
+
+  // Range slider (structural)
+  rules['.bw-range-wrapper'] = { 'margin-bottom': '1rem' };
+  rules['.bw-range-label'] = { 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '0.5rem', 'font-size': '0.875rem', 'font-weight': '500' };
+  rules['.bw-range-value'] = { 'font-weight': '600' };
+  rules['.bw-range'] = { 'width': '100%', 'height': '0.5rem', 'padding': '0', 'appearance': 'none', 'border': 'none', 'border-radius': '0.25rem', 'cursor': 'pointer', 'outline': 'none' };
+  rules['.bw-range:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
+
+  // Media object (structural)
+  rules['.bw-media'] = { 'display': 'flex', 'align-items': 'flex-start', 'gap': '1rem' };
+  rules['.bw-media-reverse'] = { 'flex-direction': 'row-reverse' };
+  rules['.bw-media-img'] = { 'border-radius': '50%', 'object-fit': 'cover', 'flex-shrink': '0' };
+  rules['.bw-media-body'] = { 'flex': '1', 'min-width': '0' };
+  rules['.bw-media-title'] = { 'margin': '0 0 0.25rem 0', 'font-size': '1rem', 'font-weight': '600', 'line-height': '1.3' };
+
+  // File upload (structural)
+  rules['.bw-file-upload'] = {
+    'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center',
+    'padding': '2rem', 'border': '2px dashed transparent', 'border-radius': '8px',
+    'cursor': 'pointer', 'text-align': 'center', 'position': 'relative',
+    'transition': 'border-color 0.15s ease-out, background-color 0.15s ease-out'
+  };
+  rules['.bw-file-upload-icon'] = { 'font-size': '2rem', 'margin-bottom': '0.5rem' };
+  rules['.bw-file-upload-text'] = { 'font-size': '0.875rem' };
+  rules['.bw-file-upload-input'] = {
+    'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
+    'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0,0,0,0)', 'border': '0'
+  };
+
+  // Timeline (structural)
+  rules['.bw-timeline'] = { 'position': 'relative', 'padding-left': '2rem' };
+  rules['.bw-timeline-item'] = { 'position': 'relative', 'padding-bottom': '1.5rem' };
+  rules['.bw-timeline-item:last-child'] = { 'padding-bottom': '0' };
+  rules['.bw-timeline-marker'] = { 'position': 'absolute', 'left': '-1.75rem', 'top': '0.25rem', 'width': '0.75rem', 'height': '0.75rem', 'border-radius': '50%' };
+  rules['.bw-timeline-content'] = { 'padding-left': '0.5rem' };
+  rules['.bw-timeline-date'] = { 'font-size': '0.75rem', 'margin-bottom': '0.25rem', 'font-weight': '500' };
+  rules['.bw-timeline-title'] = { 'font-size': '1rem', 'font-weight': '600', 'margin': '0 0 0.25rem 0', 'line-height': '1.3' };
+  rules['.bw-timeline-text'] = { 'font-size': '0.875rem', 'margin': '0', 'line-height': '1.5' };
+
+  // Stepper (structural)
+  rules['.bw-stepper'] = { 'display': 'flex', 'gap': '0' };
+  rules['.bw-step'] = { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'text-align': 'center', 'position': 'relative' };
+  rules['.bw-step-indicator'] = { 'width': '2rem', 'height': '2rem', 'border-radius': '50%', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '0.875rem', 'font-weight': '600', 'position': 'relative', 'z-index': '1', 'transition': 'background-color 0.2s ease-out, color 0.2s ease-out' };
+  rules['.bw-step-body'] = { 'margin-top': '0.5rem' };
+  rules['.bw-step-label'] = { 'font-size': '0.875rem', 'font-weight': '500' };
+  rules['.bw-step-description'] = { 'font-size': '0.75rem', 'margin-top': '0.125rem' };
+
+  // Chip input (structural)
+  rules['.bw-chip-input'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'gap': '0.375rem', 'padding': '0.375rem 0.5rem', 'border-radius': '6px', 'min-height': '2.5rem', 'cursor': 'text', 'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out' };
+  rules['.bw-chip'] = { 'display': 'inline-flex', 'align-items': 'center', 'gap': '0.25rem', 'padding': '0.125rem 0.5rem', 'border-radius': '1rem', 'font-size': '0.8125rem', 'line-height': '1.5', 'white-space': 'nowrap' };
+  rules['.bw-chip-remove'] = { 'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center', 'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none', 'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out' };
+  rules['.bw-chip-field'] = { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' };
+
+  // Popover (structural)
+  rules['.bw-popover-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
+  rules['.bw-popover-trigger'] = { 'cursor': 'pointer' };
+  rules['.bw-popover'] = {
+    'position': 'absolute', 'z-index': '1000',
+    'min-width': '200px', 'max-width': '320px',
+    'border-radius': '8px',
+    'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden',
+    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
+  };
+  rules['.bw-popover.bw-popover-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
+  rules['.bw-popover-header'] = { 'padding': '0.625rem 0.875rem', 'font-weight': '600', 'font-size': '0.9375rem' };
+  rules['.bw-popover-body'] = { 'padding': '0.75rem 0.875rem', 'font-size': '0.875rem', 'line-height': '1.5' };
+  rules['.bw-popover-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-8px)', 'margin-bottom': '8px' };
+  rules['.bw-popover-top.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-popover-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(8px)', 'margin-top': '8px' };
+  rules['.bw-popover-bottom.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
+  rules['.bw-popover-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-8px)', 'margin-right': '8px' };
+  rules['.bw-popover-left.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+  rules['.bw-popover-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(8px)', 'margin-left': '8px' };
+  rules['.bw-popover-right.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
+
   // Bar chart (structural)
   rules['.bw-bar-chart-container'] = {
     'padding': '1rem', 'border': '1px solid transparent', 'border-radius': '8px'
@@ -2053,9 +2188,25 @@ function getStructuralStyles() {
 // =========================================================================
 
 /**
- * Add underscore aliases for all bw- selectors
+ * Add underscore aliases for all `.bw-` selectors.
+ *
+ * CSS CLASS NAMING CONVENTION:
+ *
+ * Canonical form:  `.bw-btn`, `.bw-card`, `.bw-table-hover`  (hyphens)
+ * Underscore alias: `.bw_btn`, `.bw_card`, `.bw_table_hover`  (underscores)
+ *
+ * Both forms are valid in HTML and produce identical results. The hyphen
+ * form is canonical (used in docs, generated CSS, component output).
+ * Underscore aliases exist because:
+ *   1. TACO attribute keys use underscores (`bw_id`, `bw_meta`) — no
+ *      quoting needed in JS object literals
+ *   2. Some users prefer underscores for consistency with JS identifiers
+ *
+ * Use `bw.normalizeClass()` to convert underscore classes to canonical
+ * hyphen form at runtime if needed.
+ *
  * @param {Object} rules - CSS rules object
- * @returns {Object} - Rules with underscore aliases added
+ * @returns {Object} Rules with underscore aliases added (both forms work)
  */
 function addUnderscoreAliases(rules) {
   const result = {};
@@ -2072,6 +2223,27 @@ function addUnderscoreAliases(rules) {
 // =========================================================================
 // Theme tokens (backwards compatible)
 // =========================================================================
+//
+// DESIGN NOTE — Why no CSS custom properties (CSS variables)?
+//
+// Bitwrench targets IE11 as Tier 1 (see dev/bw2x-compatibility.md).
+// CSS custom properties (var(--color-primary)) are not supported in IE11.
+//
+// Instead, bitwrench uses class-scoped CSS generation:
+//   1. `defaultStyles.*` provides hardcoded cosmetic defaults
+//   2. `generateTheme(name, config)` generates a complete set of
+//      class-scoped CSS rules from 3 seed colors (primary, secondary,
+//      tertiary) — all components are restyled with the new palette
+//   3. `generateAlternateCSS()` produces the alternate (dark/light)
+//      variant scoped under `.bw-theme-alt`
+//
+// This achieves full theme customization without CSS variables:
+//   bw.generateTheme('ocean', { primary: '#006666', secondary: '#cc6633' })
+//   → generates .ocean .bw-btn-primary { background: #006666; } etc.
+//
+// When IE11 support is dropped, CSS custom properties can be added as
+// an optimization (one rule with var() instead of many scoped rules).
+// The generateTheme() API stays the same — only the output format changes.
 
 let theme = {
   colors: {
@@ -3064,13 +3236,16 @@ function makeForm(props = {}) {
 }
 
 /**
- * Create a form group with label, input, and optional help text
+ * Create a form group with label, input, optional help text and validation feedback
  *
  * @param {Object} [props] - Form group configuration
  * @param {string} [props.label] - Label text
  * @param {Object} [props.input] - Input TACO object (from makeInput, makeSelect, etc.)
  * @param {string} [props.help] - Help text displayed below the input
  * @param {string} [props.id] - Input ID (links label to input via for/id)
+ * @param {string} [props.validation] - Validation state ("valid" or "invalid")
+ * @param {string} [props.feedback] - Validation feedback text shown below input
+ * @param {boolean} [props.required=false] - Show required indicator (*) on label
  * @returns {Object} TACO object representing a form group
  * @category Component Builders
  * @example
@@ -3078,11 +3253,22 @@ function makeForm(props = {}) {
  *   label: "Email",
  *   id: "email",
  *   input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }),
- *   help: "We'll never share your email."
+ *   validation: "invalid",
+ *   feedback: "Please enter a valid email address."
  * });
  */
 function makeFormGroup(props = {}) {
-  const { label, input, help, id } = props;
+  var { label, input, help, id, validation, feedback, required } = props;
+
+  // Shallow-clone input TACO to add validation class without mutating original
+  var styledInput = input;
+  if (validation && input && input.a) {
+    styledInput = { t: input.t, a: Object.assign({}, input.a), c: input.c, o: input.o };
+    var validClass = validation === 'valid' ? 'bw-is-valid' : validation === 'invalid' ? 'bw-is-invalid' : '';
+    if (validClass) {
+      styledInput.a.class = ((styledInput.a.class || '') + ' ' + validClass).trim();
+    }
+  }
 
   return {
     t: 'div',
@@ -3091,9 +3277,14 @@ function makeFormGroup(props = {}) {
       label && {
         t: 'label',
         a: { for: id, class: 'bw-form-label' },
-        c: label
+        c: required ? [label, { t: 'span', a: { class: 'bw-text-danger', style: 'margin-left: 0.25rem' }, c: '*' }] : label
       },
-      input,
+      styledInput,
+      feedback && validation && {
+        t: 'div',
+        a: { class: validation === 'valid' ? 'bw-valid-feedback' : 'bw-invalid-feedback' },
+        c: feedback
+      },
       help && {
         t: 'small',
         a: { class: 'bw-form-text bw-text-muted' },
@@ -5175,6 +5366,863 @@ function makeCarousel(props = {}) {
   };
 }
 
+// =========================================================================
+// Phase 4: Dashboard & Data Display
+// =========================================================================
+
+/**
+ * Create a stat card for dashboard metrics display
+ *
+ * Shows a large value with a label and optional change indicator.
+ * Designed for dashboard grid layouts with left-border accent.
+ *
+ * @param {Object|string} [props] - Stat card configuration (string shorthand sets label)
+ * @param {string|number} [props.value=0] - The main stat value to display
+ * @param {string} [props.label] - Descriptive label below the value
+ * @param {number} [props.change] - Percentage change indicator (positive = green arrow, negative = red)
+ * @param {string} [props.format] - Value format ("number", "currency", "percent")
+ * @param {string} [props.prefix] - Custom prefix (e.g. "$")
+ * @param {string} [props.suffix] - Custom suffix (e.g. "%")
+ * @param {string} [props.icon] - Icon content (emoji or text) shown above value
+ * @param {string} [props.variant] - Left-border color variant ("primary", "success", "danger", etc.)
+ * @param {string} [props.className] - Additional CSS classes
+ * @param {Object} [props.style] - Inline style object
+ * @returns {Object} TACO object representing a stat card
+ * @category Component Builders
+ * @example
+ * const stat = makeStatCard({
+ *   value: 2345,
+ *   label: 'Active Users',
+ *   change: 5.3,
+ *   format: 'number',
+ *   variant: 'primary'
+ * });
+ */
+function makeStatCard(props = {}) {
+  if (typeof props === 'string') props = { label: props };
+  var {
+    value = 0,
+    label,
+    change,
+    format,
+    prefix,
+    suffix,
+    icon,
+    variant,
+    className = '',
+    style
+  } = props;
+
+  function formatValue(val, fmt) {
+    if (prefix || suffix) return (prefix || '') + val + (suffix || '');
+    switch (fmt) {
+      case 'currency': return '$' + Number(val).toLocaleString();
+      case 'percent': return val + '%';
+      case 'number': return Number(val).toLocaleString();
+      default: return '' + val;
+    }
+  }
+
+  var classes = [
+    'bw-stat-card',
+    variant ? 'bw-stat-card-' + variant : '',
+    className
+  ].filter(Boolean).join(' ').trim();
+
+  var children = [];
+
+  if (icon) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-stat-icon' },
+      c: icon
+    });
+  }
+
+  children.push({
+    t: 'div',
+    a: { class: 'bw-stat-value' },
+    c: formatValue(value, format)
+  });
+
+  if (label) {
+    children.push({
+      t: 'div',
+      a: { class: 'bw-stat-label' },
+      c: label
+    });
+  }
+
+  if (change !== undefined && change !== null) {
+    children.push({
+      t: 'div',
+      a: {
+        class: 'bw-stat-change ' + (change >= 0 ? 'bw-stat-change-up' : 'bw-stat-change-down')
+      },
+      c: (change >= 0 ? '\u2191 +' : '\u2193 ') + change + '%'
+    });
+  }
+
+  return {
+    t: 'div',
+    a: { class: classes, style: style },
+    c: children,
+    o: { type: 'stat-card' }
+  };
+}
+
+// =========================================================================
+// Phase 5: Overlays & Popovers
+// =========================================================================
+
+/**
+ * Create a tooltip wrapper around trigger content
+ *
+ * Wraps the trigger element in a container that shows tooltip text
+ * on hover and focus. Pure CSS-driven show/hide with JS lifecycle
+ * for event binding.
+ *
+ * @param {Object} [props] - Tooltip configuration
+ * @param {string|Object|Array} [props.content] - Trigger content (what the user hovers/focuses)
+ * @param {string} [props.text=""] - Tooltip text to display
+ * @param {string} [props.placement="top"] - Tooltip placement ("top", "bottom", "left", "right")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a tooltip wrapper
+ * @category Component Builders
+ * @example
+ * const tip = makeTooltip({
+ *   content: makeButton({ text: 'Hover me' }),
+ *   text: 'This is a tooltip!',
+ *   placement: 'top'
+ * });
+ */
+function makeTooltip(props = {}) {
+  var {
+    content,
+    text = '',
+    placement = 'top',
+    className = ''
+  } = props;
+
+  return {
+    t: 'span',
+    a: { class: ('bw-tooltip-wrapper ' + className).trim() },
+    c: [
+      content,
+      {
+        t: 'span',
+        a: {
+          class: 'bw-tooltip bw-tooltip-' + placement,
+          role: 'tooltip'
+        },
+        c: text
+      }
+    ],
+    o: {
+      type: 'tooltip',
+      mounted: function(el) {
+        var tip = el.querySelector('.bw-tooltip');
+        el.addEventListener('mouseenter', function() {
+          tip.classList.add('bw-tooltip-show');
+        });
+        el.addEventListener('mouseleave', function() {
+          tip.classList.remove('bw-tooltip-show');
+        });
+        el.addEventListener('focusin', function() {
+          tip.classList.add('bw-tooltip-show');
+        });
+        el.addEventListener('focusout', function() {
+          tip.classList.remove('bw-tooltip-show');
+        });
+      }
+    }
+  };
+}
+
+/**
+ * Create a popover wrapper around trigger content
+ *
+ * Like a tooltip but richer — supports title + body content and is
+ * triggered by click rather than hover. Dismisses on click outside.
+ *
+ * @param {Object} [props] - Popover configuration
+ * @param {string|Object|Array} [props.trigger] - Trigger content (what the user clicks)
+ * @param {string} [props.title] - Popover header title
+ * @param {string|Object|Array} [props.content] - Popover body content
+ * @param {string} [props.placement="top"] - Placement ("top", "bottom", "left", "right")
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a popover wrapper
+ * @category Component Builders
+ * @example
+ * const pop = makePopover({
+ *   trigger: makeButton({ text: 'Click me' }),
+ *   title: 'Popover Title',
+ *   content: 'Some helpful information here.',
+ *   placement: 'bottom'
+ * });
+ */
+function makePopover(props = {}) {
+  var {
+    trigger,
+    title,
+    content,
+    placement = 'top',
+    className = ''
+  } = props;
+
+  var popoverContent = [
+    title && {
+      t: 'div',
+      a: { class: 'bw-popover-header' },
+      c: title
+    },
+    content && {
+      t: 'div',
+      a: { class: 'bw-popover-body' },
+      c: content
+    }
+  ].filter(Boolean);
+
+  return {
+    t: 'span',
+    a: { class: ('bw-popover-wrapper ' + className).trim() },
+    c: [
+      {
+        t: 'span',
+        a: {
+          class: 'bw-popover-trigger',
+          onclick: function(e) {
+            var wrapper = e.target.closest('.bw-popover-wrapper');
+            var pop = wrapper.querySelector('.bw-popover');
+            pop.classList.toggle('bw-popover-show');
+          }
+        },
+        c: trigger
+      },
+      {
+        t: 'div',
+        a: {
+          class: 'bw-popover bw-popover-' + placement
+        },
+        c: popoverContent
+      }
+    ],
+    o: {
+      type: 'popover',
+      mounted: function(el) {
+        // Click outside to close
+        var outsideHandler = function(e) {
+          if (!el.contains(e.target)) {
+            var pop = el.querySelector('.bw-popover');
+            if (pop) pop.classList.remove('bw-popover-show');
+          }
+        };
+        document.addEventListener('click', outsideHandler);
+        el._bw_outsideHandler = outsideHandler;
+      },
+      unmount: function(el) {
+        if (el._bw_outsideHandler) {
+          document.removeEventListener('click', el._bw_outsideHandler);
+        }
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 6: Form Enhancements & Layout
+// =========================================================================
+
+/**
+ * Create a search input with clear button
+ *
+ * Wraps a text input with a clear (×) button that appears when
+ * the field has content. Calls onSearch on Enter key.
+ *
+ * @param {Object} [props] - Search input configuration
+ * @param {string} [props.placeholder="Search..."] - Placeholder text
+ * @param {string} [props.value] - Initial value
+ * @param {Function} [props.onSearch] - Callback when Enter is pressed, receives value
+ * @param {Function} [props.onInput] - Callback on each keystroke, receives value
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.name] - Input name attribute
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a search input
+ * @category Component Builders
+ * @example
+ * const search = makeSearchInput({
+ *   placeholder: 'Search users...',
+ *   onSearch: (val) => filterUsers(val)
+ * });
+ */
+function makeSearchInput(props = {}) {
+  if (typeof props === 'string') props = { placeholder: props };
+  var {
+    placeholder = 'Search...',
+    value,
+    onSearch,
+    onInput,
+    id,
+    name,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-search-input ' + className).trim() },
+    c: [
+      {
+        t: 'input',
+        a: {
+          type: 'search',
+          class: 'bw-form-control bw-search-field',
+          placeholder: placeholder,
+          value: value,
+          id: id,
+          name: name,
+          onkeydown: function(e) {
+            if (e.key === 'Enter' && onSearch) {
+              e.preventDefault();
+              onSearch(e.target.value);
+            }
+          },
+          oninput: function(e) {
+            var wrapper = e.target.closest('.bw-search-input');
+            var clearBtn = wrapper.querySelector('.bw-search-clear');
+            if (clearBtn) {
+              clearBtn.style.display = e.target.value ? 'flex' : 'none';
+            }
+            if (onInput) onInput(e.target.value);
+          }
+        }
+      },
+      {
+        t: 'button',
+        a: {
+          type: 'button',
+          class: 'bw-search-clear',
+          'aria-label': 'Clear search',
+          style: value ? undefined : 'display: none',
+          onclick: function(e) {
+            var wrapper = e.target.closest('.bw-search-input');
+            var input = wrapper.querySelector('.bw-search-field');
+            input.value = '';
+            e.target.style.display = 'none';
+            input.focus();
+            if (onInput) onInput('');
+            if (onSearch) onSearch('');
+          }
+        },
+        c: '\u00D7'
+      }
+    ],
+    o: { type: 'search-input' }
+  };
+}
+
+/**
+ * Create a styled range slider input
+ *
+ * @param {Object} [props] - Range configuration
+ * @param {number} [props.min=0] - Minimum value
+ * @param {number} [props.max=100] - Maximum value
+ * @param {number} [props.step=1] - Step increment
+ * @param {number} [props.value=50] - Current value
+ * @param {string} [props.label] - Label text
+ * @param {boolean} [props.showValue=false] - Show current value display
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.name] - Input name attribute
+ * @param {boolean} [props.disabled=false] - Whether the slider is disabled
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a range input
+ * @category Component Builders
+ * @example
+ * const slider = makeRange({
+ *   min: 0, max: 100, value: 50,
+ *   label: 'Volume',
+ *   showValue: true,
+ *   oninput: (e) => setVolume(e.target.value)
+ * });
+ */
+function makeRange(props = {}) {
+  var {
+    min = 0,
+    max = 100,
+    step = 1,
+    value = 50,
+    label,
+    showValue = false,
+    id,
+    name,
+    disabled = false,
+    className = '',
+    ...eventHandlers
+  } = props;
+
+  var children = [];
+
+  if (label || showValue) {
+    var labelContent = [];
+    if (label) {
+      labelContent.push({
+        t: 'span',
+        c: label
+      });
+    }
+    if (showValue) {
+      labelContent.push({
+        t: 'span',
+        a: { class: 'bw-range-value' },
+        c: '' + value
+      });
+    }
+    children.push({
+      t: 'div',
+      a: { class: 'bw-range-label' },
+      c: labelContent
+    });
+  }
+
+  // Wrap oninput to update value display
+  var userOnInput = eventHandlers.oninput;
+  if (showValue) {
+    eventHandlers.oninput = function(e) {
+      var wrapper = e.target.closest('.bw-range-wrapper');
+      var valDisplay = wrapper.querySelector('.bw-range-value');
+      if (valDisplay) valDisplay.textContent = e.target.value;
+      if (userOnInput) userOnInput(e);
+    };
+  }
+
+  children.push({
+    t: 'input',
+    a: {
+      type: 'range',
+      class: 'bw-range',
+      min: min,
+      max: max,
+      step: step,
+      value: value,
+      id: id,
+      name: name,
+      disabled: disabled,
+      ...eventHandlers
+    }
+  });
+
+  return {
+    t: 'div',
+    a: { class: ('bw-range-wrapper ' + className).trim() },
+    c: children,
+    o: { type: 'range' }
+  };
+}
+
+/**
+ * Create a media object layout (image + text side-by-side)
+ *
+ * Classic media object pattern: image/icon on one side, text content
+ * on the other, using flexbox. Supports reversed layout.
+ *
+ * @param {Object} [props] - Media object configuration
+ * @param {string} [props.src] - Image source URL
+ * @param {string} [props.alt=""] - Image alt text
+ * @param {string} [props.title] - Title text
+ * @param {string|Object|Array} [props.content] - Body content
+ * @param {boolean} [props.reverse=false] - Put image on the right
+ * @param {string} [props.imageSize="3rem"] - Image width/height
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a media object
+ * @category Component Builders
+ * @example
+ * const media = makeMediaObject({
+ *   src: '/avatar.jpg',
+ *   title: 'Jane Doe',
+ *   content: 'Posted a comment 5 minutes ago.'
+ * });
+ */
+function makeMediaObject(props = {}) {
+  var {
+    src,
+    alt = '',
+    title,
+    content,
+    reverse = false,
+    imageSize = '3rem',
+    className = ''
+  } = props;
+
+  var imgEl = src ? {
+    t: 'img',
+    a: {
+      class: 'bw-media-img',
+      src: src,
+      alt: alt,
+      style: 'width:' + imageSize + ';height:' + imageSize
+    }
+  } : null;
+
+  var bodyEl = {
+    t: 'div',
+    a: { class: 'bw-media-body' },
+    c: [
+      title && { t: 'h5', a: { class: 'bw-media-title' }, c: title },
+      content
+    ].filter(Boolean)
+  };
+
+  return {
+    t: 'div',
+    a: { class: ('bw-media ' + (reverse ? 'bw-media-reverse ' : '') + className).trim() },
+    c: reverse
+      ? [bodyEl, imgEl].filter(Boolean)
+      : [imgEl, bodyEl].filter(Boolean),
+    o: { type: 'media-object' }
+  };
+}
+
+/**
+ * Create a file upload zone with drag-and-drop support
+ *
+ * Styled drop zone with file input. Supports drag-and-drop visuals
+ * and multiple file selection.
+ *
+ * @param {Object} [props] - File upload configuration
+ * @param {string} [props.accept] - Accepted file types (e.g. "image/*", ".pdf,.doc")
+ * @param {boolean} [props.multiple=false] - Allow multiple file selection
+ * @param {Function} [props.onFiles] - Callback when files are selected, receives FileList
+ * @param {string} [props.text="Drop files here or click to browse"] - Zone label text
+ * @param {string} [props.id] - Element ID
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a file upload zone
+ * @category Component Builders
+ * @example
+ * const upload = makeFileUpload({
+ *   accept: 'image/*',
+ *   multiple: true,
+ *   onFiles: (files) => uploadFiles(files)
+ * });
+ */
+function makeFileUpload(props = {}) {
+  var {
+    accept,
+    multiple = false,
+    onFiles,
+    text = 'Drop files here or click to browse',
+    id,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: {
+      class: ('bw-file-upload ' + className).trim(),
+      tabindex: '0',
+      role: 'button',
+      'aria-label': text
+    },
+    c: [
+      { t: 'div', a: { class: 'bw-file-upload-icon' }, c: '\uD83D\uDCC1' },
+      { t: 'div', a: { class: 'bw-file-upload-text' }, c: text },
+      {
+        t: 'input',
+        a: {
+          type: 'file',
+          class: 'bw-file-upload-input',
+          accept: accept,
+          multiple: multiple,
+          id: id,
+          onchange: function(e) {
+            if (onFiles && e.target.files.length) onFiles(e.target.files);
+          }
+        }
+      }
+    ],
+    o: {
+      type: 'file-upload',
+      mounted: function(el) {
+        var input = el.querySelector('.bw-file-upload-input');
+
+        // Click zone to trigger file input
+        el.addEventListener('click', function(e) {
+          if (e.target !== input) input.click();
+        });
+
+        // Keyboard activation
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            input.click();
+          }
+        });
+
+        // Drag-and-drop visuals
+        el.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          el.classList.add('bw-file-upload-active');
+        });
+        el.addEventListener('dragleave', function() {
+          el.classList.remove('bw-file-upload-active');
+        });
+        el.addEventListener('drop', function(e) {
+          e.preventDefault();
+          el.classList.remove('bw-file-upload-active');
+          if (onFiles && e.dataTransfer.files.length) onFiles(e.dataTransfer.files);
+        });
+      }
+    }
+  };
+}
+
+// =========================================================================
+// Phase 7: Data Display & Workflow
+// =========================================================================
+
+/**
+ * Create a vertical timeline for chronological event display
+ *
+ * Renders events as a vertical line with markers and content cards.
+ * Each item can have a colored variant marker.
+ *
+ * @param {Object} [props] - Timeline configuration
+ * @param {Array<Object>} [props.items=[]] - Timeline events
+ * @param {string} [props.items[].title] - Event title
+ * @param {string|Object|Array} [props.items[].content] - Event description content
+ * @param {string} [props.items[].date] - Date or time label
+ * @param {string} [props.items[].variant="primary"] - Marker color variant
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a timeline
+ * @category Component Builders
+ * @example
+ * const timeline = makeTimeline({
+ *   items: [
+ *     { title: 'Project Started', date: 'Jan 2026', variant: 'primary' },
+ *     { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' },
+ *     { title: 'Stable Release', date: 'Jun 2026', variant: 'success' }
+ *   ]
+ * });
+ */
+function makeTimeline(props = {}) {
+  var {
+    items = [],
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-timeline ' + className).trim() },
+    c: items.map(function(item) {
+      return {
+        t: 'div',
+        a: { class: 'bw-timeline-item' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-timeline-marker bw-timeline-marker-' + (item.variant || 'primary') }
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-timeline-content' },
+            c: [
+              item.date && {
+                t: 'div',
+                a: { class: 'bw-timeline-date' },
+                c: item.date
+              },
+              item.title && {
+                t: 'h5',
+                a: { class: 'bw-timeline-title' },
+                c: item.title
+              },
+              item.content && (typeof item.content === 'string'
+                ? { t: 'p', a: { class: 'bw-timeline-text' }, c: item.content }
+                : item.content)
+            ].filter(Boolean)
+          }
+        ]
+      };
+    }),
+    o: { type: 'timeline' }
+  };
+}
+
+/**
+ * Create a multi-step wizard/progress indicator
+ *
+ * Displays numbered steps with active and completed states.
+ * Steps before currentStep are marked completed, the currentStep
+ * is active, and subsequent steps are pending.
+ *
+ * @param {Object} [props] - Stepper configuration
+ * @param {Array<Object>} [props.steps=[]] - Step definitions
+ * @param {string} [props.steps[].label] - Step label text
+ * @param {string} [props.steps[].description] - Optional step description
+ * @param {number} [props.currentStep=0] - Zero-based index of the active step
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a stepper
+ * @category Component Builders
+ * @example
+ * const stepper = makeStepper({
+ *   currentStep: 1,
+ *   steps: [
+ *     { label: 'Account', description: 'Create account' },
+ *     { label: 'Profile', description: 'Set up profile' },
+ *     { label: 'Confirm', description: 'Review & submit' }
+ *   ]
+ * });
+ */
+function makeStepper(props = {}) {
+  var {
+    steps = [],
+    currentStep = 0,
+    className = ''
+  } = props;
+
+  return {
+    t: 'div',
+    a: { class: ('bw-stepper ' + className).trim(), role: 'list' },
+    c: steps.map(function(step, index) {
+      var state = index < currentStep ? 'completed' : index === currentStep ? 'active' : 'pending';
+      return {
+        t: 'div',
+        a: {
+          class: 'bw-step bw-step-' + state,
+          role: 'listitem',
+          'aria-current': state === 'active' ? 'step' : undefined
+        },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw-step-indicator' },
+            c: state === 'completed' ? '\u2713' : '' + (index + 1)
+          },
+          {
+            t: 'div',
+            a: { class: 'bw-step-body' },
+            c: [
+              { t: 'div', a: { class: 'bw-step-label' }, c: step.label },
+              step.description && { t: 'div', a: { class: 'bw-step-description' }, c: step.description }
+            ].filter(Boolean)
+          }
+        ]
+      };
+    }),
+    o: { type: 'stepper' }
+  };
+}
+
+/**
+ * Create a chip/tag input for managing a list of items
+ *
+ * Displays existing chips with remove buttons and an input field
+ * for adding new ones. Chips are added on Enter and removed on
+ * clicking the × button.
+ *
+ * @param {Object} [props] - Chip input configuration
+ * @param {Array<string>} [props.chips=[]] - Initial chip values
+ * @param {string} [props.placeholder="Add..."] - Input placeholder text
+ * @param {Function} [props.onAdd] - Callback when a chip is added, receives value
+ * @param {Function} [props.onRemove] - Callback when a chip is removed, receives value
+ * @param {string} [props.className] - Additional CSS classes
+ * @returns {Object} TACO object representing a chip input
+ * @category Component Builders
+ * @example
+ * const tags = makeChipInput({
+ *   chips: ['JavaScript', 'CSS'],
+ *   placeholder: 'Add tag...',
+ *   onAdd: (val) => addTag(val),
+ *   onRemove: (val) => removeTag(val)
+ * });
+ */
+function makeChipInput(props = {}) {
+  var {
+    chips = [],
+    placeholder = 'Add...',
+    onAdd,
+    onRemove,
+    className = ''
+  } = props;
+
+  function makeChipEl(text) {
+    return {
+      t: 'span',
+      a: { class: 'bw-chip', 'data-chip-value': text },
+      c: [
+        text,
+        {
+          t: 'button',
+          a: {
+            type: 'button',
+            class: 'bw-chip-remove',
+            'aria-label': 'Remove ' + text,
+            onclick: function(e) {
+              var chip = e.target.closest('.bw-chip');
+              var val = chip.getAttribute('data-chip-value');
+              chip.parentNode.removeChild(chip);
+              if (onRemove) onRemove(val);
+            }
+          },
+          c: '\u00D7'
+        }
+      ]
+    };
+  }
+
+  return {
+    t: 'div',
+    a: { class: ('bw-chip-input ' + className).trim() },
+    c: [
+      ...chips.map(makeChipEl),
+      {
+        t: 'input',
+        a: {
+          type: 'text',
+          class: 'bw-chip-field',
+          placeholder: placeholder,
+          onkeydown: function(e) {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+              e.preventDefault();
+              var val = e.target.value.trim();
+              var wrapper = e.target.closest('.bw-chip-input');
+              // Insert chip before the input
+              var chipEl = document.createElement('span');
+              chipEl.className = 'bw-chip';
+              chipEl.setAttribute('data-chip-value', val);
+              chipEl.innerHTML = '';
+              chipEl.textContent = val;
+              var removeBtn = document.createElement('button');
+              removeBtn.type = 'button';
+              removeBtn.className = 'bw-chip-remove';
+              removeBtn.setAttribute('aria-label', 'Remove ' + val);
+              removeBtn.textContent = '\u00D7';
+              removeBtn.onclick = function() {
+                chipEl.parentNode.removeChild(chipEl);
+                if (onRemove) onRemove(val);
+              };
+              chipEl.appendChild(removeBtn);
+              wrapper.insertBefore(chipEl, e.target);
+              e.target.value = '';
+              if (onAdd) onAdd(val);
+            }
+            // Backspace on empty input removes last chip
+            if (e.key === 'Backspace' && !e.target.value) {
+              var wrapper = e.target.closest('.bw-chip-input');
+              var chipEls = wrapper.querySelectorAll('.bw-chip');
+              if (chipEls.length) {
+                var last = chipEls[chipEls.length - 1];
+                var removedVal = last.getAttribute('data-chip-value');
+                last.parentNode.removeChild(last);
+                if (onRemove) onRemove(removedVal);
+              }
+            }
+          }
+        }
+      }
+    ],
+    o: { type: 'chip-input' }
+  };
+}
+
 const componentHandles = {
   card: CardHandle,
   table: TableHandle,
@@ -5202,32 +6250,42 @@ var components = /*#__PURE__*/Object.freeze({
   makeCard: makeCard,
   makeCarousel: makeCarousel,
   makeCheckbox: makeCheckbox,
+  makeChipInput: makeChipInput,
   makeCodeDemo: makeCodeDemo,
   makeCol: makeCol,
   makeContainer: makeContainer,
   makeDropdown: makeDropdown,
   makeFeatureGrid: makeFeatureGrid,
+  makeFileUpload: makeFileUpload,
   makeForm: makeForm,
   makeFormGroup: makeFormGroup,
   makeHero: makeHero,
   makeInput: makeInput,
   makeListGroup: makeListGroup,
+  makeMediaObject: makeMediaObject,
   makeModal: makeModal,
   makeNav: makeNav,
   makeNavbar: makeNavbar,
   makePagination: makePagination,
+  makePopover: makePopover,
   makeProgress: makeProgress,
   makeRadio: makeRadio,
+  makeRange: makeRange,
   makeRow: makeRow,
+  makeSearchInput: makeSearchInput,
   makeSection: makeSection,
   makeSelect: makeSelect,
   makeSkeleton: makeSkeleton,
   makeSpinner: makeSpinner,
   makeStack: makeStack,
+  makeStatCard: makeStatCard,
+  makeStepper: makeStepper,
   makeSwitch: makeSwitch,
   makeTabs: makeTabs,
   makeTextarea: makeTextarea,
-  makeToast: makeToast
+  makeTimeline: makeTimeline,
+  makeToast: makeToast,
+  makeTooltip: makeTooltip
 });
 
 /**
@@ -6848,8 +7906,10 @@ bw.u = {
 /**
  * Generate responsive CSS with media query breakpoints.
  *
- * Produces a CSS string with `@media` rules for sm (640px), md (768px),
- * lg (1024px), and xl (1280px) breakpoints. Pass the result to `bw.injectCSS()`.
+ * Produces a CSS string with `@media (min-width)` rules for standard
+ * breakpoints. These match the grid system and theme.breakpoints:
+ *   sm: 576px, md: 768px, lg: 992px, xl: 1200px
+ * Pass the result to `bw.injectCSS()`.
  *
  * @param {string} selector - CSS selector
  * @param {Object} breakpoints - Object with keys: base, sm, md, lg, xl
@@ -6866,7 +7926,7 @@ bw.u = {
  * bw.injectCSS(css);
  */
 bw.responsive = function(selector, breakpoints) {
-  var sizes = { sm: '640px', md: '768px', lg: '1024px', xl: '1280px' };
+  var sizes = { sm: '576px', md: '768px', lg: '992px', xl: '1200px' };
   var parts = [];
   Object.keys(breakpoints).forEach(function(key) {
     var rules = {};

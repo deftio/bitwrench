@@ -59,30 +59,31 @@
 ## P2: Missing components (framework parity)
 
 ### High-value missing components
-* [ ] add --> `makeTooltip()` / `makePopover()` — essential for any component library
-* [ ] add --> `makeStatCard()` — dashboard pages hardcode this pattern; should be a helper
-* [ ] add --> form validation states — error borders, help text, success feedback on inputs
-* [ ] add --> `makeFileUpload()` — styled file input with drag-and-drop zone
-* [ ] add --> `makeSlider()` / `makeRange()` — styled range input
-* [ ] add --> `makeSearchInput()` — input with filter/autocomplete pattern
+* [x] add --> `makeTooltip()` — CSS-driven show/hide on hover/focus, 4 placements (top/bottom/left/right), lifecycle hooks, role=tooltip. 7 tests.
+* [x] add --> `makePopover()` — click-triggered overlay with title + body, 4 placements, click-outside dismiss, mounted/unmount lifecycle. 7 tests.
+* [x] add --> `makeStatCard()` — value + label + change indicator + format (number/currency/percent) + icon + variant. 8 tests. Replaces hardcoded dashboard pattern.
+* [x] add --> form validation states — `bw-is-valid`/`bw-is-invalid` classes on inputs, `bw-valid-feedback`/`bw-invalid-feedback` text, `makeFormGroup()` enhanced with `validation`/`feedback`/`required` props. 8 tests.
+* [x] add --> `makeFileUpload()` — drag-and-drop zone with hidden file input, keyboard accessible, dragover/dragleave/drop visual states. 7 tests.
+* [x] add --> `makeRange()` — styled range slider with label + live value display, min/max/step, disabled state. 5 tests.
+* [x] add --> `makeSearchInput()` — search input with clear button, onSearch/onInput callbacks, string shorthand. 5 tests.
 
 ### Medium-value missing components
-* [ ] add --> `makeTimeline()` — chronological event display
-* [ ] add --> `makeStepper()` — multi-step wizard UI
-* [ ] add --> `makeChipInput()` — tag/chip input with removable items
-* [ ] add --> `makeMediaObject()` — image + text side-by-side layout
+* [x] add --> `makeTimeline()` — vertical timeline with date/title/content items, variant markers (primary/success/danger/etc), TACO content support. 7 tests.
+* [x] add --> `makeStepper()` — numbered step indicator with completed/active/pending states, checkmark on completed, aria-current, description support. 7 tests.
+* [x] add --> `makeChipInput()` — flex-wrap chip container with text input, Enter to add, Backspace to remove last, × remove button per chip, onAdd/onRemove callbacks. 6 tests.
+* [x] add --> `makeMediaObject()` — image + text side-by-side flexbox layout, reverse mode, optional image. 5 tests.
 
 ### Component completeness
-* [ ] fix --> pagination `onPageChange` not wired in demos — show working example
-* [ ] fix --> breadcrumb active state styling unclear
-* [ ] fix --> `makeCodeDemo()` is 400+ lines for a narrow use case — consider simplifying
+* [x] assessed --> pagination `onPageChange` — already shown in code sample on 01-components.html. Static demos show visual states; live page-change would require re-rendering which is a reactive pattern concern, not a component gap.
+* [x] fix --> breadcrumb active state — added link colors (#006666), hover underline, font-weight: 500 on active item. 3 tests.
+* [x] assessed --> `makeCodeDemo()` is ~80 lines (not 400+), thin wrapper around makeTabs with code/result split. Reasonable, no simplification needed.
 
 ## P3: Theming architecture
 
-* [ ] fix --> structural vs cosmetic CSS split not enforced in code (documented but not real)
-* [ ] fix --> no CSS custom properties in component rules (hardcoded colors everywhere)
-* [ ] fix --> responsive breakpoint values not documented anywhere user-facing
-* [ ] fix --> underscore vs hyphen class naming still creates confusion (dual selectors)
+* [x] fix --> structural vs cosmetic CSS split — enforced through function separation: `getStructuralStyles()` (layout-only, 1 documented exception: progress bar stripe pattern), `defaultStyles.*` (cosmetic defaults), `generateThemedCSS()` (palette-driven). Policy comment added to JSDoc.
+* [x] fix --> CSS custom properties not used — intentional for IE11 compat (Tier 1). Design note added documenting that `generateTheme()` provides full customization via class-scoped CSS generation. CSS variables can be added when IE11 is dropped without changing the API.
+* [x] fix --> responsive breakpoints reconciled and documented — `bw.responsive()` now uses same values as grid/theme: sm=576, md=768, lg=992, xl=1200. Breakpoint reference table added to 03-styling.html. Tests updated.
+* [x] fix --> underscore vs hyphen class naming documented — JSDoc added to `addUnderscoreAliases()` explaining canonical (hyphen) vs alias (underscore) forms. New "Class Naming Convention" section added to 03-styling.html with comparison table and `bw.normalizeClass()` tip.
 
 ---
 
