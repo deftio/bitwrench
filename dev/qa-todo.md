@@ -1,4 +1,24 @@
 # QA Todo — feature/pages-polish-round2
+[ ] create ->  lets create a script, that takes the current raw bitwrench.js and reads all the docstrings and spits out an bitwrench_api_vX.Y.X.md file using the doc strings.  It should be mechanical.  *all* functions* should  have good doc strings, if not make sure they do.  In the bitwrench_api_vX.Y.Z.md file I want a summary at the top (bitwrench version, date, numlines in bw source, and table of builds in md format which can use the json builds table we already build), then for each function:
+```md
+## Name 
+lines-of-code
+### Purpose 
+
+### params ( ..) --> output
+
+### When its used
+
+### side effects
+
+```    
+* [ ] http://localhost:9903/pages/index.html > sub nav below hero syas: Install npm install bitwrench or <script src="bitwrench.umd.min.js"></script> Downloads & CDN (link)  ---> these should be links, and the script tag should be a cdn one not a local.  links to builds should be 
+clear.  
+
+* [ ] pages/ Main NavBard (white text on black) --> there are a lot of entries in it.  Perhaps API Reference --> docs, perhpas styling & themes become one menu option and we use a subnav like we do for examples (discuss this).  
+
+* [ ] build size watch --> I really don't want bitwrench to go above 40KB at the most and really want it to say closer to 25KB in many circumstances.  A primary use case is our ESP32 / Microcontroller ui crowd.  With 40kb they can statically serve one bw page and pull/push ui opdates without having to use a cdn.  We may need a build which is bitwrench-core vs bitwrench vs bitwrench-embedded (select subset).  To test this make a standalone test page --> pages/self-load-test.html which is a single bitwrench page which has some content and locally loads bitwrench (full gzipped) itself in it. so we can test any issues.  
+
 
 ## P0: Blocks professional use
 
@@ -23,8 +43,6 @@
 * [x] fix --> Removed hardcoded dark mode: `toggleDarkMode()`, `generateDarkModeCSS()`, `getDarkModeStyles()` deleted
 * [x] fix --> Alternate CSS scoped under `.bw-theme-alt` — both palettes go through same `generateThemedCSS()` pipeline
 * [x] fix --> Design doc: `dev/bw-theme-toggle-design.md`
-* [ ] tune --> alternate derivation curves need tuning with all preset themes (follow-up PR)
-* [ ] tune --> per-component dark appearance depends on alternate palette quality (follow-up)
 
 ## P1: Polish (makes or breaks first impression)
 
@@ -97,11 +115,10 @@ transitions, color usage. Before adding new components, establish shared
 design tokens that ALL components consume:
 
 * [ ] define --> spacing scale (4px base: 4, 8, 12, 16, 24, 32, 48)
-* [x] define --> font-size scale: TYPE_RATIO_PRESETS + generateTypeScale() — modular scale from ratio
-* [x] define --> shadow elevation scale: ELEVATION_PRESETS (flat/sm/md/lg × sm/md/lg/xl)
-* [x] define --> motion/transition curves: MOTION_PRESETS (reduced/standard/expressive × fast/normal/slow+easing)
 * [ ] define --> border-radius scale (none, sm, md, lg, pill) — already in RADIUS_PRESETS, enforce usage
 * [ ] define --> color usage rules: when to use primary vs surface vs muted
+* [ ] tune --> alternate derivation curves need tuning with all preset themes
+* [ ] tune --> per-component dark appearance depends on alternate palette quality
 
 Study MUI's design tokens, shadcn/ui's CSS variables, and Radix's component
 primitives for reference. The theme generator is bitwrench's differentiator —
@@ -111,82 +128,12 @@ professional, not like skinned Bootstrap 3.
 
 ### Automatic reactivity — component-level, not app-level
 
-**Design lineage**: Windows MFC, Java Swing, Borland C++ OWL/VCL. In those
-frameworks, a UI control (CButton, JTextField, TEdit) was a self-contained
-object that owned its rendering. You called `SetWindowText()` or `setText()`
-— the control repainted itself. You didn't reach inside and manipulate the
-device context or graphics buffer. The OS/runtime was the assembly language;
-the component API was the programming model.
+**Full design doc**: [`dev/reactivity-and-lifecycle-plan.md`](reactivity-and-lifecycle-plan.md)
 
-**Bitwrench BCCL follows this philosophy.** The "assembly language" is
-JS + DOM + CSS. A TACO component definition is the equivalent of a Win32
-window class registration + creation — it declares what the component is,
-how it renders, what state it manages. The `make*()` factory returns a
-component object with methods, just like `new CButton()` returned a control
-with `SetWindowText()`.
-
-What we have now (`o.render` + manual `bw.update()`) is like writing Win32
-in raw C — `CreateWindowEx()`, `SendMessage(hwnd, WM_SETTEXT, ...)`,
-manually pumping the message loop. That's the low-level layer (and should
-stay available), but BCCL components should encapsulate it completely.
-
-**Core design intent (per Manu)**: A TACO component is a complete component
-specification — not a DOM enhancement object. BCCL `make*()` factories
-should return self-contained components with internal state management.
-The user never calls `bw.update()` for internal state changes. They interact
-through getters/setters and pub/sub at the component boundary.
-
-**How it should work**:
-```javascript
-// Component definition with reactive bindings:
-var card = bw.makeCard({
-  title: 'Users Online',
-  content: '${count}',                        // template binding
-  variant: '${count > 100 ? "success" : "warning"}'  // derived
-});
-
-// Component manages its own DOM updates:
-card.set('count', 42);     // card re-renders internally
-card.get('count');          // → 42
-card.on('click', handler); // event interface
-card.sub('data:update', function(d) { card.set('count', d.n); });
-
-// Or via pub/sub for cross-component:
-bw.pub('data:update', { n: 99 }); // card auto-updates
-```
-
-**What this means for implementation**:
-1. `make*()` factories compile template strings (`'${expr}'`) into
-   internal render functions that know which state keys they depend on
-2. State is wrapped in Proxy (or ODP fallback) — mutations auto-trigger
-   only the affected DOM nodes, not a full re-render
-3. Component exposes `.get()`, `.set()`, `.on()`, `.sub()` — no direct
-   DOM access needed by consumer
-4. `o.render` remains available as escape hatch for fully custom components
-5. `bw.update()` and `bw.patch()` remain for manual/perf-critical paths
-
-**Key distinction from my earlier (wrong) framing**:
-- WRONG: "wrap el._bw_state in Proxy, auto-call bw.update()" — this is
-  jQuery thinking. The user shouldn't know about `el._bw_state` at all.
-- RIGHT: the component IS the abstraction. State is internal. The public
-  API is get/set/on/sub. The TACO definition compiles to self-managing
-  DOM code, just like Svelte compiles .svelte files.
-
-**Design questions**:
-- Template syntax: `'${expr}'` is natural JS but conflicts with template
-  literals in ES6. Alternative: `'{{expr}}'` (Mustache-style) or
-  `{ bind: 'count' }` (object form). Need to decide.
-- Nested reactivity: `card.set('user.name', 'Alice')` — dot-path or
-  only top-level keys?
-- Array reactivity: push/pop/splice on state arrays — track mutations
-  or require `card.set('items', newArray)`?
-- IE11: Proxy not available. ODP works for known keys but can't detect
-  new property addition. Accept this limitation for Tier 1?
-- Does `bw.render()` (the existing handle system) become the basis for
-  this? It already has setState, setProp, show/hide, destroy.
-
-**Target**: Design doc first (`dev/bw-reactivity-design.md`). This is the
-most important architectural decision remaining. Get it right before coding.
+Covers ComponentHandle API, template bindings (`'${expr}'`), targeted DOM
+updates, lifecycle model, named actions, function registry (revived from v1),
+`bw.when()`/`bw.each()` control flow, compile mode, and make*() evolution
+plan (Phase 1-3).
 
 ### LLM UI generation
 

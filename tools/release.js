@@ -59,10 +59,12 @@ function kb(bytes) {
 
 step('1. Pre-flight checks');
 
-// Must be on main branch
+// Warn if not on main — release runs on feature branches before merge
 const branch = runQuiet('git rev-parse --abbrev-ref HEAD');
-if (branch !== 'main') {
-  fail(`Must be on 'main' branch (currently on '${branch}')`);
+if (branch === 'main') {
+  console.log(`  Branch: main`);
+} else {
+  console.log(`  ⚠ Branch: ${branch} (not main — remember to merge to main after release)`);
 }
 
 // Clean working tree (allow untracked in dev/)
@@ -207,7 +209,8 @@ if (staged.length === 0) {
 
 step('Done!');
 
-console.log(`
+if (branch === 'main') {
+  console.log(`
   Version:  ${version}
   Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
 
@@ -219,3 +222,16 @@ console.log(`
 
   Watch CI: https://github.com/deftio/bitwrench/actions
 `);
+} else {
+  console.log(`
+  Version:  ${version}
+  Branch:   ${branch}
+  Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
+
+  Pushed to ${branch}. Next steps:
+    git checkout main && git merge ${branch} && git push origin main
+
+  After push to main, CI will handle tagging + npm publish.
+  Watch CI: https://github.com/deftio/bitwrench/actions
+`);
+}

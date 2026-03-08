@@ -1,18 +1,18 @@
-/*! bitwrench-lean v2.0.14 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.15 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 /**
  * Auto-generated version file from package.json
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
 const VERSION_INFO = {
-  version: '2.0.14',
+  version: '2.0.15',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-08T08:03:00.721Z'
+  buildDate: '2026-03-08T21:11:19.352Z'
 };
 
 /**
@@ -2859,20 +2859,52 @@ bw.normalizeClass = function(classStr) {
 bw.html = function(taco, options = {}) {
   // Handle null/undefined
   if (taco == null) return '';
-  
+
+  // Handle ComponentHandle — use its .taco
+  if (taco && taco._bwComponent === true) {
+    var compOptions = Object.assign({}, options);
+    if (!compOptions.state && taco._state) {
+      compOptions.state = taco._state;
+    }
+    return bw.html(taco.taco, compOptions);
+  }
+
   // Handle arrays of TACOs
   if (Array.isArray(taco)) {
     return taco.map(t => bw.html(t, options)).join('');
   }
-  
+
   // Handle bw.raw() marked content
   if (taco && taco.__bw_raw) {
     return taco.v;
   }
 
+  // Handle bw.when() markers
+  if (taco && taco._bwWhen && options.state) {
+    var whenExpr = taco.expr.replace(/^\$\{|\}$/g, '');
+    var whenVal = options.compile
+      ? bw._resolveTemplate('${' + whenExpr + '}', options.state, true)
+      : bw._evaluatePath(options.state, whenExpr);
+    var branch = whenVal ? taco.branches[0] : (taco.branches[1] || null);
+    return branch ? bw.html(branch, options) : '';
+  }
+
+  // Handle bw.each() markers
+  if (taco && taco._bwEach && options.state) {
+    var eachExpr = taco.expr.replace(/^\$\{|\}$/g, '');
+    var arr = bw._evaluatePath(options.state, eachExpr);
+    if (!Array.isArray(arr)) return '';
+    return arr.map(function(item, idx) { return bw.html(taco.factory(item, idx), options); }).join('');
+  }
+
   // Handle primitives and non-TACO objects
   if (typeof taco !== 'object' || !taco.t) {
-    return options.raw ? String(taco) : bw.escapeHTML(String(taco));
+    var str = options.raw ? String(taco) : bw.escapeHTML(String(taco));
+    // Resolve template bindings if state provided
+    if (options.state && typeof str === 'string' && str.indexOf('${') >= 0) {
+      str = bw._resolveTemplate(str, options.state, !!options.compile);
+    }
+    return str;
   }
   
   const { t: tag, a: attrs = {}, c: content, o: opts = {} } = taco;
@@ -2915,8 +2947,12 @@ bw.html = function(taco, options = {}) {
       // Boolean attributes
       attrStr += ` ${key}`;
     } else {
-      // Regular attributes
-      attrStr += ` ${key}="${bw.escapeHTML(String(value))}"`;
+      // Regular attributes — resolve ${expr} if state provided
+      let resolvedVal = String(value);
+      if (options.state && resolvedVal.indexOf('${') >= 0) {
+        resolvedVal = bw._resolveTemplate(resolvedVal, options.state, !!options.compile);
+      }
+      attrStr += ` ${key}="${bw.escapeHTML(resolvedVal)}"`;
     }
   }
 
@@ -2937,8 +2973,12 @@ bw.html = function(taco, options = {}) {
   }
   
   // Process content recursively
-  const contentStr = content != null ? bw.html(content, options) : '';
-  
+  let contentStr = content != null ? bw.html(content, options) : '';
+  // Resolve template bindings in content if state provided
+  if (options.state && typeof contentStr === 'string' && contentStr.indexOf('${') >= 0) {
+    contentStr = bw._resolveTemplate(contentStr, options.state, !!options.compile);
+  }
+
   return `<${tag}${attrStr}>${contentStr}</${tag}>`;
 };
 
@@ -3200,15 +3240,21 @@ bw.DOM = function(target, taco, options = {}) {
   targetEl.innerHTML = '';
   
   if (taco != null) {
+    // Handle ComponentHandle (reactive components from bw.component())
+    if (taco._bwComponent === true) {
+      taco.mount(targetEl);
+    }
     // Handle component handles (objects with element property)
-    if (taco.element instanceof Element) {
+    else if (taco.element instanceof Element) {
       targetEl.appendChild(taco.element);
     }
     // Handle arrays
     else if (Array.isArray(taco)) {
       taco.forEach(t => {
         if (t != null) {
-          if (t.element instanceof Element) {
+          if (t._bwComponent === true) {
+            t.mount(targetEl);
+          } else if (t.element instanceof Element) {
             targetEl.appendChild(t.element);
           } else {
             targetEl.appendChild(bw.createDOM(t, options));
@@ -3491,6 +3537,13 @@ bw.cleanup = function(element) {
     delete element._bw_state;
     delete element._bw_render;
     delete element._bw_refs;
+
+    // Clean up ComponentHandle back-reference
+    if (element._bwComponentHandle) {
+      element._bwComponentHandle.mounted = false;
+      element._bwComponentHandle.element = null;
+      delete element._bwComponentHandle;
+    }
   }
 };
 
@@ -3760,6 +3813,1189 @@ bw.unsub = function(topic, handler) {
   var removed = before - bw._topics[topic].length;
   if (bw._topics[topic].length === 0) delete bw._topics[topic];
   return removed;
+};
+
+// ===================================================================================
+// Function Registry (revived from v1 for string dispatch contexts)
+// ===================================================================================
+
+bw._fnRegistry = {};
+bw._fnIDCounter = 0;
+
+/**
+ * Register a function in the global function registry.
+ *
+ * Registered functions can be invoked by name in HTML string contexts
+ * (e.g., onclick attributes) via `bw.funcGetById()`. Useful for
+ * serializable event handlers, LLM wire format, and SSR.
+ *
+ * @param {Function} fn - Function to register
+ * @param {string} [name] - Optional name. Auto-generated if omitted.
+ * @returns {string} The registered name (use for dispatch)
+ * @category Function Registry
+ * @see bw.funcGetById
+ * @see bw.funcGetDispatchStr
+ */
+bw.funcRegister = function(fn, name) {
+  if (typeof fn !== 'function') return '';
+  var fnID = (typeof name === 'string' && name.length > 0) ? name : ('bw_fn_' + bw._fnIDCounter++);
+  bw._fnRegistry[fnID] = fn;
+  return fnID;
+};
+
+/**
+ * Retrieve a registered function by name.
+ *
+ * Returns the function if found, or `errFn` (or a no-op logger) if not.
+ *
+ * @param {string} name - Registered function name
+ * @param {Function} [errFn] - Fallback if not found
+ * @returns {Function} The registered function or fallback
+ * @category Function Registry
+ * @see bw.funcRegister
+ */
+bw.funcGetById = function(name, errFn) {
+  name = String(name);
+  if (name in bw._fnRegistry) return bw._fnRegistry[name];
+  return (typeof errFn === 'function') ? errFn : function() { console.warn('bw.funcGetById: unregistered fn "' + name + '"'); };
+};
+
+/**
+ * Generate a dispatch string suitable for inline HTML event attributes.
+ *
+ * @param {string} name - Registered function name
+ * @param {string} [argStr=''] - Arguments string (literal, not variable names)
+ * @returns {string} Dispatch string like `"bw.funcGetById('name')(args)"`
+ * @category Function Registry
+ * @see bw.funcRegister
+ */
+bw.funcGetDispatchStr = function(name, argStr) {
+  argStr = (argStr != null) ? String(argStr) : '';
+  return "bw.funcGetById('" + name + "')(" + argStr + ")";
+};
+
+/**
+ * Remove a function from the registry.
+ *
+ * @param {string} name - Registered function name
+ * @returns {boolean} True if removed, false if not found
+ * @category Function Registry
+ */
+bw.funcUnregister = function(name) {
+  if (name in bw._fnRegistry) {
+    delete bw._fnRegistry[name];
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Get a shallow copy of the function registry for inspection.
+ *
+ * @returns {Object} Copy of registry (name → function)
+ * @category Function Registry
+ */
+bw.funcGetRegistry = function() {
+  var copy = {};
+  for (var k in bw._fnRegistry) {
+    if (Object.prototype.hasOwnProperty.call(bw._fnRegistry, k)) {
+      copy[k] = bw._fnRegistry[k];
+    }
+  }
+  return copy;
+};
+
+// ===================================================================================
+// Template Binding Utilities
+// ===================================================================================
+
+/**
+ * Parse binding expressions from a template string.
+ * Returns array of {start, end, expr} for each `${expr}` found.
+ * @private
+ */
+bw._parseBindings = function(str) {
+  var results = [];
+  var re = /\$\{([^}]+)\}/g;
+  var match;
+  while ((match = re.exec(str)) !== null) {
+    results.push({ start: match.index, end: match.index + match[0].length, expr: match[1].trim() });
+  }
+  return results;
+};
+
+/**
+ * Evaluate a dot-path on a state object. Returns empty string for null/undefined.
+ * @private
+ */
+bw._evaluatePath = function(state, path) {
+  var parts = path.split('.');
+  var val = state;
+  for (var i = 0; i < parts.length; i++) {
+    if (val == null) return '';
+    val = val[parts[i]];
+  }
+  return (val == null) ? '' : val;
+};
+
+/**
+ * Resolve all `${expr}` bindings in a template string against a state object.
+ *
+ * Tier 1 (default): dot-path lookup only (CSP-safe).
+ * Tier 2 (compile=true): uses new Function for complex expressions.
+ *
+ * @param {string} str - Template string
+ * @param {Object} state - State object
+ * @param {boolean} [compile=false] - Use Tier 2 evaluation
+ * @returns {string} Resolved string
+ * @private
+ */
+bw._compiledExprs = {};
+bw._resolveTemplate = function(str, state, compile) {
+  if (typeof str !== 'string' || str.indexOf('${') < 0) return str;
+  var bindings = bw._parseBindings(str);
+  if (bindings.length === 0) return str;
+
+  var result = '';
+  var lastEnd = 0;
+  for (var i = 0; i < bindings.length; i++) {
+    var b = bindings[i];
+    result += str.slice(lastEnd, b.start);
+    var val;
+    if (compile) {
+      // Tier 2: new Function evaluator (cached)
+      if (!bw._compiledExprs[b.expr]) {
+        try {
+          bw._compiledExprs[b.expr] = new Function('state', 'with(state){return (' + b.expr + ');}');
+        } catch (e) {
+          bw._compiledExprs[b.expr] = function() { return ''; };
+        }
+      }
+      try {
+        val = bw._compiledExprs[b.expr](state);
+      } catch (e) {
+        val = '';
+      }
+    } else {
+      // Tier 1: dot-path only
+      val = bw._evaluatePath(state, b.expr);
+    }
+    result += (val == null) ? '' : String(val);
+    lastEnd = b.end;
+  }
+  result += str.slice(lastEnd);
+  return result;
+};
+
+/**
+ * Extract top-level state keys that an expression depends on.
+ * @param {string} expr - Expression string
+ * @param {string[]} stateKeys - Declared state keys
+ * @returns {string[]} Matching dependency keys
+ * @private
+ */
+bw._extractDeps = function(expr, stateKeys) {
+  var deps = [];
+  for (var i = 0; i < stateKeys.length; i++) {
+    var key = stateKeys[i];
+    // Match word boundary: key must be preceded by start/non-word and followed by non-word/end
+    var re = new RegExp('(?:^|[^\\w$.])' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:[^\\w$]|$)');
+    if (re.test(expr) || expr === key || expr.indexOf(key + '.') === 0) {
+      deps.push(key);
+    }
+  }
+  return deps;
+};
+
+// ===================================================================================
+// Microtask Batching
+// ===================================================================================
+
+bw._dirtyComponents = [];
+bw._flushScheduled = false;
+
+/**
+ * Schedule a microtask flush for dirty components.
+ * @private
+ */
+bw._scheduleFlush = function() {
+  if (bw._flushScheduled) return;
+  bw._flushScheduled = true;
+  if (typeof Promise !== 'undefined') {
+    Promise.resolve().then(bw._doFlush);
+  } else {
+    setTimeout(bw._doFlush, 0);
+  }
+};
+
+/**
+ * Flush all dirty components. Deduplicates by _bwId.
+ * @private
+ */
+bw._doFlush = function() {
+  bw._flushScheduled = false;
+  var queue = bw._dirtyComponents.slice();
+  bw._dirtyComponents = [];
+  // Deduplicate by _bwId
+  var seen = {};
+  for (var i = 0; i < queue.length; i++) {
+    var comp = queue[i];
+    if (!seen[comp._bwId]) {
+      seen[comp._bwId] = true;
+      comp._flush();
+    }
+  }
+};
+
+/**
+ * Synchronous flush for testing and imperative code.
+ * Forces immediate re-render of all dirty components.
+ *
+ * @category Component
+ */
+bw.flush = function() {
+  bw._doFlush();
+};
+
+// ===================================================================================
+// ComponentHandle — unified reactive component (Phase 1)
+// ===================================================================================
+
+/**
+ * ComponentHandle constructor.
+ * Wraps a TACO definition with reactive state, lifecycle hooks,
+ * template bindings, and named actions.
+ *
+ * @param {Object} taco - TACO definition {t, a, c, o}
+ * @constructor
+ * @private
+ */
+function ComponentHandle(taco) {
+  this._bwComponent = true;         // duck-type marker
+  this._bwId = bw.uuid('comp');
+  this.taco = taco;
+  this.element = null;
+  this.mounted = false;
+
+  var o = taco.o || {};
+  // Copy initial state
+  this._state = {};
+  if (o.state) {
+    for (var k in o.state) {
+      if (Object.prototype.hasOwnProperty.call(o.state, k)) {
+        this._state[k] = o.state[k];
+      }
+    }
+  }
+  // Copy actions
+  this._actions = {};
+  if (o.actions) {
+    for (var k2 in o.actions) {
+      if (Object.prototype.hasOwnProperty.call(o.actions, k2)) {
+        this._actions[k2] = o.actions[k2];
+      }
+    }
+  }
+  // Lifecycle hooks
+  this._hooks = {
+    willMount: o.willMount || null,
+    mounted: o.mounted || null,
+    willUpdate: o.willUpdate || null,
+    onUpdate: o.onUpdate || null,
+    unmount: o.unmount || null,
+    willDestroy: o.willDestroy || null
+  };
+  // Binding tracking
+  this._bindings = [];
+  this._dirtyKeys = {};
+  this._scheduled = false;
+  this._subs = [];
+  this._eventListeners = [];
+  this._registeredActions = [];
+  this._prevValues = {};
+  this._compile = !!o.compile;
+  this._bw_refs = {};
+  this._refCounter = 0;
+}
+
+// ── State Methods ──
+
+/**
+ * Get a state value. Dot-path supported: `get('user.name')`
+ */
+ComponentHandle.prototype.get = function(key) {
+  return bw._evaluatePath(this._state, key);
+};
+
+/**
+ * Set a state value. Dot-path supported. Schedules re-render.
+ * @param {string} key - State key (dot-path)
+ * @param {*} value - New value
+ * @param {Object} [opts] - Options. `{sync: true}` for immediate flush.
+ */
+ComponentHandle.prototype.set = function(key, value, opts) {
+  // Dot-path set
+  var parts = key.split('.');
+  var obj = this._state;
+  for (var i = 0; i < parts.length - 1; i++) {
+    if (obj[parts[i]] == null || typeof obj[parts[i]] !== 'object') {
+      obj[parts[i]] = {};
+    }
+    obj = obj[parts[i]];
+  }
+  obj[parts[parts.length - 1]] = value;
+  // Mark top-level key dirty
+  this._dirtyKeys[parts[0]] = true;
+  if (this.mounted) {
+    if (opts && opts.sync) {
+      this._flush();
+    } else {
+      this._scheduleDirty();
+    }
+  }
+};
+
+/**
+ * Get a shallow clone of the full state.
+ */
+ComponentHandle.prototype.getState = function() {
+  var clone = {};
+  for (var k in this._state) {
+    if (Object.prototype.hasOwnProperty.call(this._state, k)) {
+      clone[k] = this._state[k];
+    }
+  }
+  return clone;
+};
+
+/**
+ * Merge multiple state keys. Schedules re-render.
+ * @param {Object} updates - Key-value pairs to merge
+ * @param {Object} [opts] - Options. `{sync: true}` for immediate flush.
+ */
+ComponentHandle.prototype.setState = function(updates, opts) {
+  for (var k in updates) {
+    if (Object.prototype.hasOwnProperty.call(updates, k)) {
+      this._state[k] = updates[k];
+      this._dirtyKeys[k] = true;
+    }
+  }
+  if (this.mounted) {
+    if (opts && opts.sync) {
+      this._flush();
+    } else {
+      this._scheduleDirty();
+    }
+  }
+};
+
+/**
+ * Push a value onto an array in state. Clones the array.
+ */
+ComponentHandle.prototype.push = function(key, val) {
+  var arr = this.get(key);
+  var newArr = Array.isArray(arr) ? arr.slice() : [];
+  newArr.push(val);
+  this.set(key, newArr);
+};
+
+/**
+ * Splice an array in state. Clones the array.
+ */
+ComponentHandle.prototype.splice = function(key, start, deleteCount) {
+  var arr = this.get(key);
+  var newArr = Array.isArray(arr) ? arr.slice() : [];
+  var args = [start, deleteCount].concat(Array.prototype.slice.call(arguments, 3));
+  Array.prototype.splice.apply(newArr, args);
+  this.set(key, newArr);
+};
+
+// ── Scheduling ──
+
+ComponentHandle.prototype._scheduleDirty = function() {
+  if (!this._scheduled) {
+    this._scheduled = true;
+    bw._dirtyComponents.push(this);
+    bw._scheduleFlush();
+  }
+};
+
+// ── Binding Compilation ──
+
+/**
+ * Walk the TACO tree and extract ${expr} bindings.
+ * Creates binding descriptors with refIds for targeted DOM updates.
+ * @private
+ */
+ComponentHandle.prototype._compileBindings = function() {
+  this._bindings = [];
+  this._refCounter = 0;
+  var stateKeys = Object.keys(this._state);
+  var self = this;
+
+  function walkTaco(taco, path) {
+    if (taco == null || typeof taco !== 'object' || !taco.t) return taco;
+
+    // Check content for bindings
+    if (typeof taco.c === 'string' && taco.c.indexOf('${') >= 0) {
+      var refId = 'bw_ref_' + self._refCounter++;
+      var parsed = bw._parseBindings(taco.c);
+      var deps = [];
+      for (var j = 0; j < parsed.length; j++) {
+        deps = deps.concat(bw._extractDeps(parsed[j].expr, stateKeys));
+      }
+      self._bindings.push({
+        expr: taco.c,
+        type: 'content',
+        refId: refId,
+        deps: deps,
+        template: taco.c
+      });
+      // Inject data-bw-ref on the TACO for createDOM to pick up
+      if (!taco.a) taco.a = {};
+      taco.a['data-bw-ref'] = refId;
+    }
+
+    // Check attributes for bindings
+    if (taco.a) {
+      for (var attrName in taco.a) {
+        if (!Object.prototype.hasOwnProperty.call(taco.a, attrName)) continue;
+        if (attrName === 'data-bw-ref') continue;
+        var attrVal = taco.a[attrName];
+        if (typeof attrVal === 'string' && attrVal.indexOf('${') >= 0) {
+          var refId2 = 'bw_ref_' + self._refCounter++;
+          var parsed2 = bw._parseBindings(attrVal);
+          var deps2 = [];
+          for (var j2 = 0; j2 < parsed2.length; j2++) {
+            deps2 = deps2.concat(bw._extractDeps(parsed2[j2].expr, stateKeys));
+          }
+          self._bindings.push({
+            expr: attrVal,
+            type: 'attribute',
+            attrName: attrName,
+            refId: refId2,
+            deps: deps2,
+            template: attrVal
+          });
+          if (!taco.a) taco.a = {};
+          taco.a['data-bw-ref'] = taco.a['data-bw-ref'] || refId2;
+          // If multiple attribute bindings on same element, store additional marker
+          if (taco.a['data-bw-ref'] !== refId2) {
+            taco.a['data-bw-ref-' + attrName] = refId2;
+          }
+        }
+      }
+    }
+
+    // Recurse into children
+    if (Array.isArray(taco.c)) {
+      for (var i = 0; i < taco.c.length; i++) {
+        if (taco.c[i] && typeof taco.c[i] === 'object' && taco.c[i].t) {
+          walkTaco(taco.c[i], path.concat(i));
+        }
+        // Handle bw.when/bw.each markers
+        if (taco.c[i] && taco.c[i]._bwWhen) {
+          var whenRefId = 'bw_ref_' + self._refCounter++;
+          var whenDeps = bw._extractDeps(taco.c[i].expr.replace(/^\$\{|\}$/g, ''), stateKeys);
+          self._bindings.push({
+            expr: taco.c[i].expr,
+            type: 'structural',
+            subtype: 'when',
+            refId: whenRefId,
+            deps: whenDeps,
+            branches: taco.c[i].branches,
+            index: i,
+            parentPath: path
+          });
+          taco.c[i]._refId = whenRefId;
+        }
+        if (taco.c[i] && taco.c[i]._bwEach) {
+          var eachRefId = 'bw_ref_' + self._refCounter++;
+          var eachDeps = bw._extractDeps(taco.c[i].expr.replace(/^\$\{|\}$/g, ''), stateKeys);
+          self._bindings.push({
+            expr: taco.c[i].expr,
+            type: 'structural',
+            subtype: 'each',
+            refId: eachRefId,
+            deps: eachDeps,
+            factory: taco.c[i].factory,
+            index: i,
+            parentPath: path
+          });
+          taco.c[i]._refId = eachRefId;
+        }
+      }
+    } else if (taco.c && typeof taco.c === 'object' && taco.c.t) {
+      walkTaco(taco.c, path.concat(0));
+    }
+
+    return taco;
+  }
+
+  walkTaco(this.taco, []);
+};
+
+// ── DOM Reference Collection ──
+
+/**
+ * Build ref map from the live DOM after createDOM.
+ * @private
+ */
+ComponentHandle.prototype._collectRefs = function() {
+  this._bw_refs = {};
+  if (!this.element) return;
+  var els = this.element.querySelectorAll('[data-bw-ref]');
+  for (var i = 0; i < els.length; i++) {
+    this._bw_refs[els[i].getAttribute('data-bw-ref')] = els[i];
+  }
+  // Also check root element
+  var rootRef = this.element.getAttribute && this.element.getAttribute('data-bw-ref');
+  if (rootRef) {
+    this._bw_refs[rootRef] = this.element;
+  }
+};
+
+// ── Lifecycle ──
+
+/**
+ * Mount the component into a parent DOM element.
+ * Creates DOM, compiles bindings, registers actions, and calls lifecycle hooks.
+ * @param {Element} parentEl - DOM element to mount into
+ */
+ComponentHandle.prototype.mount = function(parentEl) {
+  // willMount hook
+  if (this._hooks.willMount) this._hooks.willMount(this);
+
+  // Save original TACO for re-renders (structural changes clone from this)
+  if (!this._originalTaco) {
+    this._originalTaco = this.taco;
+  }
+
+  // Deep-clone TACO so binding annotations don't mutate original.
+  // Custom clone to preserve _bwWhen/_bwEach markers and their factory functions.
+  this.taco = this._deepCloneTaco(this._originalTaco);
+
+  // Compile bindings (annotates TACO with data-bw-ref attributes)
+  this._compileBindings();
+
+  // Prepare TACO: resolve initial binding values, evaluate when/each
+  this._prepareTaco(this.taco);
+
+  // Register named actions in function registry
+  var self = this;
+  for (var actionName in this._actions) {
+    if (Object.prototype.hasOwnProperty.call(this._actions, actionName)) {
+      var registeredName = this._bwId + '_' + actionName;
+      (function(aName) {
+        bw.funcRegister(function(evt) {
+          self._actions[aName](self, evt);
+        }, registeredName);
+      })(actionName);
+      this._registeredActions.push(registeredName);
+    }
+  }
+
+  // Wire action names in onclick etc. to dispatch strings
+  this._wireActions(this.taco);
+
+  // Create DOM (strip o before createDOM to prevent double lifecycle)
+  var tacoForDOM = this._tacoForDOM(this.taco);
+  this.element = bw.createDOM(tacoForDOM);
+  this.element._bwComponentHandle = this;
+  this.element.setAttribute('data-bw-comp-id', this._bwId);
+
+  // Append to parent
+  parentEl.appendChild(this.element);
+
+  // Collect refs from live DOM
+  this._collectRefs();
+
+  // Resolve initial bindings and apply to DOM
+  this._resolveAndApplyAll();
+
+  this.mounted = true;
+
+  // mounted hook (backward compat: fn.length === 2 wraps (el, state))
+  if (this._hooks.mounted) {
+    if (this._hooks.mounted.length === 2) {
+      this._hooks.mounted(this.element, this.getState());
+    } else {
+      this._hooks.mounted(this);
+    }
+  }
+};
+
+/**
+ * Prepare TACO for initial render: resolve when/each markers.
+ * @private
+ */
+ComponentHandle.prototype._prepareTaco = function(taco) {
+  if (!taco || typeof taco !== 'object') return;
+
+  if (Array.isArray(taco.c)) {
+    for (var i = taco.c.length - 1; i >= 0; i--) {
+      var child = taco.c[i];
+      if (child && child._bwWhen) {
+        var exprStr = child.expr.replace(/^\$\{|\}$/g, '');
+        var val;
+        if (this._compile) {
+          try {
+            val = (new Function('state', 'with(state){return (' + exprStr + ');}'))(this._state);
+          } catch(e) { val = false; }
+        } else {
+          val = bw._evaluatePath(this._state, exprStr);
+        }
+        var branch = val ? child.branches[0] : (child.branches[1] || null);
+        if (branch) {
+          // Wrap in a container so we can track it
+          taco.c[i] = { t: 'span', a: { 'data-bw-when': child._refId, style: 'display:contents' }, c: branch };
+        } else {
+          taco.c[i] = { t: 'span', a: { 'data-bw-when': child._refId, style: 'display:contents' }, c: '' };
+        }
+      }
+      if (child && child._bwEach) {
+        var eachExprStr = child.expr.replace(/^\$\{|\}$/g, '');
+        var arr = bw._evaluatePath(this._state, eachExprStr);
+        var items = [];
+        if (Array.isArray(arr)) {
+          for (var j = 0; j < arr.length; j++) {
+            items.push(child.factory(arr[j], j));
+          }
+        }
+        taco.c[i] = { t: 'span', a: { 'data-bw-each': child._refId, style: 'display:contents' }, c: items };
+      }
+      if (taco.c[i] && typeof taco.c[i] === 'object' && taco.c[i].t) {
+        this._prepareTaco(taco.c[i]);
+      }
+    }
+  } else if (taco.c && typeof taco.c === 'object' && taco.c.t) {
+    this._prepareTaco(taco.c);
+  }
+};
+
+/**
+ * Wire action name strings (in onclick etc.) to dispatch function calls.
+ * @private
+ */
+ComponentHandle.prototype._wireActions = function(taco) {
+  if (!taco || typeof taco !== 'object' || !taco.t) return;
+  if (taco.a) {
+    for (var key in taco.a) {
+      if (!Object.prototype.hasOwnProperty.call(taco.a, key)) continue;
+      if (key.startsWith('on') && typeof taco.a[key] === 'string') {
+        var actionName = taco.a[key];
+        if (actionName in this._actions) {
+          var registeredName = this._bwId + '_' + actionName;
+          // Replace string with actual function for createDOM event binding
+          (function(rName) {
+            taco.a[key] = function(evt) {
+              bw.funcGetById(rName)(evt);
+            };
+          })(registeredName);
+        }
+      }
+    }
+  }
+  if (Array.isArray(taco.c)) {
+    for (var i = 0; i < taco.c.length; i++) {
+      this._wireActions(taco.c[i]);
+    }
+  } else if (taco.c && typeof taco.c === 'object' && taco.c.t) {
+    this._wireActions(taco.c);
+  }
+};
+
+/**
+ * Deep-clone a TACO tree, preserving _bwWhen/_bwEach markers and their factories.
+ * @private
+ */
+ComponentHandle.prototype._deepCloneTaco = function(taco) {
+  if (taco == null) return taco;
+  // Preserve _bwWhen / _bwEach markers (contain functions)
+  if (taco._bwWhen) {
+    return { _bwWhen: true, expr: taco.expr, branches: [
+      this._deepCloneTaco(taco.branches[0]),
+      taco.branches[1] ? this._deepCloneTaco(taco.branches[1]) : null
+    ], _refId: taco._refId };
+  }
+  if (taco._bwEach) {
+    return { _bwEach: true, expr: taco.expr, factory: taco.factory, _refId: taco._refId };
+  }
+  if (typeof taco !== 'object' || !taco.t) return taco;
+  var result = { t: taco.t };
+  if (taco.a) {
+    result.a = {};
+    for (var k in taco.a) {
+      if (Object.prototype.hasOwnProperty.call(taco.a, k)) result.a[k] = taco.a[k];
+    }
+  }
+  if (taco.c != null) {
+    if (Array.isArray(taco.c)) {
+      result.c = taco.c.map(function(child) { return this._deepCloneTaco(child); }.bind(this));
+    } else if (typeof taco.c === 'object') {
+      result.c = this._deepCloneTaco(taco.c);
+    } else {
+      result.c = taco.c;
+    }
+  }
+  if (taco.o) result.o = taco.o; // Keep o reference (not deep-cloned; hooks are functions)
+  return result;
+};
+
+/**
+ * Create a copy of TACO suitable for createDOM (strips o to prevent double lifecycle).
+ * @private
+ */
+ComponentHandle.prototype._tacoForDOM = function(taco) {
+  if (!taco || typeof taco !== 'object' || !taco.t) return taco;
+  var result = { t: taco.t };
+  if (taco.a) result.a = taco.a;
+  if (taco.c != null) {
+    if (Array.isArray(taco.c)) {
+      result.c = taco.c.map(function(child) { return this._tacoForDOM(child); }.bind(this));
+    } else if (typeof taco.c === 'object' && taco.c.t) {
+      result.c = this._tacoForDOM(taco.c);
+    } else {
+      result.c = taco.c;
+    }
+  }
+  // Intentionally strip o (no mounted/unmount/state/render on sub-elements)
+  return result;
+};
+
+/**
+ * Unmount: remove from DOM, deactivate, preserve state for re-mount.
+ */
+ComponentHandle.prototype.unmount = function() {
+  if (!this.mounted) return;
+
+  // unmount hook
+  if (this._hooks.unmount) {
+    this._hooks.unmount(this);
+  }
+
+  // Remove DOM event listeners
+  for (var i = 0; i < this._eventListeners.length; i++) {
+    var l = this._eventListeners[i];
+    if (this.element) {
+      this.element.removeEventListener(l.event, l.handler);
+    }
+  }
+  this._eventListeners = [];
+
+  // Unsubscribe pub/sub
+  for (var j = 0; j < this._subs.length; j++) {
+    this._subs[j]();
+  }
+  this._subs = [];
+
+  // Remove from DOM
+  if (this.element && this.element.parentNode) {
+    this.element.parentNode.removeChild(this.element);
+  }
+
+  this.mounted = false;
+  // State preserved — can re-mount
+};
+
+/**
+ * Destroy: unmount + clear state + unregister actions.
+ */
+ComponentHandle.prototype.destroy = function() {
+  // willDestroy hook
+  if (this._hooks.willDestroy) {
+    this._hooks.willDestroy(this);
+  }
+
+  this.unmount();
+
+  // Unregister actions from function registry
+  for (var i = 0; i < this._registeredActions.length; i++) {
+    bw.funcUnregister(this._registeredActions[i]);
+  }
+  this._registeredActions = [];
+
+  // Clear state
+  this._state = {};
+  this._bindings = [];
+  this._bw_refs = {};
+  this._prevValues = {};
+  this._dirtyKeys = {};
+  if (this.element) {
+    delete this.element._bwComponentHandle;
+    this.element = null;
+  }
+};
+
+// ── Flush & Binding Resolution ──
+
+/**
+ * Flush dirty state: resolve changed bindings and apply to DOM.
+ * @private
+ */
+ComponentHandle.prototype._flush = function() {
+  this._scheduled = false;
+  var changedKeys = Object.keys(this._dirtyKeys);
+  this._dirtyKeys = {};
+  if (changedKeys.length === 0 || !this.mounted) return;
+
+  // willUpdate hook
+  if (this._hooks.willUpdate) {
+    this._hooks.willUpdate(this, changedKeys);
+  }
+
+  // Check if any structural bindings are affected
+  var needsFullRender = false;
+  for (var i = 0; i < this._bindings.length; i++) {
+    var b = this._bindings[i];
+    if (b.type === 'structural') {
+      for (var j = 0; j < b.deps.length; j++) {
+        if (changedKeys.indexOf(b.deps[j]) >= 0) {
+          needsFullRender = true;
+          break;
+        }
+      }
+      if (needsFullRender) break;
+    }
+  }
+
+  if (needsFullRender) {
+    this._render();
+  } else {
+    var patches = this._resolveBindings(changedKeys);
+    this._applyPatches(patches);
+  }
+
+  // onUpdate hook
+  if (this._hooks.onUpdate) {
+    this._hooks.onUpdate(this, changedKeys);
+  }
+};
+
+/**
+ * Resolve bindings whose deps intersect with changedKeys.
+ * Returns list of patches to apply.
+ * @private
+ */
+ComponentHandle.prototype._resolveBindings = function(changedKeys) {
+  var patches = [];
+  for (var i = 0; i < this._bindings.length; i++) {
+    var b = this._bindings[i];
+    if (b.type === 'structural') continue;
+
+    // Check if any dep matches
+    var affected = false;
+    for (var j = 0; j < b.deps.length; j++) {
+      if (changedKeys.indexOf(b.deps[j]) >= 0) {
+        affected = true;
+        break;
+      }
+    }
+    if (!affected) continue;
+
+    // Evaluate
+    var newVal = bw._resolveTemplate(b.template, this._state, this._compile);
+    var prevKey = b.refId + '_' + (b.attrName || 'content');
+    if (this._prevValues[prevKey] !== newVal) {
+      this._prevValues[prevKey] = newVal;
+      patches.push({
+        refId: b.refId,
+        type: b.type,
+        attrName: b.attrName,
+        value: newVal
+      });
+    }
+  }
+  return patches;
+};
+
+/**
+ * Apply patches to DOM.
+ * @private
+ */
+ComponentHandle.prototype._applyPatches = function(patches) {
+  for (var i = 0; i < patches.length; i++) {
+    var p = patches[i];
+    var el = this._bw_refs[p.refId];
+    if (!el) continue;
+    if (p.type === 'content') {
+      el.textContent = p.value;
+    } else if (p.type === 'attribute') {
+      if (p.attrName === 'class') {
+        el.className = bw.normalizeClass(p.value);
+      } else {
+        el.setAttribute(p.attrName, p.value);
+      }
+    }
+  }
+};
+
+/**
+ * Resolve all bindings and apply (used for initial render).
+ * @private
+ */
+ComponentHandle.prototype._resolveAndApplyAll = function() {
+  var patches = [];
+  for (var i = 0; i < this._bindings.length; i++) {
+    var b = this._bindings[i];
+    if (b.type === 'structural') continue;
+
+    var newVal = bw._resolveTemplate(b.template, this._state, this._compile);
+    var prevKey = b.refId + '_' + (b.attrName || 'content');
+    this._prevValues[prevKey] = newVal;
+    patches.push({
+      refId: b.refId,
+      type: b.type,
+      attrName: b.attrName,
+      value: newVal
+    });
+  }
+  this._applyPatches(patches);
+};
+
+/**
+ * Full re-render for structural changes (when/each branch switches).
+ * @private
+ */
+ComponentHandle.prototype._render = function() {
+  if (!this.element || !this.element.parentNode) return;
+  var parent = this.element.parentNode;
+  var nextSibling = this.element.nextSibling;
+
+  // Remove old DOM
+  parent.removeChild(this.element);
+
+  // Re-prepare TACO with current state (deep clone preserving functions)
+  this.taco = this._deepCloneTaco(this._originalTaco || this.taco);
+
+  // Re-compile bindings and prepare
+  this._compileBindings();
+  this._prepareTaco(this.taco);
+  this._wireActions(this.taco);
+
+  var tacoForDOM = this._tacoForDOM(this.taco);
+  this.element = bw.createDOM(tacoForDOM);
+  this.element._bwComponentHandle = this;
+  this.element.setAttribute('data-bw-comp-id', this._bwId);
+
+  // Re-insert at same position
+  if (nextSibling) {
+    parent.insertBefore(this.element, nextSibling);
+  } else {
+    parent.appendChild(this.element);
+  }
+
+  // Re-collect refs and apply all bindings
+  this._collectRefs();
+  this._resolveAndApplyAll();
+};
+
+// ── Event & Pub/Sub Methods ──
+
+/**
+ * Add a DOM event listener on the component's root element.
+ * @param {string} event - Event name (e.g., 'click')
+ * @param {Function} handler - Event handler
+ */
+ComponentHandle.prototype.on = function(event, handler) {
+  if (this.element) {
+    this.element.addEventListener(event, handler);
+  }
+  this._eventListeners.push({ event: event, handler: handler });
+};
+
+/**
+ * Remove a DOM event listener.
+ * @param {string} event - Event name
+ * @param {Function} handler - Handler to remove
+ */
+ComponentHandle.prototype.off = function(event, handler) {
+  if (this.element) {
+    this.element.removeEventListener(event, handler);
+  }
+  this._eventListeners = this._eventListeners.filter(function(l) {
+    return !(l.event === event && l.handler === handler);
+  });
+};
+
+/**
+ * Subscribe to a pub/sub topic. Lifecycle-tied: auto-unsubs on destroy.
+ * @param {string} topic - Topic name
+ * @param {Function} handler - Handler function
+ * @returns {Function} Unsubscribe function
+ */
+ComponentHandle.prototype.sub = function(topic, handler) {
+  var unsub = bw.sub(topic, handler);
+  this._subs.push(unsub);
+  return unsub;
+};
+
+/**
+ * Call a named action.
+ * @param {string} name - Action name
+ * @param {...*} args - Arguments passed after comp
+ */
+ComponentHandle.prototype.action = function(name) {
+  var fn = this._actions[name];
+  if (!fn) {
+    console.warn('ComponentHandle.action: unknown action "' + name + '"');
+    return;
+  }
+  var args = [this].concat(Array.prototype.slice.call(arguments, 1));
+  return fn.apply(null, args);
+};
+
+/**
+ * querySelector within the component's DOM.
+ * @param {string} sel - CSS selector
+ * @returns {Element|null}
+ */
+ComponentHandle.prototype.select = function(sel) {
+  return this.element ? this.element.querySelector(sel) : null;
+};
+
+/**
+ * querySelectorAll within the component's DOM.
+ * @param {string} sel - CSS selector
+ * @returns {Element[]}
+ */
+ComponentHandle.prototype.selectAll = function(sel) {
+  if (!this.element) return [];
+  return Array.prototype.slice.call(this.element.querySelectorAll(sel));
+};
+
+// Expose ComponentHandle on bw (for testing and advanced use)
+bw._ComponentHandle = ComponentHandle;
+
+// ===================================================================================
+// Control Flow Helpers
+// ===================================================================================
+
+/**
+ * Conditional rendering helper.
+ * Returns a marker object that ComponentHandle detects during binding compilation.
+ * In static contexts (bw.html with state), evaluates immediately.
+ *
+ * @param {string} expr - Expression string like '${loggedIn}'
+ * @param {Object} tacoTrue - TACO to render when truthy
+ * @param {Object} [tacoFalse] - TACO to render when falsy
+ * @returns {Object} Marker object with _bwWhen flag
+ * @category Component
+ */
+bw.when = function(expr, tacoTrue, tacoFalse) {
+  return { _bwWhen: true, expr: expr, branches: [tacoTrue, tacoFalse || null] };
+};
+
+/**
+ * List rendering helper.
+ * Returns a marker object that ComponentHandle detects during binding compilation.
+ *
+ * @param {string} expr - Expression string like '${items}'
+ * @param {Function} fn - Factory function(item, index) returning TACO
+ * @returns {Object} Marker object with _bwEach flag
+ * @category Component
+ */
+bw.each = function(expr, fn) {
+  return { _bwEach: true, expr: expr, factory: fn };
+};
+
+// ===================================================================================
+// bw.component() — Factory for ComponentHandle
+// ===================================================================================
+
+/**
+ * Create a ComponentHandle from a TACO definition.
+ * The returned handle has .get(), .set(), .mount(), .destroy(), etc.
+ *
+ * @param {Object} taco - TACO definition with {t, a, c, o}
+ * @returns {ComponentHandle} Reactive component handle
+ * @category Component
+ * @see bw.DOM
+ * @example
+ * var counter = bw.component({
+ *   t: 'div', c: [{ t: 'h3', c: 'Count: ${count}' }],
+ *   o: { state: { count: 0 } }
+ * });
+ * bw.DOM('#app', counter);
+ * counter.set('count', 42); // DOM auto-updates
+ */
+bw.component = function(taco) {
+  return new ComponentHandle(taco);
+};
+
+// ===================================================================================
+// bw.compile() — Pre-compile TACO into optimized factory
+// ===================================================================================
+
+/**
+ * Pre-compile a TACO definition into a factory function.
+ * The factory produces ComponentHandles with pre-compiled binding evaluators.
+ *
+ * Phase 1: validates API surface. Template cloning optimization deferred.
+ *
+ * @param {Object} taco - TACO definition
+ * @returns {Function} Factory function(initialState?) → ComponentHandle
+ * @category Component
+ */
+bw.compile = function(taco) {
+  // Pre-extract all binding expressions
+  var precompiled = [];
+  function walkExpressions(node) {
+    if (!node || typeof node !== 'object') return;
+    if (typeof node.c === 'string' && node.c.indexOf('${') >= 0) {
+      var parsed = bw._parseBindings(node.c);
+      for (var i = 0; i < parsed.length; i++) {
+        try {
+          precompiled.push({
+            expr: parsed[i].expr,
+            fn: new Function('state', 'with(state){return (' + parsed[i].expr + ');}')
+          });
+        } catch(e) {
+          precompiled.push({ expr: parsed[i].expr, fn: function() { return ''; } });
+        }
+      }
+    }
+    if (node.a) {
+      for (var key in node.a) {
+        if (Object.prototype.hasOwnProperty.call(node.a, key)) {
+          var v = node.a[key];
+          if (typeof v === 'string' && v.indexOf('${') >= 0) {
+            var parsed2 = bw._parseBindings(v);
+            for (var j = 0; j < parsed2.length; j++) {
+              try {
+                precompiled.push({
+                  expr: parsed2[j].expr,
+                  fn: new Function('state', 'with(state){return (' + parsed2[j].expr + ');}')
+                });
+              } catch(e2) {
+                precompiled.push({ expr: parsed2[j].expr, fn: function() { return ''; } });
+              }
+            }
+          }
+        }
+      }
+    }
+    if (Array.isArray(node.c)) {
+      for (var k = 0; k < node.c.length; k++) walkExpressions(node.c[k]);
+    } else if (node.c && typeof node.c === 'object' && node.c.t) {
+      walkExpressions(node.c);
+    }
+  }
+  walkExpressions(taco);
+
+  return function(initialState) {
+    var handle = new ComponentHandle(taco);
+    handle._compile = true;
+    handle._precompiledBindings = precompiled;
+    if (initialState) {
+      for (var k in initialState) {
+        if (Object.prototype.hasOwnProperty.call(initialState, k)) {
+          handle._state[k] = initialState[k];
+        }
+      }
+    }
+    return handle;
+  };
 };
 
 /**

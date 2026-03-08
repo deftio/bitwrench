@@ -194,3 +194,8 @@ Pages converted:
 * [x] Build: `npm run build:release` passes — 24 dist files, SRI hashes generated
 * [x] Bundle: 35KB gzipped (budget: 45KB)
 * [x] Coverage: bitwrench-styles.js 99.83%, bitwrench.js 88.98%, components 70.83%
+
+## Design explorations completed (v2.0.14)
+* [x] define --> font-size scale: TYPE_RATIO_PRESETS + generateTypeScale() — modular scale from ratio (tight/normal/relaxed/dramatic)
+* [x] define --> shadow elevation scale: ELEVATION_PRESETS (flat/sm/md/lg) wired into cards, modals, toasts, dropdowns
+* [x] define --> motion/transition curves: MOTION_PRESETS (reduced/standard/expressive × fast/normal/slow+easing). 3 tiers (0.15s/0.2s/0.3s), `@media (prefers-reduced-motion: reduce)` added
