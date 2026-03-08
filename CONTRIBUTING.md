@@ -97,25 +97,53 @@ CI runs automatically on all PRs (lint, build, test across Node 20/22/24).
 
 This section is for the project maintainer. Contributors should follow the PR workflow above.
 
-**Cardinal rule: `npm run build:release` is the LAST step before commit.
-Never commit then build. The committed dist/ artifacts must be exactly
-what `build:release` produced — byte for byte.** SRI hashes and source
-maps change on every build, so stale artifacts mean npm gets a different
-package than what's on GitHub.
+### Starting a New Dev Cycle
 
-1. Bump version in `package.json`
-2. Make all source changes and verify they work
-3. `npm run build:release` — runs cleanbuild + tests + copies to releases/v2/
-4. `git status` — verify only expected files changed
-5. **Immediately commit** — no edits between build:release and commit
-6. Merge feature branch to `main` and push
+```bash
+npm run start-release -- "feature name"           # patch bump (default)
+npm run start-release -- minor "new subsystem"     # minor bump
+npm run start-release -- major "breaking change"   # major bump
+```
 
-**Everything after push is automatic.** The CI pipeline (`.github/workflows/publish.yml`) handles the rest:
+This script (`tools/start-release.js`):
+1. Verifies you are on `main` with a clean working tree
+2. Pulls latest `main`
+3. Bumps version in `package.json` (via `npm version`)
+4. Generates `src/version.js`
+5. Creates `feature/<slugified-name>` branch
+6. Commits the version bump and pushes with `-u`
 
-- CI tests run on push to `main` (`.github/workflows/ci.yml`)
-- On success, `publish.yml` checks if the version is already on npm
+### Releasing
+
+When development is complete, run `npm run release` (`tools/release.js`) on the feature branch. This script:
+
+1. **Pre-flight checks** — clean tree, version not yet on npm
+2. **Clean build** — `npm run clean && npm run build && npm run build:generated`
+3. **Lint** — `npm run lint`
+4. **Tests** — `npm test` and `npm run test:cli`
+5. **Version consistency** — verifies package.json, src/version.js, and dist banner all agree
+6. **Bundle size gate** — gzipped UMD must be under 45KB
+7. **Archive** — copies dist/ to releases/v2/
+8. **Git commit and push** — stages dist/, releases/v2/, and generated files, commits, pushes
+
+Then merge to `main`:
+
+```bash
+git checkout main
+git merge feature/<name>
+git push origin main
+```
+
+**Everything after push is automatic.** The CI pipeline (`.github/workflows/publish.yml`):
+
+- Runs tests on push to `main` (`.github/workflows/ci.yml`)
+- On success, checks if the version is already on npm
 - If not yet published: creates a git tag, pushes it, creates a GitHub Release with dist files, and publishes to npm with provenance
 
 **Do NOT run `npm publish` manually or create tags by hand.** CI handles
 tagging, GitHub Releases, and npm publishing automatically when a new
 version is pushed to `main`.
+
+**Cardinal rule: dist/ artifacts must be exactly what the release build
+produced — byte for byte.** SRI hashes and source maps change on every
+build, so stale artifacts mean npm gets a different package than GitHub.
