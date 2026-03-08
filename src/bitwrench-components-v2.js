@@ -1884,17 +1884,15 @@ export function makeCodeDemo(props = {}) {
             t: 'button',
             a: {
               class: 'bw-copy-btn bw-code-copy-btn',
-              onclick: (e) => {
-                navigator.clipboard.writeText(code).then(() => {
-                  const btn = e.target;
-                  const originalText = btn.textContent;
+              onclick: function(e) {
+                navigator.clipboard.writeText(code).then(function() {
+                  var btn = e.target;
+                  var originalText = btn.textContent;
                   btn.textContent = 'Copied!';
-                  btn.style.background = '#006666';
-                  btn.style.color = '#fff';
-                  setTimeout(() => {
+                  btn.classList.add('bw-code-copy-btn-copied');
+                  setTimeout(function() {
                     btn.textContent = originalText;
-                    btn.style.background = 'rgba(255,255,255,0.12)';
-                    btn.style.color = '#aaa';
+                    btn.classList.remove('bw-code-copy-btn-copied');
                   }, 2000);
                 });
               }

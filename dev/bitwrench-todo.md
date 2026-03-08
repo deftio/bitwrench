@@ -1,6 +1,6 @@
 # Bitwrench TODO
 
-Canonical task list. Updated 2026-03-06.
+Canonical task list. Updated 2026-03-07.
 
 ## Status Legend
 - **DONE** — Implemented, tested, shipped
@@ -11,19 +11,21 @@ Canonical task list. Updated 2026-03-06.
 
 ## Quick Wins (low-hanging fruit)
 
-### BCCL Bug Fixes — NOT STARTED
-Small bugs found in component audit. Each is a 1-5 line fix:
-1. **makeAlert dismiss**: close button has no onclick — clicking does nothing. Add `onclick` to remove the alert element via `bw.cleanup()`.
-2. **makeNavbar CSS mismatch**: CSS targets `.bw-navbar > .container` but component renders `class="bw-container"`. Fix the CSS selector.
-3. **makeCodeDemo hardcoded colors**: inline styles (`#1e293b`, `#e2e8f0`) ignore themes. Use classes instead.
-4. **makeFeatureGrid icon color**: uses `var(--bw-primary)` inline, breaks scoped themes (which use class cascade, not CSS vars). Use a class.
-5. **makeCheckbox missing onchange**: no event handler prop. Add `...eventHandlers` spread like makeInput has.
-6. **makeButton**: README says `label:` but API uses `text:`. Fix README.
+### BCCL Bug Fixes — DONE (v2.0.14)
+Bugs found in component audit. Triage result: 4 of 6 were already fixed in prior work, 1 real fix applied, 1 README fix applied.
+1. **makeAlert dismiss**: Already fixed — has onclick handler that removes via `.closest()`.
+2. **makeNavbar CSS mismatch**: Already fixed — CSS targets both `.bw-container` and `.container`.
+3. **makeCodeDemo hardcoded colors**: FIXED — replaced inline color manipulation with `.bw-code-copy-btn-copied` CSS class toggle.
+4. **makeFeatureGrid icon color**: Already fixed — uses class `bw-text-primary`, themed by `generateUtilityColors()`.
+5. **makeCheckbox missing onchange**: Already fixed — has `...eventHandlers` spread.
+6. **makeButton**: README fixed — `label:` → `text:` corrected.
 
-### README Staleness — NOT STARTED
-- `makeButton({ label: ... })` → should be `text:`
-- Test count says 284 → now 393
-- 5-minute fix
+### README Staleness — DONE (v2.0.14)
+- `makeButton({ label: ... })` → fixed to `text:`
+- Test count updated: 558 tests
+- Component count updated: 45+ (was 30+)
+- `bw.toggleDarkMode()` → `bw.toggleTheme()`
+- Dead LLM Guide link → Themes page link
 
 ### LLM One-Pager — NOT STARTED
 - Create `dev/llm-bitwrench-guide.md` — single-file reference an LLM can ingest to build bitwrench sites
@@ -31,34 +33,35 @@ Small bugs found in component audit. Each is a 1-5 line fix:
 - Target: fits in one LLM context window (~8K tokens)
 - This is the highest-leverage docs improvement — enables AI-assisted site generation
 
-### Missing make* Functions — NOT STARTED
+### Missing make* Functions — PARTIAL
 Components with CSS already written but no make* function:
-- `makePagination` — CSS rules exist in both structural + themed, no component
-- `makeRadio` — checkbox exists, radio doesn't
+- `makePagination` — DONE (added in v2.0.14)
+- `makeRadio` — NOT STARTED (checkbox exists, radio doesn't)
 
 ---
 
 ## BCCL Polish (Baseline Component Class Library)
 
 ### Component Demo Coverage — PARTIAL
-`pages/01-components.html` shows 13 of 28 components. Missing demos for:
+`pages/01-components.html` demos most components. Missing demos for:
 - Page-level: `makeHero`, `makeFeatureGrid`, `makeCTA`, `makeSection`
-- Code: `makeCodeDemo`
+- Code: `makeCodeDemo` (used throughout but no standalone demo)
 - Forms already on `02-tables-forms.html` (OK)
+- New components (v2.0.14): tooltip, popover, stat card, file upload, range, search input, timeline, stepper, chip input, media object — need demo sections
 - Consider: add a "Page Building Blocks" section to 01-components or a new page
 
 ### Visual Quality Audit — PARTIAL
-Component TACO output and class attribution is solid across all 28 functions. CSS coverage is comprehensive — every component has structural + themed rules. Two areas to improve:
+Component TACO output and class attribution is solid across all 45+ functions. CSS coverage is comprehensive — every component has structural + themed rules. Two areas to improve:
 - **Cosmetic polish**: Do all components look *beautiful* with default palette? Need visual review in browser.
-- **Dark mode**: Does `bw.toggleDarkMode()` produce good results for all components? Visual check needed.
+- **Alternate palette**: Does `bw.toggleTheme()` produce good results for all components? Visual check needed.
 - **Theme consistency**: Do all 12 preset themes look good with all components?
 
-### Missing Component Features — NOT STARTED
+### Missing Component Features — PARTIAL
 - `makeNavbar` has no hamburger/collapse for mobile
 - `makeTabs` missing: className prop, vertical tabs option
 - `makeBreadcrumb` missing: className prop, separator customization
 - `makeNav` missing: onclick handler on items
-- No modal, dropdown, accordion, toast, tooltip, or popover components (decide which are worth adding)
+- ~~No modal, dropdown, accordion, toast, tooltip, or popover~~ — All added in v2.0.12-v2.0.14
 
 ---
 
@@ -80,11 +83,11 @@ Component TACO output and class attribution is solid across all 28 functions. CS
 | 10-themes | Good | Interactive generator, 12 presets |
 | 11-code-editor | Good | Addon documentation |
 
-### Docs Improvements Needed — NOT STARTED
+### Docs Improvements Needed — PARTIAL
 1. **LLM one-pager** (see Quick Wins above) — highest priority
-2. **01-components page**: add demos for Hero, FeatureGrid, CTA, Section, CodeDemo
+2. **01-components page**: add demos for Hero, FeatureGrid, CTA, Section, CodeDemo, and new v2.0.14 components
 3. **Cookbook / recipes page**: common patterns (login form, data dashboard, CRUD list, landing page) — shows bitwrench solving real problems
-4. **index.html cleanup**: `tools/build-index.js` is stale (references `examples_v2r2/`). Either update or remove.
+4. ~~**index.html cleanup**~~: DONE — fully converted to TACO dogfooding pattern (v2.0.12)
 
 ---
 
@@ -177,7 +180,8 @@ Component TACO output and class attribution is solid across all 28 functions. CS
 ---
 
 ## Notes
-- Bundle budget: 45KB gzipped max (currently 24.9KB — plenty of headroom)
-- Test count: 393 (344 unit + 49 CLI) + 39 Playwright
+- Bundle budget: 45KB gzipped max (currently 35KB — within budget)
+- Test count: 558 unit + 49 CLI + 13 Playwright example tests
 - Branch: `main` (active), `master` (legacy default, will eventually retire)
 - NO direct DOM manipulation in examples — always `bw.DOM()` + TACO
+- All pages fully dogfooded: TACO objects + `bw.injectCSS(bw.css({...}))` — no raw HTML body or `<style>` blocks

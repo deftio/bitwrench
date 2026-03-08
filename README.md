@@ -53,7 +53,7 @@ Or include directly in a page:
 - **HTML from plain objects** — describe UI as JavaScript objects, render to live DOM with `bw.DOM()` or to HTML strings with `bw.html()` for server-side rendering, emails, and static pages
 - **Built-in reactivity** — `bw.update()` re-renders components when state changes, `bw.patch()` updates individual elements by ID, `bw.pub()`/`bw.sub()` provides decoupled messaging between any part of the application
 - **CSS and theme generation** — `bw.css()` generates stylesheets from objects, `bw.generateTheme()` derives a complete visual theme (buttons, alerts, badges, cards, forms, tables, dark mode) from 2-3 seed colors
-- **30+ ready-made components** — cards, buttons, sortable tables, form inputs, alerts, badges, tabs, navbars, spinners, progress bars — each a single function call that returns a composable object
+- **45+ ready-made components** — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards — each a single function call that returns a composable object
 - **Static site CLI** — the `bitwrench` command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support
 - **Utilities** — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js
 
@@ -130,7 +130,7 @@ bw.generateTheme('my-theme', {
   secondary: '#cc6633'
 });
 
-bw.toggleDarkMode();
+bw.toggleTheme();  // switch between primary and alternate palettes
 ```
 
 ## Core API
@@ -186,14 +186,14 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 - [State & Interactivity](https://deftio.github.io/bitwrench/pages/05-state.html) — `bw.patch()`, `bw.update()`, pub/sub
 - [Tic Tac Toe Tutorial](https://deftio.github.io/bitwrench/pages/06-tic-tac-toe-tutorial.html) — step-by-step game with state management
 - [Framework Comparison](https://deftio.github.io/bitwrench/pages/07-framework-comparison.html) — bitwrench vs React, Vue, Svelte
-- [LLM Guide](https://github.com/deftio/bitwrench/blob/main/dev/llm-bitwrench-guide.md) — single-file reference for AI-assisted bitwrench development
+- [Themes](https://deftio.github.io/bitwrench/pages/10-themes.html) — interactive theme generator with presets, dark mode, and CSS export
 
 ## Development
 
 ```bash
 npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
-npm test             # run unit tests (344 tests)
+npm test             # run unit tests (558 tests)
 npm run test:cli     # run CLI tests (49 tests)
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint

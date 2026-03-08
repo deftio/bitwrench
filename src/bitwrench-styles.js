@@ -2514,6 +2514,11 @@ export const defaultStyles = {
       'cursor': 'pointer',
       'font-family': 'inherit',
       'transition': 'all 0.15s'
+    },
+    '.bw-code-copy-btn-copied': {
+      'background': '#198754',
+      'color': '#fff',
+      'border-color': '#198754'
     }
   },
 
