@@ -605,3 +605,41 @@ describe('componentHandles', function() {
     assert.ok(bw._componentHandles.modal, 'modal handle missing from registry');
   });
 });
+
+// =========================================================================
+// String shorthand support
+// =========================================================================
+
+describe('String shorthand', function() {
+  it('makeButton should accept string shorthand', function() {
+    const btn = bw.makeButton('OK');
+    assert.strictEqual(btn.t, 'button');
+    assert.strictEqual(btn.c, 'OK');
+    assert.ok(btn.a.class.includes('bw-btn'));
+  });
+
+  it('makeButton string shorthand should default to primary variant', function() {
+    const btn = bw.makeButton('Save');
+    assert.ok(btn.a.class.includes('bw-btn-primary'));
+  });
+
+  it('makeBadge should accept string shorthand', function() {
+    const badge = bw.makeBadge('New');
+    assert.strictEqual(badge.t, 'span');
+    assert.strictEqual(badge.c, 'New');
+    assert.ok(badge.a.class.includes('bw-badge'));
+  });
+
+  it('makeAlert should accept string shorthand', function() {
+    const alert = bw.makeAlert('Something happened');
+    assert.strictEqual(alert.t, 'div');
+    assert.ok(alert.a.class.includes('bw-alert'));
+    assert.ok(alert.c.some(function(child) { return child === 'Something happened'; }));
+  });
+
+  it('makeButton object form should still work', function() {
+    const btn = bw.makeButton({ text: 'Cancel', variant: 'secondary' });
+    assert.strictEqual(btn.c, 'Cancel');
+    assert.ok(btn.a.class.includes('bw-btn-secondary'));
+  });
+});

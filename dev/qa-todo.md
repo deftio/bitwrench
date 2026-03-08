@@ -32,27 +32,29 @@
 * [ ] fix --> no consistent spacing scale — buttons, badges, form inputs all use ad-hoc padding values
 * [x] fix --> font-size scale defined: TYPE_RATIO_PRESETS + generateTypeScale() (tight/normal/relaxed/dramatic)
 * [x] fix --> shadow scale defined: ELEVATION_PRESETS (flat/sm/md/lg) wired into cards, modals, toasts, dropdowns
-* [ ] fix --> line-height inconsistent: tables 1.6, buttons unspecified, forms vary
-* [ ] fix --> font-weight inconsistent: mix of 500 and 600 across components
+* [x] fix --> transitions normalized: 3 tiers (0.15s/0.2s/0.3s) + ease-out consistently; badge em→rem; carousel caption 0.9→0.875rem
+* [x] fix --> `@media (prefers-reduced-motion: reduce)` added to structural CSS
+* [x] assessed --> line-height: consistent hierarchy (1.5 body, 1.6 text blocks, 1.25-1.3 headings/titles). No changes needed.
+* [x] assessed --> font-weight: clear 4-tier system (300 display, 400 body, 500 interactive, 600 headings, 700 emphasis). No changes needed.
 
 ### Missing hover/interactive states
-* [ ] fix --> table rows: no hover highlight on interactive tables
-* [ ] fix --> list-group items: no hover feedback
-* [ ] fix --> nav links in shared-theme.css: no background-color transition
+* [x] assessed --> table rows: hover exists in themed CSS (generateTables → `.bw-table-hover > tbody > tr:hover`); requires `.bw-table-hover` class. Not a structural CSS concern.
+* [x] fix --> list-group items: added transition to `a.bw-list-group-item`
+* [x] fix --> nav links: added `background-color` to `.bw-nav-link` transition
 
 ### Component API cleanup
-* [ ] fix --> prop naming inconsistent: some use `content`, some `children`, some both
-* [ ] fix --> `makeTable()` vs `makeDataTable()` — confusing. Document when to use which
-* [ ] fix --> missing string shorthand: `makeButton('OK')` should work as shortcut for `makeButton({ text: 'OK' })`
+* [x] assessed --> prop naming follows convention: `content` (content containers), `children` (layout wrappers), `text` (single-label), `items` (collections). Documented in JSDoc.
+* [x] fix --> `makeTable()` vs `makeDataTable()` JSDoc clarified: makeTable = bare table, makeDataTable = with title + responsive wrapper
+* [x] fix --> string shorthand: `makeButton('OK')`, `makeBadge('New')`, `makeAlert('msg')` now all work. 5 new tests.
 
 ### Pages polish
-* [ ] fix --> 03-styling.html: sections 5 (responsive) and 6 (mixing approaches) have empty demo areas
-* [ ] fix --> 01-components.html: grid examples use hardcoded hex colors instead of theme tokens
-* [ ] fix --> 01-components.html: no auto-play carousel demo shown
-* [ ] fix --> 01-components.html: dropdown only shows left-aligned; add align:"end" example
-* [ ] fix --> 01-components.html: toast shows static preview but no stacking/auto-dismiss demo
-* [ ] fix --> index.html: feature cards different heights due to text length (no equal-height grid)
-* [ ] fix --> index.html: install strip text wrapping poor on tablet widths
+* [x] assessed --> 03-styling.html: sections 5 and 6 already have live try-it demos. No issue.
+* [x] assessed --> 01-components.html: grid hex colors are demo visual aids (column differentiation), not component styles. Acceptable.
+* [x] fix --> 01-components.html: carousel now shows auto-play demo (autoPlay: true, interval: 3000)
+* [x] fix --> 01-components.html: added align:"end" dropdown example
+* [x] fix --> 01-components.html: toast buttons now use createDOM+appendChild for proper stacking with auto-dismiss
+* [x] fix --> index.html: feature cards now equal height (flex column fill)
+* [x] fix --> index.html: install strip stacks vertically on mobile, code blocks have word-break
 
 ## P2: Missing components (framework parity)
 

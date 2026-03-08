@@ -3080,9 +3080,13 @@ bw.copyToClipboard = function(text) {
 /**
  * Create a sortable TACO table from an array of row objects.
  *
+ * Returns a bare `<table>` TACO — no wrapper, title, or responsive scroll.
+ * Use this when you need full control over table placement, or when embedding
+ * the table inside your own layout. For a ready-to-use table with title,
+ * responsive wrapper, and defaults (striped + hover), use `bw.makeDataTable()`.
+ *
  * Auto-detects columns from data keys if not specified. Supports click-to-sort
- * headers with ascending/descending indicators. Returns a TACO object —
- * render with `bw.DOM()` or `bw.html()`.
+ * headers with ascending/descending indicators.
  *
  * @param {Object} config - Table configuration
  * @param {Array<Object>} config.data - Array of row objects to display
@@ -3382,10 +3386,12 @@ bw.makeBarChart = function(config) {
 };
 
 /**
- * Create a responsive data table with title and optional wrapper
+ * Create a ready-to-use data table with title and responsive wrapper.
  *
- * Wraps bw.makeTable() output in a responsive container div.
- * Adds an optional title heading above the table.
+ * Convenience wrapper around `bw.makeTable()` that adds a title heading,
+ * responsive horizontal scroll container, and defaults to striped + hover.
+ * Use this for the common case; use `bw.makeTable()` when you need a bare
+ * table element with no wrapper.
  *
  * @param {Object} config - Table configuration
  * @param {string} [config.title] - Table title heading

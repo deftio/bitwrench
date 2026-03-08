@@ -176,8 +176,11 @@ export function makeCard(props = {}) {
  *   variant: "success",
  *   onclick: () => console.log("saved")
  * });
+ * // String shorthand:
+ * const ok = makeButton("OK");
  */
 export function makeButton(props = {}) {
+  if (typeof props === 'string') props = { text: props };
   const {
     text,
     variant = 'primary',
@@ -576,8 +579,11 @@ export function makeTabs(props = {}) {
  *   variant: "success",
  *   dismissible: true
  * });
+ * // String shorthand:
+ * const msg = makeAlert("Something happened");
  */
 export function makeAlert(props = {}) {
+  if (typeof props === 'string') props = { content: props };
   const {
     content,
     variant = 'info',
@@ -624,8 +630,11 @@ export function makeAlert(props = {}) {
  * @example
  * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
  * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
+ * // String shorthand:
+ * const tag = makeBadge("New");
  */
 export function makeBadge(props = {}) {
+  if (typeof props === 'string') props = { text: props };
   const {
     text,
     variant = 'primary',

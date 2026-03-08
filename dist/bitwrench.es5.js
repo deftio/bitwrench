@@ -210,7 +210,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-08T06:16:58.374Z'
+    buildDate: '2026-03-08T06:35:41.126Z'
   };
 
   /**
@@ -3826,21 +3826,27 @@
    *   variant: "success",
    *   onclick: () => console.log("saved")
    * });
+   * // String shorthand:
+   * const ok = makeButton("OK");
    */
   function makeButton() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var text = props.text,
-      _props$variant = props.variant,
+    if (typeof props === 'string') props = {
+      text: props
+    };
+    var _props = props,
+      text = _props.text,
+      _props$variant = _props.variant,
       variant = _props$variant === void 0 ? 'primary' : _props$variant,
-      size = props.size,
-      _props$disabled = props.disabled,
+      size = _props.size,
+      _props$disabled = _props.disabled,
       disabled = _props$disabled === void 0 ? false : _props$disabled,
-      onclick = props.onclick,
-      _props$type = props.type,
+      onclick = _props.onclick,
+      _props$type = _props.type,
       type = _props$type === void 0 ? 'button' : _props$type,
-      _props$className2 = props.className,
+      _props$className2 = _props.className,
       className = _props$className2 === void 0 ? '' : _props$className2,
-      style = props.style;
+      style = _props.style;
     return {
       t: 'button',
       a: {
@@ -4276,16 +4282,22 @@
    *   variant: "success",
    *   dismissible: true
    * });
+   * // String shorthand:
+   * const msg = makeAlert("Something happened");
    */
   function makeAlert() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var content = props.content,
-      _props$variant2 = props.variant,
-      variant = _props$variant2 === void 0 ? 'info' : _props$variant2,
-      _props$dismissible = props.dismissible,
-      dismissible = _props$dismissible === void 0 ? false : _props$dismissible,
-      _props$className8 = props.className,
-      className = _props$className8 === void 0 ? '' : _props$className8;
+    if (typeof props === 'string') props = {
+      content: props
+    };
+    var _props2 = props,
+      content = _props2.content,
+      _props2$variant = _props2.variant,
+      variant = _props2$variant === void 0 ? 'info' : _props2$variant,
+      _props2$dismissible = _props2.dismissible,
+      dismissible = _props2$dismissible === void 0 ? false : _props2$dismissible,
+      _props2$className = _props2.className,
+      className = _props2$className === void 0 ? '' : _props2$className;
     return {
       t: 'div',
       a: {
@@ -4324,17 +4336,23 @@
    * @example
    * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
    * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
+   * // String shorthand:
+   * const tag = makeBadge("New");
    */
   function makeBadge() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var text = props.text,
-      _props$variant3 = props.variant,
-      variant = _props$variant3 === void 0 ? 'primary' : _props$variant3,
-      size = props.size,
-      _props$pill = props.pill,
-      pill = _props$pill === void 0 ? false : _props$pill,
-      _props$className9 = props.className,
-      className = _props$className9 === void 0 ? '' : _props$className9;
+    if (typeof props === 'string') props = {
+      text: props
+    };
+    var _props3 = props,
+      text = _props3.text,
+      _props3$variant = _props3.variant,
+      variant = _props3$variant === void 0 ? 'primary' : _props3$variant,
+      size = _props3.size,
+      _props3$pill = _props3.pill,
+      pill = _props3$pill === void 0 ? false : _props3$pill,
+      _props3$className = _props3.className,
+      className = _props3$className === void 0 ? '' : _props3$className;
     var sizeClass = size === 'sm' ? ' bw-badge-sm' : size === 'lg' ? ' bw-badge-lg' : '';
     return {
       t: 'span',
@@ -4372,8 +4390,8 @@
       value = _props$value === void 0 ? 0 : _props$value,
       _props$max = props.max,
       max = _props$max === void 0 ? 100 : _props$max,
-      _props$variant4 = props.variant,
-      variant = _props$variant4 === void 0 ? 'primary' : _props$variant4,
+      _props$variant2 = props.variant,
+      variant = _props$variant2 === void 0 ? 'primary' : _props$variant2,
       _props$striped = props.striped,
       striped = _props$striped === void 0 ? false : _props$striped,
       _props$animated = props.animated,
@@ -4561,8 +4579,8 @@
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var children = props.children,
       onsubmit = props.onsubmit,
-      _props$className0 = props.className,
-      className = _props$className0 === void 0 ? '' : _props$className0;
+      _props$className8 = props.className,
+      className = _props$className8 === void 0 ? '' : _props$className8;
     return {
       t: 'form',
       a: {
@@ -4662,8 +4680,8 @@
       readonly = _props$readonly === void 0 ? false : _props$readonly,
       _props$required = props.required,
       required = _props$required === void 0 ? false : _props$required,
-      _props$className1 = props.className,
-      className = _props$className1 === void 0 ? '' : _props$className1,
+      _props$className9 = props.className,
+      className = _props$className9 === void 0 ? '' : _props$className9,
       style = props.style,
       eventHandlers = _objectWithoutProperties(props, _excluded$1);
     return {
@@ -4719,8 +4737,8 @@
       readonly = _props$readonly2 === void 0 ? false : _props$readonly2,
       _props$required2 = props.required,
       required = _props$required2 === void 0 ? false : _props$required2,
-      _props$className10 = props.className,
-      className = _props$className10 === void 0 ? '' : _props$className10,
+      _props$className0 = props.className,
+      className = _props$className0 === void 0 ? '' : _props$className0,
       eventHandlers = _objectWithoutProperties(props, _excluded2$1);
     return {
       t: 'textarea',
@@ -4774,8 +4792,8 @@
       disabled = _props$disabled4 === void 0 ? false : _props$disabled4,
       _props$required3 = props.required,
       required = _props$required3 === void 0 ? false : _props$required3,
-      _props$className11 = props.className,
-      className = _props$className11 === void 0 ? '' : _props$className11,
+      _props$className1 = props.className,
+      className = _props$className1 === void 0 ? '' : _props$className1,
       eventHandlers = _objectWithoutProperties(props, _excluded3);
     return {
       t: 'select',
@@ -4828,8 +4846,8 @@
       _props$disabled5 = props.disabled,
       disabled = _props$disabled5 === void 0 ? false : _props$disabled5,
       value = props.value,
-      _props$className12 = props.className,
-      className = _props$className12 === void 0 ? '' : _props$className12,
+      _props$className10 = props.className,
+      className = _props$className10 === void 0 ? '' : _props$className10,
       eventHandlers = _objectWithoutProperties(props, _excluded4);
     return {
       t: 'div',
@@ -4885,8 +4903,8 @@
       direction = _props$direction === void 0 ? 'vertical' : _props$direction,
       _props$gap = props.gap,
       gap = _props$gap === void 0 ? 3 : _props$gap,
-      _props$className13 = props.className,
-      className = _props$className13 === void 0 ? '' : _props$className13;
+      _props$className11 = props.className,
+      className = _props$className11 === void 0 ? '' : _props$className11;
     return {
       t: 'div',
       a: {
@@ -4910,8 +4928,8 @@
    */
   function makeSpinner() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$variant5 = props.variant,
-      variant = _props$variant5 === void 0 ? 'primary' : _props$variant5,
+    var _props$variant3 = props.variant,
+      variant = _props$variant3 === void 0 ? 'primary' : _props$variant3,
       _props$size = props.size,
       size = _props$size === void 0 ? 'md' : _props$size,
       _props$type3 = props.type,
@@ -4967,8 +4985,8 @@
     var title = props.title,
       subtitle = props.subtitle,
       content = props.content,
-      _props$variant6 = props.variant,
-      variant = _props$variant6 === void 0 ? 'primary' : _props$variant6,
+      _props$variant4 = props.variant,
+      variant = _props$variant4 === void 0 ? 'primary' : _props$variant4,
       _props$size2 = props.size,
       size = _props$size2 === void 0 ? 'lg' : _props$size2,
       _props$centered = props.centered,
@@ -4977,8 +4995,8 @@
       overlay = _props$overlay === void 0 ? false : _props$overlay,
       backgroundImage = props.backgroundImage,
       actions = props.actions,
-      _props$className14 = props.className,
-      className = _props$className14 === void 0 ? '' : _props$className14;
+      _props$className12 = props.className,
+      className = _props$className12 === void 0 ? '' : _props$className12;
     var sizeClasses = {
       sm: 'bw-py-3',
       md: 'bw-py-4',
@@ -5067,8 +5085,8 @@
       centered = _props$centered2 === void 0 ? true : _props$centered2,
       _props$iconSize = props.iconSize,
       iconSize = _props$iconSize === void 0 ? '3rem' : _props$iconSize,
-      _props$className15 = props.className,
-      className = _props$className15 === void 0 ? '' : _props$className15;
+      _props$className13 = props.className,
+      className = _props$className13 === void 0 ? '' : _props$className13;
     var colClass = "bw-col-md-".concat(12 / columns);
     return {
       t: 'div',
@@ -5144,12 +5162,12 @@
     var title = props.title,
       description = props.description,
       actions = props.actions,
-      _props$variant7 = props.variant,
-      variant = _props$variant7 === void 0 ? 'light' : _props$variant7,
+      _props$variant5 = props.variant,
+      variant = _props$variant5 === void 0 ? 'light' : _props$variant5,
       _props$centered3 = props.centered,
       centered = _props$centered3 === void 0 ? true : _props$centered3,
-      _props$className16 = props.className,
-      className = _props$className16 === void 0 ? '' : _props$className16;
+      _props$className14 = props.className,
+      className = _props$className14 === void 0 ? '' : _props$className14;
     return {
       t: 'section',
       a: {
@@ -5214,12 +5232,12 @@
     var title = props.title,
       subtitle = props.subtitle,
       content = props.content,
-      _props$variant8 = props.variant,
-      variant = _props$variant8 === void 0 ? 'default' : _props$variant8,
+      _props$variant6 = props.variant,
+      variant = _props$variant6 === void 0 ? 'default' : _props$variant6,
       _props$spacing = props.spacing,
       spacing = _props$spacing === void 0 ? 'md' : _props$spacing,
-      _props$className17 = props.className,
-      className = _props$className17 === void 0 ? '' : _props$className17;
+      _props$className15 = props.className,
+      className = _props$className15 === void 0 ? '' : _props$className15;
     var spacingClasses = {
       sm: 'bw-py-3',
       md: 'bw-py-4',
@@ -5763,8 +5781,8 @@
       currentPage = _props$currentPage === void 0 ? 1 : _props$currentPage,
       onPageChange = props.onPageChange,
       size = props.size,
-      _props$className18 = props.className,
-      className = _props$className18 === void 0 ? '' : _props$className18;
+      _props$className16 = props.className,
+      className = _props$className16 === void 0 ? '' : _props$className16;
     function handleClick(page) {
       return function (e) {
         e.preventDefault();
@@ -5876,8 +5894,8 @@
       id = props.id,
       _props$disabled6 = props.disabled,
       disabled = _props$disabled6 === void 0 ? false : _props$disabled6,
-      _props$className19 = props.className,
-      className = _props$className19 === void 0 ? '' : _props$className19,
+      _props$className17 = props.className,
+      className = _props$className17 === void 0 ? '' : _props$className17,
       eventHandlers = _objectWithoutProperties(props, _excluded5);
     return {
       t: 'div',
@@ -5931,8 +5949,8 @@
       size = props.size,
       _props$vertical2 = props.vertical,
       vertical = _props$vertical2 === void 0 ? false : _props$vertical2,
-      _props$className20 = props.className,
-      className = _props$className20 === void 0 ? '' : _props$className20;
+      _props$className18 = props.className,
+      className = _props$className18 === void 0 ? '' : _props$className18;
     return {
       t: 'div',
       a: {
@@ -5973,8 +5991,8 @@
       items = _props$items5 === void 0 ? [] : _props$items5,
       _props$multiOpen = props.multiOpen,
       multiOpen = _props$multiOpen === void 0 ? false : _props$multiOpen,
-      _props$className21 = props.className,
-      className = _props$className21 === void 0 ? '' : _props$className21;
+      _props$className19 = props.className,
+      className = _props$className19 === void 0 ? '' : _props$className19;
     return {
       t: 'div',
       a: {
@@ -6173,8 +6191,8 @@
       _props$closeButton = props.closeButton,
       closeButton = _props$closeButton === void 0 ? true : _props$closeButton,
       onClose = props.onClose,
-      _props$className22 = props.className,
-      className = _props$className22 === void 0 ? '' : _props$className22;
+      _props$className20 = props.className,
+      className = _props$className20 === void 0 ? '' : _props$className20;
     function closeModal(el) {
       var backdrop = el.closest('.bw-modal');
       if (backdrop) {
@@ -6286,16 +6304,16 @@
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     var title = props.title,
       content = props.content,
-      _props$variant9 = props.variant,
-      variant = _props$variant9 === void 0 ? 'info' : _props$variant9,
+      _props$variant7 = props.variant,
+      variant = _props$variant7 === void 0 ? 'info' : _props$variant7,
       _props$autoDismiss = props.autoDismiss,
       autoDismiss = _props$autoDismiss === void 0 ? true : _props$autoDismiss,
       _props$delay = props.delay,
       delay = _props$delay === void 0 ? 5000 : _props$delay,
       _props$position = props.position,
       position = _props$position === void 0 ? 'top-right' : _props$position,
-      _props$className23 = props.className,
-      className = _props$className23 === void 0 ? '' : _props$className23;
+      _props$className21 = props.className,
+      className = _props$className21 === void 0 ? '' : _props$className21;
     return {
       t: 'div',
       a: {
@@ -6394,10 +6412,10 @@
       items = _props$items6 === void 0 ? [] : _props$items6,
       _props$align = props.align,
       align = _props$align === void 0 ? 'start' : _props$align,
-      _props$variant0 = props.variant,
-      variant = _props$variant0 === void 0 ? 'primary' : _props$variant0,
-      _props$className24 = props.className,
-      className = _props$className24 === void 0 ? '' : _props$className24;
+      _props$variant8 = props.variant,
+      variant = _props$variant8 === void 0 ? 'primary' : _props$variant8,
+      _props$className22 = props.className,
+      className = _props$className22 === void 0 ? '' : _props$className22;
     var triggerTaco;
     if (typeof trigger === 'string' || trigger === undefined) {
       triggerTaco = {
@@ -6502,8 +6520,8 @@
       name = props.name,
       _props$disabled7 = props.disabled,
       disabled = _props$disabled7 === void 0 ? false : _props$disabled7,
-      _props$className25 = props.className,
-      className = _props$className25 === void 0 ? '' : _props$className25,
+      _props$className23 = props.className,
+      className = _props$className23 === void 0 ? '' : _props$className23,
       eventHandlers = _objectWithoutProperties(props, _excluded6);
     return {
       t: 'div',
@@ -6548,14 +6566,14 @@
    */
   function makeSkeleton() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$variant1 = props.variant,
-      variant = _props$variant1 === void 0 ? 'text' : _props$variant1,
+    var _props$variant9 = props.variant,
+      variant = _props$variant9 === void 0 ? 'text' : _props$variant9,
       width = props.width,
       height = props.height,
       _props$count = props.count,
       count = _props$count === void 0 ? 1 : _props$count,
-      _props$className26 = props.className,
-      className = _props$className26 === void 0 ? '' : _props$className26;
+      _props$className24 = props.className,
+      className = _props$className24 === void 0 ? '' : _props$className24;
     if (variant === 'circle') {
       var circleSize = width || height || '3rem';
       return {
@@ -6641,10 +6659,10 @@
       initials = props.initials,
       _props$size3 = props.size,
       size = _props$size3 === void 0 ? 'md' : _props$size3,
-      _props$variant10 = props.variant,
-      variant = _props$variant10 === void 0 ? 'primary' : _props$variant10,
-      _props$className27 = props.className,
-      className = _props$className27 === void 0 ? '' : _props$className27;
+      _props$variant0 = props.variant,
+      variant = _props$variant0 === void 0 ? 'primary' : _props$variant0,
+      _props$className25 = props.className,
+      className = _props$className25 === void 0 ? '' : _props$className25;
     if (src) {
       return {
         t: 'img',
@@ -6709,8 +6727,8 @@
       height = _props$height === void 0 ? '300px' : _props$height,
       _props$startIndex = props.startIndex,
       startIndex = _props$startIndex === void 0 ? 0 : _props$startIndex,
-      _props$className28 = props.className,
-      className = _props$className28 === void 0 ? '' : _props$className28;
+      _props$className26 = props.className,
+      className = _props$className26 === void 0 ? '' : _props$className26;
 
     // Shared navigation logic
     function goToSlide(carouselEl, index) {
@@ -10210,9 +10228,13 @@
   /**
    * Create a sortable TACO table from an array of row objects.
    *
+   * Returns a bare `<table>` TACO — no wrapper, title, or responsive scroll.
+   * Use this when you need full control over table placement, or when embedding
+   * the table inside your own layout. For a ready-to-use table with title,
+   * responsive wrapper, and defaults (striped + hover), use `bw.makeDataTable()`.
+   *
    * Auto-detects columns from data keys if not specified. Supports click-to-sort
-   * headers with ascending/descending indicators. Returns a TACO object —
-   * render with `bw.DOM()` or `bw.html()`.
+   * headers with ascending/descending indicators.
    *
    * @param {Object} config - Table configuration
    * @param {Array<Object>} config.data - Array of row objects to display
@@ -10579,10 +10601,12 @@
   };
 
   /**
-   * Create a responsive data table with title and optional wrapper
+   * Create a ready-to-use data table with title and responsive wrapper.
    *
-   * Wraps bw.makeTable() output in a responsive container div.
-   * Adds an optional title heading above the table.
+   * Convenience wrapper around `bw.makeTable()` that adds a title heading,
+   * responsive horizontal scroll container, and defaults to striped + hover.
+   * Use this for the common case; use `bw.makeTable()` when you need a bare
+   * table element with no wrapper.
    *
    * @param {Object} config - Table configuration
    * @param {string} [config.title] - Table title heading

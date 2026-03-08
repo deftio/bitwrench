@@ -775,8 +775,8 @@
                     })
                   },
 
-                  // B) Content cards carousel
-                  subheading('Content Cards'),
+                  // B) Content cards carousel (auto-play)
+                  subheading('Auto-Play Content Cards'),
                   { t: 'div', a: { style: 'margin-bottom: 1.5rem;' }, c:
                     bw.makeCarousel({
                       items: [
@@ -784,7 +784,9 @@
                         { content: { t: 'div', a: { style: 'display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#e8f5e9; color:#2e7d32; font-size:1.5rem; font-weight:600;' }, c: 'Second Card' } },
                         { content: { t: 'div', a: { style: 'display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:#fff3e0; color:#e65100; font-size:1.5rem; font-weight:600;' }, c: 'Third Card' } }
                       ],
-                      height: '200px'
+                      height: '200px',
+                      autoPlay: true,
+                      interval: 3000
                     })
                   },
 
@@ -842,6 +844,11 @@
                     bw.makeDropdown({
                       trigger: 'More', variant: 'secondary',
                       items: [ { text: 'Profile' }, { text: 'Settings' }, { text: 'Disabled', disabled: true }, { divider: true }, { text: 'Logout' } ]
+                    }),
+                    bw.makeDropdown({
+                      trigger: 'Right-Aligned', variant: 'info',
+                      align: 'end',
+                      items: [ { text: 'Option A' }, { text: 'Option B' }, { divider: true }, { text: 'Option C' } ]
                     })
                   ]
                 },
@@ -881,16 +888,13 @@
                   t: 'div', c: [
                     { t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;' }, c: [
                       bw.makeButton({ text: 'Success Toast', variant: 'success', onclick: function() {
-                        var container = document.getElementById('toast-container');
-                        bw.DOM(container, bw.makeToast({ title: 'Success', content: 'Operation completed!', variant: 'success', delay: 3000 }), { append: true });
+                        bw.$.one('#toast-container').appendChild(bw.createDOM(bw.makeToast({ title: 'Success', content: 'Operation completed!', variant: 'success', delay: 3000 })));
                       }}),
                       bw.makeButton({ text: 'Error Toast', variant: 'danger', onclick: function() {
-                        var container = document.getElementById('toast-container');
-                        bw.DOM(container, bw.makeToast({ title: 'Error', content: 'Something went wrong.', variant: 'danger', delay: 3000 }), { append: true });
+                        bw.$.one('#toast-container').appendChild(bw.createDOM(bw.makeToast({ title: 'Error', content: 'Something went wrong.', variant: 'danger', delay: 3000 })));
                       }}),
                       bw.makeButton({ text: 'Info Toast', variant: 'info', onclick: function() {
-                        var container = document.getElementById('toast-container');
-                        bw.DOM(container, bw.makeToast({ title: 'Info', content: 'Here is some information.', variant: 'info', delay: 3000 }), { append: true });
+                        bw.$.one('#toast-container').appendChild(bw.createDOM(bw.makeToast({ title: 'Info', content: 'Here is some information.', variant: 'info', delay: 3000 })));
                       }})
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 0.75rem;' }, c: [
