@@ -18,7 +18,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-08T07:17:38.437Z'
+    buildDate: '2026-03-08T07:51:17.655Z'
   };
 
   /**
@@ -4255,17 +4255,15 @@
               t: 'button',
               a: {
                 class: 'bw-copy-btn bw-code-copy-btn',
-                onclick: (e) => {
-                  navigator.clipboard.writeText(code).then(() => {
-                    const btn = e.target;
-                    const originalText = btn.textContent;
+                onclick: function(e) {
+                  navigator.clipboard.writeText(code).then(function() {
+                    var btn = e.target;
+                    var originalText = btn.textContent;
                     btn.textContent = 'Copied!';
-                    btn.style.background = '#006666';
-                    btn.style.color = '#fff';
-                    setTimeout(() => {
+                    btn.classList.add('bw-code-copy-btn-copied');
+                    setTimeout(function() {
                       btn.textContent = originalText;
-                      btn.style.background = 'rgba(255,255,255,0.12)';
-                      btn.style.color = '#aaa';
+                      btn.classList.remove('bw-code-copy-btn-copied');
                     }, 2000);
                   });
                 }

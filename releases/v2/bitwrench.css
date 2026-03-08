@@ -3710,6 +3710,18 @@ a.bw_list-group-item:focus-visible, .bw_list-group-item:focus-visible {
   transition: all 0.15s;
 }
 
+.bw-code-copy-btn-copied {
+  background: #198754;
+  color: #fff;
+  border-color: #198754;
+}
+
+.bw-bw_code-copy-btn-copied {
+  background: #198754;
+  color: #fff;
+  border-color: #198754;
+}
+
 .bw-btn-group, .bw-btn-group-vertical {
   position: relative;
   display: inline-flex;
