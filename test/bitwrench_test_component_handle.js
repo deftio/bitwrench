@@ -8,16 +8,23 @@ import bw from "../src/bitwrench.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
-// Set up DOM environment
-const dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
-global.window = dom.window;
-global.document = window.document;
-global.Element = window.Element;
-global.HTMLElement = window.HTMLElement;
-
+// Set up DOM environment (recreated in resetApp to survive cross-file clobbering)
 function resetApp() {
-  document.getElementById('app').innerHTML = '';
+  var dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
+  global.window = dom.window;
+  global.document = dom.window.document;
+  global.Element = dom.window.Element;
+  global.HTMLElement = dom.window.HTMLElement;
+  // Clear stale node map refs from previous tests
+  if (bw._nodeMap) {
+    for (var k in bw._nodeMap) {
+      if (Object.prototype.hasOwnProperty.call(bw._nodeMap, k)) {
+        delete bw._nodeMap[k];
+      }
+    }
+  }
 }
+resetApp();
 
 // =============================================================================
 // Function Registry

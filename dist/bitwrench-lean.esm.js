@@ -12,7 +12,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-08T21:11:19.352Z'
+  buildDate: '2026-03-08T23:26:47.130Z'
 };
 
 /**
@@ -103,6 +103,7 @@ function colorParse(s, defAlpha) {
  */
 function colorRgbToHsl(r, g, b, a, rnd) {
   if (a === undefined) a = 255;
+  if (rnd === undefined) rnd = true;
   if (Array.isArray(r)) {
     g = r[1]; b = r[2]; a = r[3] !== undefined ? r[3] : 255; r = r[0];
   }
@@ -131,6 +132,13 @@ function colorRgbToHsl(r, g, b, a, rnd) {
   h *= 360;
   s *= 100;
   l *= 100;
+
+  if (rnd) {
+    h = Math.round(h);
+    s = Math.round(s);
+    l = Math.round(l);
+    a = Math.round(a);
+  }
 
   return [h, s, l, a, "hsl"];
 }
@@ -198,7 +206,7 @@ function colorHslToRgb(h, s, l, a, rnd) {
  */
 function hexToHsl(hex) {
   var rgb = colorParse(hex);
-  var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255);
+  var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255, false);
   return [hsl[0], hsl[1], hsl[2]];
 }
 
@@ -5753,187 +5761,10 @@ bw.colorInterp = function(x, in0, in1, colors, stretch) {
   return [interp(0), interp(1), interp(2), interp(3), "rgb"];
 };
 
-/**
- * Convert an HSL color to RGB.
- *
- * Accepts individual h, s, l values or a bitwrench color array [h, s, l, a, "hsl"].
- *
- * @param {number|Array} h - Hue [0..360] or [h,s,l,a,"hsl"] array
- * @param {number} s - Saturation [0..100]
- * @param {number} l - Lightness [0..100]
- * @param {number} [a=255] - Alpha [0..255]
- * @param {boolean} [rnd=true] - Round results to integers
- * @returns {Array} RGB as [r, g, b, a, "rgb"]
- * @category Color
- * @see bw.colorRgbToHsl
- * @example
- * bw.colorHslToRgb(0, 100, 50)    // => [255, 0, 0, 255, "rgb"]
- * bw.colorHslToRgb(120, 100, 50)  // => [0, 255, 0, 255, "rgb"]
- */
-bw.colorHslToRgb = function(h, s, l, a = 255, rnd = true) {
-  if (bw.typeOf(h) === "array") {
-    s = h[1]; l = h[2]; a = h[3]; h = h[0];
-  }
-  
-  const hNorm = h / 360;
-  const sNorm = s / 100;
-  const lNorm = l / 100;
-  
-  let r, g, b;
-  
-  if (sNorm === 0) {
-    r = g = b = lNorm * 255;
-  } else {
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-      return p;
-    };
-    
-    const q = lNorm < 0.5 ? lNorm * (1 + sNorm) : lNorm + sNorm - lNorm * sNorm;
-    const p = 2 * lNorm - q;
-    
-    r = hue2rgb(p, q, hNorm + 1/3) * 255;
-    g = hue2rgb(p, q, hNorm) * 255;
-    b = hue2rgb(p, q, hNorm - 1/3) * 255;
-  }
-  
-  if (rnd) {
-    r = Math.round(r);
-    g = Math.round(g);
-    b = Math.round(b);
-    a = Math.round(a);
-  }
-  
-  return [r, g, b, a, "rgb"];
-};
-
-/**
- * Convert an RGB color to HSL.
- *
- * Accepts individual r, g, b values or a bitwrench color array [r, g, b, a, "rgb"].
- *
- * @param {number|Array} r - Red [0..255] or [r,g,b,a,"rgb"] array
- * @param {number} g - Green [0..255]
- * @param {number} b - Blue [0..255]
- * @param {number} [a=255] - Alpha [0..255]
- * @param {boolean} [rnd=true] - Round results to integers
- * @returns {Array} HSL as [h, s, l, a, "hsl"]
- * @category Color
- * @see bw.colorHslToRgb
- * @example
- * bw.colorRgbToHsl(255, 0, 0)   // => [0, 100, 50, 255, "hsl"]
- * bw.colorRgbToHsl(0, 0, 255)   // => [240, 100, 50, 255, "hsl"]
- */
-bw.colorRgbToHsl = function(r, g, b, a = 255, rnd = true) {
-  if (bw.typeOf(r) === "array") {
-    g = r[1]; b = r[2]; a = r[3]; r = r[0];
-  }
-  
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
-  
-  if (max === min) {
-    h = s = 0; // achromatic
-  } else {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    
-    switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-      case g: h = ((b - r) / d + 2) / 6; break;
-      case b: h = ((r - g) / d + 4) / 6; break;
-    }
-  }
-  
-  h *= 360;
-  s *= 100;
-  l *= 100;
-  
-  if (rnd) {
-    h = Math.round(h);
-    s = Math.round(s);
-    l = Math.round(l);
-    a = Math.round(a);
-  }
-  
-  return [h, s, l, a, "hsl"];
-};
-
-/**
- * Parse a CSS color string into bitwrench's internal array format.
- *
- * Supports hex (#rgb, #rrggbb, #rrggbbaa), rgb(), rgba(), hsl(), and hsla().
- * Also accepts existing bitwrench color arrays (pass-through).
- *
- * @param {string|Array} s - CSS color string (e.g. "#ff0000", "rgb(255,0,0)") or color array
- * @param {number} [defAlpha=255] - Default alpha value
- * @returns {Array} Color as [c0, c1, c2, a, "rgb"|"hsl"]
- * @category Color
- * @see bw.colorInterp
- * @example
- * bw.colorParse('#ff0000')        // => [255, 0, 0, 255, "rgb"]
- * bw.colorParse('rgb(0,128,255)') // => [0, 128, 255, 255, "rgb"]
- */
-bw.colorParse = function(s, defAlpha = 255) {
-  let r = [0, 0, 0, defAlpha, "rgb"]; // default return
-  
-  if (bw.typeOf(s) === "array") {
-    // Handle bitwrench color array
-    const df = [0, 0, 0, 255, "rgb"];
-    for (let p = 0; p < s.length && p < df.length; p++) {
-      df[p] = s[p];
-    }
-    return df;
-  }
-  
-  s = String(s).replace(/\s/g, "");
-  
-  // Handle hex colors
-  if (s[0] === "#") {
-    const hex = s.slice(1);
-    if (hex.length === 3 || hex.length === 4) {
-      // #rgb or #rgba
-      for (let i = 0; i < hex.length; i++) {
-        r[i] = parseInt(hex[i] + hex[i], 16);
-      }
-    } else if (hex.length === 6 || hex.length === 8) {
-      // #rrggbb or #rrggbbaa
-      for (let i = 0; i < hex.length; i += 2) {
-        r[i / 2] = parseInt(hex.substring(i, i + 2), 16);
-      }
-    }
-  } else {
-    // Handle rgb() rgba() hsl() hsla()
-    const match = s.match(/^(rgb|hsl)a?\(([^)]+)\)$/i);
-    if (match) {
-      const type = match[1].toLowerCase();
-      const values = match[2].split(",").map(v => parseFloat(v));
-      
-      if (type === "rgb") {
-        r[0] = values[0] || 0;
-        r[1] = values[1] || 0;
-        r[2] = values[2] || 0;
-        r[3] = values[3] !== undefined ? values[3] * 255 : defAlpha;
-        r[4] = "rgb";
-      } else if (type === "hsl") {
-        const rgb = bw.colorHslToRgb(values[0] || 0, values[1] || 0, values[2] || 0, 
-                                      values[3] !== undefined ? values[3] * 255 : defAlpha);
-        return rgb;
-      }
-    }
-  }
-  
-  return r;
-};
+// Color conversion functions — imported from bitwrench-color-utils.js (single source of truth)
+bw.colorHslToRgb = colorHslToRgb;
+bw.colorRgbToHsl = colorRgbToHsl;
+bw.colorParse = colorParse;
 
 /**
  * Set a browser cookie with expiration and options.
@@ -7374,49 +7205,16 @@ Object.entries(components).forEach(([name, fn]) => {
   }
 });
 
-// Register component handles
-bw._componentHandles = componentHandles || {};
-
-// Create functions that return handles
+// Create functions that return handles (plain renderComponent, no Handle overlay)
 Object.entries(components).forEach(([name, fn]) => {
   if (name.startsWith('make')) {
-    const componentType = name.substring(4).toLowerCase(); // Remove 'make' prefix
     const createName = 'create' + name.substring(4); // createCard, createTable, etc.
-    
     bw[createName] = function(props) {
       const taco = fn(props);
-      const handle = bw.renderComponent(taco);
-      
-      // Use specialized handle class if available
-      const HandleClass = bw._componentHandles[componentType];
-      if (HandleClass) {
-        const specializedHandle = new HandleClass(handle.element, taco);
-        // Copy base handle properties
-        Object.setPrototypeOf(specializedHandle, handle);
-        return specializedHandle;
-      }
-      
-      return handle;
+      return bw.renderComponent(taco);
     };
   }
 });
-
-// Manual registration for functions defined in this file
-// createTable
-bw.createTable = function(data, options = {}) {
-  const taco = bw.makeTable({ data, ...options });
-  const handle = bw.renderComponent(taco);
-  
-  // Use specialized TableHandle
-  const TableHandle = bw._componentHandles.table;
-  if (TableHandle) {
-    const specializedHandle = new TableHandle(handle.element, taco);
-    Object.setPrototypeOf(specializedHandle, handle);
-    return specializedHandle;
-  }
-  
-  return handle;
-};
 
 // Also attach to global in browsers
 if (bw._isBrowser && typeof window !== 'undefined') {

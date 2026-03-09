@@ -18,7 +18,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-08T21:11:19.352Z'
+    buildDate: '2026-03-08T23:26:47.130Z'
   };
 
   /**
@@ -109,6 +109,7 @@
    */
   function colorRgbToHsl(r, g, b, a, rnd) {
     if (a === undefined) a = 255;
+    if (rnd === undefined) rnd = true;
     if (Array.isArray(r)) {
       g = r[1]; b = r[2]; a = r[3] !== undefined ? r[3] : 255; r = r[0];
     }
@@ -137,6 +138,13 @@
     h *= 360;
     s *= 100;
     l *= 100;
+
+    if (rnd) {
+      h = Math.round(h);
+      s = Math.round(s);
+      l = Math.round(l);
+      a = Math.round(a);
+    }
 
     return [h, s, l, a, "hsl"];
   }
@@ -204,7 +212,7 @@
    */
   function hexToHsl(hex) {
     var rgb = colorParse(hex);
-    var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255);
+    var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255, false);
     return [hsl[0], hsl[1], hsl[2]];
   }
 
@@ -3889,317 +3897,9 @@
   // full re-renders. Used by bw.createCard(), bw.createTable(), etc.
   // =========================================================================
 
-  /**
-   * Imperative handle for a rendered card component
-   *
-   * Provides methods to update card title, content, and CSS classes
-   * without re-rendering the entire component. Created automatically
-   * when using bw.createCard().
-   *
-   * @category Component Handles
-   */
-  class CardHandle {
-    /**
-     * @param {Element} element - The card's root DOM element
-     * @param {Object} taco - The original TACO object used to create the card
-     */
-    constructor(element, taco) {
-      this.element = element;
-      this._taco = taco;
-      this.state = taco.o?.state || {};
-
-      // Cache child elements
-      this.children = {
-        header: element.querySelector('.bw-card-header'),
-        title: element.querySelector('.bw-card-title'),
-        body: element.querySelector('.bw-card-body'),
-        footer: element.querySelector('.bw-card-footer')
-      };
-    }
-
-    /**
-     * Update the card title text
-     *
-     * @param {string} title - New title text
-     * @returns {CardHandle} this (for chaining)
-     */
-    setTitle(title) {
-      if (this.children.title) {
-        this.children.title.textContent = title;
-      }
-      return this;
-    }
-
-    /**
-     * Replace the card body content
-     *
-     * @param {string|Object} content - New content (string or TACO object)
-     * @returns {CardHandle} this (for chaining)
-     */
-    setContent(content) {
-      if (this.children.body) {
-        if (typeof content === 'string') {
-          this.children.body.textContent = content;
-        } else {
-          // Re-render content
-          this.children.body.innerHTML = '';
-          const newContent = window.bw.taco.toDOM(content);
-          this.children.body.appendChild(newContent);
-        }
-      }
-      return this;
-    }
-
-    /**
-     * Add a CSS class to the card root element
-     *
-     * @param {string} className - Class to add
-     * @returns {CardHandle} this (for chaining)
-     */
-    addClass(className) {
-      this.element.classList.add(className);
-      return this;
-    }
-
-    /**
-     * Remove a CSS class from the card root element
-     *
-     * @param {string} className - Class to remove
-     * @returns {CardHandle} this (for chaining)
-     */
-    removeClass(className) {
-      this.element.classList.remove(className);
-      return this;
-    }
-
-    /**
-     * Query a child element within the card
-     *
-     * @param {string} selector - CSS selector
-     * @returns {Element|null} Matching element or null
-     */
-    select(selector) {
-      return this.element.querySelector(selector);
-    }
-  }
-
-  /**
-   * Imperative handle for a rendered table component
-   *
-   * Provides methods for data updates and column sorting. Caches
-   * thead/tbody/header references for efficient DOM updates.
-   * Created automatically when using bw.createTable().
-   *
-   * @category Component Handles
-   */
-  class TableHandle {
-    /**
-     * @param {Element} element - The table's root DOM element
-     * @param {Object} taco - The original TACO object used to create the table
-     */
-    constructor(element, taco) {
-      this.element = element;
-      this._taco = taco;
-      this.state = taco.o?.state || {};
-      this._data = this.state.data || [];
-      this._sortColumn = null;
-      this._sortDirection = 'asc';
-
-      // Cache elements
-      this.children = {
-        thead: element.querySelector('thead'),
-        tbody: element.querySelector('tbody'),
-        headers: element.querySelectorAll('th')
-      };
-
-      // Set up sorting if enabled
-      if (this.state.sortable) {
-        this._setupSorting();
-      }
-    }
-
-    /**
-     * Attach click-to-sort handlers on all column headers
-     * @private
-     */
-    _setupSorting() {
-      this.children.headers.forEach((th, index) => {
-        th.style.cursor = 'pointer';
-        th.onclick = () => this.sortBy(th.textContent);
-      });
-    }
-
-    /**
-     * Replace the table data and re-render the body
-     *
-     * @param {Array<Object>} data - Array of row objects
-     * @returns {TableHandle} this (for chaining)
-     */
-    setData(data) {
-      this._data = data;
-      this._renderBody();
-      return this;
-    }
-
-    /**
-     * Sort the table by a column name
-     *
-     * Toggles direction if the same column is sorted again.
-     *
-     * @param {string} column - Column header text to sort by
-     * @param {string} [direction] - Sort direction ("asc" or "desc"); toggles if omitted
-     * @returns {TableHandle} this (for chaining)
-     */
-    sortBy(column, direction) {
-      if (column === this._sortColumn && !direction) {
-        this._sortDirection = this._sortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        this._sortColumn = column;
-        this._sortDirection = direction || 'asc';
-      }
-
-      const columnKey = Object.keys(this._data[0])[
-        Array.from(this.children.headers).findIndex(th => th.textContent === column)
-      ];
-
-      this._data.sort((a, b) => {
-        const aVal = a[columnKey];
-        const bVal = b[columnKey];
-        const result = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-        return this._sortDirection === 'asc' ? result : -result;
-      });
-
-      this._renderBody();
-      return this;
-    }
-
-    /**
-     * Re-render the tbody from current _data
-     * @private
-     */
-    _renderBody() {
-      this.children.tbody.innerHTML = '';
-      this._data.forEach(row => {
-        const tr = document.createElement('tr');
-        Object.values(row).forEach(value => {
-          const td = document.createElement('td');
-          td.textContent = value;
-          tr.appendChild(td);
-        });
-        this.children.tbody.appendChild(tr);
-      });
-    }
-  }
-
-  /**
-   * Imperative handle for a rendered navbar component
-   *
-   * Provides methods to update the active navigation link.
-   * Created automatically when using bw.createNavbar().
-   *
-   * @category Component Handles
-   */
-  class NavbarHandle {
-    /**
-     * @param {Element} element - The navbar's root DOM element
-     * @param {Object} taco - The original TACO object used to create the navbar
-     */
-    constructor(element, taco) {
-      this.element = element;
-      this._taco = taco;
-      this.state = taco.o?.state || {};
-
-      this.children = {
-        brand: element.querySelector('.bw-navbar-brand'),
-        links: element.querySelectorAll('.bw-nav-link')
-      };
-    }
-
-    /**
-     * Set the active navigation link by href
-     *
-     * @param {string} href - The href value of the link to activate
-     * @returns {NavbarHandle} this (for chaining)
-     */
-    setActive(href) {
-      this.children.links.forEach(link => {
-        if (link.getAttribute('href') === href) {
-          link.classList.add('active');
-        } else {
-          link.classList.remove('active');
-        }
-      });
-      return this;
-    }
-  }
-
-  /**
-   * Imperative handle for a rendered tabs component
-   *
-   * Provides programmatic tab switching. Sets up click handlers
-   * on tab buttons and manages active states on both buttons and panes.
-   * Created automatically when using bw.createTabs().
-   *
-   * @category Component Handles
-   */
-  class TabsHandle {
-    /**
-     * @param {Element} element - The tabs container DOM element
-     * @param {Object} taco - The original TACO object used to create the tabs
-     */
-    constructor(element, taco) {
-      this.element = element;
-      this._taco = taco;
-      this.state = taco.o?.state || {};
-
-      this.children = {
-        navItems: element.querySelectorAll('.bw-nav-link'),
-        tabPanes: element.querySelectorAll('.bw-tab-pane')
-      };
-
-      this._setupTabs();
-    }
-
-    /**
-     * Attach click handlers to tab navigation buttons
-     * @private
-     */
-    _setupTabs() {
-      this.children.navItems.forEach((navItem, index) => {
-        navItem.onclick = (e) => {
-          e.preventDefault();
-          this.switchTo(index);
-        };
-      });
-    }
-
-    /**
-     * Programmatically switch to a tab by index
-     *
-     * @param {number} index - Zero-based tab index to activate
-     * @returns {TabsHandle} this (for chaining)
-     */
-    switchTo(index) {
-      this.children.navItems.forEach((item, i) => {
-        if (i === index) {
-          item.classList.add('active');
-        } else {
-          item.classList.remove('active');
-        }
-      });
-
-      this.children.tabPanes.forEach((pane, i) => {
-        if (i === index) {
-          pane.classList.add('active');
-        } else {
-          pane.classList.remove('active');
-        }
-      });
-
-      this.state.activeIndex = index;
-      return this;
-    }
-  }
+  // Handle classes (CardHandle, TableHandle, NavbarHandle, TabsHandle)
+  // removed in v2.0.15 — superseded by ComponentHandle.
+  // See dev/dead-code-elimination-v2.0.15.md for recovery.
 
   /**
    * Create a code demo component for documentation pages
@@ -4626,60 +4326,8 @@
     };
   }
 
-  /**
-   * Imperative handle for a rendered modal component
-   *
-   * Provides `.show()`, `.hide()`, `.toggle()`, and `.destroy()` methods
-   * for controlling the modal programmatically.
-   *
-   * @category Component Handles
-   */
-  class ModalHandle {
-    /**
-     * @param {Element} element - The modal backdrop DOM element
-     * @param {Object} taco - The original TACO object
-     */
-    constructor(element, taco) {
-      this.element = element;
-      this._taco = taco;
-      this._escHandler = null;
-    }
-
-    /** Show the modal */
-    show() {
-      this.element.classList.add('bw-modal-show');
-      document.body.style.overflow = 'hidden';
-      return this;
-    }
-
-    /** Hide the modal */
-    hide() {
-      this.element.classList.remove('bw-modal-show');
-      document.body.style.overflow = '';
-      return this;
-    }
-
-    /** Toggle modal visibility */
-    toggle() {
-      if (this.element.classList.contains('bw-modal-show')) {
-        this.hide();
-      } else {
-        this.show();
-      }
-      return this;
-    }
-
-    /** Remove the modal from DOM and clean up */
-    destroy() {
-      this.hide();
-      if (this._escHandler) {
-        document.removeEventListener('keydown', this._escHandler);
-      }
-      if (this.element.parentNode) {
-        this.element.parentNode.removeChild(this.element);
-      }
-    }
-  }
+  // ModalHandle removed in v2.0.15 — superseded by ComponentHandle.
+  // See dev/dead-code-elimination-v2.0.15.md for recovery.
 
   /**
    * Create a modal dialog overlay
@@ -6227,22 +5875,11 @@
     };
   }
 
-  const componentHandles = {
-    card: CardHandle,
-    table: TableHandle,
-    navbar: NavbarHandle,
-    tabs: TabsHandle,
-    modal: ModalHandle
-  };
+  // componentHandles registry removed in v2.0.15.
+  // See dev/dead-code-elimination-v2.0.15.md for recovery.
 
   var components = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    CardHandle: CardHandle,
-    ModalHandle: ModalHandle,
-    NavbarHandle: NavbarHandle,
-    TableHandle: TableHandle,
-    TabsHandle: TabsHandle,
-    componentHandles: componentHandles,
     makeAccordion: makeAccordion,
     makeAlert: makeAlert,
     makeAvatar: makeAvatar,
@@ -9671,187 +9308,10 @@
     return [interp(0), interp(1), interp(2), interp(3), "rgb"];
   };
 
-  /**
-   * Convert an HSL color to RGB.
-   *
-   * Accepts individual h, s, l values or a bitwrench color array [h, s, l, a, "hsl"].
-   *
-   * @param {number|Array} h - Hue [0..360] or [h,s,l,a,"hsl"] array
-   * @param {number} s - Saturation [0..100]
-   * @param {number} l - Lightness [0..100]
-   * @param {number} [a=255] - Alpha [0..255]
-   * @param {boolean} [rnd=true] - Round results to integers
-   * @returns {Array} RGB as [r, g, b, a, "rgb"]
-   * @category Color
-   * @see bw.colorRgbToHsl
-   * @example
-   * bw.colorHslToRgb(0, 100, 50)    // => [255, 0, 0, 255, "rgb"]
-   * bw.colorHslToRgb(120, 100, 50)  // => [0, 255, 0, 255, "rgb"]
-   */
-  bw.colorHslToRgb = function(h, s, l, a = 255, rnd = true) {
-    if (bw.typeOf(h) === "array") {
-      s = h[1]; l = h[2]; a = h[3]; h = h[0];
-    }
-    
-    const hNorm = h / 360;
-    const sNorm = s / 100;
-    const lNorm = l / 100;
-    
-    let r, g, b;
-    
-    if (sNorm === 0) {
-      r = g = b = lNorm * 255;
-    } else {
-      const hue2rgb = (p, q, t) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1/6) return p + (q - p) * 6 * t;
-        if (t < 1/2) return q;
-        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-        return p;
-      };
-      
-      const q = lNorm < 0.5 ? lNorm * (1 + sNorm) : lNorm + sNorm - lNorm * sNorm;
-      const p = 2 * lNorm - q;
-      
-      r = hue2rgb(p, q, hNorm + 1/3) * 255;
-      g = hue2rgb(p, q, hNorm) * 255;
-      b = hue2rgb(p, q, hNorm - 1/3) * 255;
-    }
-    
-    if (rnd) {
-      r = Math.round(r);
-      g = Math.round(g);
-      b = Math.round(b);
-      a = Math.round(a);
-    }
-    
-    return [r, g, b, a, "rgb"];
-  };
-
-  /**
-   * Convert an RGB color to HSL.
-   *
-   * Accepts individual r, g, b values or a bitwrench color array [r, g, b, a, "rgb"].
-   *
-   * @param {number|Array} r - Red [0..255] or [r,g,b,a,"rgb"] array
-   * @param {number} g - Green [0..255]
-   * @param {number} b - Blue [0..255]
-   * @param {number} [a=255] - Alpha [0..255]
-   * @param {boolean} [rnd=true] - Round results to integers
-   * @returns {Array} HSL as [h, s, l, a, "hsl"]
-   * @category Color
-   * @see bw.colorHslToRgb
-   * @example
-   * bw.colorRgbToHsl(255, 0, 0)   // => [0, 100, 50, 255, "hsl"]
-   * bw.colorRgbToHsl(0, 0, 255)   // => [240, 100, 50, 255, "hsl"]
-   */
-  bw.colorRgbToHsl = function(r, g, b, a = 255, rnd = true) {
-    if (bw.typeOf(r) === "array") {
-      g = r[1]; b = r[2]; a = r[3]; r = r[0];
-    }
-    
-    r /= 255;
-    g /= 255;
-    b /= 255;
-    
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
-    
-    if (max === min) {
-      h = s = 0; // achromatic
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-        case g: h = ((b - r) / d + 2) / 6; break;
-        case b: h = ((r - g) / d + 4) / 6; break;
-      }
-    }
-    
-    h *= 360;
-    s *= 100;
-    l *= 100;
-    
-    if (rnd) {
-      h = Math.round(h);
-      s = Math.round(s);
-      l = Math.round(l);
-      a = Math.round(a);
-    }
-    
-    return [h, s, l, a, "hsl"];
-  };
-
-  /**
-   * Parse a CSS color string into bitwrench's internal array format.
-   *
-   * Supports hex (#rgb, #rrggbb, #rrggbbaa), rgb(), rgba(), hsl(), and hsla().
-   * Also accepts existing bitwrench color arrays (pass-through).
-   *
-   * @param {string|Array} s - CSS color string (e.g. "#ff0000", "rgb(255,0,0)") or color array
-   * @param {number} [defAlpha=255] - Default alpha value
-   * @returns {Array} Color as [c0, c1, c2, a, "rgb"|"hsl"]
-   * @category Color
-   * @see bw.colorInterp
-   * @example
-   * bw.colorParse('#ff0000')        // => [255, 0, 0, 255, "rgb"]
-   * bw.colorParse('rgb(0,128,255)') // => [0, 128, 255, 255, "rgb"]
-   */
-  bw.colorParse = function(s, defAlpha = 255) {
-    let r = [0, 0, 0, defAlpha, "rgb"]; // default return
-    
-    if (bw.typeOf(s) === "array") {
-      // Handle bitwrench color array
-      const df = [0, 0, 0, 255, "rgb"];
-      for (let p = 0; p < s.length && p < df.length; p++) {
-        df[p] = s[p];
-      }
-      return df;
-    }
-    
-    s = String(s).replace(/\s/g, "");
-    
-    // Handle hex colors
-    if (s[0] === "#") {
-      const hex = s.slice(1);
-      if (hex.length === 3 || hex.length === 4) {
-        // #rgb or #rgba
-        for (let i = 0; i < hex.length; i++) {
-          r[i] = parseInt(hex[i] + hex[i], 16);
-        }
-      } else if (hex.length === 6 || hex.length === 8) {
-        // #rrggbb or #rrggbbaa
-        for (let i = 0; i < hex.length; i += 2) {
-          r[i / 2] = parseInt(hex.substring(i, i + 2), 16);
-        }
-      }
-    } else {
-      // Handle rgb() rgba() hsl() hsla()
-      const match = s.match(/^(rgb|hsl)a?\(([^)]+)\)$/i);
-      if (match) {
-        const type = match[1].toLowerCase();
-        const values = match[2].split(",").map(v => parseFloat(v));
-        
-        if (type === "rgb") {
-          r[0] = values[0] || 0;
-          r[1] = values[1] || 0;
-          r[2] = values[2] || 0;
-          r[3] = values[3] !== undefined ? values[3] * 255 : defAlpha;
-          r[4] = "rgb";
-        } else if (type === "hsl") {
-          const rgb = bw.colorHslToRgb(values[0] || 0, values[1] || 0, values[2] || 0, 
-                                        values[3] !== undefined ? values[3] * 255 : defAlpha);
-          return rgb;
-        }
-      }
-    }
-    
-    return r;
-  };
+  // Color conversion functions — imported from bitwrench-color-utils.js (single source of truth)
+  bw.colorHslToRgb = colorHslToRgb;
+  bw.colorRgbToHsl = colorRgbToHsl;
+  bw.colorParse = colorParse;
 
   /**
    * Set a browser cookie with expiration and options.
@@ -11292,49 +10752,16 @@
     }
   });
 
-  // Register component handles
-  bw._componentHandles = componentHandles || {};
-
-  // Create functions that return handles
+  // Create functions that return handles (plain renderComponent, no Handle overlay)
   Object.entries(components).forEach(([name, fn]) => {
     if (name.startsWith('make')) {
-      const componentType = name.substring(4).toLowerCase(); // Remove 'make' prefix
       const createName = 'create' + name.substring(4); // createCard, createTable, etc.
-      
       bw[createName] = function(props) {
         const taco = fn(props);
-        const handle = bw.renderComponent(taco);
-        
-        // Use specialized handle class if available
-        const HandleClass = bw._componentHandles[componentType];
-        if (HandleClass) {
-          const specializedHandle = new HandleClass(handle.element, taco);
-          // Copy base handle properties
-          Object.setPrototypeOf(specializedHandle, handle);
-          return specializedHandle;
-        }
-        
-        return handle;
+        return bw.renderComponent(taco);
       };
     }
   });
-
-  // Manual registration for functions defined in this file
-  // createTable
-  bw.createTable = function(data, options = {}) {
-    const taco = bw.makeTable({ data, ...options });
-    const handle = bw.renderComponent(taco);
-    
-    // Use specialized TableHandle
-    const TableHandle = bw._componentHandles.table;
-    if (TableHandle) {
-      const specializedHandle = new TableHandle(handle.element, taco);
-      Object.setPrototypeOf(specializedHandle, handle);
-      return specializedHandle;
-    }
-    
-    return handle;
-  };
 
   // Also attach to global in browsers
   if (bw._isBrowser && typeof window !== 'undefined') {

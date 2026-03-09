@@ -9,7 +9,7 @@ import bw from "../src/bitwrench.js";
 import {
   makePagination, makeRadio, makeButtonGroup, makeAccordion,
   makeModal, makeToast, makeDropdown, makeSwitch, makeSkeleton,
-  makeAvatar, ModalHandle
+  makeAvatar
 } from "../src/bitwrench-components-v2.js";
 import { defaultStyles, getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, resolveLayout } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
@@ -266,34 +266,6 @@ describe('makeModal', function() {
 
   it('should be available on bw object', function() {
     assert.strictEqual(typeof bw.makeModal, 'function');
-  });
-});
-
-describe('ModalHandle', function() {
-  it('should have show, hide, toggle, destroy methods', function() {
-    const dom = freshDOM();
-    const el = document.createElement('div');
-    el.classList.add('bw-modal');
-    const handle = new ModalHandle(el, {});
-    assert.strictEqual(typeof handle.show, 'function');
-    assert.strictEqual(typeof handle.hide, 'function');
-    assert.strictEqual(typeof handle.toggle, 'function');
-    assert.strictEqual(typeof handle.destroy, 'function');
-  });
-
-  it('should toggle bw-modal-show class', function() {
-    const dom = freshDOM();
-    const el = document.createElement('div');
-    el.classList.add('bw-modal');
-    document.body.appendChild(el);
-    const handle = new ModalHandle(el, {});
-
-    handle.show();
-    assert.ok(el.classList.contains('bw-modal-show'));
-    handle.hide();
-    assert.ok(!el.classList.contains('bw-modal-show'));
-    handle.toggle();
-    assert.ok(el.classList.contains('bw-modal-show'));
   });
 });
 
@@ -626,15 +598,7 @@ describe('Component CSS', function() {
   });
 });
 
-// =========================================================================
-// componentHandles registry
-// =========================================================================
-
-describe('componentHandles', function() {
-  it('should include modal handle', function() {
-    assert.ok(bw._componentHandles.modal, 'modal handle missing from registry');
-  });
-});
+// componentHandles registry removed in v2.0.15 (dead code elimination)
 
 // =========================================================================
 // String shorthand support
