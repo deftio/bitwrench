@@ -10,7 +10,7 @@ import {
   makePagination, makeRadio, makeButtonGroup, makeAccordion,
   makeModal, makeToast, makeDropdown, makeSwitch, makeSkeleton,
   makeAvatar
-} from "../src/bitwrench-components-v2.js";
+} from "../src/bitwrench-bccl.js";
 import { defaultStyles, getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, resolveLayout } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
@@ -47,24 +47,24 @@ describe('makePagination', function() {
     const result = makePagination({ pages: 5, currentPage: 3 });
     const items = result.c.c;
     // items[3] is page 3 (index 0=prev, 1=page1, 2=page2, 3=page3)
-    assert.ok(items[3].a.class.includes('bw-active'));
+    assert.ok(items[3].a.class.includes('bw_active'));
   });
 
   it('should disable previous on first page', function() {
     const result = makePagination({ pages: 5, currentPage: 1 });
     const items = result.c.c;
-    assert.ok(items[0].a.class.includes('bw-disabled'));
+    assert.ok(items[0].a.class.includes('bw_disabled'));
   });
 
   it('should disable next on last page', function() {
     const result = makePagination({ pages: 5, currentPage: 5 });
     const items = result.c.c;
-    assert.ok(items[items.length - 1].a.class.includes('bw-disabled'));
+    assert.ok(items[items.length - 1].a.class.includes('bw_disabled'));
   });
 
   it('should accept size prop', function() {
     const result = makePagination({ pages: 3, currentPage: 1, size: 'sm' });
-    assert.ok(result.c.a.class.includes('bw-pagination-sm'));
+    assert.ok(result.c.a.class.includes('bw_pagination_sm'));
   });
 
   it('should accept className prop', function() {
@@ -84,10 +84,10 @@ describe('makePagination', function() {
 });
 
 describe('makeRadio', function() {
-  it('should return a TACO with div tag and bw-form-check class', function() {
+  it('should return a TACO with div tag and bw_form_check class', function() {
     const result = makeRadio({ label: 'Option A', name: 'choice', value: 'a' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-form-check'));
+    assert.ok(result.a.class.includes('bw_form_check'));
   });
 
   it('should create radio input with correct type', function() {
@@ -122,21 +122,21 @@ describe('makeRadio', function() {
 });
 
 describe('makeButtonGroup', function() {
-  it('should return a TACO with bw-btn-group class', function() {
+  it('should return a TACO with bw_btn_group class', function() {
     const result = makeButtonGroup({ children: [] });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-btn-group'));
+    assert.ok(result.a.class.includes('bw_btn_group'));
     assert.strictEqual(result.a.role, 'group');
   });
 
   it('should use vertical class when vertical=true', function() {
     const result = makeButtonGroup({ vertical: true });
-    assert.ok(result.a.class.includes('bw-btn-group-vertical'));
+    assert.ok(result.a.class.includes('bw_btn_group_vertical'));
   });
 
   it('should accept size prop', function() {
     const result = makeButtonGroup({ size: 'lg' });
-    assert.ok(result.a.class.includes('bw-btn-group-lg'));
+    assert.ok(result.a.class.includes('bw_btn_group_lg'));
   });
 
   it('should pass children through', function() {
@@ -161,10 +161,10 @@ describe('makeAccordion', function() {
     { title: 'Section 3', content: 'Content 3' }
   ];
 
-  it('should return a TACO with bw-accordion class', function() {
+  it('should return a TACO with bw_accordion class', function() {
     const result = makeAccordion({ items });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-accordion'));
+    assert.ok(result.a.class.includes('bw_accordion'));
   });
 
   it('should create correct number of accordion items', function() {
@@ -172,16 +172,16 @@ describe('makeAccordion', function() {
     assert.strictEqual(result.c.length, 3);
   });
 
-  it('should mark open items with bw-collapse-show', function() {
+  it('should mark open items with bw_collapse_show', function() {
     const result = makeAccordion({ items });
     const firstCollapse = result.c[0].c[1]; // second child of first item
-    assert.ok(firstCollapse.a.class.includes('bw-collapse-show'));
+    assert.ok(firstCollapse.a.class.includes('bw_collapse_show'));
   });
 
-  it('should mark closed items without bw-collapse-show', function() {
+  it('should mark closed items without bw_collapse_show', function() {
     const result = makeAccordion({ items });
     const secondCollapse = result.c[1].c[1];
-    assert.ok(!secondCollapse.a.class.includes('bw-collapse-show'));
+    assert.ok(!secondCollapse.a.class.includes('bw_collapse_show'));
   });
 
   it('should set aria-expanded on buttons', function() {
@@ -192,10 +192,10 @@ describe('makeAccordion', function() {
     assert.strictEqual(closedBtn.a['aria-expanded'], 'false');
   });
 
-  it('should add bw-collapsed class to closed items', function() {
+  it('should add bw_collapsed class to closed items', function() {
     const result = makeAccordion({ items });
     const closedBtn = result.c[1].c[0].c;
-    assert.ok(closedBtn.a.class.includes('bw-collapsed'));
+    assert.ok(closedBtn.a.class.includes('bw_collapsed'));
   });
 
   it('should have type accordion in options', function() {
@@ -214,21 +214,21 @@ describe('makeAccordion', function() {
 });
 
 describe('makeModal', function() {
-  it('should return a TACO with bw-modal class', function() {
+  it('should return a TACO with bw_modal class', function() {
     const result = makeModal({ title: 'Test', content: 'Body' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-modal'));
+    assert.ok(result.a.class.includes('bw_modal'));
   });
 
   it('should have modal-dialog inside', function() {
     const result = makeModal({ title: 'Test', content: 'Body' });
-    assert.ok(result.c.a.class.includes('bw-modal-dialog'));
+    assert.ok(result.c.a.class.includes('bw_modal_dialog'));
   });
 
   it('should render title in header', function() {
     const result = makeModal({ title: 'My Title', content: 'Body' });
     const header = result.c.c.c[0]; // dialog > content > first child
-    assert.ok(header.a.class.includes('bw-modal-header'));
+    assert.ok(header.a.class.includes('bw_modal_header'));
     const title = header.c[0];
     assert.strictEqual(title.c, 'My Title');
   });
@@ -237,7 +237,7 @@ describe('makeModal', function() {
     const result = makeModal({ title: 'Test', content: 'Body' });
     const header = result.c.c.c[0];
     const closeBtn = header.c[1];
-    assert.ok(closeBtn.a.class.includes('bw-close'));
+    assert.ok(closeBtn.a.class.includes('bw_close'));
   });
 
   it('should not render close button when closeButton=false', function() {
@@ -248,14 +248,14 @@ describe('makeModal', function() {
 
   it('should apply size class', function() {
     const result = makeModal({ content: 'Body', size: 'lg' });
-    assert.ok(result.c.a.class.includes('bw-modal-lg'));
+    assert.ok(result.c.a.class.includes('bw_modal_lg'));
   });
 
   it('should render footer when provided', function() {
     const result = makeModal({ content: 'Body', footer: 'Footer text' });
     const content = result.c.c;
     const footer = content.c[content.c.length - 1];
-    assert.ok(footer.a.class.includes('bw-modal-footer'));
+    assert.ok(footer.a.class.includes('bw_modal_footer'));
   });
 
   it('should have mounted and unmount lifecycle hooks', function() {
@@ -270,32 +270,32 @@ describe('makeModal', function() {
 });
 
 describe('makeToast', function() {
-  it('should return a TACO with bw-toast class', function() {
+  it('should return a TACO with bw_toast class', function() {
     const result = makeToast({ title: 'Hello', content: 'World' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-toast'));
+    assert.ok(result.a.class.includes('bw_toast'));
   });
 
   it('should apply variant class', function() {
     const result = makeToast({ variant: 'success' });
-    assert.ok(result.a.class.includes('bw-toast-success'));
+    assert.ok(result.a.class.includes('bw_border_success'), 'toast should have bw_border_success utility class');
   });
 
   it('should default to info variant', function() {
     const result = makeToast({});
-    assert.ok(result.a.class.includes('bw-toast-info'));
+    assert.ok(result.a.class.includes('bw_border_info'), 'toast should default to bw_border_info utility class');
   });
 
   it('should render header when title is provided', function() {
     const result = makeToast({ title: 'Notice' });
     const header = result.c[0];
-    assert.ok(header.a.class.includes('bw-toast-header'));
+    assert.ok(header.a.class.includes('bw_toast_header'));
   });
 
   it('should render body when content is provided', function() {
     const result = makeToast({ content: 'Message text' });
     // With no title, content is the first child after filter
-    const body = result.c.find(c => c && c.a && c.a.class && c.a.class.includes('bw-toast-body'));
+    const body = result.c.find(c => c && c.a && c.a.class && c.a.class.includes('bw_toast_body'));
     assert.ok(body);
     assert.strictEqual(body.c, 'Message text');
   });
@@ -320,17 +320,17 @@ describe('makeToast', function() {
 // =========================================================================
 
 describe('makeDropdown', function() {
-  it('should return a TACO with bw-dropdown class', function() {
+  it('should return a TACO with bw_dropdown class', function() {
     const result = makeDropdown({ trigger: 'Menu', items: [] });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-dropdown'));
+    assert.ok(result.a.class.includes('bw_dropdown'));
   });
 
   it('should create trigger button from string', function() {
     const result = makeDropdown({ trigger: 'Actions' });
     const trigger = result.c[0];
     assert.strictEqual(trigger.t, 'button');
-    assert.ok(trigger.a.class.includes('bw-dropdown-toggle'));
+    assert.ok(trigger.a.class.includes('bw_dropdown_toggle'));
     assert.strictEqual(trigger.c, 'Actions');
   });
 
@@ -343,7 +343,7 @@ describe('makeDropdown', function() {
       ]
     });
     const menu = result.c[1];
-    assert.ok(menu.a.class.includes('bw-dropdown-menu'));
+    assert.ok(menu.a.class.includes('bw_dropdown_menu'));
     assert.strictEqual(menu.c.length, 2);
   });
 
@@ -354,13 +354,13 @@ describe('makeDropdown', function() {
     });
     const menu = result.c[1];
     assert.strictEqual(menu.c[1].t, 'hr');
-    assert.ok(menu.c[1].a.class.includes('bw-dropdown-divider'));
+    assert.ok(menu.c[1].a.class.includes('bw_dropdown_divider'));
   });
 
   it('should apply align=end class', function() {
     const result = makeDropdown({ trigger: 'Menu', items: [], align: 'end' });
     const menu = result.c[1];
-    assert.ok(menu.a.class.includes('bw-dropdown-menu-end'));
+    assert.ok(menu.a.class.includes('bw_dropdown_menu_end'));
   });
 
   it('should apply disabled class to disabled items', function() {
@@ -384,10 +384,10 @@ describe('makeDropdown', function() {
 });
 
 describe('makeSwitch', function() {
-  it('should return a TACO with bw-form-switch class', function() {
+  it('should return a TACO with bw_form_switch class', function() {
     const result = makeSwitch({ label: 'Dark mode' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw-form-switch'));
+    assert.ok(result.a.class.includes('bw_form_switch'));
   });
 
   it('should create checkbox input with switch role', function() {
@@ -395,7 +395,7 @@ describe('makeSwitch', function() {
     const input = result.c[0];
     assert.strictEqual(input.a.type, 'checkbox');
     assert.strictEqual(input.a.role, 'switch');
-    assert.ok(input.a.class.includes('bw-switch-input'));
+    assert.ok(input.a.class.includes('bw_switch_input'));
   });
 
   it('should include label when provided', function() {
@@ -424,17 +424,17 @@ describe('makeSwitch', function() {
 describe('makeSkeleton', function() {
   it('should default to text variant', function() {
     const result = makeSkeleton();
-    assert.ok(result.a.class.includes('bw-skeleton-text'));
+    assert.ok(result.a.class.includes('bw_skeleton_text'));
   });
 
   it('should create circle variant', function() {
     const result = makeSkeleton({ variant: 'circle' });
-    assert.ok(result.a.class.includes('bw-skeleton-circle'));
+    assert.ok(result.a.class.includes('bw_skeleton_circle'));
   });
 
   it('should create rect variant', function() {
     const result = makeSkeleton({ variant: 'rect' });
-    assert.ok(result.a.class.includes('bw-skeleton-rect'));
+    assert.ok(result.a.class.includes('bw_skeleton_rect'));
   });
 
   it('should accept custom width and height', function() {
@@ -445,7 +445,7 @@ describe('makeSkeleton', function() {
 
   it('should create multiple lines with count', function() {
     const result = makeSkeleton({ count: 3 });
-    assert.ok(result.a.class.includes('bw-skeleton-group'));
+    assert.ok(result.a.class.includes('bw_skeleton_group'));
     assert.strictEqual(result.c.length, 3);
   });
 
@@ -457,7 +457,7 @@ describe('makeSkeleton', function() {
 
   it('should have skeleton animation class', function() {
     const result = makeSkeleton();
-    assert.ok(result.a.class.includes('bw-skeleton'));
+    assert.ok(result.a.class.includes('bw_skeleton'));
   });
 
   it('should be available on bw object', function() {
@@ -481,27 +481,27 @@ describe('makeAvatar', function() {
 
   it('should apply size class', function() {
     const result = makeAvatar({ initials: 'AB', size: 'lg' });
-    assert.ok(result.a.class.includes('bw-avatar-lg'));
+    assert.ok(result.a.class.includes('bw_avatar_lg'));
   });
 
   it('should default to md size', function() {
     const result = makeAvatar({ initials: 'AB' });
-    assert.ok(result.a.class.includes('bw-avatar-md'));
+    assert.ok(result.a.class.includes('bw_avatar_md'));
   });
 
   it('should apply variant class to initials avatar', function() {
     const result = makeAvatar({ initials: 'AB', variant: 'success' });
-    assert.ok(result.a.class.includes('bw-avatar-success'));
+    assert.ok(result.a.class.includes('bw_bg_success'), 'avatar should have bw_bg_success utility class');
   });
 
   it('should default to primary variant', function() {
     const result = makeAvatar({ initials: 'AB' });
-    assert.ok(result.a.class.includes('bw-avatar-primary'));
+    assert.ok(result.a.class.includes('bw_bg_primary'), 'avatar should default to bw_bg_primary utility class');
   });
 
-  it('should have bw-avatar class', function() {
+  it('should have bw_avatar class', function() {
     const result = makeAvatar({ src: '/photo.jpg' });
-    assert.ok(result.a.class.includes('bw-avatar'));
+    assert.ok(result.a.class.includes('bw_avatar'));
   });
 
   it('should be available on bw object', function() {
@@ -537,46 +537,46 @@ describe('Component CSS', function() {
 
   it('getAllStyles should include new component selectors', function() {
     const all = getAllStyles();
-    assert.ok(all['.bw-btn-group, .bw-btn-group-vertical'], 'btn-group missing');
-    assert.ok(all['.bw-accordion'], 'accordion missing');
-    assert.ok(all['.bw-modal'], 'modal missing');
-    assert.ok(all['.bw-toast'], 'toast missing');
-    assert.ok(all['.bw-dropdown'], 'dropdown missing');
-    assert.ok(all['.bw-form-switch'], 'form-switch missing');
-    assert.ok(all['.bw-skeleton'], 'skeleton missing');
-    assert.ok(all['.bw-avatar'], 'avatar missing');
-    assert.ok(all['.bw-stat-card'], 'stat-card missing');
-    assert.ok(all['.bw-tooltip-wrapper'], 'tooltip missing');
-    assert.ok(all['.bw-popover-wrapper'], 'popover missing');
-    assert.ok(all['.bw-search-input'], 'search-input missing');
-    assert.ok(all['.bw-range'], 'range missing');
-    assert.ok(all['.bw-media'], 'media missing');
-    assert.ok(all['.bw-file-upload'], 'file-upload missing');
-    assert.ok(all['.bw-timeline'], 'timeline missing');
-    assert.ok(all['.bw-stepper'], 'stepper missing');
-    assert.ok(all['.bw-chip-input'], 'chip-input missing');
+    assert.ok(all['.bw_btn_group, .bw_btn_group_vertical'], 'btn-group missing');
+    assert.ok(all['.bw_accordion'], 'accordion missing');
+    assert.ok(all['.bw_modal'], 'modal missing');
+    assert.ok(all['.bw_toast'], 'toast missing');
+    assert.ok(all['.bw_dropdown'], 'dropdown missing');
+    assert.ok(all['.bw_form_switch'], 'form-switch missing');
+    assert.ok(all['.bw_skeleton'], 'skeleton missing');
+    assert.ok(all['.bw_avatar'], 'avatar missing');
+    assert.ok(all['.bw_stat_card'], 'stat-card missing');
+    assert.ok(all['.bw_tooltip_wrapper'], 'tooltip missing');
+    assert.ok(all['.bw_popover_wrapper'], 'popover missing');
+    assert.ok(all['.bw_search_input'], 'search-input missing');
+    assert.ok(all['.bw_range'], 'range missing');
+    assert.ok(all['.bw_media'], 'media missing');
+    assert.ok(all['.bw_file_upload'], 'file-upload missing');
+    assert.ok(all['.bw_timeline'], 'timeline missing');
+    assert.ok(all['.bw_stepper'], 'stepper missing');
+    assert.ok(all['.bw_chip_input'], 'chip-input missing');
   });
 
   it('getStructuralStyles should include new component rules', function() {
     const structural = getStructuralStyles();
-    assert.ok(structural['.bw-btn-group, .bw-btn-group-vertical'], 'btn-group structural missing');
-    assert.ok(structural['.bw-accordion'], 'accordion structural missing');
-    assert.ok(structural['.bw-modal'], 'modal structural missing');
-    assert.ok(structural['.bw-toast'], 'toast structural missing');
-    assert.ok(structural['.bw-dropdown'], 'dropdown structural missing');
-    assert.ok(structural['.bw-form-switch'], 'form-switch structural missing');
-    assert.ok(structural['.bw-skeleton'], 'skeleton structural missing');
-    assert.ok(structural['.bw-avatar'], 'avatar structural missing');
-    assert.ok(structural['.bw-stat-card'], 'stat-card structural missing');
-    assert.ok(structural['.bw-tooltip-wrapper'], 'tooltip structural missing');
-    assert.ok(structural['.bw-popover-wrapper'], 'popover structural missing');
-    assert.ok(structural['.bw-search-input'], 'search-input structural missing');
-    assert.ok(structural['.bw-range'], 'range structural missing');
-    assert.ok(structural['.bw-media'], 'media structural missing');
-    assert.ok(structural['.bw-file-upload'], 'file-upload structural missing');
-    assert.ok(structural['.bw-timeline'], 'timeline structural missing');
-    assert.ok(structural['.bw-stepper'], 'stepper structural missing');
-    assert.ok(structural['.bw-chip-input'], 'chip-input structural missing');
+    assert.ok(structural['.bw_btn_group, .bw_btn_group_vertical'], 'btn-group structural missing');
+    assert.ok(structural['.bw_accordion'], 'accordion structural missing');
+    assert.ok(structural['.bw_modal'], 'modal structural missing');
+    assert.ok(structural['.bw_toast'], 'toast structural missing');
+    assert.ok(structural['.bw_dropdown'], 'dropdown structural missing');
+    assert.ok(structural['.bw_form_switch'], 'form-switch structural missing');
+    assert.ok(structural['.bw_skeleton'], 'skeleton structural missing');
+    assert.ok(structural['.bw_avatar'], 'avatar structural missing');
+    assert.ok(structural['.bw_stat_card'], 'stat-card structural missing');
+    assert.ok(structural['.bw_tooltip_wrapper'], 'tooltip structural missing');
+    assert.ok(structural['.bw_popover_wrapper'], 'popover structural missing');
+    assert.ok(structural['.bw_search_input'], 'search-input structural missing');
+    assert.ok(structural['.bw_range'], 'range structural missing');
+    assert.ok(structural['.bw_media'], 'media structural missing');
+    assert.ok(structural['.bw_file_upload'], 'file-upload structural missing');
+    assert.ok(structural['.bw_timeline'], 'timeline structural missing');
+    assert.ok(structural['.bw_stepper'], 'stepper structural missing');
+    assert.ok(structural['.bw_chip_input'], 'chip-input structural missing');
   });
 
   it('getStructuralStyles should include underscore aliases', function() {
@@ -593,8 +593,8 @@ describe('Component CSS', function() {
     const layout = resolveLayout({});
     const altRules = generateAlternateCSS('', altPalette, layout);
     const css = bw.css(altRules);
-    assert.ok(css.includes('.bw-theme-alt'), 'should use .bw-theme-alt scope');
-    assert.ok(css.includes('.bw-btn'), 'should include button rules');
+    assert.ok(css.includes('.bw_theme_alt'), 'should use .bw_theme_alt scope');
+    assert.ok(css.includes('.bw_btn'), 'should include button rules');
   });
 });
 
@@ -609,39 +609,39 @@ describe('String shorthand', function() {
     const btn = bw.makeButton('OK');
     assert.strictEqual(btn.t, 'button');
     assert.strictEqual(btn.c, 'OK');
-    assert.ok(btn.a.class.includes('bw-btn'));
+    assert.ok(btn.a.class.includes('bw_btn'));
   });
 
   it('makeButton string shorthand should default to primary variant', function() {
     const btn = bw.makeButton('Save');
-    assert.ok(btn.a.class.includes('bw-btn-primary'));
+    assert.ok(btn.a.class.includes('bw_bg_primary'), 'button should default to bw_bg_primary utility class');
   });
 
   it('makeBadge should accept string shorthand', function() {
     const badge = bw.makeBadge('New');
     assert.strictEqual(badge.t, 'span');
     assert.strictEqual(badge.c, 'New');
-    assert.ok(badge.a.class.includes('bw-badge'));
+    assert.ok(badge.a.class.includes('bw_badge'));
   });
 
   it('makeAlert should accept string shorthand', function() {
     const alert = bw.makeAlert('Something happened');
     assert.strictEqual(alert.t, 'div');
-    assert.ok(alert.a.class.includes('bw-alert'));
+    assert.ok(alert.a.class.includes('bw_alert'));
     assert.ok(alert.c.some(function(child) { return child === 'Something happened'; }));
   });
 
   it('makeButton object form should still work', function() {
     const btn = bw.makeButton({ text: 'Cancel', variant: 'secondary' });
     assert.strictEqual(btn.c, 'Cancel');
-    assert.ok(btn.a.class.includes('bw-btn-secondary'));
+    assert.ok(btn.a.class.includes('bw_bg_secondary'), 'button should have bw_bg_secondary utility class');
   });
 
   it('makeStatCard should accept string shorthand', function() {
     const stat = bw.makeStatCard('Users');
     assert.strictEqual(stat.t, 'div');
-    assert.ok(stat.a.class.includes('bw-stat-card'));
-    assert.ok(stat.c.some(function(child) { return child.c === 'Users' && child.a.class === 'bw-stat-label'; }));
+    assert.ok(stat.a.class.includes('bw_stat_card'));
+    assert.ok(stat.c.some(function(child) { return child.c === 'Users' && child.a.class === 'bw_stat_label'; }));
   });
 });
 
@@ -653,49 +653,49 @@ describe('makeStatCard', function() {
   it('should create basic stat card with value and label', function() {
     const stat = bw.makeStatCard({ value: 2345, label: 'Active Users' });
     assert.strictEqual(stat.t, 'div');
-    assert.ok(stat.a.class.includes('bw-stat-card'));
-    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw-stat-value'; }));
-    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw-stat-label' && child.c === 'Active Users'; }));
+    assert.ok(stat.a.class.includes('bw_stat_card'));
+    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw_stat_value'; }));
+    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw_stat_label' && child.c === 'Active Users'; }));
   });
 
   it('should support variant for border color', function() {
     const stat = bw.makeStatCard({ value: 100, variant: 'success' });
-    assert.ok(stat.a.class.includes('bw-stat-card-success'));
+    assert.ok(stat.a.class.includes('bw_border_success'), 'stat card should have bw_border_success utility class');
   });
 
   it('should show change indicator with up/down class', function() {
     const up = bw.makeStatCard({ value: 100, change: 5.3 });
-    const changeUp = up.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw-stat-change'); });
+    const changeUp = up.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw_stat_change'); });
     assert.ok(changeUp);
-    assert.ok(changeUp.a.class.includes('bw-stat-change-up'));
+    assert.ok(changeUp.a.class.includes('bw_stat_change_up'));
 
     const down = bw.makeStatCard({ value: 100, change: -2.1 });
-    const changeDown = down.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw-stat-change'); });
+    const changeDown = down.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw_stat_change'); });
     assert.ok(changeDown);
-    assert.ok(changeDown.a.class.includes('bw-stat-change-down'));
+    assert.ok(changeDown.a.class.includes('bw_stat_change_down'));
   });
 
   it('should format currency values', function() {
     const stat = bw.makeStatCard({ value: 45231, format: 'currency' });
-    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw-stat-value'; });
+    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw_stat_value'; });
     assert.ok(valueEl.c.startsWith('$'));
   });
 
   it('should format percent values', function() {
     const stat = bw.makeStatCard({ value: 3.2, format: 'percent' });
-    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw-stat-value'; });
+    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw_stat_value'; });
     assert.ok(valueEl.c.includes('%'));
   });
 
   it('should support custom prefix and suffix', function() {
     const stat = bw.makeStatCard({ value: 42, prefix: 'EUR ', suffix: ' avg' });
-    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw-stat-value'; });
+    const valueEl = stat.c.find(function(child) { return child.a.class === 'bw_stat_value'; });
     assert.strictEqual(valueEl.c, 'EUR 42 avg');
   });
 
   it('should show icon when provided', function() {
     const stat = bw.makeStatCard({ value: 100, icon: '📊' });
-    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw-stat-icon' && child.c === '📊'; }));
+    assert.ok(stat.c.some(function(child) { return child.a.class === 'bw_stat_icon' && child.c === '📊'; }));
   });
 
   it('should set type to stat-card in options', function() {
@@ -712,7 +712,7 @@ describe('makeTooltip', function() {
   it('should create tooltip wrapper with content and tooltip text', function() {
     const tip = bw.makeTooltip({ content: 'Hover me', text: 'Hello' });
     assert.strictEqual(tip.t, 'span');
-    assert.ok(tip.a.class.includes('bw-tooltip-wrapper'));
+    assert.ok(tip.a.class.includes('bw_tooltip_wrapper'));
     assert.strictEqual(tip.c.length, 2);
     assert.strictEqual(tip.c[0], 'Hover me');
     assert.strictEqual(tip.c[1].c, 'Hello');
@@ -720,13 +720,13 @@ describe('makeTooltip', function() {
 
   it('should default to top placement', function() {
     const tip = bw.makeTooltip({ text: 'tip' });
-    assert.ok(tip.c[1].a.class.includes('bw-tooltip-top'));
+    assert.ok(tip.c[1].a.class.includes('bw_tooltip_top'));
   });
 
   it('should support all four placements', function() {
     ['top', 'bottom', 'left', 'right'].forEach(function(p) {
       const tip = bw.makeTooltip({ text: 'tip', placement: p });
-      assert.ok(tip.c[1].a.class.includes('bw-tooltip-' + p));
+      assert.ok(tip.c[1].a.class.includes('bw_tooltip_' + p));
     });
   });
 
@@ -761,31 +761,31 @@ describe('makePopover', function() {
   it('should create popover wrapper with trigger and content', function() {
     const pop = bw.makePopover({ trigger: 'Click', title: 'Title', content: 'Body' });
     assert.strictEqual(pop.t, 'span');
-    assert.ok(pop.a.class.includes('bw-popover-wrapper'));
+    assert.ok(pop.a.class.includes('bw_popover_wrapper'));
     assert.strictEqual(pop.c.length, 2);
     // Trigger wrapper
-    assert.ok(pop.c[0].a.class.includes('bw-popover-trigger'));
+    assert.ok(pop.c[0].a.class.includes('bw_popover_trigger'));
     assert.strictEqual(pop.c[0].c, 'Click');
     // Popover content
-    assert.ok(pop.c[1].a.class.includes('bw-popover'));
+    assert.ok(pop.c[1].a.class.includes('bw_popover'));
   });
 
   it('should include header and body in popover', function() {
     const pop = bw.makePopover({ title: 'T', content: 'C' });
     const popContent = pop.c[1].c;
-    assert.ok(popContent.some(function(child) { return child.a.class === 'bw-popover-header' && child.c === 'T'; }));
-    assert.ok(popContent.some(function(child) { return child.a.class === 'bw-popover-body' && child.c === 'C'; }));
+    assert.ok(popContent.some(function(child) { return child.a.class === 'bw_popover_header' && child.c === 'T'; }));
+    assert.ok(popContent.some(function(child) { return child.a.class === 'bw_popover_body' && child.c === 'C'; }));
   });
 
   it('should default to top placement', function() {
     const pop = bw.makePopover({ content: 'C' });
-    assert.ok(pop.c[1].a.class.includes('bw-popover-top'));
+    assert.ok(pop.c[1].a.class.includes('bw_popover_top'));
   });
 
   it('should support all four placements', function() {
     ['top', 'bottom', 'left', 'right'].forEach(function(p) {
       const pop = bw.makePopover({ content: 'C', placement: p });
-      assert.ok(pop.c[1].a.class.includes('bw-popover-' + p));
+      assert.ok(pop.c[1].a.class.includes('bw_popover_' + p));
     });
   });
 
@@ -803,7 +803,7 @@ describe('makePopover', function() {
   it('should omit header when no title provided', function() {
     const pop = bw.makePopover({ content: 'Body only' });
     const popContent = pop.c[1].c;
-    assert.ok(!popContent.some(function(child) { return child.a && child.a.class === 'bw-popover-header'; }));
+    assert.ok(!popContent.some(function(child) { return child.a && child.a.class === 'bw_popover_header'; }));
   });
 });
 
@@ -812,18 +812,18 @@ describe('makePopover', function() {
 // =========================================================================
 
 describe('Form validation', function() {
-  it('makeFormGroup should add bw-is-valid class to input when validation=valid', function() {
+  it('makeFormGroup should add bw_is_valid class to input when validation=valid', function() {
     const input = bw.makeInput({ id: 'email', type: 'email' });
     const group = bw.makeFormGroup({ label: 'Email', input: input, validation: 'valid', feedback: 'Looks good!' });
     const styledInput = group.c.find(function(child) { return child.t === 'input'; });
-    assert.ok(styledInput.a.class.includes('bw-is-valid'));
+    assert.ok(styledInput.a.class.includes('bw_is_valid'));
   });
 
-  it('makeFormGroup should add bw-is-invalid class to input when validation=invalid', function() {
+  it('makeFormGroup should add bw_is_invalid class to input when validation=invalid', function() {
     const input = bw.makeInput({ id: 'email', type: 'email' });
     const group = bw.makeFormGroup({ label: 'Email', input: input, validation: 'invalid', feedback: 'Invalid email' });
     const styledInput = group.c.find(function(child) { return child.t === 'input'; });
-    assert.ok(styledInput.a.class.includes('bw-is-invalid'));
+    assert.ok(styledInput.a.class.includes('bw_is_invalid'));
   });
 
   it('should not mutate original input TACO', function() {
@@ -839,7 +839,7 @@ describe('Form validation', function() {
       validation: 'valid',
       feedback: 'Looks good!'
     });
-    const fb = group.c.find(function(child) { return child.a && child.a.class === 'bw-valid-feedback'; });
+    const fb = group.c.find(function(child) { return child.a && child.a.class === 'bw_valid_feedback'; });
     assert.ok(fb);
     assert.strictEqual(fb.c, 'Looks good!');
   });
@@ -850,7 +850,7 @@ describe('Form validation', function() {
       validation: 'invalid',
       feedback: 'Required field'
     });
-    const fb = group.c.find(function(child) { return child.a && child.a.class === 'bw-invalid-feedback'; });
+    const fb = group.c.find(function(child) { return child.a && child.a.class === 'bw_invalid_feedback'; });
     assert.ok(fb);
     assert.strictEqual(fb.c, 'Required field');
   });
@@ -860,7 +860,7 @@ describe('Form validation', function() {
       input: bw.makeInput({}),
       feedback: 'Ignored'
     });
-    const fb = group.c.find(function(child) { return child.a && (child.a.class === 'bw-valid-feedback' || child.a.class === 'bw-invalid-feedback'); });
+    const fb = group.c.find(function(child) { return child.a && (child.a.class === 'bw_valid_feedback' || child.a.class === 'bw_invalid_feedback'); });
     assert.ok(!fb);
   });
 
@@ -877,8 +877,8 @@ describe('Form validation', function() {
 
   it('validation CSS classes should exist in structural styles', function() {
     const structural = getStructuralStyles();
-    assert.ok(structural['.bw-valid-feedback'], 'valid-feedback structural missing');
-    assert.ok(structural['.bw-invalid-feedback'], 'invalid-feedback structural missing');
+    assert.ok(structural['.bw_valid_feedback'], 'valid-feedback structural missing');
+    assert.ok(structural['.bw_invalid_feedback'], 'invalid-feedback structural missing');
   });
 });
 
@@ -890,7 +890,7 @@ describe('makeSearchInput', function() {
   it('should create search input wrapper', function() {
     const search = bw.makeSearchInput({});
     assert.strictEqual(search.t, 'div');
-    assert.ok(search.a.class.includes('bw-search-input'));
+    assert.ok(search.a.class.includes('bw_search_input'));
   });
 
   it('should have input with type=search', function() {
@@ -904,7 +904,7 @@ describe('makeSearchInput', function() {
     const search = bw.makeSearchInput({});
     const clearBtn = search.c.find(function(child) { return child.t === 'button'; });
     assert.ok(clearBtn);
-    assert.ok(clearBtn.a.class.includes('bw-search-clear'));
+    assert.ok(clearBtn.a.class.includes('bw_search_clear'));
   });
 
   it('should accept string shorthand', function() {
@@ -927,7 +927,7 @@ describe('makeRange', function() {
   it('should create range wrapper with input', function() {
     const range = bw.makeRange({});
     assert.strictEqual(range.t, 'div');
-    assert.ok(range.a.class.includes('bw-range-wrapper'));
+    assert.ok(range.a.class.includes('bw_range_wrapper'));
     const input = range.c.find(function(child) { return child.t === 'input'; });
     assert.ok(input);
     assert.strictEqual(input.a.type, 'range');
@@ -944,16 +944,16 @@ describe('makeRange', function() {
 
   it('should show label when provided', function() {
     const range = bw.makeRange({ label: 'Volume' });
-    const label = range.c.find(function(child) { return child.a && child.a.class === 'bw-range-label'; });
+    const label = range.c.find(function(child) { return child.a && child.a.class === 'bw_range_label'; });
     assert.ok(label);
     assert.ok(label.c.some(function(child) { return child.c === 'Volume'; }));
   });
 
   it('should show value display when showValue is true', function() {
     const range = bw.makeRange({ showValue: true, value: 42 });
-    const label = range.c.find(function(child) { return child.a && child.a.class === 'bw-range-label'; });
+    const label = range.c.find(function(child) { return child.a && child.a.class === 'bw_range_label'; });
     assert.ok(label);
-    const valueDisplay = label.c.find(function(child) { return child.a && child.a.class === 'bw-range-value'; });
+    const valueDisplay = label.c.find(function(child) { return child.a && child.a.class === 'bw_range_value'; });
     assert.ok(valueDisplay);
     assert.strictEqual(valueDisplay.c, '42');
   });
@@ -972,23 +972,23 @@ describe('makeMediaObject', function() {
   it('should create media object with image and body', function() {
     const media = bw.makeMediaObject({ src: '/photo.jpg', title: 'Jane', content: 'Hello' });
     assert.strictEqual(media.t, 'div');
-    assert.ok(media.a.class.includes('bw-media'));
+    assert.ok(media.a.class.includes('bw_media'));
     assert.strictEqual(media.c.length, 2);
     assert.strictEqual(media.c[0].t, 'img');
-    assert.ok(media.c[1].a.class.includes('bw-media-body'));
+    assert.ok(media.c[1].a.class.includes('bw_media_body'));
   });
 
   it('should support reverse layout', function() {
     const media = bw.makeMediaObject({ src: '/photo.jpg', content: 'Hi', reverse: true });
-    assert.ok(media.a.class.includes('bw-media-reverse'));
+    assert.ok(media.a.class.includes('bw_media_reverse'));
     // Body comes first, image second in reverse
-    assert.ok(media.c[0].a.class.includes('bw-media-body'));
+    assert.ok(media.c[0].a.class.includes('bw_media_body'));
     assert.strictEqual(media.c[1].t, 'img');
   });
 
   it('should render title in body', function() {
     const media = bw.makeMediaObject({ title: 'John Doe', content: 'A message' });
-    const body = media.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw-media-body'); });
+    const body = media.c.find(function(child) { return child.a && child.a.class && child.a.class.includes('bw_media_body'); });
     assert.ok(body);
     assert.ok(body.c.some(function(child) { return child.t === 'h5' && child.c === 'John Doe'; }));
   });
@@ -1012,7 +1012,7 @@ describe('makeFileUpload', function() {
   it('should create file upload zone', function() {
     const upload = bw.makeFileUpload({});
     assert.strictEqual(upload.t, 'div');
-    assert.ok(upload.a.class.includes('bw-file-upload'));
+    assert.ok(upload.a.class.includes('bw_file_upload'));
     assert.strictEqual(upload.a.role, 'button');
   });
 
@@ -1027,14 +1027,14 @@ describe('makeFileUpload', function() {
 
   it('should show custom text', function() {
     const upload = bw.makeFileUpload({ text: 'Upload CSV' });
-    const textEl = upload.c.find(function(child) { return child.a && child.a.class === 'bw-file-upload-text'; });
+    const textEl = upload.c.find(function(child) { return child.a && child.a.class === 'bw_file_upload_text'; });
     assert.ok(textEl);
     assert.strictEqual(textEl.c, 'Upload CSV');
   });
 
   it('should have icon', function() {
     const upload = bw.makeFileUpload({});
-    const icon = upload.c.find(function(child) { return child.a && child.a.class === 'bw-file-upload-icon'; });
+    const icon = upload.c.find(function(child) { return child.a && child.a.class === 'bw_file_upload_icon'; });
     assert.ok(icon);
   });
 
@@ -1062,7 +1062,7 @@ describe('makeTimeline', function() {
   it('should create timeline container', function() {
     const tl = bw.makeTimeline({ items: [] });
     assert.strictEqual(tl.t, 'div');
-    assert.ok(tl.a.class.includes('bw-timeline'));
+    assert.ok(tl.a.class.includes('bw_timeline'));
   });
 
   it('should render items with marker and content', function() {
@@ -1074,29 +1074,29 @@ describe('makeTimeline', function() {
     });
     assert.strictEqual(tl.c.length, 2);
     const first = tl.c[0];
-    assert.ok(first.a.class.includes('bw-timeline-item'));
+    assert.ok(first.a.class.includes('bw_timeline_item'));
     const marker = first.c[0];
-    assert.ok(marker.a.class.includes('bw-timeline-marker'));
+    assert.ok(marker.a.class.includes('bw_timeline_marker'));
     const content = first.c[1];
-    assert.ok(content.a.class.includes('bw-timeline-content'));
+    assert.ok(content.a.class.includes('bw_timeline_content'));
   });
 
   it('should apply variant to marker', function() {
     const tl = bw.makeTimeline({ items: [{ title: 'Done', variant: 'success' }] });
     const marker = tl.c[0].c[0];
-    assert.ok(marker.a.class.includes('bw-timeline-marker-success'));
+    assert.ok(marker.a.class.includes('bw_bg_success'), 'timeline marker should have bw_bg_success utility class');
   });
 
   it('should default variant to primary', function() {
     const tl = bw.makeTimeline({ items: [{ title: 'Event' }] });
     const marker = tl.c[0].c[0];
-    assert.ok(marker.a.class.includes('bw-timeline-marker-primary'));
+    assert.ok(marker.a.class.includes('bw_bg_primary'), 'timeline marker should default to bw_bg_primary utility class');
   });
 
   it('should render date, title, and text content', function() {
     const tl = bw.makeTimeline({ items: [{ title: 'Launch', date: 'Feb', content: 'Details here' }] });
     const contentDiv = tl.c[0].c[1]; // timeline-content
-    const date = contentDiv.c.find(function(c) { return c.a && c.a.class === 'bw-timeline-date'; });
+    const date = contentDiv.c.find(function(c) { return c.a && c.a.class === 'bw_timeline_date'; });
     const title = contentDiv.c.find(function(c) { return c.t === 'h5'; });
     const text = contentDiv.c.find(function(c) { return c.t === 'p'; });
     assert.strictEqual(date.c, 'Feb');
@@ -1125,7 +1125,7 @@ describe('makeStepper', function() {
   it('should create stepper container with role=list', function() {
     const s = bw.makeStepper({ steps: [] });
     assert.strictEqual(s.t, 'div');
-    assert.ok(s.a.class.includes('bw-stepper'));
+    assert.ok(s.a.class.includes('bw_stepper'));
     assert.strictEqual(s.a.role, 'list');
   });
 
@@ -1139,9 +1139,9 @@ describe('makeStepper', function() {
       ]
     });
     assert.strictEqual(s.c.length, 3);
-    assert.ok(s.c[0].a.class.includes('bw-step-completed'));
-    assert.ok(s.c[1].a.class.includes('bw-step-active'));
-    assert.ok(s.c[2].a.class.includes('bw-step-pending'));
+    assert.ok(s.c[0].a.class.includes('bw_step_completed'));
+    assert.ok(s.c[1].a.class.includes('bw_step_active'));
+    assert.ok(s.c[2].a.class.includes('bw_step_pending'));
   });
 
   it('should show checkmark for completed steps', function() {
@@ -1164,7 +1164,7 @@ describe('makeStepper', function() {
   it('should render description when provided', function() {
     const s = bw.makeStepper({ steps: [{ label: 'Setup', description: 'Initial config' }] });
     const body = s.c[0].c[1]; // step-body
-    const desc = body.c.find(function(c) { return c.a && c.a.class === 'bw-step-description'; });
+    const desc = body.c.find(function(c) { return c.a && c.a.class === 'bw_step_description'; });
     assert.ok(desc);
     assert.strictEqual(desc.c, 'Initial config');
   });
@@ -1183,12 +1183,12 @@ describe('makeChipInput', function() {
   it('should create chip input container', function() {
     const ci = bw.makeChipInput({});
     assert.strictEqual(ci.t, 'div');
-    assert.ok(ci.a.class.includes('bw-chip-input'));
+    assert.ok(ci.a.class.includes('bw_chip_input'));
   });
 
   it('should render initial chips', function() {
     const ci = bw.makeChipInput({ chips: ['JS', 'CSS', 'HTML'] });
-    const chips = ci.c.filter(function(c) { return c.t === 'span' && c.a.class === 'bw-chip'; });
+    const chips = ci.c.filter(function(c) { return c.t === 'span' && c.a.class === 'bw_chip'; });
     assert.strictEqual(chips.length, 3);
     assert.strictEqual(chips[0].a['data-chip-value'], 'JS');
   });
@@ -1209,10 +1209,10 @@ describe('makeChipInput', function() {
 
   it('each chip should have remove button', function() {
     const ci = bw.makeChipInput({ chips: ['React'] });
-    const chip = ci.c.find(function(c) { return c.t === 'span' && c.a.class === 'bw-chip'; });
+    const chip = ci.c.find(function(c) { return c.t === 'span' && c.a.class === 'bw_chip'; });
     const removeBtn = chip.c.find(function(c) { return c.t === 'button'; });
     assert.ok(removeBtn);
-    assert.ok(removeBtn.a.class.includes('bw-chip-remove'));
+    assert.ok(removeBtn.a.class.includes('bw_chip_remove'));
     assert.strictEqual(removeBtn.a['aria-label'], 'Remove React');
   });
 
@@ -1253,6 +1253,116 @@ describe('Breadcrumb active state', function() {
 
   it('breadcrumb link styles should exist', function() {
     const all = getAllStyles();
-    assert.ok(all['.bw-breadcrumb-item a'], 'breadcrumb link styles missing');
+    assert.ok(all['.bw_breadcrumb_item a'], 'breadcrumb link styles missing');
+  });
+});
+
+// =========================================================================
+// bw.make() Factory + BCCL Registry + VARIANT_CLASSES
+// =========================================================================
+
+describe('bw.make() factory', function() {
+  it('should create a button via make("button")', function() {
+    const btn = bw.make('button', { text: 'Click' });
+    assert.strictEqual(btn.t, 'button');
+    assert.strictEqual(btn.c, 'Click');
+    assert.ok(btn.a.class.includes('bw_btn'));
+  });
+
+  it('should create a card via make("card")', function() {
+    const card = bw.make('card', { title: 'Title', text: 'Body' });
+    assert.strictEqual(card.t, 'div');
+    assert.ok(card.a.class.includes('bw_card'));
+  });
+
+  it('should create a badge via make("badge")', function() {
+    const badge = bw.make('badge', { text: 'New', variant: 'success' });
+    assert.strictEqual(badge.t, 'span');
+    assert.ok(badge.a.class.includes('bw_badge'));
+    assert.ok(badge.a.class.includes('bw_bg_success'));
+  });
+
+  it('should create an alert via make("alert")', function() {
+    const alert = bw.make('alert', { text: 'Warning!', variant: 'warning' });
+    assert.strictEqual(alert.t, 'div');
+    assert.ok(alert.a.class.includes('bw_alert'));
+  });
+
+  it('should throw for unknown component type', function() {
+    assert.throws(function() { bw.make('nonexistent', {}); }, /unknown component/i);
+  });
+
+  it('should work with empty props', function() {
+    const btn = bw.make('button', {});
+    assert.strictEqual(btn.t, 'button');
+    assert.ok(btn.a.class.includes('bw_btn'));
+  });
+
+  it('should produce same output as direct makeButton', function() {
+    const props = { text: 'Test', variant: 'danger' };
+    const via_make = bw.make('button', props);
+    const via_direct = bw.makeButton(props);
+    assert.strictEqual(via_make.t, via_direct.t);
+    assert.strictEqual(via_make.c, via_direct.c);
+    assert.strictEqual(via_make.a.class, via_direct.a.class);
+  });
+});
+
+describe('bw.BCCL registry', function() {
+  it('should be an object', function() {
+    assert.strictEqual(typeof bw.BCCL, 'object');
+  });
+
+  it('should contain button, card, badge, alert, and other types', function() {
+    assert.ok(bw.BCCL.button, 'BCCL should have button');
+    assert.ok(bw.BCCL.card, 'BCCL should have card');
+    assert.ok(bw.BCCL.badge, 'BCCL should have badge');
+    assert.ok(bw.BCCL.alert, 'BCCL should have alert');
+    assert.ok(bw.BCCL.toast, 'BCCL should have toast');
+    assert.ok(bw.BCCL.tabs, 'BCCL should have tabs');
+  });
+
+  it('each entry should have a make function', function() {
+    Object.keys(bw.BCCL).forEach(function(key) {
+      assert.strictEqual(typeof bw.BCCL[key].make, 'function', key + ' should have make()');
+    });
+  });
+
+  it('should list all available component types via Object.keys', function() {
+    const types = Object.keys(bw.BCCL);
+    assert.ok(types.length >= 20, 'should have at least 20 component types, got ' + types.length);
+  });
+});
+
+describe('VARIANT_CLASSES mapping', function() {
+  it('should be exposed on bw object', function() {
+    assert.strictEqual(typeof bw.VARIANT_CLASSES, 'object');
+  });
+
+  it('button mapping should produce utility classes', function() {
+    const classes = bw.VARIANT_CLASSES.button('primary');
+    assert.ok(classes.includes('bw_bg_primary'), 'should include bw_bg_primary');
+    assert.ok(classes.includes('bw_text_on_primary'), 'should include bw_text_on_primary');
+    assert.ok(classes.includes('bw_border_primary'), 'should include bw_border_primary');
+  });
+
+  it('alert mapping should produce light bg + dark text + subtle border', function() {
+    const classes = bw.VARIANT_CLASSES.alert('warning');
+    assert.ok(classes.includes('bw_bg_warning_light'), 'should include bw_bg_warning_light');
+    assert.ok(classes.includes('bw_text_warning_dark'), 'should include bw_text_warning_dark');
+    assert.ok(classes.includes('bw_border_warning_subtle'), 'should include bw_border_warning_subtle');
+  });
+
+  it('badge mapping should produce bg + textOn classes', function() {
+    const classes = bw.VARIANT_CLASSES.badge('danger');
+    assert.ok(classes.includes('bw_bg_danger'), 'should include bw_bg_danger');
+    assert.ok(classes.includes('bw_text_on_danger'), 'should include bw_text_on_danger');
+  });
+
+  it('buttonOutline mapping should produce outline + border + text classes', function() {
+    const classes = bw.VARIANT_CLASSES.buttonOutline('success');
+    assert.ok(classes.includes('bw_btn_outline'), 'should include bw_btn_outline');
+    assert.ok(classes.includes('bw_border_success'), 'should include bw_border_success');
+    assert.ok(classes.includes('bw_text_success'), 'should include bw_text_success');
   });
 });

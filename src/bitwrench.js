@@ -12,7 +12,7 @@ import { getStructuralStyles, theme, updateTheme,
          generateThemedCSS, generateAlternateCSS, derivePalette as _derivePalette,
          DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS, THEME_PRESETS,
          TYPE_RATIO_PRESETS, ELEVATION_PRESETS, MOTION_PRESETS, generateTypeScale,
-         resolveLayout, addUnderscoreAliases } from './bitwrench-styles.js';
+         resolveLayout } from './bitwrench-styles.js';
 import { hexToHsl, hslToHex, adjustLightness, mixColor,
          relativeLuminance, textOnColor, deriveShades,
          derivePalette, harmonize, deriveAlternateSeed, deriveAlternateConfig,
@@ -52,7 +52,7 @@ const bw = {
   // Fast O(1) lookup for elements by bw_id, id attribute, or bw_uuid.
   //
   // Populated by bw.createDOM() when elements have:
-  //   - data-bw-id attribute (user-declared addressable elements)
+  //   - data-bw_id attribute (user-declared addressable elements)
   //   - id attribute (standard HTML id)
   //   - bw_uuid (internal, for lifecycle-managed elements)
   //
@@ -311,9 +311,9 @@ bw.uuid = function(prefix) {
  * Accepts a DOM element directly (pass-through) or a string identifier.
  * String identifiers are tried as: direct map key, getElementById,
  * querySelector (for CSS selectors starting with . or #), and
- * data-bw-id attribute selector.
+ * data-bw_id attribute selector.
  *
- * @param {string|Element} id - Element ID, CSS selector, data-bw-id value, or DOM element
+ * @param {string|Element} id - Element ID, CSS selector, data-bw_id value, or DOM element
  * @returns {Element|null} The DOM element, or null if not found
  * @category Internal
  */
@@ -342,9 +342,9 @@ bw._el = function(id) {
     el = document.querySelector(id);
   }
 
-  // 4. Try data-bw-id attribute (for bw.uuid-generated IDs)
+  // 4. Try data-bw_id attribute (for bw.uuid-generated IDs)
   if (!el) {
-    el = document.querySelector('[data-bw-id="' + id + '"]');
+    el = document.querySelector('[data-bw_id="' + id + '"]');
   }
 
   // 5. Cache the result for next time
@@ -359,15 +359,15 @@ bw._el = function(id) {
  * Register a DOM element in the node cache under one or more keys.
  *
  * Called internally by `bw.createDOM()`. Registers elements that have
- * id attributes, data-bw-id attributes, or both.
+ * id attributes, data-bw_id attributes, or both.
  *
  * @param {Element} el - DOM element to register
- * @param {string} [bwId] - data-bw-id value to register under
+ * @param {string} [bwId] - data-bw_id value to register under
  * @category Internal
  */
 bw._registerNode = function(el, bwId) {
   if (!el) return;
-  // Register under data-bw-id
+  // Register under data-bw_id
   if (bwId) {
     bw._nodeMap[bwId] = el;
   }
@@ -385,11 +385,11 @@ bw._registerNode = function(el, bwId) {
  * through bitwrench APIs.
  *
  * @param {Element} el - DOM element to deregister
- * @param {string} [bwId] - data-bw-id value to remove
+ * @param {string} [bwId] - data-bw_id value to remove
  * @category Internal
  */
 bw._deregisterNode = function(el, bwId) {
-  // Remove data-bw-id entry
+  // Remove data-bw_id entry
   if (bwId) {
     delete bw._nodeMap[bwId];
   }
@@ -450,21 +450,21 @@ bw.raw = function(str) {
 };
 
 /**
- * Normalize CSS class names by converting underscores to hyphens for bw-prefixed classes.
+ * Normalize CSS class names by converting underscores to hyphens for bw_prefixed classes.
  *
- * Allows users to write either `bw_card` or `bw-card` and get consistent
- * hyphenated output. Only converts the `bw_` prefix — other underscores are untouched.
+ * Normalize a class string. With underscore-canonical class names (bw_btn, bw_card),
+ * this is now an identity function retained for backward compatibility.
  *
  * @param {string} classStr - Class string to normalize
- * @returns {string} Normalized class string with hyphens
+ * @returns {string} The class string unchanged
  * @category Identifiers
  * @example
- * bw.normalizeClass('bw_card bw_btn')  // => 'bw-card bw-btn'
+ * bw.normalizeClass('bw_card bw_btn')  // => 'bw_card bw_btn'
  * bw.normalizeClass('my_class')         // => 'my_class' (unchanged)
  */
 bw.normalizeClass = function(classStr) {
   if (typeof classStr !== 'string') return classStr;
-  return classStr.replace(/\bbw_/g, 'bw-');
+  return classStr;
 };
 
 /**
@@ -569,7 +569,7 @@ bw.html = function(taco, options = {}) {
         attrStr += ` style="${bw.escapeHTML(styleStr)}"`;
       }
     } else if (key === 'class') {
-      // Handle class as array or string, normalize bw_ to bw-
+      // Handle class as array or string
       const classStr = bw.normalizeClass(
         Array.isArray(value)
           ? value.filter(Boolean).join(' ')
@@ -591,14 +591,14 @@ bw.html = function(taco, options = {}) {
     }
   }
 
-  // Add bw-id as a class if lifecycle hooks present
-  if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw-id-')) {
+  // Add bw_id as a class if lifecycle hooks present
+  if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw_id_')) {
     const id = opts.bw_id || bw.uuid();
     attrStr = attrStr.replace(/class="([^"]*)"/, (_match, classes) => {
-      return `class="${classes} bw-id-${id}"`.trim();
+      return `class="${classes} bw_id_${id}"`.trim();
     });
     if (!attrStr.includes('class=')) {
-      attrStr += ` class="bw-id-${id}"`;
+      attrStr += ` class="bw_id_${id}"`;
     }
   }
   
@@ -633,7 +633,7 @@ bw.html = function(taco, options = {}) {
  * @example
  * var el = bw.createDOM({
  *   t: 'button',
- *   a: { class: 'bw-btn', onclick: () => alert('clicked') },
+ *   a: { class: 'bw_btn', onclick: () => alert('clicked') },
  *   c: 'Click Me'
  * });
  * document.body.appendChild(el);
@@ -673,7 +673,7 @@ bw.createDOM = function(taco, options = {}) {
       // Apply styles directly
       Object.assign(el.style, value);
     } else if (key === 'class') {
-      // Handle class as array or string, normalize bw_ to bw-
+      // Handle class as array or string
       const classStr = bw.normalizeClass(
         Array.isArray(value)
           ? value.filter(Boolean).join(' ')
@@ -699,7 +699,7 @@ bw.createDOM = function(taco, options = {}) {
   }
   
   // Add children, building _bw_refs for fast parent→child access.
-  // Children with data-bw-id or id attributes get local refs on the parent,
+  // Children with data-bw_id or id attributes get local refs on the parent,
   // so o.render functions can access them without any DOM lookup.
   if (content != null) {
     if (Array.isArray(content)) {
@@ -708,7 +708,7 @@ bw.createDOM = function(taco, options = {}) {
           var childEl = bw.createDOM(child, options);
           el.appendChild(childEl);
           // Build local refs for addressable children
-          var childBwId = (child && child.a) ? (child.a['data-bw-id'] || child.a.id) : null;
+          var childBwId = (child && child.a) ? (child.a['data-bw_id'] || child.a.id) : null;
           if (childBwId) {
             if (!el._bw_refs) el._bw_refs = {};
             el._bw_refs[childBwId] = childEl;
@@ -730,7 +730,7 @@ bw.createDOM = function(taco, options = {}) {
     } else if (typeof content === 'object' && content.t) {
       var childEl = bw.createDOM(content, options);
       el.appendChild(childEl);
-      var childBwId = content.a ? (content.a['data-bw-id'] || content.a.id) : null;
+      var childBwId = content.a ? (content.a['data-bw_id'] || content.a.id) : null;
       if (childBwId) {
         if (!el._bw_refs) el._bw_refs = {};
         el._bw_refs[childBwId] = childEl;
@@ -755,10 +755,10 @@ bw.createDOM = function(taco, options = {}) {
 
   // Handle lifecycle hooks and state
   if (opts.mounted || opts.unmount || opts.render || opts.state) {
-    const id = attrs['data-bw-id'] || bw.uuid();
-    el.setAttribute('data-bw-id', id);
+    const id = attrs['data-bw_id'] || bw.uuid();
+    el.setAttribute('data-bw_id', id);
 
-    // Register in node cache under data-bw-id
+    // Register in node cache under data-bw_id
     bw._registerNode(el, id);
 
     // Store state
@@ -803,9 +803,9 @@ bw.createDOM = function(taco, options = {}) {
         opts.unmount(el, el._bw_state || {});
       });
     }
-  } else if (attrs['data-bw-id']) {
-    // Element has explicit data-bw-id but no lifecycle hooks — still register it
-    bw._registerNode(el, attrs['data-bw-id']);
+  } else if (attrs['data-bw_id']) {
+    // Element has explicit data-bw_id but no lifecycle hooks — still register it
+    bw._registerNode(el, attrs['data-bw_id']);
   }
 
   return el;
@@ -852,7 +852,7 @@ bw.DOM = function(target, taco, options = {}) {
   // the target is the mount point, not the content being replaced)
   const savedState = targetEl._bw_state;
   const savedRender = targetEl._bw_render;
-  const savedBwId = targetEl.getAttribute('data-bw-id');
+  const savedBwId = targetEl.getAttribute('data-bw_id');
   const savedSubs = targetEl._bw_subs;
 
   // Temporarily remove _bw_subs so cleanup doesn't call them
@@ -865,7 +865,7 @@ bw.DOM = function(target, taco, options = {}) {
   if (savedState !== undefined) targetEl._bw_state = savedState;
   if (savedRender) targetEl._bw_render = savedRender;
   if (savedBwId) {
-    targetEl.setAttribute('data-bw-id', savedBwId);
+    targetEl.setAttribute('data-bw_id', savedBwId);
     // Re-register mount point in node cache (cleanup deregistered it)
     bw._registerNode(targetEl, savedBwId);
   }
@@ -1125,11 +1125,11 @@ bw.renderComponent = function(taco, options = {}) {
 bw.cleanup = function(element) {
   if (!bw._isBrowser || !element) return;
 
-  // Find all elements with data-bw-id
-  const elements = element.querySelectorAll('[data-bw-id]');
+  // Find all elements with data-bw_id
+  const elements = element.querySelectorAll('[data-bw_id]');
 
   elements.forEach(el => {
-    const id = el.getAttribute('data-bw-id');
+    const id = el.getAttribute('data-bw_id');
     const callback = bw._unmountCallbacks.get(id);
 
     if (callback) {
@@ -1153,7 +1153,7 @@ bw.cleanup = function(element) {
   });
 
   // Check element itself
-  const id = element.getAttribute('data-bw-id');
+  const id = element.getAttribute('data-bw_id');
   if (id) {
     const callback = bw._unmountCallbacks.get(id);
     if (callback) {
@@ -1193,7 +1193,7 @@ bw.cleanup = function(element) {
  * Calls `el._bw_render(el, state)` and emits `bw:statechange` so other
  * components can react without tight coupling.
  *
- * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element
+ * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element
  * @returns {Element|null} The element, or null if not found / no render function
  * @category State Management
  * @see bw.patch
@@ -1218,7 +1218,7 @@ bw.update = function(target) {
  * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
  * and `bw.update()` for full structural re-renders.
  *
- * @param {string|Element} id - Element ID, data-bw-id, CSS selector, or DOM element.
+ * @param {string|Element} id - Element ID, data-bw_id, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string|Object} content - New text content, or TACO object to replace children
  * @param {string} [attr] - If provided, sets this attribute instead of content
@@ -1293,7 +1293,7 @@ bw.patchAll = function(patches) {
  * bubble by default so ancestor elements can listen. Use with `bw.on()` for
  * DOM-scoped communication between components.
  *
- * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+ * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {*} [detail] - Data to pass with the event
@@ -1320,7 +1320,7 @@ bw.emit = function(target, eventName, detail) {
  * is the first argument so you don't need to destructure `e.detail`.
  * Events bubble, so you can listen on an ancestor element.
  *
- * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+ * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {Function} handler - Called with (detail, event)
@@ -1418,10 +1418,10 @@ bw.sub = function(topic, handler, el) {
   if (el) {
     if (!el._bw_subs) el._bw_subs = [];
     el._bw_subs.push(unsub);
-    // Ensure element has data-bw-id so bw.cleanup() finds it
-    if (!el.getAttribute('data-bw-id')) {
+    // Ensure element has data-bw_id so bw.cleanup() finds it
+    if (!el.getAttribute('data-bw_id')) {
       var bwId = 'bw_sub_' + id;
-      el.setAttribute('data-bw-id', bwId);
+      el.setAttribute('data-bw_id', bwId);
     }
   }
 
@@ -1886,16 +1886,16 @@ ComponentHandle.prototype._compileBindings = function() {
         deps: deps,
         template: taco.c
       });
-      // Inject data-bw-ref on the TACO for createDOM to pick up
+      // Inject data-bw_ref on the TACO for createDOM to pick up
       if (!taco.a) taco.a = {};
-      taco.a['data-bw-ref'] = refId;
+      taco.a['data-bw_ref'] = refId;
     }
 
     // Check attributes for bindings
     if (taco.a) {
       for (var attrName in taco.a) {
         if (!Object.prototype.hasOwnProperty.call(taco.a, attrName)) continue;
-        if (attrName === 'data-bw-ref') continue;
+        if (attrName === 'data-bw_ref') continue;
         var attrVal = taco.a[attrName];
         if (typeof attrVal === 'string' && attrVal.indexOf('${') >= 0) {
           var refId2 = 'bw_ref_' + self._refCounter++;
@@ -1913,10 +1913,10 @@ ComponentHandle.prototype._compileBindings = function() {
             template: attrVal
           });
           if (!taco.a) taco.a = {};
-          taco.a['data-bw-ref'] = taco.a['data-bw-ref'] || refId2;
+          taco.a['data-bw_ref'] = taco.a['data-bw_ref'] || refId2;
           // If multiple attribute bindings on same element, store additional marker
-          if (taco.a['data-bw-ref'] !== refId2) {
-            taco.a['data-bw-ref-' + attrName] = refId2;
+          if (taco.a['data-bw_ref'] !== refId2) {
+            taco.a['data-bw_ref_' + attrName] = refId2;
           }
         }
       }
@@ -1979,12 +1979,12 @@ ComponentHandle.prototype._compileBindings = function() {
 ComponentHandle.prototype._collectRefs = function() {
   this._bw_refs = {};
   if (!this.element) return;
-  var els = this.element.querySelectorAll('[data-bw-ref]');
+  var els = this.element.querySelectorAll('[data-bw_ref]');
   for (var i = 0; i < els.length; i++) {
-    this._bw_refs[els[i].getAttribute('data-bw-ref')] = els[i];
+    this._bw_refs[els[i].getAttribute('data-bw_ref')] = els[i];
   }
   // Also check root element
-  var rootRef = this.element.getAttribute && this.element.getAttribute('data-bw-ref');
+  var rootRef = this.element.getAttribute && this.element.getAttribute('data-bw_ref');
   if (rootRef) {
     this._bw_refs[rootRef] = this.element;
   }
@@ -2010,7 +2010,7 @@ ComponentHandle.prototype.mount = function(parentEl) {
   // Custom clone to preserve _bwWhen/_bwEach markers and their factory functions.
   this.taco = this._deepCloneTaco(this._originalTaco);
 
-  // Compile bindings (annotates TACO with data-bw-ref attributes)
+  // Compile bindings (annotates TACO with data-bw_ref attributes)
   this._compileBindings();
 
   // Prepare TACO: resolve initial binding values, evaluate when/each
@@ -2037,7 +2037,7 @@ ComponentHandle.prototype.mount = function(parentEl) {
   var tacoForDOM = this._tacoForDOM(this.taco);
   this.element = bw.createDOM(tacoForDOM);
   this.element._bwComponentHandle = this;
-  this.element.setAttribute('data-bw-comp-id', this._bwId);
+  this.element.setAttribute('data-bw_comp_id', this._bwId);
 
   // Append to parent
   parentEl.appendChild(this.element);
@@ -2083,9 +2083,9 @@ ComponentHandle.prototype._prepareTaco = function(taco) {
         var branch = val ? child.branches[0] : (child.branches[1] || null);
         if (branch) {
           // Wrap in a container so we can track it
-          taco.c[i] = { t: 'span', a: { 'data-bw-when': child._refId, style: 'display:contents' }, c: branch };
+          taco.c[i] = { t: 'span', a: { 'data-bw_when': child._refId, style: 'display:contents' }, c: branch };
         } else {
-          taco.c[i] = { t: 'span', a: { 'data-bw-when': child._refId, style: 'display:contents' }, c: '' };
+          taco.c[i] = { t: 'span', a: { 'data-bw_when': child._refId, style: 'display:contents' }, c: '' };
         }
       }
       if (child && child._bwEach) {
@@ -2097,7 +2097,7 @@ ComponentHandle.prototype._prepareTaco = function(taco) {
             items.push(child.factory(arr[j], j));
           }
         }
-        taco.c[i] = { t: 'span', a: { 'data-bw-each': child._refId, style: 'display:contents' }, c: items };
+        taco.c[i] = { t: 'span', a: { 'data-bw_each': child._refId, style: 'display:contents' }, c: items };
       }
       if (taco.c[i] && typeof taco.c[i] === 'object' && taco.c[i].t) {
         this._prepareTaco(taco.c[i]);
@@ -2412,7 +2412,7 @@ ComponentHandle.prototype._render = function() {
   var tacoForDOM = this._tacoForDOM(this.taco);
   this.element = bw.createDOM(tacoForDOM);
   this.element._bwComponentHandle = this;
-  this.element.setAttribute('data-bw-comp-id', this._bwId);
+  this.element.setAttribute('data-bw_comp_id', this._bwId);
 
   // Re-insert at same position
   if (nextSibling) {
@@ -2704,7 +2704,7 @@ bw.css = function(rules, options = {}) {
  *
  * @param {string|Object|Array} css - CSS string, or JS rule objects to convert
  * @param {Object} [options] - Injection options
- * @param {string} [options.id='bw-styles'] - ID for the style element
+ * @param {string} [options.id='bw_styles'] - ID for the style element
  * @param {boolean} [options.append=true] - Append to existing CSS (false to replace)
  * @returns {Element} The style element
  * @category CSS & Styling
@@ -2720,7 +2720,7 @@ bw.injectCSS = function(css, options = {}) {
     return null;
   }
   
-  const { id = 'bw-styles', append = true } = options;
+  const { id = 'bw_styles', append = true } = options;
   
   // Get or create style element
   let styleEl = document.getElementById(id);
@@ -3029,7 +3029,7 @@ bw.loadDefaultStyles = function(options = {}) {
   // 1. Inject structural CSS (layout, sizing — never changes with theme)
   if (bw._isBrowser) {
     var structuralCSS = bw.css(getStructuralStyles());
-    bw.injectCSS(structuralCSS, { id: 'bw-structural', append: false, minify: minify });
+    bw.injectCSS(structuralCSS, { id: 'bw_structural', append: false, minify: minify });
   }
 
   // 2. Inject cosmetic CSS via generateTheme (colors, shadows, radii)
@@ -3157,17 +3157,15 @@ bw.generateTheme = function(name, config) {
 
   // Generate primary themed CSS rules
   var themedRules = generateThemedCSS(name, palette, layout);
-  var aliasedRules = addUnderscoreAliases(themedRules);
-  var cssStr = bw.css(aliasedRules);
+  var cssStr = bw.css(themedRules);
 
   // Derive alternate palette (luminance-inverted)
   var altConfig = deriveAlternateConfig(fullConfig);
   var altPalette = derivePalette(altConfig);
 
-  // Generate alternate CSS scoped under .bw-theme-alt
+  // Generate alternate CSS scoped under .bw_theme_alt
   var altRules = generateAlternateCSS(name, altPalette, layout);
-  var aliasedAltRules = addUnderscoreAliases(altRules);
-  var altCssStr = bw.css(aliasedAltRules);
+  var altCssStr = bw.css(altRules);
 
   // Determine if primary is light-flavored
   var lightPrimary = isLightPalette(fullConfig);
@@ -3175,10 +3173,11 @@ bw.generateTheme = function(name, config) {
   // Inject both CSS sets into DOM if requested
   var shouldInject = config.inject !== false;
   if (shouldInject && bw._isBrowser) {
-    var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
+    var safeName = name ? name.replace(/-/g, '_') : '';
+    var styleId = safeName ? 'bw_theme_' + safeName : 'bw_theme_default';
     bw.injectCSS(cssStr, { id: styleId, append: false });
 
-    var altStyleId = name ? 'bw-theme-' + name + '-alt' : 'bw-theme-default-alt';
+    var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
     bw.injectCSS(altCssStr, { id: altStyleId, append: false });
   }
 
@@ -3209,7 +3208,7 @@ bw.generateTheme = function(name, config) {
 
 /**
  * Apply a theme mode. Switches between primary and alternate palettes
- * by adding/removing the `bw-theme-alt` class on `<html>`.
+ * by adding/removing the `bw_theme_alt` class on `<html>`.
  *
  * @param {string} mode - 'primary' | 'alternate' | 'light' | 'dark'
  * @returns {string} Active mode: 'primary' or 'alternate'
@@ -3234,9 +3233,9 @@ bw.applyTheme = function(mode) {
   else                           wantAlt = false;
 
   if (wantAlt) {
-    root.classList.add('bw-theme-alt');
+    root.classList.add('bw_theme_alt');
   } else {
-    root.classList.remove('bw-theme-alt');
+    root.classList.remove('bw_theme_alt');
   }
 
   bw._activeThemeMode = wantAlt ? 'alternate' : 'primary';
@@ -3600,9 +3599,9 @@ bw.htmlTabs = function(tabData, opts = {}) {
   if (bw.typeOf(tabData) !== "array" || tabData.length < 1) return "";
   
   const dopts = {
-    atr: { class: "bw-tab-container" },
-    tab_atr: { class: "bw-tab-item-list" },
-    tabc_atr: { class: "bw-tab-content-list" }
+    atr: { class: "bw_tab_container" },
+    tab_atr: { class: "bw_tab_item_list" },
+    tabc_atr: { class: "bw_tab_content_list" }
   };
   
   Object.assign(dopts, opts);
@@ -3611,7 +3610,7 @@ bw.htmlTabs = function(tabData, opts = {}) {
   const tabItems = tabData.map((tab, idx) => ({
     t: "li",
     a: { 
-      class: idx === 0 ? "bw-tab-item bw-tab-active" : "bw-tab-item",
+      class: idx === 0 ? "bw_tab_item bw_tab_active" : "bw_tab_item",
       onclick: "bw.selectTabContent(this)"
     },
     c: tab[0]
@@ -3620,7 +3619,7 @@ bw.htmlTabs = function(tabData, opts = {}) {
   // Create tab content
   const tabContent = tabData.map((tab, idx) => ({
     t: "div",
-    a: { class: idx === 0 ? "bw-tab-content bw-show" : "bw-tab-content" },
+    a: { class: idx === 0 ? "bw_tab_content bw_show" : "bw_tab_content" },
     c: tab[1]
   }));
   
@@ -3646,29 +3645,29 @@ bw.selectTabContent = function(tabElement) {
   console.warn('bw.selectTabContent() is deprecated. Use bw.makeTabs() instead.');
   if (!bw._isBrowser || !tabElement) return;
   
-  const container = tabElement.closest(".bw-tab-container");
+  const container = tabElement.closest(".bw_tab_container");
   if (!container) return;
   
   // Remove active class from all tabs
-  container.querySelectorAll(".bw-tab-item").forEach(tab => {
-    tab.classList.remove("bw-tab-active");
+  container.querySelectorAll(".bw_tab_item").forEach(tab => {
+    tab.classList.remove("bw_tab_active");
   });
   
   // Add active to clicked tab
-  tabElement.classList.add("bw-tab-active");
+  tabElement.classList.add("bw_tab_active");
   
   // Get tab index
   const tabIndex = Array.from(tabElement.parentElement.children).indexOf(tabElement);
   
   // Hide all content
-  container.querySelectorAll(".bw-tab-content").forEach(content => {
-    content.classList.remove("bw-show");
+  container.querySelectorAll(".bw_tab_content").forEach(content => {
+    content.classList.remove("bw_show");
   });
   
   // Show selected content
-  const contents = container.querySelectorAll(".bw-tab-content");
+  const contents = container.querySelectorAll(".bw_tab_content");
   if (contents[tabIndex]) {
-    contents[tabIndex].classList.add("bw-show");
+    contents[tabIndex].classList.add("bw_show");
   }
 };
 
@@ -4185,10 +4184,10 @@ bw.makeTable = function(config) {
     sortDirection = 'asc'
   } = config;
 
-  // Build class list: always include bw-table, add striped/hover, append user className
-  let cls = 'bw-table';
-  if (striped) cls += ' bw-table-striped';
-  if (hover) cls += ' bw-table-hover';
+  // Build class list: always include bw_table, add striped/hover, append user className
+  let cls = 'bw_table';
+  if (striped) cls += ' bw_table_striped';
+  if (hover) cls += ' bw_table_hover';
   if (className) cls += ' ' + className;
   cls = cls.trim();
   
@@ -4402,7 +4401,7 @@ bw.makeBarChart = function(config) {
   } = config;
 
   if (!Array.isArray(data) || data.length === 0) {
-    return { t: 'div', a: { class: ('bw-bar-chart-container ' + className).trim() }, c: '' };
+    return { t: 'div', a: { class: ('bw_bar_chart_container ' + className).trim() }, c: '' };
   }
 
   const values = data.map(function(d) { return Number(d[valueKey]) || 0; });
@@ -4415,35 +4414,35 @@ bw.makeBarChart = function(config) {
 
     const children = [];
     if (showValues) {
-      children.push({ t: 'div', a: { class: 'bw-bar-value' }, c: formatted });
+      children.push({ t: 'div', a: { class: 'bw_bar_value' }, c: formatted });
     }
     children.push({
       t: 'div',
       a: {
-        class: 'bw-bar',
+        class: 'bw_bar',
         style: 'height:' + pct + '%;background:' + color + ';'
       }
     });
     if (showLabels) {
-      children.push({ t: 'div', a: { class: 'bw-bar-label' }, c: String(d[labelKey] || '') });
+      children.push({ t: 'div', a: { class: 'bw_bar_label' }, c: String(d[labelKey] || '') });
     }
 
-    return { t: 'div', a: { class: 'bw-bar-group' }, c: children };
+    return { t: 'div', a: { class: 'bw_bar_group' }, c: children };
   });
 
   const chartChildren = [];
   if (title) {
-    chartChildren.push({ t: 'h3', a: { class: 'bw-bar-chart-title' }, c: title });
+    chartChildren.push({ t: 'h3', a: { class: 'bw_bar_chart_title' }, c: title });
   }
   chartChildren.push({
     t: 'div',
-    a: { class: 'bw-bar-chart', style: 'height:' + height + ';' },
+    a: { class: 'bw_bar_chart', style: 'height:' + height + ';' },
     c: bars
   });
 
   return {
     t: 'div',
-    a: { class: ('bw-bar-chart-container ' + className).trim() },
+    a: { class: ('bw_bar_chart_container ' + className).trim() },
     c: chartChildren
   };
 };
@@ -4542,7 +4541,7 @@ bw._componentRegistry = new Map();
  * @see bw.DOM
  * @example
  * var handle = bw.render('#app', 'append', {
- *   t: 'button', a: { class: 'bw-btn' }, c: 'Click Me',
+ *   t: 'button', a: { class: 'bw_btn' }, c: 'Click Me',
  *   o: { state: { clicks: 0 } }
  * });
  * handle.setState({ clicks: 1 });
@@ -4580,7 +4579,7 @@ bw.render = function(element, position, taco) {
   }
   
   // Add component ID to element
-  domElement.setAttribute('data-bw-id', componentId);
+  domElement.setAttribute('data-bw_id', componentId);
   
   // Insert into DOM based on position
   try {
@@ -4655,7 +4654,7 @@ bw.render = function(element, position, taco) {
       
       // Re-render
       const newElement = bw.createDOM(this._taco);
-      newElement.setAttribute('data-bw-id', componentId);
+      newElement.setAttribute('data-bw_id', componentId);
       
       // Replace in DOM
       parent.replaceChild(newElement, this.element);
@@ -4829,7 +4828,7 @@ bw.getAllComponents = function() {
 // =========================================================================
 // Import and register all components
 // =========================================================================
-import * as components from './bitwrench-components-v2.js';
+import * as components from './bitwrench-bccl.js';
 
 // Register all make functions
 Object.entries(components).forEach(([name, fn]) => {
@@ -4837,6 +4836,15 @@ Object.entries(components).forEach(([name, fn]) => {
     bw[name] = fn;
   }
 });
+
+// Factory dispatch: bw.make('card', props) → bw.makeCard(props)
+bw.make = components.make;
+
+// Component registry: bw.BCCL lists all available component types
+bw.BCCL = components.BCCL;
+
+// Variant class mapping: bw.VARIANT_CLASSES for theming introspection
+bw.VARIANT_CLASSES = components.VARIANT_CLASSES;
 
 // Create functions that return handles (plain renderComponent, no Handle overlay)
 Object.entries(components).forEach(([name, fn]) => {
