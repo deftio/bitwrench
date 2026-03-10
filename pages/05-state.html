@@ -211,11 +211,11 @@
           ]},
           { t: 'tr', c: [
             { t: 'td', c: [{ t: 'code', c: 'useState' }, ' / ', { t: 'code', c: 'createSignal' }, ' / ', { t: 'code', c: '$state' }] },
-            { t: 'td', c: bw.raw('<code>o.state</code> &rarr; stored as <code>el._bw_state</code>') }
+            { t: 'td', c: bw.raw('<code>bw.component()</code> with <code>o.state</code> + <code>.get()/.set()</code>') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: bw.raw('<code>render()</code> / reactive template') },
-            { t: 'td', c: bw.raw('<code>o.render(el)</code> &mdash; called explicitly via <code>bw.update(el)</code>') }
+            { t: 'td', c: bw.raw('Template bindings (<code>${count}</code>) auto-render on <code>.set()</code>') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Virtual DOM diff / fine-grained reactivity' },
@@ -245,20 +245,26 @@
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Frameworks like React, Solid, and Svelte each have their own approach to state management &mdash; virtual DOMs, reactive signals, compiler-generated update code. They work well for the problems they were designed to solve.') },
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('Bitwrench takes a different approach. State is a plain JavaScript object stored directly on the DOM element it belongs to. Updates are explicit function calls rather than automatic reactions. There is no virtual DOM, no dependency tracking, no compiler step. A component re-renders when &mdash; and only when &mdash; <code>bw.update(el)</code> is called.') },
+            c: bw.raw('Bitwrench takes a different approach. Wrap any TACO in <code>bw.component()</code> to get a reactive handle with <code>.get()</code> and <code>.set()</code>. Template bindings like <code>${count}</code> re-render automatically when you call <code>.set()</code>. There is no virtual DOM, no dependency tracking, no compiler step.') },
 
           callout('concept', 'Coming from another framework?', frameworkComparisonTable),
 
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('The tradeoff: bitwrench requires the developer to say <em>when</em> to update, rather than detecting changes automatically. In return, every state change is an explicit function call you can see and step through in a debugger. The sections below walk through each pattern from simplest to most complex.') },
+            c: bw.raw('The sections below walk through each pattern from simplest to most complex. For most applications, <code>bw.component()</code> with template bindings is the recommended approach. Lower-level tools (<code>o.render</code>, <code>bw.patch()</code>) are available when you need them.') },
 
           callout('tip', 'The toolkit at a glance', {
             t: 'p',
             c: bw.raw(
-              '<code>o.state</code> &mdash; initial state object, stored as <code>el._bw_state</code> on mount<br>' +
-              '<code>o.render(el)</code> &mdash; render function, stored as <code>el._bw_render</code>, called on mount and on <code>bw.update()</code><br>' +
+              '<strong>Recommended:</strong><br>' +
+              '<code>bw.component(taco)</code> &mdash; wrap a TACO in a reactive ComponentHandle with <code>.get()/.set()</code><br>' +
+              '<code>${expr}</code> template bindings &mdash; auto-render on <code>.set()</code><br>' +
+              '<code>o.state</code> &mdash; initial state object<br>' +
+              '<code>o.methods</code> &mdash; named methods callable on the handle (e.g. <code>counter.reset()</code>)<br>' +
+              '<br><strong>Low-level:</strong><br>' +
+              '<code>o.render(el)</code> &mdash; render function, called on mount and on <code>bw.update()</code><br>' +
               '<code>bw.update(el)</code> &mdash; re-run the render function and emit <code>bw:statechange</code><br>' +
               '<code>bw.patch(id, content)</code> &mdash; targeted update of a single element (no full re-render)<br>' +
+              '<br><strong>Communication:</strong><br>' +
               '<code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> &mdash; decoupled cross-component messaging<br>' +
               '<code>o.mounted(el)</code> &mdash; lifecycle hook, runs after the element is in the DOM<br>' +
               '<code>o.unmount(el)</code> &mdash; cleanup hook, runs when the element is removed'
@@ -274,7 +280,7 @@
 
           callout('concept', 'Debugging', {
             t: 'p',
-            c: bw.raw('All component state is visible in the browser\'s built-in inspector. Select any bitwrench component in the Elements panel, then type <code>$0._bw_state</code> in the console to see its current state object. You can modify it directly and call <code>bw.update($0)</code> to see the result. No browser extension required.')
+            c: bw.raw('Use <code>bw.inspect(handle)</code> to print a component\'s state, bindings, and DOM in the console. You can also select any bitwrench component in the Elements panel and type <code>$0._bw_state</code> to see its state object directly. No browser extension required.')
           })
         ]}
       ]
@@ -296,7 +302,95 @@
     };
 
     // =========================================================================
-    // Section 2: How State Works
+    // Section 1b: ComponentHandle — The Recommended Pattern
+    // =========================================================================
+    var componentHandleCode =
+      '// bw.component() wraps a TACO in a reactive handle\n' +
+      'var counter = bw.component({\n' +
+      '  t: \'div\', c: [\n' +
+      '    { t: \'h3\', c: \'Count: ${count}\' },\n' +
+      '    { t: \'button\', c: \'+1\', a: {\n' +
+      '      onclick: function() {\n' +
+      '        counter.set(\'count\',\n' +
+      '          counter.get(\'count\') + 1);\n' +
+      '      }\n' +
+      '    }}\n' +
+      '  ],\n' +
+      '  o: {\n' +
+      '    state: { count: 0 },\n' +
+      '    methods: {\n' +
+      '      reset: function(comp) {\n' +
+      '        comp.set(\'count\', 0);\n' +
+      '      }\n' +
+      '    }\n' +
+      '  }\n' +
+      '});\n' +
+      '\n' +
+      '// Mount to DOM\n' +
+      'bw.DOM(target, counter);\n' +
+      '\n' +
+      '// Use the handle API\n' +
+      'counter.set(\'count\', 42);\n' +
+      'counter.reset();';
+
+    var sectionCH = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'ComponentHandle \u2014 The Recommended Pattern' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('For most components, <code>bw.component()</code> is the recommended approach. It wraps a TACO in a <strong>ComponentHandle</strong> that provides <code>.get()</code>, <code>.set()</code>, and automatic re-rendering via template bindings.') },
+
+          callout('concept', 'How it works', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('<code>bw.component(taco)</code> returns a handle with:') },
+              { t: 'ul', c: [
+                { t: 'li', c: bw.raw('<code>.get(key)</code> / <code>.set(key, value)</code> &mdash; read and write state') },
+                { t: 'li', c: bw.raw('<code>.getState()</code> / <code>.setState(obj)</code> &mdash; bulk state access') },
+                { t: 'li', c: bw.raw('Template bindings (<code>${count}</code>) in content strings auto-render on <code>.set()</code>') },
+                { t: 'li', c: bw.raw('<code>o.methods</code> are promoted to the handle: <code>counter.reset()</code>') },
+                { t: 'li', c: bw.raw('<code>.mount(sel)</code> / <code>.unmount()</code> / <code>.destroy()</code> &mdash; lifecycle control') }
+              ]}
+            ]
+          }),
+
+          callout('concept', 'Coming from React / Vue / Solid?', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('Think of <code>bw.component()</code> as a unified hook: <code>useState</code> + <code>useRef</code> + render in one call. The handle is your component instance.') },
+              { t: 'table', a: { class: 'event-table', style: 'margin-top: 0.5rem;' }, c: [
+                { t: 'thead', c: { t: 'tr', c: [
+                  { t: 'th', c: 'Framework' },
+                  { t: 'th', c: 'bitwrench equivalent' }
+                ]}},
+                { t: 'tbody', c: [
+                  { t: 'tr', c: [
+                    { t: 'td', c: bw.raw('React: <code>useState(0)</code>') },
+                    { t: 'td', c: bw.raw('<code>o: { state: { count: 0 } }</code> + <code>.get()/.set()</code>') }
+                  ]},
+                  { t: 'tr', c: [
+                    { t: 'td', c: bw.raw('Vue: <code>ref(0)</code>') },
+                    { t: 'td', c: bw.raw('<code>.set(\'count\', n)</code> triggers re-render') }
+                  ]},
+                  { t: 'tr', c: [
+                    { t: 'td', c: bw.raw('Solid: <code>createSignal(0)</code>') },
+                    { t: 'td', c: bw.raw('<code>${count}</code> template bindings') }
+                  ]},
+                  { t: 'tr', c: [
+                    { t: 'td', c: bw.raw('All: component methods') },
+                    { t: 'td', c: bw.raw('<code>o.methods</code> &rarr; callable on handle') }
+                  ]}
+                ]}
+              ]}
+            ]
+          }),
+
+          { t: 'div', a: { id: 'tryit-component-handle' } }
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 2: How State Works (low-level)
     // =========================================================================
     var completePatternCode =
       '// 1. Factory function \u2014 returns an object with TACO + API\n' +
@@ -375,10 +469,10 @@
     var section2 = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', c: 'How State Works in Bitwrench' },
+        { t: 'h2', c: 'Low-Level State: o.render + bw.update()' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('In bitwrench, you build components by writing functions that return plain JavaScript objects describing what to render. State lives <strong>on the DOM element itself</strong>. When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.') },
+            c: bw.raw('For fine-grained control, you can manage state directly on DOM elements. This is the low-level foundation that <code>bw.component()</code> builds on. State lives <strong>on the DOM element itself</strong>. When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.') },
 
           { t: 'div', a: { class: 'state-diagram' }, c: [
             { t: 'div', a: { class: 'state-step' }, c: [
@@ -518,8 +612,12 @@
     var section3 = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', c: 'Encapsulated Components' },
+        { t: 'h2', c: 'Encapsulated Components (Low-Level)' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
+          callout('tip', 'Prefer bw.component()', {
+            t: 'p',
+            c: bw.raw('The <code>bw.component()</code> pattern shown above provides <code>.get()/.set()</code> out of the box. This section shows the manual approach for cases where you need full control over rendering logic.')
+          }),
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Three counters from the same factory. Each has its own state on its own DOM element. Click any counter &mdash; the others don\'t change. The factory returns a getter/setter API alongside the TACO, enabling cross-component coordination (next section).') },
           { t: 'div', a: { class: 'bw_grid_2col' }, c: [
@@ -1037,17 +1135,23 @@
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
           { t: 'h1', c: 'State & Interactivity' },
-          { t: 'p', a: { class: 'subtitle' }, c: "How bitwrench manages state, from simple closures to component factories and pub/sub." }
+          { t: 'p', a: { class: 'subtitle' }, c: "How bitwrench manages state, from bw.component() with reactive handles to low-level patterns and pub/sub." }
         ]
       }
     };
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [section0, section1, section2, section3, section4, section5, section6, section7, section8, section9]
+      c: [section0, section1, sectionCH, section2, section3, section4, section5, section6, section7, section8, section9]
     };
 
     bw.DOM('#app', [pageHeader, contentWrapper]);
+
+    // ── ComponentHandle (try-it editor) ──
+    bw.DOM('#tryit-component-handle', makeTryIt({
+      code: componentHandleCode,
+      height: '420px'
+    }));
 
     // ── The Simplest State Pattern (try-it editor) ──
     bw.DOM('#tryit-simple-state', makeTryIt({

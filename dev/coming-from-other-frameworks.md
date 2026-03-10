@@ -46,11 +46,11 @@ The largest single pool of frontend developers. Comfortable with JSX, hooks, com
 | Concern | Answer | Where documented |
 |---------|--------|-----------------|
 | No virtual DOM | bitwrench doesn't need one. `bw.patch(uuid, content)` does targeted DOM updates by UUID — no tree walk, no diffing. For structural changes, `bw.update(el)` replaces the subtree via `el._bw_render(el)`. The DOM *is* the source of truth. | `pages/05-state.html` §5-6 |
-| No automatic re-renders | Explicit is the point. Call `bw.update(el)` to re-render a component. This makes update flow visible and debuggable — no stale closure bugs, no dependency arrays. React's `useEffect` cleanup is replaced by `o.unmount`. | `pages/05-state.html` §3-4 |
+| No automatic re-renders | `bw.component()` with template bindings (`${count}`) re-renders on `.set()`. For lower-level control, `bw.update(el)` re-renders explicitly. Either way, update flow is visible and debuggable — no stale closure bugs, no dependency arrays. | `pages/05-state.html` §2-4 |
 | No JSX | TACO objects are plain JS — no transpiler, no build step, no source maps to debug through. `{t: 'div', a: {class: 'card'}, c: 'Hello'}` is the same mental model as `<div className="card">Hello</div>`, just native syntax. You get `.map()`, ternaries, and variables for free. | `pages/00-quick-start.html`, `pages/06-tic-tac-toe-tutorial.html` |
 | No devtools | Select any bitwrench element in browser inspector, then `$0._bw_state` in the console shows its state. `$0._bw_render` shows its render function. No extension needed — the browser *is* the devtool. | `pages/00-quick-start.html` (callout), `pages/05-state.html` (callout) |
 | No ecosystem | By design. bitwrench targets environments where pulling in 50 npm packages is impossible or undesirable. For routing, use the History API directly. For data fetching, use `fetch()`. For forms, use DOM events. The lack of an ecosystem *is* the feature for constrained environments. | `pages/07-framework-comparison.html` (use-cases section) |
-| No component model | Factory functions returning TACO objects *are* components. They compose via nesting in the `c` (content) field. `bw.makeCard()`, `bw.makeButton()`, etc. demonstrate this. State is closed over in the factory. | `pages/01-components.html`, `pages/05-state.html` §4 |
+| No component model | `bw.component(taco)` returns a reactive handle with `.get()/.set()/.mount()/.destroy()`. Factory functions returning TACO compose via nesting in the `c` field. `bw.makeCard()`, `bw.makeButton()`, etc. demonstrate this. | `pages/01-components.html`, `pages/05-state.html` §2 (ComponentHandle) |
 
 ### Gaps
 - No migration guide showing "here's your React component, here's the bitwrench equivalent line-by-line"
@@ -61,13 +61,14 @@ The largest single pool of frontend developers. Comfortable with JSX, hooks, com
 ### Bridge concepts
 | React | bitwrench | Notes |
 |-------|-----------|-------|
-| `useState` | `o.state` + closure | State lives in the factory closure, accessed via `el._bw_state` |
+| `useState` | `bw.component()` with `o.state` | `handle.get('key')` / `handle.set('key', val)` — auto re-renders |
 | `useEffect` | `o.mounted` / `o.unmount` | No dependency array — you control when effects run |
-| `setState` → re-render | `bw.update(el)` | Explicit call replaces automatic re-render |
+| `setState` → re-render | `handle.set(key, val)` | `.set()` triggers re-render via template bindings (`${key}`) |
 | `useContext` | `bw.pub()` / `bw.sub()` | App-scoped pub/sub replaces context provider trees |
 | `key` prop | `bw.uuid()` | Stable identity for list items |
 | JSX `<Comp />` | `makeComp()` returning TACO | Factory function call instead of JSX element |
 | Virtual DOM diff | `bw.patch(uuid, val)` | Skip the diff — update exactly what you know changed |
+| Component instance | `bw.component(taco)` → handle | Handle has `.get()/.set()/.mount()/.destroy()` |
 
 ---
 
@@ -91,7 +92,7 @@ Developers who value progressive adoption, clear separation of template/script/s
 
 | Concern | Answer | Where documented |
 |---------|--------|-----------------|
-| No reactivity | Explicit updates via `bw.update(el)` and `bw.patch(uuid, val)`. No proxy magic means no reactivity gotchas (deep vs shallow, array mutation caveats). You always know *when* and *why* the DOM changed. | `pages/05-state.html` §3-6 |
+| No reactivity | `bw.component()` provides `.get()/.set()` with template bindings that auto-render. No proxy magic means no reactivity gotchas (deep vs shallow, array mutation caveats). You always know *when* and *why* the DOM changed. | `pages/05-state.html` §2-6 |
 | No SFCs | A bitwrench "component" is a factory function that returns TACO. Structure (tag), style (attributes/bw.css), and logic (closure) live in one function. No file-format lock-in — it's just JS. | `pages/05-state.html` §4, `pages/01-components.html` |
 | No template directives | `v-if` → ternary operator. `v-for` → `.map()`. `v-model` → event handler + state update. These are native JS — no new syntax to learn or forget. | `pages/00-quick-start.html` (data-driven UI section) |
 | No state store | `bw.pub(topic, detail)` / `bw.sub(topic, handler)` provides app-scoped communication. For shared state, a plain JS object + pub/sub achieves the same pattern as Pinia without the library. | `pages/05-state.html` §7 |
@@ -105,12 +106,13 @@ Developers who value progressive adoption, clear separation of template/script/s
 ### Bridge concepts
 | Vue | bitwrench | Notes |
 |-----|-----------|-------|
-| `ref()` / `reactive()` | `o.state` closure variable | No proxy, no unwrapping with `.value` |
-| `watch()` / `computed()` | Derive in render function | Computed values are just expressions in the TACO |
+| `ref()` / `reactive()` | `bw.component()` with `o.state` | `handle.set(key, val)` triggers re-render — no `.value` unwrapping |
+| `watch()` / `computed()` | Derive in render function or `o.methods` | Computed values are expressions in TACO or method calls on handle |
 | `v-if` / `v-for` | Ternary / `.map()` | Native JS, no template compiler |
 | `<Transition>` | CSS transitions via `bw.css()` | Browser-native animations |
 | Pinia store | `bw.pub()` / `bw.sub()` | Decoupled pub/sub, no store boilerplate |
 | `<template>` | TACO object | Data structure instead of markup language |
+| Component instance | `bw.component(taco)` → handle | `.get()/.set()/.getState()/.setState()` |
 
 ---
 
@@ -147,8 +149,8 @@ Developers who prioritize minimal runtime, compiler-driven optimization, and "wr
 ### Bridge concepts
 | Svelte | bitwrench | Notes |
 |--------|-----------|-------|
-| `$state` rune | `o.state` + `bw.update(el)` | Explicit instead of compiler-tracked |
-| `$derived` | Compute in render function | No memoization — recomputes on update |
+| `$state` rune | `bw.component()` with `o.state` | `handle.set(key, val)` re-renders template bindings `${key}` |
+| `$derived` | Compute in render function or `o.methods` | No memoization — recomputes on update |
 | `{#each}` / `{#if}` | `.map()` / ternary | Native JS control flow |
 | `on:click` | `a: { onclick: fn }` | DOM attribute, no special syntax |
 | Stores | `bw.pub()` / `bw.sub()` | Simpler API, no auto-subscription |
@@ -188,9 +190,9 @@ Performance-focused developers who chose Solid specifically for its fine-grained
 ### Bridge concepts
 | Solid | bitwrench | Notes |
 |-------|-----------|-------|
-| `createSignal()` | Closure variable + `bw.update()` | No subscription tracking overhead |
+| `createSignal()` | `bw.component()` with `o.state` | `handle.get(key)` / `handle.set(key, val)` — template bindings auto-update |
 | `createEffect()` | `o.mounted` callback | Runs once at mount, not on every dependency change |
-| `createMemo()` | Inline computation in render | No automatic caching |
+| `createMemo()` | Inline computation in render or `o.methods` | No automatic caching |
 | `<For>` / `<Show>` | `.map()` / ternary | Native JS, no special components |
 | Fine-grained DOM updates | `bw.patch(uuid, val)` | Same goal (skip VDOM), different mechanism |
 | JSX | TACO objects | Both produce DOM — different syntax |
@@ -234,11 +236,11 @@ Enterprise developers working in large teams with strict architecture requiremen
 ### Bridge concepts
 | Angular | bitwrench | Notes |
 |---------|-----------|-------|
-| Components + decorators | Factory functions returning TACO | No decorator metadata, no class syntax required |
+| Components + decorators | `bw.component(taco)` → handle | Handle has `.get()/.set()/.mount()/.destroy()` |
 | Services + DI | Imported modules / closures | No injection container |
-| `@Input()` / `@Output()` | Function parameters / callbacks | Plain JS function signatures |
+| `@Input()` / `@Output()` | `o.state` props + `o.methods` | Props → state keys, methods callable on handle |
 | RxJS Observables | `bw.pub()` / `bw.sub()` | Simpler API, no operators |
-| Reactive Forms | DOM events + state closure | Manual but transparent |
+| Reactive Forms | DOM events + `handle.set()` | `.set()` auto-renders template bindings |
 | Angular CLI | `<script>` tag | Zero tooling |
 | NgModules | None needed | No module declaration system |
 
@@ -358,8 +360,8 @@ Cutting-edge developers interested in resumability, progressive hydration, and O
 ### Bridge concepts
 | Qwik | bitwrench | Notes |
 |------|-----------|-------|
-| `component$()` | Factory function returning TACO | No lazy boundary |
-| `useSignal()` | `o.state` + closure | No serialization |
+| `component$()` | `bw.component(taco)` → handle | Handle has `.get()/.set()`, no lazy boundary |
+| `useSignal()` | `o.state` + `handle.set()` | No serialization, template bindings auto-update |
 | `$` (lazy marker) | Not needed | Everything loads with the script tag |
 | Resumability | Full execution | Trade larger initial load for simpler model |
 | `server$()` | `bw.html()` in Node.js | String output, not resumable HTML |
@@ -378,7 +380,7 @@ Every framework developer will ask some version of these questions. This table m
 | Cross-component communication | `bw.pub(topic, detail)` / `bw.sub(topic, handler)` for app-scoped; `bw.emit()` / `bw.on()` for DOM-scoped | `pages/05-state.html` §7 | Documented |
 | Lifecycle management | `o.mounted(el)` on mount, `o.unmount(el)` on cleanup | `pages/05-state.html` §3-4 | Documented |
 | Memory / listener cleanup | DOM replacement = automatic GC. `o.unmount` for external resources. `bw.cleanup(el)` for manual teardown | `pages/05-state.html` | Documented |
-| Debugging component state | `$0._bw_state` in browser console. `$0._bw_render` shows render function | `pages/00-quick-start.html`, `pages/05-state.html` | Documented |
+| Debugging component state | `bw.inspect(handle)` in console, or `$0._bw_state` in browser inspector | `pages/00-quick-start.html`, `pages/05-state.html` | Documented |
 | Server-side rendering | `bw.html(taco)` from Node.js — string output, any server | `pages/07-framework-comparison.html` §1 | Documented |
 | Server-driven UI (JSON→DOM) | bitwrench's unique capability — backend sends JSON, bitwrench renders it | `pages/07-framework-comparison.html` §1 | Documented |
 | CSS strategy | Three strategies: `bw.s()` inline, `bw.css()` generated, or any external CSS | `pages/03-styling.html` | Documented |
@@ -409,7 +411,7 @@ bitwrench ships with a growing set of component helpers (`makeTable`, `makeCard`
 TACO objects are plain interfaces — TypeScript works natively. Define a `Taco` interface with `t`, `a`, `c`, `o` fields and your factory functions are fully typed. A `.d.ts` file is planned. No special compiler plugin is needed because TACO is already a JS data structure.
 
 ### Reactivity
-bitwrench uses explicit state updates: `bw.update(el)` re-renders a component, `bw.patch(uuid, val)` does targeted DOM updates by UUID, and `bw.pub()`/`bw.sub()` handle cross-component communication. This approach makes every state change traceable and debuggable — grep for `bw.update` to find every re-render in your app.
+`bw.component(taco)` wraps a TACO in a reactive handle with `.get()/.set()` and template bindings (`${key}`). Calling `handle.set('count', 42)` automatically re-renders bindings. For lower-level control, `bw.update(el)` re-renders a component, `bw.patch(uuid, val)` does targeted DOM updates by UUID, and `bw.pub()`/`bw.sub()` handle cross-component communication.
 
 ### Performance at scale
 `bw.patch(uuid, content)` updates specific DOM elements without walking or diffing a tree. There's no virtual DOM overhead — updates go directly to the real DOM, which the browser handles at native speed. For structural changes, `bw.update(el)` replaces the subtree via the element's render function.

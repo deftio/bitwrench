@@ -4,7 +4,7 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.15 |
+| Version | 2.0.16 |
 | Generated | 2026-03-10 |
 | Total APIs | 99 |
 | Categories | 11 |

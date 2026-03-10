@@ -16,6 +16,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const banner = `/*! bitwrench v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+const bwserveBanner = `/*! bwserve v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+const bcclBanner = `/*! bitwrench-bccl v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 
 // Inline plugin: redirect component imports to empty stub (for lean build)
 function stubComponents() {
@@ -304,6 +306,87 @@ const babelConfig = {
         resolve(),
         commonjs(),
         babel(babelConfig),
+      ],
+    },
+
+    // BCCL component addon — modern builds (UMD, CJS, ESM)
+    // Use alongside bitwrench-lean for a split-bundle setup
+    {
+      input: 'src/bitwrench-bccl-entry.js',
+      output: [
+        {
+          file: 'dist/bitwrench-bccl.umd.js',
+          format: 'umd',
+          name: 'bwBCCL',
+          exports: 'named',
+          banner: bcclBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-bccl.umd.min.js',
+          format: 'umd',
+          name: 'bwBCCL',
+          exports: 'named',
+          banner: bcclBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-bccl.cjs.js',
+          format: 'cjs',
+          exports: 'named',
+          banner: bcclBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-bccl.cjs.min.js',
+          format: 'cjs',
+          exports: 'named',
+          banner: bcclBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-bccl.esm.js',
+          format: 'esm',
+          banner: bcclBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-bccl.esm.min.js',
+          format: 'esm',
+          banner: bcclBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+      ],
+    },
+
+    // bwserve — server-driven UI library (Node.js only, CJS + ESM)
+    {
+      input: 'src/bwserve/index.js',
+      output: [
+        {
+          file: 'dist/bwserve.cjs.js',
+          format: 'cjs',
+          exports: 'named',
+          banner: bwserveBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bwserve.esm.js',
+          format: 'esm',
+          banner: bwserveBanner,
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
       ],
     },
   ];

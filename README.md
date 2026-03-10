@@ -88,27 +88,30 @@ Or include directly in a page:
 
 ## Adding State
 
-The `o` key adds state and a render function to any element. When state changes, call `bw.update()` to re-render:
+Wrap any TACO in `bw.component()` to get a reactive component with `.get()`, `.set()`, and template bindings:
 
 ```javascript
-bw.DOM('#counter', {
-  t: 'div',
+var counter = bw.component({
+  t: 'div', c: [
+    { t: 'span', c: 'Count: ${count}' },
+    { t: 'button', c: '+1', a: {
+      onclick: function() { counter.set('count', counter.get('count') + 1); }
+    }}
+  ],
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
-      bw.DOM(el, {
-        t: 'div', c: [
-          { t: 'span', c: 'Count: ' + s.count },
-          { t: 'button', a: {
-            onclick: function() { s.count++; bw.update(el); }
-          }, c: '+1' }
-        ]
-      });
+    methods: {
+      reset: function(comp) { comp.set('count', 0); }
     }
   }
 });
+
+bw.DOM('#app', counter);
+counter.set('count', 42);   // DOM updates automatically
+counter.reset();             // methods from o.methods are callable on the handle
 ```
+
+For low-level control, you can also use `o.render` + `bw.update()` directly — see the [State Management guide](docs/state-management.md).
 
 For communication between components, use pub/sub:
 
@@ -139,13 +142,16 @@ bw.toggleTheme();  // switch between primary and alternate palettes
 |---|---|
 | `bw.html(obj)` | Convert an object to an HTML string |
 | `bw.DOM(selector, obj)` | Mount an object to a DOM element |
+| `bw.component(taco)` | Wrap a TACO in a ComponentHandle with `.get()/.set()` reactive API |
 | `bw.css(rules)` | Generate CSS from a JS object |
 | `bw.loadDefaultStyles()` | Inject the built-in stylesheet |
 | `bw.generateTheme(name, config)` | Generate a scoped theme from seed colors |
 | `bw.patch(id, content)` | Update a specific element by UUID |
 | `bw.update(el)` | Re-render via the element's `o.render` function |
+| `bw.message(target, action, data)` | Send a message to a component by tag name |
 | `bw.pub(topic, detail)` | Publish a message to subscribers |
 | `bw.sub(topic, handler)` | Subscribe to a topic; returns an unsub function |
+| `bw.inspect(target)` | Debug a component in the browser console |
 
 See the full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html) for all functions.
 
@@ -179,14 +185,24 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 ## Documentation
 
-- [Interactive docs and demos](https://deftio.github.io/bitwrench/pages/) — full tutorial site with live examples
+**Guides** (in `docs/`):
+
+- [TACO Format](docs/taco-format.md) — the `{t, a, c, o}` object format
+- [State Management](docs/state-management.md) — three-level component model, ComponentHandle, reactive state
+- [Component Library](docs/component-library.md) — all 50+ `make*()` functions with signatures and examples
+- [Theming](docs/theming.md) — palette-driven theme generation, presets, design tokens
+- [CLI](docs/cli.md) — the `bitwrench` command for file conversion
+- [LLM Guide](docs/llm-bitwrench-guide.md) — compact single-file reference for AI-assisted development
+
+**Interactive demos** (live site):
+
 - [Quick Start](https://deftio.github.io/bitwrench/pages/00-quick-start.html) — first steps with `bw.DOM()`
 - [Components](https://deftio.github.io/bitwrench/pages/01-components.html) — buttons, cards, alerts, badges, navbars
 - [Styling & Theming](https://deftio.github.io/bitwrench/pages/03-styling.html) — CSS generation and theming strategies
-- [State & Interactivity](https://deftio.github.io/bitwrench/pages/05-state.html) — `bw.patch()`, `bw.update()`, pub/sub
+- [State & Interactivity](https://deftio.github.io/bitwrench/pages/05-state.html) — state patterns and ComponentHandle
 - [Tic Tac Toe Tutorial](https://deftio.github.io/bitwrench/pages/06-tic-tac-toe-tutorial.html) — step-by-step game with state management
 - [Framework Comparison](https://deftio.github.io/bitwrench/pages/07-framework-comparison.html) — bitwrench vs React, Vue, Svelte
-- [Themes](https://deftio.github.io/bitwrench/pages/10-themes.html) — interactive theme generator with presets, dark mode, and CSS export
+- [Themes](https://deftio.github.io/bitwrench/pages/10-themes.html) — interactive theme generator with presets and CSS export
 
 ## Development
 

@@ -22,6 +22,20 @@
 			"import": "./dist/bitwrench.esm.js",
 			"require": "./dist/bitwrench.cjs.js",
 			"default": "./dist/bitwrench.umd.js"
+		},
+		"./lean": {
+			"import": "./dist/bitwrench-lean.esm.js",
+			"require": "./dist/bitwrench-lean.cjs.js",
+			"default": "./dist/bitwrench-lean.umd.js"
+		},
+		"./bccl": {
+			"import": "./dist/bitwrench-bccl.esm.js",
+			"require": "./dist/bitwrench-bccl.cjs.js",
+			"default": "./dist/bitwrench-bccl.umd.js"
+		},
+		"./bwserve": {
+			"import": "./dist/bwserve.esm.js",
+			"require": "./dist/bwserve.cjs.js"
 		}
 	},
 	"types": "./dist/bitwrench.d.ts",

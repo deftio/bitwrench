@@ -64,6 +64,14 @@ var BUNDLE_FILES = [
   'bitwrench-lean.es5.min.js',
   'bitwrench-code-edit.umd.js',
   'bitwrench-code-edit.umd.min.js',
+  'bitwrench-bccl.umd.js',
+  'bitwrench-bccl.umd.min.js',
+  'bitwrench-bccl.esm.js',
+  'bitwrench-bccl.esm.min.js',
+  'bitwrench-bccl.cjs.js',
+  'bitwrench-bccl.cjs.min.js',
+  'bwserve.cjs.js',
+  'bwserve.esm.js',
   'bitwrench.css'
 ];
 
@@ -235,6 +243,38 @@ async function main() {
   if (trivial.length > 0) {
     var trivNames = trivial.map(function(s) { return s.file; }).join(', ');
     console.log('\n(omitted < 1KB: ' + trivNames + ')');
+  }
+
+  // Print dist bundle analysis — group by family, show only .min.js variants
+  var minBundles = bundles.filter(function(b) {
+    return b.file.indexOf('.min.') !== -1 || b.file === 'bitwrench.css';
+  });
+
+  if (minBundles.length > 0) {
+    console.log('\n=== Dist Bundles v' + version + ' ===\n');
+    console.log(pad('Bundle', 40) + pad('Raw KB', 10) + pad('Gz KB', 10) + pad('Status', 10));
+    console.log('-'.repeat(70));
+
+    minBundles.forEach(function(b) {
+      var rawKB = (b.bytes / 1024).toFixed(1);
+      var gzKB = (b.gzipBytes / 1024).toFixed(1);
+      var status = '';
+      // Flag if gzipped size exceeds 45KB budget (only for full bundle)
+      if (b.file.indexOf('bitwrench.umd.min') === 0 || b.file.indexOf('bitwrench.esm.min') === 0) {
+        status = b.gzipBytes <= 46080 ? 'OK' : 'OVER 45KB!';
+      }
+      console.log(pad(b.file, 40) + pad(rawKB, 10) + pad(gzKB, 10) + pad(status, 10));
+    });
+
+    console.log('-'.repeat(70));
+
+    // Show non-minified sizes for reference
+    var nonMin = bundles.filter(function(b) {
+      return b.file.indexOf('.min.') === -1 && b.file !== 'bitwrench.css';
+    });
+    if (nonMin.length > 0) {
+      console.log('\n(' + nonMin.length + ' non-minified bundles also generated, not shown)');
+    }
   }
 
   console.log('\nAppended to ' + JSONL_PATH);
