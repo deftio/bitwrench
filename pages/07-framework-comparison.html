@@ -25,7 +25,7 @@
       '.intro-text': {
         'font-size': '0.9375rem',
         'line-height': '1.7',
-        'color': 'var(--bw-text)',
+        'color': 'var(--bw_text)',
         'margin': '0 0 1rem',
         'max-width': '720px'
       },
@@ -33,17 +33,17 @@
         'margin-bottom': '0'
       },
       '.preview-box': {
-        'background': 'var(--bw-card-bg)',
-        'border': '2px solid var(--bw-teal)',
-        'border-radius': 'var(--bw-radius)',
-        'padding': 'var(--bw-space-lg)',
+        'background': 'var(--bw_card_bg)',
+        'border': '2px solid var(--bw_teal)',
+        'border-radius': 'var(--bw_radius)',
+        'padding': 'var(--bw_space_lg)',
         'margin-bottom': '1.25rem'
       },
       '.preview-label': {
         'font-size': '0.6875rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.06em',
-        'color': 'var(--bw-teal)',
+        'color': 'var(--bw_teal)',
         'font-weight': '700',
         'margin-bottom': '0.75rem'
       },
@@ -56,18 +56,18 @@
       '.cmp-table th, .cmp-table td': {
         'padding': '0.65rem 1rem',
         'text-align': 'left',
-        'border-bottom': '1px solid var(--bw-card-border)'
+        'border-bottom': '1px solid var(--bw_card_border)'
       },
       '.cmp-table th': {
-        'background': 'var(--bw-teal-bg)',
+        'background': 'var(--bw_teal_bg)',
         'font-weight': '600',
-        'color': 'var(--bw-text-secondary)',
+        'color': 'var(--bw_text_secondary)',
         'font-size': '0.75rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.04em'
       },
       '.cmp-table tr:hover': {
-        'background': 'var(--bw-teal-bg)'
+        'background': 'var(--bw_teal_bg)'
       },
       '.todo-input-row': {
         'display': 'flex',
@@ -77,8 +77,8 @@
       '.todo-input-row input': {
         'flex': '1',
         'padding': '0.4rem 0.75rem',
-        'border': '1px solid var(--bw-card-border)',
-        'border-radius': 'var(--bw-radius)',
+        'border': '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
         'font-size': '0.875rem'
       },
       '.todo-item': {
@@ -86,7 +86,7 @@
         'align-items': 'center',
         'gap': '0.5rem',
         'padding': '0.5rem 0',
-        'border-bottom': '1px solid var(--bw-card-border)',
+        'border-bottom': '1px solid var(--bw_card_border)',
         'font-size': '0.875rem'
       },
       '.todo-item:last-child': {
@@ -94,15 +94,15 @@
       },
       '.todo-item.done span': {
         'text-decoration': 'line-through',
-        'color': 'var(--bw-text-secondary)'
+        'color': 'var(--bw_text_secondary)'
       },
       '.todo-item span': {
         'flex': '1'
       },
       '.theme-card': {
         'padding': '1.25rem',
-        'border-radius': 'var(--bw-radius)',
-        'border': '1px solid var(--bw-card-border)',
+        'border-radius': 'var(--bw_radius)',
+        'border': '1px solid var(--bw_card_border)',
         'transition': 'all 0.3s'
       },
       '.theme-card h4': {
@@ -118,16 +118,16 @@
         'gap': '0.5rem',
         'margin-bottom': '1rem'
       },
-      '.demo-section-body .bw-nav-tabs': {
+      '.demo-section-body .bw_nav_tabs': {
         'flex-wrap': 'nowrap',
         'overflow-x': 'auto',
         '-webkit-overflow-scrolling': 'touch',
         'scrollbar-width': 'none'
       },
-      '.demo-section-body .bw-nav-tabs::-webkit-scrollbar': {
+      '.demo-section-body .bw_nav_tabs::-webkit-scrollbar': {
         'display': 'none'
       },
-      '.demo-section-body .bw-nav-tabs .bw-nav-link': {
+      '.demo-section-body .bw_nav_tabs .bw_nav_link': {
         'white-space': 'nowrap'
       },
       '#honest-summary .callout': {
@@ -596,10 +596,10 @@
               t: 'div', a: { style: 'display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;' },
               c: counters.map(function(ctr) {
                 return {
-                  t: 'div', a: { style: 'border: 1px solid var(--bw-card-border); border-radius: var(--bw-radius); padding: 0.75rem 1rem; text-align: center; min-width: 100px; flex: 1;' },
+                  t: 'div', a: { style: 'border: 1px solid var(--bw_card_border); border-radius: var(--bw_radius); padding: 0.75rem 1rem; text-align: center; min-width: 100px; flex: 1;' },
                   c: [
                     { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: ctr.label },
-                    { t: 'div', a: { style: 'font-size: 1.5rem; font-weight: 700; color: var(--bw-teal-dark); margin-bottom: 0.5rem;' }, c: String(ctr.count) },
+                    { t: 'div', a: { style: 'font-size: 1.5rem; font-weight: 700; color: var(--bw_teal_dark); margin-bottom: 0.5rem;' }, c: String(ctr.count) },
                     { t: 'div', a: { style: 'display: flex; gap: 0.25rem; justify-content: center;' }, c: [
                       bw.makeButton({ text: '+', variant: 'primary', onclick: function() { ctr.count++; renderCross(); } }),
                       bw.makeButton({ text: '\u2013', variant: 'secondary', onclick: function() { ctr.count--; renderCross(); } })
@@ -609,7 +609,7 @@
               })
             },
             {
-              t: 'div', a: { style: 'background: var(--bw-teal-bg); border: 1px solid var(--bw-card-border); border-radius: var(--bw-radius); padding: 0.75rem 1rem; text-align: center;' },
+              t: 'div', a: { style: 'background: var(--bw_teal_bg); border: 1px solid var(--bw_card_border); border-radius: var(--bw_radius); padding: 0.75rem 1rem; text-align: center;' },
               c: [
                 { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Global Total' },
                 { t: 'div', a: { style: 'font-size: 1.25rem; font-weight: 700;' },
@@ -801,12 +801,12 @@
           previewLabel,
           {
             t: 'ul',
-            a: { class: 'bw-list-group' },
+            a: { class: 'bw_list_group' },
             c: users.map(function(u) {
               return {
                 t: 'li',
                 a: {
-                  class: 'bw-list-group-item',
+                  class: 'bw_list_group_item',
                   style: 'display: flex; justify-content: space-between; align-items: center;'
                 },
                 c: [
@@ -1005,11 +1005,11 @@
             '',
             'bw.DOM("#app", {',
             '  t: "ul",',
-            '  a: { class: "bw-list-group" },',
+            '  a: { class: "bw_list_group" },',
             '  c: users.map(function(u) {',
             '    return {',
             '      t: "li",',
-            '      a: { class: "bw-list-group-item" },',
+            '      a: { class: "bw_list_group_item" },',
             '      c: [',
             '        u.name, " ",',
             '        bw.makeBadge({ text: u.role, variant: "primary" })',
@@ -1041,7 +1041,7 @@
             {
               t: 'div',
               a: {
-                style: 'padding: 1rem; border-radius: 8px; border: 1px solid var(--bw-card-border); ' +
+                style: 'padding: 1rem; border-radius: 8px; border: 1px solid var(--bw_card_border); ' +
                   'transition: all 0.3s; margin-bottom: 0.75rem; ' +
                   'background:' + bg + '; color:' + fg
               },
@@ -1330,7 +1330,7 @@
             { t: 'div', c: todos.map(todoItem) },
             {
               t: 'div',
-              a: { style: 'margin-top: 0.5rem; font-size: 0.8125rem; color: var(--bw-text-secondary);' },
+              a: { style: 'margin-top: 0.5rem; font-size: 0.8125rem; color: var(--bw_text_secondary);' },
               c: todos.filter(function(t) { return !t.done; }).length + ' remaining'
             }
           ]
@@ -1794,7 +1794,7 @@
               a: { style: 'margin-top: 0.75rem;' },
               c: {
                 t: 'pre',
-                a: { style: 'font-size: 0.8125rem; margin: 0; padding: 0.75rem; background: #f4f4f4; border-radius: 4px; border: 1px solid var(--bw-card-border);' },
+                a: { style: 'font-size: 0.8125rem; margin: 0; padding: 0.75rem; background: #f4f4f4; border-radius: 4px; border: 1px solid var(--bw_card_border);' },
                 c: 'bw.css({\n  ".themed": {\n    background: "' + theme.bg + '",\n    color: "' + theme.fg + '",\n    borderColor: "' + theme.accent + '"\n  }\n})'
               }
             }
@@ -2030,7 +2030,7 @@
             '      "border-color": t.accent',
             '    },',
             '    ".themed-card h4": { color: t.accent },',
-            '    ".themed-card .bw-btn": {',
+            '    ".themed-card .bw_btn": {',
             '      background: t.accent,',
             '      "border-color": t.accent,',
             '      color: "#fff"',
@@ -2423,7 +2423,7 @@
             'function makeGreeting(name: string): Taco {',
             '  return {',
             '    t: "div",',
-            '    a: { class: "bw-card" },',
+            '    a: { class: "bw_card" },',
             '    c: [',
             '      { t: "h3", c: "Hello, " + name },',
             '      { t: "p", c: "Welcome to the dashboard." }',
@@ -2603,7 +2603,7 @@
       var useCaseCard = function(uc) {
         return {
           t: 'div',
-          a: { class: 'bw-feature-card' },
+          a: { class: 'bw_feature_card' },
           c: [
             { t: 'h4', c: uc.title },
             { t: 'p', c: uc.desc }
@@ -2613,7 +2613,7 @@
 
       bw.DOM('#use-cases', {
         t: 'div',
-        a: { class: 'bw-feature-grid' },
+        a: { class: 'bw_feature_grid' },
         c: useCases.map(useCaseCard)
       });
     })();

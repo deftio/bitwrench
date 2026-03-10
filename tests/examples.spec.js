@@ -40,7 +40,7 @@ test.describe('Bitwrench v2 Examples', () => {
     expect(editorCount).toBeGreaterThanOrEqual(4);
 
     // Check feature grid next steps section
-    const featureCards = page.locator('.bw-feature-card');
+    const featureCards = page.locator('.bw_feature_card');
     const featureCount = await featureCards.count();
     expect(featureCount).toBeGreaterThanOrEqual(6);
 
@@ -77,11 +77,11 @@ test.describe('Bitwrench v2 Examples', () => {
     await resultTab.click();
 
     // Check cards are rendered (visible in Result tab)
-    const cards = page.locator('.bw-card:visible');
+    const cards = page.locator('.bw_card:visible');
     await expect(cards.first()).toBeVisible();
 
     // Check buttons exist
-    const buttons = page.locator('.bw-btn:visible');
+    const buttons = page.locator('.bw_btn:visible');
     await expect(buttons.first()).toBeVisible();
 
     expect(page.errors).toHaveLength(0);
@@ -134,7 +134,7 @@ test.describe('Bitwrench v2 Examples', () => {
     await expect(paginationControls).toBeVisible();
 
     // Test pagination
-    const nextButton = paginationControls.locator('.bw-page-link:has-text("Next")');
+    const nextButton = paginationControls.locator('.bw_page_link:has-text("Next")');
     await nextButton.click();
     await page.waitForTimeout(500);
 
@@ -152,7 +152,7 @@ test.describe('Bitwrench v2 Examples', () => {
     await expect(page.locator('h1').first()).toContainText('Forms');
 
     // Check form inputs are rendered
-    const formInputs = page.locator('.bw-form-control');
+    const formInputs = page.locator('.bw_form_control');
     await expect(formInputs.first()).toBeVisible();
 
     // Test tabbed forms
@@ -160,8 +160,8 @@ test.describe('Bitwrench v2 Examples', () => {
     await expect(tabbedForm).toBeVisible();
 
     // Check tab navigation works
-    const personalTab = tabbedForm.locator('.bw-nav-link:has-text("Personal Info")');
-    const addressTab = tabbedForm.locator('.bw-nav-link:has-text("Address")');
+    const personalTab = tabbedForm.locator('.bw_nav_link:has-text("Personal Info")');
+    const addressTab = tabbedForm.locator('.bw_nav_link:has-text("Address")');
 
     await expect(personalTab).toHaveClass(/active/);
     await addressTab.click();
@@ -262,12 +262,12 @@ test.describe('Bitwrench v2 Examples', () => {
     await expect(alertsSection).toBeVisible();
 
     // Check alerts exist
-    const alerts = alertsSection.locator('.bw-alert');
+    const alerts = alertsSection.locator('.bw_alert');
     const alertCount = await alerts.count();
     expect(alertCount).toBeGreaterThanOrEqual(1);
 
     // Test progress bars exist and have width values
-    const progressBars = page.locator('.bw-progress-bar');
+    const progressBars = page.locator('.bw_progress_bar');
     const progressCount = await progressBars.count();
     expect(progressCount).toBeGreaterThanOrEqual(2);
     // Verify they have width set (values may change with component updates)
@@ -349,7 +349,7 @@ test.describe('Accessibility Tests', () => {
 
     // Check forms have labels
     await page.goto('/pages/02-forms.html');
-    const formGroups = page.locator('.bw-form-group');
+    const formGroups = page.locator('.bw_form_group');
     const firstGroup = formGroups.first();
     const label = firstGroup.locator('label');
     await expect(label).toBeVisible();

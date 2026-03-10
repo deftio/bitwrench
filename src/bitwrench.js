@@ -18,6 +18,12 @@ import { hexToHsl, hslToHex, adjustLightness, mixColor,
          derivePalette, harmonize, deriveAlternateSeed, deriveAlternateConfig,
          isLightPalette,
          colorParse, colorRgbToHsl, colorHslToRgb } from './bitwrench-color-utils.js';
+import { typeOf as _typeOf, mapScale as _mapScale, clip as _clip,
+         choice as _choice, arrayUniq as _arrayUniq, arrayBinA as _arrayBinA,
+         arrayBNotInA as _arrayBNotInA, colorInterp as _colorInterp,
+         loremIpsum as _loremIpsum, multiArray as _multiArray,
+         naturalCompare as _naturalCompare, setIntervalX as _setIntervalX,
+         repeatUntil as _repeatUntil } from './bitwrench-utils.js';
 
 // Environment-aware module loader for optional Node.js built-ins (fs).
 // Strategy: try require() first (CJS/UMD), fall back to import() (ESM).
@@ -210,58 +216,7 @@ bw._getFs = function() {
  * // baseTypeOnly mode:
  * bw.typeOf([1,2], true)     // => "object"
  */
-bw.typeOf = function(x, baseTypeOnly) {
-  if (x === null) return "null";
-  
-  const basic = typeof x;
-  
-  if (basic !== "object") {
-    return basic;  // covers: string, number, boolean, undefined, function, symbol, bigint
-  }
-
-  if (baseTypeOnly) return basic;
-  
-  const stringTag = Object.prototype.toString.call(x);
-  
-  const typeMap = {
-    '[object Array]': 'array',
-    '[object Date]': 'Date',
-    '[object RegExp]': 'RegExp',
-    '[object Error]': 'Error',
-    '[object Promise]': 'Promise',
-    '[object Map]': 'Map',
-    '[object Set]': 'Set',
-    '[object WeakMap]': 'WeakMap',
-    '[object WeakSet]': 'WeakSet',
-    '[object ArrayBuffer]': 'ArrayBuffer',
-    '[object DataView]': 'DataView',
-    '[object Int8Array]': 'Int8Array',
-    '[object Uint8Array]': 'Uint8Array',
-    '[object Uint8ClampedArray]': 'Uint8ClampedArray',
-    '[object Int16Array]': 'Int16Array',
-    '[object Uint16Array]': 'Uint16Array',
-    '[object Int32Array]': 'Int32Array',
-    '[object Uint32Array]': 'Uint32Array',
-    '[object Float32Array]': 'Float32Array',
-    '[object Float64Array]': 'Float64Array'
-  };
-  
-  if (typeMap[stringTag]) {
-    return typeMap[stringTag];
-  }
-  
-  // Check for custom bitwrench types
-  if (x._bw_type) {
-    return x._bw_type;
-  }
-  
-  // Try constructor name
-  if (x.constructor && x.constructor.name) {
-    return x.constructor.name;
-  }
-  
-  return basic;
-};
+bw.typeOf = _typeOf;
 
 // Alias
 bw.to = bw.typeOf;
@@ -449,23 +404,6 @@ bw.raw = function(str) {
   return { __bw_raw: true, v: String(str) };
 };
 
-/**
- * Normalize CSS class names by converting underscores to hyphens for bw_prefixed classes.
- *
- * Normalize a class string. With underscore-canonical class names (bw_btn, bw_card),
- * this is now an identity function retained for backward compatibility.
- *
- * @param {string} classStr - Class string to normalize
- * @returns {string} The class string unchanged
- * @category Identifiers
- * @example
- * bw.normalizeClass('bw_card bw_btn')  // => 'bw_card bw_btn'
- * bw.normalizeClass('my_class')         // => 'my_class' (unchanged)
- */
-bw.normalizeClass = function(classStr) {
-  if (typeof classStr !== 'string') return classStr;
-  return classStr;
-};
 
 /**
  * Convert a TACO object (or array of TACOs) to an HTML string.
@@ -570,11 +508,7 @@ bw.html = function(taco, options = {}) {
       }
     } else if (key === 'class') {
       // Handle class as array or string
-      const classStr = bw.normalizeClass(
-        Array.isArray(value)
-          ? value.filter(Boolean).join(' ')
-          : String(value)
-      );
+      const classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
       if (classStr) {
         attrStr += ` class="${bw.escapeHTML(classStr)}"`;
       }
@@ -674,11 +608,7 @@ bw.createDOM = function(taco, options = {}) {
       Object.assign(el.style, value);
     } else if (key === 'class') {
       // Handle class as array or string
-      const classStr = bw.normalizeClass(
-        Array.isArray(value)
-          ? value.filter(Boolean).join(' ')
-          : String(value)
-      );
+      const classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
       if (classStr) {
         el.className = classStr;
       }
@@ -2358,7 +2288,7 @@ ComponentHandle.prototype._applyPatches = function(patches) {
       el.textContent = p.value;
     } else if (p.type === 'attribute') {
       if (p.attrName === 'class') {
-        el.className = bw.normalizeClass(p.value);
+        el.className = p.value;
       } else {
         el.setAttribute(p.attrName, p.value);
       }
@@ -2920,29 +2850,7 @@ bw.responsive = function(selector, breakpoints) {
  * bw.mapScale(50, 0, 100, 0, 1)  // => 0.5
  * bw.mapScale(75, 0, 100, 0, 255) // => 191.25
  */
-bw.mapScale = function(x, in0, in1, out0, out1, options = {}) {
-  const { clip = false, expScale = 1 } = options;
-  
-  // Normalize to 0-1
-  let normalized = (x - in0) / (in1 - in0);
-  
-  // Apply exponential scaling
-  if (expScale !== 1) {
-    normalized = Math.pow(normalized, expScale);
-  }
-  
-  // Map to output range
-  let result = normalized * (out1 - out0) + out0;
-  
-  // Clip if requested
-  if (clip) {
-    const min = Math.min(out0, out1);
-    const max = Math.max(out0, out1);
-    result = Math.max(min, Math.min(max, result));
-  }
-  
-  return result;
-};
+bw.mapScale = _mapScale;
 
 /**
  * Clamp a value between min and max bounds.
@@ -2958,9 +2866,7 @@ bw.mapScale = function(x, in0, in1, out0, out1, options = {}) {
  * bw.clip(-5, 0, 100)   // => 0
  * bw.clip(50, 0, 100)   // => 50
  */
-bw.clip = function(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-};
+bw.clip = _clip;
 
 /**
  * DOM selection helper that always returns an array (browser only).
@@ -3285,107 +3191,18 @@ bw.THEME_PRESETS = THEME_PRESETS;
 // Legacy v1 Functions - Useful utilities retained from bitwrench v1
 // ===================================================================================
 
-/**
- * Use a dictionary as a switch statement, with support for function values.
- *
- * Looks up `x` in `choices`. If the value is a function, calls it with `x` as argument.
- * Returns `def` if the key is not found.
- *
- * @param {*} x - Key to look up
- * @param {Object} choices - Dictionary of choices (values can be functions)
- * @param {*} def - Default value if key not found
- * @returns {*} Value or function result
- * @category Array Utilities
- * @example
- * var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } };
- * bw.choice('red', colors, '0')   // => 1
- * bw.choice('aqua', colors)       // => 'aquamarine'
- * bw.choice('pink', colors, 'n/a') // => 'n/a'
- */
-bw.choice = function(x, choices, def) {
-  const z = (x in choices) ? choices[x] : def;
-  return bw.typeOf(z) === "function" ? z(x) : z;
-};
+/** @see bitwrench-utils.js for implementation */
+bw.choice = _choice;
+/** @see bitwrench-utils.js for implementation */
+bw.arrayUniq = _arrayUniq;
+/** @see bitwrench-utils.js for implementation */
+bw.arrayBinA = _arrayBinA;
+/** @see bitwrench-utils.js for implementation */
+bw.arrayBNotInA = _arrayBNotInA;
 
-/**
- * Return unique elements of an array (preserves first occurrence order).
- *
- * @param {Array} x - Input array
- * @returns {Array} Array with unique elements
- * @category Array Utilities
- * @example
- * bw.arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
- */
-bw.arrayUniq = function(x) {
-  if (bw.typeOf(x) !== "array") return [];
-  return x.filter((v, i, arr) => arr.indexOf(v) === i);
-};
-
-/**
- * Return the intersection of two arrays (elements present in both).
- *
- * @param {Array} a - First array
- * @param {Array} b - Second array
- * @returns {Array} Unique elements found in both a and b
- * @category Array Utilities
- * @see bw.arrayBNotInA
- * @example
- * bw.arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
- */
-bw.arrayBinA = function(a, b) {
-  if (bw.typeOf(a) !== "array" || bw.typeOf(b) !== "array") return [];
-  return bw.arrayUniq(a.filter(n => b.indexOf(n) !== -1));
-};
-
-/**
- * Return elements of b that are not present in a (set difference).
- *
- * @param {Array} a - First array (the "exclude" set)
- * @param {Array} b - Second array (source of results)
- * @returns {Array} Unique elements in b but not in a
- * @category Array Utilities
- * @see bw.arrayBinA
- * @example
- * bw.arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
- */
-bw.arrayBNotInA = function(a, b) {
-  if (bw.typeOf(a) !== "array" || bw.typeOf(b) !== "array") return [];
-  return bw.arrayUniq(b.filter(n => a.indexOf(n) < 0));
-};
-
-/**
- * Interpolate between an array of colors based on a value in a range.
- *
- * Maps a value from [in0..in1] across a gradient of colors, smoothly blending
- * between adjacent stops. Useful for heatmaps, gauges, and data visualization.
- *
- * @param {number} x - Value to interpolate
- * @param {number} in0 - Input range start
- * @param {number} in1 - Input range end
- * @param {Array} colors - Array of CSS color strings to interpolate between
- * @param {number} [stretch] - Exponential scaling factor (1 = linear)
- * @returns {Array} Interpolated color as [r, g, b, a, "rgb"]
- * @category Color
- * @see bw.colorParse
- * @see bw.mapScale
- * @example
- * bw.colorInterp(50, 0, 100, ['#ff0000', '#00ff00'])
- * // => [128, 128, 0, 255, "rgb"] (yellow midpoint)
- */
+/** @see bitwrench-utils.js for implementation — wraps _colorInterp with bw.colorParse */
 bw.colorInterp = function(x, in0, in1, colors, stretch) {
-  let c = Array.isArray(colors) ? colors : ["#000", "#fff"];
-  c = c.length === 0 ? ["#000", "#fff"] : c;
-  if (c.length === 1) return c[0];
-  
-  // Convert all colors to RGB format
-  c = c.map(col => bw.colorParse(col));
-  
-  const a = bw.mapScale(x, in0, in1, 0, c.length - 1, { clip: true, expScale: stretch });
-  const i = bw.clip(Math.floor(a), 0, c.length - 2);
-  const r = a - i;
-  
-  const interp = (idx) => bw.mapScale(r, 0, 1, c[i][idx], c[i + 1][idx], { clip: true });
-  return [interp(0), interp(1), interp(2), interp(3), "rgb"];
+  return _colorInterp(x, in0, in1, colors, stretch, colorParse);
 };
 
 // Color conversion functions — imported from bitwrench-color-utils.js (single source of truth)
@@ -3671,245 +3488,17 @@ bw.selectTabContent = function(tabElement) {
   }
 };
 
-/**
- * Generate Lorem Ipsum placeholder text.
- *
- * Useful for prototyping layouts. Generates repeatable text from the standard
- * Lorem Ipsum passage. Omit numChars for a random length between 25-150 characters.
- *
- * @param {number} [numChars] - Number of characters (random 25-150 if not provided)
- * @param {number} [startSpot] - Starting index in Lorem text (random if undefined)
- * @param {boolean} [startWithCapitalLetter=true] - Start with a capital letter
- * @returns {string} Lorem ipsum text
- * @category Text Generation
- * @example
- * bw.loremIpsum(50)
- * // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
- */
-bw.loremIpsum = function(numChars, startSpot, startWithCapitalLetter = true) {
-  const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ";
-  
-  // If numChars not provided, generate random length between 25-150
-  if (typeof numChars !== "number") {
-    numChars = Math.floor(Math.random() * 125) + 25;
-  }
-  
-  // If startSpot is undefined, randomize it
-  if (startSpot === undefined) {
-    startSpot = Math.floor(Math.random() * lorem.length);
-  }
-  
-  startSpot = startSpot % lorem.length;
-  
-  // Track how many characters we skip to honor numChars
-  let skippedChars = 0;
-  // Move startSpot to the next non-whitespace and non-punctuation character
-  while (lorem[startSpot] === ' ' || /[.,:;!?]/.test(lorem[startSpot])) {
-    startSpot = (startSpot + 1) % lorem.length;
-    skippedChars++;
-    // Prevent infinite loop in case entire lorem is spaces/punctuation
-    if (skippedChars >= lorem.length) {
-      startSpot = 0;
-      skippedChars = 0;
-      break;
-    }
-  }
-  
-  let l = lorem.substring(startSpot) + lorem.substring(0, startSpot);
-  
-  let result = "";
-  let remaining = numChars + skippedChars;  // Add skipped chars to honor original numChars
-  
-  while (remaining > 0) {
-    result += remaining < l.length ? l.substring(0, remaining) : l;
-    remaining -= l.length;
-  }
-  
-  // Trim to exact numChars length
-  if (result.length > numChars) {
-    result = result.substring(0, numChars);
-  }
-  
-  // Ensure no trailing space
-  if (result[result.length - 1] === " ") {
-    result = result.substring(0, result.length - 1) + ".";
-  }
-  
-  // Ensure capital letter at start if requested
-  if (startWithCapitalLetter) {
-    let c = result[0].toUpperCase();
-    c = /[A-Z]/.test(c) ? c : "L";  // Use "L" as default if first char isn't a letter
-    result = c + result.substring(1);
-  }
-  
-  return result;
-};
+/** @see bitwrench-utils.js for implementation */
+bw.loremIpsum = _loremIpsum;
 
-/**
- * Create a multidimensional array filled with a value or function result.
- *
- * If value is a function, it's called for each cell (useful for random data).
- *
- * @param {*} value - Value or function to fill array with
- * @param {number|Array} dims - Dimensions (number for 1D, array for multi-D)
- * @returns {Array} Multidimensional array
- * @category Array Utilities
- * @example
- * bw.multiArray(0, [4, 5])            // 4x5 array of 0s
- * bw.multiArray('test', 5)            // ['test','test','test','test','test']
- * bw.multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
- */
-bw.multiArray = function(value, dims) {
-  const v = () => bw.typeOf(value) === "function" ? value() : value;
-  dims = typeof dims === "number" ? [dims] : dims;
-  
-  const createArray = (dim) => {
-    if (dim >= dims.length) return v();
-    
-    const arr = [];
-    for (let i = 0; i < dims[dim]; i++) {
-      arr[i] = createArray(dim + 1);
-    }
-    return arr;
-  };
-  
-  return createArray(0);
-};
-
-/**
- * Natural sort comparison function for use with `Array.sort()`.
- *
- * Sorts strings with embedded numbers in human-expected order
- * (e.g. "file2" before "file10") instead of lexicographic order.
- *
- * @param {*} as - First value
- * @param {*} bs - Second value
- * @returns {number} Sort order (-1, 0, 1)
- * @category Array Utilities
- * @example
- * ['item10', 'item2', 'item1'].sort(bw.naturalCompare)
- * // => ['item1', 'item2', 'item10']
- */
-bw.naturalCompare = function(as, bs) {
-  // Handle numbers
-  if (isFinite(as) && isFinite(bs)) {
-    return Math.sign(as - bs);
-  }
-  
-  const a = String(as).toLowerCase();
-  const b = String(bs).toLowerCase();
-  
-  if (a === b) return as > bs ? 1 : 0;
-  
-  // If no digits, simple string compare
-  if (!/\d/.test(a) || !/\d/.test(b)) {
-    return a > b ? 1 : -1;
-  }
-  
-  // Split into chunks of digits/non-digits
-  const aParts = a.match(/(\d+|\D+)/g) || [];
-  const bParts = b.match(/(\d+|\D+)/g) || [];
-  
-  const len = Math.min(aParts.length, bParts.length);
-  
-  for (let i = 0; i < len; i++) {
-    const aPart = aParts[i];
-    const bPart = bParts[i];
-    
-    if (aPart !== bPart) {
-      // Both numeric
-      if (/^\d+$/.test(aPart) && /^\d+$/.test(bPart)) {
-        // Handle leading zeros
-        let aNum = aPart;
-        let bNum = bPart;
-        
-        if (aPart[0] === "0") aNum = "0." + aPart;
-        if (bPart[0] === "0") bNum = "0." + bPart;
-        
-        return parseFloat(aNum) - parseFloat(bNum);
-      }
-      
-      // String comparison
-      return aPart > bPart ? 1 : -1;
-    }
-  }
-  
-  // Different lengths
-  return aParts.length - bParts.length;
-};
-
-/**
- * Run `setInterval` with a maximum number of repetitions.
- *
- * Like `setInterval` but automatically clears after N calls.
- *
- * @param {Function} callback - Function to call (receives iteration index)
- * @param {number} delay - Delay between calls in ms
- * @param {number} repetitions - Maximum number of times to call
- * @returns {number} Interval ID (can be passed to clearInterval)
- * @category Timing
- * @example
- * bw.setIntervalX(function(i) {
- *   console.log('Iteration', i);
- * }, 1000, 5); // Runs 5 times, 1 second apart
- */
-bw.setIntervalX = function(callback, delay, repetitions) {
-  let count = 0;
-  const intervalID = setInterval(function() {
-    callback(count);
-    
-    if (++count >= repetitions) {
-      clearInterval(intervalID);
-    }
-  }, delay);
-  
-  return intervalID;
-};
-
-/**
- * Repeat a test function until it returns truthy, or give up after max attempts.
- *
- * Useful for polling (waiting for an element to appear, an API to respond, etc.).
- *
- * @param {Function} testFn - Test function that returns truthy when done
- * @param {Function} successFn - Called with test result when test passes
- * @param {Function} [failFn] - Called on each failed test attempt
- * @param {number} [delay=250] - Delay between attempts in ms
- * @param {number} [maxReps=10] - Maximum number of attempts
- * @param {Function} [lastFn] - Called when done with (success, count)
- * @returns {string|number} "err" if invalid params, otherwise interval ID
- * @category Timing
- * @example
- * bw.repeatUntil(
- *   function() { return document.getElementById('myDiv'); },
- *   function() { console.log('Element found!'); },
- *   null, 100, 30
- * );
- */
-bw.repeatUntil = function(testFn, successFn, failFn, delay = 250, maxReps = 10, lastFn) {
-  if (typeof testFn !== "function") return "err";
-  
-  let count = 0;
-  
-  const intervalID = setInterval(function() {
-    const result = testFn();
-    count++;
-    
-    if (result) {
-      clearInterval(intervalID);
-      if (successFn) successFn(result);
-      if (lastFn) lastFn(true, count);
-    } else if (count >= maxReps) {
-      clearInterval(intervalID);
-      if (failFn) failFn();
-      if (lastFn) lastFn(false, count);
-    } else {
-      if (failFn) failFn();
-    }
-  }, delay);
-  
-  return intervalID;
-};
+/** @see bitwrench-utils.js for implementation */
+bw.multiArray = _multiArray;
+/** @see bitwrench-utils.js for implementation */
+bw.naturalCompare = _naturalCompare;
+/** @see bitwrench-utils.js for implementation */
+bw.setIntervalX = _setIntervalX;
+/** @see bitwrench-utils.js for implementation */
+bw.repeatUntil = _repeatUntil;
 
 // ===================================================================================
 // File I/O Functions - Works in both Node.js and browser
@@ -4843,8 +4432,8 @@ bw.make = components.make;
 // Component registry: bw.BCCL lists all available component types
 bw.BCCL = components.BCCL;
 
-// Variant class mapping: bw.VARIANT_CLASSES for theming introspection
-bw.VARIANT_CLASSES = components.VARIANT_CLASSES;
+// Variant class helper: bw.variantClass('primary') → 'bw_primary'
+bw.variantClass = components.variantClass;
 
 // Create functions that return handles (plain renderComponent, no Handle overlay)
 Object.entries(components).forEach(([name, fn]) => {

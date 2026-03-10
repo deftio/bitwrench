@@ -20,11 +20,11 @@ const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.
 // Inline plugin: redirect component imports to empty stub (for lean build)
 function stubComponents() {
   const stubPath = pathResolve(__dirname, 'src/bitwrench-components-stub.js');
-  const componentPath = pathResolve(__dirname, 'src/bitwrench-components-v2.js');
+  const componentPath = pathResolve(__dirname, 'src/bitwrench-bccl.js');
   return {
     name: 'stub-components',
     resolveId(source, importer) {
-      if (importer && source.includes('bitwrench-components-v2')) {
+      if (importer && source.includes('bitwrench-bccl')) {
         return stubPath;
       }
       return null;

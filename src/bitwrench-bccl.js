@@ -30,34 +30,24 @@
  * Each function takes a variant name (e.g. 'primary') and returns a class string.
  * @type {Object.<string, function(string): string>}
  */
-export var VARIANT_CLASSES = {
-  // Solid background + contrast text + matching border
-  button:   function(v) { return 'bw_bg_' + v + ' bw_text_on_' + v + ' bw_border_' + v; },
-  // Outline: transparent bg, colored border + text
-  buttonOutline: function(v) { return 'bw_btn_outline bw_border_' + v + ' bw_text_' + v; },
-  // Light bg + dark text + subtle border
-  alert:    function(v) { return 'bw_bg_' + v + '_light bw_text_' + v + '_dark bw_border_' + v + '_subtle'; },
-  // Solid bg + contrast text
-  badge:    function(v) { return 'bw_bg_' + v + ' bw_text_on_' + v; },
-  // Solid bg for progress bar fill
-  progress: function(v) { return 'bw_bg_' + v; },
-  // Text color for spinner
-  spinner:  function(v) { return 'bw_text_' + v; },
-  // Solid bg + contrast text for avatar initials
-  avatar:   function(v) { return 'bw_bg_' + v + ' bw_text_on_' + v; },
-  // Accent border for cards
-  card:     function(v) { return 'bw_card_accent bw_border_' + v; },
-  // Accent border for stat cards
-  statCard: function(v) { return 'bw_border_' + v; },
-  // Accent border for toasts
-  toast:    function(v) { return 'bw_border_' + v; },
-  // Marker bg for timeline items
-  timeline: function(v) { return 'bw_bg_' + v; },
-  // Hero gradient — stays component-specific (gradient CSS not expressible as utility)
-  hero:     function(v) { return 'bw_hero_' + v; },
-  // Dropdown trigger inherits button mapping
-  dropdown: function(v) { return 'bw_bg_' + v + ' bw_text_on_' + v + ' bw_border_' + v; }
-};
+/**
+ * Convert a variant name to a single palette class.
+ * All BCCL components use this: variant='primary' → class includes 'bw_primary'.
+ * The CSS palette class (.bw-primary) sets bg/color/border; component-specific
+ * overrides in generatePaletteClasses() adjust per component type.
+ *
+ * @param {string} v - Variant name (e.g. 'primary', 'danger', 'outline_primary')
+ * @returns {string} CSS class string
+ */
+export function variantClass(v) {
+  if (!v) return '';
+  // Handle outline variants: 'outline_primary' or 'outline-primary'
+  if (v.indexOf('outline') === 0) {
+    var base = v.replace(/^outline[_-]/, '');
+    return 'bw_btn_outline bw_' + base;
+  }
+  return 'bw_' + v;
+}
 
 /**
  * Create a card component with optional header, body, footer, and image support
@@ -125,7 +115,7 @@ export function makeCard(props = {}) {
 
   const cardClasses = [
     'bw_card',
-    variant ? VARIANT_CLASSES.card(variant) : '',
+    variantClass(variant),
     shadow ? (shadowClasses[shadow] || '') : '',
     !bordered ? 'bw_border_0' : '',
     hoverable ? 'bw_card_hoverable' : '',
@@ -234,20 +224,13 @@ export function makeButton(props = {}) {
     style
   } = props;
 
-  // Check for outline- prefix variants
-  var isOutline = variant.indexOf('outline_') === 0 || variant.indexOf('outline-') === 0;
-  var baseVariant = isOutline ? variant.replace(/^outline[_-]/, '') : variant;
-  var variantClass = isOutline
-    ? VARIANT_CLASSES.buttonOutline(baseVariant)
-    : VARIANT_CLASSES.button(baseVariant);
-
   return {
     t: 'button',
     a: {
       type,
       class: [
         'bw_btn',
-        variantClass,
+        variantClass(variant),
         size && `bw_btn_${size}`,
         className
       ].filter(Boolean).join(' '),
@@ -643,7 +626,7 @@ export function makeAlert(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_alert ${VARIANT_CLASSES.alert(variant)} ${dismissible ? 'bw_alert_dismissible' : ''} ${className}`.trim(),
+      class: `bw_alert ${variantClass(variant)} ${dismissible ? 'bw_alert_dismissible' : ''} ${className}`.trim(),
       role: 'alert'
     },
     c: [
@@ -697,7 +680,7 @@ export function makeBadge(props = {}) {
   return {
     t: 'span',
     a: {
-      class: `bw_badge ${VARIANT_CLASSES.badge(variant)}${sizeClass} ${pill ? 'bw_badge_pill' : ''} ${className}`.trim()
+      class: `bw_badge ${variantClass(variant)}${sizeClass} ${pill ? 'bw_badge_pill' : ''} ${className}`.trim()
     },
     c: text
   };
@@ -748,7 +731,7 @@ export function makeProgress(props = {}) {
       a: {
         class: [
           'bw_progress_bar',
-          VARIANT_CLASSES.progress(variant),
+          variantClass(variant),
           striped && 'bw_progress_bar_striped',
           animated && 'bw_progress_bar_animated'
         ].filter(Boolean).join(' '),
@@ -1265,7 +1248,7 @@ export function makeSpinner(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_spinner_${type} bw_spinner_${type}-${size} ${VARIANT_CLASSES.spinner(variant)}`,
+      class: `bw_spinner_${type} bw_spinner_${type}-${size} ${variantClass(variant)}`,
       role: 'status'
     },
     c: {
@@ -1330,7 +1313,7 @@ export function makeHero(props = {}) {
   return {
     t: 'section',
     a: {
-      class: `bw_hero ${VARIANT_CLASSES.hero(variant)} ${sizeClasses[size] || sizeClasses.lg} ${centered ? 'bw_text_center' : ''} ${className}`.trim(),
+      class: `bw_hero ${variantClass(variant)} ${sizeClasses[size] || sizeClasses.lg} ${centered ? 'bw_text_center' : ''} ${className}`.trim(),
       style: backgroundImage ? `background-image: url('${backgroundImage}'); background-size: cover; background-position: center;` : undefined
     },
     c: [
@@ -2139,7 +2122,7 @@ export function makeToast(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_toast ${VARIANT_CLASSES.toast(variant)} ${className}`.trim(),
+      class: `bw_toast ${variantClass(variant)} ${className}`.trim(),
       role: 'alert',
       'data-position': position
     },
@@ -2236,7 +2219,7 @@ export function makeDropdown(props = {}) {
     triggerTaco = {
       t: 'button',
       a: {
-        class: `bw_btn ${VARIANT_CLASSES.dropdown(variant)} bw_dropdown_toggle`,
+        class: `bw_btn ${variantClass(variant)} bw_dropdown_toggle`,
         type: 'button',
         onclick: function(e) {
           var dropdown = e.target.closest('.bw_dropdown');
@@ -2480,7 +2463,7 @@ export function makeAvatar(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_avatar bw_avatar_${size} ${VARIANT_CLASSES.avatar(variant)} ${className}`.trim()
+      class: `bw_avatar bw_avatar_${size} ${variantClass(variant)} ${className}`.trim()
     },
     c: initials || ''
   };
@@ -2747,7 +2730,7 @@ export function makeStatCard(props = {}) {
 
   var classes = [
     'bw_stat_card',
-    variant ? VARIANT_CLASSES.statCard(variant) : '',
+    variantClass(variant),
     className
   ].filter(Boolean).join(' ').trim();
 
@@ -3340,7 +3323,7 @@ export function makeTimeline(props = {}) {
         c: [
           {
             t: 'div',
-            a: { class: 'bw_timeline_marker ' + VARIANT_CLASSES.timeline(item.variant || 'primary') }
+            a: { class: 'bw_timeline_marker ' + variantClass(item.variant || 'primary') }
           },
           {
             t: 'div',

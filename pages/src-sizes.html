@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Source Size Analysis</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 1rem 2rem; background: #fafafa; color: #222; }
+h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+.subtitle { color: #666; font-size: 0.85rem; margin-bottom: 1.5rem; }
+.section { margin-bottom: 2rem; }
+.section h2 { font-size: 1.1rem; border-bottom: 2px solid #006666; padding-bottom: 0.4rem; margin-bottom: 0.75rem; }
+.sz { text-align: right; font-variant-numeric: tabular-nums; }
+.pct { text-align: right; font-variant-numeric: tabular-nums; color: #666; font-size: 0.85em; }
+.table-wrap { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.table-wrap .bw_table { margin-bottom: 0; }
+.table-wrap .bw_table > thead > tr > * { background: #004d4d; color: #fff; font-size: 0.8rem; }
+.table-wrap .bw_table > tbody > tr > * { font-size: 0.8rem; }
+.table-wrap .bw_table > tbody > tr:nth-of-type(odd) > * { background-color: rgba(0,0,0,0.025); }
+.table-wrap .bw_table > tfoot > tr > * { font-weight: 700; background: #f0f0f0; font-size: 0.8rem; }
+.bar { display: inline-block; height: 14px; background: #006666; border-radius: 2px; vertical-align: middle; min-width: 2px; }
+.bar-doc { background: #90c0c0; }
+.bar-wrap { display: flex; gap: 1px; align-items: center; }
+.legend { display: flex; gap: 1rem; margin: 0.5rem 0; font-size: 0.75rem; color: #666; }
+.legend-item { display: flex; align-items: center; gap: 0.3rem; }
+.legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+canvas { border: 1px solid #e0e0e0; border-radius: 4px; background: #fff; display: block; max-width: 100%; }
+.chart-title { font-size: 0.85rem; font-weight: 600; margin: 1rem 0 0.4rem; }
+.summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.summary-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 0.75rem 1rem; min-width: 140px; }
+.summary-card .label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+.summary-card .value { font-size: 1.4rem; font-weight: 700; color: #006666; }
+.summary-card .detail { font-size: 0.75rem; color: #666; }
+.build-selector { margin-bottom: 1rem; }
+.build-selector select { padding: 0.3rem 0.5rem; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+  (function() {
+    var JSONL_PATH = '../dbg/build-metrics.jsonl';
+
+    function loadData(cb) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', JSONL_PATH);
+      xhr.onload = function() {
+        if (xhr.status !== 200) { cb([], 'Failed to load ' + JSONL_PATH); return; }
+        var lines = xhr.responseText.trim().split('\n').filter(function(l) { return l.trim(); });
+        var records = [];
+        lines.forEach(function(line) {
+          try { records.push(JSON.parse(line)); } catch(e) { /* skip bad lines */ }
+        });
+        cb(records);
+      };
+      xhr.onerror = function() { cb([], 'Network error loading ' + JSONL_PATH); };
+      xhr.send();
+    }
+
+    function kb(bytes) { return (bytes / 1024).toFixed(1); }
+    function pct(part, whole) { return whole ? (100 * part / whole).toFixed(0) + '%' : '-'; }
+
+    function barHTML(codeBytes, docBytes, maxBytes) {
+      var scale = 200; // max bar width px
+      var codeW = Math.max(2, Math.round(scale * codeBytes / maxBytes));
+      var docW = Math.max(0, Math.round(scale * docBytes / maxBytes));
+      return '<div class="bar-wrap">' +
+        '<span class="bar" style="width:' + codeW + 'px" title="Code: ' + kb(codeBytes) + ' KB"></span>' +
+        '<span class="bar bar-doc" style="width:' + docW + 'px" title="Docs/whitespace: ' + kb(docBytes) + ' KB"></span>' +
+        '</div>';
+    }
+
+    function renderSourceTable(record) {
+      var sources = record.sources;
+      var maxBytes = 0;
+      sources.forEach(function(s) { if (s.bytes > maxBytes) maxBytes = s.bytes; });
+
+      var rows = sources.map(function(s) {
+        var docBytes = s.bytes - s.minBytes;
+        return [
+          s.file,
+          s.purpose,
+          s.lines,
+          kb(s.bytes),
+          kb(s.minBytes),
+          pct(s.minBytes, s.bytes),
+          kb(s.gzipBytes),
+          bw.raw(barHTML(s.minBytes, docBytes, maxBytes))
+        ];
+      });
+
+      var t = record.totals;
+      var totDocBytes = t.sourceBytes - t.sourceMinBytes;
+      rows.push([
+        { t: 'strong', c: 'TOTAL' }, '',
+        t.sourceLines,
+        kb(t.sourceBytes),
+        kb(t.sourceMinBytes),
+        pct(t.sourceMinBytes, t.sourceBytes),
+        kb(t.sourceGzipBytes),
+        bw.raw(barHTML(t.sourceMinBytes, totDocBytes, maxBytes))
+      ]);
+
+      return bw.makeTable({
+        headers: ['File', 'Purpose', 'Lines', 'KB', 'Min KB', 'Code%', 'Gz KB', 'Weight'],
+        rows: rows,
+        footer: false
+      });
+    }
+
+    function renderBundleTable(record) {
+      var bundles = record.bundles.filter(function(b) {
+        return b.file.includes('.min.') || b.file.endsWith('.css');
+      });
+
+      var rows = bundles.map(function(b) {
+        var name = b.file.replace('bitwrench', 'bw').replace('.min', '');
+        var fmt = 'css';
+        if (b.file.includes('.umd.')) fmt = 'UMD';
+        else if (b.file.includes('.esm.')) fmt = 'ESM';
+        else if (b.file.includes('.cjs.')) fmt = 'CJS';
+        else if (b.file.includes('.es5.')) fmt = 'ES5';
+        var variant = 'full';
+        if (b.file.includes('-lean')) variant = 'lean';
+        else if (b.file.includes('-code-edit')) variant = 'code-edit';
+        else if (b.file.endsWith('.css')) variant = 'css';
+        return [name, variant, fmt, kb(b.bytes), kb(b.gzipBytes)];
+      });
+
+      return bw.makeTable({
+        headers: ['Bundle', 'Variant', 'Format', 'KB', 'Gz KB'],
+        rows: rows
+      });
+    }
+
+    function drawSparkline(canvas, records, valueFn, label, color) {
+      var ctx = canvas.getContext('2d');
+      var w = canvas.width;
+      var h = canvas.height;
+      var pad = { top: 20, right: 60, bottom: 30, left: 50 };
+      var plotW = w - pad.left - pad.right;
+      var plotH = h - pad.top - pad.bottom;
+
+      ctx.clearRect(0, 0, w, h);
+
+      var values = records.map(valueFn);
+      if (values.length === 0) return;
+
+      var min = Math.min.apply(null, values);
+      var max = Math.max.apply(null, values);
+      var range = max - min || 1;
+      // Add 10% padding
+      min = min - range * 0.1;
+      max = max + range * 0.1;
+      range = max - min;
+
+      // Grid lines
+      ctx.strokeStyle = '#e8e8e8';
+      ctx.lineWidth = 1;
+      var gridSteps = 4;
+      for (var g = 0; g <= gridSteps; g++) {
+        var gy = pad.top + plotH - (g / gridSteps) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, gy);
+        ctx.lineTo(pad.left + plotW, gy);
+        ctx.stroke();
+        // Y-axis labels
+        ctx.fillStyle = '#999';
+        ctx.font = '10px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        var val = min + (g / gridSteps) * range;
+        ctx.fillText(val.toFixed(1), pad.left - 4, gy + 3);
+      }
+
+      // X-axis labels (version)
+      ctx.fillStyle = '#999';
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      var step = Math.max(1, Math.floor(records.length / 8));
+      for (var xi = 0; xi < records.length; xi += step) {
+        var xx = pad.left + (xi / Math.max(1, records.length - 1)) * plotW;
+        var lbl = records[xi].version;
+        ctx.fillText(lbl, xx, h - pad.bottom + 14);
+      }
+
+      // Data line
+      ctx.strokeStyle = color || '#006666';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      values.forEach(function(v, i) {
+        var x = pad.left + (i / Math.max(1, values.length - 1)) * plotW;
+        var y = pad.top + plotH - ((v - min) / range) * plotH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Data points
+      ctx.fillStyle = color || '#006666';
+      values.forEach(function(v, i) {
+        var x = pad.left + (i / Math.max(1, values.length - 1)) * plotW;
+        var y = pad.top + plotH - ((v - min) / range) * plotH;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      // Latest value label
+      var lastVal = values[values.length - 1];
+      var lastX = pad.left + plotW;
+      var lastY = pad.top + plotH - ((lastVal - min) / range) * plotH;
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(lastVal.toFixed(1) + ' KB', lastX + 6, lastY + 4);
+
+      // Title
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 12px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(label, pad.left, 14);
+    }
+
+    function render(records, error) {
+      if (error || records.length === 0) {
+        bw.DOM('#app', { t: 'div', c: error || 'No build metrics data found. Run npm run build first.' });
+        return;
+      }
+
+      var latest = records[records.length - 1];
+      var t = latest.totals;
+      var umdGz = 0;
+      var leanGz = 0;
+      latest.bundles.forEach(function(b) {
+        if (b.file === 'bitwrench.umd.min.js') umdGz = b.gzipBytes;
+        if (b.file === 'bitwrench-lean.umd.min.js') leanGz = b.gzipBytes;
+      });
+
+      var content = [
+        { t: 'h1', c: 'Source Size Analysis' },
+        { t: 'p', a: { class: 'subtitle' }, c: 'v' + latest.version + ' \u00b7 ' + latest.gitHash + ' \u00b7 ' + latest.gitBranch + ' \u00b7 ' + latest.timestamp.split('T')[0] + ' \u00b7 ' + records.length + ' builds tracked' },
+
+        // Summary cards
+        { t: 'div', a: { class: 'summary-cards' }, c: [
+          { t: 'div', a: { class: 'summary-card' }, c: [
+            { t: 'div', a: { class: 'label' }, c: 'Source Lines' },
+            { t: 'div', a: { class: 'value' }, c: t.sourceLines.toLocaleString() },
+            { t: 'div', a: { class: 'detail' }, c: t.sourceFiles + ' files' }
+          ]},
+          { t: 'div', a: { class: 'summary-card' }, c: [
+            { t: 'div', a: { class: 'label' }, c: 'Source (raw)' },
+            { t: 'div', a: { class: 'value' }, c: kb(t.sourceBytes) + ' KB' },
+            { t: 'div', a: { class: 'detail' }, c: 'with JSDoc + comments' }
+          ]},
+          { t: 'div', a: { class: 'summary-card' }, c: [
+            { t: 'div', a: { class: 'label' }, c: 'Source (code only)' },
+            { t: 'div', a: { class: 'value' }, c: kb(t.sourceMinBytes) + ' KB' },
+            { t: 'div', a: { class: 'detail' }, c: pct(t.sourceMinBytes, t.sourceBytes) + ' is actual code' }
+          ]},
+          { t: 'div', a: { class: 'summary-card' }, c: [
+            { t: 'div', a: { class: 'label' }, c: 'UMD gzip' },
+            { t: 'div', a: { class: 'value' }, c: kb(umdGz) + ' KB' },
+            { t: 'div', a: { class: 'detail' }, c: 'budget: 45 KB' }
+          ]},
+          { t: 'div', a: { class: 'summary-card' }, c: [
+            { t: 'div', a: { class: 'label' }, c: 'Lean gzip' },
+            { t: 'div', a: { class: 'value' }, c: kb(leanGz) + ' KB' },
+            { t: 'div', a: { class: 'detail' }, c: 'no BCCL' }
+          ]}
+        ]},
+
+        // Source file table
+        { t: 'div', a: { class: 'section' }, c: [
+          { t: 'h2', c: 'Source File Breakdown' },
+          { t: 'div', a: { class: 'legend' }, c: [
+            { t: 'span', a: { class: 'legend-item' }, c: [
+              { t: 'span', a: { class: 'legend-swatch', style: 'background:#006666' } },
+              'Code'
+            ]},
+            { t: 'span', a: { class: 'legend-item' }, c: [
+              { t: 'span', a: { class: 'legend-swatch', style: 'background:#90c0c0' } },
+              'JSDoc / comments / whitespace'
+            ]}
+          ]},
+          { t: 'div', a: { class: 'table-wrap' }, c: renderSourceTable(latest) }
+        ]},
+
+        // Bundle table
+        { t: 'div', a: { class: 'section' }, c: [
+          { t: 'h2', c: 'Dist Bundles (minified)' },
+          { t: 'div', a: { class: 'table-wrap' }, c: renderBundleTable(latest) }
+        ]},
+
+        // Trend charts (only if > 1 record)
+        records.length > 1 ? { t: 'div', a: { class: 'section' }, c: [
+          { t: 'h2', c: 'Trends Over Builds' },
+          { t: 'div', a: { class: 'chart-title' }, c: 'UMD Gzip (KB)' },
+          { t: 'canvas', a: { id: 'chart-umd-gz', width: '700', height: '220' } },
+          { t: 'div', a: { class: 'chart-title' }, c: 'Lean UMD Gzip (KB)' },
+          { t: 'canvas', a: { id: 'chart-lean-gz', width: '700', height: '220' } },
+          { t: 'div', a: { class: 'chart-title' }, c: 'Source Lines' },
+          { t: 'canvas', a: { id: 'chart-lines', width: '700', height: '220' } },
+          { t: 'div', a: { class: 'chart-title' }, c: 'Source Code KB (minified, no docs)' },
+          { t: 'canvas', a: { id: 'chart-code-kb', width: '700', height: '220' } }
+        ]} : { t: 'p', a: { style: 'color:#999; font-style:italic' }, c: 'Build more than once to see trends.' }
+      ];
+
+      bw.DOM('#app', content);
+
+      // Draw charts after DOM is rendered
+      if (records.length > 1) {
+        setTimeout(function() {
+          var c1 = document.getElementById('chart-umd-gz');
+          var c2 = document.getElementById('chart-lean-gz');
+          var c3 = document.getElementById('chart-lines');
+          var c4 = document.getElementById('chart-code-kb');
+          if (c1) drawSparkline(c1, records, function(r) {
+            var b = r.bundles.find(function(x) { return x.file === 'bitwrench.umd.min.js'; });
+            return b ? b.gzipBytes / 1024 : 0;
+          }, 'UMD Gzip (KB)', '#006666');
+          if (c2) drawSparkline(c2, records, function(r) {
+            var b = r.bundles.find(function(x) { return x.file === 'bitwrench-lean.umd.min.js'; });
+            return b ? b.gzipBytes / 1024 : 0;
+          }, 'Lean UMD Gzip (KB)', '#cc6633');
+          if (c3) drawSparkline(c3, records, function(r) {
+            return r.totals.sourceLines;
+          }, 'Source Lines', '#336699');
+          if (c4) drawSparkline(c4, records, function(r) {
+            return r.totals.sourceMinBytes / 1024;
+          }, 'Source Code KB (minified)', '#993366');
+        }, 50);
+      }
+    }
+
+    loadData(render);
+  })();
+  </script>
+</body>
+</html>

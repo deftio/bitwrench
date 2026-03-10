@@ -111,7 +111,7 @@ function extractExampleFromSource(sourceLines) {
   return lines.join('\n').trim() || null;
 }
 
-// ─── Parse component builders from bitwrench-components-v2.js ────────────────
+// ─── Parse component builders from bitwrench-bccl.js ─────────────────────────
 
 function parseComponents(source, defaultCategory) {
   const entries = [];
@@ -174,7 +174,7 @@ function parseComponents(source, defaultCategory) {
 // ─── Read source files ───────────────────────────────────────────────────────
 
 const v2Source = readFileSync(join(__dirname, '..', 'src', 'bitwrench.js'), 'utf8');
-const compSource = readFileSync(join(__dirname, '..', 'src', 'bitwrench-components-v2.js'), 'utf8');
+const compSource = readFileSync(join(__dirname, '..', 'src', 'bitwrench-bccl.js'), 'utf8');
 
 const coreAPIs = parseAPIs(v2Source, 'Core');
 const componentAPIs = parseComponents(compSource, 'Component Builders');

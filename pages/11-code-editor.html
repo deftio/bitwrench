@@ -176,7 +176,7 @@
                   t: 'p',
                   c: [
                     'Pass ',
-                    { t: 'code', c: "className: 'bw-ce-light'" },
+                    { t: 'code', c: "className: 'bw_ce_light'" },
                     ' for a light background.'
                   ]
                 },
@@ -248,12 +248,12 @@
       code: jsCode, lang: 'js', readOnly: true, height: '140px'
     }));
 
-    var cssCode = '.bw-card {\n  background: #ffffff;\n  border: 1px solid #dee2e6;\n  border-radius: 8px;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n  padding: 1.25rem;\n}';
+    var cssCode = '.bw_card {\n  background: #ffffff;\n  border: 1px solid #dee2e6;\n  border-radius: 8px;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n  padding: 1.25rem;\n}';
     bw.DOM('#demo-highlight-css', bw.codeEditor({
       code: cssCode, lang: 'css', readOnly: true, height: '160px'
     }));
 
-    var htmlCode = '<div class="bw-card">\n  <h3 class="bw-card-title">Hello</h3>\n  <p>Content here</p>\n  <button class="bw-btn bw-btn-primary">Click</button>\n</div>';
+    var htmlCode = '<div class="bw_card">\n  <h3 class="bw_card_title">Hello</h3>\n  <p>Content here</p>\n  <button class="bw_btn bw_btn_primary">Click</button>\n</div>';
     bw.DOM('#demo-highlight-html', bw.codeEditor({
       code: htmlCode, lang: 'html', readOnly: true, height: '140px'
     }));
@@ -279,7 +279,7 @@
 
     bw.DOM('#demo-editor-light', bw.codeEditor({
       code: jsCode, lang: 'js', readOnly: true, height: '140px',
-      className: 'bw-ce-light'
+      className: 'bw_ce_light'
     }));
 
     bw.DOM('#demo-editor-css', bw.codeEditor({
@@ -299,7 +299,7 @@
         { fn: 'opts.lang', returns: 'string', desc: 'Language: "js", "css", or "html" (default: "js")' },
         { fn: 'opts.height', returns: 'string', desc: 'Max height CSS value (default: "180px")' },
         { fn: 'opts.readOnly', returns: 'boolean', desc: 'If true, editor is not editable (default: false)' },
-        { fn: 'opts.className', returns: 'string', desc: 'Extra CSS class (e.g. "bw-ce-light" for light theme)' },
+        { fn: 'opts.className', returns: 'string', desc: 'Extra CSS class (e.g. "bw_ce_light" for light theme)' },
         { fn: 'opts.onChange', returns: 'function', desc: 'Callback called with new code on each edit' },
         { fn: 'el._bwCodeEdit.getValue()', returns: 'string', desc: 'Get current code from mounted editor element' },
         { fn: 'el._bwCodeEdit.setValue(code)', returns: 'void', desc: 'Set code and re-highlight' }

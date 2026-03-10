@@ -6,9 +6,13 @@
  * bw.colorParse, bw.colorRgbToHsl, etc.
  *
  * @module bitwrench-color-utils
- * @license BSD-2-Clause
+ * @license BSD-2-Clause 
+ * @copy Manu Chatterjee @deftio
  */
 
+function _xs (x) {
+  return ('0' + x.toString(16)).slice(-2)
+}
 /**
  * Clamp a value between min and max.
  * @param {number} val
@@ -200,10 +204,7 @@ export function hexToHsl(hex) {
  */
 export function hslToHex(hsl) {
   var rgb = colorHslToRgb(hsl[0], hsl[1], hsl[2], 255, true);
-  return '#' +
-    ('0' + rgb[0].toString(16)).slice(-2) +
-    ('0' + rgb[1].toString(16)).slice(-2) +
-    ('0' + rgb[2].toString(16)).slice(-2);
+  return '#' + _xs(rgb[0])+_xs(rgb[1])+_xs(rgb[2]);
 }
 
 /**
@@ -232,10 +233,7 @@ export function mixColor(hex1, hex2, ratio) {
   var r = Math.round(c1[0] + (c2[0] - c1[0]) * ratio);
   var g = Math.round(c1[1] + (c2[1] - c1[1]) * ratio);
   var b = Math.round(c1[2] + (c2[2] - c1[2]) * ratio);
-  return '#' +
-    ('0' + r.toString(16)).slice(-2) +
-    ('0' + g.toString(16)).slice(-2) +
-    ('0' + b.toString(16)).slice(-2);
+  return '#' + _xs(r) + _xs(g) + _xs(b);
 }
 
 /**

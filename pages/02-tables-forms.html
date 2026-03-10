@@ -20,33 +20,33 @@
       flex-wrap: wrap;
       align-items: center;
       padding: 0.875rem 1.25rem;
-      background: var(--bw-card-bg);
-      border-radius: var(--bw-radius) var(--bw-radius) 0 0;
-      border: 1px solid var(--bw-card-border);
+      background: var(--bw_card_bg);
+      border-radius: var(--bw_radius) var(--bw_radius) 0 0;
+      border: 1px solid var(--bw_card_border);
       border-bottom: none;
     }
     .table-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
-      box-shadow: var(--bw-card-shadow);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
+      box-shadow: var(--bw_card_shadow);
       overflow: hidden;
     }
-    .table-card .bw-table { margin-bottom: 0; }
+    .table-card .bw_table { margin-bottom: 0; }
     /* Give step-demo tables a visible border so they don't blend into the card */
-    .bw-code-demo .bw-table {
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+    .bw_code_demo .bw_table {
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       overflow: hidden;
     }
     .table-info {
       padding: 0.625rem 1.25rem;
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
       border-top: none;
-      border-radius: 0 0 var(--bw-radius) var(--bw-radius);
+      border-radius: 0 0 var(--bw_radius) var(--bw_radius);
       font-size: 0.8125rem;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
     }
   </style>
 </head>
@@ -891,11 +891,11 @@ bw.DOM('#table-container', tableComponent);`;
       c: [
         {
           t: 'div',
-          a: { class: 'bw-row' },
+          a: { class: 'bw_row' },
           c: [
             {
               t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
+              a: { class: 'bw_col bw_col_md_6' },
               c: [
                 { t: 'h4', c: 'Input Types' },
                 bw.makeFormGroup({
@@ -933,7 +933,7 @@ bw.DOM('#table-container', tableComponent);`;
             },
             {
               t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
+              a: { class: 'bw_col bw_col_md_6' },
               c: [
                 { t: 'h4', c: 'Selection Controls' },
                 bw.makeFormGroup({
@@ -978,11 +978,11 @@ const formDemo = {
   c: [
     {
       t: 'div',
-      a: { class: 'bw-row' },
+      a: { class: 'bw_row' },
       c: [
         {
           t: 'div',
-          a: { class: 'bw-col bw-col-md-6' },
+          a: { class: 'bw_col bw_col_md_6' },
           c: [
             { t: 'h4', c: 'Input Types' },
             bw.makeFormGroup({
@@ -1020,7 +1020,7 @@ const formDemo = {
         },
         {
           t: 'div',
-          a: { class: 'bw-col bw-col-md-6' },
+          a: { class: 'bw_col bw_col_md_6' },
           c: [
             { t: 'h4', c: 'Selection Controls' },
             bw.makeFormGroup({
@@ -1268,11 +1268,11 @@ bw.makeTabs({
       // Previous button
       paginationItems.push({
         t: 'li',
-        a: { class: `bw-page-item ${currentPage === 1 ? 'bw-disabled' : ''}` },
+        a: { class: `bw_page_item ${currentPage === 1 ? 'bw_disabled' : ''}` },
         c: {
           t: 'a',
           a: { 
-            class: 'bw-page-link',
+            class: 'bw_page_link',
             href: '#',
             onclick: (e) => {
               e.preventDefault();
@@ -1290,11 +1290,11 @@ bw.makeTabs({
       for (let i = 1; i <= Math.min(totalPages, 5); i++) {
         paginationItems.push({
           t: 'li',
-          a: { class: `bw-page-item ${currentPage === i ? 'bw-active' : ''}` },
+          a: { class: `bw_page_item ${currentPage === i ? 'bw_active' : ''}` },
           c: {
             t: 'a',
             a: { 
-              class: 'bw-page-link',
+              class: 'bw_page_link',
               href: '#',
               onclick: (e) => {
                 e.preventDefault();
@@ -1310,11 +1310,11 @@ bw.makeTabs({
       // Next button
       paginationItems.push({
         t: 'li',
-        a: { class: `bw-page-item ${currentPage === totalPages ? 'bw-disabled' : ''}` },
+        a: { class: `bw_page_item ${currentPage === totalPages ? 'bw_disabled' : ''}` },
         c: {
           t: 'a',
           a: { 
-            class: 'bw-page-link',
+            class: 'bw_page_link',
             href: '#',
             onclick: (e) => {
               e.preventDefault();
@@ -1332,7 +1332,7 @@ bw.makeTabs({
         t: 'nav',
         c: {
           t: 'ul',
-          a: { class: 'bw-pagination' },
+          a: { class: 'bw_pagination' },
           c: paginationItems
         }
       });
@@ -1352,7 +1352,7 @@ bw.makeTabs({
         },
         {
           t: 'div',
-          a: { id: 'pagination-controls', class: 'bw-mt-3' },
+          a: { id: 'pagination-controls', class: 'bw_mt_3' },
           c: ''
         }
       ]
@@ -1405,11 +1405,11 @@ function updatePagination() {
   // Previous button
   paginationItems.push({
     t: 'li',
-    a: { class: \`bw-page-item \${currentPage === 1 ? 'bw-disabled' : ''}\` },
+    a: { class: \`bw_page_item \${currentPage === 1 ? 'bw_disabled' : ''}\` },
     c: {
       t: 'a',
       a: { 
-        class: 'bw-page-link',
+        class: 'bw_page_link',
         href: '#',
         onclick: (e) => {
           e.preventDefault();
@@ -1427,11 +1427,11 @@ function updatePagination() {
   for (let i = 1; i <= Math.min(totalPages, 5); i++) {
     paginationItems.push({
       t: 'li',
-      a: { class: \`bw-page-item \${currentPage === i ? 'bw-active' : ''}\` },
+      a: { class: \`bw_page_item \${currentPage === i ? 'bw_active' : ''}\` },
       c: {
         t: 'a',
         a: { 
-          class: 'bw-page-link',
+          class: 'bw_page_link',
           href: '#',
           onclick: (e) => {
             e.preventDefault();
@@ -1447,11 +1447,11 @@ function updatePagination() {
   // Next button
   paginationItems.push({
     t: 'li',
-    a: { class: \`bw-page-item \${currentPage === totalPages ? 'bw-disabled' : ''}\` },
+    a: { class: \`bw_page_item \${currentPage === totalPages ? 'bw_disabled' : ''}\` },
     c: {
       t: 'a',
       a: { 
-        class: 'bw-page-link',
+        class: 'bw_page_link',
         href: '#',
         onclick: (e) => {
           e.preventDefault();
@@ -1470,7 +1470,7 @@ function updatePagination() {
     t: 'nav',
     c: {
       t: 'ul',
-      a: { class: 'bw-pagination' },
+      a: { class: 'bw_pagination' },
       c: paginationItems
     }
   });

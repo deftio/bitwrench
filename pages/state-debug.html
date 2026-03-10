@@ -23,22 +23,22 @@
 
     /* ---- Counter Card ---- */
     .ctr-card {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       padding: 1.25rem;
       text-align: center;
     }
     .ctr-card h4 { margin: 0 0 0.35rem; font-size: 0.95rem; }
     .ctr-label {
       font-size: 0.75rem;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       margin-bottom: 0.5rem;
     }
     .ctr-value {
       font-size: 2.5rem;
       font-weight: 700;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
       margin: 0.5rem 0;
       font-variant-numeric: tabular-nums;
     }
@@ -57,24 +57,24 @@
     .ctr-set-row input {
       width: 60px;
       padding: 0.3rem 0.5rem;
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       font-size: 0.8125rem;
       text-align: center;
     }
 
     /* ---- Global Controls ---- */
     .global-panel {
-      background: var(--bw-teal-bg);
-      border: 2px solid var(--bw-teal);
-      border-radius: var(--bw-radius);
+      background: var(--bw_teal_bg);
+      border: 2px solid var(--bw_teal);
+      border-radius: var(--bw_radius);
       padding: 1.25rem;
       margin: 1.25rem 0;
     }
     .global-panel h3 {
       margin: 0 0 0.75rem;
       font-size: 1rem;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
     }
     .global-btns {
       display: flex;
@@ -86,35 +86,35 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       padding: 0.5rem 1rem;
       font-weight: 600;
       font-size: 0.875rem;
-      color: var(--bw-teal-dark);
-      font-family: var(--bw-font-mono);
+      color: var(--bw_teal_dark);
+      font-family: var(--bw_font_mono);
     }
     .sum-breakdown {
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       font-weight: 400;
     }
     .sum-total {
       font-weight: 700;
       font-size: 1rem;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
     }
 
     /* ---- Event Log ---- */
     .event-log {
-      background: var(--bw-code-bg);
-      color: var(--bw-code-text);
-      border-radius: var(--bw-radius);
+      background: var(--bw_code_bg);
+      color: var(--bw_code_text);
+      border-radius: var(--bw_radius);
       padding: 1rem;
       margin: 1.25rem 0;
       max-height: 200px;
       overflow-y: auto;
-      font-family: var(--bw-font-mono);
+      font-family: var(--bw_font_mono);
       font-size: 0.75rem;
       line-height: 1.6;
     }
@@ -125,35 +125,35 @@
 
     /* ---- State Inspector ---- */
     .state-inspector {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       padding: 1rem;
       margin: 1.25rem 0;
     }
     .state-inspector h3 {
       margin: 0 0 0.75rem;
       font-size: 1rem;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
     }
     .state-row {
       display: flex;
       gap: 1rem;
-      font-family: var(--bw-font-mono);
+      font-family: var(--bw_font_mono);
       font-size: 0.8125rem;
       padding: 0.35rem 0;
-      border-bottom: 1px solid var(--bw-card-border);
+      border-bottom: 1px solid var(--bw_card_border);
     }
     .state-row:last-child { border-bottom: none; }
-    .state-key { color: var(--bw-teal-dark); font-weight: 600; min-width: 100px; }
-    .state-val { color: var(--bw-text); }
+    .state-key { color: var(--bw_teal_dark); font-weight: 600; min-width: 100px; }
+    .state-val { color: var(--bw_text); }
 
     /* ---- Source Code Tabs ---- */
     .src-tabs { margin: 1.25rem 0; }
     .src-tab-bar {
       display: flex;
       gap: 0;
-      border-bottom: 2px solid var(--bw-card-border);
+      border-bottom: 2px solid var(--bw_card_border);
     }
     .src-tab-btn {
       padding: 0.6rem 1.25rem;
@@ -163,14 +163,14 @@
       margin-bottom: -2px;
       font-size: 0.8125rem;
       font-weight: 500;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       cursor: pointer;
       transition: color 0.15s, border-color 0.15s;
     }
-    .src-tab-btn:hover { color: var(--bw-text); }
+    .src-tab-btn:hover { color: var(--bw_text); }
     .src-tab-btn.active {
-      color: var(--bw-teal-dark);
-      border-bottom-color: var(--bw-teal);
+      color: var(--bw_teal_dark);
+      border-bottom-color: var(--bw_teal);
       font-weight: 600;
     }
     .src-tab-panel {
@@ -179,9 +179,9 @@
     }
     .src-tab-panel.active { display: block; }
     .src-tab-panel pre {
-      background: var(--bw-code-bg);
-      color: var(--bw-code-text);
-      border-radius: 0 0 var(--bw-radius) var(--bw-radius);
+      background: var(--bw_code_bg);
+      color: var(--bw_code_text);
+      border-radius: 0 0 var(--bw_radius) var(--bw_radius);
       padding: 1.25rem;
       margin: 0;
       font-size: 0.8125rem;
@@ -192,8 +192,8 @@
 
     /* ---- Demo Group Containers ---- */
     .demo-group {
-      border: 2px solid var(--bw-card-border);
-      border-radius: calc(var(--bw-radius) + 4px);
+      border: 2px solid var(--bw_card_border);
+      border-radius: calc(var(--bw_radius) + 4px);
       padding: 1.5rem;
       margin-bottom: 2rem;
     }
@@ -206,18 +206,18 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       padding: 0.2rem 0.6rem;
       border-radius: 3px;
       margin-bottom: 1rem;
     }
     .demo-group-a {
-      border-color: var(--bw-teal);
-      background: color-mix(in srgb, var(--bw-teal) 3%, transparent);
+      border-color: var(--bw_teal);
+      background: color-mix(in srgb, var(--bw_teal) 3%, transparent);
     }
     .demo-group-a .demo-group-label {
-      background: color-mix(in srgb, var(--bw-teal) 12%, transparent);
-      color: var(--bw-teal-dark);
+      background: color-mix(in srgb, var(--bw_teal) 12%, transparent);
+      color: var(--bw_teal_dark);
     }
     .demo-group-b {
       border-color: #7c3aed;
@@ -232,33 +232,33 @@
     .intro-text {
       font-size: 0.9375rem;
       line-height: 1.7;
-      color: var(--bw-text);
+      color: var(--bw_text);
       margin: 0 0 1rem;
       max-width: 800px;
     }
     .concept-box {
-      background: var(--bw-teal-bg);
-      border: 1px solid var(--bw-teal);
-      border-radius: var(--bw-radius);
+      background: var(--bw_teal_bg);
+      border: 1px solid var(--bw_teal);
+      border-radius: var(--bw_radius);
       padding: 1.25rem;
       margin: 1rem 0;
     }
-    .concept-box h4 { margin: 0 0 0.5rem; color: var(--bw-teal-dark); font-size: 0.95rem; }
+    .concept-box h4 { margin: 0 0 0.5rem; color: var(--bw_teal_dark); font-size: 0.95rem; }
     .concept-box p { margin: 0; font-size: 0.875rem; line-height: 1.6; }
     .concept-box code { background: rgba(0,100,100,0.1); padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.8125rem; }
 
     /* ---- Dynamic List ---- */
     .list-panel {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       padding: 1.25rem;
       margin: 1.25rem 0;
     }
     .list-panel h3 {
       margin: 0 0 0.75rem;
       font-size: 1rem;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
     }
     .list-controls {
       display: flex;
@@ -277,9 +277,9 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0.5rem 0.75rem;
-      background: var(--bw-teal-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_teal_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
     }
     .list-item-name {
       font-weight: 600;
@@ -289,7 +289,7 @@
     .list-item-val {
       font-size: 1.25rem;
       font-weight: 700;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
       min-width: 40px;
       text-align: center;
       font-variant-numeric: tabular-nums;
@@ -302,24 +302,24 @@
     .list-stats {
       margin-top: 0.75rem;
       padding-top: 0.75rem;
-      border-top: 1px solid var(--bw-card-border);
+      border-top: 1px solid var(--bw_card_border);
       font-size: 0.8125rem;
-      font-family: var(--bw-font-mono);
-      color: var(--bw-text-secondary);
+      font-family: var(--bw_font_mono);
+      color: var(--bw_text_secondary);
     }
 
     /* ---- List Dashboard ---- */
     .list-dash {
-      background: var(--bw-teal-bg);
-      border: 2px solid var(--bw-teal);
-      border-radius: var(--bw-radius);
+      background: var(--bw_teal_bg);
+      border: 2px solid var(--bw_teal);
+      border-radius: var(--bw_radius);
       padding: 1.25rem;
       margin-top: 1.25rem;
     }
     .list-dash h4 {
       margin: 0 0 0.75rem;
       font-size: 0.95rem;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
     }
     .list-dash-stats {
       display: grid;
@@ -328,16 +328,16 @@
       margin-bottom: 0.75rem;
     }
     .list-dash-stat {
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       padding: 0.75rem;
       text-align: center;
     }
     .list-dash-stat .stat-value {
       font-size: 1.75rem;
       font-weight: 700;
-      color: var(--bw-teal-dark);
+      color: var(--bw_teal_dark);
       font-variant-numeric: tabular-nums;
       line-height: 1.2;
     }
@@ -345,24 +345,24 @@
       font-size: 0.6875rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       margin-top: 0.25rem;
     }
     .list-dash-breakdown {
-      font-family: var(--bw-font-mono);
+      font-family: var(--bw_font_mono);
       font-size: 0.8125rem;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       margin-bottom: 0.75rem;
     }
     .spark-section {
-      border-top: 1px solid var(--bw-card-border);
+      border-top: 1px solid var(--bw_card_border);
       padding-top: 0.75rem;
     }
     .spark-label {
       font-size: 0.6875rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--bw-text-secondary);
+      color: var(--bw_text_secondary);
       margin-bottom: 0.35rem;
     }
     .spark-chart {
@@ -370,22 +370,22 @@
       align-items: flex-end;
       gap: 2px;
       height: 48px;
-      background: var(--bw-card-bg);
-      border: 1px solid var(--bw-card-border);
-      border-radius: var(--bw-radius);
+      background: var(--bw_card_bg);
+      border: 1px solid var(--bw_card_border);
+      border-radius: var(--bw_radius);
       padding: 4px 6px;
     }
     .spark-bar {
       flex: 1;
       min-width: 4px;
       max-width: 14px;
-      background: var(--bw-teal);
+      background: var(--bw_teal);
       border-radius: 2px 2px 0 0;
       transition: height 0.15s ease;
       position: relative;
     }
     .spark-bar:hover {
-      background: var(--bw-teal-dark);
+      background: var(--bw_teal_dark);
     }
     .spark-bar[data-tip]:hover::after {
       content: attr(data-tip);
@@ -393,8 +393,8 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--bw-code-bg);
-      color: var(--bw-code-text);
+      background: var(--bw_code_bg);
+      color: var(--bw_code_text);
       font-size: 0.625rem;
       padding: 2px 5px;
       border-radius: 3px;
@@ -536,16 +536,16 @@
           <table style="width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin-top: 0.5rem;">
             <thead>
               <tr>
-                <th style="text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);">Aspect</th>
-                <th style="text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);"><code>emit/on</code></th>
-                <th style="text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);"><code>pub/sub</code></th>
+                <th style="text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);">Aspect</th>
+                <th style="text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);"><code>emit/on</code></th>
+                <th style="text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);"><code>pub/sub</code></th>
               </tr>
             </thead>
             <tbody>
-              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Scope</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">DOM subtree (bubbles)</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Application-wide (topic)</td></tr>
-              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Trigger</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">1:1 with DOM action</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Composite condition / logic</td></tr>
-              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Cleanup</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Automatic (DOM GC)</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">unsub() or element-tied</td></tr>
-              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Coupling</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">Spatial (ancestor)</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);">None (any component)</td></tr>
+              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Scope</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">DOM subtree (bubbles)</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Application-wide (topic)</td></tr>
+              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Trigger</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">1:1 with DOM action</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Composite condition / logic</td></tr>
+              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Cleanup</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Automatic (DOM GC)</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">unsub() or element-tied</td></tr>
+              <tr><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Coupling</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">Spatial (ancestor)</td><td style="padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);">None (any component)</td></tr>
               <tr><td style="padding: 0.3rem 0.5rem;">Error</td><td style="padding: 0.3rem 0.5rem;">Native DOM throws</td><td style="padding: 0.3rem 0.5rem;">Try/catch, log, continue</td></tr>
             </tbody>
           </table>
@@ -616,7 +616,7 @@
           t: 'div', a: {
             class: 'src-tab-bar',
             id: sourceId + '-subtabs',
-            style: 'margin-top: 0.75rem; border-bottom-color: var(--bw-text-muted);'
+            style: 'margin-top: 0.75rem; border-bottom-color: var(--bw_text_muted);'
           },
           c: sourceTabs.map(function(tab) {
             return {
@@ -1188,7 +1188,7 @@
             }
           }),
           listItems.length === 0 ? { t: 'span', a: {
-            style: 'font-size: 0.8125rem; color: var(--bw-text-secondary); margin-left: 0.5rem;'
+            style: 'font-size: 0.8125rem; color: var(--bw_text_secondary); margin-left: 0.5rem;'
           }, c: 'Click "Add Counter" to start' } : null
         ]}
       ];
@@ -1199,7 +1199,7 @@
       } else {
         panelContent.push({
           t: 'div', a: {
-            style: 'text-align: center; padding: 2rem; color: var(--bw-text-secondary); font-style: italic;'
+            style: 'text-align: center; padding: 2rem; color: var(--bw_text_secondary); font-style: italic;'
           }, c: 'No items yet. Add some counters to test UUID addressing.'
         });
       }
@@ -1373,7 +1373,7 @@
       if (subBDestroyed) {
         panelBContent = [
           { t: 'h4', c: 'Subscriber B (destroyed)' },
-          { t: 'div', a: { style: 'color: var(--bw-text-secondary); font-style: italic; padding: 0.5rem 0;' },
+          { t: 'div', a: { style: 'color: var(--bw_text_secondary); font-style: italic; padding: 0.5rem 0;' },
             c: 'Cleaned up via bw.cleanup() \u2014 no longer receiving messages.' }
         ];
       } else {
@@ -1400,7 +1400,7 @@
         { t: 'div', a: { style: 'display: flex; gap: 0.75rem; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap;' }, c: [
           { t: 'input', a: {
             type: 'text', id: 'notif-input', placeholder: 'Type a message...',
-            style: 'flex: 1; min-width: 200px; padding: 0.4rem 0.75rem; border: 1px solid var(--bw-card-border); border-radius: var(--bw-radius); font-size: 0.875rem;',
+            style: 'flex: 1; min-width: 200px; padding: 0.4rem 0.75rem; border: 1px solid var(--bw_card_border); border-radius: var(--bw_radius); font-size: 0.875rem;',
             onkeydown: function(e) {
               if (e.key === 'Enter') sendNotification();
             }
@@ -1411,8 +1411,8 @@
         { t: 'div', a: { class: 'cards-row', style: 'grid-template-columns: repeat(2, 1fr);' }, c: [panelA, panelB] },
         // Audit log demo
         { t: 'div', a: { style: 'margin-top: 1.5rem;' }, c: [
-          { t: 'h4', a: { style: 'margin: 0 0 0.5rem; color: var(--bw-teal-dark);' }, c: 'Counter Audit Log (via pub/sub)' },
-          { t: 'div', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary); margin-bottom: 0.5rem;' },
+          { t: 'h4', a: { style: 'margin: 0 0 0.5rem; color: var(--bw_teal_dark);' }, c: 'Counter Audit Log (via pub/sub)' },
+          { t: 'div', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary); margin-bottom: 0.5rem;' },
             c: 'Click the counter card buttons above \u2014 each action also publishes to the "counter.audit" topic.' },
           { t: 'div', a: {
             class: 'event-log', id: 'audit-log-box',
@@ -1517,9 +1517,9 @@
             { t: 'span', a: { class: 'state-key' }, c: c.name },
             { t: 'span', a: { class: 'state-val' },
               c: 'el._bw_state = ' + stateStr },
-            { t: 'span', a: { class: 'state-val', style: 'color: var(--bw-text-secondary);' },
+            { t: 'span', a: { class: 'state-val', style: 'color: var(--bw_text_secondary);' },
               c: '  |  _bw_render: ' + hasRender },
-            { t: 'span', a: { class: 'state-val', style: 'color: var(--bw-text-secondary);' },
+            { t: 'span', a: { class: 'state-val', style: 'color: var(--bw_text_secondary);' },
               c: '  |  id: ' + c.id }
           ]
         };
@@ -1536,7 +1536,7 @@
           { t: 'h3', c: 'DOM State (read from el._bw_state)' },
           { t: 'div', c: rows },
           { t: 'div', a: {
-            style: 'margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--bw-card-border); font-weight: 700;'
+            style: 'margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--bw_card_border); font-weight: 700;'
           }, c: 'Sum of all counts: ' + sum }
         ]
       });

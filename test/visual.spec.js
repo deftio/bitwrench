@@ -301,7 +301,7 @@ test.describe('Accessibility', () => {
     await page.waitForLoadState('networkidle');
 
     // Check that form groups have labels
-    const formGroups = page.locator('.bw-form-group');
+    const formGroups = page.locator('.bw_form_group');
     const groupCount = await formGroups.count();
     expect(groupCount).toBeGreaterThan(0);
 
@@ -340,9 +340,9 @@ test.describe('CSS and Styling', () => {
     const cssVars = await page.evaluate(() => {
       const styles = getComputedStyle(document.documentElement);
       return {
-        primary: styles.getPropertyValue('--bw-primary').trim(),
-        secondary: styles.getPropertyValue('--bw-secondary').trim(),
-        success: styles.getPropertyValue('--bw-success').trim()
+        primary: styles.getPropertyValue('--bw_primary').trim(),
+        secondary: styles.getPropertyValue('--bw_secondary').trim(),
+        success: styles.getPropertyValue('--bw_success').trim()
       };
     });
 
@@ -355,7 +355,7 @@ test.describe('CSS and Styling', () => {
     await page.waitForLoadState('networkidle');
 
     const spacings = await page.evaluate(() => {
-      const cards = Array.from(document.querySelectorAll('.bw-card'));
+      const cards = Array.from(document.querySelectorAll('.bw_card'));
       return cards.map(card => {
         const styles = window.getComputedStyle(card);
         return {

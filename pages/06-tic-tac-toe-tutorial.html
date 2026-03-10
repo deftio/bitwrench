@@ -22,16 +22,16 @@
     // Inject page CSS via bw.css() + bw.injectCSS()
     // =========================================================================
     bw.injectCSS(bw.css({
-      '.bw-step-body > p': {
+      '.bw_step_body > p': {
         'margin': '0 0 1rem',
-        'color': 'var(--bw-text-secondary, #555)',
+        'color': 'var(--bw_text_secondary, #555)',
         'font-size': '0.95rem'
       },
       '.game-board': {
         'display': 'grid',
         'grid-template-columns': 'repeat(3, 90px)',
         'gap': '4px',
-        'background': 'var(--bw-teal-dark, #004d4d)',
+        'background': 'var(--bw_teal_dark, #004d4d)',
         'padding': '4px',
         'border-radius': '6px',
         'margin': '0 auto',
@@ -50,23 +50,23 @@
         'justify-content': 'center',
         'transition': 'background 0.15s',
         'border-radius': '3px',
-        'color': 'var(--bw-text-primary, #1a1a1a)',
+        'color': 'var(--bw_text_primary, #1a1a1a)',
         'font-family': 'inherit'
       },
       '.square:hover:not(:disabled)': { 'background': '#f0f0f0' },
       '.square:disabled': { 'cursor': 'default' },
       '.square.winning': { 'background': '#b2dfdb' },
-      '.x-mark': { 'color': 'var(--bw-teal, #006666)' },
+      '.x-mark': { 'color': 'var(--bw_teal, #006666)' },
       '.o-mark': { 'color': '#c62828' },
       '.status-bar': {
         'text-align': 'center',
         'font-size': '1.1rem',
         'font-weight': '600',
         'padding': '0.75rem 1rem',
-        'border-radius': 'var(--bw-radius, 8px)',
+        'border-radius': 'var(--bw_radius, 8px)',
         'margin-bottom': '1rem',
         'background': '#f5f5f5',
-        'color': 'var(--bw-text-primary, #1a1a1a)'
+        'color': 'var(--bw_text_primary, #1a1a1a)'
       },
       '.status-bar.winner': {
         'background': '#e8f5e9',
@@ -80,7 +80,7 @@
         'display': 'block',
         'margin': '1rem auto 0',
         'padding': '0.5rem 1.25rem',
-        'background': 'var(--bw-teal, #006666)',
+        'background': 'var(--bw_teal, #006666)',
         'color': 'white',
         'border': 'none',
         'border-radius': '6px',
@@ -90,7 +90,7 @@
         'font-family': 'inherit',
         'transition': 'background 0.15s'
       },
-      '.new-game-btn:hover': { 'background': 'var(--bw-teal-dark, #004d4d)' },
+      '.new-game-btn:hover': { 'background': 'var(--bw_teal_dark, #004d4d)' },
       '.game-layout': {
         'display': 'flex',
         'gap': '2rem',
@@ -105,7 +105,7 @@
       '.game-sidebar h4': {
         'margin': '0 0 0.5rem',
         'font-size': '0.9rem',
-        'color': 'var(--bw-text-secondary, #555)',
+        'color': 'var(--bw_text_secondary, #555)',
         'text-transform': 'uppercase',
         'letter-spacing': '0.5px'
       },
@@ -118,7 +118,7 @@
       },
       '.history-btn': {
         'padding': '0.4rem 0.75rem',
-        'border': '1px solid var(--bw-card-border, #e0e0e0)',
+        'border': '1px solid var(--bw_card_border, #e0e0e0)',
         'border-radius': '4px',
         'background': 'white',
         'font-size': '0.8rem',
@@ -127,11 +127,11 @@
         'font-family': 'inherit',
         'transition': 'all 0.15s'
       },
-      '.history-btn:hover': { 'background': '#f5f5f5', 'border-color': 'var(--bw-teal, #006666)' },
+      '.history-btn:hover': { 'background': '#f5f5f5', 'border-color': 'var(--bw_teal, #006666)' },
       '.history-btn.current': {
-        'background': 'var(--bw-teal, #006666)',
+        'background': 'var(--bw_teal, #006666)',
         'color': 'white',
-        'border-color': 'var(--bw-teal, #006666)'
+        'border-color': 'var(--bw_teal, #006666)'
       },
       '.game-options': {
         'display': 'flex',
@@ -148,7 +148,7 @@
       },
       '.sort-btn': {
         'padding': '0.35rem 0.75rem',
-        'border': '1px solid var(--bw-card-border, #e0e0e0)',
+        'border': '1px solid var(--bw_card_border, #e0e0e0)',
         'border-radius': '4px',
         'background': 'white',
         'font-size': '0.8rem',
@@ -163,8 +163,8 @@
         'margin-bottom': '1.25rem',
         'padding': '0.75rem 1.25rem',
         'background': '#f8f8f8',
-        'border-radius': 'var(--bw-radius, 8px)',
-        'border': '1px solid var(--bw-card-border, #e0e0e0)'
+        'border-radius': 'var(--bw_radius, 8px)',
+        'border': '1px solid var(--bw_card_border, #e0e0e0)'
       },
       '.score-item': {
         'text-align': 'center',
@@ -180,13 +180,13 @@
         'font-size': '0.7rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.05em',
-        'color': 'var(--bw-text-secondary, #555)',
+        'color': 'var(--bw_text_secondary, #555)',
         'margin-top': '0.15rem'
       },
-      '.score-x .score-value': { 'color': 'var(--bw-teal, #006666)' },
+      '.score-x .score-value': { 'color': 'var(--bw_teal, #006666)' },
       '.score-o .score-value': { 'color': '#c62828' },
       '.score-draw .score-value': { 'color': '#777' },
-      '.score-total .score-value': { 'color': 'var(--bw-text-primary, #1a1a1a)' },
+      '.score-total .score-value': { 'color': 'var(--bw_text_primary, #1a1a1a)' },
       '.step-table': {
         'width': '100%',
         'border-collapse': 'collapse',
@@ -196,13 +196,13 @@
       '.step-table th': {
         'text-align': 'left',
         'padding': '0.4rem 0.75rem',
-        'border-bottom': '2px solid var(--bw-teal, #006666)',
-        'color': 'var(--bw-teal-dark, #004d4d)',
+        'border-bottom': '2px solid var(--bw_teal, #006666)',
+        'color': 'var(--bw_teal_dark, #004d4d)',
         'font-weight': '600'
       },
       '.step-table td': {
         'padding': '0.35rem 0.75rem',
-        'border-bottom': '1px solid var(--bw-card-border, #e0e0e0)'
+        'border-bottom': '1px solid var(--bw_card_border, #e0e0e0)'
       },
       '.step-table code': {
         'background': 'rgba(0,100,100,0.08)',
@@ -211,15 +211,15 @@
         'font-size': '0.8rem'
       },
       '.congrats': {
-        'background': 'linear-gradient(135deg, var(--bw-teal-light, #e0f2f1) 0%, #b2dfdb 100%)',
+        'background': 'linear-gradient(135deg, var(--bw_teal_light, #e0f2f1) 0%, #b2dfdb 100%)',
         'border': '1px solid #80cbc4',
-        'border-radius': 'var(--bw-radius, 8px)',
+        'border-radius': 'var(--bw_radius, 8px)',
         'padding': '2rem',
         'text-align': 'left',
         'margin-bottom': '2rem'
       },
-      '.congrats h2': { 'color': 'var(--bw-teal-dark, #004d4d)', 'margin': '0 0 0.75rem' },
-      '.congrats p': { 'color': 'var(--bw-text-secondary, #555)', 'margin': '0.5rem 0' },
+      '.congrats h2': { 'color': 'var(--bw_teal_dark, #004d4d)', 'margin': '0 0 0.75rem' },
+      '.congrats p': { 'color': 'var(--bw_text_secondary, #555)', 'margin': '0.5rem 0' },
       '.complete-tabs': { 'display': 'flex', 'gap': '0', 'border-bottom': '2px solid #e0e0e0', 'margin-bottom': '0' },
       '.complete-tab': { 'padding': '0.5rem 1.25rem', 'border': 'none', 'background': 'none', 'font-size': '0.9rem', 'font-weight': '600', 'cursor': 'pointer', 'color': '#666', 'border-bottom': '2px solid transparent', 'margin-bottom': '-2px', 'font-family': 'inherit' },
       '.complete-tab.active': { 'color': '#006666', 'border-bottom-color': '#006666' },
@@ -232,7 +232,7 @@
       '.complete-iframe': { 'width': '100%', 'min-height': '800px', 'border': '1px solid #e0e0e0', 'border-radius': '6px', 'background': 'white' },
       '@media (max-width: 640px)': {
         '.page-header h1': { 'font-size': '1.5rem' },
-        '.bw-step-body': { 'padding': '1rem' },
+        '.bw_step_body': { 'padding': '1rem' },
         '.game-board': { 'grid-template-columns': 'repeat(3, 70px)' },
         '.square': { 'width': '70px', 'height': '70px', 'font-size': '1.5rem' },
         '.game-layout': { 'flex-direction': 'column', 'align-items': 'center' },
@@ -358,17 +358,17 @@
     // Step 0: What You'll Learn
     // =========================================================================
     var step0 = {
-      t: 'div', a: { class: 'bw-step' },
+      t: 'div', a: { class: 'bw_step' },
       c: [
         {
-          t: 'div', a: { class: 'bw-step-header' },
+          t: 'div', a: { class: 'bw_step_header' },
           c: [
-            { t: 'div', a: { class: 'bw-step-num', style: 'background: #555;' }, c: '?' },
+            { t: 'div', a: { class: 'bw_step_num', style: 'background: #555;' }, c: '?' },
             { t: 'h2', c: 'What You\'ll Learn' }
           ]
         },
         {
-          t: 'div', a: { class: 'bw-step-body' },
+          t: 'div', a: { class: 'bw_step_body' },
           c: [
             {
               t: 'p',
@@ -430,7 +430,7 @@
                 { t: 'h4', c: 'TACO Format' },
                 { t: 'p', c: bw.raw('Bitwrench describes HTML using plain JavaScript objects called <strong>TACOs</strong>:') },
                 {
-                  t: 'pre', a: { style: 'background: var(--bw-code-bg, #1e293b); color: var(--bw-code-text, #e2e8f0); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0 0; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto;' },
+                  t: 'pre', a: { style: 'background: var(--bw_code_bg, #1e293b); color: var(--bw_code_text, #e2e8f0); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0 0; font-size: 0.8125rem; line-height: 1.5; overflow-x: auto;' },
                   c: { t: 'code', c: '{ t: \'div\', a: { class: \'card\' }, c: \'Hello\' }\n//  Tag       Attributes            Content' }
                 }
               ]
@@ -448,7 +448,7 @@
                     { t: 'li', c: bw.raw('<strong>bw.DOM()</strong> &mdash; mount the TACO to the page') }
                   ]
                 },
-                { t: 'p', a: { style: 'margin-top: 0.5rem; font-size: 0.85rem; color: var(--bw-text-secondary, #555);' }, c: 'No virtual DOM, no JSX, no build step. Just JavaScript.' }
+                { t: 'p', a: { style: 'margin-top: 0.5rem; font-size: 0.85rem; color: var(--bw_text_secondary, #555);' }, c: 'No virtual DOM, no JSX, no build step. Just JavaScript.' }
               ]
             }
           ]
@@ -521,17 +521,17 @@
       ].join('\n');
 
       return {
-        t: 'div', a: { class: 'bw-step', id: 'step-1' },
+        t: 'div', a: { class: 'bw_step', id: 'step-1' },
         c: [
           {
-            t: 'div', a: { class: 'bw-step-header' },
+            t: 'div', a: { class: 'bw_step_header' },
             c: [
-              { t: 'div', a: { class: 'bw-step-num' }, c: '1' },
+              { t: 'div', a: { class: 'bw_step_num' }, c: '1' },
               { t: 'h2', c: 'Draw the Board' }
             ]
           },
           {
-            t: 'div', a: { class: 'bw-step-body' },
+            t: 'div', a: { class: 'bw_step_body' },
             c: [
               { t: 'p', c: 'We start by creating 9 squares with Array.map(). Each square is a TACO button. Click any square to see the handler fire.' },
               {
@@ -668,17 +668,17 @@
       ].join('\n');
 
       return {
-        t: 'div', a: { class: 'bw-step', id: 'step-2' },
+        t: 'div', a: { class: 'bw_step', id: 'step-2' },
         c: [
           {
-            t: 'div', a: { class: 'bw-step-header' },
+            t: 'div', a: { class: 'bw_step_header' },
             c: [
-              { t: 'div', a: { class: 'bw-step-num' }, c: '2' },
+              { t: 'div', a: { class: 'bw_step_num' }, c: '2' },
               { t: 'h2', c: 'State with o.render' }
             ]
           },
           {
-            t: 'div', a: { class: 'bw-step-body' },
+            t: 'div', a: { class: 'bw_step_body' },
             c: [
               { t: 'p', c: 'Now we add state management. Declare initial state in o.state, define the render function in o.render, and call bw.update(el) when state changes. That\'s the entire pattern.' },
               {
@@ -815,17 +815,17 @@
       ].join('\n');
 
       return {
-        t: 'div', a: { class: 'bw-step', id: 'step-3' },
+        t: 'div', a: { class: 'bw_step', id: 'step-3' },
         c: [
           {
-            t: 'div', a: { class: 'bw-step-header' },
+            t: 'div', a: { class: 'bw_step_header' },
             c: [
-              { t: 'div', a: { class: 'bw-step-num' }, c: '3' },
+              { t: 'div', a: { class: 'bw_step_num' }, c: '3' },
               { t: 'h2', c: 'Detect the Winner' }
             ]
           },
           {
-            t: 'div', a: { class: 'bw-step-body' },
+            t: 'div', a: { class: 'bw_step_body' },
             c: [
               { t: 'p', c: 'We add a calcWinner() function that checks all 8 winning lines. When someone wins, the winning squares highlight and a New Game button appears.' },
               {
@@ -1042,17 +1042,17 @@
       ].join('\n');
 
       return {
-        t: 'div', a: { class: 'bw-step', id: 'step-4' },
+        t: 'div', a: { class: 'bw_step', id: 'step-4' },
         c: [
           {
-            t: 'div', a: { class: 'bw-step-header' },
+            t: 'div', a: { class: 'bw_step_header' },
             c: [
-              { t: 'div', a: { class: 'bw-step-num' }, c: '4' },
+              { t: 'div', a: { class: 'bw_step_num' }, c: '4' },
               { t: 'h2', c: 'Add Move History' }
             ]
           },
           {
-            t: 'div', a: { class: 'bw-step-body' },
+            t: 'div', a: { class: 'bw_step_body' },
             c: [
               { t: 'p', c: 'Instead of mutating the squares array, we copy it with .slice() before each move. The full history lives in state, so we can jump to any past board.' },
               {
@@ -1366,17 +1366,17 @@
 
       return {
         taco: {
-          t: 'div', a: { class: 'bw-step', id: 'step-5' },
+          t: 'div', a: { class: 'bw_step', id: 'step-5' },
           c: [
             {
-              t: 'div', a: { class: 'bw-step-header' },
+              t: 'div', a: { class: 'bw_step_header' },
               c: [
-                { t: 'div', a: { class: 'bw-step-num' }, c: '5' },
+                { t: 'div', a: { class: 'bw_step_num' }, c: '5' },
                 { t: 'h2', c: 'The Complete Game' }
               ]
             },
             {
-              t: 'div', a: { class: 'bw-step-body' },
+              t: 'div', a: { class: 'bw_step_body' },
               c: [
                 { t: 'p', c: 'The finished game adds a scoreboard that tracks wins across games. The game publishes to a topic with bw.pub(). The scoreboard subscribes with bw.sub() and updates individual values with bw.patch(). No coupling between components.' },
                 {
@@ -1469,7 +1469,7 @@
             t: 'a',
             a: {
               href: 'index.html',
-              style: 'display: inline-block; padding: 0.6rem 1.5rem; background: var(--bw-teal, #006666); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem;'
+              style: 'display: inline-block; padding: 0.6rem 1.5rem; background: var(--bw_teal, #006666); color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem;'
             },
             c: 'Back to Examples'
           }
@@ -1684,7 +1684,7 @@
 
     var completeExample = (function() {
       function getEditorCode() {
-        var editorEl = document.querySelector('#complete-code-panel .bw-ce');
+        var editorEl = document.querySelector('#complete-code-panel .bw_ce');
         if (editorEl && editorEl._bwCodeEdit) {
           return editorEl._bwCodeEdit.getValue();
         }
@@ -1728,17 +1728,17 @@
       }
 
       return {
-        t: 'div', a: { class: 'bw-step', style: 'margin-bottom: 2rem;' },
+        t: 'div', a: { class: 'bw_step', style: 'margin-bottom: 2rem;' },
         c: [
           {
-            t: 'div', a: { class: 'bw-step-header' },
+            t: 'div', a: { class: 'bw_step_header' },
             c: [
-              { t: 'div', a: { class: 'bw-step-num', style: 'background: #7b1fa2; font-size: 0.85rem;' }, c: '{}' },
+              { t: 'div', a: { class: 'bw_step_num', style: 'background: #7b1fa2; font-size: 0.85rem;' }, c: '{}' },
               { t: 'h2', c: 'Complete Standalone Example' }
             ]
           },
           {
-            t: 'div', a: { class: 'bw-step-body' },
+            t: 'div', a: { class: 'bw_step_body' },
             c: [
               { t: 'p', c: 'The complete game as a single HTML file. Edit the code and click Run to see changes in the Preview tab.' },
               {

@@ -22,10 +22,10 @@
     // ---- Page CSS ----
     bw.injectCSS(bw.css({
       '.form-showcase': {
-        background: 'var(--bw-card-bg)',
-        border: '1px solid var(--bw-card-border)',
-        'border-radius': 'var(--bw-radius)',
-        'box-shadow': 'var(--bw-card-shadow)',
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        'box-shadow': 'var(--bw_card_shadow)',
         padding: '1.5rem'
       }
     }), { id: 'forms-page-styles' });
@@ -159,11 +159,11 @@
       c: [
         {
           t: 'div',
-          a: { class: 'bw-row' },
+          a: { class: 'bw_row' },
           c: [
             {
               t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
+              a: { class: 'bw_col bw_col_md_6' },
               c: [
                 { t: 'h4', c: 'Input Types' },
                 bw.makeFormGroup({
@@ -201,7 +201,7 @@
             },
             {
               t: 'div',
-              a: { class: 'bw-col bw-col-md-6' },
+              a: { class: 'bw_col bw_col_md_6' },
               c: [
                 { t: 'h4', c: 'Selection Controls' },
                 bw.makeFormGroup({
@@ -245,11 +245,11 @@ const formDemo = {
   t: 'div',
   c: [{
     t: 'div',
-    a: { class: 'bw-row' },
+    a: { class: 'bw_row' },
     c: [
       {
         t: 'div',
-        a: { class: 'bw-col bw-col-md-6' },
+        a: { class: 'bw_col bw_col_md_6' },
         c: [
           { t: 'h4', c: 'Input Types' },
           bw.makeFormGroup({
@@ -273,7 +273,7 @@ const formDemo = {
       },
       {
         t: 'div',
-        a: { class: 'bw-col bw-col-md-6' },
+        a: { class: 'bw_col bw_col_md_6' },
         c: [
           { t: 'h4', c: 'Selection Controls' },
           bw.makeFormGroup({
@@ -577,9 +577,9 @@ bw.makeTabs({
       }
 
       function fieldClass(field) {
-        if (state.errors[field]) return 'bw-form-control bw-is-invalid';
-        if (state[field].trim()) return 'bw-form-control bw-is-valid';
-        return 'bw-form-control';
+        if (state.errors[field]) return 'bw_form_control bw_is_invalid';
+        if (state[field].trim()) return 'bw_form_control bw_is_valid';
+        return 'bw_form_control';
       }
 
       function renderForm() {
@@ -631,7 +631,7 @@ bw.makeTabs({
                     if (validate()) {
                       bw.DOM('#validation-result', {
                         t: 'div',
-                        a: { class: 'bw-alert bw-alert-success', style: 'margin-top: 1rem;' },
+                        a: { class: 'bw_alert bw_alert_success', style: 'margin-top: 1rem;' },
                         c: 'Form submitted successfully!'
                       });
                     }
@@ -677,9 +677,9 @@ function validate() {
 }
 
 function fieldClass(field) {
-  if (state.errors[field]) return 'bw-form-control bw-is-invalid';
-  if (state[field].trim()) return 'bw-form-control bw-is-valid';
-  return 'bw-form-control';
+  if (state.errors[field]) return 'bw_form_control bw_is_invalid';
+  if (state[field].trim()) return 'bw_form_control bw_is_valid';
+  return 'bw_form_control';
 }
 
 function renderForm() {

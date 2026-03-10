@@ -210,10 +210,10 @@ describe("Default Styles (bw.loadDefaultStyles)", function() {
     assert.ok('palette' in result, 'should have palette');
     assert.ok(result.css.length > 100, 'css should have content');
     // Check structural styles were injected
-    const structEl = document.getElementById('bw-structural');
+    const structEl = document.getElementById('bw_structural');
     assert.ok(structEl !== null, 'structural style element should exist');
     // Check themed styles were injected
-    const themeEl = document.getElementById('bw-theme-default');
+    const themeEl = document.getElementById('bw_theme_default');
     assert.ok(themeEl !== null, 'theme style element should exist');
   });
 });
@@ -421,10 +421,10 @@ describe("Tabs (bw.htmlTabs, bw.selectTabContent)", function() {
       ['Tab 1', 'Content 1'],
       ['Tab 2', 'Content 2']
     ]);
-    assert.ok(html.includes('bw-tab-container'));
+    assert.ok(html.includes('bw_tab_container'));
     assert.ok(html.includes('Tab 1'));
     assert.ok(html.includes('Content 1'));
-    assert.ok(html.includes('bw-tab-active'));
+    assert.ok(html.includes('bw_tab_active'));
   });
 
   it("should return empty string for invalid input", function() {
@@ -434,9 +434,9 @@ describe("Tabs (bw.htmlTabs, bw.selectTabContent)", function() {
 
   it("should make first tab active by default", function() {
     const html = bw.htmlTabs([['A', '1'], ['B', '2']]);
-    assert.ok(html.includes('bw-tab-active'));
+    assert.ok(html.includes('bw_tab_active'));
     // Only first tab has active class
-    const activeCount = (html.match(/bw-tab-active/g) || []).length;
+    const activeCount = (html.match(/bw_tab_active/g) || []).length;
     assert.equal(activeCount, 1);
   });
 
@@ -444,16 +444,16 @@ describe("Tabs (bw.htmlTabs, bw.selectTabContent)", function() {
     freshDOM();
     const html = bw.htmlTabs([['A', 'Content A'], ['B', 'Content B']]);
     document.body.innerHTML = html;
-    const tabs = document.querySelectorAll('.bw-tab-item');
+    const tabs = document.querySelectorAll('.bw_tab_item');
     assert.equal(tabs.length, 2);
     // Click second tab
     bw.selectTabContent(tabs[1]);
-    assert.ok(tabs[1].classList.contains('bw-tab-active'));
-    assert.ok(!tabs[0].classList.contains('bw-tab-active'));
+    assert.ok(tabs[1].classList.contains('bw_tab_active'));
+    assert.ok(!tabs[0].classList.contains('bw_tab_active'));
     // Second content should be visible
-    const contents = document.querySelectorAll('.bw-tab-content');
-    assert.ok(contents[1].classList.contains('bw-show'));
-    assert.ok(!contents[0].classList.contains('bw-show'));
+    const contents = document.querySelectorAll('.bw_tab_content');
+    assert.ok(contents[1].classList.contains('bw_show'));
+    assert.ok(!contents[0].classList.contains('bw_show'));
   });
 });
 
@@ -710,8 +710,8 @@ describe("Table Builder (bw.makeTable)", function() {
       data: [{ x: 1 }],
       className: 'my-table striped'
     });
-    // bw-table is always included as the base class
-    assert.equal(taco.a.class, 'bw-table my-table striped');
+    // bw_table is always included as the base class
+    assert.equal(taco.a.class, 'bw_table my-table striped');
   });
 
   it("should add striped and hover classes via props", function() {
@@ -720,9 +720,9 @@ describe("Table Builder (bw.makeTable)", function() {
       striped: true,
       hover: true
     });
-    assert.ok(taco.a.class.includes('bw-table'));
-    assert.ok(taco.a.class.includes('bw-table-striped'));
-    assert.ok(taco.a.class.includes('bw-table-hover'));
+    assert.ok(taco.a.class.includes('bw_table'));
+    assert.ok(taco.a.class.includes('bw_table_striped'));
+    assert.ok(taco.a.class.includes('bw_table_hover'));
   });
 
   it("should support custom column render", function() {
@@ -780,8 +780,8 @@ describe("Table From Array (bw.makeTableFromArray)", function() {
       striped: true,
       hover: true
     });
-    assert.ok(taco.a.class.includes('bw-table-striped'));
-    assert.ok(taco.a.class.includes('bw-table-hover'));
+    assert.ok(taco.a.class.includes('bw_table_striped'));
+    assert.ok(taco.a.class.includes('bw_table_hover'));
   });
 
   it("should handle empty data", function() {
@@ -899,7 +899,7 @@ describe("Bar Chart (bw.makeBarChart)", function() {
   it("should return empty container for no data", function() {
     const taco = bw.makeBarChart({ data: [] });
     assert.equal(taco.t, 'div');
-    assert.ok(taco.a.class.includes('bw-bar-chart-container'));
+    assert.ok(taco.a.class.includes('bw_bar_chart_container'));
     assert.equal(taco.c, '');
   });
 
@@ -911,10 +911,10 @@ describe("Bar Chart (bw.makeBarChart)", function() {
       ]
     });
     assert.equal(taco.t, 'div');
-    // Should have bw-bar-chart div (no title, so 1 child)
+    // Should have bw_bar_chart div (no title, so 1 child)
     assert.equal(taco.c.length, 1);
     const chart = taco.c[0];
-    assert.ok(chart.a.class.includes('bw-bar-chart'));
+    assert.ok(chart.a.class.includes('bw_bar_chart'));
     assert.equal(chart.c.length, 2); // 2 bar groups
   });
 
@@ -957,7 +957,7 @@ describe("Bar Chart (bw.makeBarChart)", function() {
     const barGroup = taco.c[0].c[0];
     // Should have 2 children (bar + label), no value div
     assert.equal(barGroup.c.length, 2);
-    assert.ok(barGroup.c[0].a.class.includes('bw-bar'));
+    assert.ok(barGroup.c[0].a.class.includes('bw_bar'));
   });
 
   it("should hide labels when showLabels is false", function() {
@@ -968,7 +968,7 @@ describe("Bar Chart (bw.makeBarChart)", function() {
     const barGroup = taco.c[0].c[0];
     // Should have 2 children (value + bar), no label div
     assert.equal(barGroup.c.length, 2);
-    assert.ok(barGroup.c[0].a.class.includes('bw-bar-value'));
+    assert.ok(barGroup.c[0].a.class.includes('bw_bar_value'));
   });
 
   it("should apply custom color and height", function() {
@@ -1002,7 +1002,7 @@ describe("Bar Chart (bw.makeBarChart)", function() {
       data: [{ label: 'A', value: 10 }],
       className: 'my-chart'
     });
-    assert.ok(taco.a.class.includes('bw-bar-chart-container'));
+    assert.ok(taco.a.class.includes('bw_bar_chart_container'));
     assert.ok(taco.a.class.includes('my-chart'));
   });
 });
@@ -1210,7 +1210,7 @@ describe("Component Registry", function() {
 // =========================================================================
 describe("File I/O (bw.loadClientFile)", function() {
   it("should load a file in Node", function(done) {
-    const tmpFile = '/tmp/bw-test-load.txt';
+    const tmpFile = '/tmp/bw_test_load.txt';
     fs.writeFileSync(tmpFile, 'hello bitwrench');
     bw.loadClientFile(tmpFile, function(data, err) {
       assert.equal(err, null);
@@ -1221,7 +1221,7 @@ describe("File I/O (bw.loadClientFile)", function() {
   });
 
   it("should parse JSON when parser option set", function(done) {
-    const tmpFile = '/tmp/bw-test-load.json';
+    const tmpFile = '/tmp/bw_test_load.json';
     fs.writeFileSync(tmpFile, JSON.stringify({ x: 42 }));
     bw.loadClientFile(tmpFile, function(data, err) {
       assert.equal(err, null);
@@ -1232,7 +1232,7 @@ describe("File I/O (bw.loadClientFile)", function() {
   });
 
   it("bw.loadClientJSON should parse JSON", function(done) {
-    const tmpFile = '/tmp/bw-test-loadjson.json';
+    const tmpFile = '/tmp/bw_test_loadjson.json';
     fs.writeFileSync(tmpFile, JSON.stringify({ name: 'bw' }));
     bw.loadClientJSON(tmpFile, function(data, err) {
       assert.equal(err, null);
@@ -1243,7 +1243,7 @@ describe("File I/O (bw.loadClientFile)", function() {
   });
 
   it("should return error for missing file", function(done) {
-    bw.loadClientFile('/tmp/bw-nonexistent-file-xyz.txt', function(data, err) {
+    bw.loadClientFile('/tmp/bw_nonexistent_file_xyz.txt', function(data, err) {
       assert.equal(data, null);
       assert.ok(err);
       done();
@@ -1251,7 +1251,7 @@ describe("File I/O (bw.loadClientFile)", function() {
   });
 
   it("should return error for invalid JSON", function(done) {
-    const tmpFile = '/tmp/bw-test-badjson.txt';
+    const tmpFile = '/tmp/bw_test_badjson.txt';
     fs.writeFileSync(tmpFile, 'not json {{{');
     bw.loadClientJSON(tmpFile, function(data, err) {
       assert.equal(data, null);
@@ -1272,7 +1272,7 @@ describe("File I/O (bw.loadClientFile)", function() {
 
 describe("File I/O (bw.saveClientFile)", function() {
   it("should save a file in Node", function(done) {
-    const tmpFile = '/tmp/bw-test-save.txt';
+    const tmpFile = '/tmp/bw_test_save.txt';
     bw.saveClientFile(tmpFile, 'saved data');
     setTimeout(function() {
       const content = fs.readFileSync(tmpFile, 'utf8');
@@ -1283,7 +1283,7 @@ describe("File I/O (bw.saveClientFile)", function() {
   });
 
   it("bw.saveClientJSON should save as JSON", function(done) {
-    const tmpFile = '/tmp/bw-test-savejson.json';
+    const tmpFile = '/tmp/bw_test_savejson.json';
     bw.saveClientJSON(tmpFile, { test: true });
     setTimeout(function() {
       const content = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
@@ -1326,7 +1326,7 @@ describe("Merged makeCard", function() {
     const taco = bw.makeCard({ title: 'Test', content: 'Content' });
     assert.strictEqual(taco.t, 'div');
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-card'), 'should have bw-card class');
+    assert.ok(html.includes('bw_card'), 'should have bw_card class');
     assert.ok(html.includes('Test'), 'should include title');
     assert.ok(html.includes('Content'), 'should include content');
   });
@@ -1335,32 +1335,32 @@ describe("Merged makeCard", function() {
     const taco = bw.makeCard({ title: 'Main', subtitle: 'Sub', content: 'Content' });
     const html = bw.html(taco);
     assert.ok(html.includes('Sub'), 'should include subtitle');
-    assert.ok(html.includes('bw-card-subtitle'), 'should have subtitle class');
+    assert.ok(html.includes('bw_card_subtitle'), 'should have subtitle class');
   });
 
   it("should support image prop", function() {
     const taco = bw.makeCard({ title: 'Img', content: 'Content', image: { src: 'test.jpg', alt: 'Test' } });
     const html = bw.html(taco);
     assert.ok(html.includes('test.jpg'), 'should include image src');
-    assert.ok(html.includes('bw-card-img-top'), 'should have img-top class by default');
+    assert.ok(html.includes('bw_card_img_top'), 'should have img-top class by default');
   });
 
   it("should support imagePosition bottom", function() {
     const taco = bw.makeCard({ title: 'Img', content: 'Content', image: { src: 'test.jpg', alt: 'Test' }, imagePosition: 'bottom' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-card-img-bottom'), 'should have img-bottom class');
+    assert.ok(html.includes('bw_card_img_bottom'), 'should have img-bottom class');
   });
 
   it("should support shadow prop", function() {
     const taco = bw.makeCard({ title: 'Shadow', content: 'Content', shadow: 'md' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-shadow'), 'should have shadow class');
+    assert.ok(html.includes('bw_shadow'), 'should have shadow class');
   });
 
   it("should support hoverable prop", function() {
     const taco = bw.makeCard({ title: 'Hover', content: 'Content', hoverable: true });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-card-hoverable'), 'should have hoverable class');
+    assert.ok(html.includes('bw_card_hoverable'), 'should have hoverable class');
   });
 
   it("should not have makeCardV2 (removed)", function() {
@@ -1375,13 +1375,13 @@ describe("makeSpinner", function() {
   it("should create a spinner element", function() {
     const taco = bw.makeSpinner();
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-spinner'), 'should have spinner class');
+    assert.ok(html.includes('bw_spinner'), 'should have spinner class');
   });
 
   it("should support type prop", function() {
     const taco = bw.makeSpinner({ type: 'grow' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-spinner-grow'), 'should have spinner-grow class');
+    assert.ok(html.includes('bw_spinner_grow'), 'should have spinner-grow class');
   });
 });
 
@@ -1392,13 +1392,13 @@ describe("makeStack", function() {
   it("should create a vstack by default", function() {
     const taco = bw.makeStack({ children: ['A', 'B'] });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-vstack'), 'should have vstack class');
+    assert.ok(html.includes('bw_vstack'), 'should have vstack class');
   });
 
   it("should create an hstack with direction horizontal", function() {
     const taco = bw.makeStack({ children: ['A', 'B'], direction: 'horizontal' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-hstack'), 'should have hstack class');
+    assert.ok(html.includes('bw_hstack'), 'should have hstack class');
   });
 });
 
@@ -1409,7 +1409,7 @@ describe("makeCheckbox", function() {
   it("should create a checkbox element", function() {
     const taco = bw.makeCheckbox({ label: 'Accept', name: 'terms' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-form-check'), 'should have form-check class');
+    assert.ok(html.includes('bw_form_check'), 'should have form-check class');
     assert.ok(html.includes('Accept'), 'should include label');
   });
 });
@@ -1418,15 +1418,15 @@ describe("makeCheckbox", function() {
 // makeCodeDemo
 // =========================================================================
 describe("makeCodeDemo", function() {
-  it("should use bw-code-demo class", function() {
+  it("should use bw_code_demo class", function() {
     const taco = bw.makeCodeDemo({ code: 'var x = 1;', language: 'javascript' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-code-demo'), 'should have bw-code-demo class');
+    assert.ok(html.includes('bw_code_demo'), 'should have bw_code_demo class');
   });
 
-  it("should use bw-copy-btn class for copy button", function() {
+  it("should use bw_copy_btn class for copy button", function() {
     const taco = bw.makeCodeDemo({ code: 'var x = 1;', language: 'javascript' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw-copy-btn'), 'should have bw-copy-btn class');
+    assert.ok(html.includes('bw_copy_btn'), 'should have bw_copy_btn class');
   });
 });

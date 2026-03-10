@@ -351,21 +351,21 @@ describe('Theme Generation', function() {
       });
     });
 
-    it('should contain button variant selectors', function() {
+    it('should contain palette class selectors for all variants', function() {
       const result = bw.generateTheme('t', {
         primary: '#006666',
         secondary: '#6c757d',
         inject: false
       });
-      // Utility classes: .bw_btn.bw_bg_primary replaces .bw_btn_primary
-      assert.ok(result.css.includes('.bw_btn.bw_bg_primary'), 'should have .bw_btn.bw_bg_primary');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_secondary'), 'should have .bw_btn.bw_bg_secondary');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_success'), 'should have .bw_btn.bw_bg_success');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_danger'), 'should have .bw_btn.bw_bg_danger');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_warning'), 'should have .bw_btn.bw_bg_warning');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_info'), 'should have .bw_btn.bw_bg_info');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_light'), 'should have .bw_btn.bw_bg_light');
-      assert.ok(result.css.includes('.bw_btn.bw_bg_dark'), 'should have .bw_btn.bw_bg_dark');
+      // Single palette class per variant: .bw_primary, .bw_secondary, etc.
+      assert.ok(result.css.includes('.bw_primary'), 'should have .bw_primary');
+      assert.ok(result.css.includes('.bw_secondary'), 'should have .bw_secondary');
+      assert.ok(result.css.includes('.bw_success'), 'should have .bw_success');
+      assert.ok(result.css.includes('.bw_danger'), 'should have .bw_danger');
+      assert.ok(result.css.includes('.bw_warning'), 'should have .bw_warning');
+      assert.ok(result.css.includes('.bw_info'), 'should have .bw_info');
+      assert.ok(result.css.includes('.bw_light'), 'should have .bw_light');
+      assert.ok(result.css.includes('.bw_dark'), 'should have .bw_dark');
     });
 
     it('should contain outline button variants', function() {
@@ -374,9 +374,9 @@ describe('Theme Generation', function() {
         secondary: '#6c757d',
         inject: false
       });
-      // Utility classes: .bw_btn.bw_btn_outline.bw_border_primary replaces .bw_btn_outline_primary
-      assert.ok(result.css.includes('.bw_btn.bw_btn_outline.bw_border_primary'), 'should have outline-primary');
-      assert.ok(result.css.includes('.bw_btn.bw_btn_outline.bw_border_danger'), 'should have outline-danger');
+      // Outline buttons: .bw_btn_outline.bw_primary
+      assert.ok(result.css.includes('.bw_btn_outline.bw_primary'), 'should have outline-primary');
+      assert.ok(result.css.includes('.bw_btn_outline.bw_danger'), 'should have outline-danger');
     });
 
     it('should contain alert variant selectors', function() {
@@ -385,10 +385,10 @@ describe('Theme Generation', function() {
         secondary: '#6c757d',
         inject: false
       });
-      // Utility classes: .bw_alert.bw_bg_primary_light replaces .bw_alert_primary
-      assert.ok(result.css.includes('.bw_bg_primary_light'), 'should have .bw_bg_primary_light for alerts');
-      assert.ok(result.css.includes('.bw_bg_success_light'), 'should have .bw_bg_success_light for alerts');
-      assert.ok(result.css.includes('.bw_bg_danger_light'), 'should have .bw_bg_danger_light for alerts');
+      // Alerts: .bw_alert.bw_primary with light bg override
+      assert.ok(result.css.includes('.bw_alert.bw_primary'), 'should have .bw_alert.bw_primary');
+      assert.ok(result.css.includes('.bw_alert.bw_success'), 'should have .bw_alert.bw_success');
+      assert.ok(result.css.includes('.bw_alert.bw_danger'), 'should have .bw_alert.bw_danger');
     });
 
     it('should contain badge variant selectors', function() {
@@ -397,30 +397,31 @@ describe('Theme Generation', function() {
         secondary: '#6c757d',
         inject: false
       });
-      // Utility classes: .bw_bg_primary replaces .bw_badge_primary
-      assert.ok(result.css.includes('.bw_bg_primary'), 'should have .bw_bg_primary for badges');
-      assert.ok(result.css.includes('.bw_bg_success'), 'should have .bw_bg_success for badges');
+      // Badges use the root palette class: .bw_primary
+      assert.ok(result.css.includes('.bw_primary'), 'should have .bw_primary for badges');
+      assert.ok(result.css.includes('.bw_success'), 'should have .bw_success for badges');
     });
 
-    it('should contain utility color selectors', function() {
+    it('should contain palette color selectors', function() {
       const result = bw.generateTheme('t', {
         primary: '#006666',
         secondary: '#6c757d',
         inject: false
       });
-      assert.ok(result.css.includes('.bw_text_primary'), 'should have .bw_text_primary');
-      assert.ok(result.css.includes('.bw_bg_primary'), 'should have .bw_bg_primary');
+      // Single palette class handles bg+color+border
+      assert.ok(result.css.includes('.bw_primary'), 'should have .bw_primary');
+      assert.ok(result.css.includes('.bw_text_muted'), 'should have .bw_text_muted');
     });
 
-    it('should contain underscore alias selectors', function() {
+    it('should contain underscore palette selectors', function() {
       const result = bw.generateTheme('t', {
         primary: '#006666',
         secondary: '#6c757d',
         inject: false
       });
-      // Utility classes use underscores: .bw_bg_primary, .bw_text_primary
-      assert.ok(result.css.includes('.bw_bg_primary'),
-        'should have underscore utility classes');
+      // Palette classes use underscores: .bw_primary
+      assert.ok(result.css.includes('.bw_primary'),
+        'should have underscore palette classes');
     });
 
     it('should use default semantic colors when harmonize is 0', function() {
@@ -822,7 +823,7 @@ describe('Integration (jsdom)', function() {
     });
     const el = document.getElementById('bw_theme_inject_test');
     assert.ok(el !== null, 'style element should exist');
-    assert.ok(el.textContent.includes('.bw_bg_primary'), 'should contain .bw_bg_primary utility class');
+    assert.ok(el.textContent.includes('.bw_primary'), 'should contain .bw_primary palette class');
     // Clean up
     el.remove();
   });
@@ -959,14 +960,14 @@ describe('Themed CSS Completeness', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
     const rules = generateThemedCSS('', palette, resolveLayout({}));
     const css = bw.css(rules);
-    // Buttons (utility classes)
-    assert.ok(css.includes('.bw_btn.bw_bg_primary'), 'should have button interaction rules');
-    // Alerts (utility classes)
-    assert.ok(css.includes('.bw_bg_primary_light'), 'should have alert bg utility');
-    // Badges (utility classes)
-    assert.ok(css.includes('.bw_bg_primary'), 'should have badge bg utility');
+    // Palette classes (single class per variant)
+    assert.ok(css.includes('.bw_primary'), 'should have palette class .bw_primary');
+    assert.ok(css.includes('.bw_primary:hover'), 'should have hover pseudo-state');
+    // Alert overrides
+    assert.ok(css.includes('.bw_alert.bw_primary'), 'should have alert override');
     // Cards
     assert.ok(css.includes('.bw_card'), 'should have cards');
+    assert.ok(css.includes('.bw_card.bw_primary'), 'should have card variant override');
     // Forms
     assert.ok(css.includes('.bw_form_control'), 'should have forms');
     // Navigation
@@ -981,39 +982,41 @@ describe('Themed CSS Completeness', function() {
     assert.ok(css.includes('.bw_page_link'), 'should have pagination');
     // Progress
     assert.ok(css.includes('.bw_progress'), 'should have progress');
+    assert.ok(css.includes('.bw_progress_bar.bw_primary'), 'should have progress bar variant');
     // Hero
-    assert.ok(css.includes('.bw_hero'), 'should have hero');
+    assert.ok(css.includes('.bw_hero.bw_primary'), 'should have hero variant');
     // Breadcrumb
     assert.ok(css.includes('.bw_breadcrumb'), 'should have breadcrumbs');
-    // Spinner (interaction rules)
-    assert.ok(css.includes('.bw_spinner_border.bw_text_primary'), 'should have spinners');
+    // Spinner (palette class override)
+    assert.ok(css.includes('.bw_spinner_grow.bw_primary'), 'should have spinners');
     // Close button
     assert.ok(css.includes('.bw_close'), 'should have close button');
     // Sections
     assert.ok(css.includes('.bw_section_subtitle'), 'should have sections');
     // Reset (body)
     assert.ok(css.includes('body'), 'should have body reset');
-    // Utility colors
-    assert.ok(css.includes('.bw_text_primary'), 'should have text colors');
-    assert.ok(css.includes('.bw_bg_primary'), 'should have bg colors');
+    // Outline buttons
+    assert.ok(css.includes('.bw_btn_outline.bw_primary'), 'should have outline buttons');
+    // Text muted
+    assert.ok(css.includes('.bw_text_muted'), 'should have text muted');
   });
 
-  it('generateThemedCSS should produce card variant accent borders', function() {
+  it('generateThemedCSS should produce card variant overrides', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
     const rules = generateThemedCSS('', palette, resolveLayout({}));
     const css = bw.css(rules);
-    // Card accent borders via utility classes
-    assert.ok(css.includes('.bw_card.bw_card_accent.bw_border_primary'), 'should have card accent primary');
-    assert.ok(css.includes('.bw_card.bw_card_accent.bw_border_danger'), 'should have card accent danger');
+    // Card variants via single palette class
+    assert.ok(css.includes('.bw_card.bw_primary'), 'should have card primary');
+    assert.ok(css.includes('.bw_card.bw_danger'), 'should have card danger');
   });
 
   it('generateThemedCSS should produce progress bar variants', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
     const rules = generateThemedCSS('', palette, resolveLayout({}));
     const css = bw.css(rules);
-    // Progress bar colors via utility classes
-    assert.ok(css.includes('.bw_progress_bar.bw_bg_primary'), 'should have progress-bar-primary');
-    assert.ok(css.includes('.bw_progress_bar.bw_bg_success'), 'should have progress-bar-success');
+    // Progress bar colors via palette class
+    assert.ok(css.includes('.bw_progress_bar.bw_primary'), 'should have progress-bar-primary');
+    assert.ok(css.includes('.bw_progress_bar.bw_success'), 'should have progress-bar-success');
   });
 
   it('scoped generateThemedCSS should prefix all selectors', function() {
@@ -1034,8 +1037,8 @@ describe('Themed CSS Completeness', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
     const rules = generateThemedCSS('', palette, resolveLayout({}));
     const css = bw.css(rules);
-    assert.ok(css.includes('.bw_bg_primary'), 'raw output should have utility class selectors');
-    assert.ok(css.includes('.bw_btn.bw_bg_primary'), 'raw output should have button interaction rules');
+    assert.ok(css.includes('.bw_primary'), 'raw output should have palette class selectors');
+    assert.ok(css.includes('.bw_primary:hover'), 'raw output should have palette hover rules');
   });
 });
 

@@ -22,14 +22,14 @@
 
     // ---- Page CSS via bw.injectCSS ----
     bw.injectCSS(bw.css({
-      '.bw-hero-landing': {
+      '.bw_hero_landing': {
         background: 'linear-gradient(135deg, #006666 0%, #003d3d 100%)',
         color: '#fff',
         padding: '5rem 0 4rem',
         position: 'relative',
         overflow: 'hidden'
       },
-      '.bw-hero-landing::before': {
+      '.bw_hero_landing::before': {
         content: "''",
         position: 'absolute',
         top: '-50%',
@@ -40,7 +40,7 @@
         background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)',
         'pointer-events': 'none'
       },
-      '.bw-hero-tagline': {
+      '.bw_hero_tagline': {
         'font-size': '2.5rem',
         'font-weight': '700',
         margin: '0 0 1rem',
@@ -48,21 +48,21 @@
         'line-height': '1.2',
         'max-width': '700px'
       },
-      '.bw-hero-sub': {
+      '.bw_hero_sub': {
         'font-size': '1.125rem',
         opacity: '0.85',
         'max-width': '580px',
         margin: '0 0 2rem',
         'line-height': '1.65'
       },
-      '.bw-hero-actions': {
+      '.bw_hero_actions': {
         display: 'flex',
         gap: '1rem',
         'flex-wrap': 'wrap',
         'align-items': 'center',
         'justify-content': 'flex-start'
       },
-      '.bw-hero-actions a': {
+      '.bw_hero_actions a': {
         'text-decoration': 'none',
         'font-size': '1rem',
         padding: '0.7rem 1.75rem',
@@ -70,41 +70,41 @@
         'border-radius': '6px',
         transition: 'all 0.15s'
       },
-      '.bw-hero-primary': {
+      '.bw_hero_primary': {
         background: '#fff',
         color: '#006666'
       },
-      '.bw-hero-primary:hover': {
+      '.bw_hero_primary:hover': {
         background: '#e0f2f1',
         color: '#004d4d'
       },
-      '.bw-hero-secondary': {
+      '.bw_hero_secondary': {
         background: 'transparent',
         color: '#fff',
         border: '1.5px solid rgba(255,255,255,0.4)'
       },
-      '.bw-hero-secondary:hover': {
+      '.bw_hero_secondary:hover': {
         'border-color': 'rgba(255,255,255,0.7)',
         background: 'rgba(255,255,255,0.08)'
       },
-      '.bw-hero-version': {
+      '.bw_hero_version': {
         'font-size': '0.8125rem',
         opacity: '0.5',
         'margin-left': '0.5rem'
       },
-      '.bw-install-strip': {
+      '.bw_install_strip': {
         background: '#222',
         padding: '0.65rem 0',
         'border-top': '1px solid rgba(255,255,255,0.08)',
         'border-bottom': '1px solid rgba(255,255,255,0.08)'
       },
-      '.bw-install-inner': {
+      '.bw_install_inner': {
         display: 'flex',
         'align-items': 'center',
         gap: '1rem',
         'flex-wrap': 'wrap'
       },
-      '.bw-install-label': {
+      '.bw_install_label': {
         'font-size': '0.8125rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.08em',
@@ -112,10 +112,10 @@
         'font-weight': '700',
         'white-space': 'nowrap'
       },
-      '.bw-install-cmd': {
+      '.bw_install_cmd': {
         color: '#fff',
         'font-size': '1rem',
-        'font-family': 'var(--bw-font-mono)',
+        'font-family': 'var(--bw_font_mono)',
         background: 'rgba(255,255,255,0.08)',
         padding: '0.2rem 0.6rem',
         'border-radius': '4px',
@@ -123,14 +123,14 @@
         'overflow-wrap': 'break-word',
         'word-break': 'break-all'
       },
-      '.bw-install-or': {
+      '.bw_install_or': {
         color: 'rgba(255,255,255,0.45)',
         'font-size': '0.875rem'
       },
-      '.bw-install-cdn': {
+      '.bw_install_cdn': {
         color: 'rgba(255,255,255,0.85)',
         'font-size': '0.9375rem',
-        'font-family': 'var(--bw-font-mono)',
+        'font-family': 'var(--bw_font_mono)',
         background: 'rgba(255,255,255,0.08)',
         padding: '0.2rem 0.6rem',
         'border-radius': '4px',
@@ -138,153 +138,153 @@
         'overflow-wrap': 'break-word',
         'word-break': 'break-all'
       },
-      '.bw-stat-strip': {
+      '.bw_stat_strip': {
         display: 'grid',
         'grid-template-columns': 'repeat(4, 1fr)',
         gap: '0.75rem',
         margin: '0',
         padding: '0'
       },
-      '.bw-stat-item': {
+      '.bw_stat_item': {
         'text-align': 'center',
         padding: '0.75rem 0.5rem',
-        background: 'var(--bw-card-bg)',
-        border: '1px solid var(--bw-card-border)',
-        'border-radius': 'var(--bw-radius)'
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)'
       },
-      '.bw-stat-value': {
+      '.bw_stat_value': {
         'font-size': '1.5rem',
         'font-weight': '700',
-        color: 'var(--bw-teal)',
+        color: 'var(--bw_teal)',
         'line-height': '1'
       },
-      '.bw-stat-label': {
+      '.bw_stat_label': {
         'font-size': '0.8125rem',
         'font-weight': '600',
         'margin-top': '0.25rem',
-        color: 'var(--bw-text)'
+        color: 'var(--bw_text)'
       },
-      '.bw-stat-sub': {
+      '.bw_stat_sub': {
         'font-size': '0.6875rem',
-        color: 'var(--bw-text-muted)',
+        color: 'var(--bw_text_muted)',
         'margin-top': '0.1rem'
       },
       '@media (max-width: 600px)': {
-        '.bw-stat-strip': { 'grid-template-columns': 'repeat(2, 1fr)', gap: '0.5rem' },
-        '.bw-stat-item': { padding: '0.5rem' },
-        '.bw-stat-value': { 'font-size': '1.25rem' }
+        '.bw_stat_strip': { 'grid-template-columns': 'repeat(2, 1fr)', gap: '0.5rem' },
+        '.bw_stat_item': { padding: '0.5rem' },
+        '.bw_stat_value': { 'font-size': '1.25rem' }
       },
-      '.bw-how-grid': {
+      '.bw_how_grid': {
         display: 'grid',
         'grid-template-columns': '1fr 1fr',
         gap: '1.5rem',
         'align-items': 'start'
       },
-      '.bw-how-arrow': {
+      '.bw_how_arrow': {
         'text-align': 'center',
-        color: 'var(--bw-teal)',
+        color: 'var(--bw_teal)',
         'font-size': '1.5rem',
         padding: '1rem 0',
         display: 'none'
       },
       '@media (max-width: 768px)': {
-        '.bw-how-grid': { 'grid-template-columns': '1fr' },
-        '.bw-how-arrow': { display: 'block' },
-        '.bw-hero-landing': { padding: '3rem 0 2.5rem' },
-        '.bw-hero-tagline': { 'font-size': '1.75rem' },
-        '.bw-hero-sub': { 'font-size': '1rem' },
-        '.bw-install-inner': { 'flex-direction': 'column', 'align-items': 'flex-start', gap: '0.5rem' },
-        '.bw-install-or': { display: 'none' }
+        '.bw_how_grid': { 'grid-template-columns': '1fr' },
+        '.bw_how_arrow': { display: 'block' },
+        '.bw_hero_landing': { padding: '3rem 0 2.5rem' },
+        '.bw_hero_tagline': { 'font-size': '1.75rem' },
+        '.bw_hero_sub': { 'font-size': '1rem' },
+        '.bw_install_inner': { 'flex-direction': 'column', 'align-items': 'flex-start', gap: '0.5rem' },
+        '.bw_install_or': { display: 'none' }
       },
-      '.bw-feature-highlight': {
+      '.bw_feature_highlight': {
         display: 'grid',
         'grid-template-columns': 'repeat(3, 1fr)',
         gap: '1.25rem'
       },
-      '.bw-fh-card': {
-        background: 'var(--bw-card-bg)',
-        border: '1px solid var(--bw-card-border)',
-        'border-radius': 'var(--bw-radius)',
+      '.bw_fh_card': {
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
         padding: '1.25rem 1.5rem',
         transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
         display: 'flex',
         'flex-direction': 'column'
       },
-      '.bw-fh-card:hover': {
+      '.bw_fh_card:hover': {
         transform: 'translateY(-2px)',
         'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
       },
-      '.bw-fh-icon': {
+      '.bw_fh_icon': {
         'font-size': '1.5rem',
         'margin-bottom': '0.5rem',
         display: 'block'
       },
-      '.bw-fh-card h4': {
+      '.bw_fh_card h4': {
         margin: '0 0 0.4rem',
         'font-size': '1rem',
         'font-weight': '600',
-        color: 'var(--bw-text)'
+        color: 'var(--bw_text)'
       },
-      '.bw-fh-card p': {
+      '.bw_fh_card p': {
         margin: '0',
         'font-size': '0.875rem',
-        color: 'var(--bw-text-secondary)',
+        color: 'var(--bw_text_secondary)',
         'line-height': '1.55'
       },
       '@media (max-width: 900px)': {
-        '.bw-feature-highlight': { 'grid-template-columns': 'repeat(2, 1fr)' }
+        '.bw_feature_highlight': { 'grid-template-columns': 'repeat(2, 1fr)' }
       },
       '@media (max-width: 600px) ': {
-        '.bw-feature-highlight': { 'grid-template-columns': '1fr' }
+        '.bw_feature_highlight': { 'grid-template-columns': '1fr' }
       },
-      '.bw-live-demo-grid': {
+      '.bw_live_demo_grid': {
         display: 'grid',
         'grid-template-columns': '1fr 1fr',
         gap: '1.5rem'
       },
       '@media (max-width: 768px) ': {
-        '.bw-live-demo-grid': { 'grid-template-columns': '1fr' }
+        '.bw_live_demo_grid': { 'grid-template-columns': '1fr' }
       },
-      '.bw-page-grid': {
+      '.bw_page_grid': {
         display: 'grid',
         'grid-template-columns': 'repeat(auto-fill, minmax(260px, 1fr))',
         gap: '1rem'
       },
-      '.bw-page-link': {
+      '.bw_page_link': {
         'text-decoration': 'none',
         color: 'inherit',
         display: 'block'
       },
-      '.bw-page-link .bw-card': {
+      '.bw_page_link .bw_card': {
         height: '100%',
         transition: 'transform 0.15s, box-shadow 0.15s'
       },
-      '.bw-page-link:hover .bw-card': {
+      '.bw_page_link:hover .bw_card': {
         transform: 'translateY(-2px)',
         'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
       },
-      '.bw-page-category': {
+      '.bw_page_category': {
         'font-size': '0.6875rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.08em',
         'font-weight': '600',
-        color: 'var(--bw-teal)',
+        color: 'var(--bw_teal)',
         'margin-bottom': '0.75rem'
       },
-      '.bw-site-footer': {
+      '.bw_site_footer': {
         'text-align': 'center',
         padding: '2.5rem 0 1.5rem',
-        color: 'var(--bw-text-muted)',
+        color: 'var(--bw_text_muted)',
         'font-size': '0.8125rem'
       },
-      '.bw-site-footer a': {
-        color: 'var(--bw-text-secondary)',
+      '.bw_site_footer a': {
+        color: 'var(--bw_text_secondary)',
         'text-decoration': 'none'
       },
-      '.bw-site-footer a:hover': {
-        color: 'var(--bw-teal)'
+      '.bw_site_footer a:hover': {
+        color: 'var(--bw_teal)'
       },
-      '.bw-footer-links': {
+      '.bw_footer_links': {
         display: 'flex',
         'justify-content': 'center',
         gap: '1.5rem',
@@ -295,20 +295,20 @@
 
     // ---- Build page structure as TACO ----
     var hero = {
-      t: 'div', a: { class: 'bw-hero-landing' },
+      t: 'div', a: { class: 'bw_hero_landing' },
       c: [{
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
-          { t: 'h1', a: { class: 'bw-hero-tagline' }, c: 'Build UI from plain JavaScript objects' },
+          { t: 'h1', a: { class: 'bw_hero_tagline' }, c: 'Build UI from plain JavaScript objects' },
           {
-            t: 'p', a: { class: 'bw-hero-sub' },
+            t: 'p', a: { class: 'bw_hero_sub' },
             c: 'Describe your interface as native JS objects. Render to HTML strings or mount to the DOM. No JSX, no virtual DOM, no build step. Zero dependencies.'
           },
           {
-            t: 'div', a: { class: 'bw-hero-actions' },
+            t: 'div', a: { class: 'bw_hero_actions' },
             c: [
-              { t: 'a', a: { href: '00-quick-start.html', class: 'bw-hero-primary' }, c: 'Get Started' },
-              { t: 'a', a: { href: 'https://github.com/deftio/bitwrench', class: 'bw-hero-secondary' }, c: 'GitHub' }
+              { t: 'a', a: { href: '00-quick-start.html', class: 'bw_hero_primary' }, c: 'Get Started' },
+              { t: 'a', a: { href: 'https://github.com/deftio/bitwrench', class: 'bw_hero_secondary' }, c: 'GitHub' }
             ]
           }
         ]
@@ -316,18 +316,18 @@
     };
 
     var installStrip = {
-      t: 'div', a: { class: 'bw-install-strip' },
+      t: 'div', a: { class: 'bw_install_strip' },
       c: [{
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [{
-          t: 'div', a: { class: 'bw-install-inner' },
+          t: 'div', a: { class: 'bw_install_inner' },
           c: [
-            { t: 'span', a: { class: 'bw-install-label' }, c: 'Install' },
-            { t: 'code', a: { class: 'bw-install-cmd' }, c: 'npm install bitwrench' },
-            { t: 'span', a: { class: 'bw-install-or' }, c: 'or' },
-            { t: 'code', a: { class: 'bw-install-cdn' }, c: '<script src="bitwrench.umd.min.js"><\/script>' },
+            { t: 'span', a: { class: 'bw_install_label' }, c: 'Install' },
+            { t: 'code', a: { class: 'bw_install_cmd' }, c: 'npm install bitwrench' },
+            { t: 'span', a: { class: 'bw_install_or' }, c: 'or' },
+            { t: 'code', a: { class: 'bw_install_cdn' }, c: '<script src="bitwrench.umd.min.js"><\/script>' },
             {
-              t: 'span', a: { class: 'bw-install-or', style: 'margin-left: auto;' },
+              t: 'span', a: { class: 'bw_install_or', style: 'margin-left: auto;' },
               c: {
                 t: 'a',
                 a: { href: '09-builds.html', style: 'color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.875rem; font-weight: 500;' },
@@ -343,7 +343,7 @@
       t: 'div', a: { class: 'demo-section' },
       c: [{
         t: 'div', a: { class: 'demo-content' },
-        c: [{ t: 'div', a: { class: 'bw-stat-strip', id: 'stat-strip' } }]
+        c: [{ t: 'div', a: { class: 'bw_stat_strip', id: 'stat-strip' } }]
       }]
     };
 
@@ -355,22 +355,22 @@
           t: 'div', a: { class: 'demo-content' },
           c: [
             {
-              t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw-text-secondary); margin: 0 0 1.25rem;' },
+              t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1.25rem;' },
               c: bw.raw('Describe your UI as plain objects using the <strong>TACO</strong> format &mdash; <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions. Nest them, loop over them, compose them with regular JS. Then render with <code>bw.html()</code> or mount with <code>bw.DOM()</code>.')
             },
             {
-              t: 'div', a: { class: 'bw-how-grid' },
+              t: 'div', a: { class: 'bw_how_grid' },
               c: [
                 {
                   t: 'div', c: [
-                    { t: 'div', a: { class: 'bw-code-label' }, c: 'JavaScript' },
+                    { t: 'div', a: { class: 'bw_code_label' }, c: 'JavaScript' },
                     { t: 'div', a: { id: 'how-code' } }
                   ]
                 },
                 {
                   t: 'div', c: [
-                    { t: 'div', a: { class: 'bw-code-label', style: 'color: var(--bw-teal);' }, c: 'Result' },
-                    { t: 'div', a: { id: 'how-result', class: 'bw-demo-result' } }
+                    { t: 'div', a: { class: 'bw_code_label', style: 'color: var(--bw_teal);' }, c: 'Result' },
+                    { t: 'div', a: { id: 'how-result', class: 'bw_demo_result' } }
                   ]
                 }
               ]
@@ -386,7 +386,7 @@
         { t: 'h2', c: 'What You Get' },
         {
           t: 'div', a: { class: 'demo-content' },
-          c: [{ t: 'div', a: { class: 'bw-feature-highlight', id: 'features' } }]
+          c: [{ t: 'div', a: { class: 'bw_feature_highlight', id: 'features' } }]
         }
       ]
     };
@@ -397,7 +397,7 @@
         { t: 'h2', c: 'Live Examples' },
         {
           t: 'div', a: { class: 'demo-content' },
-          c: [{ t: 'div', a: { class: 'bw-live-demo-grid', id: 'live-demos' } }]
+          c: [{ t: 'div', a: { class: 'bw_live_demo_grid', id: 'live-demos' } }]
         }
       ]
     };
@@ -414,10 +414,10 @@
     };
 
     var footer = {
-      t: 'div', a: { class: 'bw-site-footer' },
+      t: 'div', a: { class: 'bw_site_footer' },
       c: [
         {
-          t: 'div', a: { class: 'bw-footer-links' },
+          t: 'div', a: { class: 'bw_footer_links' },
           c: [
             { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'GitHub' },
             { t: 'a', a: { href: 'https://www.npmjs.com/package/bitwrench' }, c: 'npm' },
@@ -451,11 +451,11 @@
         ];
         bw.DOM('#stat-strip', stats.map(function(s) {
           return {
-            t: 'div', a: { class: 'bw-stat-item' },
+            t: 'div', a: { class: 'bw_stat_item' },
             c: [
-              { t: 'div', a: { class: 'bw-stat-value' }, c: s.value },
-              { t: 'div', a: { class: 'bw-stat-label' }, c: s.label },
-              { t: 'div', a: { class: 'bw-stat-sub' }, c: s.sub }
+              { t: 'div', a: { class: 'bw_stat_value' }, c: s.value },
+              { t: 'div', a: { class: 'bw_stat_label' }, c: s.label },
+              { t: 'div', a: { class: 'bw_stat_sub' }, c: s.sub }
             ]
           };
         }));
@@ -485,11 +485,11 @@
     // ---- How It Works ----
     (function() {
       var code = 'const card = {\n'
-        + '  t: \'div\', a: { class: \'bw-card\' },\n'
+        + '  t: \'div\', a: { class: \'bw_card\' },\n'
         + '  c: [{\n'
-        + '    t: \'div\', a: { class: \'bw-card-body\' },\n'
+        + '    t: \'div\', a: { class: \'bw_card_body\' },\n'
         + '    c: [\n'
-        + '      { t: \'h5\', a: { class: \'bw-card-title\' },\n'
+        + '      { t: \'h5\', a: { class: \'bw_card_title\' },\n'
         + '        c: \'Hello bitwrench\' },\n'
         + '      { t: \'p\', c: \'UI as native JS objects.\' },\n'
         + '      bw.makeButton({ text: \'Click me\',\n'
@@ -506,8 +506,8 @@
         }));
       } else {
         bw.DOM('#how-code', {
-          t: 'div', a: { class: 'bw-code-block' },
-          c: { t: 'pre', c: { t: 'code', a: { style: 'color: var(--bw-code-text);' }, c: code } }
+          t: 'div', a: { class: 'bw_code_block' },
+          c: { t: 'pre', c: { t: 'code', a: { style: 'color: var(--bw_code_text);' }, c: code } }
         });
       }
 
@@ -552,9 +552,9 @@
 
       bw.DOM('#features', features.map(function(f) {
         return {
-          t: 'div', a: { class: 'bw-fh-card' },
+          t: 'div', a: { class: 'bw_fh_card' },
           c: [
-            { t: 'span', a: { class: 'bw-fh-icon' }, c: f.icon },
+            { t: 'span', a: { class: 'bw_fh_icon' }, c: f.icon },
             { t: 'h4', c: f.title },
             { t: 'p', c: f.desc }
           ]
@@ -684,15 +684,15 @@
         return {
           t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
           c: [
-            { t: 'div', a: { class: 'bw-page-category' }, c: section.category },
+            { t: 'div', a: { class: 'bw_page_category' }, c: section.category },
             {
-              t: 'div', a: { class: 'bw-page-grid' },
+              t: 'div', a: { class: 'bw_page_grid' },
               c: section.pages.map(function(p) {
                 return {
-                  t: 'a', a: { href: p.href, class: 'bw-page-link' },
+                  t: 'a', a: { href: p.href, class: 'bw_page_link' },
                   c: bw.makeCard({
                     title: p.title,
-                    content: { t: 'p', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary); margin: 0;' }, c: p.desc }
+                    content: { t: 'p', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary); margin: 0;' }, c: p.desc }
                   })
                 };
               })

@@ -1,0 +1,1011 @@
+# Bitwrench Source Function Map
+# Generated: 2026-03-09
+# Scanned source files in src/ directory
+
+src/bitwrench.js:
+  exports:
+    - name: bw (default export)
+      line: 4861
+      description: Main bitwrench namespace object exported as default
+  namespace_properties:
+    # --- Core ---
+    - name: bw.version
+      line: 29
+      description: Version string from generated VERSION_INFO
+    - name: bw.versionInfo
+      line: 30
+      description: Full version metadata object
+    - name: bw.getVersion
+      line: 41
+      description: Get version metadata object (v1-compatible callable API)
+    - name: bw.isNodeJS
+      line: 99
+      description: Detect if running in Node.js environment
+    - name: bw._isNode
+      line: 118
+      description: Static flag indicating Node.js APIs are available
+    - name: bw._isBrowser
+      line: 119
+      description: Dynamic getter for DOM API availability (typeof document/window)
+    - name: bw._getFs
+      line: 136
+      description: Lazy-resolve Node.js fs module (CJS require then ESM import fallback)
+    - name: bw.typeOf
+      line: 213
+      description: Enhanced type detection (distinguishes arrays, dates, regexps, maps, etc.)
+    - name: bw.to
+      line: 267
+      description: Alias for bw.typeOf
+    - name: bw.uuid
+      line: 283
+      description: Generate a unique identifier string with optional prefix
+    # --- Node Cache ---
+    - name: bw._el
+      line: 320
+      description: Look up a DOM element by ID using the node cache for O(1) access
+    - name: bw._registerNode
+      line: 368
+      description: Register a DOM element in the node cache under one or more keys
+    - name: bw._deregisterNode
+      line: 391
+      description: Remove a DOM element from the node cache
+    # --- HTML/DOM Generation ---
+    - name: bw.escapeHTML
+      line: 417
+      description: Escape HTML special characters to prevent XSS
+    - name: bw.raw
+      line: 448
+      description: Mark a string as raw HTML so it bypasses escaping in bw.html/createDOM
+    - name: bw.normalizeClass
+      line: 465
+      description: Normalize CSS class names (identity function, retained for backward compat)
+    - name: bw.html
+      line: 494
+      description: Convert a TACO object to an HTML string (works in Node.js and browsers)
+    - name: bw.createDOM
+      line: 641
+      description: Create a live DOM element from a TACO object (browser only)
+    - name: bw.DOM
+      line: 838
+      description: Mount a TACO object into a DOM element, replacing its contents
+    - name: bw.compileProps
+      line: 920
+      description: Compile props into getter/setter functions for reactive updates
+    - name: bw.renderComponent
+      line: 958
+      description: Render a TACO component and return an enhanced handle object
+    - name: bw.cleanup
+      line: 1125
+      description: Clean up DOM element lifecycle hooks, pub/sub, and state references
+    # --- State Management ---
+    - name: bw.update
+      line: 1205
+      description: Trigger re-render of a component by calling its stored o.render function
+    - name: bw.patch
+      line: 1234
+      description: Targeted DOM update by element ID (content or attribute)
+    - name: bw.patchAll
+      line: 1279
+      description: Batch version of bw.patch for updating multiple elements at once
+    # --- Events (DOM-scoped) ---
+    - name: bw.emit
+      line: 1306
+      description: Emit a custom DOM event (bw:-prefixed) on an element
+    - name: bw.on
+      line: 1335
+      description: Listen for a custom bitwrench event on a DOM element
+    # --- Pub/Sub (app-scoped) ---
+    - name: bw.pub
+      line: 1369
+      description: Publish to a topic, calling all subscribers with try/catch isolation
+    - name: bw.sub
+      line: 1405
+      description: Subscribe to a topic; returns unsub function; optional element lifecycle tie-in
+    - name: bw.unsub
+      line: 1443
+      description: Unsubscribe a handler by reference from a topic
+    # --- Function Registry ---
+    - name: bw.funcRegister
+      line: 1474
+      description: Register a function in the global function registry for string dispatch
+    - name: bw.funcGetById
+      line: 1492
+      description: Retrieve a registered function by name
+    - name: bw.funcGetDispatchStr
+      line: 1507
+      description: Generate a dispatch string for inline HTML event attributes
+    - name: bw.funcUnregister
+      line: 1519
+      description: Remove a function from the registry
+    - name: bw.funcGetRegistry
+      line: 1533
+      description: Get a shallow copy of the function registry for inspection
+    # --- Template Binding (private) ---
+    - name: bw._parseBindings
+      line: 1552
+      description: Parse ${expr} binding expressions from a template string
+    - name: bw._evaluatePath
+      line: 1566
+      description: Evaluate a dot-path on a state object
+    - name: bw._resolveTemplate
+      line: 1589
+      description: Resolve all ${expr} bindings in a template string against state
+    - name: bw._extractDeps
+      line: 1632
+      description: Extract top-level state keys that an expression depends on
+    # --- Microtask Batching ---
+    - name: bw._scheduleFlush
+      line: 1656
+      description: Schedule a microtask flush for dirty components
+    - name: bw._doFlush
+      line: 1670
+      description: Flush all dirty components, deduplicating by _bwId
+    - name: bw.flush
+      line: 1691
+      description: Synchronous flush for testing; forces immediate re-render of dirty components
+    # --- Control Flow Helpers ---
+    - name: bw.when
+      line: 2521
+      description: Conditional rendering helper returning a marker for ComponentHandle
+    - name: bw.each
+      line: 2534
+      description: List rendering helper returning a marker for ComponentHandle
+    # --- Component Factory ---
+    - name: bw.component
+      line: 2558
+      description: Create a ComponentHandle from a TACO definition with reactive state
+    - name: bw.compile
+      line: 2576
+      description: Pre-compile a TACO definition into a factory for ComponentHandles
+    # --- CSS Generation ---
+    - name: bw.css
+      line: 2656
+      description: Generate CSS string from JavaScript objects (camelCase auto-converted)
+    - name: bw.injectCSS
+      line: 2717
+      description: Inject CSS into the document head (browser only)
+    - name: bw.s
+      line: 2762
+      description: Merge multiple style objects into one (like Object.assign for styles)
+    - name: bw.u
+      line: 2783
+      description: Pre-built CSS utility objects (flex, padding, margin, typography, etc.)
+    - name: bw.responsive
+      line: 2886
+      description: Generate responsive CSS with media query breakpoints
+    # --- Math Utilities ---
+    - name: bw.mapScale
+      line: 2923
+      description: Map/scale a value from one range to another (linear interpolation)
+    - name: bw.clip
+      line: 2961
+      description: Clamp a value between min and max bounds
+    # --- DOM Selection ---
+    - name: bw.$
+      line: 2981
+      description: DOM selection helper that always returns an array (browser only)
+    # --- CSS & Styling ---
+    - name: bw.loadDefaultStyles
+      line: 3026
+      description: Load the built-in Bootstrap-inspired default stylesheet
+    - name: bw.getTheme
+      line: 3048
+      description: Get current theme configuration as deep copy (deprecated)
+    - name: bw.setTheme
+      line: 3071
+      description: Set theme overrides and re-inject CSS custom properties (deprecated)
+    - name: bw.generateTheme
+      line: 3143
+      description: Generate a complete, scoped theme from seed colors with alternate palette
+    - name: bw.applyTheme
+      line: 3223
+      description: Apply a theme mode (primary/alternate/light/dark) via CSS class toggle
+    - name: bw.toggleTheme
+      line: 3255
+      description: Toggle between primary and alternate theme palettes
+    # --- Color Utilities (re-exported from bitwrench-color-utils.js) ---
+    - name: bw.hexToHsl
+      line: 3261
+      description: Convert hex color to HSL array
+    - name: bw.hslToHex
+      line: 3262
+      description: Convert HSL array to hex color string
+    - name: bw.adjustLightness
+      line: 3263
+      description: Adjust lightness of a hex color by percentage
+    - name: bw.mixColor
+      line: 3264
+      description: Mix two hex colors via RGB linear interpolation
+    - name: bw.relativeLuminance
+      line: 3265
+      description: Compute WCAG 2.0 relative luminance of a hex color
+    - name: bw.textOnColor
+      line: 3266
+      description: Return '#fff' or '#000' for readable text on a background color
+    - name: bw.deriveShades
+      line: 3267
+      description: Derive 8 shade variants for a single color
+    - name: bw.derivePalette
+      line: 3268
+      description: Derive full palette from seed colors with harmonized semantics
+    - name: bw.harmonize
+      line: 3269
+      description: Shift a color's hue toward a target hue
+    - name: bw.deriveAlternateSeed
+      line: 3270
+      description: Derive luminance-inverted version of a seed color
+    - name: bw.deriveAlternateConfig
+      line: 3271
+      description: Derive complete alternate config from primary theme config
+    - name: bw.isLightPalette
+      line: 3272
+      description: Determine if palette config is light-flavored based on luminance
+    # --- Theme/Layout Presets (re-exported from bitwrench-styles.js) ---
+    - name: bw.SPACING_PRESETS
+      line: 3275
+      description: Spacing preset configurations (compact/normal/spacious)
+    - name: bw.RADIUS_PRESETS
+      line: 3276
+      description: Border radius preset configurations (none/sm/md/lg/pill)
+    - name: bw.TYPE_RATIO_PRESETS
+      line: 3277
+      description: Typography scale ratio presets (tight/normal/relaxed/dramatic)
+    - name: bw.ELEVATION_PRESETS
+      line: 3278
+      description: Shadow depth presets (flat/sm/md/lg)
+    - name: bw.MOTION_PRESETS
+      line: 3279
+      description: Transition/animation presets (reduced/standard/expressive)
+    - name: bw.generateTypeScale
+      line: 3280
+      description: Generate modular type scale from base size and ratio
+    - name: bw.DEFAULT_PALETTE_CONFIG
+      line: 3281
+      description: Default palette seed colors used when none specified
+    - name: bw.THEME_PRESETS
+      line: 3282
+      description: Named theme presets (ocean, sunset, forest, slate, etc.)
+    # --- Legacy v1 Utilities ---
+    - name: bw.choice
+      line: 3305
+      description: Use a dictionary as a switch statement with function value support
+    - name: bw.arrayUniq
+      line: 3319
+      description: Return unique elements of an array
+    - name: bw.arrayBinA
+      line: 3335
+      description: Return intersection of two arrays
+    - name: bw.arrayBNotInA
+      line: 3351
+      description: Return elements of b not present in a (set difference)
+    - name: bw.colorInterp
+      line: 3375
+      description: Interpolate between an array of colors based on a value in a range
+    - name: bw.colorHslToRgb
+      line: 3392
+      description: Convert HSL to RGB (re-exported from color-utils)
+    - name: bw.colorRgbToHsl
+      line: 3393
+      description: Convert RGB to HSL (re-exported from color-utils)
+    - name: bw.colorParse
+      line: 3394
+      description: Parse CSS color string to [r,g,b,a,"rgb"] (re-exported from color-utils)
+    # --- Browser Utilities ---
+    - name: bw.setCookie
+      line: 3410
+      description: Set a browser cookie with expiration and options
+    - name: bw.getCookie
+      line: 3436
+      description: Get a browser cookie value by name
+    - name: bw.getURLParam
+      line: 3462
+      description: Get a URL query parameter value from the current page URL
+    # --- Legacy HTML Generation ---
+    - name: bw.htmlTable
+      line: 3497
+      description: Create an HTML table string from a 2D array (deprecated, use makeTable)
+    - name: bw._attrsToStr
+      line: 3568
+      description: Convert an attributes object to an HTML attribute string (internal)
+    - name: bw.htmlTabs
+      line: 3597
+      description: Create HTML tabs from [title, content] pairs (deprecated, use makeTabs)
+    - name: bw.selectTabContent
+      line: 3644
+      description: Tab selection handler for bw.htmlTabs (deprecated)
+    # --- Text Generation ---
+    - name: bw.loremIpsum
+      line: 3689
+      description: Generate Lorem Ipsum placeholder text
+    # --- Array Utilities ---
+    - name: bw.multiArray
+      line: 3762
+      description: Create a multidimensional array filled with a value or function result
+    - name: bw.naturalCompare
+      line: 3793
+      description: Natural sort comparison function (file2 before file10)
+    # --- Timing ---
+    - name: bw.setIntervalX
+      line: 3856
+      description: Run setInterval with a maximum number of repetitions
+    - name: bw.repeatUntil
+      line: 3889
+      description: Repeat a test function until truthy or max attempts reached
+    # --- File I/O ---
+    - name: bw.saveClientFile
+      line: 3926
+      description: Save data to a file (Node.js fs or browser download)
+    - name: bw.saveClientJSON
+      line: 3963
+      description: Save data as a JSON file with pretty formatting
+    - name: bw.loadClientFile
+      line: 3978
+      description: Load a file by path (Node.js) or URL (browser via XHR)
+    - name: bw.loadClientJSON
+      line: 4022
+      description: Load a JSON file by path or URL (convenience wrapper)
+    - name: bw.loadLocalFile
+      line: 4038
+      description: Prompt user to pick a local file via file dialog (browser only)
+    - name: bw.loadLocalJSON
+      line: 4082
+      description: Prompt user to pick a local JSON file (browser only)
+    - name: bw.copyToClipboard
+      line: 4095
+      description: Copy text to the system clipboard (Clipboard API or execCommand fallback)
+    # --- Component Builders (defined in bitwrench.js) ---
+    - name: bw.makeTable
+      line: 4174
+      description: Create a sortable TACO table from an array of row objects
+    - name: bw.makeTableFromArray
+      line: 4318
+      description: Create a table from a 2D array (delegates to makeTable)
+    - name: bw.makeBarChart
+      line: 4389
+      description: Create a vertical bar chart from data (pure CSS, no canvas/SVG)
+    - name: bw.makeDataTable
+      line: 4474
+      description: Create a ready-to-use data table with title and responsive wrapper
+    # --- Render & Component Registry ---
+    - name: bw.render
+      line: 4550
+      description: Render a TACO into the DOM at a specific position, returning a handle
+    - name: bw.getComponent
+      line: 4813
+      description: Get a component handle by its ID from the registry
+    - name: bw.getAllComponents
+      line: 4824
+      description: Get all registered component handles as a Map
+    # --- BCCL Integration (imported from bitwrench-bccl.js) ---
+    - name: bw.make
+      line: 4841
+      description: Factory dispatch — create any BCCL component by type name
+    - name: bw.BCCL
+      line: 4844
+      description: Component registry mapping type names to factory functions
+    - name: bw.variantClass
+      line: 4847
+      description: Convert a variant name to a palette CSS class
+  internal:
+    - name: ComponentHandle
+      line: 1708
+      description: Constructor for reactive component with state, bindings, lifecycle hooks, and actions
+    - name: ComponentHandle.prototype.get
+      line: 1761
+      description: Get a state value by dot-path
+    - name: ComponentHandle.prototype.set
+      line: 1771
+      description: Set a state value by dot-path, scheduling re-render
+    - name: ComponentHandle.prototype.getState
+      line: 1796
+      description: Get shallow clone of full state
+    - name: ComponentHandle.prototype.setState
+      line: 1811
+      description: Merge multiple state keys and schedule re-render
+    - name: ComponentHandle.prototype.push
+      line: 1830
+      description: Push a value onto an array in state
+    - name: ComponentHandle.prototype.splice
+      line: 1840
+      description: Splice an array in state
+    - name: ComponentHandle.prototype._scheduleDirty
+      line: 1850
+      description: Queue this component for microtask flush
+    - name: ComponentHandle.prototype._compileBindings
+      line: 1865
+      description: Walk TACO tree and extract ${expr} bindings with ref IDs
+    - name: ComponentHandle.prototype._collectRefs
+      line: 1979
+      description: Build ref map from live DOM after createDOM
+    - name: ComponentHandle.prototype.mount
+      line: 2000
+      description: Mount component into a parent DOM element
+    - name: ComponentHandle.prototype._prepareTaco
+      line: 2067
+      description: Prepare TACO for initial render resolving when/each markers
+    - name: ComponentHandle.prototype._wireActions
+      line: 2115
+      description: Wire action name strings to dispatch function calls
+    - name: ComponentHandle.prototype._deepCloneTaco
+      line: 2148
+      description: Deep-clone a TACO tree preserving _bwWhen/_bwEach markers
+    - name: ComponentHandle.prototype._tacoForDOM
+      line: 2185
+      description: Create TACO copy for createDOM stripping o to prevent double lifecycle
+    - name: ComponentHandle.prototype.unmount
+      line: 2205
+      description: Unmount from DOM, deactivate, preserve state for re-mount
+    - name: ComponentHandle.prototype.destroy
+      line: 2240
+      description: Destroy component (unmount + clear state + unregister actions)
+    - name: ComponentHandle.prototype._flush
+      line: 2272
+      description: Flush dirty state and apply bindings or re-render
+    - name: ComponentHandle.prototype._resolveBindings
+      line: 2316
+      description: Resolve bindings whose deps intersect with changed keys
+    - name: ComponentHandle.prototype._applyPatches
+      line: 2352
+      description: Apply content/attribute patches to DOM
+    - name: ComponentHandle.prototype._resolveAndApplyAll
+      line: 2373
+      description: Resolve all bindings and apply (used for initial render)
+    - name: ComponentHandle.prototype._render
+      line: 2396
+      description: Full re-render for structural changes (when/each branch switches)
+    - name: ComponentHandle.prototype.on
+      line: 2436
+      description: Add a DOM event listener on the component root element
+    - name: ComponentHandle.prototype.off
+      line: 2448
+      description: Remove a DOM event listener
+    - name: ComponentHandle.prototype.sub
+      line: 2463
+      description: Subscribe to pub/sub topic, lifecycle-tied to component
+    - name: ComponentHandle.prototype.action
+      line: 2474
+      description: Call a named action on the component
+    - name: ComponentHandle.prototype.select
+      line: 2489
+      description: querySelector within the component DOM
+    - name: ComponentHandle.prototype.selectAll
+      line: 2498
+      description: querySelectorAll within the component DOM
+
+src/bitwrench-styles.js:
+  exports:
+    - name: derivePalette
+      line: 28
+      description: Re-export from bitwrench-color-utils.js for convenience
+    - name: SPACING_PRESETS
+      line: 34
+      description: Spacing presets (compact/normal/spacious) for btn, card, alert, cell, input
+    - name: RADIUS_PRESETS
+      line: 40
+      description: Border radius presets (none/sm/md/lg/pill) for btn, card, badge, alert, input
+    - name: TYPE_RATIO_PRESETS
+      line: 50
+      description: Typography scale ratio presets (tight/normal/relaxed/dramatic)
+    - name: generateTypeScale
+      line: 63
+      description: Generate a modular type scale from a base size and ratio
+    - name: ELEVATION_PRESETS
+      line: 80
+      description: Shadow depth presets (flat/sm/md/lg) with sm/md/lg/xl levels
+    - name: MOTION_PRESETS
+      line: 109
+      description: Motion/transition presets (reduced/standard/expressive)
+    - name: DEFAULT_PALETTE_CONFIG
+      line: 133
+      description: Default palette seed colors (teal primary, gray secondary)
+    - name: THEME_PRESETS
+      line: 149
+      description: Named theme presets (teal, ocean, sunset, forest, slate, rose, indigo, etc.)
+    - name: resolveLayout
+      line: 169
+      description: Resolve layout config to spacing, radius, typeScale, elevation, motion objects
+    - name: generateThemedCSS
+      line: 985
+      description: Generate all themed CSS rules for a palette and layout, scoped by name
+    - name: getStructuralStyles
+      line: 2055
+      description: Get all structural (theme-independent) CSS rules
+    - name: defaultStyles
+      line: 2069
+      description: Backward-compatible categorized style object (structural + root/utilities)
+    - name: getAllStyles
+      line: 2091
+      description: Get all structural CSS rules (backward-compatible alias)
+    - name: theme
+      line: 2099
+      description: Theme configuration object with colors, breakpoints, spacing, typography (deprecated)
+    - name: generateAlternateCSS
+      line: 2154
+      description: Generate alternate-palette CSS scoped under .bw_theme_alt
+    - name: deepMerge
+      line: 2201
+      description: Deep-merge two objects recursively
+    - name: updateTheme
+      line: 2213
+      description: Merge overrides into the theme object
+  internal:
+    - name: scopeSelector
+      line: 204
+      description: Prefix a CSS selector with a scope class name
+    - name: generateTypographyThemed
+      line: 214
+      description: Generate themed typography CSS (links, headings, code)
+    - name: generateButtons
+      line: 229
+      description: Generate themed button CSS for all variants
+    - name: generateAlerts
+      line: 262
+      description: Generate themed alert CSS for all variants
+    - name: generateCards
+      line: 279
+      description: Generate themed card CSS (borders, shadows, headers)
+    - name: generateForms
+      line: 324
+      description: Generate themed form control CSS (inputs, selects, checkboxes)
+    - name: generateNavigation
+      line: 385
+      description: Generate themed navigation CSS (navbar, nav-link)
+    - name: generateTables
+      line: 428
+      description: Generate themed table CSS (striped, hover, borders)
+    - name: generateTabs
+      line: 461
+      description: Generate themed tab CSS (active, hover states)
+    - name: generateListGroups
+      line: 480
+      description: Generate themed list group CSS
+    - name: generatePagination
+      line: 507
+      description: Generate themed pagination CSS
+    - name: generateProgress
+      line: 536
+      description: Generate themed progress bar CSS
+    - name: generateResetThemed
+      line: 555
+      description: Generate themed body/root CSS reset
+    - name: generateBreadcrumbThemed
+      line: 564
+      description: Generate themed breadcrumb CSS
+    - name: generateCloseButtonThemed
+      line: 581
+      description: Generate themed close button CSS
+    - name: generateSectionsThemed
+      line: 593
+      description: Generate themed section CSS (hero, feature-grid)
+    - name: generateAccordionThemed
+      line: 607
+      description: Generate themed accordion CSS
+    - name: generateCarouselThemed
+      line: 635
+      description: Generate themed carousel CSS
+    - name: generateModalThemed
+      line: 657
+      description: Generate themed modal CSS (overlay, backdrop)
+    - name: generateToastThemed
+      line: 676
+      description: Generate themed toast notification CSS
+    - name: generateDropdownThemed
+      line: 690
+      description: Generate themed dropdown menu CSS
+    - name: generateSwitchThemed
+      line: 713
+      description: Generate themed switch toggle CSS
+    - name: generateSkeletonThemed
+      line: 729
+      description: Generate themed skeleton loading CSS
+    - name: generateStatCardThemed
+      line: 739
+      description: Generate themed stat card CSS
+    - name: generateTimelineThemed
+      line: 747
+      description: Generate themed timeline CSS
+    - name: generateStepperThemed
+      line: 755
+      description: Generate themed stepper CSS
+    - name: generateChipInputThemed
+      line: 780
+      description: Generate themed chip input CSS
+    - name: generateFileUploadThemed
+      line: 798
+      description: Generate themed file upload CSS
+    - name: generateRangeThemed
+      line: 820
+      description: Generate themed range slider CSS
+    - name: generateSearchThemed
+      line: 837
+      description: Generate themed search input CSS
+    - name: generateCodeDemoThemed
+      line: 843
+      description: Generate themed code demo CSS
+    - name: generateNavPillsThemed
+      line: 857
+      description: Generate themed nav pills CSS
+    - name: generatePaletteClasses
+      line: 878
+      description: Generate palette utility classes (.bw_primary, .bw_danger, etc.)
+    - name: generateUtilityRules
+      line: 1872
+      description: Generate utility CSS rules (display, flex, spacing, text, etc.)
+    - name: getStructuralCSS
+      line: 2026
+      description: Combine all structural CSS rule groups into one object
+
+src/bitwrench-bccl.js:
+  exports:
+    - name: variantClass
+      line: 42
+      description: Convert a variant name to a palette CSS class string
+    - name: makeCard
+      line: 89
+      description: Create a card component with optional header, body, footer, image
+    - name: makeButton
+      line: 214
+      description: Create a button component with variant, size, and disabled support
+    - name: makeContainer
+      line: 263
+      description: Create a responsive container with optional fluid mode
+    - name: makeRow
+      line: 288
+      description: Create a flexbox row with gap and alignment options
+    - name: makeCol
+      line: 319
+      description: Create a column with responsive breakpoint sizes
+    - name: makeNav
+      line: 373
+      description: Create a navigation component with links and active state
+    - name: makeNavbar
+      line: 425
+      description: Create a responsive navbar with brand, links, and mobile toggle
+    - name: makeTabs
+      line: 493
+      description: Create a tabbed interface with tab switching behavior
+    - name: makeAlert
+      line: 617
+      description: Create an alert/notification component with dismiss support
+    - name: makeBadge
+      line: 668
+      description: Create a badge/label component with variant colors
+    - name: makeProgress
+      line: 710
+      description: Create a progress bar with percentage, label, and animation
+    - name: makeListGroup
+      line: 777
+      description: Create a list group with optional flush, active, and badge items
+    - name: makeBreadcrumb
+      line: 849
+      description: Create a breadcrumb navigation trail
+    - name: makeForm
+      line: 892
+      description: Create a form container with submit handler
+    - name: makeFormGroup
+      line: 927
+      description: Create a form group with label, input, and help text
+    - name: makeInput
+      line: 991
+      description: Create a text input with validation states and sizing
+    - name: makeTextarea
+      line: 1046
+      description: Create a textarea with rows, resize, and validation
+    - name: makeSelect
+      line: 1102
+      description: Create a select dropdown with options
+    - name: makeCheckbox
+      line: 1154
+      description: Create a checkbox input with label and switch mode
+    - name: makeStack
+      line: 1212
+      description: Create a vertical or horizontal stack layout with gap
+    - name: makeSpinner
+      line: 1241
+      description: Create a loading spinner with size and variant options
+    - name: makeHero
+      line: 1292
+      description: Create a hero section with title, subtitle, CTA, and background image
+    - name: makeFeatureGrid
+      line: 1381
+      description: Create a feature grid with icon cards
+    - name: makeCTA
+      line: 1452
+      description: Create a call-to-action section
+    - name: makeSection
+      line: 1505
+      description: Create a generic page section with title, subtitle, and content
+    - name: makeCodeDemo
+      line: 1579
+      description: Create a code demonstration block with preview and source
+    - name: makePagination
+      line: 1689
+      description: Create a pagination component with page numbers
+    - name: makeRadio
+      line: 1779
+      description: Create a radio button input with label
+    - name: makeButtonGroup
+      line: 1836
+      description: Create a button group combining multiple buttons
+    - name: makeAccordion
+      line: 1878
+      description: Create an accordion with collapsible sections
+    - name: makeModal
+      line: 2005
+      description: Create a modal dialog with header, body, footer, and backdrop
+    - name: makeToast
+      line: 2111
+      description: Create a toast notification with auto-dismiss
+    - name: makeDropdown
+      line: 2208
+      description: Create a dropdown menu with trigger and items
+    - name: makeSwitch
+      line: 2307
+      description: Create a toggle switch input
+    - name: makeSkeleton
+      line: 2358
+      description: Create a skeleton loading placeholder
+    - name: makeAvatar
+      line: 2442
+      description: Create an avatar component with image or initials
+    - name: makeCarousel
+      line: 2501
+      description: Create an image carousel with navigation controls
+    - name: makeStatCard
+      line: 2706
+      description: Create a statistics card with value, label, and change indicator
+    - name: makeTooltip
+      line: 2804
+      description: Create a tooltip on a trigger element
+    - name: makePopover
+      line: 2869
+      description: Create a popover with title, content, and trigger
+    - name: makeSearchInput
+      line: 2963
+      description: Create a search input with suggestions and debounce
+    - name: makeRange
+      line: 3052
+      description: Create a range slider input with min/max/step
+    - name: makeMediaObject
+      line: 3149
+      description: Create a media object layout (image + text)
+    - name: makeFileUpload
+      line: 3211
+      description: Create a file upload component with drag-and-drop
+    - name: makeTimeline
+      line: 3310
+      description: Create a vertical timeline component
+    - name: makeStepper
+      line: 3379
+      description: Create a multi-step progress indicator
+    - name: makeChipInput
+      line: 3442
+      description: Create a chip/tag input component
+    - name: BCCL
+      line: 3548
+      description: Component registry mapping type names to factory functions
+    - name: make
+      line: 3610
+      description: Factory function to create any BCCL component by type name
+
+src/bitwrench-color-utils.js:
+  exports:
+    - name: clip
+      line: 19
+      description: Clamp a value between min and max
+    - name: colorParse
+      line: 30
+      description: Parse a CSS color string to [r, g, b, a, "rgb"] array
+    - name: colorRgbToHsl
+      line: 87
+      description: Convert RGB values (0-255) to HSL array [h, s, l, a, "hsl"]
+    - name: colorHslToRgb
+      line: 138
+      description: Convert HSL values to RGB array [r, g, b, a, "rgb"]
+    - name: hexToHsl
+      line: 190
+      description: Convert hex color string to [h, s, l] array
+    - name: hslToHex
+      line: 201
+      description: Convert [h, s, l] array to hex color string
+    - name: adjustLightness
+      line: 216
+      description: Adjust lightness of a hex color by percentage amount
+    - name: mixColor
+      line: 229
+      description: Mix two hex colors via RGB linear interpolation
+    - name: relativeLuminance
+      line: 246
+      description: Compute WCAG 2.0 relative luminance of a hex color (0-1)
+    - name: textOnColor
+      line: 260
+      description: Return '#fff' or '#000' for readable text on a background
+    - name: harmonize
+      line: 272
+      description: Shift a color's hue toward a target hue via shortest-arc interpolation
+    - name: deriveShades
+      line: 292
+      description: Derive 8 shade variants (base, hover, active, light, darkText, border, focus, textOn)
+    - name: deriveAlternateSeed
+      line: 312
+      description: Derive luminance-inverted version of a seed color
+    - name: isLightPalette
+      line: 338
+      description: Determine if palette config is light-flavored based on average luminance
+    - name: deriveAlternateConfig
+      line: 352
+      description: Derive complete alternate config from primary theme config
+    - name: derivePalette
+      line: 402
+      description: Derive full palette with shade sets for all 9 semantic colors
+
+src/bitwrench-lean.js:
+  exports:
+    - name: default (re-export)
+      line: 14
+      description: Re-exports bw from bitwrench.js; Rollup redirects BCCL import to empty stub
+
+src/bitwrench-code-edit.js:
+  exports:
+    - name: highlight
+      line: 626
+      description: Tokenize code and convert to TACO spans with syntax coloring
+    - name: codeEditor
+      line: 626
+      description: Create a contenteditable code editor TACO with live syntax highlighting
+    - name: install
+      line: 626
+      description: Install highlight and codeEditor onto a bw namespace object
+    - name: CSS_TEXT
+      line: 626
+      description: CSS string for code editor styling (dark and light themes)
+    - name: tokenizeJS
+      line: 626
+      description: JavaScript tokenizer returning token array
+    - name: tokenizeCSS
+      line: 626
+      description: CSS tokenizer returning token array
+    - name: tokenizeHTML
+      line: 626
+      description: HTML tokenizer returning token array
+    - name: default
+      line: 627
+      description: Default export object with highlight, codeEditor, install, CSS_TEXT
+  internal:
+    - name: ensureCSS
+      line: 59
+      description: Inject code editor CSS once via bw.injectCSS
+    - name: tokenizeJS
+      line: 72
+      description: JavaScript tokenizer splitting code into typed tokens
+    - name: tokenizeCSS
+      line: 265
+      description: CSS tokenizer with selector/prop/value state tracking
+    - name: tokenizeHTML
+      line: 376
+      description: HTML tokenizer handling tags, attributes, entities, comments
+    - name: tokensToTACO
+      line: 479
+      description: Convert token array to TACO span elements
+    - name: highlight
+      line: 493
+      description: Tokenize code with selected language and return TACO array
+    - name: getCaretOffset
+      line: 500
+      description: Get caret position offset in a contenteditable element
+    - name: setCaretOffset
+      line: 509
+      description: Restore caret position in a contenteditable element
+    - name: codeEditor
+      line: 534
+      description: Build the full code editor TACO with editing, tab support, debounce
+    - name: install
+      line: 611
+      description: Attach highlight and codeEditor to a bw namespace
+
+src/bitwrench-components-stub.js:
+  exports:
+    - name: componentHandles
+      line: 5
+      description: Empty object stub (no component handles in lean build)
+    - name: variantClass
+      line: 6
+      description: Stub returning empty string (no variant classes in lean build)
+    - name: BCCL
+      line: 7
+      description: Empty object stub (no BCCL registry in lean build)
+    - name: make
+      line: 8
+      description: Stub that throws error indicating full build is required
+
+src/version.js:
+  exports:
+    - name: VERSION
+      line: 6
+      description: Version string (e.g. '2.0.15')
+    - name: VERSION_INFO
+      line: 7
+      description: Full version metadata object (version, name, description, license, etc.)
+
+src/generate-css.js:
+  description: Build script that generates dist/bitwrench.css from style definitions (no runtime exports)
+  internal:
+    - name: stylesToCSS
+      line: 13
+      description: Convert styles object to CSS string with selector processing
+    - name: processSelector
+      line: 60
+      description: Process CSS selector to add .bw prefix where needed
+    - name: processRules
+      line: 86
+      description: Convert CSS rule object properties to kebab-case CSS declarations
+    - name: deepMergeStyles
+      line: 99
+      description: Deep-merge themed + structural style objects per-property
+
+src/cli/index.js:
+  exports:
+    - name: run
+      line: 45
+      description: Parse CLI arguments and dispatch to single-file conversion
+
+src/cli/convert.js:
+  exports:
+    - name: convertFile
+      line: 108
+      description: Convert a single file (.md/.html/.json) to a styled HTML page
+    - name: THEME_PRESETS
+      line: 205
+      description: Re-export of theme presets from bitwrench-styles.js
+    - name: resolveTheme
+      line: 205
+      description: Resolve theme config from --theme flag value (preset name or hex colors)
+    - name: deriveOutputPath
+      line: 205
+      description: Derive .html output path from input path
+    - name: extractMarkdownTitle
+      line: 205
+      description: Extract title from the first # heading in markdown
+    - name: extractHtmlTitle
+      line: 205
+      description: Extract <title> from an HTML document
+  internal:
+    - name: extractMarkdownTitle
+      line: 19
+      description: Extract title from the first # heading in markdown
+    - name: extractHtmlTitle
+      line: 29
+      description: Extract <title> from an HTML document
+    - name: extractHtmlBody
+      line: 39
+      description: Extract <body> content from a full HTML document
+    - name: isFullHtmlDoc
+      line: 49
+      description: Check if HTML string is a full document (has doctype or html tag)
+    - name: resolveInjectionMode
+      line: 59
+      description: Resolve injection mode from flags (standalone/cdn/none)
+    - name: resolveTheme
+      line: 72
+      description: Resolve theme config from --theme flag value
+    - name: deriveOutputPath
+      line: 97
+      description: Derive .html output path from input path (replace extension)
+
+src/cli/inject.js:
+  exports:
+    - name: getInjectionHead
+      line: 20
+      description: Get HTML to inject into <head> for a given injection mode (standalone/cdn/none)
+    - name: getInjectionBodyEnd
+      line: 49
+      description: Get HTML to inject before </body> for a given injection mode
+
+src/cli/layout-default.js:
+  exports:
+    - name: makePageLayout
+      line: 91
+      description: Build a complete HTML page from content and options (title, CSS, favicon, etc.)
+    - name: BASE_PAGE_CSS
+      line: 142
+      description: Base page CSS for CLI-generated pages (typography, tables, code blocks)

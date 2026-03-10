@@ -3,7 +3,9 @@
  * Creates class-based CSS to prevent collisions with other frameworks
  */
 
-import { getAllStyles, getStructuralStyles } from './bitwrench-styles.js';
+import { getAllStyles, getStructuralStyles, generateThemedCSS,
+         resolveLayout, DEFAULT_PALETTE_CONFIG } from './bitwrench-styles.js';
+import { derivePalette } from './bitwrench-color-utils.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -57,7 +59,7 @@ function stylesToCSS(styles) {
 // Process selector to add .bw prefix where needed
 function processSelector(selector) {
   // Don't modify :root, html, body, or already namespaced selectors
-  if (selector === ':root' || selector === 'html' || selector === 'body' || selector.includes('.bw-')) {
+  if (selector === ':root' || selector === 'html' || selector === 'body' || selector.includes('.bw_')) {
     return selector;
   }
   
@@ -74,7 +76,7 @@ function processSelector(selector) {
     if (bootstrapClasses.some(cls => className.startsWith(cls))) {
       return selector;
     }
-    return `.bw-${className}`;
+    return `.bw_${className}`;
   }
   
   return selector;
@@ -106,178 +108,180 @@ function deepMergeStyles(base, overrides) {
   return merged;
 }
 
-// Generate the CSS — merge themed styles + structural styles
-const themed = getAllStyles();
+// Generate the CSS — merge structural + themed (default palette) styles
 const structural = getStructuralStyles();
-// Structural properties take precedence; themed properties preserved where structural doesn't override
-const styles = deepMergeStyles(themed, structural);
+const palette = derivePalette(DEFAULT_PALETTE_CONFIG);
+const layout = resolveLayout({});
+const themed = generateThemedCSS('', palette, layout);
+// Themed properties layer on top of structural (colors, padding, borders)
+const styles = deepMergeStyles(structural, themed);
 const css = stylesToCSS(styles);
 
 // Add additional bitwrench-specific styles
 const additionalCSS = `
 /* Bitwrench Page Layout */
-.bw-page {
+.bw_page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #f8f9fa;
 }
 
-.bw-page-content {
+.bw_page_content {
   flex: 1;
   padding: 2rem 0;
 }
 
 /* Responsive body margins */
 @media (min-width: 576px) {
-  .bw-page-content {
+  .bw_page_content {
     padding: 3rem 0;
   }
 }
 
 @media (min-width: 768px) {
-  .bw-page-content {
+  .bw_page_content {
     padding: 4rem 0;
   }
 }
 
 /* Theme variations */
-.bw-theme-dark,
-.bw-theme-dark body {
+.bw_theme_dark,
+.bw_theme_dark body {
   background-color: #212529;
   color: #fff;
 }
 
-.bw-theme-dark h1,
-.bw-theme-dark h2,
-.bw-theme-dark h3,
-.bw-theme-dark h4,
-.bw-theme-dark h5,
-.bw-theme-dark h6 {
+.bw_theme_dark h1,
+.bw_theme_dark h2,
+.bw_theme_dark h3,
+.bw_theme_dark h4,
+.bw_theme_dark h5,
+.bw_theme_dark h6 {
   color: #fff;
 }
 
-.bw-theme-dark .text-muted {
+.bw_theme_dark .text-muted {
   color: #adb5bd !important;
 }
 
-.bw-theme-dark .lead {
+.bw_theme_dark .lead {
   color: #e9ecef;
 }
 
-.bw-theme-dark .card {
+.bw_theme_dark .card {
   background-color: #343a40;
   border-color: #495057;
   color: #fff;
 }
 
-.bw-theme-dark .btn-light {
+.bw_theme_dark .btn-light {
   background-color: #495057;
   border-color: #495057;
   color: #fff;
 }
 
-.bw-theme-dark .btn-light:hover {
+.bw_theme_dark .btn-light:hover {
   background-color: #5a6268;
   border-color: #545b62;
 }
 
-.bw-theme-dark .navbar-light {
+.bw_theme_dark .navbar-light {
   background-color: #343a40 !important;
 }
 
-.bw-theme-dark .navbar-light .navbar-brand,
-.bw-theme-dark .navbar-light .nav-link {
+.bw_theme_dark .navbar-light .navbar-brand,
+.bw_theme_dark .navbar-light .nav-link {
   color: rgba(255,255,255,.8);
 }
 
-.bw-theme-dark .navbar-light .nav-link:hover {
+.bw_theme_dark .navbar-light .nav-link:hover {
   color: rgba(255,255,255,.9);
 }
 
-.bw-theme-dark .navbar-light .nav-link.active {
+.bw_theme_dark .navbar-light .nav-link.active {
   color: #fff;
 }
 
-.bw-theme-dark .bg-light {
+.bw_theme_dark .bg-light {
   background-color: #495057 !important;
   color: #fff;
 }
 
-.bw-theme-dark .text-muted {
+.bw_theme_dark .text-muted {
   color: #adb5bd !important;
 }
 
-.bw-theme-dark .table {
+.bw_theme_dark .table {
   color: #fff;
   border-color: #495057;
 }
 
-.bw-theme-dark .table-striped > tbody > tr:nth-of-type(odd) > * {
+.bw_theme_dark .table-striped > tbody > tr:nth-of-type(odd) > * {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.bw-theme-dark .table-hover > tbody > tr:hover > * {
+.bw_theme_dark .table-hover > tbody > tr:hover > * {
   background-color: rgba(255, 255, 255, 0.075);
   color: #fff;
 }
 
-.bw-theme-dark .form-control {
+.bw_theme_dark .form-control {
   background-color: #495057;
   border-color: #495057;
   color: #fff;
 }
 
-.bw-theme-dark .form-control:focus {
+.bw_theme_dark .form-control:focus {
   background-color: #495057;
   border-color: #80bdff;
   color: #fff;
 }
 
-.bw-theme-dark .form-control::placeholder {
+.bw_theme_dark .form-control::placeholder {
   color: #adb5bd;
 }
 
-.bw-theme-dark .form-select {
+.bw_theme_dark .form-select {
   background-color: #495057;
   border-color: #495057;
   color: #fff;
 }
 
-.bw-theme-dark pre {
+.bw_theme_dark pre {
   background-color: #343a40;
   color: #f8f9fa;
 }
 
-.bw-theme-dark code {
+.bw_theme_dark code {
   color: #e83e8c;
 }
 
 /* Form switch in dark mode */
-.bw-theme-dark .form-check-input:checked {
+.bw_theme_dark .form-check-input:checked {
   background-color: #0dcaf0;
   border-color: #0dcaf0;
 }
 
-.bw-theme-dark .form-switch .form-check-input {
+.bw_theme_dark .form-switch .form-check-input {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.85%29'/%3e%3c/svg%3e");
 }
 
-.bw-theme-dark .form-switch .form-check-input:checked {
+.bw_theme_dark .form-switch .form-check-input:checked {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.85%29'/%3e%3c/svg%3e");
 }
 
-.bw-theme-dark .form-check-label {
+.bw_theme_dark .form-check-label {
   color: #fff;
 }
 
 /* Ensure proper spacing for example pages */
-.bw-example-page {
+.bw_example_page {
   padding: 0;
   margin: 0;
 }
 
-.bw-example-page .container {
+.bw_example_page .container {
   padding-top: 2rem;
   padding-bottom: 2rem;
 }
@@ -298,7 +302,7 @@ const additionalCSS = `
   border-bottom: 2px solid #dee2e6;
 }
 
-.bw-theme-dark .table th {
+.bw_theme_dark .table th {
   background-color: #343a40;
   border-bottom-color: #495057;
 }
@@ -342,7 +346,7 @@ pre {
   border: 1px solid #dee2e6;
 }
 
-.bw-theme-dark pre {
+.bw_theme_dark pre {
   border-color: #495057;
 }
 
@@ -376,11 +380,11 @@ pre {
 @media print {
   .navbar,
   .btn,
-  .bw-no-print {
+  .bw_no_print {
     display: none !important;
   }
   
-  .bw-page {
+  .bw_page {
     min-height: auto;
   }
   

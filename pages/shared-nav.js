@@ -77,7 +77,7 @@
           t: 'a',
           a: {
             href: rh,
-            class: 'bw-site-nav-link' + (active ? ' active' : '')
+            class: 'bw_site_nav_link' + (active ? ' active' : '')
           },
           c: item.text
         }
@@ -92,7 +92,7 @@
         t: 'a',
         a: {
           href: rh,
-          class: 'bw-site-subnav-link' + (active ? ' active' : '')
+          class: 'bw_site_subnav_link' + (active ? ' active' : '')
         },
         c: item.text
       };
@@ -121,18 +121,18 @@
       // Primary nav (dark bar)
       {
         t: 'nav',
-        a: { class: 'bw-site-nav' },
+        a: { class: 'bw_site_nav' },
         c: [
           {
             t: 'div',
-            a: { class: 'bw-site-nav-inner' },
+            a: { class: 'bw_site_nav_inner' },
             c: [
               // Left: logo + version
               {
                 t: 'a',
                 a: {
                   href: homeHref,
-                  class: 'bw-site-nav-brand'
+                  class: 'bw_site_nav_brand'
                 },
                 c: [
                   {
@@ -140,12 +140,12 @@
                     a: {
                       src: '../images/bitwrench-thick-logo.svg',
                       alt: 'bitwrench',
-                      class: 'bw-site-nav-logo'
+                      class: 'bw_site_nav_logo'
                     }
                   },
                   {
                     t: 'span',
-                    a: { class: 'bw-site-nav-ver' },
+                    a: { class: 'bw_site_nav_ver' },
                     c: 'v' + ver
                   }
                 ]
@@ -153,18 +153,18 @@
               // Center: primary links (desktop)
               {
                 t: 'ul',
-                a: { class: 'bw-site-nav-links' },
+                a: { class: 'bw_site_nav_links' },
                 c: primaryLinks
               },
               // Right: controls
               {
                 t: 'div',
-                a: { class: 'bw-site-nav-controls' },
+                a: { class: 'bw_site_nav_controls' },
                 c: [
                   {
                     t: 'button',
                     a: {
-                      class: 'bw-site-nav-toggle',
+                      class: 'bw_site_nav_toggle',
                       title: 'Toggle theme palette',
                       onclick: function() {
                         var mode = bw.toggleTheme();
@@ -176,12 +176,12 @@
                   {
                     t: 'button',
                     a: {
-                      class: 'bw-site-nav-hamburger',
+                      class: 'bw_site_nav_hamburger',
                       title: 'Toggle menu',
                       'aria-label': 'Toggle navigation menu',
                       onclick: function() {
-                        var wrapper = this.closest('.bw-site-nav-wrapper');
-                        var mobile = wrapper && wrapper.querySelector('.bw-site-nav-mobile');
+                        var wrapper = this.closest('.bw_site_nav_wrapper');
+                        var mobile = wrapper && wrapper.querySelector('.bw_site_nav_mobile');
                         if (mobile) {
                           mobile.classList.toggle('open');
                           this.textContent = mobile.classList.contains('open') ? '\u2715' : '\u2630';
@@ -202,11 +202,11 @@
     if (onExamplePage) {
       wrapperChildren.push({
         t: 'div',
-        a: { class: 'bw-site-subnav' },
+        a: { class: 'bw_site_subnav' },
         c: [
           {
             t: 'div',
-            a: { class: 'bw-site-subnav-inner' },
+            a: { class: 'bw_site_subnav_inner' },
             c: secondaryLinks
           }
         ]
@@ -216,13 +216,13 @@
     // Mobile menu (always present, toggled by hamburger)
     wrapperChildren.push({
       t: 'div',
-      a: { class: 'bw-site-nav-mobile' },
+      a: { class: 'bw_site_nav_mobile' },
       c: mobileLinks
     });
 
     return {
       t: 'div',
-      a: { class: 'bw-site-nav-wrapper' },
+      a: { class: 'bw_site_nav_wrapper' },
       c: wrapperChildren
     };
   }

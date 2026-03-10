@@ -46,7 +46,7 @@
           var runBtn = el.querySelector('.tryit-run');
 
           // Get code from either code editor or textarea
-          var ceEl = el.querySelector('.bw-ce');
+          var ceEl = el.querySelector('.bw_ce');
           var textarea = el.querySelector('.tryit-textarea');
 
           function getCode() {
@@ -139,7 +139,7 @@
       if (useCE) {
         return bw.codeEditor({ code: code, lang: lang || 'js', readOnly: true, height: 'auto' });
       }
-      return { t: 'div', a: { class: 'bw-code-block' }, c: { t: 'pre', c: { t: 'code', c: code } } };
+      return { t: 'div', a: { class: 'bw_code_block' }, c: { t: 'pre', c: { t: 'code', c: code } } };
     }
 
     return {
@@ -174,7 +174,7 @@
               a: { class: 'pipeline-col' },
               c: [
                 { t: 'div', a: { class: 'pipeline-col-label' }, c: 'Renders As' },
-                { t: 'div', a: { class: 'bw-demo-result' }, c: opts.taco }
+                { t: 'div', a: { class: 'bw_demo_result' }, c: opts.taco }
               ]
             }
           ]

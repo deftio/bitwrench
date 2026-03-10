@@ -9,7 +9,7 @@ import bw from '../bitwrench.js';
  * Base page CSS for the CLI-generated pages
  */
 const BASE_PAGE_CSS = `
-.bw-cli-page {
+.bw_cli_page {
   max-width: 48rem;
   margin: 0 auto;
   padding: 2rem 1.5rem;
@@ -18,61 +18,61 @@ const BASE_PAGE_CSS = `
   line-height: 1.6;
   color: #333;
 }
-.bw-cli-page pre {
+.bw_cli_page pre {
   overflow-x: auto;
   padding: 1em;
   background: #f5f5f5;
   border-radius: 4px;
   font-size: 0.875em;
 }
-.bw-cli-page code {
+.bw_cli_page code {
   font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", Menlo, Courier, monospace;
 }
-.bw-cli-page p code {
+.bw_cli_page p code {
   background: #f0f0f0;
   padding: 0.15em 0.3em;
   border-radius: 3px;
   font-size: 0.875em;
 }
-.bw-cli-page table {
+.bw_cli_page table {
   border-collapse: collapse;
   width: 100%;
   margin: 1em 0;
   overflow-x: auto;
   display: block;
 }
-.bw-cli-page th, .bw-cli-page td {
+.bw_cli_page th, .bw_cli_page td {
   border: 1px solid #ddd;
   padding: 0.5em 0.75em;
   text-align: left;
 }
-.bw-cli-page th {
+.bw_cli_page th {
   background: #f5f5f5;
   font-weight: 600;
 }
-.bw-cli-page blockquote {
+.bw_cli_page blockquote {
   border-left: 4px solid #ddd;
   margin-left: 0;
   padding-left: 1em;
   color: #666;
 }
-.bw-cli-page img {
+.bw_cli_page img {
   max-width: 100%;
   height: auto;
 }
-.bw-cli-page h1, .bw-cli-page h2, .bw-cli-page h3,
-.bw-cli-page h4, .bw-cli-page h5, .bw-cli-page h6 {
+.bw_cli_page h1, .bw_cli_page h2, .bw_cli_page h3,
+.bw_cli_page h4, .bw_cli_page h5, .bw_cli_page h6 {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   line-height: 1.25;
 }
-.bw-cli-page h1 { font-size: 2em; }
-.bw-cli-page h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
-.bw-cli-page a { color: #0366d6; text-decoration: none; }
-.bw-cli-page a:hover { text-decoration: underline; }
-.bw-cli-page hr { border: none; border-top: 1px solid #eee; margin: 2em 0; }
+.bw_cli_page h1 { font-size: 2em; }
+.bw_cli_page h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
+.bw_cli_page a { color: #0366d6; text-decoration: none; }
+.bw_cli_page a:hover { text-decoration: underline; }
+.bw_cli_page hr { border: none; border-top: 1px solid #eee; margin: 2em 0; }
 @media (max-width: 600px) {
-  .bw-cli-page { padding: 1rem; }
+  .bw_cli_page { padding: 1rem; }
 }
 `;
 
@@ -131,7 +131,7 @@ ${faviconTag}${headInjection}${highlightHead}
 <style>${allCSS}</style>
 </head>
 <body>
-<div class="bw-cli-page">
+<div class="bw_cli_page">
 ${bodyHTML}
 </div>
 ${bodyEndInjection}${highlightBodyEnd}

@@ -180,23 +180,23 @@ describe("Lifecycle integration", function() {
     assert.equal(typeof el._bw_subs[0], 'function');
   });
 
-  it("should set data-bw-id on element if not present", function() {
+  it("should set data-bw_id on element if not present", function() {
     var el = document.createElement('div');
     bw.sub('life2', function() {}, el);
-    assert.ok(el.getAttribute('data-bw-id'));
-    assert.ok(el.getAttribute('data-bw-id').indexOf('bw_sub_') === 0);
+    assert.ok(el.getAttribute('data-bw_id'));
+    assert.ok(el.getAttribute('data-bw_id').indexOf('bw_sub_') === 0);
   });
 
-  it("should not overwrite existing data-bw-id", function() {
+  it("should not overwrite existing data-bw_id", function() {
     var el = document.createElement('div');
-    el.setAttribute('data-bw-id', 'my-existing-id');
+    el.setAttribute('data-bw_id', 'my-existing-id');
     bw.sub('life3', function() {}, el);
-    assert.equal(el.getAttribute('data-bw-id'), 'my-existing-id');
+    assert.equal(el.getAttribute('data-bw_id'), 'my-existing-id');
   });
 
   it("should remove subscriptions on bw.cleanup()", function() {
     var el = document.createElement('div');
-    el.setAttribute('data-bw-id', 'cleanup-test');
+    el.setAttribute('data-bw_id', 'cleanup-test');
     document.body.appendChild(el);
 
     var called = false;
@@ -213,7 +213,7 @@ describe("Lifecycle integration", function() {
     // bw.DOM needs browser-like environment for querySelector
     var container = document.createElement('div');
     container.id = 'pubsub-dom-test';
-    container.setAttribute('data-bw-id', 'mount-test');
+    container.setAttribute('data-bw_id', 'mount-test');
     document.body.appendChild(container);
 
     var calls = 0;
@@ -231,7 +231,7 @@ describe("Lifecycle integration", function() {
 
   it("should handle multiple subs tied to same element", function() {
     var el = document.createElement('div');
-    el.setAttribute('data-bw-id', 'multi-sub');
+    el.setAttribute('data-bw_id', 'multi-sub');
     document.body.appendChild(el);
 
     var aCalled = false, bCalled = false;

@@ -7,20 +7,20 @@ test.describe('State on DOM element (o.state pattern)', () => {
     await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
-    // Should find 3 counter cards (div[data-bw-id] inside #counter-demo)
-    const counters = page.locator('#counter-demo [data-bw-id]');
+    // Should find 3 counter cards (div[data-bw_id] inside #counter-demo)
+    const counters = page.locator('#counter-demo [data-bw_id]');
     await expect(counters).toHaveCount(3);
 
     // Check initial values: Visitors=42, Orders=7, Errors=0
     // Value is the second child div inside the card wrapper (after h4)
-    const values = page.locator('#counter-demo [data-bw-id] h4 + div');
+    const values = page.locator('#counter-demo [data-bw_id] h4 + div');
     await expect(values.nth(0)).toHaveText('42');
     await expect(values.nth(1)).toHaveText('7');
     await expect(values.nth(2)).toHaveText('0');
 
     // Verify state is actually on the DOM element (not in a closure)
     const stateOnElement = await page.evaluate(() => {
-      var els = document.querySelectorAll('#counter-demo [data-bw-id]');
+      var els = document.querySelectorAll('#counter-demo [data-bw_id]');
       var results = [];
       els.forEach(function(el) {
         if (el._bw_state && typeof el._bw_state.count === 'number') {
@@ -36,8 +36,8 @@ test.describe('State on DOM element (o.state pattern)', () => {
     await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
-    const values = page.locator('#counter-demo [data-bw-id] h4 + div');
-    const counters = page.locator('#counter-demo [data-bw-id]');
+    const values = page.locator('#counter-demo [data-bw_id] h4 + div');
+    const counters = page.locator('#counter-demo [data-bw_id]');
 
     // Click + on first counter twice
     await counters.nth(0).locator('button', { hasText: '+' }).click();
@@ -62,7 +62,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
     // Verify el._bw_state matches the displayed values
     const stateAfter = await page.evaluate(() => {
       var results = [];
-      document.querySelectorAll('#counter-demo [data-bw-id]').forEach(function(el) {
+      document.querySelectorAll('#counter-demo [data-bw_id]').forEach(function(el) {
         if (el._bw_state && typeof el._bw_state.count === 'number') {
           results.push(el._bw_state.count);
         }
@@ -76,8 +76,8 @@ test.describe('State on DOM element (o.state pattern)', () => {
     await page.goto('/pages/05-state.html');
     await page.waitForTimeout(500);
 
-    const values = page.locator('#counter-demo [data-bw-id] h4 + div');
-    const counters = page.locator('#counter-demo [data-bw-id]');
+    const values = page.locator('#counter-demo [data-bw_id] h4 + div');
+    const counters = page.locator('#counter-demo [data-bw_id]');
 
     // Increment first counter, then reset
     await counters.nth(0).locator('button', { hasText: '+' }).click();
@@ -112,7 +112,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
 
     // Verify state is on the element
     const todoState = await page.evaluate(() => {
-      var els = document.querySelectorAll('[data-bw-id]');
+      var els = document.querySelectorAll('[data-bw_id]');
       var result = null;
       els.forEach(function(el) {
         if (el._bw_state && el._bw_state.todos) {
@@ -134,18 +134,18 @@ test.describe('State on DOM element (o.state pattern)', () => {
     await page.waitForTimeout(500);
 
     // Click + 5 times on the first counter
-    const btn = page.locator('#counter-demo [data-bw-id]').nth(0).locator('button', { hasText: '+' });
+    const btn = page.locator('#counter-demo [data-bw_id]').nth(0).locator('button', { hasText: '+' });
     for (let i = 0; i < 5; i++) {
       await btn.click();
       await page.waitForTimeout(30);
     }
 
     // Verify the displayed value AND the underlying state match
-    const values = page.locator('#counter-demo [data-bw-id] h4 + div');
+    const values = page.locator('#counter-demo [data-bw_id] h4 + div');
     await expect(values.nth(0)).toHaveText('47');
 
     const stateValue = await page.evaluate(() => {
-      var els = document.querySelectorAll('#counter-demo [data-bw-id]');
+      var els = document.querySelectorAll('#counter-demo [data-bw_id]');
       var result = null;
       els.forEach(function(el) {
         if (el._bw_state && el._bw_state.count === 47) {
@@ -168,7 +168,7 @@ test.describe('State on DOM element (o.state pattern)', () => {
     // Verify state changed
     const themeState = await page.evaluate(() => {
       var result = null;
-      document.querySelectorAll('[data-bw-id]').forEach(function(el) {
+      document.querySelectorAll('[data-bw_id]').forEach(function(el) {
         if (el._bw_state && el._bw_state.current) {
           result = el._bw_state.current;
         }

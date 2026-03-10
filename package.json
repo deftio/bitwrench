@@ -73,7 +73,7 @@
 	"scripts": {
 		"generate-version": "node tools/generate-version.cjs",
 		"prebuild": "npm run generate-version",
-		"build": "rollup --config && npm run build:css",
+		"build": "rollup --config && npm run build:css && npm run build:metrics",
 		"build:css": "node src/generate-css.js",
 		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
@@ -103,6 +103,7 @@
 		"test:coverage": "c8 --reporter=html --reporter=text mocha ./test/bitwrench_ci.js -r jsdom-global/",
 		"build:api-reference": "node tools/build-api-reference.js",
 		"build:builds": "node tools/build-builds-manifest.js",
+		"build:metrics": "node tools/build-metrics.cjs",
 		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference",
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
 		"release": "node tools/release.js",

@@ -102,11 +102,11 @@
       footer: {
         t: 'div', a: { style: 'display: flex; gap: 0.5rem; justify-content: flex-end;' }, c: [
           bw.makeButton({ text: 'Cancel', variant: 'secondary', onclick: function() {
-            document.querySelector('.bw-modal').classList.remove('bw-modal-show');
+            document.querySelector('.bw_modal').classList.remove('bw_modal_show');
             document.body.style.overflow = '';
           }}),
           bw.makeButton({ text: 'Confirm', variant: 'primary', onclick: function() {
-            document.querySelector('.bw-modal').classList.remove('bw-modal-show');
+            document.querySelector('.bw_modal').classList.remove('bw_modal_show');
             document.body.style.overflow = '';
           }})
         ]
@@ -213,7 +213,7 @@
               'Flexible content containers with header, body, footer, and image support. Cards support variants, shadows, and hover effects.',
               createTabbedDemo(
                 {
-                  t: 'div', a: { class: 'bw-grid-auto' },
+                  t: 'div', a: { class: 'bw_grid_auto' },
                   c: [
                     bw.makeCard({ title: 'Basic Card', content: 'Simple card with title and content. Cards are flexible content containers.', footer: 'Card footer' }),
                     bw.makeCard({ header: 'Featured', title: 'Card with Header', content: 'This card has a header section for categories or status.', footer: bw.makeButton({ text: 'Action', variant: 'primary' }) }),
@@ -328,19 +328,19 @@
                       subheading('Half + Quarter + Quarter (6-3-3)'),
                       bw.makeRow({
                         children: [
-                          bw.makeCol({ size: 6, content: gridCell('bw-col-6', '#e3f2fd') }),
-                          bw.makeCol({ size: 3, content: gridCell('bw-col-3', '#bbdefb') }),
-                          bw.makeCol({ size: 3, content: gridCell('bw-col-3', '#90caf9') })
+                          bw.makeCol({ size: 6, content: gridCell('bw_col_6', '#e3f2fd') }),
+                          bw.makeCol({ size: 3, content: gridCell('bw_col_3', '#bbdefb') }),
+                          bw.makeCol({ size: 3, content: gridCell('bw_col_3', '#90caf9') })
                         ]
                       }),
                       { t: 'div', a: { style: 'height: 0.75rem;' } },
                       subheading('Half + Quarter + Sixth + Twelfth (6-3-2-1)'),
                       bw.makeRow({
                         children: [
-                          bw.makeCol({ size: 6, content: gridCell('bw-col-6', '#f3e5f5') }),
-                          bw.makeCol({ size: 3, content: gridCell('bw-col-3', '#e1bee7') }),
-                          bw.makeCol({ size: 2, content: gridCell('bw-col-2', '#ce93d8') }),
-                          bw.makeCol({ size: 1, content: gridCell('bw-col-1', '#ba68c8') })
+                          bw.makeCol({ size: 6, content: gridCell('bw_col_6', '#f3e5f5') }),
+                          bw.makeCol({ size: 3, content: gridCell('bw_col_3', '#e1bee7') }),
+                          bw.makeCol({ size: 2, content: gridCell('bw_col_2', '#ce93d8') }),
+                          bw.makeCol({ size: 1, content: gridCell('bw_col_1', '#ba68c8') })
                         ]
                       })
                     ]})
@@ -384,7 +384,7 @@
             // 5b. Text Alignment & Vertical Centering
             // =================================================================
             demoSection('section-alignment', 'Text Alignment & Vertical Centering',
-              'Horizontal text alignment using bw-text-left, bw-text-center, and bw-text-right utility classes. Vertical centering uses flexbox inline styles for top, middle, and bottom alignment within a container.',
+              'Horizontal text alignment using bw_text_left, bw_text_center, and bw_text_right utility classes. Vertical centering uses flexbox inline styles for top, middle, and bottom alignment within a container.',
               createTabbedDemo(
                 {
                   t: 'div', c: [
@@ -396,26 +396,26 @@
                       c: [
                         {
                           t: 'div',
-                          a: { class: 'bw-text-left', style: 'background: #e0f2f1; padding: 1rem; border-radius: 6px; border: 1px solid #b2dfdb;' },
+                          a: { class: 'bw_text_left', style: 'background: #e0f2f1; padding: 1rem; border-radius: 6px; border: 1px solid #b2dfdb;' },
                           c: [
                             { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Left Aligned' },
-                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text flows to the left edge using bw-text-left.' }
+                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text flows to the left edge using bw_text_left.' }
                           ]
                         },
                         {
                           t: 'div',
-                          a: { class: 'bw-text-center', style: 'background: #e3f2fd; padding: 1rem; border-radius: 6px; border: 1px solid #bbdefb;' },
+                          a: { class: 'bw_text_center', style: 'background: #e3f2fd; padding: 1rem; border-radius: 6px; border: 1px solid #bbdefb;' },
                           c: [
                             { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Center Aligned' },
-                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text is centered using bw-text-center.' }
+                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text is centered using bw_text_center.' }
                           ]
                         },
                         {
                           t: 'div',
-                          a: { class: 'bw-text-right', style: 'background: #fff3e0; padding: 1rem; border-radius: 6px; border: 1px solid #ffe0b2;' },
+                          a: { class: 'bw_text_right', style: 'background: #fff3e0; padding: 1rem; border-radius: 6px; border: 1px solid #ffe0b2;' },
                           c: [
                             { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Right Aligned' },
-                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text flows to the right edge using bw-text-right.' }
+                            { t: 'div', a: { style: 'font-size: 0.85rem; color: #555;' }, c: 'Text flows to the right edge using bw_text_right.' }
                           ]
                         }
                       ]
@@ -446,7 +446,7 @@
                     }
                   ]
                 },
-                "// Horizontal text alignment using utility classes\n{ t: 'div', a: { class: 'bw-text-left' },\n  c: 'Left aligned text' }\n\n{ t: 'div', a: { class: 'bw-text-center' },\n  c: 'Center aligned text' }\n\n{ t: 'div', a: { class: 'bw-text-right' },\n  c: 'Right aligned text' }\n\n// Vertical centering using flexbox inline styles\n// Top-aligned\n{ t: 'div',\n  a: { style: 'display: flex; align-items: flex-start; justify-content: center; height: 150px;' },\n  c: 'Top' }\n\n// Middle-aligned (vertically centered)\n{ t: 'div',\n  a: { style: 'display: flex; align-items: center; justify-content: center; height: 150px;' },\n  c: 'Middle' }\n\n// Bottom-aligned\n{ t: 'div',\n  a: { style: 'display: flex; align-items: flex-end; justify-content: center; height: 150px;' },\n  c: 'Bottom' }"
+                "// Horizontal text alignment using utility classes\n{ t: 'div', a: { class: 'bw_text_left' },\n  c: 'Left aligned text' }\n\n{ t: 'div', a: { class: 'bw_text_center' },\n  c: 'Center aligned text' }\n\n{ t: 'div', a: { class: 'bw_text_right' },\n  c: 'Right aligned text' }\n\n// Vertical centering using flexbox inline styles\n// Top-aligned\n{ t: 'div',\n  a: { style: 'display: flex; align-items: flex-start; justify-content: center; height: 150px;' },\n  c: 'Top' }\n\n// Middle-aligned (vertically centered)\n{ t: 'div',\n  a: { style: 'display: flex; align-items: center; justify-content: center; height: 150px;' },\n  c: 'Middle' }\n\n// Bottom-aligned\n{ t: 'div',\n  a: { style: 'display: flex; align-items: flex-end; justify-content: center; height: 150px;' },\n  c: 'Bottom' }"
               )
             ),
 
@@ -594,7 +594,7 @@
               'Flexible list components for displaying series of content. Supports interactive items, active/disabled states, and flush variant.',
               createTabbedDemo(
                 {
-                  t: 'div', a: { class: 'bw-grid-auto' }, c: [
+                  t: 'div', a: { class: 'bw_grid_auto' }, c: [
                     { t: 'div', c: [
                       subheading('Basic List'),
                       bw.makeListGroup({ items: ['First item', 'Second item', 'Third item', 'Fourth item'] })
@@ -867,14 +867,14 @@
                     bw.makeButton({
                       text: 'Open Modal', variant: 'primary',
                       onclick: function() {
-                        document.querySelector('.bw-modal').classList.add('bw-modal-show');
+                        document.querySelector('.bw_modal').classList.add('bw_modal_show');
                         document.body.style.overflow = 'hidden';
                       }
                     }),
                     modalTaco
                   ]
                 },
-                "var modal = bw.makeModal({\n  title: 'Confirm Action',\n  content: 'Are you sure?',\n  footer: {\n    t: 'div', c: [\n      bw.makeButton({ text: 'Cancel', variant: 'secondary' }),\n      bw.makeButton({ text: 'Confirm', variant: 'primary' })\n    ]\n  }\n});\n\n// Show the modal\ndocument.querySelector('.bw-modal').classList.add('bw-modal-show');"
+                "var modal = bw.makeModal({\n  title: 'Confirm Action',\n  content: 'Are you sure?',\n  footer: {\n    t: 'div', c: [\n      bw.makeButton({ text: 'Cancel', variant: 'secondary' }),\n      bw.makeButton({ text: 'Confirm', variant: 'primary' })\n    ]\n  }\n});\n\n// Show the modal\ndocument.querySelector('.bw_modal').classList.add('bw_modal_show');"
               )
             ),
 

@@ -53,7 +53,7 @@
                 var iframe = el.querySelector('.live-page-iframe');
                 var errorEl = el.querySelector('.tryit-error');
                 var runBtn = el.querySelector('.tryit-run');
-                var ceEl = el.querySelector('.bw-ce');
+                var ceEl = el.querySelector('.bw_ce');
                 var textarea = el.querySelector('.tryit-textarea');
 
                 function getCode() {
@@ -97,7 +97,7 @@
                     { t: 'iframe', a: {
                       class: 'live-page-iframe',
                       sandbox: 'allow-scripts',
-                      style: 'width: 100%; min-height: 280px; border: 2px dashed var(--bw-card-border, #d8d8d8); border-radius: var(--bw-radius, 8px); background: #fff;'
+                      style: 'width: 100%; min-height: 280px; border: 2px dashed var(--bw_card_border, #d8d8d8); border-radius: var(--bw_radius, 8px); background: #fff;'
                     }}
                   ]
                 }
@@ -181,7 +181,7 @@
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' }, c: [
             'Bitwrench includes built-in CSS classes (',
-            { t: 'code', c: 'bw-btn' }, ', ', { t: 'code', c: 'bw-card' },
+            { t: 'code', c: 'bw_btn' }, ', ', { t: 'code', c: 'bw_card' },
             ', etc.) that give you Bootstrap-like styling. You get them by including ',
             { t: 'code', c: '<link href="bitwrench.css">' }, ' in your page.'
           ]},
@@ -339,11 +339,11 @@
               'var fruits = [\'Apple\', \'Banana\', \'Cherry\', \'Date\', \'Elderberry\'];',
               '',
               'bw.DOM(target, {',
-              '  t: \'ul\', a: { class: \'bw-list-group\' },',
+              '  t: \'ul\', a: { class: \'bw_list_group\' },',
               '  c: fruits.map(function(f) {',
               '    return {',
               '      t: \'li\',',
-              '      a: { class: \'bw-list-group-item\' },',
+              '      a: { class: \'bw_list_group_item\' },',
               '      c: f',
               '    };',
               '  })',
@@ -383,10 +383,10 @@
       c: [
         { t: 'h2', c: { t: 'a', a: { href: '#section-next-steps' }, c: 'Next Steps' } },
         { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'div', a: { class: 'bw-feature-grid' },
+          { t: 'div', a: { class: 'bw_feature_grid' },
             c: nextSteps.map(function(item) {
               return {
-                t: 'div', a: { class: 'bw-feature-card' },
+                t: 'div', a: { class: 'bw_feature_card' },
                 c: [
                   { t: 'h4', c: { t: 'a', a: { href: item.href, style: 'text-decoration: none;' }, c: item.title } },
                   { t: 'p', c: item.desc }

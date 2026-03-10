@@ -151,7 +151,7 @@
         'justify-content': 'space-between',
         'align-items': 'center',
         'padding': '0.5rem 0.75rem',
-        'border-bottom': '1px solid var(--bw-card-border)',
+        'border-bottom': '1px solid var(--bw_card_border)',
         'font-size': '0.875rem',
         'font-family': '"SF Mono", "Fira Code", "Consolas", monospace'
       },
@@ -159,12 +159,12 @@
         'border-bottom': 'none'
       },
       '.lap-number': {
-        'color': 'var(--bw-text-secondary)',
+        'color': 'var(--bw_text_secondary)',
         'font-weight': '600',
         'min-width': '60px'
       },
       '.lap-time': {
-        'color': 'var(--bw-text)',
+        'color': 'var(--bw_text)',
         'font-weight': '500'
       },
       '.lap-delta': {
@@ -175,8 +175,8 @@
       '.lap-list-container': {
         'max-height': '200px',
         'overflow-y': 'auto',
-        'background': 'var(--bw-card-bg)',
-        'border': '1px solid var(--bw-card-border)',
+        'background': 'var(--bw_card_bg)',
+        'border': '1px solid var(--bw_card_border)',
         'border-radius': '8px'
       },
       '.alarm-time-input': {
@@ -192,17 +192,17 @@
         'font-weight': '600',
         'text-align': 'center',
         'padding': '0.5rem 0.75rem',
-        'border': '2px solid var(--bw-card-border)',
+        'border': '2px solid var(--bw_card_border)',
         'border-radius': '8px',
-        'background': 'var(--bw-card-bg)',
-        'color': 'var(--bw-text)',
+        'background': 'var(--bw_card_bg)',
+        'color': 'var(--bw_text)',
         'min-width': '80px',
         'cursor': 'pointer'
       },
       '.alarm-colon': {
         'font-size': '2rem',
         'font-weight': '700',
-        'color': 'var(--bw-text-secondary)'
+        'color': 'var(--bw_text_secondary)'
       },
       '.alarm-status': {
         'text-align': 'center',
@@ -217,9 +217,9 @@
         'color': '#e65100'
       },
       '.alarm-inactive': {
-        'background': 'var(--bw-card-bg)',
-        'border': '1px solid var(--bw-card-border)',
-        'color': 'var(--bw-text-secondary)'
+        'background': 'var(--bw_card_bg)',
+        'border': '1px solid var(--bw_card_border)',
+        'color': 'var(--bw_text_secondary)'
       },
       '.alarm-ringing': {
         'animation': 'alarm-pulse 0.5s ease-in-out infinite alternate'
@@ -690,7 +690,7 @@
                 s.laps.length > 0
                   ? {
                       t: 'div', c: [
-                        { t: 'div', a: { style: 'font-size: 0.8125rem; font-weight: 600; color: var(--bw-text-secondary); margin-bottom: 0.5rem;' },
+                        { t: 'div', a: { style: 'font-size: 0.8125rem; font-weight: 600; color: var(--bw_text_secondary); margin-bottom: 0.5rem;' },
                           c: 'Laps (' + s.laps.length + ')' },
                         {
                           t: 'div', a: { id: lapsContainerId, class: 'lap-list-container' },
@@ -700,7 +700,7 @@
                     }
                   : {
                       t: 'div',
-                      a: { style: 'text-align: center; color: var(--bw-text-secondary); font-size: 0.875rem; padding: 1rem; font-style: italic;' },
+                      a: { style: 'text-align: center; color: var(--bw_text_secondary); font-size: 0.875rem; padding: 1rem; font-style: italic;' },
                       c: 'Press Lap while running to record split times'
                     }
               ]
@@ -1519,21 +1519,21 @@
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
                           { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' },
-                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Full re-render (clock face)' }
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Full re-render (clock face)' }
                         ]
                       },
                       {
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
                           { t: 'span', a: { class: 'reactivity-badge badge-patch' }, c: 'bw.patch()' },
-                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Targeted update (stopwatch ms)' }
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Targeted update (stopwatch ms)' }
                         ]
                       },
                       {
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
                           { t: 'span', a: { class: 'reactivity-badge badge-pubsub' }, c: 'pub/sub' },
-                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw-text-secondary);' }, c: 'Decoupled events (alarm trigger)' }
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Decoupled events (alarm trigger)' }
                         ]
                       }
                     ]
@@ -1637,41 +1637,41 @@
                     t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.75rem; align-items: center; text-align: center; margin: 1.5rem 0;' },
                     c: [
                       {
-                        t: 'div', a: { style: 'background: var(--bw-card-bg); border: 2px solid #00acc1; border-radius: 8px; padding: 1rem;' },
+                        t: 'div', a: { style: 'background: var(--bw_card_bg); border: 2px solid #00acc1; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #00acc1; margin-bottom: 0.25rem;' }, c: 'Clock' },
                           { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'bw.update(el)' },
-                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary); margin-top: 0.25rem;' }, c: 'every 1s' }
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary); margin-top: 0.25rem;' }, c: 'every 1s' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary);' },
+                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary);' },
                         c: [
                           { t: 'div', a: { style: 'font-size: 1.5rem;' }, c: '\u2192' },
                           { t: 'code', c: 'pub("clock:tick")' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'background: var(--bw-card-bg); border: 2px solid #ff9800; border-radius: 8px; padding: 1rem;' },
+                        t: 'div', a: { style: 'background: var(--bw_card_bg); border: 2px solid #ff9800; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #ff9800; margin-bottom: 0.25rem;' }, c: 'Alarm' },
                           { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'sub("clock:tick")' },
-                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary); margin-top: 0.25rem;' }, c: 'checks match' }
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary); margin-top: 0.25rem;' }, c: 'checks match' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary);' },
+                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary);' },
                         c: [
                           { t: 'div', a: { style: 'font-size: 1.5rem;' }, c: '\u2192' },
                           { t: 'code', c: 'pub("alarm:trigger")' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'background: var(--bw-card-bg); border: 2px solid #e91e63; border-radius: 8px; padding: 1rem;' },
+                        t: 'div', a: { style: 'background: var(--bw_card_bg); border: 2px solid #e91e63; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #e91e63; margin-bottom: 0.25rem;' }, c: 'Toast Listener' },
                           { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'sub("alarm:trigger")' },
-                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw-text-secondary); margin-top: 0.25rem;' }, c: 'shows notification' }
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary); margin-top: 0.25rem;' }, c: 'shows notification' }
                         ]
                       }
                     ]
@@ -1686,9 +1686,9 @@
                           {
                             t: 'thead', c: {
                               t: 'tr', c: [
-                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);' }, c: 'Strategy' },
-                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);' }, c: 'Use when' },
-                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw-teal);' }, c: 'Example on this page' }
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);' }, c: 'Strategy' },
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);' }, c: 'Use when' },
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);' }, c: 'Example on this page' }
                               ]
                             }
                           },
@@ -1696,16 +1696,16 @@
                             t: 'tbody', c: [
                               {
                                 t: 'tr', c: [
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: { t: 'code', c: 'bw.update(el)' } },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Structure changes, infrequent updates' },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Clock (1/s), lap list changes' }
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: { t: 'code', c: 'bw.update(el)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Structure changes, infrequent updates' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Clock (1/s), lap list changes' }
                                 ]
                               },
                               {
                                 t: 'tr', c: [
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: { t: 'code', c: 'bw.patch(id, val)' } },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Value-only changes, high frequency' },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw-card-border);' }, c: 'Stopwatch display (30fps)' }
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: { t: 'code', c: 'bw.patch(id, val)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Value-only changes, high frequency' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Stopwatch display (30fps)' }
                                 ]
                               },
                               {

@@ -126,7 +126,7 @@
       t: 'div', a: { class: 'demo-section' },
       c: [
         { t: 'h2', c: 'Responsive Styles' },
-        { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first <code>@media (min-width)</code> CSS from a single object. These breakpoints match the grid system (<code>.bw-col-sm-*</code>, etc.) and <code>theme.breakpoints</code>.') },
+        { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first <code>@media (min-width)</code> CSS from a single object. These breakpoints match the grid system (<code>.bw_col_sm_*</code>, etc.) and <code>theme.breakpoints</code>.') },
         bw.makeTable({
           headers: ['Key', 'Min-Width', 'Target'],
           rows: [
@@ -136,7 +136,7 @@
             ['lg', '992px', 'Large devices (desktops)'],
             ['xl', '1200px', 'Extra large devices (wide desktops)']
           ],
-          className: 'bw-table-sm',
+          className: 'bw_table_sm',
           style: 'margin-bottom: 1rem;'
         }),
         { t: 'div', a: { id: 'tryit-responsive' } }
@@ -177,7 +177,7 @@
             ])
           ]
         },
-        { t: 'p', c: bw.raw('Both produce the same <code>bw-btn</code>, <code>bw-card</code>, <code>bw-table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.') },
+        { t: 'p', c: bw.raw('Both produce the same <code>bw_btn</code>, <code>bw_card</code>, <code>bw_table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.') },
         callout('tip', [
           { t: 'strong', c: 'Custom palettes:' },
           bw.raw(' Need different colors? <code>bw.generateTheme()</code> derives a complete palette from just 2-3 seed colors &mdash; buttons, alerts, badges, hover states, and contrast text, all scoped to a CSS class. See the <a href="10-themes.html">Themes page</a> for an interactive generator, presets, multi-theme demos, and code export.')
@@ -188,7 +188,7 @@
     // =========================================================================
     // Separator
     // =========================================================================
-    var separator1 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid var(--bw-card-border);' } };
+    var separator1 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid var(--bw_card_border);' } };
 
     // =========================================================================
     // Section 8: Theming — Generate Complete Palettes
@@ -210,7 +210,7 @@
     // =========================================================================
     // Separator
     // =========================================================================
-    var separator2 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid var(--bw-card-border);' } };
+    var separator2 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid var(--bw_card_border);' } };
 
     // =========================================================================
     // Section 9: Structural vs Cosmetic CSS Architecture
@@ -225,12 +225,12 @@
             callout('concept', [
               { t: 'h4', c: 'Structural (layout)' },
               { t: 'p', c: bw.raw('Display, flex, sizing, spacing, cursor, font metrics. These <strong>never change</strong> with themes. A button is always <code>display: inline-block</code> and <code>cursor: pointer</code> regardless of color.') },
-              { t: 'pre', c: { t: 'code', c: '// Loaded once, never changes\nbw.loadDefaultStyles();\n// injects structural CSS (id="bw-structural")' } }
+              { t: 'pre', c: { t: 'code', c: '// Loaded once, never changes\nbw.loadDefaultStyles();\n// injects structural CSS (id="bw_structural")' } }
             ]),
             callout('concept', [
               { t: 'h4', c: 'Cosmetic (theme)' },
               { t: 'p', c: bw.raw('Colors, backgrounds, shadows, border-colors, border-radius. These are <strong>derived from your palette</strong> by <code>bw.generateTheme()</code>. Swap palettes without touching layout.') },
-              { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\nbw.generateTheme(\'ocean\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n// injects themed CSS (id="bw-theme-ocean")' } }
+              { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\nbw.generateTheme(\'ocean\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n// injects themed CSS (id="bw_theme_ocean")' } }
             ])
           ]
         },
@@ -249,10 +249,10 @@
         bw.makeTable({
           headers: ['Form', 'Example', 'Notes'],
           rows: [
-            ['Hyphen (canonical)', 'bw-btn, bw-card, bw-table-hover', 'Used in docs, generated CSS, component output'],
+            ['Hyphen (canonical)', 'bw_btn, bw_card, bw_table_hover', 'Used in docs, generated CSS, component output'],
             ['Underscore (alias)', 'bw_btn, bw_card, bw_table_hover', 'Convenient in JS objects (no quoting needed)']
           ],
-          className: 'bw-table-sm',
+          className: 'bw_table_sm',
           style: 'margin-bottom: 1rem;'
         }),
         { t: 'p', c: bw.raw('TACO attribute keys like <code>bw_id</code> and <code>bw_meta</code> use underscores because they\'re plain JS identifiers. CSS classes support both forms — the generated stylesheet includes both selectors automatically.') },
@@ -331,8 +331,8 @@
         '    // String concatenation builds the class name\n' +
         '    return {\n' +
         '      t: \'div\',\n' +
-        '      a: { class: \'bw-alert bw-alert-\' + item.status },\n' +
-        '      c: item.text + \' (class: bw-alert-\' + item.status + \')\'\n' +
+        '      a: { class: \'bw_alert bw_alert_\' + item.status },\n' +
+        '      c: item.text + \' (class: bw_alert_\' + item.status + \')\'\n' +
         '    };\n' +
         '  })\n' +
         '});',
@@ -393,7 +393,7 @@
         '  a: {\n' +
         '    // Global class (from bitwrench.css) for base card styling\n' +
         '    // + generated class for :hover\n' +
-        '    class: \'bw-card status-card\',\n' +
+        '    class: \'bw_card status-card\',\n' +
         '    // Inline style for the dynamic part (computed from JS)\n' +
         '    style: bw.s(bw.u.p4, bw.u.transition, {\n' +
         '      borderLeft: \'4px solid \' + (isOnline ? \'#28a745\' : \'#dc3545\'),\n' +
@@ -449,10 +449,10 @@
         var pal = result.palette;
 
         bw.DOM('#theme-preview-area', {
-          t: 'div', a: { class: 'bw-card' },
+          t: 'div', a: { class: 'bw_card' },
           c: [
-            { t: 'div', a: { class: 'bw-card-header' }, c: 'Live Preview' },
-            { t: 'div', a: { class: 'bw-card-body' },
+            { t: 'div', a: { class: 'bw_card_header' }, c: 'Live Preview' },
+            { t: 'div', a: { class: 'bw_card_body' },
               c: [
                 // Color pickers row
                 {

@@ -28,27 +28,27 @@
         'flex-wrap': 'wrap',
         'align-items': 'center',
         padding: '0.875rem 1.25rem',
-        background: 'var(--bw-card-bg)',
-        'border-radius': 'var(--bw-radius) var(--bw-radius) 0 0',
-        border: '1px solid var(--bw-card-border)',
+        background: 'var(--bw_card_bg)',
+        'border-radius': 'var(--bw_radius) var(--bw_radius) 0 0',
+        border: '1px solid var(--bw_card_border)',
         'border-bottom': 'none'
       },
       '.table-card': {
-        background: 'var(--bw-card-bg)',
-        border: '1px solid var(--bw-card-border)',
-        'border-radius': 'var(--bw-radius)',
-        'box-shadow': 'var(--bw-card-shadow)',
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        'box-shadow': 'var(--bw_card_shadow)',
         overflow: 'hidden'
       },
-      '.table-card .bw-table': { 'margin-bottom': '0' },
+      '.table-card .bw_table': { 'margin-bottom': '0' },
       '.table-info': {
         padding: '0.625rem 1.25rem',
-        background: 'var(--bw-card-bg)',
-        border: '1px solid var(--bw-card-border)',
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
         'border-top': 'none',
-        'border-radius': '0 0 var(--bw-radius) var(--bw-radius)',
+        'border-radius': '0 0 var(--bw_radius) var(--bw_radius)',
         'font-size': '0.8125rem',
-        color: 'var(--bw-text-secondary)'
+        color: 'var(--bw_text_secondary)'
       }
     }), { id: 'tables-page-styles' });
 
@@ -910,11 +910,11 @@ bw.DOM('#table-container', createTableComponent());`;
 
       paginationItems.push({
         t: 'li',
-        a: { class: `bw-page-item ${currentPage === 1 ? 'bw-disabled' : ''}` },
+        a: { class: `bw_page_item ${currentPage === 1 ? 'bw_disabled' : ''}` },
         c: {
           t: 'a',
           a: {
-            class: 'bw-page-link', href: '#',
+            class: 'bw_page_link', href: '#',
             onclick: (e) => { e.preventDefault(); if (currentPage > 1) { currentPage--; renderPaginatedTable(); } }
           },
           c: 'Previous'
@@ -924,11 +924,11 @@ bw.DOM('#table-container', createTableComponent());`;
       for (let i = 1; i <= Math.min(totalPages, 5); i++) {
         paginationItems.push({
           t: 'li',
-          a: { class: `bw-page-item ${currentPage === i ? 'bw-active' : ''}` },
+          a: { class: `bw_page_item ${currentPage === i ? 'bw_active' : ''}` },
           c: {
             t: 'a',
             a: {
-              class: 'bw-page-link', href: '#',
+              class: 'bw_page_link', href: '#',
               onclick: (e) => { e.preventDefault(); currentPage = i; renderPaginatedTable(); }
             },
             c: String(i)
@@ -938,11 +938,11 @@ bw.DOM('#table-container', createTableComponent());`;
 
       paginationItems.push({
         t: 'li',
-        a: { class: `bw-page-item ${currentPage === totalPages ? 'bw-disabled' : ''}` },
+        a: { class: `bw_page_item ${currentPage === totalPages ? 'bw_disabled' : ''}` },
         c: {
           t: 'a',
           a: {
-            class: 'bw-page-link', href: '#',
+            class: 'bw_page_link', href: '#',
             onclick: (e) => { e.preventDefault(); if (currentPage < totalPages) { currentPage++; renderPaginatedTable(); } }
           },
           c: 'Next'
@@ -951,7 +951,7 @@ bw.DOM('#table-container', createTableComponent());`;
 
       bw.DOM('#pagination-controls', {
         t: 'nav',
-        c: { t: 'ul', a: { class: 'bw-pagination' }, c: paginationItems }
+        c: { t: 'ul', a: { class: 'bw_pagination' }, c: paginationItems }
       });
     }
 
@@ -960,7 +960,7 @@ bw.DOM('#table-container', createTableComponent());`;
       c: [
         { t: 'p', c: `Showing ${itemsPerPage} items per page from ${moreEmployees.length} total records.` },
         { t: 'div', a: { id: 'paginated-table' }, c: '' },
-        { t: 'div', a: { id: 'pagination-controls', class: 'bw-mt-3' }, c: '' }
+        { t: 'div', a: { id: 'pagination-controls', class: 'bw_mt_3' }, c: '' }
       ]
     };
 
@@ -1009,10 +1009,10 @@ function updatePagination() {
   // Previous button
   paginationItems.push({
     t: 'li',
-    a: { class: \`bw-page-item \${currentPage === 1 ? 'bw-disabled' : ''}\` },
+    a: { class: \`bw_page_item \${currentPage === 1 ? 'bw_disabled' : ''}\` },
     c: {
       t: 'a',
-      a: { class: 'bw-page-link', href: '#',
+      a: { class: 'bw_page_link', href: '#',
         onclick: (e) => {
           e.preventDefault();
           if (currentPage > 1) { currentPage--; renderPaginatedTable(); }
@@ -1026,10 +1026,10 @@ function updatePagination() {
   for (let i = 1; i <= Math.min(totalPages, 5); i++) {
     paginationItems.push({
       t: 'li',
-      a: { class: \`bw-page-item \${currentPage === i ? 'bw-active' : ''}\` },
+      a: { class: \`bw_page_item \${currentPage === i ? 'bw_active' : ''}\` },
       c: {
         t: 'a',
-        a: { class: 'bw-page-link', href: '#',
+        a: { class: 'bw_page_link', href: '#',
           onclick: (e) => {
             e.preventDefault();
             currentPage = i;
@@ -1044,10 +1044,10 @@ function updatePagination() {
   // Next button
   paginationItems.push({
     t: 'li',
-    a: { class: \`bw-page-item \${currentPage === totalPages ? 'bw-disabled' : ''}\` },
+    a: { class: \`bw_page_item \${currentPage === totalPages ? 'bw_disabled' : ''}\` },
     c: {
       t: 'a',
-      a: { class: 'bw-page-link', href: '#',
+      a: { class: 'bw_page_link', href: '#',
         onclick: (e) => {
           e.preventDefault();
           if (currentPage < totalPages) { currentPage++; renderPaginatedTable(); }
@@ -1059,7 +1059,7 @@ function updatePagination() {
 
   bw.DOM('#pagination-controls', {
     t: 'nav',
-    c: { t: 'ul', a: { class: 'bw-pagination' }, c: paginationItems }
+    c: { t: 'ul', a: { class: 'bw_pagination' }, c: paginationItems }
   });
 }
 

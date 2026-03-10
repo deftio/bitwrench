@@ -242,11 +242,7 @@ function generateButtons(scope, palette, layout) {
     'box-shadow': '0 0 0 3px ' + palette.primary.focus
   };
 
-  // Variant colors handled by generatePaletteUtilities() + generateInteractionRules()
-  // Outline button base style (transparent bg)
-  rules[scopeSelector(scope, '.bw_btn.bw_btn_outline')] = {
-    'background-color': 'transparent'
-  };
+  // Variant colors handled by palette class on component root
 
   // Size variants (structural, reuse layout radius)
   rules[scopeSelector(scope, '.bw_btn_lg')] = {
@@ -273,15 +269,12 @@ function generateAlerts(scope, palette, layout) {
     'border-radius': rd.alert
   };
 
-  // Variant colors handled by generatePaletteUtilities() + generateInteractionRules()
+  // Variant colors handled by palette class on component root
 
   return rules;
 }
 
-function generateBadges(scope, palette) {
-  // Variant colors handled by generatePaletteUtilities()
-  return {};
-}
+// generateBadges: removed — palette class on root handles variants
 
 function generateCards(scope, palette, layout) {
   var rules = {};
@@ -323,7 +316,7 @@ function generateCards(scope, palette, layout) {
     'color': palette.secondary.base
   };
 
-  // Card variant accent borders handled by generateInteractionRules()
+  // Card variant accent handled by palette class on component root
 
   return rules;
 }
@@ -551,35 +544,13 @@ function generateProgress(scope, palette) {
     'background-color': palette.primary.base,
     'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
   };
-  // Variant progress bar colors handled by generatePaletteUtilities()
+  // Variant progress bar colors handled by palette class
   return rules;
 }
 
-function generateHero(scope, palette) {
-  var rules = {};
-  rules[scopeSelector(scope, '.bw_hero_primary')] = {
-    'background': 'linear-gradient(135deg, ' + palette.primary.base + ' 0%, ' + palette.primary.hover + ' 100%)',
-    'color': palette.primary.textOn
-  };
-  rules[scopeSelector(scope, '.bw_hero_secondary')] = {
-    'background': 'linear-gradient(135deg, ' + palette.secondary.base + ' 0%, ' + palette.secondary.hover + ' 100%)',
-    'color': palette.secondary.textOn
-  };
-  rules[scopeSelector(scope, '.bw_hero_dark')] = {
-    'background': 'linear-gradient(135deg, ' + palette.dark.base + ' 0%, ' + palette.dark.hover + ' 100%)',
-    'color': palette.dark.textOn
-  };
-  rules[scopeSelector(scope, '.bw_hero_light')] = {
-    'background': palette.light.light,
-    'color': palette.dark.base
-  };
-  return rules;
-}
+// generateHero: removed — palette class with .bw_hero override handles variants
 
-function generateUtilityColors(scope, palette) {
-  // Fully replaced by generatePaletteUtilities() — kept as no-op for orchestrator call
-  return {};
-}
+// generateUtilityColors: removed — palette classes replace utility colors
 
 function generateResetThemed(scope, palette) {
   var rules = {};
@@ -605,10 +576,7 @@ function generateBreadcrumbThemed(scope, palette) {
   return rules;
 }
 
-function generateSpinnerThemed(scope, palette) {
-  // Spinner variant colors handled by generateInteractionRules()
-  return {};
-}
+// generateSpinnerThemed: removed — palette class on root handles variants
 
 function generateCloseButtonThemed(scope, palette) {
   var rules = {};
@@ -715,7 +683,7 @@ function generateToastThemed(scope, palette, layout) {
   rules[scopeSelector(scope, '.bw_toast_header')] = {
     'border-bottom-color': 'rgba(0,0,0,0.05)'
   };
-  // Variant toast borders handled by generateInteractionRules()
+  // Variant toast borders handled by palette class
   return rules;
 }
 
@@ -766,14 +734,11 @@ function generateSkeletonThemed(scope, palette) {
   return rules;
 }
 
-function generateAvatarThemed(scope, palette) {
-  // Avatar variant colors handled by generatePaletteUtilities() + generateInteractionRules()
-  return {};
-}
+// generateAvatarThemed: removed — palette class on root handles variants
 
 function generateStatCardThemed(scope, palette) {
   var rules = {};
-  // Variant border colors handled by generateInteractionRules()
+  // Variant border colors handled by palette class
   rules[scopeSelector(scope, '.bw_stat_change_up')] = { 'color': palette.success.base };
   rules[scopeSelector(scope, '.bw_stat_change_down')] = { 'color': palette.danger.base };
   return rules;
@@ -782,7 +747,7 @@ function generateStatCardThemed(scope, palette) {
 function generateTimelineThemed(scope, palette) {
   var rules = {};
   rules[scopeSelector(scope, '.bw_timeline::before')] = { 'background-color': palette.light.border };
-  // Variant marker colors handled by generatePaletteUtilities() + generateInteractionRules()
+  // Variant marker colors handled by palette class
   rules[scopeSelector(scope, '.bw_timeline_date')] = { 'color': palette.secondary.base };
   return rules;
 }
@@ -897,124 +862,114 @@ function generateNavPillsThemed(scope, palette, layout) {
 }
 
 // =========================================================================
-// Palette utility classes — shared by ALL components
+// Palette classes — single-class theming for ALL components
 // =========================================================================
 
 /**
- * Generate palette utility classes for background, text, and border colors.
- * These replace per-component variant forEach loops: components compose
- * utility classes (e.g. `bw_bg_primary bw_text_on_primary`) instead of
- * owning their own variant selectors (e.g. `bw_btn_primary`).
+ * Generate palette root classes. Each palette color (primary, secondary, etc.)
+ * gets ONE class that sets bg, text, and border. Components add this single
+ * class to their root element for variant styling. Component-specific overrides
+ * (e.g. alerts use light bg, toasts use border-left accent) are included.
  *
  * @param {string} scope - CSS scope class ('' for global)
  * @param {Object} palette - From derivePalette()
  * @returns {Object} CSS rules object
  */
-function generatePaletteUtilities(scope, palette) {
+function generatePaletteClasses(scope, palette) {
   var rules = {};
   var keys = Object.keys(palette);
   keys.forEach(function(k) {
     if (typeof palette[k] !== 'object') return;
     var s = palette[k];
 
-    // Background utilities
-    rules[scopeSelector(scope, '.bw_bg_' + k)]           = { 'background-color': s.base };
-    rules[scopeSelector(scope, '.bw_bg_' + k + '_light')] = { 'background-color': s.light };
-
-    // Text utilities
-    rules[scopeSelector(scope, '.bw_text_' + k)]          = { 'color': s.base };
-    rules[scopeSelector(scope, '.bw_text_on_' + k)]       = { 'color': s.textOn };
-    rules[scopeSelector(scope, '.bw_text_' + k + '_dark')] = { 'color': s.darkText };
-
-    // Border utilities
-    rules[scopeSelector(scope, '.bw_border_' + k)]         = { 'border-color': s.base };
-    rules[scopeSelector(scope, '.bw_border_' + k + '_subtle')] = { 'border-color': s.border };
-  });
-  // Default border color from palette
-  rules[scopeSelector(scope, '.bw_border')] = { 'border-color': palette.light.border + ' !important' };
-  // Text-muted
-  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
-  return rules;
-}
-
-/**
- * Generate interaction rules that require CSS pseudo-selectors.
- * Utility classes alone cannot express :hover, :active, :focus —
- * these rules target utility-class-bearing elements with pseudo states.
- *
- * @param {string} scope - CSS scope class ('' for global)
- * @param {Object} palette - From derivePalette()
- * @returns {Object} CSS rules object
- */
-function generateInteractionRules(scope, palette) {
-  var rules = {};
-  var keys = Object.keys(palette);
-  keys.forEach(function(k) {
-    if (typeof palette[k] !== 'object') return;
-    var s = palette[k];
-
-    // Button hover/active — pseudo-selectors on utility-classed elements
-    rules[scopeSelector(scope, '.bw_btn.bw_bg_' + k + ':hover')] = {
-      'background-color': s.hover,
-      'border-color': s.active,
-      'color': s.textOn
-    };
-    rules[scopeSelector(scope, '.bw_btn.bw_bg_' + k + ':active')] = {
-      'background-color': s.active,
-      'color': s.textOn
-    };
-
-    // Outline button hover (transparent bg → solid bg on hover)
-    rules[scopeSelector(scope, '.bw_btn.bw_btn_outline.bw_border_' + k + ':hover')] = {
+    // --- Root palette class: sets default bg/color/border ---
+    rules[scopeSelector(scope, '.bw_' + k)] = {
       'background-color': s.base,
-      'color': s.textOn
+      'color': s.textOn,
+      'border-color': s.base
     };
 
-    // Focus ring for any utility-bg element
-    rules[scopeSelector(scope, '.bw_bg_' + k + ':focus-visible')] = {
+    // --- Pseudo-states (shared across all components) ---
+    rules[scopeSelector(scope, '.bw_' + k + ':hover')] = {
+      'background-color': s.hover,
+      'border-color': s.active
+    };
+    rules[scopeSelector(scope, '.bw_' + k + ':active')] = {
+      'background-color': s.active
+    };
+    rules[scopeSelector(scope, '.bw_' + k + ':focus-visible')] = {
       'box-shadow': '0 0 0 3px ' + s.focus,
       'outline': 'none'
     };
 
-    // Card accent borders via utility class
-    rules[scopeSelector(scope, '.bw_card.bw_card_accent.bw_border_' + k)] = {
+    // --- Component-specific overrides ---
+
+    // Alerts: light bg, dark text, subtle border
+    rules[scopeSelector(scope, '.bw_alert.bw_' + k)] = {
+      'background-color': s.light,
+      'color': s.darkText,
+      'border-color': s.border
+    };
+
+    // Toast: inherit bg, left border accent
+    rules[scopeSelector(scope, '.bw_toast.bw_' + k)] = {
+      'background-color': 'inherit',
+      'color': 'inherit',
       'border-left': '4px solid ' + s.base
     };
 
-    // Alert variant via utility classes
-    rules[scopeSelector(scope, '.bw_alert.bw_bg_' + k + '_light .alert-link')] = {
-      'color': adjustLightness(s.darkText, -10)
-    };
-
-    // Progress bar variant
-    rules[scopeSelector(scope, '.bw_progress_bar.bw_bg_' + k)] = {
-      'color': '#fff'
-    };
-
-    // Timeline marker variant
-    rules[scopeSelector(scope, '.bw_timeline_marker.bw_bg_' + k)] = {
-      'box-shadow': '0 0 0 2px ' + s.base
-    };
-
-    // Toast accent border
-    rules[scopeSelector(scope, '.bw_toast.bw_border_' + k)] = {
-      'border-left': '4px solid ' + s.base
-    };
-
-    // Stat card accent border
-    rules[scopeSelector(scope, '.bw_stat_card.bw_border_' + k)] = {
+    // Stat card: inherit bg, left border accent
+    rules[scopeSelector(scope, '.bw_stat_card.bw_' + k)] = {
+      'background-color': 'inherit',
+      'color': 'inherit',
       'border-left-color': s.base
     };
 
-    // Avatar background + text
-    rules[scopeSelector(scope, '.bw_avatar.bw_bg_' + k)] = {
+    // Card accent: left border accent, inherit bg
+    rules[scopeSelector(scope, '.bw_card.bw_' + k)] = {
+      'background-color': 'inherit',
+      'color': 'inherit',
+      'border-left': '4px solid ' + s.base
+    };
+
+    // Timeline marker: colored dot
+    rules[scopeSelector(scope, '.bw_timeline_marker.bw_' + k)] = {
+      'box-shadow': '0 0 0 2px ' + s.base
+    };
+
+    // Spinner: text color only, transparent bg
+    rules[scopeSelector(scope, '.bw_spinner_border.bw_' + k + ',\n' + scopeSelector(scope, '.bw_spinner_grow.bw_' + k))] = {
+      'background-color': 'transparent',
+      'color': s.base,
+      'border-color': 'currentColor'
+    };
+
+    // Outline button: transparent bg, colored border+text, solid on hover
+    rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k)] = {
+      'background-color': 'transparent',
+      'color': s.base,
+      'border-color': s.base
+    };
+    rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
+      'background-color': s.base,
       'color': s.textOn
     };
 
-    // Spinner color
-    rules[scopeSelector(scope, '.bw_spinner_border.bw_text_' + k)] = { 'color': s.base };
-    rules[scopeSelector(scope, '.bw_spinner_grow.bw_text_' + k)] = { 'color': s.base };
+    // Hero: gradient background
+    rules[scopeSelector(scope, '.bw_hero.bw_' + k)] = {
+      'background': 'linear-gradient(135deg, ' + s.base + ' 0%, ' + s.hover + ' 100%)',
+      'color': s.textOn
+    };
+
+    // Progress bar: white text on colored bg (default is fine, just ensure text)
+    rules[scopeSelector(scope, '.bw_progress_bar.bw_' + k)] = {
+      'color': '#fff'
+    };
   });
+
+  // Text muted
+  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
+
   return rules;
 }
 
@@ -1033,7 +988,6 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateTypographyThemed(scopeName, palette, layout),
     generateButtons(scopeName, palette, layout),
     generateAlerts(scopeName, palette, layout),
-    generateBadges(scopeName, palette),
     generateCards(scopeName, palette, layout),
     generateForms(scopeName, palette, layout),
     generateNavigation(scopeName, palette),
@@ -1042,9 +996,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateListGroups(scopeName, palette, layout),
     generatePagination(scopeName, palette),
     generateProgress(scopeName, palette),
-    generateHero(scopeName, palette),
     generateBreadcrumbThemed(scopeName, palette),
-    generateSpinnerThemed(scopeName, palette),
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
     generateAccordionThemed(scopeName, palette),
@@ -1054,7 +1006,6 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateDropdownThemed(scopeName, palette, layout),
     generateSwitchThemed(scopeName, palette),
     generateSkeletonThemed(scopeName, palette),
-    generateAvatarThemed(scopeName, palette),
     generateStatCardThemed(scopeName, palette),
     generateTimelineThemed(scopeName, palette),
     generateStepperThemed(scopeName, palette),
@@ -1064,9 +1015,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateSearchThemed(scopeName, palette),
     generateCodeDemoThemed(scopeName, palette),
     generateNavPillsThemed(scopeName, palette, layout),
-    generateUtilityColors(scopeName, palette),
-    generatePaletteUtilities(scopeName, palette),
-    generateInteractionRules(scopeName, palette)
+    generatePaletteClasses(scopeName, palette)
   );
 }
 

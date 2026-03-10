@@ -278,12 +278,12 @@ describe('makeToast', function() {
 
   it('should apply variant class', function() {
     const result = makeToast({ variant: 'success' });
-    assert.ok(result.a.class.includes('bw_border_success'), 'toast should have bw_border_success utility class');
+    assert.ok(result.a.class.includes('bw_success'), 'toast should have bw_success palette class');
   });
 
   it('should default to info variant', function() {
     const result = makeToast({});
-    assert.ok(result.a.class.includes('bw_border_info'), 'toast should default to bw_border_info utility class');
+    assert.ok(result.a.class.includes('bw_info'), 'toast should default to bw_info palette class');
   });
 
   it('should render header when title is provided', function() {
@@ -491,12 +491,12 @@ describe('makeAvatar', function() {
 
   it('should apply variant class to initials avatar', function() {
     const result = makeAvatar({ initials: 'AB', variant: 'success' });
-    assert.ok(result.a.class.includes('bw_bg_success'), 'avatar should have bw_bg_success utility class');
+    assert.ok(result.a.class.includes('bw_success'), 'avatar should have bw_success palette class');
   });
 
   it('should default to primary variant', function() {
     const result = makeAvatar({ initials: 'AB' });
-    assert.ok(result.a.class.includes('bw_bg_primary'), 'avatar should default to bw_bg_primary utility class');
+    assert.ok(result.a.class.includes('bw_primary'), 'avatar should default to bw_primary palette class');
   });
 
   it('should have bw_avatar class', function() {
@@ -614,7 +614,7 @@ describe('String shorthand', function() {
 
   it('makeButton string shorthand should default to primary variant', function() {
     const btn = bw.makeButton('Save');
-    assert.ok(btn.a.class.includes('bw_bg_primary'), 'button should default to bw_bg_primary utility class');
+    assert.ok(btn.a.class.includes('bw_primary'), 'button should default to bw_primary palette class');
   });
 
   it('makeBadge should accept string shorthand', function() {
@@ -634,7 +634,7 @@ describe('String shorthand', function() {
   it('makeButton object form should still work', function() {
     const btn = bw.makeButton({ text: 'Cancel', variant: 'secondary' });
     assert.strictEqual(btn.c, 'Cancel');
-    assert.ok(btn.a.class.includes('bw_bg_secondary'), 'button should have bw_bg_secondary utility class');
+    assert.ok(btn.a.class.includes('bw_secondary'), 'button should have bw_secondary palette class');
   });
 
   it('makeStatCard should accept string shorthand', function() {
@@ -660,7 +660,7 @@ describe('makeStatCard', function() {
 
   it('should support variant for border color', function() {
     const stat = bw.makeStatCard({ value: 100, variant: 'success' });
-    assert.ok(stat.a.class.includes('bw_border_success'), 'stat card should have bw_border_success utility class');
+    assert.ok(stat.a.class.includes('bw_success'), 'stat card should have bw_success palette class');
   });
 
   it('should show change indicator with up/down class', function() {
@@ -1084,13 +1084,13 @@ describe('makeTimeline', function() {
   it('should apply variant to marker', function() {
     const tl = bw.makeTimeline({ items: [{ title: 'Done', variant: 'success' }] });
     const marker = tl.c[0].c[0];
-    assert.ok(marker.a.class.includes('bw_bg_success'), 'timeline marker should have bw_bg_success utility class');
+    assert.ok(marker.a.class.includes('bw_success'), 'timeline marker should have bw_success palette class');
   });
 
   it('should default variant to primary', function() {
     const tl = bw.makeTimeline({ items: [{ title: 'Event' }] });
     const marker = tl.c[0].c[0];
-    assert.ok(marker.a.class.includes('bw_bg_primary'), 'timeline marker should default to bw_bg_primary utility class');
+    assert.ok(marker.a.class.includes('bw_primary'), 'timeline marker should default to bw_primary palette class');
   });
 
   it('should render date, title, and text content', function() {
@@ -1279,7 +1279,7 @@ describe('bw.make() factory', function() {
     const badge = bw.make('badge', { text: 'New', variant: 'success' });
     assert.strictEqual(badge.t, 'span');
     assert.ok(badge.a.class.includes('bw_badge'));
-    assert.ok(badge.a.class.includes('bw_bg_success'));
+    assert.ok(badge.a.class.includes('bw_success'));
   });
 
   it('should create an alert via make("alert")', function() {
@@ -1334,35 +1334,26 @@ describe('bw.BCCL registry', function() {
   });
 });
 
-describe('VARIANT_CLASSES mapping', function() {
+describe('bw.variantClass()', function() {
   it('should be exposed on bw object', function() {
-    assert.strictEqual(typeof bw.VARIANT_CLASSES, 'object');
+    assert.strictEqual(typeof bw.variantClass, 'function');
   });
 
-  it('button mapping should produce utility classes', function() {
-    const classes = bw.VARIANT_CLASSES.button('primary');
-    assert.ok(classes.includes('bw_bg_primary'), 'should include bw_bg_primary');
-    assert.ok(classes.includes('bw_text_on_primary'), 'should include bw_text_on_primary');
-    assert.ok(classes.includes('bw_border_primary'), 'should include bw_border_primary');
+  it('should return bw_ + variant name', function() {
+    assert.strictEqual(bw.variantClass('primary'), 'bw_primary');
+    assert.strictEqual(bw.variantClass('danger'), 'bw_danger');
+    assert.strictEqual(bw.variantClass('success'), 'bw_success');
   });
 
-  it('alert mapping should produce light bg + dark text + subtle border', function() {
-    const classes = bw.VARIANT_CLASSES.alert('warning');
-    assert.ok(classes.includes('bw_bg_warning_light'), 'should include bw_bg_warning_light');
-    assert.ok(classes.includes('bw_text_warning_dark'), 'should include bw_text_warning_dark');
-    assert.ok(classes.includes('bw_border_warning_subtle'), 'should include bw_border_warning_subtle');
+  it('should handle outline variants', function() {
+    var cls = bw.variantClass('outline_primary');
+    assert.ok(cls.includes('bw_btn_outline'), 'should include bw_btn_outline');
+    assert.ok(cls.includes('bw_primary'), 'should include bw_primary');
   });
 
-  it('badge mapping should produce bg + textOn classes', function() {
-    const classes = bw.VARIANT_CLASSES.badge('danger');
-    assert.ok(classes.includes('bw_bg_danger'), 'should include bw_bg_danger');
-    assert.ok(classes.includes('bw_text_on_danger'), 'should include bw_text_on_danger');
-  });
-
-  it('buttonOutline mapping should produce outline + border + text classes', function() {
-    const classes = bw.VARIANT_CLASSES.buttonOutline('success');
-    assert.ok(classes.includes('bw_btn_outline'), 'should include bw_btn_outline');
-    assert.ok(classes.includes('bw_border_success'), 'should include bw_border_success');
-    assert.ok(classes.includes('bw_text_success'), 'should include bw_text_success');
+  it('should return empty string for falsy input', function() {
+    assert.strictEqual(bw.variantClass(''), '');
+    assert.strictEqual(bw.variantClass(null), '');
+    assert.strictEqual(bw.variantClass(undefined), '');
   });
 });

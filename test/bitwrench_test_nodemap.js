@@ -2,7 +2,7 @@
  * Tests for bw._nodeMap — UUID/ID → DOM node reference cache
  *
  * Tests cover:
- * - Registration on createDOM (data-bw-id, id attribute)
+ * - Registration on createDOM (data-bw_id, id attribute)
  * - bw._el() lookup: cache hit, cache miss with fallback, stale cleanup
  * - bw._registerNode / bw._deregisterNode
  * - bw.cleanup() removes entries
@@ -70,9 +70,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._el('test-id'), el);
     });
 
-    it('should find element by data-bw-id from cache', function() {
+    it('should find element by data-bw_id from cache', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'my-widget' }, c: 'test',
+        t: 'div', a: { 'data-bw_id': 'my-widget' }, c: 'test',
         o: { state: {} }
       });
       document.body.appendChild(el);
@@ -104,9 +104,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._el('.dot-test'), el);
     });
 
-    it('should fall back to data-bw-id attribute selector', function() {
+    it('should fall back to data-bw_id attribute selector', function() {
       var el = document.createElement('div');
-      el.setAttribute('data-bw-id', 'fallback-bwid');
+      el.setAttribute('data-bw_id', 'fallback-bwid');
       document.body.appendChild(el);
       // Not in cache, should fall back
       assert.strictEqual(bw._el('fallback-bwid'), el);
@@ -208,14 +208,14 @@ describe('Node Map Cache (bw._nodeMap)', function() {
         o: { state: { count: 0 } }
       });
       document.body.appendChild(el);
-      var bwId = el.getAttribute('data-bw-id');
-      assert.ok(bwId, 'should have data-bw-id');
+      var bwId = el.getAttribute('data-bw_id');
+      assert.ok(bwId, 'should have data-bw_id');
       assert.strictEqual(bw._nodeMap[bwId], el);
     });
 
-    it('should register element with explicit data-bw-id', function() {
+    it('should register element with explicit data-bw_id', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'explicit-id' }, c: 'test',
+        t: 'div', a: { 'data-bw_id': 'explicit-id' }, c: 'test',
         o: { state: {} }
       });
       document.body.appendChild(el);
@@ -228,10 +228,10 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._nodeMap['html-id-create'], el);
     });
 
-    it('should register element with both id and data-bw-id', function() {
+    it('should register element with both id and data-bw_id', function() {
       var el = bw.createDOM({
         t: 'div',
-        a: { id: 'dual-id', 'data-bw-id': 'dual-bwid' },
+        a: { id: 'dual-id', 'data-bw_id': 'dual-bwid' },
         c: 'test',
         o: { state: {} }
       });
@@ -240,15 +240,15 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._nodeMap['dual-bwid'], el);
     });
 
-    it('should register data-bw-id even without lifecycle hooks', function() {
+    it('should register data-bw_id even without lifecycle hooks', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'no-lifecycle' }, c: 'test'
+        t: 'div', a: { 'data-bw_id': 'no-lifecycle' }, c: 'test'
       });
       document.body.appendChild(el);
       assert.strictEqual(bw._nodeMap['no-lifecycle'], el);
     });
 
-    it('should not register plain elements without id or data-bw-id', function() {
+    it('should not register plain elements without id or data-bw_id', function() {
       var mapSizeBefore = Object.keys(bw._nodeMap).length;
       bw.createDOM({ t: 'span', c: 'anonymous' });
       assert.equal(Object.keys(bw._nodeMap).length, mapSizeBefore);
@@ -258,11 +258,11 @@ describe('Node Map Cache (bw._nodeMap)', function() {
   // ─── _bw_refs: local parent→child refs ────────────────────────────────
 
   describe('_bw_refs (local parent→child refs)', function() {
-    it('should build refs for children with data-bw-id', function() {
+    it('should build refs for children with data-bw_id', function() {
       var el = bw.createDOM({
         t: 'div', c: [
-          { t: 'h2', a: { 'data-bw-id': 'title' }, c: 'Hello' },
-          { t: 'span', a: { 'data-bw-id': 'count' }, c: '0' }
+          { t: 'h2', a: { 'data-bw_id': 'title' }, c: 'Hello' },
+          { t: 'span', a: { 'data-bw_id': 'count' }, c: '0' }
         ]
       });
       assert.ok(el._bw_refs, 'parent should have _bw_refs');
@@ -297,8 +297,8 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       var el = bw.createDOM({
         t: 'div', c: [
           {
-            t: 'div', a: { 'data-bw-id': 'wrapper' }, c: [
-              { t: 'span', a: { 'data-bw-id': 'deep-child' }, c: 'deep' }
+            t: 'div', a: { 'data-bw_id': 'wrapper' }, c: [
+              { t: 'span', a: { 'data-bw_id': 'deep-child' }, c: 'deep' }
             ]
           }
         ]
@@ -313,9 +313,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       var rendered = false;
       var el = bw.createDOM({
         t: 'div',
-        a: { 'data-bw-id': 'card' },
+        a: { 'data-bw_id': 'card' },
         c: [
-          { t: 'span', a: { 'data-bw-id': 'val' }, c: '0' }
+          { t: 'span', a: { 'data-bw_id': 'val' }, c: '0' }
         ],
         o: {
           state: { count: 0 },
@@ -338,7 +338,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('should handle single child TACO (not array) with id', function() {
       var el = bw.createDOM({
         t: 'div',
-        c: { t: 'span', a: { 'data-bw-id': 'only-child' }, c: 'alone' }
+        c: { t: 'span', a: { 'data-bw_id': 'only-child' }, c: 'alone' }
       });
       assert.ok(el._bw_refs);
       assert.strictEqual(el._bw_refs['only-child'].textContent, 'alone');
@@ -348,9 +348,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
   // ─── cleanup() deregistration ─────────────────────────────────────────
 
   describe('cleanup() deregistration', function() {
-    it('should remove data-bw-id entries from nodeMap', function() {
+    it('should remove data-bw_id entries from nodeMap', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'cleanup-test' }, c: 'bye',
+        t: 'div', a: { 'data-bw_id': 'cleanup-test' }, c: 'bye',
         o: { state: {} }
       });
       document.body.appendChild(el);
@@ -361,7 +361,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should remove id attribute entries from nodeMap', function() {
       var el = bw.createDOM({
-        t: 'div', a: { id: 'cleanup-id', 'data-bw-id': 'cleanup-bwid' },
+        t: 'div', a: { id: 'cleanup-id', 'data-bw_id': 'cleanup-bwid' },
         c: 'bye', o: { state: {} }
       });
       document.body.appendChild(el);
@@ -374,8 +374,8 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should remove child entries from nodeMap', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'parent-clean' }, c: [
-          { t: 'span', a: { 'data-bw-id': 'child-clean' }, c: 'x', o: { state: {} } }
+        t: 'div', a: { 'data-bw_id': 'parent-clean' }, c: [
+          { t: 'span', a: { 'data-bw_id': 'child-clean' }, c: 'x', o: { state: {} } }
         ], o: { state: {} }
       });
       document.body.appendChild(el);
@@ -387,8 +387,8 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should clear _bw_refs on cleanup', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'refs-clean' }, c: [
-          { t: 'span', a: { 'data-bw-id': 'rc1' }, c: 'x' }
+        t: 'div', a: { 'data-bw_id': 'refs-clean' }, c: [
+          { t: 'span', a: { 'data-bw_id': 'rc1' }, c: 'x' }
         ], o: { state: {} }
       });
       document.body.appendChild(el);
@@ -404,7 +404,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('should preserve mount point in cache across re-renders', function() {
       var mount = document.createElement('div');
       mount.id = 'mount';
-      mount.setAttribute('data-bw-id', 'mount-bwid');
+      mount.setAttribute('data-bw_id', 'mount-bwid');
       document.body.appendChild(mount);
       bw._registerNode(mount, 'mount-bwid');
 
@@ -422,14 +422,14 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
       bw.DOM('#rerender-mount', {
         t: 'div', c: [
-          { t: 'span', a: { 'data-bw-id': 'old-child' }, c: 'old', o: { state: {} } }
+          { t: 'span', a: { 'data-bw_id': 'old-child' }, c: 'old', o: { state: {} } }
         ]
       });
       assert.ok(bw._nodeMap['old-child']);
 
       bw.DOM('#rerender-mount', {
         t: 'div', c: [
-          { t: 'span', a: { 'data-bw-id': 'new-child' }, c: 'new', o: { state: {} } }
+          { t: 'span', a: { 'data-bw_id': 'new-child' }, c: 'new', o: { state: {} } }
         ]
       });
       assert.strictEqual(bw._nodeMap['old-child'], undefined);
@@ -458,9 +458,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(el.textContent, '99');
     });
 
-    it('bw.patch should resolve data-bw-id', function() {
+    it('bw.patch should resolve data-bw_id', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'patch-bwid' }, c: 'old',
+        t: 'div', a: { 'data-bw_id': 'patch-bwid' }, c: 'old',
         o: { state: {} }
       });
       document.body.appendChild(el);
@@ -471,7 +471,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('bw.update should resolve via cache', function() {
       var renderCount = 0;
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'update-cache' }, c: '',
+        t: 'div', a: { 'data-bw_id': 'update-cache' }, c: '',
         o: {
           state: { v: 1 },
           render: function() { renderCount++; }
@@ -525,7 +525,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       for (var i = 0; i < 100; i++) {
         children.push({
           t: 'div',
-          a: { 'data-bw-id': 'bulk-' + i },
+          a: { 'data-bw_id': 'bulk-' + i },
           c: 'item ' + i,
           o: { state: { idx: i } }
         });
@@ -543,7 +543,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       for (var k = 0; k < 10; k++) {
         fewerChildren.push({
           t: 'div',
-          a: { 'data-bw-id': 'new-bulk-' + k },
+          a: { 'data-bw_id': 'new-bulk-' + k },
           c: 'new ' + k,
           o: { state: { idx: k } }
         });
@@ -571,7 +571,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
       for (var round = 0; round < 20; round++) {
         bw.DOM('#rapid-mount', {
-          t: 'div', a: { 'data-bw-id': 'rapid-' + round }, c: 'r' + round,
+          t: 'div', a: { 'data-bw_id': 'rapid-' + round }, c: 'r' + round,
           o: { state: {} }
         });
       }
@@ -611,12 +611,12 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       var el = bw.createDOM({
         t: 'div', a: { id: 'root' }, c: [
           { t: 'header', a: { id: 'hdr' }, c: [
-            { t: 'h1', a: { 'data-bw-id': 'title' }, c: 'App', o: { state: {} } }
+            { t: 'h1', a: { 'data-bw_id': 'title' }, c: 'App', o: { state: {} } }
           ]},
           { t: 'main', a: { id: 'main' }, c: [
             { t: 'section', c: [
-              { t: 'div', a: { 'data-bw-id': 'card-1' }, c: 'Card 1', o: { state: {} } },
-              { t: 'div', a: { 'data-bw-id': 'card-2' }, c: 'Card 2', o: { state: {} } }
+              { t: 'div', a: { 'data-bw_id': 'card-1' }, c: 'Card 1', o: { state: {} } },
+              { t: 'div', a: { 'data-bw_id': 'card-2' }, c: 'Card 2', o: { state: {} } }
             ]}
           ]},
           { t: 'footer', a: { id: 'ftr' }, c: 'Footer' }
@@ -624,7 +624,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       });
       document.body.appendChild(el);
 
-      // All id and data-bw-id elements should be cached
+      // All id and data-bw_id elements should be cached
       assert.ok(bw._nodeMap['root']);
       assert.ok(bw._nodeMap['hdr']);
       assert.ok(bw._nodeMap['title']);
@@ -637,9 +637,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('should build _bw_refs across nested structure', function() {
       var el = bw.createDOM({
         t: 'div', c: [
-          { t: 'div', a: { 'data-bw-id': 'panel' }, c: [
-            { t: 'span', a: { 'data-bw-id': 'label' }, c: 'Name:' },
-            { t: 'span', a: { 'data-bw-id': 'value' }, c: 'Alice' }
+          { t: 'div', a: { 'data-bw_id': 'panel' }, c: [
+            { t: 'span', a: { 'data-bw_id': 'label' }, c: 'Name:' },
+            { t: 'span', a: { 'data-bw_id': 'value' }, c: 'Alice' }
           ]}
         ]
       });
@@ -656,9 +656,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should clean up entire hierarchy on cleanup', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'hierarchy-root' }, c: [
-          { t: 'div', a: { 'data-bw-id': 'h-child-1' }, c: [
-            { t: 'span', a: { 'data-bw-id': 'h-grandchild' }, c: 'x', o: { state: {} } }
+        t: 'div', a: { 'data-bw_id': 'hierarchy-root' }, c: [
+          { t: 'div', a: { 'data-bw_id': 'h-child-1' }, c: [
+            { t: 'span', a: { 'data-bw_id': 'h-grandchild' }, c: 'x', o: { state: {} } }
           ], o: { state: {} } }
         ], o: { state: {} }
       });
@@ -679,7 +679,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
   // ─── Edge cases ───────────────────────────────────────────────────────
 
   describe('Edge cases', function() {
-    it('should handle element with id but no data-bw-id and no lifecycle', function() {
+    it('should handle element with id but no data-bw_id and no lifecycle', function() {
       var el = bw.createDOM({ t: 'input', a: { id: 'my-input', type: 'text' } });
       document.body.appendChild(el);
       assert.strictEqual(bw._nodeMap['my-input'], el);
@@ -699,18 +699,18 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should handle bw.DOM with mount point found via _el cache', function() {
       var mount = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'cached-mount' }, c: 'initial',
+        t: 'div', a: { 'data-bw_id': 'cached-mount' }, c: 'initial',
         o: { state: {} }
       });
       document.body.appendChild(mount);
 
-      // bw.DOM should find it via _el cache (data-bw-id lookup)
+      // bw.DOM should find it via _el cache (data-bw_id lookup)
       var result = bw.DOM('cached-mount', { t: 'span', c: 'replaced' });
       assert.ok(result);
       assert.strictEqual(result.querySelector('span').textContent, 'replaced');
     });
 
-    it('should survive cleanup on element with no data-bw-id', function() {
+    it('should survive cleanup on element with no data-bw_id', function() {
       var el = document.createElement('div');
       el.innerHTML = '<span>hello</span>';
       document.body.appendChild(el);
@@ -734,7 +734,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('should deregister on cleanup even when unmount callbacks exist', function() {
       var unmounted = false;
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'unmount-dereg' }, c: 'x',
+        t: 'div', a: { 'data-bw_id': 'unmount-dereg' }, c: 'x',
         o: {
           state: {},
           unmount: function() { unmounted = true; }
@@ -750,7 +750,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should deregister on cleanup with pub/sub subscriptions', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw-id': 'pubsub-dereg' }, c: 'x',
+        t: 'div', a: { 'data-bw_id': 'pubsub-dereg' }, c: 'x',
         o: { state: {} }
       });
       document.body.appendChild(el);

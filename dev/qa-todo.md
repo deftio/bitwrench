@@ -2,12 +2,14 @@
 
 ## Open items
 
+* [ ] src/bitwrench-styles.js --> the built-in themes have unncessary "label" and "desc" fields.  For the lable any dev or ui can just capitlize the theme name from the dict, and for desc--> people will just pick the theme by looking at it not its flowerig desc.  Besure to make sure this doesn't break anything in pages/  
 * [ ] create --> API doc generation script: reads bitwrench.js docstrings, produces bitwrench_api_vX.Y.Z.md with summary table (version, date, line count by file, builds) + per-function sections (Name, lines-of-code, Purpose, params-->output, When its used, side effects)
 * [ ] pages/index.html sub-nav: install strip should have links, script tag should use CDN URL not local path, links to builds should be clear
 * [ ] pages/ Main Navbar: consolidate entries — consider merging API Reference into "Docs", merging Styling & Themes into one option with subnav
 * [ ] build size watch: target 25-40KB gzipped for ESP32/embedded crowd. Consider bitwrench-core vs bitwrench-embedded split. Create pages/self-load-test.html to validate single-page self-loading
 * [ ] bitwrench logo in main banner should be slightly larger, as should bitwrench text
 * [ ] CSS spacing scale: no consistent spacing scale — buttons, badges, form inputs all use ad-hoc padding values. Define 4px base (4, 8, 12, 16, 24, 32, 48) and enforce across components
+* [ ] http://localhost:9903/pages/index.html --> On some viewports the word bitwrench is clipped in the navbar (Tested in chrome and firefox in ubuntu)
 
 ## Design explorations (plan before code)
 

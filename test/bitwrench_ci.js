@@ -315,42 +315,26 @@ describe("Theming API", function() {
   });
 });
 
-describe("CSS Class Normalization", function() {
-  describe("#normalizeClass()", function() {
-    it("should convert bw_ to bw- in class names", function() {
-      assert.equal(bw.normalizeClass("bw_card"), "bw-card");
-      assert.equal(bw.normalizeClass("bw_btn bw_btn_primary"), "bw-btn bw-btn_primary");
-    });
-
-    it("should not affect non-bw classes", function() {
-      assert.equal(bw.normalizeClass("my_class"), "my_class");
-      assert.equal(bw.normalizeClass("test"), "test");
-    });
-
-    it("should handle mixed class names", function() {
-      assert.equal(bw.normalizeClass("bw_card my_class bw_btn"), "bw-card my_class bw-btn");
-    });
-  });
-
-  describe("html() class normalization", function() {
-    it("should normalize underscore classes in TACO output", function() {
+describe("CSS Class Handling", function() {
+  describe("html() class handling", function() {
+    it("should handle underscore classes in TACO output", function() {
       const taco = { t: "div", a: { class: "bw_card" }, c: "test" };
       const html = bw.html(taco);
-      assert.equal(html, '<div class="bw-card">test</div>');
+      assert.equal(html, '<div class="bw_card">test</div>');
     });
 
-    it("should normalize array classes", function() {
+    it("should handle array classes", function() {
       const taco = { t: "div", a: { class: ["bw_btn", "bw_btn_primary"] }, c: "click" };
       const html = bw.html(taco);
-      assert.ok(html.includes('class="bw-btn bw-btn_primary"'));
+      assert.ok(html.includes('class="bw_btn bw_btn_primary"'));
     });
   });
 
-  describe("createDOM() class normalization", function() {
-    it("should normalize underscore classes in DOM", function() {
+  describe("createDOM() class handling", function() {
+    it("should handle underscore classes in DOM", function() {
       const taco = { t: "div", a: { class: "bw_card" }, c: "test" };
       const el = bw.createDOM(taco);
-      assert.equal(el.className, "bw-card");
+      assert.equal(el.className, "bw_card");
     });
   });
 });

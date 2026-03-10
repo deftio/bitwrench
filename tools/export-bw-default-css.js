@@ -16,7 +16,7 @@ console.log ("Export bitwrench css: using bw version:"+bw.version()["version"]+"
 /* process cmd line notes
 
 process.argv[0] --> nodejs executable
-process.argv[1] --> /full/path/to/this/file/update-bw-package.js 
+process.argv[1] --> /full/path/to/this/file/update-bw_package.js 
 process.argv[2] --> export_filename
 
 */
@@ -24,8 +24,8 @@ process.argv[2] --> export_filename
 if (process.argv.length <=1 ) {//no parameters specified
 	console.log("bitwrench in-built css exporter\n\n");
 	console.log("arguments:\n");
-	console.log("export-bw-default-css.js  filename-to-export ==> exports in-built css classes to specified filename");
-	console.log("export-bw-default.css.js  filename-to-export false|load  ==> exports in-built css turning on/off global container defs");
+	console.log("export-bw_default_css.js  filename-to-export ==> exports in-built css classes to specified filename");
+	console.log("export-bw_default.css.js  filename-to-export false|load  ==> exports in-built css turning on/off global container defs");
 }
 
 if (bw.typeOf(process.argv[2]) == "string") {

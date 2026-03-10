@@ -14,7 +14,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-08T23:26:47.130Z'
+  buildDate: '2026-03-10T01:20:08.511Z'
 };
 
 /**
@@ -25,9 +25,13 @@ const VERSION_INFO = {
  * bw.colorParse, bw.colorRgbToHsl, etc.
  *
  * @module bitwrench-color-utils
- * @license BSD-2-Clause
+ * @license BSD-2-Clause 
+ * @copy Manu Chatterjee @deftio
  */
 
+function _xs (x) {
+  return ('0' + x.toString(16)).slice(-2)
+}
 /**
  * Clamp a value between min and max.
  * @param {number} val
@@ -35,7 +39,7 @@ const VERSION_INFO = {
  * @param {number} max
  * @returns {number}
  */
-function clip(val, min, max) {
+function clip$1(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
@@ -219,10 +223,7 @@ function hexToHsl(hex) {
  */
 function hslToHex(hsl) {
   var rgb = colorHslToRgb(hsl[0], hsl[1], hsl[2], 255, true);
-  return '#' +
-    ('0' + rgb[0].toString(16)).slice(-2) +
-    ('0' + rgb[1].toString(16)).slice(-2) +
-    ('0' + rgb[2].toString(16)).slice(-2);
+  return '#' + _xs(rgb[0])+_xs(rgb[1])+_xs(rgb[2]);
 }
 
 /**
@@ -234,7 +235,7 @@ function hslToHex(hsl) {
  */
 function adjustLightness(hex, amount) {
   var hsl = hexToHsl(hex);
-  hsl[2] = clip(hsl[2] + amount, 0, 100);
+  hsl[2] = clip$1(hsl[2] + amount, 0, 100);
   return hslToHex(hsl);
 }
 
@@ -251,10 +252,7 @@ function mixColor(hex1, hex2, ratio) {
   var r = Math.round(c1[0] + (c2[0] - c1[0]) * ratio);
   var g = Math.round(c1[1] + (c2[1] - c1[1]) * ratio);
   var b = Math.round(c1[2] + (c2[2] - c1[2]) * ratio);
-  return '#' +
-    ('0' + r.toString(16)).slice(-2) +
-    ('0' + g.toString(16)).slice(-2) +
-    ('0' + b.toString(16)).slice(-2);
+  return '#' + _xs(r) + _xs(g) + _xs(b);
 }
 
 /**
@@ -335,14 +333,14 @@ function deriveAlternateSeed(hex) {
 
   if (l > 50) {
     // Light color → make dark. Map 50-100 → 30-10 range
-    altL = clip(100 - l - 10, 8, 40);
+    altL = clip$1(100 - l - 10, 8, 40);
     // Reduce saturation slightly — vivid colors at low lightness look garish
-    altS = clip(s * 0.85, 0, 100);
+    altS = clip$1(s * 0.85, 0, 100);
   } else {
     // Dark color → make light. Map 0-50 → 65-92 range
-    altL = clip(100 - l + 10, 60, 92);
+    altL = clip$1(100 - l + 10, 60, 92);
     // Slightly increase saturation for light variant
-    altS = clip(s * 1.1, 0, 100);
+    altS = clip$1(s * 1.1, 0, 100);
   }
 
   return hslToHex([h, altS, altL]);
@@ -679,50 +677,25 @@ function generateButtons(scope, palette, layout) {
   var rd = layout.radius;
 
   // Base button (only when scoped — unscoped uses defaultStyles)
-  rules[scopeSelector(scope, '.bw-btn')] = {
+  rules[scopeSelector(scope, '.bw_btn')] = {
     'padding': sp.btn,
     'border-radius': rd.btn
   };
-  rules[scopeSelector(scope, '.bw-btn:focus-visible')] = {
+  rules[scopeSelector(scope, '.bw_btn:focus-visible')] = {
     'outline': '2px solid currentColor',
     'outline-offset': '2px',
     'box-shadow': '0 0 0 3px ' + palette.primary.focus
   };
 
-  // Variants
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    var p = palette[v];
-    rules[scopeSelector(scope, '.bw-btn-' + v)] = {
-      'color': p.textOn,
-      'background-color': p.base,
-      'border-color': p.base
-    };
-    rules[scopeSelector(scope, '.bw-btn-' + v + ':hover')] = {
-      'color': p.textOn,
-      'background-color': p.hover,
-      'border-color': p.active
-    };
-    // Outline
-    rules[scopeSelector(scope, '.bw-btn-outline-' + v)] = {
-      'color': p.base,
-      'border-color': p.base,
-      'background-color': 'transparent'
-    };
-    rules[scopeSelector(scope, '.bw-btn-outline-' + v + ':hover')] = {
-      'color': p.textOn,
-      'background-color': p.base,
-      'border-color': p.base
-    };
-  });
+  // Variant colors handled by palette class on component root
 
   // Size variants (structural, reuse layout radius)
-  rules[scopeSelector(scope, '.bw-btn-lg')] = {
+  rules[scopeSelector(scope, '.bw_btn_lg')] = {
     'padding': '0.625rem 1.5rem',
     'font-size': '1rem',
     'border-radius': rd.btn === '50rem' ? '50rem' : (parseInt(rd.btn) + 2) + 'px'
   };
-  rules[scopeSelector(scope, '.bw-btn-sm')] = {
+  rules[scopeSelector(scope, '.bw_btn_sm')] = {
     'padding': '0.25rem 0.75rem',
     'font-size': '0.8125rem',
     'border-radius': rd.btn === '50rem' ? '50rem' : (Math.max(parseInt(rd.btn) - 1, 0)) + 'px'
@@ -736,39 +709,17 @@ function generateAlerts(scope, palette, layout) {
   var sp = layout.spacing;
   var rd = layout.radius;
 
-  rules[scopeSelector(scope, '.bw-alert')] = {
+  rules[scopeSelector(scope, '.bw_alert')] = {
     'padding': sp.alert,
     'border-radius': rd.alert
   };
 
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    var p = palette[v];
-    rules[scopeSelector(scope, '.bw-alert-' + v)] = {
-      'color': p.darkText,
-      'background-color': p.light,
-      'border-color': p.border
-    };
-    rules[scopeSelector(scope, '.bw-alert-' + v + ' .alert-link')] = {
-      'color': adjustLightness(p.darkText, -10)
-    };
-  });
+  // Variant colors handled by palette class on component root
 
   return rules;
 }
 
-function generateBadges(scope, palette) {
-  var rules = {};
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    var p = palette[v];
-    rules[scopeSelector(scope, '.bw-badge-' + v)] = {
-      'color': p.textOn,
-      'background-color': p.base
-    };
-  });
-  return rules;
-}
+// generateBadges: removed — palette class on root handles variants
 
 function generateCards(scope, palette, layout) {
   var rules = {};
@@ -776,42 +727,41 @@ function generateCards(scope, palette, layout) {
   var rd = layout.radius;
 
   var elev = layout.elevation;
-  rules[scopeSelector(scope, '.bw-card')] = {
+  var motion = layout.motion;
+  rules[scopeSelector(scope, '.bw_card')] = {
     'background-color': '#fff',
     'border': '1px solid ' + palette.light.border,
     'border-radius': rd.card,
-    'box-shadow': elev.sm
+    'box-shadow': elev.sm,
+    'transition': 'box-shadow ' + motion.normal + ' ' + motion.easing + ', transform ' + motion.normal + ' ' + motion.easing
   };
-  rules[scopeSelector(scope, '.bw-card:hover')] = {
+  rules[scopeSelector(scope, '.bw_card:hover')] = {
     'box-shadow': elev.md
   };
-  rules[scopeSelector(scope, '.bw-card-body')] = {
+  rules[scopeSelector(scope, '.bw_card_hoverable:hover')] = {
+    'box-shadow': elev.lg
+  };
+  rules[scopeSelector(scope, '.bw_card_body')] = {
     'padding': sp.card
   };
-  rules[scopeSelector(scope, '.bw-card-header')] = {
+  rules[scopeSelector(scope, '.bw_card_header')] = {
     'padding': sp.card.split(' ').map(function(v) { return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem'; }).join(' '),
     'background-color': palette.light.light,
     'border-bottom': '1px solid ' + palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-card-footer')] = {
+  rules[scopeSelector(scope, '.bw_card_footer')] = {
     'background-color': palette.light.light,
     'border-top': '1px solid ' + palette.light.border,
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-card-title')] = {
+  rules[scopeSelector(scope, '.bw_card_title')] = {
     'color': palette.dark.base
   };
-  rules[scopeSelector(scope, '.bw-card-subtitle')] = {
+  rules[scopeSelector(scope, '.bw_card_subtitle')] = {
     'color': palette.secondary.base
   };
 
-  // Card variant accent borders
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    rules[scopeSelector(scope, '.bw-card-' + v)] = {
-      'border-left': '4px solid ' + palette[v].base
-    };
-  });
+  // Card variant accent handled by palette class on component root
 
   return rules;
 }
@@ -821,33 +771,56 @@ function generateForms(scope, palette, layout) {
   var sp = layout.spacing;
   var rd = layout.radius;
 
-  rules[scopeSelector(scope, '.bw-form-control')] = {
+  rules[scopeSelector(scope, '.bw_form_control')] = {
     'padding': sp.input,
     'border-radius': rd.input,
     'color': palette.dark.base,
     'background-color': '#fff',
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-form-control:focus')] = {
+  rules[scopeSelector(scope, '.bw_form_control:focus')] = {
     'border-color': palette.primary.border,
     'outline': '2px solid ' + palette.primary.base,
     'outline-offset': '-1px',
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
   };
-  rules[scopeSelector(scope, '.bw-form-control::placeholder')] = {
+  rules[scopeSelector(scope, '.bw_form_control::placeholder')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-form-label')] = {
+  rules[scopeSelector(scope, '.bw_form_label')] = {
     'color': palette.dark.base
   };
-  rules[scopeSelector(scope, '.bw-form-text')] = {
+  rules[scopeSelector(scope, '.bw_form_text')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-form-check-input:checked')] = {
+  rules[scopeSelector(scope, '.bw_form_check_input:checked')] = {
     'background-color': palette.primary.base,
     'border-color': palette.primary.base
   };
-  rules[scopeSelector(scope, '.bw-form-check-input:focus')] = {
+  rules[scopeSelector(scope, '.bw_form_check_input:focus')] = {
+    'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+  };
+  // Validation states
+  rules[scopeSelector(scope, '.bw_form_control.bw_is_valid')] = { 'border-color': palette.success.base };
+  rules[scopeSelector(scope, '.bw_form_control.bw_is_valid:focus')] = {
+    'border-color': palette.success.base,
+    'box-shadow': '0 0 0 0.2rem ' + palette.success.focus
+  };
+  rules[scopeSelector(scope, '.bw_form_control.bw_is_invalid')] = { 'border-color': palette.danger.base };
+  rules[scopeSelector(scope, '.bw_form_control.bw_is_invalid:focus')] = {
+    'border-color': palette.danger.base,
+    'box-shadow': '0 0 0 0.2rem ' + palette.danger.focus
+  };
+  // Form select
+  rules[scopeSelector(scope, '.bw_form_select')] = {
+    'padding': sp.input,
+    'border-radius': rd.input,
+    'color': palette.dark.base,
+    'background-color': '#fff',
+    'border-color': palette.light.border
+  };
+  rules[scopeSelector(scope, '.bw_form_select:focus')] = {
+    'border-color': palette.primary.border,
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
   };
 
@@ -856,41 +829,41 @@ function generateForms(scope, palette, layout) {
 
 function generateNavigation(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-navbar')] = {
+  rules[scopeSelector(scope, '.bw_navbar')] = {
     'background-color': palette.light.light,
     'border-bottom-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-navbar-brand')] = {
+  rules[scopeSelector(scope, '.bw_navbar_brand')] = {
     'color': palette.dark.base
   };
-  rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link')] = {
+  rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link:hover')] = {
+  rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
     'color': palette.dark.base
   };
-  rules[scopeSelector(scope, '.bw-navbar-nav .bw-nav-link.active')] = {
+  rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
     'color': palette.primary.base,
     'background-color': palette.primary.focus
   };
-  rules[scopeSelector(scope, '.bw-navbar-dark')] = {
+  rules[scopeSelector(scope, '.bw_navbar_dark')] = {
     'background-color': palette.dark.base,
     'border-bottom-color': palette.dark.hover
   };
-  rules[scopeSelector(scope, '.bw-navbar-dark .bw-navbar-brand')] = {
+  rules[scopeSelector(scope, '.bw_navbar_dark .bw_navbar_brand')] = {
     'color': palette.light.base
   };
-  rules[scopeSelector(scope, '.bw-navbar-dark .bw-nav-link')] = {
+  rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link')] = {
     'color': 'rgba(255,255,255,.65)'
   };
-  rules[scopeSelector(scope, '.bw-navbar-dark .bw-nav-link:hover')] = {
+  rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
     'color': '#fff'
   };
-  rules[scopeSelector(scope, '.bw-navbar-dark .bw-nav-link.active')] = {
+  rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
     'color': '#fff',
     'font-weight': '600'
   };
-  rules[scopeSelector(scope, '.bw-nav-pills .bw-nav-link.active')] = {
+  rules[scopeSelector(scope, '.bw_nav_pills .bw_nav_link.active')] = {
     'color': palette.primary.textOn,
     'background-color': palette.primary.base
   };
@@ -901,29 +874,29 @@ function generateTables(scope, palette, layout) {
   var rules = {};
   var sp = layout.spacing;
 
-  rules[scopeSelector(scope, '.bw-table')] = {
+  rules[scopeSelector(scope, '.bw_table')] = {
     'color': palette.dark.base,
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-table > :not(caption) > * > *')] = {
+  rules[scopeSelector(scope, '.bw_table > :not(caption) > * > *')] = {
     'padding': sp.cell,
     'border-bottom-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-table > thead > tr > *')] = {
+  rules[scopeSelector(scope, '.bw_table > thead > tr > *')] = {
     'color': palette.secondary.base,
     'border-bottom-color': palette.light.border,
     'background-color': palette.light.light
   };
-  rules[scopeSelector(scope, '.bw-table-striped > tbody > tr:nth-of-type(odd) > *')] = {
+  rules[scopeSelector(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
     'background-color': 'rgba(0, 0, 0, 0.05)'
   };
-  rules[scopeSelector(scope, '.bw-table-hover > tbody > tr:hover > *')] = {
+  rules[scopeSelector(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
     'background-color': palette.primary.focus
   };
-  rules[scopeSelector(scope, '.bw-table-bordered')] = {
+  rules[scopeSelector(scope, '.bw_table_bordered')] = {
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-table caption')] = {
+  rules[scopeSelector(scope, '.bw_table caption')] = {
     'color': palette.secondary.base
   };
 
@@ -932,17 +905,17 @@ function generateTables(scope, palette, layout) {
 
 function generateTabs(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-nav-tabs')] = {
+  rules[scopeSelector(scope, '.bw_nav_tabs')] = {
     'border-bottom-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-nav-link')] = {
+  rules[scopeSelector(scope, '.bw_nav_link')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-nav-tabs .bw-nav-link:hover')] = {
+  rules[scopeSelector(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
     'color': palette.dark.base,
     'border-bottom-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-nav-tabs .bw-nav-link.active')] = {
+  rules[scopeSelector(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
     'color': palette.primary.base,
     'border-bottom': '2px solid ' + palette.primary.base
   };
@@ -953,22 +926,22 @@ function generateListGroups(scope, palette, layout) {
   var rules = {};
   var sp = layout.spacing;
 
-  rules[scopeSelector(scope, '.bw-list-group-item')] = {
+  rules[scopeSelector(scope, '.bw_list_group_item')] = {
     'padding': sp.cell,
     'color': palette.dark.base,
     'background-color': '#fff',
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, 'a.bw-list-group-item:hover')] = {
+  rules[scopeSelector(scope, 'a.bw_list_group_item:hover')] = {
     'background-color': palette.light.light,
     'color': palette.dark.hover
   };
-  rules[scopeSelector(scope, '.bw-list-group-item.active')] = {
+  rules[scopeSelector(scope, '.bw_list_group_item.active')] = {
     'color': palette.primary.textOn,
     'background-color': palette.primary.base,
     'border-color': palette.primary.base
   };
-  rules[scopeSelector(scope, '.bw-list-group-item.disabled')] = {
+  rules[scopeSelector(scope, '.bw_list_group_item.disabled')] = {
     'color': palette.secondary.base,
     'background-color': '#fff'
   };
@@ -978,26 +951,26 @@ function generateListGroups(scope, palette, layout) {
 
 function generatePagination(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-page-link')] = {
+  rules[scopeSelector(scope, '.bw_page_link')] = {
     'color': palette.primary.base,
     'background-color': '#fff',
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-page-link:hover')] = {
+  rules[scopeSelector(scope, '.bw_page_link:hover')] = {
     'color': palette.primary.hover,
     'background-color': palette.light.light,
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-page-link:focus')] = {
+  rules[scopeSelector(scope, '.bw_page_link:focus')] = {
     'outline': '2px solid ' + palette.primary.base,
     'outline-offset': '-2px'
   };
-  rules[scopeSelector(scope, '.bw-page-item.bw-active .bw-page-link')] = {
+  rules[scopeSelector(scope, '.bw_page_item.bw_active .bw_page_link')] = {
     'color': palette.primary.textOn,
     'background-color': palette.primary.base,
     'border-color': palette.primary.base
   };
-  rules[scopeSelector(scope, '.bw-page-item.bw-disabled .bw-page-link')] = {
+  rules[scopeSelector(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
     'color': palette.secondary.base,
     'background-color': '#fff',
     'border-color': palette.light.border
@@ -1007,52 +980,22 @@ function generatePagination(scope, palette) {
 
 function generateProgress(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-progress')] = {
+  rules[scopeSelector(scope, '.bw_progress')] = {
     'background-color': palette.light.light,
     'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
   };
-  rules[scopeSelector(scope, '.bw-progress-bar')] = {
+  rules[scopeSelector(scope, '.bw_progress_bar')] = {
     'color': '#fff',
     'background-color': palette.primary.base,
     'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
   };
-  // Variant progress bars
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info'];
-  variants.forEach(function(v) {
-    rules[scopeSelector(scope, '.bw-progress-bar-' + v)] = {
-      'background-color': palette[v].base
-    };
-  });
+  // Variant progress bar colors handled by palette class
   return rules;
 }
 
-function generateHero(scope, palette) {
-  var rules = {};
-  rules[scopeSelector(scope, '.bw-hero-primary')] = {
-    'background': 'linear-gradient(135deg, ' + palette.primary.base + ' 0%, ' + palette.primary.hover + ' 100%)',
-    'color': palette.primary.textOn
-  };
-  rules[scopeSelector(scope, '.bw-hero-secondary')] = {
-    'background': 'linear-gradient(135deg, ' + palette.secondary.base + ' 0%, ' + palette.secondary.hover + ' 100%)',
-    'color': palette.secondary.textOn
-  };
-  rules[scopeSelector(scope, '.bw-hero-dark')] = {
-    'background': 'linear-gradient(135deg, ' + palette.dark.base + ' 0%, ' + palette.dark.hover + ' 100%)',
-    'color': palette.dark.textOn
-  };
-  return rules;
-}
+// generateHero: removed — palette class with .bw_hero override handles variants
 
-function generateUtilityColors(scope, palette) {
-  var rules = {};
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    var p = palette[v];
-    rules[scopeSelector(scope, '.bw-text-' + v)] = { 'color': p.base };
-    rules[scopeSelector(scope, '.bw-bg-' + v)] = { 'background-color': p.base };
-  });
-  return rules;
-}
+// generateUtilityColors: removed — palette classes replace utility colors
 
 function generateResetThemed(scope, palette) {
   var rules = {};
@@ -1065,32 +1008,28 @@ function generateResetThemed(scope, palette) {
 
 function generateBreadcrumbThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-breadcrumb-item + .bw-breadcrumb-item::before')] = {
+  rules[scopeSelector(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-breadcrumb-item.active')] = {
+  rules[scopeSelector(scope, '.bw_breadcrumb_item.active')] = {
     'color': palette.secondary.base
+  };
+  rules[scopeSelector(scope, '.bw_breadcrumb_item a:hover')] = {
+    'color': palette.primary.hover,
+    'text-decoration': 'underline'
   };
   return rules;
 }
 
-function generateSpinnerThemed(scope, palette) {
-  var rules = {};
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    rules[scopeSelector(scope, '.bw-spinner-border.bw-text-' + v)] = { 'color': palette[v].base };
-    rules[scopeSelector(scope, '.bw-spinner-grow.bw-text-' + v)] = { 'color': palette[v].base };
-  });
-  return rules;
-}
+// generateSpinnerThemed: removed — palette class on root handles variants
 
 function generateCloseButtonThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-close')] = {
+  rules[scopeSelector(scope, '.bw_close')] = {
     'color': palette.dark.base,
     'opacity': '0.5'
   };
-  rules[scopeSelector(scope, '.bw-close:focus')] = {
+  rules[scopeSelector(scope, '.bw_close:focus')] = {
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
   };
   return rules;
@@ -1098,13 +1037,13 @@ function generateCloseButtonThemed(scope, palette) {
 
 function generateSectionsThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-section-subtitle')] = {
+  rules[scopeSelector(scope, '.bw_section_subtitle')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-feature-description')] = {
+  rules[scopeSelector(scope, '.bw_feature_description')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-cta-description')] = {
+  rules[scopeSelector(scope, '.bw_cta_description')] = {
     'color': palette.secondary.base
   };
   return rules;
@@ -1112,27 +1051,27 @@ function generateSectionsThemed(scope, palette) {
 
 function generateAccordionThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-accordion-item')] = {
+  rules[scopeSelector(scope, '.bw_accordion_item')] = {
     'background-color': '#fff',
     'border-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-accordion-button')] = {
+  rules[scopeSelector(scope, '.bw_accordion_button')] = {
     'color': palette.dark.base
   };
-  rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed)')] = {
+  rules[scopeSelector(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
     'color': palette.primary.darkText,
     'background-color': palette.primary.light
   };
-  rules[scopeSelector(scope, '.bw-accordion-button:hover')] = {
+  rules[scopeSelector(scope, '.bw_accordion_button:hover')] = {
     'background-color': palette.light.light
   };
-  rules[scopeSelector(scope, '.bw-accordion-button:not(.bw-collapsed):hover')] = {
+  rules[scopeSelector(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
     'background-color': palette.primary.hover
   };
-  rules[scopeSelector(scope, '.bw-accordion-button:focus-visible')] = {
+  rules[scopeSelector(scope, '.bw_accordion_button:focus-visible')] = {
     'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
   };
-  rules[scopeSelector(scope, '.bw-accordion-body')] = {
+  rules[scopeSelector(scope, '.bw_accordion_body')] = {
     'border-top': '1px solid ' + palette.light.border
   };
   return rules;
@@ -1140,29 +1079,40 @@ function generateAccordionThemed(scope, palette) {
 
 function generateCarouselThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-carousel')] = {
+  rules[scopeSelector(scope, '.bw_carousel')] = {
     'background-color': palette.light.light
   };
-  rules[scopeSelector(scope, '.bw-carousel-indicator.active')] = {
+  rules[scopeSelector(scope, '.bw_carousel_indicator.active')] = {
     'background-color': palette.primary.base
+  };
+  rules[scopeSelector(scope, '.bw_carousel_control')] = {
+    'background-color': 'rgba(0,0,0,0.4)',
+    'color': '#fff'
+  };
+  rules[scopeSelector(scope, '.bw_carousel_control:hover')] = {
+    'background-color': 'rgba(0,0,0,0.6)'
+  };
+  rules[scopeSelector(scope, '.bw_carousel_caption')] = {
+    'background': 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+    'color': '#fff'
   };
   return rules;
 }
 
 function generateModalThemed(scope, palette, layout) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-modal-content')] = {
+  rules[scopeSelector(scope, '.bw_modal_content')] = {
     'background-color': '#fff',
     'border-color': palette.light.border,
     'box-shadow': layout.elevation.lg
   };
-  rules[scopeSelector(scope, '.bw-modal-header')] = {
+  rules[scopeSelector(scope, '.bw_modal_header')] = {
     'border-bottom-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-modal-footer')] = {
+  rules[scopeSelector(scope, '.bw_modal_footer')] = {
     'border-top-color': palette.light.border
   };
-  rules[scopeSelector(scope, '.bw-modal-title')] = {
+  rules[scopeSelector(scope, '.bw_modal_title')] = {
     'color': palette.dark.base
   };
   return rules;
@@ -1170,41 +1120,36 @@ function generateModalThemed(scope, palette, layout) {
 
 function generateToastThemed(scope, palette, layout) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-toast')] = {
+  rules[scopeSelector(scope, '.bw_toast')] = {
     'background-color': '#fff',
     'border-color': 'rgba(0,0,0,0.1)',
     'box-shadow': layout.elevation.lg
   };
-  rules[scopeSelector(scope, '.bw-toast-header')] = {
+  rules[scopeSelector(scope, '.bw_toast_header')] = {
     'border-bottom-color': 'rgba(0,0,0,0.05)'
   };
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info'];
-  variants.forEach(function(v) {
-    rules[scopeSelector(scope, '.bw-toast-' + v)] = {
-      'border-left': '4px solid ' + palette[v].base
-    };
-  });
+  // Variant toast borders handled by palette class
   return rules;
 }
 
 function generateDropdownThemed(scope, palette, layout) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-dropdown-menu')] = {
+  rules[scopeSelector(scope, '.bw_dropdown_menu')] = {
     'background-color': '#fff',
     'border-color': palette.light.border,
     'box-shadow': layout.elevation.md
   };
-  rules[scopeSelector(scope, '.bw-dropdown-item')] = {
+  rules[scopeSelector(scope, '.bw_dropdown_item')] = {
     'color': palette.dark.base
   };
-  rules[scopeSelector(scope, '.bw-dropdown-item:hover')] = {
+  rules[scopeSelector(scope, '.bw_dropdown_item:hover')] = {
     'color': palette.dark.hover,
     'background-color': palette.light.light
   };
-  rules[scopeSelector(scope, '.bw-dropdown-item.disabled')] = {
+  rules[scopeSelector(scope, '.bw_dropdown_item.disabled')] = {
     'color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-dropdown-divider')] = {
+  rules[scopeSelector(scope, '.bw_dropdown_divider')] = {
     'border-top-color': palette.light.border
   };
   return rules;
@@ -1212,15 +1157,15 @@ function generateDropdownThemed(scope, palette, layout) {
 
 function generateSwitchThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-form-switch .bw-switch-input')] = {
+  rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input')] = {
     'background-color': palette.secondary.base,
     'border-color': palette.secondary.base
   };
-  rules[scopeSelector(scope, '.bw-form-switch .bw-switch-input:checked')] = {
+  rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input:checked')] = {
     'background-color': palette.primary.base,
     'border-color': palette.primary.base
   };
-  rules[scopeSelector(scope, '.bw-form-switch .bw-switch-input:focus')] = {
+  rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input:focus')] = {
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
   };
   return rules;
@@ -1228,21 +1173,248 @@ function generateSwitchThemed(scope, palette) {
 
 function generateSkeletonThemed(scope, palette) {
   var rules = {};
-  rules[scopeSelector(scope, '.bw-skeleton')] = {
+  rules[scopeSelector(scope, '.bw_skeleton')] = {
     'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
   };
   return rules;
 }
 
-function generateAvatarThemed(scope, palette) {
+// generateAvatarThemed: removed — palette class on root handles variants
+
+function generateStatCardThemed(scope, palette) {
   var rules = {};
-  var variants = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-  variants.forEach(function(v) {
-    rules[scopeSelector(scope, '.bw-avatar-' + v)] = {
-      'background-color': palette[v].base,
-      'color': palette[v].textOn
+  // Variant border colors handled by palette class
+  rules[scopeSelector(scope, '.bw_stat_change_up')] = { 'color': palette.success.base };
+  rules[scopeSelector(scope, '.bw_stat_change_down')] = { 'color': palette.danger.base };
+  return rules;
+}
+
+function generateTimelineThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_timeline::before')] = { 'background-color': palette.light.border };
+  // Variant marker colors handled by palette class
+  rules[scopeSelector(scope, '.bw_timeline_date')] = { 'color': palette.secondary.base };
+  return rules;
+}
+
+function generateStepperThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_step_indicator')] = {
+    'background-color': palette.light.light,
+    'border': '2px solid ' + palette.light.border,
+    'color': palette.secondary.base
+  };
+  rules[scopeSelector(scope, '.bw_step + .bw_step::before')] = { 'background-color': palette.light.border };
+  rules[scopeSelector(scope, '.bw_step_active .bw_step_indicator')] = {
+    'background-color': palette.primary.base,
+    'color': palette.primary.textOn
+  };
+  rules[scopeSelector(scope, '.bw_step_active .bw_step_label')] = {
+    'color': palette.dark.base,
+    'font-weight': '600'
+  };
+  rules[scopeSelector(scope, '.bw_step_completed .bw_step_indicator')] = {
+    'background-color': palette.primary.base,
+    'color': palette.primary.textOn
+  };
+  rules[scopeSelector(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.primary.base };
+  rules[scopeSelector(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.primary.base };
+  return rules;
+}
+
+function generateChipInputThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_chip_input')] = { 'border-color': palette.light.border };
+  rules[scopeSelector(scope, '.bw_chip_input:focus-within')] = {
+    'border-color': palette.primary.base,
+    'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+  };
+  rules[scopeSelector(scope, '.bw_chip')] = {
+    'background-color': palette.light.light,
+    'color': palette.dark.base
+  };
+  rules[scopeSelector(scope, '.bw_chip_remove:hover')] = {
+    'color': palette.danger.base,
+    'background-color': palette.danger.light
+  };
+  return rules;
+}
+
+function generateFileUploadThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_file_upload')] = {
+    'border-color': palette.light.border,
+    'background-color': palette.light.light
+  };
+  rules[scopeSelector(scope, '.bw_file_upload:hover')] = {
+    'border-color': palette.primary.base,
+    'background-color': palette.primary.light
+  };
+  rules[scopeSelector(scope, '.bw_file_upload:focus')] = {
+    'outline': '2px solid ' + palette.primary.base,
+    'outline-offset': '2px'
+  };
+  rules[scopeSelector(scope, '.bw_file_upload.bw_file_upload_active')] = {
+    'border-color': palette.primary.base,
+    'background-color': palette.primary.light,
+    'border-style': 'solid'
+  };
+  return rules;
+}
+
+function generateRangeThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_range')] = { 'background-color': palette.light.border };
+  rules[scopeSelector(scope, '.bw_range::-webkit-slider-thumb')] = {
+    'background-color': palette.primary.base,
+    'border-color': '#fff',
+    'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
+    'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
+  };
+  rules[scopeSelector(scope, '.bw_range::-moz-range-thumb')] = {
+    'background-color': palette.primary.base,
+    'border-color': '#fff',
+    'box-shadow': '0 1px 3px rgba(0,0,0,0.2)'
+  };
+  return rules;
+}
+
+function generateSearchThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_search_clear:hover')] = { 'color': palette.dark.base };
+  return rules;
+}
+
+function generateCodeDemoThemed(scope, palette) {
+  var rules = {};
+  rules[scopeSelector(scope, '.bw_code_copy_btn_copied')] = {
+    'background': palette.success.base,
+    'color': palette.success.textOn,
+    'border-color': palette.success.base
+  };
+  rules[scopeSelector(scope, '.bw_copy_btn:hover')] = {
+    'background': 'rgba(255,255,255,0.2)',
+    'color': '#fff'
+  };
+  return rules;
+}
+
+function generateNavPillsThemed(scope, palette, layout) {
+  var rules = {};
+  var rd = layout.radius;
+  rules[scopeSelector(scope, '.bw_nav_pills .bw_nav_link')] = { 'border-radius': rd.btn };
+  return rules;
+}
+
+// =========================================================================
+// Palette classes — single-class theming for ALL components
+// =========================================================================
+
+/**
+ * Generate palette root classes. Each palette color (primary, secondary, etc.)
+ * gets ONE class that sets bg, text, and border. Components add this single
+ * class to their root element for variant styling. Component-specific overrides
+ * (e.g. alerts use light bg, toasts use border-left accent) are included.
+ *
+ * @param {string} scope - CSS scope class ('' for global)
+ * @param {Object} palette - From derivePalette()
+ * @returns {Object} CSS rules object
+ */
+function generatePaletteClasses(scope, palette) {
+  var rules = {};
+  var keys = Object.keys(palette);
+  keys.forEach(function(k) {
+    if (typeof palette[k] !== 'object') return;
+    var s = palette[k];
+
+    // --- Root palette class: sets default bg/color/border ---
+    rules[scopeSelector(scope, '.bw_' + k)] = {
+      'background-color': s.base,
+      'color': s.textOn,
+      'border-color': s.base
+    };
+
+    // --- Pseudo-states (shared across all components) ---
+    rules[scopeSelector(scope, '.bw_' + k + ':hover')] = {
+      'background-color': s.hover,
+      'border-color': s.active
+    };
+    rules[scopeSelector(scope, '.bw_' + k + ':active')] = {
+      'background-color': s.active
+    };
+    rules[scopeSelector(scope, '.bw_' + k + ':focus-visible')] = {
+      'box-shadow': '0 0 0 3px ' + s.focus,
+      'outline': 'none'
+    };
+
+    // --- Component-specific overrides ---
+
+    // Alerts: light bg, dark text, subtle border
+    rules[scopeSelector(scope, '.bw_alert.bw_' + k)] = {
+      'background-color': s.light,
+      'color': s.darkText,
+      'border-color': s.border
+    };
+
+    // Toast: inherit bg, left border accent
+    rules[scopeSelector(scope, '.bw_toast.bw_' + k)] = {
+      'background-color': 'inherit',
+      'color': 'inherit',
+      'border-left': '4px solid ' + s.base
+    };
+
+    // Stat card: inherit bg, left border accent
+    rules[scopeSelector(scope, '.bw_stat_card.bw_' + k)] = {
+      'background-color': 'inherit',
+      'color': 'inherit',
+      'border-left-color': s.base
+    };
+
+    // Card accent: left border accent, inherit bg
+    rules[scopeSelector(scope, '.bw_card.bw_' + k)] = {
+      'background-color': 'inherit',
+      'color': 'inherit',
+      'border-left': '4px solid ' + s.base
+    };
+
+    // Timeline marker: colored dot
+    rules[scopeSelector(scope, '.bw_timeline_marker.bw_' + k)] = {
+      'box-shadow': '0 0 0 2px ' + s.base
+    };
+
+    // Spinner: text color only, transparent bg
+    rules[scopeSelector(scope, '.bw_spinner_border.bw_' + k + ',\n' + scopeSelector(scope, '.bw_spinner_grow.bw_' + k))] = {
+      'background-color': 'transparent',
+      'color': s.base,
+      'border-color': 'currentColor'
+    };
+
+    // Outline button: transparent bg, colored border+text, solid on hover
+    rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k)] = {
+      'background-color': 'transparent',
+      'color': s.base,
+      'border-color': s.base
+    };
+    rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
+      'background-color': s.base,
+      'color': s.textOn
+    };
+
+    // Hero: gradient background
+    rules[scopeSelector(scope, '.bw_hero.bw_' + k)] = {
+      'background': 'linear-gradient(135deg, ' + s.base + ' 0%, ' + s.hover + ' 100%)',
+      'color': s.textOn
+    };
+
+    // Progress bar: white text on colored bg (default is fine, just ensure text)
+    rules[scopeSelector(scope, '.bw_progress_bar.bw_' + k)] = {
+      'color': '#fff'
     };
   });
+
+  // Text muted
+  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
+
   return rules;
 }
 
@@ -1261,7 +1433,6 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateTypographyThemed(scopeName, palette, layout),
     generateButtons(scopeName, palette, layout),
     generateAlerts(scopeName, palette, layout),
-    generateBadges(scopeName, palette),
     generateCards(scopeName, palette, layout),
     generateForms(scopeName, palette, layout),
     generateNavigation(scopeName, palette),
@@ -1270,9 +1441,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateListGroups(scopeName, palette, layout),
     generatePagination(scopeName, palette),
     generateProgress(scopeName, palette),
-    generateHero(scopeName, palette),
     generateBreadcrumbThemed(scopeName, palette),
-    generateSpinnerThemed(scopeName, palette),
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
     generateAccordionThemed(scopeName, palette),
@@ -1282,864 +1451,974 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateDropdownThemed(scopeName, palette, layout),
     generateSwitchThemed(scopeName, palette),
     generateSkeletonThemed(scopeName, palette),
-    generateAvatarThemed(scopeName, palette),
-    generateUtilityColors(scopeName, palette)
+    generateStatCardThemed(scopeName, palette),
+    generateTimelineThemed(scopeName, palette),
+    generateStepperThemed(scopeName, palette),
+    generateChipInputThemed(scopeName, palette),
+    generateFileUploadThemed(scopeName, palette),
+    generateRangeThemed(scopeName, palette),
+    generateSearchThemed(scopeName, palette),
+    generateCodeDemoThemed(scopeName, palette),
+    generateNavPillsThemed(scopeName, palette, layout),
+    generatePaletteClasses(scopeName, palette)
   );
 }
 
 // =========================================================================
-// Static structural styles (unchanged, color-independent)
+// structuralRules — static CSS that never changes regardless of theme
+// =========================================================================
+//
+// Architecture (v2.0.15 refactor):
+//
+//   structuralRules = { category: { selector: { prop: value } } }
+//     Pure data — display, flex, position, overflow, cursor, z-index, etc.
+//     NEVER contains colors, backgrounds, shadows, or border-colors.
+//
+//   generate*Themed(scope, palette, layout)
+//     Computes all configurable CSS: colors from palette, padding from
+//     spacing presets, border-radius from radius presets, box-shadow from
+//     elevation presets, transitions from motion presets.
+//
+//   getStructuralStyles()  → flattens structuralRules + underscore aliases
+//   getAllStyles()          → merge(getStructuralCSS(), generateThemedCSS())
+//   defaultStyles           → backward-compat categorized view
+//
+// Adding a new BCCL component = add a category to structuralRules +
+// a generate*Themed() function. That's it.
 // =========================================================================
 
-/**
- * Complete default style definitions organized by component category
- *
- * Each property is a style category containing CSS rule objects.
- * Pass individual categories to bw.css() or use getAllStyles() to
- * get everything merged into a single flat object.
- *
- * @type {Object}
- */
-const defaultStyles = {
-  /**
-   * 12-column flexbox grid system
-   */
-  grid: {
-    '.bw-container': {
-      'width': '100%',
-      'padding-right': '0.75rem',
-      'padding-left': '0.75rem',
-      'margin-right': 'auto',
-      'margin-left': 'auto'
+var structuralRules = {
+  // ---- Reset ----
+  base: {
+    '*': { 'box-sizing': 'border-box', 'margin': '0', 'padding': '0' },
+    'html': {
+      'font-size': '16px', 'line-height': '1.5',
+      '-webkit-text-size-adjust': '100%',
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale'
     },
-    '@media (min-width: 576px)': {
-      '.bw-container': { 'max-width': '540px' }
+    'body': {
+      'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      'font-size': '1rem', 'font-weight': '400', 'line-height': '1.6',
+      'margin': '0', 'padding': '0',
+      '-webkit-font-smoothing': 'antialiased',
+      '-moz-osx-font-smoothing': 'grayscale'
     },
-    '@media (min-width: 768px)': {
-      '.bw-container': { 'max-width': '720px' }
-    },
-    '@media (min-width: 992px)': {
-      '.bw-container': { 'max-width': '960px' }
-    },
-    '@media (min-width: 1200px)': {
-      '.bw-container': { 'max-width': '1140px' }
-    },
-    '.bw-container-fluid': {
-      'width': '100%',
-      'padding-right': '15px',
-      'padding-left': '15px',
-      'margin-right': 'auto',
-      'margin-left': 'auto'
-    },
-
-    '.bw-row': {
-      'display': 'flex',
-      'flex-wrap': 'wrap',
-      'margin-right': 'calc(var(--bw-gutter-x, 0.75rem) * -0.5)',
-      'margin-left': 'calc(var(--bw-gutter-x, 0.75rem) * -0.5)'
-    },
-
-    // Column system
-    '.col, [class*="col-"]': {
-      'position': 'relative',
-      'width': '100%',
-      'padding-right': 'calc(var(--bw-gutter-x, 0.75rem) * 0.5)',
-      'padding-left': 'calc(var(--bw-gutter-x, 0.75rem) * 0.5)'
-    },
-    '.bw-col': {
-      'flex': '1 0 0%'
-    },
-    '.bw-col': {
-      'flex-basis': '0',
-      'flex-grow': '1',
-      'max-width': '100%'
-    },
-
-    // Column sizes
-    '.bw-col-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-    '.bw-col-2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-    '.bw-col-3': { 'flex': '0 0 25%', 'max-width': '25%' },
-    '.bw-col-4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-    '.bw-col-5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-    '.bw-col-6': { 'flex': '0 0 50%', 'max-width': '50%' },
-    '.bw-col-7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-    '.bw-col-8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-    '.bw-col-9': { 'flex': '0 0 75%', 'max-width': '75%' },
-    '.bw-col-10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-    '.bw-col-11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-    '.bw-col-12': { 'flex': '0 0 100%', 'max-width': '100%' }
+    '.bw_page': { 'min-height': '100vh', 'display': 'flex', 'flex-direction': 'column' },
+    '.bw_page_content': { 'flex': '1', 'padding': '2rem 0' },
+    'main': { 'display': 'block' },
+    'hr': { 'box-sizing': 'content-box', 'height': '0', 'overflow': 'visible', 'margin': '1rem 0', 'border': '0' },
+    'hr:not([size])': { 'height': '1px' }
   },
 
-  /**
-   * Responsive grid columns
-   */
+  // ---- Typography ----
+  typography: {
+    'h1, h2, h3, h4, h5, h6': {
+      'margin-top': '0', 'margin-bottom': '.5rem', 'font-weight': '600',
+      'line-height': '1.25', 'letter-spacing': '-0.01em'
+    },
+    'h1': { 'font-size': 'calc(1.375rem + 1.5vw)' },
+    'h2': { 'font-size': 'calc(1.325rem + .9vw)' },
+    'h3': { 'font-size': 'calc(1.3rem + .6vw)' },
+    'h4': { 'font-size': 'calc(1.275rem + .3vw)' },
+    'h5': { 'font-size': '1.25rem' },
+    'h6': { 'font-size': '1rem' },
+    'p': { 'margin-top': '0', 'margin-bottom': '1rem' },
+    'small': { 'font-size': '0.875rem' },
+    'a': { 'text-decoration': 'none' },
+    '.bw_display_4': { 'font-size': 'calc(1.475rem + 2.7vw)', 'font-weight': '300', 'line-height': '1.2' },
+    '.bw_lead': { 'font-size': '1.25rem', 'font-weight': '300' },
+    '.bw_h5': { 'font-size': '1.25rem' },
+    '.bw_h6': { 'font-size': '1rem' }
+  },
+
+  // ---- Grid ----
+  grid: {
+    '.bw_container': {
+      'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
+      'margin-right': 'auto', 'margin-left': 'auto'
+    },
+    '@media (min-width: 576px)': { '.bw_container': { 'max-width': '540px' } },
+    '@media (min-width: 768px)': { '.bw_container': { 'max-width': '720px' } },
+    '@media (min-width: 992px)': { '.bw_container': { 'max-width': '960px' } },
+    '@media (min-width: 1200px)': { '.bw_container': { 'max-width': '1140px' } },
+    '.bw_container_fluid': {
+      'width': '100%', 'padding-right': '15px', 'padding-left': '15px',
+      'margin-right': 'auto', 'margin-left': 'auto'
+    },
+    '.bw_row': {
+      'display': 'flex', 'flex-wrap': 'wrap',
+      'margin-right': 'calc(var(--bw_gutter_x, 0.75rem) * -0.5)',
+      'margin-left': 'calc(var(--bw_gutter_x, 0.75rem) * -0.5)'
+    },
+    '.col, [class*="col-"]': {
+      'position': 'relative', 'width': '100%',
+      'padding-right': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)',
+      'padding-left': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)'
+    },
+    '.bw_col': { 'flex-basis': '0', 'flex-grow': '1', 'max-width': '100%' },
+    '.bw_col_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
+    '.bw_col_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
+    '.bw_col_3': { 'flex': '0 0 25%', 'max-width': '25%' },
+    '.bw_col_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
+    '.bw_col_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
+    '.bw_col_6': { 'flex': '0 0 50%', 'max-width': '50%' },
+    '.bw_col_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
+    '.bw_col_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
+    '.bw_col_9': { 'flex': '0 0 75%', 'max-width': '75%' },
+    '.bw_col_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
+    '.bw_col_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
+    '.bw_col_12': { 'flex': '0 0 100%', 'max-width': '100%' }
+  },
+
+  // ---- Buttons ----
+  buttons: {
+    '.bw_btn': {
+      'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
+      'font-weight': '500', 'line-height': '1.5', 'text-align': 'center',
+      'text-decoration': 'none', 'vertical-align': 'middle', 'cursor': 'pointer',
+      'user-select': 'none', 'border': '1px solid transparent',
+      'font-size': '0.875rem', 'font-family': 'inherit', 'gap': '0.5rem'
+    },
+    '.bw_btn:hover': { 'text-decoration': 'none', 'transform': 'translateY(-1px)' },
+    '.bw_btn:active': { 'transform': 'translateY(0)' },
+    '.bw_btn:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '2px' },
+    '.bw_btn:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed', 'pointer-events': 'none' },
+    '.bw_btn_block': { 'display': 'block', 'width': '100%' }
+  },
+
+  // ---- Cards ----
+  cards: {
+    '.bw_card': {
+      'position': 'relative', 'display': 'flex', 'flex-direction': 'column',
+      'min-width': '0', 'height': '100%', 'word-wrap': 'break-word',
+      'background-clip': 'border-box', 'margin-bottom': '1.5rem', 'overflow': 'hidden'
+    },
+    '.bw_card_body': { 'flex': '1 1 auto' },
+    '.bw_card_body > *:last-child': { 'margin-bottom': '0' },
+    '.bw_card_title': { 'margin-bottom': '0.5rem', 'font-size': '1.125rem', 'font-weight': '600', 'line-height': '1.3' },
+    '.bw_card_text': { 'margin-bottom': '0', 'font-size': '0.9375rem', 'line-height': '1.6' },
+    '.bw_card_header': { 'margin-bottom': '0', 'font-weight': '600', 'font-size': '0.875rem' },
+    '.bw_card_footer': { 'font-size': '0.875rem' },
+    '.bw_card_hoverable': { 'transition': 'all 0.3s ease-out' },
+    '.bw_card_hoverable:hover': { 'transform': 'translateY(-4px)' },
+    '.bw_card_img_top': { 'width': '100%' },
+    '.bw_card_img_bottom': { 'width': '100%' },
+    '.bw_card_img_left': { 'width': '40%', 'object-fit': 'cover' },
+    '.bw_card_img_right': { 'width': '40%', 'object-fit': 'cover' },
+    '.bw_card_subtitle, .card-subtitle': { 'margin-top': '-0.25rem', 'margin-bottom': '0.5rem', 'font-size': '0.875rem' }
+  },
+
+  // ---- Forms ----
+  forms: {
+    '.bw_form_control': {
+      'display': 'block', 'width': '100%',
+      'font-size': '0.9375rem', 'font-weight': '400', 'line-height': '1.5',
+      'background-clip': 'padding-box', 'appearance': 'none',
+      'border': '1px solid transparent', 'font-family': 'inherit'
+    },
+    '.bw_form_control:focus': { 'outline': '2px solid currentColor', 'outline-offset': '-1px' },
+    '.bw_form_control::placeholder': { 'opacity': '1' },
+    '.bw_form_label': { 'display': 'block', 'margin-bottom': '0.375rem', 'font-size': '0.875rem', 'font-weight': '600' },
+    '.bw_form_group': { 'margin-bottom': '1.25rem' },
+    '.bw_form_text': { 'margin-top': '0.25rem', 'font-size': '0.8125rem' },
+    'select.bw_form_control': {
+      'padding-right': '2.25rem',
+      'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
+      'background-repeat': 'no-repeat', 'background-position': 'right 0.75rem center',
+      'background-size': '16px 12px'
+    },
+    'textarea.bw_form_control': { 'min-height': '5rem', 'resize': 'vertical' },
+    '.bw_valid_feedback': { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' },
+    '.bw_invalid_feedback': { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' }
+  },
+
+  // ---- Form checks ----
+  formChecks: {
+    '.bw_form_check': { 'display': 'flex', 'align-items': 'center', 'gap': '0.5rem', 'min-height': '1.5rem', 'margin-bottom': '0.25rem' },
+    '.bw_form_check_input': { 'width': '1rem', 'height': '1rem', 'margin': '0', 'cursor': 'pointer', 'flex-shrink': '0', 'border-radius': '0.25rem', 'appearance': 'auto' },
+    '.bw_form_check_input:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed' },
+    '.bw_form_check_label': { 'cursor': 'pointer', 'user-select': 'none', 'font-size': '0.9375rem' }
+  },
+
+  // ---- Navigation ----
+  navigation: {
+    '.bw_navbar': {
+      'position': 'relative', 'display': 'flex', 'flex-wrap': 'wrap',
+      'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 1.5rem'
+    },
+    '.bw_navbar > .bw_container, .bw_navbar > .container': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' },
+    '.bw_navbar_brand': {
+      'display': 'inline-flex', 'align-items': 'center', 'gap': '0.5rem',
+      'padding-top': '0.25rem', 'padding-bottom': '0.25rem', 'margin-right': '1.5rem',
+      'font-size': '1.125rem', 'font-weight': '600', 'line-height': 'inherit',
+      'white-space': 'nowrap', 'text-decoration': 'none'
+    },
+    '.bw_navbar_nav': {
+      'display': 'flex', 'flex-direction': 'row', 'padding-left': '0',
+      'margin-bottom': '0', 'list-style': 'none', 'gap': '0.25rem'
+    },
+    '.bw_navbar_nav .bw_nav_link': {
+      'display': 'block', 'text-decoration': 'none',
+      'font-size': '0.875rem', 'font-weight': '500'
+    }
+  },
+
+  // ---- Tables ----
+  tables: {
+    '.bw_table': {
+      'width': '100%', 'margin-bottom': '1.5rem', 'vertical-align': 'top',
+      'border-collapse': 'collapse', 'font-size': '0.9375rem', 'line-height': '1.5'
+    },
+    '.bw_table > :not(caption) > * > *': {
+      'background-color': 'transparent',
+      'border-bottom-width': '1px', 'border-bottom-style': 'solid'
+    },
+    '.bw_table > tbody': { 'vertical-align': 'inherit' },
+    '.bw_table > thead': { 'vertical-align': 'bottom' },
+    '.bw_table > thead > tr > *': {
+      'font-size': '0.8125rem', 'font-weight': '600',
+      'text-transform': 'uppercase', 'letter-spacing': '0.04em',
+      'border-bottom-width': '2px'
+    },
+    '.bw_table caption': { 'font-size': '0.875rem', 'caption-side': 'bottom' },
+    '.bw_table_bordered > :not(caption) > * > *': { 'border-width': '1px', 'border-style': 'solid' },
+    '.bw_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' }
+  },
+
+  // ---- Alerts ----
+  alerts: {
+    '.bw_alert': {
+      'position': 'relative', 'margin-bottom': '1rem',
+      'border': '1px solid transparent',
+      'font-size': '0.9375rem', 'line-height': '1.6'
+    },
+    '.bw_alert_heading, .alert-heading': { 'color': 'inherit' },
+    '.bw_alert_link, .alert-link': { 'font-weight': '700' },
+    '.bw_alert_dismissible': { 'padding-right': '3rem' },
+    '.bw_alert_dismissible .btn-close': { 'position': 'absolute', 'top': '0', 'right': '0', 'z-index': '2', 'padding': '1.25rem 1rem' }
+  },
+
+  // ---- Badges ----
+  badges: {
+    '.bw_badge': {
+      'display': 'inline-block', 'font-size': '0.875rem',
+      'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
+      'white-space': 'nowrap', 'vertical-align': 'baseline'
+    },
+    '.bw_badge:empty': { 'display': 'none' },
+    '.bw_badge_sm': { 'font-size': '0.75rem', 'padding': '0.25rem 0.5rem' },
+    '.bw_badge_lg': { 'font-size': '1rem', 'padding': '0.5rem 0.875rem' },
+    '.bw_badge_pill': { 'border-radius': '50rem' },
+    '.btn .badge': { 'position': 'relative', 'top': '-1px' }
+  },
+
+  // ---- Progress ----
+  progress: {
+    '.bw_progress': { 'display': 'flex', 'height': '1.25rem', 'overflow': 'hidden', 'font-size': '.875rem' },
+    '.bw_progress_bar': {
+      'display': 'flex', 'flex-direction': 'column', 'justify-content': 'center',
+      'overflow': 'hidden', 'text-align': 'center', 'white-space': 'nowrap', 'font-weight': '600'
+    },
+    '.bw_progress_bar_striped': {
+      'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
+      'background-size': '1rem 1rem'
+    },
+    '.bw_progress_bar_animated': { 'animation': 'progress-bar-stripes 1s linear infinite' },
+    '@keyframes progress-bar-stripes': { '0%': { 'background-position-x': '1rem' } }
+  },
+
+  // ---- Tabs ----
+  tabs: {
+    '.bw_nav': { 'display': 'flex', 'flex-wrap': 'wrap', 'padding-left': '0', 'margin-bottom': '0', 'list-style': 'none', 'gap': '0' },
+    '.bw_nav_item': { 'display': 'block' },
+    '.bw_nav_tabs .bw_nav_item': { 'margin-bottom': '-2px' },
+    '.bw_nav_link': {
+      'display': 'block', 'font-size': '0.875rem', 'font-weight': '500',
+      'text-decoration': 'none', 'cursor': 'pointer',
+      'border': 'none', 'background': 'transparent', 'font-family': 'inherit'
+    },
+    '.bw_nav_tabs .bw_nav_link': { 'border': 'none', 'border-bottom': '2px solid transparent', 'border-radius': '0', 'background-color': 'transparent' },
+    '.bw_nav_vertical': { 'flex-direction': 'column' },
+    '.bw_tab_content': { 'padding': '1.25rem 0' },
+    '.bw_tab_pane': { 'display': 'none' },
+    '.bw_tab_pane.active': { 'display': 'block' },
+    '.bw_nav_scrollable': { 'flex-wrap': 'nowrap', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch', 'scrollbar-width': 'none' },
+    '.bw_nav_scrollable::-webkit-scrollbar': { 'display': 'none' },
+    '.bw_nav_scrollable .bw_nav_link': { 'white-space': 'nowrap' }
+  },
+
+  // ---- List groups ----
+  listGroups: {
+    '.bw_list_group': { 'display': 'flex', 'flex-direction': 'column', 'padding-left': '0', 'margin-bottom': '0' },
+    '.bw_list_group_item': { 'position': 'relative', 'display': 'block', 'text-decoration': 'none', 'font-size': '0.9375rem' },
+    '.bw_list_group_item:first-child': { 'border-top-left-radius': 'inherit', 'border-top-right-radius': 'inherit' },
+    '.bw_list_group_item:last-child': { 'border-bottom-right-radius': 'inherit', 'border-bottom-left-radius': 'inherit' },
+    '.bw_list_group_item + .bw_list_group_item': { 'border-top-width': '0' },
+    '.bw_list_group_item.disabled': { 'pointer-events': 'none' },
+    'a.bw_list_group_item': { 'cursor': 'pointer' },
+    'a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible': { 'z-index': '2', 'outline': '2px solid currentColor', 'outline-offset': '-2px' },
+    '.bw_list_group_flush': { 'border-radius': '0' },
+    '.bw_list_group_flush > .bw_list_group_item': { 'border-width': '0 0 1px', 'border-radius': '0' },
+    '.bw_list_group_flush > .bw_list_group_item:last-child': { 'border-bottom-width': '0' }
+  },
+
+  // ---- Pagination ----
+  pagination: {
+    '.bw_pagination': { 'display': 'flex', 'padding-left': '0', 'list-style': 'none', 'margin-bottom': '0' },
+    '.bw_page_item': { 'display': 'list-item', 'list-style': 'none' },
+    '.bw_page_link': {
+      'position': 'relative', 'display': 'block', 'padding': '0.375rem 0.75rem',
+      'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none'
+    },
+    '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0', 'border-top-left-radius': '0.375rem', 'border-bottom-left-radius': '0.375rem' },
+    '.bw_page_item:last-child .bw_page_link': { 'border-top-right-radius': '0.375rem', 'border-bottom-right-radius': '0.375rem' },
+    '.bw_page_link:focus-visible': { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' }
+  },
+
+  // ---- Breadcrumb ----
+  breadcrumb: {
+    '.bw_breadcrumb': { 'display': 'flex', 'flex-wrap': 'wrap', 'padding': '0 0', 'margin-bottom': '1rem', 'list-style': 'none' },
+    '.bw_breadcrumb_item': { 'display': 'flex' },
+    '.bw_breadcrumb_item + .bw_breadcrumb_item': { 'padding-left': '0.5rem' },
+    '.bw_breadcrumb_item + .bw_breadcrumb_item::before': { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' },
+    '.bw_breadcrumb_item a': { 'text-decoration': 'none' },
+    '.bw_breadcrumb_item.active': { 'font-weight': '500' }
+  },
+
+  // ---- Hero ----
+  hero: {
+    '.bw_hero': { 'position': 'relative', 'overflow': 'hidden' },
+    '.bw_hero_overlay': { 'position': 'absolute', 'top': '0', 'left': '0', 'right': '0', 'bottom': '0', 'z-index': '1' },
+    '.bw_hero_content': { 'position': 'relative', 'z-index': '2' },
+    '.bw_hero_title': { 'font-weight': '300', 'letter-spacing': '-0.05rem', 'color': 'inherit' },
+    '.bw_hero_subtitle': { 'color': 'inherit' },
+    '.bw_hero_actions': { 'display': 'flex', 'gap': '1rem', 'justify-content': 'center', 'flex-wrap': 'wrap' }
+  },
+
+  // ---- Features ----
+  features: {
+    '.bw_feature': { 'padding': '1rem' },
+    '.bw_feature_icon': { 'display': 'inline-block', 'margin-bottom': '1rem' },
+    '.bw_feature_title': { 'margin-bottom': '0.5rem' },
+    '.bw_feature_grid': { 'width': '100%' },
+    '.bw_g_4': { '--bw_gutter_x': '1.5rem', '--bw_gutter_y': '1.5rem' }
+  },
+
+  // ---- Sections ----
+  sections: {
+    '.bw_section': { 'position': 'relative' },
+    '.bw_section_header': { 'margin-bottom': '3rem' },
+    '.bw_section_title': { 'margin-bottom': '1rem', 'font-weight': '300', 'font-size': 'calc(1.325rem + .9vw)' }
+  },
+
+  // ---- CTA ----
+  cta: {
+    '.bw_cta': { 'position': 'relative' },
+    '.bw_cta_content': { 'max-width': '48rem', 'margin': '0 auto' },
+    '.bw_cta_title': { 'font-weight': '300' },
+    '.bw_cta_actions': { 'display': 'flex', 'gap': '1rem', 'justify-content': 'center', 'flex-wrap': 'wrap' }
+  },
+
+  // ---- Spinner ----
+  spinner: {
+    '.bw_spinner_border': {
+      'display': 'inline-block', 'width': '2rem', 'height': '2rem',
+      'vertical-align': '-0.125em', 'border': '0.25em solid currentcolor',
+      'border-right-color': 'transparent', 'border-radius': '50%',
+      'animation': 'bw_spinner_border 0.75s linear infinite'
+    },
+    '.bw_spinner_border_sm': { 'width': '1rem', 'height': '1rem', 'border-width': '0.2em' },
+    '.bw_spinner_border_lg': { 'width': '3rem', 'height': '3rem', 'border-width': '0.3em' },
+    '.bw_spinner_border_md': {},
+    '.bw_spinner_grow': {
+      'display': 'inline-block', 'width': '2rem', 'height': '2rem',
+      'vertical-align': '-0.125em', 'border-radius': '50%', 'opacity': '0',
+      'animation': 'bw_spinner_grow 0.75s linear infinite'
+    },
+    '.bw_spinner_grow_sm': { 'width': '1rem', 'height': '1rem' },
+    '.bw_spinner_grow_lg': { 'width': '3rem', 'height': '3rem' },
+    '.bw_spinner_grow_md': {},
+    '@keyframes bw_spinner_border': { '100%': { 'transform': 'rotate(360deg)' } },
+    '@keyframes bw_spinner_grow': { '0%': { 'transform': 'scale(0)' }, '50%': { 'opacity': '1', 'transform': 'none' } },
+    '.bw_visually_hidden': {
+      'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
+      'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0, 0, 0, 0)',
+      'white-space': 'nowrap', 'border': '0'
+    }
+  },
+
+  // ---- Close button ----
+  closeButton: {
+    '.bw_close': {
+      'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
+      'width': '1.5rem', 'height': '1.5rem', 'padding': '0',
+      'font-size': '1.25rem', 'font-weight': '700', 'line-height': '1',
+      'background': 'transparent', 'border': '0', 'border-radius': '0.25rem', 'cursor': 'pointer'
+    },
+    '.bw_close:hover': { 'opacity': '0.75' }
+  },
+
+  // ---- Stacks ----
+  stacks: {
+    '.bw_vstack': { 'display': 'flex', 'flex-direction': 'column' },
+    '.bw_hstack': { 'display': 'flex', 'flex-direction': 'row', 'align-items': 'center' },
+    '.bw_gap_0': { 'gap': '0' },
+    '.bw_gap_1': { 'gap': '0.25rem' },
+    '.bw_gap_2': { 'gap': '0.5rem' },
+    '.bw_gap_3': { 'gap': '1rem' },
+    '.bw_gap_4': { 'gap': '1.5rem' },
+    '.bw_gap_5': { 'gap': '3rem' }
+  },
+
+  // ---- Offsets ----
+  offsets: {
+    '.bw_offset_1': { 'margin-left': '8.333333%' },
+    '.bw_offset_2': { 'margin-left': '16.666667%' },
+    '.bw_offset_3': { 'margin-left': '25%' },
+    '.bw_offset_4': { 'margin-left': '33.333333%' },
+    '.bw_offset_5': { 'margin-left': '41.666667%' },
+    '.bw_offset_6': { 'margin-left': '50%' },
+    '.bw_offset_7': { 'margin-left': '58.333333%' },
+    '.bw_offset_8': { 'margin-left': '66.666667%' },
+    '.bw_offset_9': { 'margin-left': '75%' },
+    '.bw_offset_10': { 'margin-left': '83.333333%' },
+    '.bw_offset_11': { 'margin-left': '91.666667%' }
+  },
+
+  // ---- Code demo ----
+  codeDemo: {
+    '.bw_code_demo': { 'margin-bottom': '2rem' },
+    '.bw_code_pre': { 'margin': '0', 'border': 'none', 'overflow-x': 'auto' },
+    '.bw_code_block': {
+      'display': 'block', 'padding': '1.25rem',
+      'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
+      'font-size': '0.8125rem', 'line-height': '1.6'
+    },
+    '.bw_code_copy_btn': {
+      'position': 'absolute', 'top': '0.5rem', 'right': '0.5rem',
+      'padding': '0.25rem 0.625rem', 'font-size': '0.6875rem',
+      'cursor': 'pointer', 'font-family': 'inherit'
+    },
+    '.bw_copy_btn': {
+      'position': 'absolute', 'top': '0.5rem', 'right': '0.5rem',
+      'padding': '0.25rem 0.625rem', 'font-size': '0.6875rem',
+      'cursor': 'pointer', 'font-family': 'inherit'
+    }
+  },
+
+  // ---- Button group ----
+  buttonGroup: {
+    '.bw_btn_group, .bw_btn_group_vertical': { 'position': 'relative', 'display': 'inline-flex', 'vertical-align': 'middle' },
+    '.bw_btn_group > .bw_btn, .bw_btn_group_vertical > .bw_btn': { 'position': 'relative', 'flex': '1 1 auto', 'border-radius': '0', 'margin-left': '-1px' },
+    '.bw_btn_group > .bw_btn:first-child': { 'margin-left': '0' },
+    '.bw_btn_group > .bw_btn:last-child': {},
+    '.bw_btn_group_lg > .bw_btn': { 'padding': '0.625rem 1.5rem', 'font-size': '1rem' },
+    '.bw_btn_group_sm > .bw_btn': { 'padding': '0.25rem 0.75rem', 'font-size': '0.8125rem' },
+    '.bw_btn_group_vertical': { 'flex-direction': 'column', 'align-items': 'flex-start', 'justify-content': 'center' },
+    '.bw_btn_group_vertical > .bw_btn': { 'width': '100%', 'margin-left': '0', 'margin-top': '-1px' },
+    '.bw_btn_group_vertical > .bw_btn:first-child': { 'margin-top': '0' },
+    '.bw_btn_group_vertical > .bw_btn:last-child': {}
+  },
+
+  // ---- Accordion ----
+  accordion: {
+    '.bw_accordion': { 'overflow': 'hidden' },
+    '.bw_accordion_item': { 'border': '1px solid transparent' },
+    '.bw_accordion_item + .bw_accordion_item': { 'border-top': '0' },
+    '.bw_accordion_header': { 'margin': '0' },
+    '.bw_accordion_button': {
+      'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
+      'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
+      'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
+      'font-family': 'inherit'
+    },
+    '.bw_accordion_button::after': {
+      'flex-shrink': '0', 'width': '1.25rem', 'height': '1.25rem', 'margin-left': 'auto',
+      'content': '""',
+      'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
+      'background-repeat': 'no-repeat', 'background-size': '1.25rem'
+    },
+    '.bw_accordion_button:not(.bw_collapsed)::after': { 'transform': 'rotate(-180deg)' },
+    '.bw_accordion_collapse': { 'max-height': '0', 'overflow': 'hidden' },
+    '.bw_accordion_collapse.bw_collapse_show': { 'max-height': 'none' },
+    '.bw_accordion_item:first-child': { 'border-top-left-radius': '8px', 'border-top-right-radius': '8px' },
+    '.bw_accordion_item:last-child': { 'border-bottom-left-radius': '8px', 'border-bottom-right-radius': '8px' }
+  },
+
+  // ---- Carousel ----
+  carousel: {
+    '.bw_carousel': { 'position': 'relative', 'overflow': 'hidden' },
+    '.bw_carousel_track': { 'display': 'flex', 'height': '100%' },
+    '.bw_carousel_slide': {
+      'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden',
+      'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center'
+    },
+    '.bw_carousel_slide img': { 'width': '100%', 'height': '100%', 'object-fit': 'cover' },
+    '.bw_carousel_caption': { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem', 'font-size': '0.875rem' },
+    '.bw_carousel_control': {
+      'position': 'absolute', 'top': '50%', 'transform': 'translateY(-50%)',
+      'width': '40px', 'height': '40px', 'border': 'none', 'border-radius': '50%',
+      'cursor': 'pointer', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+      'z-index': '2', 'padding': '0'
+    },
+    '.bw_carousel_control img': { 'width': '20px', 'height': '20px', 'pointer-events': 'none' },
+    '.bw_carousel_control_prev': { 'left': '10px' },
+    '.bw_carousel_control_next': { 'right': '10px' },
+    '.bw_carousel_indicators': {
+      'position': 'absolute', 'bottom': '12px', 'left': '50%', 'transform': 'translateX(-50%)',
+      'display': 'flex', 'gap': '6px', 'z-index': '2'
+    },
+    '.bw_carousel_indicator': {
+      'width': '10px', 'height': '10px', 'border-radius': '50%', 'border': '2px solid transparent',
+      'padding': '0', 'cursor': 'pointer'
+    },
+    '.bw_carousel_indicator:hover': { 'opacity': '0.8' }
+  },
+
+  // ---- Modal ----
+  modal: {
+    '.bw_modal': {
+      'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+      'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
+      'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto',
+      'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none'
+    },
+    '.bw_modal.bw_modal_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
+    '.bw_modal_dialog': {
+      'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
+      'pointer-events': 'none'
+    },
+    '.bw_modal.bw_modal_show .bw_modal_dialog': { 'transform': 'translateY(0)' },
+    '.bw_modal_sm': { 'max-width': '300px' },
+    '.bw_modal_lg': { 'max-width': '800px' },
+    '.bw_modal_xl': { 'max-width': '1140px' },
+    '.bw_modal_content': {
+      'position': 'relative', 'display': 'flex', 'flex-direction': 'column', 'pointer-events': 'auto',
+      'background-clip': 'padding-box', 'border': '1px solid transparent', 'outline': '0'
+    },
+    '.bw_modal_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between' },
+    '.bw_modal_title': { 'margin': '0', 'font-size': '1.25rem', 'font-weight': '600', 'line-height': '1.3' },
+    '.bw_modal_body': { 'position': 'relative', 'flex': '1 1 auto' },
+    '.bw_modal_footer': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'gap': '0.5rem' }
+  },
+
+  // ---- Toast ----
+  toast: {
+    '.bw_toast_container': {
+      'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
+      'display': 'flex', 'flex-direction': 'column', 'gap': '0.5rem', 'padding': '1rem'
+    },
+    '.bw_toast_container.bw_toast_top_right': { 'top': '0', 'right': '0' },
+    '.bw_toast_container.bw_toast_top_left': { 'top': '0', 'left': '0' },
+    '.bw_toast_container.bw_toast_bottom_right': { 'bottom': '0', 'right': '0' },
+    '.bw_toast_container.bw_toast_bottom_left': { 'bottom': '0', 'left': '0' },
+    '.bw_toast_container.bw_toast_top_center': { 'top': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
+    '.bw_toast_container.bw_toast_bottom_center': { 'bottom': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
+    '.bw_toast': {
+      'pointer-events': 'auto', 'width': '350px', 'max-width': '100%', 'background-clip': 'padding-box',
+      'opacity': '0'
+    },
+    '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
+    '.bw_toast.bw_toast_hiding': { 'opacity': '0' },
+    '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'font-size': '0.875rem' },
+    '.bw_toast_body': { 'font-size': '0.9375rem' }
+  },
+
+  // ---- Dropdown ----
+  dropdown: {
+    '.bw_dropdown': { 'position': 'relative', 'display': 'inline-block' },
+    '.bw_dropdown_toggle::after': {
+      'display': 'inline-block', 'margin-left': '0.255em', 'vertical-align': '0.255em',
+      'content': '""', 'border-top': '0.3em solid', 'border-right': '0.3em solid transparent',
+      'border-bottom': '0', 'border-left': '0.3em solid transparent'
+    },
+    '.bw_dropdown_menu': {
+      'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
+      'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
+      'background-clip': 'padding-box',
+      'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none'
+    },
+    '.bw_dropdown_menu.bw_dropdown_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
+    '.bw_dropdown_menu_end': { 'left': 'auto', 'right': '0' },
+    '.bw_dropdown_item': {
+      'display': 'block', 'width': '100%', 'clear': 'both',
+      'font-weight': '400', 'text-align': 'inherit', 'text-decoration': 'none', 'white-space': 'nowrap',
+      'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem'
+    },
+    '.bw_dropdown_item:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '-2px' },
+    '.bw_dropdown_divider': { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' }
+  },
+
+  // ---- Form switch ----
+  formSwitch: {
+    '.bw_form_switch': { 'padding-left': '2.5em' },
+    '.bw_form_switch .bw_switch_input': {
+      'width': '2em', 'height': '1.125em', 'margin-left': '-2.5em', 'border-radius': '2em',
+      'appearance': 'none',
+      'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1)'/%3e%3c/svg%3e\")",
+      'background-position': 'left center', 'background-repeat': 'no-repeat',
+      'background-size': 'contain', 'cursor': 'pointer'
+    },
+    '.bw_form_switch .bw_switch_input:checked': { 'background-position': 'right center' },
+    '.bw_form_switch .bw_switch_input:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed' }
+  },
+
+  // ---- Skeleton ----
+  skeleton: {
+    '.bw_skeleton': { 'background-size': '400% 100%', 'animation': 'bw_skeleton_shimmer 1.4s ease infinite' },
+    '.bw_skeleton_text': { 'height': '1em', 'margin-bottom': '0.5rem' },
+    '.bw_skeleton_circle': { 'border-radius': '50%' },
+    '.bw_skeleton_rect': {},
+    '.bw_skeleton_group': { 'display': 'flex', 'flex-direction': 'column' },
+    '@keyframes bw_skeleton_shimmer': { '0%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0 50%' } }
+  },
+
+  // ---- Avatar ----
+  avatar: {
+    '.bw_avatar': {
+      'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
+      'border-radius': '50%', 'overflow': 'hidden', 'font-weight': '600',
+      'text-transform': 'uppercase', 'vertical-align': 'middle', 'object-fit': 'cover'
+    },
+    '.bw_avatar_sm': { 'width': '2rem', 'height': '2rem', 'font-size': '0.75rem' },
+    '.bw_avatar_md': { 'width': '3rem', 'height': '3rem', 'font-size': '1rem' },
+    '.bw_avatar_lg': { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' },
+    '.bw_avatar_xl': { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' }
+  },
+
+  // ---- Stat card ----
+  statCard: {
+    '.bw_stat_card': { 'border-left': '4px solid transparent' },
+    '.bw_stat_card:hover': { 'transform': 'translateY(-1px)' },
+    '.bw_stat_icon': { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' },
+    '.bw_stat_value': { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' },
+    '.bw_stat_label': { 'font-size': '0.875rem', 'margin-top': '0.25rem' },
+    '.bw_stat_change': { 'font-size': '0.875rem', 'font-weight': '500', 'margin-top': '0.5rem' }
+  },
+
+  // ---- Tooltip ----
+  tooltip: {
+    '.bw_tooltip_wrapper': { 'position': 'relative', 'display': 'inline-block' },
+    '.bw_tooltip': {
+      'position': 'absolute', 'z-index': '999',
+      'font-size': '0.875rem', 'white-space': 'nowrap', 'pointer-events': 'none',
+      'opacity': '0', 'visibility': 'hidden'
+    },
+    '.bw_tooltip.bw_tooltip_show': { 'opacity': '1', 'visibility': 'visible' },
+    '.bw_tooltip_top': { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-4px)', 'margin-bottom': '4px' },
+    '.bw_tooltip_top.bw_tooltip_show': { 'transform': 'translateX(-50%) translateY(0)' },
+    '.bw_tooltip_bottom': { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(4px)', 'margin-top': '4px' },
+    '.bw_tooltip_bottom.bw_tooltip_show': { 'transform': 'translateX(-50%) translateY(0)' },
+    '.bw_tooltip_left': { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-4px)', 'margin-right': '4px' },
+    '.bw_tooltip_left.bw_tooltip_show': { 'transform': 'translateY(-50%) translateX(0)' },
+    '.bw_tooltip_right': { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(4px)', 'margin-left': '4px' },
+    '.bw_tooltip_right.bw_tooltip_show': { 'transform': 'translateY(-50%) translateX(0)' }
+  },
+
+  // ---- Popover ----
+  popover: {
+    '.bw_popover_wrapper': { 'position': 'relative', 'display': 'inline-block' },
+    '.bw_popover_trigger': { 'cursor': 'pointer' },
+    '.bw_popover': {
+      'position': 'absolute', 'z-index': '1000',
+      'min-width': '200px', 'max-width': '320px',
+      'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden'
+    },
+    '.bw_popover.bw_popover_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
+    '.bw_popover_header': { 'font-weight': '600', 'font-size': '0.9375rem' },
+    '.bw_popover_body': { 'font-size': '0.875rem', 'line-height': '1.5' },
+    '.bw_popover_top': { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-8px)', 'margin-bottom': '8px' },
+    '.bw_popover_top.bw_popover_show': { 'transform': 'translateX(-50%) translateY(0)' },
+    '.bw_popover_bottom': { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(8px)', 'margin-top': '8px' },
+    '.bw_popover_bottom.bw_popover_show': { 'transform': 'translateX(-50%) translateY(0)' },
+    '.bw_popover_left': { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-8px)', 'margin-right': '8px' },
+    '.bw_popover_left.bw_popover_show': { 'transform': 'translateY(-50%) translateX(0)' },
+    '.bw_popover_right': { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(8px)', 'margin-left': '8px' },
+    '.bw_popover_right.bw_popover_show': { 'transform': 'translateY(-50%) translateX(0)' }
+  },
+
+  // ---- Search input ----
+  searchInput: {
+    '.bw_search_input': { 'position': 'relative', 'display': 'flex', 'align-items': 'center' },
+    '.bw_search_input .bw_search_field': { 'padding-right': '2.5rem' },
+    '.bw_search_clear': {
+      'position': 'absolute', 'right': '0.5rem',
+      'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+      'width': '1.5rem', 'height': '1.5rem',
+      'border': 'none', 'background': 'none',
+      'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%'
+    }
+  },
+
+  // ---- Range ----
+  range: {
+    '.bw_range_wrapper': { 'margin-bottom': '1rem' },
+    '.bw_range_label': { 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '0.5rem', 'font-size': '0.875rem', 'font-weight': '500' },
+    '.bw_range_value': { 'font-weight': '600' },
+    '.bw_range': { 'width': '100%', 'height': '0.5rem', 'padding': '0', 'appearance': 'none', 'border': 'none', 'border-radius': '0.25rem', 'cursor': 'pointer', 'outline': 'none' },
+    '.bw_range:focus': { 'outline': 'none' },
+    '.bw_range::-webkit-slider-thumb': {
+      'appearance': 'none', 'width': '1.25rem', 'height': '1.25rem', 'border-radius': '50%',
+      'border-width': '2px', 'border-style': 'solid', 'cursor': 'pointer'
+    },
+    '.bw_range::-moz-range-thumb': {
+      'width': '1.25rem', 'height': '1.25rem', 'border-radius': '50%',
+      'border-width': '2px', 'border-style': 'solid', 'cursor': 'pointer'
+    },
+    '.bw_range::-webkit-slider-thumb:hover': { 'transform': 'scale(1.15)' },
+    '.bw_range:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed' }
+  },
+
+  // ---- Media object ----
+  mediaObject: {
+    '.bw_media': { 'display': 'flex', 'align-items': 'flex-start', 'gap': '1rem' },
+    '.bw_media_reverse': { 'flex-direction': 'row-reverse' },
+    '.bw_media_img': { 'border-radius': '50%', 'object-fit': 'cover', 'flex-shrink': '0' },
+    '.bw_media_body': { 'flex': '1', 'min-width': '0' },
+    '.bw_media_title': { 'margin': '0 0 0.25rem 0', 'font-size': '1rem', 'font-weight': '600', 'line-height': '1.3' }
+  },
+
+  // ---- File upload ----
+  fileUpload: {
+    '.bw_file_upload': {
+      'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center',
+      'border': '2px dashed transparent', 'cursor': 'pointer', 'text-align': 'center', 'position': 'relative'
+    },
+    '.bw_file_upload_icon': { 'font-size': '2rem', 'margin-bottom': '0.5rem' },
+    '.bw_file_upload_text': { 'font-size': '0.875rem' },
+    '.bw_file_upload_input': {
+      'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
+      'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0,0,0,0)', 'border': '0'
+    }
+  },
+
+  // ---- Timeline ----
+  timeline: {
+    '.bw_timeline': { 'position': 'relative', 'padding-left': '2rem' },
+    '.bw_timeline::before': {
+      'content': '""', 'position': 'absolute', 'left': '0.5rem', 'top': '0', 'bottom': '0',
+      'width': '2px'
+    },
+    '.bw_timeline_item': { 'position': 'relative', 'padding-bottom': '1.5rem' },
+    '.bw_timeline_item:last-child': { 'padding-bottom': '0' },
+    '.bw_timeline_marker': { 'position': 'absolute', 'left': '-1.75rem', 'top': '0.25rem', 'width': '0.75rem', 'height': '0.75rem', 'border-radius': '50%' },
+    '.bw_timeline_content': { 'padding-left': '0.5rem' },
+    '.bw_timeline_date': { 'font-size': '0.75rem', 'margin-bottom': '0.25rem', 'font-weight': '500' },
+    '.bw_timeline_title': { 'font-size': '1rem', 'font-weight': '600', 'margin': '0 0 0.25rem 0', 'line-height': '1.3' },
+    '.bw_timeline_text': { 'font-size': '0.875rem', 'margin': '0', 'line-height': '1.5' }
+  },
+
+  // ---- Stepper ----
+  stepper: {
+    '.bw_stepper': { 'display': 'flex', 'gap': '0', 'counter-reset': 'step' },
+    '.bw_step': { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'text-align': 'center', 'position': 'relative' },
+    '.bw_step + .bw_step::before': { 'content': '""', 'position': 'absolute', 'top': '1rem', 'left': '-50%', 'right': '50%', 'height': '2px' },
+    '.bw_step_indicator': {
+      'width': '2rem', 'height': '2rem', 'border-radius': '50%',
+      'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+      'font-size': '0.875rem', 'font-weight': '600', 'position': 'relative', 'z-index': '1'
+    },
+    '.bw_step_body': { 'margin-top': '0.5rem' },
+    '.bw_step_label': { 'font-size': '0.875rem', 'font-weight': '500' },
+    '.bw_step_description': { 'font-size': '0.75rem', 'margin-top': '0.125rem' }
+  },
+
+  // ---- Chip input ----
+  chipInput: {
+    '.bw_chip_input': {
+      'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'gap': '0.375rem',
+      'padding': '0.375rem 0.5rem', 'min-height': '2.5rem', 'cursor': 'text'
+    },
+    '.bw_chip': {
+      'display': 'inline-flex', 'align-items': 'center', 'gap': '0.25rem',
+      'padding': '0.125rem 0.5rem', 'border-radius': '1rem',
+      'font-size': '0.8125rem', 'line-height': '1.5', 'white-space': 'nowrap'
+    },
+    '.bw_chip_remove': {
+      'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
+      'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none',
+      'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%'
+    },
+    '.bw_chip_field': { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' }
+  },
+
+  // ---- Bar chart ----
+  barChart: {
+    '.bw_bar_chart_container': { 'padding': '1rem', 'border': '1px solid transparent' },
+    '.bw_bar_chart': { 'display': 'flex', 'align-items': 'flex-end', 'gap': '6px', 'padding': '0 0.5rem' },
+    '.bw_bar_group': { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'height': '100%', 'justify-content': 'flex-end' },
+    '.bw_bar': { 'width': '100%', 'border-radius': '3px 3px 0 0', 'min-height': '4px' },
+    '.bw_bar:hover': { 'opacity': '0.85' },
+    '.bw_bar_value': { 'font-size': '0.65rem', 'font-weight': '600', 'margin-bottom': '2px', 'text-align': 'center' },
+    '.bw_bar_label': { 'font-size': '0.7rem', 'margin-top': '4px', 'text-align': 'center' },
+    '.bw_bar_chart_title': { 'font-size': '1.1rem', 'font-weight': '600', 'margin': '0 0 0.75rem 0' }
+  },
+
+  // ---- Responsive ----
   responsive: {
     '@media (min-width: 576px)': {
-      '.bw-col-sm-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-      '.bw-col-sm-2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-      '.bw-col-sm-3': { 'flex': '0 0 25%', 'max-width': '25%' },
-      '.bw-col-sm-4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-      '.bw-col-sm-5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-      '.bw-col-sm-6': { 'flex': '0 0 50%', 'max-width': '50%' },
-      '.bw-col-sm-7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-      '.bw-col-sm-8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-      '.bw-col-sm-9': { 'flex': '0 0 75%', 'max-width': '75%' },
-      '.bw-col-sm-10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-      '.bw-col-sm-11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-      '.bw-col-sm-12': { 'flex': '0 0 100%', 'max-width': '100%' }
+      '.bw_col_sm_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
+      '.bw_col_sm_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
+      '.bw_col_sm_3': { 'flex': '0 0 25%', 'max-width': '25%' },
+      '.bw_col_sm_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
+      '.bw_col_sm_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
+      '.bw_col_sm_6': { 'flex': '0 0 50%', 'max-width': '50%' },
+      '.bw_col_sm_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
+      '.bw_col_sm_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
+      '.bw_col_sm_9': { 'flex': '0 0 75%', 'max-width': '75%' },
+      '.bw_col_sm_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
+      '.bw_col_sm_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
+      '.bw_col_sm_12': { 'flex': '0 0 100%', 'max-width': '100%' }
     },
     '@media (min-width: 768px)': {
-      '.bw-col-md-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-      '.bw-col-md-2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-      '.bw-col-md-3': { 'flex': '0 0 25%', 'max-width': '25%' },
-      '.bw-col-md-4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-      '.bw-col-md-5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-      '.bw-col-md-6': { 'flex': '0 0 50%', 'max-width': '50%' },
-      '.bw-col-md-7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-      '.bw-col-md-8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-      '.bw-col-md-9': { 'flex': '0 0 75%', 'max-width': '75%' },
-      '.bw-col-md-10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-      '.bw-col-md-11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-      '.bw-col-md-12': { 'flex': '0 0 100%', 'max-width': '100%' }
+      '.bw_col_md_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
+      '.bw_col_md_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
+      '.bw_col_md_3': { 'flex': '0 0 25%', 'max-width': '25%' },
+      '.bw_col_md_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
+      '.bw_col_md_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
+      '.bw_col_md_6': { 'flex': '0 0 50%', 'max-width': '50%' },
+      '.bw_col_md_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
+      '.bw_col_md_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
+      '.bw_col_md_9': { 'flex': '0 0 75%', 'max-width': '75%' },
+      '.bw_col_md_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
+      '.bw_col_md_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
+      '.bw_col_md_12': { 'flex': '0 0 100%', 'max-width': '100%' }
     },
     '@media (min-width: 992px)': {
-      '.bw-col-lg-1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-      '.bw-col-lg-2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-      '.bw-col-lg-3': { 'flex': '0 0 25%', 'max-width': '25%' },
-      '.bw-col-lg-4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-      '.bw-col-lg-5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-      '.bw-col-lg-6': { 'flex': '0 0 50%', 'max-width': '50%' },
-      '.bw-col-lg-7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-      '.bw-col-lg-8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-      '.bw-col-lg-9': { 'flex': '0 0 75%', 'max-width': '75%' },
-      '.bw-col-lg-10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-      '.bw-col-lg-11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-      '.bw-col-lg-12': { 'flex': '0 0 100%', 'max-width': '100%' }
+      '.bw_col_lg_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
+      '.bw_col_lg_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
+      '.bw_col_lg_3': { 'flex': '0 0 25%', 'max-width': '25%' },
+      '.bw_col_lg_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
+      '.bw_col_lg_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
+      '.bw_col_lg_6': { 'flex': '0 0 50%', 'max-width': '50%' },
+      '.bw_col_lg_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
+      '.bw_col_lg_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
+      '.bw_col_lg_9': { 'flex': '0 0 75%', 'max-width': '75%' },
+      '.bw_col_lg_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
+      '.bw_col_lg_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
+      '.bw_col_lg_12': { 'flex': '0 0 100%', 'max-width': '100%' }
     },
     '@media (max-width: 575px)': {
-      '.bw-card-img-left, .bw_card-img-left': { 'width': '100%' },
-      '.bw-card-img-right, .bw_card-img-right': { 'width': '100%' },
-      '.bw-hero, .bw_hero': { 'padding': '2rem 1rem' },
-      '.bw-cta-actions, .bw_cta-actions': { 'flex-direction': 'column' },
-      '.bw-hstack, .bw_hstack': { 'flex-direction': 'column' },
-      '.bw-feature-grid, .bw_feature-grid': { 'grid-template-columns': '1fr' }
+      '.bw_card_img_left, .bw_card-img-left': { 'width': '100%' },
+      '.bw_card_img_right, .bw_card-img-right': { 'width': '100%' },
+      '.bw_hero, .bw_hero': { 'padding': '2rem 1rem' },
+      '.bw_cta_actions, .bw_cta-actions': { 'flex-direction': 'column' },
+      '.bw_hstack, .bw_hstack': { 'flex-direction': 'column' },
+      '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' }
     }
   }
 };
 
 // =========================================================================
-// Structural styles — color-independent layout/behavior CSS
+// Utility CSS — structural, generated programmatically
 // =========================================================================
 
-/**
- * Structural styles — layout, sizing, spacing, positioning, and behavior.
- *
- * POLICY: No colors, backgrounds, shadows, or border-colors in this function.
- * All cosmetic values belong in `defaultStyles.*` sections (unthemed defaults)
- * or in `generateThemedCSS()` (theme-driven colors).
- *
- * Exception: `.bw-progress-bar-striped` uses rgba(255,255,255,.15) for the
- * stripe pattern overlay. This is theme-neutral — a semi-transparent white
- * gradient that creates visible stripes on any background color.
- *
- * Architecture:
- *   getStructuralStyles()  → layout-only rules (never change with themes)
- *   defaultStyles.*        → cosmetic defaults (colors, shadows, borders)
- *   generateThemedCSS()    → palette-driven cosmetics from seed colors
- *   generateAlternateCSS() → alternate palette (luminance-inverted)
- *
- * @returns {Object} CSS rules object (layout-only, theme-independent)
- */
-function getStructuralStyles() {
+function generateUtilityRules() {
   var rules = {};
 
-  // Reset (structural portion)
-  rules['*'] = { 'box-sizing': 'border-box', 'margin': '0', 'padding': '0' };
-  rules['html'] = {
-    'font-size': '16px', 'line-height': '1.5',
-    '-webkit-text-size-adjust': '100%',
-    '-webkit-font-smoothing': 'antialiased',
-    '-moz-osx-font-smoothing': 'grayscale'
-  };
-  rules['body'] = {
-    'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    'font-size': '1rem', 'font-weight': '400', 'line-height': '1.6',
-    'margin': '0', 'padding': '0',
-    '-webkit-font-smoothing': 'antialiased',
-    '-moz-osx-font-smoothing': 'grayscale'
-  };
-  rules['.bw-page'] = { 'min-height': '100vh', 'display': 'flex', 'flex-direction': 'column' };
-  rules['.bw-page-content'] = { 'flex': '1', 'padding': '2rem 0' };
-  rules['main'] = { 'display': 'block' };
-  rules['hr'] = { 'box-sizing': 'content-box', 'height': '0', 'overflow': 'visible', 'margin': '1rem 0', 'border': '0' };
-  rules['hr:not([size])'] = { 'height': '1px' };
-
-  // Typography (structural)
-  rules['h1, h2, h3, h4, h5, h6'] = {
-    'margin-top': '0', 'margin-bottom': '.5rem', 'font-weight': '600',
-    'line-height': '1.25', 'letter-spacing': '-0.01em'
-  };
-  rules['h1'] = { 'font-size': 'calc(1.375rem + 1.5vw)' };
-  rules['h2'] = { 'font-size': 'calc(1.325rem + .9vw)' };
-  rules['h3'] = { 'font-size': 'calc(1.3rem + .6vw)' };
-  rules['h4'] = { 'font-size': 'calc(1.275rem + .3vw)' };
-  rules['h5'] = { 'font-size': '1.25rem' };
-  rules['h6'] = { 'font-size': '1rem' };
-  rules['p'] = { 'margin-top': '0', 'margin-bottom': '1rem' };
-  rules['small'] = { 'font-size': '0.875rem' };
-  rules['a'] = { 'text-decoration': 'none', 'transition': 'color 0.15s' };
-
-  // Grid (all structural)
-  Object.assign(rules, defaultStyles.grid);
-
-  // Button (structural)
-  rules['.bw-btn'] = {
-    'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
-    'font-weight': '500', 'line-height': '1.5', 'text-align': 'center',
-    'text-decoration': 'none', 'vertical-align': 'middle', 'cursor': 'pointer',
-    'user-select': 'none', 'border': '1px solid transparent',
-    'padding': '0.5rem 1.125rem', 'font-size': '0.875rem', 'font-family': 'inherit',
-    'border-radius': '6px', 'transition': 'all 0.15s ease-out',
-    'gap': '0.5rem'
-  };
-  rules['.bw-btn:hover'] = { 'text-decoration': 'none', 'transform': 'translateY(-1px)' };
-  rules['.bw-btn:active'] = { 'transform': 'translateY(0)' };
-  rules['.bw-btn:focus-visible'] = { 'outline': '2px solid currentColor', 'outline-offset': '2px' };
-  rules['.bw-btn:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed', 'pointer-events': 'none' };
-  rules['.bw-btn-lg'] = { 'padding': '0.625rem 1.5rem', 'font-size': '1rem', 'border-radius': '8px' };
-  rules['.bw-btn-sm'] = { 'padding': '0.25rem 0.75rem', 'font-size': '0.8125rem', 'border-radius': '5px' };
-
-  // Card (structural)
-  rules['.bw-card'] = {
-    'position': 'relative', 'display': 'flex', 'flex-direction': 'column',
-    'min-width': '0', 'height': '100%', 'word-wrap': 'break-word',
-    'background-clip': 'border-box', 'border': '1px solid transparent',
-    'border-radius': '8px', 'transition': 'box-shadow 0.2s ease-out, transform 0.2s ease-out',
-    'margin-bottom': '1.5rem', 'overflow': 'hidden'
-  };
-  rules['.bw-card-body'] = { 'flex': '1 1 auto', 'padding': '1.25rem 1.5rem' };
-  rules['.bw-card-body > *:last-child'] = { 'margin-bottom': '0' };
-  rules['.bw-card-title'] = { 'margin-bottom': '0.5rem', 'font-size': '1.125rem', 'font-weight': '600', 'line-height': '1.3' };
-  rules['.bw-card-text'] = { 'margin-bottom': '0', 'font-size': '0.9375rem', 'line-height': '1.6' };
-  rules['.bw-card-header'] = { 'padding': '0.875rem 1.5rem', 'margin-bottom': '0', 'font-weight': '600', 'font-size': '0.875rem' };
-  rules['.bw-card-footer'] = { 'padding': '0.75rem 1.5rem', 'font-size': '0.875rem' };
-  rules['.bw-card-hoverable'] = { 'transition': 'all 0.3s ease-out' };
-  rules['.bw-card-img-top'] = { 'width': '100%', 'border-top-left-radius': '7px', 'border-top-right-radius': '7px' };
-  rules['.bw-card-img-bottom'] = { 'width': '100%', 'border-bottom-left-radius': '7px', 'border-bottom-right-radius': '7px' };
-  rules['.bw-card-img-left'] = { 'width': '40%', 'object-fit': 'cover' };
-  rules['.bw-card-img-right'] = { 'width': '40%', 'object-fit': 'cover' };
-  rules['.bw-card-subtitle'] = { 'margin-top': '-0.25rem', 'margin-bottom': '0.5rem', 'font-size': '0.875rem' };
-
-  // Forms (structural)
-  rules['.bw-form-control'] = {
-    'display': 'block', 'width': '100%', 'padding': '0.5rem 0.875rem',
-    'font-size': '0.9375rem', 'font-weight': '400', 'line-height': '1.5',
-    'background-clip': 'padding-box', 'appearance': 'none',
-    'border': '1px solid transparent', 'border-radius': '6px',
-    'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out',
-    'font-family': 'inherit'
-  };
-  rules['.bw-form-control:focus'] = { 'outline': '2px solid currentColor', 'outline-offset': '-1px' };
-  rules['.bw-form-control::placeholder'] = { 'opacity': '1' };
-  rules['.bw-form-label'] = { 'display': 'block', 'margin-bottom': '0.375rem', 'font-size': '0.875rem', 'font-weight': '600' };
-  rules['.bw-form-group'] = { 'margin-bottom': '1.25rem' };
-  rules['.bw-form-text'] = { 'margin-top': '0.25rem', 'font-size': '0.8125rem' };
-  rules['select.bw-form-control'] = {
-    'padding-right': '2.25rem',
-    'background-repeat': 'no-repeat', 'background-position': 'right 0.75rem center',
-    'background-size': '16px 12px'
-  };
-  rules['textarea.bw-form-control'] = { 'min-height': '5rem', 'resize': 'vertical' };
-
-  // Form validation (structural)
-  rules['.bw-valid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
-  rules['.bw-invalid-feedback'] = { 'display': 'block', 'font-size': '0.875rem', 'margin-top': '0.25rem' };
-
-  // Form checks (structural)
-  Object.assign(rules, {
-    '.bw-form-check': { 'display': 'flex', 'align-items': 'center', 'gap': '0.5rem', 'min-height': '1.5rem', 'margin-bottom': '0.25rem' },
-    '.bw-form-check-input': { 'width': '1rem', 'height': '1rem', 'margin': '0', 'cursor': 'pointer', 'flex-shrink': '0', 'border-radius': '0.25rem', 'appearance': 'auto' },
-    '.bw-form-check-input:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed' },
-    '.bw-form-check-label': { 'cursor': 'pointer', 'user-select': 'none', 'font-size': '0.9375rem' }
-  });
-
-  // Navigation (structural)
-  rules['.bw-navbar'] = {
-    'position': 'relative', 'display': 'flex', 'flex-wrap': 'wrap',
-    'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 1.5rem'
-  };
-  rules['.bw-navbar > .bw-container, .bw-navbar > .container'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' };
-  rules['.bw-navbar-brand'] = {
-    'display': 'inline-flex', 'align-items': 'center', 'gap': '0.5rem',
-    'padding-top': '0.25rem', 'padding-bottom': '0.25rem', 'margin-right': '1.5rem',
-    'font-size': '1.125rem', 'font-weight': '600', 'line-height': 'inherit',
-    'white-space': 'nowrap', 'text-decoration': 'none'
-  };
-  rules['.bw-navbar-nav'] = {
-    'display': 'flex', 'flex-direction': 'row', 'padding-left': '0',
-    'margin-bottom': '0', 'list-style': 'none', 'gap': '0.25rem'
-  };
-  rules['.bw-navbar-nav .bw-nav-link'] = {
-    'display': 'block', 'padding': '0.5rem 0.875rem', 'text-decoration': 'none',
-    'font-size': '0.875rem', 'font-weight': '500', 'border-radius': '6px',
-    'transition': 'color 0.15s, background-color 0.15s'
-  };
-
-  // Tables (structural)
-  rules['.bw-table'] = {
-    'width': '100%', 'margin-bottom': '1.5rem', 'vertical-align': 'top',
-    'border-collapse': 'collapse', 'font-size': '0.9375rem', 'line-height': '1.5'
-  };
-  rules['.bw-table > :not(caption) > * > *'] = { 'padding': '0.75rem 1rem' };
-  rules['.bw-table > tbody'] = { 'vertical-align': 'inherit' };
-  rules['.bw-table > thead'] = { 'vertical-align': 'bottom' };
-  rules['.bw-table > thead > tr > *'] = {
-    'padding': '0.625rem 1rem', 'font-size': '0.8125rem', 'font-weight': '600',
-    'text-transform': 'uppercase', 'letter-spacing': '0.04em'
-  };
-  rules['.bw-table caption'] = { 'padding': '0.5rem 1rem', 'font-size': '0.875rem', 'caption-side': 'bottom' };
-  rules['.bw-table-responsive'] = { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' };
-
-  // Alerts (structural)
-  rules['.bw-alert'] = {
-    'position': 'relative', 'padding': '0.875rem 1.25rem', 'margin-bottom': '1rem',
-    'border': '1px solid transparent', 'border-radius': '8px',
-    'font-size': '0.9375rem', 'line-height': '1.6'
-  };
-  rules['.bw-alert-heading, .alert-heading'] = { 'color': 'inherit' };
-  rules['.bw-alert-link, .alert-link'] = { 'font-weight': '700' };
-  rules['.bw-alert-dismissible'] = { 'padding-right': '3rem' };
-  rules['.bw-alert-dismissible .btn-close'] = { 'position': 'absolute', 'top': '0', 'right': '0', 'z-index': '2', 'padding': '1.25rem 1rem' };
-
-  // Badges (structural)
-  rules['.bw-badge'] = {
-    'display': 'inline-block', 'padding': '0.375rem 0.625rem', 'font-size': '0.875rem',
-    'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
-    'white-space': 'nowrap', 'vertical-align': 'baseline', 'border-radius': '.375rem'
-  };
-  rules['.bw-badge:empty'] = { 'display': 'none' };
-  rules['.bw-badge-sm'] = { 'font-size': '0.75rem', 'padding': '0.25rem 0.5rem' };
-  rules['.bw-badge-lg'] = { 'font-size': '1rem', 'padding': '0.5rem 0.875rem' };
-  rules['.bw-badge-pill'] = { 'border-radius': '50rem' };
-
-  // Progress (structural)
-  rules['.bw-progress'] = { 'display': 'flex', 'height': '1.25rem', 'overflow': 'hidden', 'font-size': '.875rem', 'border-radius': '.5rem' };
-  rules['.bw-progress-bar'] = {
-    'display': 'flex', 'flex-direction': 'column', 'justify-content': 'center',
-    'overflow': 'hidden', 'text-align': 'center', 'white-space': 'nowrap',
-    'transition': 'width 0.3s ease-out', 'font-weight': '600'
-  };
-  rules['.bw-progress-bar-striped'] = {
-    'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
-    'background-size': '1rem 1rem'
-  };
-  rules['.bw-progress-bar-animated'] = { 'animation': 'progress-bar-stripes 1s linear infinite' };
-  rules['@keyframes progress-bar-stripes'] = { '0%': { 'background-position-x': '1rem' } };
-
-  // Tabs (structural)
-  rules['.bw-nav'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'padding-left': '0', 'margin-bottom': '0', 'list-style': 'none', 'gap': '0' };
-  rules['.bw-nav-item'] = { 'display': 'block' };
-  rules['.bw-nav-tabs .bw-nav-item'] = { 'margin-bottom': '-2px' };
-  rules['.bw-nav-link'] = {
-    'display': 'block', 'padding': '0.625rem 1rem', 'font-size': '0.875rem',
-    'font-weight': '500', 'text-decoration': 'none', 'cursor': 'pointer',
-    'border': 'none', 'background': 'transparent',
-    'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out', 'font-family': 'inherit'
-  };
-  rules['.bw-nav-tabs .bw-nav-link'] = { 'border': 'none', 'border-bottom': '2px solid transparent', 'border-radius': '0', 'background-color': 'transparent' };
-  rules['.bw-nav-pills .bw-nav-link'] = { 'border-radius': '6px' };
-  rules['.bw-nav-vertical'] = { 'flex-direction': 'column' };
-  rules['.bw-tab-content'] = { 'padding': '1.25rem 0' };
-  rules['.bw-tab-pane'] = { 'display': 'none' };
-  rules['.bw-tab-pane.active'] = { 'display': 'block' };
-  rules['.bw-nav-scrollable'] = { 'flex-wrap': 'nowrap', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch', 'scrollbar-width': 'none' };
-  rules['.bw-nav-scrollable .bw-nav-link'] = { 'white-space': 'nowrap' };
-
-  // List groups (structural)
-  rules['.bw-list-group'] = { 'display': 'flex', 'flex-direction': 'column', 'padding-left': '0', 'margin-bottom': '0', 'border-radius': '0.375rem' };
-  rules['.bw-list-group-item'] = { 'position': 'relative', 'display': 'block', 'padding': '0.75rem 1.25rem', 'text-decoration': 'none', 'font-size': '0.9375rem' };
-  rules['.bw-list-group-item:first-child'] = { 'border-top-left-radius': 'inherit', 'border-top-right-radius': 'inherit' };
-  rules['.bw-list-group-item:last-child'] = { 'border-bottom-right-radius': 'inherit', 'border-bottom-left-radius': 'inherit' };
-  rules['.bw-list-group-item + .bw-list-group-item'] = { 'border-top-width': '0' };
-  rules['.bw-list-group-item.disabled'] = { 'pointer-events': 'none' };
-  rules['a.bw-list-group-item'] = { 'cursor': 'pointer', 'transition': 'background-color 0.15s ease-out, color 0.15s ease-out' };
-  rules['a.bw-list-group-item:focus-visible, .bw-list-group-item:focus-visible'] = { 'z-index': '2', 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
-  rules['.bw-list-group-flush'] = { 'border-radius': '0' };
-  rules['.bw-list-group-flush > .bw-list-group-item'] = { 'border-width': '0 0 1px', 'border-radius': '0' };
-  rules['.bw-list-group-flush > .bw-list-group-item:last-child'] = { 'border-bottom-width': '0' };
-
-  // Pagination (structural)
-  rules['.bw-pagination'] = { 'display': 'flex', 'padding-left': '0', 'list-style': 'none', 'margin-bottom': '0' };
-  rules['.bw-page-item'] = { 'display': 'list-item', 'list-style': 'none' };
-  rules['.bw-page-link'] = {
-    'position': 'relative', 'display': 'block', 'padding': '0.375rem 0.75rem',
-    'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none',
-    'transition': 'color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out'
-  };
-  rules['.bw-page-item:first-child .bw-page-link'] = { 'margin-left': '0', 'border-top-left-radius': '0.375rem', 'border-bottom-left-radius': '0.375rem' };
-  rules['.bw-page-item:last-child .bw-page-link'] = { 'border-top-right-radius': '0.375rem', 'border-bottom-right-radius': '0.375rem' };
-  rules['.bw-page-link:focus-visible'] = { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
-
-  // Breadcrumb (structural)
-  rules['.bw-breadcrumb'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'padding': '0 0', 'margin-bottom': '1rem', 'list-style': 'none' };
-  rules['.bw-breadcrumb-item'] = { 'display': 'flex' };
-  rules['.bw-breadcrumb-item + .bw-breadcrumb-item'] = { 'padding-left': '0.5rem' };
-  rules['.bw-breadcrumb-item + .bw-breadcrumb-item::before'] = { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' };
-  rules['.bw-breadcrumb-item a'] = { 'text-decoration': 'none', 'transition': 'color 0.15s ease-out' };
-  rules['.bw-breadcrumb-item.active'] = { 'font-weight': '500' };
-
-  // Hero (structural)
-  rules['.bw-hero'] = { 'position': 'relative', 'overflow': 'hidden' };
-  rules['.bw-hero-overlay'] = { 'position': 'absolute', 'top': '0', 'left': '0', 'right': '0', 'bottom': '0', 'z-index': '1' };
-  rules['.bw-hero-content'] = { 'position': 'relative', 'z-index': '2' };
-  rules['.bw-hero-title'] = { 'font-weight': '300', 'letter-spacing': '-0.05rem', 'color': 'inherit' };
-  rules['.bw-hero-subtitle'] = { 'color': 'inherit' };
-  rules['.bw-hero-actions'] = { 'display': 'flex', 'gap': '1rem', 'justify-content': 'center', 'flex-wrap': 'wrap' };
-  rules['.bw-display-4'] = { 'font-size': 'calc(1.475rem + 2.7vw)', 'font-weight': '300', 'line-height': '1.2' };
-  rules['.bw-lead'] = { 'font-size': '1.25rem', 'font-weight': '300' };
-
-  // Features (structural)
-  rules['.bw-feature'] = { 'padding': '1rem' };
-  rules['.bw-feature-icon'] = { 'display': 'inline-block', 'margin-bottom': '1rem' };
-  rules['.bw-feature-title'] = { 'margin-bottom': '0.5rem' };
-  rules['.bw-feature-grid'] = { 'width': '100%' };
-  rules['.bw-g-4'] = { '--bw-gutter-x': '1.5rem', '--bw-gutter-y': '1.5rem' };
-
-  // Sections (structural)
-  rules['.bw-section'] = { 'position': 'relative' };
-  rules['.bw-section-header'] = { 'margin-bottom': '3rem' };
-  rules['.bw-section-title'] = { 'margin-bottom': '1rem', 'font-weight': '300', 'font-size': 'calc(1.325rem + .9vw)' };
-
-  // CTA (structural)
-  rules['.bw-cta'] = { 'position': 'relative' };
-  rules['.bw-cta-content'] = { 'max-width': '48rem', 'margin': '0 auto' };
-  rules['.bw-cta-title'] = { 'font-weight': '300' };
-  rules['.bw-cta-actions'] = { 'display': 'flex', 'gap': '1rem', 'justify-content': 'center', 'flex-wrap': 'wrap' };
-
-  // Spinner (structural)
-  rules['.bw-spinner-border'] = {
-    'display': 'inline-block', 'width': '2rem', 'height': '2rem',
-    'vertical-align': '-0.125em', 'border': '0.25em solid currentcolor',
-    'border-right-color': 'transparent', 'border-radius': '50%',
-    'animation': 'bw-spinner-border 0.75s linear infinite'
-  };
-  rules['.bw-spinner-border-sm'] = { 'width': '1rem', 'height': '1rem', 'border-width': '0.2em' };
-  rules['.bw-spinner-border-lg'] = { 'width': '3rem', 'height': '3rem', 'border-width': '0.3em' };
-  rules['.bw-spinner-grow'] = {
-    'display': 'inline-block', 'width': '2rem', 'height': '2rem',
-    'vertical-align': '-0.125em', 'border-radius': '50%', 'opacity': '0',
-    'animation': 'bw-spinner-grow 0.75s linear infinite'
-  };
-  rules['.bw-spinner-grow-sm'] = { 'width': '1rem', 'height': '1rem' };
-  rules['.bw-spinner-grow-lg'] = { 'width': '3rem', 'height': '3rem' };
-  rules['@keyframes bw-spinner-border'] = { '100%': { 'transform': 'rotate(360deg)' } };
-  rules['@keyframes bw-spinner-grow'] = { '0%': { 'transform': 'scale(0)' }, '50%': { 'opacity': '1', 'transform': 'none' } };
-  rules['.bw-visually-hidden'] = {
-    'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
-    'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0, 0, 0, 0)',
-    'white-space': 'nowrap', 'border': '0'
-  };
-
-  // Close button (structural)
-  rules['.bw-close'] = {
-    'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
-    'width': '1.5rem', 'height': '1.5rem', 'padding': '0',
-    'font-size': '1.25rem', 'font-weight': '700', 'line-height': '1',
-    'background': 'transparent', 'border': '0', 'border-radius': '0.25rem',
-    'cursor': 'pointer'
-  };
-
-  // Stacks (structural)
-  rules['.bw-vstack'] = { 'display': 'flex', 'flex-direction': 'column' };
-  rules['.bw-hstack'] = { 'display': 'flex', 'flex-direction': 'row', 'align-items': 'center' };
-  rules['.bw-gap-0'] = { 'gap': '0' };
-  rules['.bw-gap-1'] = { 'gap': '0.25rem' };
-  rules['.bw-gap-2'] = { 'gap': '0.5rem' };
-  rules['.bw-gap-3'] = { 'gap': '1rem' };
-  rules['.bw-gap-4'] = { 'gap': '1.5rem' };
-  rules['.bw-gap-5'] = { 'gap': '3rem' };
-
-  // Offsets (structural)
-  for (var i = 1; i <= 11; i++) {
-    rules['.bw-offset-' + i] = { 'margin-left': ((i / 12) * 100).toFixed(6).replace(/\.?0+$/, '') + '%' };
-  }
-
-  // Code demo (structural)
-  rules['.bw-code-demo'] = { 'margin-bottom': '2rem' };
-  rules['.bw-code-pre'] = { 'margin': '0', 'border': 'none', 'border-radius': '6px', 'overflow-x': 'auto' };
-  rules['.bw-code-block'] = { 'display': 'block', 'padding': '1.25rem', 'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace', 'font-size': '0.8125rem', 'line-height': '1.6' };
-  rules['.bw-code-copy-btn'] = { 'position': 'absolute', 'top': '0.5rem', 'right': '0.5rem', 'padding': '0.25rem 0.625rem', 'font-size': '0.6875rem', 'border-radius': '4px', 'cursor': 'pointer', 'font-family': 'inherit', 'transition': 'all 0.15s' };
-
-  // Button group (structural)
-  rules['.bw-btn-group, .bw-btn-group-vertical'] = { 'position': 'relative', 'display': 'inline-flex', 'vertical-align': 'middle' };
-  rules['.bw-btn-group > .bw-btn, .bw-btn-group-vertical > .bw-btn'] = { 'position': 'relative', 'flex': '1 1 auto', 'border-radius': '0', 'margin-left': '-1px' };
-  rules['.bw-btn-group > .bw-btn:first-child'] = { 'margin-left': '0', 'border-top-left-radius': '6px', 'border-bottom-left-radius': '6px' };
-  rules['.bw-btn-group > .bw-btn:last-child'] = { 'border-top-right-radius': '6px', 'border-bottom-right-radius': '6px' };
-  rules['.bw-btn-group-vertical'] = { 'flex-direction': 'column', 'align-items': 'flex-start', 'justify-content': 'center' };
-  rules['.bw-btn-group-vertical > .bw-btn'] = { 'width': '100%', 'margin-left': '0', 'margin-top': '-1px' };
-  rules['.bw-btn-group-vertical > .bw-btn:first-child'] = { 'margin-top': '0', 'border-top-left-radius': '6px', 'border-top-right-radius': '6px', 'border-bottom-left-radius': '0', 'border-bottom-right-radius': '0' };
-  rules['.bw-btn-group-vertical > .bw-btn:last-child'] = { 'border-top-left-radius': '0', 'border-top-right-radius': '0', 'border-bottom-left-radius': '6px', 'border-bottom-right-radius': '6px' };
-
-  // Accordion (structural)
-  rules['.bw-accordion'] = { 'border-radius': '8px', 'overflow': 'hidden' };
-  rules['.bw-accordion-item'] = { 'border': '1px solid transparent' };
-  rules['.bw-accordion-item + .bw-accordion-item'] = { 'border-top': '0' };
-  rules['.bw-accordion-header'] = { 'margin': '0' };
-  rules['.bw-accordion-button'] = {
-    'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
-    'padding': '1rem 1.25rem', 'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
-    'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
-    'font-family': 'inherit', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out'
-  };
-  rules['.bw-accordion-button::after'] = {
-    'flex-shrink': '0', 'width': '1.25rem', 'height': '1.25rem', 'margin-left': 'auto',
-    'content': '""', 'background-repeat': 'no-repeat', 'background-size': '1.25rem',
-    'transition': 'transform 0.2s ease-out'
-  };
-  rules['.bw-accordion-button:not(.bw-collapsed)::after'] = { 'transform': 'rotate(-180deg)' };
-  rules['.bw-accordion-collapse'] = { 'max-height': '0', 'overflow': 'hidden', 'transition': 'max-height 0.3s ease' };
-  rules['.bw-accordion-collapse.bw-collapse-show'] = { 'max-height': 'none' };
-  rules['.bw-accordion-body'] = { 'padding': '1rem 1.25rem' };
-
-  // Modal (structural)
-  rules['.bw-modal'] = {
-    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
-    'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
-    'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto',
-    'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none',
-    'transition': 'opacity 0.2s ease, visibility 0.2s ease'
-  };
-  rules['.bw-modal.bw-modal-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
-  rules['.bw-modal-dialog'] = {
-    'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
-    'pointer-events': 'none', 'transform': 'translateY(-20px)', 'transition': 'transform 0.2s ease-out'
-  };
-  rules['.bw-modal.bw-modal-show .bw-modal-dialog'] = { 'transform': 'translateY(0)' };
-  rules['.bw-modal-sm'] = { 'max-width': '300px' };
-  rules['.bw-modal-lg'] = { 'max-width': '800px' };
-  rules['.bw-modal-xl'] = { 'max-width': '1140px' };
-  rules['.bw-modal-content'] = {
-    'position': 'relative', 'display': 'flex', 'flex-direction': 'column', 'pointer-events': 'auto',
-    'background-clip': 'padding-box', 'border': '1px solid transparent', 'border-radius': '8px', 'outline': '0'
-  };
-  rules['.bw-modal-header'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '1rem 1.5rem' };
-  rules['.bw-modal-title'] = { 'margin': '0', 'font-size': '1.25rem', 'font-weight': '600', 'line-height': '1.3' };
-  rules['.bw-modal-body'] = { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1.5rem' };
-  rules['.bw-modal-footer'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'padding': '0.75rem 1.5rem', 'gap': '0.5rem' };
-
-  // Carousel (structural)
-  rules['.bw-carousel'] = { 'position': 'relative', 'overflow': 'hidden', 'border-radius': '8px' };
-  rules['.bw-carousel-track'] = { 'display': 'flex', 'transition': 'transform 0.3s ease-out', 'height': '100%' };
-  rules['.bw-carousel-slide'] = { 'min-width': '100%', 'flex-shrink': '0', 'overflow': 'hidden', 'position': 'relative', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
-  rules['.bw-carousel-slide img'] = { 'width': '100%', 'height': '100%', 'object-fit': 'cover' };
-  rules['.bw-carousel-caption'] = { 'position': 'absolute', 'bottom': '0', 'left': '0', 'right': '0', 'padding': '0.75rem 1rem' };
-  rules['.bw-carousel-control'] = {
-    'position': 'absolute', 'top': '50%', 'transform': 'translateY(-50%)', 'width': '40px', 'height': '40px',
-    'border': 'none', 'border-radius': '50%', 'cursor': 'pointer', 'display': 'flex', 'align-items': 'center',
-    'justify-content': 'center', 'z-index': '2', 'padding': '0', 'transition': 'background-color 0.2s ease'
-  };
-  rules['.bw-carousel-control img'] = { 'width': '20px', 'height': '20px', 'pointer-events': 'none' };
-  rules['.bw-carousel-control-prev'] = { 'left': '10px' };
-  rules['.bw-carousel-control-next'] = { 'right': '10px' };
-  rules['.bw-carousel-indicators'] = {
-    'position': 'absolute', 'bottom': '12px', 'left': '50%', 'transform': 'translateX(-50%)',
-    'display': 'flex', 'gap': '6px', 'z-index': '2'
-  };
-  rules['.bw-carousel-indicator'] = {
-    'width': '10px', 'height': '10px', 'border-radius': '50%', 'border': '2px solid transparent',
-    'padding': '0', 'cursor': 'pointer', 'transition': 'opacity 0.2s ease, background-color 0.2s ease'
-  };
-
-  // Toast (structural)
-  rules['.bw-toast-container'] = {
-    'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
-    'display': 'flex', 'flex-direction': 'column', 'gap': '0.5rem', 'padding': '1rem'
-  };
-  rules['.bw-toast'] = {
-    'pointer-events': 'auto', 'width': '350px', 'max-width': '100%', 'background-clip': 'padding-box',
-    'border-radius': '8px', 'opacity': '0', 'transform': 'translateY(-10px)',
-    'transition': 'opacity 0.3s ease, transform 0.3s ease'
-  };
-  rules['.bw-toast.bw-toast-show'] = { 'opacity': '1', 'transform': 'translateY(0)' };
-  rules['.bw-toast.bw-toast-hiding'] = { 'opacity': '0', 'transform': 'translateY(-10px)' };
-  rules['.bw-toast-header'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem' };
-  rules['.bw-toast-body'] = { 'padding': '0.75rem', 'font-size': '0.9375rem' };
-
-  // Dropdown (structural)
-  rules['.bw-dropdown'] = { 'position': 'relative', 'display': 'inline-block' };
-  rules['.bw-dropdown-toggle::after'] = {
-    'display': 'inline-block', 'margin-left': '0.255em', 'vertical-align': '0.255em',
-    'content': '""', 'border-top': '0.3em solid', 'border-right': '0.3em solid transparent',
-    'border-bottom': '0', 'border-left': '0.3em solid transparent'
-  };
-  rules['.bw-dropdown-menu'] = {
-    'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
-    'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
-    'background-clip': 'padding-box', 'border-radius': '6px',
-    'opacity': '0', 'visibility': 'hidden', 'transform': 'translateY(-4px)',
-    'pointer-events': 'none',
-    'transition': 'opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease'
-  };
-  rules['.bw-dropdown-menu.bw-dropdown-show'] = { 'opacity': '1', 'visibility': 'visible', 'transform': 'translateY(0)', 'pointer-events': 'auto' };
-  rules['.bw-dropdown-menu-end'] = { 'left': 'auto', 'right': '0' };
-  rules['.bw-dropdown-item'] = {
-    'display': 'block', 'width': '100%', 'padding': '0.375rem 1rem', 'clear': 'both',
-    'font-weight': '400', 'text-align': 'inherit', 'text-decoration': 'none', 'white-space': 'nowrap',
-    'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem',
-    'transition': 'background-color 0.15s, color 0.15s'
-  };
-  rules['.bw-dropdown-item:focus-visible'] = { 'outline': '2px solid currentColor', 'outline-offset': '-2px' };
-  rules['.bw-dropdown-divider'] = { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' };
-
-  // Switch (structural)
-  rules['.bw-form-switch'] = { 'padding-left': '2.5em' };
-  rules['.bw-form-switch .bw-switch-input'] = {
-    'width': '2em', 'height': '1.125em', 'margin-left': '-2.5em', 'border-radius': '2em',
-    'appearance': 'none', 'background-position': 'left center', 'background-repeat': 'no-repeat',
-    'background-size': 'contain', 'transition': 'background-position 0.15s ease-out, background-color 0.15s ease-out',
-    'cursor': 'pointer'
-  };
-  rules['.bw-form-switch .bw-switch-input:checked'] = { 'background-position': 'right center' };
-  rules['.bw-form-switch .bw-switch-input:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
-
-  // Skeleton (structural)
-  rules['.bw-skeleton'] = { 'border-radius': '4px', 'background-size': '400% 100%', 'animation': 'bw-skeleton-shimmer 1.4s ease infinite' };
-  rules['.bw-skeleton-text'] = { 'height': '1em', 'margin-bottom': '0.5rem' };
-  rules['.bw-skeleton-circle'] = { 'border-radius': '50%' };
-  rules['.bw-skeleton-rect'] = { 'border-radius': '8px' };
-  rules['.bw-skeleton-group'] = { 'display': 'flex', 'flex-direction': 'column' };
-  rules['@keyframes bw-skeleton-shimmer'] = { '0%': { 'background-position': '100% 50%' }, '100%': { 'background-position': '0 50%' } };
-
-  // Avatar (structural)
-  rules['.bw-avatar'] = {
-    'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
-    'border-radius': '50%', 'overflow': 'hidden', 'font-weight': '600',
-    'text-transform': 'uppercase', 'vertical-align': 'middle', 'object-fit': 'cover'
-  };
-  rules['.bw-avatar-sm'] = { 'width': '2rem', 'height': '2rem', 'font-size': '0.75rem' };
-  rules['.bw-avatar-md'] = { 'width': '3rem', 'height': '3rem', 'font-size': '1rem' };
-  rules['.bw-avatar-lg'] = { 'width': '4rem', 'height': '4rem', 'font-size': '1.25rem' };
-  rules['.bw-avatar-xl'] = { 'width': '5rem', 'height': '5rem', 'font-size': '1.5rem' };
-
-  // Stat card (structural)
-  rules['.bw-stat-card'] = {
-    'border-radius': '8px', 'padding': '1.25rem',
-    'border-left': '4px solid transparent',
-    'transition': 'box-shadow 0.15s ease-out, transform 0.15s ease-out'
-  };
-  rules['.bw-stat-card:hover'] = { 'transform': 'translateY(-1px)' };
-  rules['.bw-stat-icon'] = { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' };
-  rules['.bw-stat-value'] = { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' };
-  rules['.bw-stat-label'] = { 'font-size': '0.875rem', 'margin-top': '0.25rem' };
-  rules['.bw-stat-change'] = { 'font-size': '0.875rem', 'font-weight': '500', 'margin-top': '0.5rem' };
-
-  // Tooltip (structural)
-  rules['.bw-tooltip-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
-  rules['.bw-tooltip'] = {
-    'position': 'absolute', 'z-index': '999',
-    'padding': '0.375rem 0.75rem', 'border-radius': '4px', 'font-size': '0.875rem',
-    'white-space': 'nowrap', 'pointer-events': 'none',
-    'opacity': '0', 'visibility': 'hidden',
-    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
-  };
-  rules['.bw-tooltip.bw-tooltip-show'] = { 'opacity': '1', 'visibility': 'visible' };
-  rules['.bw-tooltip-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-4px)', 'margin-bottom': '4px' };
-  rules['.bw-tooltip-top.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
-  rules['.bw-tooltip-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(4px)', 'margin-top': '4px' };
-  rules['.bw-tooltip-bottom.bw-tooltip-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
-  rules['.bw-tooltip-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-4px)', 'margin-right': '4px' };
-  rules['.bw-tooltip-left.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
-  rules['.bw-tooltip-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(4px)', 'margin-left': '4px' };
-  rules['.bw-tooltip-right.bw-tooltip-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
-
-  // Search input (structural)
-  rules['.bw-search-input'] = { 'position': 'relative', 'display': 'flex', 'align-items': 'center' };
-  rules['.bw-search-input .bw-search-field'] = { 'padding-right': '2.5rem' };
-  rules['.bw-search-clear'] = {
-    'position': 'absolute', 'right': '0.5rem',
-    'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
-    'width': '1.5rem', 'height': '1.5rem',
-    'border': 'none', 'background': 'none',
-    'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0',
-    'border-radius': '50%', 'transition': 'color 0.15s ease-out'
-  };
-
-  // Range slider (structural)
-  rules['.bw-range-wrapper'] = { 'margin-bottom': '1rem' };
-  rules['.bw-range-label'] = { 'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center', 'margin-bottom': '0.5rem', 'font-size': '0.875rem', 'font-weight': '500' };
-  rules['.bw-range-value'] = { 'font-weight': '600' };
-  rules['.bw-range'] = { 'width': '100%', 'height': '0.5rem', 'padding': '0', 'appearance': 'none', 'border': 'none', 'border-radius': '0.25rem', 'cursor': 'pointer', 'outline': 'none' };
-  rules['.bw-range:disabled'] = { 'opacity': '0.5', 'cursor': 'not-allowed' };
-
-  // Media object (structural)
-  rules['.bw-media'] = { 'display': 'flex', 'align-items': 'flex-start', 'gap': '1rem' };
-  rules['.bw-media-reverse'] = { 'flex-direction': 'row-reverse' };
-  rules['.bw-media-img'] = { 'border-radius': '50%', 'object-fit': 'cover', 'flex-shrink': '0' };
-  rules['.bw-media-body'] = { 'flex': '1', 'min-width': '0' };
-  rules['.bw-media-title'] = { 'margin': '0 0 0.25rem 0', 'font-size': '1rem', 'font-weight': '600', 'line-height': '1.3' };
-
-  // File upload (structural)
-  rules['.bw-file-upload'] = {
-    'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'justify-content': 'center',
-    'padding': '2rem', 'border': '2px dashed transparent', 'border-radius': '8px',
-    'cursor': 'pointer', 'text-align': 'center', 'position': 'relative',
-    'transition': 'border-color 0.15s ease-out, background-color 0.15s ease-out'
-  };
-  rules['.bw-file-upload-icon'] = { 'font-size': '2rem', 'margin-bottom': '0.5rem' };
-  rules['.bw-file-upload-text'] = { 'font-size': '0.875rem' };
-  rules['.bw-file-upload-input'] = {
-    'position': 'absolute', 'width': '1px', 'height': '1px', 'padding': '0',
-    'margin': '-1px', 'overflow': 'hidden', 'clip': 'rect(0,0,0,0)', 'border': '0'
-  };
-
-  // Timeline (structural)
-  rules['.bw-timeline'] = { 'position': 'relative', 'padding-left': '2rem' };
-  rules['.bw-timeline-item'] = { 'position': 'relative', 'padding-bottom': '1.5rem' };
-  rules['.bw-timeline-item:last-child'] = { 'padding-bottom': '0' };
-  rules['.bw-timeline-marker'] = { 'position': 'absolute', 'left': '-1.75rem', 'top': '0.25rem', 'width': '0.75rem', 'height': '0.75rem', 'border-radius': '50%' };
-  rules['.bw-timeline-content'] = { 'padding-left': '0.5rem' };
-  rules['.bw-timeline-date'] = { 'font-size': '0.75rem', 'margin-bottom': '0.25rem', 'font-weight': '500' };
-  rules['.bw-timeline-title'] = { 'font-size': '1rem', 'font-weight': '600', 'margin': '0 0 0.25rem 0', 'line-height': '1.3' };
-  rules['.bw-timeline-text'] = { 'font-size': '0.875rem', 'margin': '0', 'line-height': '1.5' };
-
-  // Stepper (structural)
-  rules['.bw-stepper'] = { 'display': 'flex', 'gap': '0' };
-  rules['.bw-step'] = { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'text-align': 'center', 'position': 'relative' };
-  rules['.bw-step-indicator'] = { 'width': '2rem', 'height': '2rem', 'border-radius': '50%', 'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'font-size': '0.875rem', 'font-weight': '600', 'position': 'relative', 'z-index': '1', 'transition': 'background-color 0.2s ease-out, color 0.2s ease-out' };
-  rules['.bw-step-body'] = { 'margin-top': '0.5rem' };
-  rules['.bw-step-label'] = { 'font-size': '0.875rem', 'font-weight': '500' };
-  rules['.bw-step-description'] = { 'font-size': '0.75rem', 'margin-top': '0.125rem' };
-
-  // Chip input (structural)
-  rules['.bw-chip-input'] = { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'gap': '0.375rem', 'padding': '0.375rem 0.5rem', 'border-radius': '6px', 'min-height': '2.5rem', 'cursor': 'text', 'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out' };
-  rules['.bw-chip'] = { 'display': 'inline-flex', 'align-items': 'center', 'gap': '0.25rem', 'padding': '0.125rem 0.5rem', 'border-radius': '1rem', 'font-size': '0.8125rem', 'line-height': '1.5', 'white-space': 'nowrap' };
-  rules['.bw-chip-remove'] = { 'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center', 'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none', 'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%', 'transition': 'color 0.15s ease-out, background-color 0.15s ease-out' };
-  rules['.bw-chip-field'] = { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' };
-
-  // Popover (structural)
-  rules['.bw-popover-wrapper'] = { 'position': 'relative', 'display': 'inline-block' };
-  rules['.bw-popover-trigger'] = { 'cursor': 'pointer' };
-  rules['.bw-popover'] = {
-    'position': 'absolute', 'z-index': '1000',
-    'min-width': '200px', 'max-width': '320px',
-    'border-radius': '8px',
-    'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden',
-    'transition': 'opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease'
-  };
-  rules['.bw-popover.bw-popover-show'] = { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' };
-  rules['.bw-popover-header'] = { 'padding': '0.625rem 0.875rem', 'font-weight': '600', 'font-size': '0.9375rem' };
-  rules['.bw-popover-body'] = { 'padding': '0.75rem 0.875rem', 'font-size': '0.875rem', 'line-height': '1.5' };
-  rules['.bw-popover-top'] = { 'bottom': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(-8px)', 'margin-bottom': '8px' };
-  rules['.bw-popover-top.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
-  rules['.bw-popover-bottom'] = { 'top': '100%', 'left': '50%', 'transform': 'translateX(-50%) translateY(8px)', 'margin-top': '8px' };
-  rules['.bw-popover-bottom.bw-popover-show'] = { 'transform': 'translateX(-50%) translateY(0)' };
-  rules['.bw-popover-left'] = { 'right': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(-8px)', 'margin-right': '8px' };
-  rules['.bw-popover-left.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
-  rules['.bw-popover-right'] = { 'left': '100%', 'top': '50%', 'transform': 'translateY(-50%) translateX(8px)', 'margin-left': '8px' };
-  rules['.bw-popover-right.bw-popover-show'] = { 'transform': 'translateY(-50%) translateX(0)' };
-
-  // Bar chart (structural)
-  rules['.bw-bar-chart-container'] = {
-    'padding': '1rem', 'border': '1px solid transparent', 'border-radius': '8px'
-  };
-  rules['.bw-bar-chart'] = {
-    'display': 'flex', 'align-items': 'flex-end', 'gap': '6px', 'padding': '0 0.5rem'
-  };
-  rules['.bw-bar-group'] = {
-    'flex': '1', 'display': 'flex', 'flex-direction': 'column',
-    'align-items': 'center', 'height': '100%', 'justify-content': 'flex-end'
-  };
-  rules['.bw-bar'] = {
-    'width': '100%', 'border-radius': '3px 3px 0 0',
-    'transition': 'height 0.3s ease-out', 'min-height': '4px'
-  };
-  rules['.bw-bar:hover'] = { 'opacity': '0.85' };
-  rules['.bw-bar-value'] = {
-    'font-size': '0.65rem', 'font-weight': '600', 'margin-bottom': '2px', 'text-align': 'center'
-  };
-  rules['.bw-bar-label'] = {
-    'font-size': '0.7rem', 'margin-top': '4px', 'text-align': 'center'
-  };
-  rules['.bw-bar-chart-title'] = {
-    'font-size': '1.1rem', 'font-weight': '600', 'margin': '0 0 0.75rem 0'
-  };
-
-  // Spacing utilities (structural)
+  // Spacing
   var spacingValues = { '0': '0', '1': '.25rem', '2': '.5rem', '3': '1rem', '4': '1.5rem', '5': '3rem' };
   for (var k in spacingValues) {
     var v = spacingValues[k];
-    rules['.bw-m-' + k] = { 'margin': v + ' !important' };
-    rules['.bw-mt-' + k] = { 'margin-top': v + ' !important' };
-    rules['.bw-mb-' + k] = { 'margin-bottom': v + ' !important' };
-    rules['.bw-ms-' + k] = { 'margin-left': v + ' !important' };
-    rules['.bw-me-' + k] = { 'margin-right': v + ' !important' };
-    rules['.bw-p-' + k] = { 'padding': v + ' !important' };
-    rules['.bw-pt-' + k + ', .pt-' + k] = { 'padding-top': v + ' !important' };
-    rules['.bw-pb-' + k + ', .pb-' + k] = { 'padding-bottom': v + ' !important' };
-    rules['.bw-ps-' + k + ', .ps-' + k] = { 'padding-left': v + ' !important' };
-    rules['.bw-pe-' + k + ', .pe-' + k] = { 'padding-right': v + ' !important' };
+    rules['.bw_m_' + k] = { 'margin': v + ' !important' };
+    rules['.bw_mt_' + k] = { 'margin-top': v + ' !important' };
+    rules['.bw_mb_' + k] = { 'margin-bottom': v + ' !important' };
+    rules['.bw_ms_' + k] = { 'margin-left': v + ' !important' };
+    rules['.bw_me_' + k] = { 'margin-right': v + ' !important' };
+    rules['.bw_p_' + k] = { 'padding': v + ' !important' };
+    rules['.bw_pt_' + k + ', .pt-' + k] = { 'padding-top': v + ' !important' };
+    rules['.bw_pb_' + k + ', .pb-' + k] = { 'padding-bottom': v + ' !important' };
+    rules['.bw_ps_' + k + ', .ps-' + k] = { 'padding-left': v + ' !important' };
+    rules['.bw_pe_' + k + ', .pe-' + k] = { 'padding-right': v + ' !important' };
   }
-  rules['.bw-m-auto, .m-auto'] = { 'margin': 'auto !important' };
-  rules['.bw-py-3'] = { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' };
-  rules['.bw-py-4'] = { 'padding-top': '1.5rem !important', 'padding-bottom': '1.5rem !important' };
-  rules['.bw-py-5'] = { 'padding-top': '3rem !important', 'padding-bottom': '3rem !important' };
-  rules['.bw-py-6'] = { 'padding-top': '4rem !important', 'padding-bottom': '4rem !important' };
+  rules['.bw_m_auto, .m-auto'] = { 'margin': 'auto !important' };
+  rules['.bw_py_3'] = { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' };
+  rules['.bw_py_4'] = { 'padding-top': '1.5rem !important', 'padding-bottom': '1.5rem !important' };
+  rules['.bw_py_5'] = { 'padding-top': '3rem !important', 'padding-bottom': '3rem !important' };
+  rules['.bw_py_6'] = { 'padding-top': '4rem !important', 'padding-bottom': '4rem !important' };
 
-  // Display utilities (structural)
-  rules['.bw-d-none'] = { 'display': 'none' };
-  rules['.bw-d-block'] = { 'display': 'block' };
-  rules['.bw-d-inline'] = { 'display': 'inline' };
-  rules['.bw-d-inline-block'] = { 'display': 'inline-block' };
-  rules['.bw-d-flex'] = { 'display': 'flex' };
-  rules['.bw-text-left'] = { 'text-align': 'left' };
-  rules['.bw-text-right'] = { 'text-align': 'right' };
-  rules['.bw-text-center'] = { 'text-align': 'center' };
+  // Display
+  rules['.bw_d_none'] = { 'display': 'none' };
+  rules['.bw_d_block'] = { 'display': 'block' };
+  rules['.bw_d_inline'] = { 'display': 'inline' };
+  rules['.bw_d_inline_block'] = { 'display': 'inline-block' };
+  rules['.bw_d_flex'] = { 'display': 'flex' };
 
-  // Flexbox utilities (structural)
+  // Text alignment
+  rules['.bw_text_left'] = { 'text-align': 'left' };
+  rules['.bw_text_right'] = { 'text-align': 'right' };
+  rules['.bw_text_center'] = { 'text-align': 'center' };
+
+  // Flexbox
   var jc = { start: 'flex-start', end: 'flex-end', center: 'center', between: 'space-between', around: 'space-around' };
-  for (var jk in jc) {
-    rules['.bw-justify-content-' + jk + ', .justify-content-' + jk] = { 'justify-content': jc[jk] };
-  }
+  for (var jk in jc) { rules['.bw_justify_content_' + jk + ', .justify-content-' + jk] = { 'justify-content': jc[jk] }; }
   var ai = { start: 'flex-start', end: 'flex-end', center: 'center' };
-  for (var ak in ai) {
-    rules['.bw-align-items-' + ak + ', .align-items-' + ak] = { 'align-items': ai[ak] };
-  }
+  for (var ak in ai) { rules['.bw_align_items_' + ak + ', .align-items-' + ak] = { 'align-items': ai[ak] }; }
 
-  // Size utilities (structural)
+  // Borders
+  rules['.bw_border'] = { 'border': '1px solid transparent !important' };
+  rules['.bw_border_0'] = { 'border': '0 !important' };
+  rules['.bw_border_top_0, .border-top-0'] = { 'border-top': '0 !important' };
+  rules['.bw_border_end_0, .border-end-0'] = { 'border-right': '0 !important' };
+  rules['.bw_border_bottom_0, .border-bottom-0'] = { 'border-bottom': '0 !important' };
+  rules['.bw_border_start_0, .border-start-0'] = { 'border-left': '0 !important' };
+
+  // Rounded
+  rules['.bw_rounded'] = { 'border-radius': '.375rem !important' };
+  rules['.bw_rounded_0'] = { 'border-radius': '0 !important' };
+  rules['.bw_rounded_1, .rounded-1'] = { 'border-radius': '.25rem !important' };
+  rules['.bw_rounded_2, .rounded-2'] = { 'border-radius': '.375rem !important' };
+  rules['.bw_rounded_3, .rounded-3'] = { 'border-radius': '.5rem !important' };
+  rules['.bw_rounded_circle'] = { 'border-radius': '50% !important' };
+  rules['.bw_rounded_pill, .rounded-pill'] = { 'border-radius': '50rem !important' };
+
+  // Shadows
+  rules['.bw_shadow'] = { 'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important' };
+  rules['.bw_shadow_sm'] = { 'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important' };
+  rules['.bw_shadow_lg'] = { 'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important' };
+  rules['.bw_shadow_none, .shadow-none'] = { 'box-shadow': 'none !important' };
+
+  // Width/Height
   ['25', '50', '75', '100'].forEach(function(n) {
-    rules['.bw-w-' + n + ', .w-' + n] = { 'width': n + '% !important' };
-    rules['.bw-h-' + n + ', .h-' + n] = { 'height': n + '% !important' };
+    rules['.bw_w_' + n + ', .w-' + n] = { 'width': n + '% !important' };
+    rules['.bw_h_' + n + ', .h-' + n] = { 'height': n + '% !important' };
   });
-  rules['.bw-w-auto, .w-auto'] = { 'width': 'auto !important' };
-  rules['.bw-h-auto, .h-auto'] = { 'height': 'auto !important' };
-  rules['.bw-mw-100, .mw-100'] = { 'max-width': '100% !important' };
-  rules['.bw-mh-100, .mh-100'] = { 'max-height': '100% !important' };
+  rules['.bw_w_auto, .w-auto'] = { 'width': 'auto !important' };
+  rules['.bw_h_auto, .h-auto'] = { 'height': 'auto !important' };
+  rules['.bw_mw_100, .mw-100'] = { 'max-width': '100% !important' };
+  rules['.bw_mh_100, .mh-100'] = { 'max-height': '100% !important' };
 
-  // Position utilities (structural)
+  // Positioning
   ['static', 'relative', 'absolute', 'fixed', 'sticky'].forEach(function(p) {
-    rules['.bw-position-' + p + ', .position-' + p] = { 'position': p + ' !important' };
+    rules['.bw_position_' + p + ', .position-' + p] = { 'position': p + ' !important' };
   });
-  rules['.bw-translate-middle, .translate-middle'] = { 'transform': 'translate(-50%, -50%) !important' };
+  rules['.bw_top_0, .top-0'] = { 'top': '0 !important' };
+  rules['.bw_top_50, .top-50'] = { 'top': '50% !important' };
+  rules['.bw_top_100, .top-100'] = { 'top': '100% !important' };
+  rules['.bw_bottom_0, .bottom-0'] = { 'bottom': '0 !important' };
+  rules['.bw_bottom_50, .bottom-50'] = { 'bottom': '50% !important' };
+  rules['.bw_bottom_100, .bottom-100'] = { 'bottom': '100% !important' };
+  rules['.bw_start_0, .start-0'] = { 'left': '0 !important' };
+  rules['.bw_start_50, .start-50'] = { 'left': '50% !important' };
+  rules['.bw_start_100, .start-100'] = { 'left': '100% !important' };
+  rules['.bw_end_0, .end-0'] = { 'right': '0 !important' };
+  rules['.bw_end_50, .end-50'] = { 'right': '50% !important' };
+  rules['.bw_end_100, .end-100'] = { 'right': '100% !important' };
+  rules['.bw_translate_middle, .translate-middle'] = { 'transform': 'translate(-50%, -50%) !important' };
 
-  // Overflow utilities (structural)
+  // Overflow
   ['auto', 'hidden', 'visible', 'scroll'].forEach(function(o) {
-    rules['.bw-overflow-' + o + ', .overflow-' + o] = { 'overflow': o + ' !important' };
+    rules['.bw_overflow_' + o + ', .overflow-' + o] = { 'overflow': o + ' !important' };
   });
 
-  // Visibility utilities (structural)
-  rules['.bw-visible, .visible'] = { 'visibility': 'visible !important' };
-  rules['.bw-invisible, .invisible'] = { 'visibility': 'hidden !important' };
-
-  // User select utilities (structural)
-  ['all', 'auto', 'none'].forEach(function(u) {
-    rules['.bw-user-select-' + u + ', .user-select-' + u] = { 'user-select': u + ' !important' };
-  });
-
-  // Pointer events
-  rules['.pe-none'] = { 'pointer-events': 'none !important' };
-  rules['.pe-auto'] = { 'pointer-events': 'auto !important' };
-
-  // Typography utilities (structural)
+  // Typography utilities
+  rules['.fs-1'] = { 'font-size': 'calc(1.375rem + 1.5vw) !important' };
+  rules['.fs-2'] = { 'font-size': 'calc(1.325rem + .9vw) !important' };
+  rules['.fs-3'] = { 'font-size': 'calc(1.3rem + .6vw) !important' };
+  rules['.fs-4'] = { 'font-size': 'calc(1.275rem + .3vw) !important' };
+  rules['.fs-5'] = { 'font-size': '1.25rem !important' };
+  rules['.fs-6'] = { 'font-size': '1rem !important' };
   rules['.fw-light'] = { 'font-weight': '300 !important' };
   rules['.fw-lighter'] = { 'font-weight': 'lighter !important' };
   rules['.fw-normal'] = { 'font-weight': '400 !important' };
@@ -2156,32 +2435,49 @@ function getStructuralStyles() {
   rules['.text-wrap'] = { 'white-space': 'normal !important' };
   rules['.text-nowrap'] = { 'white-space': 'nowrap !important' };
 
-  // Font-size utilities (structural)
-  rules['.fs-1'] = { 'font-size': 'calc(1.375rem + 1.5vw) !important' };
-  rules['.fs-2'] = { 'font-size': 'calc(1.325rem + .9vw) !important' };
-  rules['.fs-3'] = { 'font-size': 'calc(1.3rem + .6vw) !important' };
-  rules['.fs-4'] = { 'font-size': 'calc(1.275rem + .3vw) !important' };
-  rules['.fs-5'] = { 'font-size': '1.25rem !important' };
-  rules['.fs-6'] = { 'font-size': '1rem !important' };
-
-  // List utilities (structural)
+  // List utilities
   rules['.list-unstyled'] = { 'padding-left': '0', 'list-style': 'none' };
   rules['.list-inline'] = { 'padding-left': '0', 'list-style': 'none' };
   rules['.list-inline-item'] = { 'display': 'inline-block' };
   rules['.list-inline-item:not(:last-child)'] = { 'margin-right': '.5rem' };
 
-  // Opacity utilities (structural)
+  // Visibility
+  rules['.bw_visible, .visible'] = { 'visibility': 'visible !important' };
+  rules['.bw_invisible, .invisible'] = { 'visibility': 'hidden !important' };
+
+  // User select
+  ['all', 'auto', 'none'].forEach(function(u) {
+    rules['.bw_user_select_' + u + ', .user-select-' + u] = { 'user-select': u + ' !important' };
+  });
+
+  // Pointer events
+  rules['.pe-none'] = { 'pointer-events': 'none !important' };
+  rules['.pe-auto'] = { 'pointer-events': 'auto !important' };
+
+  // Opacity
   rules['.opacity-0'] = { 'opacity': '0 !important' };
   rules['.opacity-25'] = { 'opacity': '.25 !important' };
   rules['.opacity-50'] = { 'opacity': '.5 !important' };
   rules['.opacity-75'] = { 'opacity': '.75 !important' };
   rules['.opacity-100'] = { 'opacity': '1 !important' };
 
-  // Responsive grid
-  Object.assign(rules, defaultStyles.responsive);
+  return rules;
+}
 
-  // Accessibility: reduce motion for users who prefer it
-  rules['@media (prefers-reduced-motion: reduce)'] = {
+// =========================================================================
+// Flatten structuralRules → flat CSS rules object
+// =========================================================================
+
+function getStructuralCSS() {
+  var result = {};
+  var keys = Object.keys(structuralRules);
+  for (var i = 0; i < keys.length; i++) {
+    Object.assign(result, structuralRules[keys[i]]);
+  }
+  Object.assign(result, generateUtilityRules());
+
+  // Accessibility: reduce motion
+  result['@media (prefers-reduced-motion: reduce)'] = {
     '*, *::before, *::after': {
       'animation-duration': '0.01ms !important',
       'animation-iteration-count': '1 !important',
@@ -2190,70 +2486,52 @@ function getStructuralStyles() {
     }
   };
 
-  return addUnderscoreAliases(rules);
-}
-
-// =========================================================================
-// getAllStyles — backwards compatible
-// =========================================================================
-
-/**
- * Add underscore aliases for all `.bw-` selectors.
- *
- * CSS CLASS NAMING CONVENTION:
- *
- * Canonical form:  `.bw-btn`, `.bw-card`, `.bw-table-hover`  (hyphens)
- * Underscore alias: `.bw_btn`, `.bw_card`, `.bw_table_hover`  (underscores)
- *
- * Both forms are valid in HTML and produce identical results. The hyphen
- * form is canonical (used in docs, generated CSS, component output).
- * Underscore aliases exist because:
- *   1. TACO attribute keys use underscores (`bw_id`, `bw_meta`) — no
- *      quoting needed in JS object literals
- *   2. Some users prefer underscores for consistency with JS identifiers
- *
- * Use `bw.normalizeClass()` to convert underscore classes to canonical
- * hyphen form at runtime if needed.
- *
- * @param {Object} rules - CSS rules object
- * @returns {Object} Rules with underscore aliases added (both forms work)
- */
-function addUnderscoreAliases(rules) {
-  const result = {};
-  for (const [selector, styles] of Object.entries(rules)) {
-    result[selector] = styles;
-    if (selector.includes('.bw-')) {
-      const underscoreSelector = selector.replace(/\.bw-/g, '.bw_');
-      result[underscoreSelector] = styles;
-    }
-  }
   return result;
 }
 
 // =========================================================================
-// Theme tokens (backwards compatible)
+// getStructuralStyles — public API (backward compatible)
+// =========================================================================
+
+/**
+ * Get all structural (theme-independent) CSS rules.
+ * @returns {Object} CSS rules object
+ */
+function getStructuralStyles() {
+  return getStructuralCSS();
+}
+
+// =========================================================================
+// defaultStyles — backward-compatible categorized view
 // =========================================================================
 //
-// DESIGN NOTE — Why no CSS custom properties (CSS variables)?
-//
-// Bitwrench targets IE11 as Tier 1 (see dev/bw2x-compatibility.md).
-// CSS custom properties (var(--color-primary)) are not supported in IE11.
-//
-// Instead, bitwrench uses class-scoped CSS generation:
-//   1. `defaultStyles.*` provides hardcoded cosmetic defaults
-//   2. `generateTheme(name, config)` generates a complete set of
-//      class-scoped CSS rules from 3 seed colors (primary, secondary,
-//      tertiary) — all components are restyled with the new palette
-//   3. `generateAlternateCSS()` produces the alternate (dark/light)
-//      variant scoped under `.bw-theme-alt`
-//
-// This achieves full theme customization without CSS variables:
-//   bw.generateTheme('ocean', { primary: '#006666', secondary: '#cc6633' })
-//   → generates .ocean .bw-btn-primary { background: #006666; } etc.
-//
-// When IE11 support is dropped, CSS custom properties can be added as
-// an optimization (one rule with var() instead of many scoped rules).
-// The generateTheme() API stays the same — only the output format changes.
+// Tests import `defaultStyles` and check for category keys.
+// We export structuralRules directly as defaultStyles — it already
+// has all the required category keys. The 'utilities' category is
+// generated from generateUtilityRules() and 'root' from the theme token.
+// =========================================================================
+
+Object.assign({}, structuralRules, {
+  // Merge utility + root categories for backward compat
+  root: {
+    ':root': {
+      '--bw_font_sans_serif': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      '--bw_font_monospace': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", "Courier New", monospace',
+      '--bw_body_font_family': 'var(--bw_font_sans_serif)',
+      '--bw_body_font_size': '1rem',
+      '--bw_body_font_weight': '400',
+      '--bw_body_line_height': '1.5'
+    }
+  },
+  reset: structuralRules.base,
+  enhancedCards: structuralRules.cards,
+  tableResponsive: { '.bw_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' } },
+  utilities: generateUtilityRules()
+});
+
+// =========================================================================
+// Theme configuration object (deprecated — use generateTheme())
+// =========================================================================
 
 let theme = {
   colors: {
@@ -2301,21 +2579,21 @@ let theme = {
 };
 
 /**
- * Generate alternate-palette CSS scoped under `.bw-theme-alt`.
+ * Generate alternate-palette CSS scoped under `.bw_theme_alt`.
  * Uses the same `generateThemedCSS()` pipeline as the primary palette —
  * both sides go through identical code paths.
  *
  * @param {string} name - Theme scope name (e.g. 'ocean'). '' for global.
  * @param {Object} altPalette - From derivePalette(deriveAlternateConfig(...))
  * @param {Object} layout - From resolveLayout()
- * @returns {Object} CSS rules object scoped under .bw-theme-alt (+ optional .name)
+ * @returns {Object} CSS rules object scoped under .bw_theme_alt (+ optional .name)
  */
 function generateAlternateCSS(name, altPalette, layout) {
   // Generate themed CSS using the same pipeline as primary
   var rawRules = generateThemedCSS('', altPalette, layout);
 
-  // Re-scope every selector under .bw-theme-alt (+ optional theme name)
-  var altPrefix = name ? '.' + name + '.bw-theme-alt' : '.bw-theme-alt';
+  // Re-scope every selector under .bw_theme_alt (+ optional theme name)
+  var altPrefix = name ? '.' + name + '.bw_theme_alt' : '.bw_theme_alt';
   var altRules = {};
 
   for (var sel in rawRules) {
@@ -2337,7 +2615,7 @@ function generateAlternateCSS(name, altPalette, layout) {
       var scopedParts = [];
       for (var i = 0; i < parts.length; i++) {
         var s = parts[i].trim();
-        // 'body' selector gets special treatment: .bw-theme-alt body
+        // 'body' selector gets special treatment: .bw_theme_alt body
         if (s === 'body' || s.indexOf('body') === 0) {
           scopedParts.push(altPrefix + ' ' + s);
         } else {
@@ -2374,14 +2652,479 @@ function updateTheme(overrides) {
 }
 
 /**
- * Empty stub for bitwrench-components-v2.js.
+ * Bitwrench v2 Utility Functions
+ *
+ * Pure utility functions with no DOM dependencies. These work identically
+ * in Node.js and browsers: type detection, math, array ops, text generation,
+ * timing helpers.
+ *
+ * Extracted from bitwrench.js to keep the core focused on DOM/TACO/state.
+ *
+ * @module bitwrench-utils
+ * @license BSD-2-Clause
+ * @author M A Chatterjee <deftio [at] deftio [dot] com>
+ */
+
+/**
+ * Enhanced type detection that distinguishes arrays, dates, regexps, and more.
+ *
+ * Goes beyond `typeof` by using `Object.prototype.toString` to identify
+ * specific object types. Returns lowercase strings for primitives and arrays,
+ * PascalCase for built-in classes (Date, RegExp, Map, Set, etc.).
+ *
+ * @param {*} x - Value to examine
+ * @param {boolean} [baseTypeOnly=false] - If true, return only the base type ("object" for all objects)
+ * @returns {string} Type name
+ * @category Core
+ * @example
+ * typeOf("hello")         // => "string"
+ * typeOf(42)              // => "number"
+ * typeOf([1, 2, 3])       // => "array"
+ * typeOf(new Date())      // => "Date"
+ * typeOf({a: 1})          // => "Object"
+ * typeOf([1,2], true)     // => "object"
+ */
+function typeOf(x, baseTypeOnly) {
+  if (x === null) return "null";
+
+  const basic = typeof x;
+
+  if (basic !== "object") {
+    return basic;  // covers: string, number, boolean, undefined, function, symbol, bigint
+  }
+
+  if (baseTypeOnly) return basic;
+
+  const stringTag = Object.prototype.toString.call(x);
+
+  const typeMap = {
+    '[object Array]': 'array',
+    '[object Date]': 'Date',
+    '[object RegExp]': 'RegExp',
+    '[object Error]': 'Error',
+    '[object Promise]': 'Promise',
+    '[object Map]': 'Map',
+    '[object Set]': 'Set',
+    '[object WeakMap]': 'WeakMap',
+    '[object WeakSet]': 'WeakSet',
+    '[object ArrayBuffer]': 'ArrayBuffer',
+    '[object DataView]': 'DataView',
+    '[object Int8Array]': 'Int8Array',
+    '[object Uint8Array]': 'Uint8Array',
+    '[object Uint8ClampedArray]': 'Uint8ClampedArray',
+    '[object Int16Array]': 'Int16Array',
+    '[object Uint16Array]': 'Uint16Array',
+    '[object Int32Array]': 'Int32Array',
+    '[object Uint32Array]': 'Uint32Array',
+    '[object Float32Array]': 'Float32Array',
+    '[object Float64Array]': 'Float64Array'
+  };
+
+  if (typeMap[stringTag]) {
+    return typeMap[stringTag];
+  }
+
+  // Check for custom bitwrench types
+  if (x._bw_type) {
+    return x._bw_type;
+  }
+
+  // Try constructor name
+  if (x.constructor && x.constructor.name) {
+    return x.constructor.name;
+  }
+
+  return basic;
+}
+
+/**
+ * Map/scale a value from one range to another (linear interpolation).
+ *
+ * @param {number} x - Input value
+ * @param {number} in0 - Input range start
+ * @param {number} in1 - Input range end
+ * @param {number} out0 - Output range start
+ * @param {number} out1 - Output range end
+ * @param {Object} [options] - Mapping options
+ * @param {boolean} [options.clip=false] - Clamp result to output range
+ * @param {number} [options.expScale=1] - Exponential scaling factor
+ * @returns {number} Mapped value
+ * @category Math
+ * @example
+ * mapScale(50, 0, 100, 0, 1)  // => 0.5
+ * mapScale(75, 0, 100, 0, 255) // => 191.25
+ */
+function mapScale(x, in0, in1, out0, out1, options = {}) {
+  const { clip: doClip = false, expScale = 1 } = options;
+
+  // Normalize to 0-1
+  let normalized = (x - in0) / (in1 - in0);
+
+  // Apply exponential scaling
+  if (expScale !== 1) {
+    normalized = Math.pow(normalized, expScale);
+  }
+
+  // Map to output range
+  let result = normalized * (out1 - out0) + out0;
+
+  // Clip if requested
+  if (doClip) {
+    const min = Math.min(out0, out1);
+    const max = Math.max(out0, out1);
+    result = Math.max(min, Math.min(max, result));
+  }
+
+  return result;
+}
+
+/**
+ * Clamp a value between min and max bounds.
+ *
+ * @param {number} value - Value to clamp
+ * @param {number} min - Minimum allowed value
+ * @param {number} max - Maximum allowed value
+ * @returns {number} Clamped value
+ * @category Math
+ * @example
+ * clip(150, 0, 100)  // => 100
+ * clip(-5, 0, 100)   // => 0
+ */
+function clip(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Use a dictionary as a switch statement, with support for function values.
+ *
+ * @param {*} x - Key to look up
+ * @param {Object} choices - Dictionary of choices (values can be functions)
+ * @param {*} def - Default value if key not found
+ * @returns {*} Value or function result
+ * @category Array Utilities
+ * @example
+ * var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } };
+ * choice('red', colors, '0')   // => 1
+ * choice('aqua', colors)       // => 'aquamarine'
+ */
+function choice(x, choices, def) {
+  const z = (x in choices) ? choices[x] : def;
+  return typeOf(z) === "function" ? z(x) : z;
+}
+
+/**
+ * Return unique elements of an array (preserves first occurrence order).
+ *
+ * @param {Array} x - Input array
+ * @returns {Array} Array with unique elements
+ * @category Array Utilities
+ * @example
+ * arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
+ */
+function arrayUniq(x) {
+  if (typeOf(x) !== "array") return [];
+  return x.filter((v, i, arr) => arr.indexOf(v) === i);
+}
+
+/**
+ * Return the intersection of two arrays (elements present in both).
+ *
+ * @param {Array} a - First array
+ * @param {Array} b - Second array
+ * @returns {Array} Unique elements found in both a and b
+ * @category Array Utilities
+ * @example
+ * arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
+ */
+function arrayBinA(a, b) {
+  if (typeOf(a) !== "array" || typeOf(b) !== "array") return [];
+  return arrayUniq(a.filter(n => b.indexOf(n) !== -1));
+}
+
+/**
+ * Return elements of b that are not present in a (set difference).
+ *
+ * @param {Array} a - First array (the "exclude" set)
+ * @param {Array} b - Second array (source of results)
+ * @returns {Array} Unique elements in b but not in a
+ * @category Array Utilities
+ * @example
+ * arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
+ */
+function arrayBNotInA(a, b) {
+  if (typeOf(a) !== "array" || typeOf(b) !== "array") return [];
+  return arrayUniq(b.filter(n => a.indexOf(n) < 0));
+}
+
+/**
+ * Interpolate between an array of colors based on a value in a range.
+ *
+ * @param {number} x - Value to interpolate
+ * @param {number} in0 - Input range start
+ * @param {number} in1 - Input range end
+ * @param {Array} colors - Array of CSS color strings to interpolate between
+ * @param {number} [stretch] - Exponential scaling factor (1 = linear)
+ * @param {Function} colorParseFn - Color parse function (injected to avoid circular dep)
+ * @returns {Array} Interpolated color as [r, g, b, a, "rgb"]
+ * @category Color
+ * @example
+ * colorInterp(50, 0, 100, ['#ff0000', '#00ff00'], undefined, bw.colorParse)
+ */
+function colorInterp(x, in0, in1, colors, stretch, colorParseFn) {
+  let c = Array.isArray(colors) ? colors : ["#000", "#fff"];
+  c = c.length === 0 ? ["#000", "#fff"] : c;
+  if (c.length === 1) return c[0];
+
+  // Convert all colors to RGB format
+  c = c.map(col => colorParseFn(col));
+
+  const a = mapScale(x, in0, in1, 0, c.length - 1, { clip: true, expScale: stretch });
+  const i = clip(Math.floor(a), 0, c.length - 2);
+  const r = a - i;
+
+  const interp = (idx) => mapScale(r, 0, 1, c[i][idx], c[i + 1][idx], { clip: true });
+  return [interp(0), interp(1), interp(2), interp(3), "rgb"];
+}
+
+/**
+ * Generate Lorem Ipsum placeholder text.
+ *
+ * @param {number} [numChars] - Number of characters (random 25-150 if not provided)
+ * @param {number} [startSpot] - Starting index in Lorem text (random if undefined)
+ * @param {boolean} [startWithCapitalLetter=true] - Start with a capital letter
+ * @returns {string} Lorem ipsum text
+ * @category Text Generation
+ * @example
+ * loremIpsum(50)
+ * // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
+ */
+function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
+  const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ";
+
+  // If numChars not provided, generate random length between 25-150
+  if (typeof numChars !== "number") {
+    numChars = Math.floor(Math.random() * 125) + 25;
+  }
+
+  // If startSpot is undefined, randomize it
+  if (startSpot === undefined) {
+    startSpot = Math.floor(Math.random() * lorem.length);
+  }
+
+  startSpot = startSpot % lorem.length;
+
+  // Track how many characters we skip to honor numChars
+  let skippedChars = 0;
+  // Move startSpot to the next non-whitespace and non-punctuation character
+  while (lorem[startSpot] === ' ' || /[.,:;!?]/.test(lorem[startSpot])) {
+    startSpot = (startSpot + 1) % lorem.length;
+    skippedChars++;
+    // Prevent infinite loop in case entire lorem is spaces/punctuation
+    if (skippedChars >= lorem.length) {
+      startSpot = 0;
+      skippedChars = 0;
+      break;
+    }
+  }
+
+  let l = lorem.substring(startSpot) + lorem.substring(0, startSpot);
+
+  let result = "";
+  let remaining = numChars + skippedChars;  // Add skipped chars to honor original numChars
+
+  while (remaining > 0) {
+    result += remaining < l.length ? l.substring(0, remaining) : l;
+    remaining -= l.length;
+  }
+
+  // Trim to exact numChars length
+  if (result.length > numChars) {
+    result = result.substring(0, numChars);
+  }
+
+  // Ensure no trailing space
+  if (result[result.length - 1] === " ") {
+    result = result.substring(0, result.length - 1) + ".";
+  }
+
+  // Ensure capital letter at start if requested
+  if (startWithCapitalLetter) {
+    let c = result[0].toUpperCase();
+    c = /[A-Z]/.test(c) ? c : "L";  // Use "L" as default if first char isn't a letter
+    result = c + result.substring(1);
+  }
+
+  return result;
+}
+
+/**
+ * Create a multidimensional array filled with a value or function result.
+ *
+ * @param {*} value - Value or function to fill array with
+ * @param {number|Array} dims - Dimensions (number for 1D, array for multi-D)
+ * @returns {Array} Multidimensional array
+ * @category Array Utilities
+ * @example
+ * multiArray(0, [4, 5])            // 4x5 array of 0s
+ * multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
+ */
+function multiArray(value, dims) {
+  const v = () => typeOf(value) === "function" ? value() : value;
+  dims = typeof dims === "number" ? [dims] : dims;
+
+  const createArray = (dim) => {
+    if (dim >= dims.length) return v();
+
+    const arr = [];
+    for (let i = 0; i < dims[dim]; i++) {
+      arr[i] = createArray(dim + 1);
+    }
+    return arr;
+  };
+
+  return createArray(0);
+}
+
+/**
+ * Natural sort comparison function for use with `Array.sort()`.
+ *
+ * Sorts strings with embedded numbers in human-expected order
+ * (e.g. "file2" before "file10") instead of lexicographic order.
+ *
+ * @param {*} as - First value
+ * @param {*} bs - Second value
+ * @returns {number} Sort order (-1, 0, 1)
+ * @category Array Utilities
+ * @example
+ * ['item10', 'item2', 'item1'].sort(naturalCompare)
+ * // => ['item1', 'item2', 'item10']
+ */
+function naturalCompare(as, bs) {
+  // Handle numbers
+  if (isFinite(as) && isFinite(bs)) {
+    return Math.sign(as - bs);
+  }
+
+  const a = String(as).toLowerCase();
+  const b = String(bs).toLowerCase();
+
+  if (a === b) return as > bs ? 1 : 0;
+
+  // If no digits, simple string compare
+  if (!/\d/.test(a) || !/\d/.test(b)) {
+    return a > b ? 1 : -1;
+  }
+
+  // Split into chunks of digits/non-digits
+  const aParts = a.match(/(\d+|\D+)/g) || [];
+  const bParts = b.match(/(\d+|\D+)/g) || [];
+
+  const len = Math.min(aParts.length, bParts.length);
+
+  for (let i = 0; i < len; i++) {
+    const aPart = aParts[i];
+    const bPart = bParts[i];
+
+    if (aPart !== bPart) {
+      // Both numeric
+      if (/^\d+$/.test(aPart) && /^\d+$/.test(bPart)) {
+        // Handle leading zeros
+        let aNum = aPart;
+        let bNum = bPart;
+
+        if (aPart[0] === "0") aNum = "0." + aPart;
+        if (bPart[0] === "0") bNum = "0." + bPart;
+
+        return parseFloat(aNum) - parseFloat(bNum);
+      }
+
+      // String comparison
+      return aPart > bPart ? 1 : -1;
+    }
+  }
+
+  // Different lengths
+  return aParts.length - bParts.length;
+}
+
+/**
+ * Run `setInterval` with a maximum number of repetitions.
+ *
+ * @param {Function} callback - Function to call (receives iteration index)
+ * @param {number} delay - Delay between calls in ms
+ * @param {number} repetitions - Maximum number of times to call
+ * @returns {number} Interval ID (can be passed to clearInterval)
+ * @category Timing
+ * @example
+ * setIntervalX(function(i) {
+ *   console.log('Iteration', i);
+ * }, 1000, 5); // Runs 5 times, 1 second apart
+ */
+function setIntervalX(callback, delay, repetitions) {
+  let count = 0;
+  const intervalID = setInterval(function() {
+    callback(count);
+
+    if (++count >= repetitions) {
+      clearInterval(intervalID);
+    }
+  }, delay);
+
+  return intervalID;
+}
+
+/**
+ * Repeat a test function until it returns truthy, or give up after max attempts.
+ *
+ * @param {Function} testFn - Test function that returns truthy when done
+ * @param {Function} successFn - Called with test result when test passes
+ * @param {Function} [failFn] - Called on each failed test attempt
+ * @param {number} [delay=250] - Delay between attempts in ms
+ * @param {number} [maxReps=10] - Maximum number of attempts
+ * @param {Function} [lastFn] - Called when done with (success, count)
+ * @returns {string|number} "err" if invalid params, otherwise interval ID
+ * @category Timing
+ */
+function repeatUntil(testFn, successFn, failFn, delay = 250, maxReps = 10, lastFn) {
+  if (typeof testFn !== "function") return "err";
+
+  let count = 0;
+
+  const intervalID = setInterval(function() {
+    const result = testFn();
+    count++;
+
+    if (result) {
+      clearInterval(intervalID);
+      if (successFn) successFn(result);
+      if (lastFn) lastFn(true, count);
+    } else if (count >= maxReps) {
+      clearInterval(intervalID);
+      if (failFn) failFn();
+      if (lastFn) lastFn(false, count);
+    } else {
+      if (failFn) failFn();
+    }
+  }, delay);
+
+  return intervalID;
+}
+
+/**
+ * Empty stub for bitwrench-bccl.js.
  * Used by the lean build to exclude all BCCL component code.
  */
 const componentHandles = {};
+function variantClass() { return ''; }
+var BCCL = {};
+function make() { throw new Error('bw.make() requires the full bitwrench build (not lean)'); }
 
 var components = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  componentHandles: componentHandles
+  BCCL: BCCL,
+  componentHandles: componentHandles,
+  make: make,
+  variantClass: variantClass
 });
 
 /**
@@ -2427,7 +3170,7 @@ const bw = {
   // Fast O(1) lookup for elements by bw_id, id attribute, or bw_uuid.
   //
   // Populated by bw.createDOM() when elements have:
-  //   - data-bw-id attribute (user-declared addressable elements)
+  //   - data-bw_id attribute (user-declared addressable elements)
   //   - id attribute (standard HTML id)
   //   - bw_uuid (internal, for lifecycle-managed elements)
   //
@@ -2585,58 +3328,7 @@ bw._getFs = function() {
  * // baseTypeOnly mode:
  * bw.typeOf([1,2], true)     // => "object"
  */
-bw.typeOf = function(x, baseTypeOnly) {
-  if (x === null) return "null";
-  
-  const basic = typeof x;
-  
-  if (basic !== "object") {
-    return basic;  // covers: string, number, boolean, undefined, function, symbol, bigint
-  }
-
-  if (baseTypeOnly) return basic;
-  
-  const stringTag = Object.prototype.toString.call(x);
-  
-  const typeMap = {
-    '[object Array]': 'array',
-    '[object Date]': 'Date',
-    '[object RegExp]': 'RegExp',
-    '[object Error]': 'Error',
-    '[object Promise]': 'Promise',
-    '[object Map]': 'Map',
-    '[object Set]': 'Set',
-    '[object WeakMap]': 'WeakMap',
-    '[object WeakSet]': 'WeakSet',
-    '[object ArrayBuffer]': 'ArrayBuffer',
-    '[object DataView]': 'DataView',
-    '[object Int8Array]': 'Int8Array',
-    '[object Uint8Array]': 'Uint8Array',
-    '[object Uint8ClampedArray]': 'Uint8ClampedArray',
-    '[object Int16Array]': 'Int16Array',
-    '[object Uint16Array]': 'Uint16Array',
-    '[object Int32Array]': 'Int32Array',
-    '[object Uint32Array]': 'Uint32Array',
-    '[object Float32Array]': 'Float32Array',
-    '[object Float64Array]': 'Float64Array'
-  };
-  
-  if (typeMap[stringTag]) {
-    return typeMap[stringTag];
-  }
-  
-  // Check for custom bitwrench types
-  if (x._bw_type) {
-    return x._bw_type;
-  }
-  
-  // Try constructor name
-  if (x.constructor && x.constructor.name) {
-    return x.constructor.name;
-  }
-  
-  return basic;
-};
+bw.typeOf = typeOf;
 
 // Alias
 bw.to = bw.typeOf;
@@ -2686,9 +3378,9 @@ bw.uuid = function(prefix) {
  * Accepts a DOM element directly (pass-through) or a string identifier.
  * String identifiers are tried as: direct map key, getElementById,
  * querySelector (for CSS selectors starting with . or #), and
- * data-bw-id attribute selector.
+ * data-bw_id attribute selector.
  *
- * @param {string|Element} id - Element ID, CSS selector, data-bw-id value, or DOM element
+ * @param {string|Element} id - Element ID, CSS selector, data-bw_id value, or DOM element
  * @returns {Element|null} The DOM element, or null if not found
  * @category Internal
  */
@@ -2717,9 +3409,9 @@ bw._el = function(id) {
     el = document.querySelector(id);
   }
 
-  // 4. Try data-bw-id attribute (for bw.uuid-generated IDs)
+  // 4. Try data-bw_id attribute (for bw.uuid-generated IDs)
   if (!el) {
-    el = document.querySelector('[data-bw-id="' + id + '"]');
+    el = document.querySelector('[data-bw_id="' + id + '"]');
   }
 
   // 5. Cache the result for next time
@@ -2734,15 +3426,15 @@ bw._el = function(id) {
  * Register a DOM element in the node cache under one or more keys.
  *
  * Called internally by `bw.createDOM()`. Registers elements that have
- * id attributes, data-bw-id attributes, or both.
+ * id attributes, data-bw_id attributes, or both.
  *
  * @param {Element} el - DOM element to register
- * @param {string} [bwId] - data-bw-id value to register under
+ * @param {string} [bwId] - data-bw_id value to register under
  * @category Internal
  */
 bw._registerNode = function(el, bwId) {
   if (!el) return;
-  // Register under data-bw-id
+  // Register under data-bw_id
   if (bwId) {
     bw._nodeMap[bwId] = el;
   }
@@ -2760,11 +3452,11 @@ bw._registerNode = function(el, bwId) {
  * through bitwrench APIs.
  *
  * @param {Element} el - DOM element to deregister
- * @param {string} [bwId] - data-bw-id value to remove
+ * @param {string} [bwId] - data-bw_id value to remove
  * @category Internal
  */
 bw._deregisterNode = function(el, bwId) {
-  // Remove data-bw-id entry
+  // Remove data-bw_id entry
   if (bwId) {
     delete bw._nodeMap[bwId];
   }
@@ -2824,23 +3516,6 @@ bw.raw = function(str) {
   return { __bw_raw: true, v: String(str) };
 };
 
-/**
- * Normalize CSS class names by converting underscores to hyphens for bw-prefixed classes.
- *
- * Allows users to write either `bw_card` or `bw-card` and get consistent
- * hyphenated output. Only converts the `bw_` prefix — other underscores are untouched.
- *
- * @param {string} classStr - Class string to normalize
- * @returns {string} Normalized class string with hyphens
- * @category Identifiers
- * @example
- * bw.normalizeClass('bw_card bw_btn')  // => 'bw-card bw-btn'
- * bw.normalizeClass('my_class')         // => 'my_class' (unchanged)
- */
-bw.normalizeClass = function(classStr) {
-  if (typeof classStr !== 'string') return classStr;
-  return classStr.replace(/\bbw_/g, 'bw-');
-};
 
 /**
  * Convert a TACO object (or array of TACOs) to an HTML string.
@@ -2944,12 +3619,8 @@ bw.html = function(taco, options = {}) {
         attrStr += ` style="${bw.escapeHTML(styleStr)}"`;
       }
     } else if (key === 'class') {
-      // Handle class as array or string, normalize bw_ to bw-
-      const classStr = bw.normalizeClass(
-        Array.isArray(value)
-          ? value.filter(Boolean).join(' ')
-          : String(value)
-      );
+      // Handle class as array or string
+      const classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
       if (classStr) {
         attrStr += ` class="${bw.escapeHTML(classStr)}"`;
       }
@@ -2966,14 +3637,14 @@ bw.html = function(taco, options = {}) {
     }
   }
 
-  // Add bw-id as a class if lifecycle hooks present
-  if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw-id-')) {
+  // Add bw_id as a class if lifecycle hooks present
+  if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw_id_')) {
     const id = opts.bw_id || bw.uuid();
     attrStr = attrStr.replace(/class="([^"]*)"/, (_match, classes) => {
-      return `class="${classes} bw-id-${id}"`.trim();
+      return `class="${classes} bw_id_${id}"`.trim();
     });
     if (!attrStr.includes('class=')) {
-      attrStr += ` class="bw-id-${id}"`;
+      attrStr += ` class="bw_id_${id}"`;
     }
   }
   
@@ -3008,7 +3679,7 @@ bw.html = function(taco, options = {}) {
  * @example
  * var el = bw.createDOM({
  *   t: 'button',
- *   a: { class: 'bw-btn', onclick: () => alert('clicked') },
+ *   a: { class: 'bw_btn', onclick: () => alert('clicked') },
  *   c: 'Click Me'
  * });
  * document.body.appendChild(el);
@@ -3048,12 +3719,8 @@ bw.createDOM = function(taco, options = {}) {
       // Apply styles directly
       Object.assign(el.style, value);
     } else if (key === 'class') {
-      // Handle class as array or string, normalize bw_ to bw-
-      const classStr = bw.normalizeClass(
-        Array.isArray(value)
-          ? value.filter(Boolean).join(' ')
-          : String(value)
-      );
+      // Handle class as array or string
+      const classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
       if (classStr) {
         el.className = classStr;
       }
@@ -3074,7 +3741,7 @@ bw.createDOM = function(taco, options = {}) {
   }
   
   // Add children, building _bw_refs for fast parent→child access.
-  // Children with data-bw-id or id attributes get local refs on the parent,
+  // Children with data-bw_id or id attributes get local refs on the parent,
   // so o.render functions can access them without any DOM lookup.
   if (content != null) {
     if (Array.isArray(content)) {
@@ -3083,7 +3750,7 @@ bw.createDOM = function(taco, options = {}) {
           var childEl = bw.createDOM(child, options);
           el.appendChild(childEl);
           // Build local refs for addressable children
-          var childBwId = (child && child.a) ? (child.a['data-bw-id'] || child.a.id) : null;
+          var childBwId = (child && child.a) ? (child.a['data-bw_id'] || child.a.id) : null;
           if (childBwId) {
             if (!el._bw_refs) el._bw_refs = {};
             el._bw_refs[childBwId] = childEl;
@@ -3105,7 +3772,7 @@ bw.createDOM = function(taco, options = {}) {
     } else if (typeof content === 'object' && content.t) {
       var childEl = bw.createDOM(content, options);
       el.appendChild(childEl);
-      var childBwId = content.a ? (content.a['data-bw-id'] || content.a.id) : null;
+      var childBwId = content.a ? (content.a['data-bw_id'] || content.a.id) : null;
       if (childBwId) {
         if (!el._bw_refs) el._bw_refs = {};
         el._bw_refs[childBwId] = childEl;
@@ -3130,10 +3797,10 @@ bw.createDOM = function(taco, options = {}) {
 
   // Handle lifecycle hooks and state
   if (opts.mounted || opts.unmount || opts.render || opts.state) {
-    const id = attrs['data-bw-id'] || bw.uuid();
-    el.setAttribute('data-bw-id', id);
+    const id = attrs['data-bw_id'] || bw.uuid();
+    el.setAttribute('data-bw_id', id);
 
-    // Register in node cache under data-bw-id
+    // Register in node cache under data-bw_id
     bw._registerNode(el, id);
 
     // Store state
@@ -3178,9 +3845,9 @@ bw.createDOM = function(taco, options = {}) {
         opts.unmount(el, el._bw_state || {});
       });
     }
-  } else if (attrs['data-bw-id']) {
-    // Element has explicit data-bw-id but no lifecycle hooks — still register it
-    bw._registerNode(el, attrs['data-bw-id']);
+  } else if (attrs['data-bw_id']) {
+    // Element has explicit data-bw_id but no lifecycle hooks — still register it
+    bw._registerNode(el, attrs['data-bw_id']);
   }
 
   return el;
@@ -3227,7 +3894,7 @@ bw.DOM = function(target, taco, options = {}) {
   // the target is the mount point, not the content being replaced)
   const savedState = targetEl._bw_state;
   const savedRender = targetEl._bw_render;
-  const savedBwId = targetEl.getAttribute('data-bw-id');
+  const savedBwId = targetEl.getAttribute('data-bw_id');
   const savedSubs = targetEl._bw_subs;
 
   // Temporarily remove _bw_subs so cleanup doesn't call them
@@ -3240,7 +3907,7 @@ bw.DOM = function(target, taco, options = {}) {
   if (savedState !== undefined) targetEl._bw_state = savedState;
   if (savedRender) targetEl._bw_render = savedRender;
   if (savedBwId) {
-    targetEl.setAttribute('data-bw-id', savedBwId);
+    targetEl.setAttribute('data-bw_id', savedBwId);
     // Re-register mount point in node cache (cleanup deregistered it)
     bw._registerNode(targetEl, savedBwId);
   }
@@ -3500,11 +4167,11 @@ bw.renderComponent = function(taco, options = {}) {
 bw.cleanup = function(element) {
   if (!bw._isBrowser || !element) return;
 
-  // Find all elements with data-bw-id
-  const elements = element.querySelectorAll('[data-bw-id]');
+  // Find all elements with data-bw_id
+  const elements = element.querySelectorAll('[data-bw_id]');
 
   elements.forEach(el => {
-    const id = el.getAttribute('data-bw-id');
+    const id = el.getAttribute('data-bw_id');
     const callback = bw._unmountCallbacks.get(id);
 
     if (callback) {
@@ -3528,7 +4195,7 @@ bw.cleanup = function(element) {
   });
 
   // Check element itself
-  const id = element.getAttribute('data-bw-id');
+  const id = element.getAttribute('data-bw_id');
   if (id) {
     const callback = bw._unmountCallbacks.get(id);
     if (callback) {
@@ -3568,7 +4235,7 @@ bw.cleanup = function(element) {
  * Calls `el._bw_render(el, state)` and emits `bw:statechange` so other
  * components can react without tight coupling.
  *
- * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element
+ * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element
  * @returns {Element|null} The element, or null if not found / no render function
  * @category State Management
  * @see bw.patch
@@ -3593,7 +4260,7 @@ bw.update = function(target) {
  * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
  * and `bw.update()` for full structural re-renders.
  *
- * @param {string|Element} id - Element ID, data-bw-id, CSS selector, or DOM element.
+ * @param {string|Element} id - Element ID, data-bw_id, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string|Object} content - New text content, or TACO object to replace children
  * @param {string} [attr] - If provided, sets this attribute instead of content
@@ -3668,7 +4335,7 @@ bw.patchAll = function(patches) {
  * bubble by default so ancestor elements can listen. Use with `bw.on()` for
  * DOM-scoped communication between components.
  *
- * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+ * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {*} [detail] - Data to pass with the event
@@ -3695,7 +4362,7 @@ bw.emit = function(target, eventName, detail) {
  * is the first argument so you don't need to destructure `e.detail`.
  * Events bubble, so you can listen on an ancestor element.
  *
- * @param {string|Element} target - Element ID, data-bw-id, CSS selector, or DOM element.
+ * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {Function} handler - Called with (detail, event)
@@ -3793,10 +4460,10 @@ bw.sub = function(topic, handler, el) {
   if (el) {
     if (!el._bw_subs) el._bw_subs = [];
     el._bw_subs.push(unsub);
-    // Ensure element has data-bw-id so bw.cleanup() finds it
-    if (!el.getAttribute('data-bw-id')) {
+    // Ensure element has data-bw_id so bw.cleanup() finds it
+    if (!el.getAttribute('data-bw_id')) {
       var bwId = 'bw_sub_' + id;
-      el.setAttribute('data-bw-id', bwId);
+      el.setAttribute('data-bw_id', bwId);
     }
   }
 
@@ -4261,16 +4928,16 @@ ComponentHandle.prototype._compileBindings = function() {
         deps: deps,
         template: taco.c
       });
-      // Inject data-bw-ref on the TACO for createDOM to pick up
+      // Inject data-bw_ref on the TACO for createDOM to pick up
       if (!taco.a) taco.a = {};
-      taco.a['data-bw-ref'] = refId;
+      taco.a['data-bw_ref'] = refId;
     }
 
     // Check attributes for bindings
     if (taco.a) {
       for (var attrName in taco.a) {
         if (!Object.prototype.hasOwnProperty.call(taco.a, attrName)) continue;
-        if (attrName === 'data-bw-ref') continue;
+        if (attrName === 'data-bw_ref') continue;
         var attrVal = taco.a[attrName];
         if (typeof attrVal === 'string' && attrVal.indexOf('${') >= 0) {
           var refId2 = 'bw_ref_' + self._refCounter++;
@@ -4288,10 +4955,10 @@ ComponentHandle.prototype._compileBindings = function() {
             template: attrVal
           });
           if (!taco.a) taco.a = {};
-          taco.a['data-bw-ref'] = taco.a['data-bw-ref'] || refId2;
+          taco.a['data-bw_ref'] = taco.a['data-bw_ref'] || refId2;
           // If multiple attribute bindings on same element, store additional marker
-          if (taco.a['data-bw-ref'] !== refId2) {
-            taco.a['data-bw-ref-' + attrName] = refId2;
+          if (taco.a['data-bw_ref'] !== refId2) {
+            taco.a['data-bw_ref_' + attrName] = refId2;
           }
         }
       }
@@ -4354,12 +5021,12 @@ ComponentHandle.prototype._compileBindings = function() {
 ComponentHandle.prototype._collectRefs = function() {
   this._bw_refs = {};
   if (!this.element) return;
-  var els = this.element.querySelectorAll('[data-bw-ref]');
+  var els = this.element.querySelectorAll('[data-bw_ref]');
   for (var i = 0; i < els.length; i++) {
-    this._bw_refs[els[i].getAttribute('data-bw-ref')] = els[i];
+    this._bw_refs[els[i].getAttribute('data-bw_ref')] = els[i];
   }
   // Also check root element
-  var rootRef = this.element.getAttribute && this.element.getAttribute('data-bw-ref');
+  var rootRef = this.element.getAttribute && this.element.getAttribute('data-bw_ref');
   if (rootRef) {
     this._bw_refs[rootRef] = this.element;
   }
@@ -4385,7 +5052,7 @@ ComponentHandle.prototype.mount = function(parentEl) {
   // Custom clone to preserve _bwWhen/_bwEach markers and their factory functions.
   this.taco = this._deepCloneTaco(this._originalTaco);
 
-  // Compile bindings (annotates TACO with data-bw-ref attributes)
+  // Compile bindings (annotates TACO with data-bw_ref attributes)
   this._compileBindings();
 
   // Prepare TACO: resolve initial binding values, evaluate when/each
@@ -4412,7 +5079,7 @@ ComponentHandle.prototype.mount = function(parentEl) {
   var tacoForDOM = this._tacoForDOM(this.taco);
   this.element = bw.createDOM(tacoForDOM);
   this.element._bwComponentHandle = this;
-  this.element.setAttribute('data-bw-comp-id', this._bwId);
+  this.element.setAttribute('data-bw_comp_id', this._bwId);
 
   // Append to parent
   parentEl.appendChild(this.element);
@@ -4458,9 +5125,9 @@ ComponentHandle.prototype._prepareTaco = function(taco) {
         var branch = val ? child.branches[0] : (child.branches[1] || null);
         if (branch) {
           // Wrap in a container so we can track it
-          taco.c[i] = { t: 'span', a: { 'data-bw-when': child._refId, style: 'display:contents' }, c: branch };
+          taco.c[i] = { t: 'span', a: { 'data-bw_when': child._refId, style: 'display:contents' }, c: branch };
         } else {
-          taco.c[i] = { t: 'span', a: { 'data-bw-when': child._refId, style: 'display:contents' }, c: '' };
+          taco.c[i] = { t: 'span', a: { 'data-bw_when': child._refId, style: 'display:contents' }, c: '' };
         }
       }
       if (child && child._bwEach) {
@@ -4472,7 +5139,7 @@ ComponentHandle.prototype._prepareTaco = function(taco) {
             items.push(child.factory(arr[j], j));
           }
         }
-        taco.c[i] = { t: 'span', a: { 'data-bw-each': child._refId, style: 'display:contents' }, c: items };
+        taco.c[i] = { t: 'span', a: { 'data-bw_each': child._refId, style: 'display:contents' }, c: items };
       }
       if (taco.c[i] && typeof taco.c[i] === 'object' && taco.c[i].t) {
         this._prepareTaco(taco.c[i]);
@@ -4732,7 +5399,7 @@ ComponentHandle.prototype._applyPatches = function(patches) {
       el.textContent = p.value;
     } else if (p.type === 'attribute') {
       if (p.attrName === 'class') {
-        el.className = bw.normalizeClass(p.value);
+        el.className = p.value;
       } else {
         el.setAttribute(p.attrName, p.value);
       }
@@ -4786,7 +5453,7 @@ ComponentHandle.prototype._render = function() {
   var tacoForDOM = this._tacoForDOM(this.taco);
   this.element = bw.createDOM(tacoForDOM);
   this.element._bwComponentHandle = this;
-  this.element.setAttribute('data-bw-comp-id', this._bwId);
+  this.element.setAttribute('data-bw_comp_id', this._bwId);
 
   // Re-insert at same position
   if (nextSibling) {
@@ -5078,7 +5745,7 @@ bw.css = function(rules, options = {}) {
  *
  * @param {string|Object|Array} css - CSS string, or JS rule objects to convert
  * @param {Object} [options] - Injection options
- * @param {string} [options.id='bw-styles'] - ID for the style element
+ * @param {string} [options.id='bw_styles'] - ID for the style element
  * @param {boolean} [options.append=true] - Append to existing CSS (false to replace)
  * @returns {Element} The style element
  * @category CSS & Styling
@@ -5094,7 +5761,7 @@ bw.injectCSS = function(css, options = {}) {
     return null;
   }
   
-  const { id = 'bw-styles', append = true } = options;
+  const { id = 'bw_styles', append = true } = options;
   
   // Get or create style element
   let styleEl = document.getElementById(id);
@@ -5294,29 +5961,7 @@ bw.responsive = function(selector, breakpoints) {
  * bw.mapScale(50, 0, 100, 0, 1)  // => 0.5
  * bw.mapScale(75, 0, 100, 0, 255) // => 191.25
  */
-bw.mapScale = function(x, in0, in1, out0, out1, options = {}) {
-  const { clip = false, expScale = 1 } = options;
-  
-  // Normalize to 0-1
-  let normalized = (x - in0) / (in1 - in0);
-  
-  // Apply exponential scaling
-  if (expScale !== 1) {
-    normalized = Math.pow(normalized, expScale);
-  }
-  
-  // Map to output range
-  let result = normalized * (out1 - out0) + out0;
-  
-  // Clip if requested
-  if (clip) {
-    const min = Math.min(out0, out1);
-    const max = Math.max(out0, out1);
-    result = Math.max(min, Math.min(max, result));
-  }
-  
-  return result;
-};
+bw.mapScale = mapScale;
 
 /**
  * Clamp a value between min and max bounds.
@@ -5332,9 +5977,7 @@ bw.mapScale = function(x, in0, in1, out0, out1, options = {}) {
  * bw.clip(-5, 0, 100)   // => 0
  * bw.clip(50, 0, 100)   // => 50
  */
-bw.clip = function(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-};
+bw.clip = clip;
 
 /**
  * DOM selection helper that always returns an array (browser only).
@@ -5403,7 +6046,7 @@ bw.loadDefaultStyles = function(options = {}) {
   // 1. Inject structural CSS (layout, sizing — never changes with theme)
   if (bw._isBrowser) {
     var structuralCSS = bw.css(getStructuralStyles());
-    bw.injectCSS(structuralCSS, { id: 'bw-structural', append: false, minify: minify });
+    bw.injectCSS(structuralCSS, { id: 'bw_structural', append: false, minify: minify });
   }
 
   // 2. Inject cosmetic CSS via generateTheme (colors, shadows, radii)
@@ -5531,17 +6174,15 @@ bw.generateTheme = function(name, config) {
 
   // Generate primary themed CSS rules
   var themedRules = generateThemedCSS(name, palette, layout);
-  var aliasedRules = addUnderscoreAliases(themedRules);
-  var cssStr = bw.css(aliasedRules);
+  var cssStr = bw.css(themedRules);
 
   // Derive alternate palette (luminance-inverted)
   var altConfig = deriveAlternateConfig(fullConfig);
   var altPalette = derivePalette(altConfig);
 
-  // Generate alternate CSS scoped under .bw-theme-alt
+  // Generate alternate CSS scoped under .bw_theme_alt
   var altRules = generateAlternateCSS(name, altPalette, layout);
-  var aliasedAltRules = addUnderscoreAliases(altRules);
-  var altCssStr = bw.css(aliasedAltRules);
+  var altCssStr = bw.css(altRules);
 
   // Determine if primary is light-flavored
   var lightPrimary = isLightPalette(fullConfig);
@@ -5549,10 +6190,11 @@ bw.generateTheme = function(name, config) {
   // Inject both CSS sets into DOM if requested
   var shouldInject = config.inject !== false;
   if (shouldInject && bw._isBrowser) {
-    var styleId = name ? 'bw-theme-' + name : 'bw-theme-default';
+    var safeName = name ? name.replace(/-/g, '_') : '';
+    var styleId = safeName ? 'bw_theme_' + safeName : 'bw_theme_default';
     bw.injectCSS(cssStr, { id: styleId, append: false });
 
-    var altStyleId = name ? 'bw-theme-' + name + '-alt' : 'bw-theme-default-alt';
+    var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
     bw.injectCSS(altCssStr, { id: altStyleId, append: false });
   }
 
@@ -5583,7 +6225,7 @@ bw.generateTheme = function(name, config) {
 
 /**
  * Apply a theme mode. Switches between primary and alternate palettes
- * by adding/removing the `bw-theme-alt` class on `<html>`.
+ * by adding/removing the `bw_theme_alt` class on `<html>`.
  *
  * @param {string} mode - 'primary' | 'alternate' | 'light' | 'dark'
  * @returns {string} Active mode: 'primary' or 'alternate'
@@ -5608,9 +6250,9 @@ bw.applyTheme = function(mode) {
   else                           wantAlt = false;
 
   if (wantAlt) {
-    root.classList.add('bw-theme-alt');
+    root.classList.add('bw_theme_alt');
   } else {
-    root.classList.remove('bw-theme-alt');
+    root.classList.remove('bw_theme_alt');
   }
 
   bw._activeThemeMode = wantAlt ? 'alternate' : 'primary';
@@ -5660,107 +6302,18 @@ bw.THEME_PRESETS = THEME_PRESETS;
 // Legacy v1 Functions - Useful utilities retained from bitwrench v1
 // ===================================================================================
 
-/**
- * Use a dictionary as a switch statement, with support for function values.
- *
- * Looks up `x` in `choices`. If the value is a function, calls it with `x` as argument.
- * Returns `def` if the key is not found.
- *
- * @param {*} x - Key to look up
- * @param {Object} choices - Dictionary of choices (values can be functions)
- * @param {*} def - Default value if key not found
- * @returns {*} Value or function result
- * @category Array Utilities
- * @example
- * var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } };
- * bw.choice('red', colors, '0')   // => 1
- * bw.choice('aqua', colors)       // => 'aquamarine'
- * bw.choice('pink', colors, 'n/a') // => 'n/a'
- */
-bw.choice = function(x, choices, def) {
-  const z = (x in choices) ? choices[x] : def;
-  return bw.typeOf(z) === "function" ? z(x) : z;
-};
+/** @see bitwrench-utils.js for implementation */
+bw.choice = choice;
+/** @see bitwrench-utils.js for implementation */
+bw.arrayUniq = arrayUniq;
+/** @see bitwrench-utils.js for implementation */
+bw.arrayBinA = arrayBinA;
+/** @see bitwrench-utils.js for implementation */
+bw.arrayBNotInA = arrayBNotInA;
 
-/**
- * Return unique elements of an array (preserves first occurrence order).
- *
- * @param {Array} x - Input array
- * @returns {Array} Array with unique elements
- * @category Array Utilities
- * @example
- * bw.arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
- */
-bw.arrayUniq = function(x) {
-  if (bw.typeOf(x) !== "array") return [];
-  return x.filter((v, i, arr) => arr.indexOf(v) === i);
-};
-
-/**
- * Return the intersection of two arrays (elements present in both).
- *
- * @param {Array} a - First array
- * @param {Array} b - Second array
- * @returns {Array} Unique elements found in both a and b
- * @category Array Utilities
- * @see bw.arrayBNotInA
- * @example
- * bw.arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
- */
-bw.arrayBinA = function(a, b) {
-  if (bw.typeOf(a) !== "array" || bw.typeOf(b) !== "array") return [];
-  return bw.arrayUniq(a.filter(n => b.indexOf(n) !== -1));
-};
-
-/**
- * Return elements of b that are not present in a (set difference).
- *
- * @param {Array} a - First array (the "exclude" set)
- * @param {Array} b - Second array (source of results)
- * @returns {Array} Unique elements in b but not in a
- * @category Array Utilities
- * @see bw.arrayBinA
- * @example
- * bw.arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
- */
-bw.arrayBNotInA = function(a, b) {
-  if (bw.typeOf(a) !== "array" || bw.typeOf(b) !== "array") return [];
-  return bw.arrayUniq(b.filter(n => a.indexOf(n) < 0));
-};
-
-/**
- * Interpolate between an array of colors based on a value in a range.
- *
- * Maps a value from [in0..in1] across a gradient of colors, smoothly blending
- * between adjacent stops. Useful for heatmaps, gauges, and data visualization.
- *
- * @param {number} x - Value to interpolate
- * @param {number} in0 - Input range start
- * @param {number} in1 - Input range end
- * @param {Array} colors - Array of CSS color strings to interpolate between
- * @param {number} [stretch] - Exponential scaling factor (1 = linear)
- * @returns {Array} Interpolated color as [r, g, b, a, "rgb"]
- * @category Color
- * @see bw.colorParse
- * @see bw.mapScale
- * @example
- * bw.colorInterp(50, 0, 100, ['#ff0000', '#00ff00'])
- * // => [128, 128, 0, 255, "rgb"] (yellow midpoint)
- */
+/** @see bitwrench-utils.js for implementation — wraps _colorInterp with bw.colorParse */
 bw.colorInterp = function(x, in0, in1, colors, stretch) {
-  let c = Array.isArray(colors) ? colors : ["#000", "#fff"];
-  c = c.length === 0 ? ["#000", "#fff"] : c;
-  if (c.length === 1) return c[0];
-  
-  // Convert all colors to RGB format
-  c = c.map(col => bw.colorParse(col));
-  
-  const a = bw.mapScale(x, in0, in1, 0, c.length - 1, { clip: true, expScale: stretch });
-  const i = bw.clip(Math.floor(a), 0, c.length - 2);
-  const r = a - i;
-  
-  const interp = (idx) => bw.mapScale(r, 0, 1, c[i][idx], c[i + 1][idx], { clip: true });
-  return [interp(0), interp(1), interp(2), interp(3), "rgb"];
+  return colorInterp(x, in0, in1, colors, stretch, colorParse);
 };
 
 // Color conversion functions — imported from bitwrench-color-utils.js (single source of truth)
@@ -5974,9 +6527,9 @@ bw.htmlTabs = function(tabData, opts = {}) {
   if (bw.typeOf(tabData) !== "array" || tabData.length < 1) return "";
   
   const dopts = {
-    atr: { class: "bw-tab-container" },
-    tab_atr: { class: "bw-tab-item-list" },
-    tabc_atr: { class: "bw-tab-content-list" }
+    atr: { class: "bw_tab_container" },
+    tab_atr: { class: "bw_tab_item_list" },
+    tabc_atr: { class: "bw_tab_content_list" }
   };
   
   Object.assign(dopts, opts);
@@ -5985,7 +6538,7 @@ bw.htmlTabs = function(tabData, opts = {}) {
   const tabItems = tabData.map((tab, idx) => ({
     t: "li",
     a: { 
-      class: idx === 0 ? "bw-tab-item bw-tab-active" : "bw-tab-item",
+      class: idx === 0 ? "bw_tab_item bw_tab_active" : "bw_tab_item",
       onclick: "bw.selectTabContent(this)"
     },
     c: tab[0]
@@ -5994,7 +6547,7 @@ bw.htmlTabs = function(tabData, opts = {}) {
   // Create tab content
   const tabContent = tabData.map((tab, idx) => ({
     t: "div",
-    a: { class: idx === 0 ? "bw-tab-content bw-show" : "bw-tab-content" },
+    a: { class: idx === 0 ? "bw_tab_content bw_show" : "bw_tab_content" },
     c: tab[1]
   }));
   
@@ -6020,271 +6573,43 @@ bw.selectTabContent = function(tabElement) {
   console.warn('bw.selectTabContent() is deprecated. Use bw.makeTabs() instead.');
   if (!bw._isBrowser || !tabElement) return;
   
-  const container = tabElement.closest(".bw-tab-container");
+  const container = tabElement.closest(".bw_tab_container");
   if (!container) return;
   
   // Remove active class from all tabs
-  container.querySelectorAll(".bw-tab-item").forEach(tab => {
-    tab.classList.remove("bw-tab-active");
+  container.querySelectorAll(".bw_tab_item").forEach(tab => {
+    tab.classList.remove("bw_tab_active");
   });
   
   // Add active to clicked tab
-  tabElement.classList.add("bw-tab-active");
+  tabElement.classList.add("bw_tab_active");
   
   // Get tab index
   const tabIndex = Array.from(tabElement.parentElement.children).indexOf(tabElement);
   
   // Hide all content
-  container.querySelectorAll(".bw-tab-content").forEach(content => {
-    content.classList.remove("bw-show");
+  container.querySelectorAll(".bw_tab_content").forEach(content => {
+    content.classList.remove("bw_show");
   });
   
   // Show selected content
-  const contents = container.querySelectorAll(".bw-tab-content");
+  const contents = container.querySelectorAll(".bw_tab_content");
   if (contents[tabIndex]) {
-    contents[tabIndex].classList.add("bw-show");
+    contents[tabIndex].classList.add("bw_show");
   }
 };
 
-/**
- * Generate Lorem Ipsum placeholder text.
- *
- * Useful for prototyping layouts. Generates repeatable text from the standard
- * Lorem Ipsum passage. Omit numChars for a random length between 25-150 characters.
- *
- * @param {number} [numChars] - Number of characters (random 25-150 if not provided)
- * @param {number} [startSpot] - Starting index in Lorem text (random if undefined)
- * @param {boolean} [startWithCapitalLetter=true] - Start with a capital letter
- * @returns {string} Lorem ipsum text
- * @category Text Generation
- * @example
- * bw.loremIpsum(50)
- * // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
- */
-bw.loremIpsum = function(numChars, startSpot, startWithCapitalLetter = true) {
-  const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. ";
-  
-  // If numChars not provided, generate random length between 25-150
-  if (typeof numChars !== "number") {
-    numChars = Math.floor(Math.random() * 125) + 25;
-  }
-  
-  // If startSpot is undefined, randomize it
-  if (startSpot === undefined) {
-    startSpot = Math.floor(Math.random() * lorem.length);
-  }
-  
-  startSpot = startSpot % lorem.length;
-  
-  // Track how many characters we skip to honor numChars
-  let skippedChars = 0;
-  // Move startSpot to the next non-whitespace and non-punctuation character
-  while (lorem[startSpot] === ' ' || /[.,:;!?]/.test(lorem[startSpot])) {
-    startSpot = (startSpot + 1) % lorem.length;
-    skippedChars++;
-    // Prevent infinite loop in case entire lorem is spaces/punctuation
-    if (skippedChars >= lorem.length) {
-      startSpot = 0;
-      skippedChars = 0;
-      break;
-    }
-  }
-  
-  let l = lorem.substring(startSpot) + lorem.substring(0, startSpot);
-  
-  let result = "";
-  let remaining = numChars + skippedChars;  // Add skipped chars to honor original numChars
-  
-  while (remaining > 0) {
-    result += remaining < l.length ? l.substring(0, remaining) : l;
-    remaining -= l.length;
-  }
-  
-  // Trim to exact numChars length
-  if (result.length > numChars) {
-    result = result.substring(0, numChars);
-  }
-  
-  // Ensure no trailing space
-  if (result[result.length - 1] === " ") {
-    result = result.substring(0, result.length - 1) + ".";
-  }
-  
-  // Ensure capital letter at start if requested
-  if (startWithCapitalLetter) {
-    let c = result[0].toUpperCase();
-    c = /[A-Z]/.test(c) ? c : "L";  // Use "L" as default if first char isn't a letter
-    result = c + result.substring(1);
-  }
-  
-  return result;
-};
+/** @see bitwrench-utils.js for implementation */
+bw.loremIpsum = loremIpsum;
 
-/**
- * Create a multidimensional array filled with a value or function result.
- *
- * If value is a function, it's called for each cell (useful for random data).
- *
- * @param {*} value - Value or function to fill array with
- * @param {number|Array} dims - Dimensions (number for 1D, array for multi-D)
- * @returns {Array} Multidimensional array
- * @category Array Utilities
- * @example
- * bw.multiArray(0, [4, 5])            // 4x5 array of 0s
- * bw.multiArray('test', 5)            // ['test','test','test','test','test']
- * bw.multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
- */
-bw.multiArray = function(value, dims) {
-  const v = () => bw.typeOf(value) === "function" ? value() : value;
-  dims = typeof dims === "number" ? [dims] : dims;
-  
-  const createArray = (dim) => {
-    if (dim >= dims.length) return v();
-    
-    const arr = [];
-    for (let i = 0; i < dims[dim]; i++) {
-      arr[i] = createArray(dim + 1);
-    }
-    return arr;
-  };
-  
-  return createArray(0);
-};
-
-/**
- * Natural sort comparison function for use with `Array.sort()`.
- *
- * Sorts strings with embedded numbers in human-expected order
- * (e.g. "file2" before "file10") instead of lexicographic order.
- *
- * @param {*} as - First value
- * @param {*} bs - Second value
- * @returns {number} Sort order (-1, 0, 1)
- * @category Array Utilities
- * @example
- * ['item10', 'item2', 'item1'].sort(bw.naturalCompare)
- * // => ['item1', 'item2', 'item10']
- */
-bw.naturalCompare = function(as, bs) {
-  // Handle numbers
-  if (isFinite(as) && isFinite(bs)) {
-    return Math.sign(as - bs);
-  }
-  
-  const a = String(as).toLowerCase();
-  const b = String(bs).toLowerCase();
-  
-  if (a === b) return as > bs ? 1 : 0;
-  
-  // If no digits, simple string compare
-  if (!/\d/.test(a) || !/\d/.test(b)) {
-    return a > b ? 1 : -1;
-  }
-  
-  // Split into chunks of digits/non-digits
-  const aParts = a.match(/(\d+|\D+)/g) || [];
-  const bParts = b.match(/(\d+|\D+)/g) || [];
-  
-  const len = Math.min(aParts.length, bParts.length);
-  
-  for (let i = 0; i < len; i++) {
-    const aPart = aParts[i];
-    const bPart = bParts[i];
-    
-    if (aPart !== bPart) {
-      // Both numeric
-      if (/^\d+$/.test(aPart) && /^\d+$/.test(bPart)) {
-        // Handle leading zeros
-        let aNum = aPart;
-        let bNum = bPart;
-        
-        if (aPart[0] === "0") aNum = "0." + aPart;
-        if (bPart[0] === "0") bNum = "0." + bPart;
-        
-        return parseFloat(aNum) - parseFloat(bNum);
-      }
-      
-      // String comparison
-      return aPart > bPart ? 1 : -1;
-    }
-  }
-  
-  // Different lengths
-  return aParts.length - bParts.length;
-};
-
-/**
- * Run `setInterval` with a maximum number of repetitions.
- *
- * Like `setInterval` but automatically clears after N calls.
- *
- * @param {Function} callback - Function to call (receives iteration index)
- * @param {number} delay - Delay between calls in ms
- * @param {number} repetitions - Maximum number of times to call
- * @returns {number} Interval ID (can be passed to clearInterval)
- * @category Timing
- * @example
- * bw.setIntervalX(function(i) {
- *   console.log('Iteration', i);
- * }, 1000, 5); // Runs 5 times, 1 second apart
- */
-bw.setIntervalX = function(callback, delay, repetitions) {
-  let count = 0;
-  const intervalID = setInterval(function() {
-    callback(count);
-    
-    if (++count >= repetitions) {
-      clearInterval(intervalID);
-    }
-  }, delay);
-  
-  return intervalID;
-};
-
-/**
- * Repeat a test function until it returns truthy, or give up after max attempts.
- *
- * Useful for polling (waiting for an element to appear, an API to respond, etc.).
- *
- * @param {Function} testFn - Test function that returns truthy when done
- * @param {Function} successFn - Called with test result when test passes
- * @param {Function} [failFn] - Called on each failed test attempt
- * @param {number} [delay=250] - Delay between attempts in ms
- * @param {number} [maxReps=10] - Maximum number of attempts
- * @param {Function} [lastFn] - Called when done with (success, count)
- * @returns {string|number} "err" if invalid params, otherwise interval ID
- * @category Timing
- * @example
- * bw.repeatUntil(
- *   function() { return document.getElementById('myDiv'); },
- *   function() { console.log('Element found!'); },
- *   null, 100, 30
- * );
- */
-bw.repeatUntil = function(testFn, successFn, failFn, delay = 250, maxReps = 10, lastFn) {
-  if (typeof testFn !== "function") return "err";
-  
-  let count = 0;
-  
-  const intervalID = setInterval(function() {
-    const result = testFn();
-    count++;
-    
-    if (result) {
-      clearInterval(intervalID);
-      if (successFn) successFn(result);
-      if (lastFn) lastFn(true, count);
-    } else if (count >= maxReps) {
-      clearInterval(intervalID);
-      if (failFn) failFn();
-      if (lastFn) lastFn(false, count);
-    } else {
-      if (failFn) failFn();
-    }
-  }, delay);
-  
-  return intervalID;
-};
+/** @see bitwrench-utils.js for implementation */
+bw.multiArray = multiArray;
+/** @see bitwrench-utils.js for implementation */
+bw.naturalCompare = naturalCompare;
+/** @see bitwrench-utils.js for implementation */
+bw.setIntervalX = setIntervalX;
+/** @see bitwrench-utils.js for implementation */
+bw.repeatUntil = repeatUntil;
 
 // ===================================================================================
 // File I/O Functions - Works in both Node.js and browser
@@ -6559,10 +6884,10 @@ bw.makeTable = function(config) {
     sortDirection = 'asc'
   } = config;
 
-  // Build class list: always include bw-table, add striped/hover, append user className
-  let cls = 'bw-table';
-  if (striped) cls += ' bw-table-striped';
-  if (hover) cls += ' bw-table-hover';
+  // Build class list: always include bw_table, add striped/hover, append user className
+  let cls = 'bw_table';
+  if (striped) cls += ' bw_table_striped';
+  if (hover) cls += ' bw_table_hover';
   if (className) cls += ' ' + className;
   cls = cls.trim();
   
@@ -6776,7 +7101,7 @@ bw.makeBarChart = function(config) {
   } = config;
 
   if (!Array.isArray(data) || data.length === 0) {
-    return { t: 'div', a: { class: ('bw-bar-chart-container ' + className).trim() }, c: '' };
+    return { t: 'div', a: { class: ('bw_bar_chart_container ' + className).trim() }, c: '' };
   }
 
   const values = data.map(function(d) { return Number(d[valueKey]) || 0; });
@@ -6789,35 +7114,35 @@ bw.makeBarChart = function(config) {
 
     const children = [];
     if (showValues) {
-      children.push({ t: 'div', a: { class: 'bw-bar-value' }, c: formatted });
+      children.push({ t: 'div', a: { class: 'bw_bar_value' }, c: formatted });
     }
     children.push({
       t: 'div',
       a: {
-        class: 'bw-bar',
+        class: 'bw_bar',
         style: 'height:' + pct + '%;background:' + color + ';'
       }
     });
     if (showLabels) {
-      children.push({ t: 'div', a: { class: 'bw-bar-label' }, c: String(d[labelKey] || '') });
+      children.push({ t: 'div', a: { class: 'bw_bar_label' }, c: String(d[labelKey] || '') });
     }
 
-    return { t: 'div', a: { class: 'bw-bar-group' }, c: children };
+    return { t: 'div', a: { class: 'bw_bar_group' }, c: children };
   });
 
   const chartChildren = [];
   if (title) {
-    chartChildren.push({ t: 'h3', a: { class: 'bw-bar-chart-title' }, c: title });
+    chartChildren.push({ t: 'h3', a: { class: 'bw_bar_chart_title' }, c: title });
   }
   chartChildren.push({
     t: 'div',
-    a: { class: 'bw-bar-chart', style: 'height:' + height + ';' },
+    a: { class: 'bw_bar_chart', style: 'height:' + height + ';' },
     c: bars
   });
 
   return {
     t: 'div',
-    a: { class: ('bw-bar-chart-container ' + className).trim() },
+    a: { class: ('bw_bar_chart_container ' + className).trim() },
     c: chartChildren
   };
 };
@@ -6916,7 +7241,7 @@ bw._componentRegistry = new Map();
  * @see bw.DOM
  * @example
  * var handle = bw.render('#app', 'append', {
- *   t: 'button', a: { class: 'bw-btn' }, c: 'Click Me',
+ *   t: 'button', a: { class: 'bw_btn' }, c: 'Click Me',
  *   o: { state: { clicks: 0 } }
  * });
  * handle.setState({ clicks: 1 });
@@ -6954,7 +7279,7 @@ bw.render = function(element, position, taco) {
   }
   
   // Add component ID to element
-  domElement.setAttribute('data-bw-id', componentId);
+  domElement.setAttribute('data-bw_id', componentId);
   
   // Insert into DOM based on position
   try {
@@ -7029,7 +7354,7 @@ bw.render = function(element, position, taco) {
       
       // Re-render
       const newElement = bw.createDOM(this._taco);
-      newElement.setAttribute('data-bw-id', componentId);
+      newElement.setAttribute('data-bw_id', componentId);
       
       // Replace in DOM
       parent.replaceChild(newElement, this.element);
@@ -7206,6 +7531,15 @@ Object.entries(components).forEach(([name, fn]) => {
     bw[name] = fn;
   }
 });
+
+// Factory dispatch: bw.make('card', props) → bw.makeCard(props)
+bw.make = make;
+
+// Component registry: bw.BCCL lists all available component types
+bw.BCCL = BCCL;
+
+// Variant class helper: bw.variantClass('primary') → 'bw_primary'
+bw.variantClass = variantClass;
 
 // Create functions that return handles (plain renderComponent, no Handle overlay)
 Object.entries(components).forEach(([name, fn]) => {
