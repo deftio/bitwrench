@@ -72,7 +72,7 @@
 	},
 	"scripts": {
 		"generate-version": "node tools/generate-version.cjs",
-		"prebuild": "npm run generate-version",
+		"prebuild": "npm run generate-version && npm run lint",
 		"build": "rollup --config && npm run build:css && npm run build:metrics",
 		"build:css": "node src/generate-css.js",
 		"build:readme": "node tools/build-readme.js",
