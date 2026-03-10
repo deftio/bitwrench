@@ -2086,7 +2086,6 @@ ComponentHandle.prototype._wireActions = function(taco) {
         var actionName = taco.a[key];
         if (actionName in this._actions) {
           var registeredName = this._bwId + '_' + actionName;
-          var self = this;
           // Replace string with actual function for createDOM event binding
           (function(rName) {
             taco.a[key] = function(evt) {
@@ -2601,9 +2600,10 @@ bw.message = function(target, action, data) {
  */
 bw.inspect = function(target) {
   var el = target;
+  var comp;
   if (target && target._bwComponent === true) {
     el = target.element;
-    var comp = target;
+    comp = target;
   } else {
     if (typeof target === 'string') {
       el = bw.$(target)[0];
@@ -2612,7 +2612,7 @@ bw.inspect = function(target) {
       console.warn('bw.inspect: element not found');
       return null;
     }
-    var comp = el._bwComponentHandle;
+    comp = el._bwComponentHandle;
   }
   if (!comp) {
     console.log('bw.inspect: no ComponentHandle on this element');
