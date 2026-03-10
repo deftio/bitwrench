@@ -207,20 +207,6 @@ describe("TACO and HTML Generation", function() {
 });
 
 describe("Table Functions", function() {
-  describe("#htmlTable()", function() {
-    it("should generate table HTML", function() {
-      const data = [
-        ["Name", "Age"],
-        ["John", 30],
-        ["Jane", 25]
-      ];
-      const html = bw.htmlTable(data, { firstRowHeader: true });
-      assert.ok(html.includes("<table"));
-      assert.ok(html.includes("<thead>"));
-      assert.ok(html.includes("Name"));
-      assert.ok(html.includes("John"));
-    });
-  });
 });
 
 describe("CSS Functions", function() {
@@ -254,51 +240,6 @@ describe("Component Functions", function() {
 });
 
 describe("Theming API", function() {
-  describe("#getTheme()", function() {
-    it("should return theme object with colors", function() {
-      const t = bw.getTheme();
-      assert.equal(typeof t, "object");
-      assert.equal(typeof t.colors, "object");
-      assert.ok(t.colors.primary);
-      assert.ok(t.colors.danger);
-    });
-
-    it("should return a deep copy", function() {
-      const t1 = bw.getTheme();
-      const t2 = bw.getTheme();
-      assert.notStrictEqual(t1, t2);
-      assert.notStrictEqual(t1.colors, t2.colors);
-      assert.deepEqual(t1.colors, t2.colors);
-    });
-  });
-
-  describe("#setTheme()", function() {
-    it("should merge color overrides", function() {
-      const originalPrimary = bw.getTheme().colors.primary;
-      bw.setTheme({ colors: { primary: '#ff0000' } }, { inject: false });
-      assert.equal(bw.getTheme().colors.primary, '#ff0000');
-      // Restore
-      bw.setTheme({ colors: { primary: originalPrimary } }, { inject: false });
-    });
-
-    it("should preserve unmodified values", function() {
-      const before = bw.getTheme();
-      bw.setTheme({ colors: { primary: '#123456' } }, { inject: false });
-      const after = bw.getTheme();
-      assert.equal(after.colors.danger, before.colors.danger);
-      assert.equal(after.colors.success, before.colors.success);
-      // Restore
-      bw.setTheme({ colors: { primary: before.colors.primary } }, { inject: false });
-    });
-
-    it("should return updated theme", function() {
-      const original = bw.getTheme().colors.primary;
-      const result = bw.setTheme({ colors: { primary: '#abcdef' } }, { inject: false });
-      assert.equal(result.colors.primary, '#abcdef');
-      bw.setTheme({ colors: { primary: original } }, { inject: false });
-    });
-  });
-
   describe("#applyTheme() and #toggleTheme()", function() {
     it("applyTheme should return mode string", function() {
       var mode = bw.applyTheme('primary');

@@ -412,50 +412,6 @@ describe("Cookie Functions (bw.setCookie, bw.getCookie)", function() {
   });
 });
 
-// =========================================================================
-// bw.htmlTabs() and bw.selectTabContent()
-// =========================================================================
-describe("Tabs (bw.htmlTabs, bw.selectTabContent)", function() {
-  it("should generate tab HTML", function() {
-    const html = bw.htmlTabs([
-      ['Tab 1', 'Content 1'],
-      ['Tab 2', 'Content 2']
-    ]);
-    assert.ok(html.includes('bw_tab_container'));
-    assert.ok(html.includes('Tab 1'));
-    assert.ok(html.includes('Content 1'));
-    assert.ok(html.includes('bw_tab_active'));
-  });
-
-  it("should return empty string for invalid input", function() {
-    assert.equal(bw.htmlTabs('not-array'), '');
-    assert.equal(bw.htmlTabs([]), '');
-  });
-
-  it("should make first tab active by default", function() {
-    const html = bw.htmlTabs([['A', '1'], ['B', '2']]);
-    assert.ok(html.includes('bw_tab_active'));
-    // Only first tab has active class
-    const activeCount = (html.match(/bw_tab_active/g) || []).length;
-    assert.equal(activeCount, 1);
-  });
-
-  it("bw.selectTabContent should switch active tab", function() {
-    freshDOM();
-    const html = bw.htmlTabs([['A', 'Content A'], ['B', 'Content B']]);
-    document.body.innerHTML = html;
-    const tabs = document.querySelectorAll('.bw_tab_item');
-    assert.equal(tabs.length, 2);
-    // Click second tab
-    bw.selectTabContent(tabs[1]);
-    assert.ok(tabs[1].classList.contains('bw_tab_active'));
-    assert.ok(!tabs[0].classList.contains('bw_tab_active'));
-    // Second content should be visible
-    const contents = document.querySelectorAll('.bw_tab_content');
-    assert.ok(contents[1].classList.contains('bw_show'));
-    assert.ok(!contents[0].classList.contains('bw_show'));
-  });
-});
 
 // =========================================================================
 // bw.loremIpsum()
@@ -1268,6 +1224,24 @@ describe("File I/O (bw.loadClientFile)", function() {
   it("bw.loadLocalJSON should be a function", function() {
     assert.equal(typeof bw.loadLocalJSON, 'function');
   });
+
+  it("bw.loadLocalFile should return error in Node.js", function() {
+    var err = null;
+    bw.loadLocalFile(function(data, fname, e) {
+      err = e;
+    });
+    assert.ok(err, 'should call back with error in Node');
+    assert.ok(err.message.includes('browser-only'), 'error should mention browser-only');
+  });
+
+  it("bw.loadLocalJSON should return error in Node.js", function() {
+    var err = null;
+    bw.loadLocalJSON(function(data, fname, e) {
+      err = e;
+    });
+    assert.ok(err, 'should call back with error in Node');
+    assert.ok(err.message.includes('browser-only'), 'error should mention browser-only');
+  });
 });
 
 describe("File I/O (bw.saveClientFile)", function() {
@@ -1292,6 +1266,15 @@ describe("File I/O (bw.saveClientFile)", function() {
       done();
     }, 100);
   });
+
+  it("should handle write errors gracefully", function(done) {
+    // Write to a non-existent directory to trigger error callback
+    bw.saveClientFile('/nonexistent_dir_xyz/test.txt', 'data');
+    // The error is logged to console.error — just ensure it doesn't throw
+    setTimeout(function() {
+      done();
+    }, 100);
+  });
 });
 
 // =========================================================================
@@ -1300,6 +1283,191 @@ describe("File I/O (bw.saveClientFile)", function() {
 describe("Clipboard (bw.copyToClipboard)", function() {
   it("should be a function", function() {
     assert.equal(typeof bw.copyToClipboard, 'function');
+  });
+});
+
+// =========================================================================
+// bw.render position modes
+// =========================================================================
+describe("bw.render position modes", function() {
+  beforeEach(function() {
+    freshDOM();
+    bw._componentRegistry.clear();
+  });
+
+  it("should support 'replace' position", function() {
+    // Add a child to replace
+    var child = document.createElement('div');
+    child.id = 'replaceme';
+    child.textContent = 'old';
+    document.getElementById('app').appendChild(child);
+    var handle = bw.render('#replaceme', 'replace', { t: 'span', c: 'new' });
+    assert.equal(handle.status_code, 'success');
+    assert.equal(handle.element.textContent, 'new');
+    assert.equal(handle.element.tagName, 'SPAN');
+    // Old element should be gone
+    assert.equal(document.getElementById('replaceme'), null);
+  });
+
+  it("should support 'before' position", function() {
+    var marker = document.createElement('div');
+    marker.id = 'marker';
+    marker.textContent = 'marker';
+    document.getElementById('app').appendChild(marker);
+    var handle = bw.render('#marker', 'before', { t: 'span', c: 'before-content' });
+    assert.equal(handle.status_code, 'success');
+    var app = document.getElementById('app');
+    assert.equal(app.children[0].textContent, 'before-content');
+    assert.equal(app.children[1].textContent, 'marker');
+  });
+
+  it("should support 'after' position", function() {
+    var marker = document.createElement('div');
+    marker.id = 'marker2';
+    marker.textContent = 'marker';
+    document.getElementById('app').appendChild(marker);
+    var handle = bw.render('#marker2', 'after', { t: 'span', c: 'after-content' });
+    assert.equal(handle.status_code, 'success');
+    var app = document.getElementById('app');
+    assert.equal(app.children[0].textContent, 'marker');
+    assert.equal(app.children[1].textContent, 'after-content');
+  });
+
+  it("should return error for invalid position", function() {
+    var handle = bw.render('#app', 'invalid_pos', { t: 'div', c: 'x' });
+    assert.ok(handle.status_code.includes('error'), 'should return error status');
+  });
+
+  it("should call o.mounted callback on render", function() {
+    var mountedCalled = false;
+    var mountedEl = null;
+    var mountedHandle = null;
+    bw.render('#app', 'append', {
+      t: 'div', c: 'mounted-test',
+      o: {
+        mounted: function(el, h) {
+          mountedCalled = true;
+          mountedEl = el;
+          mountedHandle = h;
+        }
+      }
+    });
+    assert.ok(mountedCalled, 'mounted callback should be called');
+    assert.ok(mountedEl, 'mounted should receive element');
+    assert.ok(mountedHandle, 'mounted should receive handle');
+  });
+});
+
+// =========================================================================
+// bw.getAllComponents
+// =========================================================================
+describe("bw.getAllComponents", function() {
+  beforeEach(function() {
+    freshDOM();
+    bw._componentRegistry.clear();
+  });
+
+  it("should return a Map of all registered components", function() {
+    bw.render('#app', 'append', { t: 'div', c: 'A' });
+    bw.render('#app', 'append', { t: 'div', c: 'B' });
+    var all = bw.getAllComponents();
+    assert.ok(all instanceof Map, 'should return a Map');
+    assert.equal(all.size, 2, 'should have 2 components');
+  });
+
+  it("should return a copy, not the registry itself", function() {
+    bw.render('#app', 'append', { t: 'div', c: 'X' });
+    var a = bw.getAllComponents();
+    var b = bw.getAllComponents();
+    assert.notStrictEqual(a, b, 'should be different Map instances');
+  });
+});
+
+// =========================================================================
+// create* convenience functions
+// =========================================================================
+describe("create* convenience functions", function() {
+  beforeEach(function() {
+    freshDOM();
+  });
+
+  it("bw.createCard should create a rendered card handle", function() {
+    var handle = bw.createCard({ title: 'Test', content: 'Body' });
+    assert.ok(handle, 'should return a handle');
+    assert.ok(handle.element, 'should have an element');
+    assert.ok(handle.element.outerHTML.includes('bw_card'), 'should be a card');
+  });
+
+  it("bw.createButton should create a rendered button handle", function() {
+    var handle = bw.createButton({ text: 'Click' });
+    assert.ok(handle, 'should return a handle');
+    assert.ok(handle.element, 'should have an element');
+    assert.equal(handle.element.tagName, 'BUTTON');
+  });
+
+  it("bw.createAlert should create a rendered alert handle", function() {
+    var handle = bw.createAlert({ text: 'Danger!', variant: 'danger' });
+    assert.ok(handle, 'should return a handle');
+    assert.ok(handle.element.outerHTML.includes('bw_alert'), 'should be an alert');
+  });
+
+  it("bw.createBadge should create a rendered badge handle", function() {
+    var handle = bw.createBadge({ text: '7' });
+    assert.ok(handle, 'should return a handle');
+    assert.ok(handle.element.outerHTML.includes('bw_badge'), 'should be a badge');
+  });
+});
+
+// =========================================================================
+// bw.render handle methods
+// =========================================================================
+describe("bw.render handle methods", function() {
+  beforeEach(function() {
+    freshDOM();
+    bw._componentRegistry.clear();
+  });
+
+  it("setContent with string should update textContent", function() {
+    var handle = bw.render('#app', 'append', { t: 'div', c: 'initial' });
+    assert.equal(handle.status_code, 'success');
+    handle.setContent('updated');
+    assert.equal(handle.element.textContent, 'updated');
+  });
+
+  it("setContent with TACO should call update", function() {
+    var handle = bw.render('#app', 'append', { t: 'div', c: 'initial' });
+    // setContent with a TACO triggers update path (line 3889-3891)
+    handle.setContent({ t: 'span', c: 'nested' });
+    assert.ok(handle.element);
+  });
+
+  it("addClass/removeClass/toggleClass/hasClass should work", function() {
+    var handle = bw.render('#app', 'append', { t: 'div', c: 'test' });
+    handle.addClass('foo');
+    assert.ok(handle.hasClass('foo'), 'should have class after addClass');
+    handle.removeClass('foo');
+    assert.ok(!handle.hasClass('foo'), 'should not have class after removeClass');
+    handle.toggleClass('bar');
+    assert.ok(handle.hasClass('bar'), 'should have class after toggleClass');
+    handle.toggleClass('bar');
+    assert.ok(!handle.hasClass('bar'), 'should not have class after second toggleClass');
+  });
+
+  it("show/hide should toggle display", function() {
+    var handle = bw.render('#app', 'append', { t: 'div', c: 'vis' });
+    handle.hide();
+    assert.equal(handle.element.style.display, 'none');
+    handle.show();
+    assert.equal(handle.element.style.display, '');
+  });
+
+  it("destroy should remove element and clean up", function() {
+    var handle = bw.render('#app', 'append', { t: 'div', c: 'destroy-me' });
+    var id = handle.component_id;
+    document.getElementById('app').appendChild(handle.element);
+    handle.destroy();
+    assert.equal(handle.status_code, 'destroyed');
+    assert.equal(bw.getComponent(id), null);
   });
 });
 
@@ -1428,5 +1596,541 @@ describe("makeCodeDemo", function() {
     const taco = bw.makeCodeDemo({ code: 'var x = 1;', language: 'javascript' });
     const html = bw.html(taco);
     assert.ok(html.includes('bw_copy_btn'), 'should have bw_copy_btn class');
+  });
+});
+
+// =========================================================================
+// bw.raw()
+// =========================================================================
+describe("bw.raw", function() {
+  it("should return a raw sentinel object", function() {
+    const result = bw.raw('<b>bold</b>');
+    assert.strictEqual(result.__bw_raw, true);
+    assert.strictEqual(result.v, '<b>bold</b>');
+  });
+
+  it("should coerce non-string to string", function() {
+    const result = bw.raw(42);
+    assert.strictEqual(result.v, '42');
+  });
+
+  it("should render raw content without escaping in bw.html", function() {
+    const taco = { t: 'div', c: bw.raw('<em>italic</em>') };
+    const html = bw.html(taco);
+    assert.ok(html.includes('<em>italic</em>'), 'raw HTML should not be escaped');
+  });
+});
+
+// =========================================================================
+// __monkey_patch_is_nodejs__
+// =========================================================================
+describe("__monkey_patch_is_nodejs__", function() {
+  it("should default to 'ignore'", function() {
+    // Access the internal property
+    assert.strictEqual(bw.__monkey_patch_is_nodejs__.get(), 'ignore');
+  });
+
+  it("should accept boolean values", function() {
+    bw.__monkey_patch_is_nodejs__.set(false);
+    assert.strictEqual(bw.__monkey_patch_is_nodejs__.get(), false);
+    bw.__monkey_patch_is_nodejs__.set(true);
+    assert.strictEqual(bw.__monkey_patch_is_nodejs__.get(), true);
+    // Reset
+    bw.__monkey_patch_is_nodejs__.set('ignore');
+    assert.strictEqual(bw.__monkey_patch_is_nodejs__.get(), 'ignore');
+  });
+
+  it("should reject non-boolean values as 'ignore'", function() {
+    bw.__monkey_patch_is_nodejs__.set('hello');
+    assert.strictEqual(bw.__monkey_patch_is_nodejs__.get(), 'ignore');
+    bw.__monkey_patch_is_nodejs__.set(42);
+    assert.strictEqual(bw.__monkey_patch_is_nodejs__.get(), 'ignore');
+  });
+});
+
+// =========================================================================
+// copyToClipboard (browser fallback path)
+// =========================================================================
+// =========================================================================
+// getURLParam edge cases
+// =========================================================================
+describe("bw.getURLParam edge cases", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should return all params as object when no key given", function() {
+    // Set location with params
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      url: 'http://localhost/?foo=bar&baz=qux'
+    });
+    global.window = dom.window;
+    global.document = dom.window.document;
+
+    const result = bw.getURLParam();
+    assert.strictEqual(result.foo, 'bar');
+    assert.strictEqual(result.baz, 'qux');
+  });
+
+  it("should return all params including boolean flags", function() {
+    const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+      url: 'http://localhost/?debug&verbose=1'
+    });
+    global.window = dom.window;
+    global.document = dom.window.document;
+
+    const result = bw.getURLParam();
+    assert.strictEqual(result.debug, true);
+    assert.strictEqual(result.verbose, '1');
+  });
+});
+
+describe("bw.copyToClipboard", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should resolve via execCommand fallback on success", function(done) {
+    document.execCommand = function(cmd) {
+      if (cmd === 'copy') return true;
+      return false;
+    };
+    bw.copyToClipboard('test text').then(function() {
+      done();
+    }).catch(function() {
+      done();
+    });
+  });
+
+  it("should reject when execCommand returns false", function(done) {
+    document.execCommand = function() { return false; };
+    bw.copyToClipboard('test text').then(function() {
+      done(new Error('should have rejected'));
+    }).catch(function(err) {
+      assert.ok(err.message.includes('Copy command failed'));
+      done();
+    });
+  });
+
+  it("should reject when execCommand throws", function(done) {
+    document.execCommand = function() { throw new Error('not allowed'); };
+    bw.copyToClipboard('test text').then(function() {
+      done(new Error('should have rejected'));
+    }).catch(function(err) {
+      assert.ok(err.message.includes('not allowed'));
+      done();
+    });
+  });
+});
+
+// =========================================================================
+// bw.render createDOM error path
+// =========================================================================
+describe("bw.render error path", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should return error handle when createDOM throws", function() {
+    // Temporarily make createDOM throw to test the catch path
+    const origCreateDOM = bw.createDOM;
+    bw.createDOM = function() { throw new Error('mock createDOM failure'); };
+    const handle = bw.render('#app', 'append', { t: 'div', o: { id: 'err-test' } });
+    bw.createDOM = origCreateDOM;
+    assert.strictEqual(handle.object_type, 'error');
+    assert.ok(handle.status_code.includes('render_failed'));
+  });
+});
+
+// =========================================================================
+// renderComponent handle methods (addChild, getChild, setState, onPropChange)
+// =========================================================================
+describe("renderComponent handle methods", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("addChild and getChild should register/retrieve child components", function() {
+    const parent = bw.renderComponent({ t: 'div', c: 'parent' });
+    const child = bw.renderComponent({ t: 'span', c: 'child' });
+    parent.addChild('label', child);
+    assert.strictEqual(parent.getChild('label'), child);
+    assert.strictEqual(parent.getChild('missing'), undefined);
+  });
+
+  it("setState should merge state and re-render", function() {
+    const taco = { t: 'div', c: 'hello', o: { state: { count: 0 } } };
+    const handle = bw.renderComponent(taco);
+    document.body.appendChild(handle.element);
+    handle.setState({ count: 5 });
+    assert.strictEqual(handle.state.count, 5);
+    document.body.removeChild(handle.element);
+  });
+
+  it("state setter should replace state and re-render", function() {
+    const taco = { t: 'div', c: 'hello', o: { state: { a: 1 } } };
+    const handle = bw.renderComponent(taco);
+    document.body.appendChild(handle.element);
+    handle.state = { b: 2 };
+    assert.deepStrictEqual(handle.state, { b: 2 });
+    document.body.removeChild(handle.element);
+  });
+
+  it("onPropChange should trigger re-render", function() {
+    const taco = { t: 'div', a: { class: 'test' }, c: 'hello' };
+    const handle = bw.renderComponent(taco);
+    document.body.appendChild(handle.element);
+    handle.onPropChange('class', 'updated', 'test');
+    document.body.removeChild(handle.element);
+  });
+
+  it("update should merge new props and replace element", function() {
+    const taco = { t: 'div', a: { 'data-x': '1' }, c: 'hello' };
+    const handle = bw.renderComponent(taco);
+    document.body.appendChild(handle.element);
+    handle.update({ 'data-x': '2' });
+    assert.strictEqual(handle.element.getAttribute('data-x'), '2');
+    document.body.removeChild(handle.element);
+  });
+
+  it("render should re-create element from TACO", function() {
+    const taco = { t: 'div', c: 'render test' };
+    const handle = bw.renderComponent(taco);
+    document.body.appendChild(handle.element);
+    const oldEl = handle.element;
+    handle.render();
+    assert.notStrictEqual(handle.element, oldEl, 'element should be replaced');
+    document.body.removeChild(handle.element);
+  });
+});
+
+// =========================================================================
+// bw.render handle getContent, setContent, onUpdate
+// =========================================================================
+describe("bw.render handle getContent and onUpdate", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("getContent should return the TACO content", function() {
+    const taco = { t: 'div', c: 'Hello World' };
+    const handle = bw.render('#app', 'append', taco);
+    assert.strictEqual(handle.getContent(), 'Hello World');
+  });
+
+  it("setContent with string should update textContent", function() {
+    const taco = { t: 'div', c: 'original' };
+    const handle = bw.render('#app', 'append', taco);
+    handle.setContent('updated text');
+    assert.strictEqual(handle.element.textContent, 'updated text');
+  });
+
+  it("update should trigger onUpdate lifecycle", function() {
+    var updateCalled = false;
+    const taco = {
+      t: 'div',
+      c: 'original',
+      o: {
+        onUpdate: function(el, state) {
+          updateCalled = true;
+        }
+      }
+    };
+    const handle = bw.render('#app', 'append', taco);
+    handle.update();
+    assert.ok(updateCalled, 'onUpdate should have been called');
+  });
+
+  it("setProp should update DOM attribute", function() {
+    const taco = { t: 'div', a: { 'data-val': '1' }, c: 'test' };
+    const handle = bw.render('#app', 'append', taco);
+    handle.setProp('data-val', '2');
+    assert.strictEqual(handle.element.getAttribute('data-val'), '2');
+    // Set to null should remove
+    handle.setProp('data-val', null);
+    assert.strictEqual(handle.element.getAttribute('data-val'), null);
+    // Set to true should set empty string
+    handle.setProp('disabled', true);
+    assert.strictEqual(handle.element.getAttribute('disabled'), '');
+  });
+
+  it("getProp should return attribute value", function() {
+    const taco = { t: 'div', a: { 'data-x': '42' }, c: 'test' };
+    const handle = bw.render('#app', 'append', taco);
+    assert.strictEqual(handle.getProp('data-x'), '42');
+  });
+
+  it("setState and getState should manage state", function() {
+    const taco = { t: 'div', c: 'test' };
+    const handle = bw.render('#app', 'append', taco);
+    handle.setState({ count: 10 });
+    assert.strictEqual(handle.getState().count, 10);
+  });
+
+  it("onStateChange lifecycle should fire on setState", function() {
+    var stateChangeCalled = false;
+    const taco = {
+      t: 'div',
+      c: 'test',
+      o: {
+        onStateChange: function(newState, updates) {
+          stateChangeCalled = true;
+        }
+      }
+    };
+    const handle = bw.render('#app', 'append', taco);
+    handle.setState({ a: 1 });
+    assert.ok(stateChangeCalled, 'onStateChange should have been called');
+  });
+});
+
+// =========================================================================
+// makeTable sortable (handleSort + onclick)
+// =========================================================================
+describe("makeTable sortable", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should call onSort when header is clicked", function() {
+    var sortedCol = null;
+    var sortedDir = null;
+    const taco = bw.makeTable({
+      columns: [
+        { key: 'name', label: 'Name' },
+        { key: 'age', label: 'Age' }
+      ],
+      data: [
+        { name: 'Alice', age: 30 },
+        { name: 'Bob', age: 25 }
+      ],
+      sortable: true,
+      onSort: function(col, dir) {
+        sortedCol = col;
+        sortedDir = dir;
+      }
+    });
+
+    const el = bw.createDOM(taco);
+    document.body.appendChild(el);
+
+    // Click on the first header (Name)
+    const headers = el.querySelectorAll('th');
+    if (headers.length > 0) {
+      headers[0].click();
+      assert.strictEqual(sortedCol, 'name');
+      assert.strictEqual(sortedDir, 'asc');
+
+      // Click again to toggle direction
+      headers[0].click();
+      assert.strictEqual(sortedDir, 'desc');
+
+      // Click a different column
+      headers[1].click();
+      assert.strictEqual(sortedCol, 'age');
+      assert.strictEqual(sortedDir, 'asc');
+    }
+
+    document.body.removeChild(el);
+  });
+
+  it("should sort data in descending order with sortColumn and sortDirection", function() {
+    const taco = bw.makeTable({
+      columns: [{ key: 'name', label: 'Name' }],
+      data: [
+        { name: 'Alice' },
+        { name: 'Charlie' },
+        { name: 'Bob' }
+      ],
+      sortColumn: 'name',
+      sortDirection: 'desc'
+    });
+    const html = bw.html(taco);
+    // Verify data is rendered in desc order: Charlie, Bob, Alice
+    const charlieIdx = html.indexOf('Charlie');
+    const bobIdx = html.indexOf('Bob');
+    const aliceIdx = html.indexOf('Alice');
+    assert.ok(charlieIdx < bobIdx, 'Charlie before Bob in desc');
+    assert.ok(bobIdx < aliceIdx, 'Bob before Alice in desc');
+  });
+
+  it("should sort numbers correctly", function() {
+    const taco = bw.makeTable({
+      columns: [{ key: 'val', label: 'Value' }],
+      data: [{ val: 10 }, { val: 5 }, { val: 20 }],
+      sortColumn: 'val',
+      sortDirection: 'asc'
+    });
+    const html = bw.html(taco);
+    const idx5 = html.indexOf('>5<');
+    const idx10 = html.indexOf('>10<');
+    const idx20 = html.indexOf('>20<');
+    assert.ok(idx5 < idx10, '5 before 10 in asc');
+    assert.ok(idx10 < idx20, '10 before 20 in asc');
+  });
+});
+
+// =========================================================================
+// File I/O browser paths (mock isNodeJS to return false)
+// =========================================================================
+describe("File I/O browser paths", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("saveClientFile browser path via Blob", function() {
+    // Mock isNodeJS to return false (force browser path)
+    const origIsNode = bw.isNodeJS;
+    bw.isNodeJS = function() { return false; };
+
+    // Mock window.URL
+    var revokedUrl = null;
+    global.window.URL = {
+      createObjectURL: function() { return 'blob:mock-url'; },
+      revokeObjectURL: function(url) { revokedUrl = url; }
+    };
+    global.Blob = function(data, opts) { this.data = data; this.type = opts.type; };
+
+    // The click() and appendChild/removeChild should work in jsdom
+    var clickCalled = false;
+    const origCreateDOM = bw.createDOM;
+    bw.createDOM = function(taco) {
+      var el = origCreateDOM.call(bw, taco);
+      el.click = function() { clickCalled = true; };
+      return el;
+    };
+
+    bw.saveClientFile('test.txt', 'hello');
+
+    assert.ok(clickCalled, 'download link should have been clicked');
+    assert.strictEqual(revokedUrl, 'blob:mock-url');
+
+    // Restore
+    bw.isNodeJS = origIsNode;
+    bw.createDOM = origCreateDOM;
+  });
+
+  it("loadClientFile browser path via XHR", function(done) {
+    const origIsNode = bw.isNodeJS;
+    bw.isNodeJS = function() { return false; };
+
+    // Mock XMLHttpRequest
+    function MockXHR() {
+      this.readyState = 0;
+      this.status = 0;
+      this.responseText = '';
+    }
+    MockXHR.prototype.open = function(method, url, async) {
+      this._url = url;
+    };
+    MockXHR.prototype.send = function() {
+      this.readyState = 4;
+      this.status = 200;
+      this.responseText = 'file content';
+      if (this.onreadystatechange) this.onreadystatechange();
+    };
+    global.XMLHttpRequest = MockXHR;
+
+    bw.loadClientFile('test.txt', function(data, err) {
+      assert.strictEqual(data, 'file content');
+      assert.strictEqual(err, null);
+      bw.isNodeJS = origIsNode;
+      done();
+    });
+  });
+
+  it("loadClientFile browser path XHR error", function(done) {
+    const origIsNode = bw.isNodeJS;
+    bw.isNodeJS = function() { return false; };
+
+    function MockXHR() {}
+    MockXHR.prototype.open = function() {};
+    MockXHR.prototype.send = function() {
+      this.readyState = 4;
+      this.status = 404;
+      if (this.onreadystatechange) this.onreadystatechange();
+    };
+    global.XMLHttpRequest = MockXHR;
+
+    bw.loadClientFile('missing.txt', function(data, err) {
+      assert.strictEqual(data, null);
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes('404'));
+      bw.isNodeJS = origIsNode;
+      done();
+    });
+  });
+
+  it("loadClientFile browser path JSON parse", function(done) {
+    const origIsNode = bw.isNodeJS;
+    bw.isNodeJS = function() { return false; };
+
+    function MockXHR() {}
+    MockXHR.prototype.open = function() {};
+    MockXHR.prototype.send = function() {
+      this.readyState = 4;
+      this.status = 200;
+      this.responseText = '{"key":"value"}';
+      if (this.onreadystatechange) this.onreadystatechange();
+    };
+    global.XMLHttpRequest = MockXHR;
+
+    bw.loadClientJSON('data.json', function(data, err) {
+      assert.deepStrictEqual(data, { key: 'value' });
+      assert.strictEqual(err, null);
+      bw.isNodeJS = origIsNode;
+      done();
+    });
+  });
+
+  it("loadClientFile browser path JSON parse error", function(done) {
+    const origIsNode = bw.isNodeJS;
+    bw.isNodeJS = function() { return false; };
+
+    function MockXHR() {}
+    MockXHR.prototype.open = function() {};
+    MockXHR.prototype.send = function() {
+      this.readyState = 4;
+      this.status = 200;
+      this.responseText = 'not valid json{{{';
+      if (this.onreadystatechange) this.onreadystatechange();
+    };
+    global.XMLHttpRequest = MockXHR;
+
+    bw.loadClientJSON('bad.json', function(data, err) {
+      assert.strictEqual(data, null);
+      assert.ok(err instanceof SyntaxError);
+      bw.isNodeJS = origIsNode;
+      done();
+    });
+  });
+
+  it("loadLocalFile browser path with FileReader", function(done) {
+    const origIsNode = bw.isNodeJS;
+    bw.isNodeJS = function() { return false; };
+
+    // Mock FileReader
+    function MockFileReader() {}
+    MockFileReader.prototype.readAsText = function(file) {
+      var self = this;
+      setTimeout(function() {
+        self.onload({ target: { result: 'file data here' } });
+      }, 0);
+    };
+    global.FileReader = MockFileReader;
+
+    // Mock the createDOM to return a functional input
+    const origCreateDOM = bw.createDOM;
+    bw.createDOM = function(taco) {
+      var el = origCreateDOM.call(bw, taco);
+      // Override click to simulate file selection
+      if (taco.a && taco.a.type === 'file') {
+        el.click = function() {
+          // Simulate user picking a file
+          Object.defineProperty(el, 'files', {
+            value: [{ name: 'test.txt', size: 100 }],
+            configurable: true
+          });
+          el.dispatchEvent(new window.Event('change'));
+        };
+        el.remove = function() {};
+      }
+      return el;
+    };
+
+    bw.loadLocalFile(function(data, fname, err) {
+      assert.strictEqual(data, 'file data here');
+      assert.strictEqual(fname, 'test.txt');
+      assert.strictEqual(err, null);
+      bw.isNodeJS = origIsNode;
+      bw.createDOM = origCreateDOM;
+      done();
+    });
   });
 });

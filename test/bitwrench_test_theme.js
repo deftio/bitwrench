@@ -741,21 +741,6 @@ describe('Backwards Compatibility', function() {
     assert.strictEqual(typeof bw.loadDefaultStyles, 'function');
   });
 
-  it('getTheme should still work', function() {
-    const t = bw.getTheme();
-    assert.ok('colors' in t, 'theme should have colors');
-    assert.strictEqual(t.colors.primary, '#006666');
-  });
-
-  it('setTheme should still work (with deprecation)', function() {
-    // Store original
-    const original = bw.getTheme();
-    const result = bw.setTheme({ colors: { primary: '#ff0000' } }, { inject: false });
-    assert.strictEqual(result.colors.primary, '#ff0000');
-    // Restore
-    bw.setTheme({ colors: { primary: original.colors.primary } }, { inject: false });
-  });
-
   it('applyTheme should be a function', function() {
     assert.strictEqual(typeof bw.applyTheme, 'function');
   });

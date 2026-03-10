@@ -18,7 +18,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-10T01:20:08.511Z'
+    buildDate: '2026-03-10T03:31:20.508Z'
   };
 
   /**
@@ -2533,55 +2533,6 @@
     utilities: generateUtilityRules()
   });
 
-  // =========================================================================
-  // Theme configuration object (deprecated — use generateTheme())
-  // =========================================================================
-
-  let theme = {
-    colors: {
-      primary: '#006666',
-      secondary: '#6c757d',
-      success: '#198754',
-      danger: '#dc3545',
-      warning: '#b38600',
-      info: '#0891b2',
-      light: '#f8f9fa',
-      dark: '#212529',
-      white: '#fff',
-      black: '#000'
-    },
-    breakpoints: {
-      xs: 0,
-      sm: 576,
-      md: 768,
-      lg: 992,
-      xl: 1200,
-      xxl: 1400
-    },
-    spacing: {
-      0: '0',
-      1: '0.25rem',
-      2: '0.5rem',
-      3: '1rem',
-      4: '1.5rem',
-      5: '3rem'
-    },
-    typography: {
-      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      fontSize: {
-        xs: '0.75rem',
-        sm: '0.875rem',
-        base: '1rem',
-        lg: '1.125rem',
-        xl: '1.25rem',
-        '2xl': '1.5rem',
-        '3xl': '1.875rem',
-        '4xl': '2.25rem',
-        '5xl': '3rem'
-      }
-    },
-  };
-
   /**
    * Generate alternate-palette CSS scoped under `.bw_theme_alt`.
    * Uses the same `generateThemedCSS()` pipeline as the primary palette —
@@ -2639,20 +2590,185 @@
     return altRules;
   }
 
-  function deepMerge(target, source) {
-    for (const key of Object.keys(source)) {
-      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])
-          && target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])) {
-        deepMerge(target[key], source[key]);
-      } else {
-        target[key] = source[key];
-      }
-    }
-    return target;
-  }
+  /**
+   * Bitwrench v2 File I/O Functions
+   *
+   * Save/load files in both Node.js and browser environments.
+   * Node uses fs module, browser uses Blob/XHR/FileReader.
+   *
+   * Called via bindFileOps(bw) which attaches all functions to the bw namespace.
+   * This preserves the same public API (bw.saveClientFile, bw.loadClientFile, etc.)
+   * while keeping the implementation in a separate module.
+   *
+   * @module bitwrench-file-ops
+   * @license BSD-2-Clause
+   * @author M A Chatterjee <deftio [at] deftio [dot] com>
+   */
 
-  function updateTheme(overrides) {
-    deepMerge(theme, overrides);
+  /**
+   * Attach all file I/O functions to the bitwrench namespace.
+   *
+   * @param {Object} bw - Bitwrench namespace object
+   */
+  function bindFileOps(bw) {
+
+    /**
+     * Save data to a file. Works in both Node.js (fs.writeFile) and browser (download link).
+     *
+     * @param {string} fname - Filename to save as
+     * @param {*} data - Data to save (string or buffer)
+     * @category File I/O
+     */
+    bw.saveClientFile = function(fname, data) {
+      if (bw.isNodeJS()) {
+        bw._getFs().then(function(fs) {
+          if (!fs) { console.error('bw.saveClientFile: fs module not available'); return; }
+          fs.writeFile(fname, data, function(err) {
+            if (err) {
+              console.error("Error saving file:", err);
+            }
+          });
+        });
+      } else {
+        var blob = new Blob([data], { type: "application/octet-stream" });
+        var url = window.URL.createObjectURL(blob);
+        var a = bw.createDOM({
+          t: 'a',
+          a: {
+            href: url,
+            download: fname,
+            style: 'display: none'
+          }
+        });
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    };
+
+    /**
+     * Save data as a JSON file with pretty formatting.
+     *
+     * @param {string} fname - Filename to save as
+     * @param {*} data - Data to serialize as JSON
+     * @category File I/O
+     */
+    bw.saveClientJSON = function(fname, data) {
+      bw.saveClientFile(fname, JSON.stringify(data, null, 2));
+    };
+
+    /**
+     * Load a file by path (Node.js) or URL (browser via XHR).
+     *
+     * @param {string} fname - File path (Node) or URL (browser)
+     * @param {Function} callback - Called with (data, error). data is null on error.
+     * @param {Object} [options] - Options
+     * @param {string} [options.parser="raw"] - "raw" for string, "JSON" to auto-parse
+     * @returns {string} "BW_OK"
+     * @category File I/O
+     */
+    bw.loadClientFile = function(fname, callback, options) {
+      var opts = { parser: 'raw' };
+      if (options && options.parser) { opts.parser = options.parser; }
+      var parse = (opts.parser === 'JSON') ? JSON.parse : function(s) { return s; };
+
+      if (bw.isNodeJS()) {
+        bw._getFs().then(function(fs) {
+          if (!fs) { callback(null, new Error('fs module not available')); return; }
+          fs.readFile(fname, 'utf8', function(err, data) {
+            if (err) { callback(null, err); }
+            else {
+              try { callback(parse(data), null); }
+              catch (e) { callback(null, e); }
+            }
+          });
+        });
+      } else {
+        var x = new XMLHttpRequest();
+        x.open('GET', fname, true);
+        x.onreadystatechange = function() {
+          if (x.readyState === 4) {
+            if (x.status >= 200 && x.status < 300) {
+              try { callback(parse(x.responseText), null); }
+              catch (e) { callback(null, e); }
+            } else {
+              callback(null, new Error('HTTP ' + x.status + ': ' + fname));
+            }
+          }
+        };
+        x.send(null);
+      }
+      return 'BW_OK';
+    };
+
+    /**
+     * Load a JSON file by path (Node.js) or URL (browser).
+     *
+     * @param {string} fname - File path (Node) or URL (browser)
+     * @param {Function} callback - Called with (parsedData, error)
+     * @returns {string} "BW_OK"
+     * @category File I/O
+     */
+    bw.loadClientJSON = function(fname, callback) {
+      return bw.loadClientFile(fname, callback, { parser: 'JSON' });
+    };
+
+    /**
+     * Prompt user to pick a local file via file dialog (browser only).
+     *
+     * @param {Function} callback - Called with (data, filename, error)
+     * @param {Object} [options] - Options
+     * @param {string} [options.accept] - File type filter (e.g. ".json,.txt")
+     * @param {string} [options.parser="raw"] - "raw" for string, "JSON" to auto-parse
+     * @category File I/O
+     */
+    bw.loadLocalFile = function(callback, options) {
+      var opts = { parser: 'raw', accept: '' };
+      if (options) {
+        if (options.parser) { opts.parser = options.parser; }
+        if (options.accept) { opts.accept = options.accept; }
+      }
+      var parse = (opts.parser === 'JSON') ? JSON.parse : function(s) { return s; };
+
+      if (bw.isNodeJS()) {
+        callback(null, '', new Error('bw.loadLocalFile is browser-only. Use bw.loadClientFile() in Node.'));
+        return;
+      }
+
+      var input = bw.createDOM({
+        t: 'input',
+        a: {
+          type: 'file',
+          accept: opts.accept,
+          style: 'display: none'
+        }
+      });
+      input.addEventListener('change', function() {
+        var file = input.files[0];
+        if (!file) { callback(null, '', new Error('No file selected')); return; }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          try { callback(parse(e.target.result), file.name, null); }
+          catch (err) { callback(null, file.name, err); }
+        };
+        reader.onerror = function() { callback(null, file.name, reader.error); };
+        reader.readAsText(file);
+        input.remove();
+      });
+      document.body.appendChild(input);
+      input.click();
+    };
+
+    /**
+     * Prompt user to pick a local JSON file via file dialog (browser only).
+     *
+     * @param {Function} callback - Called with (parsedData, filename, error)
+     * @category File I/O
+     */
+    bw.loadLocalJSON = function(callback) {
+      bw.loadLocalFile(callback, { parser: 'JSON', accept: '.json' });
+    };
   }
 
   /**
@@ -6059,53 +6175,6 @@
     return result;
   };
 
-  /**
-   * Get the current theme configuration as a deep copy.
-   *
-   * @returns {Object} Theme object with colors, fonts, spacing, etc.
-   * @category CSS & Styling
-   * @see bw.setTheme
-   */
-  bw.getTheme = function() {
-    if (typeof console !== 'undefined' && console.warn) {
-      console.warn('bw.getTheme() is deprecated. Use bw.generateTheme() instead.');
-    }
-    return JSON.parse(JSON.stringify(theme));
-  };
-
-  /**
-   * Set theme overrides and optionally re-inject CSS custom properties.
-   *
-   * Merges your overrides into the current theme and updates `--bw-*` CSS
-   * custom properties on `<html>` so all components pick up the changes live.
-   *
-   * @param {Object} overrides - Partial theme object to merge (e.g. { colors: { primary: '#ff0000' } })
-   * @param {Object} [options] - Options
-   * @param {boolean} [options.inject=true] - Whether to re-inject CSS (browser only)
-   * @returns {Object} Updated theme
-   * @category CSS & Styling
-   * @see bw.getTheme
-   * @see bw.loadDefaultStyles
-   * @example
-   * bw.setTheme({ colors: { primary: '#ff6600' } });
-   */
-  bw.setTheme = function(overrides, options = {}) {
-    if (typeof console !== 'undefined' && console.warn) {
-      console.warn('bw.setTheme() is deprecated. Use bw.generateTheme() instead.');
-    }
-    const { inject = true } = options;
-    updateTheme(overrides);
-
-    // Update CSS custom properties if colors changed and we're in browser
-    if (inject && bw._isBrowser && overrides.colors) {
-      const root = document.documentElement;
-      for (const [name, value] of Object.entries(overrides.colors)) {
-        root.style.setProperty('--bw-' + name, value);
-      }
-    }
-
-    return bw.getTheme();
-  };
 
   /**
    * Generate a complete, scoped theme from seed colors.
@@ -6412,196 +6481,6 @@
     }
   };
 
-  /**
-   * Create an HTML table string from a 2D data array.
-   *
-   * Legacy v1 API — returns an HTML string, not a TACO. First row is used
-   * as headers by default. For TACO-based tables, use `bw.makeTable()` instead.
-   *
-   * @param {Array} data - 2D array of table data
-   * @param {Object} [opts] - Table options
-   * @param {boolean} [opts.useFirstRowAsHeaders=true] - Use first row as headers
-   * @param {string} [opts.caption] - Table caption
-   * @returns {string} HTML table string
-   * @category Legacy (v1)
-   * @see bw.makeTable
-   */
-  bw.htmlTable = function(data, opts = {}) {
-    console.warn('bw.htmlTable() is deprecated. Use bw.makeTableFromArray() for TACO output or bw.makeTable() for object-array data.');
-    if (bw.typeOf(data) !== "array" || data.length < 1) return "";
-    
-    const dopts = {
-      useFirstRowAsHeaders: true,
-      caption: null,
-      atr: { class: "table" },
-      thead_atr: {},
-      th_atr: {},
-      tbody_atr: {},
-      tr_atr: {},
-      td_atr: {}
-    };
-    
-    Object.assign(dopts, opts);
-    
-    let html = `<table${bw._attrsToStr(dopts.atr)}>`;
-    
-    if (dopts.caption) {
-      html += `<caption>${bw.escapeHTML(dopts.caption)}</caption>`;
-    }
-    
-    let startRow = 0;
-    
-    // Handle header row
-    if (dopts.useFirstRowAsHeaders && data.length > 0) {
-      html += `<thead${bw._attrsToStr(dopts.thead_atr)}>`;
-      html += `<tr${bw._attrsToStr(dopts.tr_atr)}>`;
-      
-      data[0].forEach(cell => {
-        html += `<th${bw._attrsToStr(dopts.th_atr)}>${bw.escapeHTML(String(cell))}</th>`;
-      });
-      
-      html += "</tr></thead>";
-      startRow = 1;
-    }
-    
-    // Body rows
-    if (data.length > startRow) {
-      html += `<tbody${bw._attrsToStr(dopts.tbody_atr)}>`;
-      
-      for (let i = startRow; i < data.length; i++) {
-        html += `<tr${bw._attrsToStr(dopts.tr_atr)}>`;
-        
-        data[i].forEach(cell => {
-          html += `<td${bw._attrsToStr(dopts.td_atr)}>${bw.escapeHTML(String(cell))}</td>`;
-        });
-        
-        html += "</tr>";
-      }
-      
-      html += "</tbody>";
-    }
-    
-    html += "</table>";
-    
-    return html;
-  };
-
-  /**
-   * Convert an attributes object to an HTML attribute string
-   *
-   * Handles boolean attributes (key only), null/undefined/false (skipped),
-   * and regular string values (HTML-escaped). Used internally by bw.htmlTable()
-   * and bw.htmlTabs().
-   *
-   * @param {Object} attrs - Attribute key-value pairs
-   * @returns {string} HTML attribute string with leading space, or empty string
-   * @private
-   */
-  bw._attrsToStr = function(attrs) {
-    if (!attrs || typeof attrs !== "object") return "";
-    
-    let str = "";
-    for (const [key, value] of Object.entries(attrs)) {
-      if (value != null && value !== false) {
-        if (value === true) {
-          str += ` ${key}`;
-        } else {
-          str += ` ${key}="${bw.escapeHTML(String(value))}"`;
-        }
-      }
-    }
-    
-    return str;
-  };
-
-  /**
-   * Create an HTML tabs structure from an array of [title, content] pairs.
-   *
-   * Legacy v1 API — returns an HTML string. For TACO-based tabs,
-   * use `bw.makeTabs()` instead.
-   *
-   * @param {Array} tabData - Array of [title, content] pairs
-   * @param {Object} [opts] - Tab options
-   * @returns {string} HTML tabs string
-   * @category Legacy (v1)
-   * @see bw.makeTabs
-   */
-  bw.htmlTabs = function(tabData, opts = {}) {
-    console.warn('bw.htmlTabs() is deprecated. Use bw.makeTabs() instead.');
-    if (bw.typeOf(tabData) !== "array" || tabData.length < 1) return "";
-    
-    const dopts = {
-      atr: { class: "bw_tab_container" },
-      tab_atr: { class: "bw_tab_item_list" },
-      tabc_atr: { class: "bw_tab_content_list" }
-    };
-    
-    Object.assign(dopts, opts);
-    
-    // Create tab items
-    const tabItems = tabData.map((tab, idx) => ({
-      t: "li",
-      a: { 
-        class: idx === 0 ? "bw_tab_item bw_tab_active" : "bw_tab_item",
-        onclick: "bw.selectTabContent(this)"
-      },
-      c: tab[0]
-    }));
-    
-    // Create tab content
-    const tabContent = tabData.map((tab, idx) => ({
-      t: "div",
-      a: { class: idx === 0 ? "bw_tab_content bw_show" : "bw_tab_content" },
-      c: tab[1]
-    }));
-    
-    return bw.html({
-      t: "div",
-      a: dopts.atr,
-      c: [
-        { t: "ul", a: dopts.tab_atr, c: tabItems },
-        { t: "div", a: dopts.tabc_atr, c: tabContent }
-      ]
-    });
-  };
-
-  /**
-   * Tab selection handler — shows the clicked tab's content and hides others.
-   *
-   * Used internally by `bw.htmlTabs()`. You generally don't call this directly.
-   *
-   * @param {Element} tabElement - Clicked tab element
-   * @category Legacy (v1)
-   */
-  bw.selectTabContent = function(tabElement) {
-    console.warn('bw.selectTabContent() is deprecated. Use bw.makeTabs() instead.');
-    if (!bw._isBrowser || !tabElement) return;
-    
-    const container = tabElement.closest(".bw_tab_container");
-    if (!container) return;
-    
-    // Remove active class from all tabs
-    container.querySelectorAll(".bw_tab_item").forEach(tab => {
-      tab.classList.remove("bw_tab_active");
-    });
-    
-    // Add active to clicked tab
-    tabElement.classList.add("bw_tab_active");
-    
-    // Get tab index
-    const tabIndex = Array.from(tabElement.parentElement.children).indexOf(tabElement);
-    
-    // Hide all content
-    container.querySelectorAll(".bw_tab_content").forEach(content => {
-      content.classList.remove("bw_show");
-    });
-    
-    // Show selected content
-    const contents = container.querySelectorAll(".bw_tab_content");
-    if (contents[tabIndex]) {
-      contents[tabIndex].classList.add("bw_show");
-    }
-  };
 
   /** @see bitwrench-utils.js for implementation */
   bw.loremIpsum = loremIpsum;
@@ -6615,177 +6494,8 @@
   /** @see bitwrench-utils.js for implementation */
   bw.repeatUntil = repeatUntil;
 
-  // ===================================================================================
-  // File I/O Functions - Works in both Node.js and browser
-  // ===================================================================================
-
-  /**
-   * Save data to a file. Works in both Node.js (fs.writeFile) and browser (download link).
-   *
-   * @param {string} fname - Filename to save as
-   * @param {*} data - Data to save (string or buffer)
-   * @category File I/O
-   * @see bw.saveClientJSON
-   */
-  bw.saveClientFile = function(fname, data) {
-    if (bw.isNodeJS()) {
-      bw._getFs().then(function(fs) {
-        if (!fs) { console.error('bw.saveClientFile: fs module not available'); return; }
-        fs.writeFile(fname, data, function(err) {
-          if (err) {
-            console.error("Error saving file:", err);
-          }
-        });
-      });
-    } else {
-      // Browser environment
-      const blob = new Blob([data], { type: "application/octet-stream" });
-      const url = window.URL.createObjectURL(blob);
-      const a = bw.createDOM({
-        t: 'a',
-        a: { 
-          href: url, 
-          download: fname,
-          style: 'display: none'
-        }
-      });
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    }
-  };
-
-  /**
-   * Save data as a JSON file with pretty formatting.
-   *
-   * @param {string} fname - Filename to save as
-   * @param {*} data - Data to serialize as JSON
-   * @category File I/O
-   * @see bw.saveClientFile
-   */
-  bw.saveClientJSON = function(fname, data) {
-    bw.saveClientFile(fname, JSON.stringify(data, null, 2));
-  };
-
-  /**
-   * Load a file by path (Node.js) or URL (browser via XHR).
-   *
-   * @param {string} fname - File path (Node) or URL (browser)
-   * @param {Function} callback - Called with (data, error). data is null on error.
-   * @param {Object} [options] - Options
-   * @param {string} [options.parser="raw"] - "raw" for string, "JSON" to auto-parse
-   * @returns {string} "BW_OK"
-   * @category File I/O
-   * @see bw.loadClientJSON
-   */
-  bw.loadClientFile = function(fname, callback, options) {
-    var opts = { parser: 'raw' };
-    if (options && options.parser) { opts.parser = options.parser; }
-    var parse = (opts.parser === 'JSON') ? JSON.parse : function(s) { return s; };
-
-    if (bw.isNodeJS()) {
-      bw._getFs().then(function(fs) {
-        if (!fs) { callback(null, new Error('fs module not available')); return; }
-        fs.readFile(fname, 'utf8', function(err, data) {
-          if (err) { callback(null, err); }
-          else {
-            try { callback(parse(data), null); }
-            catch (e) { callback(null, e); }
-          }
-        });
-      });
-    } else {
-      var x = new XMLHttpRequest();
-      x.open('GET', fname, true);
-      x.onreadystatechange = function() {
-        if (x.readyState === 4) {
-          if (x.status >= 200 && x.status < 300) {
-            try { callback(parse(x.responseText), null); }
-            catch (e) { callback(null, e); }
-          } else {
-            callback(null, new Error('HTTP ' + x.status + ': ' + fname));
-          }
-        }
-      };
-      x.send(null);
-    }
-    return 'BW_OK';
-  };
-
-  /**
-   * Load a JSON file by path (Node.js) or URL (browser). Convenience wrapper
-   * around `bw.loadClientFile()` with `parser: "JSON"`.
-   *
-   * @param {string} fname - File path (Node) or URL (browser)
-   * @param {Function} callback - Called with (parsedData, error)
-   * @returns {string} "BW_OK"
-   * @category File I/O
-   * @see bw.loadClientFile
-   */
-  bw.loadClientJSON = function(fname, callback) {
-    return bw.loadClientFile(fname, callback, { parser: 'JSON' });
-  };
-
-  /**
-   * Prompt user to pick a local file via file dialog (browser only).
-   *
-   * Opens a native file picker and reads the selected file.
-   *
-   * @param {Function} callback - Called with (data, filename, error)
-   * @param {Object} [options] - Options
-   * @param {string} [options.accept] - File type filter (e.g. ".json,.txt")
-   * @param {string} [options.parser="raw"] - "raw" for string, "JSON" to auto-parse
-   * @category File I/O
-   * @see bw.loadLocalJSON
-   */
-  bw.loadLocalFile = function(callback, options) {
-    var opts = { parser: 'raw', accept: '' };
-    if (options) {
-      if (options.parser) { opts.parser = options.parser; }
-      if (options.accept) { opts.accept = options.accept; }
-    }
-    var parse = (opts.parser === 'JSON') ? JSON.parse : function(s) { return s; };
-
-    if (bw.isNodeJS()) {
-      callback(null, '', new Error('bw.loadLocalFile is browser-only. Use bw.loadClientFile() in Node.'));
-      return;
-    }
-
-    var input = bw.createDOM({
-      t: 'input',
-      a: {
-        type: 'file',
-        accept: opts.accept,
-        style: 'display: none'
-      }
-    });
-    input.addEventListener('change', function() {
-      var file = input.files[0];
-      if (!file) { callback(null, '', new Error('No file selected')); return; }
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        try { callback(parse(e.target.result), file.name, null); }
-        catch (err) { callback(null, file.name, err); }
-      };
-      reader.onerror = function() { callback(null, file.name, reader.error); };
-      reader.readAsText(file);
-      input.remove();
-    });
-    document.body.appendChild(input);
-    input.click();
-  };
-
-  /**
-   * Prompt user to pick a local JSON file via file dialog (browser only).
-   *
-   * @param {Function} callback - Called with (parsedData, filename, error)
-   * @category File I/O
-   * @see bw.loadLocalFile
-   */
-  bw.loadLocalJSON = function(callback) {
-    bw.loadLocalFile(callback, { parser: 'JSON', accept: '.json' });
-  };
+  // File I/O — see bitwrench-file-ops.js
+  bindFileOps(bw);
 
   /**
    * Copy text to the system clipboard (browser only).

@@ -31,6 +31,7 @@ var SOURCE_FILES = [
   { file: 'bitwrench-styles.js',        purpose: 'CSS generation (structural + themed)', category: 'library' },
   { file: 'bitwrench-utils.js',         purpose: 'Pure utility functions',               category: 'library' },
   { file: 'bitwrench-color-utils.js',   purpose: 'Color math utilities',                 category: 'library' },
+  { file: 'bitwrench-file-ops.js',     purpose: 'File I/O (save/load)',                 category: 'library' },
   { file: 'bitwrench-code-edit.js',     purpose: 'Code editor component',                category: 'library' },
   { file: 'bitwrench-components-stub.js', purpose: 'Lean build stub',                    category: 'library' },
   { file: 'bitwrench-lean.js',          purpose: 'Lean bundle entry',                    category: 'library' },
