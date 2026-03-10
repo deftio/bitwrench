@@ -164,6 +164,7 @@ self-contained and work without a build step.
 * [x] update --> `dev/bitwrench-todo.md`: fixed stale items (LLM guide, v2.0.15 work, ComponentHandle, bwserve plan)
 * [ ] update --> navbar on all pages: add "Docs" link pointing to docs/ or GH Pages docs section
 * [x] fix --> `dev/coming-from-other-frameworks.md` — updated all 8 framework bridge tables with ComponentHandle, .get/.set, template bindings; updated cross-cutting concerns, reactivity section
+* [ ] document --> Users can create custom TACO components without BCCL. BCCL is a convenience library, not a requirement. Users can write raw `{t, a, c, o}` objects, compose their own component factories, or wrap existing CSS frameworks (Bootstrap, Tailwind, etc.) in TACO objects. This should be clearly stated in the Quick Start, Component docs, and the LLM guide. Example: `{ t: 'button', a: { class: 'btn btn-primary' }, c: 'Click me' }` works fine — bitwrench doesn't care where the CSS classes come from.
 
 ### Stale docs culled
 
@@ -181,6 +182,34 @@ self-contained and work without a build step.
 * [x] fix --> `dev/bitwrench-todo.md` "Completed" section — added v2.0.15: ComponentHandle, three-level model, 77 tests, dead code elimination, reactivity Phase 1
 * [x] fix --> `dev/bitwrench-todo.md` "Future" section — bwserve now has concrete plan with client/server breakdown
 * [x] fix --> `dev/bitwrench-todo.md` "State Management — DONE (v2.0.3)" — split into low-level (v2.0.3) + ComponentHandle (v2.0.15)
+
+---
+
+## P1: Mobile Responsiveness — pages/ site + default theme
+
+The bitwrench pages/ website has mobile layout issues: side margins too small,
+text overflowing containers. Both the default styles and the theme-generated
+CSS need audit. Must be covered by automated Playwright tests.
+
+### Audit and fix
+
+* [ ] fix --> `pages/*.html`: audit all pages on mobile viewport (375px, 414px). Fix margin/padding issues where text overflows or touches screen edges.
+* [ ] fix --> `src/bitwrench-styles.js`: audit default container, card, table, code block styles for mobile. Ensure `max-width: 100%`, `overflow-x: auto` on tables/pre, proper `padding` on containers at small viewports.
+* [ ] fix --> `src/bitwrench-styles.js` + theme CSS: audit `@media` breakpoints. Ensure they cover 375px (iPhone SE), 414px (iPhone Plus), 768px (tablet). Fix any hard-coded widths or margins that break at small sizes.
+* [ ] fix --> Generated theme CSS (`bw.generateTheme()`): ensure themed components (cards, alerts, navbars) inherit responsive behavior from base styles. Check that theme-specific padding/margin doesn't override responsive rules.
+
+### Playwright mobile tests
+
+* [ ] test --> Add mobile viewport Playwright tests (375px width) for all pages:
+  - No horizontal scrollbar on any page
+  - All text stays within its container (no overflow)
+  - Nav/navbar collapses or wraps properly
+  - Tables have `overflow-x: auto` scroll (not page overflow)
+  - Cards stack vertically (no side-by-side at 375px)
+  - Code blocks don't push containers wider than viewport
+  - Form inputs are full-width on mobile
+* [ ] test --> Add tablet viewport Playwright tests (768px width) for key pages
+* [ ] test --> Add these to CI pipeline (`npm run test:playwright` should include mobile)
 
 ---
 
