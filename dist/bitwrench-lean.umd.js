@@ -18,7 +18,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-10T08:57:25.695Z'
+    buildDate: '2026-03-10T09:03:33.939Z'
   };
 
   /**
@@ -5858,9 +5858,10 @@
    */
   bw.inspect = function(target) {
     var el = target;
+    var comp;
     if (target && target._bwComponent === true) {
       el = target.element;
-      var comp = target;
+      comp = target;
     } else {
       if (typeof target === 'string') {
         el = bw.$(target)[0];
@@ -5869,7 +5870,7 @@
         console.warn('bw.inspect: element not found');
         return null;
       }
-      var comp = el._bwComponentHandle;
+      comp = el._bwComponentHandle;
     }
     if (!comp) {
       console.log('bw.inspect: no ComponentHandle on this element');
