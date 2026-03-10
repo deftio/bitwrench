@@ -396,7 +396,23 @@ pre {
 `;
 
 // Write to file
+const fullCSS = css + additionalCSS;
 const outputPath = path.join(process.cwd(), 'dist', 'bitwrench.css');
-fs.writeFileSync(outputPath, css + additionalCSS);
+fs.writeFileSync(outputPath, fullCSS);
+
+// Generate minified CSS — strip comments, collapse whitespace
+const minCSS = fullCSS
+  .replace(/\/\*[\s\S]*?\*\//g, '')        // remove block comments
+  .replace(/\s*\n\s*/g, '')                // collapse newlines
+  .replace(/\s*{\s*/g, '{')               // collapse around {
+  .replace(/\s*}\s*/g, '}')               // collapse around }
+  .replace(/\s*;\s*/g, ';')               // collapse around ;
+  .replace(/\s*:\s*/g, ':')               // collapse around :
+  .replace(/\s*,\s*/g, ',')               // collapse around ,
+  .replace(/;}/g, '}')                    // remove last semicolon before }
+  .trim();
+const minOutputPath = path.join(process.cwd(), 'dist', 'bitwrench.min.css');
+fs.writeFileSync(minOutputPath, minCSS);
 
 console.log(`Generated bitwrench.css at ${outputPath}`);
+console.log(`Generated bitwrench.min.css at ${minOutputPath} (${(minCSS.length / 1024).toFixed(1)} KB)`);

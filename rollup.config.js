@@ -168,6 +168,14 @@ const babelConfig = {
           sourcemap: true,
         },
         {
+          file: 'dist/bitwrench-code-edit.cjs.min.js',
+          format: 'cjs',
+          exports: 'named',
+          banner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
           file: 'dist/bitwrench-code-edit.esm.js',
           format: 'esm',
           banner,

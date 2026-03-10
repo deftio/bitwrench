@@ -413,11 +413,12 @@ export function derivePalette(config) {
   var lightBase = config.light || hslToHex([h, 8, 97]);
   var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
-  // Background & surface tokens — light palettes get white/near-white,
-  // dark palettes derive from the dark base
-  var isLight = isLightPalette(config);
-  var bgBase = config.background || (isLight ? '#ffffff' : adjustLightness(darkBase, -3));
-  var surfBase = config.surface || (isLight ? '#f8f9fa' : adjustLightness(darkBase, 4));
+  // Background & surface tokens — default to light (white/near-white).
+  // Dark backgrounds require explicit config.background / config.surface.
+  // Primary/secondary colors are accents, not page backgrounds, so
+  // isLightPalette should NOT drive bg/surface defaults.
+  var bgBase = config.background || '#ffffff';
+  var surfBase = config.surface || '#f8f9fa';
 
   var palette = {
     primary:    deriveShades(config.primary),

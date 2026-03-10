@@ -2,7 +2,39 @@
 
 ## Open items
 
-* [ ] discuss --> what are the current gaps in component level reactivity?  Look at our design docs in dev/
+### Three-level component materialization (design doc: `dev/bw-component-materialization.md`)
+
+#### Design (completed)
+* [x] discuss --> what are the current gaps in component level reactivity?
+* [x] write --> design doc: three-level model (Level 0 TACO / Level 1 DOM / Level 2 ComponentHandle)
+* [x] discuss --> component API vs keyed reconciliation for dynamic lists
+* [x] discuss --> bw.message() dispatch (SendMessage for the web), user-defined UUIDs
+* [x] discuss --> bw.inspect() and browser console as DevTools
+* [x] discuss --> o.methods pattern for custom component behavior
+
+#### P0: Core implementation (v2.0.15)
+* [x] implement --> `o.methods` promotion to ComponentHandle API (~15 lines in constructor)
+* [x] implement --> `ComponentHandle.prototype.userTag(id)` — adds class, registers for dispatch (~8 lines)
+* [x] implement --> `bw.message(target, action, data)` — find component by UUID/tag, call method (~12 lines)
+* [x] implement --> `bw.inspect(el_or_selector)` — debug utility, dump state/bindings/methods (~35 lines)
+* [x] implement --> ComponentHandle detection in `bw.createDOM()` content walker (~15 lines)
+* [x] implement --> ComponentHandle detection in `bw.html()` content walker (~10 lines)
+* [x] test --> o.methods, bw.message, userTag, bw.inspect, content walker nesting (~250 lines, 32 tests)
+* [x] docs --> `pages/11-debugging.html` — console debugging guide, bw.inspect(), bw.message(), custom components
+* [x] docs --> update `dev/llm-bitwrench-guide.md` with ComponentHandle, bw.message(), bw.inspect(), three-level model
+* [x] docs --> `pages/08-api-reference.html` — better intro with quick-nav category cards, clickable TOC headers with counts, removed internal "auto-generated" text 
+* [ ] on http://localhost:9903/pages/11-debugging.html -> there are alot texts with black background and dark text (like  bw.makeCard({...}) in the section "Three Levels of Materialization")  --> these need to be readable.  use playwright if in doubt.
+
+#### P1: Deferred (future sprint)
+* [ ] implement --> factory `_factory` stash on BCCL TACOs (for .set() triggering factory rebuild)
+* [ ] implement --> factory rebuild in `ComponentHandle._flush()` (~25 lines)
+* [ ] cleanup --> ComponentHandle design smells: _deepCloneTaco, _tacoForDOM (refactor to avoid TACO mutation)
+* [ ] cleanup --> consider reducing lifecycle hooks from 6 to 3 (mounted, updated, unmount)
+
+#### P2: Per-need (future)
+* [ ] per-factory template-friendly TACO where `.set()` makes sense
+* [ ] child component ownership (parent.destroy() cascades to children)
+* [ ] list reorder helper (insertBefore-based, ~5 lines)
 
 ## Remaining design explorations (not yet implemented)
 

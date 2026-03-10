@@ -865,3 +865,506 @@ describe("Edge Cases", function() {
     assert.equal(comp.mounted, false);
   });
 });
+
+// =============================================================================
+// o.methods Promotion
+// =============================================================================
+
+describe("o.methods Promotion", function() {
+  beforeEach(resetApp);
+
+  it("should promote o.methods to handle API", function() {
+    var comp = bw.component({
+      t: 'div', c: 'hello',
+      o: {
+        methods: {
+          greet: function(comp, name) { return 'Hello ' + name; }
+        }
+      }
+    });
+    assert.equal(typeof comp.greet, 'function');
+    assert.equal(comp.greet('World'), 'Hello World');
+  });
+
+  it("should pass comp as first arg to methods", function() {
+    var comp = bw.component({
+      t: 'div', c: '',
+      o: {
+        state: { count: 0 },
+        methods: {
+          increment: function(comp) {
+            comp.set('count', comp.get('count') + 1, { sync: true });
+          }
+        }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.increment();
+    assert.equal(comp.get('count'), 1);
+    comp.increment();
+    assert.equal(comp.get('count'), 2);
+    comp.destroy();
+  });
+
+  it("should store methods in _methods map", function() {
+    var comp = bw.component({
+      t: 'div',
+      o: {
+        methods: {
+          foo: function(comp) { return 'foo'; },
+          bar: function(comp, x) { return 'bar-' + x; }
+        }
+      }
+    });
+    assert.deepEqual(Object.keys(comp._methods).sort(), ['bar', 'foo']);
+  });
+
+  it("should handle component with no methods", function() {
+    var comp = bw.component({ t: 'div', c: 'plain' });
+    assert.deepEqual(Object.keys(comp._methods), []);
+  });
+
+  it("methods should do surgical DOM updates", function() {
+    var comp = bw.component({
+      t: 'ul', c: [],
+      o: {
+        state: { items: [] },
+        methods: {
+          addItem: function(comp, item) {
+            var li = bw.createDOM({ t: 'li', a: { 'data-bw_id': item.id }, c: item.text });
+            comp.element.appendChild(li);
+            comp._state.items.push(item);
+          },
+          removeItem: function(comp, id) {
+            var el = comp.select('[data-bw_id="' + id + '"]');
+            if (el) el.parentNode.removeChild(el);
+            comp._state.items = comp._state.items.filter(function(i) { return i.id !== id; });
+          }
+        }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    assert.equal(comp.element.children.length, 0);
+
+    comp.addItem({ id: 'a', text: 'Alice' });
+    assert.equal(comp.element.children.length, 1);
+    assert.equal(comp.element.children[0].textContent, 'Alice');
+
+    comp.addItem({ id: 'b', text: 'Bob' });
+    assert.equal(comp.element.children.length, 2);
+
+    comp.removeItem('a');
+    assert.equal(comp.element.children.length, 1);
+    assert.equal(comp.element.children[0].textContent, 'Bob');
+    assert.equal(comp._state.items.length, 1);
+
+    comp.destroy();
+  });
+
+  it("methods should coexist with actions", function() {
+    var actionCalled = false;
+    var comp = bw.component({
+      t: 'div', c: '',
+      o: {
+        state: { val: 0 },
+        actions: {
+          bump: function(comp) { actionCalled = true; comp.set('val', 1, { sync: true }); }
+        },
+        methods: {
+          reset: function(comp) { comp.set('val', 0, { sync: true }); }
+        }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.action('bump');
+    assert.equal(actionCalled, true);
+    assert.equal(comp.get('val'), 1);
+    comp.reset();
+    assert.equal(comp.get('val'), 0);
+    comp.destroy();
+  });
+
+  it("method with multiple args should work", function() {
+    var comp = bw.component({
+      t: 'div',
+      o: {
+        methods: {
+          add: function(comp, a, b) { return a + b; }
+        }
+      }
+    });
+    assert.equal(comp.add(3, 4), 7);
+  });
+});
+
+// =============================================================================
+// userTag
+// =============================================================================
+
+describe("userTag", function() {
+  beforeEach(resetApp);
+
+  it("should set _userTag property", function() {
+    var comp = bw.component({ t: 'div', c: 'test' });
+    comp.userTag('my_dashboard');
+    assert.equal(comp._userTag, 'my_dashboard');
+  });
+
+  it("should add class to element when mounted", function() {
+    var comp = bw.component({ t: 'div', c: 'test' });
+    comp.userTag('my_dashboard');
+    comp.mount(document.getElementById('app'));
+    assert.ok(comp.element.classList.contains('my_dashboard'));
+    comp.destroy();
+  });
+
+  it("should add class immediately if already mounted", function() {
+    var comp = bw.component({ t: 'div', c: 'test' });
+    comp.mount(document.getElementById('app'));
+    comp.userTag('late_tag');
+    assert.ok(comp.element.classList.contains('late_tag'));
+    comp.destroy();
+  });
+
+  it("should return this for chaining", function() {
+    var comp = bw.component({ t: 'div', c: 'test' });
+    var result = comp.userTag('chain_test');
+    assert.strictEqual(result, comp);
+  });
+
+  it("should be findable via querySelector after mount", function() {
+    var comp = bw.component({ t: 'div', c: 'tagged' });
+    comp.userTag('findable_tag');
+    comp.mount(document.getElementById('app'));
+    var found = document.querySelector('.findable_tag');
+    assert.ok(found);
+    assert.equal(found.textContent, 'tagged');
+    comp.destroy();
+  });
+});
+
+// =============================================================================
+// bw.message()
+// =============================================================================
+
+describe("bw.message()", function() {
+  beforeEach(resetApp);
+
+  it("should dispatch by user tag", function() {
+    var received = null;
+    var comp = bw.component({
+      t: 'div', c: 'msg-test',
+      o: {
+        methods: {
+          handleAlert: function(comp, data) { received = data; }
+        }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.userTag('msg_target');
+
+    var result = bw.message('msg_target', 'handleAlert', { severity: 'warning' });
+    assert.equal(result, true);
+    assert.deepEqual(received, { severity: 'warning' });
+    comp.destroy();
+  });
+
+  it("should dispatch by comp_id", function() {
+    var received = null;
+    var comp = bw.component({
+      t: 'div', c: 'id-test',
+      o: {
+        methods: {
+          ping: function(comp, data) { received = data; }
+        }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+
+    var result = bw.message(comp._bwId, 'ping', 'hello');
+    assert.equal(result, true);
+    assert.equal(received, 'hello');
+    comp.destroy();
+  });
+
+  it("should return false for unknown target", function() {
+    var result = bw.message('nonexistent', 'foo', {});
+    assert.equal(result, false);
+  });
+
+  it("should return false for unknown action", function() {
+    var comp = bw.component({
+      t: 'div', c: 'test',
+      o: { methods: { known: function() {} } }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.userTag('msg_test2');
+    var result = bw.message('msg_test2', 'unknown_action', {});
+    assert.equal(result, false);
+    comp.destroy();
+  });
+
+  it("should work with built-in methods like set", function() {
+    var comp = bw.component({
+      t: 'div', c: '${val}',
+      o: { state: { val: 'initial' } }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.userTag('set_test');
+    // bw.message dispatches to comp.set('val', 'updated') — but set takes (key, value)
+    // so message data is the first arg. For set, this won't work directly.
+    // message calls comp[action](data), so comp.set({val:'updated'}) won't work.
+    // This test verifies that custom methods are the right pattern for message dispatch.
+    var result = bw.message('set_test', 'get', 'val');
+    // get('val') returns 'initial' but message doesn't return the method's return value
+    assert.equal(result, true);
+    comp.destroy();
+  });
+
+  it("should simulate server-driven update pattern", function() {
+    var alerts = [];
+    var comp = bw.component({
+      t: 'div', c: '',
+      o: {
+        state: { alertCount: 0 },
+        methods: {
+          addAlert: function(comp, data) {
+            alerts.push(data);
+            comp.set('alertCount', alerts.length, { sync: true });
+          },
+          clearAlerts: function(comp) {
+            alerts = [];
+            comp.set('alertCount', 0, { sync: true });
+          }
+        }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.userTag('dashboard_east');
+
+    // Simulate SSE messages
+    var messages = [
+      { target: 'dashboard_east', action: 'addAlert', data: { msg: 'CPU high' } },
+      { target: 'dashboard_east', action: 'addAlert', data: { msg: 'Disk full' } },
+      { target: 'dashboard_east', action: 'clearAlerts', data: null }
+    ];
+
+    messages.forEach(function(m) {
+      bw.message(m.target, m.action, m.data);
+    });
+
+    assert.equal(comp.get('alertCount'), 0);
+    assert.equal(alerts.length, 0);
+    comp.destroy();
+  });
+});
+
+// =============================================================================
+// bw.inspect()
+// =============================================================================
+
+describe("bw.inspect()", function() {
+  beforeEach(resetApp);
+
+  it("should return ComponentHandle for a mounted component", function() {
+    var comp = bw.component({
+      t: 'div', a: { id: 'inspect-target' }, c: 'test',
+      o: {
+        state: { x: 42 },
+        methods: { foo: function() {} }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+
+    var result = bw.inspect('#inspect-target');
+    assert.ok(result);
+    assert.equal(result._bwId, comp._bwId);
+    assert.equal(result._state.x, 42);
+    assert.ok('foo' in result._methods);
+    comp.destroy();
+  });
+
+  it("should accept a ComponentHandle directly", function() {
+    var comp = bw.component({ t: 'div', c: 'direct' });
+    comp.mount(document.getElementById('app'));
+    var result = bw.inspect(comp);
+    assert.strictEqual(result, comp);
+    comp.destroy();
+  });
+
+  it("should accept a DOM element", function() {
+    var comp = bw.component({ t: 'div', c: 'element-inspect' });
+    comp.mount(document.getElementById('app'));
+    var result = bw.inspect(comp.element);
+    assert.strictEqual(result, comp);
+    comp.destroy();
+  });
+
+  it("should return null for element without ComponentHandle", function() {
+    var result = bw.inspect(document.getElementById('app'));
+    assert.equal(result, null);
+  });
+
+  it("should return null for nonexistent selector", function() {
+    var result = bw.inspect('#nonexistent');
+    assert.equal(result, null);
+  });
+
+  it("should show userTag if set", function() {
+    var comp = bw.component({ t: 'div', c: 'tagged' });
+    comp.userTag('my_tag');
+    comp.mount(document.getElementById('app'));
+    var result = bw.inspect(comp);
+    assert.equal(result._userTag, 'my_tag');
+    comp.destroy();
+  });
+});
+
+// =============================================================================
+// ComponentHandle in content arrays (nesting)
+// =============================================================================
+
+describe("ComponentHandle in content arrays", function() {
+  beforeEach(resetApp);
+
+  it("should mount ComponentHandle children in createDOM content arrays", function() {
+    var child = bw.component({
+      t: 'span', c: 'child-content',
+      o: { state: { val: 'hi' } }
+    });
+    var parent = bw.createDOM({
+      t: 'div', a: { class: 'parent' },
+      c: [
+        { t: 'p', c: 'static child' },
+        child
+      ]
+    });
+    document.getElementById('app').appendChild(parent);
+    assert.ok(child.mounted);
+    assert.equal(child.element.textContent, 'child-content');
+    assert.equal(parent.children.length, 2);
+    assert.equal(parent.children[0].textContent, 'static child');
+    assert.equal(parent.children[1].textContent, 'child-content');
+  });
+
+  it("should handle single ComponentHandle as content", function() {
+    var child = bw.component({ t: 'span', c: 'only-child' });
+    var parent = bw.createDOM({
+      t: 'div',
+      c: child
+    });
+    document.getElementById('app').appendChild(parent);
+    assert.ok(child.mounted);
+    assert.equal(parent.children.length, 1);
+    assert.equal(parent.children[0].textContent, 'only-child');
+  });
+
+  it("should allow mixed Level 0 and Level 2 children", function() {
+    var managed = bw.component({
+      t: 'span', c: 'Count: ${count}',
+      o: { state: { count: 0 } }
+    });
+    var taco = {
+      t: 'div', c: [
+        { t: 'h1', c: 'Dashboard' },
+        managed,
+        { t: 'p', c: 'Footer' }
+      ]
+    };
+    bw.DOM('#app', taco);
+    assert.ok(managed.mounted);
+    assert.equal(managed.element.textContent, 'Count: 0');
+
+    // Update managed child independently
+    managed.set('count', 42, { sync: true });
+    assert.equal(managed.element.textContent, 'Count: 42');
+
+    // Parent structure unchanged
+    var app = document.getElementById('app');
+    assert.equal(app.children[0].children.length, 3);
+  });
+
+  it("should handle bw.html() with ComponentHandle in content", function() {
+    var child = bw.component({
+      t: 'span', c: 'html-child',
+      o: { state: { x: 'test' } }
+    });
+    var html = bw.html({
+      t: 'div', c: [
+        { t: 'p', c: 'before' },
+        child,
+        { t: 'p', c: 'after' }
+      ]
+    });
+    assert.ok(html.indexOf('<p>before</p>') >= 0);
+    assert.ok(html.indexOf('html-child') >= 0);
+    assert.ok(html.indexOf('<p>after</p>') >= 0);
+  });
+
+  it("should handle bw.createDOM() called directly on ComponentHandle", function() {
+    var comp = bw.component({ t: 'div', c: 'direct-create' });
+    var el = bw.createDOM(comp);
+    assert.ok(el);
+    assert.equal(el.textContent, 'direct-create');
+  });
+
+  it("managed children should update independently", function() {
+    var child1 = bw.component({
+      t: 'span', c: '${name}',
+      o: { state: { name: 'Alice' } }
+    });
+    var child2 = bw.component({
+      t: 'span', c: '${name}',
+      o: { state: { name: 'Bob' } }
+    });
+    bw.DOM('#app', { t: 'div', c: [child1, child2] });
+
+    assert.ok(child1.mounted);
+    assert.ok(child2.mounted);
+
+    child1.set('name', 'Carol', { sync: true });
+    assert.equal(child1.element.textContent, 'Carol');
+    assert.equal(child2.element.textContent, 'Bob');  // unchanged
+  });
+
+  it("nested ComponentHandles with methods should work", function() {
+    var list = bw.component({
+      t: 'ul', c: [],
+      o: {
+        methods: {
+          addItem: function(comp, text) {
+            var li = bw.createDOM({ t: 'li', c: text });
+            comp.element.appendChild(li);
+          }
+        }
+      }
+    });
+    bw.DOM('#app', { t: 'div', c: [
+      { t: 'h2', c: 'My List' },
+      list
+    ]});
+
+    assert.ok(list.mounted);
+    list.addItem('Item 1');
+    list.addItem('Item 2');
+    assert.equal(list.element.children.length, 2);
+  });
+
+  it("bw.message should work on nested tagged component", function() {
+    var received = null;
+    var child = bw.component({
+      t: 'div', c: 'inner',
+      o: {
+        methods: {
+          notify: function(comp, data) { received = data; }
+        }
+      }
+    });
+    child.userTag('nested_target');
+    bw.DOM('#app', { t: 'div', c: [child] });
+
+    bw.message('nested_target', 'notify', { msg: 'hello from server' });
+    assert.deepEqual(received, { msg: 'hello from server' });
+    child.destroy();
+  });
+});

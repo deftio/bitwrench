@@ -196,7 +196,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-10T05:52:55.459Z'
+    buildDate: '2026-03-10T08:57:25.695Z'
   };
 
   /**
@@ -609,11 +609,12 @@
     var lightBase = config.light || hslToHex([h, 8, 97]);
     var darkBase = config.dark || hslToHex([h, 10, 13]);
 
-    // Background & surface tokens — light palettes get white/near-white,
-    // dark palettes derive from the dark base
-    var isLight = isLightPalette(config);
-    var bgBase = config.background || (isLight ? '#ffffff' : adjustLightness(darkBase, -3));
-    var surfBase = config.surface || (isLight ? '#f8f9fa' : adjustLightness(darkBase, 4));
+    // Background & surface tokens — default to light (white/near-white).
+    // Dark backgrounds require explicit config.background / config.surface.
+    // Primary/secondary colors are accents, not page backgrounds, so
+    // isLightPalette should NOT drive bg/surface defaults.
+    var bgBase = config.background || '#ffffff';
+    var surfBase = config.surface || '#f8f9fa';
     var palette = {
       primary: deriveShades(config.primary),
       secondary: deriveShades(config.secondary),
@@ -5609,6 +5610,11 @@
       return frag;
     }
 
+    // Handle ComponentHandle — extract .taco for DOM creation
+    if (taco && taco._bwComponent === true) {
+      return bw.createDOM(taco.taco, options);
+    }
+
     // Handle text nodes
     if (_typeof(taco) !== 'object' || !taco.t) {
       return document.createTextNode(String(taco));
@@ -5661,6 +5667,11 @@
       if (Array.isArray(content)) {
         content.forEach(function (child) {
           if (child != null) {
+            // Handle ComponentHandle in content arrays (Level 2 children)
+            if (child._bwComponent === true) {
+              child.mount(el);
+              return;
+            }
             var childEl = bw.createDOM(child, options);
             el.appendChild(childEl);
             // Build local refs for addressable children
@@ -5683,6 +5694,9 @@
       } else if (_typeof(content) === 'object' && content.__bw_raw) {
         // Raw HTML content — inject via innerHTML
         el.innerHTML = content.v;
+      } else if (content._bwComponent === true) {
+        // Single ComponentHandle as content
+        content.mount(el);
       } else if (_typeof(content) === 'object' && content.t) {
         var childEl = bw.createDOM(content, options);
         el.appendChild(childEl);
@@ -6686,6 +6700,24 @@
         }
       }
     }
+    // Promote o.methods to handle API (MFC/Qt pattern: component owns its methods)
+    this._methods = {};
+    if (o.methods) {
+      var self = this;
+      for (var k3 in o.methods) {
+        if (Object.prototype.hasOwnProperty.call(o.methods, k3)) {
+          this._methods[k3] = o.methods[k3];
+          (function (methodName, methodFn) {
+            self[methodName] = function () {
+              var args = [self].concat(Array.prototype.slice.call(arguments));
+              return methodFn.apply(null, args);
+            };
+          })(k3, o.methods[k3]);
+        }
+      }
+    }
+    // User tag for addressing via bw.message()
+    this._userTag = null;
     // Lifecycle hooks
     this._hooks = {
       willMount: o.willMount || null,
@@ -6990,6 +7022,9 @@
     this.element = bw.createDOM(tacoForDOM);
     this.element._bwComponentHandle = this;
     this.element.setAttribute('data-bw_comp_id', this._bwId);
+    if (this._userTag) {
+      this.element.classList.add(this._userTag);
+    }
 
     // Append to parent
     parentEl.appendChild(this.element);
@@ -7485,6 +7520,20 @@
     return Array.prototype.slice.call(this.element.querySelectorAll(sel));
   };
 
+  /**
+   * Tag this component with a user-defined ID for addressing via bw.message().
+   * The tag is added as a CSS class on the root element (DOM IS the registry).
+   * @param {string} tag - User-defined identifier (e.g. 'dashboard_prod_east')
+   * @returns {ComponentHandle} this (for chaining)
+   */
+  ComponentHandle.prototype.userTag = function (tag) {
+    this._userTag = tag;
+    if (this.element) {
+      this.element.classList.add(tag);
+    }
+    return this;
+  };
+
   // Expose ComponentHandle on bw (for testing and advanced use)
   bw._ComponentHandle = ComponentHandle;
 
@@ -7550,6 +7599,106 @@
    */
   bw.component = function (taco) {
     return new ComponentHandle(taco);
+  };
+
+  // ===================================================================================
+  // bw.message() — SendMessage() for the web
+  // ===================================================================================
+
+  /**
+   * Dispatch a message to a component by UUID or user tag.
+   * Finds the component's DOM element, looks up its ComponentHandle,
+   * and calls the named method. This is the bitwrench equivalent of
+   * Win32 SendMessage(hwnd, msg, wParam, lParam).
+   *
+   * @param {string} target - Component UUID (data-bw_comp_id) or user tag (CSS class)
+   * @param {string} action - Method name to call on the component
+   * @param {*} data - Data to pass to the method
+   * @returns {boolean} True if message was dispatched successfully
+   * @category Component
+   * @example
+   * // Tag a component
+   * myDash.userTag('dashboard_prod');
+   * // Dispatch locally
+   * bw.message('dashboard_prod', 'addAlert', { severity: 'warning', text: 'CPU spike' });
+   * // Or from SSE handler:
+   * es.onmessage = function(e) {
+   *   var msg = JSON.parse(e.data);
+   *   bw.message(msg.target, msg.action, msg.data);
+   * };
+   */
+  bw.message = function (target, action, data) {
+    // Try data-bw_comp_id attribute first, then CSS class (user tag)
+    var el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
+    if (!el) {
+      el = bw.$('.' + target)[0];
+    }
+    if (!el || !el._bwComponentHandle) return false;
+    var comp = el._bwComponentHandle;
+    if (typeof comp[action] !== 'function') {
+      console.warn('bw.message: unknown action "' + action + '" on component ' + target);
+      return false;
+    }
+    comp[action](data);
+    return true;
+  };
+
+  // ===================================================================================
+  // bw.inspect() — Debug utility
+  // ===================================================================================
+
+  /**
+   * Inspect a component's state, bindings, methods, and metadata.
+   * Works with DOM elements, CSS selectors, or ComponentHandle objects.
+   * Returns the ComponentHandle for console chaining.
+   *
+   * @param {string|Element|ComponentHandle} target - Selector, element, or handle
+   * @returns {ComponentHandle|null} The component handle, or null if not found
+   * @category Component
+   * @example
+   * // In browser console, click element in Elements panel then:
+   * bw.inspect($0);
+   * // Or by selector:
+   * var h = bw.inspect('#my-dashboard');
+   * h.set('count', 99);  // chain from returned handle
+   */
+  bw.inspect = function (target) {
+    var el = target;
+    if (target && target._bwComponent === true) {
+      el = target.element;
+      var comp = target;
+    } else {
+      if (typeof target === 'string') {
+        el = bw.$(target)[0];
+      }
+      if (!el) {
+        console.warn('bw.inspect: element not found');
+        return null;
+      }
+      var comp = el._bwComponentHandle;
+    }
+    if (!comp) {
+      console.log('bw.inspect: no ComponentHandle on this element');
+      console.log('  Tag:', el.tagName);
+      console.log('  Classes:', el.className);
+      console.log('  _bw_state:', el._bw_state || '(none)');
+      return null;
+    }
+    var deps = comp._bindings.reduce(function (s, b) {
+      return s.concat(b.deps || []);
+    }, []).filter(function (v, i, a) {
+      return a.indexOf(v) === i;
+    });
+    console.group('Component: ' + comp._bwId);
+    console.log('State:', comp._state);
+    console.log('Bindings:', comp._bindings.length, '(deps:', deps, ')');
+    console.log('Methods:', Object.keys(comp._methods));
+    console.log('Actions:', Object.keys(comp._actions));
+    console.log('User tag:', comp._userTag || '(none)');
+    console.log('Mounted:', comp.mounted);
+    console.log('Element:', comp.element);
+    console.groupEnd();
+    return comp;
   };
 
   // ===================================================================================

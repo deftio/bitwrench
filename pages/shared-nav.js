@@ -27,7 +27,8 @@
       text: 'Docs', href: '08-api-reference.html',
       children: [
         { text: 'API Reference', href: '08-api-reference.html' },
-        { text: 'Builds', href: '09-builds.html' }
+        { text: 'Builds', href: '09-builds.html' },
+        { text: 'Debugging', href: '11-debugging.html' }
       ]
     }
   ];

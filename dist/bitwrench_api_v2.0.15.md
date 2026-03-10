@@ -6,9 +6,9 @@
 |-------|-------|
 | Version | 2.0.15 |
 | Generated | 2026-03-10 |
-| Total APIs | 97 |
+| Total APIs | 99 |
 | Categories | 11 |
-| bitwrench.js | 4077 lines |
+| bitwrench.js | 4223 lines |
 | bitwrench-bccl.js | 3615 lines |
 
 ## Table of Contents
@@ -23,7 +23,7 @@
 - [Component Builders](#component-builders) (50)
 - [Browser Utilities](#browser-utilities) (4)
 - [Function Registry](#function-registry) (5)
-- [Component](#component) (5)
+- [Component](#component) (7)
 
 ---
 
@@ -2122,6 +2122,46 @@ Create a ComponentHandle from a TACO definition. The returned handle has .get(),
 **Example:**
 ```javascript
 var counter = bw.component({ t: 'div', c: [{ t: 'h3', c: 'Count: ${count}' }], o: { state: { count: 0 } } }); bw.DOM('#app', counter); counter.set('count', 42); // DOM auto-updates
+```
+
+---
+
+### `bw.message(target, action, data)`
+
+Dispatch a message to a component by UUID or user tag. Finds the component's DOM element, looks up its ComponentHandle, and calls the named method. This is the bitwrench equivalent of Win32 SendMessage(hwnd, msg, wParam, lParam).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `string` | - Component UUID (data-bw_comp_id) or user tag (CSS class) |
+| `action` | `string` | - Method name to call on the component |
+| `data` | `*` | - Data to pass to the method |
+
+**Returns:** `boolean` — if message was dispatched successfully
+
+**Example:**
+```javascript
+// Tag a component myDash.userTag('dashboard_prod'); // Dispatch locally bw.message('dashboard_prod', 'addAlert', { severity: 'warning', text: 'CPU spike' }); // Or from SSE handler: es.onmessage = function(e) { var msg = JSON.parse(e.data); bw.message(msg.target, msg.action, msg.data); };
+```
+
+---
+
+### `bw.inspect(target)`
+
+Inspect a component's state, bindings, methods, and metadata. Works with DOM elements, CSS selectors, or ComponentHandle objects. Returns the ComponentHandle for console chaining.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `string|Element|ComponentHandle` | - Selector, element, or handle |
+
+**Returns:** `ComponentHandle|null` — component handle, or null if not found
+
+**Example:**
+```javascript
+// In browser console, click element in Elements panel then: bw.inspect($0); // Or by selector: var h = bw.inspect('#my-dashboard'); h.set('count', 99);  // chain from returned handle
 ```
 
 ---

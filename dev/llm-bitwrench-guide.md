@@ -307,7 +307,7 @@ bw.makeAvatar({
 // Load defaults (call once)
 bw.loadDefaultStyles();
 
-// Generate a custom theme
+// Generate a custom theme (returns { css, palette, name, alternate })
 bw.generateTheme('mytheme', {
   primary: '#336699',
   secondary: '#cc6633',
@@ -316,41 +316,219 @@ bw.generateTheme('mytheme', {
   radius: 'md'             // 'none'|'sm'|'md'|'lg'|'pill'
 });
 
-// Dark mode toggle
-bw.toggleDarkMode();
+// Toggle between primary and alternate palette
+bw.toggleTheme();          // returns 'primary' or 'alternate'
+bw.applyTheme('primary');  // or 'alternate', 'light', 'dark'
 
 // 12 built-in presets: ocean, sunset, forest, slate, monochrome,
 // lavender, coral, midnight, emerald, autumn, nordic, cherry
 ```
 
-## State Management Pattern
+## Three Levels of Materialization
+
+TACO objects exist at three levels. Choose per-component:
+
+| Level | What | How | Use case |
+|-------|------|-----|----------|
+| **Level 0: TACO** | Plain JS object (data/intent) | `bw.makeCard({...})` | Serialize, transform, send over wire, SSR |
+| **Level 1: DOM/HTML** | Live DOM nodes (fire-and-forget) | `bw.DOM(sel, taco)` or `bw.html(taco)` | Render once, static pages |
+| **Level 2: ComponentHandle** | Managed object with API | `bw.component(taco)` | Reactive state, .get()/.set()/.mount()/.destroy() |
+
+`make*()` factories always return Level 0. User escalates to Level 2 via `bw.component()`.
+
+## ComponentHandle (Reactive Components)
+
+Wrap any TACO in `bw.component()` for reactive state with `.get()/.set()` API:
 
 ```javascript
-function Counter() {
-  const id = bw.uuid('counter');
+var counter = bw.component({
+  t: 'div',
+  c: 'Count: ${count}',       // template binding — auto-updates on .set()
+  o: {
+    state: { count: 0 },
+    methods: {
+      increment: function(comp) { comp.set('count', comp.get('count') + 1); },
+      reset: function(comp) { comp.set('count', 0); }
+    }
+  }
+});
+
+// Mount
+counter.mount(document.getElementById('app'));
+// or: bw.DOM('#app', counter);   // auto-detects ComponentHandle
+
+// Use the API
+counter.set('count', 42);        // auto-re-renders (microtask batched)
+counter.get('count');             // 42
+counter.increment();              // methods from o.methods are promoted to API
+counter.destroy();                // cleanup + remove from DOM
+```
+
+### ComponentHandle API
+
+| Method | Description |
+|--------|-------------|
+| `.get(key)` | Read state value |
+| `.set(key, value)` | Set state, trigger re-render (batched) |
+| `.mount(el)` | Mount into DOM element |
+| `.destroy()` | Remove from DOM, run cleanup hooks |
+| `.select(sel)` | Query within component |
+| `.selectAll(sel)` | Query all within component |
+| `.userTag(tag)` | Add CSS class for addressing via `bw.message()` |
+| `.taco` | Access underlying TACO definition |
+| `.element` | Access mounted DOM element |
+| `.mounted` | Boolean: is component in the DOM? |
+
+### Template Bindings
+
+Use `${expr}` in TACO content or attributes. Bindings auto-update on `.set()`:
+
+```javascript
+bw.component({
+  t: 'div', c: [
+    { t: 'h3', c: 'Hello, ${name}!' },
+    { t: 'p', c: 'Status: ${active ? "Online" : "Offline"}' }
+  ],
+  o: { state: { name: 'World', active: true } }
+});
+```
+
+### Custom Methods (o.methods)
+
+Define component behavior in `o.methods`. Each method receives the component handle as first arg:
+
+```javascript
+var dashboard = bw.component({
+  t: 'div', c: 'Alerts: ${count}',
+  o: {
+    state: { count: 0, alerts: [] },
+    methods: {
+      addAlert: function(comp, data) {
+        var alerts = comp.get('alerts').concat(data);
+        comp.set('alerts', alerts);
+        comp.set('count', alerts.length);
+      },
+      clearAlerts: function(comp) {
+        comp.set('alerts', []);
+        comp.set('count', 0);
+      }
+    }
+  }
+});
+
+// Methods appear directly on the handle:
+dashboard.addAlert({ severity: 'warning', text: 'CPU spike' });
+dashboard.clearAlerts();
+```
+
+### Control Flow
+
+```javascript
+// Conditional rendering
+bw.when('active', trueContent, falseContent)
+
+// List rendering
+bw.each('items', function(item) {
+  return { t: 'li', c: item.name };
+})
+```
+
+## bw.message() — Component Dispatch
+
+Find a component by UUID or user tag, call one of its methods. Foundation for server-driven UI:
+
+```javascript
+// Tag a component for addressing
+var panel = bw.component({...});
+panel.userTag('dashboard_prod');
+panel.mount(document.getElementById('app'));
+
+// Dispatch from anywhere:
+bw.message('dashboard_prod', 'addAlert', { severity: 'warning', text: 'CPU spike' });
+// Returns true if dispatched, false if target/action not found
+
+// Server-driven pattern (SSE):
+var es = new EventSource('/api/events');
+es.onmessage = function(e) {
+  var msg = JSON.parse(e.data);
+  bw.message(msg.target, msg.action, msg.data);
+};
+```
+
+## bw.inspect() — Console Debugging
+
+Dump component state, bindings, methods to console. Returns handle for chaining:
+
+```javascript
+// In browser console:
+bw.inspect($0);              // inspect selected element
+bw.inspect('#my-component'); // by selector
+bw.inspect(myHandle);        // by ComponentHandle
+
+// Output:
+// Component: bw_comp_a1b2c3
+//   State: { count: 42 }
+//   Bindings: 1 (deps: ['count'])
+//   Methods: ['increment', 'reset']
+//   User tag: dashboard_prod
+//   Mounted: true
+//   Element: <div data-bw_comp_id="bw_comp_a1b2c3">
+```
+
+## State Management Patterns
+
+### Low-Level Pattern (o.state + bw.update)
+
+For simple components that don't need a managed API:
+
+```javascript
+function makeCounter(opts) {
+  var id = bw.uuid('ctr');
   return {
-    t: 'div', a: { 'data-bw-id': id },
-    c: [
-      { t: 'span', a: { 'data-bw-id': id + '-val' }, c: '0' },
-      bw.makeButton({
-        text: '+1',
-        onclick: function() {
-          var el = bw.$('[data-bw-id="' + id + '"]')[0];
-          el._bw_state.count++;
-          bw.update(el);
-        }
-      })
-    ],
+    t: 'div', a: { id: id },
     o: {
-      state: { count: 0 },
+      state: { count: opts.start || 0 },
       render: function(el) {
-        bw.patch(id + '-val', String(el._bw_state.count));
+        var s = el._bw_state;
+        bw.DOM(el, {
+          t: 'div', c: [
+            { t: 'span', c: 'Count: ' + s.count },
+            bw.makeButton({ text: '+', onclick: function() {
+              s.count++; bw.update(el);
+            }})
+          ]
+        });
       }
     }
   };
 }
+bw.DOM('#app', makeCounter({ start: 0 }));
+```
 
-bw.DOM('#app', Counter());
+### ComponentHandle Pattern (preferred for stateful components)
+
+```javascript
+function makeCounter(opts) {
+  return bw.component({
+    t: 'div',
+    c: [
+      { t: 'span', c: 'Count: ${count}' },
+      bw.makeButton({ text: '+', onclick: function() {
+        counter.increment();
+      }})
+    ],
+    o: {
+      state: { count: opts.start || 0 },
+      methods: {
+        increment: function(comp) { comp.set('count', comp.get('count') + 1); },
+        reset: function(comp) { comp.set('count', 0); }
+      }
+    }
+  });
+}
+var counter = makeCounter({ start: 0 });
+bw.DOM('#app', counter);
+counter.increment();   // API-driven update
 ```
 
 ## Pub/Sub Pattern
@@ -531,9 +709,12 @@ bw.DOM('#app', bw.makeDataTable({
 ## Key Rules
 
 1. **Always call `bw.loadDefaultStyles()`** before rendering components (in browser).
-2. **Content is escaped by default.** Use `o: { raw: true }` for HTML content.
-3. **All make* functions return TACO objects**, not HTML strings. Pass them to `bw.DOM()` or `bw.html()`.
+2. **Content is escaped by default.** Use `o: { raw: true }` or `bw.raw(str)` for pre-escaped HTML.
+3. **All make* functions return Level 0 TACO objects**, not HTML strings. Pass them to `bw.DOM()` or `bw.html()`.
 4. **Use `bw.DOM()` to mount**, not `innerHTML`. It handles lifecycle hooks and cleanup.
-5. **State lives on the element**: `el._bw_state`. Modify it, then call `bw.update(el)`.
-6. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`, etc.
-7. **Variants**: `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`.
+5. **For reactive components, use `bw.component(taco)`** to get a ComponentHandle with `.get()/.set()`.
+6. **Low-level state**: `el._bw_state` + `bw.update(el)` still works for simple cases.
+7. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`, etc.
+8. **Variants**: `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`.
+9. **`bw.message(target, action, data)`** dispatches to components by UUID or user tag — the foundation for server-driven UI.
+10. **Browser console IS your DevTools**: `$0._bw_state`, `$0._bwComponentHandle`, `bw.inspect($0)`. No extension needed.
