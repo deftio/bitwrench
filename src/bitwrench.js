@@ -2965,6 +2965,8 @@ bw.loadDefaultStyles = function(options = {}) {
  * @param {string} [config.info='#0dcaf0'] - Info color hex
  * @param {string} [config.light='#f8f9fa'] - Light color hex
  * @param {string} [config.dark='#212529'] - Dark color hex
+ * @param {string} [config.background] - Page background hex (default: '#ffffff' light, derived dark)
+ * @param {string} [config.surface] - Surface/card background hex (default: '#f8f9fa' light, derived dark)
  * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
  * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
  * @param {number} [config.fontSize=1.0] - Base font size scale factor
@@ -3035,10 +3037,12 @@ bw.generateTheme = function(name, config) {
   if (shouldInject && bw._isBrowser) {
     var safeName = name ? name.replace(/-/g, '_') : '';
     var styleId = safeName ? 'bw_theme_' + safeName : 'bw_theme_default';
-    bw.injectCSS(cssStr, { id: styleId, append: false });
-
     var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
+
+    bw.injectCSS(cssStr, { id: styleId, append: false });
     bw.injectCSS(altCssStr, { id: altStyleId, append: false });
+
+    bw._activeThemeStyleIds = [styleId, altStyleId];
   }
 
   // Update bw.u color entries to reflect the palette
@@ -3115,6 +3119,29 @@ bw.applyTheme = function(mode) {
 bw.toggleTheme = function() {
   var current = bw._activeThemeMode || 'primary';
   return bw.applyTheme(current === 'primary' ? 'alternate' : 'primary');
+};
+
+/**
+ * Remove the currently active theme's injected style elements from the DOM.
+ * Use this before generating a new theme with a different name to prevent
+ * stale CSS accumulation.
+ *
+ * @category CSS & Styling
+ * @see bw.generateTheme
+ * @example
+ * bw.clearTheme();                   // remove current theme styles
+ * bw.generateTheme('sunset', conf);  // inject fresh theme
+ */
+bw.clearTheme = function() {
+  if (bw._activeThemeStyleIds && bw._isBrowser) {
+    bw._activeThemeStyleIds.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    bw._activeThemeStyleIds = null;
+  }
+  bw._activeTheme = null;
+  bw._activeThemeMode = 'primary';
 };
 
 // Expose color utility functions on bw namespace

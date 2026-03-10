@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Self Load Test</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script>window.__bw_load_start = performance.now();</script>
+  <script src="../dist/bitwrench.umd.js"></script>
+  <script>window.__bw_load_end = performance.now();</script>
+  <script src="shared-nav.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    mountExampleNav('#example-nav', 'self-load-test.html');
+
+    var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
+    var GZIP_WARN_KB = 40;
+
+    function fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      return (bytes / 1024).toFixed(1) + ' KB';
+    }
+
+    function renderPage(buildsData) {
+      var files = buildsData ? buildsData.files : [];
+
+      // Separate into groups
+      var coreFiles = files.filter(function(f) { return f.name.indexOf('lean') === -1 && f.name.indexOf('code-edit') === -1 && !f.name.endsWith('.css'); });
+      var leanFiles = files.filter(function(f) { return f.name.indexOf('lean') !== -1; });
+      var addonFiles = files.filter(function(f) { return f.name.indexOf('code-edit') !== -1; });
+      var cssFiles = files.filter(function(f) { return f.name.endsWith('.css'); });
+
+      // Find the main UMD min gzip size for the warning
+      var umdMin = files.find(function(f) { return f.name === 'bitwrench.umd.min.js'; });
+      var umdGzKB = umdMin ? (umdMin.gzipped / 1024).toFixed(1) : '?';
+      var gzipOver = umdMin && (umdMin.gzipped / 1024) > GZIP_WARN_KB;
+
+      function makeSizeRow(f) {
+        return {
+          t: 'tr', c: [
+            { t: 'td', c: { t: 'code', a: { style: 'font-size: 0.8125rem' }, c: f.name } },
+            { t: 'td', a: { style: 'text-align:right' }, c: fmtSize(f.raw) },
+            { t: 'td', a: { style: 'text-align:right' }, c: f.gzipped ? fmtSize(f.gzipped) : '\u2014' }
+          ]
+        };
+      }
+
+      function makeSizeTable(fileList, title) {
+        if (fileList.length === 0) return { t: 'p', a: { style: 'color:var(--bw_text_muted)' }, c: 'No files found in this group.' };
+        return {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: title },
+            {
+              t: 'div', a: { class: 'demo-content', style: 'overflow-x:auto' },
+              c: {
+                t: 'table', a: { class: 'bw-table', style: 'width:100%' },
+                c: [
+                  { t: 'thead', c: { t: 'tr', c: [
+                    { t: 'th', c: 'File' },
+                    { t: 'th', a: { style: 'text-align:right' }, c: 'Raw' },
+                    { t: 'th', a: { style: 'text-align:right' }, c: 'Gzipped' }
+                  ]}},
+                  { t: 'tbody', c: fileList.map(makeSizeRow) }
+                ]
+              }
+            }
+          ]
+        };
+      }
+
+      // Source file line counts (static — updated at build time)
+      var sourceInfo = [
+        { file: 'src/bitwrench.js', desc: 'Core library' },
+        { file: 'src/bitwrench-styles.js', desc: 'Default styles' },
+        { file: 'src/bitwrench-color-utils.js', desc: 'Color utilities' },
+        { file: 'src/bitwrench-bccl.js', desc: 'BCCL components' }
+      ];
+
+      var page = {
+        t: 'div', c: [
+          // Header
+          {
+            t: 'div', a: { class: 'page-header' },
+            c: {
+              t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+              c: [
+                { t: 'h1', c: 'Self Load Test' },
+                { t: 'p', a: { class: 'subtitle' }, c: 'Performance metrics, bundle sizes, and health checks' }
+              ]
+            }
+          },
+          // Content
+          {
+            t: 'div', a: { class: 'content-container wide' },
+            c: [
+              // Load timing
+              {
+                t: 'div', a: { class: 'demo-section' },
+                c: [
+                  { t: 'h2', c: 'Load Performance' },
+                  {
+                    t: 'div', a: { class: 'demo-content' },
+                    c: [
+                      {
+                        t: 'div', a: { style: 'display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;' },
+                        c: [
+                          {
+                            t: 'div', a: { class: 'bw_feature_card' },
+                            c: [
+                              { t: 'h3', c: 'UMD Load + Parse' },
+                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:var(--bw_teal); margin:0.25rem 0' }, c: loadTimeMs + ' ms' }
+                            ]
+                          },
+                          {
+                            t: 'div', a: { class: 'bw_feature_card' },
+                            c: [
+                              { t: 'h3', c: 'UMD Min Gzipped' },
+                              {
+                                t: 'p',
+                                a: { style: 'font-size:1.75rem; font-weight:700; margin:0.25rem 0; color:' + (gzipOver ? '#dc3545' : 'var(--bw_teal)') },
+                                c: umdGzKB + ' KB'
+                              },
+                              gzipOver ? { t: 'p', a: { style: 'color:#dc3545; font-size:0.875rem; font-weight:600; margin:0' }, c: 'WARNING: Over ' + GZIP_WARN_KB + ' KB gzip target!' } : null
+                            ].filter(Boolean)
+                          },
+                          {
+                            t: 'div', a: { class: 'bw_feature_card' },
+                            c: [
+                              { t: 'h3', c: 'Version' },
+                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:var(--bw_teal); margin:0.25rem 0' }, c: 'v' + bw.version }
+                            ]
+                          },
+                          {
+                            t: 'div', a: { class: 'bw_feature_card' },
+                            c: [
+                              { t: 'h3', c: 'Total APIs' },
+                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:var(--bw_teal); margin:0.25rem 0' }, c: Object.keys(bw).length + ' exports' }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              // Source files
+              {
+                t: 'div', a: { class: 'demo-section' },
+                c: [
+                  { t: 'h2', c: 'Source Files' },
+                  {
+                    t: 'div', a: { class: 'demo-content' },
+                    c: {
+                      t: 'table', a: { class: 'bw-table', style: 'width:100%' },
+                      c: [
+                        { t: 'thead', c: { t: 'tr', c: [
+                          { t: 'th', c: 'File' },
+                          { t: 'th', c: 'Description' }
+                        ]}},
+                        { t: 'tbody', c: sourceInfo.map(function(s) {
+                          return { t: 'tr', c: [
+                            { t: 'td', c: { t: 'code', a: { style: 'font-size: 0.8125rem' }, c: s.file } },
+                            { t: 'td', c: s.desc }
+                          ]};
+                        })}
+                      ]
+                    }
+                  }
+                ]
+              },
+              // Bundle sizes by group
+              makeSizeTable(coreFiles, 'Core Library Bundles'),
+              makeSizeTable(leanFiles, 'Lean Bundles'),
+              makeSizeTable(addonFiles, 'Addon Bundles'),
+              makeSizeTable(cssFiles, 'CSS'),
+              // Health checks
+              {
+                t: 'div', a: { class: 'demo-section' },
+                c: [
+                  { t: 'h2', c: 'Health Checks' },
+                  {
+                    t: 'div', a: { class: 'demo-content' },
+                    c: [
+                      { t: 'p', c: [
+                        gzipOver ? '\u274C' : '\u2705',
+                        ' UMD min gzip ' + (gzipOver ? 'OVER' : 'under') + ' ' + GZIP_WARN_KB + ' KB target (' + umdGzKB + ' KB)'
+                      ]},
+                      { t: 'p', c: [
+                        parseFloat(loadTimeMs) < 100 ? '\u2705' : '\u26A0\uFE0F',
+                        ' Load + parse time: ' + loadTimeMs + ' ms'
+                      ]},
+                      { t: 'p', c: [
+                        typeof bw.version === 'string' ? '\u2705' : '\u274C',
+                        ' bw.version: ' + bw.version
+                      ]},
+                      { t: 'p', c: [
+                        typeof bw.html === 'function' ? '\u2705' : '\u274C',
+                        ' bw.html() available'
+                      ]},
+                      { t: 'p', c: [
+                        typeof bw.DOM === 'function' ? '\u2705' : '\u274C',
+                        ' bw.DOM() available'
+                      ]},
+                      { t: 'p', c: [
+                        typeof bw.generateTheme === 'function' ? '\u2705' : '\u274C',
+                        ' bw.generateTheme() available'
+                      ]},
+                      { t: 'p', c: [
+                        typeof bw.makeCard === 'function' ? '\u2705' : '\u274C',
+                        ' BCCL components available (bw.makeCard)'
+                      ]}
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+
+      bw.DOM('#app', page);
+    }
+
+    // Load builds.json and render
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '../dist/builds.json', true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try {
+          renderPage(JSON.parse(xhr.responseText));
+        } catch (e) {
+          renderPage(null);
+        }
+      } else {
+        renderPage(null);
+      }
+    };
+    xhr.onerror = function() { renderPage(null); };
+    xhr.send();
+  </script>
+</body>
+</html>

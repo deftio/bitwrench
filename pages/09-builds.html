@@ -161,6 +161,11 @@
       'bitwrench.css':         'Default styles (Bootstrap-inspired)',
       'bitwrench-code-edit.umd.js':     'Code editor addon (UMD)',
       'bitwrench-code-edit.umd.min.js': 'Code editor addon (UMD, minified)',
+      'bitwrench-code-edit.esm.js':     'Code editor addon (ESM)',
+      'bitwrench-code-edit.esm.min.js': 'Code editor addon (ESM, minified)',
+      'bitwrench-code-edit.cjs.js':     'Code editor addon (CJS)',
+      'bitwrench-code-edit.es5.js':     'Code editor addon (ES5)',
+      'bitwrench-code-edit.es5.min.js': 'Code editor addon (ES5, minified)',
       'bitwrench-lean.umd.js':      'Lean build, no components (UMD)',
       'bitwrench-lean.umd.min.js':  'Lean build, no components (UMD, minified)',
       'bitwrench-lean.esm.js':      'Lean build, no components (ESM)',
@@ -234,7 +239,7 @@
                   c: [
                     { t: 'a', a: { href: '#section-core' }, c: 'Core Library' },
                     { t: 'a', a: { href: '#section-lean' }, c: 'Lean Build' },
-                    { t: 'a', a: { href: '#section-addons' }, c: 'Addons' },
+                    { t: 'a', a: { href: '#section-addons' }, c: 'Addon Bundles' },
                     { t: 'a', a: { href: '#section-css' }, c: 'CSS' },
                     { t: 'a', a: { href: '#section-all' }, c: 'All Files' },
                     { t: 'a', a: { href: '#section-sri' }, c: 'SRI Hashes' },
@@ -270,11 +275,11 @@
                 { t: 'div', a: { id: 'builds-lean', style: 'overflow-x:auto' }, c: 'Loading...' }
               ]
             },
-            // Addons
+            // Addon Bundles
             {
               t: 'div', a: { class: 'demo-section builds-section', id: 'section-addons' },
               c: [
-                { t: 'h2', c: 'Addons' },
+                { t: 'h2', c: 'Addon Bundles' },
                 { t: 'h3', c: 'Code Editor (bitwrench-code-edit)' },
                 { t: 'p', c: 'Syntax-highlighted code editor with line numbers, read-only mode, and copy support. Loaded as a separate script after the core library.' },
                 { t: 'div', a: { id: 'builds-addons', style: 'overflow-x:auto' }, c: 'Loading...' }

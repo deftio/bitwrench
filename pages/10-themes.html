@@ -186,6 +186,8 @@
       }
     };
 
+    var descStyle = 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;';
+
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' }, c: [
 
@@ -196,7 +198,7 @@
             {
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
-                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;' }, c: [
+                  t: 'p', a: { style: descStyle }, c: [
                     'Pick three seed colors, choose spacing and border-radius presets, then click ',
                     { t: 'strong', c: 'Generate' },
                     '. The preview below updates live with fully themed buttons, alerts, badges, cards, forms, and a table.'
@@ -215,7 +217,7 @@
             {
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
-                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;' }, c: [
+                  t: 'p', a: { style: descStyle }, c: [
                     'Click any preset to apply it to the preview area above. Each theme is generated from just three seed colors using ',
                     { t: 'code', c: 'bw.generateTheme()' },
                     '.'
@@ -227,15 +229,106 @@
           ]
         },
 
-        // Section 3: Multi-theme Demo
+        // Section 3: Applying Themes
         {
           t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Multi-theme Demo' },
+            { t: 'h2', c: 'Applying Themes' },
             {
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
-                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;' }, c:
-                    'Multiple themes can coexist on the same page. Each container gets a CSS scope class and renders the same components with different palettes.'
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'Themes in bitwrench are <strong>CSS-scoped</strong>. Every call to <code>bw.generateTheme(name, config)</code> ' +
+                    'produces CSS rules scoped under the class <code>.name</code>. To apply a theme, add that class to a container element. ' +
+                    'Every <code>bw-*</code> component inside that container automatically inherits the theme.'
+                  )
+                },
+                // Whole-page application
+                { t: 'h3', a: { style: 'margin: 1.5rem 0 0.75rem 0; font-size: 1.05rem;' }, c: 'Whole-page theme' },
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'To theme an entire page, add the scope class to <code>&lt;body&gt;</code>. ' +
+                    'The generated CSS includes a body background-color rule scoped to that class, ' +
+                    'so the page background, text color, and every component update together.'
+                  )
+                },
+                { t: 'div', a: { id: 'apply-theme-code' } },
+                // Scoped (container) application
+                { t: 'h3', a: { style: 'margin: 1.5rem 0 0.75rem 0; font-size: 1.05rem;' }, c: 'Scoped container theme' },
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'To theme only part of a page, add the scope class to a <code>&lt;div&gt;</code> wrapper. ' +
+                    'Components outside that container are unaffected. This is how the multi-theme demo below works.'
+                  )
+                },
+                { t: 'div', a: { id: 'scoped-theme-code' } },
+                // Switching themes
+                { t: 'h3', a: { style: 'margin: 1.5rem 0 0.75rem 0; font-size: 1.05rem;' }, c: 'Switching themes' },
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'To switch from one theme to another, call <code>bw.clearTheme()</code> first to remove the ' +
+                    'previous theme\'s injected <code>&lt;style&gt;</code> elements, then generate the new theme. ' +
+                    'This prevents stale CSS from accumulating in the DOM.'
+                  )
+                },
+                { t: 'div', a: { id: 'switch-theme-code' } }
+              ]
+            }
+          ]
+        },
+
+        // Section 4: Background & Surface Colors
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Background & Surface Colors' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'Every theme palette includes <strong>background</strong> and <strong>surface</strong> tokens. ' +
+                    'These are the page-level canvas colors that all components sit on top of.'
+                  )
+                },
+                // Explainer graphic: layered color model
+                { t: 'div', a: { id: 'bg-surface-explainer' } },
+                {
+                  t: 'ul', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem; padding-left: 1.25rem; line-height: 1.8;' },
+                  c: [
+                    { t: 'li', c: bw.raw('<code>palette.background</code> &mdash; the page body background. Light themes default to <code>#ffffff</code>; dark themes derive from the dark base color.') },
+                    { t: 'li', c: bw.raw('<code>palette.surface</code> &mdash; elevated surfaces like cards, inputs, modals, dropdowns. Light themes default to <code>#f8f9fa</code>; dark themes derive a slightly lighter shade.') },
+                    { t: 'li', c: bw.raw('Components like buttons and badges use <strong>seed colors</strong> (primary, secondary, etc.) for their fills &mdash; these sit on top of the surface layer.') },
+                    { t: 'li', c: bw.raw('You can override either canvas value by passing <code>background</code> or <code>surface</code> in the config.') }
+                  ]
+                },
+                { t: 'div', a: { id: 'bg-surface-demo' } },
+                {
+                  t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1.25rem;' },
+                  c: [
+                    { t: 'h4', c: 'Design rationale' },
+                    { t: 'p', c: bw.raw(
+                      'Industry standard (MUI, shadcn, Tailwind): <code>background</code> is a surface token, not derived from the primary seed color. ' +
+                      'A blue primary should give you a blue <em>button</em>, not a blue page. ' +
+                      'Background defaults to white (light) or near-black (dark), keeping the canvas neutral so components pop.'
+                    )}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        // Section 5: Multi-theme Demo (mixed themes)
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Mixed Themes on One Page' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'Multiple themes can coexist on the same page. Generate each with a unique name &mdash; ' +
+                    'bitwrench scopes every CSS rule under that name\'s class. ' +
+                    'Add the class to any container and the components inside pick up that theme. ' +
+                    'This works because themes are pure CSS &mdash; no global state, no conflicts.'
+                  )
                 },
                 { t: 'div', a: { id: 'multi-theme-demo' } }
               ]
@@ -243,14 +336,14 @@
           ]
         },
 
-        // Section 4: Code Export
+        // Section 6: Code Export
         {
           t: 'div', a: { class: 'demo-section' }, c: [
             { t: 'h2', c: 'Code Export' },
             {
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
-                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;' }, c:
+                  t: 'p', a: { style: descStyle }, c:
                     'The JavaScript call and generated CSS for your current theme. Copy the CSS to use in production without any runtime cost.'
                 },
                 { t: 'div', a: { id: 'code-export' } }
@@ -259,14 +352,14 @@
           ]
         },
 
-        // Section 5: Theme Toggle (Primary / Alternate)
+        // Section 7: Theme Toggle (Primary / Alternate)
         {
           t: 'div', a: { class: 'demo-section' }, c: [
             { t: 'h2', c: bw.raw('Theme Toggle &mdash; Primary / Alternate') },
             {
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
-                  t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;' }, c: [
+                  t: 'p', a: { style: descStyle }, c: [
                     { t: 'code', c: 'bw.generateTheme()' },
                     ' always produces two complementary palettes: ',
                     { t: 'strong', c: 'primary' },
@@ -289,14 +382,16 @@
     // State
     // ---------------------------------------------------------------
     var state = {
-      primary:   '#0077b6',
-      secondary: '#90e0ef',
-      tertiary:  '#00b4d8',
-      spacing:   'normal',
-      radius:    'md',
-      themeName: 'custom',
+      primary:    '#0077b6',
+      secondary:  '#90e0ef',
+      tertiary:   '#00b4d8',
+      background: '',  // empty = auto-derive
+      surface:    '',  // empty = auto-derive
+      spacing:    'normal',
+      radius:     'md',
+      themeName:  'custom',
       lastResult: null,
-      codeTheme: 'dark'  // 'dark' or 'light'
+      codeTheme:  'dark'  // 'dark' or 'light'
     };
 
     // Preset themes — read from bw.THEME_PRESETS (canonical source)
@@ -308,20 +403,27 @@
     var lastPageScope = '';
 
     function generateCurrentTheme() {
-      var result = bw.generateTheme(state.themeName, {
+      bw.clearTheme();
+      var config = {
         primary:   state.primary,
         secondary: state.secondary,
         tertiary:  state.tertiary,
         spacing:   state.spacing,
         radius:    state.radius,
         inject:    true
-      });
+      };
+      if (state.background) config.background = state.background;
+      if (state.surface)    config.surface    = state.surface;
+      var result = bw.generateTheme(state.themeName, config);
       state.lastResult = result;
 
-      // Apply theme scope to body so the whole page reacts
-      if (lastPageScope) document.body.classList.remove(lastPageScope);
-      lastPageScope = state.themeName;
-      document.body.classList.add(lastPageScope);
+      // Apply theme scope to #app (not body, so the navbar is unaffected)
+      var appEl = document.getElementById('app');
+      if (appEl) {
+        if (lastPageScope) appEl.classList.remove(lastPageScope);
+        lastPageScope = state.themeName;
+        appEl.classList.add(lastPageScope);
+      }
 
       // Re-inject multi-theme CSS so the scoped panels override the page theme
       bw.generateTheme('demo-ocean', {
@@ -514,6 +616,72 @@
                   }
                 ]
               },
+              // Background
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: bw.raw('Background <span style="font-weight:400;font-size:0.6875rem;text-transform:none;letter-spacing:0;">(optional)</span>') },
+                  {
+                    t: 'div', a: { style: 'display: flex; gap: 0.375rem;' }, c: [
+                      {
+                        t: 'input', a: {
+                          type: 'color',
+                          value: state.background || '#ffffff',
+                          style: 'flex: 1;',
+                          onchange: function(e) { state.background = e.target.value; }
+                        }
+                      },
+                      bw.makeButton({
+                        text: 'Auto',
+                        variant: state.background ? 'secondary' : 'primary',
+                        size: 'sm',
+                        onclick: function() {
+                          state.background = '';
+                          state.themeName = 'custom';
+                          generateCurrentTheme();
+                          renderGenerator();
+                          renderPreview();
+                          renderCodeExport();
+                          renderBgSurfaceExplainer();
+                          renderBgSurfaceDemo();
+                        }
+                      })
+                    ]
+                  }
+                ]
+              },
+              // Surface
+              {
+                t: 'div', a: { class: 'theme-control-group' }, c: [
+                  { t: 'label', c: bw.raw('Surface <span style="font-weight:400;font-size:0.6875rem;text-transform:none;letter-spacing:0;">(optional)</span>') },
+                  {
+                    t: 'div', a: { style: 'display: flex; gap: 0.375rem;' }, c: [
+                      {
+                        t: 'input', a: {
+                          type: 'color',
+                          value: state.surface || '#f8f9fa',
+                          style: 'flex: 1;',
+                          onchange: function(e) { state.surface = e.target.value; }
+                        }
+                      },
+                      bw.makeButton({
+                        text: 'Auto',
+                        variant: state.surface ? 'secondary' : 'primary',
+                        size: 'sm',
+                        onclick: function() {
+                          state.surface = '';
+                          state.themeName = 'custom';
+                          generateCurrentTheme();
+                          renderGenerator();
+                          renderPreview();
+                          renderCodeExport();
+                          renderBgSurfaceExplainer();
+                          renderBgSurfaceDemo();
+                        }
+                      })
+                    ]
+                  }
+                ]
+              },
               // Spacing
               {
                 t: 'div', a: { class: 'theme-control-group' }, c: [
@@ -553,6 +721,8 @@
                       generateCurrentTheme();
                       renderPreview();
                       renderCodeExport();
+                      renderBgSurfaceExplainer();
+                      renderBgSurfaceDemo();
                     }
                   })
                 ]
@@ -590,13 +760,17 @@
           t: 'div', a: {
             class: 'preset-card',
             onclick: function() {
-              state.primary   = p.primary;
-              state.secondary = p.secondary;
-              state.tertiary  = p.tertiary;
-              state.themeName = key;
+              state.primary    = p.primary;
+              state.secondary  = p.secondary;
+              state.tertiary   = p.tertiary;
+              state.background = '';
+              state.surface    = '';
+              state.themeName  = key;
               generateCurrentTheme();
               renderGenerator();
               renderCodeExport();
+              renderBgSurfaceExplainer();
+              renderBgSurfaceDemo();
             }
           },
           c: [
@@ -611,8 +785,7 @@
             // Body
             {
               t: 'div', a: { class: 'preset-card-body' }, c: [
-                { t: 'h4', c: p.label },
-                { t: 'p', c: p.desc }
+                { t: 'h4', c: key.charAt(0).toUpperCase() + key.slice(1) }
               ]
             }
           ]
@@ -625,7 +798,215 @@
     }
 
     // ---------------------------------------------------------------
-    // Section 3: Multi-theme Demo
+    // Section 3: Applying Themes (code examples)
+    // ---------------------------------------------------------------
+    function renderApplyThemeDocs() {
+      var useCE = typeof bw.codeEditor === 'function';
+      var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
+
+      // Whole-page theme code
+      var wholePageCode =
+        "// Generate and inject the theme CSS\n" +
+        "var theme = bw.generateTheme('ocean', {\n" +
+        "  primary:   '#0077b6',\n" +
+        "  secondary: '#90e0ef',\n" +
+        "  tertiary:  '#00b4d8'\n" +
+        "});\n\n" +
+        "// Apply to the entire page\n" +
+        "document.body.classList.add('ocean');\n\n" +
+        "// The body background, text color, and all bw-*\n" +
+        "// components inside <body> now use the ocean theme.";
+
+      bw.DOM('#apply-theme-code', useCE
+        ? bw.codeEditor({ code: wholePageCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        : { t: 'pre', c: { t: 'code', c: wholePageCode } }
+      );
+
+      // Scoped container code
+      var scopedCode =
+        "// Generate two themes on the same page\n" +
+        "bw.generateTheme('ocean',  { primary: '#0077b6', secondary: '#90e0ef' });\n" +
+        "bw.generateTheme('sunset', { primary: '#e76f51', secondary: '#264653' });\n\n" +
+        "// Scope each theme to a container\n" +
+        "bw.DOM('#sidebar', {\n" +
+        "  t: 'div', a: { class: 'ocean' },  // ocean theme here\n" +
+        "  c: bw.makeCard({ title: 'Nav', content: '...' })\n" +
+        "});\n\n" +
+        "bw.DOM('#main', {\n" +
+        "  t: 'div', a: { class: 'sunset' }, // sunset theme here\n" +
+        "  c: bw.makeCard({ title: 'Content', content: '...' })\n" +
+        "});";
+
+      bw.DOM('#scoped-theme-code', useCE
+        ? bw.codeEditor({ code: scopedCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        : { t: 'pre', c: { t: 'code', c: scopedCode } }
+      );
+
+      // Switching themes code
+      var switchCode =
+        "// Remove the current theme's injected <style> elements\n" +
+        "bw.clearTheme();\n" +
+        "document.body.classList.remove('ocean');\n\n" +
+        "// Generate and apply the new theme\n" +
+        "bw.generateTheme('sunset', {\n" +
+        "  primary: '#e76f51', secondary: '#264653'\n" +
+        "});\n" +
+        "document.body.classList.add('sunset');\n\n" +
+        "// Without bw.clearTheme(), the old 'ocean' <style>\n" +
+        "// elements would remain in the DOM, wasting memory\n" +
+        "// and potentially causing CSS specificity conflicts.";
+
+      bw.DOM('#switch-theme-code', useCE
+        ? bw.codeEditor({ code: switchCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        : { t: 'pre', c: { t: 'code', c: switchCode } }
+      );
+    }
+
+    // ---------------------------------------------------------------
+    // Section 4: Background & Surface Colors explainer + demo
+    // ---------------------------------------------------------------
+    function renderBgSurfaceExplainer() {
+      var result = state.lastResult || generateCurrentTheme();
+      var palette = result.palette;
+      var bgColor  = palette.background || '#ffffff';
+      var surColor = palette.surface    || '#f8f9fa';
+      var priColor = palette.primary.base;
+      var secColor = palette.secondary.base;
+
+      // Layered diagram: background → surface (card) → component colors
+      bw.DOM('#bg-surface-explainer', {
+        t: 'div', a: {
+          style: 'position: relative; border: 2px solid var(--bw_card_border); border-radius: 12px; ' +
+                 'background: ' + bgColor + '; padding: 2rem; margin: 1rem 0 1.5rem; min-height: 200px;'
+        }, c: [
+          // Background label
+          {
+            t: 'div', a: { style: 'position: absolute; top: 0.5rem; left: 0.75rem; font-size: 0.75rem; font-weight: 600; color: ' + palette.dark.base + '; opacity: 0.6;' },
+            c: bw.raw('BACKGROUND <code style="font-weight:400;">' + bgColor + '</code>')
+          },
+          // Surface card
+          {
+            t: 'div', a: {
+              style: 'background: ' + surColor + '; border: 1px solid ' + palette.light.border + '; ' +
+                     'border-radius: 8px; padding: 1.5rem; margin-top: 0.75rem; position: relative;'
+            }, c: [
+              // Surface label
+              {
+                t: 'div', a: { style: 'position: absolute; top: 0.5rem; left: 0.75rem; font-size: 0.75rem; font-weight: 600; color: ' + palette.dark.base + '; opacity: 0.6;' },
+                c: bw.raw('SURFACE <code style="font-weight:400;">' + surColor + '</code>')
+              },
+              // Component layer
+              {
+                t: 'div', a: { style: 'display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-top: 1rem;' }, c: [
+                  {
+                    t: 'div', a: {
+                      style: 'background: ' + priColor + '; color: ' + palette.primary.textOn + '; ' +
+                             'padding: 0.5rem 1.25rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600;'
+                    }, c: 'Primary Button'
+                  },
+                  {
+                    t: 'div', a: {
+                      style: 'background: ' + secColor + '; color: ' + palette.secondary.textOn + '; ' +
+                             'padding: 0.5rem 1.25rem; border-radius: 6px; font-size: 0.875rem; font-weight: 600;'
+                    }, c: 'Secondary'
+                  },
+                  {
+                    t: 'div', a: {
+                      style: 'background: ' + palette.success.base + '; color: ' + palette.success.textOn + '; ' +
+                             'padding: 0.25rem 0.625rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;'
+                    }, c: 'Badge'
+                  },
+                  {
+                    t: 'div', a: {
+                      style: 'border: 1px solid ' + palette.light.border + '; background: ' + surColor + '; ' +
+                             'padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.8125rem; color: ' + palette.dark.base + ';'
+                    }, c: 'Input field'
+                  }
+                ]
+              },
+              // Component label
+              {
+                t: 'div', a: { style: 'margin-top: 0.75rem; font-size: 0.75rem; font-weight: 600; color: ' + palette.dark.base + '; opacity: 0.6;' },
+                c: 'COMPONENTS use seed colors (primary, secondary, success, ...)'
+              }
+            ]
+          }
+        ]
+      });
+    }
+
+    function renderBgSurfaceDemo() {
+      var result = state.lastResult;
+      if (!result) result = generateCurrentTheme();
+      var palette = result.palette;
+
+      var bgColor  = palette.background || '#ffffff';
+      var surColor = palette.surface    || '#f8f9fa';
+      var altPalette = result.alternate && result.alternate.palette;
+      var altBg  = altPalette ? (altPalette.background || '#1a1a2e') : '—';
+      var altSur = altPalette ? (altPalette.surface    || '#252540') : '—';
+
+      function swatch(color, label) {
+        return {
+          t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;' }, c: [
+            { t: 'div', a: { style: 'width: 48px; height: 48px; border-radius: 6px; border: 1px solid #ccc; background: ' + color + ';' } },
+            {
+              t: 'div', c: [
+                { t: 'div', a: { style: 'font-weight: 600; font-size: 0.875rem;' }, c: label },
+                { t: 'code', a: { style: 'font-size: 0.8125rem;' }, c: color }
+              ]
+            }
+          ]
+        };
+      }
+
+      var useCE = typeof bw.codeEditor === 'function';
+      var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
+      var overrideCode =
+        "// Override the default background and surface\n" +
+        "var theme = bw.generateTheme('custom', {\n" +
+        "  primary:    '#0077b6',\n" +
+        "  secondary:  '#90e0ef',\n" +
+        "  background: '#fefce8',  // warm cream instead of white\n" +
+        "  surface:    '#fef9c3'   // slightly tinted panels\n" +
+        "});\n\n" +
+        "// theme.palette.background === '#fefce8'\n" +
+        "// theme.palette.surface    === '#fef9c3'";
+
+      bw.DOM('#bg-surface-demo', {
+        t: 'div', c: [
+          {
+            t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.25rem;' }, c: [
+              {
+                t: 'div', a: { style: 'padding: 1rem; border: 1px solid var(--bw_card_border); border-radius: 8px;' }, c: [
+                  { t: 'h4', a: { style: 'margin: 0 0 0.75rem 0; font-size: 0.9375rem;' }, c: 'Primary Palette' },
+                  swatch(bgColor, 'background'),
+                  swatch(surColor, 'surface')
+                ]
+              },
+              {
+                t: 'div', a: { style: 'padding: 1rem; border: 1px solid var(--bw_card_border); border-radius: 8px;' }, c: [
+                  { t: 'h4', a: { style: 'margin: 0 0 0.75rem 0; font-size: 0.9375rem;' }, c: 'Alternate Palette' },
+                  swatch(altBg, 'background'),
+                  swatch(altSur, 'surface')
+                ]
+              }
+            ]
+          },
+          { t: 'h4', a: { style: 'margin: 0.5rem 0 0.75rem 0; font-size: 0.9375rem;' }, c: 'Overriding defaults' },
+          {
+            t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 0.75rem;' },
+            c: bw.raw('Pass <code>background</code> and/or <code>surface</code> in the config to replace the auto-derived values:')
+          },
+          useCE
+            ? bw.codeEditor({ code: overrideCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+            : { t: 'pre', c: { t: 'code', c: overrideCode } }
+        ]
+      });
+    }
+
+    // ---------------------------------------------------------------
+    // Section 5: Mixed Themes on One Page
     // ---------------------------------------------------------------
     function renderMultiTheme() {
       // Generate two scoped themes side by side
@@ -738,7 +1119,7 @@
     }
 
     // ---------------------------------------------------------------
-    // Section 4: Code Export
+    // Section 6: Code Export
     // ---------------------------------------------------------------
     function renderCodeExport() {
       var result = state.lastResult;
@@ -750,6 +1131,8 @@
         "  primary:   '" + state.primary + "',\n" +
         "  secondary: '" + state.secondary + "',\n" +
         "  tertiary:  '" + state.tertiary + "',\n" +
+        (state.background ? "  background: '" + state.background + "',\n" : '') +
+        (state.surface    ? "  surface:    '" + state.surface    + "',\n" : '') +
         "  spacing:   '" + state.spacing + "',\n" +
         "  radius:    '" + state.radius + "'\n" +
         "});";
@@ -830,7 +1213,7 @@
     }
 
     // ---------------------------------------------------------------
-    // Theme toggle demo (primary / alternate)
+    // Section 7: Theme toggle demo (primary / alternate)
     // ---------------------------------------------------------------
     function renderThemeToggleDemo() {
       var isAlt = false;
@@ -891,6 +1274,9 @@
     // ---------------------------------------------------------------
     renderGenerator();
     renderGallery();
+    renderApplyThemeDocs();
+    renderBgSurfaceExplainer();
+    renderBgSurfaceDemo();
     renderMultiTheme();
     renderCodeExport();
     renderThemeToggleDemo();

@@ -102,9 +102,10 @@
 		"test:examples": "playwright test tests/examples.spec.js",
 		"test:coverage": "c8 --reporter=html --reporter=text mocha ./test/bitwrench_ci.js -r jsdom-global/",
 		"build:api-reference": "node tools/build-api-reference.js",
+		"build:api-md": "node tools/build-api-markdown.js",
 		"build:builds": "node tools/build-builds-manifest.js",
 		"build:metrics": "node tools/build-metrics.cjs",
-		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference",
+		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference && npm run build:api-md",
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
 		"release": "node tools/release.js",
 		"start-release": "node tools/start-release.js"

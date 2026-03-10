@@ -353,12 +353,10 @@ describe('CLI: utility functions', function () {
             assert.equal(Object.keys(THEME_PRESETS).length, 12);
         });
 
-        it('each preset should have primary, secondary, label, and desc', function () {
+        it('each preset should have primary and secondary', function () {
             for (const [name, preset] of Object.entries(THEME_PRESETS)) {
                 assert.ok(preset.primary, `${name} missing primary`);
                 assert.ok(preset.secondary, `${name} missing secondary`);
-                assert.ok(preset.label, `${name} missing label`);
-                assert.ok(preset.desc, `${name} missing desc`);
             }
         });
     });

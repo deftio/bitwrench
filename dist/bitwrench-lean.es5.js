@@ -196,7 +196,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-10T03:31:20.508Z'
+    buildDate: '2026-03-10T05:52:55.459Z'
   };
 
   /**
@@ -608,6 +608,12 @@
     // Light/dark: derive from primary hue with low saturation (if not user-supplied)
     var lightBase = config.light || hslToHex([h, 8, 97]);
     var darkBase = config.dark || hslToHex([h, 10, 13]);
+
+    // Background & surface tokens — light palettes get white/near-white,
+    // dark palettes derive from the dark base
+    var isLight = isLightPalette(config);
+    var bgBase = config.background || (isLight ? '#ffffff' : adjustLightness(darkBase, -3));
+    var surfBase = config.surface || (isLight ? '#f8f9fa' : adjustLightness(darkBase, 4));
     var palette = {
       primary: deriveShades(config.primary),
       secondary: deriveShades(config.secondary),
@@ -617,7 +623,9 @@
       warning: deriveShades(warningBase),
       info: deriveShades(infoBase),
       light: deriveShades(lightBase),
-      dark: deriveShades(darkBase)
+      dark: deriveShades(darkBase),
+      background: bgBase,
+      surface: surfBase
     };
     return palette;
   }
@@ -626,27 +634,43 @@
   // Layout presets
   // =========================================================================
 
+  /**
+   * Base spacing scale (4px unit). Shared design token for consistent spacing
+   * across all components. Use scale keys (0-7) in component definitions.
+   */
+  var SPACING_SCALE = {
+    1: '0.25rem',
+    // 4px
+    2: '0.5rem',
+    // 8px
+    3: '0.75rem',
+    // 12px
+    4: '1rem',
+    // 16px
+    5: '1.5rem',
+    // 24px
+    6: '2rem'};
   var SPACING_PRESETS = {
     compact: {
-      btn: '0.3rem 0.8rem',
-      card: '0.875rem 1rem',
-      alert: '0.625rem 1rem',
-      cell: '0.5rem 0.75rem',
-      input: '0.375rem 0.7rem'
+      btn: SPACING_SCALE[1] + ' ' + SPACING_SCALE[3],
+      card: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4],
+      alert: SPACING_SCALE[2] + ' ' + SPACING_SCALE[4],
+      cell: SPACING_SCALE[2] + ' ' + SPACING_SCALE[3],
+      input: SPACING_SCALE[1] + ' ' + SPACING_SCALE[3]
     },
     normal: {
-      btn: '0.5rem 1.125rem',
-      card: '1.25rem 1.5rem',
-      alert: '0.875rem 1.25rem',
-      cell: '0.75rem 1rem',
-      input: '0.5rem 0.875rem'
+      btn: SPACING_SCALE[2] + ' ' + SPACING_SCALE[4],
+      card: SPACING_SCALE[5] + ' ' + SPACING_SCALE[5],
+      alert: SPACING_SCALE[3] + ' ' + SPACING_SCALE[5],
+      cell: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4],
+      input: SPACING_SCALE[2] + ' ' + SPACING_SCALE[3]
     },
     spacious: {
-      btn: '0.75rem 1.5rem',
-      card: '1.75rem 2rem',
-      alert: '1.125rem 1.5rem',
-      cell: '1rem 1.25rem',
-      input: '0.75rem 1.125rem'
+      btn: SPACING_SCALE[3] + ' ' + SPACING_SCALE[5],
+      card: SPACING_SCALE[6] + ' ' + SPACING_SCALE[6],
+      alert: SPACING_SCALE[4] + ' ' + SPACING_SCALE[5],
+      cell: SPACING_SCALE[4] + ' ' + SPACING_SCALE[5],
+      input: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4]
     }
   };
   var RADIUS_PRESETS = {
@@ -792,86 +816,62 @@
     teal: {
       primary: '#006666',
       secondary: '#6c757d',
-      tertiary: '#006666',
-      label: 'Teal',
-      desc: 'The signature bitwrench palette — professional teal and neutral gray.'
+      tertiary: '#006666'
     },
     ocean: {
       primary: '#0077b6',
       secondary: '#90e0ef',
-      tertiary: '#00b4d8',
-      label: 'Ocean',
-      desc: 'Cool blues and teals for a calm, professional look.'
+      tertiary: '#00b4d8'
     },
     sunset: {
       primary: '#e76f51',
       secondary: '#264653',
-      tertiary: '#e9c46a',
-      label: 'Sunset',
-      desc: 'Warm oranges and deep earth tones for a bold feel.'
+      tertiary: '#e9c46a'
     },
     forest: {
       primary: '#2d6a4f',
       secondary: '#95d5b2',
-      tertiary: '#52b788',
-      label: 'Forest',
-      desc: 'Natural greens for an organic, earthy vibe.'
+      tertiary: '#52b788'
     },
     slate: {
       primary: '#343a40',
       secondary: '#adb5bd',
-      tertiary: '#6c757d',
-      label: 'Slate',
-      desc: 'Elegant grays for a minimal, modern interface.'
+      tertiary: '#6c757d'
     },
     rose: {
       primary: '#e11d48',
       secondary: '#fda4af',
-      tertiary: '#fb7185',
-      label: 'Rose',
-      desc: 'Vibrant pinks and reds for a bold, energetic design.'
+      tertiary: '#fb7185'
     },
     indigo: {
       primary: '#4f46e5',
       secondary: '#a5b4fc',
-      tertiary: '#818cf8',
-      label: 'Indigo',
-      desc: 'Deep purples and soft lavenders for a creative palette.'
+      tertiary: '#818cf8'
     },
     amber: {
       primary: '#d97706',
       secondary: '#fbbf24',
-      tertiary: '#f59e0b',
-      label: 'Amber',
-      desc: 'Warm golds and yellows for a sunny, welcoming feel.'
+      tertiary: '#f59e0b'
     },
     emerald: {
       primary: '#059669',
       secondary: '#6ee7b7',
-      tertiary: '#34d399',
-      label: 'Emerald',
-      desc: 'Bright greens and mints for a fresh, modern look.'
+      tertiary: '#34d399'
     },
     nord: {
       primary: '#5e81ac',
       secondary: '#88c0d0',
-      tertiary: '#81a1c1',
-      label: 'Nord',
-      desc: 'Muted arctic blues inspired by the Nord color scheme.'
+      tertiary: '#81a1c1'
     },
     coral: {
       primary: '#ef6461',
       secondary: '#4a7c7e',
-      tertiary: '#e8a87c',
-      label: 'Coral',
-      desc: 'Warm coral and teal for a balanced, approachable design.'
+      tertiary: '#e8a87c'
     },
     midnight: {
       primary: '#1e3a5f',
       secondary: '#7c8db5',
-      tertiary: '#3d5a80',
-      label: 'Midnight',
-      desc: 'Deep navy and steel blue for a sophisticated, authoritative feel.'
+      tertiary: '#3d5a80'
     }
   };
 
@@ -994,7 +994,7 @@
     var elev = layout.elevation;
     var motion = layout.motion;
     rules[scopeSelector(scope, '.bw_card')] = {
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border': '1px solid ' + palette.light.border,
       'border-radius': rd.card,
       'box-shadow': elev.sm,
@@ -1040,7 +1040,7 @@
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
     rules[scopeSelector(scope, '.bw_form_control:focus')] = {
@@ -1085,7 +1085,7 @@
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
     rules[scopeSelector(scope, '.bw_form_select:focus')] = {
@@ -1190,7 +1190,7 @@
     rules[scopeSelector(scope, '.bw_list_group_item')] = {
       'padding': sp.cell,
       'color': palette.dark.base,
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
     rules[scopeSelector(scope, 'a.bw_list_group_item:hover')] = {
@@ -1204,7 +1204,7 @@
     };
     rules[scopeSelector(scope, '.bw_list_group_item.disabled')] = {
       'color': palette.secondary.base,
-      'background-color': '#fff'
+      'background-color': palette.surface || '#fff'
     };
     return rules;
   }
@@ -1212,7 +1212,7 @@
     var rules = {};
     rules[scopeSelector(scope, '.bw_page_link')] = {
       'color': palette.primary.base,
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
     rules[scopeSelector(scope, '.bw_page_link:hover')] = {
@@ -1231,7 +1231,7 @@
     };
     rules[scopeSelector(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
       'color': palette.secondary.base,
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
     return rules;
@@ -1257,10 +1257,16 @@
 
   function generateResetThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, 'body')] = {
+    var bg = palette.background || '#f5f5f5';
+    var baseReset = {
       'color': palette.dark.base,
-      'background-color': '#f5f5f5'
+      'background-color': bg
     };
+    rules[scopeSelector(scope, 'body')] = baseReset;
+    // Also apply to the scope element itself so themes work on any container, not just body
+    if (scope) {
+      rules['.' + scope] = baseReset;
+    }
     return rules;
   }
   function generateBreadcrumbThemed(scope, palette) {
@@ -1307,7 +1313,7 @@
   function generateAccordionThemed(scope, palette) {
     var rules = {};
     rules[scopeSelector(scope, '.bw_accordion_item')] = {
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
     rules[scopeSelector(scope, '.bw_accordion_button')] = {
@@ -1355,7 +1361,7 @@
   function generateModalThemed(scope, palette, layout) {
     var rules = {};
     rules[scopeSelector(scope, '.bw_modal_content')] = {
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
       'box-shadow': layout.elevation.lg
     };
@@ -1373,7 +1379,7 @@
   function generateToastThemed(scope, palette, layout) {
     var rules = {};
     rules[scopeSelector(scope, '.bw_toast')] = {
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': 'rgba(0,0,0,0.1)',
       'box-shadow': layout.elevation.lg
     };
@@ -1386,7 +1392,7 @@
   function generateDropdownThemed(scope, palette, layout) {
     var rules = {};
     rules[scopeSelector(scope, '.bw_dropdown_menu')] = {
-      'background-color': '#fff',
+      'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
       'box-shadow': layout.elevation.md
     };
@@ -8170,6 +8176,8 @@
    * @param {string} [config.info='#0dcaf0'] - Info color hex
    * @param {string} [config.light='#f8f9fa'] - Light color hex
    * @param {string} [config.dark='#212529'] - Dark color hex
+   * @param {string} [config.background] - Page background hex (default: '#ffffff' light, derived dark)
+   * @param {string} [config.surface] - Surface/card background hex (default: '#f8f9fa' light, derived dark)
    * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
    * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
    * @param {number} [config.fontSize=1.0] - Base font size scale factor
@@ -8240,15 +8248,16 @@
     if (shouldInject && bw._isBrowser) {
       var safeName = name ? name.replace(/-/g, '_') : '';
       var styleId = safeName ? 'bw_theme_' + safeName : 'bw_theme_default';
+      var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
       bw.injectCSS(cssStr, {
         id: styleId,
         append: false
       });
-      var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
       bw.injectCSS(altCssStr, {
         id: altStyleId,
         append: false
       });
+      bw._activeThemeStyleIds = [styleId, altStyleId];
     }
 
     // Update bw.u color entries to reflect the palette
@@ -8326,6 +8335,29 @@
   bw.toggleTheme = function () {
     var current = bw._activeThemeMode || 'primary';
     return bw.applyTheme(current === 'primary' ? 'alternate' : 'primary');
+  };
+
+  /**
+   * Remove the currently active theme's injected style elements from the DOM.
+   * Use this before generating a new theme with a different name to prevent
+   * stale CSS accumulation.
+   *
+   * @category CSS & Styling
+   * @see bw.generateTheme
+   * @example
+   * bw.clearTheme();                   // remove current theme styles
+   * bw.generateTheme('sunset', conf);  // inject fresh theme
+   */
+  bw.clearTheme = function () {
+    if (bw._activeThemeStyleIds && bw._isBrowser) {
+      bw._activeThemeStyleIds.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.remove();
+      });
+      bw._activeThemeStyleIds = null;
+    }
+    bw._activeTheme = null;
+    bw._activeThemeMode = 'primary';
   };
 
   // Expose color utility functions on bw namespace

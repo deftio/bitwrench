@@ -413,16 +413,24 @@ export function derivePalette(config) {
   var lightBase = config.light || hslToHex([h, 8, 97]);
   var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
+  // Background & surface tokens — light palettes get white/near-white,
+  // dark palettes derive from the dark base
+  var isLight = isLightPalette(config);
+  var bgBase = config.background || (isLight ? '#ffffff' : adjustLightness(darkBase, -3));
+  var surfBase = config.surface || (isLight ? '#f8f9fa' : adjustLightness(darkBase, 4));
+
   var palette = {
-    primary:   deriveShades(config.primary),
-    secondary: deriveShades(config.secondary),
-    tertiary:  deriveShades(config.tertiary),
-    success:   deriveShades(successBase),
-    danger:    deriveShades(dangerBase),
-    warning:   deriveShades(warningBase),
-    info:      deriveShades(infoBase),
-    light:     deriveShades(lightBase),
-    dark:      deriveShades(darkBase)
+    primary:    deriveShades(config.primary),
+    secondary:  deriveShades(config.secondary),
+    tertiary:   deriveShades(config.tertiary),
+    success:    deriveShades(successBase),
+    danger:     deriveShades(dangerBase),
+    warning:    deriveShades(warningBase),
+    info:       deriveShades(infoBase),
+    light:      deriveShades(lightBase),
+    dark:       deriveShades(darkBase),
+    background: bgBase,
+    surface:    surfBase
   };
 
   return palette;

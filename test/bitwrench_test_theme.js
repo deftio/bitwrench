@@ -279,7 +279,12 @@ describe('Palette Derivation', function() {
         tertiary: '#20c997'
       });
       const shadeKeys = ['base', 'hover', 'active', 'light', 'darkText', 'border', 'focus', 'textOn'];
-      Object.values(palette).forEach(function(shades) {
+      Object.entries(palette).forEach(function([name, shades]) {
+        // background and surface are plain strings, not shade objects
+        if (name === 'background' || name === 'surface') {
+          assert.ok(typeof shades === 'string', name + ' should be a string');
+          return;
+        }
         shadeKeys.forEach(function(k) {
           assert.ok(k in shades, 'each semantic color should have key: ' + k);
         });

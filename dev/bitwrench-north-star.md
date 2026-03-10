@@ -10,7 +10,10 @@ principles, stop and rethink.
 Modern web frameworks treat UI as a rendering problem: you write templates
 (JSX, .vue, .svelte), a compiler turns them into DOM instructions, and a
 runtime manages updates. The template is not the component — the compiled
-output is.
+output is.  JSX is probably the culprit here because it make html like patterns the core
+of app generation.  But HTML is a layout grammar not an action grammar so actions
+and reactivity had to be re-bolted on thru other state management mechanisms outside of JSX leading
+to many sets of tooling (babel, jsx, use-state, use-effect, webpack/vite) etc.
 
 Bitwrench rejects this split. A TACO object `{t, a, c, o}` IS the
 component. It's a plain JavaScript object that fully describes structure,
@@ -35,9 +38,25 @@ These frameworks shared a philosophy: **the component is a self-contained
 object with an API. The rendering substrate (GDI, AWT, Win32) is an
 implementation detail the user doesn't touch.**
 
-TACO brings this philosophy to the web. The rendering substrate is
+Bitwrench via TACO brings this philosophy to the web. The rendering substrate is
 JS + DOM + CSS. The component API is get/set/on/sub. The TACO object is
 the component definition — like a window class in MFC or a bean in Swing.
+
+Because bitwrench uses {taco} object some other advantages are aviaible:
+* css handling - the need for tailwind or less/sass is not required because just as
+bitwrench can generate html/js from {taco} it can also generate css.  This includes
+resusing css across components (because they can be js vars and strings) and using js 
+functions to live generate / manipulate css classes or styles (global or inline)
+
+* server {taco} - because bitwrench can take js objects and manipulate or swap them in the DOM
+bitwrench can assume server side rendering, such as via react server components or python streamlit. 
+when writing code don't lose sight of this.
+
+* embedded (ESP32 etc) - because bitwrench's client js lib contains 30+ components and rendering logic, it can be served as the ui
+layer for embedded microntrollers.  They can send a stratic html page, and send udpates via json which bitwrench natively handles.
+This is orders of magnitude smaller than simlar web frameworks and it stylable and the microcotnroler can do reactive ui updates.
+
+
 
 ---
 
@@ -79,11 +98,11 @@ Internal state changes trigger internal re-renders. The user never
 manually updates the DOM for a component's internal state.
 
 ```
-WRONG:  el._bw_state.count++; bw.update(el);    // user is the message pump
+WRONG:  el._bw_state.count++; bw.update(el);    // user is the message pump, its allowed but not preferred
 RIGHT:  counter.set('count', 42);                // component repaints itself
 ```
 
-This is the MFC/Swing model: you call `SetWindowText("hello")` and the
+This is the MFC/Swing model: you call `mywindow.SetWindowText("hello")` and the
 control repaints. You don't call `InvalidateRect()` yourself. You don't
 reach into the device context. The control owns its rendering.
 
@@ -174,17 +193,17 @@ Study for consistency patterns (not to copy):
 Not the goal: Bootstrap 3 (grab-bag of unrelated CSS classes), jQuery UI
 (inconsistent skinning), ad-hoc component libraries.
 
-### The theme generator advantage
+### The theme generator for included bitwrench components (BCCL)
 
-`bw.generateTheme()` is bitwrench's differentiator — regenerate an entire
-design system from 3 seed colors. No other framework can do this as
+`bw.generateTheme()` is another bitwrench differentiator — regenerate an entire
+design system from seed colors, spacing, compactness (etc). No other framework can do this as
 seamlessly. But it only works if the base components consume tokens
 consistently. A theme that changes colors but leaves spacing, shadows,
 and motion untouched is only half a design system.
 
 ---
 
-## Principle 4: No raw DOM in examples or components
+## Principle 4: Avoid  DOM in examples or components
 
 All bitwrench examples and BCCL components use TACO patterns:
 
@@ -202,6 +221,8 @@ strings in component code, that's drift. The whole point of TACO is
 that you don't need to think about the DOM. If the TACO API can't do
 what you need, that's a gap in the API — fix the API, don't work around
 it with raw DOM.
+The maintainer is deeply experienced, when in doubt ask before reaching for the DOM.
+
 
 ---
 

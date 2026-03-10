@@ -2,14 +2,9 @@
 
 ## Open items
 
-* [ ] src/bitwrench-styles.js --> the built-in themes have unncessary "label" and "desc" fields.  For the lable any dev or ui can just capitlize the theme name from the dict, and for desc--> people will just pick the theme by looking at it not its flowerig desc.  Besure to make sure this doesn't break anything in pages/  
-* [ ] create --> API doc generation script: reads bitwrench.js docstrings, produces bitwrench_api_vX.Y.Z.md with summary table (version, date, line count by file, builds) + per-function sections (Name, lines-of-code, Purpose, params-->output, When its used, side effects)
-* [ ] pages/index.html sub-nav: install strip should have links, script tag should use CDN URL not local path, links to builds should be clear
-* [ ] pages/ Main Navbar: consolidate entries — consider merging API Reference into "Docs", merging Styling & Themes into one option with subnav
-* [ ] build size watch: target 25-40KB gzipped for ESP32/embedded crowd. Consider bitwrench-core vs bitwrench-embedded split. Create pages/self-load-test.html to validate single-page self-loading
-* [ ] bitwrench logo in main banner should be slightly larger, as should bitwrench text
-* [ ] CSS spacing scale: no consistent spacing scale — buttons, badges, form inputs all use ad-hoc padding values. Define 4px base (4, 8, 12, 16, 24, 32, 48) and enforce across components
-* [ ] http://localhost:9903/pages/index.html --> On some viewports the word bitwrench is clipped in the navbar (Tested in chrome and firefox in ubuntu)
+* [ ] discuss --> what are the current gaps in component level reactivity?  Look at our design docs in dev/
+
+## Remaining design explorations (not yet implemented)
 
 ## Design explorations (plan before code)
 
@@ -20,9 +15,9 @@ they feel assembled from different CSS snippets — inconsistent spacing, shadow
 transitions, color usage. Before adding new components, establish shared
 design tokens that ALL components consume:
 
-* [ ] define --> spacing scale (4px base: 4, 8, 12, 16, 24, 32, 48)
+* [x] define --> spacing scale (4px base: 4, 8, 12, 16, 24, 32, 48) — SPACING_SCALE added, SPACING_PRESETS updated
 * [ ] define --> border-radius scale (none, sm, md, lg, pill) — already in RADIUS_PRESETS, enforce usage
-* [ ] define --> color usage rules: when to use primary vs surface vs muted
+* [x] define --> color usage rules: background/surface tokens added to palette output
 * [ ] tune --> alternate derivation curves need tuning with all preset themes
 * [ ] tune --> per-component dark appearance depends on alternate palette quality
 
@@ -67,6 +62,28 @@ prerequisites ARE the product. Polish them and the LLM story follows.
 * [x] add --> bw.component() factory, bw.compile() pre-compilation
 * [x] add --> Integration with bw.DOM(), bw.html(), bw.cleanup()
 * [x] add --> 77 new tests (bitwrench_test_component_handle.js)
+
+### QA fixes (v2.0.15 round 2)
+* [x] fix --> Removed label/desc from THEME_PRESETS, updated pages/10-themes.html + test/bitwrench_test_cli.js
+* [x] fix --> Logo and bitwrench text enlarged in banner (36px->42px, mobile 22px->26px)
+* [x] fix --> Navbar text clipping: reduced link padding, added 1024px breakpoint, reduced font-size
+* [x] fix --> Theme persistence bug: bw._activeThemeStyleIds tracks and removes stale <style> elements
+* [x] fix --> index.html install strip: CDN URL, prominent Downloads link
+* [x] fix --> 09-builds.html: "Addons" -> "Addon Bundles", added code-edit ESM/CJS/ES5 descriptions
+* [x] fix --> Navbar: API Reference+Builds -> "Docs" dropdown; Styling and Themes remain separate top-level items
+* [x] add --> SPACING_SCALE constant (4px base), SPACING_PRESETS now references scale values
+* [x] add --> palette.background + palette.surface tokens, generateResetThemed uses palette.background
+* [x] add --> tools/build-api-markdown.js: generates dist/bitwrench_api_v{VERSION}.md from JSDoc
+* [x] add --> pages/self-load-test.html: load timing, bundle sizes, health checks
+* [x] doc --> 10-themes.html: added "Applying Themes" section (whole-page, scoped, switching with bw.clearTheme())
+* [x] doc --> 10-themes.html: added "Background & Surface Colors" section with live swatches and override example
+* [x] doc --> 10-themes.html: renamed multi-theme section to "Mixed Themes on One Page" with clearer explanation
+* [x] doc --> bw.generateTheme() JSDoc updated with background/surface config params
+* [x] fix --> Theme scope applied to #app not body (prevents navbar from being themed)
+* [x] fix --> palette.surface wired into all component backgrounds (card, input, select, list-group, pagination, accordion, modal, toast, dropdown)
+* [x] fix --> generateResetThemed also applies background to scope element itself (not just body descendant)
+* [x] add --> Background/Surface color pickers in theme generator with Auto reset buttons
+* [x] add --> Layered explainer graphic in Background & Surface section (background → surface → components)
 
 ### Dead code elimination
 * [x] remove --> 5 Handle classes (CardHandle, TableHandle, NavbarHandle, TabsHandle, ModalHandle) — superseded by ComponentHandle
