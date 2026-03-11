@@ -59,7 +59,12 @@ var CSS_TEXT =
   '.bw_ce_light.bw_ce .bw_ce_css_value{color:#ea580c}' +
   '.bw_ce_light.bw_ce .bw_ce_at_rule{color:#7c3aed}' +
   '.bw_ce_light.bw_ce .bw_ce_color{color:#ea580c}' +
-  '.bw_ce_light.bw_ce .bw_ce_template_interp{color:#0891b2}';
+  '.bw_ce_light.bw_ce .bw_ce_template_interp{color:#0891b2}' +
+  // Line number gutter (opt-in via lineNumbers option)
+  '.bw_ce_wrap{display:flex;flex-direction:row}' +
+  '.bw_ce_gutter{flex:0 0 auto;padding:0.75rem 0;text-align:right;user-select:none;-webkit-user-select:none;color:#546e7a;font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:0.875rem;line-height:1.6;border-right:1px solid rgba(255,255,255,0.08);overflow:hidden}' +
+  '.bw_ce_gutter span{display:block;padding:0 0.5rem 0 0.75rem}' +
+  '.bw_ce_light .bw_ce_gutter{color:#9ca3af;border-right-color:#d8d8d8}';
 
 function ensureCSS(bw) {
   if (_cssInjected) return;
@@ -542,6 +547,7 @@ function codeEditor(opts) {
   var lang = opts.lang || 'js';
   var height = opts.height || '180px';
   var readOnly = !!opts.readOnly;
+  var showLineNumbers = !!opts.lineNumbers;
   var className = 'bw_ce' + (opts.className ? ' ' + opts.className : '');
 
   var highlighted = highlight(code, lang);
@@ -554,12 +560,26 @@ function codeEditor(opts) {
     codeAttrs.contenteditable = 'true';
   }
 
+  // Build line number gutter TACO if requested
+  var gutterTaco = null;
+  if (showLineNumbers) {
+    var lineCount = (code.match(/\n/g) || []).length + 1;
+    var gutterLines = [];
+    for (var li = 1; li <= lineCount; li++) {
+      gutterLines.push({ t: 'span', c: String(li) });
+    }
+    gutterTaco = { t: 'div', a: { class: 'bw_ce_gutter' }, c: gutterLines };
+  }
+
+  var preBlock = { t: 'pre', a: { style: 'flex:1;min-width:0;margin:0' }, c: { t: 'code', a: codeAttrs, c: highlighted } };
+  var innerContent = showLineNumbers
+    ? { t: 'div', a: { class: 'bw_ce_wrap' }, c: [gutterTaco, preBlock] }
+    : preBlock;
+
   return {
     t: 'div',
     a: { class: className, style: 'max-height:' + height + ';overflow:auto' },
-    c: [
-      { t: 'pre', c: { t: 'code', a: codeAttrs, c: highlighted } }
-    ],
+    c: [innerContent],
     o: {
       mounted: function(el) {
         var codeEl = el.querySelector('.bw_ce_code');
@@ -567,20 +587,42 @@ function codeEditor(opts) {
 
         var currentCode = code;
         var debounceTimer = null;
+        var gutterEl = showLineNumbers ? el.querySelector('.bw_ce_gutter') : null;
 
         // Resolve bw from global or import context
         var bw = (typeof window !== 'undefined' && window.bw) || {};
 
         function getValue() { return codeEl.textContent || ''; }
 
+        function updateGutter(text) {
+          if (!gutterEl) return;
+          var count = (text.match(/\n/g) || []).length + 1;
+          var html = '';
+          for (var i = 1; i <= count; i++) html += '<span>' + i + '</span>';
+          gutterEl.innerHTML = html;
+        }
+
         function setValue(newCode) {
           currentCode = newCode;
           var tacos = highlight(newCode, lang);
           if (bw.html) codeEl.innerHTML = bw.html({ t: 'span', c: tacos });
+          updateGutter(newCode);
         }
 
         // Expose API on the element
         el._bwCodeEdit = { getValue: getValue, setValue: setValue };
+
+        // Scroll sync: keep gutter aligned with code
+        if (gutterEl) {
+          var scrollParent = codeEl.closest('.bw_ce') || el;
+          scrollParent.addEventListener('scroll', function() {
+            gutterEl.style.transform = 'translateY(' + (-scrollParent.scrollTop) + 'px)';
+          });
+          // If the outer .bw_ce has overflow, sync from there
+          el.addEventListener('scroll', function() {
+            gutterEl.style.transform = 'translateY(' + (-el.scrollTop) + 'px)';
+          });
+        }
 
         if (readOnly) return;
 
@@ -592,6 +634,7 @@ function codeEditor(opts) {
           var tacos = highlight(newCode, lang);
           if (bw.html) codeEl.innerHTML = bw.html({ t: 'span', c: tacos });
           setCaretOffset(codeEl, offset);
+          updateGutter(newCode);
           if (opts.onChange) opts.onChange(newCode);
         }
 

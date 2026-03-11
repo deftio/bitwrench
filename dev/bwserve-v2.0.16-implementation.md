@@ -10,12 +10,12 @@
 ## Purpose
 
 This document validates the bitwrench grammar and developer ergonomics against
-ten concrete use cases before we write production code. Each use case
+eleven concrete use cases before we write production code. Each use case
 exercises a different part of the surface area. If the API feels
 wrong on paper, it'll feel worse in production.
 
-The ten use cases span the full spectrum — from build-time static generation
-to multi-user e-commerce:
+The eleven use cases span the full spectrum — from build-time static generation
+to multi-user e-commerce, plus an interactive playground for API exploration:
 
 | # | Use Case | Mode | Key Features |
 |---|----------|------|-------------|
@@ -29,6 +29,7 @@ to multi-user e-commerce:
 | 8 | Client-side routed SPA | Client JS (no bwserve) | `hashchange`/`popstate`, `bw.DOM()`, vanilla JS router, no server |
 | 9 | Server-side routed app | SSE + POST (runtime) | `app.page()` multi-path, server pushes views, URL sync |
 | 10 | E-commerce storefront | SSE + POST (runtime) | Cart state, product catalog, checkout flow, multi-user, roles |
+| 11 | Interactive playground | Client JS (no bwserve) | Mock client, iframe sandbox, protocol log, try-it editor, presets |
 
 ---
 
@@ -4070,6 +4071,386 @@ approaches (full `replace` on `#app` or partial `replace` on `#product-grid`).
 
 ---
 
+## Use Case 11: Interactive Playground (Single-Page bwserve Sandbox)
+
+### Motivation
+
+Before implementing the full bwserve server, we need a way to experiment with
+the protocol grammar interactively. This use case is a **developer tool** — a
+single HTML page that simulates both client and server in the browser. The user
+writes "server code" in a try-it editor, clicks Run, and sees the result
+rendered in a "client viewport" on the same page.
+
+This is analogous to CodePen or JSFiddle, but specialized for bitwrench's
+server-driven protocol. It lets us:
+
+1. Validate the `bw.clientApply()` grammar before building the real server
+2. Give users a zero-install sandbox to learn bwserve concepts
+3. Dog-food the try-it editor pattern already used on `pages/01-components.html`
+4. Test protocol messages (replace, append, patch, batch) interactively
+
+### Architecture Decision: iframe vs Same-Page div
+
+**Option A — iframe**
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Playground Page                                      │
+│ ┌─────────────────────┐ ┌─────────────────────────┐ │
+│ │ Editor (server code) │ │ <iframe>                │ │
+│ │                      │ │   bitwrench loaded      │ │
+│ │ // "server" logic    │ │   bw.clientApply()      │ │
+│ │ client.render(...)   │ │   isolated DOM          │ │
+│ │ client.patch(...)    │ │   isolated CSS          │ │
+│ │                      │ │                         │ │
+│ │ [▶ Run]              │ │   ← rendered output     │ │
+│ └─────────────────────┘ └─────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+```
+
+Pros:
+- **Full CSS isolation** — theme/styles in the iframe don't bleed into playground
+- **Accurate simulation** — the iframe behaves like a real browser client
+- **`bw.loadDefaultStyles()` in iframe** won't affect the editor page styles
+- Security: user code in the iframe can't break the playground UI
+
+Cons:
+- Cross-frame communication requires `postMessage` or `contentWindow` access
+- Slightly more complex wiring (inject bitwrench into the iframe)
+- iframe sizing/scrolling needs handling
+
+**Option B — Same-page div**
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Playground Page                                      │
+│ ┌─────────────────────┐ ┌─────────────────────────┐ │
+│ │ Editor (server code) │ │ <div id="client-view">  │ │
+│ │                      │ │                         │ │
+│ │ // "server" logic    │ │   ← rendered output     │ │
+│ │ client.render(...)   │ │   shares page CSS       │ │
+│ │ client.patch(...)    │ │                         │ │
+│ │                      │ │                         │ │
+│ │ [▶ Run]              │ │                         │ │
+│ └─────────────────────┘ └─────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+```
+
+Pros:
+- Simpler — just a div, no cross-frame communication
+- Direct DOM access — `bw.clientApply()` targets `#client-view` children
+- Faster iteration, less boilerplate
+- Same `bw` instance — no need to inject bitwrench twice
+
+Cons:
+- CSS leaks: themes/styles applied by user code affect the editor
+- User code has access to the full page DOM (can break playground UI)
+- Less realistic — real bwserve clients run in their own document
+
+**Decision: iframe (Option A)**
+
+The CSS isolation alone justifies the iframe. The playground's job is to
+simulate a real bwserve client. An iframe IS a real client — it loads
+bitwrench, has its own `document`, receives protocol messages, and renders
+independently. The extra wiring is minimal: the parent page calls
+`iframe.contentWindow.bw.clientApply(msg)` to deliver messages.
+
+If CSS isolation proves unnecessary (e.g., the playground page uses no theme),
+we can simplify to Option B later. Starting with iframe is the safer choice.
+
+### Implementation
+
+The playground page lives at `pages/11-playground.html` and uses the standard
+bitwrench page pattern (bw.DOM + bw.injectCSS, no raw HTML body).
+
+#### Page Layout
+
+```javascript
+// pages/11-playground.html
+bw.DOM('#app', {
+  t: 'div', a: { class: 'bw-container' }, c: [
+    { t: 'h1', c: 'bwserve Playground' },
+    { t: 'p', a: { class: 'bw-text-muted' },
+      c: 'Write server-side bwserve code on the left. Click Run to see the client render on the right.' },
+
+    // Main layout: editor + client viewport
+    { t: 'div', a: { style: 'display:flex;gap:16px;height:70vh' }, c: [
+
+      // Left: code editor
+      { t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column' }, c: [
+        { t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px' }, c: [
+          { t: 'span', a: { class: 'bw-badge bw-badge-secondary' }, c: 'Server Code' },
+          { t: 'div', c: [
+            { t: 'button', a: { class: 'bw-btn bw-btn-sm bw-btn-primary', id: 'btn-run' }, c: 'Run' },
+            { t: 'button', a: { class: 'bw-btn bw-btn-sm bw-btn-outline-secondary', id: 'btn-reset',
+              style: 'margin-left:4px' }, c: 'Reset' }
+          ]}
+        ]},
+        { t: 'textarea', a: {
+          id: 'editor',
+          class: 'bw-form-control',
+          style: 'flex:1;font-family:monospace;font-size:14px;resize:none;tab-size:2',
+          spellcheck: 'false'
+        }}
+      ]},
+
+      // Right: client viewport (iframe)
+      { t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column' }, c: [
+        { t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px' }, c: [
+          { t: 'span', a: { class: 'bw-badge bw-badge-info' }, c: 'Client View' },
+          { t: 'span', a: { id: 'status', class: 'bw-text-muted', style: 'font-size:12px' }, c: 'Ready' }
+        ]},
+        { t: 'iframe', a: {
+          id: 'client-frame',
+          style: 'flex:1;border:1px solid #ddd;border-radius:4px;background:#fff',
+          sandbox: 'allow-scripts allow-same-origin'
+        }}
+      ]}
+    ]},
+
+    // Bottom: protocol log
+    { t: 'details', a: { style: 'margin-top:16px' }, c: [
+      { t: 'summary', c: 'Protocol Messages' },
+      { t: 'pre', a: { id: 'log', style: 'max-height:200px;overflow-y:auto;font-size:12px;background:#f5f5f5;padding:8px' },
+        c: '// Messages will appear here...' }
+    ]}
+  ]
+});
+```
+
+#### The Simulated Server API
+
+The key insight: we don't need a real HTTP server. We create a **mock client
+object** that mirrors the bwserve `client` API. When the user's code calls
+`client.render('#app', taco)`, the mock constructs the protocol message and
+delivers it to the iframe via `postMessage` (or direct contentWindow access).
+
+```javascript
+// Mock bwserve client — runs in the parent page, delivers to iframe
+function createMockClient(iframe) {
+  var client = {};
+  var iframeWindow = iframe.contentWindow;
+
+  function send(msg) {
+    logMessage(msg);  // Show in protocol log
+    // Deliver to iframe's bitwrench instance
+    iframeWindow.bw.clientApply(msg);
+  }
+
+  client.render = function(target, taco) {
+    send({ type: 'replace', target: target, node: taco });
+  };
+  client.patch = function(id, content, attr) {
+    send({ type: 'patch', target: id, content: content, attr: attr || null });
+  };
+  client.append = function(target, taco) {
+    send({ type: 'append', target: target, node: taco });
+  };
+  client.remove = function(target) {
+    send({ type: 'remove', target: target });
+  };
+  client.batch = function(ops) {
+    send({ type: 'batch', ops: ops });
+  };
+  client.message = function(target, action, data) {
+    send({ type: 'message', target: target, action: action, data: data });
+  };
+  client.pushUrl = function(url, title) {
+    // No-op in playground (no real navigation)
+    logMessage({ type: 'pushUrl', url: url, title: title, note: 'simulated' });
+  };
+
+  return client;
+}
+```
+
+#### iframe Bootstrap
+
+The iframe loads bitwrench and creates a clean `#app` mount point:
+
+```javascript
+function initClientFrame(iframe) {
+  var doc = iframe.contentDocument;
+  doc.open();
+  doc.write([
+    '<!DOCTYPE html>',
+    '<html><head>',
+    '<script src="../dist/bitwrench.umd.js"><' + '/script>',
+    '</head><body>',
+    '<div id="app">Waiting for server...</div>',
+    '<script>',
+    'bw.loadDefaultStyles();',
+    // Wire up action sending — actions go back to parent page
+    'document.addEventListener("click", function(e) {',
+    '  var el = e.target.closest("[data-bw-action]");',
+    '  if (el) {',
+    '    e.preventDefault();',
+    '    window.parent.postMessage({',
+    '      type: "bwAction",',
+    '      action: el.getAttribute("data-bw-action"),',
+    '      data: {}',
+    '    }, "*");',
+    '  }',
+    '});',
+    '<' + '/script>',
+    '</body></html>'
+  ].join('\n'));
+  doc.close();
+}
+```
+
+#### Run Button Behavior
+
+When the user clicks Run:
+
+1. Reset the iframe (re-initialize clean state)
+2. Create a mock `client` object targeting the iframe
+3. Wrap the user's code in a function and execute it
+4. The code calls `client.render()`, `client.patch()`, etc.
+5. Each call delivers protocol messages to the iframe
+6. The iframe's bitwrench applies them via `bw.clientApply()`
+
+```javascript
+function runCode() {
+  var code = bw.$('#editor')[0].value;
+  var iframe = bw.$('#client-frame')[0];
+
+  // Reset iframe
+  initClientFrame(iframe);
+
+  // Wait for iframe to load, then execute
+  iframe.onload = function() {
+    var client = createMockClient(iframe);
+    clearLog();
+
+    try {
+      // The user's code runs with `client` in scope
+      var fn = new Function('client', 'bw', code);
+      fn(client, bw);
+      bw.$('#status')[0].textContent = 'Rendered';
+    } catch (e) {
+      bw.$('#status')[0].textContent = 'Error: ' + e.message;
+      logMessage({ error: e.message, stack: e.stack });
+    }
+  };
+}
+```
+
+#### Default Example Code
+
+The editor starts pre-populated with a simple example:
+
+```javascript
+var DEFAULT_CODE = [
+  '// bwserve Playground — write server code here',
+  '// `client` is a mock bwserve client targeting the iframe',
+  '// `bw` is the bitwrench library (for building TACO objects)',
+  '',
+  '// Render a card with a counter',
+  'client.render("#app", {',
+  '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+  '    { t: "h2", c: "Hello from bwserve!" },',
+  '    bw.makeCard({',
+  '      title: "Counter Demo",',
+  '      content: { t: "div", c: [',
+  '        { t: "p", c: [',
+  '          "Count: ",',
+  '          { t: "span", a: { id: "count" }, c: "0" }',
+  '        ]},',
+  '        { t: "button", a: {',
+  '          class: "bw-btn bw-btn-primary",',
+  '          "data-bw-action": "increment"',
+  '        }, c: "Increment" }',
+  '      ]}',
+  '    })',
+  '  ]',
+  '});',
+  '',
+  '// Simulate a server-side action handler',
+  'var count = 0;',
+  'window.addEventListener("message", function(e) {',
+  '  if (e.data && e.data.type === "bwAction") {',
+  '    if (e.data.action === "increment") {',
+  '      count++;',
+  '      client.patch("count", String(count));',
+  '    }',
+  '  }',
+  '});'
+].join('\n');
+```
+
+#### Preset Examples (dropdown)
+
+The page includes a dropdown to load different preset examples:
+
+| Preset | What it demonstrates |
+|--------|---------------------|
+| Counter | `render` + `patch` — basic state update |
+| Todo List | `append` + `remove` — dynamic list |
+| Dashboard | `batch` — multiple updates at once |
+| Chat | `append` + auto-scroll — streaming content |
+| Theme Test | `render` with themed components — BCCL in action |
+| Protocol Raw | Manual JSON editing — type raw protocol messages |
+
+### Why This Is Valuable Before Implementing bwserve
+
+1. **Grammar validation**: We can test every message type (`replace`, `append`,
+   `patch`, `remove`, `batch`) interactively before writing server code. If
+   `bw.clientApply()` feels wrong, we fix it now.
+
+2. **Ergonomics testing**: Does `client.render('#app', taco)` feel natural? Is
+   `client.patch('count', '42')` intuitive? Is `client.batch([...])` worth
+   the API surface? The playground answers these questions empirically.
+
+3. **Documentation by example**: Every preset is a teaching tool. Users can
+   see the protocol messages in the log and understand exactly what flows
+   between server and client.
+
+4. **Zero-install onboarding**: Share a URL, user starts experimenting. No
+   `npm install`, no server setup, no WebSocket debugging.
+
+5. **Test fixture**: The mock client can be extracted into tests — same mock
+   that powers the playground powers the test suite.
+
+### What This Use Case Does NOT Need
+
+- No real HTTP server or SSE connection
+- No `bwserve` package (everything runs client-side)
+- No database or authentication
+- No routing (single page)
+- No `bw.clientConnect()` (direct `clientApply` calls bypass the transport layer)
+
+### Ergonomics Assessment
+
+**What works well:**
+- Mock client mirrors real `client` API 1:1 — user code will work on real
+  bwserve without changes (minus the `window.addEventListener` action wiring)
+- Protocol log shows exactly what messages flow — excellent teaching tool
+- iframe isolation prevents CSS/DOM leaks between editor and client
+- Presets provide progressive disclosure — start with `render`, learn `patch`,
+  build up to `batch`
+- Action round-trip (button click → postMessage → parent → client.patch)
+  simulates the real SSE+POST pattern without network overhead
+
+**Friction points:**
+- **Action wiring is manual in the playground**: Real bwserve auto-wires
+  `o.events` in the shell page. The playground mock must replicate this, or
+  the user must wire `data-bw-action` listeners manually. Decision: replicate
+  basic `data-bw-action` handling in the iframe bootstrap (shown above).
+- **No `o.events` support**: The declarative events descriptor requires
+  bitwrench's `createDOM()` to wire handlers that POST back. In the playground,
+  we simulate this with `postMessage`. This is a fidelity gap — acceptable
+  for a sandbox.
+- **Async patterns (setTimeout for streaming)**: User code can use
+  `setTimeout` to simulate delayed updates, but there's no `app.onInterval()`
+  equivalent. Fine for a playground — the user writes raw JS.
+- **No `new Function()` in CSP-strict environments**: The `eval` approach
+  won't work on pages with strict CSP. Since the playground is a dev tool
+  served locally or from GitHub Pages (which allows inline scripts), this is
+  acceptable.
+
+---
+
 ## Cross-Cutting Concerns
 
 ### 1. Shell Page Generation
@@ -4440,16 +4821,16 @@ client.close();
 
 ### The spectrum — bitwrench's unique position
 
-No other tool covers all ten modes with the same library:
+No other tool covers all eleven modes with the same library:
 
 ```
-          bitwrench   bw.DOM()   bw.component()  bwserve       bw.client    LLM→TACO     bwserve+DB   client SPA   server SPA   e-commerce
+          bitwrench   bw.DOM()   bw.component()  bwserve       bw.client    LLM→TACO     bwserve+DB   client SPA   server SPA   e-commerce   playground
           build                                                Connect
-Mode:     static gen  client     reactive SPA    server-push   embedded     AI-gen UI    CRUD app     hash router  server route multi-user
-Runtime:  build-time  browser    browser          Node+browser  HTTP+browser LLM+bwserve  Node+DB+brw  browser      Node+browser Node+DB+brw
-Server:   none        none       none             SSE           poll         SSE          SSE          none         SSE          SSE
-JS sent:  0/38KB      38KB       38KB             38KB          38KB(CDN)    38KB         38KB         38KB         38KB         38KB
-Routing:  build-time  client     client           server        N/A          N/A          server       client(hash) server(push) server(push)
+Mode:     static gen  client     reactive SPA    server-push   embedded     AI-gen UI    CRUD app     hash router  server route multi-user    sandbox
+Runtime:  build-time  browser    browser          Node+browser  HTTP+browser LLM+bwserve  Node+DB+brw  browser      Node+browser Node+DB+brw  browser
+Server:   none        none       none             SSE           poll         SSE          SSE          none         SSE          SSE          none(mock)
+JS sent:  0/38KB      38KB       38KB             38KB          38KB(CDN)    38KB         38KB         38KB         38KB         38KB         38KB
+Routing:  build-time  client     client           server        N/A          N/A          server       client(hash) server(push) server(push) N/A
 ```
 
 Hugo can only do column 1. Streamlit can only do columns 4-5. React can do
@@ -4457,29 +4838,33 @@ columns 2-3 (with Next.js: 1-3). No single tool covers client-side SPA routing
 AND server-driven routing AND real-time multi-user broadcast with the same
 component library and theme system. The e-commerce column is the ultimate
 stress test: auth, cart state, multi-step forms, role-based rendering,
-broadcast inventory updates — all with 38KB of client-side JS.
+broadcast inventory updates — all with 38KB of client-side JS. The playground
+column (UC11) is unique: it lets developers experiment with the bwserve
+protocol entirely client-side, validating the grammar before writing any
+server code.
 
 ---
 
 ## Next Steps
 
-1. Review this document — validate API grammar against all 10 use cases
-2. Resolve open grammar decisions (pushUrl/replaceUrl, sendForm spec, link interception)
-3. Implement Phase A (client-side protocol in bitwrench.js, including pushUrl/replaceUrl)
-4. Implement Phase B (bwserve server runtime, shell page with link interception + popstate)
-5. Implement Phase C (static site generation — `bitwrench build`)
-6. Build Use Case 5 example (bitwrench docs site built with bitwrench)
-7. Build Use Case 4 example (stock dashboard)
-8. Build Use Case 8 example (client-side SPA — no bwserve, pure bitwrench)
-9. Build Use Case 3 example (LLM chat)
-10. Build Use Case 6 example (LLM-generated UI) — the showcase demo
-11. Build Use Case 7 example (CRUD app — SQLite variant as reference)
-12. Build Use Case 10 example (e-commerce — multi-user stress test)
-13. Release as v2.0.16 (protocol + build) or v2.1.0 (if scope grows)
+1. Review this document — validate API grammar against all 11 use cases
+2. **Build Use Case 11 playground** — validate clientApply grammar interactively before writing server code
+3. Resolve open grammar decisions (pushUrl/replaceUrl, sendForm spec, link interception)
+4. Implement Phase A (client-side protocol in bitwrench.js, including pushUrl/replaceUrl)
+5. Implement Phase B (bwserve server runtime, shell page with link interception + popstate)
+6. Implement Phase C (static site generation — `bitwrench build`)
+7. Build Use Case 5 example (bitwrench docs site built with bitwrench)
+8. Build Use Case 4 example (stock dashboard)
+9. Build Use Case 8 example (client-side SPA — no bwserve, pure bitwrench)
+10. Build Use Case 3 example (LLM chat)
+11. Build Use Case 6 example (LLM-generated UI) — the showcase demo
+12. Build Use Case 7 example (CRUD app — SQLite variant as reference)
+13. Build Use Case 10 example (e-commerce — multi-user stress test)
+14. Release as v2.0.16 (protocol + build) or v2.1.0 (if scope grows)
 
 ### Release scoping question
 
-All ten use cases share the same TACO + theme infrastructure but differ in
+All eleven use cases share the same TACO + theme infrastructure but differ in
 transport layer. Possible release strategies:
 
 **Option A — Ship everything in v2.0.16:**

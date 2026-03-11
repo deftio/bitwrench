@@ -196,7 +196,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-10T17:40:31.039Z'
+    buildDate: '2026-03-11T02:05:34.438Z'
   };
 
   /**
@@ -1857,8 +1857,8 @@
       },
       '.bw_container_fluid': {
         'width': '100%',
-        'padding-right': '15px',
-        'padding-left': '15px',
+        'padding-right': '0.75rem',
+        'padding-left': '0.75rem',
         'margin-right': 'auto',
         'margin-left': 'auto'
       },
@@ -2699,7 +2699,8 @@
       '.bw_code_pre': {
         'margin': '0',
         'border': 'none',
-        'overflow-x': 'auto'
+        'overflow-x': 'auto',
+        'max-width': '100%'
       },
       '.bw_code_block': {
         'display': 'block',
@@ -2928,7 +2929,7 @@
       },
       '.bw_modal_dialog': {
         'position': 'relative',
-        'width': '100%',
+        'width': 'calc(100% - 1rem)',
         'max-width': '500px',
         'margin': '1.75rem auto',
         'pointer-events': 'none'
@@ -3017,7 +3018,7 @@
       '.bw_toast': {
         'pointer-events': 'auto',
         'width': '350px',
-        'max-width': '100%',
+        'max-width': 'calc(100vw - 2rem)',
         'background-clip': 'padding-box',
         'opacity': '0'
       },
@@ -3224,6 +3225,7 @@
         'z-index': '999',
         'font-size': '0.875rem',
         'white-space': 'nowrap',
+        'max-width': 'min(300px, calc(100vw - 1rem))',
         'pointer-events': 'none',
         'opacity': '0',
         'visibility': 'hidden'
@@ -3282,7 +3284,7 @@
         'position': 'absolute',
         'z-index': '1000',
         'min-width': '200px',
-        'max-width': '320px',
+        'max-width': 'min(320px, calc(100vw - 2rem))',
         'pointer-events': 'none',
         'opacity': '0',
         'visibility': 'hidden'
@@ -3828,6 +3830,45 @@
         },
         '.bw_feature_grid, .bw_feature-grid': {
           'grid-template-columns': '1fr'
+        },
+        '.bw_modal_dialog': {
+          'margin': '0.5rem auto'
+        },
+        '.bw_modal_lg': {
+          'max-width': 'calc(100% - 1rem)'
+        },
+        '.bw_modal_xl': {
+          'max-width': 'calc(100% - 1rem)'
+        },
+        '.bw_navbar': {
+          'padding': '0.5rem 0.75rem'
+        },
+        '.bw_navbar_brand': {
+          'margin-right': '0.5rem',
+          'font-size': '1rem'
+        },
+        '.bw_navbar_nav': {
+          'flex-wrap': 'wrap'
+        },
+        '.bw_tooltip': {
+          'white-space': 'normal'
+        },
+        '.bw_table': {
+          'display': 'block',
+          'overflow-x': 'auto',
+          '-webkit-overflow-scrolling': 'touch'
+        },
+        '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': {
+          'flex': '0 0 100%',
+          'max-width': '100%'
+        },
+        '.bw_container': {
+          'padding-right': '0.5rem',
+          'padding-left': '0.5rem'
+        },
+        '.bw_container_fluid': {
+          'padding-right': '0.5rem',
+          'padding-left': '0.5rem'
         }
       }
     }

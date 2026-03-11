@@ -123,23 +123,24 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
   &lt;/script&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre></p><h2 class="quikdown-h2">Adding State</h2>
-<p>The <code class="quikdown-code">o</code> key adds state and a render function to any element. When state changes, call <code class="quikdown-code">bw.update()</code> to re-render:</p><pre class="quikdown-pre"><code class="language-javascript">bw.DOM(&#39;#counter&#39;, {
-  t: &#39;div&#39;,
+<p>Wrap any TACO in <code class="quikdown-code">bw.component()</code> to get a reactive component with <code class="quikdown-code">.get()</code>, <code class="quikdown-code">.set()</code>, and template bindings:</p><pre class="quikdown-pre"><code class="language-javascript">var counter = bw.component({
+  t: &#39;div&#39;, c: [
+    { t: &#39;span&#39;, c: &#39;Count: ${count}&#39; },
+    { t: &#39;button&#39;, c: &#39;+1&#39;, a: {
+      onclick: function() { counter.set(&#39;count&#39;, counter.get(&#39;count&#39;) + 1); }
+    }}
+  ],
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
-      bw.DOM(el, {
-        t: &#39;div&#39;, c: [
-          { t: &#39;span&#39;, c: &#39;Count: &#39; + s.count },
-          { t: &#39;button&#39;, a: {
-            onclick: function() { s.count++; bw.update(el); }
-          }, c: &#39;+1&#39; }
-        ]
-      });
+    methods: {
+      reset: function(comp) { comp.set(&#39;count&#39;, 0); }
     }
   }
-});</code></pre><p>For communication between components, use pub/sub:</p><pre class="quikdown-pre"><code class="language-javascript">bw.sub(&#39;item-added&#39;, function(detail) {
+});
+
+bw.DOM(&#39;#app&#39;, counter);
+counter.set(&#39;count&#39;, 42);   // DOM updates automatically
+counter.reset();             // methods from o.methods are callable on the handle</code></pre><p>For low-level control, you can also use <code class="quikdown-code">o.render</code> + <code class="quikdown-code">bw.update()</code> directly — see the <a class="quikdown-a" href="docs/state-management.md">State Management guide</a>.</p><p>For communication between components, use pub/sub:</p><pre class="quikdown-pre"><code class="language-javascript">bw.sub(&#39;item-added&#39;, function(detail) {
   console.log(&#39;New item:&#39;, detail.name);
 });
 
@@ -167,6 +168,10 @@ bw.toggleTheme();  // switch between primary and alternate palettes</code></pre>
 <td class="quikdown-td">Mount an object to a DOM element</td>
 </tr>
 <tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.component(taco)</code></td>
+<td class="quikdown-td">Wrap a TACO in a ComponentHandle with <code class="quikdown-code">.get()/.set()</code> reactive API</td>
+</tr>
+<tr class="quikdown-tr">
 <td class="quikdown-td"><code class="quikdown-code">bw.css(rules)</code></td>
 <td class="quikdown-td">Generate CSS from a JS object</td>
 </tr>
@@ -187,12 +192,20 @@ bw.toggleTheme();  // switch between primary and alternate palettes</code></pre>
 <td class="quikdown-td">Re-render via the element&#39;s <code class="quikdown-code">o.render</code> function</td>
 </tr>
 <tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.message(target, action, data)</code></td>
+<td class="quikdown-td">Send a message to a component by tag name</td>
+</tr>
+<tr class="quikdown-tr">
 <td class="quikdown-td"><code class="quikdown-code">bw.pub(topic, detail)</code></td>
 <td class="quikdown-td">Publish a message to subscribers</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td"><code class="quikdown-code">bw.sub(topic, handler)</code></td>
 <td class="quikdown-td">Subscribe to a topic; returns an unsub function</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.inspect(target)</code></td>
+<td class="quikdown-td">Debug a component in the browser console</td>
 </tr>
 </tbody>
 </table><p>See the full <a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/08-api-reference.html" rel="noopener noreferrer">API Reference</a> for all functions.</p><h2 class="quikdown-h2">CLI</h2>
@@ -235,15 +248,21 @@ bitwrench doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</c
 </tr>
 </tbody>
 </table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><h2 class="quikdown-h2">Documentation</h2>
-<ul class="quikdown-ul">
-<li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/" rel="noopener noreferrer">Interactive docs and demos</a> — full tutorial site with live examples</li>
+<strong class="quikdown-strong">Guides</strong> (in <code class="quikdown-code">docs/</code>):</p><ul class="quikdown-ul">
+<li class="quikdown-li"><a class="quikdown-a" href="docs/taco-format.md">TACO Format</a> — the <code class="quikdown-code">{t, a, c, o}</code> object format</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> — three-level component model, ComponentHandle, reactive state</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> — all 50+ <code class="quikdown-code">make*()</code> functions with signatures and examples</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/theming.md">Theming</a> — palette-driven theme generation, presets, design tokens</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/cli.md">CLI</a> — the <code class="quikdown-code">bitwrench</code> command for file conversion</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/llm-bitwrench-guide.md">LLM Guide</a> — compact single-file reference for AI-assisted development</li>
+</ul><p><strong class="quikdown-strong">Interactive demos</strong> (live site):</p><ul class="quikdown-ul">
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/00-quick-start.html" rel="noopener noreferrer">Quick Start</a> — first steps with <code class="quikdown-code">bw.DOM()</code></li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/01-components.html" rel="noopener noreferrer">Components</a> — buttons, cards, alerts, badges, navbars</li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/03-styling.html" rel="noopener noreferrer">Styling &amp; Theming</a> — CSS generation and theming strategies</li>
-<li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/05-state.html" rel="noopener noreferrer">State &amp; Interactivity</a> — <code class="quikdown-code">bw.patch()</code>, <code class="quikdown-code">bw.update()</code>, pub/sub</li>
+<li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/05-state.html" rel="noopener noreferrer">State &amp; Interactivity</a> — state patterns and ComponentHandle</li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/06-tic-tac-toe-tutorial.html" rel="noopener noreferrer">Tic Tac Toe Tutorial</a> — step-by-step game with state management</li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/07-framework-comparison.html" rel="noopener noreferrer">Framework Comparison</a> — bitwrench vs React, Vue, Svelte</li>
-<li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/10-themes.html" rel="noopener noreferrer">Themes</a> — interactive theme generator with presets, dark mode, and CSS export</li>
+<li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/10-themes.html" rel="noopener noreferrer">Themes</a> — interactive theme generator with presets and CSS export</li>
 </ul><h2 class="quikdown-h2">Development</h2>
 <p><pre class="quikdown-pre"><code class="language-bash">npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)

@@ -357,7 +357,7 @@
               'Vertical and horizontal flex stacks with configurable gap. A quick way to lay out groups of elements without writing CSS.',
               createTabbedDemo(
                 {
-                  t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;' }, c: [
+                  t: 'div', a: { class: 'bw_grid_2col', style: 'gap: 2rem;' }, c: [
                     { t: 'div', c: [
                       subheading('Vertical Stack'),
                       bw.makeStack({ children: [
@@ -392,7 +392,7 @@
                     subheading('Horizontal Text Alignment'),
                     {
                       t: 'div',
-                      a: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;' },
+                      a: { class: 'bw_grid_3col', style: 'gap: 1rem; margin-bottom: 1.5rem;' },
                       c: [
                         {
                           t: 'div',
@@ -425,7 +425,7 @@
                     subheading('Vertical Centering'),
                     {
                       t: 'div',
-                      a: { style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;' },
+                      a: { class: 'bw_grid_3col', style: 'gap: 1rem;' },
                       c: [
                         {
                           t: 'div',
@@ -656,7 +656,7 @@
               createTabbedDemo(
                 {
                   t: 'div', c: [
-                    { t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;' }, c: [
+                    { t: 'div', a: { class: 'bw_grid_2col', style: 'gap: 1.5rem;' }, c: [
                       { t: 'div', c: [
                         subheading('Text Inputs'),
                         bw.makeFormGroup({ label: 'Name', id: 'demo-name', input: bw.makeInput({ id: 'demo-name', placeholder: 'Enter your name' }) }),
@@ -918,7 +918,7 @@
               'Loading placeholders in text, circle, and rectangle shapes. Use to indicate loading state before content arrives.',
               createTabbedDemo(
                 {
-                  t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;' }, c: [
+                  t: 'div', a: { class: 'bw_grid_2col', style: 'gap: 1.5rem;' }, c: [
                     { t: 'div', c: [
                       subheading('Text Lines'),
                       bw.makeSkeleton({ variant: 'text', count: 4, width: '100%' })

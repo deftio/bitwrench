@@ -22,7 +22,9 @@
   var _cssInjected = false;
   var CSS_TEXT = '.bw_ce{background:#1e293b;border-radius:6px;border:1px solid rgba(255,255,255,0.08);overflow:auto}' + '.bw_ce pre{margin:0;padding:0}' + '.bw_ce code{font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:0.875rem;line-height:1.6;color:#e2e8f0;outline:none;white-space:pre-wrap;display:block;padding:0.75rem 1rem}' + '.bw_ce code:empty::before{content:"\\200b"}' + '.bw_ce .bw_ce_keyword{color:#c792ea}' + '.bw_ce .bw_ce_string{color:#c3e88d}' + '.bw_ce .bw_ce_comment{color:#546e7a;font-style:italic}' + '.bw_ce .bw_ce_number{color:#f78c6c}' + '.bw_ce .bw_ce_operator{color:#89ddff}' + '.bw_ce .bw_ce_punctuation{color:#89ddff}' + '.bw_ce .bw_ce_property{color:#82aaff}' + '.bw_ce .bw_ce_function{color:#82aaff}' + '.bw_ce .bw_ce_tag{color:#f07178}' + '.bw_ce .bw_ce_attr_name{color:#ffcb6b}' + '.bw_ce .bw_ce_attr_value{color:#c3e88d}' + '.bw_ce .bw_ce_selector{color:#c792ea}' + '.bw_ce .bw_ce_css_prop{color:#82aaff}' + '.bw_ce .bw_ce_css_value{color:#f78c6c}' + '.bw_ce .bw_ce_at_rule{color:#c792ea;font-style:italic}' + '.bw_ce .bw_ce_color{color:#f78c6c}' + '.bw_ce .bw_ce_template_interp{color:#89ddff}' +
   // Light theme
-  '.bw_ce_light.bw_ce{background:#fafafa;border-color:#d8d8d8}' + '.bw_ce_light.bw_ce code{color:#1a1a1a}' + '.bw_ce_light.bw_ce .bw_ce_keyword{color:#7c3aed}' + '.bw_ce_light.bw_ce .bw_ce_string{color:#16a34a}' + '.bw_ce_light.bw_ce .bw_ce_comment{color:#9ca3af;font-style:italic}' + '.bw_ce_light.bw_ce .bw_ce_number{color:#ea580c}' + '.bw_ce_light.bw_ce .bw_ce_operator{color:#0891b2}' + '.bw_ce_light.bw_ce .bw_ce_punctuation{color:#6b7280}' + '.bw_ce_light.bw_ce .bw_ce_property{color:#2563eb}' + '.bw_ce_light.bw_ce .bw_ce_function{color:#2563eb}' + '.bw_ce_light.bw_ce .bw_ce_tag{color:#dc2626}' + '.bw_ce_light.bw_ce .bw_ce_attr_name{color:#d97706}' + '.bw_ce_light.bw_ce .bw_ce_attr_value{color:#16a34a}' + '.bw_ce_light.bw_ce .bw_ce_selector{color:#7c3aed}' + '.bw_ce_light.bw_ce .bw_ce_css_prop{color:#2563eb}' + '.bw_ce_light.bw_ce .bw_ce_css_value{color:#ea580c}' + '.bw_ce_light.bw_ce .bw_ce_at_rule{color:#7c3aed}' + '.bw_ce_light.bw_ce .bw_ce_color{color:#ea580c}' + '.bw_ce_light.bw_ce .bw_ce_template_interp{color:#0891b2}';
+  '.bw_ce_light.bw_ce{background:#fafafa;border-color:#d8d8d8}' + '.bw_ce_light.bw_ce code{color:#1a1a1a}' + '.bw_ce_light.bw_ce .bw_ce_keyword{color:#7c3aed}' + '.bw_ce_light.bw_ce .bw_ce_string{color:#16a34a}' + '.bw_ce_light.bw_ce .bw_ce_comment{color:#9ca3af;font-style:italic}' + '.bw_ce_light.bw_ce .bw_ce_number{color:#ea580c}' + '.bw_ce_light.bw_ce .bw_ce_operator{color:#0891b2}' + '.bw_ce_light.bw_ce .bw_ce_punctuation{color:#6b7280}' + '.bw_ce_light.bw_ce .bw_ce_property{color:#2563eb}' + '.bw_ce_light.bw_ce .bw_ce_function{color:#2563eb}' + '.bw_ce_light.bw_ce .bw_ce_tag{color:#dc2626}' + '.bw_ce_light.bw_ce .bw_ce_attr_name{color:#d97706}' + '.bw_ce_light.bw_ce .bw_ce_attr_value{color:#16a34a}' + '.bw_ce_light.bw_ce .bw_ce_selector{color:#7c3aed}' + '.bw_ce_light.bw_ce .bw_ce_css_prop{color:#2563eb}' + '.bw_ce_light.bw_ce .bw_ce_css_value{color:#ea580c}' + '.bw_ce_light.bw_ce .bw_ce_at_rule{color:#7c3aed}' + '.bw_ce_light.bw_ce .bw_ce_color{color:#ea580c}' + '.bw_ce_light.bw_ce .bw_ce_template_interp{color:#0891b2}' +
+  // Line number gutter (opt-in via lineNumbers option)
+  '.bw_ce_wrap{display:flex;flex-direction:row}' + '.bw_ce_gutter{flex:0 0 auto;padding:0.75rem 0;text-align:right;user-select:none;-webkit-user-select:none;color:#546e7a;font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:0.875rem;line-height:1.6;border-right:1px solid rgba(255,255,255,0.08);overflow:hidden}' + '.bw_ce_gutter span{display:block;padding:0 0.5rem 0 0.75rem}' + '.bw_ce_light .bw_ce_gutter{color:#9ca3af;border-right-color:#d8d8d8}';
   function ensureCSS(bw) {
     if (_cssInjected) return;
     _cssInjected = true;
@@ -759,6 +761,7 @@
     var lang = opts.lang || 'js';
     var height = opts.height || '180px';
     var readOnly = !!opts.readOnly;
+    var showLineNumbers = !!opts.lineNumbers;
     var className = 'bw_ce' + (opts.className ? ' ' + opts.className : '');
     var highlighted = highlight(code, lang);
     var codeAttrs = {
@@ -768,31 +771,70 @@
     if (!readOnly) {
       codeAttrs.contenteditable = 'true';
     }
+
+    // Build line number gutter TACO if requested
+    var gutterTaco = null;
+    if (showLineNumbers) {
+      var lineCount = (code.match(/\n/g) || []).length + 1;
+      var gutterLines = [];
+      for (var li = 1; li <= lineCount; li++) {
+        gutterLines.push({
+          t: 'span',
+          c: String(li)
+        });
+      }
+      gutterTaco = {
+        t: 'div',
+        a: {
+          "class": 'bw_ce_gutter'
+        },
+        c: gutterLines
+      };
+    }
+    var preBlock = {
+      t: 'pre',
+      a: {
+        style: 'flex:1;min-width:0;margin:0'
+      },
+      c: {
+        t: 'code',
+        a: codeAttrs,
+        c: highlighted
+      }
+    };
+    var innerContent = showLineNumbers ? {
+      t: 'div',
+      a: {
+        "class": 'bw_ce_wrap'
+      },
+      c: [gutterTaco, preBlock]
+    } : preBlock;
     return {
       t: 'div',
       a: {
         "class": className,
         style: 'max-height:' + height + ';overflow:auto'
       },
-      c: [{
-        t: 'pre',
-        c: {
-          t: 'code',
-          a: codeAttrs,
-          c: highlighted
-        }
-      }],
+      c: [innerContent],
       o: {
         mounted: function mounted(el) {
           var codeEl = el.querySelector('.bw_ce_code');
           if (!codeEl) return;
           var currentCode = code;
           var debounceTimer = null;
+          var gutterEl = showLineNumbers ? el.querySelector('.bw_ce_gutter') : null;
 
           // Resolve bw from global or import context
           var bw = typeof window !== 'undefined' && window.bw || {};
           function getValue() {
             return codeEl.textContent || '';
+          }
+          function updateGutter(text) {
+            if (!gutterEl) return;
+            var count = (text.match(/\n/g) || []).length + 1;
+            var html = '';
+            for (var i = 1; i <= count; i++) html += '<span>' + i + '</span>';
+            gutterEl.innerHTML = html;
           }
           function setValue(newCode) {
             currentCode = newCode;
@@ -801,6 +843,7 @@
               t: 'span',
               c: tacos
             });
+            updateGutter(newCode);
           }
 
           // Expose API on the element
@@ -808,6 +851,18 @@
             getValue: getValue,
             setValue: setValue
           };
+
+          // Scroll sync: keep gutter aligned with code
+          if (gutterEl) {
+            var scrollParent = codeEl.closest('.bw_ce') || el;
+            scrollParent.addEventListener('scroll', function () {
+              gutterEl.style.transform = 'translateY(' + -scrollParent.scrollTop + 'px)';
+            });
+            // If the outer .bw_ce has overflow, sync from there
+            el.addEventListener('scroll', function () {
+              gutterEl.style.transform = 'translateY(' + -el.scrollTop + 'px)';
+            });
+          }
           if (readOnly) return;
           function rehighlight() {
             var newCode = getValue();
@@ -820,6 +875,7 @@
               c: tacos
             });
             setCaretOffset(codeEl, offset);
+            updateGutter(newCode);
             if (opts.onChange) opts.onChange(newCode);
           }
           codeEl.addEventListener('input', function () {

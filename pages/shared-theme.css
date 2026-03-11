@@ -353,6 +353,11 @@ body {
   padding-left: 3rem;
   padding-right: 3rem;
 }
+/* Ensure all direct children respect container width */
+.content-container > * {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
 
 /* ---- Card / Demo Section ---- */
 .demo-section {
@@ -532,6 +537,8 @@ pre {
   background: var(--bw_code_bg);
   border: 1px solid rgba(0,0,0,0.1);
   position: relative;
+  max-width: 100%;
+  overflow-x: auto;
 }
 .bw_theme_alt pre {
   border-color: rgba(255,255,255,0.08);
@@ -560,6 +567,16 @@ code:not(pre code) {
 .bw_theme_alt code:not(pre code) {
   background: #1a3636;
   color: #80cbc4;
+}
+
+/* ---- Tables — mobile overflow safety ---- */
+.content-container table,
+.demo-content table,
+.demo-section-body table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 /* ---- Links ---- */
@@ -612,7 +629,7 @@ a:hover { color: var(--bw_teal_dark); }
 }
 .bw_grid_auto {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: var(--bw_space_md);
 }
 
@@ -620,8 +637,10 @@ a:hover { color: var(--bw_teal_dark); }
   .bw_grid_3col { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
-  .bw_grid_2col { grid-template-columns: 1fr; }
   .bw_grid_3col { grid-template-columns: 1fr; }
+}
+@media (max-width: 576px) {
+  .bw_grid_2col { grid-template-columns: 1fr; }
 }
 
 /* ---- Demo Section Body ---- */
@@ -674,7 +693,7 @@ a:hover { color: var(--bw_teal_dark); }
 /* ---- Feature Card Pattern ---- */
 .bw_feature_grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   gap: var(--bw_space_md);
 }
 .bw_feature_card {
@@ -777,16 +796,39 @@ a:hover { color: var(--bw_teal_dark); }
 @media (max-width: 768px) {
   .page-header { padding: 1.5rem 0; }
   .page-header h1 { font-size: 1.35rem; }
-  .content-container { padding: 1rem 0.75rem 2rem; }
+  .content-container { padding: 1rem 1rem 2rem; }
+  .content-container.wide { padding-left: 1rem; padding-right: 1rem; }
   .demo-content { padding: 1rem; }
   .demo-tab-panel { padding: 1rem; }
   .bw_tab_content { padding: 1rem; }
+  .demo-section > p,
+  .demo-section > div:not(.demo-content):not(.demo-tabs),
+  .demo-section > ul,
+  .demo-section > ol { padding-left: 1rem; padding-right: 1rem; }
+  .demo-section > h2,
+  .demo-section-title { padding: 0.75rem 1rem; }
+  .demo-section > h3,
+  .demo-section > h4 { padding: 0.75rem 1rem 0.5rem; }
+  .bw_step_header { padding: 1rem; }
+  .bw_step_body { padding: 1rem; }
+  .demo-section-body { padding: 1rem; }
 }
 
 @media (max-width: 480px) {
+  .content-container { padding: 0.75rem 0.75rem 1.5rem; }
+  .content-container.wide { padding-left: 0.75rem; padding-right: 0.75rem; }
   .demo-section > h2,
-  .demo-section-title { padding: 0.75rem 1rem; font-size: 1rem; }
+  .demo-section-title { padding: 0.75rem 0.75rem; font-size: 1rem; }
   .demo-content { padding: 0.75rem; }
+  .demo-section > p,
+  .demo-section > div:not(.demo-content):not(.demo-tabs),
+  .demo-section > ul,
+  .demo-section > ol { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .bw_step_header { padding: 0.75rem; gap: 0.5rem; }
+  .bw_step_body { padding: 0.75rem; }
+  .demo-section-body { padding: 0.75rem; }
+  .page-header h1 { font-size: 1.2rem; }
+  .page-header .subtitle { font-size: 0.95rem; }
 }
 
 /* ---- Try-It Editor ---- */
@@ -849,6 +891,9 @@ a:hover { color: var(--bw_teal_dark); }
 }
 @media (max-width: 768px) {
   .tryit-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .tryit-textarea { font-size: 0.75rem; padding: 0.75rem; }
 }
 
 /* ---- Pipeline Demo ---- */

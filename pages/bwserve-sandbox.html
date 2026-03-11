@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - bwserve Sandbox</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    // This page is NOT linked from the main nav — standalone sandbox for bwserve API experimentation
+    // But it still uses the shared theme for consistent look
+    mountExampleNav('#example-nav', 'bwserve-sandbox.html');
+    bw.loadDefaultStyles();
+
+    // =========================================================================
+    // Preset examples
+    // =========================================================================
+    var PRESETS = {
+      counter: {
+        label: 'Counter',
+        desc: 'render + patch — basic state update',
+        code: [
+          '// Counter: render a card, patch the count on click',
+          'client.render("#app", {',
+          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '    { t: "h2", c: "Hello from bwserve!" },',
+          '    { t: "div", a: { class: "bw-card" }, c: [',
+          '      { t: "div", a: { class: "bw-card-body" }, c: [',
+          '        { t: "h5", a: { class: "bw-card-title" }, c: "Counter Demo" },',
+          '        { t: "p", c: [',
+          '          "Count: ",',
+          '          { t: "span", a: { id: "count", style: "font-weight:bold;font-size:1.5rem" }, c: "0" }',
+          '        ]},',
+          '        { t: "button", a: {',
+          '          class: "bw-btn bw-btn-primary",',
+          '          "data-bw-action": "increment"',
+          '        }, c: "Increment" },',
+          '        { t: "button", a: {',
+          '          class: "bw-btn bw-btn-outline-secondary",',
+          '          "data-bw-action": "reset",',
+          '          style: "margin-left:8px"',
+          '        }, c: "Reset" }',
+          '      ]}',
+          '    ]}',
+          '  ]',
+          '});',
+          '',
+          '// Handle actions from the client',
+          'var count = 0;',
+          'onAction("increment", function() {',
+          '  count++;',
+          '  client.patch("count", String(count));',
+          '});',
+          'onAction("reset", function() {',
+          '  count = 0;',
+          '  client.patch("count", "0");',
+          '});'
+        ].join('\n')
+      },
+      todo: {
+        label: 'Todo List',
+        desc: 'append + remove — dynamic list',
+        code: [
+          '// Todo List: append items, remove on click',
+          'var nextId = 1;',
+          '',
+          'client.render("#app", {',
+          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '    { t: "h2", c: "Todo List" },',
+          '    { t: "div", a: { style: "display:flex;gap:8px;margin-bottom:16px" }, c: [',
+          '      { t: "input", a: {',
+          '        id: "todo-input", type: "text", class: "bw-form-control",',
+          '        placeholder: "What needs to be done?", style: "flex:1"',
+          '      }},',
+          '      { t: "button", a: { class: "bw-btn bw-btn-primary", "data-bw-action": "add-todo" }, c: "Add" }',
+          '    ]},',
+          '    { t: "ul", a: { id: "todo-list", class: "bw-list-group" } }',
+          '  ]',
+          '});',
+          '',
+          'onAction("add-todo", function(data) {',
+          '  var text = data.inputValue || "Item " + nextId;',
+          '  var id = "todo-" + nextId++;',
+          '  client.append("#todo-list", {',
+          '    t: "li", a: { id: id, class: "bw-list-group-item",',
+          '      style: "display:flex;justify-content:space-between;align-items:center" }, c: [',
+          '      { t: "span", c: text },',
+          '      { t: "button", a: {',
+          '        class: "bw-btn bw-btn-sm bw-btn-outline-danger",',
+          '        "data-bw-action": "remove-todo",',
+          '        "data-bw-id": id',
+          '      }, c: "\\u2715" }',
+          '    ]',
+          '  });',
+          '});',
+          '',
+          'onAction("remove-todo", function(data) {',
+          '  if (data.bwId) client.remove("#" + data.bwId);',
+          '});'
+        ].join('\n')
+      },
+      dashboard: {
+        label: 'Dashboard',
+        desc: 'batch — multiple updates at once',
+        code: [
+          '// Dashboard: batch updates to multiple stat cards',
+          'client.render("#app", {',
+          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '    { t: "h2", c: "Live Dashboard" },',
+          '    { t: "p", a: { class: "bw-text-muted" }, c: "Stats update every 2 seconds via batch" },',
+          '    { t: "div", a: { style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px" }, c: [',
+          '      statCard("users", "Active Users", "0", "#4CAF50"),',
+          '      statCard("orders", "Orders", "0", "#2196F3"),',
+          '      statCard("revenue", "Revenue", "$0", "#FF9800"),',
+          '      statCard("errors", "Errors", "0", "#f44336")',
+          '    ]},',
+          '    { t: "div", a: { style: "margin-top:16px" }, c: [',
+          '      { t: "button", a: { class: "bw-btn bw-btn-primary", "data-bw-action": "start" }, c: "Start Updates" },',
+          '      { t: "button", a: { class: "bw-btn bw-btn-outline-secondary", "data-bw-action": "stop", style: "margin-left:8px" }, c: "Stop" }',
+          '    ]}',
+          '  ]',
+          '});',
+          '',
+          'function statCard(id, label, value, color) {',
+          '  return {',
+          '    t: "div", a: { class: "bw-card" }, c: {',
+          '      t: "div", a: { class: "bw-card-body", style: "text-align:center" }, c: [',
+          '        { t: "div", a: { class: "bw-text-muted", style: "font-size:0.85rem" }, c: label },',
+          '        { t: "div", a: { id: id, style: "font-size:2rem;font-weight:bold;color:" + color }, c: value }',
+          '      ]',
+          '    }',
+          '  };',
+          '}',
+          '',
+          'var timer = null;',
+          'onAction("start", function() {',
+          '  if (timer) return;',
+          '  timer = setInterval(function() {',
+          '    client.batch([',
+          '      { type: "patch", target: "users", content: String(Math.floor(Math.random() * 500) + 100) },',
+          '      { type: "patch", target: "orders", content: String(Math.floor(Math.random() * 50) + 10) },',
+          '      { type: "patch", target: "revenue", content: "$" + (Math.floor(Math.random() * 10000) + 1000) },',
+          '      { type: "patch", target: "errors", content: String(Math.floor(Math.random() * 5)) }',
+          '    ]);',
+          '  }, 2000);',
+          '});',
+          'onAction("stop", function() { clearInterval(timer); timer = null; });'
+        ].join('\n')
+      },
+      chat: {
+        label: 'Chat',
+        desc: 'append — streaming content',
+        code: [
+          '// Chat: simulate streaming messages with append',
+          'client.render("#app", {',
+          '  t: "div", a: { class: "bw-container", style: "padding:24px;display:flex;flex-direction:column;height:100%" }, c: [',
+          '    { t: "h2", c: "Chat Demo" },',
+          '    { t: "div", a: {',
+          '      id: "messages",',
+          '      style: "flex:1;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:12px;margin-bottom:12px;min-height:200px"',
+          '    }, c: [',
+          '      { t: "div", a: { class: "bw-text-muted", style: "text-align:center" }, c: "Send a message to start chatting" }',
+          '    ]},',
+          '    { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
+          '      { t: "input", a: {',
+          '        id: "chat-input", type: "text", class: "bw-form-control",',
+          '        placeholder: "Type a message...", style: "flex:1"',
+          '      }},',
+          '      { t: "button", a: { class: "bw-btn bw-btn-primary", "data-bw-action": "send" }, c: "Send" }',
+          '    ]}',
+          '  ]',
+          '});',
+          '',
+          'var botReplies = ["Interesting!", "Tell me more.", "I see what you mean.",',
+          '  "That\'s a great point.", "How about we try something different?",',
+          '  "Let me think about that...", "Absolutely!", "Good question."];',
+          '',
+          'onAction("send", function(data) {',
+          '  var text = data.inputValue || "Hello!";',
+          '  // User message',
+          '  client.append("#messages", {',
+          '    t: "div", a: { style: "margin:8px 0;padding:8px 12px;background:#e3f2fd;border-radius:8px;max-width:80%;margin-left:auto" },',
+          '    c: text',
+          '  });',
+          '  // Bot reply after delay',
+          '  setTimeout(function() {',
+          '    var reply = botReplies[Math.floor(Math.random() * botReplies.length)];',
+          '    client.append("#messages", {',
+          '      t: "div", a: { style: "margin:8px 0;padding:8px 12px;background:#f5f5f5;border-radius:8px;max-width:80%" },',
+          '      c: reply',
+          '    });',
+          '  }, 500 + Math.random() * 1000);',
+          '});'
+        ].join('\n')
+      },
+      theme: {
+        label: 'BCCL Components',
+        desc: 'render with themed BCCL components',
+        code: [
+          '// BCCL Components: render themed bitwrench components',
+          '// Note: bw.makeCard etc. are available via the parent bw instance',
+          '',
+          'client.render("#app", {',
+          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '    { t: "h2", c: "BCCL Component Gallery" },',
+          '    { t: "p", a: { class: "bw-text-muted" }, c: "Themed components rendered via bwserve protocol" },',
+          '',
+          '    // Alert',
+          '    { t: "div", a: { class: "bw-alert bw-alert-info", style: "margin-bottom:16px" },',
+          '      c: "This is an info alert rendered by the server!" },',
+          '',
+          '    // Button row',
+          '    { t: "div", a: { style: "display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" }, c: [',
+          '      { t: "button", a: { class: "bw-btn bw-btn-primary" }, c: "Primary" },',
+          '      { t: "button", a: { class: "bw-btn bw-btn-secondary" }, c: "Secondary" },',
+          '      { t: "button", a: { class: "bw-btn bw-btn-success" }, c: "Success" },',
+          '      { t: "button", a: { class: "bw-btn bw-btn-danger" }, c: "Danger" },',
+          '      { t: "button", a: { class: "bw-btn bw-btn-outline-primary" }, c: "Outline" }',
+          '    ]},',
+          '',
+          '    // Card with badge',
+          '    { t: "div", a: { class: "bw-card", style: "margin-bottom:16px" }, c: {',
+          '      t: "div", a: { class: "bw-card-body" }, c: [',
+          '        { t: "div", a: { style: "display:flex;justify-content:space-between;align-items:center" }, c: [',
+          '          { t: "h5", a: { class: "bw-card-title" }, c: "Server Stats" },',
+          '          { t: "span", a: { class: "bw-badge bw-badge-success" }, c: "Online" }',
+          '        ]},',
+          '        { t: "p", c: "This card was sent as a TACO object from the server." },',
+          '        { t: "button", a: { class: "bw-btn bw-btn-sm bw-btn-primary", "data-bw-action": "refresh" }, c: "Refresh" }',
+          '      ]',
+          '    }},',
+          '',
+          '    // Progress bar',
+          '    { t: "div", a: { style: "margin-bottom:16px" }, c: [',
+          '      { t: "div", a: { class: "bw-text-muted", style: "margin-bottom:4px" }, c: "Upload Progress" },',
+          '      { t: "div", a: { class: "bw-progress" }, c: {',
+          '        t: "div", a: { id: "prog", class: "bw-progress-bar", style: "width:65%", role: "progressbar" }, c: "65%"',
+          '      }}',
+          '    ]},',
+          '',
+          '    // Table',
+          '    { t: "table", a: { class: "bw-table bw-table-striped" }, c: [',
+          '      { t: "thead", c: { t: "tr", c: [',
+          '        { t: "th", c: "Name" }, { t: "th", c: "Role" }, { t: "th", c: "Status" }',
+          '      ]}},',
+          '      { t: "tbody", c: [',
+          '        { t: "tr", c: [{ t: "td", c: "Alice" }, { t: "td", c: "Admin" }, { t: "td", c: { t: "span", a: { class: "bw-badge bw-badge-success" }, c: "Active" } }]},',
+          '        { t: "tr", c: [{ t: "td", c: "Bob" }, { t: "td", c: "Editor" }, { t: "td", c: { t: "span", a: { class: "bw-badge bw-badge-warning" }, c: "Away" } }]},',
+          '        { t: "tr", c: [{ t: "td", c: "Carol" }, { t: "td", c: "Viewer" }, { t: "td", c: { t: "span", a: { class: "bw-badge bw-badge-secondary" }, c: "Offline" } }]}',
+          '      ]}',
+          '    ]}',
+          '  ]',
+          '});',
+          '',
+          'onAction("refresh", function() {',
+          '  var pct = Math.floor(Math.random() * 100);',
+          '  client.patch("prog", pct + "%", { style: "width:" + pct + "%" });',
+          '});'
+        ].join('\n')
+      },
+      raw: {
+        label: 'Raw Protocol',
+        desc: 'type protocol JSON directly',
+        code: [
+          '// Raw Protocol: send JSON messages directly',
+          '// Edit the messages below and click Run to see them applied',
+          '',
+          '// Step 1: render initial UI',
+          'send({',
+          '  type: "replace",',
+          '  target: "#app",',
+          '  node: {',
+          '    t: "div", a: { style: "padding:24px" }, c: [',
+          '      { t: "h2", c: "Raw Protocol Demo" },',
+          '      { t: "p", a: { id: "msg" }, c: "This text can be patched." },',
+          '      { t: "ul", a: { id: "list" }, c: [',
+          '        { t: "li", c: "Item 1" },',
+          '        { t: "li", c: "Item 2" }',
+          '      ]}',
+          '    ]',
+          '  }',
+          '});',
+          '',
+          '// Step 2: patch the paragraph',
+          'send({ type: "patch", target: "msg", content: "Patched at " + new Date().toLocaleTimeString() });',
+          '',
+          '// Step 3: append to the list',
+          'send({',
+          '  type: "append",',
+          '  target: "#list",',
+          '  node: { t: "li", a: { style: "color:green" }, c: "Appended item!" }',
+          '});',
+          '',
+          '// Step 4: batch multiple ops',
+          'send({',
+          '  type: "batch",',
+          '  ops: [',
+          '    { type: "append", target: "#list", node: { t: "li", c: "Batch item A" } },',
+          '    { type: "append", target: "#list", node: { t: "li", c: "Batch item B" } }',
+          '  ]',
+          '});'
+        ].join('\n')
+      }
+    };
+
+    // =========================================================================
+    // Protocol log
+    // =========================================================================
+    var logEntries = [];
+
+    function logMessage(msg) {
+      var entry = JSON.stringify(msg, null, 2);
+      logEntries.push(entry);
+      var logEl = bw.$('#protocol-log')[0];
+      if (logEl) {
+        logEl.textContent = logEntries.join('\n---\n');
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+    }
+
+    function clearLog() {
+      logEntries = [];
+      var logEl = bw.$('#protocol-log')[0];
+      if (logEl) logEl.textContent = '// Protocol messages will appear here...';
+    }
+
+    // =========================================================================
+    // Mock client — mirrors bwserve client API
+    // =========================================================================
+    function createMockClient(iframe) {
+      var client = {};
+      var iframeWindow = iframe.contentWindow;
+
+      function send(msg) {
+        logMessage(msg);
+        try {
+          iframeWindow.bw.clientApply(msg);
+        } catch (e) {
+          // clientApply may not exist yet — fall back to manual DOM ops
+          applyFallback(iframeWindow, msg);
+        }
+      }
+
+      client.render = function(target, taco) {
+        send({ type: 'replace', target: target, node: taco });
+      };
+      client.patch = function(id, content, attr) {
+        send({ type: 'patch', target: id, content: content, attr: attr || null });
+      };
+      client.append = function(target, taco) {
+        send({ type: 'append', target: target, node: taco });
+      };
+      client.remove = function(target) {
+        send({ type: 'remove', target: target });
+      };
+      client.batch = function(ops) {
+        send({ type: 'batch', ops: ops });
+      };
+      client.message = function(target, action, data) {
+        send({ type: 'message', target: target, action: action, data: data });
+      };
+
+      // Also expose raw send for the "Raw Protocol" preset
+      client._send = send;
+
+      return client;
+    }
+
+    // Fallback: apply protocol messages without bw.clientApply
+    // (handles the case before clientApply is implemented)
+    function applyFallback(win, msg) {
+      var doc = win.document;
+      if (!doc) return;
+
+      if (msg.type === 'replace') {
+        var target = doc.querySelector(msg.target);
+        if (target && win.bw) {
+          var el = win.bw.createDOM(msg.node);
+          target.innerHTML = '';
+          target.appendChild(el);
+        }
+      } else if (msg.type === 'patch') {
+        var el2 = doc.getElementById(msg.target) || doc.querySelector(msg.target);
+        if (el2) {
+          if (msg.content !== undefined && msg.content !== null) el2.textContent = msg.content;
+          if (msg.attr) {
+            for (var k in msg.attr) {
+              if (msg.attr[k] === null) el2.removeAttribute(k);
+              else el2.setAttribute(k, msg.attr[k]);
+            }
+          }
+        }
+      } else if (msg.type === 'append') {
+        var parent = doc.querySelector(msg.target);
+        if (parent && win.bw) {
+          var child = win.bw.createDOM(msg.node);
+          parent.appendChild(child);
+        }
+      } else if (msg.type === 'remove') {
+        var toRemove = doc.querySelector(msg.target);
+        if (toRemove) toRemove.remove();
+      } else if (msg.type === 'batch' && msg.ops) {
+        msg.ops.forEach(function(op) { applyFallback(win, op); });
+      }
+    }
+
+    // =========================================================================
+    // iframe bootstrap
+    // =========================================================================
+
+    // Build the srcdoc HTML string once — used for both init and reset.
+    // srcdoc iframes have origin about:srcdoc, so relative paths won't resolve.
+    // We compute absolute URLs from the parent page's location.
+    var pageDir = location.href.replace(/[^/]*$/, '');
+    var bwScriptUrl = new URL('../dist/bitwrench.umd.js', pageDir).href;
+    var bwCssUrl = new URL('../dist/bitwrench.css', pageDir).href;
+
+    var IFRAME_SRCDOC = [
+      '<!DOCTYPE html>',
+      '<html><head>',
+      '<script src="' + bwScriptUrl + '"></' + 'script>',
+      '<link rel="stylesheet" href="' + bwCssUrl + '">',
+      '</head><body style="margin:0">',
+      '<div id="app" style="padding:16px;color:#888;font-family:system-ui,sans-serif">Waiting for server code...</div>',
+      '<script>',
+      'bw.loadDefaultStyles();',
+      'window._bwReady = true;',
+      // Wire up data-bw-action click delegation
+      'document.addEventListener("click", function(e) {',
+      '  var el = e.target.closest("[data-bw-action]");',
+      '  if (!el) return;',
+      '  e.preventDefault();',
+      '  var actionData = { action: el.getAttribute("data-bw-action") };',
+      '  if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");',
+      '  var form = el.closest("div") || document;',
+      '  var inp = form.querySelector("input[type=text],input:not([type])");',
+      '  if (inp) { actionData.inputValue = inp.value; inp.value = ""; }',
+      '  window.parent.postMessage(actionData, "*");',
+      '});',
+      'document.addEventListener("keydown", function(e) {',
+      '  if (e.key === "Enter" && e.target.tagName === "INPUT") {',
+      '    var form = e.target.closest("div") || document;',
+      '    var actionBtn = form.querySelector("[data-bw-action]");',
+      '    if (actionBtn) {',
+      '      var actionData = { action: actionBtn.getAttribute("data-bw-action"), inputValue: e.target.value };',
+      '      e.target.value = "";',
+      '      window.parent.postMessage(actionData, "*");',
+      '    }',
+      '  }',
+      '});',
+      '</' + 'script>',
+      '</body></html>'
+    ].join('\n');
+
+    function initClientFrame(iframe, callback) {
+      // Use srcdoc — the browser handles loading natively.
+      // We listen for the load event to know when scripts have executed.
+      iframe.onload = function() {
+        // Poll briefly for _bwReady (script execution may lag behind load)
+        var attempts = 0;
+        var poll = setInterval(function() {
+          attempts++;
+          try {
+            if (iframe.contentWindow && iframe.contentWindow._bwReady) {
+              clearInterval(poll);
+              if (callback) callback();
+            } else if (attempts > 50) {
+              clearInterval(poll);
+              if (callback) callback();
+            }
+          } catch (e) {
+            clearInterval(poll);
+            if (callback) callback();
+          }
+        }, 100);
+      };
+      iframe.srcdoc = IFRAME_SRCDOC;
+    }
+
+    // =========================================================================
+    // Run user code
+    // =========================================================================
+    var actionHandlers = {};
+
+    function runCode() {
+      var editorEl = bw.$('#sandbox-editor')[0];
+      if (!editorEl || !editorEl._bwCodeEdit) return;
+      var code = editorEl._bwCodeEdit.getValue();
+      var iframe = bw.$('#client-frame')[0];
+      if (!iframe) return;
+
+      actionHandlers = {};
+
+      initClientFrame(iframe, function() {
+        var client = createMockClient(iframe);
+        clearLog();
+
+        // Set up action listener from iframe
+        window.removeEventListener('message', window._bwSandboxMsgHandler);
+        window._bwSandboxMsgHandler = function(e) {
+          if (e.data && e.data.action) {
+            var handler = actionHandlers[e.data.action];
+            if (handler) handler(e.data);
+          }
+        };
+        window.addEventListener('message', window._bwSandboxMsgHandler);
+
+        try {
+          // Provide helpers: client, onAction, send
+          var fn = new Function('client', 'bw', 'onAction', 'send',
+            '"use strict";\n' + code
+          );
+          fn(
+            client,
+            bw,
+            function(action, handler) { actionHandlers[action] = handler; },
+            function(msg) { logMessage(msg); applyFallback(iframe.contentWindow, msg); }
+          );
+
+          var statusEl = bw.$('#sandbox-status')[0];
+          if (statusEl) {
+            statusEl.textContent = 'Running';
+            statusEl.style.color = '#4CAF50';
+          }
+        } catch (e) {
+          var statusEl2 = bw.$('#sandbox-status')[0];
+          if (statusEl2) {
+            statusEl2.textContent = 'Error: ' + e.message;
+            statusEl2.style.color = '#f44336';
+          }
+          logMessage({ error: e.message, stack: e.stack });
+        }
+      });
+    }
+
+    function loadPreset(name) {
+      var preset = PRESETS[name];
+      if (!preset) return;
+      var editorEl = bw.$('#sandbox-editor')[0];
+      if (editorEl && editorEl._bwCodeEdit) {
+        editorEl._bwCodeEdit.setValue(preset.code);
+      }
+      // Update active state on preset buttons
+      bw.$('.preset-btn').forEach(function(btn) {
+        btn.classList.toggle('bw_btn_primary', btn.getAttribute('data-preset') === name);
+        btn.classList.toggle('bw_btn_outline_secondary', btn.getAttribute('data-preset') !== name);
+      });
+    }
+
+    // =========================================================================
+    // Build page
+    // =========================================================================
+
+    var presetButtons = Object.keys(PRESETS).map(function(key) {
+      var p = PRESETS[key];
+      return {
+        t: 'button',
+        a: {
+          class: 'preset-btn bw_btn bw_btn_sm ' + (key === 'counter' ? 'bw_btn_primary' : 'bw_btn_outline_secondary'),
+          title: p.desc,
+          'data-preset': key,
+          onclick: function() { loadPreset(key); }
+        },
+        c: p.label
+      };
+    });
+
+    // Page header — same pattern as all other pages
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+        c: [
+          { t: 'h1', c: 'bwserve Sandbox' },
+          { t: 'p', a: { class: 'subtitle' },
+            c: 'Write server-side bwserve code on the left. Click Run to see the client render on the right.' }
+        ]
+      }
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' }, c: [
+        // Preset bar
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            {
+              t: 'div', a: { class: 'demo-section-body' }, c: [
+                {
+                  t: 'div', a: { style: 'display:flex;gap:6px;flex-wrap:wrap;align-items:center' },
+                  c: [
+                    { t: 'span', a: { style: 'font-weight:600;margin-right:4px;color:var(--bw_text_secondary)' }, c: 'Presets:' }
+                  ].concat(presetButtons)
+                }
+              ]
+            }
+          ]
+        },
+
+        // Main layout: editor + client viewport
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            {
+              t: 'div', a: { class: 'demo-section-body', style: 'padding:0' }, c: [
+                {
+                  t: 'div', a: { id: 'sandbox-main', style: 'display:flex;gap:0;height:60vh;min-height:400px' }, c: [
+                    // Left: code editor
+                    {
+                      t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--bw_card_border)' }, c: [
+                        {
+                          t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bw_teal_light);border-bottom:1px solid var(--bw_card_border)' }, c: [
+                            { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:var(--bw_teal_dark)' }, c: 'Server Code' },
+                            { t: 'div', a: { style: 'display:flex;gap:4px' }, c: [
+                              {
+                                t: 'button',
+                                a: { class: 'bw_btn bw_btn_sm bw_btn_primary', onclick: function() { runCode(); } },
+                                c: '\u25B6 Run'
+                              },
+                              {
+                                t: 'button',
+                                a: {
+                                  class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
+                                  onclick: function() { loadPreset('counter'); runCode(); }
+                                },
+                                c: 'Reset'
+                              }
+                            ]}
+                          ]
+                        },
+                        {
+                          t: 'div', a: { id: 'sandbox-editor', style: 'flex:1;min-height:0' },
+                          c: 'Loading editor...',
+                          o: {
+                            mounted: function(el) {
+                              var editor = bw.codeEditor({
+                                code: PRESETS.counter.code,
+                                lang: 'js',
+                                lineNumbers: true,
+                                height: '100%',
+                                onChange: function() {}
+                              });
+                              var dom = bw.createDOM(editor);
+                              el.innerHTML = '';
+                              el.appendChild(dom);
+                              // The inner .bw_ce mounted hook sets _bwCodeEdit via rAF.
+                              // Poll until it's available (typically 1-2 frames).
+                              var editorPoll = setInterval(function() {
+                                var inner = el.querySelector('.bw_ce');
+                                if (inner && inner._bwCodeEdit) {
+                                  clearInterval(editorPoll);
+                                  el._bwCodeEdit = inner._bwCodeEdit;
+                                }
+                              }, 50);
+                            }
+                          }
+                        }
+                      ]
+                    },
+
+                    // Right: client viewport (iframe)
+                    {
+                      t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column;min-width:0' }, c: [
+                        {
+                          t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bw_teal_light);border-bottom:1px solid var(--bw_card_border)' }, c: [
+                            { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:var(--bw_teal_dark)' }, c: 'Client View' },
+                            { t: 'span', a: { id: 'sandbox-status', style: 'font-size:0.8rem;color:var(--bw_text_muted)' }, c: 'Ready' }
+                          ]
+                        },
+                        {
+                          t: 'iframe', a: {
+                            id: 'client-frame',
+                            // No sandbox attr — we need contentDocument access for doc.write().
+                            // This is a dev tool, not a security boundary.
+                            style: 'flex:1;border:none;background:#fff;min-height:0'
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        // Protocol log
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'Protocol Messages' },
+            {
+              t: 'div', a: { class: 'demo-section-body' }, c: [
+                {
+                  t: 'pre', a: {
+                    id: 'protocol-log',
+                    style: 'max-height:200px;overflow-y:auto;font-size:0.8rem;background:var(--bw_code_bg);color:var(--bw_code_text);padding:12px;border-radius:var(--bw_radius);margin:0'
+                  },
+                  c: '// Protocol messages will appear here after you click Run...'
+                }
+              ]
+            }
+          ]
+        },
+
+        // How it works
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'How It Works' },
+            {
+              t: 'div', a: { class: 'demo-section-body' }, c: [
+                {
+                  t: 'div', a: { class: 'callout callout-concept' }, c: [
+                    { t: 'h4', c: 'Client-side simulation' },
+                    { t: 'p', c: [
+                      'No real server is running. Your code executes in the browser with a mock ',
+                      { t: 'code', c: 'client' },
+                      ' object that mirrors the bwserve API. The iframe on the right acts as the "browser client", receiving protocol messages just like a real bwserve connection.'
+                    ]}
+                  ]
+                },
+                {
+                  t: 'div', a: { style: 'margin-top:16px' }, c: [
+                    { t: 'h4', a: { style: 'margin-bottom:8px' }, c: 'Available API' },
+                    {
+                      t: 'table', a: { class: 'bw_table bw_table_striped' }, c: [
+                        { t: 'thead', c: { t: 'tr', c: [
+                          { t: 'th', c: 'Function' },
+                          { t: 'th', c: 'Description' }
+                        ]}},
+                        { t: 'tbody', c: [
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.render(target, taco)' } }, { t: 'td', c: 'Replace target contents with TACO' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.patch(id, content, attr)' } }, { t: 'td', c: 'Update text/attributes of element by id' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.append(target, taco)' } }, { t: 'td', c: 'Append a TACO child to target' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.remove(target)' } }, { t: 'td', c: 'Remove element from DOM' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.batch(ops)' } }, { t: 'td', c: 'Send multiple operations at once' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'onAction(name, handler)' } }, { t: 'td', c: 'Handle actions from client (button clicks etc.)' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] }
+                        ]}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
+
+    // Initialize the iframe on page load so it shows "Waiting for server code..."
+    // and bitwrench is pre-loaded for when the user clicks Run
+    var initFrame = bw.$('#client-frame')[0];
+    if (initFrame) {
+      initClientFrame(initFrame, function() {
+        var statusEl = bw.$('#sandbox-status')[0];
+        if (statusEl) statusEl.textContent = 'Ready';
+      });
+    }
+
+    // =========================================================================
+    // Responsive: stack editor/iframe vertically on narrow screens
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '@media (max-width: 768px)': {
+        '#sandbox-main': {
+          'flex-direction': 'column !important',
+          'height': 'auto !important',
+          'min-height': '0 !important'
+        },
+        '#sandbox-main > div': {
+          'flex': '0 0 auto !important',
+          'min-height': '300px',
+          'border-right': 'none !important',
+          'border-bottom': '1px solid var(--bw_card_border) !important'
+        }
+      }
+    }), { id: 'sandbox-responsive' });
+  </script>
+</body>
+</html>

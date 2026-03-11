@@ -14,7 +14,6 @@
   'use strict';
 
   // Primary nav items (main dark bar)
-  // Items with `children` array render as hover-activated dropdowns.
   var primaryItems = [
     { text: 'Home', href: 'index.html' },
     { text: 'Quick Start', href: '00-quick-start.html' },
@@ -23,14 +22,7 @@
     { text: 'Themes', href: '10-themes.html' },
     { text: 'State', href: '05-state.html' },
     { text: 'Examples', href: '02-tables.html' },
-    {
-      text: 'Docs', href: '08-api-reference.html',
-      children: [
-        { text: 'API Reference', href: '08-api-reference.html' },
-        { text: 'Builds', href: '09-builds.html' },
-        { text: 'Debugging', href: '11-debugging.html' }
-      ]
-    }
+    { text: 'Docs', href: '08-api-reference.html' }
   ];
 
   // Secondary nav items (sub-nav bar, shown only on example pages)
@@ -44,19 +36,19 @@
     { text: 'Comparison', href: '07-framework-comparison.html' }
   ];
 
+  // Docs secondary nav items (sub-nav bar, shown only on docs pages)
+  var docsSecondaryItems = [
+    { text: 'API Reference', href: '08-api-reference.html' },
+    { text: 'Builds', href: '09-builds.html' },
+    { text: 'Debugging', href: '11-debugging.html' }
+  ];
+
   // Set of secondary hrefs for quick lookup
   var secondaryHrefs = {};
   secondaryItems.forEach(function(item) { secondaryHrefs[item.href] = true; });
 
-  // Collect all child hrefs for dropdown active highlighting
-  var dropdownChildHrefs = {};
-  primaryItems.forEach(function(item) {
-    if (item.children) {
-      item.children.forEach(function(child) {
-        dropdownChildHrefs[child.href] = item;
-      });
-    }
-  });
+  var docsSecondaryHrefs = {};
+  docsSecondaryItems.forEach(function(item) { docsSecondaryHrefs[item.href] = true; });
 
   function resolveHref(href, baseHref) {
     if (!baseHref) return href;
@@ -74,11 +66,9 @@
     return false;
   }
 
-  function isDropdownActive(item, currentPage, baseHref) {
-    if (!item.children) return false;
-    for (var i = 0; i < item.children.length; i++) {
-      var rh = resolveHref(item.children[i].href, baseHref);
-      if (isActive(item.children[i].href, currentPage, rh)) return true;
+  function isDocsPage(currentPage) {
+    for (var href in docsSecondaryHrefs) {
+      if (currentPage === href) return true;
     }
     return false;
   }
@@ -88,55 +78,20 @@
     var ver = window.bw && window.bw.version || '2.0.4';
     var onExamplePage = isExamplePage(currentPage);
 
+    var onDocsPage = isDocsPage(currentPage);
+
     // Build primary link items
     var primaryLinks = primaryItems.map(function(item) {
       var rh = resolveHref(item.href, baseHref);
       var active;
       if (item.text === 'Examples') {
         active = onExamplePage;
-      } else if (item.children) {
-        active = isDropdownActive(item, currentPage, baseHref);
+      } else if (item.text === 'Docs') {
+        active = onDocsPage;
       } else {
         active = isActive(item.href, currentPage, rh);
       }
 
-      // Dropdown item
-      if (item.children) {
-        var dropdownLinks = item.children.map(function(child) {
-          var crh = resolveHref(child.href, baseHref);
-          var childActive = isActive(child.href, currentPage, crh);
-          return {
-            t: 'a',
-            a: {
-              href: crh,
-              class: 'bw_site_dropdown_link' + (childActive ? ' active' : '')
-            },
-            c: child.text
-          };
-        });
-
-        return {
-          t: 'li',
-          a: { class: 'bw_site_nav_dropdown' },
-          c: [
-            {
-              t: 'a',
-              a: {
-                href: rh,
-                class: 'bw_site_nav_link' + (active ? ' active' : '')
-              },
-              c: item.text + ' \u25BE'
-            },
-            {
-              t: 'div',
-              a: { class: 'bw_site_dropdown_menu' },
-              c: dropdownLinks
-            }
-          ]
-        };
-      }
-
-      // Regular item
       return {
         t: 'li',
         c: {
@@ -164,22 +119,38 @@
       };
     });
 
-    // Build mobile menu (all items, flat — dropdowns expanded)
+    // Build docs secondary links
+    var docsSecondaryLinks = docsSecondaryItems.map(function(item) {
+      var rh = resolveHref(item.href, baseHref);
+      var active = isActive(item.href, currentPage, rh);
+      return {
+        t: 'a',
+        a: {
+          href: rh,
+          class: 'bw_site_subnav_link' + (active ? ' active' : '')
+        },
+        c: item.text
+      };
+    });
+
+    // Build mobile menu (all items, flat)
     var mobileItems = [];
     primaryItems.forEach(function(item) {
-      if (item.children) {
-        item.children.forEach(function(child) {
-          mobileItems.push(child);
-        });
-      } else {
-        mobileItems.push(item);
-      }
+      mobileItems.push(item);
     });
-    secondaryItems.forEach(function(s) {
-      // Skip duplicates — "Examples" in primary already links to first secondary
+    // Add docs sub-items
+    docsSecondaryItems.forEach(function(s) {
       var isDup = false;
       primaryItems.forEach(function(p) {
-        if (p.text === 'Examples' && p.href === s.href) isDup = true;
+        if (p.href === s.href) isDup = true;
+      });
+      if (!isDup) mobileItems.push(s);
+    });
+    // Add example sub-items
+    secondaryItems.forEach(function(s) {
+      var isDup = false;
+      primaryItems.forEach(function(p) {
+        if (p.href === s.href) isDup = true;
       });
       if (!isDup) mobileItems.push(s);
     });
@@ -278,7 +249,7 @@
     // Secondary items: sub-nav + mobile menu (inserted after #example-nav)
     var belowNav = [];
 
-    // Only add sub-nav when on an example page
+    // Show sub-nav when on an example page or docs page
     if (onExamplePage) {
       belowNav.push({
         t: 'div',
@@ -288,6 +259,18 @@
             t: 'div',
             a: { class: 'bw_site_subnav_inner' },
             c: secondaryLinks
+          }
+        ]
+      });
+    } else if (onDocsPage) {
+      belowNav.push({
+        t: 'div',
+        a: { class: 'bw_site_subnav' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw_site_subnav_inner' },
+            c: docsSecondaryLinks
           }
         ]
       });

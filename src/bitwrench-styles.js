@@ -1119,7 +1119,7 @@ var structuralRules = {
     '@media (min-width: 992px)': { '.bw_container': { 'max-width': '960px' } },
     '@media (min-width: 1200px)': { '.bw_container': { 'max-width': '1140px' } },
     '.bw_container_fluid': {
-      'width': '100%', 'padding-right': '15px', 'padding-left': '15px',
+      'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
       'margin-right': 'auto', 'margin-left': 'auto'
     },
     '.bw_row': {
@@ -1465,7 +1465,7 @@ var structuralRules = {
   // ---- Code demo ----
   codeDemo: {
     '.bw_code_demo': { 'margin-bottom': '2rem' },
-    '.bw_code_pre': { 'margin': '0', 'border': 'none', 'overflow-x': 'auto' },
+    '.bw_code_pre': { 'margin': '0', 'border': 'none', 'overflow-x': 'auto', 'max-width': '100%' },
     '.bw_code_block': {
       'display': 'block', 'padding': '1.25rem',
       'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
@@ -1562,7 +1562,7 @@ var structuralRules = {
     },
     '.bw_modal.bw_modal_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
     '.bw_modal_dialog': {
-      'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
+      'position': 'relative', 'width': 'calc(100% - 1rem)', 'max-width': '500px', 'margin': '1.75rem auto',
       'pointer-events': 'none'
     },
     '.bw_modal.bw_modal_show .bw_modal_dialog': { 'transform': 'translateY(0)' },
@@ -1592,7 +1592,7 @@ var structuralRules = {
     '.bw_toast_container.bw_toast_top_center': { 'top': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
     '.bw_toast_container.bw_toast_bottom_center': { 'bottom': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
     '.bw_toast': {
-      'pointer-events': 'auto', 'width': '350px', 'max-width': '100%', 'background-clip': 'padding-box',
+      'pointer-events': 'auto', 'width': '350px', 'max-width': 'calc(100vw - 2rem)', 'background-clip': 'padding-box',
       'opacity': '0'
     },
     '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
@@ -1678,7 +1678,7 @@ var structuralRules = {
     '.bw_tooltip_wrapper': { 'position': 'relative', 'display': 'inline-block' },
     '.bw_tooltip': {
       'position': 'absolute', 'z-index': '999',
-      'font-size': '0.875rem', 'white-space': 'nowrap', 'pointer-events': 'none',
+      'font-size': '0.875rem', 'white-space': 'nowrap', 'max-width': 'min(300px, calc(100vw - 1rem))', 'pointer-events': 'none',
       'opacity': '0', 'visibility': 'hidden'
     },
     '.bw_tooltip.bw_tooltip_show': { 'opacity': '1', 'visibility': 'visible' },
@@ -1698,7 +1698,7 @@ var structuralRules = {
     '.bw_popover_trigger': { 'cursor': 'pointer' },
     '.bw_popover': {
       'position': 'absolute', 'z-index': '1000',
-      'min-width': '200px', 'max-width': '320px',
+      'min-width': '200px', 'max-width': 'min(320px, calc(100vw - 2rem))',
       'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden'
     },
     '.bw_popover.bw_popover_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
@@ -1881,7 +1881,18 @@ var structuralRules = {
       '.bw_hero, .bw_hero': { 'padding': '2rem 1rem' },
       '.bw_cta_actions, .bw_cta-actions': { 'flex-direction': 'column' },
       '.bw_hstack, .bw_hstack': { 'flex-direction': 'column' },
-      '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' }
+      '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' },
+      '.bw_modal_dialog': { 'margin': '0.5rem auto' },
+      '.bw_modal_lg': { 'max-width': 'calc(100% - 1rem)' },
+      '.bw_modal_xl': { 'max-width': 'calc(100% - 1rem)' },
+      '.bw_navbar': { 'padding': '0.5rem 0.75rem' },
+      '.bw_navbar_brand': { 'margin-right': '0.5rem', 'font-size': '1rem' },
+      '.bw_navbar_nav': { 'flex-wrap': 'wrap' },
+      '.bw_tooltip': { 'white-space': 'normal' },
+      '.bw_table': { 'display': 'block', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' },
+      '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': { 'flex': '0 0 100%', 'max-width': '100%' },
+      '.bw_container': { 'padding-right': '0.5rem', 'padding-left': '0.5rem' },
+      '.bw_container_fluid': { 'padding-right': '0.5rem', 'padding-left': '0.5rem' }
     }
   }
 };
