@@ -156,22 +156,79 @@ Options:
       --version          Print version
 ```
 
-## The `bwcli serve` subcommand
+## The `bwcli serve` subcommand — Pipe Server
+
+`bwcli serve` is a pipe server that turns **any language** into a bwserve backend. It opens two ports:
+
+- **Web port** (default `:8080`) — browsers connect here via SSE
+- **Input port** (default `:9000`) — your app sends protocol messages here via HTTP POST
+
+Alternatively, use `--stdin` to pipe newline-delimited JSON from stdin.
+
+### Usage
 
 ```bash
-bwcli serve [dir] [options]
+# Start the pipe server with default ports
+bwcli serve
+
+# Custom ports
+bwcli serve --port 8080 --input-port 9000
+
+# Open browser automatically
+bwcli serve --open
+
+# Stdin mode: pipe messages from any command
+python sensor.py | bwcli serve --stdin --port 8080
+
+# Verbose logging (shows all messages)
+bwcli serve -v
 ```
 
-A development server for bitwrench applications. This feature is under development — see [bwserve](bwserve.md) for the server-driven UI library it will be built on.
+### Sending protocol messages
+
+Your app sends bwserve protocol messages (JSON) to the input port. All connected browsers update in real time.
+
+```bash
+# Patch a value:
+curl -X POST http://localhost:9000 \
+  -H "Content-Type: application/json" \
+  -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+
+# Batch update:
+curl -X POST http://localhost:9000 \
+  -d '{"type":"batch","ops":[
+    {"type":"patch","target":"temp","content":"23.5"},
+    {"type":"patch","target":"humidity","content":"67%"}
+  ]}'
+
+# r-prefix relaxed JSON is also accepted (for C/embedded):
+curl -X POST http://localhost:9000 -d "r{'type':'patch','target':'temp','content':'23.5'}"
+```
+
+### Options
 
 ```
+bwcli serve [options]
+
 Options:
-  -p, --port <number>    Port (default: 7902)
-  -t, --theme <name>     Theme preset or hex colors
-      --open             Open browser on start
-  -v, --verbose          Verbose output
-  -h, --help             Print help
+  -p, --port <number>         Web port for browsers (default: 8080)
+      --input-port <number>   Input port for protocol messages (default: 9000)
+      --stdin                 Read messages from stdin instead of input port
+  -t, --theme <name>          Theme preset or hex colors
+      --open                  Open browser on start
+  -v, --verbose               Verbose output (shows all messages)
+  -h, --help                  Print help
 ```
+
+### How it works
+
+1. Browser opens `http://localhost:8080` and gets an auto-generated page shell
+2. Shell loads bitwrench, opens SSE connection to `/__bw/events/:clientId`
+3. Your app POSTs protocol messages to `http://localhost:9000`
+4. `bwcli serve` broadcasts each message to all connected browsers via SSE
+5. Browser's `bw.clientApply()` updates the DOM
+
+Both strict JSON and r-prefix relaxed JSON are accepted on the input port. See [bwserve](bwserve.md) for the full protocol reference.
 
 ## Page layout
 

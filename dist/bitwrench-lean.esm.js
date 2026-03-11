@@ -12,7 +12,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-11T19:24:12.692Z'
+  buildDate: '2026-03-11T22:33:26.468Z'
 };
 
 /**
@@ -5903,6 +5903,9 @@ bw._builtinClientFunctions = {
  * The r-prefix format is designed for C/C++ string literals where
  * double-quote escaping is painful. The parser is a state machine
  * that walks character by character — not a regex replace.
+ *
+ * Escaping: apostrophes inside single-quoted values must be escaped
+ * with backslash: r{'name':'Barry\'s room'}
  *
  * @param {string} str - JSON or r-prefixed relaxed JSON string
  * @returns {Object} Parsed message object

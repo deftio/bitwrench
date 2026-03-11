@@ -11,7 +11,7 @@ These guides cover how to build UIs with bitwrench. Start with the TACO format, 
 | [Component Library](component-library.md) | All 52 `make*()` functions with signatures and examples |
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
 | [CLI](cli.md) | The `bwcli` command: file conversion, themes, standalone pages |
-| [bwserve](bwserve.md) | Server-driven UI (coming soon) |
+| [bwserve](bwserve.md) | Server-driven UI: SSE protocol, pipe server, embedded devices, relaxed JSON |
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
 
 ## Tutorials
@@ -35,6 +35,8 @@ The [live documentation site](https://deftio.github.io/bitwrench/pages/) has int
 - [Framework Comparison](https://deftio.github.io/bitwrench/pages/07-framework-comparison.html)
 - [Themes](https://deftio.github.io/bitwrench/pages/10-themes.html)
 - [Debugging](https://deftio.github.io/bitwrench/pages/11-debugging.html)
+- [bwserve Protocol](https://deftio.github.io/bitwrench/pages/12-bwserve-protocol.html)
+- [bwserve Sandbox](https://deftio.github.io/bitwrench/pages/bwserve-sandbox.html)
 
 ## Key Concepts
 

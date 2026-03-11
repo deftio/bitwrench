@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench - bwserve Protocol</title>
+  <title>Bitwrench - Server Side</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
@@ -18,19 +18,39 @@
     mountExampleNav('#example-nav', '12-bwserve-protocol.html');
     bw.loadDefaultStyles();
 
+    // =========================================================================
+    // Page-specific styles (only badge colors — everything else is shared-theme)
+    // =========================================================================
     bw.injectCSS(bw.css({
-      '.proto-section': {
-        'margin-bottom': '2rem'
+      '.msg-badge': {
+        'display': 'inline-block',
+        'padding': '0.15rem 0.5rem',
+        'border-radius': '4px',
+        'font-weight': '600',
+        'font-size': '0.75rem',
+        'font-family': 'var(--bw_font_mono)',
+        'color': '#fff',
+        'margin-right': '0.5rem',
+        'vertical-align': 'middle'
       },
-      '.proto-code': {
-        'background': '#f8f9fa',
-        'border': '1px solid #e0e0e0',
-        'border-radius': '6px',
-        'padding': '1rem',
-        'font-family': "'SF Mono', 'Fira Code', monospace",
-        'font-size': '0.85rem',
+      '.badge-replace':  { 'background': '#2a9d8f' },
+      '.badge-patch':    { 'background': '#e07b4a' },
+      '.badge-append':   { 'background': '#457b9d' },
+      '.badge-remove':   { 'background': '#e63946' },
+      '.badge-batch':    { 'background': '#6c757d' },
+      '.badge-message':  { 'background': '#8b5cf6' },
+      '.badge-register': { 'background': '#7c3aed' },
+      '.badge-call':     { 'background': '#0891b2' },
+      '.badge-exec':     { 'background': '#dc2626' },
+      '.arch-diagram': {
+        'background': 'var(--bw_code_bg)',
+        'color': 'var(--bw_code_text)',
+        'padding': '1.25rem',
+        'border-radius': '8px',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '0.8rem',
+        'line-height': '1.4',
         'overflow-x': 'auto',
-        'line-height': '1.5',
         'white-space': 'pre'
       },
       '.proto-table': {
@@ -40,850 +60,838 @@
       },
       '.proto-table th, .proto-table td': {
         'padding': '0.5rem 0.75rem',
-        'border': '1px solid #e0e0e0',
-        'text-align': 'left'
+        'border': '1px solid var(--bw_card_border)',
+        'text-align': 'left',
+        'font-size': '0.875rem'
       },
       '.proto-table th': {
-        'background': '#f0f0f0',
+        'background': 'var(--bw_teal_bg)',
         'font-weight': '600',
-        'font-size': '0.85rem'
-      },
-      '.proto-table td': {
-        'font-size': '0.9rem'
+        'font-size': '0.8rem'
       },
       '.proto-table code': {
-        'background': '#e8f5f3',
-        'padding': '0.15rem 0.35rem',
+        'background': 'var(--bw_teal_light)',
+        'padding': '0.1rem 0.3rem',
         'border-radius': '3px',
         'font-size': '0.8rem',
-        'color': '#006666'
-      },
-      '.proto-diagram': {
-        'background': '#1a2332',
-        'color': '#88c0d0',
-        'padding': '1.25rem',
-        'border-radius': '8px',
-        'font-family': "'SF Mono', 'Fira Code', monospace",
-        'font-size': '0.8rem',
-        'line-height': '1.4',
-        'overflow-x': 'auto',
-        'white-space': 'pre'
-      },
-      '.callout-tip': {
-        'background': '#e8f5f3',
-        'border-left': '4px solid #006666',
-        'padding': '0.75rem 1rem',
-        'margin': '1rem 0',
-        'border-radius': '0 6px 6px 0',
-        'font-size': '0.9rem'
-      },
-      '.msg-type-badge': {
-        'display': 'inline-block',
-        'padding': '0.15rem 0.5rem',
-        'border-radius': '4px',
-        'font-weight': '600',
-        'font-size': '0.75rem',
-        'font-family': "'SF Mono', 'Fira Code', monospace",
-        'color': '#fff',
-        'margin-right': '0.5rem'
-      },
-      '.badge-replace': { 'background': '#2a9d8f' },
-      '.badge-patch': { 'background': '#e07b4a' },
-      '.badge-append': { 'background': '#457b9d' },
-      '.badge-remove': { 'background': '#e63946' },
-      '.badge-batch': { 'background': '#6c757d' },
-      '.badge-register': { 'background': '#7c3aed' },
-      '.badge-call': { 'background': '#0891b2' },
-      '.badge-exec': { 'background': '#dc2626' },
-      '.toc-link': {
-        'color': '#006666',
-        'text-decoration': 'none',
-        'font-size': '0.9rem'
-      },
-      '.toc-link:hover': {
-        'text-decoration': 'underline'
+        'color': 'var(--bw_teal_dark)'
       }
     }), { id: 'proto-styles' });
 
     // =========================================================================
-    // Page content
+    // Helpers
     // =========================================================================
-
-    function codeBlock(code) {
-      return { t: 'pre', a: { class: 'proto-code' }, c: code };
+    function code(text) {
+      return { t: 'code', c: text };
     }
 
     function badge(type) {
-      var cls = 'msg-type-badge badge-' + type;
-      return { t: 'span', a: { class: cls }, c: type };
+      return { t: 'span', a: { class: 'msg-badge badge-' + type }, c: type };
     }
 
-    // --- Table of Contents ---
-    var toc = {
-      t: 'div', a: { class: 'proto-section' }, c: [
-        { t: 'h2', c: 'Contents' },
-        { t: 'ol', a: { style: 'columns:2;column-gap:2rem' }, c: [
-          { t: 'li', c: { t: 'a', a: { href: '#overview', class: 'toc-link' }, c: 'Overview' } },
-          { t: 'li', c: { t: 'a', a: { href: '#messages', class: 'toc-link' }, c: 'Protocol Messages' } },
-          { t: 'li', c: { t: 'a', a: { href: '#targets', class: 'toc-link' }, c: 'Target Resolution' } },
-          { t: 'li', c: { t: 'a', a: { href: '#actions', class: 'toc-link' }, c: 'Actions (Client to Server)' } },
-          { t: 'li', c: { t: 'a', a: { href: '#transport', class: 'toc-link' }, c: 'Transport' } },
-          { t: 'li', c: { t: 'a', a: { href: '#server-api', class: 'toc-link' }, c: 'Server API' } },
-          { t: 'li', c: { t: 'a', a: { href: '#client-api', class: 'toc-link' }, c: 'Client API' } },
-          { t: 'li', c: { t: 'a', a: { href: '#execution', class: 'toc-link' }, c: 'Server-to-Client Execution' } },
-          { t: 'li', c: { t: 'a', a: { href: '#examples', class: 'toc-link' }, c: 'Examples' } }
-        ]}
-      ]
-    };
+    function codeBlock(lines) {
+      var text = Array.isArray(lines) ? lines.join('\n') : lines;
+      return { t: 'pre', c: { t: 'code', c: text } };
+    }
 
-    // --- 1. Overview ---
-    var overview = {
-      t: 'div', a: { class: 'proto-section', id: 'overview' }, c: [
-        { t: 'h2', c: '1. Overview' },
-        { t: 'p', c: 'bwserve is a server-driven UI library for bitwrench. Application state lives on the server (Node.js), and the server pushes rendering commands to the browser over Server-Sent Events (SSE). User interactions are sent back as actions via HTTP POST.' },
-        { t: 'p', c: 'This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and Liveview.js. The key difference: bwserve sends TACO objects, not HTML strings. The browser already has bitwrench loaded, so it can render TACO natively.' },
-        { t: 'div', a: { class: 'proto-diagram' }, c: [
-'  Browser                            Node.js Server',
+    function callout(type, title, content) {
+      return {
+        t: 'div', a: { class: 'callout callout-' + type, style: 'margin-top: 1rem;' },
+        c: [
+          { t: 'h4', c: title },
+          typeof content === 'string' ? { t: 'p', c: content } : content
+        ]
+      };
+    }
+
+    function protoTable(headers, rows) {
+      return {
+        t: 'table', a: { class: 'proto-table' }, c: [
+          { t: 'thead', c: { t: 'tr', c: headers.map(function(h) { return { t: 'th', c: h }; }) } },
+          { t: 'tbody', c: rows.map(function(row) {
+            return { t: 'tr', c: row.map(function(cell) { return { t: 'td', c: cell }; }) };
+          })}
+        ]
+      };
+    }
+
+    function section(id, title, content) {
+      return {
+        t: 'div', a: { class: 'demo-section', id: id },
+        c: [
+          { t: 'h2', c: { t: 'a', a: { href: '#' + id }, c: title } },
+          { t: 'div', a: { class: 'demo-content' }, c: content }
+        ]
+      };
+    }
+
+    // =========================================================================
+    // 1. Overview
+    // =========================================================================
+    var secOverview = section('overview', 'Overview', [
+      { t: 'p', a: { class: 'demo-description' }, c: [
+        'Bitwrench can be used on the server to send and update an entire UI, using the ',
+        { t: 'strong', c: 'bwserve' },
+        ' (bitwrench server) protocol. You already know how to describe UI as TACO objects \u2014 bwserve lets you compose those same objects on a server and push them to a browser in real time.'
+      ]},
+
+      { t: 'p', c: [
+        'The idea is simple: your application state lives on the server, and the server sends small JSON messages (',
+        code('replace'), ', ', code('patch'), ', ', code('append'), ', ', code('remove'),
+        ') over ',
+        { t: 'a', a: { href: 'https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events' }, c: 'Server-Sent Events (SSE)' },
+        '. The browser already has bitwrench loaded, so it renders each TACO update natively. When the user clicks a button, the browser posts an action back to the server. This is the same pattern as ',
+        { t: 'a', a: { href: 'https://streamlit.io' }, c: 'Streamlit' },
+        ' or Phoenix LiveView \u2014 but instead of HTML strings, the wire format is the same TACO objects you already use.'
+      ]},
+
+      { t: 'div', a: { class: 'arch-diagram' }, c: [
+'  Browser                            Server',
 ' \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510               \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510',
-' \u2502 bitwrench.js     \u2502               \u2502 bwserve              \u2502',
-' \u2502                  \u2502   GET /       \u2502                      \u2502',
+' \u2502 bitwrench.js     \u2502               \u2502 your server          \u2502',
+' \u2502                  \u2502   GET /       \u2502  (Node / Python / C) \u2502',
 ' \u2502  bw.clientConnect\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500>  app.page(\'/\', fn)   \u2502',
 ' \u2502  (opens SSE)     \u2502               \u2502                      \u2502',
 ' \u2502                  \u2502<\u2500\u2500SSE\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500  client.render()     \u2502',
-' \u2502  bw.clientApply()\u2502  {type,node} \u2502  client.patch()      \u2502',
-' \u2502  -> bw.DOM()     \u2502               \u2502  client.append()     \u2502',
-' \u2502  -> bw.patch()   \u2502               \u2502  client.remove()     \u2502',
-' \u2502                  \u2502               \u2502  client.batch()      \u2502',
-' \u2502  data-bw-action  \u2502               \u2502  client.message()    \u2502',
-' \u2502  conn.sendAction \u2502\u2500\u2500POST\u2500\u2500\u2500\u2500\u2500\u2500\u2500>                      \u2502',
+' \u2502  bw.clientApply()\u2502  {TACO JSON}  \u2502  client.patch()      \u2502',
+' \u2502  renders UI      \u2502               \u2502  client.append()     \u2502',
+' \u2502                  \u2502               \u2502  client.remove()     \u2502',
+' \u2502                  \u2502               \u2502  app.broadcast()     \u2502',
+' \u2502  user clicks     \u2502               \u2502                      \u2502',
+' \u2502  data-bw-action  \u2502\u2500\u2500POST\u2500\u2500\u2500\u2500\u2500\u2500\u2500>                      \u2502',
 ' \u2502                  \u2502  {action,data}\u2502  client.on(action,fn)\u2502',
 ' \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518               \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518'
-        ].join('\n') },
-        { t: 'div', a: { class: 'callout-tip' }, c: [
-          { t: 'strong', c: 'Key insight: ' },
-          'The browser already has bitwrench loaded (40KB). The server sends tiny JSON messages (50-500 bytes) instead of full HTML. This makes bwserve ideal for embedded devices (ESP32) and bandwidth-constrained environments.'
-        ]}
-      ]
-    };
+      ].join('\n') },
 
-    // --- 2. Protocol Messages ---
-    var messages = {
-      t: 'div', a: { class: 'proto-section', id: 'messages' }, c: [
-        { t: 'h2', c: '2. Protocol Messages' },
-        { t: 'p', c: 'All messages are JSON objects sent as SSE data frames. Each message has a type field that determines how the client processes it.' },
+      callout('concept', 'Why is this useful?', {
+        t: 'div', c: [
+          { t: 'p', c: [
+            'The browser already has bitwrench loaded (~40KB). The server sends tiny JSON messages (50\u2013500 bytes each) instead of full HTML pages. This makes server-driven UI practical for ',
+            { t: 'strong', c: 'embedded devices' },
+            ' (ESP32, Raspberry Pi), ',
+            { t: 'strong', c: 'dashboards and internal tools' },
+            ', and ',
+            { t: 'strong', c: 'AI agents' },
+            ' that need to push UI updates to a browser.'
+          ]},
+          { t: 'p', c: 'No frontend build step, no client-side routing, no state synchronization bugs. The server is the single source of truth.' }
+        ]
+      }),
 
-        // Message type summary table
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Type' },
-            { t: 'th', c: 'Purpose' },
-            { t: 'th', c: 'Client Action' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: badge('replace') },
-              { t: 'td', c: 'Replace element content with a TACO tree' },
-              { t: 'td', c: { t: 'code', c: 'bw.DOM(target, node)' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('patch') },
-              { t: 'td', c: 'Update text content or attributes of an element' },
-              { t: 'td', c: { t: 'code', c: 'bw.patch(target, content, attr)' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('append') },
-              { t: 'td', c: 'Add a new child element' },
-              { t: 'td', c: { t: 'code', c: 'target.appendChild(bw.createDOM(node))' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('remove') },
-              { t: 'td', c: 'Remove an element from the DOM' },
-              { t: 'td', c: { t: 'code', c: 'bw.cleanup(el); el.remove()' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('batch') },
-              { t: 'td', c: 'Execute multiple operations atomically' },
-              { t: 'td', c: { t: 'code', c: 'ops.forEach(bw.clientApply)' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('register') },
-              { t: 'td', c: 'Register a named function for later invocation' },
-              { t: 'td', c: { t: 'code', c: 'bw._clientFunctions[name] = new Function(body)' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('call') },
-              { t: 'td', c: 'Invoke a registered or built-in function' },
-              { t: 'td', c: { t: 'code', c: 'fn.apply(null, args)' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: badge('exec') },
-              { t: 'td', c: 'Execute arbitrary JS (requires allowExec)' },
-              { t: 'td', c: { t: 'code', c: 'new Function(code)()' } }
-            ]}
-          ]}
-        ]},
+      { t: 'p', c: [
+        'Three ways to use it: ',
+        { t: 'strong', c: '1) Node.js library' },
+        ' \u2014 ', code('import bwserve from "bitwrench/bwserve"'), ', ',
+        { t: 'strong', c: '2) bwcli serve' },
+        ' \u2014 a pipe server that lets any language (Python, shell, etc.) drive the UI, ',
+        { t: 'strong', c: '3) Embedded C/Python/Rust' },
+        ' \u2014 header-only macros for microcontrollers.'
+      ]}
+    ]);
 
-        // replace
-        { t: 'h3', c: [badge('replace'), ' replace'] },
-        { t: 'p', c: 'Replaces the entire content of a target element with a new TACO tree. Use this for initial page render or full section updates.' },
-        codeBlock([
-          '// Schema:',
-          '{ type: "replace", target: "#app", node: {t, a, c, o} }',
-          '',
-          '// Example: render a card into #app',
-          '{ type: "replace",',
-          '  target: "#app",',
-          '  node: {',
-          '    t: "div", a: { class: "bw-card" }, c: [',
-          '      { t: "h3", c: "Hello from bwserve" },',
-          '      { t: "p", c: "This was rendered by the server." }',
-          '    ]',
-          '  }',
-          '}'
-        ].join('\n')),
+    // =========================================================================
+    // 2. Protocol Messages
+    // =========================================================================
+    var secMessages = section('messages', 'Protocol Messages', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'All messages are JSON objects sent as SSE data frames. Each has a type field that determines how the client processes it. There are 5 DOM operations, 1 notification, and 3 execution operations.' },
 
-        // patch
-        { t: 'h3', c: [badge('patch'), ' patch'] },
-        { t: 'p', c: 'Updates the text content or attributes of an existing element without rebuilding the tree. The most lightweight update type.' },
-        codeBlock([
-          '// Schema:',
-          '{ type: "patch", target: "element-id", content: "new text", attr: null }',
-          '',
-          '// Example: update a counter display',
-          '{ type: "patch", target: "counter", content: "42" }',
-          '',
-          '// Example: update an attribute',
-          '{ type: "patch", target: "status", content: "active", attr: "class" }'
-        ].join('\n')),
+      protoTable(
+        ['Type', 'Purpose', 'Client Action'],
+        [
+          [badge('replace'), 'Replace element content with a TACO tree', code('bw.DOM(target, node)')],
+          [badge('patch'), 'Update text content or attributes', code('bw.patch(target, content, attr)')],
+          [badge('append'), 'Add a new child element', code('target.appendChild(bw.createDOM(node))')],
+          [badge('remove'), 'Remove an element from the DOM', code('bw.cleanup(el); el.remove()')],
+          [badge('batch'), 'Execute multiple operations atomically', code('ops.forEach(bw.clientApply)')],
+          [badge('message'), 'Send notification/dispatch to component', code('bw.pub() or component dispatch')],
+          [badge('register'), 'Register a named function for later call', code('bw._clientFunctions[name] = fn')],
+          [badge('call'), 'Invoke a registered or built-in function', code('fn.apply(null, args)')],
+          [badge('exec'), 'Execute arbitrary JS (requires allowExec)', code('new Function(code)()')]
+        ]
+      ),
 
-        // append
-        { t: 'h3', c: [badge('append'), ' append'] },
-        { t: 'p', c: 'Adds a new child element to the target. Use for lists, chat messages, log entries, and growing content.' },
-        codeBlock([
-          '// Schema:',
-          '{ type: "append", target: "#list", node: {t, a, c, o} }',
-          '',
-          '// Example: add a chat message',
-          '{ type: "append",',
-          '  target: "#messages",',
-          '  node: { t: "div", a: { class: "bw-alert bw-alert-info" }, c: "New message!" }',
-          '}'
-        ].join('\n')),
+      // replace
+      { t: 'h3', c: [badge('replace'), ' replace'] },
+      { t: 'p', c: 'Replaces the entire content of a target element with a new TACO tree. Use for initial page render or full section updates.' },
+      codeBlock([
+        '{ type: "replace", target: "#app",',
+        '  node: {',
+        '    t: "div", a: { class: "bw-card" }, c: [',
+        '      { t: "h3", c: "Hello from bwserve" },',
+        '      { t: "p", c: "Rendered by the server." }',
+        '    ]',
+        '  }',
+        '}'
+      ]),
 
-        // remove
-        { t: 'h3', c: [badge('remove'), ' remove'] },
-        { t: 'p', c: 'Removes an element from the DOM. Calls bw.cleanup() to tear down any lifecycle hooks before removal.' },
-        codeBlock([
-          '// Schema:',
-          '{ type: "remove", target: "#item-3" }',
-          '',
-          '// Example: remove a todo item',
-          '{ type: "remove", target: "#todo-5" }'
-        ].join('\n')),
+      // patch
+      { t: 'h3', c: [badge('patch'), ' patch'] },
+      { t: 'p', c: 'Updates text content or attributes of an existing element without rebuilding the tree. The most lightweight update.' },
+      codeBlock([
+        '// Update text content',
+        '{ type: "patch", target: "counter", content: "42" }',
+        '',
+        '// Update an attribute',
+        '{ type: "patch", target: "status", content: "active", attr: "class" }'
+      ]),
 
-        // batch
-        { t: 'h3', c: [badge('batch'), ' batch'] },
-        { t: 'p', c: 'Sends multiple operations in a single message. Operations are applied sequentially. Use for dashboard updates or any case where multiple elements change together.' },
-        codeBlock([
-          '// Schema:',
-          '{ type: "batch", ops: [ ...messages ] }',
-          '',
-          '// Example: update a dashboard with multiple stat cards',
-          '{ type: "batch", ops: [',
-          '    { type: "patch", target: "users", content: "342" },',
-          '    { type: "patch", target: "orders", content: "28" },',
-          '    { type: "patch", target: "revenue", content: "$4,200" },',
-          '    { type: "append", target: "#log", node: { t: "p", c: "Updated at 14:32" } }',
-          ']}'
-        ].join('\n')),
+      // append
+      { t: 'h3', c: [badge('append'), ' append'] },
+      { t: 'p', c: 'Adds a new child element to the target. Use for lists, chat messages, and growing content.' },
+      codeBlock([
+        '{ type: "append", target: "#messages",',
+        '  node: { t: "div", a: { class: "bw-alert bw-alert-info" }, c: "New message!" }',
+        '}'
+      ]),
 
-        // register
-        { t: 'h3', c: [badge('register'), ' register'] },
-        { t: 'p', c: 'Sends a named function to the client for later invocation via call. The function body is a string that gets compiled on the client. Register once, call many times.' },
-        codeBlock([
-          '// Schema:',
-          '{ type: "register", name: "fnName", body: "function(args) { ... }" }',
-          '',
-          '// Example: register an auto-scroll function',
-          '{ type: "register",',
-          '  name: "autoScroll",',
-          '  body: "function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }"',
-          '}'
-        ].join('\n')),
+      // remove
+      { t: 'h3', c: [badge('remove'), ' remove'] },
+      { t: 'p', c: 'Removes an element from the DOM. Calls bw.cleanup() first to tear down lifecycle hooks.' },
+      codeBlock('{ type: "remove", target: "#todo-5" }'),
 
-        // call
-        { t: 'h3', c: [badge('call'), ' call'] },
-        { t: 'p', c: [
-          'Invokes a previously registered function or a built-in function by name. Built-in functions are always available: ',
-          { t: 'code', c: 'scrollTo' }, ', ',
-          { t: 'code', c: 'focus' }, ', ',
-          { t: 'code', c: 'download' }, ', ',
-          { t: 'code', c: 'clipboard' }, ', ',
-          { t: 'code', c: 'redirect' }, ', ',
-          { t: 'code', c: 'log' }, '.'
-        ]},
-        codeBlock([
-          '// Schema:',
-          '{ type: "call", name: "fnName", args: [arg1, arg2, ...] }',
-          '',
-          '// Example: call a registered function',
-          '{ type: "call", name: "autoScroll", args: ["#chat"] }',
-          '',
-          '// Example: call a built-in function',
-          '{ type: "call", name: "focus", args: ["#search-input"] }',
-          '{ type: "call", name: "download", args: ["report.csv", "id,name\\n1,Alice", "text/csv"] }',
-          '{ type: "call", name: "log", args: ["Debug:", { status: "ok" }] }'
-        ].join('\n')),
+      // batch
+      { t: 'h3', c: [badge('batch'), ' batch'] },
+      { t: 'p', c: 'Multiple operations in a single message. Applied sequentially. Use for dashboard updates.' },
+      codeBlock([
+        '{ type: "batch", ops: [',
+        '    { type: "patch", target: "users", content: "342" },',
+        '    { type: "patch", target: "orders", content: "28" },',
+        '    { type: "patch", target: "revenue", content: "$4,200" }',
+        ']}'
+      ]),
 
-        // exec
-        { t: 'h3', c: [badge('exec'), ' exec'] },
-        { t: 'p', c: [
-          'Executes arbitrary JavaScript on the client. ',
-          { t: 'strong', c: 'Requires opt-in:' },
-          ' the client connection must be created with ',
-          { t: 'code', c: '{ allowExec: true }' },
-          '. Without this flag, exec messages are silently rejected.'
-        ]},
-        codeBlock([
-          '// Schema:',
-          '{ type: "exec", code: "javascript code string" }',
-          '',
-          '// Example: set the page title',
-          '{ type: "exec", code: "document.title = \'Updated at \' + new Date().toLocaleTimeString()" }',
-          '',
-          '// Requires opt-in on the client:',
-          'bw.clientConnect(url, { allowExec: true });'
-        ].join('\n')),
-        { t: 'div', a: { class: 'callout-tip' }, c: [
-          { t: 'strong', c: 'Security note: ' },
-          'Prefer call() over exec() whenever possible. call() passes data as arguments (safe from injection), while exec() evaluates a code string. Never interpolate user input into exec() code strings.'
-        ]}
-      ]
-    };
+      // register
+      { t: 'h3', c: [badge('register'), ' register'] },
+      { t: 'p', c: 'Sends a named function to the client for later invocation. Register once, call many times.' },
+      codeBlock([
+        '{ type: "register", name: "autoScroll",',
+        '  body: "function(sel) { var el = document.querySelector(sel);',
+        '    if (el) el.scrollTop = el.scrollHeight; }"',
+        '}'
+      ]),
 
-    // --- 3. Target Resolution ---
-    var targets = {
-      t: 'div', a: { class: 'proto-section', id: 'targets' }, c: [
-        { t: 'h2', c: '3. Target Resolution' },
-        { t: 'p', c: 'The target field in every message is resolved to a DOM element using these rules:' },
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Pattern' },
-            { t: 'th', c: 'Resolution' },
-            { t: 'th', c: 'Example' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: '#selector' } },
-              { t: 'td', c: 'CSS selector via querySelector' },
-              { t: 'td', c: { t: 'code', c: '#app' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: '.selector' } },
-              { t: 'td', c: 'CSS class selector via querySelector' },
-              { t: 'td', c: { t: 'code', c: '.bw-card' } }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'bare-string' } },
-              { t: 'td', c: 'getElementById, then bw._el() fallback (UUID registry)' },
-              { t: 'td', c: { t: 'code', c: 'counter' } }
-            ]}
-          ]}
-        ]},
-        { t: 'div', a: { class: 'callout-tip' }, c: [
-          { t: 'strong', c: 'Best practice: ' },
-          'Use simple id attributes for patchable elements. The server calls ',
-          { t: 'code', c: 'client.patch("counter", "42")' },
-          ' and the client resolves "counter" to the element with ',
-          { t: 'code', c: 'id="counter"' },
-          '.'
-        ]}
-      ]
-    };
+      // call
+      { t: 'h3', c: [badge('call'), ' call'] },
+      { t: 'p', c: [
+        'Invokes a previously registered function or a built-in: ',
+        code('scrollTo'), ', ', code('focus'), ', ', code('download'), ', ',
+        code('clipboard'), ', ', code('redirect'), ', ', code('log'), '.'
+      ]},
+      codeBlock([
+        '{ type: "call", name: "autoScroll", args: ["#chat"] }',
+        '{ type: "call", name: "focus", args: ["#search-input"] }',
+        '{ type: "call", name: "download", args: ["report.csv", csvData, "text/csv"] }'
+      ]),
 
-    // --- 4. Actions ---
-    var actions = {
-      t: 'div', a: { class: 'proto-section', id: 'actions' }, c: [
-        { t: 'h2', c: '4. Actions (Client to Server)' },
-        { t: 'p', c: 'When a user clicks a button or submits a form, the client sends an action to the server via HTTP POST:' },
-        codeBlock([
-          '// Client sends:',
-          'POST /__bw/action/:clientId',
-          'Content-Type: application/json',
-          '',
-          '{ "action": "increment", "data": { "inputValue": "hello" } }'
-        ].join('\n')),
-        { t: 'h3', c: 'data-bw-action shorthand' },
-        { t: 'p', c: [
-          'The easiest way to wire actions. Add ',
-          { t: 'code', c: 'data-bw-action="name"' },
-          ' to any clickable element. The shell page auto-delegates click events:'
-        ]},
-        codeBlock([
-          '// Server sends this TACO:',
-          '{ t: "button",',
-          '  a: { class: "bw-btn bw-btn-primary", "data-bw-action": "save" },',
-          '  c: "Save" }',
-          '',
-          '// When clicked, the client posts:',
-          '{ action: "save", data: {} }',
-          '',
-          '// Server handles it:',
-          'client.on("save", function(data) {',
-          '  // do something',
-          '  client.patch("status", "Saved!");',
-          '});'
-        ].join('\n')),
-        { t: 'h3', c: 'Input value collection' },
-        { t: 'p', c: 'If a text input is found near the clicked button, its value is automatically included as inputValue and the input is cleared:' },
-        codeBlock([
-          '// Button + input in same container:',
-          '{ t: "div", c: [',
-          '  { t: "input", a: { type: "text", placeholder: "Type here..." } },',
-          '  { t: "button", a: { "data-bw-action": "send" }, c: "Send" }',
-          ']}',
-          '',
-          '// Client sends: { action: "send", data: { inputValue: "typed text" } }'
-        ].join('\n'))
-      ]
-    };
+      // exec
+      { t: 'h3', c: [badge('exec'), ' exec'] },
+      { t: 'p', c: [
+        'Executes arbitrary JavaScript on the client. ',
+        { t: 'strong', c: 'Requires opt-in:' },
+        ' ', code('bw.clientConnect(url, { allowExec: true })'), '.'
+      ]},
+      codeBlock('{ type: "exec", code: "document.title = \'Updated\'" }'),
 
-    // --- 5. Transport ---
-    var transport = {
-      t: 'div', a: { class: 'proto-section', id: 'transport' }, c: [
-        { t: 'h2', c: '5. Transport' },
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Transport' },
-            { t: 'th', c: 'Direction' },
-            { t: 'th', c: 'Use Case' },
-            { t: 'th', c: 'Auto-reconnect' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'strong', c: 'SSE (default)' } },
-              { t: 'td', c: 'Server \u2192 Client (unidirectional stream)' },
-              { t: 'td', c: 'Most apps, dashboards, chat' },
-              { t: 'td', c: 'Yes (native EventSource)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: 'HTTP Polling' },
-              { t: 'td', c: 'Client polls server at interval' },
-              { t: 'td', c: 'ESP32, constrained devices' },
-              { t: 'td', c: 'N/A (stateless)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: 'WebSocket (planned)' },
-              { t: 'td', c: 'Bidirectional' },
-              { t: 'td', c: 'High-frequency updates, gaming' },
-              { t: 'td', c: 'Manual' }
-            ]}
-          ]}
-        ]},
-        { t: 'h3', c: 'SSE Endpoints' },
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Endpoint' },
-            { t: 'th', c: 'Method' },
-            { t: 'th', c: 'Purpose' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'GET /' } },
-              { t: 'td', c: 'GET' },
-              { t: 'td', c: 'Serve page shell HTML (auto-generated)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'GET /__bw/events/:clientId' } },
-              { t: 'td', c: 'GET' },
-              { t: 'td', c: 'SSE event stream (protocol messages)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'POST /__bw/action/:clientId' } },
-              { t: 'td', c: 'POST' },
-              { t: 'td', c: 'User action dispatch' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'GET /__bw/bitwrench.umd.js' } },
-              { t: 'td', c: 'GET' },
-              { t: 'td', c: 'Serve bitwrench client library' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'GET /__bw/bitwrench.css' } },
-              { t: 'td', c: 'GET' },
-              { t: 'td', c: 'Serve bitwrench stylesheet' }
-            ]}
-          ]}
-        ]},
-        { t: 'h3', c: 'SSE Frame Format' },
-        { t: 'p', c: 'Each protocol message is sent as a single SSE data frame:' },
-        codeBlock('data: {"type":"replace","target":"#app","node":{"t":"div","c":"Hello"}}\\n\\n'),
-        { t: 'p', c: 'Keep-alive comments are sent every 15 seconds:' },
-        codeBlock(':keepalive\\n\\n')
-      ]
-    };
+      callout('warning', 'Security', {
+        t: 'p', c: 'Prefer call() over exec(). call() passes data as arguments (safe from injection). exec() evaluates a code string. Never interpolate user input into exec() code strings.'
+      })
+    ]);
 
-    // --- 6. Server API ---
-    var serverApi = {
-      t: 'div', a: { class: 'proto-section', id: 'server-api' }, c: [
-        { t: 'h2', c: '6. Server API' },
-        codeBlock([
-          'import bwserve from "bitwrench/bwserve";',
-          '',
-          '// Create the app',
-          'var app = bwserve.create({',
-          '  port: 7902,            // default port',
-          '  title: "My App",       // <title> tag',
-          '  theme: "ocean",        // optional theme preset',
-          '  static: "./public"     // optional static file directory',
-          '});',
-          '',
-          '// Register a page',
-          'app.page("/", function(client) {',
-          '  client.render("#app", { t: "div", c: "Hello world" });',
-          '});',
-          '',
-          '// Start',
-          'app.listen(function() {',
-          '  console.log("Running on http://localhost:" + app.port);',
-          '});',
-          '',
-          '// Stop',
-          'app.close();'
-        ].join('\n')),
+    // =========================================================================
+    // 3. Target Resolution & Actions
+    // =========================================================================
+    var secTargets = section('targets', 'Target Resolution', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'The target field in every message is resolved to a DOM element:' },
+      protoTable(
+        ['Pattern', 'Resolution', 'Example'],
+        [
+          [code('#selector'), 'CSS selector via querySelector', code('#app')],
+          [code('.selector'), 'CSS class selector via querySelector', code('.bw-card')],
+          [code('bare-string'), 'getElementById, then bw._el() fallback', code('counter')]
+        ]
+      ),
+      callout('tip', 'Best practice', {
+        t: 'p', c: [
+          'Use simple ', code('id'), ' attributes for patchable elements. The server calls ',
+          code('client.patch("counter", "42")'), ' and the client resolves "counter" to ',
+          code('id="counter"'), '.'
+        ]
+      })
+    ]);
 
-        { t: 'h3', c: 'BwServeClient methods' },
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Method' },
-            { t: 'th', c: 'Protocol Message' },
-            { t: 'th', c: 'Description' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.render(target, taco)' } },
-              { t: 'td', c: badge('replace') },
-              { t: 'td', c: 'Replace target with TACO tree' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.patch(id, content, attr?)' } },
-              { t: 'td', c: badge('patch') },
-              { t: 'td', c: 'Update text or attribute' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.append(target, taco)' } },
-              { t: 'td', c: badge('append') },
-              { t: 'td', c: 'Add child element' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.remove(target)' } },
-              { t: 'td', c: badge('remove') },
-              { t: 'td', c: 'Remove element' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.batch(ops)' } },
-              { t: 'td', c: badge('batch') },
-              { t: 'td', c: 'Multiple operations at once' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.message(target, action, data)' } },
-              { t: 'td', c: 'message' },
-              { t: 'td', c: 'Dispatch to ComponentHandle' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.register(name, body)' } },
-              { t: 'td', c: badge('register') },
-              { t: 'td', c: 'Send named function to client' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } },
-              { t: 'td', c: badge('call') },
-              { t: 'td', c: 'Invoke registered or built-in function' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.exec(code)' } },
-              { t: 'td', c: badge('exec') },
-              { t: 'td', c: 'Execute arbitrary JS (needs allowExec)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.on(action, handler)' } },
-              { t: 'td', c: '\u2014' },
-              { t: 'td', c: 'Register handler for client actions' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'client.close()' } },
-              { t: 'td', c: '\u2014' },
-              { t: 'td', c: 'Disconnect this client' }
-            ]}
-          ]}
-        ]}
-      ]
-    };
+    var secActions = section('actions', 'Actions (Client to Server)', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'When a user clicks a button or submits a form, the client sends an action to the server via HTTP POST.' },
+      codeBlock([
+        'POST /__bw/action/:clientId',
+        'Content-Type: application/json',
+        '',
+        '{ "action": "increment", "data": { "inputValue": "hello" } }'
+      ]),
 
-    // --- 7. Client API ---
-    var clientApi = {
-      t: 'div', a: { class: 'proto-section', id: 'client-api' }, c: [
-        { t: 'h2', c: '7. Client API' },
-        { t: 'p', c: 'The client-side API lives in bitwrench.js. The shell page calls these automatically, but they can also be used standalone.' },
+      { t: 'h3', c: 'data-bw-action shorthand' },
+      { t: 'p', c: [
+        'Add ', code('data-bw-action="name"'), ' to any clickable element. The shell page auto-delegates clicks:'
+      ]},
+      codeBlock([
+        '// Server sends this TACO:',
+        '{ t: "button",',
+        '  a: { class: "bw-btn bw-btn-primary", "data-bw-action": "save" },',
+        '  c: "Save" }',
+        '',
+        '// When clicked, client posts: { action: "save", data: {} }',
+        '',
+        '// Server handles it:',
+        'client.on("save", function(data) {',
+        '  client.patch("status", "Saved!");',
+        '});'
+      ]),
 
-        { t: 'h3', c: 'bw.clientConnect(url, opts)' },
-        { t: 'p', c: 'Opens an SSE connection and auto-applies incoming protocol messages.' },
-        codeBlock([
-          'var conn = bw.clientConnect("/__bw/events/c1", {',
-          '  transport: "sse",            // "sse" (default) or "poll"',
-          '  interval: 2000,              // poll interval (ms), ignored for SSE',
-          '  actionUrl: "/__bw/action/c1",// POST endpoint for actions',
-          '  reconnect: true,             // auto-reconnect (default)',
-          '  allowExec: false,            // enable exec messages (default: false)',
-          '  onStatus: function(s) {      // "connecting"|"connected"|"disconnected"',
-          '    console.log("Status:", s);',
-          '  }',
-          '});',
-          '',
-          '// Send an action to the server',
-          'conn.sendAction("increment", { count: 1 });',
-          '',
-          '// Listen for events',
-          'conn.on("message", function(msg) { console.log(msg); });',
-          'conn.on("error", function(err) { console.error(err); });',
-          '',
-          '// Disconnect',
-          'conn.close();'
-        ].join('\n')),
+      { t: 'h3', c: 'Input value collection' },
+      { t: 'p', c: 'If a text input is near the clicked button, its value is automatically included as inputValue and the input is cleared.' },
+      codeBlock([
+        '// Button + input in same container:',
+        '{ t: "div", c: [',
+        '  { t: "input", a: { type: "text", placeholder: "Type here..." } },',
+        '  { t: "button", a: { "data-bw-action": "send" }, c: "Send" }',
+        ']}',
+        '// Client sends: { action: "send", data: { inputValue: "typed text" } }'
+      ])
+    ]);
 
-        { t: 'h3', c: 'bw.clientApply(msg)' },
-        { t: 'p', c: [
-          'Applies a single protocol message to the DOM. Called automatically by ',
-          { t: 'code', c: 'clientConnect' },
-          ', but also usable standalone for testing or custom transports. Handles all 9 message types.'
-        ]},
-        codeBlock([
-          '// DOM operations',
-          'bw.clientApply({ type: "replace", target: "#app", node: { t: "div", c: "Hello" } });',
-          'bw.clientApply({ type: "patch", target: "counter", content: "42" });',
-          'bw.clientApply({ type: "append", target: "#list", node: { t: "li", c: "New item" } });',
-          'bw.clientApply({ type: "remove", target: "#old-item" });',
-          'bw.clientApply({ type: "batch", ops: [ msg1, msg2, msg3 ] });',
-          '',
-          '// Execution operations',
-          'bw.clientApply({ type: "register", name: "scroll", body: "function(s){...}" });',
-          'bw.clientApply({ type: "call", name: "scroll", args: ["#chat"] });',
-          'bw.clientApply({ type: "exec", code: "alert(1)" }); // needs allowExec'
-        ].join('\n'))
-      ]
-    };
+    // =========================================================================
+    // 4. Transport & Relaxed JSON
+    // =========================================================================
+    var secTransport = section('transport', 'Transport & Relaxed JSON', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'bwserve uses SSE (Server-Sent Events) by default. Each message is a JSON data frame.' },
 
-    // --- 8. Server-to-Client Execution ---
-    var execution = {
-      t: 'div', a: { class: 'proto-section', id: 'execution' }, c: [
-        { t: 'h2', c: '8. Server-to-Client Execution' },
-        { t: 'p', c: 'Beyond DOM operations, the server can invoke functions and execute code on the client. This is organized in three tiers of increasing power:' },
+      protoTable(
+        ['Transport', 'Direction', 'Use Case', 'Auto-reconnect'],
+        [
+          [{ t: 'strong', c: 'SSE (default)' }, 'Server \u2192 Client', 'Most apps, dashboards, chat', 'Yes (native EventSource)'],
+          ['HTTP Polling', 'Client polls server', 'ESP32, constrained devices', 'N/A'],
+          ['WebSocket (planned)', 'Bidirectional', 'High-frequency, gaming', 'Manual']
+        ]
+      ),
 
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Tier' },
-            { t: 'th', c: 'Server Method' },
-            { t: 'th', c: 'What it Does' },
-            { t: 'th', c: 'When to Use' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: '1' },
-              { t: 'td', c: { t: 'code', c: 'client.register(name, body)' } },
-              { t: 'td', c: 'Send a named function to the client for later use' },
-              { t: 'td', c: 'Reusable client-side behavior (auto-scroll, format, validate)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: '2' },
-              { t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } },
-              { t: 'td', c: 'Invoke a registered or built-in function by name' },
-              { t: 'td', c: 'Most non-DOM operations (scroll, focus, download, log)' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: '3' },
-              { t: 'td', c: { t: 'code', c: 'client.exec(code)' } },
-              { t: 'td', c: 'Execute arbitrary JS (opt-in required)' },
-              { t: 'td', c: 'Quick one-off operations, debugging, dev tools' }
-            ]}
-          ]}
-        ]},
+      { t: 'h3', c: 'SSE Endpoints' },
+      protoTable(
+        ['Endpoint', 'Method', 'Purpose'],
+        [
+          [code('GET /'), 'GET', 'Serve page shell HTML (auto-generated)'],
+          [code('GET /__bw/events/:clientId'), 'GET', 'SSE event stream'],
+          [code('POST /__bw/action/:clientId'), 'POST', 'User action dispatch'],
+          [code('GET /__bw/bitwrench.umd.js'), 'GET', 'Serve bitwrench library'],
+          [code('GET /__bw/bitwrench.css'), 'GET', 'Serve bitwrench stylesheet']
+        ]
+      ),
 
-        { t: 'h3', c: 'Built-in Functions (always available)' },
-        { t: 'p', c: 'These can be invoked via call() without prior registration:' },
-        { t: 'table', a: { class: 'proto-table' }, c: [
-          { t: 'thead', c: { t: 'tr', c: [
-            { t: 'th', c: 'Name' },
-            { t: 'th', c: 'Args' },
-            { t: 'th', c: 'Description' }
-          ]}},
-          { t: 'tbody', c: [
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'scrollTo' } },
-              { t: 'td', c: { t: 'code', c: 'selector' } },
-              { t: 'td', c: 'Scroll element to bottom' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'focus' } },
-              { t: 'td', c: { t: 'code', c: 'selector' } },
-              { t: 'td', c: 'Focus an input element' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'download' } },
-              { t: 'td', c: { t: 'code', c: 'filename, content, mimeType?' } },
-              { t: 'td', c: 'Trigger a file download' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'clipboard' } },
-              { t: 'td', c: { t: 'code', c: 'text' } },
-              { t: 'td', c: 'Copy text to clipboard' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'redirect' } },
-              { t: 'td', c: { t: 'code', c: 'url' } },
-              { t: 'td', c: 'Navigate to a URL' }
-            ]},
-            { t: 'tr', c: [
-              { t: 'td', c: { t: 'code', c: 'log' } },
-              { t: 'td', c: { t: 'code', c: '...args' } },
-              { t: 'td', c: 'console.log from the server' }
-            ]}
-          ]}
-        ]},
+      { t: 'h3', c: 'r-prefix Relaxed JSON' },
+      { t: 'p', c: [
+        'For embedded C/C++ systems, composing JSON with double-quoted strings is painful. bwserve supports ',
+        { t: 'strong', c: 'r-prefix relaxed JSON' },
+        ': single-quoted strings with an ', code('r'), ' prefix character. The browser\'s ',
+        code('bw.clientParse()'), ' normalizes this to strict JSON before processing.'
+      ]},
+      codeBlock([
+        '// r-prefix relaxed JSON (sent by ESP32):',
+        "r{'type':'patch','target':'temp','content':'23.5 C'}",
+        '',
+        '// Normalized to strict JSON by bw.clientParse():',
+        '{"type":"patch","target":"temp","content":"23.5 C"}'
+      ]),
 
-        { t: 'h3', c: 'Example: Register + Call Pattern' },
-        codeBlock([
-          '// Server: register a scroll function on connect',
-          'client.register("autoScroll",',
-          '  "function(sel) { var el = document.querySelector(sel);' +
-          ' if (el) el.scrollTop = el.scrollHeight; }");',
-          '',
-          '// Server: after appending a chat message, scroll to bottom',
-          'client.append("#chat", { t: "div", c: "New message" });',
-          'client.call("autoScroll", "#chat");',
-          '',
-          '// Server: trigger a CSV download',
-          'client.call("download", "report.csv", csvContent, "text/csv");',
-          '',
-          '// Server: focus the search input',
-          'client.call("focus", "#search");',
-          '',
-          '// Server: log debug info to browser console',
-          'client.call("log", "Debug: user count =", users.length);'
-        ].join('\n')),
+      { t: 'h3', c: 'Escaping Rule' },
+      { t: 'p', c: [
+        'Since single quotes delimit strings in r-prefix format, apostrophes in values must be escaped with ', code("\\'"), ':'
+      ]},
+      codeBlock([
+        "// C code with apostrophe in content:",
+        "BW_PATCH(msg, \"room\", \"Barry\\\\'s Room\");",
+        '// Produces: r{\'type\':\'patch\',\'target\':\'room\',\'content\':\'Barry\\\'s Room\'}',
+        '',
+        '// For dynamic user text, use BW_PATCH_SAFE (auto-escapes):',
+        'char user_text[] = "it\'s 23.5 C";',
+        'BW_PATCH_SAFE(msg, sizeof(msg), "status", user_text);'
+      ]),
 
-        { t: 'h3', c: 'Security Model' },
-        { t: 'p', c: [
-          { t: 'code', c: 'register' }, ' and ', { t: 'code', c: 'call' },
-          ' are always enabled. ', { t: 'code', c: 'exec' },
-          ' requires explicit opt-in via ',
-          { t: 'code', c: 'bw.clientConnect(url, { allowExec: true })' },
-          '. Without this flag, exec messages are silently rejected.'
-        ]},
-        { t: 'div', a: { class: 'callout-tip' }, c: [
-          { t: 'strong', c: 'Principle: ' },
-          'Use the least powerful tier that gets the job done. Most apps only need DOM operations (replace/patch/append/remove). When you need non-DOM behavior, prefer call() with built-in functions. Use register() for reusable custom functions. Reserve exec() for development and debugging.'
-        ]}
-      ]
-    };
+      callout('concept', 'Huge win for C programmers', {
+        t: 'p', c: [
+          'Standard JSON in C requires escaping ', { t: 'strong', c: 'every quote' },
+          ': ', code('\\\"type\\\":\\\"patch\\\"'), '. Relaxed JSON only requires escaping apostrophes in values ',
+          '(a rare case). The ', code('BW_PATCH_SAFE'), ' macro handles even that automatically.'
+        ]
+      })
+    ]);
 
-    // --- 9. Examples ---
-    var examples = {
-      t: 'div', a: { class: 'proto-section', id: 'examples' }, c: [
-        { t: 'h2', c: '9. Examples' },
-        { t: 'p', c: [
-          'Try these patterns in the ',
-          { t: 'a', a: { href: 'bwserve-sandbox.html' }, c: 'bwserve sandbox' },
-          '.'
-        ]},
+    // =========================================================================
+    // 5. Server API
+    // =========================================================================
+    var secServerApi = section('server-api', 'Server API (Node.js)', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'The Node.js bwserve library provides a zero-dependency server.' },
+      codeBlock([
+        'import bwserve from "bitwrench/bwserve";',
+        '',
+        'var app = bwserve.create({',
+        '  port: 7902,          // default port',
+        '  title: "My App",     // <title> tag',
+        '  theme: "ocean",      // optional theme preset',
+        '  static: "./public"   // optional static file directory',
+        '});',
+        '',
+        'app.page("/", function(client) {',
+        '  client.render("#app", {',
+        '    t: "div", c: [',
+        '      { t: "h2", c: "Counter" },',
+        '      { t: "span", a: { id: "count" }, c: "0" },',
+        '      { t: "button", a: { "data-bw-action": "inc" }, c: "+1" }',
+        '    ]',
+        '  });',
+        '',
+        '  var count = 0;',
+        '  client.on("inc", function() {',
+        '    client.patch("count", String(++count));',
+        '  });',
+        '});',
+        '',
+        'app.listen(function() {',
+        '  console.log("Running on http://localhost:" + app.port);',
+        '});'
+      ]),
 
-        { t: 'h3', c: 'Counter (render + patch)' },
-        codeBlock([
-          '// Server code (~15 lines):',
-          'var count = 0;',
-          '',
-          'client.render("#app", {',
-          '  t: "div", c: [',
-          '    { t: "h2", c: "Counter" },',
-          '    { t: "span", a: { id: "count" }, c: "0" },',
-          '    { t: "button", a: { "data-bw-action": "inc" }, c: "+1" }',
-          '  ]',
-          '});',
-          '',
-          'client.on("inc", function() {',
-          '  client.patch("count", String(++count));',
-          '});'
-        ].join('\n')),
+      { t: 'h3', c: 'BwServeClient Methods' },
+      protoTable(
+        ['Method', 'Message Type', 'Description'],
+        [
+          [code('client.render(target, taco)'), badge('replace'), 'Replace target with TACO tree'],
+          [code('client.patch(id, content, attr?)'), badge('patch'), 'Update text or attribute'],
+          [code('client.append(target, taco)'), badge('append'), 'Add child element'],
+          [code('client.remove(target)'), badge('remove'), 'Remove element'],
+          [code('client.batch(ops)'), badge('batch'), 'Multiple operations at once'],
+          [code('client.message(target, action, data)'), badge('message'), 'Dispatch to component'],
+          [code('client.register(name, body)'), badge('register'), 'Send named function to client'],
+          [code('client.call(name, ...args)'), badge('call'), 'Invoke registered or built-in function'],
+          [code('client.exec(code)'), badge('exec'), 'Execute arbitrary JS (needs allowExec)'],
+          [code('client.on(action, handler)'), '\u2014', 'Register handler for client actions'],
+          [code('client.close()'), '\u2014', 'Disconnect this client']
+        ]
+      ),
 
-        { t: 'h3', c: 'Todo List (append + remove)' },
-        codeBlock([
-          'var nextId = 1;',
-          '',
-          'client.render("#app", {',
-          '  t: "div", c: [',
-          '    { t: "input", a: { type: "text", id: "inp" } },',
-          '    { t: "button", a: { "data-bw-action": "add" }, c: "Add" },',
-          '    { t: "ul", a: { id: "list" } }',
-          '  ]',
-          '});',
-          '',
-          'client.on("add", function(data) {',
-          '  var id = "item-" + nextId++;',
-          '  client.append("#list", {',
-          '    t: "li", a: { id: id }, c: [',
-          '      data.inputValue || "item",',
-          '      { t: "button", a: { "data-bw-action": "del", "data-bw-id": id }, c: "x" }',
-          '    ]',
-          '  });',
-          '});',
-          '',
-          'client.on("del", function(data) {',
-          '  if (data.bwId) client.remove("#" + data.bwId);',
-          '});'
-        ].join('\n')),
+      { t: 'h3', c: 'app.broadcast(msg)' },
+      { t: 'p', c: [
+        'Send a protocol message to ', { t: 'strong', c: 'all connected clients' },
+        '. Useful for dashboards, notifications, and multi-user apps. Optionally target a specific client by setting ',
+        code('msg.clientId'), '.'
+      ]},
+      codeBlock([
+        '// Broadcast a patch to all browsers:',
+        'app.broadcast({ type: "patch", target: "status", content: "System OK" });',
+        '',
+        '// Target a specific client:',
+        'app.broadcast({ type: "patch", target: "msg", content: "Hello", clientId: "c1" });'
+      ])
+    ]);
 
-        { t: 'h3', c: 'Dashboard (batch)' },
-        codeBlock([
-          'client.render("#app", {',
-          '  t: "div", c: [',
-          '    { t: "span", a: { id: "users" }, c: "0" },',
-          '    { t: "span", a: { id: "orders" }, c: "0" },',
-          '    { t: "span", a: { id: "revenue" }, c: "$0" }',
-          '  ]',
-          '});',
-          '',
-          'setInterval(function() {',
-          '  client.batch([',
-          '    { type: "patch", target: "users", content: String(Math.floor(Math.random() * 500)) },',
-          '    { type: "patch", target: "orders", content: String(Math.floor(Math.random() * 50)) },',
-          '    { type: "patch", target: "revenue", content: "$" + Math.floor(Math.random() * 10000) }',
-          '  ]);',
-          '}, 1000);'
-        ].join('\n'))
-      ]
-    };
+    // =========================================================================
+    // 6. Client API
+    // =========================================================================
+    var secClientApi = section('client-api', 'Client API (Browser)', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'The client-side API lives in bitwrench.js. The shell page calls these automatically, but they can be used standalone.' },
+
+      { t: 'h3', c: 'bw.clientConnect(url, opts)' },
+      { t: 'p', c: 'Opens an SSE connection and auto-applies incoming protocol messages.' },
+      codeBlock([
+        'var conn = bw.clientConnect("/__bw/events/c1", {',
+        '  transport: "sse",            // "sse" (default) or "poll"',
+        '  interval: 2000,              // poll interval (ms), ignored for SSE',
+        '  actionUrl: "/__bw/action/c1",// POST endpoint for actions',
+        '  reconnect: true,             // auto-reconnect (default)',
+        '  allowExec: false,            // enable exec messages (default: false)',
+        '  onStatus: function(s) {      // "connecting"|"connected"|"disconnected"',
+        '    console.log("Status:", s);',
+        '  }',
+        '});',
+        '',
+        'conn.sendAction("increment", { count: 1 });',
+        'conn.close();'
+      ]),
+
+      { t: 'h3', c: 'bw.clientApply(msg)' },
+      { t: 'p', c: [
+        'Applies a single protocol message to the DOM. Called automatically by ',
+        code('clientConnect'), ', but usable standalone for testing or custom transports. Handles all 9 message types.'
+      ]},
+      codeBlock([
+        'bw.clientApply({ type: "replace", target: "#app", node: { t: "div", c: "Hello" } });',
+        'bw.clientApply({ type: "patch", target: "counter", content: "42" });',
+        'bw.clientApply({ type: "batch", ops: [ msg1, msg2 ] });'
+      ]),
+
+      { t: 'h3', c: 'bw.clientParse(str)' },
+      { t: 'p', c: [
+        'Parses both strict JSON and r-prefix relaxed JSON. A state-machine parser that converts single-quoted strings to double-quoted, strips trailing commas, and handles escape sequences (',
+        code("\\'"), ', ', code('\\\\'), ', ', code('\\n'), ', ', code('\\t'), '). Falls back to ', code('JSON.parse()'), ' for strict JSON (no r-prefix).'
+      ]},
+      codeBlock([
+        '// Strict JSON:',
+        'bw.clientParse(\'{"type":"patch","target":"t","content":"42"}\');',
+        '',
+        '// r-prefix relaxed JSON (from ESP32):',
+        "bw.clientParse(\"r{'type':'patch','target':'t','content':'42'}\");",
+        '',
+        '// Handles apostrophes:',
+        "bw.clientParse(\"r{'content':'Barry\\\\'s Room'}\");",
+        '// \u2192 { content: "Barry\'s Room" }'
+      ]),
+
+      callout('concept', 'clientParse is automatic', {
+        t: 'p', c: [
+          code('bw.clientConnect()'), ' calls ', code('bw.clientParse()'),
+          ' on every incoming SSE message. You only need to call it directly if you\'re building a custom transport.'
+        ]
+      })
+    ]);
+
+    // =========================================================================
+    // 7. Execution Model
+    // =========================================================================
+    var secExecution = section('execution', 'Server-to-Client Execution', [
+      { t: 'p', a: { class: 'demo-description' }, c: 'Beyond DOM operations, the server can invoke functions on the client. Three tiers of increasing power:' },
+
+      protoTable(
+        ['Tier', 'Server Method', 'What it Does', 'When to Use'],
+        [
+          ['1', code('client.register(name, body)'), 'Send a named function to the client', 'Reusable behavior (auto-scroll, format, validate)'],
+          ['2', code('client.call(name, ...args)'), 'Invoke a registered or built-in function', 'Non-DOM operations (scroll, focus, download)'],
+          ['3', code('client.exec(code)'), 'Execute arbitrary JS (opt-in required)', 'Quick one-off operations, debugging']
+        ]
+      ),
+
+      { t: 'h3', c: 'Built-in Functions' },
+      { t: 'p', c: 'These can be invoked via call() without prior registration:' },
+      protoTable(
+        ['Name', 'Args', 'Description'],
+        [
+          [code('scrollTo'), code('selector'), 'Scroll element to bottom'],
+          [code('focus'), code('selector'), 'Focus an input element'],
+          [code('download'), code('filename, content, mimeType?'), 'Trigger a file download'],
+          [code('clipboard'), code('text'), 'Copy text to clipboard'],
+          [code('redirect'), code('url'), 'Navigate to a URL'],
+          [code('log'), code('...args'), 'console.log from the server']
+        ]
+      ),
+
+      { t: 'h3', c: 'Example: Register + Call' },
+      codeBlock([
+        '// Register on connect',
+        'client.register("autoScroll",',
+        '  "function(sel) { var el = document.querySelector(sel);' +
+        ' if (el) el.scrollTop = el.scrollHeight; }");',
+        '',
+        '// After appending a chat message, scroll to bottom',
+        'client.append("#chat", { t: "div", c: "New message" });',
+        'client.call("autoScroll", "#chat");',
+        '',
+        '// Trigger a CSV download',
+        'client.call("download", "report.csv", csvContent, "text/csv");'
+      ]),
+
+      callout('tip', 'Least-privilege principle', {
+        t: 'p', c: 'Use the least powerful tier that gets the job done. Most apps only need DOM operations (replace/patch/append/remove). Use call() with built-ins for non-DOM behavior. Reserve exec() for development.'
+      })
+    ]);
+
+    // =========================================================================
+    // 8. bwcli serve
+    // =========================================================================
+    var secCliServe = section('bwcli-serve', 'bwcli serve \u2014 Pipe Server', [
+      { t: 'p', a: { class: 'demo-description' }, c: [
+        code('bwcli serve'), ' turns any language into a bwserve backend. It opens two ports: a ',
+        { t: 'strong', c: 'web port' },
+        ' (browsers connect here) and an ',
+        { t: 'strong', c: 'input port' },
+        ' (your app sends protocol messages here via HTTP POST). Alternatively, use ',
+        code('--stdin'), ' mode to pipe messages from stdin.'
+      ]},
+
+      { t: 'div', a: { class: 'arch-diagram' }, c: [
+'  Your App (any language)          bwcli serve         Browser(s)',
+' \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510',
+' \u2502  curl / Python / C    \u2502    \u2502  web: :8080  \u2502<\u2500\u2500>\u2502  EventSource \u2502',
+' \u2502  POST to :9000        \u2502\u2500\u2500\u2500>\u2502  input: :9000\u2502    \u2502  bw.client.. \u2502',
+' \u2502  or pipe to stdin     \u2502    \u2502  --stdin     \u2502    \u2502             \u2502',
+' \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518'
+      ].join('\n') },
+
+      { t: 'h3', c: 'Usage' },
+      codeBlock([
+        '# Start the pipe server (dual port)',
+        'bwcli serve --port 8080 --input-port 9000',
+        '',
+        '# Open browser automatically',
+        'bwcli serve --open',
+        '',
+        '# Stdin mode (pipe messages from any command)',
+        'python sensor.py | bwcli serve --stdin --port 8080',
+        '',
+        '# With verbose logging',
+        'bwcli serve -v'
+      ]),
+
+      { t: 'h3', c: 'Sending messages via curl' },
+      codeBlock([
+        '# Patch a value:',
+        'curl -X POST http://localhost:9000 \\',
+        '  -H "Content-Type: application/json" \\',
+        '  -d \'{"type":"patch","target":"temp","content":"23.5 C"}\'',
+        '',
+        '# Batch update:',
+        'curl -X POST http://localhost:9000 \\',
+        '  -d \'{"type":"batch","ops":[',
+        '    {"type":"patch","target":"temp","content":"23.5"},',
+        '    {"type":"patch","target":"humidity","content":"67%"}',
+        '  ]}\'',
+        '',
+        '# r-prefix relaxed JSON also accepted:',
+        "curl -X POST http://localhost:9000 -d \"r{'type':'patch','target':'temp','content':'23.5'}\""
+      ]),
+
+      { t: 'h3', c: 'Sending from Python' },
+      codeBlock([
+        'import requests, time, random',
+        '',
+        'while True:',
+        '    temp = 20 + random.random() * 10',
+        '    requests.post("http://localhost:9000", json={',
+        '        "type": "patch",',
+        '        "target": "temp",',
+        '        "content": f"{temp:.1f} C"',
+        '    })',
+        '    time.sleep(2)'
+      ]),
+
+      callout('concept', 'Language agnostic', {
+        t: 'p', c: [
+          'Any language that can make HTTP POST requests (or write to stdout) can drive a bwserve UI. ',
+          'The ', code('--stdin'), ' mode reads newline-delimited JSON from stdin. ',
+          'The input port accepts both strict JSON and r-prefix relaxed JSON.'
+        ]
+      })
+    ]);
+
+    // =========================================================================
+    // 9. Embedded Systems
+    // =========================================================================
+    var secEmbedded = section('embedded', 'Embedded Systems (C / Python / Rust)', [
+      { t: 'p', a: { class: 'demo-description' }, c: [
+        'Header-only libraries in ', code('embedded_c/'), ', ', code('embedded_python/'), ', and ', code('embedded_rust/'),
+        ' provide protocol macros for microcontrollers. The ESP32 never generates HTML \u2014 it sends JSON data, the browser renders everything.'
+      ]},
+
+      { t: 'h3', c: 'C Macros (bitwrench.h + bwserve.h)' },
+      codeBlock([
+        '#include "bitwrench.h"',
+        '#include "bwserve.h"',
+        '',
+        '// Compose TACO nodes',
+        'char taco[256];',
+        'BW_TACO(taco, "h1", "Hello World");',
+        '// \u2192 r{\'t\':\'h1\',\'c\':\'Hello World\'}',
+        '',
+        '// Protocol messages',
+        'char msg[512];',
+        'BW_PATCH(msg, "counter", "42");',
+        'BW_PATCH_NUM(msg, "temperature", 23.5);',
+        'BW_REPLACE(msg, "#app", taco);',
+        'BW_APPEND(msg, "#log", taco);',
+        'BW_REMOVE(msg, "#old-item");',
+        '',
+        '// Safe escaping for user text with apostrophes',
+        'char name[] = "Barry\'s Room";',
+        'BW_PATCH_SAFE(msg, sizeof(msg), "room", name);',
+        '',
+        '// Batch multiple updates',
+        'bw_batch_t batch;',
+        'bw_batch_begin(&batch);',
+        'BW_PATCH(m1, "temp", "23.5 C");',
+        'bw_batch_add(&batch, m1);',
+        'BW_PATCH(m2, "humidity", "67%");',
+        'bw_batch_add(&batch, m2);',
+        'char out[1024];',
+        'bw_batch_end(out, sizeof(out), &batch);',
+        'events.send(out, NULL, millis());  // SSE push'
+      ]),
+
+      { t: 'h3', c: 'C++ Wrappers' },
+      codeBlock([
+        '// Clean C++ API in bw:: and bwserve:: namespaces',
+        'auto node = bw::taco("h1", "Hello");',
+        'auto msg = bwserve::patch("counter", "42");',
+        'auto batch = bwserve::batch({',
+        '  bwserve::patch("temp", "23.5"),',
+        '  bwserve::patch("humidity", "67%")',
+        '});'
+      ]),
+
+      { t: 'h3', c: 'Python (MicroPython / CircuitPython)' },
+      codeBlock([
+        'from bwserve import patch, batch, replace',
+        '',
+        'msg = patch("temperature", f"{temp:.1f} C")',
+        'send_sse(msg)'
+      ]),
+
+      protoTable(
+        ['Platform', 'Language', 'Library'],
+        [
+          ['ESP32 (Arduino)', 'C/C++', code('embedded_c/bwserve.h')],
+          ['ESP32 (esp-idf)', 'Rust', code('embedded_rust/')],
+          ['MicroPython / CircuitPython', 'Python', code('embedded_python/bwserve.py')],
+          ['Node.js', 'JavaScript', code("import bwserve from 'bitwrench/bwserve'")]
+        ]
+      ),
+
+      callout('tip', 'Try without hardware first', {
+        t: 'p', c: [
+          'The ', code('examples/embedded/cmake-demo/'), ' directory compiles on Linux/macOS with regular gcc. ',
+          'Same protocol, same macros, simulated sensors. Or use ', code('bwcli serve'),
+          ' with curl to test the protocol without any C code.'
+        ]
+      })
+    ]);
+
+    // =========================================================================
+    // 10. Examples
+    // =========================================================================
+    var secExamples = section('examples', 'Examples', [
+      { t: 'p', a: { class: 'demo-description' }, c: [
+        'Try these patterns in the ',
+        { t: 'a', a: { href: 'bwserve-sandbox.html' }, c: 'bwserve sandbox' },
+        ', or run them as standalone Node.js scripts.'
+      ]},
+
+      { t: 'h3', c: 'Counter (render + patch)' },
+      codeBlock([
+        'var count = 0;',
+        '',
+        'client.render("#app", {',
+        '  t: "div", c: [',
+        '    { t: "h2", c: "Counter" },',
+        '    { t: "span", a: { id: "count" }, c: "0" },',
+        '    { t: "button", a: { "data-bw-action": "inc" }, c: "+1" }',
+        '  ]',
+        '});',
+        '',
+        'client.on("inc", function() {',
+        '  client.patch("count", String(++count));',
+        '});'
+      ]),
+
+      { t: 'h3', c: 'Todo List (append + remove)' },
+      codeBlock([
+        'var nextId = 1;',
+        '',
+        'client.render("#app", {',
+        '  t: "div", c: [',
+        '    { t: "input", a: { type: "text", id: "inp" } },',
+        '    { t: "button", a: { "data-bw-action": "add" }, c: "Add" },',
+        '    { t: "ul", a: { id: "list" } }',
+        '  ]',
+        '});',
+        '',
+        'client.on("add", function(data) {',
+        '  var id = "item-" + nextId++;',
+        '  client.append("#list", {',
+        '    t: "li", a: { id: id }, c: [',
+        '      data.inputValue || "item",',
+        '      { t: "button", a: { "data-bw-action": "del", "data-bw-id": id }, c: "x" }',
+        '    ]',
+        '  });',
+        '});',
+        '',
+        'client.on("del", function(data) {',
+        '  if (data.bwId) client.remove("#" + data.bwId);',
+        '});'
+      ]),
+
+      { t: 'h3', c: 'Dashboard (batch + broadcast)' },
+      codeBlock([
+        '// Batch update multiple stats at once',
+        'setInterval(function() {',
+        '  app.broadcast({',
+        '    type: "batch", ops: [',
+        '      { type: "patch", target: "users", content: String(Math.floor(Math.random() * 500)) },',
+        '      { type: "patch", target: "orders", content: String(Math.floor(Math.random() * 50)) },',
+        '      { type: "patch", target: "revenue", content: "$" + Math.floor(Math.random() * 10000) }',
+        '    ]',
+        '  });',
+        '}, 1000);'
+      ]),
+
+      { t: 'h3', c: 'ESP32 Sensor Dashboard (C)' },
+      codeBlock([
+        '// In Arduino loop() — push sensor readings every 2s',
+        'void loop() {',
+        '  static unsigned long lastSend = 0;',
+        '  if (millis() - lastSend < 2000) return;',
+        '  lastSend = millis();',
+        '',
+        '  float temp = dht.readTemperature();',
+        '  char m1[256], m2[256], ts[16], hs[16];',
+        '',
+        '  snprintf(ts, sizeof(ts), "%.1f C", temp);',
+        '  BW_PATCH(m1, "val-temp", ts);',
+        '',
+        '  snprintf(hs, sizeof(hs), "%.1f%%", dht.readHumidity());',
+        '  BW_PATCH(m2, "val-humidity", hs);',
+        '',
+        '  bw_batch_t batch;',
+        '  bw_batch_begin(&batch);',
+        '  bw_batch_add(&batch, m1);',
+        '  bw_batch_add(&batch, m2);',
+        '',
+        '  char out[1024];',
+        '  bw_batch_end(out, sizeof(out), &batch);',
+        '  events.send(out, NULL, millis());',
+        '}'
+      ])
+    ]);
 
     // =========================================================================
     // Assemble page
     // =========================================================================
-
-    var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
-      c: {
-        t: 'div', a: { class: 'content-container' },
-        c: [
-          { t: 'h1', c: 'bwserve Protocol Reference' },
-          { t: 'p', a: { class: 'subtitle' },
-            c: 'Authoritative specification for the bwserve server-driven UI protocol.' }
-        ]
-      }
+    var page = {
+      t: 'div', c: [
+        {
+          t: 'div', a: { class: 'page-header' },
+          c: {
+            t: 'div', a: { class: 'content-container' },
+            c: [
+              { t: 'h1', c: 'Using Bitwrench on the Server Side' },
+              { t: 'p', a: { class: 'subtitle' },
+                c: 'Push UI updates from any server \u2014 Node.js, Python, C on an ESP32 \u2014 to connected browsers in real time.' }
+            ]
+          }
+        },
+        {
+          t: 'div', a: { class: 'content-container' },
+          c: [
+            secOverview,
+            secMessages,
+            secTargets,
+            secActions,
+            secTransport,
+            secServerApi,
+            secClientApi,
+            secExecution,
+            secCliServe,
+            secEmbedded,
+            secExamples
+          ]
+        }
+      ]
     };
 
-    var content = {
-      t: 'div', a: { class: 'content-container' },
-      c: [toc, overview, messages, targets, actions, transport, serverApi, clientApi, execution, examples]
-    };
-
-    bw.DOM('#app', [pageHeader, content]);
+    bw.DOM('#app', page);
   </script>
 </body>
 </html>

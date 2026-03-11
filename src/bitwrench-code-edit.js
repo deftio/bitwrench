@@ -4,6 +4,13 @@
  * Provides bw.highlight() for tokenizing JS/CSS/HTML into TACO spans,
  * and bw.codeEditor() for a live editable code block with syntax coloring.
  *
+ * Theme integration: The editor chrome (background, text color, font) reads
+ * from CSS custom properties --bw_code_bg, --bw_code_text, --bw_font_mono,
+ * falling back to built-in dark values when no theme is active. Syntax
+ * highlighting colors are intentionally fixed (they are a code color scheme,
+ * not brand colors). The bw_ce_light class is still supported for manual
+ * light-mode override.
+ *
  * Can be loaded standalone (browser script tag after bitwrench.umd.js),
  * or imported as an ES module / CJS module.
  *
@@ -14,9 +21,9 @@
 // -- CSS (injected once) ----------------------------------------------
 var _cssInjected = false;
 var CSS_TEXT =
-  '.bw_ce{background:#1e293b;border-radius:6px;border:1px solid rgba(255,255,255,0.08);overflow:auto}' +
+  '.bw_ce{background:var(--bw_code_bg,#1e293b);border-radius:6px;border:1px solid rgba(255,255,255,0.08);overflow:auto}' +
   '.bw_ce pre{margin:0;padding:0}' +
-  '.bw_ce code{font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:0.875rem;line-height:1.6;color:#e2e8f0;outline:none;white-space:pre-wrap;display:block;padding:0.75rem 1rem}' +
+  '.bw_ce code{font-family:var(--bw_font_mono,"SF Mono",Monaco,"Cascadia Code",Consolas,monospace);font-size:0.875rem;line-height:1.6;color:var(--bw_code_text,#e2e8f0);outline:none;white-space:pre-wrap;display:block;padding:0.75rem 1rem}' +
   '.bw_ce code:empty::before{content:"\\200b"}' +
   '.bw_ce .bw_ce_keyword{color:#c792ea}' +
   '.bw_ce .bw_ce_string{color:#c3e88d}' +
@@ -57,7 +64,7 @@ var CSS_TEXT =
   '.bw_ce_light.bw_ce .bw_ce_template_interp{color:#0891b2}' +
   // Line number gutter (opt-in via lineNumbers option)
   '.bw_ce_wrap{display:flex;flex-direction:row}' +
-  '.bw_ce_gutter{flex:0 0 auto;padding:0.75rem 0;text-align:right;user-select:none;-webkit-user-select:none;color:#546e7a;font-family:"SF Mono",Monaco,"Cascadia Code",Consolas,monospace;font-size:0.875rem;line-height:1.6;border-right:1px solid rgba(255,255,255,0.08);overflow:hidden}' +
+  '.bw_ce_gutter{flex:0 0 auto;padding:0.75rem 0;text-align:right;user-select:none;-webkit-user-select:none;color:#546e7a;font-family:var(--bw_font_mono,"SF Mono",Monaco,"Cascadia Code",Consolas,monospace);font-size:0.875rem;line-height:1.6;border-right:1px solid rgba(255,255,255,0.08);overflow:hidden}' +
   '.bw_ce_gutter span{display:block;padding:0 0.5rem 0 0.75rem}' +
   '.bw_ce_light .bw_ce_gutter{color:#9ca3af;border-right-color:#d8d8d8}';
 

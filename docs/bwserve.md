@@ -247,6 +247,26 @@ await app.close();
 
 Number of active SSE connections (read-only property).
 
+### `app.broadcast(msg)`
+
+Send a protocol message to all connected clients. Useful for dashboards, notifications, and multi-user apps. Returns the number of clients the message was sent to.
+
+```javascript
+// Broadcast a patch to all browsers:
+app.broadcast({ type: 'patch', target: 'status', content: 'System OK' });
+
+// Target a specific client by setting clientId:
+app.broadcast({ type: 'patch', target: 'msg', content: 'Hello', clientId: 'c1' });
+
+// Broadcast a batch update:
+app.broadcast({
+  type: 'batch', ops: [
+    { type: 'patch', target: 'users', content: '342' },
+    { type: 'patch', target: 'orders', content: '28' }
+  ]
+});
+```
+
 ### BwServeClient Methods
 
 #### DOM Operations
@@ -393,6 +413,24 @@ bw.clientApply({ type: 'exec', code: 'alert(1)' });  // needs allowExec
 
 Returns `true` if the message was applied successfully, `false` otherwise.
 
+### `bw.clientParse(str)`
+
+Parse both strict JSON and r-prefix relaxed JSON. This is a state-machine parser that converts single-quoted strings to double-quoted, strips trailing commas, and handles escape sequences (`\'`, `\\`, `\n`, `\t`). Falls back to `JSON.parse()` for strict JSON (no r-prefix).
+
+```javascript
+// Strict JSON — passes through to JSON.parse():
+bw.clientParse('{"type":"patch","target":"t","content":"42"}');
+
+// r-prefix relaxed JSON (from ESP32 / C macros):
+bw.clientParse("r{'type':'patch','target':'t','content':'42'}");
+
+// Handles apostrophes in values:
+bw.clientParse("r{'content':'Barry\\'s Room'}");
+// → { content: "Barry's Room" }
+```
+
+`bw.clientConnect()` calls `bw.clientParse()` on every incoming SSE message automatically. You only need to call it directly if you're building a custom transport or testing.
+
 ## Transport
 
 bwserve supports multiple transports:
@@ -439,6 +477,95 @@ var conn = bw.clientConnect('/bw/ui', {
 ```
 
 The device responds to `GET /bw/ui` with protocol messages using relaxed JSON (single quotes for C++ ergonomics). `bw.clientParse()` converts the relaxed format to strict JSON.
+
+## Relaxed JSON (r-prefix format)
+
+For embedded C/C++ systems, composing JSON with double-quoted strings is painful — every quote needs escaping (`\"`). bwserve supports **r-prefix relaxed JSON**: single-quoted strings with an `r` prefix character.
+
+```
+// Standard JSON in C (painful):
+"{\"type\":\"patch\",\"target\":\"temp\",\"content\":\"23.5\"}"
+
+// r-prefix relaxed JSON (natural):
+"r{'type':'patch','target':'temp','content':'23.5'}"
+```
+
+The `r` prefix tells the parser to convert single quotes to double quotes before parsing. The browser's `bw.clientParse()` handles this automatically.
+
+### Escaping Rule
+
+Since single quotes delimit strings in r-prefix format, apostrophes in values must be escaped with `\'`:
+
+```c
+// Static text with apostrophe:
+BW_PATCH(msg, "room", "Barry\\'s Room");
+
+// Dynamic user text — use BW_PATCH_SAFE (auto-escapes):
+char user_text[] = "it's 23.5 C";
+BW_PATCH_SAFE(msg, sizeof(msg), "status", user_text);
+```
+
+This is still a huge win over standard JSON in C, where every quote needs `\"`.
+
+**Direction:** r-prefix is outbound only (device to browser). The browser always sends strict JSON back via `fetch()`.
+
+## bwcli serve — Pipe Server
+
+`bwcli serve` turns **any language** into a bwserve backend. It opens two ports: a **web port** (browsers connect here) and an **input port** (your app sends protocol messages here via HTTP POST). Alternatively, use `--stdin` to pipe messages from stdin.
+
+```
+  Your App (any language)          bwcli serve         Browser(s)
+┌───────────────────────┐    ┌───────────────┐    ┌─────────────┐
+│  curl / Python / C    │    │  web: :8080   │<──>│  EventSource│
+│  POST to :9000        │───>│  input: :9000 │    │  bw.client..│
+│  or pipe to stdin     │    │  --stdin      │    │             │
+└───────────────────────┘    └───────────────┘    └─────────────┘
+```
+
+### Usage
+
+```bash
+# Start the pipe server (dual port)
+bwcli serve --port 8080 --input-port 9000
+
+# Open browser automatically
+bwcli serve --open
+
+# Stdin mode (pipe messages from any command)
+python sensor.py | bwcli serve --stdin --port 8080
+
+# With verbose logging
+bwcli serve -v
+```
+
+### Sending messages
+
+```bash
+# Patch a value via curl:
+curl -X POST http://localhost:9000 \
+  -H "Content-Type: application/json" \
+  -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+
+# r-prefix relaxed JSON is also accepted:
+curl -X POST http://localhost:9000 -d "r{'type':'patch','target':'temp','content':'23.5'}"
+```
+
+### From Python
+
+```python
+import requests, time, random
+
+while True:
+    temp = 20 + random.random() * 10
+    requests.post("http://localhost:9000", json={
+        "type": "patch",
+        "target": "temp",
+        "content": f"{temp:.1f} C"
+    })
+    time.sleep(2)
+```
+
+Both the input port and stdin mode accept strict JSON and r-prefix relaxed JSON. All messages are broadcast to every connected browser.
 
 ## Complete Examples
 
@@ -585,4 +712,5 @@ client.on('export', function(data) {
 - [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 9 message types
 - [Sandbox](../pages/bwserve-sandbox.html) — Try bwserve protocol in the browser (no server needed)
 - [Design Document](../dev/bw-client-server.md) — Protocol design decisions and architecture
-- [CLI](cli.md) — The `bitwrench` command for file conversion
+- [CLI](cli.md) — The `bwcli` command for file conversion and pipe server
+- [Embedded Tutorial](tutorial-embedded.md) — ESP32 IoT dashboard with C macros and r-prefix JSON

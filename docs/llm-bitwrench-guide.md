@@ -486,15 +486,19 @@ bw.injectCSS(responsiveCSS, { id: 'my-grid-styles' });
 ## CLI Usage
 
 ```bash
-npm install -g bitwrench
+npm install -g bitwrench    # installs the `bwcli` command
 
-bitwrench input.md -o output.html                  # basic conversion
-bitwrench input.md -o output.html --theme ocean     # with theme
-bitwrench input.md -o output.html --standalone       # offline (bitwrench inlined)
-bitwrench input.md -o output.html --cdn              # CDN mode (jsdelivr)
-bitwrench input.md -o output.html --css styles.css   # custom CSS
-bitwrench input.md -o output.html --highlight        # syntax highlighting
-bitwrench input.md --theme "#336699,#cc6633"          # custom hex colors
+bwcli input.md -o output.html                  # basic conversion
+bwcli input.md -o output.html --theme ocean     # with theme
+bwcli input.md -o output.html --standalone       # offline (bitwrench inlined)
+bwcli input.md -o output.html --cdn              # CDN mode (jsdelivr)
+bwcli input.md -o output.html --css styles.css   # custom CSS
+bwcli input.md -o output.html --highlight        # syntax highlighting
+bwcli input.md --theme "#336699,#cc6633"          # custom hex colors
+
+# Pipe server (any language → browser UI)
+bwcli serve --port 8080 --input-port 9000
+bwcli serve --stdin                              # pipe from stdin
 ```
 
 ## Node.js / SSR Usage

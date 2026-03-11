@@ -54,6 +54,7 @@ Or include directly in a page:
 - **Built-in reactivity** — `bw.update()` re-renders components when state changes, `bw.patch()` updates individual elements by ID, `bw.pub()`/`bw.sub()` provides decoupled messaging between any part of the application
 - **CSS and theme generation** — `bw.css()` generates stylesheets from objects, `bw.generateTheme()` derives a complete visual theme (buttons, alerts, badges, cards, forms, tables, dark mode) from 2-3 seed colors
 - **45+ ready-made components** — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards — each a single function call that returns a composable object
+- **Server-driven UI (bwserve)** — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the `bwcli serve` pipe server
 - **Static site CLI** — the `bwcli` command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support
 - **Utilities** — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js
 
@@ -152,6 +153,9 @@ bw.toggleTheme();  // switch between primary and alternate palettes
 | `bw.pub(topic, detail)` | Publish a message to subscribers |
 | `bw.sub(topic, handler)` | Subscribe to a topic; returns an unsub function |
 | `bw.inspect(target)` | Debug a component in the browser console |
+| `bw.clientConnect(url, opts)` | Connect to a bwserve SSE endpoint |
+| `bw.clientApply(msg)` | Apply a bwserve protocol message to the DOM |
+| `bw.clientParse(str)` | Parse strict or r-prefix relaxed JSON |
 
 See the full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html) for all functions.
 
@@ -161,16 +165,25 @@ Convert Markdown, HTML, or JSON files to styled standalone pages:
 
 ```bash
 # Convert Markdown to a self-contained HTML page
-bitwrench README.md -o index.html --standalone
+bwcli README.md -o index.html --standalone
 
 # Apply a theme preset
-bitwrench doc.md -o doc.html --standalone --theme ocean
+bwcli doc.md -o doc.html --standalone --theme ocean
 
 # Custom colors
-bitwrench doc.md -o doc.html --standalone --theme "#336699,#cc6633"
+bwcli doc.md -o doc.html --standalone --theme "#336699,#cc6633"
 ```
 
 Flags: `--output/-o`, `--standalone/-s`, `--cdn`, `--theme/-t`, `--css/-c`, `--title`, `--favicon/-f`, `--highlight`, `--verbose/-v`
+
+### Pipe Server
+
+`bwcli serve` turns any language into a bwserve backend — send JSON protocol messages via HTTP POST or stdin, and connected browsers update in real time:
+
+```bash
+bwcli serve --port 8080 --input-port 9000
+curl -X POST http://localhost:9000 -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+```
 
 ## Build Formats
 
@@ -191,8 +204,15 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 - [State Management](docs/state-management.md) — three-level component model, ComponentHandle, reactive state
 - [Component Library](docs/component-library.md) — all 50+ `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) — palette-driven theme generation, presets, design tokens
-- [CLI](docs/cli.md) — the `bitwrench` command for file conversion
+- [CLI](docs/cli.md) — the `bwcli` command for file conversion and pipe server
+- [bwserve](docs/bwserve.md) — server-driven UI protocol (SSE, actions, embedded devices)
 - [LLM Guide](docs/llm-bitwrench-guide.md) — compact single-file reference for AI-assisted development
+
+**Tutorials:**
+
+- [Build a Website](docs/tutorial-website.md) — multi-section landing page from TACO objects
+- [bwserve Dashboard](docs/tutorial-bwserve.md) — Streamlit-style server-push dashboard
+- [ESP32 IoT Dashboard](docs/tutorial-embedded.md) — embedded sensor dashboard with C macros
 
 **Interactive demos** (live site):
 
@@ -209,7 +229,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 ```bash
 npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
-npm test             # run unit tests (558 tests)
+npm test             # run unit tests (1000+ tests)
 npm run test:cli     # run CLI tests (49 tests)
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint

@@ -280,6 +280,7 @@ embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
 * [ ] implement --> WebSocket transport option
 * [ ] decide --> Optimistic updates: client-side immediate response while waiting for server
 * [ ] decide --> Event batching: multiple actions in same frame → single POST
+* [ ] implement --> Remote screenshot via bwcli debug protocol: use div-to-image (html2canvas or dom-to-image approach) on the client side, triggered by a `call` message (e.g. `client.call("screenshot", "#app")`). The client captures the rendered DOM as a PNG data URL and POSTs it back as an action. Enables headless visual debugging of bwserve apps — especially useful for embedded/IoT dashboards where you can't easily open a browser. Could also be used for automated visual regression testing.
 
 ---
 

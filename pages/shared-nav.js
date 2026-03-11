@@ -22,7 +22,7 @@
     { text: 'Themes', href: '10-themes.html' },
     { text: 'State', href: '05-state.html' },
     { text: 'Examples', href: '02-tables.html' },
-    { text: 'bwserve', href: '12-bwserve-protocol.html' },
+    { text: 'Server', href: '12-bwserve-protocol.html' },
     { text: 'Docs', href: '08-api-reference.html' }
   ];
 
@@ -106,7 +106,7 @@
         active = onExamplePage;
       } else if (item.text === 'Docs') {
         active = onDocsPage;
-      } else if (item.text === 'bwserve') {
+      } else if (item.text === 'Server') {
         active = onBwservePage;
       } else {
         active = isActive(item.href, currentPage, rh);
