@@ -17,6 +17,7 @@ const { JSDOM } = jsdom;
 // bwserve server-side imports
 import bwserve from "../src/bwserve/index.js";
 const { BwServeApp, BwServeClient } = bwserve;
+import { generateShell } from "../src/bwserve/shell.js";
 
 function resetApp() {
   var dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
@@ -189,6 +190,141 @@ describe("bw.clientApply()", function() {
     var result = bw.clientApply({ type: 'unknown', target: '#app' });
     assert.strictEqual(result, false);
   });
+
+  describe("register", function() {
+    beforeEach(function() {
+      bw._clientFunctions = {};
+    });
+
+    it("should register a named function from body string", function() {
+      var result = bw.clientApply({
+        type: 'register',
+        name: 'greet',
+        body: 'function(name) { return "Hello " + name; }'
+      });
+      assert.strictEqual(result, true);
+      assert.strictEqual(typeof bw._clientFunctions.greet, 'function');
+      assert.strictEqual(bw._clientFunctions.greet('World'), 'Hello World');
+    });
+
+    it("should return false for missing name", function() {
+      assert.strictEqual(bw.clientApply({ type: 'register', body: 'function(){}' }), false);
+    });
+
+    it("should return false for missing body", function() {
+      assert.strictEqual(bw.clientApply({ type: 'register', name: 'foo' }), false);
+    });
+
+    it("should return false for invalid body syntax", function() {
+      var result = bw.clientApply({
+        type: 'register',
+        name: 'bad',
+        body: 'not valid javascript {{{}'
+      });
+      assert.strictEqual(result, false);
+    });
+
+    it("should overwrite a previously registered function", function() {
+      bw.clientApply({ type: 'register', name: 'fn', body: 'function() { return 1; }' });
+      bw.clientApply({ type: 'register', name: 'fn', body: 'function() { return 2; }' });
+      assert.strictEqual(bw._clientFunctions.fn(), 2);
+    });
+  });
+
+  describe("call", function() {
+    beforeEach(function() {
+      bw._clientFunctions = {};
+    });
+
+    it("should call a registered function", function() {
+      var callLog = [];
+      bw._clientFunctions.myFn = function(a, b) { callLog.push(a + b); };
+      var result = bw.clientApply({ type: 'call', name: 'myFn', args: [3, 4] });
+      assert.strictEqual(result, true);
+      assert.deepStrictEqual(callLog, [7]);
+    });
+
+    it("should call a built-in function (log)", function() {
+      var origLog = console.log;
+      var logged = [];
+      console.log = function() { logged.push([].slice.call(arguments)); };
+      var result = bw.clientApply({ type: 'call', name: 'log', args: ['hello', 'world'] });
+      console.log = origLog;
+      assert.strictEqual(result, true);
+      assert.deepStrictEqual(logged, [['hello', 'world']]);
+    });
+
+    it("should call built-in focus function", function() {
+      bw.DOM('#app', { t: 'input', a: { id: 'inp' } });
+      var focused = false;
+      document.getElementById('inp').focus = function() { focused = true; };
+      var result = bw.clientApply({ type: 'call', name: 'focus', args: ['#inp'] });
+      assert.strictEqual(result, true);
+      assert.strictEqual(focused, true);
+    });
+
+    it("should call built-in scrollTo function", function() {
+      bw.DOM('#app', { t: 'div', a: { id: 'scrollable' } });
+      var el = document.getElementById('scrollable');
+      // jsdom doesn't fully support scroll, but we can verify the function runs
+      var result = bw.clientApply({ type: 'call', name: 'scrollTo', args: ['#scrollable'] });
+      assert.strictEqual(result, true);
+    });
+
+    it("should return false for missing name", function() {
+      assert.strictEqual(bw.clientApply({ type: 'call', args: [] }), false);
+    });
+
+    it("should return false for unknown function name", function() {
+      assert.strictEqual(bw.clientApply({ type: 'call', name: 'nonexistent', args: [] }), false);
+    });
+
+    it("should prefer registered over built-in if same name", function() {
+      var called = '';
+      bw._clientFunctions.log = function() { called = 'registered'; };
+      bw.clientApply({ type: 'call', name: 'log', args: [] });
+      assert.strictEqual(called, 'registered');
+    });
+
+    it("should handle missing args gracefully", function() {
+      bw._clientFunctions.noArgs = function() { return 42; };
+      var result = bw.clientApply({ type: 'call', name: 'noArgs' });
+      assert.strictEqual(result, true);
+    });
+  });
+
+  describe("exec", function() {
+    afterEach(function() {
+      bw._allowExec = false;
+    });
+
+    it("should reject exec when allowExec is false", function() {
+      bw._allowExec = false;
+      var result = bw.clientApply({ type: 'exec', code: 'var x = 1;' });
+      assert.strictEqual(result, false);
+    });
+
+    it("should execute code when allowExec is true", function() {
+      bw._allowExec = true;
+      global._execTest = 0;
+      var result = bw.clientApply({ type: 'exec', code: '_execTest = 42;' });
+      assert.strictEqual(result, true);
+      assert.strictEqual(global._execTest, 42);
+      delete global._execTest;
+    });
+
+    it("should return false for empty code", function() {
+      bw._allowExec = true;
+      assert.strictEqual(bw.clientApply({ type: 'exec' }), false);
+      assert.strictEqual(bw.clientApply({ type: 'exec', code: '' }), false);
+    });
+
+    it("should return false for code with syntax errors", function() {
+      bw._allowExec = true;
+      var result = bw.clientApply({ type: 'exec', code: 'if if if {{{' });
+      assert.strictEqual(result, false);
+    });
+  });
 });
 
 // ===================================================================================
@@ -277,6 +413,61 @@ describe("BwServeClient", function() {
         target: 'my-comp',
         action: 'refresh',
         data: { force: true }
+      });
+    });
+  });
+
+  describe("#register()", function() {
+    it("should send a register message", function() {
+      var client = new BwServeClient('c1', null);
+      client.register('autoScroll', 'function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }');
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'register',
+        name: 'autoScroll',
+        body: 'function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }'
+      });
+    });
+  });
+
+  describe("#call()", function() {
+    it("should send a call message with args", function() {
+      var client = new BwServeClient('c1', null);
+      client.call('scrollTo', '#chat');
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'call',
+        name: 'scrollTo',
+        args: ['#chat']
+      });
+    });
+
+    it("should send a call with multiple args", function() {
+      var client = new BwServeClient('c1', null);
+      client.call('download', 'report.csv', 'id,name\n1,Alice', 'text/csv');
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'call',
+        name: 'download',
+        args: ['report.csv', 'id,name\n1,Alice', 'text/csv']
+      });
+    });
+
+    it("should send a call with no args", function() {
+      var client = new BwServeClient('c1', null);
+      client.call('log');
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'call',
+        name: 'log',
+        args: []
+      });
+    });
+  });
+
+  describe("#exec()", function() {
+    it("should send an exec message", function() {
+      var client = new BwServeClient('c1', null);
+      client.exec("document.title = 'New Title'");
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'exec',
+        code: "document.title = 'New Title'"
       });
     });
   });
@@ -494,6 +685,81 @@ describe("bwserve round-trip", function() {
 });
 
 // ===================================================================================
+// Round-trip tests: register/call/exec
+// ===================================================================================
+
+describe("bwserve round-trip: register/call/exec", function() {
+  beforeEach(function() {
+    resetApp();
+    bw._clientFunctions = {};
+    bw._allowExec = false;
+  });
+
+  it("should register via server then call via round-trip", function() {
+    var client = new BwServeClient('rt-reg', null);
+
+    // Server registers a function
+    client.register('setTitle', 'function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }');
+    bw.clientApply(client._sent[0]);
+    assert.strictEqual(typeof bw._clientFunctions.setTitle, 'function');
+
+    // Server renders some content, then calls the registered function
+    client.render('#app', { t: 'h1', a: { id: 'title' }, c: 'Original' });
+    bw.clientApply(client._sent[1]);
+    assert.strictEqual(document.getElementById('title').textContent, 'Original');
+
+    client.call('setTitle', 'title', 'Updated by call');
+    bw.clientApply(client._sent[2]);
+    assert.strictEqual(document.getElementById('title').textContent, 'Updated by call');
+  });
+
+  it("should call built-in log via server round-trip", function() {
+    var client = new BwServeClient('rt-log', null);
+    var origLog = console.log;
+    var logged = [];
+    console.log = function() { logged.push([].slice.call(arguments)); };
+    client.call('log', 'server says hello');
+    bw.clientApply(client._sent[0]);
+    console.log = origLog;
+    assert.deepStrictEqual(logged, [['server says hello']]);
+  });
+
+  it("should reject exec in round-trip when not opted in", function() {
+    var client = new BwServeClient('rt-exec-no', null);
+    client.exec('var x = 1;');
+    var result = bw.clientApply(client._sent[0]);
+    assert.strictEqual(result, false);
+  });
+
+  it("should allow exec in round-trip when opted in", function() {
+    bw._allowExec = true;
+    var client = new BwServeClient('rt-exec-yes', null);
+    global._execRoundTrip = 0;
+    client.exec('_execRoundTrip = 99;');
+    var result = bw.clientApply(client._sent[0]);
+    assert.strictEqual(result, true);
+    assert.strictEqual(global._execRoundTrip, 99);
+    delete global._execRoundTrip;
+  });
+
+  it("should batch register + call in one round-trip", function() {
+    var client = new BwServeClient('rt-batch-call', null);
+
+    // Render content first
+    client.render('#app', { t: 'div', a: { id: 'status' }, c: 'waiting' });
+    bw.clientApply(client._sent[0]);
+
+    // Batch: register a function then call it
+    client.batch([
+      { type: 'register', name: 'markDone', body: 'function(id) { var el = document.getElementById(id); if (el) el.textContent = "done"; }' },
+      { type: 'call', name: 'markDone', args: ['status'] }
+    ]);
+    bw.clientApply(client._sent[1]);
+    assert.strictEqual(document.getElementById('status').textContent, 'done');
+  });
+});
+
+// ===================================================================================
 // bw.clientConnect() tests (limited — no real EventSource in jsdom)
 // ===================================================================================
 
@@ -525,5 +791,537 @@ describe("bw.clientConnect()", function() {
     // We can't directly inspect, but the conn exists
     assert.ok(conn);
     conn.close();
+  });
+
+  it("should set bw._allowExec when allowExec option is true", function() {
+    bw._allowExec = false;
+    var conn = bw.clientConnect('/__bw/events/c2', {
+      transport: 'poll',
+      interval: 999999,
+      allowExec: true
+    });
+    assert.strictEqual(bw._allowExec, true);
+    conn.close();
+    bw._allowExec = false; // cleanup
+  });
+
+  it("should not set bw._allowExec when allowExec option is absent", function() {
+    bw._allowExec = true; // pre-set
+    var conn = bw.clientConnect('/__bw/events/c3', {
+      transport: 'poll',
+      interval: 999999
+    });
+    assert.strictEqual(bw._allowExec, false);
+    conn.close();
+  });
+});
+
+// ===================================================================================
+// generateShell() tests
+// ===================================================================================
+
+describe("generateShell()", function() {
+  it("should return a string", function() {
+    var html = generateShell({ clientId: 'test-1' });
+    assert.strictEqual(typeof html, 'string');
+  });
+
+  it("should include DOCTYPE and html tags", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('<!DOCTYPE html>'));
+    assert.ok(html.includes('<html lang="en">'));
+    assert.ok(html.includes('</html>'));
+  });
+
+  it("should include default title", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('<title>bwserve</title>'));
+  });
+
+  it("should use custom title", function() {
+    var html = generateShell({ clientId: 'c1', title: 'My Dashboard' });
+    assert.ok(html.includes('<title>My Dashboard</title>'));
+  });
+
+  it("should include bitwrench script and CSS by default", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('/__bw/bitwrench.umd.js'));
+    assert.ok(html.includes('/__bw/bitwrench.css'));
+  });
+
+  it("should not include bitwrench when injectBitwrench is false", function() {
+    var html = generateShell({ clientId: 'c1', injectBitwrench: false });
+    assert.ok(!html.includes('/__bw/bitwrench.umd.js'));
+    assert.ok(!html.includes('/__bw/bitwrench.css'));
+  });
+
+  it("should include #app div", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('<div id="app"></div>'));
+  });
+
+  it("should include clientConnect with correct clientId", function() {
+    var html = generateShell({ clientId: 'my-client-42' });
+    assert.ok(html.includes('"my-client-42"'));
+    assert.ok(html.includes('/__bw/events/'));
+    assert.ok(html.includes('/__bw/action/'));
+  });
+
+  it("should include data-bw-action click delegation", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('data-bw-action'));
+    assert.ok(html.includes('sendAction'));
+  });
+
+  it("should include Enter key handler", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('keydown'));
+    assert.ok(html.includes('Enter'));
+  });
+
+  it("should use defaults when called with empty opts", function() {
+    var html = generateShell({});
+    assert.ok(html.includes('<title>bwserve</title>'));
+    assert.ok(html.includes('"default"'));
+  });
+
+  it("should use defaults when called with no opts", function() {
+    var html = generateShell();
+    assert.ok(html.includes('<title>bwserve</title>'));
+  });
+
+  it("should include theme generation when theme is provided as string", function() {
+    var html = generateShell({ clientId: 'c1', theme: 'ocean' });
+    assert.ok(html.includes('generateTheme'));
+  });
+
+  it("should include theme generation when theme is provided as object", function() {
+    var html = generateShell({ clientId: 'c1', theme: { primary: '#336699', secondary: '#cc6633' } });
+    assert.ok(html.includes('generateTheme'));
+    assert.ok(html.includes('#336699'));
+  });
+
+  it("should include loadDefaultStyles call", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('loadDefaultStyles'));
+  });
+
+  it("should include meta viewport", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('viewport'));
+  });
+
+  it("should include inputValue collection logic", function() {
+    var html = generateShell({ clientId: 'c1' });
+    assert.ok(html.includes('inputValue'));
+    assert.ok(html.includes('input[type=text]'));
+  });
+});
+
+// ===================================================================================
+// BwServeClient edge case tests (error branches)
+// ===================================================================================
+
+describe("BwServeClient edge cases", function() {
+  it("should call res.end() when close() is called with a mock response", function() {
+    var endCalled = false;
+    var mockRes = {
+      write: function() {},
+      end: function() { endCalled = true; }
+    };
+    var client = new BwServeClient('c-close', mockRes);
+    client.close();
+    assert.strictEqual(endCalled, true);
+    assert.strictEqual(client._closed, true);
+  });
+
+  it("should handle res.end() throwing an error", function() {
+    var mockRes = {
+      write: function() {},
+      end: function() { throw new Error('stream already closed'); }
+    };
+    var client = new BwServeClient('c-close-err', mockRes);
+    // Should not throw
+    client.close();
+    assert.strictEqual(client._closed, true);
+  });
+
+  it("should handle _send() when res.write() throws", function() {
+    var mockRes = {
+      write: function() { throw new Error('write after end'); }
+    };
+    var client = new BwServeClient('c-write-err', mockRes);
+    // Should not throw, should still store in _sent
+    client.render('#app', { t: 'div', c: 'test' });
+    assert.strictEqual(client._sent.length, 1);
+  });
+
+  it("should handle dispatch passing client as second arg", function() {
+    var client = new BwServeClient('c-dispatch', null);
+    var receivedClient = null;
+    client.on('test', function(data, c) {
+      receivedClient = c;
+    });
+    client._dispatch('test', {});
+    assert.strictEqual(receivedClient, client);
+  });
+});
+
+// ===================================================================================
+// BwServeApp HTTP integration tests
+// ===================================================================================
+
+describe("BwServeApp HTTP integration", function() {
+  var apps = [];  // track all apps for cleanup
+
+  function createApp(opts) {
+    var a = bwserve.create(Object.assign({ port: 0 }, opts || {}));
+    apps.push(a);
+    return a;
+  }
+
+  afterEach(async function() {
+    this.timeout(5000);
+    for (var a of apps) {
+      if (a._server) await a.close();
+    }
+    apps = [];
+  });
+
+  it("should serve shell HTML for registered page", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function(client) {
+      client.render('#app', { t: 'div', c: 'Hello from test' });
+    });
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/');
+    assert.strictEqual(res.status, 200);
+    var html = await res.text();
+    assert.ok(html.includes('<!DOCTYPE html>'));
+    assert.ok(html.includes('bitwrench'));
+    assert.ok(html.includes('id="app"'));
+  });
+
+  it("should return 404 for unregistered page", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/nonexistent');
+    assert.strictEqual(res.status, 404);
+  });
+
+  it("should serve bitwrench.umd.js from /__bw/", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.umd.js');
+    assert.strictEqual(res.status, 200);
+    var contentType = res.headers.get('content-type');
+    assert.ok(contentType.includes('javascript'));
+    var body = await res.text();
+    assert.ok(body.length > 1000, "bitwrench.umd.js should be > 1KB");
+  });
+
+  it("should serve bitwrench.umd.min.js from /__bw/", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.umd.min.js');
+    assert.strictEqual(res.status, 200);
+  });
+
+  it("should serve bitwrench.css from /__bw/", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.css');
+    assert.strictEqual(res.status, 200);
+    var contentType = res.headers.get('content-type');
+    assert.ok(contentType.includes('css'));
+  });
+
+  it("should handle SSE connection and send messages", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function(client) {
+      client.render('#app', { t: 'div', c: 'Hello from SSE test' });
+      // Close client after sending to allow fetch to complete
+      setTimeout(function() { client.close(); }, 50);
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    var pageRes = await fetch('http://localhost:' + port + '/');
+    var html = await pageRes.text();
+
+    var match = html.match(/"(c\d+)"/);
+    assert.ok(match, "should have a client ID in the shell");
+    var clientId = match[1];
+
+    var sseRes = await fetch('http://localhost:' + port + '/__bw/events/' + clientId);
+    assert.strictEqual(sseRes.status, 200);
+    var sseType = sseRes.headers.get('content-type');
+    assert.ok(sseType.includes('text/event-stream'));
+
+    var body = await sseRes.text();
+    assert.ok(body.includes('"type":"replace"'), "SSE should contain replace message");
+    assert.ok(body.includes('Hello from SSE test'), "SSE should contain our content");
+  });
+
+  it("should handle action POST", async function() {
+    this.timeout(5000);
+    var actionCalled = false;
+    var app = createApp();
+    app.page('/', function(client) {
+      client.render('#app', { t: 'div', c: 'test' });
+      client.on('myAction', function() {
+        actionCalled = true;
+      });
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    var pageRes = await fetch('http://localhost:' + port + '/');
+    var html = await pageRes.text();
+    var match = html.match(/"(c\d+)"/);
+    var clientId = match[1];
+
+    fetch('http://localhost:' + port + '/__bw/events/' + clientId).catch(function() {});
+    await new Promise(function(r) { setTimeout(r, 100); });
+
+    var actionRes = await fetch('http://localhost:' + port + '/__bw/action/' + clientId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'myAction', data: { test: true } })
+    });
+    assert.strictEqual(actionRes.status, 200);
+    var actionBody = await actionRes.json();
+    assert.strictEqual(actionBody.ok, true);
+    assert.strictEqual(actionCalled, true);
+  });
+
+  it("should return 404 for action with unknown client", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/__bw/action/unknown-client', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'test' })
+    });
+    assert.strictEqual(res.status, 404);
+  });
+
+  it("should return 400 for malformed action POST body", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function(client) {
+      client.render('#app', { t: 'div', c: 'test' });
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    var pageRes = await fetch('http://localhost:' + port + '/');
+    var html = await pageRes.text();
+    var match = html.match(/"(c\d+)"/);
+    var clientId = match[1];
+
+    fetch('http://localhost:' + port + '/__bw/events/' + clientId).catch(function() {});
+    await new Promise(function(r) { setTimeout(r, 100); });
+
+    var res = await fetch('http://localhost:' + port + '/__bw/action/' + clientId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'not valid json{{{}'
+    });
+    assert.strictEqual(res.status, 400);
+  });
+
+  it("should close all clients on app.close()", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function(client) {
+      client.render('#app', { t: 'div', c: 'test' });
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    var pageRes = await fetch('http://localhost:' + port + '/');
+    var html = await pageRes.text();
+    var match = html.match(/"(c\d+)"/);
+    var clientId = match[1];
+
+    var controller = new AbortController();
+    fetch('http://localhost:' + port + '/__bw/events/' + clientId, {
+      signal: controller.signal
+    }).catch(function() {});
+
+    await new Promise(function(r) { setTimeout(r, 100); });
+    assert.ok(app.clientCount >= 1);
+
+    controller.abort();
+    await app.close();
+    assert.strictEqual(app.clientCount, 0);
+    assert.strictEqual(app._server, null);
+  });
+
+  it("should close cleanly when no server is running", async function() {
+    var emptyApp = createApp();
+    await emptyApp.close();
+  });
+
+  it("should handle multiple pages", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function(client) {
+      client.render('#app', { t: 'div', c: 'Home' });
+    });
+    app.page('/about', function(client) {
+      client.render('#app', { t: 'div', c: 'About' });
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    var homeRes = await fetch('http://localhost:' + port + '/');
+    assert.strictEqual(homeRes.status, 200);
+
+    var aboutRes = await fetch('http://localhost:' + port + '/about');
+    assert.strictEqual(aboutRes.status, 200);
+  });
+
+  it("should serve static files when static dir is set", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.writeFileSync(path.join(tmpDir, 'hello.txt'), 'static content');
+    fs.writeFileSync(path.join(tmpDir, 'data.json'), '{"key":"value"}');
+
+    var app = createApp({ static: tmpDir });
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+
+    var res = await fetch('http://localhost:' + port + '/hello.txt');
+    assert.strictEqual(res.status, 200);
+    var body = await res.text();
+    assert.strictEqual(body, 'static content');
+
+    var jsonRes = await fetch('http://localhost:' + port + '/data.json');
+    assert.strictEqual(jsonRes.status, 200);
+    var ct = jsonRes.headers.get('content-type');
+    assert.ok(ct.includes('json'));
+
+    // Cleanup temp dir
+    fs.unlinkSync(path.join(tmpDir, 'hello.txt'));
+    fs.unlinkSync(path.join(tmpDir, 'data.json'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should return 404 for non-existent static file", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+
+    var app = createApp({ static: tmpDir });
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+
+    var res = await fetch('http://localhost:' + port + '/nonexistent.txt');
+    assert.strictEqual(res.status, 404);
+
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should handle page handler that throws", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function(client) {
+      throw new Error('test handler error');
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    // Get the page to create a client ID
+    var pageRes = await fetch('http://localhost:' + port + '/');
+    var html = await pageRes.text();
+    var match = html.match(/"(c\d+)"/);
+    var clientId = match[1];
+
+    // Connect SSE — the handler will throw but server should not crash
+    var controller = new AbortController();
+    var sseRes = await Promise.race([
+      fetch('http://localhost:' + port + '/__bw/events/' + clientId, {
+        signal: controller.signal
+      }),
+      new Promise(function(r) { setTimeout(function() { r({ status: 200 }); }, 200); })
+    ]);
+    controller.abort();
+    // Server should still be running
+    var res2 = await fetch('http://localhost:' + port + '/');
+    assert.strictEqual(res2.status, 200);
+  });
+
+  it("should send keep-alive comments on SSE connection", async function() {
+    this.timeout(5000);
+    var app = createApp({ keepAliveInterval: 50 });
+    app.page('/', function(client) {
+      // Close after enough time for keep-alive to fire
+      setTimeout(function() { client.close(); }, 150);
+    });
+    await app.listen();
+    var port = app._server.address().port;
+
+    var pageRes = await fetch('http://localhost:' + port + '/');
+    var html = await pageRes.text();
+    var match = html.match(/"(c\d+)"/);
+    var clientId = match[1];
+
+    var sseRes = await fetch('http://localhost:' + port + '/__bw/events/' + clientId);
+    var body = await sseRes.text();
+    assert.ok(body.includes(':keepalive'), "SSE stream should contain keep-alive comment");
+  });
+
+  it("should return 404 when dist file is missing", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var path = await import('path');
+    var distDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'dist');
+    var cssPath = path.join(distDir, 'bitwrench.css');
+    var backupPath = cssPath + '.bak';
+
+    // Temporarily rename the CSS file to simulate missing dist file
+    fs.renameSync(cssPath, backupPath);
+
+    try {
+      var app = createApp();
+      app.page('/', function() {});
+      await app.listen();
+      var port = app._server.address().port;
+
+      var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.css');
+      assert.strictEqual(res.status, 404);
+      var body = await res.text();
+      assert.ok(body.includes('Not Found'));
+    } finally {
+      // Restore the CSS file
+      fs.renameSync(backupPath, cssPath);
+    }
   });
 });

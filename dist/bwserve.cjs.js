@@ -16,11 +16,14 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  * on this object to push UI updates to the client.
  *
  * Protocol message types (sent as SSE data):
- *   { type: 'replace', target: '#app', node: {t,a,c,o} }
- *   { type: 'append',  target: '#list', node: {t,a,c,o} }
- *   { type: 'remove',  target: '#item-3' }
- *   { type: 'patch',   target: 'bw_counter_abc', content: '42', attr: null }
- *   { type: 'batch',   ops: [ ...messages ] }
+ *   { type: 'replace',  target: '#app', node: {t,a,c,o} }
+ *   { type: 'append',   target: '#list', node: {t,a,c,o} }
+ *   { type: 'remove',   target: '#item-3' }
+ *   { type: 'patch',    target: 'bw_counter_abc', content: '42', attr: null }
+ *   { type: 'batch',    ops: [ ...messages ] }
+ *   { type: 'register', name: 'fn', body: 'function(x) { ... }' }
+ *   { type: 'call',     name: 'fn', args: [...] }
+ *   { type: 'exec',     code: 'js code string' }
  *
  * @module bwserve/client
  */
@@ -94,6 +97,44 @@ class BwServeClient {
      */
     message(target, action, data) {
         this._send({ type: 'message', target, action, data });
+    }
+
+    /**
+     * Register a named function on the client for later invocation via call().
+     *
+     * The function body is sent as a string and compiled on the client side.
+     * Registered functions persist for the lifetime of the connection.
+     *
+     * @param {string} name - Function name (used as key for later call())
+     * @param {string} body - Function source as string, e.g. "function(el) { el.scrollTop = el.scrollHeight; }"
+     */
+    register(name, body) {
+        this._send({ type: 'register', name, body });
+    }
+
+    /**
+     * Call a previously registered or built-in function on the client.
+     *
+     * Built-in functions (always available, no registration needed):
+     *   scrollTo, focus, download, clipboard, redirect, log
+     *
+     * @param {string} name - Function name (registered or built-in)
+     * @param {...*} args - Arguments to pass to the function
+     */
+    call(name, ...args) {
+        this._send({ type: 'call', name, args });
+    }
+
+    /**
+     * Execute arbitrary JavaScript code on the client.
+     *
+     * Requires the client connection to be created with { allowExec: true }.
+     * Use call() as the safe alternative when possible.
+     *
+     * @param {string} code - JavaScript code string to execute
+     */
+    exec(code) {
+        this._send({ type: 'exec', code });
     }
 
     /**

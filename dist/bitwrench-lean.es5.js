@@ -196,7 +196,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-11T03:53:58.828Z'
+    buildDate: '2026-03-11T04:41:28.875Z'
   };
 
   /**
@@ -7689,21 +7689,76 @@
   // ===================================================================================
 
   /**
+   * Registry of named functions sent via register messages.
+   * Populated by clientApply({ type: 'register', name, body }).
+   * Invoked by clientApply({ type: 'call', name, args }).
+   * @private
+   */
+  bw._clientFunctions = {};
+
+  /**
+   * Whether exec messages are allowed. Set by clientConnect opts.allowExec.
+   * Default false — exec messages are rejected unless explicitly opted in.
+   * @private
+   */
+  bw._allowExec = false;
+
+  /**
+   * Built-in client functions available via call() without registration.
+   * @private
+   */
+  bw._builtinClientFunctions = {
+    scrollTo: function scrollTo(selector) {
+      var el = bw._el(selector);
+      if (el) el.scrollTop = el.scrollHeight;
+    },
+    focus: function focus(selector) {
+      var el = bw._el(selector);
+      if (el && typeof el.focus === 'function') el.focus();
+    },
+    download: function download(filename, content, mimeType) {
+      if (typeof document === 'undefined') return;
+      var blob = new Blob([content], {
+        type: mimeType || 'text/plain'
+      });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
+    clipboard: function clipboard(text) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      }
+    },
+    redirect: function redirect(url) {
+      if (typeof window !== 'undefined') window.location.href = url;
+    },
+    log: function log() {
+      console.log.apply(console, arguments);
+    }
+  };
+
+  /**
    * Apply a bwserve protocol message to the DOM.
    *
-   * Dispatches one of 6 message types:
-   *   replace — bw.DOM(target, node)
-   *   append  — target.appendChild(bw.createDOM(node))
-   *   remove  — bw.cleanup(target); target.remove()
-   *   patch   — bw.patch(target, content, attr)
-   *   batch   — iterate ops, call clientApply for each
-   *   message — bw.message(target, action, data)
+   * Dispatches one of 9 message types:
+   *   replace  — bw.DOM(target, node)
+   *   append   — target.appendChild(bw.createDOM(node))
+   *   remove   — bw.cleanup(target); target.remove()
+   *   patch    — bw.patch(target, content, attr)
+   *   batch    — iterate ops, call clientApply for each
+   *   message  — bw.message(target, action, data)
+   *   register — store a named function for later call()
+   *   call     — invoke a registered or built-in function
+   *   exec     — execute arbitrary JS (requires allowExec)
    *
    * Target resolution:
    *   Starts with '#' or '.' → CSS selector (querySelector)
    *   Otherwise → getElementById, then bw._el fallback
    *
-   * @param {Object} msg - Protocol message {type, target, node?, content?, attr?, ops?, action?, data?}
+   * @param {Object} msg - Protocol message
    * @returns {boolean} true if the message was applied successfully
    * @category Server
    */
@@ -7714,11 +7769,9 @@
     if (type === 'replace') {
       var el = bw._el(target);
       if (!el) return false;
-      // Use bw.DOM for replace — it handles cleanup and mounting
       bw.DOM(el, msg.node);
       return true;
     } else if (type === 'patch') {
-      // patch uses bw.patch which resolves via bw._el internally
       var patched = bw.patch(target, msg.content, msg.attr);
       return patched !== null;
     } else if (type === 'append') {
@@ -7742,6 +7795,40 @@
       return allOk;
     } else if (type === 'message') {
       return bw.message(msg.target, msg.action, msg.data);
+    } else if (type === 'register') {
+      if (!msg.name || !msg.body) return false;
+      try {
+        bw._clientFunctions[msg.name] = new Function('return ' + msg.body)();
+        return true;
+      } catch (e) {
+        console.error('[bw] register error:', msg.name, e);
+        return false;
+      }
+    } else if (type === 'call') {
+      if (!msg.name) return false;
+      var fn = bw._clientFunctions[msg.name] || bw._builtinClientFunctions[msg.name];
+      if (typeof fn !== 'function') return false;
+      try {
+        var args = Array.isArray(msg.args) ? msg.args : [];
+        fn.apply(null, args);
+        return true;
+      } catch (e) {
+        console.error('[bw] call error:', msg.name, e);
+        return false;
+      }
+    } else if (type === 'exec') {
+      if (!bw._allowExec) {
+        console.warn('[bw] exec rejected: allowExec is not enabled');
+        return false;
+      }
+      if (!msg.code) return false;
+      try {
+        new Function(msg.code)();
+        return true;
+      } catch (e) {
+        console.error('[bw] exec error:', e);
+        return false;
+      }
     }
     return false;
   };
@@ -7757,6 +7844,7 @@
    * @param {number} [opts.interval=2000] - Poll interval in ms (only for 'poll' transport)
    * @param {string} [opts.actionUrl] - POST endpoint for actions (default: derived from url)
    * @param {boolean} [opts.reconnect=true] - Auto-reconnect on disconnect
+   * @param {boolean} [opts.allowExec=false] - Enable exec message type (arbitrary JS execution)
    * @param {Function} [opts.onStatus] - Status callback: 'connecting'|'connected'|'disconnected'
    * @param {Function} [opts.onMessage] - Raw message callback (before clientApply)
    * @returns {Object} Connection object { sendAction, on, close, status }
@@ -7770,6 +7858,8 @@
     var onStatus = opts.onStatus || function () {};
     var onMessage = opts.onMessage || null;
     var handlers = {};
+    // Set the global allowExec flag from connection options
+    bw._allowExec = !!opts.allowExec;
     var conn = {
       status: 'connecting',
       _es: null,

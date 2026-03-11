@@ -764,12 +764,262 @@ All client-to-server messages go through `conn.sendAction()`.
 
 
 
+## Three-Tier Server-to-Client Execution Model
+
+**Status**: Implemented in v2.0.16.
+
+### The Problem
+
+The current protocol has five verbs for pushing *data* to the client
+(replace, patch, append, remove, batch). These are declarative — the server
+says *what* the DOM should look like, and the client renders it.
+
+But sometimes the server needs the client to *do* something that isn't a
+DOM mutation:
+
+- Read the scroll position or viewport dimensions
+- Trigger a file download
+- Access a browser API (clipboard, geolocation, notifications)
+- Run a validation function on form data before submitting
+- Initialize a third-party library (chart, map, code editor)
+- Call a function that was already loaded in the page
+
+The existing `module` message type (dynamic `import()`) covers the
+"load new code" case, but it's heavyweight — a full HTTP round-trip
+to fetch a JS file. For small operations the server already knows about,
+we need something lighter.
+
+### Three Tiers
+
+| Tier | Method | What it does | Analogy |
+|------|--------|-------------|---------|
+| 1 | `client.register(name, code)` | Send a named function to the client for later use | Installing a DLL |
+| 2 | `client.call(name, args)` | Invoke a previously registered function by name | Win32 SendMessage |
+| 3 | `client.exec(code)` | Execute arbitrary JS on the client immediately | eval() / devtools console |
+
+#### Tier 1: `client.register(name, code)`
+
+```javascript
+// Server sends:
+{ type: "register", name: "scrollToBottom", body: "function(el) { el.scrollTop = el.scrollHeight; }" }
+
+// Client stores it in a registry:
+bw._clientFunctions["scrollToBottom"] = new Function("return " + body)();
+```
+
+The function is sent once and cached. Subsequent calls reference it by
+name. This amortizes the cost of sending code — you pay once, call many
+times.
+
+**Use case**: The server knows the chat panel needs auto-scrolling. It
+registers the scroll function on first connect, then calls it after every
+append.
+
+#### Tier 2: `client.call(name, args)`
+
+```javascript
+// Server sends:
+{ type: "call", name: "scrollToBottom", args: ["#chat"] }
+
+// Client looks up the registered function and calls it:
+bw._clientFunctions["scrollToBottom"](document.querySelector("#chat"));
+```
+
+Lightweight — just a name and arguments. No code transfer. The function
+must have been previously registered (Tier 1) or be a built-in.
+
+**Built-in calls** (always available, no registration needed):
+- `"scrollTo"` — scroll an element
+- `"focus"` — focus an input
+- `"download"` — trigger file download
+- `"clipboard"` — write to clipboard
+- `"redirect"` — navigate to URL
+- `"log"` — console.log from server
+
+#### Tier 3: `client.exec(code)`
+
+```javascript
+// Server sends:
+{ type: "exec", code: "document.title = 'New Title'" }
+
+// Client evaluates:
+new Function(code)();
+```
+
+The nuclear option. Full arbitrary JS execution. No name, no caching,
+no safety net. The code runs once and is discarded.
+
+### Security Analysis
+
+**Is `exec()` dangerous?**
+
+The short answer: no more dangerous than what we already have.
+
+The longer analysis:
+
+1. **The server already controls all client code.** bwserve serves the
+   HTML page, injects bitwrench, and generates the shell bootstrap
+   script. The server has *total* control over what runs in the browser.
+   Adding `exec()` doesn't grant new capabilities — it makes an existing
+   capability explicit.
+
+2. **SSE is same-origin.** The EventSource connection goes back to the
+   same server that served the page. A MITM attacker who can inject into
+   the SSE stream could already inject malicious `replace` messages with
+   TACOs containing `o.mounted` callbacks (which ARE real functions
+   when the TACO is created client-side). `exec()` doesn't expand the
+   attack surface beyond what `replace` already provides.
+
+3. **The real trust boundary is the server, not the protocol.** If you
+   don't trust the server, you can't trust the page it serves. This is
+   true for every web application. bwserve doesn't change this.
+
+4. **Comparison with existing tools:**
+   - Chrome DevTools: `exec()` is literally the console
+   - Streamlit: st.components.html() can inject arbitrary HTML+JS
+   - LiveView: Phoenix.LiveView.JS provides client-side execution
+   - htmx: hx-on attributes run arbitrary JS
+   - Every `<script>` tag: the server already sends JS to execute
+
+**What IS the security concern?**
+
+The concern is not "can the server run code on the client" (it always can)
+but rather "does adding an explicit `exec` verb make it easier for *bugs*
+to become *exploits*?"
+
+Scenario: A bwserve app takes user input and naively interpolates it into
+an `exec()` call:
+
+```javascript
+// DANGEROUS: server-side code injection via user input
+client.exec("alert('Hello " + userName + "')");
+// If userName is: '); document.cookie='stolen'  → XSS
+```
+
+This is classic code injection — the same class of bug as SQL injection.
+But it's the developer's mistake, not a protocol flaw. The same developer
+could write:
+
+```javascript
+// Equally dangerous without exec():
+client.render('#app', { t: 'div', c: bw.raw("<script>alert('xss')</script>") });
+```
+
+**Mitigations:**
+
+1. **Opt-in on the client.** `exec` messages are rejected unless the
+   client connection was created with `{ allowExec: true }`:
+
+   ```javascript
+   bw.clientConnect(url, { allowExec: true });  // explicit opt-in
+   ```
+
+   Default is `false`. This prevents accidental exposure.
+
+2. **No user data in exec strings.** Documentation must strongly warn
+   against interpolating user input into exec code. Provide `call()` as
+   the safe alternative (data passed as arguments, not concatenated into
+   code).
+
+3. **CSP headers.** Content-Security-Policy can restrict `eval()` and
+   `new Function()`. Apps that set `script-src 'self'` will block exec()
+   automatically. This is the correct defense for security-sensitive apps.
+
+4. **Logging.** Every exec() call should be logged to the console in
+   development mode so developers can audit what's running.
+
+### When to Use Each Tier
+
+| Need | Use | Why |
+|------|-----|-----|
+| Update the DOM | replace/patch/append/remove | Declarative, inspectable, safe |
+| Simple button click | data-bw-action | Zero code, just an attribute |
+| Input with debounce | o.events (future) | Declarative event map |
+| Reusable client behavior | register + call | Send once, invoke many times |
+| One-off browser API call | exec | Quick, no registration overhead |
+| Complex UI module | module import | Full JS with closures, imports |
+| Production security-sensitive | call (never exec) | Arguments can't inject code |
+| Dev tools / debugging | exec | Same as browser console |
+
+### Do We Need This Now?
+
+**No.** The current 5-verb protocol + `data-bw-action` covers all the
+sandbox examples (counter, todo, dashboard, chat, gallery, raw protocol).
+The `module` message type (already designed, not yet implemented) covers
+complex behavior loading.
+
+**When we will need it:**
+
+- When someone builds a real bwserve app and needs to trigger a file
+  download, read scroll position, or call a chart library's `.update()`
+  method from the server
+- When agent-driven UI (LLM → bwserve → browser) needs to inspect DOM
+  state to make decisions about what to render next
+- When embedded device apps need to trigger browser notifications or
+  geolocation reads
+
+**Recommendation:** Implement Tier 2 (`call` with built-in functions only)
+as the first step. The built-in list (scrollTo, focus, download, clipboard,
+redirect, log) covers most non-DOM needs without any security concerns.
+Tier 1 (register) and Tier 3 (exec) can follow if real use cases demand
+them.
+
+### Protocol Messages
+
+```javascript
+// Tier 1: Register a named function
+{ type: "register", name: "autoScroll", body: "function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }" }
+
+// Tier 2: Call a registered or built-in function
+{ type: "call", name: "autoScroll", args: ["#chat"] }
+{ type: "call", name: "focus", args: ["#search-input"] }
+{ type: "call", name: "download", args: ["report.csv", "id,name\n1,Alice\n2,Bob"] }
+
+// Tier 3: Execute arbitrary code (opt-in required)
+{ type: "exec", code: "document.title = 'Updated at ' + new Date().toLocaleTimeString()" }
+```
+
+### Server API
+
+```javascript
+// Tier 1: Register
+client.register("autoScroll", "function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }");
+
+// Tier 2: Call
+client.call("autoScroll", "#chat");
+client.call("focus", "#search-input");
+client.call("download", "report.csv", csvContent);
+
+// Tier 3: Execute
+client.exec("document.title = 'New Title'");
+```
+
+### Relationship to Existing Tiers
+
+The three-tier execution model extends the existing protocol vocabulary:
+
+```
+Declarative data:   replace, patch, append, remove, batch  ← current (v2.0.16)
+Declarative events: o.events map                           ← planned
+Named invocation:   register, call                         ← this proposal (Tier 1-2)
+Arbitrary code:     exec                                   ← this proposal (Tier 3)
+Module loading:     module import                          ← existing design (Layer 2)
+```
+
+Each tier adds power but reduces inspectability. The principle: use the
+least powerful tier that gets the job done. Most apps will never need
+exec(). Many won't need register/call. The 5-verb declarative protocol
+should remain the primary tool.
+
+---
+
 ## Deferred (Future Work)
 
 - WebSocket transport (`transport: 'ws'`)
-- `bitwrench serve` CLI subcommand
+- `bitwrench serve` CLI subcommand with file watching and live reload
 - Client session identification (multi-client action routing)
 - Form value auto-collection from `data-bw-action` buttons
 - Component vocabulary expansion (`{ component:'card', title:'...' }`)
 - Agent protocol adapters (AG-UI compatibility)
 - Production hardening (rate limiting, CORS, auth, keep-alive)
+- ~~Three-tier execution model: register/call/exec~~ DONE (v2.0.16)

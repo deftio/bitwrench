@@ -8,7 +8,7 @@
 | Generated | 2026-03-11 |
 | Total APIs | 101 |
 | Categories | 12 |
-| bitwrench.js | 4424 lines |
+| bitwrench.js | 4515 lines |
 | bitwrench-bccl.js | 3615 lines |
 
 ## Table of Contents
@@ -2185,13 +2185,13 @@ Pre-compile a TACO definition into a factory function. The factory produces Comp
 
 ### `bw.clientApply(msg)`
 
-Apply a bwserve protocol message to the DOM. Dispatches one of 6 message types: replace — bw.DOM(target, node) append  — target.appendChild(bw.createDOM(node)) remove  — bw.cleanup(target); target.remove() patch   — bw.patch(target, content, attr) batch   — iterate ops, call clientApply for each message — bw.message(target, action, data) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
+Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.createDOM(node)) remove   — bw.cleanup(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call clientApply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered or built-in function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `msg` | `Object` | - Protocol message {type, target, node?, content?, attr?, ops?, action?, data?} |
+| `msg` | `Object` | - Protocol message |
 
 **Returns:** `boolean` — if the message was applied successfully
 
@@ -2211,6 +2211,7 @@ Connect to a bwserve SSE endpoint and apply protocol messages automatically. Ret
 | `opts.interval` | `number` | - Poll interval in ms (only for 'poll' transport) |
 | `opts.actionUrl` | `string` | - POST endpoint for actions (default: derived from url) |
 | `opts.reconnect` | `boolean` | - Auto-reconnect on disconnect |
+| `opts.allowExec` | `boolean` | - Enable exec message type (arbitrary JS execution) |
 | `opts.onStatus` | `Function` | - Status callback: 'connecting'|'connected'|'disconnected' |
 | `opts.onMessage` | `Function` | - Raw message callback (before clientApply) |
 

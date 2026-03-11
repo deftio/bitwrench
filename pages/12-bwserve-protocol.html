@@ -92,6 +92,9 @@
       '.badge-append': { 'background': '#457b9d' },
       '.badge-remove': { 'background': '#e63946' },
       '.badge-batch': { 'background': '#6c757d' },
+      '.badge-register': { 'background': '#7c3aed' },
+      '.badge-call': { 'background': '#0891b2' },
+      '.badge-exec': { 'background': '#dc2626' },
       '.toc-link': {
         'color': '#006666',
         'text-decoration': 'none',
@@ -127,6 +130,7 @@
           { t: 'li', c: { t: 'a', a: { href: '#transport', class: 'toc-link' }, c: 'Transport' } },
           { t: 'li', c: { t: 'a', a: { href: '#server-api', class: 'toc-link' }, c: 'Server API' } },
           { t: 'li', c: { t: 'a', a: { href: '#client-api', class: 'toc-link' }, c: 'Client API' } },
+          { t: 'li', c: { t: 'a', a: { href: '#execution', class: 'toc-link' }, c: 'Server-to-Client Execution' } },
           { t: 'li', c: { t: 'a', a: { href: '#examples', class: 'toc-link' }, c: 'Examples' } }
         ]}
       ]
@@ -200,6 +204,21 @@
               { t: 'td', c: badge('batch') },
               { t: 'td', c: 'Execute multiple operations atomically' },
               { t: 'td', c: { t: 'code', c: 'ops.forEach(bw.clientApply)' } }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: badge('register') },
+              { t: 'td', c: 'Register a named function for later invocation' },
+              { t: 'td', c: { t: 'code', c: 'bw._clientFunctions[name] = new Function(body)' } }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: badge('call') },
+              { t: 'td', c: 'Invoke a registered or built-in function' },
+              { t: 'td', c: { t: 'code', c: 'fn.apply(null, args)' } }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: badge('exec') },
+              { t: 'td', c: 'Execute arbitrary JS (requires allowExec)' },
+              { t: 'td', c: { t: 'code', c: 'new Function(code)()' } }
             ]}
           ]}
         ]},
@@ -276,7 +295,69 @@
           '    { type: "patch", target: "revenue", content: "$4,200" },',
           '    { type: "append", target: "#log", node: { t: "p", c: "Updated at 14:32" } }',
           ']}'
-        ].join('\n'))
+        ].join('\n')),
+
+        // register
+        { t: 'h3', c: [badge('register'), ' register'] },
+        { t: 'p', c: 'Sends a named function to the client for later invocation via call. The function body is a string that gets compiled on the client. Register once, call many times.' },
+        codeBlock([
+          '// Schema:',
+          '{ type: "register", name: "fnName", body: "function(args) { ... }" }',
+          '',
+          '// Example: register an auto-scroll function',
+          '{ type: "register",',
+          '  name: "autoScroll",',
+          '  body: "function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }"',
+          '}'
+        ].join('\n')),
+
+        // call
+        { t: 'h3', c: [badge('call'), ' call'] },
+        { t: 'p', c: [
+          'Invokes a previously registered function or a built-in function by name. Built-in functions are always available: ',
+          { t: 'code', c: 'scrollTo' }, ', ',
+          { t: 'code', c: 'focus' }, ', ',
+          { t: 'code', c: 'download' }, ', ',
+          { t: 'code', c: 'clipboard' }, ', ',
+          { t: 'code', c: 'redirect' }, ', ',
+          { t: 'code', c: 'log' }, '.'
+        ]},
+        codeBlock([
+          '// Schema:',
+          '{ type: "call", name: "fnName", args: [arg1, arg2, ...] }',
+          '',
+          '// Example: call a registered function',
+          '{ type: "call", name: "autoScroll", args: ["#chat"] }',
+          '',
+          '// Example: call a built-in function',
+          '{ type: "call", name: "focus", args: ["#search-input"] }',
+          '{ type: "call", name: "download", args: ["report.csv", "id,name\\n1,Alice", "text/csv"] }',
+          '{ type: "call", name: "log", args: ["Debug:", { status: "ok" }] }'
+        ].join('\n')),
+
+        // exec
+        { t: 'h3', c: [badge('exec'), ' exec'] },
+        { t: 'p', c: [
+          'Executes arbitrary JavaScript on the client. ',
+          { t: 'strong', c: 'Requires opt-in:' },
+          ' the client connection must be created with ',
+          { t: 'code', c: '{ allowExec: true }' },
+          '. Without this flag, exec messages are silently rejected.'
+        ]},
+        codeBlock([
+          '// Schema:',
+          '{ type: "exec", code: "javascript code string" }',
+          '',
+          '// Example: set the page title',
+          '{ type: "exec", code: "document.title = \'Updated at \' + new Date().toLocaleTimeString()" }',
+          '',
+          '// Requires opt-in on the client:',
+          'bw.clientConnect(url, { allowExec: true });'
+        ].join('\n')),
+        { t: 'div', a: { class: 'callout-tip' }, c: [
+          { t: 'strong', c: 'Security note: ' },
+          'Prefer call() over exec() whenever possible. call() passes data as arguments (safe from injection), while exec() evaluates a code string. Never interpolate user input into exec() code strings.'
+        ]}
       ]
     };
 
@@ -510,6 +591,21 @@
               { t: 'td', c: 'Dispatch to ComponentHandle' }
             ]},
             { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'client.register(name, body)' } },
+              { t: 'td', c: badge('register') },
+              { t: 'td', c: 'Send named function to client' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } },
+              { t: 'td', c: badge('call') },
+              { t: 'td', c: 'Invoke registered or built-in function' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'client.exec(code)' } },
+              { t: 'td', c: badge('exec') },
+              { t: 'td', c: 'Execute arbitrary JS (needs allowExec)' }
+            ]},
+            { t: 'tr', c: [
               { t: 'td', c: { t: 'code', c: 'client.on(action, handler)' } },
               { t: 'td', c: '\u2014' },
               { t: 'td', c: 'Register handler for client actions' }
@@ -538,6 +634,7 @@
           '  interval: 2000,              // poll interval (ms), ignored for SSE',
           '  actionUrl: "/__bw/action/c1",// POST endpoint for actions',
           '  reconnect: true,             // auto-reconnect (default)',
+          '  allowExec: false,            // enable exec messages (default: false)',
           '  onStatus: function(s) {      // "connecting"|"connected"|"disconnected"',
           '    console.log("Status:", s);',
           '  }',
@@ -558,23 +655,141 @@
         { t: 'p', c: [
           'Applies a single protocol message to the DOM. Called automatically by ',
           { t: 'code', c: 'clientConnect' },
-          ', but also usable standalone for testing or custom transports.'
+          ', but also usable standalone for testing or custom transports. Handles all 9 message types.'
         ]},
         codeBlock([
-          '// Apply messages directly (useful for testing or mock servers)',
+          '// DOM operations',
           'bw.clientApply({ type: "replace", target: "#app", node: { t: "div", c: "Hello" } });',
           'bw.clientApply({ type: "patch", target: "counter", content: "42" });',
           'bw.clientApply({ type: "append", target: "#list", node: { t: "li", c: "New item" } });',
           'bw.clientApply({ type: "remove", target: "#old-item" });',
-          'bw.clientApply({ type: "batch", ops: [ msg1, msg2, msg3 ] });'
+          'bw.clientApply({ type: "batch", ops: [ msg1, msg2, msg3 ] });',
+          '',
+          '// Execution operations',
+          'bw.clientApply({ type: "register", name: "scroll", body: "function(s){...}" });',
+          'bw.clientApply({ type: "call", name: "scroll", args: ["#chat"] });',
+          'bw.clientApply({ type: "exec", code: "alert(1)" }); // needs allowExec'
         ].join('\n'))
       ]
     };
 
-    // --- 8. Examples ---
+    // --- 8. Server-to-Client Execution ---
+    var execution = {
+      t: 'div', a: { class: 'proto-section', id: 'execution' }, c: [
+        { t: 'h2', c: '8. Server-to-Client Execution' },
+        { t: 'p', c: 'Beyond DOM operations, the server can invoke functions and execute code on the client. This is organized in three tiers of increasing power:' },
+
+        { t: 'table', a: { class: 'proto-table' }, c: [
+          { t: 'thead', c: { t: 'tr', c: [
+            { t: 'th', c: 'Tier' },
+            { t: 'th', c: 'Server Method' },
+            { t: 'th', c: 'What it Does' },
+            { t: 'th', c: 'When to Use' }
+          ]}},
+          { t: 'tbody', c: [
+            { t: 'tr', c: [
+              { t: 'td', c: '1' },
+              { t: 'td', c: { t: 'code', c: 'client.register(name, body)' } },
+              { t: 'td', c: 'Send a named function to the client for later use' },
+              { t: 'td', c: 'Reusable client-side behavior (auto-scroll, format, validate)' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: '2' },
+              { t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } },
+              { t: 'td', c: 'Invoke a registered or built-in function by name' },
+              { t: 'td', c: 'Most non-DOM operations (scroll, focus, download, log)' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: '3' },
+              { t: 'td', c: { t: 'code', c: 'client.exec(code)' } },
+              { t: 'td', c: 'Execute arbitrary JS (opt-in required)' },
+              { t: 'td', c: 'Quick one-off operations, debugging, dev tools' }
+            ]}
+          ]}
+        ]},
+
+        { t: 'h3', c: 'Built-in Functions (always available)' },
+        { t: 'p', c: 'These can be invoked via call() without prior registration:' },
+        { t: 'table', a: { class: 'proto-table' }, c: [
+          { t: 'thead', c: { t: 'tr', c: [
+            { t: 'th', c: 'Name' },
+            { t: 'th', c: 'Args' },
+            { t: 'th', c: 'Description' }
+          ]}},
+          { t: 'tbody', c: [
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'scrollTo' } },
+              { t: 'td', c: { t: 'code', c: 'selector' } },
+              { t: 'td', c: 'Scroll element to bottom' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'focus' } },
+              { t: 'td', c: { t: 'code', c: 'selector' } },
+              { t: 'td', c: 'Focus an input element' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'download' } },
+              { t: 'td', c: { t: 'code', c: 'filename, content, mimeType?' } },
+              { t: 'td', c: 'Trigger a file download' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'clipboard' } },
+              { t: 'td', c: { t: 'code', c: 'text' } },
+              { t: 'td', c: 'Copy text to clipboard' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'redirect' } },
+              { t: 'td', c: { t: 'code', c: 'url' } },
+              { t: 'td', c: 'Navigate to a URL' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'log' } },
+              { t: 'td', c: { t: 'code', c: '...args' } },
+              { t: 'td', c: 'console.log from the server' }
+            ]}
+          ]}
+        ]},
+
+        { t: 'h3', c: 'Example: Register + Call Pattern' },
+        codeBlock([
+          '// Server: register a scroll function on connect',
+          'client.register("autoScroll",',
+          '  "function(sel) { var el = document.querySelector(sel);' +
+          ' if (el) el.scrollTop = el.scrollHeight; }");',
+          '',
+          '// Server: after appending a chat message, scroll to bottom',
+          'client.append("#chat", { t: "div", c: "New message" });',
+          'client.call("autoScroll", "#chat");',
+          '',
+          '// Server: trigger a CSV download',
+          'client.call("download", "report.csv", csvContent, "text/csv");',
+          '',
+          '// Server: focus the search input',
+          'client.call("focus", "#search");',
+          '',
+          '// Server: log debug info to browser console',
+          'client.call("log", "Debug: user count =", users.length);'
+        ].join('\n')),
+
+        { t: 'h3', c: 'Security Model' },
+        { t: 'p', c: [
+          { t: 'code', c: 'register' }, ' and ', { t: 'code', c: 'call' },
+          ' are always enabled. ', { t: 'code', c: 'exec' },
+          ' requires explicit opt-in via ',
+          { t: 'code', c: 'bw.clientConnect(url, { allowExec: true })' },
+          '. Without this flag, exec messages are silently rejected.'
+        ]},
+        { t: 'div', a: { class: 'callout-tip' }, c: [
+          { t: 'strong', c: 'Principle: ' },
+          'Use the least powerful tier that gets the job done. Most apps only need DOM operations (replace/patch/append/remove). When you need non-DOM behavior, prefer call() with built-in functions. Use register() for reusable custom functions. Reserve exec() for development and debugging.'
+        ]}
+      ]
+    };
+
+    // --- 9. Examples ---
     var examples = {
       t: 'div', a: { class: 'proto-section', id: 'examples' }, c: [
-        { t: 'h2', c: '8. Examples' },
+        { t: 'h2', c: '9. Examples' },
         { t: 'p', c: [
           'Try these patterns in the ',
           { t: 'a', a: { href: 'bwserve-sandbox.html' }, c: 'bwserve sandbox' },
@@ -665,7 +880,7 @@
 
     var content = {
       t: 'div', a: { class: 'content-container' },
-      c: [toc, overview, messages, targets, actions, transport, serverApi, clientApi, examples]
+      c: [toc, overview, messages, targets, actions, transport, serverApi, clientApi, execution, examples]
     };
 
     bw.DOM('#app', [pageHeader, content]);

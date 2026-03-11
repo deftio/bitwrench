@@ -281,7 +281,7 @@ embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
 * [ ] implement --> `bw.clientParse()` relaxed JSON for ESP32 (single-quoted keys, trailing commas)
 * [ ] implement --> DOM morphing for `replace` — preserve local state (scroll pos, expanded accordions)
 * [ ] implement --> Form data serialization in actions (sendForm: '#my-form')
-* [ ] implement --> `client.register()` / `client.call()` / `client.exec()` three-tier execution model
+* [x] implement --> `client.register()` / `client.call()` / `client.exec()` three-tier execution model — 6 built-in call functions (scrollTo, focus, download, clipboard, redirect, log), allowExec opt-in, 71 bwserve tests
 * [ ] implement --> WebSocket transport option
 * [ ] decide --> Optimistic updates: client-side immediate response while waiting for server
 * [ ] decide --> Event batching: multiple actions in same frame → single POST

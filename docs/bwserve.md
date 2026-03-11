@@ -1,21 +1,63 @@
-# bwserve — Server-Driven UI
+# bwserve — Server-Driven UI for Bitwrench
 
-bwserve is a server-side library for pushing UI updates to the browser over Server-Sent Events (SSE). Application state lives on the server (Node.js), and the server sends TACO rendering commands to the client. User interactions are sent back as actions via HTTP POST.
+## What is bwserve?
 
-This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and htmx — but bwserve sends TACO objects, not HTML strings. The browser already has bitwrench loaded, so it renders TACO natively.
+bwserve is a server-side library that lets you build interactive web UIs entirely from Node.js. Your application state lives on the server, and the server pushes rendering commands to the browser over SSE (Server-Sent Events). User interactions are sent back as actions via HTTP POST.
 
-**Status**: Implemented in v2.0.16. The library provides a working HTTP/SSE server with zero runtime dependencies (Node.js stdlib only).
+This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and htmx — but bwserve sends TACO objects (bitwrench's {t, a, c, o} format), not HTML strings. The browser already has bitwrench loaded (~40KB), so it renders TACO natively with no build step.
+
+**Key characteristics:**
+- Zero runtime dependencies — only Node.js stdlib (`http`, `fs`, `path`)
+- Auto-generates the client page (loads bitwrench, opens SSE, wires actions)
+- Same protocol works for Node.js servers and ESP32/Arduino embedded devices
+- 9 protocol message types covering DOM operations and remote execution
+
+## Architecture
+
+```
+  Browser                            Node.js Server
+┌──────────────────┐               ┌──────────────────────┐
+│ bitwrench.js     │               │ bwserve              │
+│                  │   GET /       │                      │
+│  bw.clientConnect├──────────────>  app.page('/', fn)    │
+│  (opens SSE)     │               │                      │
+│                  │<──SSE──────── │ DOM operations:      │
+│  bw.clientApply()│  {type,node}  │  client.render()     │
+│  -> bw.DOM()     │               │  client.patch()      │
+│  -> bw.patch()   │               │  client.append()     │
+│                  │               │  client.remove()     │
+│                  │               │  client.batch()      │
+│                  │               │                      │
+│                  │               │ Execution:           │
+│                  │               │  client.register()   │
+│                  │               │  client.call()       │
+│                  │               │  client.exec()       │
+│                  │               │                      │
+│  data-bw-action  │               │                      │
+│  conn.sendAction │──POST───────> │ client.on(action,fn) │
+│                  │  {action,data}│                      │
+└──────────────────┘               └──────────────────────┘
+```
+
+**Flow:**
+1. Browser requests page → server returns auto-generated HTML shell
+2. Shell loads bitwrench from `/__bw/bitwrench.umd.js` and opens SSE
+3. SSE triggers page handler → server sends TACO rendering commands
+4. Browser applies each message via `bw.clientApply()` → DOM updates
+5. User clicks → `data-bw-action` triggers POST → server handler runs
+6. Server sends more messages → browser updates. Loop continues.
 
 ## Quick Start
 
 ```javascript
+// server.js
 import bwserve from 'bitwrench/bwserve';
 
 var app = bwserve.create({ port: 7902 });
-
 var count = 0;
 
 app.page('/', function(client) {
+  // 1. Render the initial UI as a TACO tree
   client.render('#app', {
     t: 'div', a: { style: 'padding:24px' }, c: [
       { t: 'h1', c: 'Counter' },
@@ -28,6 +70,7 @@ app.page('/', function(client) {
     ]
   });
 
+  // 2. Handle user actions
   client.on('increment', function() {
     count++;
     client.patch('count', String(count));
@@ -46,27 +89,49 @@ app.listen(function() {
 
 Save as `server.js`, run `node server.js`, open `http://localhost:7902`.
 
-## Protocol
+## Protocol Messages
 
-bwserve uses 5 message types sent as JSON over SSE:
+bwserve uses 9 message types, organized in two categories:
+
+### DOM Operations (5 types)
+
+These modify the browser's DOM tree:
 
 | Type | Purpose | Server Method | Client Action |
-|------|---------|--------------|---------------|
+|------|---------|---------------|---------------|
 | `replace` | Replace element content | `client.render(target, taco)` | `bw.DOM(target, node)` |
 | `patch` | Update text/attributes | `client.patch(id, content, attr?)` | `bw.patch(target, content, attr)` |
 | `append` | Add child element | `client.append(target, taco)` | `target.appendChild(bw.createDOM(node))` |
 | `remove` | Remove element | `client.remove(target)` | `bw.cleanup(el); el.remove()` |
 | `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence |
 
+### Execution Operations (3 types)
+
+These invoke functions or execute code on the client:
+
+| Type | Purpose | Server Method | Client Action |
+|------|---------|---------------|---------------|
+| `register` | Send named function | `client.register(name, body)` | Store in `bw._clientFunctions` |
+| `call` | Invoke function by name | `client.call(name, ...args)` | Call registered or built-in function |
+| `exec` | Run arbitrary JS | `client.exec(code)` | `new Function(code)()` (needs opt-in) |
+
+### Additional
+
+| Type | Purpose | Server Method | Client Action |
+|------|---------|---------------|---------------|
+| `message` | Component dispatch | `client.message(target, action, data)` | `bw.message(target, action, data)` |
+
 ### Message Schemas
 
 ```json
+// --- DOM Operations ---
+
 // replace — full subtree replacement
 { "type": "replace", "target": "#app", "node": {"t":"div","c":"Hello"} }
 
 // patch — lightweight text/attribute update
 { "type": "patch", "target": "counter", "content": "42" }
-{ "type": "patch", "target": "status", "content": "active", "attr": "class" }
+{ "type": "patch", "target": "status", "content": "active", "attr": {"class": "done"} }
 
 // append — add a child
 { "type": "append", "target": "#list", "node": {"t":"li","c":"New item"} }
@@ -74,21 +139,48 @@ bwserve uses 5 message types sent as JSON over SSE:
 // remove — delete from DOM
 { "type": "remove", "target": "#old-item" }
 
-// batch — atomic multi-update
+// batch — multi-update
 { "type": "batch", "ops": [
     { "type": "patch", "target": "a", "content": "1" },
     { "type": "patch", "target": "b", "content": "2" }
 ]}
+
+// --- Execution Operations ---
+
+// register — send a named function to the client
+{ "type": "register", "name": "autoScroll", "body": "function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }" }
+
+// call — invoke a registered or built-in function
+{ "type": "call", "name": "autoScroll", "args": ["#chat"] }
+{ "type": "call", "name": "focus", "args": ["#search-input"] }
+{ "type": "call", "name": "download", "args": ["report.csv", "id,name\n1,Alice", "text/csv"] }
+
+// exec — execute arbitrary JS (requires allowExec on client)
+{ "type": "exec", "code": "document.title = 'Updated'" }
 ```
 
 ### Target Resolution
 
-- `#selector` or `.selector` → CSS query (`querySelector`)
-- Bare string → `getElementById`, then `bw._el()` fallback (UUID registry)
+All DOM operation targets are resolved using:
+
+| Pattern | Resolution | Example |
+|---------|-----------|---------|
+| `#selector` | CSS selector via `querySelector` | `#app`, `#counter` |
+| `.selector` | CSS class selector | `.bw-card` |
+| `bare-string` | `getElementById`, then `bw._el()` fallback | `counter` |
+
+**Best practice:** Use simple `id` attributes for patchable elements:
+```javascript
+// Server sends render with id:
+client.render('#app', { t: 'span', a: { id: 'count' }, c: '0' });
+
+// Later, server patches by id:
+client.patch('count', '42');
+```
 
 ### Actions (Client → Server)
 
-User interactions are sent as POST requests:
+User interactions flow from client to server via HTTP POST:
 
 ```
 POST /__bw/action/:clientId
@@ -97,13 +189,22 @@ Content-Type: application/json
 { "action": "increment", "data": { "inputValue": "hello" } }
 ```
 
-Wire actions using `data-bw-action` attribute:
+**Wiring actions** — add `data-bw-action` to any element:
 
 ```javascript
-{ t: 'button', a: { 'data-bw-action': 'save' }, c: 'Save' }
+// Server sends this TACO:
+{ t: 'button', a: { 'data-bw-action': 'save', class: 'bw-btn' }, c: 'Save' }
+
+// When clicked, client auto-POSTs:
+{ action: 'save', data: {} }
+
+// Server handles it:
+client.on('save', function(data) {
+  client.patch('status', 'Saved!');
+});
 ```
 
-The shell page auto-delegates clicks on `[data-bw-action]` elements. Input values from nearby text inputs are automatically included as `inputValue`.
+If a text `<input>` is near the clicked button, its value is automatically included as `inputValue` and the input is cleared.
 
 ## Server API Reference
 
@@ -114,14 +215,14 @@ Create a bwserve application.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `port` | number | 7902 | Listen port |
-| `title` | string | 'bwserve' | HTML `<title>` |
+| `title` | string | `'bwserve'` | HTML `<title>` |
 | `static` | string | null | Static file directory |
-| `theme` | string/object | null | Theme preset or config |
+| `theme` | string/object | null | Theme preset name or config |
 | `injectBitwrench` | boolean | true | Auto-inject bitwrench UMD + CSS |
 
 ### `app.page(path, handler)`
 
-Register a page handler. The handler is called with a `BwServeClient` when a browser connects via SSE.
+Register a page handler. The `handler` function is called with a `BwServeClient` when a browser connects via SSE.
 
 ```javascript
 app.page('/', function(client) {
@@ -135,7 +236,7 @@ app.page('/dashboard', function(client) {
 
 ### `app.listen(callback?)` / `app.close()`
 
-Start and stop the server.
+Start and stop the server. Both return Promises.
 
 ```javascript
 await app.listen(function() { console.log('Ready'); });
@@ -144,20 +245,106 @@ await app.close();
 
 ### `app.clientCount`
 
-Number of active SSE connections.
+Number of active SSE connections (read-only property).
 
 ### BwServeClient Methods
 
+#### DOM Operations
+
+| Method | Protocol Type | Description |
+|--------|--------------|-------------|
+| `client.render(target, taco)` | `replace` | Replace target contents with TACO tree |
+| `client.patch(id, content, attr?)` | `patch` | Update text or attribute of element |
+| `client.append(target, taco)` | `append` | Add TACO as child of target |
+| `client.remove(target)` | `remove` | Remove element from DOM |
+| `client.batch(ops)` | `batch` | Send multiple operations atomically |
+| `client.message(target, action, data)` | `message` | Dispatch to ComponentHandle |
+
+#### Execution Operations
+
+| Method | Protocol Type | Description |
+|--------|--------------|-------------|
+| `client.register(name, body)` | `register` | Send named function to client for later call() |
+| `client.call(name, ...args)` | `call` | Invoke registered or built-in function |
+| `client.exec(code)` | `exec` | Execute arbitrary JS (requires client allowExec) |
+
+#### Connection Management
+
 | Method | Description |
 |--------|-------------|
-| `client.render(target, taco)` | Replace target contents with TACO tree |
-| `client.patch(id, content, attr?)` | Update text or attribute of element |
-| `client.append(target, taco)` | Add TACO as child of target |
-| `client.remove(target)` | Remove element from DOM |
-| `client.batch(ops)` | Send multiple operations atomically |
-| `client.message(target, action, data)` | Dispatch to ComponentHandle |
 | `client.on(action, handler)` | Register handler for client actions |
 | `client.close()` | Disconnect this client |
+
+## Server-to-Client Execution
+
+Beyond DOM operations, the server can invoke functions and execute code on the client. This is organized in three tiers:
+
+### Tier 1: `client.register(name, body)`
+
+Send a named function to the client. The function body is a string that gets compiled once and cached. Use for reusable client-side behavior.
+
+```javascript
+// Register an auto-scroll function on connect
+client.register('autoScroll',
+  'function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }');
+
+// Register a formatter
+client.register('formatCurrency',
+  'function(id, val) { var el = document.getElementById(id); if (el) el.textContent = "$" + Number(val).toFixed(2); }');
+```
+
+### Tier 2: `client.call(name, ...args)`
+
+Invoke a previously registered function or a built-in function by name. This is the workhorse for non-DOM operations — safe, lightweight, no code transfer.
+
+```javascript
+// Call registered functions
+client.call('autoScroll', '#chat');
+client.call('formatCurrency', 'total', 42.5);
+
+// Call built-in functions (always available, no registration needed)
+client.call('focus', '#search-input');
+client.call('scrollTo', '#bottom');
+client.call('download', 'report.csv', csvContent, 'text/csv');
+client.call('clipboard', 'Copied text');
+client.call('redirect', '/dashboard');
+client.call('log', 'Debug: user count =', users.length);
+```
+
+**Built-in functions:**
+
+| Name | Args | Description |
+|------|------|-------------|
+| `scrollTo` | `selector` | Scroll element to bottom |
+| `focus` | `selector` | Focus an input element |
+| `download` | `filename, content, mimeType?` | Trigger a file download |
+| `clipboard` | `text` | Copy text to clipboard |
+| `redirect` | `url` | Navigate to a URL |
+| `log` | `...args` | console.log from the server |
+
+### Tier 3: `client.exec(code)`
+
+Execute arbitrary JavaScript on the client. **Requires opt-in:** the client connection must be created with `{ allowExec: true }`. Without this flag, exec messages are silently rejected.
+
+```javascript
+// Server side
+client.exec("document.title = 'Updated at ' + new Date().toLocaleTimeString()");
+client.exec("window.scrollTo(0, 0)");
+```
+
+**Security:** Prefer `call()` over `exec()` whenever possible. `call()` passes data as arguments (safe from injection), while `exec()` evaluates a code string. Never interpolate user input into `exec()` code strings.
+
+### When to Use Each Tier
+
+| Need | Use | Why |
+|------|-----|-----|
+| Update the DOM | replace/patch/append/remove | Declarative, inspectable, safe |
+| Simple button click | `data-bw-action` | Zero code, just an attribute |
+| Scroll after append | `call("scrollTo", sel)` | Built-in, no registration |
+| Trigger file download | `call("download", ...)` | Built-in, safe |
+| Reusable client logic | `register` + `call` | Send once, invoke many times |
+| Quick one-off operation | `exec` | No registration overhead |
+| Production security | `call` (never `exec`) | Arguments can't inject code |
 
 ## Client API Reference
 
@@ -167,56 +354,235 @@ Connect to a bwserve SSE endpoint. Returns a connection object.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `transport` | string | 'sse' | 'sse' or 'poll' |
-| `interval` | number | 2000 | Poll interval (ms), SSE ignores |
-| `actionUrl` | string | auto | POST endpoint for actions |
+| `transport` | string | `'sse'` | `'sse'` or `'poll'` |
+| `interval` | number | 2000 | Poll interval (ms), only for `'poll'` |
+| `actionUrl` | string | auto-derived | POST endpoint for actions |
 | `reconnect` | boolean | true | Auto-reconnect on disconnect |
-| `onStatus` | function | noop | Status callback |
+| `allowExec` | boolean | false | Enable `exec` message type |
+| `onStatus` | function | noop | Status callback: `'connecting'`\|`'connected'`\|`'disconnected'` |
+| `onMessage` | function | null | Raw message callback (before clientApply) |
 
 ```javascript
-var conn = bw.clientConnect('/__bw/events/c1');
+var conn = bw.clientConnect('/__bw/events/c1', {
+  allowExec: true  // opt-in for exec messages
+});
+
 conn.sendAction('save', { text: 'hello' });
 conn.on('message', function(msg) { /* raw message */ });
+conn.on('error', function(err) { /* handle error */ });
 conn.close();
 ```
 
 ### `bw.clientApply(msg)`
 
-Apply a single protocol message to the DOM. Called automatically by `clientConnect`, but also usable standalone for testing or custom transports.
+Apply a single protocol message to the DOM. Called automatically by `clientConnect`, but also usable standalone for testing or custom transports. Handles all 9 message types.
 
 ```javascript
+// DOM operations
 bw.clientApply({ type: 'replace', target: '#app', node: { t: 'div', c: 'Hi' } });
 bw.clientApply({ type: 'patch', target: 'counter', content: '42' });
+bw.clientApply({ type: 'append', target: '#list', node: { t: 'li', c: 'New' } });
+bw.clientApply({ type: 'remove', target: '#old' });
+bw.clientApply({ type: 'batch', ops: [msg1, msg2] });
+
+// Execution operations
+bw.clientApply({ type: 'register', name: 'myFn', body: 'function() { ... }' });
+bw.clientApply({ type: 'call', name: 'myFn', args: [] });
+bw.clientApply({ type: 'exec', code: 'alert(1)' });  // needs allowExec
 ```
+
+Returns `true` if the message was applied successfully, `false` otherwise.
 
 ## Transport
 
 bwserve supports multiple transports:
 
 - **SSE (default)**: Uses browser-native `EventSource`. Auto-reconnects. Best for most apps.
-- **HTTP Polling**: `setInterval` + `fetch`. Works on any HTTP server including ESP32.
+- **HTTP Polling**: `setInterval` + `fetch`. Works on any HTTP server including ESP32/Arduino.
 - **WebSocket** (planned): Bidirectional. For high-frequency updates.
 
-### Endpoints
+### HTTP Endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `GET /` | GET | Serve page shell HTML |
+| `GET /` (or registered path) | GET | Serve auto-generated page shell HTML |
 | `GET /__bw/events/:clientId` | GET | SSE event stream |
 | `POST /__bw/action/:clientId` | POST | User action dispatch |
-| `GET /__bw/bitwrench.umd.js` | GET | Serve bitwrench JS |
+| `GET /__bw/bitwrench.umd.js` | GET | Serve bitwrench client JS |
 | `GET /__bw/bitwrench.css` | GET | Serve bitwrench CSS |
+
+### SSE Frame Format
+
+Each protocol message is sent as a single SSE data frame:
+```
+data: {"type":"replace","target":"#app","node":{"t":"div","c":"Hello"}}
+
+```
+
+Keep-alive comments are sent every 15 seconds:
+```
+:keepalive
+
+```
+
+### Embedded Device (Polling) Transport
+
+For ESP32, Arduino, and other constrained devices. The device serves compact JSON; the browser does all rendering.
+
+```javascript
+// Browser side: use polling transport
+var conn = bw.clientConnect('/bw/ui', {
+  transport: 'poll',
+  interval: 1000,       // poll every 1 second
+  relaxedJson: true     // accept single-quoted JSON from firmware
+});
+```
+
+The device responds to `GET /bw/ui` with protocol messages using relaxed JSON (single quotes for C++ ergonomics). `bw.clientParse()` converts the relaxed format to strict JSON.
+
+## Complete Examples
+
+### Counter (render + patch + actions)
+
+```javascript
+import bwserve from 'bitwrench/bwserve';
+
+var app = bwserve.create({ port: 7902 });
+var count = 0;
+
+app.page('/', function(client) {
+  client.render('#app', {
+    t: 'div', c: [
+      { t: 'h2', c: 'Counter' },
+      { t: 'span', a: { id: 'count' }, c: '0' },
+      { t: 'button', a: { 'data-bw-action': 'inc' }, c: '+1' }
+    ]
+  });
+
+  client.on('inc', function() {
+    client.patch('count', String(++count));
+  });
+});
+
+app.listen();
+```
+
+### Todo List (append + remove)
+
+```javascript
+app.page('/', function(client) {
+  var nextId = 1;
+
+  client.render('#app', {
+    t: 'div', c: [
+      { t: 'input', a: { type: 'text', id: 'inp' } },
+      { t: 'button', a: { 'data-bw-action': 'add' }, c: 'Add' },
+      { t: 'ul', a: { id: 'list' } }
+    ]
+  });
+
+  client.on('add', function(data) {
+    var id = 'item-' + nextId++;
+    client.append('#list', {
+      t: 'li', a: { id: id }, c: [
+        data.inputValue || 'item',
+        { t: 'button', a: { 'data-bw-action': 'del', 'data-bw-id': id }, c: 'x' }
+      ]
+    });
+  });
+
+  client.on('del', function(data) {
+    if (data.bwId) client.remove('#' + data.bwId);
+  });
+});
+```
+
+### Dashboard (batch + register/call)
+
+```javascript
+app.page('/', function(client) {
+  client.render('#app', {
+    t: 'div', c: [
+      { t: 'span', a: { id: 'users' }, c: '0' },
+      { t: 'span', a: { id: 'orders' }, c: '0' },
+      { t: 'span', a: { id: 'revenue' }, c: '$0' },
+      { t: 'div', a: { id: 'log' } }
+    ]
+  });
+
+  // Register a format function on the client
+  client.register('formatNum',
+    'function(id, val) { var el = document.getElementById(id); if (el) el.textContent = Number(val).toLocaleString(); }');
+
+  // Update every second
+  setInterval(function() {
+    var users = Math.floor(Math.random() * 500);
+    var orders = Math.floor(Math.random() * 50);
+    client.batch([
+      { type: 'call', name: 'formatNum', args: ['users', users] },
+      { type: 'call', name: 'formatNum', args: ['orders', orders] },
+      { type: 'patch', target: 'revenue', content: '$' + Math.floor(Math.random() * 10000) }
+    ]);
+  }, 1000);
+});
+```
+
+### Chat with Auto-scroll (append + register + call)
+
+```javascript
+app.page('/', function(client) {
+  client.render('#app', {
+    t: 'div', c: [
+      { t: 'div', a: { id: 'chat', style: 'max-height:400px;overflow-y:auto' } },
+      { t: 'div', a: { style: 'display:flex;gap:8px' }, c: [
+        { t: 'input', a: { type: 'text', id: 'msg-input' } },
+        { t: 'button', a: { 'data-bw-action': 'send' }, c: 'Send' }
+      ]}
+    ]
+  });
+
+  // Register auto-scroll for reuse after each message
+  client.register('scrollChat',
+    'function() { var el = document.getElementById("chat"); if (el) el.scrollTop = el.scrollHeight; }');
+
+  client.on('send', function(data) {
+    if (!data.inputValue) return;
+
+    // Append the message, then scroll to bottom
+    client.append('#chat', {
+      t: 'div', a: { style: 'padding:4px' }, c: data.inputValue
+    });
+    client.call('scrollChat');
+
+    // Focus back on the input
+    client.call('focus', '#msg-input');
+  });
+});
+```
+
+### File Download (call built-in)
+
+```javascript
+client.on('export', function(data) {
+  var csv = 'id,name,score\n';
+  records.forEach(function(r) {
+    csv += r.id + ',' + r.name + ',' + r.score + '\n';
+  });
+  client.call('download', 'export.csv', csv, 'text/csv');
+});
+```
 
 ## Target Use Cases
 
 - **Streamlit-style apps**: Data dashboards, ML experiment UIs, admin panels — server computes, browser displays
-- **Embedded device dashboards**: ESP32 or Raspberry Pi serves a web UI using lightweight SSE (client lib is ~40KB)
+- **Embedded device dashboards**: ESP32/Raspberry Pi serves a web UI using lightweight polling
 - **Agent-driven UI**: An AI agent pushes UI updates to a browser session
-- **Prototyping**: Server-side Python/Node.js logic with zero frontend build step
+- **Prototyping**: Server-side Node.js logic with zero frontend build step
+- **Internal tools**: Quick admin panels without frontend framework overhead
 
 ## Related
 
-- [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol documentation
+- [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 9 message types
 - [Sandbox](../pages/bwserve-sandbox.html) — Try bwserve protocol in the browser (no server needed)
+- [Design Document](../dev/bw-client-server.md) — Protocol design decisions and architecture
 - [CLI](cli.md) — The `bitwrench` command for file conversion
-- [State Management](state-management.md) — Client-side state patterns that complement server-driven updates
