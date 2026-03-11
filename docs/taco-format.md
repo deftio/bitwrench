@@ -250,6 +250,63 @@ bw.DOM('#app', {
 
 See [Component Library](component-library.md) for all available components.
 
+## Custom components without BCCL
+
+The `make*()` component library (BCCL) is a convenience, not a requirement. You can write your own component factories that return TACO objects — bitwrench doesn't care where the TACO comes from.
+
+```javascript
+// Your own component factory — no BCCL needed
+function myStatusBadge(status) {
+  var colors = { ok: '#4caf50', warn: '#ff9800', error: '#f44336' };
+  return {
+    t: 'span',
+    a: {
+      class: 'status-badge',
+      style: 'background: ' + (colors[status] || '#999')
+        + '; color: #fff; padding: 0.25rem 0.75rem;'
+        + ' border-radius: 999px; font-size: 0.8rem;'
+    },
+    c: status.toUpperCase()
+  };
+}
+
+bw.DOM('#app', myStatusBadge('ok'));
+```
+
+You can also wrap existing CSS frameworks (Bootstrap, Tailwind, etc.) in TACO objects:
+
+```javascript
+// Bootstrap button as a TACO
+{ t: 'button', a: { class: 'btn btn-primary' }, c: 'Save' }
+
+// Tailwind card as a TACO
+{
+  t: 'div',
+  a: { class: 'bg-white rounded-lg shadow-md p-6' },
+  c: [
+    { t: 'h3', a: { class: 'text-lg font-semibold' }, c: 'Title' },
+    { t: 'p', a: { class: 'text-gray-600 mt-2' }, c: 'Content' }
+  ]
+}
+```
+
+Bitwrench doesn't care where your CSS classes come from — it just renders the TACO to HTML/DOM. The `make*()` functions use bitwrench's built-in CSS classes (`bw_card`, `bw_btn`, etc.), but that's a choice, not a constraint.
+
+To make a custom component reactive, wrap it in `bw.component()`:
+
+```javascript
+var badge = bw.component({
+  t: 'span',
+  a: { class: 'status-badge', style: 'background: ${color}; color: #fff; padding: 0.25rem 0.75rem; border-radius: 999px;' },
+  c: '${label}',
+  o: { state: { label: 'OK', color: '#4caf50' } }
+});
+
+bw.DOM('#app', badge);
+badge.set('label', 'ERROR');
+badge.set('color', '#f44336');
+```
+
 ## TACO beyond the browser
 
 Because TACO objects are plain data, they work in contexts beyond browser rendering:

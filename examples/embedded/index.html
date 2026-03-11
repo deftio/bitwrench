@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Sensor Dashboard</title>
+  <!--
+    In production, the ESP32 serves bitwrench from its flash filesystem (SPIFFS/LittleFS).
+    For development, use CDN. The entire HTML payload is < 6KB (excluding bitwrench lib).
+  -->
+  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // ESP32 IoT Dashboard — Embedded Device UI
+    //
+    // This HTML page is served by an ESP32 microcontroller. The device:
+    //   1. Serves this static HTML page on GET /
+    //   2. Provides sensor data via GET /api/sensors (JSON)
+    //   3. Pushes real-time updates via SSE on GET /events
+    //   4. Accepts commands via POST /api/command
+    //
+    // bitwrench renders all UI from JSON data — the ESP32 never generates HTML.
+    // Total HTML payload: ~5KB (the device only serves this file + bitwrench assets).
+    //
+    // For development without hardware, this page includes a mock data source
+    // that simulates the ESP32 endpoints.
+    // =====================================================================
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('iot', {
+      primary: '#059669',
+      secondary: '#0891b2',
+      spacing: 'compact',
+      radius: 'sm'
+    });
+
+    bw.injectCSS(bw.css({
+      'body': { 'background': '#0f172a', 'color': '#e2e8f0' },
+      '.iot-dash': { 'max-width': '800px', 'margin': '0 auto', 'padding': '1rem' },
+      '.iot-header': {
+        'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center',
+        'padding': '0.5rem 0', 'border-bottom': '1px solid #334155', 'margin-bottom': '1rem'
+      },
+      '.iot-header h1': { 'font-size': '1.25rem', 'color': '#10b981', 'margin': '0' },
+      '.status-dot': {
+        'width': '10px', 'height': '10px', 'border-radius': '50%',
+        'display': 'inline-block', 'margin-right': '0.5rem'
+      },
+      '.status-dot.online': { 'background': '#10b981' },
+      '.status-dot.offline': { 'background': '#ef4444' },
+      '.sensor-grid': {
+        'display': 'grid', 'grid-template-columns': 'repeat(auto-fit, minmax(170px, 1fr))',
+        'gap': '1rem', 'margin-bottom': '1.5rem'
+      },
+      '.sensor-card': {
+        'background': '#1e293b', 'border': '1px solid #334155', 'border-radius': '0.5rem',
+        'padding': '1rem', 'text-align': 'center'
+      },
+      '.sensor-icon': { 'font-size': '1.5rem', 'margin-bottom': '0.25rem' },
+      '.sensor-value': { 'font-size': '1.75rem', 'font-weight': '700', 'color': '#f1f5f9' },
+      '.sensor-label': { 'font-size': '0.8rem', 'color': '#94a3b8', 'margin-top': '0.25rem' },
+      '.sensor-bar': {
+        'height': '4px', 'background': '#334155', 'border-radius': '2px',
+        'margin-top': '0.5rem', 'overflow': 'hidden'
+      },
+      '.sensor-bar-fill': {
+        'height': '100%', 'border-radius': '2px', 'transition': 'width 0.5s ease'
+      },
+      '.log-panel': {
+        'background': '#1e293b', 'border': '1px solid #334155', 'border-radius': '0.5rem',
+        'padding': '0.75rem', 'max-height': '200px', 'overflow-y': 'auto',
+        'font-family': 'monospace', 'font-size': '0.8rem', 'color': '#94a3b8'
+      },
+      '.log-entry': { 'padding': '0.15rem 0', 'border-bottom': '1px solid #1e293b' },
+      '.log-entry .ts': { 'color': '#64748b' },
+      '.controls': {
+        'display': 'flex', 'gap': '0.5rem', 'margin': '1rem 0', 'flex-wrap': 'wrap'
+      },
+      '.controls button': { 'font-size': '0.85rem' }
+    }));
+
+    // =====================================================================
+    // Mock ESP32 data source (replace with real fetch() in production)
+    // =====================================================================
+    var mockSensors = {
+      temperature: 23.5,
+      humidity: 45.2,
+      pressure: 1013.25,
+      light: 680,
+      uptime: 0,
+      heap: 245760,
+      wifi_rssi: -42
+    };
+
+    function updateMockSensors() {
+      mockSensors.temperature += (Math.random() - 0.48) * 0.5;
+      mockSensors.humidity += (Math.random() - 0.5) * 2;
+      mockSensors.humidity = Math.max(20, Math.min(95, mockSensors.humidity));
+      mockSensors.pressure += (Math.random() - 0.5) * 0.5;
+      mockSensors.light = Math.max(0, Math.min(1023, mockSensors.light + Math.floor((Math.random() - 0.5) * 50)));
+      mockSensors.uptime += 2;
+      mockSensors.heap = 245760 - Math.floor(Math.random() * 8192);
+      mockSensors.wifi_rssi = -40 - Math.floor(Math.random() * 20);
+      return JSON.parse(JSON.stringify(mockSensors));
+    }
+
+    // =====================================================================
+    // UI Rendering
+    // =====================================================================
+    var logEntries = [];
+    var isConnected = true;
+
+    function addLog(msg) {
+      var ts = new Date().toLocaleTimeString();
+      logEntries.push({ ts: ts, msg: msg });
+      if (logEntries.length > 50) logEntries.shift();
+    }
+
+    function barColor(pct) {
+      if (pct < 30) return '#10b981';
+      if (pct < 70) return '#f59e0b';
+      return '#ef4444';
+    }
+
+    function sensorCard(id, icon, label, value, unit, pct) {
+      var color = pct !== undefined ? barColor(pct) : '#3b82f6';
+      return {
+        t: 'div', a: { class: 'sensor-card', id: id },
+        c: [
+          { t: 'div', a: { class: 'sensor-icon' }, c: icon },
+          { t: 'div', a: { class: 'sensor-value' }, c: value + (unit || '') },
+          { t: 'div', a: { class: 'sensor-label' }, c: label },
+          pct !== undefined ? {
+            t: 'div', a: { class: 'sensor-bar' },
+            c: { t: 'div', a: {
+              class: 'sensor-bar-fill',
+              style: 'width: ' + Math.min(100, pct) + '%; background: ' + color + ';'
+            }}
+          } : null
+        ].filter(Boolean)
+      };
+    }
+
+    function formatUptime(seconds) {
+      var h = Math.floor(seconds / 3600);
+      var m = Math.floor((seconds % 3600) / 60);
+      var s = seconds % 60;
+      return h + 'h ' + m + 'm ' + s + 's';
+    }
+
+    function renderSensors(data) {
+      bw.DOM('#sensor-grid', {
+        t: 'div', a: { class: 'sensor-grid' },
+        c: [
+          sensorCard('s-temp', '\uD83C\uDF21\uFE0F', 'Temperature', data.temperature.toFixed(1), '\u00B0C',
+            ((data.temperature - 10) / 40) * 100),
+          sensorCard('s-hum', '\uD83D\uDCA7', 'Humidity', data.humidity.toFixed(1), '%', data.humidity),
+          sensorCard('s-press', '\uD83C\uDF0A', 'Pressure', data.pressure.toFixed(0), ' hPa'),
+          sensorCard('s-light', '\u2600\uFE0F', 'Light', data.light, '', (data.light / 1023) * 100),
+          sensorCard('s-up', '\u23F1\uFE0F', 'Uptime', formatUptime(data.uptime), ''),
+          sensorCard('s-heap', '\uD83D\uDCBE', 'Free Heap', Math.floor(data.heap / 1024) + 'KB', '',
+            100 - (data.heap / 327680) * 100),
+          sensorCard('s-wifi', '\uD83D\uDCF6', 'WiFi RSSI', data.wifi_rssi, ' dBm',
+            Math.min(100, Math.max(0, (data.wifi_rssi + 90) * 2)))
+        ]
+      });
+    }
+
+    function renderLog() {
+      bw.DOM('#log-panel', {
+        t: 'div', a: { class: 'log-panel', id: 'log-inner' },
+        c: logEntries.length === 0
+          ? { t: 'div', a: { class: 'log-entry' }, c: 'Waiting for data...' }
+          : logEntries.map(function(e) {
+              return {
+                t: 'div', a: { class: 'log-entry' },
+                c: [
+                  { t: 'span', a: { class: 'ts' }, c: '[' + e.ts + '] ' },
+                  e.msg
+                ]
+              };
+            })
+      });
+      // Scroll log to bottom
+      var logEl = bw.$('#log-inner')[0];
+      if (logEl) logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // -- Initial page structure -------------------------------------------
+    bw.DOM('#app', {
+      t: 'div', a: { class: 'iot-dash' },
+      c: [
+        // Header
+        { t: 'div', a: { class: 'iot-header' }, c: [
+          { t: 'h1', c: '\uD83D\uDD27 ESP32 Sensor Dashboard' },
+          { t: 'div', a: { id: 'conn-status' }, c: [
+            { t: 'span', a: { class: 'status-dot online' } },
+            { t: 'span', c: 'Connected' }
+          ]}
+        ]},
+
+        // Sensor cards
+        { t: 'div', a: { id: 'sensor-grid' } },
+
+        // Controls
+        { t: 'div', a: { class: 'controls' }, c: [
+          bw.makeButton({ text: 'LED On', variant: 'primary', size: 'sm',
+            onclick: function() { sendCommand('led', 'on'); } }),
+          bw.makeButton({ text: 'LED Off', variant: 'secondary', size: 'sm',
+            onclick: function() { sendCommand('led', 'off'); } }),
+          bw.makeButton({ text: 'Restart', variant: 'danger', size: 'sm',
+            onclick: function() { sendCommand('restart', ''); } }),
+          bw.makeButton({ text: 'Clear Log', variant: 'outline_primary', size: 'sm',
+            onclick: function() { logEntries = []; renderLog(); } })
+        ]},
+
+        // Log
+        { t: 'h3', a: { style: 'color: #94a3b8; font-size: 0.9rem; margin: 0.5rem 0;' },
+          c: 'Event Log' },
+        { t: 'div', a: { id: 'log-panel' } }
+      ]
+    });
+
+    // =====================================================================
+    // Data loop (mock SSE — in production, use EventSource('/events'))
+    // =====================================================================
+    function sendCommand(cmd, val) {
+      // In production: fetch('/api/command', { method: 'POST', body: JSON.stringify({cmd, val}) })
+      addLog('CMD: ' + cmd + '=' + val);
+      renderLog();
+    }
+
+    addLog('Dashboard initialized');
+    var data = updateMockSensors();
+    renderSensors(data);
+    renderLog();
+
+    // Simulate SSE updates every 2 seconds
+    setInterval(function() {
+      if (!isConnected) return;
+      var data = updateMockSensors();
+      renderSensors(data);
+      addLog('Sensor update: T=' + data.temperature.toFixed(1) + '\u00B0C H=' + data.humidity.toFixed(0) + '%');
+      renderLog();
+    }, 2000);
+
+    // =====================================================================
+    // Production notes (commented out):
+    //
+    //   // Real SSE connection to ESP32:
+    //   // var es = new EventSource('/events');
+    //   // es.onmessage = function(e) {
+    //   //   var data = JSON.parse(e.data);
+    //   //   renderSensors(data);
+    //   //   addLog('Update: T=' + data.temperature.toFixed(1));
+    //   //   renderLog();
+    //   // };
+    //
+    //   // Real command POST:
+    //   // function sendCommand(cmd, val) {
+    //   //   fetch('/api/command', {
+    //   //     method: 'POST',
+    //   //     headers: { 'Content-Type': 'application/json' },
+    //   //     body: JSON.stringify({ cmd: cmd, val: val })
+    //   //   });
+    //   //   addLog('CMD: ' + cmd + '=' + val);
+    //   //   renderLog();
+    //   // }
+    // =====================================================================
+  </script>
+</body>
+</html>

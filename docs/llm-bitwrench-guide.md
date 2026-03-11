@@ -286,6 +286,8 @@ bw.DOM('#app', {
 
 All `bw.make*()` functions accept a props object and return a Level 0 TACO.
 
+> **BCCL is optional.** You can create any UI with raw `{t, a, c, o}` objects — bitwrench doesn't require its built-in components. You can also use BCCL components alongside classes from other CSS frameworks (Bootstrap, Tailwind, etc.): `{ t: 'button', a: { class: 'btn btn-primary' }, c: 'Save' }` works fine. BCCL provides pre-styled components with bitwrench's built-in CSS, but the TACO format is framework-agnostic.
+
 ### Layout
 
 ```javascript

@@ -41,7 +41,10 @@ var SOURCE_FILES = [
   { file: 'cli/convert.js',             purpose: 'CLI file conversion',                  category: 'cli' },
   { file: 'cli/inject.js',              purpose: 'CLI bitwrench injection',              category: 'cli' },
   { file: 'cli/layout-default.js',      purpose: 'CLI page layout',                      category: 'cli' },
-  { file: 'vendor/quikdown.js',         purpose: 'Vendored markdown parser',             category: 'vendor' }
+  { file: 'vendor/quikdown.js',         purpose: 'Vendored markdown parser',             category: 'vendor' },
+  { file: 'bwserve/index.js',           purpose: 'bwserve server app',                   category: 'bwserve' },
+  { file: 'bwserve/client.js',          purpose: 'bwserve client connection',             category: 'bwserve' },
+  { file: 'bwserve/shell.js',           purpose: 'bwserve HTML shell generator',          category: 'bwserve' }
 ];
 
 // Dist bundles to measure (the important ones — min + non-min for each format)
@@ -245,9 +248,33 @@ async function main() {
     console.log('\n(omitted < 1KB: ' + trivNames + ')');
   }
 
-  // Print dist bundle analysis — group by family, show only .min.js variants
+  // Print bwserve source analysis (if any bwserve sources present)
+  var bwserveSources = sources.filter(function(s) { return s.category === 'bwserve'; });
+  if (bwserveSources.length > 0) {
+    console.log('\n=== bwserve Sources ===\n');
+    console.log(pad('File', 32) + pad('LOC', 7) + pad('Raw KB', 9) + pad('Min KB', 9) + pad('Gz KB', 8));
+    console.log('-'.repeat(65));
+    var bwsLines = 0, bwsBytes = 0, bwsMin = 0, bwsGz = 0;
+    bwserveSources.forEach(function(s) {
+      console.log(pad(s.file, 32) +
+        pad(String(s.lines), 7) +
+        pad((s.bytes / 1024).toFixed(1), 9) +
+        pad((s.minBytes / 1024).toFixed(1), 9) +
+        pad((s.gzipBytes / 1024).toFixed(1), 8));
+      bwsLines += s.lines; bwsBytes += s.bytes; bwsMin += s.minBytes; bwsGz += s.gzipBytes;
+    });
+    console.log('-'.repeat(65));
+    console.log(pad('TOTAL', 32) +
+      pad(String(bwsLines), 7) +
+      pad((bwsBytes / 1024).toFixed(1), 9) +
+      pad((bwsMin / 1024).toFixed(1), 9) +
+      pad((bwsGz / 1024).toFixed(1), 8));
+  }
+
+  // Print dist bundle analysis — show .min.js variants + server bundles + CSS
   var minBundles = bundles.filter(function(b) {
-    return b.file.indexOf('.min.') !== -1 || b.file === 'bitwrench.css';
+    return b.file.indexOf('.min.') !== -1 || b.file === 'bitwrench.css'
+      || b.file.startsWith('bwserve.');
   });
 
   if (minBundles.length > 0) {
@@ -262,6 +289,8 @@ async function main() {
       // Flag if gzipped size exceeds 45KB budget (only for full bundle)
       if (b.file.indexOf('bitwrench.umd.min') === 0 || b.file.indexOf('bitwrench.esm.min') === 0) {
         status = b.gzipBytes <= 46080 ? 'OK' : 'OVER 45KB!';
+      } else if (b.file.startsWith('bwserve.')) {
+        status = 'server';
       }
       console.log(pad(b.file, 40) + pad(rawKB, 10) + pad(gzKB, 10) + pad(status, 10));
     });

@@ -363,6 +363,7 @@ class BwServeApp {
     this.staticDir = opts.static || null;
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
+    this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
     this._server = null;
@@ -409,8 +410,10 @@ class BwServeApp {
     var self = this;
     return new Promise(function(res) {
       // Close all SSE streams
-      for (var client of self._clients.values()) {
-        client.close();
+      for (var record of self._clients.values()) {
+        if (record.client && typeof record.client.close === 'function') {
+          record.client.close();
+        }
       }
       self._clients.clear();
 
@@ -549,12 +552,12 @@ class BwServeApp {
     var pagePath = pending ? pending.pagePath : '/';
     self._clients.set(clientId, { pagePath: pagePath, client: client });
 
-    // Keep-alive: send SSE comment every 15 seconds
+    // Keep-alive: send SSE comment periodically
     var keepAlive = setInterval(function() {
       if (!client._closed) {
         try { res.write(':keepalive\n\n'); } catch (e) { /* ignore */ }
       }
-    }, 15000);
+    }, self.keepAliveInterval);
 
     // Clean up on disconnect
     req.on('close', function() {

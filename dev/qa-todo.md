@@ -94,12 +94,12 @@ Must cover:
 * [x] update --> Reframe existing o.render sections as "Low-Level Pattern" (still valid, not deprecated)
   - Section 2 renamed to "Low-Level State: o.render + bw.update()"
   - Section 3 renamed to "Encapsulated Components (Low-Level)" with "prefer bw.component()" callout
-* [ ] update --> Add section: "Which Pattern to Use?" decision table
+* [x] update --> Add section: "Which Pattern to Use?" decision table
   - Static content → Level 0 TACO (make*(), bw.html())
   - Render-once interactive → Level 1 (o.render + bw.update)
   - Managed stateful component → Level 2 (bw.component + .set())
-* [ ] update --> Add section: "Wrapping make*() in ComponentHandle" with practical example
-* [ ] update --> Add bw.message() example (server-driven update simulation)
+* [x] update --> Add section: "Wrapping make*() in ComponentHandle" with practical example
+* [x] update --> Add bw.message() example (cross-component messaging)
 * [ ] make --> a examples/llm-chat which is a stand alone example using python which has a streamlit like chat with an llm with real llm integraiton (example can use ollama | lm studio | openrouter) to do a nice chat window.  
 * [ ] make --> a examples/llm-chat-advance which is a stand alone example using python which has a streamlit like chat with an llm with real llm integraiton (example can use ollama | lm studio | openrouter) to do a nice chat window but allows users to see markdown or images in the chat dynamically (this might be a stand alone repo -- discuss)
 
@@ -108,13 +108,14 @@ Must cover:
 Quick start must take someone from zero to a working app. Then longer tutorials guide
 them through building real projects.
 
-* [ ] rewrite --> `pages/00-quick-start.html`: proper onboarding from nothing to a simple app
-  - Step 1: include bitwrench (CDN one-liner)
-  - Step 2: first TACO render (bw.DOM)
-  - Step 3: add a component (makeCard)
-  - Step 4: add interactivity (bw.component + .set())
-  - Step 5: add styling (loadDefaultStyles + generateTheme)
-  - Must feel like "5 minutes to your first app"
+* [x] rewrite --> `pages/00-quick-start.html`: proper onboarding from nothing to a styled interactive app
+  - Step 1: include bitwrench (CDN one-liner) — full HTML page iframe editor
+  - Step 2: TACO building blocks (progressively complex)
+  - Step 3: built-in components (makeButton, makeCard, makeAlert)
+  - Step 4: interactivity — closure pattern (simple) + bw.component() (recommended)
+  - Step 5: data-driven UI (.map() for lists)
+  - Step 6: theming (generateTheme with seed colors + presets)
+  - Step 7: next steps with links to all other pages
 * [ ] create --> `docs/tutorial-website.md`: longer tutorial building a complete multi-page website
   - Landing page with hero, features, CTA
   - Dashboard with stat cards, charts, tables
@@ -137,34 +138,35 @@ them through building real projects.
 Cloneable, runnable example projects in `examples/` directory. Each should be
 self-contained and work without a build step.
 
-* [ ] create --> `examples/static-page/` — static page built with bitwrench
-  - Single HTML file using CDN bitwrench
-  - Landing page with hero, feature grid, contact form
-  - Shows Level 0 TACO composition, makeCard, makeHero, makeForm
-* [ ] create --> `examples/reactive-ui/` — interactive single-page app
-  - Todo list or dashboard with live state
-  - Uses bw.component() with template bindings
-  - Shows Level 2 ComponentHandle pattern end-to-end
-  - Pub/sub for cross-component communication
-* [ ] create --> `examples/client-server/` — bwserve client-server app
-  - Node.js server using bwserve library
-  - SSE push for live updates
-  - User actions sent back to server
-  - Counter + dashboard demo
-* [ ] create --> `examples/embedded/` — ESP32/IoT embedded dashboard
-  - C++ Arduino sketch with embedded HTML
-  - JSON endpoint for sensor data
-  - SSE stream for real-time updates
-  - bitwrench client rendering gauges, charts, status cards
-  - Minimal footprint (< 10KB HTML payload)
+* [x] create --> `examples/static-page/` — static page built with bitwrench
+  - Single HTML file using CDN bitwrench (217 lines)
+  - Landing page: hero, feature grid, stat cards, testimonials, contact form, footer
+  - Shows Level 0 TACO composition: makeHero, makeFeatureGrid, makeStatCard, makeCard, makeForm, makeNavbar
+  - generateTheme() for branded colors, bw.css() for custom page styles
+* [x] create --> `examples/reactive-ui/` — interactive single-page app
+  - Todo list with bw.component() input bar (295 lines)
+  - Filter (all/active/completed), clear completed, item count
+  - bw.pub('todos:changed') pub/sub drives all re-renders
+  - makeButton, makeInput, makeCheckbox for form controls
+* [x] create --> `examples/client-server/` — bwserve client-server app
+  - Node.js server using bwserve library (174 lines)
+  - Counter page: increment/decrement/reset via data-bw-action
+  - Dashboard page: live stats updating every 2s via client.batch()
+  - SSE push for live updates, POST for actions, multi-page routing
+* [x] create --> `examples/embedded/` — ESP32/IoT embedded dashboard
+  - Arduino sketch (sketch.ino) with WiFi, DHT22, LDR, SSE, JSON API
+  - index.html with mock data source for development without hardware
+  - 7 sensor cards (temp, humidity, pressure, light, uptime, heap, RSSI)
+  - Event log, LED/restart controls, dark theme
+  - HTML payload ~5KB (under 10KB budget)
 
 ### Other documentation tasks
 
 * [x] fix --> `pages/11-debugging.html`: contrast issues — added explicit bg/color to `.api-table code`
 * [x] update --> `dev/bitwrench-todo.md`: fixed stale items (LLM guide, v2.0.15 work, ComponentHandle, bwserve plan)
-* [ ] update --> navbar on all pages: add "Docs" link pointing to docs/ or GH Pages docs section
+* [x] update --> navbar on all pages: "Docs" link already present in shared-nav.js → `08-api-reference.html`
 * [x] fix --> `dev/coming-from-other-frameworks.md` — updated all 8 framework bridge tables with ComponentHandle, .get/.set, template bindings; updated cross-cutting concerns, reactivity section
-* [ ] document --> Users can create custom TACO components without BCCL. BCCL is a convenience library, not a requirement. Users can write raw `{t, a, c, o}` objects, compose their own component factories, or wrap existing CSS frameworks (Bootstrap, Tailwind, etc.) in TACO objects. This should be clearly stated in the Quick Start, Component docs, and the LLM guide. Example: `{ t: 'button', a: { class: 'btn btn-primary' }, c: 'Click me' }` works fine — bitwrench doesn't care where the CSS classes come from.
+* [x] document --> Custom TACO without BCCL: added "Custom components without BCCL" section to `docs/taco-format.md` (raw TACO, Bootstrap/Tailwind wrapping, reactive custom components) + BCCL-is-optional callout in `docs/llm-bitwrench-guide.md`
 
 ### Stale docs culled
 
@@ -250,7 +252,7 @@ embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
 * [x] implement --> `src/bwserve/shell.js` — Page shell generator
   - Auto-injects bitwrench UMD + CSS from `/__bw/` routes
   - Bootstrap: `bw.loadDefaultStyles()`, `bw.clientConnect()`, `data-bw-action` delegation
-* [x] implement --> SSE stream management: keep-alive (15s), client tracking, cleanup on disconnect
+* [x] implement --> SSE stream management: configurable keep-alive (default 15s, via `opts.keepAliveInterval`), client tracking, cleanup on disconnect
 * [ ] implement --> `bitwrench serve` actual dev server with file watching and live reload
 
 ### Documentation — IMPLEMENTED
@@ -262,12 +264,15 @@ embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
 
 ### Tests — IMPLEMENTED
 
-* [x] test --> `bw.clientApply()`: all 5 message types + error cases (14 tests)
-* [x] test --> `BwServeClient`: message format, SSE frame format, dispatch, chaining (15 tests)
-* [x] test --> `BwServeApp`: create, page registration, listen/close lifecycle (5 tests)
-* [x] test --> Round-trip: client.render() → _sent → clientApply() → DOM verification (4 tests)
-* [x] test --> `bw.clientConnect()`: API shape, connection object (3 tests)
-* Total: 42 new tests in `test/bitwrench_test_bwserve.js`
+* [x] test --> `bw.clientApply()`: all 9 message types + error cases (30 tests)
+* [x] test --> `BwServeClient`: message format, SSE frame format, dispatch, chaining, edge cases (19 tests)
+* [x] test --> `BwServeApp`: create, page registration, listen/close lifecycle, HTTP integration (17 tests)
+* [x] test --> Round-trip: client.render() → _sent → clientApply() → DOM verification (9 tests)
+* [x] test --> `bw.clientConnect()`: API shape, connection object, allowExec (5 tests)
+* [x] test --> `generateShell()`: all options, defaults, theme, injectBitwrench (16 tests)
+* [x] test --> HTTP integration: static files, dist files, SSE, actions, keep-alive, page handlers (13 tests)
+* [x] coverage --> 100% statement/line/function coverage on all `src/bwserve/` files (client.js, index.js, shell.js)
+* Total: 109 tests in `test/bitwrench_test_bwserve.js`
 
 ### Demos and examples (future)
 

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataForge - Built with Bitwrench</title>
+  <!-- CDN bitwrench — replace with local path if offline -->
+  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Static Landing Page — Level 0 TACO composition only
+    //
+    // This example demonstrates bitwrench as a static site generator:
+    //   - bw.loadDefaultStyles() for base CSS
+    //   - bw.generateTheme() for branded colors
+    //   - bw.css() + bw.injectCSS() for custom page styles
+    //   - BCCL make*() functions for pre-built components
+    //   - Plain TACO objects for custom sections
+    //   - bw.DOM() to mount everything into a single #app div
+    //
+    // No build step. No framework. Just a script tag and data.
+    // =====================================================================
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('dataforge', {
+      primary: '#2563eb',
+      secondary: '#7c3aed',
+      tertiary: '#059669'
+    });
+
+    // -- Custom page CSS ---------------------------------------------------
+    bw.injectCSS(bw.css({
+      '.site-header': {
+        'background': '#1e293b',
+        'padding': '1rem 0'
+      },
+      '.site-header a': {
+        'color': '#e2e8f0',
+        'text-decoration': 'none',
+        'font-weight': '600',
+        'font-size': '1.25rem'
+      },
+      '.stats-row': {
+        'display': 'flex',
+        'gap': '1.5rem',
+        'flex-wrap': 'wrap',
+        'justify-content': 'center',
+        'padding': '2rem 0'
+      },
+      '.stats-row .bw_stat_card': {
+        'flex': '1 1 200px',
+        'max-width': '250px'
+      },
+      '.contact-form': {
+        'max-width': '600px',
+        'margin': '0 auto'
+      },
+      '.site-footer': {
+        'background': '#1e293b',
+        'color': '#94a3b8',
+        'padding': '2rem 0',
+        'text-align': 'center',
+        'margin-top': '3rem'
+      },
+      '.site-footer a': {
+        'color': '#93c5fd'
+      }
+    }));
+
+    // -- Navigation --------------------------------------------------------
+    var nav = bw.makeNavbar({
+      brand: 'DataForge',
+      variant: 'primary',
+      items: [
+        { text: 'Features', href: '#features' },
+        { text: 'Stats', href: '#stats' },
+        { text: 'Contact', href: '#contact' }
+      ]
+    });
+
+    // -- Hero section ------------------------------------------------------
+    var hero = bw.makeHero({
+      title: 'Transform Your Data Pipeline',
+      subtitle: 'DataForge gives your team real-time analytics, automated reports, and AI-powered insights — all in one platform.',
+      variant: 'primary',
+      size: 'xl',
+      actions: [
+        bw.makeButton({ text: 'Get Started Free', variant: 'light', size: 'lg',
+          onclick: function() { window.location.hash = '#contact'; } }),
+        { t: 'span', a: { style: 'display:inline-block; width:1rem;' } },
+        bw.makeButton({ text: 'View Demo', variant: 'outline_light', size: 'lg' })
+      ]
+    });
+
+    // -- Feature grid ------------------------------------------------------
+    var features = bw.makeSection({
+      title: 'Why DataForge?',
+      subtitle: 'Everything you need to go from raw data to actionable insight.',
+      id: 'features',
+      children: [
+        bw.makeFeatureGrid({
+          columns: 3,
+          features: [
+            { icon: '\u26A1', title: 'Real-Time Streaming',
+              description: 'Process millions of events per second with sub-millisecond latency.' },
+            { icon: '\uD83D\uDCC8', title: 'Auto Dashboards',
+              description: 'AI-generated dashboards from your schema. No drag-and-drop required.' },
+            { icon: '\uD83D\uDD12', title: 'Enterprise Security',
+              description: 'SOC 2 Type II certified. Row-level access control. End-to-end encryption.' },
+            { icon: '\uD83E\uDDE9', title: '200+ Connectors',
+              description: 'PostgreSQL, MongoDB, S3, Kafka, BigQuery, Snowflake, and more.' },
+            { icon: '\uD83D\uDE80', title: 'Zero Infra',
+              description: 'Fully managed. No servers to provision, no clusters to tune.' },
+            { icon: '\uD83E\uDD16', title: 'AI Copilot',
+              description: 'Ask questions in plain English. Get SQL, charts, and anomaly alerts.' }
+          ]
+        })
+      ]
+    });
+
+    // -- Stats section -----------------------------------------------------
+    var stats = bw.makeSection({
+      title: 'Trusted by Data Teams Worldwide',
+      id: 'stats',
+      children: [{
+        t: 'div', a: { class: 'stats-row' },
+        c: [
+          bw.makeStatCard({ value: '2.4M', label: 'Events / Second', icon: '\u26A1' }),
+          bw.makeStatCard({ value: '99.99%', label: 'Uptime SLA', icon: '\u2705' }),
+          bw.makeStatCard({ value: '1,200+', label: 'Companies', icon: '\uD83C\uDFE2' }),
+          bw.makeStatCard({ value: '< 50ms', label: 'Query P99', icon: '\u23F1' })
+        ]
+      }]
+    });
+
+    // -- Testimonial cards -------------------------------------------------
+    var testimonials = bw.makeSection({
+      title: 'What Our Users Say',
+      children: [{
+        t: 'div', a: { class: 'bw_row bw_g_4' },
+        c: [
+          { t: 'div', a: { class: 'bw_col_md_4' }, c: bw.makeCard({
+            content: '"DataForge replaced three tools in our stack. Setup took 20 minutes."',
+            footer: { t: 'strong', c: '-- Sarah K., Head of Analytics' },
+            shadow: 'sm'
+          })},
+          { t: 'div', a: { class: 'bw_col_md_4' }, c: bw.makeCard({
+            content: '"The AI copilot saved our team 15 hours per week on ad-hoc queries."',
+            footer: { t: 'strong', c: '-- James L., Data Engineer' },
+            shadow: 'sm'
+          })},
+          { t: 'div', a: { class: 'bw_col_md_4' }, c: bw.makeCard({
+            content: '"Best developer experience I have seen in an analytics product. Period."',
+            footer: { t: 'strong', c: '-- Priya M., CTO' },
+            shadow: 'sm'
+          })}
+        ]
+      }]
+    });
+
+    // -- Contact form ------------------------------------------------------
+    var contactForm = bw.makeSection({
+      title: 'Get in Touch',
+      id: 'contact',
+      children: [{
+        t: 'div', a: { class: 'contact-form' },
+        c: bw.makeForm({
+          onsubmit: function(e) {
+            e.preventDefault();
+            bw.DOM('#form-status', bw.makeAlert({
+              content: 'Thanks! We will be in touch within 24 hours.',
+              variant: 'success',
+              dismissible: true
+            }));
+          },
+          children: [
+            bw.makeFormGroup({
+              label: 'Name', id: 'name', required: true,
+              input: bw.makeInput({ id: 'name', placeholder: 'Your name', required: true })
+            }),
+            bw.makeFormGroup({
+              label: 'Email', id: 'email', required: true,
+              input: bw.makeInput({ type: 'email', id: 'email', placeholder: 'you@company.com', required: true })
+            }),
+            bw.makeFormGroup({
+              label: 'Message', id: 'message',
+              input: bw.makeTextarea({ id: 'message', placeholder: 'Tell us about your data challenges...', rows: 4 })
+            }),
+            { t: 'div', a: { class: 'bw_mt_3' }, c: bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', size: 'lg' }) },
+            { t: 'div', a: { id: 'form-status', class: 'bw_mt_3' } }
+          ]
+        })
+      }]
+    });
+
+    // -- Footer ------------------------------------------------------------
+    var footer = {
+      t: 'footer', a: { class: 'site-footer' },
+      c: [
+        { t: 'p', c: 'DataForge Inc. \u00A9 2026. Built with bitwrench.' },
+        { t: 'p', c: { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'View bitwrench on GitHub' } }
+      ]
+    };
+
+    // -- Mount everything --------------------------------------------------
+    bw.DOM('#app', {
+      t: 'div',
+      c: [nav, hero, features, stats, testimonials, contactForm, footer]
+    });
+  </script>
+</body>
+</html>

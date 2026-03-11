@@ -390,6 +390,143 @@
     };
 
     // =========================================================================
+    // Section 1c: Which Pattern to Use?
+    // =========================================================================
+    var decisionTable = {
+      t: 'table', a: { class: 'event-table' },
+      c: [
+        { t: 'thead', c: { t: 'tr', c: [
+          { t: 'th', c: 'Use case' },
+          { t: 'th', c: 'Pattern' },
+          { t: 'th', c: 'Level' },
+          { t: 'th', c: 'Example' }
+        ]}},
+        { t: 'tbody', c: [
+          { t: 'tr', c: [
+            { t: 'td', c: 'Static content, layout, markup' },
+            { t: 'td', c: bw.raw('<code>bw.DOM()</code> or <code>bw.html()</code>') },
+            { t: 'td', c: 'Level 0' },
+            { t: 'td', c: bw.raw('Landing pages, docs, cards without state') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Simple interactivity' },
+            { t: 'td', c: bw.raw('Closure + re-render') },
+            { t: 'td', c: 'Level 1' },
+            { t: 'td', c: bw.raw('Tabs, toggles, one-off widgets') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Stateful components' },
+            { t: 'td', c: bw.raw('<code>bw.component()</code>') },
+            { t: 'td', c: bw.raw('<strong>Level 2</strong>') },
+            { t: 'td', c: bw.raw('Counters, forms, dashboards, anything with <code>.get()/.set()</code>') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Custom render logic' },
+            { t: 'td', c: bw.raw('<code>o.render</code> + <code>bw.update()</code>') },
+            { t: 'td', c: 'Level 1 (manual)' },
+            { t: 'td', c: bw.raw('Canvas, WebGL, complex DOM that needs full control') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'High-frequency value updates' },
+            { t: 'td', c: bw.raw('<code>bw.patch()</code>') },
+            { t: 'td', c: 'Level 1 (targeted)' },
+            { t: 'td', c: bw.raw('Live tickers, sensor values, counters in large lists') }
+          ]},
+          { t: 'tr', c: [
+            { t: 'td', c: 'Server-driven UI' },
+            { t: 'td', c: bw.raw('bwserve + <code>bw.clientApply()</code>') },
+            { t: 'td', c: 'Level 0 over SSE' },
+            { t: 'td', c: bw.raw('Streamlit-style apps, embedded dashboards') }
+          ]}
+        ]}
+      ]
+    };
+
+    var sectionDecision = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Which Pattern to Use?' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Bitwrench has three materialization levels. Most applications only need Level 0 (static) and Level 2 (<code>bw.component()</code>). The low-level tools exist for custom components and escape hatches.') },
+          decisionTable,
+          callout('tip', 'Rule of thumb', {
+            t: 'p',
+            c: bw.raw('Start with <code>bw.component()</code>. If you need finer control, drop to <code>o.render</code> + <code>bw.update()</code>. If you just need to update a single value fast, use <code>bw.patch()</code>. You can mix all three in the same page.')
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 1d: Wrapping make*() in ComponentHandle
+    // =========================================================================
+    var wrapMakeCode =
+      '// Any make*() TACO can be wrapped in bw.component()\n' +
+      '// to get a reactive handle with .get()/.set()\n' +
+      '\n' +
+      'var statusCard = bw.component({\n' +
+      '  t: \'div\', c: [\n' +
+      '    bw.makeCard({\n' +
+      '      title: \'${title}\',\n' +
+      '      content: \'${status}\',\n' +
+      '      variant: \'${variant}\'\n' +
+      '    })\n' +
+      '  ],\n' +
+      '  o: {\n' +
+      '    state: {\n' +
+      '      title: \'Server Status\',\n' +
+      '      status: \'Online\',\n' +
+      '      variant: \'success\'\n' +
+      '    },\n' +
+      '    methods: {\n' +
+      '      setOnline: function(comp) {\n' +
+      '        comp.setState({\n' +
+      '          status: \'Online\',\n' +
+      '          variant: \'success\'\n' +
+      '        });\n' +
+      '      },\n' +
+      '      setOffline: function(comp) {\n' +
+      '        comp.setState({\n' +
+      '          status: \'Offline\',\n' +
+      '          variant: \'danger\'\n' +
+      '        });\n' +
+      '      }\n' +
+      '    }\n' +
+      '  }\n' +
+      '});\n' +
+      '\n' +
+      'bw.DOM(target, statusCard);\n' +
+      '\n' +
+      '// Update via handle API:\n' +
+      'statusCard.set(\'status\', \'Maintenance\');\n' +
+      'statusCard.set(\'variant\', \'warning\');\n' +
+      '\n' +
+      '// Or use promoted methods:\n' +
+      'statusCard.setOffline();';
+
+    var sectionWrap = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: bw.raw('Wrapping make*() in ComponentHandle') },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('BCCL <code>make*()</code> functions return Level 0 TACOs &mdash; pure data with no reactivity. This is by design: it keeps them serializable, composable, and SSR-friendly. To add reactivity, wrap the TACO in <code>bw.component()</code> and use template bindings for the props you want to be reactive.') },
+
+          callout('concept', 'The pattern', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('<strong>Level 0</strong>: <code>bw.makeCard({ title: \'Hello\' })</code> &mdash; static TACO, no reactivity') },
+              { t: 'p', c: bw.raw('<strong>Level 2</strong>: wrap in <code>bw.component()</code> with <code>${expr}</code> template bindings + <code>o.methods</code> &mdash; reactive handle with <code>.get()/.set()</code>') },
+              { t: 'p', c: bw.raw('The key insight: <code>make*()</code> intentionally returns Level 0. This is a feature, not a limitation. You choose when to "activate" reactivity by wrapping in <code>bw.component()</code>.') }
+            ]
+          }),
+
+          { t: 'div', a: { id: 'tryit-wrap-make' } }
+        ]}
+      ]
+    };
+
+    // =========================================================================
     // Section 2: How State Works (low-level)
     // =========================================================================
     var completePatternCode =
@@ -1052,6 +1189,61 @@
     };
 
     // =========================================================================
+    // Section 8b: bw.message() — Cross-Component Messaging
+    // =========================================================================
+    var messageCode =
+      '// Component A: a display with a userTag\n' +
+      'var display = bw.component({\n' +
+      '  t: \'div\', a: { class: \'bw_card\' },\n' +
+      '  c: [\n' +
+      '    { t: \'h4\', c: \'Display\' },\n' +
+      '    { t: \'p\', c: \'Message: ${msg}\' },\n' +
+      '    { t: \'p\', c: \'Count: ${count}\' }\n' +
+      '  ],\n' +
+      '  o: {\n' +
+      '    state: { msg: \'(none)\', count: 0 },\n' +
+      '    methods: {\n' +
+      '      setText: function(comp, data) {\n' +
+      '        comp.set(\'msg\', data);\n' +
+      '      },\n' +
+      '      increment: function(comp) {\n' +
+      '        comp.set(\'count\',\n' +
+      '          comp.get(\'count\') + 1);\n' +
+      '      }\n' +
+      '    }\n' +
+      '  }\n' +
+      '});\n' +
+      'display.userTag(\'my-display\');\n' +
+      'bw.DOM(target, display);\n' +
+      '\n' +
+      '// From anywhere \u2014 send a message:\n' +
+      'bw.message(\'my-display\',\n' +
+      '  \'setText\', \'Hello!\');\n' +
+      'bw.message(\'my-display\',\n' +
+      '  \'increment\');';
+
+    var sectionMessage = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: bw.raw('bw.message() &mdash; Cross-Component Messaging') },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('<code>bw.message(target, action, data)</code> sends a named message to a component by its user tag. The target component must have the action defined in <code>o.methods</code>. This is the Win32 <code>SendMessage()</code> pattern &mdash; direct, typed communication without pub/sub overhead.') },
+
+          callout('concept', 'When to use bw.message() vs pub/sub', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('<strong>bw.message()</strong>: You know the target. One sender, one receiver. Think: "tell that specific component to do this."') },
+              { t: 'p', c: bw.raw('<strong>bw.pub()/sub()</strong>: Any number of receivers. Think: "announce this event, whoever cares can react."') },
+              { t: 'p', c: bw.raw('<strong>bwserve</strong>: The server uses the same message types (<code>replace</code>, <code>patch</code>, <code>call</code>) over SSE. <code>bw.message()</code> is the local equivalent.') }
+            ]
+          }),
+
+          { t: 'div', a: { id: 'tryit-message' } }
+        ]}
+      ]
+    };
+
+    // =========================================================================
     // Section 9: Performance
     // =========================================================================
     var perfSourceCode =
@@ -1142,7 +1334,7 @@
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [section0, section1, sectionCH, section2, section3, section4, section5, section6, section7, section8, section9]
+      c: [section0, section1, sectionCH, sectionDecision, sectionWrap, section2, section3, section4, section5, section6, section7, sectionMessage, section8, section9]
     };
 
     bw.DOM('#app', [pageHeader, contentWrapper]);
@@ -1151,6 +1343,18 @@
     bw.DOM('#tryit-component-handle', makeTryIt({
       code: componentHandleCode,
       height: '420px'
+    }));
+
+    // ── bw.message() (try-it editor) ──
+    bw.DOM('#tryit-message', makeTryIt({
+      code: messageCode,
+      height: '440px'
+    }));
+
+    // ── Wrapping make*() (try-it editor) ──
+    bw.DOM('#tryit-wrap-make', makeTryIt({
+      code: wrapMakeCode,
+      height: '440px'
     }));
 
     // ── The Simplest State Pattern (try-it editor) ──

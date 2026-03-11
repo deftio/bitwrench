@@ -257,10 +257,12 @@
                   t: 'button',
                   a: {
                     class: 'bw_site_nav_toggle',
+                    id: 'bw_theme_toggle_btn',
                     title: 'Toggle theme palette',
                     onclick: function() {
                       var mode = bw.toggleTheme();
                       this.textContent = mode === 'alternate' ? '\u2600' : '\u263D';
+                      bw.setCookie('bw_theme_mode', mode, 365);
                     }
                   },
                   c: '\u263D'
@@ -354,6 +356,16 @@
           t: 'div', a: { class: 'bw_site_nav_wrapper' }, c: parts.belowNav
         });
         navEl.parentNode.insertBefore(belowWrapper, navEl.nextSibling);
+      }
+
+      // Restore saved theme preference from cookie
+      var savedMode = bw.getCookie('bw_theme_mode');
+      if (savedMode === 'alternate' || savedMode === 'primary') {
+        bw.applyTheme(savedMode);
+        var btn = document.getElementById('bw_theme_toggle_btn');
+        if (btn) {
+          btn.textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
+        }
       }
     }
   }

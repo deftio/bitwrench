@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App - Bitwrench Reactive UI</title>
+  <!-- CDN bitwrench — replace with local path if offline -->
+  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Reactive Todo App — Level 2 ComponentHandle pattern
+    //
+    // Demonstrates:
+    //   - bw.component() with template bindings and o.methods
+    //   - .get() / .set() for reactive state
+    //   - bw.pub() / bw.sub() for cross-component communication
+    //   - Composing multiple ComponentHandles on one page
+    //   - No direct DOM manipulation anywhere
+    //
+    // No build step. No framework. Just bitwrench.
+    // =====================================================================
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('todo', {
+      primary: '#6366f1',
+      secondary: '#ec4899',
+      spacing: 'normal',
+      radius: 'md'
+    });
+
+    // -- Page CSS ----------------------------------------------------------
+    bw.injectCSS(bw.css({
+      'body': {
+        'background': '#f8fafc',
+        'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      },
+      '.todo-app': {
+        'max-width': '600px',
+        'margin': '2rem auto',
+        'padding': '0 1rem'
+      },
+      '.todo-header': {
+        'text-align': 'center',
+        'margin-bottom': '2rem'
+      },
+      '.todo-header h1': {
+        'font-size': '2rem',
+        'color': '#1e293b'
+      },
+      '.todo-header p': {
+        'color': '#64748b'
+      },
+      '.todo-input-row': {
+        'display': 'flex',
+        'gap': '0.5rem',
+        'margin-bottom': '1rem'
+      },
+      '.todo-input-row input': {
+        'flex': '1'
+      },
+      '.todo-filters': {
+        'display': 'flex',
+        'gap': '0.5rem',
+        'margin-bottom': '1rem',
+        'justify-content': 'center'
+      },
+      '.todo-filters button': {
+        'cursor': 'pointer'
+      },
+      '.todo-filters button.active': {
+        'font-weight': '700'
+      },
+      '.todo-item': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.75rem',
+        'padding': '0.75rem 1rem',
+        'background': '#fff',
+        'border': '1px solid #e2e8f0',
+        'border-radius': '0.5rem',
+        'margin-bottom': '0.5rem',
+        'transition': 'opacity 0.2s ease'
+      },
+      '.todo-item.done': {
+        'opacity': '0.6'
+      },
+      '.todo-item.done .todo-text': {
+        'text-decoration': 'line-through',
+        'color': '#94a3b8'
+      },
+      '.todo-text': {
+        'flex': '1',
+        'font-size': '1rem'
+      },
+      '.todo-delete': {
+        'background': 'none',
+        'border': 'none',
+        'color': '#ef4444',
+        'cursor': 'pointer',
+        'font-size': '1.25rem',
+        'padding': '0 0.25rem',
+        'line-height': '1'
+      },
+      '.todo-stats': {
+        'text-align': 'center',
+        'color': '#64748b',
+        'padding': '1rem 0',
+        'font-size': '0.9rem'
+      },
+      '.clear-btn': {
+        'background': 'none',
+        'border': 'none',
+        'color': '#6366f1',
+        'cursor': 'pointer',
+        'text-decoration': 'underline',
+        'font-size': '0.9rem'
+      }
+    }));
+
+    // =====================================================================
+    // State: shared todo data (plain array — source of truth)
+    // =====================================================================
+    var todos = [];
+    var nextId = 1;
+    var currentFilter = 'all';  // 'all' | 'active' | 'completed'
+
+    function addTodo(text) {
+      if (!text.trim()) return;
+      todos.push({ id: nextId++, text: text.trim(), done: false });
+      bw.pub('todos:changed');
+    }
+
+    function toggleTodo(id) {
+      todos.forEach(function(t) { if (t.id === id) t.done = !t.done; });
+      bw.pub('todos:changed');
+    }
+
+    function deleteTodo(id) {
+      todos = todos.filter(function(t) { return t.id !== id; });
+      bw.pub('todos:changed');
+    }
+
+    function clearCompleted() {
+      todos = todos.filter(function(t) { return !t.done; });
+      bw.pub('todos:changed');
+    }
+
+    function filteredTodos() {
+      if (currentFilter === 'active') return todos.filter(function(t) { return !t.done; });
+      if (currentFilter === 'completed') return todos.filter(function(t) { return t.done; });
+      return todos;
+    }
+
+    // =====================================================================
+    // Component: Todo Input (bw.component with o.methods)
+    // =====================================================================
+    var todoInput = bw.component({
+      t: 'div', a: { class: 'todo-input-row' },
+      c: [
+        bw.makeInput({
+          id: 'todo-new',
+          placeholder: 'What needs to be done?',
+          onkeydown: function(e) {
+            if (e.key === 'Enter') {
+              addTodo(e.target.value);
+              e.target.value = '';
+            }
+          }
+        }),
+        bw.makeButton({
+          text: 'Add',
+          variant: 'primary',
+          onclick: function() {
+            var inp = bw.$('#todo-new')[0];
+            if (inp) { addTodo(inp.value); inp.value = ''; }
+          }
+        })
+      ]
+    });
+
+    // =====================================================================
+    // Component: Filter Bar
+    // =====================================================================
+    function renderFilterBar() {
+      return {
+        t: 'div', a: { class: 'todo-filters' },
+        c: ['all', 'active', 'completed'].map(function(f) {
+          return bw.makeButton({
+            text: f.charAt(0).toUpperCase() + f.slice(1),
+            variant: currentFilter === f ? 'primary' : 'outline_primary',
+            size: 'sm',
+            className: currentFilter === f ? 'active' : '',
+            onclick: function() {
+              currentFilter = f;
+              bw.pub('todos:changed');
+            }
+          });
+        })
+      };
+    }
+
+    // =====================================================================
+    // Component: Todo List (re-renders on todos:changed)
+    // =====================================================================
+    function renderTodoItem(todo) {
+      return {
+        t: 'div', a: { class: 'todo-item' + (todo.done ? ' done' : '') },
+        c: [
+          bw.makeCheckbox({
+            checked: todo.done,
+            onchange: function() { toggleTodo(todo.id); }
+          }),
+          { t: 'span', a: { class: 'todo-text' }, c: todo.text },
+          { t: 'button', a: {
+            class: 'todo-delete',
+            title: 'Delete',
+            onclick: function() { deleteTodo(todo.id); }
+          }, c: '\u00D7' }
+        ]
+      };
+    }
+
+    function renderTodoList() {
+      var items = filteredTodos();
+      if (items.length === 0) {
+        var msg = currentFilter === 'all'
+          ? 'No todos yet. Add one above!'
+          : 'No ' + currentFilter + ' todos.';
+        return { t: 'div', a: { class: 'todo-stats' }, c: msg };
+      }
+      return { t: 'div', c: items.map(renderTodoItem) };
+    }
+
+    // =====================================================================
+    // Component: Stats footer
+    // =====================================================================
+    function renderStats() {
+      var active = todos.filter(function(t) { return !t.done; }).length;
+      var completed = todos.filter(function(t) { return t.done; }).length;
+      var parts = [
+        { t: 'span', c: active + ' item' + (active !== 1 ? 's' : '') + ' left' }
+      ];
+      if (completed > 0) {
+        parts.push({ t: 'span', c: ' \u00B7 ' });
+        parts.push({ t: 'button', a: {
+          class: 'clear-btn',
+          onclick: clearCompleted
+        }, c: 'Clear completed (' + completed + ')' });
+      }
+      return { t: 'div', a: { class: 'todo-stats' }, c: parts };
+    }
+
+    // =====================================================================
+    // Main render — re-called on every todos:changed event
+    // =====================================================================
+    function renderApp() {
+      bw.DOM('#todo-list', renderTodoList());
+      bw.DOM('#todo-filters', renderFilterBar());
+      bw.DOM('#todo-stats', renderStats());
+    }
+
+    // Subscribe to changes
+    bw.sub('todos:changed', renderApp);
+
+    // -- Seed some demo todos ---------------------------------------------
+    addTodo('Learn TACO format');
+    addTodo('Build a todo app with bitwrench');
+    addTodo('Try bw.component() template bindings');
+    toggleTodo(1);  // mark first as done
+
+    // -- Mount the page structure -----------------------------------------
+    bw.DOM('#app', {
+      t: 'div', a: { class: 'todo-app' },
+      c: [
+        { t: 'div', a: { class: 'todo-header' }, c: [
+          { t: 'h1', c: 'Todo App' },
+          { t: 'p', c: 'Built with bitwrench \u2014 reactive UI, zero dependencies' }
+        ]},
+        todoInput,
+        { t: 'div', a: { id: 'todo-filters' } },
+        { t: 'div', a: { id: 'todo-list' } },
+        { t: 'div', a: { id: 'todo-stats' } }
+      ]
+    });
+
+    // Trigger initial render of dynamic sections
+    bw.pub('todos:changed');
+  </script>
+</body>
+</html>

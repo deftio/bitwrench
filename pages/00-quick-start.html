@@ -268,52 +268,80 @@
               'explicit call you can see and step through.'
             ]
           }),
-          callout('concept', 'There\'s more when you need it', {
+          callout('concept', 'This works, but there\'s a better way', {
+            t: 'p', c: [
+              'The closure pattern is great for simple cases. For anything with state you want to read or update from outside, use ',
+              { t: 'code', c: 'bw.component()' },
+              ' \u2014 shown in the next section.'
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 4b: The Recommended Pattern — bw.component()
+    // =========================================================================
+    var section4b = {
+      t: 'div', a: { class: 'demo-section', id: 'section-component' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-component' }, c: 'The Recommended Pattern: bw.component()' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            'The closure pattern above works, but for most components, ',
+            { t: 'code', c: 'bw.component()' },
+            ' is the better approach. It wraps a TACO in a reactive handle with ',
+            { t: 'code', c: '.get()' }, ' / ', { t: 'code', c: '.set()' },
+            ' and auto-renders template bindings like ',
+            { t: 'code', c: '${count}' }, '.'
+          ]},
+          makeTryIt({
+            code: [
+              '// bw.component() = reactive state + auto-render',
+              'var counter = bw.component({',
+              '  t: \'div\', c: [',
+              '    { t: \'h3\', c: \'Count: ${count}\' },',
+              '    bw.makeButton({',
+              '      text: \'+\', variant: \'primary\',',
+              '      onclick: function() {',
+              '        counter.set(\'count\',',
+              '          counter.get(\'count\') + 1);',
+              '      }',
+              '    }),',
+              '    \' \',',
+              '    bw.makeButton({',
+              '      text: \'Reset\', variant: \'secondary\',',
+              '      onclick: function() {',
+              '        counter.reset();',
+              '      }',
+              '    })',
+              '  ],',
+              '  o: {',
+              '    state: { count: 0 },',
+              '    methods: {',
+              '      reset: function(comp) {',
+              '        comp.set(\'count\', 0);',
+              '      }',
+              '    }',
+              '  }',
+              '});',
+              '',
+              'bw.DOM(target, counter);'
+            ].join('\n'),
+            height: '420px'
+          }),
+          callout('tip', 'When to use which pattern', {
             t: 'div', c: [
-              { t: 'p', c: 'For real applications, bitwrench provides a full state management toolkit:' },
-              { t: 'ul', c: [
-                { t: 'li', c: [
-                  { t: 'strong', c: 'Component state' }, ' \u2014 ',
-                  { t: 'code', c: 'o.state' }, ' and ', { t: 'code', c: 'o.render' },
-                  ' store state and render logic directly on the DOM element. Multiple instances each carry their own independent state.'
-                ]},
-                { t: 'li', c: [
-                  { t: 'strong', c: 'Targeted updates' }, ' \u2014 ',
-                  { t: 'code', c: 'bw.patch(id, value)' },
-                  ' updates a single element by UUID without rebuilding the component tree. Update one value in a list of 1,000 items without touching the rest.'
-                ]},
-                { t: 'li', c: [
-                  { t: 'strong', c: 'Pub/sub' }, ' \u2014 ',
-                  { t: 'code', c: 'bw.pub()' }, ' / ', { t: 'code', c: 'bw.sub()' },
-                  ' provide decoupled cross-component messaging, independent of DOM hierarchy. Subscriptions can be tied to element lifecycle for automatic cleanup.'
-                ]},
-                { t: 'li', c: [
-                  { t: 'strong', c: 'DOM events' }, ' \u2014 ',
-                  { t: 'code', c: 'bw.emit()' }, ' / ', { t: 'code', c: 'bw.on()' },
-                  ' wrap CustomEvents for scoped, bubbling communication between parent and child components.'
-                ]},
-                { t: 'li', c: [
-                  { t: 'strong', c: 'Lifecycle' }, ' \u2014 ',
-                  { t: 'code', c: 'o.mounted(el)' },
-                  ' runs after the element is in the DOM. ',
-                  { t: 'code', c: 'o.unmount(el)' },
-                  ' runs on cleanup for timers, subscriptions, or anything that needs teardown.'
-                ]}
+              { t: 'p', c: [
+                { t: 'strong', c: 'Closure + render()' }, ' \u2014 simple widgets, one-off interactivity.'
               ]},
               { t: 'p', c: [
-                'When ', { t: 'code', c: 'bw.DOM()' },
-                ' replaces content, old DOM nodes and their event listeners are removed by the browser\'s garbage collector \u2014 no manual listener cleanup needed. State lives on the element, so there\'s nothing external to leak.'
-              ]},
-              { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
-                { t: 'strong', c: 'Debugging:' },
-                ' all state is visible in the browser inspector. Select any bitwrench component, then check ',
-                { t: 'code', c: '$0._bw_state' },
-                ' in the console to see its current state. No special devtools extension required.'
+                { t: 'strong', c: 'bw.component()' }, ' \u2014 anything with state you want to read/write from outside. Template bindings, methods, pub/sub integration.'
               ]},
               { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
                 'See the ',
-                { t: 'a', a: { href: '05-state.html' }, c: { t: 'strong', c: 'State & Interactivity' } },
-                ' page for the full picture, including working examples of each pattern.'
+                { t: 'a', a: { href: '05-state.html' }, c: 'State & Interactivity' },
+                ' page for the full comparison.'
               ]}
             ]
           })
@@ -353,6 +381,77 @@
               '// to show only fruits starting with a letter.'
             ].join('\n'),
             height: '260px'
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 5b: Theming
+    // =========================================================================
+    var section5b = {
+      t: 'div', a: { class: 'demo-section', id: 'section-theming' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-theming' }, c: 'Theming in One Call' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            { t: 'code', c: 'bw.generateTheme()' },
+            ' creates a complete design system from two seed colors. Every ',
+            { t: 'code', c: 'bw_*' },
+            ' component picks up the new palette automatically.'
+          ]},
+          makeTryIt({
+            code: [
+              '// Generate a theme from two seed colors',
+              'bw.generateTheme(\'my-theme\', {',
+              '  primary: \'#336699\',',
+              '  secondary: \'#cc6633\'',
+              '});',
+              '',
+              '// All components use the theme automatically',
+              'bw.DOM(target, {',
+              '  t: \'div\', c: [',
+              '    bw.makeCard({',
+              '      title: \'Themed Card\',',
+              '      content: \'Colors from seed palette.\'',
+              '    }),',
+              '    { t: \'div\',',
+              '      a: { style: \'margin-top: 0.75rem;\' },',
+              '      c: [',
+              '        bw.makeButton({',
+              '          text: \'Primary\',',
+              '          variant: \'primary\' }),',
+              '        \' \',',
+              '        bw.makeButton({',
+              '          text: \'Secondary\',',
+              '          variant: \'secondary\' }),',
+              '        \' \',',
+              '        bw.makeBadge({',
+              '          text: \'New\',',
+              '          variant: \'success\' })',
+              '      ]',
+              '    },',
+              '    bw.makeAlert({',
+              '      content: \'Try changing the hex \' +',
+              '        \'colors above!\',',
+              '      variant: \'info\' })',
+              '  ]',
+              '});'
+            ].join('\n'),
+            height: '480px'
+          }),
+          callout('concept', 'Built-in presets', {
+            t: 'p', c: [
+              'Try replacing the hex colors with a preset name: ',
+              { t: 'code', c: "'ocean'" }, ', ',
+              { t: 'code', c: "'sunset'" }, ', ',
+              { t: 'code', c: "'forest'" }, ', ',
+              { t: 'code', c: "'slate'" }, ', or ',
+              { t: 'code', c: "'monochrome'" }, '. ',
+              'See the ',
+              { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' },
+              ' page for the full generator.'
+            ]
           })
         ]}
       ]
@@ -410,14 +509,14 @@
             t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
             c: [
               { t: 'h1', c: 'Quick Start' },
-              { t: 'p', a: { class: 'subtitle' }, c: 'From zero to working UI in 2 minutes. Code first, explanations after.' }
+              { t: 'p', a: { class: 'subtitle' }, c: 'From zero to a styled, interactive app in 5 minutes. Every example is editable.' }
             ]
           }
         },
         // Content sections
         {
           t: 'div', a: { class: 'content-container wide' },
-          c: [section1, section2, section3, section4, section5, section6]
+          c: [section1, section2, section3, section4, section4b, section5, section5b, section6]
         }
       ]
     };

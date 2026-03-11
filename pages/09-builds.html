@@ -175,7 +175,15 @@
       'bitwrench-lean.cjs.js':      'Lean build, no components (CJS)',
       'bitwrench-lean.cjs.min.js':  'Lean build, no components (CJS, minified)',
       'bitwrench-lean.es5.js':      'Lean build, no components (ES5)',
-      'bitwrench-lean.es5.min.js':  'Lean build, no components (ES5, minified)'
+      'bitwrench-lean.es5.min.js':  'Lean build, no components (ES5, minified)',
+      'bitwrench-bccl.umd.js':     'BCCL component addon (UMD)',
+      'bitwrench-bccl.umd.min.js': 'BCCL component addon (UMD, minified)',
+      'bitwrench-bccl.esm.js':     'BCCL component addon (ESM)',
+      'bitwrench-bccl.esm.min.js': 'BCCL component addon (ESM, minified)',
+      'bitwrench-bccl.cjs.js':     'BCCL component addon (CJS)',
+      'bitwrench-bccl.cjs.min.js': 'BCCL component addon (CJS, minified)',
+      'bwserve.cjs.js':            'bwserve server runtime (CJS)',
+      'bwserve.esm.js':            'bwserve server runtime (ESM)'
     };
 
     // Grouped-format table (Format | Raw | Minified | Min+Gzip)
@@ -242,6 +250,7 @@
                     { t: 'a', a: { href: '#section-core' }, c: 'Core Library' },
                     { t: 'a', a: { href: '#section-lean' }, c: 'Lean Build' },
                     { t: 'a', a: { href: '#section-addons' }, c: 'Addon Bundles' },
+                    { t: 'a', a: { href: '#section-bwserve' }, c: 'bwserve' },
                     { t: 'a', a: { href: '#section-css' }, c: 'CSS' },
                     { t: 'a', a: { href: '#section-all' }, c: 'All Files' },
                     { t: 'a', a: { href: '#section-sri' }, c: 'SRI Hashes' },
@@ -282,9 +291,24 @@
               t: 'div', a: { class: 'demo-section builds-section', id: 'section-addons' },
               c: [
                 { t: 'h2', c: 'Addon Bundles' },
-                { t: 'h3', c: 'Code Editor (bitwrench-code-edit)' },
-                { t: 'p', c: 'Syntax-highlighted code editor with line numbers, read-only mode, and copy support. Loaded as a separate script after the core library.' },
+                { t: 'p', c: [
+                  'Optional addons that extend the core library. ',
+                  { t: 'strong', c: 'BCCL' }, ' (bitwrench-bccl) provides 40+ component factories (makeButton, makeCard, makeHero, etc.) as a standalone bundle for use with the lean build. ',
+                  { t: 'strong', c: 'Code Editor' }, ' (bitwrench-code-edit) adds syntax-highlighted code editing with line numbers, read-only mode, and copy support.'
+                ]},
                 { t: 'div', a: { id: 'builds-addons', style: 'overflow-x:auto' }, c: 'Loading...' }
+              ]
+            },
+            // bwserve (server runtime)
+            {
+              t: 'div', a: { class: 'demo-section builds-section', id: 'section-bwserve' },
+              c: [
+                { t: 'h2', c: 'Server Runtime (bwserve)' },
+                { t: 'p', c: [
+                  'Server-driven UI library for building Streamlit-style apps. Uses SSE to push TACO objects from a Node.js server to the browser. ',
+                  'Available as CJS and ESM (server-side only \u2014 no browser/UMD build).'
+                ]},
+                { t: 'div', a: { id: 'builds-bwserve', style: 'overflow-x:auto' }, c: 'Loading...' }
               ]
             },
             // CSS
@@ -323,7 +347,8 @@
                 codeSnippet('ES Module import', "import bw from 'bitwrench';", 'js'),
                 codeSnippet('CommonJS require', "const bw = require('bitwrench');", 'js'),
                 codeSnippet('GitHub', 'git clone https://github.com/deftio/bitwrench.git', 'bash'),
-                codeSnippet('ES5 (legacy browsers)', '<script src="dist/bitwrench.es5.min.js"><\/script>', 'html')
+                codeSnippet('ES5 (legacy browsers)', '<script src="dist/bitwrench.es5.min.js"><\/script>', 'html'),
+                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js')
               ]
             },
             // CDN
@@ -366,12 +391,14 @@
       var manifest = JSON.parse(raw);
 
       // Categorize files
-      var coreJS = [], leanJS = [], addonJS = [], css = [];
+      var coreJS = [], leanJS = [], addonJS = [], bcclJS = [], bwserveJS = [], css = [];
       manifest.files.forEach(function(f) {
         if (f.ver === '1.x') return;
         if (f.format === 'CSS') { css.push(f); }
         else if (f.component === 'code-edit') { addonJS.push(f); }
         else if (f.component === 'lean') { leanJS.push(f); }
+        else if (f.component === 'bccl') { bcclJS.push(f); }
+        else if (f.component === 'bwserve') { bwserveJS.push(f); }
         else { coreJS.push(f); }
       });
 
@@ -385,11 +412,36 @@
         bw.DOM('#builds-lean', { t: 'p', c: 'No lean builds found. Run: npm run build' });
       }
 
-      // Addons table — same format as core (Format | Raw | Minified | Min+Gzip)
-      if (addonJS.length > 0) {
-        renderGroupedTable('#builds-addons', addonJS);
+      // Addons table — code-edit + BCCL combined
+      var allAddons = addonJS.concat(bcclJS);
+      if (allAddons.length > 0) {
+        renderGroupedTable('#builds-addons', allAddons);
       } else {
         bw.DOM('#builds-addons', { t: 'p', c: 'No addon builds found.' });
+      }
+
+      // bwserve table (server-side, CJS + ESM only — no min variants)
+      if (bwserveJS.length > 0) {
+        var bwsHeaders = [
+          { label: 'File', sz: false },
+          { label: 'Format', sz: false },
+          { label: 'Raw', sz: true },
+          { label: 'Gzipped', sz: true }
+        ];
+        var bwsData = bwserveJS.map(function(f) {
+          return {
+            cells: [
+              { t: 'a', a: { href: '../dist/' + f.file }, c: f.file },
+              f.format,
+              fmtSize(f.raw),
+              fmtSize(f.gzipped)
+            ],
+            sortValues: [f.file, f.format, f.raw, f.gzipped]
+          };
+        });
+        sortableTable('#builds-bwserve', bwsHeaders, bwsData);
+      } else {
+        bw.DOM('#builds-bwserve', { t: 'p', c: 'No bwserve builds found.' });
       }
 
       // CSS table (same grouped format as other sections)
@@ -400,7 +452,7 @@
       }
 
       // All files
-      var allFiles = coreJS.concat(leanJS).concat(addonJS).concat(css);
+      var allFiles = coreJS.concat(leanJS).concat(addonJS).concat(bcclJS).concat(bwserveJS).concat(css);
       if (allFiles.length > 0) {
         var allHeaders = [
           { label: 'File', sz: false },
