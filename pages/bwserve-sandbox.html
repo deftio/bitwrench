@@ -318,9 +318,11 @@
 
       var isServer = entry.dir === 'server';
       var label = isServer ? 'S\u2192C' : 'C\u2192S';
-      var borderColor = isServer ? '#006666' : '#cc6633';
-      var bgColor = isServer ? 'rgba(0,102,102,0.06)' : 'rgba(204,102,51,0.06)';
-      var labelColor = isServer ? '#006666' : '#cc6633';
+      var borderColor = isServer ? '#2a9d8f' : '#e07b4a';
+      var bgColor = isServer ? '#f0faf8' : '#fdf5f0';
+      var labelColor = isServer ? '#1a7a6e' : '#c45a2a';
+      var textColor = '#1a1a1a';
+      var timeColor = '#888';
       var time = new Date(entry.ts);
       var timeStr = time.toLocaleTimeString() + '.' + String(time.getMilliseconds()).padStart(3, '0');
 
@@ -333,11 +335,11 @@
           {
             t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;font-size:0.7rem' }, c: [
               { t: 'span', a: { style: 'font-weight:700;color:' + labelColor }, c: label },
-              { t: 'span', a: { style: 'color:var(--bw_text_muted)' }, c: timeStr }
+              { t: 'span', a: { style: 'color:' + timeColor }, c: timeStr }
             ]
           },
           {
-            t: 'pre', a: { style: 'margin:0;font-size:0.75rem;white-space:pre-wrap;word-break:break-all' },
+            t: 'pre', a: { style: 'margin:0;padding:0;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;color:' + textColor + ';background:transparent;border:none' },
             c: JSON.stringify(entry.msg, null, 2)
           }
         ]
@@ -349,15 +351,16 @@
     function updateLogStats() {
       var el = bw.$('#log-stats')[0];
       if (!el) return;
-      function kb(bytes) { return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB'; }
+      function fmt(bytes) { return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB'; }
+      function avg(total, count) { return count === 0 ? '0 B' : fmt(Math.round(total / count)); }
       el.innerHTML = '';
       el.appendChild(bw.createDOM({
         t: 'span', c: [
-          { t: 'span', a: { style: 'color:#006666;font-weight:600' }, c: 'S\u2192C: ' },
-          logStats.serverMsgs + ' msgs (' + kb(logStats.serverBytes) + ')',
+          { t: 'span', a: { style: 'color:#1a7a6e;font-weight:600' }, c: 'S\u2192C: ' },
+          logStats.serverMsgs + ' msgs, ' + fmt(logStats.serverBytes) + ', avg ' + avg(logStats.serverBytes, logStats.serverMsgs) + '/msg',
           { t: 'span', a: { style: 'margin:0 12px;color:var(--bw_text_muted)' }, c: '|' },
-          { t: 'span', a: { style: 'color:#cc6633;font-weight:600' }, c: 'C\u2192S: ' },
-          logStats.clientMsgs + ' msgs (' + kb(logStats.clientBytes) + ')'
+          { t: 'span', a: { style: 'color:#c45a2a;font-weight:600' }, c: 'C\u2192S: ' },
+          logStats.clientMsgs + ' msgs, ' + fmt(logStats.clientBytes) + ', avg ' + avg(logStats.clientBytes, logStats.clientMsgs) + '/msg'
         ]
       }));
     }
@@ -796,11 +799,11 @@
                 {
                   t: 'div', a: { style: 'display:flex;gap:16px;margin-bottom:8px;font-size:0.7rem;color:var(--bw_text_muted)' }, c: [
                     { t: 'span', c: [
-                      { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#006666;border-radius:2px;margin-right:4px;vertical-align:middle' } },
+                      { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#2a9d8f;border-radius:2px;margin-right:4px;vertical-align:middle' } },
                       'S\u2192C Server to Client'
                     ]},
                     { t: 'span', c: [
-                      { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#cc6633;border-radius:2px;margin-right:4px;vertical-align:middle' } },
+                      { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#e07b4a;border-radius:2px;margin-right:4px;vertical-align:middle' } },
                       'C\u2192S Client to Server'
                     ]}
                   ]
@@ -809,7 +812,7 @@
                 {
                   t: 'div', a: {
                     id: 'protocol-log',
-                    style: 'max-height:300px;overflow-y:auto;background:var(--bw_code_bg);padding:8px;border-radius:var(--bw_radius)'
+                    style: 'max-height:300px;overflow-y:auto;background:#fafafa;border:1px solid #e0e0e0;padding:8px;border-radius:var(--bw_radius)'
                   },
                   c: {
                     t: 'div', a: { class: 'log-placeholder', style: 'color:var(--bw_text_muted);font-size:0.8rem;padding:4px' },
