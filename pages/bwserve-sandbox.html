@@ -29,28 +29,24 @@
         label: 'Counter',
         desc: 'render + patch — basic state update',
         code: [
-          '// Counter: render a card, patch the count on click',
+          '// Counter: bw.makeCard() + bw.makeButton() with action()',
+          '// action(taco, name) tags a component with data-bw-action',
           'client.render("#app", {',
-          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Hello from bwserve!" },',
-          '    { t: "div", a: { class: "bw-card" }, c: [',
-          '      { t: "div", a: { class: "bw-card-body" }, c: [',
-          '        { t: "h5", a: { class: "bw-card-title" }, c: "Counter Demo" },',
+          '    bw.makeCard({',
+          '      title: "Counter Demo",',
+          '      content: { t: "div", c: [',
           '        { t: "p", c: [',
           '          "Count: ",',
           '          { t: "span", a: { id: "count", style: "font-weight:bold;font-size:1.5rem" }, c: "0" }',
           '        ]},',
-          '        { t: "button", a: {',
-          '          class: "bw-btn bw-btn-primary",',
-          '          "data-bw-action": "increment"',
-          '        }, c: "Increment" },',
-          '        { t: "button", a: {',
-          '          class: "bw-btn bw-btn-outline-secondary",',
-          '          "data-bw-action": "reset",',
-          '          style: "margin-left:8px"',
-          '        }, c: "Reset" }',
+          '        { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
+          '          action(bw.makeButton({ text: "Increment", variant: "primary" }), "increment"),',
+          '          action(bw.makeButton({ text: "Reset", variant: "outline-secondary" }), "reset")',
+          '        ]}',
           '      ]}',
-          '    ]}',
+          '    })',
           '  ]',
           '});',
           '',
@@ -74,16 +70,15 @@
           'var nextId = 1;',
           '',
           'client.render("#app", {',
-          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Todo List" },',
-          '    { t: "div", a: { style: "display:flex;gap:8px;margin-bottom:16px" }, c: [',
-          '      { t: "input", a: {',
-          '        id: "todo-input", type: "text", class: "bw-form-control",',
-          '        placeholder: "What needs to be done?", style: "flex:1"',
-          '      }},',
-          '      { t: "button", a: { class: "bw-btn bw-btn-primary", "data-bw-action": "add-todo" }, c: "Add" }',
-          '    ]},',
-          '    { t: "ul", a: { id: "todo-list", class: "bw-list-group" } }',
+          '    bw.makeCard({ content: { t: "div", c: [',
+          '      { t: "div", a: { style: "display:flex;gap:8px;margin-bottom:16px" }, c: [',
+          '        bw.makeInput({ placeholder: "What needs to be done?", id: "todo-input", style: "flex:1" }),',
+          '        action(bw.makeButton({ text: "Add", variant: "primary" }), "add-todo")',
+          '      ]},',
+          '      { t: "ul", a: { id: "todo-list", class: "bw-list-group" } }',
+          '    ]}})',
           '  ]',
           '});',
           '',
@@ -91,14 +86,10 @@
           '  var text = data.inputValue || "Item " + nextId;',
           '  var id = "todo-" + nextId++;',
           '  client.append("#todo-list", {',
-          '    t: "li", a: { id: id, class: "bw-list-group-item",',
-          '      style: "display:flex;justify-content:space-between;align-items:center" }, c: [',
+          '    t: "li", a: { id: id, class: "bw-list-group-item", style: "display:flex;justify-content:space-between;align-items:center" },',
+          '    c: [',
           '      { t: "span", c: text },',
-          '      { t: "button", a: {',
-          '        class: "bw-btn bw-btn-sm bw-btn-outline-danger",',
-          '        "data-bw-action": "remove-todo",',
-          '        "data-bw-id": id',
-          '      }, c: "\\u2715" }',
+          '      action(bw.makeButton({ text: "\\u2715", variant: "outline-danger", size: "sm" }), "remove-todo", { "data-bw-id": id })',
           '    ]',
           '  });',
           '});',
@@ -112,34 +103,33 @@
         label: 'Dashboard',
         desc: 'batch — multiple updates at once',
         code: [
-          '// Dashboard: batch updates to multiple stat cards',
+          '// Dashboard: batch updates with BCCL cards',
+          '// Uses bw.makeCard() for stat boxes with patchable value ids',
+          'function statBox(title, valueId) {',
+          '  return bw.makeCard({ content: {',
+          '    t: "div", a: { style: "text-align:center;padding:8px" }, c: [',
+          '      { t: "div", a: { id: valueId, style: "font-size:2rem;font-weight:bold" }, c: "0" },',
+          '      { t: "div", a: { style: "color:#888;font-size:0.85rem;margin-top:4px" }, c: title }',
+          '    ]',
+          '  }});',
+          '}',
+          '',
           'client.render("#app", {',
-          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Live Dashboard" },',
-          '    { t: "p", a: { class: "bw-text-muted" }, c: "Stats update every 2 seconds via batch" },',
-          '    { t: "div", a: { style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px" }, c: [',
-          '      statCard("users", "Active Users", "0", "#4CAF50"),',
-          '      statCard("orders", "Orders", "0", "#2196F3"),',
-          '      statCard("revenue", "Revenue", "$0", "#FF9800"),',
-          '      statCard("errors", "Errors", "0", "#f44336")',
+          '    bw.makeAlert({ content: "Stats update every 500ms via batch. Click Start!", variant: "info" }),',
+          '    { t: "div", a: { style: "display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px" }, c: [',
+          '      statBox("Active Users", "users"),',
+          '      statBox("Orders", "orders"),',
+          '      statBox("Revenue", "revenue"),',
+          '      statBox("Errors", "errors")',
           '    ]},',
-          '    { t: "div", a: { style: "margin-top:16px" }, c: [',
-          '      { t: "button", a: { class: "bw-btn bw-btn-primary", "data-bw-action": "start" }, c: "Start Updates" },',
-          '      { t: "button", a: { class: "bw-btn bw-btn-outline-secondary", "data-bw-action": "stop", style: "margin-left:8px" }, c: "Stop" }',
+          '    { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
+          '      action(bw.makeButton({ text: "Start Updates", variant: "primary" }), "start"),',
+          '      action(bw.makeButton({ text: "Stop", variant: "outline-secondary" }), "stop")',
           '    ]}',
           '  ]',
           '});',
-          '',
-          'function statCard(id, label, value, color) {',
-          '  return {',
-          '    t: "div", a: { class: "bw-card" }, c: {',
-          '      t: "div", a: { class: "bw-card-body", style: "text-align:center" }, c: [',
-          '        { t: "div", a: { class: "bw-text-muted", style: "font-size:0.85rem" }, c: label },',
-          '        { t: "div", a: { id: id, style: "font-size:2rem;font-weight:bold;color:" + color }, c: value }',
-          '      ]',
-          '    }',
-          '  };',
-          '}',
           '',
           'var timer = null;',
           'onAction("start", function() {',
@@ -151,7 +141,7 @@
           '      { type: "patch", target: "revenue", content: "$" + (Math.floor(Math.random() * 10000) + 1000) },',
           '      { type: "patch", target: "errors", content: String(Math.floor(Math.random() * 5)) }',
           '    ]);',
-          '  }, 2000);',
+          '  }, 500);',
           '});',
           'onAction("stop", function() { clearInterval(timer); timer = null; });'
         ].join('\n')
@@ -160,23 +150,19 @@
         label: 'Chat',
         desc: 'append — streaming content',
         code: [
-          '// Chat: simulate streaming messages with append',
+          '// Chat: bw.makeCard() + bw.makeInput() + append for messages',
           'client.render("#app", {',
-          '  t: "div", a: { class: "bw-container", style: "padding:24px;display:flex;flex-direction:column;height:100%" }, c: [',
+          '  t: "div", a: { style: "padding:24px;display:flex;flex-direction:column;height:100%" }, c: [',
           '    { t: "h2", c: "Chat Demo" },',
-          '    { t: "div", a: {',
-          '      id: "messages",',
-          '      style: "flex:1;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:12px;margin-bottom:12px;min-height:200px"',
-          '    }, c: [',
-          '      { t: "div", a: { class: "bw-text-muted", style: "text-align:center" }, c: "Send a message to start chatting" }',
-          '    ]},',
-          '    { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
-          '      { t: "input", a: {',
-          '        id: "chat-input", type: "text", class: "bw-form-control",',
-          '        placeholder: "Type a message...", style: "flex:1"',
-          '      }},',
-          '      { t: "button", a: { class: "bw-btn bw-btn-primary", "data-bw-action": "send" }, c: "Send" }',
-          '    ]}',
+          '    bw.makeCard({ content: { t: "div", a: { style: "display:flex;flex-direction:column;height:100%" }, c: [',
+          '      { t: "div", a: { id: "messages", style: "flex:1;overflow-y:auto;padding:12px;min-height:200px" }, c: [',
+          '        bw.makeAlert({ content: "Send a message to start chatting", variant: "info" })',
+          '      ]},',
+          '      { t: "div", a: { style: "display:flex;gap:8px;padding-top:12px;border-top:1px solid #eee" }, c: [',
+          '        bw.makeInput({ placeholder: "Type a message...", id: "chat-input", style: "flex:1" }),',
+          '        action(bw.makeButton({ text: "Send", variant: "primary" }), "send")',
+          '      ]}',
+          '    ]}})',
           '  ]',
           '});',
           '',
@@ -186,16 +172,14 @@
           '',
           'onAction("send", function(data) {',
           '  var text = data.inputValue || "Hello!";',
-          '  // User message',
           '  client.append("#messages", {',
-          '    t: "div", a: { style: "margin:8px 0;padding:8px 12px;background:#e3f2fd;border-radius:8px;max-width:80%;margin-left:auto" },',
+          '    t: "div", a: { class: "bw-alert bw-alert-primary", style: "max-width:80%;margin-left:auto;margin-bottom:8px" },',
           '    c: text',
           '  });',
-          '  // Bot reply after delay',
           '  setTimeout(function() {',
           '    var reply = botReplies[Math.floor(Math.random() * botReplies.length)];',
           '    client.append("#messages", {',
-          '      t: "div", a: { style: "margin:8px 0;padding:8px 12px;background:#f5f5f5;border-radius:8px;max-width:80%" },',
+          '      t: "div", a: { class: "bw-alert bw-alert-light", style: "max-width:80%;margin-bottom:8px" },',
           '      c: reply',
           '    });',
           '  }, 500 + Math.random() * 1000);',
@@ -203,67 +187,51 @@
         ].join('\n')
       },
       theme: {
-        label: 'BCCL Components',
-        desc: 'render with themed BCCL components',
+        label: 'BCCL Gallery',
+        desc: 'themed BCCL components showcase',
         code: [
-          '// BCCL Components: render themed bitwrench components',
-          '// Note: bw.makeCard etc. are available via the parent bw instance',
+          '// BCCL Gallery — showcasing component helpers via bwserve',
           '',
           'client.render("#app", {',
-          '  t: "div", a: { class: "bw-container", style: "padding:24px" }, c: [',
+          '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "BCCL Component Gallery" },',
-          '    { t: "p", a: { class: "bw-text-muted" }, c: "Themed components rendered via bwserve protocol" },',
+          '    { t: "p", a: { style: "color:#888" }, c: "Every element is a BCCL component rendered via bwserve" },',
           '',
-          '    // Alert',
-          '    { t: "div", a: { class: "bw-alert bw-alert-info", style: "margin-bottom:16px" },',
-          '      c: "This is an info alert rendered by the server!" },',
+          '    bw.makeAlert({ content: "Info: This page was rendered by the server!", variant: "info" }),',
+          '    bw.makeAlert({ content: "Success: All components loaded.", variant: "success" }),',
           '',
-          '    // Button row',
-          '    { t: "div", a: { style: "display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" }, c: [',
-          '      { t: "button", a: { class: "bw-btn bw-btn-primary" }, c: "Primary" },',
-          '      { t: "button", a: { class: "bw-btn bw-btn-secondary" }, c: "Secondary" },',
-          '      { t: "button", a: { class: "bw-btn bw-btn-success" }, c: "Success" },',
-          '      { t: "button", a: { class: "bw-btn bw-btn-danger" }, c: "Danger" },',
-          '      { t: "button", a: { class: "bw-btn bw-btn-outline-primary" }, c: "Outline" }',
-          '    ]},',
-          '',
-          '    // Card with badge',
-          '    { t: "div", a: { class: "bw-card", style: "margin-bottom:16px" }, c: {',
-          '      t: "div", a: { class: "bw-card-body" }, c: [',
-          '        { t: "div", a: { style: "display:flex;justify-content:space-between;align-items:center" }, c: [',
-          '          { t: "h5", a: { class: "bw-card-title" }, c: "Server Stats" },',
-          '          { t: "span", a: { class: "bw-badge bw-badge-success" }, c: "Online" }',
-          '        ]},',
-          '        { t: "p", c: "This card was sent as a TACO object from the server." },',
-          '        { t: "button", a: { class: "bw-btn bw-btn-sm bw-btn-primary", "data-bw-action": "refresh" }, c: "Refresh" }',
+          '    bw.makeCard({ title: "Buttons", content: {',
+          '      t: "div", a: { style: "display:flex;gap:8px;flex-wrap:wrap" }, c: [',
+          '        bw.makeButton({ text: "Primary", variant: "primary" }),',
+          '        bw.makeButton({ text: "Secondary", variant: "secondary" }),',
+          '        bw.makeButton({ text: "Success", variant: "success" }),',
+          '        bw.makeButton({ text: "Danger", variant: "danger" }),',
+          '        bw.makeButton({ text: "Warning", variant: "warning" }),',
+          '        bw.makeButton({ text: "Outline", variant: "outline-primary" })',
           '      ]',
-          '    }},',
+          '    }}),',
           '',
-          '    // Progress bar',
-          '    { t: "div", a: { style: "margin-bottom:16px" }, c: [',
-          '      { t: "div", a: { class: "bw-text-muted", style: "margin-bottom:4px" }, c: "Upload Progress" },',
-          '      { t: "div", a: { class: "bw-progress" }, c: {',
-          '        t: "div", a: { id: "prog", class: "bw-progress-bar", style: "width:65%", role: "progressbar" }, c: "65%"',
-          '      }}',
-          '    ]},',
+          '    bw.makeCard({ title: "Badges & Progress", content: {',
+          '      t: "div", c: [',
+          '        { t: "div", a: { style: "display:flex;gap:8px;margin-bottom:16px" }, c: [',
+          '          bw.makeBadge({ text: "Active", variant: "success" }),',
+          '          bw.makeBadge({ text: "Away", variant: "warning" }),',
+          '          bw.makeBadge({ text: "Offline", variant: "secondary" }),',
+          '          bw.makeBadge({ text: "New", variant: "primary", pill: true })',
+          '        ]},',
+          '        { t: "div", a: { style: "margin-bottom:8px" }, c: "Upload Progress:" },',
+          '        bw.makeProgress({ value: 65, variant: "primary" })',
+          '      ]',
+          '    }}),',
           '',
-          '    // Table',
-          '    { t: "table", a: { class: "bw-table bw-table-striped" }, c: [',
-          '      { t: "thead", c: { t: "tr", c: [',
-          '        { t: "th", c: "Name" }, { t: "th", c: "Role" }, { t: "th", c: "Status" }',
-          '      ]}},',
-          '      { t: "tbody", c: [',
-          '        { t: "tr", c: [{ t: "td", c: "Alice" }, { t: "td", c: "Admin" }, { t: "td", c: { t: "span", a: { class: "bw-badge bw-badge-success" }, c: "Active" } }]},',
-          '        { t: "tr", c: [{ t: "td", c: "Bob" }, { t: "td", c: "Editor" }, { t: "td", c: { t: "span", a: { class: "bw-badge bw-badge-warning" }, c: "Away" } }]},',
-          '        { t: "tr", c: [{ t: "td", c: "Carol" }, { t: "td", c: "Viewer" }, { t: "td", c: { t: "span", a: { class: "bw-badge bw-badge-secondary" }, c: "Offline" } }]}',
-          '      ]}',
-          '    ]}',
+          '    bw.makeCard({ title: "Inputs", content: {',
+          '      t: "div", a: { style: "display:flex;flex-direction:column;gap:12px" }, c: [',
+          '        bw.makeInput({ placeholder: "Text input", type: "text" }),',
+          '        bw.makeInput({ placeholder: "Email input", type: "email" }),',
+          '        bw.makeInput({ placeholder: "Search...", type: "search" })',
+          '      ]',
+          '    }})',
           '  ]',
-          '});',
-          '',
-          'onAction("refresh", function() {',
-          '  var pct = Math.floor(Math.random() * 100);',
-          '  client.patch("prog", pct + "%", { style: "width:" + pct + "%" });',
           '});'
         ].join('\n')
       },
@@ -281,10 +249,10 @@
           '  node: {',
           '    t: "div", a: { style: "padding:24px" }, c: [',
           '      { t: "h2", c: "Raw Protocol Demo" },',
-          '      { t: "p", a: { id: "msg" }, c: "This text can be patched." },',
-          '      { t: "ul", a: { id: "list" }, c: [',
-          '        { t: "li", c: "Item 1" },',
-          '        { t: "li", c: "Item 2" }',
+          '      { t: "p", a: { id: "msg", class: "bw-alert bw-alert-info" }, c: "This text can be patched." },',
+          '      { t: "ul", a: { id: "list", class: "bw-list-group" }, c: [',
+          '        { t: "li", a: { class: "bw-list-group-item" }, c: "Item 1" },',
+          '        { t: "li", a: { class: "bw-list-group-item" }, c: "Item 2" }',
           '      ]}',
           '    ]',
           '  }',
@@ -297,15 +265,15 @@
           'send({',
           '  type: "append",',
           '  target: "#list",',
-          '  node: { t: "li", a: { style: "color:green" }, c: "Appended item!" }',
+          '  node: { t: "li", a: { class: "bw-list-group-item", style: "color:green" }, c: "Appended item!" }',
           '});',
           '',
           '// Step 4: batch multiple ops',
           'send({',
           '  type: "batch",',
           '  ops: [',
-          '    { type: "append", target: "#list", node: { t: "li", c: "Batch item A" } },',
-          '    { type: "append", target: "#list", node: { t: "li", c: "Batch item B" } }',
+          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw-list-group-item" }, c: "Batch item A" } },',
+          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw-list-group-item" }, c: "Batch item B" } }',
           '  ]',
           '});'
         ].join('\n')
@@ -313,24 +281,119 @@
     };
 
     // =========================================================================
-    // Protocol log
+    // Protocol log — tracks direction, timestamps, sizes
     // =========================================================================
-    var logEntries = [];
+    var logEntries = []; // { dir:'server'|'client', msg:obj, ts:number, size:number }
+    var logStats = { serverMsgs: 0, clientMsgs: 0, serverBytes: 0, clientBytes: 0 };
 
-    function logMessage(msg) {
-      var entry = JSON.stringify(msg, null, 2);
+    function logMessage(msg, direction) {
+      var json = JSON.stringify(msg, null, 2);
+      var entry = {
+        dir: direction || 'server',
+        msg: msg,
+        ts: Date.now(),
+        size: json.length
+      };
       logEntries.push(entry);
-      var logEl = bw.$('#protocol-log')[0];
-      if (logEl) {
-        logEl.textContent = logEntries.join('\n---\n');
-        logEl.scrollTop = logEl.scrollHeight;
+
+      if (entry.dir === 'server') {
+        logStats.serverMsgs++;
+        logStats.serverBytes += entry.size;
+      } else {
+        logStats.clientMsgs++;
+        logStats.clientBytes += entry.size;
       }
+
+      renderLogEntry(entry);
+      updateLogStats();
+    }
+
+    function renderLogEntry(entry) {
+      var logEl = bw.$('#protocol-log')[0];
+      if (!logEl) return;
+
+      // Remove placeholder text on first entry
+      var placeholder = logEl.querySelector('.log-placeholder');
+      if (placeholder) placeholder.remove();
+
+      var isServer = entry.dir === 'server';
+      var label = isServer ? 'S\u2192C' : 'C\u2192S';
+      var borderColor = isServer ? '#006666' : '#cc6633';
+      var bgColor = isServer ? 'rgba(0,102,102,0.06)' : 'rgba(204,102,51,0.06)';
+      var labelColor = isServer ? '#006666' : '#cc6633';
+      var time = new Date(entry.ts);
+      var timeStr = time.toLocaleTimeString() + '.' + String(time.getMilliseconds()).padStart(3, '0');
+
+      var div = bw.createDOM({
+        t: 'div', a: {
+          class: 'log-entry',
+          style: 'border-left:3px solid ' + borderColor + ';background:' + bgColor +
+            ';padding:6px 8px;margin-bottom:4px;border-radius:0 4px 4px 0'
+        }, c: [
+          {
+            t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;font-size:0.7rem' }, c: [
+              { t: 'span', a: { style: 'font-weight:700;color:' + labelColor }, c: label },
+              { t: 'span', a: { style: 'color:var(--bw_text_muted)' }, c: timeStr }
+            ]
+          },
+          {
+            t: 'pre', a: { style: 'margin:0;font-size:0.75rem;white-space:pre-wrap;word-break:break-all' },
+            c: JSON.stringify(entry.msg, null, 2)
+          }
+        ]
+      });
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateLogStats() {
+      var el = bw.$('#log-stats')[0];
+      if (!el) return;
+      function kb(bytes) { return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB'; }
+      el.innerHTML = '';
+      el.appendChild(bw.createDOM({
+        t: 'span', c: [
+          { t: 'span', a: { style: 'color:#006666;font-weight:600' }, c: 'S\u2192C: ' },
+          logStats.serverMsgs + ' msgs (' + kb(logStats.serverBytes) + ')',
+          { t: 'span', a: { style: 'margin:0 12px;color:var(--bw_text_muted)' }, c: '|' },
+          { t: 'span', a: { style: 'color:#cc6633;font-weight:600' }, c: 'C\u2192S: ' },
+          logStats.clientMsgs + ' msgs (' + kb(logStats.clientBytes) + ')'
+        ]
+      }));
     }
 
     function clearLog() {
       logEntries = [];
+      logStats = { serverMsgs: 0, clientMsgs: 0, serverBytes: 0, clientBytes: 0 };
       var logEl = bw.$('#protocol-log')[0];
-      if (logEl) logEl.textContent = '// Protocol messages will appear here...';
+      if (logEl) {
+        logEl.innerHTML = '';
+        logEl.appendChild(bw.createDOM({
+          t: 'div', a: { class: 'log-placeholder', style: 'color:var(--bw_text_muted);font-size:0.8rem' },
+          c: '// Protocol messages will appear here after you click Run...'
+        }));
+      }
+      updateLogStats();
+    }
+
+    function exportLogAsJSONL() {
+      if (logEntries.length === 0) return;
+      var lines = logEntries.map(function(e) {
+        return JSON.stringify({
+          direction: e.dir,
+          timestamp: new Date(e.ts).toISOString(),
+          epoch_ms: e.ts,
+          size_bytes: e.size,
+          message: e.msg
+        });
+      });
+      var blob = new Blob([lines.join('\n') + '\n'], { type: 'application/x-ndjson' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'bwserve-protocol-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.jsonl';
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     // =========================================================================
@@ -341,7 +404,7 @@
       var iframeWindow = iframe.contentWindow;
 
       function send(msg) {
-        logMessage(msg);
+        logMessage(msg, 'server');
         try {
           iframeWindow.bw.clientApply(msg);
         } catch (e) {
@@ -433,6 +496,7 @@
       '<div id="app" style="padding:16px;color:#888;font-family:system-ui,sans-serif">Waiting for server code...</div>',
       '<script>',
       'bw.loadDefaultStyles();',
+      'bw.generateTheme("sandbox", { primary: "#006666", secondary: "#333333", inject: true });',
       'window._bwReady = true;',
       // Wire up data-bw-action click delegation
       'document.addEventListener("click", function(e) {',
@@ -508,6 +572,7 @@
         window.removeEventListener('message', window._bwSandboxMsgHandler);
         window._bwSandboxMsgHandler = function(e) {
           if (e.data && e.data.action) {
+            logMessage({ type: 'action', action: e.data.action, data: e.data }, 'client');
             var handler = actionHandlers[e.data.action];
             if (handler) handler(e.data);
           }
@@ -515,15 +580,25 @@
         window.addEventListener('message', window._bwSandboxMsgHandler);
 
         try {
-          // Provide helpers: client, onAction, send
-          var fn = new Function('client', 'bw', 'onAction', 'send',
+          // action(taco, name, extra) — adds data-bw-action attr to a BCCL component TACO
+          function actionHelper(taco, actionName, extraAttrs) {
+            if (taco && taco.a) {
+              taco.a['data-bw-action'] = actionName;
+              if (extraAttrs) { for (var k in extraAttrs) taco.a[k] = extraAttrs[k]; }
+            }
+            return taco;
+          }
+
+          // Provide helpers: client, bw, onAction, send, action
+          var fn = new Function('client', 'bw', 'onAction', 'send', 'action',
             '"use strict";\n' + code
           );
           fn(
             client,
             bw,
-            function(action, handler) { actionHandlers[action] = handler; },
-            function(msg) { logMessage(msg); applyFallback(iframe.contentWindow, msg); }
+            function(name, handler) { actionHandlers[name] = handler; },
+            function(msg) { logMessage(msg, 'server'); applyFallback(iframe.contentWindow, msg); },
+            actionHelper
           );
 
           var statusEl = bw.$('#sandbox-status')[0];
@@ -542,7 +617,7 @@
       });
     }
 
-    function loadPreset(name) {
+    function loadPreset(name, skipRun) {
       var preset = PRESETS[name];
       if (!preset) return;
       var editorEl = bw.$('#sandbox-editor')[0];
@@ -554,6 +629,10 @@
         btn.classList.toggle('bw_btn_primary', btn.getAttribute('data-preset') === name);
         btn.classList.toggle('bw_btn_outline_secondary', btn.getAttribute('data-preset') !== name);
       });
+      // Auto-run: reset iframe and execute the new preset
+      if (!skipRun) {
+        runCode();
+      }
     }
 
     // =========================================================================
@@ -580,7 +659,7 @@
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
         c: [
-          { t: 'h1', c: 'bwserve Sandbox' },
+          { t: 'h1', c: 'bwserve sandbox' },
           { t: 'p', a: { class: 'subtitle' },
             c: 'Write server-side bwserve code on the left. Click Run to see the client render on the right.' }
         ]
@@ -628,7 +707,7 @@
                                 t: 'button',
                                 a: {
                                   class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
-                                  onclick: function() { loadPreset('counter'); runCode(); }
+                                  onclick: function() { loadPreset('counter'); }
                                 },
                                 c: 'Reset'
                               }
@@ -697,12 +776,45 @@
             { t: 'h2', c: 'Protocol Messages' },
             {
               t: 'div', a: { class: 'demo-section-body' }, c: [
+                // Stats bar + controls
                 {
-                  t: 'pre', a: {
+                  t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.8rem' }, c: [
+                    { t: 'span', a: { id: 'log-stats', style: 'color:var(--bw_text_muted)' }, c: 'No messages yet' },
+                    { t: 'div', a: { style: 'display:flex;gap:4px' }, c: [
+                      { t: 'button', a: {
+                        class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
+                        onclick: function() { clearLog(); }
+                      }, c: 'Clear' },
+                      { t: 'button', a: {
+                        class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
+                        onclick: function() { exportLogAsJSONL(); }
+                      }, c: 'Export JSONL' }
+                    ]}
+                  ]
+                },
+                // Legend
+                {
+                  t: 'div', a: { style: 'display:flex;gap:16px;margin-bottom:8px;font-size:0.7rem;color:var(--bw_text_muted)' }, c: [
+                    { t: 'span', c: [
+                      { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#006666;border-radius:2px;margin-right:4px;vertical-align:middle' } },
+                      'S\u2192C Server to Client'
+                    ]},
+                    { t: 'span', c: [
+                      { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#cc6633;border-radius:2px;margin-right:4px;vertical-align:middle' } },
+                      'C\u2192S Client to Server'
+                    ]}
+                  ]
+                },
+                // Log entries container
+                {
+                  t: 'div', a: {
                     id: 'protocol-log',
-                    style: 'max-height:200px;overflow-y:auto;font-size:0.8rem;background:var(--bw_code_bg);color:var(--bw_code_text);padding:12px;border-radius:var(--bw_radius);margin:0'
+                    style: 'max-height:300px;overflow-y:auto;background:var(--bw_code_bg);padding:8px;border-radius:var(--bw_radius)'
                   },
-                  c: '// Protocol messages will appear here after you click Run...'
+                  c: {
+                    t: 'div', a: { class: 'log-placeholder', style: 'color:var(--bw_text_muted);font-size:0.8rem;padding:4px' },
+                    c: '// Protocol messages will appear here after you click Run...'
+                  }
                 }
               ]
             }
@@ -741,7 +853,8 @@
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.remove(target)' } }, { t: 'td', c: 'Remove element from DOM' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.batch(ops)' } }, { t: 'td', c: 'Send multiple operations at once' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'onAction(name, handler)' } }, { t: 'td', c: 'Handle actions from client (button clicks etc.)' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] }
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'action(taco, name, extra)' } }, { t: 'td', c: 'Add data-bw-action attribute to a BCCL component TACO' }] }
                         ]}
                       ]
                     }
