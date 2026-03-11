@@ -22,6 +22,7 @@
     { text: 'Themes', href: '10-themes.html' },
     { text: 'State', href: '05-state.html' },
     { text: 'Examples', href: '02-tables.html' },
+    { text: 'bwserve', href: '12-bwserve-protocol.html' },
     { text: 'Docs', href: '08-api-reference.html' }
   ];
 
@@ -43,12 +44,21 @@
     { text: 'Debugging', href: '11-debugging.html' }
   ];
 
+  // bwserve secondary nav items
+  var bwserveSecondaryItems = [
+    { text: 'Protocol', href: '12-bwserve-protocol.html' },
+    { text: 'Sandbox', href: 'bwserve-sandbox.html' }
+  ];
+
   // Set of secondary hrefs for quick lookup
   var secondaryHrefs = {};
   secondaryItems.forEach(function(item) { secondaryHrefs[item.href] = true; });
 
   var docsSecondaryHrefs = {};
   docsSecondaryItems.forEach(function(item) { docsSecondaryHrefs[item.href] = true; });
+
+  var bwserveSecondaryHrefs = {};
+  bwserveSecondaryItems.forEach(function(item) { bwserveSecondaryHrefs[item.href] = true; });
 
   function resolveHref(href, baseHref) {
     if (!baseHref) return href;
@@ -73,12 +83,20 @@
     return false;
   }
 
+  function isBwservePage(currentPage) {
+    for (var href in bwserveSecondaryHrefs) {
+      if (currentPage === href) return true;
+    }
+    return false;
+  }
+
   function createExampleNav(currentPage, baseHref) {
     var homeHref = resolveHref(primaryItems[0].href, baseHref);
     var ver = window.bw && window.bw.version || '2.0.4';
     var onExamplePage = isExamplePage(currentPage);
 
     var onDocsPage = isDocsPage(currentPage);
+    var onBwservePage = isBwservePage(currentPage);
 
     // Build primary link items
     var primaryLinks = primaryItems.map(function(item) {
@@ -88,6 +106,8 @@
         active = onExamplePage;
       } else if (item.text === 'Docs') {
         active = onDocsPage;
+      } else if (item.text === 'bwserve') {
+        active = onBwservePage;
       } else {
         active = isActive(item.href, currentPage, rh);
       }
@@ -133,6 +153,20 @@
       };
     });
 
+    // Build bwserve secondary links
+    var bwserveSecondaryLinks = bwserveSecondaryItems.map(function(item) {
+      var rh = resolveHref(item.href, baseHref);
+      var active = isActive(item.href, currentPage, rh);
+      return {
+        t: 'a',
+        a: {
+          href: rh,
+          class: 'bw_site_subnav_link' + (active ? ' active' : '')
+        },
+        c: item.text
+      };
+    });
+
     // Build mobile menu (all items, flat)
     var mobileItems = [];
     primaryItems.forEach(function(item) {
@@ -148,6 +182,14 @@
     });
     // Add example sub-items
     secondaryItems.forEach(function(s) {
+      var isDup = false;
+      primaryItems.forEach(function(p) {
+        if (p.href === s.href) isDup = true;
+      });
+      if (!isDup) mobileItems.push(s);
+    });
+    // Add bwserve sub-items
+    bwserveSecondaryItems.forEach(function(s) {
       var isDup = false;
       primaryItems.forEach(function(p) {
         if (p.href === s.href) isDup = true;
@@ -271,6 +313,18 @@
             t: 'div',
             a: { class: 'bw_site_subnav_inner' },
             c: docsSecondaryLinks
+          }
+        ]
+      });
+    } else if (onBwservePage) {
+      belowNav.push({
+        t: 'div',
+        a: { class: 'bw_site_subnav' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw_site_subnav_inner' },
+            c: bwserveSecondaryLinks
           }
         ]
       });

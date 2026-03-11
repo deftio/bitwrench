@@ -2580,6 +2580,207 @@ bw.message = function(target, action, data) {
 };
 
 // ===================================================================================
+// bw.clientApply() / bw.clientConnect() — Server-driven UI protocol
+// ===================================================================================
+
+/**
+ * Apply a bwserve protocol message to the DOM.
+ *
+ * Dispatches one of 6 message types:
+ *   replace — bw.DOM(target, node)
+ *   append  — target.appendChild(bw.createDOM(node))
+ *   remove  — bw.cleanup(target); target.remove()
+ *   patch   — bw.patch(target, content, attr)
+ *   batch   — iterate ops, call clientApply for each
+ *   message — bw.message(target, action, data)
+ *
+ * Target resolution:
+ *   Starts with '#' or '.' → CSS selector (querySelector)
+ *   Otherwise → getElementById, then bw._el fallback
+ *
+ * @param {Object} msg - Protocol message {type, target, node?, content?, attr?, ops?, action?, data?}
+ * @returns {boolean} true if the message was applied successfully
+ * @category Server
+ */
+bw.clientApply = function(msg) {
+  if (!msg || !msg.type) return false;
+
+  var type = msg.type;
+  var target = msg.target;
+
+  if (type === 'replace') {
+    var el = bw._el(target);
+    if (!el) return false;
+    // Use bw.DOM for replace — it handles cleanup and mounting
+    bw.DOM(el, msg.node);
+    return true;
+
+  } else if (type === 'patch') {
+    // patch uses bw.patch which resolves via bw._el internally
+    var patched = bw.patch(target, msg.content, msg.attr);
+    return patched !== null;
+
+  } else if (type === 'append') {
+    var parent = bw._el(target);
+    if (!parent) return false;
+    var child = bw.createDOM(msg.node);
+    parent.appendChild(child);
+    return true;
+
+  } else if (type === 'remove') {
+    var toRemove = bw._el(target);
+    if (!toRemove) return false;
+    if (typeof bw.cleanup === 'function') bw.cleanup(toRemove);
+    toRemove.remove();
+    return true;
+
+  } else if (type === 'batch') {
+    if (!Array.isArray(msg.ops)) return false;
+    var allOk = true;
+    msg.ops.forEach(function(op) {
+      if (!bw.clientApply(op)) allOk = false;
+    });
+    return allOk;
+
+  } else if (type === 'message') {
+    return bw.message(msg.target, msg.action, msg.data);
+  }
+
+  return false;
+};
+
+/**
+ * Connect to a bwserve SSE endpoint and apply protocol messages automatically.
+ *
+ * Returns a connection object with sendAction(), on(), and close() methods.
+ *
+ * @param {string} url - SSE endpoint URL (e.g., '/__bw/events/client-1')
+ * @param {Object} [opts] - Connection options
+ * @param {string} [opts.transport='sse'] - Transport type: 'sse' (default) or 'poll'
+ * @param {number} [opts.interval=2000] - Poll interval in ms (only for 'poll' transport)
+ * @param {string} [opts.actionUrl] - POST endpoint for actions (default: derived from url)
+ * @param {boolean} [opts.reconnect=true] - Auto-reconnect on disconnect
+ * @param {Function} [opts.onStatus] - Status callback: 'connecting'|'connected'|'disconnected'
+ * @param {Function} [opts.onMessage] - Raw message callback (before clientApply)
+ * @returns {Object} Connection object { sendAction, on, close, status }
+ * @category Server
+ */
+bw.clientConnect = function(url, opts) {
+  opts = opts || {};
+  var transport = opts.transport || 'sse';
+  var actionUrl = opts.actionUrl || url.replace(/\/events\//, '/action/');
+  var reconnect = opts.reconnect !== false;
+  var onStatus = opts.onStatus || function() {};
+  var onMessage = opts.onMessage || null;
+  var handlers = {};
+  var conn = {
+    status: 'connecting',
+    _es: null,
+    _pollTimer: null
+  };
+
+  function setStatus(s) {
+    conn.status = s;
+    onStatus(s);
+  }
+
+  function handleMessage(data) {
+    try {
+      var msg = typeof data === 'string' ? JSON.parse(data) : data;
+      if (onMessage) onMessage(msg);
+      if (handlers.message) handlers.message(msg);
+      bw.clientApply(msg);
+    } catch (e) {
+      if (handlers.error) handlers.error(e);
+    }
+  }
+
+  if (transport === 'sse' && typeof EventSource !== 'undefined') {
+    setStatus('connecting');
+    var es = new EventSource(url);
+    conn._es = es;
+
+    es.onopen = function() {
+      setStatus('connected');
+      if (handlers.open) handlers.open();
+    };
+
+    es.onmessage = function(e) {
+      handleMessage(e.data);
+    };
+
+    es.onerror = function() {
+      if (conn.status === 'connected') {
+        setStatus('disconnected');
+      }
+      if (handlers.error) handlers.error(new Error('SSE connection error'));
+      if (!reconnect) {
+        es.close();
+      }
+      // EventSource auto-reconnects by default when reconnect=true
+    };
+  } else if (transport === 'poll') {
+    var interval = opts.interval || 2000;
+    setStatus('connected');
+    conn._pollTimer = setInterval(function() {
+      fetch(url).then(function(r) { return r.json(); }).then(function(msgs) {
+        if (Array.isArray(msgs)) {
+          msgs.forEach(handleMessage);
+        } else if (msgs && msgs.type) {
+          handleMessage(msgs);
+        }
+      }).catch(function(e) {
+        if (handlers.error) handlers.error(e);
+      });
+    }, interval);
+  }
+
+  /**
+   * Send an action to the server via POST.
+   * @param {string} action - Action name
+   * @param {Object} [data] - Action payload
+   */
+  conn.sendAction = function(action, data) {
+    var body = JSON.stringify({ type: 'action', action: action, data: data || {} });
+    fetch(actionUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body
+    }).catch(function(e) {
+      if (handlers.error) handlers.error(e);
+    });
+  };
+
+  /**
+   * Register an event handler.
+   * @param {string} event - 'open'|'message'|'error'|'close'
+   * @param {Function} handler
+   */
+  conn.on = function(event, handler) {
+    handlers[event] = handler;
+    return conn;
+  };
+
+  /**
+   * Close the connection.
+   */
+  conn.close = function() {
+    if (conn._es) {
+      conn._es.close();
+      conn._es = null;
+    }
+    if (conn._pollTimer) {
+      clearInterval(conn._pollTimer);
+      conn._pollTimer = null;
+    }
+    setStatus('disconnected');
+    if (handlers.close) handlers.close();
+  };
+
+  return conn;
+};
+
+// ===================================================================================
 // bw.inspect() — Debug utility
 // ===================================================================================
 

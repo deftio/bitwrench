@@ -213,73 +213,78 @@ CSS need audit. Must be covered by automated Playwright tests.
 
 ---
 
-## P1: bwserve — Server-Driven UI (v2.0.16 or v2.1.0)
+## P1: bwserve — Server-Driven UI (v2.0.16)
 
 Server-push UI using SSE. Three target scenarios: Streamlit-style apps,
 embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
 (`dev/bw-client-server.md`, `dev/bw-stream-agent-protocol-draft-2026-03-06.md`).
 
-### Client-side additions (in bitwrench.js)
+### Client-side additions (in bitwrench.js) — IMPLEMENTED
 
-* [ ] implement --> Declarative events: `o.events: { click: { action: 'increment', sendValue: true } }` in `bw.createDOM()` (~60 lines)
-  - Interprets `o.events` map, wires DOM listeners that call `conn.sendAction()`
-  - Supports: action name, sendValue (element value), debounce, throttle
-  - This is BLOCKING — functions can't serialize over SSE, declarative events are the bridge
-* [ ] implement --> `bw.clientConnect(url, opts)` — establish SSE/poll/WS connection, return connection object (~80 lines)
-  - opts: { transport: 'sse'|'poll'|'ws', interval, reconnect }
-  - Returns: `{ sendAction(action, data), on(event, handler), close() }`
+* [x] implement --> `bw.clientConnect(url, opts)` — establish SSE/poll connection, return connection object
+  - opts: { transport: 'sse'|'poll', interval, reconnect, onStatus, actionUrl }
+  - Returns: `{ sendAction(action, data), on(event, handler), close(), status }`
   - Auto-reconnect for SSE (EventSource does this natively)
-* [ ] implement --> `bw.clientApply(msg)` — message dispatcher for 5 types (~40 lines)
+* [x] implement --> `bw.clientApply(msg)` — message dispatcher for 5 types + message
   - replace → `bw.DOM(target, node)`
   - append → `target.appendChild(bw.createDOM(node))`
   - remove → `bw.cleanup(target); target.remove()`
   - patch → `bw.patch(target, content, attr)`
   - batch → sequential `clientApply()` per operation
-* [ ] implement --> Connection lifecycle UI: "connecting", "connected", "disconnected" states
-  - Optional status indicator component
-  - Reconnect behavior and stale-state warning
+  - message → `bw.message(target, action, data)`
+* [x] implement --> Connection lifecycle: "connecting", "connected", "disconnected" via onStatus callback
+* [ ] implement --> Declarative events: `o.events: { click: { action: 'increment', sendValue: true } }` in `bw.createDOM()`
+  - Deferred: `data-bw-action` attribute covers the 80% case; o.events is Phase 2
 
-### Server-side runtime (`src/bwserve/`, separate from bitwrench.js)
+### Server-side runtime (`src/bwserve/`) — IMPLEMENTED
 
-* [x] scaffold --> `src/bwserve/index.js` — bwserve library stub with API surface
-  - `bwserve.create({ port, static })` → BwServeApp
+* [x] implement --> `src/bwserve/index.js` — Full HTTP/SSE server (zero runtime deps, Node.js stdlib only)
+  - `bwserve.create({ port, static, title, theme })` → BwServeApp
   - `app.page(path, handler)`, `app.listen()`, `app.close()`, `app.clientCount`
+  - Routes: page shell, SSE events, action POST, static files, bitwrench assets
   - Builds to `dist/bwserve.cjs.js` + `dist/bwserve.esm.js` via rollup
-  - Importable as `import bwserve from 'bitwrench/bwserve'`
-* [x] scaffold --> `src/bwserve/client.js` — BwServeClient stub with full protocol API
+* [x] implement --> `src/bwserve/client.js` — BwServeClient with real SSE transport
   - `client.render()`, `.patch()`, `.append()`, `.remove()`, `.batch()`, `.message()`
   - `client.on(action, handler)` + `client._dispatch()` for incoming actions
-  - Stores `_sent` array for testing (real SSE transport is TODO)
-* [x] scaffold --> `src/cli/serve.js` — `bitwrench serve [dir] [--port] [--theme] [--open]` CLI subcommand
-  - Integrated into `src/cli/index.js` as subcommand dispatch
-  - Default port: 7902
-* [x] build --> rollup config: bwserve builds to dist/bwserve.{cjs,esm}.js
-* [x] build --> package.json: `"./bwserve"` export map entry
-* [ ] implement --> SSE stream management: keep-alive, client tracking, cleanup on disconnect
-* [ ] implement --> HTTP server: static file serving, page shell generation, SSE + action endpoints
+  - `_send()`: writes SSE frames + stores in `_sent[]` for testing
+* [x] implement --> `src/bwserve/shell.js` — Page shell generator
+  - Auto-injects bitwrench UMD + CSS from `/__bw/` routes
+  - Bootstrap: `bw.loadDefaultStyles()`, `bw.clientConnect()`, `data-bw-action` delegation
+* [x] implement --> SSE stream management: keep-alive (15s), client tracking, cleanup on disconnect
 * [ ] implement --> `bitwrench serve` actual dev server with file watching and live reload
 
-### Demos and examples
+### Documentation — IMPLEMENTED
 
-* [ ] create --> `examples/serve-counter.js` — minimal Streamlit-style counter (server state, SSE push, ~30 lines)
-* [ ] create --> `examples/serve-dashboard.js` — multi-card dashboard with live data updates
-* [ ] create --> `examples/serve-esp32-mock.js` — simulated embedded device: static HTML page + JSON state updates over SSE
-* [ ] create --> `docs/bwserve.md` — bwserve user guide (getting started, API, patterns, ESP32 usage)
+* [x] create --> `pages/12-bwserve-protocol.html` — Protocol reference page (spec, schemas, examples)
+* [x] update --> `docs/bwserve.md` — Full user guide (getting started, API, protocol, transport)
+* [x] update --> `pages/shared-nav.js` — bwserve primary nav item + Protocol/Sandbox sub-nav
+* [x] update --> `pages/bwserve-sandbox.html` — Linked from main nav (was standalone)
 
-### Tests
+### Tests — IMPLEMENTED
 
-* [ ] test --> client transport: clientConnect, clientApply, declarative events (~40 tests)
-* [ ] test --> server runtime: create, page, render, patch, SSE stream (~30 tests)
-* [ ] test --> integration: full round-trip (server render → client display → user action → server update → client patch)
+* [x] test --> `bw.clientApply()`: all 5 message types + error cases (14 tests)
+* [x] test --> `BwServeClient`: message format, SSE frame format, dispatch, chaining (15 tests)
+* [x] test --> `BwServeApp`: create, page registration, listen/close lifecycle (5 tests)
+* [x] test --> Round-trip: client.render() → _sent → clientApply() → DOM verification (4 tests)
+* [x] test --> `bw.clientConnect()`: API shape, connection object (3 tests)
+* Total: 42 new tests in `test/bitwrench_test_bwserve.js`
 
-### Design decisions to resolve during implementation
+### Demos and examples (future)
 
-* [ ] decide --> What data gets sent back with actions? Just element value? Form data? Custom payload?
-* [ ] decide --> Optimistic updates: can client do something immediately while waiting for server?
-* [ ] decide --> Event batching: multiple actions in same frame → single POST?
-* [ ] decide --> `bw.clientParse()` relaxed JSON for ESP32 — implement now or defer?
-* [ ] decide --> DOM morphing for `replace` (preserve local state like expanded accordion) — implement now or defer?
-* [ ] decide --> bwserve as separate npm package or bundled in bitwrench?
+* [ ] create --> `examples/serve-counter.js` — minimal Streamlit-style counter (~30 lines)
+* [ ] create --> `examples/serve-dashboard.js` — multi-card dashboard with live data
+* [ ] create --> `examples/serve-esp32-mock.js` — simulated embedded device SSE
+
+### Future work
+
+* [ ] implement --> Declarative events (`o.events`) in `bw.createDOM()` — sendValue, debounce, throttle, sendForm
+* [ ] implement --> `bw.clientParse()` relaxed JSON for ESP32 (single-quoted keys, trailing commas)
+* [ ] implement --> DOM morphing for `replace` — preserve local state (scroll pos, expanded accordions)
+* [ ] implement --> Form data serialization in actions (sendForm: '#my-form')
+* [ ] implement --> `client.register()` / `client.call()` / `client.exec()` three-tier execution model
+* [ ] implement --> WebSocket transport option
+* [ ] decide --> Optimistic updates: client-side immediate response while waiting for server
+* [ ] decide --> Event batching: multiple actions in same frame → single POST
 
 ---
 

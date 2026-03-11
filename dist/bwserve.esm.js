@@ -1,4 +1,9 @@
 /*! bwserve v2.0.16 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+import { fileURLToPath } from 'url';
+import { dirname, resolve, join, extname } from 'path';
+import { createServer } from 'http';
+import { existsSync, statSync, readFileSync } from 'fs';
+
 /**
  * BwServeClient — per-client connection for bwserve.
  *
@@ -103,9 +108,8 @@ class BwServeClient {
      */
     close() {
         this._closed = true;
-        // TODO: close SSE response stream
         if (this._res && typeof this._res.end === 'function') {
-            this._res.end();
+            try { this._res.end(); } catch (e) { /* ignore */ }
         }
     }
 
@@ -115,10 +119,17 @@ class BwServeClient {
      */
     _send(msg) {
         if (this._closed) return;
-        // TODO: write SSE frame: `data: ${JSON.stringify(msg)}\n\n`
-        // Stub: store for testing
+        // Always store for testing / inspection
         if (!this._sent) this._sent = [];
         this._sent.push(msg);
+        // Write SSE frame if we have a live response stream
+        if (this._res && typeof this._res.write === 'function') {
+            try {
+                this._res.write('data: ' + JSON.stringify(msg) + '\n\n');
+            } catch (e) {
+                // Stream may have been closed — ignore write errors
+            }
+        }
     }
 
     /**
@@ -136,10 +147,115 @@ class BwServeClient {
 }
 
 /**
+ * bwserve shell — generates the HTML page shell served to browsers.
+ *
+ * The shell is a minimal HTML doc that:
+ * - Loads bitwrench UMD + CSS from /__bw/ routes
+ * - Calls bw.loadDefaultStyles()
+ * - Optionally applies a theme
+ * - Creates a #app div
+ * - Opens an SSE connection via bw.clientConnect()
+ * - Delegates data-bw-action clicks to the server via POST
+ *
+ * @module bwserve/shell
+ */
+
+/**
+ * Generate the shell HTML page for a bwserve app.
+ *
+ * @param {Object} opts
+ * @param {string} opts.clientId - Unique client ID for this connection
+ * @param {string} [opts.title='bwserve'] - Page title
+ * @param {string} [opts.theme] - Theme preset name or config
+ * @param {boolean} [opts.injectBitwrench=true] - Whether to inject bitwrench scripts
+ * @returns {string} Complete HTML document
+ */
+function generateShell(opts) {
+  opts = opts || {};
+  var clientId = opts.clientId || 'default';
+  var title = opts.title || 'bwserve';
+  var inject = opts.injectBitwrench !== false;
+
+  var head = [
+    '<!DOCTYPE html>',
+    '<html lang="en">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    '<title>' + title + '</title>'
+  ];
+
+  if (inject) {
+    head.push('<script src="/__bw/bitwrench.umd.js"></script>');
+    head.push('<link rel="stylesheet" href="/__bw/bitwrench.css">');
+  }
+
+  head.push('</head>');
+  head.push('<body>');
+  head.push('<div id="app"></div>');
+
+  var script = [
+    '<script>',
+    '(function() {',
+    '  "use strict";',
+    '  bw.loadDefaultStyles();'
+  ];
+
+  if (opts.theme) {
+    script.push('  bw.generateTheme("bwserve", ' + JSON.stringify(
+      typeof opts.theme === 'string'
+        ? { primary: '#006666', secondary: '#333333' }
+        : opts.theme
+    ) + ');');
+  }
+
+  script.push('  var clientId = ' + JSON.stringify(clientId) + ';');
+  script.push('  var conn = bw.clientConnect("/__bw/events/" + clientId, {');
+  script.push('    actionUrl: "/__bw/action/" + clientId,');
+  script.push('    onStatus: function(s) {');
+  script.push('      if (typeof console !== "undefined") console.log("[bwserve] " + s);');
+  script.push('    }');
+  script.push('  });');
+
+  // data-bw-action click delegation
+  script.push('  document.addEventListener("click", function(e) {');
+  script.push('    var el = e.target.closest ? e.target.closest("[data-bw-action]") : null;');
+  script.push('    if (!el) return;');
+  script.push('    e.preventDefault();');
+  script.push('    var actionData = {};');
+  script.push('    if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");');
+  script.push('    var form = el.closest("div") || document;');
+  script.push('    var inp = form.querySelector("input[type=text],input:not([type])");');
+  script.push('    if (inp) { actionData.inputValue = inp.value; inp.value = ""; }');
+  script.push('    conn.sendAction(el.getAttribute("data-bw-action"), actionData);');
+  script.push('  });');
+
+  // Enter key on inputs
+  script.push('  document.addEventListener("keydown", function(e) {');
+  script.push('    if (e.key === "Enter" && e.target.tagName === "INPUT") {');
+  script.push('      var form = e.target.closest("div") || document;');
+  script.push('      var btn = form.querySelector("[data-bw-action]");');
+  script.push('      if (btn) {');
+  script.push('        conn.sendAction(btn.getAttribute("data-bw-action"), { inputValue: e.target.value });');
+  script.push('        e.target.value = "";');
+  script.push('      }');
+  script.push('    }');
+  script.push('  });');
+
+  script.push('})();');
+  script.push('</script>');
+  script.push('</body>');
+  script.push('</html>');
+
+  return head.concat(script).join('\n');
+}
+
+/**
  * bwserve — Server-driven UI library for bitwrench
  *
  * Programmatic API for building server-push UIs (Streamlit-style).
  * Uses SSE (Server-Sent Events) by default, with WebSocket opt-in.
+ * Zero runtime dependencies — only Node.js stdlib (http, fs, path).
  *
  * Usage:
  *   import bwserve from 'bitwrench/bwserve';
@@ -149,25 +265,44 @@ class BwServeClient {
  *   });
  *   app.listen();
  *
- * Design docs:
- *   dev/bw-client-server.md
- *   dev/bw-stream-agent-protocol-draft-2026-03-06.md
- *
  * @module bwserve
  */
 
+
+var __dirname$1 = dirname(fileURLToPath(import.meta.url));
+var DIST_DIR = resolve(__dirname$1, '..', '..', 'dist');
+
+// MIME type lookup for static file serving
+var MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'application/javascript; charset=utf-8',
+  '.css':  'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif':  'image/gif',
+  '.svg':  'image/svg+xml',
+  '.ico':  'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf':  'font/ttf',
+  '.map':  'application/json'
+};
 
 /**
  * Create a bwserve application.
  *
  * @param {Object} opts - Server options
  * @param {number} [opts.port=7902] - Port to listen on
+ * @param {string} [opts.title='bwserve'] - Page title
  * @param {string} [opts.static] - Directory to serve static files from
  * @param {boolean} [opts.injectBitwrench=true] - Auto-inject bitwrench client JS
+ * @param {string|Object} [opts.theme] - Theme preset name or config object
  * @returns {BwServeApp} Application instance
  */
-function create(opts = {}) {
-    return new BwServeApp(opts);
+function create(opts) {
+  return new BwServeApp(opts || {});
 }
 
 /**
@@ -176,70 +311,253 @@ function create(opts = {}) {
  * Manages pages, client connections, and the HTTP/SSE server.
  */
 class BwServeApp {
-    constructor(opts = {}) {
-        this.port = opts.port || 7902;
-        this.staticDir = opts.static || null;
-        this.injectBitwrench = opts.injectBitwrench !== false;
-        this._pages = new Map();
-        this._clients = new Map();
-        this._server = null;
-    }
+  constructor(opts) {
+    this.port = opts.port || 7902;
+    this.title = opts.title || 'bwserve';
+    this.staticDir = opts.static || null;
+    this.injectBitwrench = opts.injectBitwrench !== false;
+    this.theme = opts.theme || null;
+    this._pages = new Map();
+    this._clients = new Map();
+    this._server = null;
+    this._clientCounter = 0;
+  }
 
-    /**
-     * Register a page handler.
-     *
-     * @param {string} path - URL path (e.g., '/', '/dashboard')
-     * @param {Function} handler - Called with (client: BwServeClient) on connection
-     * @returns {BwServeApp} this (for chaining)
-     */
-    page(path, handler) {
-        this._pages.set(path, handler);
-        return this;
-    }
+  /**
+   * Register a page handler.
+   *
+   * @param {string} path - URL path (e.g., '/', '/dashboard')
+   * @param {Function} handler - Called with (client: BwServeClient) on connection
+   * @returns {BwServeApp} this (for chaining)
+   */
+  page(path, handler) {
+    this._pages.set(path, handler);
+    return this;
+  }
 
-    /**
-     * Start the HTTP server and begin accepting SSE connections.
-     *
-     * @param {Function} [callback] - Called when server is listening
-     * @returns {Promise<void>}
-     */
-    async listen(callback) {
-        // TODO: implement HTTP server with SSE support
-        // - Serve static files from this.staticDir
-        // - Serve bitwrench client JS at /__bw/bitwrench.umd.min.js
-        // - Serve SSE endpoint at /__bw/events/:clientId
-        // - Serve action POST endpoint at /__bw/action/:clientId
-        // - Generate page shell HTML for registered paths
-        // - Create BwServeClient for each SSE connection
-        // - Call page handler with client instance
-        const msg = `bwserve stub: would listen on port ${this.port}`;
+  /**
+   * Start the HTTP server and begin accepting SSE connections.
+   *
+   * @param {Function} [callback] - Called when server is listening
+   * @returns {Promise<void>}
+   */
+  listen(callback) {
+    var self = this;
+
+    return new Promise(function(res) {
+      self._server = createServer(function(req, rawRes) {
+        self._handleRequest(req, rawRes);
+      });
+
+      self._server.listen(self.port, function() {
         if (callback) callback();
-        console.log(msg);
-        return msg;
+        res();
+      });
+    });
+  }
+
+  /**
+   * Stop the server and close all client connections.
+   */
+  close() {
+    var self = this;
+    return new Promise(function(res) {
+      // Close all SSE streams
+      for (var client of self._clients.values()) {
+        client.close();
+      }
+      self._clients.clear();
+
+      if (self._server) {
+        self._server.close(function() {
+          self._server = null;
+          res();
+        });
+      } else {
+        res();
+      }
+    });
+  }
+
+  /**
+   * Get count of active client connections.
+   * @returns {number}
+   */
+  get clientCount() {
+    return this._clients.size;
+  }
+
+  /**
+   * Internal: route incoming HTTP requests.
+   * @private
+   */
+  _handleRequest(req, res) {
+    var url = req.url || '/';
+    var method = req.method || 'GET';
+
+    // Parse URL path (strip query string)
+    var path = url.split('?')[0];
+
+    // /__bw/bitwrench.umd.js — serve bitwrench client library
+    if (path === '/__bw/bitwrench.umd.js' && method === 'GET') {
+      return this._serveDistFile(res, 'bitwrench.umd.js');
     }
 
-    /**
-     * Stop the server and close all client connections.
-     */
-    async close() {
-        // TODO: close all SSE streams, stop HTTP server
-        if (this._server) {
-            this._server.close();
-            this._server = null;
-        }
-        for (const client of this._clients.values()) {
-            client.close();
-        }
-        this._clients.clear();
+    // /__bw/bitwrench.umd.min.js — serve minified
+    if (path === '/__bw/bitwrench.umd.min.js' && method === 'GET') {
+      return this._serveDistFile(res, 'bitwrench.umd.min.js');
     }
 
-    /**
-     * Get count of active client connections.
-     * @returns {number}
-     */
-    get clientCount() {
-        return this._clients.size;
+    // /__bw/bitwrench.css — serve bitwrench CSS
+    if (path === '/__bw/bitwrench.css' && method === 'GET') {
+      return this._serveDistFile(res, 'bitwrench.css');
     }
+
+    // /__bw/events/:clientId — SSE stream
+    if (path.startsWith('/__bw/events/') && method === 'GET') {
+      var clientId = path.slice('/__bw/events/'.length);
+      return this._handleSSE(req, res, clientId);
+    }
+
+    // /__bw/action/:clientId — action POST
+    if (path.startsWith('/__bw/action/') && method === 'POST') {
+      var actionClientId = path.slice('/__bw/action/'.length);
+      return this._handleAction(req, res, actionClientId);
+    }
+
+    // Registered page routes — serve shell HTML
+    if (method === 'GET' && this._pages.has(path)) {
+      var clientId2 = 'c' + (++this._clientCounter);
+      var shell = generateShell({
+        clientId: clientId2,
+        title: this.title,
+        theme: this.theme,
+        injectBitwrench: this.injectBitwrench
+      });
+      // Store the page path for this client so SSE knows which handler to call
+      this._clients.set(clientId2, { pagePath: path, client: null });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(shell);
+      return;
+    }
+
+    // Static file serving
+    if (method === 'GET' && this.staticDir) {
+      var filePath = join(this.staticDir, path);
+      if (existsSync(filePath) && statSync(filePath).isFile()) {
+        var ext = extname(filePath);
+        var mime = MIME_TYPES[ext] || 'application/octet-stream';
+        var content = readFileSync(filePath);
+        res.writeHead(200, { 'Content-Type': mime });
+        res.end(content);
+        return;
+      }
+    }
+
+    // 404
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
+  }
+
+  /**
+   * Serve a file from the dist/ directory.
+   * @private
+   */
+  _serveDistFile(res, filename) {
+    var filePath = join(DIST_DIR, filename);
+    if (!existsSync(filePath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found: ' + filename);
+      return;
+    }
+    var ext = extname(filename);
+    var mime = MIME_TYPES[ext] || 'application/octet-stream';
+    var content = readFileSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': mime,
+      'Cache-Control': 'public, max-age=3600'
+    });
+    res.end(content);
+  }
+
+  /**
+   * Handle an SSE connection.
+   * @private
+   */
+  _handleSSE(req, res, clientId) {
+    var self = this;
+
+    // Set SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+
+    // Create client instance
+    var client = new BwServeClient(clientId, res);
+
+    // Look up the pending client record (set during page serve)
+    var pending = self._clients.get(clientId);
+    var pagePath = pending ? pending.pagePath : '/';
+    self._clients.set(clientId, { pagePath: pagePath, client: client });
+
+    // Keep-alive: send SSE comment every 15 seconds
+    var keepAlive = setInterval(function() {
+      if (!client._closed) {
+        try { res.write(':keepalive\n\n'); } catch (e) { /* ignore */ }
+      }
+    }, 15000);
+
+    // Clean up on disconnect
+    req.on('close', function() {
+      clearInterval(keepAlive);
+      client._closed = true;
+      self._clients.delete(clientId);
+    });
+
+    // Call the page handler
+    var handler = self._pages.get(pagePath);
+    if (handler) {
+      try {
+        handler(client);
+      } catch (e) {
+        console.error('[bwserve] Page handler error:', e);
+      }
+    }
+  }
+
+  /**
+   * Handle an action POST from a client.
+   * @private
+   */
+  _handleAction(req, res, clientId) {
+    var record = this._clients.get(clientId);
+    if (!record || !record.client) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unknown client' }));
+      return;
+    }
+
+    var body = '';
+    req.on('data', function(chunk) {
+      body += chunk;
+    });
+    req.on('end', function() {
+      try {
+        var data = JSON.parse(body);
+        var action = data.action;
+        var payload = data.data || data;
+        record.client._dispatch(action, payload);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+  }
 }
 
 var index = { create, BwServeApp, BwServeClient };

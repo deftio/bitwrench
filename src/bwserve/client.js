@@ -102,9 +102,8 @@ export class BwServeClient {
      */
     close() {
         this._closed = true;
-        // TODO: close SSE response stream
         if (this._res && typeof this._res.end === 'function') {
-            this._res.end();
+            try { this._res.end(); } catch (e) { /* ignore */ }
         }
     }
 
@@ -114,10 +113,17 @@ export class BwServeClient {
      */
     _send(msg) {
         if (this._closed) return;
-        // TODO: write SSE frame: `data: ${JSON.stringify(msg)}\n\n`
-        // Stub: store for testing
+        // Always store for testing / inspection
         if (!this._sent) this._sent = [];
         this._sent.push(msg);
+        // Write SSE frame if we have a live response stream
+        if (this._res && typeof this._res.write === 'function') {
+            try {
+                this._res.write('data: ' + JSON.stringify(msg) + '\n\n');
+            } catch (e) {
+                // Stream may have been closed — ignore write errors
+            }
+        }
     }
 
     /**
