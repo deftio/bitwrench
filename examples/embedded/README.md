@@ -91,11 +91,43 @@ ESP32                           Browser
 | ESP32 SPIFFS partition | 1.5 MB |
 | Free heap (runtime) | ~240 KB |
 
+## cmake Demo (No Hardware Required)
+
+The `cmake-demo/` directory contains a complete bwserve server written in C that compiles on Linux/macOS:
+
+```bash
+cd cmake-demo
+mkdir build && cd build
+cmake .. && make
+./bwserve_demo
+# Open http://localhost:8080
+```
+
+This uses `bitwrench.h` and `bwserve.h` from `embedded_c/` — the same macros you'd use on an ESP32, but with POSIX sockets instead of ESPAsyncWebServer.
+
+## Cross-Language Support
+
+The bwserve protocol works from any language. Choose what fits your platform:
+
+| Platform | Language | Location |
+|----------|----------|----------|
+| ESP32/STM32 (Arduino) | C/C++ | `embedded_c/bitwrench.h` + `bwserve.h` |
+| ESP32 (esp-idf, bare-metal) | Rust | `embedded_rust/` |
+| ESP32 (MicroPython), Raspberry Pi | Python | `embedded_python/bwserve.py` |
+| Linux/macOS/Node.js | JavaScript | `npm install bitwrench` → `bitwrench/bwserve` |
+| Any language | CLI pipe | `bwserve --stdin` (pipe JSON to browser) |
+
+All produce the same wire protocol — the browser doesn't know which backend is talking.
+
 ## Structure
 
 ```
 embedded/
-  index.html    ← dashboard page with mock data (~150 lines of JS)
-  sketch.ino    ← Arduino sketch for ESP32
-  README.md     ← this file
+  index.html        ← dashboard page with mock data (~150 lines of JS)
+  sketch.ino        ← Arduino sketch for ESP32
+  cmake-demo/       ← POSIX socket server (compiles on Linux/macOS)
+    CMakeLists.txt
+    main.c
+    README.md
+  README.md         ← this file
 ```

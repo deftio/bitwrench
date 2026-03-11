@@ -1,0 +1,15 @@
+[package]
+name = "bwserve"
+version = "0.1.0"
+edition = "2021"
+description = "bwserve protocol helpers for embedded Rust (ESP32, no_std compatible)"
+license = "BSD-2-Clause"
+repository = "https://github.com/nicktackes/bitwrench"
+keywords = ["embedded", "esp32", "sse", "ui"]
+
+[features]
+default = ["std"]
+std = []          # Enable std::string, std::vec — disable for bare-metal no_std
+
+[dependencies]
+# Zero dependencies — this is a formatting/protocol library only
