@@ -1,10 +1,10 @@
 /**
- * Bitwrench CLI - Main entry point
+ * bwcli — Main entry point for the bitwrench command-line tool
  * Arg parsing with util.parseArgs(), help, version, dispatch
  *
  * Subcommands:
- *   bitwrench <file> [options]       Convert a file to styled HTML
- *   bitwrench serve [dir] [options]  Start bwserve dev server
+ *   bwcli <file> [options]       Convert a file to styled HTML
+ *   bwcli serve [dir] [options]  Start bwserve dev server
  */
 
 import { parseArgs } from 'node:util';
@@ -13,13 +13,13 @@ import { convertFile } from './convert.js';
 import { runServe } from './serve.js';
 
 const USAGE = `
-bitwrench v${VERSION} — Document converter, static site generator & dev server
+bwcli v${VERSION} — bitwrench command-line tool
 
 Usage:
-  bitwrench <file> [options]       Convert a file to styled HTML
-  bitwrench serve [dir] [options]  Start bwserve development server
-  bitwrench --version              Print version
-  bitwrench --help                 Print this help
+  bwcli <file> [options]       Convert a file to styled HTML
+  bwcli serve [dir] [options]  Start bwserve development server
+  bwcli --version              Print version
+  bwcli --help                 Print this help
 
 Convert options:
   -o, --output <file>    Output file path (default: input with .html extension)
@@ -44,14 +44,14 @@ General:
       --version          Print version
 
 Examples:
-  bitwrench README.md                          Convert README.md to README.html
-  bitwrench README.md -o index.html            Specify output file
-  bitwrench README.md -o out.html --theme ocean  Apply ocean theme
-  bitwrench README.md -o out.html --standalone   Self-contained offline HTML
-  bitwrench README.md -o out.html --highlight    With syntax highlighting
-  bitwrench doc.md --theme "#336699,#cc6633"     Custom theme colors
-  bitwrench serve                              Serve current directory on port 7902
-  bitwrench serve ./site --port 8080           Serve ./site on port 8080
+  bwcli README.md                          Convert README.md to README.html
+  bwcli README.md -o index.html            Specify output file
+  bwcli README.md -o out.html --theme ocean  Apply ocean theme
+  bwcli README.md -o out.html --standalone   Self-contained offline HTML
+  bwcli README.md -o out.html --highlight    With syntax highlighting
+  bwcli doc.md --theme "#336699,#cc6633"     Custom theme colors
+  bwcli serve                              Serve current directory on port 7902
+  bwcli serve ./site --port 8080           Serve ./site on port 8080
 `.trim();
 
 /**
@@ -90,13 +90,13 @@ export function run(argv) {
         positionals = result.positionals;
     } catch (err) {
         console.error(`Error: ${err.message}`);
-        console.error('Run "bitwrench --help" for usage.');
+        console.error('Run "bwcli --help" for usage.');
         process.exit(1);
     }
 
     // --version
     if (values.version) {
-        console.log(`bitwrench v${VERSION}`);
+        console.log(`bwcli v${VERSION}`);
         return;
     }
 
@@ -109,7 +109,7 @@ export function run(argv) {
     // No positional args → error
     if (positionals.length === 0) {
         console.error('Error: No input file specified.');
-        console.error('Run "bitwrench --help" for usage.');
+        console.error('Run "bwcli --help" for usage.');
         process.exit(1);
     }
 

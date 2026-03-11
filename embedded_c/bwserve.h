@@ -68,6 +68,21 @@ extern "C" {
         "r{'type':'patch','target':'%s','content':'%g'}", target, (double)(value))
 
 /**
+ * BW_PATCH_SAFE — Patch with user-provided content that may contain apostrophes.
+ * Uses bw_escape_string() to auto-escape single quotes and backslashes.
+ *   char name[] = "Barry's Room";
+ *   BW_PATCH_SAFE(msg, sizeof(msg), "room-name", name)
+ *   → r{'type':'patch','target':'room-name','content':'Barry\'s Room'}
+ */
+#define BW_PATCH_SAFE(buf, buf_size, target, content) \
+    do { \
+        char _esc[BW_BUF_SIZE]; \
+        bw_escape_string(_esc, sizeof(_esc), content); \
+        snprintf(buf, buf_size, \
+            "r{'type':'patch','target':'%s','content':'%s'}", target, _esc); \
+    } while(0)
+
+/**
  * BW_PATCH_ATTR — Patch with content AND attributes.
  *   BW_PATCH_ATTR(msg, "status", "Online", "'class':'text-success'")
  *   → r{'type':'patch','target':'status','content':'Online','attr':{'class':'text-success'}}

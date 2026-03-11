@@ -12,6 +12,18 @@
  *   r{'t':'div','c':'Hello'}   (sent on wire)
  *   {"t":"div","c":"Hello"}    (browser normalizes before JSON.parse)
  *
+ * ESCAPING RULE: Since single quotes delimit strings, apostrophes in
+ * values must be escaped with backslash:
+ *   r{'content':'Barry\'s room'}  →  {"content":"Barry's room"}
+ *
+ * This is still a huge win over standard JSON in C, where EVERY quote
+ * needs escaping:
+ *   "{\"content\":\"Barry's room\"}"   ← standard JSON (painful)
+ *   "r{'content':'Barry\\'s room'}"    ← relaxed JSON (only escape apostrophes)
+ *
+ * For dynamic user text, use bw_escape_string() before inserting into
+ * a message macro. See examples below.
+ *
  * License: BSD-2-Clause
  * Copyright (c) 2026 Manu Chatterjee / deftio
  */

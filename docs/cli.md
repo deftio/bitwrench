@@ -1,6 +1,6 @@
 # CLI
 
-The `bitwrench` command converts files to styled HTML pages. It supports Markdown, HTML, and JSON input, and can produce self-contained offline pages or pages that load bitwrench from a CDN.
+The `bwcli` command converts files to styled HTML pages. It supports Markdown, HTML, and JSON input, and can produce self-contained offline pages or pages that load bitwrench from a CDN.
 
 ## Installation
 
@@ -11,26 +11,26 @@ npm install -g bitwrench
 Or use `npx` without installing:
 
 ```bash
-npx bitwrench README.md
+npx bwcli README.md
 ```
 
 ## Basic usage
 
 ```bash
 # Convert a Markdown file to HTML
-bitwrench README.md
+bwcli README.md
 
 # Specify output file
-bitwrench README.md -o index.html
+bwcli README.md -o index.html
 
 # Apply a theme
-bitwrench README.md -o index.html --theme ocean
+bwcli README.md -o index.html --theme ocean
 
 # Create a self-contained offline page
-bitwrench README.md -o index.html --standalone
+bwcli README.md -o index.html --standalone
 
 # Add syntax highlighting
-bitwrench README.md -o index.html --highlight
+bwcli README.md -o index.html --highlight
 ```
 
 ## Input formats
@@ -48,14 +48,14 @@ The CLI detects the input format by file extension:
 By default, the output file has the same name as the input with a `.html` extension:
 
 ```bash
-bitwrench docs/guide.md       # → docs/guide.html
-bitwrench data.json            # → data.html
+bwcli docs/guide.md       # → docs/guide.html
+bwcli data.json            # → data.html
 ```
 
 Override with `-o`:
 
 ```bash
-bitwrench docs/guide.md -o site/index.html
+bwcli docs/guide.md -o site/index.html
 ```
 
 ## Bitwrench injection modes
@@ -75,16 +75,16 @@ When bitwrench is included (`--standalone` or `--cdn`), a small script runs afte
 Apply a built-in theme preset:
 
 ```bash
-bitwrench README.md --theme ocean
-bitwrench README.md --theme sunset
-bitwrench README.md --theme forest
-bitwrench README.md --theme slate
+bwcli README.md --theme ocean
+bwcli README.md --theme sunset
+bwcli README.md --theme forest
+bwcli README.md --theme slate
 ```
 
 Or specify custom colors as a comma-separated pair of hex values (primary and secondary):
 
 ```bash
-bitwrench README.md --theme "#336699,#cc6633"
+bwcli README.md --theme "#336699,#cc6633"
 ```
 
 Available presets: `teal`, `ocean`, `sunset`, `forest`, `slate`, `rose`, `indigo`, `amber`, `emerald`, `nord`, `coral`, `midnight`.
@@ -96,7 +96,7 @@ Themes require bitwrench to be included (`--standalone` or `--cdn`). If neither 
 Include an external CSS file:
 
 ```bash
-bitwrench README.md -c styles.css -o index.html
+bwcli README.md -c styles.css -o index.html
 ```
 
 The CSS file's contents are embedded in a `<style>` tag in the output. This works with or without bitwrench injection.
@@ -106,8 +106,8 @@ The CSS file's contents are embedded in a `<style>` tag in the output. This work
 Add a favicon to the page:
 
 ```bash
-bitwrench README.md -f favicon.ico -o index.html
-bitwrench README.md -f https://example.com/icon.png -o index.html
+bwcli README.md -f favicon.ico -o index.html
+bwcli README.md -f https://example.com/icon.png -o index.html
 ```
 
 The value is used directly as the `href` attribute of a `<link rel="icon">` tag.
@@ -117,7 +117,7 @@ The value is used directly as the `href` attribute of a `<link rel="icon">` tag.
 Include highlight.js for code block syntax highlighting:
 
 ```bash
-bitwrench README.md --highlight -o index.html
+bwcli README.md --highlight -o index.html
 ```
 
 This adds the highlight.js CDN stylesheet and script to the output page. Code blocks in the Markdown source get automatic syntax highlighting based on the language specified in the fenced code block.
@@ -133,13 +133,13 @@ The CLI auto-detects the page title from the content:
 Override with `--title`:
 
 ```bash
-bitwrench README.md --title "My Project Documentation" -o index.html
+bwcli README.md --title "My Project Documentation" -o index.html
 ```
 
 ## All flags
 
 ```
-bitwrench <file> [options]
+bwcli <file> [options]
 
 Options:
   -o, --output <file>    Output file path
@@ -156,10 +156,10 @@ Options:
       --version          Print version
 ```
 
-## The `bitwrench serve` subcommand
+## The `bwcli serve` subcommand
 
 ```bash
-bitwrench serve [dir] [options]
+bwcli serve [dir] [options]
 ```
 
 A development server for bitwrench applications. This feature is under development — see [bwserve](bwserve.md) for the server-driven UI library it will be built on.

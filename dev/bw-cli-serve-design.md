@@ -47,29 +47,31 @@ bwserve protocol (JSON over SSE + POST)
 
 ## 1. Naming
 
-### Decision: Two bin entries from one npm package
+### Decision: `bwcli` with subcommands (single bin entry)
 
 ```json
 {
   "bin": {
-    "bitwrench": "./bin/bitwrench.js",
-    "bwserve": "./bin/bwserve.js"
+    "bwcli": "./bin/bwcli.js"
   }
 }
 ```
 
-- **`bitwrench`** — file converter (Phase 1, already working).
-  `bitwrench input.md -o output.html`
-- **`bwserve`** — pipe server + static file server.
-  `bwserve --listen 9000 --port 8080 ./static`
+- **`bwcli`** — the bitwrench command-line tool (distinct from `bitwrench.js` the library).
+  `bwcli input.md -o output.html` (file conversion)
+  `bwcli serve --listen 9000 --port 8080 ./static` (streaming pipe server)
+  `bwcli build ./site -o ./dist` (static site generation, future)
+  `bwcli dev ./site` (dev server with live reload, future)
 
-`npm install -g bitwrench` installs both commands.
+`npm install -g bitwrench` installs the `bwcli` command.
+
+No `bwserve` alias — `bwcli serve` is the canonical form.
 
 ### Library import
 
 Keep `import { create } from 'bitwrench/bwserve'`. The import path already
-implies "library" — nobody confuses `git` (command) with
-`import { simpleGit } from 'simple-git'` (module). No rename needed.
+implies "library" — nobody confuses `bwcli` (command) with
+`import { create } from 'bitwrench/bwserve'` (module). No rename needed.
 
 ### Name collision check
 
@@ -262,10 +264,28 @@ Both arrive on the same SSE stream. The browser detects and handles each.
 3. Standard JSON is also valid relaxed JSON (the `r` prefix is harmless
    if the content is already strict)
 
+**Escaping rule**: Since single quotes delimit strings, apostrophes in
+values must be escaped with `\'`:
+```
+r{'content':'Barry\'s room'}  →  {"content":"Barry's room"}
+r{'text':'don\'t panic'}      →  {"text":"don't panic"}
+```
+
+This is still a massive win over standard JSON in C:
+```c
+// Standard JSON: 14+ escape sequences per message
+"{\"type\":\"patch\",\"target\":\"status\",\"content\":\"Barry's room\"}"
+
+// Relaxed JSON: only escape the apostrophe
+"r{'type':'patch','target':'status','content':'Barry\\'s room'}"
+```
+
+For dynamic user text, use `bw_escape_string()` (C) or equivalent before
+inserting into a message. The `BW_PATCH_SAFE` macro does this automatically.
+
 **Not supported** (keep it simple):
 - Unquoted keys (`{type:'replace'}`) — defer unless requested
 - Comments (`// ...` or `/* ... */`) — not needed for wire protocol
-- Single quotes inside values — don't use apostrophes in relaxed strings
 
 ### Implementation — `bw.clientParse()`
 

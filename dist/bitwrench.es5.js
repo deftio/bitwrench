@@ -196,7 +196,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-11T15:47:35.344Z'
+    buildDate: '2026-03-11T19:24:12.692Z'
   };
 
   /**
@@ -11809,6 +11809,89 @@
   };
 
   /**
+   * Parse a bwserve protocol message string, supporting both strict JSON
+   * and r-prefixed relaxed JSON (single-quoted strings, trailing commas).
+   *
+   * The r-prefix format is designed for C/C++ string literals where
+   * double-quote escaping is painful. The parser is a state machine
+   * that walks character by character — not a regex replace.
+   *
+   * @param {string} str - JSON or r-prefixed relaxed JSON string
+   * @returns {Object} Parsed message object
+   * @throws {SyntaxError} If the string is not valid JSON or relaxed JSON
+   * @category Server
+   */
+  bw.clientParse = function (str) {
+    str = (str || '').trim();
+    if (str.charAt(0) !== 'r') return JSON.parse(str);
+    str = str.slice(1);
+    var out = [];
+    var i = 0;
+    var len = str.length;
+    while (i < len) {
+      var ch = str[i];
+      if (ch === "'") {
+        // Single-quoted string → emit as double-quoted
+        out.push('"');
+        i++;
+        while (i < len) {
+          var c = str[i];
+          if (c === '\\' && i + 1 < len) {
+            var next = str[i + 1];
+            if (next === "'") {
+              out.push("'"); // \' in input → ' in output
+            } else {
+              out.push('\\');
+              out.push(next);
+            }
+            i += 2;
+          } else if (c === '"') {
+            out.push('\\"');
+            i++;
+          } else if (c === "'") {
+            break;
+          } else {
+            out.push(c);
+            i++;
+          }
+        }
+        out.push('"');
+        i++; // skip closing '
+      } else if (ch === '"') {
+        // Double-quoted string — pass through verbatim
+        out.push(ch);
+        i++;
+        while (i < len) {
+          var c2 = str[i];
+          if (c2 === '\\' && i + 1 < len) {
+            out.push(c2);
+            out.push(str[i + 1]);
+            i += 2;
+          } else {
+            out.push(c2);
+            i++;
+            if (c2 === '"') break;
+          }
+        }
+      } else if (ch === ',') {
+        // Trailing comma check: skip comma if next non-whitespace is } or ]
+        var j = i + 1;
+        while (j < len && (str[j] === ' ' || str[j] === '\t' || str[j] === '\n' || str[j] === '\r')) j++;
+        if (j < len && (str[j] === '}' || str[j] === ']')) {
+          i++; // skip trailing comma
+        } else {
+          out.push(ch);
+          i++;
+        }
+      } else {
+        out.push(ch);
+        i++;
+      }
+    }
+    return JSON.parse(out.join(''));
+  };
+
+  /**
    * Apply a bwserve protocol message to the DOM.
    *
    * Dispatches one of 9 message types:
@@ -11939,7 +12022,7 @@
     }
     function handleMessage(data) {
       try {
-        var msg = typeof data === 'string' ? JSON.parse(data) : data;
+        var msg = typeof data === 'string' ? bw.clientParse(data) : data;
         if (onMessage) onMessage(msg);
         if (handlers.message) handlers.message(msg);
         bw.clientApply(msg);

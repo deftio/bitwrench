@@ -100,8 +100,10 @@ Must cover:
   - Managed stateful component → Level 2 (bw.component + .set())
 * [x] update --> Add section: "Wrapping make*() in ComponentHandle" with practical example
 * [x] update --> Add bw.message() example (cross-component messaging)
-* [ ] make --> a examples/llm-chat which is a stand alone example using python which has a streamlit like chat with an llm with real llm integraiton (example can use ollama | lm studio | openrouter) to do a nice chat window.  
-* [ ] make --> a examples/llm-chat-advance which is a stand alone example using python which has a streamlit like chat with an llm with real llm integraiton (example can use ollama | lm studio | openrouter) to do a nice chat window but allows users to see markdown or images in the chat dynamically (this might be a stand alone repo -- discuss)
+* [x] make --> `examples/llm-chat/` — Node.js + bwserve chat with LLM streaming (ollama/lm-studio/openrouter)
+  - OpenAI-compatible API, streaming token-by-token via SSE patches
+  - ~180 lines, zero client JS beyond bitwrench
+* [ ] make --> a examples/llm-chat-advance (deferred to separate repo — requires markdown rendering + image display in chat)
 
 ### Quick Start & Tutorials
 
@@ -116,22 +118,9 @@ them through building real projects.
   - Step 5: data-driven UI (.map() for lists)
   - Step 6: theming (generateTheme with seed colors + presets)
   - Step 7: next steps with links to all other pages
-* [ ] create --> `docs/tutorial-website.md`: longer tutorial building a complete multi-page website
-  - Landing page with hero, features, CTA
-  - Dashboard with stat cards, charts, tables
-  - Forms with validation
-  - Navigation between pages
-  - Theming and responsive design
-* [ ] create --> `docs/tutorial-bwserve.md`: tutorial building a Streamlit-style server app
-  - Server state + SSE push
-  - Interactive controls sending actions back
-  - Real-time data updates
-  - Deployment patterns
-* [ ] create --> `docs/tutorial-embedded.md`: ESP32/IoT dashboard tutorial
-  - C++ Arduino sketch serving static HTML
-  - JSON state updates over SSE
-  - bitwrench client rendering sensor data
-  - Minimal memory footprint considerations
+* [x] create --> `docs/tutorial-website.md`: multi-section landing page tutorial (9 steps, ~120 lines JS)
+* [x] create --> `docs/tutorial-bwserve.md`: Streamlit-style server dashboard tutorial (6 steps)
+* [x] create --> `docs/tutorial-embedded.md`: ESP32 IoT dashboard tutorial (bwserve.h macros, SPIFFS, r-prefix JSON)
 
 ### Standalone Examples (`examples/`)
 
@@ -195,10 +184,10 @@ CSS need audit. Must be covered by automated Playwright tests.
 
 ### Audit and fix
 
-* [ ] fix --> `pages/*.html`: audit all pages on mobile viewport (375px, 414px). Fix margin/padding issues where text overflows or touches screen edges.
-* [ ] fix --> `src/bitwrench-styles.js`: audit default container, card, table, code block styles for mobile. Ensure `max-width: 100%`, `overflow-x: auto` on tables/pre, proper `padding` on containers at small viewports.
-* [ ] fix --> `src/bitwrench-styles.js` + theme CSS: audit `@media` breakpoints. Ensure they cover 375px (iPhone SE), 414px (iPhone Plus), 768px (tablet). Fix any hard-coded widths or margins that break at small sizes.
-* [ ] fix --> Generated theme CSS (`bw.generateTheme()`): ensure themed components (cards, alerts, navbars) inherit responsive behavior from base styles. Check that theme-specific padding/margin doesn't override responsive rules.
+* [x] fix --> `pages/index.html`: hero decorative circle hidden at 480px, tagline/subtitle max-width use `min(Npx, 90vw)`, 480px breakpoint added for hero text sizes
+* [x] audit --> `src/bitwrench-styles.js`: default styles have proper mobile breakpoints (575px, 768px), toast uses `calc(100vw - 2rem)`, tooltips use `min()`, modals covered at 575px
+* [x] audit --> `pages/shared-theme.css`: responsive at 480px/768px/1024px. Nav collapses at 900px, pipeline at 900px, try-it at 768px
+* [ ] fix --> Generated theme CSS (`bw.generateTheme()`): verify themed components inherit responsive behavior (low priority — base styles are solid)
 
 ### Playwright mobile tests
 
@@ -253,7 +242,8 @@ embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
   - Auto-injects bitwrench UMD + CSS from `/__bw/` routes
   - Bootstrap: `bw.loadDefaultStyles()`, `bw.clientConnect()`, `data-bw-action` delegation
 * [x] implement --> SSE stream management: configurable keep-alive (default 15s, via `opts.keepAliveInterval`), client tracking, cleanup on disconnect
-* [ ] implement --> `bitwrench serve` actual dev server with file watching and live reload
+* [x] implement --> `bwcli serve` pipe server — dual-port (web + input), stdin mode, r-prefix parsing, broadcast to all clients
+* [ ] implement --> `bwcli serve` file watching and live reload (future)
 
 ### Documentation — IMPLEMENTED
 
@@ -276,14 +266,14 @@ embedded device dashboards (ESP32), and agent-driven UI. Design docs exist
 
 ### Demos and examples (future)
 
-* [ ] create --> `examples/serve-counter.js` — minimal Streamlit-style counter (~30 lines)
-* [ ] create --> `examples/serve-dashboard.js` — multi-card dashboard with live data
-* [ ] create --> `examples/serve-esp32-mock.js` — simulated embedded device SSE
+* [x] create --> `examples/client-server/server.js` — counter + dashboard example (already existed)
+* [x] create --> `examples/llm-chat/server.js` — LLM streaming chat with bwserve (~180 lines)
+* [x] create --> `examples/pipe-demo/sensor.sh` — shell script pushing sensor data via `bwcli serve` pipe server
 
 ### Future work
 
 * [ ] implement --> Declarative events (`o.events`) in `bw.createDOM()` — sendValue, debounce, throttle, sendForm
-* [ ] implement --> `bw.clientParse()` relaxed JSON for ESP32 (single-quoted keys, trailing commas)
+* [x] implement --> `bw.clientParse()` relaxed JSON state machine — single-quoted strings, trailing commas, escapes. Used by `bw.clientConnect()` and `bwcli serve`. 14 tests.
 * [ ] implement --> DOM morphing for `replace` — preserve local state (scroll pos, expanded accordions)
 * [ ] implement --> Form data serialization in actions (sendForm: '#my-form')
 * [x] implement --> `client.register()` / `client.call()` / `client.exec()` three-tier execution model — 6 built-in call functions (scrollTo, focus, download, clipboard, redirect, log), allowExec opt-in, 71 bwserve tests
@@ -388,7 +378,7 @@ Package.json exports: `"."`, `"./lean"`, `"./bccl"`, `"./bwserve"`
 ### Doc cleanup (v2.0.16)
 * [x] archive --> moved `dev/bitwrench-serve-and-protocol.md` → `dev/archive/` (superseded by bw-client-server.md)
 * [x] archive --> moved `dev/bccl-component-redux.md` → `dev/archive/` (superseded by bccl-components-representation.md)
-* [x] scaffold --> bwserve library stubs (`src/bwserve/`) + CLI `bitwrench serve` subcommand
+* [x] scaffold --> bwserve library stubs (`src/bwserve/`) + CLI `bwcli serve` subcommand
 * [x] build --> bwserve integrated into rollup + package.json exports
 
 ### Documentation Blitz (v2.0.16)

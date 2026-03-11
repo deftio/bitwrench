@@ -46,12 +46,12 @@
         margin: '0 0 1rem',
         'letter-spacing': '-0.5px',
         'line-height': '1.2',
-        'max-width': '700px'
+        'max-width': 'min(700px, 90vw)'
       },
       '.bw_hero_sub': {
         'font-size': '1.125rem',
         opacity: '0.85',
-        'max-width': '580px',
+        'max-width': 'min(580px, 90vw)',
         margin: '0 0 2rem',
         'line-height': '1.65'
       },
@@ -195,6 +195,12 @@
         '.bw_hero_sub': { 'font-size': '1rem' },
         '.bw_install_inner': { 'flex-direction': 'column', 'align-items': 'flex-start', gap: '0.5rem' },
         '.bw_install_or': { display: 'none' }
+      },
+      '@media (max-width: 480px)': {
+        '.bw_hero_landing::before': { display: 'none' },
+        '.bw_hero_tagline': { 'font-size': '1.5rem' },
+        '.bw_hero_sub': { 'font-size': '0.9375rem' },
+        '.bw_hero_actions a': { padding: '0.6rem 1.25rem', 'font-size': '0.9375rem' }
       },
       '.bw_feature_highlight': {
         display: 'grid',

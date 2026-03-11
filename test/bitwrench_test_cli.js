@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = resolve(fileURLToPath(import.meta.url), '..');
 
 const fixtureDir = join(__dirname, 'fixtures', 'cli', 'tmp');
-const binPath = resolve(__dirname, '..', 'bin', 'bitwrench.js');
+const binPath = resolve(__dirname, '..', 'bin', 'bwcli.js');
 
 // Dynamically import CLI modules
 let convertFile, resolveTheme, deriveOutputPath, extractMarkdownTitle, extractHtmlTitle, THEME_PRESETS;

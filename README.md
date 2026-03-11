@@ -54,7 +54,7 @@ Or include directly in a page:
 - **Built-in reactivity** — `bw.update()` re-renders components when state changes, `bw.patch()` updates individual elements by ID, `bw.pub()`/`bw.sub()` provides decoupled messaging between any part of the application
 - **CSS and theme generation** — `bw.css()` generates stylesheets from objects, `bw.generateTheme()` derives a complete visual theme (buttons, alerts, badges, cards, forms, tables, dark mode) from 2-3 seed colors
 - **45+ ready-made components** — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards — each a single function call that returns a composable object
-- **Static site CLI** — the `bitwrench` command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support
+- **Static site CLI** — the `bwcli` command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support
 - **Utilities** — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js
 
 ## Getting Started

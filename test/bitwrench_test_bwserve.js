@@ -1325,3 +1325,264 @@ describe("BwServeApp HTTP integration", function() {
     }
   });
 });
+
+// ===================================================================================
+// bw.clientParse() — relaxed JSON parser
+// ===================================================================================
+
+describe("bw.clientParse()", function() {
+  it("should parse strict JSON (no r-prefix)", function() {
+    var msg = bw.clientParse('{"type":"patch","target":"temp","content":"23.5"}');
+    assert.strictEqual(msg.type, 'patch');
+    assert.strictEqual(msg.target, 'temp');
+    assert.strictEqual(msg.content, '23.5');
+  });
+
+  it("should parse r-prefixed single-quoted strings", function() {
+    var msg = bw.clientParse("r{'type':'patch','target':'temp','content':'23.5'}");
+    assert.strictEqual(msg.type, 'patch');
+    assert.strictEqual(msg.target, 'temp');
+    assert.strictEqual(msg.content, '23.5');
+  });
+
+  it("should handle escaped single quotes", function() {
+    var msg = bw.clientParse("r{'content':'it\\'s hot'}");
+    assert.strictEqual(msg.content, "it's hot");
+  });
+
+  it("should handle double quotes inside single-quoted strings", function() {
+    var msg = bw.clientParse("r{'msg':'say \"hello\"'}");
+    assert.strictEqual(msg.msg, 'say "hello"');
+  });
+
+  it("should strip trailing commas", function() {
+    var msg = bw.clientParse("r{'a':1,'b':[2,3,],}");
+    assert.strictEqual(msg.a, 1);
+    assert.deepStrictEqual(msg.b, [2, 3]);
+  });
+
+  it("should handle mixed strict JSON inside r-prefix", function() {
+    var msg = bw.clientParse('r{"already":"valid json"}');
+    assert.strictEqual(msg.already, 'valid json');
+  });
+
+  it("should handle nested objects", function() {
+    var msg = bw.clientParse("r{'type':'replace','target':'#app','node':{'t':'div','c':'hi'}}");
+    assert.strictEqual(msg.type, 'replace');
+    assert.strictEqual(msg.node.t, 'div');
+    assert.strictEqual(msg.node.c, 'hi');
+  });
+
+  it("should handle arrays in values", function() {
+    var msg = bw.clientParse("r{'ops':[{'type':'patch','target':'a','content':'1'},{'type':'patch','target':'b','content':'2'}]}");
+    assert.strictEqual(msg.ops.length, 2);
+    assert.strictEqual(msg.ops[0].target, 'a');
+    assert.strictEqual(msg.ops[1].target, 'b');
+  });
+
+  it("should handle whitespace in input", function() {
+    var msg = bw.clientParse("  r{ 'type' : 'patch' , 'target' : 'x' , 'content' : '1' }  ");
+    assert.strictEqual(msg.type, 'patch');
+    assert.strictEqual(msg.target, 'x');
+  });
+
+  it("should throw on invalid JSON", function() {
+    assert.throws(function() {
+      bw.clientParse("not json");
+    });
+  });
+
+  it("should throw on invalid r-prefixed JSON", function() {
+    assert.throws(function() {
+      bw.clientParse("r{broken");
+    });
+  });
+
+  it("should handle empty/null input", function() {
+    assert.throws(function() { bw.clientParse(''); });
+    assert.throws(function() { bw.clientParse(null); });
+  });
+
+  it("should handle numeric values", function() {
+    var msg = bw.clientParse("r{'count':42,'pi':3.14,'neg':-1}");
+    assert.strictEqual(msg.count, 42);
+    assert.strictEqual(msg.pi, 3.14);
+    assert.strictEqual(msg.neg, -1);
+  });
+
+  it("should handle boolean and null values", function() {
+    var msg = bw.clientParse("r{'a':true,'b':false,'c':null}");
+    assert.strictEqual(msg.a, true);
+    assert.strictEqual(msg.b, false);
+    assert.strictEqual(msg.c, null);
+  });
+
+  // --- Real-world content with apostrophes ---
+
+  it("should handle apostrophe in value (escaped)", function() {
+    var msg = bw.clientParse("r{'content':'Barry\\'s food'}");
+    assert.strictEqual(msg.content, "Barry's food");
+  });
+
+  it("should handle multiple apostrophes in value", function() {
+    var msg = bw.clientParse("r{'content':'it\\'s Barry\\'s food and it\\'s great'}");
+    assert.strictEqual(msg.content, "it's Barry's food and it's great");
+  });
+
+  it("should handle apostrophe in target value", function() {
+    var msg = bw.clientParse("r{'type':'patch','target':'room-name','content':'Barry\\'s Room'}");
+    assert.strictEqual(msg.content, "Barry's Room");
+    assert.strictEqual(msg.type, 'patch');
+  });
+
+  it("should handle backslash in value", function() {
+    var msg = bw.clientParse("r{'path':'C:\\\\Users\\\\data'}");
+    assert.strictEqual(msg.path, "C:\\Users\\data");
+  });
+
+  it("should handle double quotes inside single-quoted values (C literal scenario)", function() {
+    // In C: "r{'msg':'say \"hello\"'}"
+    var msg = bw.clientParse("r{'msg':'say \"hello\"'}");
+    assert.strictEqual(msg.msg, 'say "hello"');
+  });
+
+  it("should handle newline escape in value", function() {
+    var msg = bw.clientParse("r{'text':'line1\\nline2'}");
+    assert.strictEqual(msg.text, "line1\nline2");
+  });
+
+  it("should handle tab escape in value", function() {
+    var msg = bw.clientParse("r{'text':'col1\\tcol2'}");
+    assert.strictEqual(msg.text, "col1\tcol2");
+  });
+
+  // --- Nested TACO with content containing apostrophes ---
+
+  it("should handle nested TACO with apostrophe in content", function() {
+    var msg = bw.clientParse("r{'type':'replace','target':'#app','node':{'t':'p','c':'Don\\'t panic'}}");
+    assert.strictEqual(msg.type, 'replace');
+    assert.strictEqual(msg.node.t, 'p');
+    assert.strictEqual(msg.node.c, "Don't panic");
+  });
+
+  it("should handle batch with apostrophes in multiple ops", function() {
+    var msg = bw.clientParse("r{'type':'batch','ops':[{'type':'patch','target':'a','content':'it\\'s'},{'type':'patch','target':'b','content':'they\\'re'}]}");
+    assert.strictEqual(msg.ops[0].content, "it's");
+    assert.strictEqual(msg.ops[1].content, "they're");
+  });
+
+  // --- Edge cases ---
+
+  it("should handle empty single-quoted string", function() {
+    var msg = bw.clientParse("r{'content':''}");
+    assert.strictEqual(msg.content, '');
+  });
+
+  it("should handle single char value", function() {
+    var msg = bw.clientParse("r{'c':'x'}");
+    assert.strictEqual(msg.c, 'x');
+  });
+
+  it("should handle value that is only an escaped apostrophe", function() {
+    var msg = bw.clientParse("r{'c':'\\''}");
+    assert.strictEqual(msg.c, "'");
+  });
+
+  it("should handle consecutive escaped apostrophes", function() {
+    var msg = bw.clientParse("r{'c':'\\'\\'\\'\\''}");
+    assert.strictEqual(msg.c, "''''");
+  });
+
+  // --- ESP32 / embedded simulation: BW_PATCH output ---
+
+  it("should parse simulated BW_PATCH output (sensor value)", function() {
+    // Simulates: BW_PATCH(msg, "val-temp", "23.5 C")
+    var msg = bw.clientParse("r{'type':'patch','target':'val-temp','content':'23.5 C'}");
+    assert.strictEqual(msg.target, 'val-temp');
+    assert.strictEqual(msg.content, '23.5 C');
+  });
+
+  it("should parse simulated BW_BATCH output (multiple sensors)", function() {
+    // Simulates batch of 3 sensor patches
+    var msg = bw.clientParse("r{'type':'batch','ops':[{'type':'patch','target':'val-temp','content':'23.5 C'},{'type':'patch','target':'val-humidity','content':'45%'},{'type':'patch','target':'val-uptime','content':'3600s'}]}");
+    assert.strictEqual(msg.type, 'batch');
+    assert.strictEqual(msg.ops.length, 3);
+    assert.strictEqual(msg.ops[0].content, '23.5 C');
+    assert.strictEqual(msg.ops[2].content, '3600s');
+  });
+
+  it("should parse simulated BW_REPLACE with TACO node", function() {
+    // Simulates: BW_REPLACE(msg, "#app", taco)
+    var msg = bw.clientParse("r{'type':'replace','target':'#app','node':{'t':'h1','c':'Hello World'}}");
+    assert.strictEqual(msg.type, 'replace');
+    assert.strictEqual(msg.node.t, 'h1');
+    assert.strictEqual(msg.node.c, 'Hello World');
+  });
+
+  it("should parse simulated BW_TACO_ATTR output", function() {
+    // Simulates: BW_TACO_ATTR(buf, "button", "'data-bw-action':'increment','class':'bw-btn'", "+1")
+    var msg = bw.clientParse("r{'t':'button','a':{'data-bw-action':'increment','class':'bw-btn'},'c':'+1'}");
+    assert.strictEqual(msg.t, 'button');
+    assert.strictEqual(msg.a['data-bw-action'], 'increment');
+    assert.strictEqual(msg.c, '+1');
+  });
+});
+
+// ===================================================================================
+// BwServeApp.broadcast()
+// ===================================================================================
+
+describe("BwServeApp.broadcast()", function() {
+  it("should send message to all connected clients", function() {
+    var app = new BwServeApp({});
+    // Simulate two connected clients
+    var client1 = new BwServeClient('c1', null);
+    var client2 = new BwServeClient('c2', null);
+    app._clients.set('c1', { pagePath: '/', client: client1 });
+    app._clients.set('c2', { pagePath: '/', client: client2 });
+
+    var count = app.broadcast({ type: 'patch', target: 'test', content: 'hello' });
+    assert.strictEqual(count, 2);
+    assert.strictEqual(client1._sent.length, 1);
+    assert.strictEqual(client2._sent.length, 1);
+    assert.strictEqual(client1._sent[0].content, 'hello');
+  });
+
+  it("should target specific client when clientId is set", function() {
+    var app = new BwServeApp({});
+    var client1 = new BwServeClient('c1', null);
+    var client2 = new BwServeClient('c2', null);
+    app._clients.set('c1', { pagePath: '/', client: client1 });
+    app._clients.set('c2', { pagePath: '/', client: client2 });
+
+    var count = app.broadcast({ type: 'patch', target: 'test', content: 'only-c1', clientId: 'c1' });
+    assert.strictEqual(count, 1);
+    assert.strictEqual(client1._sent.length, 1);
+    assert.strictEqual(client2._sent, undefined); // never initialized
+  });
+
+  it("should skip closed clients", function() {
+    var app = new BwServeApp({});
+    var client1 = new BwServeClient('c1', null);
+    var client2 = new BwServeClient('c2', null);
+    client2._closed = true;
+    app._clients.set('c1', { pagePath: '/', client: client1 });
+    app._clients.set('c2', { pagePath: '/', client: client2 });
+
+    var count = app.broadcast({ type: 'patch', target: 'test', content: 'x' });
+    assert.strictEqual(count, 1);
+    assert.strictEqual(client1._sent.length, 1);
+  });
+
+  it("should return 0 when no clients connected", function() {
+    var app = new BwServeApp({});
+    var count = app.broadcast({ type: 'patch', target: 'test', content: 'x' });
+    assert.strictEqual(count, 0);
+  });
+
+  it("should return 0 for unknown clientId", function() {
+    var app = new BwServeApp({});
+    var count = app.broadcast({ type: 'patch', target: 'test', content: 'x', clientId: 'unknown' });
+    assert.strictEqual(count, 0);
+  });
+});

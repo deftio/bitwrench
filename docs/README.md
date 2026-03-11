@@ -10,9 +10,17 @@ These guides cover how to build UIs with bitwrench. Start with the TACO format, 
 | [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
 | [Component Library](component-library.md) | All 52 `make*()` functions with signatures and examples |
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
-| [CLI](cli.md) | The `bitwrench` command: file conversion, themes, standalone pages |
+| [CLI](cli.md) | The `bwcli` command: file conversion, themes, standalone pages |
 | [bwserve](bwserve.md) | Server-driven UI (coming soon) |
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
+
+## Tutorials
+
+| Tutorial | Description |
+|----------|-------------|
+| [Building a Website](tutorial-website.md) | Build a complete landing page from scratch |
+| [Server App with bwserve](tutorial-bwserve.md) | Build a Streamlit-style server-driven dashboard |
+| [ESP32 Embedded](tutorial-embedded.md) | ESP32 IoT dashboard with C/C++ macros |
 
 ## Interactive Docs
 

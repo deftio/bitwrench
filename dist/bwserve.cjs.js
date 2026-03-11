@@ -437,6 +437,34 @@ class BwServeApp {
   }
 
   /**
+   * Broadcast a protocol message to all connected clients.
+   *
+   * If msg has a clientId field, send only to that client.
+   * Otherwise, broadcast to all.
+   *
+   * @param {Object} msg - Protocol message (replace, patch, append, remove, batch)
+   * @returns {number} Number of clients that received the message
+   */
+  broadcast(msg) {
+    if (msg.clientId) {
+      var record = this._clients.get(msg.clientId);
+      if (record && record.client) {
+        record.client._send(msg);
+        return 1;
+      }
+      return 0;
+    }
+    var count = 0;
+    for (var record of this._clients.values()) {
+      if (record.client && !record.client._closed) {
+        record.client._send(msg);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Internal: route incoming HTTP requests.
    * @private
    */

@@ -13,7 +13,7 @@
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
 	"bin": {
-		"bitwrench": "./bin/bitwrench.js"
+		"bwcli": "./bin/bwcli.js"
 	},
 	"type": "module",
 	"module": "./dist/bitwrench.esm.js",

@@ -312,7 +312,7 @@ badge.set('color', '#f44336');
 Because TACO objects are plain data, they work in contexts beyond browser rendering:
 
 - **Server-side rendering**: `bw.html(taco)` produces HTML strings in Node.js
-- **Static site generation**: The `bitwrench` CLI converts files to styled HTML pages
+- **Static site generation**: The `bwcli` command converts files to styled HTML pages
 - **Server-driven UI**: A server can push TACO objects to the browser via SSE, and the client renders them with `bw.DOM()`
 - **Serialization**: TACO objects (without function values) can be JSON-serialized and sent over the network
 - **Testing**: TACO objects can be inspected and compared as data without needing a DOM
