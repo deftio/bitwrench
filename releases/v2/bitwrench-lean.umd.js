@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.15 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.16 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -11,14 +11,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.15',
+    version: '2.0.16',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-10T09:05:58.828Z'
+    buildDate: '2026-03-12T08:01:30.008Z'
   };
 
   /**
@@ -436,12 +436,11 @@
     var lightBase = config.light || hslToHex([h, 8, 97]);
     var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
-    // Background & surface tokens — default to light (white/near-white).
-    // Dark backgrounds require explicit config.background / config.surface.
-    // Primary/secondary colors are accents, not page backgrounds, so
-    // isLightPalette should NOT drive bg/surface defaults.
-    var bgBase = config.background || '#ffffff';
-    var surfBase = config.surface || '#f8f9fa';
+    // Background & surface tokens — tinted with primary hue for theme personality.
+    // Very subtle: bg at L=98/S=6, surface at L=96/S=8.
+    // User can override with config.background / config.surface.
+    var bgBase = config.background || hslToHex([h, 6, 98]);
+    var surfBase = config.surface || hslToHex([h, 8, 96]);
 
     var palette = {
       primary:    deriveShades(config.primary),
@@ -1574,7 +1573,7 @@
       '@media (min-width: 992px)': { '.bw_container': { 'max-width': '960px' } },
       '@media (min-width: 1200px)': { '.bw_container': { 'max-width': '1140px' } },
       '.bw_container_fluid': {
-        'width': '100%', 'padding-right': '15px', 'padding-left': '15px',
+        'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
         'margin-right': 'auto', 'margin-left': 'auto'
       },
       '.bw_row': {
@@ -1735,7 +1734,8 @@
       '.bw_badge': {
         'display': 'inline-block', 'font-size': '0.875rem',
         'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
-        'white-space': 'nowrap', 'vertical-align': 'baseline'
+        'white-space': 'nowrap', 'vertical-align': 'baseline',
+        'padding': '0.35rem 0.65rem', 'border-radius': '0.25rem'
       },
       '.bw_badge:empty': { 'display': 'none' },
       '.bw_badge_sm': { 'font-size': '0.75rem', 'padding': '0.25rem 0.5rem' },
@@ -1920,7 +1920,7 @@
     // ---- Code demo ----
     codeDemo: {
       '.bw_code_demo': { 'margin-bottom': '2rem' },
-      '.bw_code_pre': { 'margin': '0', 'border': 'none', 'overflow-x': 'auto' },
+      '.bw_code_pre': { 'margin': '0', 'border': 'none', 'overflow-x': 'auto', 'max-width': '100%' },
       '.bw_code_block': {
         'display': 'block', 'padding': '1.25rem',
         'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
@@ -2017,7 +2017,7 @@
       },
       '.bw_modal.bw_modal_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
       '.bw_modal_dialog': {
-        'position': 'relative', 'width': '100%', 'max-width': '500px', 'margin': '1.75rem auto',
+        'position': 'relative', 'width': 'calc(100% - 1rem)', 'max-width': '500px', 'margin': '1.75rem auto',
         'pointer-events': 'none'
       },
       '.bw_modal.bw_modal_show .bw_modal_dialog': { 'transform': 'translateY(0)' },
@@ -2047,7 +2047,7 @@
       '.bw_toast_container.bw_toast_top_center': { 'top': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
       '.bw_toast_container.bw_toast_bottom_center': { 'bottom': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
       '.bw_toast': {
-        'pointer-events': 'auto', 'width': '350px', 'max-width': '100%', 'background-clip': 'padding-box',
+        'pointer-events': 'auto', 'width': '350px', 'max-width': 'calc(100vw - 2rem)', 'background-clip': 'padding-box',
         'opacity': '0'
       },
       '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
@@ -2133,7 +2133,7 @@
       '.bw_tooltip_wrapper': { 'position': 'relative', 'display': 'inline-block' },
       '.bw_tooltip': {
         'position': 'absolute', 'z-index': '999',
-        'font-size': '0.875rem', 'white-space': 'nowrap', 'pointer-events': 'none',
+        'font-size': '0.875rem', 'white-space': 'nowrap', 'max-width': 'min(300px, calc(100vw - 1rem))', 'pointer-events': 'none',
         'opacity': '0', 'visibility': 'hidden'
       },
       '.bw_tooltip.bw_tooltip_show': { 'opacity': '1', 'visibility': 'visible' },
@@ -2153,7 +2153,7 @@
       '.bw_popover_trigger': { 'cursor': 'pointer' },
       '.bw_popover': {
         'position': 'absolute', 'z-index': '1000',
-        'min-width': '200px', 'max-width': '320px',
+        'min-width': '200px', 'max-width': 'min(320px, calc(100vw - 2rem))',
         'pointer-events': 'none', 'opacity': '0', 'visibility': 'hidden'
       },
       '.bw_popover.bw_popover_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
@@ -2336,7 +2336,18 @@
         '.bw_hero, .bw_hero': { 'padding': '2rem 1rem' },
         '.bw_cta_actions, .bw_cta-actions': { 'flex-direction': 'column' },
         '.bw_hstack, .bw_hstack': { 'flex-direction': 'column' },
-        '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' }
+        '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' },
+        '.bw_modal_dialog': { 'margin': '0.5rem auto' },
+        '.bw_modal_lg': { 'max-width': 'calc(100% - 1rem)' },
+        '.bw_modal_xl': { 'max-width': 'calc(100% - 1rem)' },
+        '.bw_navbar': { 'padding': '0.5rem 0.75rem' },
+        '.bw_navbar_brand': { 'margin-right': '0.5rem', 'font-size': '1rem' },
+        '.bw_navbar_nav': { 'flex-wrap': 'wrap' },
+        '.bw_tooltip': { 'white-space': 'normal' },
+        '.bw_table': { 'display': 'block', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' },
+        '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': { 'flex': '0 0 100%', 'max-width': '100%' },
+        '.bw_container': { 'padding-right': '0.5rem', 'padding-left': '0.5rem' },
+        '.bw_container_fluid': { 'padding-right': '0.5rem', 'padding-left': '0.5rem' }
       }
     }
   };
@@ -5835,6 +5846,391 @@
     }
     comp[action](data);
     return true;
+  };
+
+  // ===================================================================================
+  // bw.clientApply() / bw.clientConnect() — Server-driven UI protocol
+  // ===================================================================================
+
+  /**
+   * Registry of named functions sent via register messages.
+   * Populated by clientApply({ type: 'register', name, body }).
+   * Invoked by clientApply({ type: 'call', name, args }).
+   * @private
+   */
+  bw._clientFunctions = {};
+
+  /**
+   * Whether exec messages are allowed. Set by clientConnect opts.allowExec.
+   * Default false — exec messages are rejected unless explicitly opted in.
+   * @private
+   */
+  bw._allowExec = false;
+
+  /**
+   * Built-in client functions available via call() without registration.
+   * @private
+   */
+  bw._builtinClientFunctions = {
+    scrollTo: function(selector) {
+      var el = bw._el(selector);
+      if (el) el.scrollTop = el.scrollHeight;
+    },
+    focus: function(selector) {
+      var el = bw._el(selector);
+      if (el && typeof el.focus === 'function') el.focus();
+    },
+    download: function(filename, content, mimeType) {
+      if (typeof document === 'undefined') return;
+      var blob = new Blob([content], { type: mimeType || 'text/plain' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
+    clipboard: function(text) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      }
+    },
+    redirect: function(url) {
+      if (typeof window !== 'undefined') window.location.href = url;
+    },
+    log: function() {
+      console.log.apply(console, arguments);
+    }
+  };
+
+  /**
+   * Parse a bwserve protocol message string, supporting both strict JSON
+   * and r-prefixed relaxed JSON (single-quoted strings, trailing commas).
+   *
+   * The r-prefix format is designed for C/C++ string literals where
+   * double-quote escaping is painful. The parser is a state machine
+   * that walks character by character — not a regex replace.
+   *
+   * Escaping: apostrophes inside single-quoted values must be escaped
+   * with backslash: r{'name':'Barry\'s room'}
+   *
+   * @param {string} str - JSON or r-prefixed relaxed JSON string
+   * @returns {Object} Parsed message object
+   * @throws {SyntaxError} If the string is not valid JSON or relaxed JSON
+   * @category Server
+   */
+  bw.clientParse = function(str) {
+    str = (str || '').trim();
+    if (str.charAt(0) !== 'r') return JSON.parse(str);
+    str = str.slice(1);
+
+    var out = [];
+    var i = 0;
+    var len = str.length;
+
+    while (i < len) {
+      var ch = str[i];
+
+      if (ch === "'") {
+        // Single-quoted string → emit as double-quoted
+        out.push('"');
+        i++;
+        while (i < len) {
+          var c = str[i];
+          if (c === '\\' && i + 1 < len) {
+            var next = str[i + 1];
+            if (next === "'") {
+              out.push("'");     // \' in input → ' in output
+            } else {
+              out.push('\\');
+              out.push(next);
+            }
+            i += 2;
+          } else if (c === '"') {
+            out.push('\\"');
+            i++;
+          } else if (c === "'") {
+            break;
+          } else {
+            out.push(c);
+            i++;
+          }
+        }
+        out.push('"');
+        i++; // skip closing '
+
+      } else if (ch === '"') {
+        // Double-quoted string — pass through verbatim
+        out.push(ch);
+        i++;
+        while (i < len) {
+          var c2 = str[i];
+          if (c2 === '\\' && i + 1 < len) {
+            out.push(c2);
+            out.push(str[i + 1]);
+            i += 2;
+          } else {
+            out.push(c2);
+            i++;
+            if (c2 === '"') break;
+          }
+        }
+
+      } else if (ch === ',') {
+        // Trailing comma check: skip comma if next non-whitespace is } or ]
+        var j = i + 1;
+        while (j < len && (str[j] === ' ' || str[j] === '\t' || str[j] === '\n' || str[j] === '\r')) j++;
+        if (j < len && (str[j] === '}' || str[j] === ']')) {
+          i++; // skip trailing comma
+        } else {
+          out.push(ch);
+          i++;
+        }
+
+      } else {
+        out.push(ch);
+        i++;
+      }
+    }
+
+    return JSON.parse(out.join(''));
+  };
+
+  /**
+   * Apply a bwserve protocol message to the DOM.
+   *
+   * Dispatches one of 9 message types:
+   *   replace  — bw.DOM(target, node)
+   *   append   — target.appendChild(bw.createDOM(node))
+   *   remove   — bw.cleanup(target); target.remove()
+   *   patch    — bw.patch(target, content, attr)
+   *   batch    — iterate ops, call clientApply for each
+   *   message  — bw.message(target, action, data)
+   *   register — store a named function for later call()
+   *   call     — invoke a registered or built-in function
+   *   exec     — execute arbitrary JS (requires allowExec)
+   *
+   * Target resolution:
+   *   Starts with '#' or '.' → CSS selector (querySelector)
+   *   Otherwise → getElementById, then bw._el fallback
+   *
+   * @param {Object} msg - Protocol message
+   * @returns {boolean} true if the message was applied successfully
+   * @category Server
+   */
+  bw.clientApply = function(msg) {
+    if (!msg || !msg.type) return false;
+
+    var type = msg.type;
+    var target = msg.target;
+
+    if (type === 'replace') {
+      var el = bw._el(target);
+      if (!el) return false;
+      bw.DOM(el, msg.node);
+      return true;
+
+    } else if (type === 'patch') {
+      var patched = bw.patch(target, msg.content, msg.attr);
+      return patched !== null;
+
+    } else if (type === 'append') {
+      var parent = bw._el(target);
+      if (!parent) return false;
+      var child = bw.createDOM(msg.node);
+      parent.appendChild(child);
+      return true;
+
+    } else if (type === 'remove') {
+      var toRemove = bw._el(target);
+      if (!toRemove) return false;
+      if (typeof bw.cleanup === 'function') bw.cleanup(toRemove);
+      toRemove.remove();
+      return true;
+
+    } else if (type === 'batch') {
+      if (!Array.isArray(msg.ops)) return false;
+      var allOk = true;
+      msg.ops.forEach(function(op) {
+        if (!bw.clientApply(op)) allOk = false;
+      });
+      return allOk;
+
+    } else if (type === 'message') {
+      return bw.message(msg.target, msg.action, msg.data);
+
+    } else if (type === 'register') {
+      if (!msg.name || !msg.body) return false;
+      try {
+        bw._clientFunctions[msg.name] = new Function('return ' + msg.body)();
+        return true;
+      } catch (e) {
+        console.error('[bw] register error:', msg.name, e);
+        return false;
+      }
+
+    } else if (type === 'call') {
+      if (!msg.name) return false;
+      var fn = bw._clientFunctions[msg.name] || bw._builtinClientFunctions[msg.name];
+      if (typeof fn !== 'function') return false;
+      try {
+        var args = Array.isArray(msg.args) ? msg.args : [];
+        fn.apply(null, args);
+        return true;
+      } catch (e) {
+        console.error('[bw] call error:', msg.name, e);
+        return false;
+      }
+
+    } else if (type === 'exec') {
+      if (!bw._allowExec) {
+        console.warn('[bw] exec rejected: allowExec is not enabled');
+        return false;
+      }
+      if (!msg.code) return false;
+      try {
+        new Function(msg.code)();
+        return true;
+      } catch (e) {
+        console.error('[bw] exec error:', e);
+        return false;
+      }
+    }
+
+    return false;
+  };
+
+  /**
+   * Connect to a bwserve SSE endpoint and apply protocol messages automatically.
+   *
+   * Returns a connection object with sendAction(), on(), and close() methods.
+   *
+   * @param {string} url - SSE endpoint URL (e.g., '/__bw/events/client-1')
+   * @param {Object} [opts] - Connection options
+   * @param {string} [opts.transport='sse'] - Transport type: 'sse' (default) or 'poll'
+   * @param {number} [opts.interval=2000] - Poll interval in ms (only for 'poll' transport)
+   * @param {string} [opts.actionUrl] - POST endpoint for actions (default: derived from url)
+   * @param {boolean} [opts.reconnect=true] - Auto-reconnect on disconnect
+   * @param {boolean} [opts.allowExec=false] - Enable exec message type (arbitrary JS execution)
+   * @param {Function} [opts.onStatus] - Status callback: 'connecting'|'connected'|'disconnected'
+   * @param {Function} [opts.onMessage] - Raw message callback (before clientApply)
+   * @returns {Object} Connection object { sendAction, on, close, status }
+   * @category Server
+   */
+  bw.clientConnect = function(url, opts) {
+    opts = opts || {};
+    var transport = opts.transport || 'sse';
+    var actionUrl = opts.actionUrl || url.replace(/\/events\//, '/action/');
+    var reconnect = opts.reconnect !== false;
+    var onStatus = opts.onStatus || function() {};
+    var onMessage = opts.onMessage || null;
+    var handlers = {};
+    // Set the global allowExec flag from connection options
+    bw._allowExec = !!opts.allowExec;
+    var conn = {
+      status: 'connecting',
+      _es: null,
+      _pollTimer: null
+    };
+
+    function setStatus(s) {
+      conn.status = s;
+      onStatus(s);
+    }
+
+    function handleMessage(data) {
+      try {
+        var msg = typeof data === 'string' ? bw.clientParse(data) : data;
+        if (onMessage) onMessage(msg);
+        if (handlers.message) handlers.message(msg);
+        bw.clientApply(msg);
+      } catch (e) {
+        if (handlers.error) handlers.error(e);
+      }
+    }
+
+    if (transport === 'sse' && typeof EventSource !== 'undefined') {
+      setStatus('connecting');
+      var es = new EventSource(url);
+      conn._es = es;
+
+      es.onopen = function() {
+        setStatus('connected');
+        if (handlers.open) handlers.open();
+      };
+
+      es.onmessage = function(e) {
+        handleMessage(e.data);
+      };
+
+      es.onerror = function() {
+        if (conn.status === 'connected') {
+          setStatus('disconnected');
+        }
+        if (handlers.error) handlers.error(new Error('SSE connection error'));
+        if (!reconnect) {
+          es.close();
+        }
+        // EventSource auto-reconnects by default when reconnect=true
+      };
+    } else if (transport === 'poll') {
+      var interval = opts.interval || 2000;
+      setStatus('connected');
+      conn._pollTimer = setInterval(function() {
+        fetch(url).then(function(r) { return r.json(); }).then(function(msgs) {
+          if (Array.isArray(msgs)) {
+            msgs.forEach(handleMessage);
+          } else if (msgs && msgs.type) {
+            handleMessage(msgs);
+          }
+        }).catch(function(e) {
+          if (handlers.error) handlers.error(e);
+        });
+      }, interval);
+    }
+
+    /**
+     * Send an action to the server via POST.
+     * @param {string} action - Action name
+     * @param {Object} [data] - Action payload
+     */
+    conn.sendAction = function(action, data) {
+      var body = JSON.stringify({ type: 'action', action: action, data: data || {} });
+      fetch(actionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body
+      }).catch(function(e) {
+        if (handlers.error) handlers.error(e);
+      });
+    };
+
+    /**
+     * Register an event handler.
+     * @param {string} event - 'open'|'message'|'error'|'close'
+     * @param {Function} handler
+     */
+    conn.on = function(event, handler) {
+      handlers[event] = handler;
+      return conn;
+    };
+
+    /**
+     * Close the connection.
+     */
+    conn.close = function() {
+      if (conn._es) {
+        conn._es.close();
+        conn._es = null;
+      }
+      if (conn._pollTimer) {
+        clearInterval(conn._pollTimer);
+        conn._pollTimer = null;
+      }
+      setStatus('disconnected');
+      if (handlers.close) handlers.close();
+    };
+
+    return conn;
   };
 
   // ===================================================================================
