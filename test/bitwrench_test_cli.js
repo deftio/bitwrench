@@ -365,7 +365,7 @@ describe('CLI: utility functions', function () {
 describe('CLI: integration tests', function () {
     it('should print version with --version', function () {
         const result = execSync(`node ${binPath} --version`, { encoding: 'utf8' });
-        assert.ok(result.includes('bitwrench v'));
+        assert.ok(result.includes('bwcli v'));
         // Dynamically check version matches package.json
         const pkg = JSON.parse(readFileSync(resolve(binPath, '..', '..', 'package.json'), 'utf8'));
         assert.ok(result.includes(pkg.version), `Expected version ${pkg.version} in output: ${result.trim()}`);
