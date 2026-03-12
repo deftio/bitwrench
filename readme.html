@@ -96,7 +96,8 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
 <li class="quikdown-li"><strong class="quikdown-strong">Built-in reactivity</strong> — <code class="quikdown-code">bw.update()</code> re-renders components when state changes, <code class="quikdown-code">bw.patch()</code> updates individual elements by ID, <code class="quikdown-code">bw.pub()</code>/<code class="quikdown-code">bw.sub()</code> provides decoupled messaging between any part of the application</li>
 <li class="quikdown-li"><strong class="quikdown-strong">CSS and theme generation</strong> — <code class="quikdown-code">bw.css()</code> generates stylesheets from objects, <code class="quikdown-code">bw.generateTheme()</code> derives a complete visual theme (buttons, alerts, badges, cards, forms, tables, dark mode) from 2-3 seed colors</li>
 <li class="quikdown-li"><strong class="quikdown-strong">45+ ready-made components</strong> — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards — each a single function call that returns a composable object</li>
-<li class="quikdown-li"><strong class="quikdown-strong">Static site CLI</strong> — the <code class="quikdown-code">bitwrench</code> command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Server-driven UI (bwserve)</strong> — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the <code class="quikdown-code">bwcli serve</code> pipe server</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Static site CLI</strong> — the <code class="quikdown-code">bwcli</code> command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support</li>
 <li class="quikdown-li"><strong class="quikdown-strong">Utilities</strong> — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js</li>
 </ul><h2 class="quikdown-h2">Getting Started</h2>
 <p><pre class="quikdown-pre"><code class="language-html">&lt;!DOCTYPE html&gt;
@@ -207,16 +208,30 @@ bw.toggleTheme();  // switch between primary and alternate palettes</code></pre>
 <td class="quikdown-td"><code class="quikdown-code">bw.inspect(target)</code></td>
 <td class="quikdown-td">Debug a component in the browser console</td>
 </tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.clientConnect(url, opts)</code></td>
+<td class="quikdown-td">Connect to a bwserve SSE endpoint</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.clientApply(msg)</code></td>
+<td class="quikdown-td">Apply a bwserve protocol message to the DOM</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.clientParse(str)</code></td>
+<td class="quikdown-td">Parse strict or r-prefix relaxed JSON</td>
+</tr>
 </tbody>
 </table><p>See the full <a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/08-api-reference.html" rel="noopener noreferrer">API Reference</a> for all functions.</p><h2 class="quikdown-h2">CLI</h2>
 <p>Convert Markdown, HTML, or JSON files to styled standalone pages:</p><pre class="quikdown-pre"><code class="language-bash"># Convert Markdown to a self-contained HTML page
-bitwrench README.md -o index.html --standalone
+bwcli README.md -o index.html --standalone
 
 # Apply a theme preset
-bitwrench doc.md -o doc.html --standalone --theme ocean
+bwcli doc.md -o doc.html --standalone --theme ocean
 
 # Custom colors
-bitwrench doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</code></pre><p>Flags: <code class="quikdown-code">--output/-o</code>, <code class="quikdown-code">--standalone/-s</code>, <code class="quikdown-code">--cdn</code>, <code class="quikdown-code">--theme/-t</code>, <code class="quikdown-code">--css/-c</code>, <code class="quikdown-code">--title</code>, <code class="quikdown-code">--favicon/-f</code>, <code class="quikdown-code">--highlight</code>, <code class="quikdown-code">--verbose/-v</code></p><h2 class="quikdown-h2">Build Formats</h2>
+bwcli doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</code></pre><p>Flags: <code class="quikdown-code">--output/-o</code>, <code class="quikdown-code">--standalone/-s</code>, <code class="quikdown-code">--cdn</code>, <code class="quikdown-code">--theme/-t</code>, <code class="quikdown-code">--css/-c</code>, <code class="quikdown-code">--title</code>, <code class="quikdown-code">--favicon/-f</code>, <code class="quikdown-code">--highlight</code>, <code class="quikdown-code">--verbose/-v</code></p><h3 class="quikdown-h3">Pipe Server</h3>
+<p><code class="quikdown-code">bwcli serve</code> turns any language into a bwserve backend — send JSON protocol messages via HTTP POST or stdin, and connected browsers update in real time:</p><pre class="quikdown-pre"><code class="language-bash">bwcli serve --port 8080 --input-port 9000
+curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&quot;target&quot;:&quot;temp&quot;,&quot;content&quot;:&quot;23.5 C&quot;}&#39;</code></pre><h2 class="quikdown-h2">Build Formats</h2>
 <table class="quikdown-table">
 <thead class="quikdown-thead">
 <tr class="quikdown-tr">
@@ -253,8 +268,13 @@ bitwrench doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</c
 <li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> — three-level component model, ComponentHandle, reactive state</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> — all 50+ <code class="quikdown-code">make*()</code> functions with signatures and examples</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/theming.md">Theming</a> — palette-driven theme generation, presets, design tokens</li>
-<li class="quikdown-li"><a class="quikdown-a" href="docs/cli.md">CLI</a> — the <code class="quikdown-code">bitwrench</code> command for file conversion</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/cli.md">CLI</a> — the <code class="quikdown-code">bwcli</code> command for file conversion and pipe server</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/bwserve.md">bwserve</a> — server-driven UI protocol (SSE, actions, embedded devices)</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/llm-bitwrench-guide.md">LLM Guide</a> — compact single-file reference for AI-assisted development</li>
+</ul><p><strong class="quikdown-strong">Tutorials:</strong></p><ul class="quikdown-ul">
+<li class="quikdown-li"><a class="quikdown-a" href="docs/tutorial-website.md">Build a Website</a> — multi-section landing page from TACO objects</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/tutorial-bwserve.md">bwserve Dashboard</a> — Streamlit-style server-push dashboard</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/tutorial-embedded.md">ESP32 IoT Dashboard</a> — embedded sensor dashboard with C macros</li>
 </ul><p><strong class="quikdown-strong">Interactive demos</strong> (live site):</p><ul class="quikdown-ul">
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/00-quick-start.html" rel="noopener noreferrer">Quick Start</a> — first steps with <code class="quikdown-code">bw.DOM()</code></li>
 <li class="quikdown-li"><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/01-components.html" rel="noopener noreferrer">Components</a> — buttons, cards, alerts, badges, navbars</li>
@@ -266,7 +286,7 @@ bitwrench doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</c
 </ul><h2 class="quikdown-h2">Development</h2>
 <p><pre class="quikdown-pre"><code class="language-bash">npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
-npm test             # run unit tests (558 tests)
+npm test             # run unit tests (1000+ tests)
 npm run test:cli     # run CLI tests (49 tests)
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint
