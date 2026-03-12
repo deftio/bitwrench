@@ -39,9 +39,9 @@
 
   // Docs secondary nav items (sub-nav bar, shown only on docs pages)
   var docsSecondaryItems = [
-    { text: 'API Reference', href: '08-api-reference.html' },
     { text: 'Builds', href: '09-builds.html' },
-    { text: 'Debugging', href: '11-debugging.html' }
+    { text: 'Debugging', href: '11-debugging.html' },
+    { text: 'API Reference', href: '08-api-reference.html' }
   ];
 
   // bwserve secondary nav items
@@ -220,6 +220,7 @@
           a: { class: 'bw_site_nav_inner' },
           c: [
             // Left: logo + version
+            // Homepage shows full logo with text; sub-pages show icon only
             {
               t: 'a',
               a: {
@@ -230,9 +231,9 @@
                 {
                   t: 'img',
                   a: {
-                    src: '../images/bitwrench-thick-logo.svg',
+                    src: '../images/bitwrench-icon.svg',
                     alt: 'bitwrench',
-                    class: 'bw_site_nav_logo'
+                    class: 'bw_site_nav_icon'
                   }
                 },
                 {
@@ -367,6 +368,13 @@
           btn.textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
         }
       }
+
+      // Append shared site footer
+      var footerTaco = {
+        t: 'footer', a: { class: 'bw_site_footer_shared' },
+        c: { t: 'p', c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
+      };
+      document.body.appendChild(bw.createDOM(footerTaco));
     }
   }
 

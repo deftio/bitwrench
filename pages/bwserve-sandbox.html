@@ -631,6 +631,9 @@
         btn.classList.toggle('bw_btn_primary', btn.getAttribute('data-preset') === name);
         btn.classList.toggle('bw_btn_outline_secondary', btn.getAttribute('data-preset') !== name);
       });
+      // Clear protocol log immediately so stale entries don't linger
+      // while the iframe reinitializes
+      clearLog();
       // Auto-run: reset iframe and execute the new preset
       if (!skipRun) {
         runCode();

@@ -12,7 +12,7 @@
   <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <style>
 .builds-header { margin-bottom: 0.5rem; }
-.builds-header .build-meta { font-size: 0.85rem; color: #888; margin: 0.25rem 0 0; }
+.builds-header .build-meta { font-size: 0.85rem; color: #666; margin: 0.25rem 0 0; }
 .builds-section { margin-top: 2rem; }
 .builds-section h2 { border-bottom: 2px solid #006666; padding-bottom: 0.5rem; margin-bottom: 1rem; }
 .builds-section h3 { margin: 1.5rem 0 0.75rem; }
@@ -176,14 +176,14 @@
       'bitwrench-lean.cjs.min.js':  'Lean build, no components (CJS, minified)',
       'bitwrench-lean.es5.js':      'Lean build, no components (ES5)',
       'bitwrench-lean.es5.min.js':  'Lean build, no components (ES5, minified)',
-      'bitwrench-bccl.umd.js':     'BCCL component addon (UMD)',
-      'bitwrench-bccl.umd.min.js': 'BCCL component addon (UMD, minified)',
-      'bitwrench-bccl.esm.js':     'BCCL component addon (ESM)',
-      'bitwrench-bccl.esm.min.js': 'BCCL component addon (ESM, minified)',
-      'bitwrench-bccl.cjs.js':     'BCCL component addon (CJS)',
-      'bitwrench-bccl.cjs.min.js': 'BCCL component addon (CJS, minified)',
-      'bwserve.cjs.js':            'bwserve server runtime (CJS)',
-      'bwserve.esm.js':            'bwserve server runtime (ESM)'
+      'bitwrench-bccl.umd.js':     'BCCL components addon (UMD)',
+      'bitwrench-bccl.umd.min.js': 'BCCL components addon (UMD, minified)',
+      'bitwrench-bccl.esm.js':     'BCCL components addon (ESM)',
+      'bitwrench-bccl.esm.min.js': 'BCCL components addon (ESM, minified)',
+      'bitwrench-bccl.cjs.js':     'BCCL components addon (CJS)',
+      'bitwrench-bccl.cjs.min.js': 'BCCL components addon (CJS, minified)',
+      'bwserve.cjs.js':            'bwserve server lib runtime (CJS)',
+      'bwserve.esm.js':            'bwserve server lib runtime (ESM)'
     };
 
     // Grouped-format table (Format | Raw | Minified | Min+Gzip)
@@ -250,12 +250,14 @@
                     { t: 'a', a: { href: '#section-core' }, c: 'Core Library' },
                     { t: 'a', a: { href: '#section-lean' }, c: 'Lean Build' },
                     { t: 'a', a: { href: '#section-addons' }, c: 'Addon Bundles' },
-                    { t: 'a', a: { href: '#section-bwserve' }, c: 'bwserve' },
+                    { t: 'a', a: { href: '#section-bwserve' }, c: 'Server' },
+                    { t: 'a', a: { href: '#section-cli' }, c: 'CLI' },
                     { t: 'a', a: { href: '#section-css' }, c: 'CSS' },
                     { t: 'a', a: { href: '#section-all' }, c: 'All Files' },
                     { t: 'a', a: { href: '#section-sri' }, c: 'SRI Hashes' },
                     { t: 'a', a: { href: '#section-install' }, c: 'Installation' },
-                    { t: 'a', a: { href: '#section-cdn' }, c: 'CDN' }
+                    { t: 'a', a: { href: '#section-cdn' }, c: 'CDN' },
+                    { t: 'a', a: { href: '#section-llm' }, c: 'LLM Guide' }
                   ]
                 }
               ]
@@ -311,6 +313,15 @@
                 { t: 'div', a: { id: 'builds-bwserve', style: 'overflow-x:auto' }, c: 'Loading...' }
               ]
             },
+            // CLI (bwcli)
+            {
+              t: 'div', a: { class: 'demo-section builds-section', id: 'section-cli' },
+              c: [
+                { t: 'h2', c: 'CLI (bwcli)' },
+                { t: 'p', c: 'Command-line tool for converting Markdown/HTML files, running a dev server with live reload, and serving bwserve apps. Included in the npm package \u2014 no separate install needed.' },
+                { t: 'div', a: { id: 'builds-cli', style: 'overflow-x:auto' }, c: '' }
+              ]
+            },
             // CSS
             {
               t: 'div', a: { class: 'demo-section builds-section', id: 'section-css' },
@@ -348,7 +359,9 @@
                 codeSnippet('CommonJS require', "const bw = require('bitwrench');", 'js'),
                 codeSnippet('GitHub', 'git clone https://github.com/deftio/bitwrench.git', 'bash'),
                 codeSnippet('ES5 (legacy browsers)', '<script src="dist/bitwrench.es5.min.js"><\/script>', 'html'),
-                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js')
+                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js'),
+                codeSnippet('bwcli (convert files)', 'npx bwcli README.md -o readme.html --theme ocean --standalone', 'bash'),
+                codeSnippet('bwcli (dev server)', 'npx bwcli serve --port 8080', 'bash')
               ]
             },
             // CDN
@@ -372,6 +385,24 @@
                   ]
                 }
               ]
+            },
+            // LLM Guide
+            {
+              t: 'div', a: { class: 'demo-section builds-section', id: 'section-llm' },
+              c: [
+                { t: 'h2', c: 'LLM Guide' },
+                { t: 'p', c: 'A single-file reference for AI-assisted bitwrench development. Feed this to ChatGPT, Claude, or any LLM to enable code generation with bitwrench.' },
+                { t: 'p', c: [
+                  'The guide covers TACO format, core API, component library (BCCL), theming, pub/sub, CSS generation, bwserve, CLI usage, and common patterns.'
+                ]},
+                {
+                  t: 'div', a: { style: 'display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem' },
+                  c: [
+                    { t: 'a', a: { href: '../docs/llm-bitwrench-guide.md', download: 'llm-bitwrench-guide.md', class: 'bw_btn bw_btn_primary' }, c: 'Download LLM Guide (.md)' },
+                    { t: 'a', a: { href: '../docs/llm-bitwrench-guide.md', target: '_blank', class: 'bw_btn bw_btn_secondary' }, c: 'View Raw' }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -380,12 +411,49 @@
 
     bw.DOM('#app', page);
 
+    // CLI section — show usage, not internal files
+    bw.DOM('#builds-cli', {
+      t: 'div', c: [
+        { t: 'p', a: { style: 'margin-bottom: 0.75rem' }, c: [
+          'Installed as ', { t: 'code', c: 'bwcli' }, ' via ', { t: 'code', c: 'npm install bitwrench' }, '. Run with ', { t: 'code', c: 'npx bwcli' }, ' or install globally.'
+        ]},
+        codeSnippet('Convert a file', 'npx bwcli README.md -o readme.html --theme ocean --standalone', 'bash'),
+        codeSnippet('Dev server', 'npx bwcli serve --port 8080', 'bash'),
+        codeSnippet('Serve a directory', 'npx bwcli serve ./site --port 8080 --open', 'bash'),
+        codeSnippet('Custom theme colors', 'npx bwcli doc.md --theme "#336699,#cc6633" -o doc.html', 'bash'),
+        {
+          t: 'div', a: { class: 'table-card', style: 'margin-top: 1rem' },
+          c: {
+            t: 'table', a: { class: 'bw_table' },
+            c: [
+              { t: 'thead', c: { t: 'tr', c: [
+                { t: 'th', c: 'Flag' },
+                { t: 'th', c: 'Description' }
+              ]}},
+              { t: 'tbody', c: [
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '-o, --output' } }, { t: 'td', c: 'Output file path' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '-t, --theme' } }, { t: 'td', c: 'Theme preset (ocean, sunset, forest, slate, monochrome) or hex pair' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '-s, --standalone' } }, { t: 'td', c: 'Inline bitwrench UMD into output HTML' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '--cdn' } }, { t: 'td', c: 'Use jsdelivr CDN with SRI hashes' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '--highlight' } }, { t: 'td', c: 'Enable syntax highlighting for code blocks' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '-c, --css' } }, { t: 'td', c: 'Custom CSS file to include' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '--title' } }, { t: 'td', c: 'Page title override' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '--open' } }, { t: 'td', c: 'Open browser on start (serve mode)' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '-p, --port' } }, { t: 'td', c: 'Port number (serve mode, default: 7902)' }] },
+                { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: '-v, --verbose' } }, { t: 'td', c: 'Verbose output' }] }
+              ]}
+            ]
+          }
+        }
+      ]
+    });
+
     // =========================================================================
     // Load build manifest and populate tables
     // =========================================================================
     bw.loadClientFile('../dist/builds.json', function(raw, err) {
       if (err) {
-        bw.DOM('#builds-core', { t: 'p', a: { style: 'color:red' }, c: 'Failed to load build manifest. Run: npm run build:builds' });
+        bw.DOM('#builds-core', { t: 'p', a: { style: 'color:#b91c1c' }, c: 'Failed to load build manifest. Run: npm run build:builds' });
         return;
       }
       var manifest = JSON.parse(raw);
@@ -412,10 +480,90 @@
         bw.DOM('#builds-lean', { t: 'p', c: 'No lean builds found. Run: npm run build' });
       }
 
-      // Addons table — code-edit + BCCL combined
-      var allAddons = addonJS.concat(bcclJS);
-      if (allAddons.length > 0) {
-        renderGroupedTable('#builds-addons', allAddons);
+      // Addons — separate cards per addon with file details
+      function renderAddonCard(targetId, label, desc, files, importSnippet) {
+        var headers = [
+          { label: 'File', sz: false },
+          { label: 'Format', sz: false },
+          { label: 'Size', sz: true },
+          { label: 'Gzipped', sz: true }
+        ];
+        var data = files.filter(function(f) { return f.minified; }).map(function(f) {
+          return {
+            cells: [
+              { t: 'a', a: { href: '../dist/' + f.file }, c: f.file },
+              f.format,
+              fmtSize(f.raw),
+              fmtSize(f.gzipped)
+            ],
+            sortValues: [f.file, f.format, f.raw, f.gzipped]
+          };
+        });
+        // If no minified, show all
+        if (data.length === 0) {
+          data = files.map(function(f) {
+            return {
+              cells: [
+                { t: 'a', a: { href: '../dist/' + f.file }, c: f.file },
+                f.format,
+                fmtSize(f.raw),
+                fmtSize(f.gzipped)
+              ],
+              sortValues: [f.file, f.format, f.raw, f.gzipped]
+            };
+          });
+        }
+        var content = [
+          { t: 'h3', c: label },
+          { t: 'p', a: { style: 'margin:0 0 0.75rem' }, c: desc },
+        ];
+        if (importSnippet) {
+          content.push(codeSnippet(null, importSnippet, 'js'));
+        }
+        content.push({ t: 'div', a: { id: targetId, style: 'overflow-x:auto' }, c: '' });
+        return { content: content, headers: headers, data: data, targetId: targetId };
+      }
+
+      var addonContent = [];
+      var addonTables = [];
+      if (bcclJS.length > 0) {
+        var bccl = renderAddonCard('builds-addon-bccl',
+          'bitwrench-bccl \u2014 Component Library',
+          [
+            '40+ component factories: ',
+            { t: 'code', c: 'makeButton' }, ', ',
+            { t: 'code', c: 'makeCard' }, ', ',
+            { t: 'code', c: 'makeHero' }, ', ',
+            { t: 'code', c: 'makeNavbar' }, ', ',
+            { t: 'code', c: 'makeAccordion' },
+            ', and more. Use with the lean build for a smaller total footprint, or it\u2019s already included in the full core build.'
+          ],
+          bcclJS,
+          "// Use with lean build (tree-shake what you don't need)\nimport bw from 'bitwrench/lean';\nimport 'bitwrench/bccl';\n\n// Or use script tag\n// <script src=\"dist/bitwrench-bccl.umd.min.js\"><\/script>"
+        );
+        addonContent = addonContent.concat(bccl.content);
+        addonTables.push(bccl);
+      }
+      if (addonJS.length > 0) {
+        var ce = renderAddonCard('builds-addon-codeedit',
+          'bitwrench-code-edit \u2014 Code Editor',
+          [
+            'Syntax-highlighted code editor with line numbers, read-only mode, and copy-to-clipboard. Supports JavaScript, HTML, CSS, Bash, JSON, Markdown, and more.'
+          ],
+          addonJS,
+          "import bw from 'bitwrench';\nimport 'bitwrench/code-edit';\n\n// Then use:\nbw.codeEditor({ code: 'var x = 1;', lang: 'js', readOnly: true })"
+        );
+        if (addonContent.length > 0) {
+          addonContent.push({ t: 'hr', a: { style: 'margin:1.5rem 0;border:0;border-top:1px solid #e0e0e0' } });
+        }
+        addonContent = addonContent.concat(ce.content);
+        addonTables.push(ce);
+      }
+      if (addonContent.length > 0) {
+        bw.DOM('#builds-addons', { t: 'div', c: addonContent });
+        addonTables.forEach(function(tbl) {
+          sortableTable('#' + tbl.targetId, tbl.headers, tbl.data);
+        });
       } else {
         bw.DOM('#builds-addons', { t: 'p', c: 'No addon builds found.' });
       }

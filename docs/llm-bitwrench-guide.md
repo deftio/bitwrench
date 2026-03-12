@@ -488,17 +488,54 @@ bw.injectCSS(responsiveCSS, { id: 'my-grid-styles' });
 ```bash
 npm install -g bitwrench    # installs the `bwcli` command
 
-bwcli input.md -o output.html                  # basic conversion
-bwcli input.md -o output.html --theme ocean     # with theme
-bwcli input.md -o output.html --standalone       # offline (bitwrench inlined)
-bwcli input.md -o output.html --cdn              # CDN mode (jsdelivr)
-bwcli input.md -o output.html --css styles.css   # custom CSS
-bwcli input.md -o output.html --highlight        # syntax highlighting
-bwcli input.md --theme "#336699,#cc6633"          # custom hex colors
+# File conversion
+bwcli input.md -o output.html                    # basic conversion
+bwcli input.md -o output.html --theme ocean       # with theme
+bwcli input.md -o output.html --standalone         # offline (bitwrench inlined)
+bwcli input.md -o output.html --cdn                # CDN mode (jsdelivr)
+bwcli input.md -o output.html --css styles.css     # custom CSS
+bwcli input.md -o output.html --highlight          # syntax highlighting
+bwcli input.md --theme "#336699,#cc6633"            # custom hex colors
 
-# Pipe server (any language → browser UI)
-bwcli serve --port 8080 --input-port 9000
-bwcli serve --stdin                              # pipe from stdin
+# Dev server
+bwcli serve                                       # serve current dir on port 7902
+bwcli serve ./site --port 8080 --open             # serve directory, open browser
+```
+
+## bwserve (Server-Driven UI)
+
+Push TACO objects from Node.js to the browser via SSE. Think Streamlit for JS.
+
+```javascript
+import { create } from 'bitwrench/bwserve';
+
+const app = create({ port: 7902 });
+app.page('/', (client) => {
+  // Push UI to browser
+  client.replace('#app', { t: 'h1', c: 'Hello from server!' });
+  client.patch('#status', 'Connected');
+  client.append('#log', { t: 'p', c: 'New entry' });
+  client.remove('.old-item');
+  // Batch multiple operations
+  client.batch([
+    { type: 'replace', selector: '#title', taco: { t: 'h1', c: 'Updated' } },
+    { type: 'patch', selector: '#count', content: '42' }
+  ]);
+});
+app.listen();
+```
+
+**Protocol messages**: `replace`, `patch`, `append`, `remove`, `batch`, `message`, `register`, `call`, `exec`.
+
+**Three-tier execution**:
+- `call(name, args)` — invoke a named function registered on the client
+- `register(name, fnBody)` — send a function to register on client
+- `exec(code)` — arbitrary JS execution (opt-in only: `allowExec: true`)
+
+**Client-side** (auto-included when served by bwserve):
+```javascript
+bw.clientConnect('http://localhost:7902');
+// All messages from server are applied automatically
 ```
 
 ## Node.js / SSR Usage

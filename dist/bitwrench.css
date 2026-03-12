@@ -30,7 +30,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #212529;
-  background-color: #ffffff;
+  background-color: #fafafa;
 }
 
 .bw_page {
@@ -436,7 +436,7 @@ a {
   background-clip: border-box;
   margin-bottom: 1.5rem;
   overflow: hidden;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border: 1px solid #fcfdfd;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -528,7 +528,7 @@ a {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   color: #212529;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
 }
 
@@ -758,6 +758,8 @@ textarea.bw_form_control {
   text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.25rem;
 }
 
 .bw_badge:empty {
@@ -901,7 +903,7 @@ textarea.bw_form_control {
   font-size: 0.9375rem;
   padding: 0.75rem 1rem;
   color: #212529;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
 }
 
@@ -922,7 +924,7 @@ textarea.bw_form_control {
 .bw_list_group_item.disabled {
   pointer-events: none;
   color: #6c757d;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
 }
 
 a.bw_list_group_item {
@@ -968,7 +970,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   line-height: 1.25;
   text-decoration: none;
   color: #006666;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
 }
 
@@ -1385,7 +1387,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
 
 .bw_accordion_item {
   border: 1px solid transparent;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
 }
 
@@ -1595,7 +1597,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   background-clip: padding-box;
   border: 1px solid transparent;
   outline: 0;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
   box-shadow: 0 4px 12px rgba(0,0,0,0.16);
 }
@@ -1677,7 +1679,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   max-width: calc(100vw - 2rem);
   background-clip: padding-box;
   opacity: 0;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: rgba(0,0,0,0.1);
   box-shadow: 0 4px 12px rgba(0,0,0,0.16);
 }
@@ -1732,7 +1734,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
@@ -3219,7 +3221,7 @@ a:hover {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   color: #212529;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
 }
 
@@ -3320,7 +3322,7 @@ a.bw_list_group_item:hover {
 
 .bw_page_item.bw_disabled .bw_page_link {
   color: #6c757d;
-  background-color: #f8f9fa;
+  background-color: #f4f6f6;
   border-color: #fcfdfd;
 }
 

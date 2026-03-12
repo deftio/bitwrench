@@ -196,7 +196,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-11T22:33:26.468Z'
+    buildDate: '2026-03-12T07:46:20.255Z'
   };
 
   /**
@@ -609,12 +609,11 @@
     var lightBase = config.light || hslToHex([h, 8, 97]);
     var darkBase = config.dark || hslToHex([h, 10, 13]);
 
-    // Background & surface tokens — default to light (white/near-white).
-    // Dark backgrounds require explicit config.background / config.surface.
-    // Primary/secondary colors are accents, not page backgrounds, so
-    // isLightPalette should NOT drive bg/surface defaults.
-    var bgBase = config.background || '#ffffff';
-    var surfBase = config.surface || '#f8f9fa';
+    // Background & surface tokens — tinted with primary hue for theme personality.
+    // Very subtle: bg at L=98/S=6, surface at L=96/S=8.
+    // User can override with config.background / config.surface.
+    var bgBase = config.background || hslToHex([h, 6, 98]);
+    var surfBase = config.surface || hslToHex([h, 8, 96]);
     var palette = {
       primary: deriveShades(config.primary),
       secondary: deriveShades(config.secondary),
@@ -2234,7 +2233,9 @@
         'line-height': '1.3',
         'text-align': 'center',
         'white-space': 'nowrap',
-        'vertical-align': 'baseline'
+        'vertical-align': 'baseline',
+        'padding': '0.35rem 0.65rem',
+        'border-radius': '0.25rem'
       },
       '.bw_badge:empty': {
         'display': 'none'

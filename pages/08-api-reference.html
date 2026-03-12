@@ -33,14 +33,15 @@
       '.api-entry': {
         'background': '#fff', 'border': '1px solid #e4e4e4', 'border-radius': '8px',
         'padding': '1.25rem 1.5rem', 'margin-bottom': '1rem',
-        'transition': 'box-shadow 0.15s'
+        'transition': 'box-shadow 0.15s', 'overflow': 'hidden'
       },
       '.api-entry:hover': { 'box-shadow': '0 2px 8px rgba(0,0,0,0.06)' },
       '.api-entry.hidden': { 'display': 'none' },
       '.api-sig': {
         'font-family': "'SF Mono', 'Fira Code', monospace", 'font-size': '1rem',
         'font-weight': '600', 'color': '#006666', 'margin': '0 0 0.5rem',
-        'display': 'flex', 'align-items': 'baseline', 'gap': '0.5rem'
+        'display': 'flex', 'align-items': 'baseline', 'gap': '0.5rem',
+        'flex-wrap': 'wrap', 'overflow-wrap': 'break-word'
       },
       '.api-anchor': { 'color': '#ccc', 'text-decoration': 'none', 'font-size': '0.85rem' },
       '.api-anchor:hover': { 'color': '#006666' },
@@ -57,7 +58,7 @@
         'font-size': '0.8rem', 'color': '#006666', 'background': '#e8f5f3',
         'padding': '0.1em 0.4em', 'border-radius': '3px', 'font-family': "'SF Mono', monospace"
       },
-      '.api-param-desc': { 'font-size': '0.875rem', 'color': '#555' },
+      '.api-param-desc': { 'font-size': '0.875rem', 'color': '#555', 'overflow-wrap': 'break-word', 'word-break': 'break-word', 'min-width': '0' },
       '.api-returns': { 'font-size': '0.875rem', 'color': '#555', 'margin': '0.5rem 0' },
       '.api-returns-type': {
         'background': '#e8f5f3', 'color': '#006666', 'padding': '0.1em 0.4em',

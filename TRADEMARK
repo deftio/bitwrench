@@ -1,0 +1,27 @@
+Trademark Notice
+
+"bitwrench" is a trademark of Manjirnath A. Chatterjee.
+
+The bitwrench name and logo (the "{}" wrench mark) are trademarks used to
+identify the official bitwrench open-source project and its authorized
+distributions.
+
+You are free to use bitwrench under the terms of the BSD-2-Clause license.
+The trademark exists to protect the identity of the project and prevent
+confusion — not to restrict legitimate use. Specifically:
+
+  Permitted:
+  - Using bitwrench in your applications (commercial or otherwise)
+  - Referring to bitwrench by name in documentation, blog posts, and talks
+  - Stating compatibility with or use of bitwrench
+  - Forking and modifying the source code under the BSD-2-Clause license
+
+  Not permitted without written authorization:
+  - Distributing modified versions under the "bitwrench" name in a way that
+    implies they are the official release
+  - Using the bitwrench name or logo to imply endorsement of unrelated
+    products or services
+  - Registering domain names, package names, or social media accounts that
+    could cause confusion with the official project
+
+If you have questions about trademark usage, contact: manu@deftio.com

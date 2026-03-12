@@ -25,7 +25,7 @@
       '.bw_hero_landing': {
         background: 'linear-gradient(135deg, #006666 0%, #003d3d 100%)',
         color: '#fff',
-        padding: '5rem 0 4rem',
+        padding: '1.25rem 0 2rem',
         position: 'relative',
         overflow: 'hidden'
       },
@@ -40,20 +40,28 @@
         background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)',
         'pointer-events': 'none'
       },
+      '.bw_hero_logo': {
+        display: 'block',
+        height: '100px',
+        'margin-bottom': '0.5rem',
+        filter: 'brightness(0) invert(1)',
+        opacity: '0.95'
+      },
       '.bw_hero_tagline': {
-        'font-size': '2.5rem',
-        'font-weight': '700',
-        margin: '0 0 1rem',
-        'letter-spacing': '-0.5px',
-        'line-height': '1.2',
-        'max-width': 'min(700px, 90vw)'
+        'font-size': '2.25rem',
+        'font-weight': '600',
+        margin: '0 0 0.5rem',
+        'letter-spacing': '-0.3px',
+        'line-height': '1.25',
+        'max-width': 'min(650px, 90vw)',
+        opacity: '0.95'
       },
       '.bw_hero_sub': {
-        'font-size': '1.125rem',
-        opacity: '0.85',
-        'max-width': 'min(580px, 90vw)',
-        margin: '0 0 2rem',
-        'line-height': '1.65'
+        'font-size': '1.0625rem',
+        opacity: '0.7',
+        'max-width': 'min(560px, 90vw)',
+        margin: '0 0 1.25rem',
+        'line-height': '1.55'
       },
       '.bw_hero_actions': {
         display: 'flex',
@@ -191,6 +199,7 @@
         '.bw_how_grid': { 'grid-template-columns': '1fr' },
         '.bw_how_arrow': { display: 'block' },
         '.bw_hero_landing': { padding: '3rem 0 2.5rem' },
+        '.bw_hero_logo': { height: '64px' },
         '.bw_hero_tagline': { 'font-size': '1.75rem' },
         '.bw_hero_sub': { 'font-size': '1rem' },
         '.bw_install_inner': { 'flex-direction': 'column', 'align-items': 'flex-start', gap: '0.5rem' },
@@ -198,6 +207,7 @@
       },
       '@media (max-width: 480px)': {
         '.bw_hero_landing::before': { display: 'none' },
+        '.bw_hero_logo': { height: '52px' },
         '.bw_hero_tagline': { 'font-size': '1.5rem' },
         '.bw_hero_sub': { 'font-size': '0.9375rem' },
         '.bw_hero_actions a': { padding: '0.6rem 1.25rem', 'font-size': '0.9375rem' }
@@ -248,6 +258,12 @@
         'grid-template-columns': '1fr 1fr',
         gap: '1.5rem'
       },
+      '.bw_live_demo_panel': {
+        background: 'var(--bw_card_bg, #fff)',
+        border: '1px solid var(--bw_card_border, #e0e0e0)',
+        'border-radius': '8px',
+        padding: '1.25rem'
+      },
       '@media (max-width: 768px) ': {
         '.bw_live_demo_grid': { 'grid-template-columns': '1fr' }
       },
@@ -277,25 +293,8 @@
         color: 'var(--bw_teal)',
         'margin-bottom': '0.75rem'
       },
-      '.bw_site_footer': {
-        'text-align': 'center',
-        padding: '2.5rem 0 1.5rem',
-        color: 'var(--bw_text_muted)',
-        'font-size': '0.8125rem'
-      },
-      '.bw_site_footer a': {
-        color: 'var(--bw_text_secondary)',
-        'text-decoration': 'none'
-      },
-      '.bw_site_footer a:hover': {
-        color: 'var(--bw_teal)'
-      },
-      '.bw_footer_links': {
-        display: 'flex',
-        'justify-content': 'center',
-        gap: '1.5rem',
-        'flex-wrap': 'wrap',
-        'margin-bottom': '0.75rem'
+      '.bw_page_category + .bw_page_grid': {
+        'margin-bottom': '0'
       }
     }), { id: 'index-page-styles' });
 
@@ -305,10 +304,11 @@
       c: [{
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
+          { t: 'img', a: { src: '../images/bitwrench-thick-logo.svg', alt: 'bitwrench', class: 'bw_hero_logo' } },
           { t: 'h1', a: { class: 'bw_hero_tagline' }, c: 'Build UI from plain JavaScript objects' },
           {
             t: 'p', a: { class: 'bw_hero_sub' },
-            c: 'Describe your interface as native JS objects. Render to HTML strings or mount to the DOM. No JSX, no virtual DOM, no build step. Zero dependencies.'
+            c: '36+ built-in components as plain JS objects. Render client-side or server-side. No JSX, no virtual DOM, no build step. Zero dependencies.'
           },
           {
             t: 'div', a: { class: 'bw_hero_actions' },
@@ -330,15 +330,20 @@
           c: [
             { t: 'span', a: { class: 'bw_install_label' }, c: 'Install' },
             { t: 'code', a: { class: 'bw_install_cmd' }, c: 'npm install bitwrench' },
-            { t: 'span', a: { class: 'bw_install_or' }, c: 'or' },
-            { t: 'code', a: { class: 'bw_install_cdn' }, c: '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>' },
             {
-              t: 'span', a: { class: 'bw_install_or', style: 'margin-left: auto;' },
-              c: {
-                t: 'a',
-                a: { href: '09-builds.html', style: 'color: #fff; text-decoration: none; font-size: 0.9375rem; font-weight: 600; background: rgba(255,255,255,0.15); padding: 0.35rem 0.75rem; border-radius: 4px;' },
-                c: bw.raw('Downloads &amp; CDN &rarr;')
-              }
+              t: 'span', a: { style: 'margin-left: auto; display: flex; gap: 0.5rem; align-items: center;' },
+              c: [
+                {
+                  t: 'a',
+                  a: { href: '../docs/llm-bitwrench-guide.md', download: 'llm-bitwrench-guide.md', style: 'color: #fff; text-decoration: none; font-size: 0.9375rem; font-weight: 600; background: rgba(255,255,255,0.15); padding: 0.35rem 0.75rem; border-radius: 4px;' },
+                  c: 'LLM Guide'
+                },
+                {
+                  t: 'a',
+                  a: { href: '09-builds.html', style: 'color: #fff; text-decoration: none; font-size: 0.9375rem; font-weight: 600; background: rgba(255,255,255,0.15); padding: 0.35rem 0.75rem; border-radius: 4px;' },
+                  c: bw.raw('Downloads &amp; CDN &rarr;')
+                }
+              ]
             }
           ]
         }]
@@ -361,8 +366,12 @@
           t: 'div', a: { class: 'demo-content' },
           c: [
             {
-              t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1.25rem;' },
-              c: bw.raw('Describe your UI as plain objects using the <strong>TACO</strong> format &mdash; <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions. Nest them, loop over them, compose them with regular JS. Then render with <code>bw.html()</code> or mount with <code>bw.DOM()</code>.')
+              t: 'div', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1.25rem; line-height: 1.65;' },
+              c: [
+                { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Bitwrench represents UI as plain JavaScript objects &mdash; composition, layout, styles, and theming are all regular JS calls. A built-in library of 36+ components covers common elements; custom components are objects in the same format.') },
+                { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Rendering works client-side in the browser or server-side in Node.js, with partial updates and streaming via the bwserve protocol. CSS collapses to JS strings, so theming can be applied dynamically at the object, component, or page level &mdash; no CSS compilation step.') },
+                { t: 'p', a: { style: 'margin: 0 0 1rem;' }, c: bw.raw('The object format is called <strong>TACO</strong>: <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions. Objects nest, loop, and compose with standard JS. They serialize to compact JSON and render with <code>bw.html()</code> (strings) or <code>bw.DOM()</code> (live DOM).') }
+              ]
             },
             {
               t: 'div', a: { class: 'bw_how_grid' },
@@ -419,28 +428,9 @@
       ]
     };
 
-    var footer = {
-      t: 'div', a: { class: 'bw_site_footer' },
-      c: [
-        {
-          t: 'div', a: { class: 'bw_footer_links' },
-          c: [
-            { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'GitHub' },
-            { t: 'a', a: { href: 'https://www.npmjs.com/package/bitwrench' }, c: 'npm' },
-            { t: 'a', a: { href: '08-api-reference.html' }, c: 'API Reference' },
-            { t: 'a', a: { href: '09-builds.html' }, c: 'Downloads' }
-          ]
-        },
-        {
-          t: 'p', a: { style: 'margin: 0;' },
-          c: bw.raw('BSD-2-Clause License &middot; Created by <a href="https://deftio.com">Manu Chatterjee</a>')
-        }
-      ]
-    };
-
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [statsSection, howItWorksSection, featuresSection, liveDemosSection, pageIndexSection, footer]
+      c: [statsSection, howItWorksSection, featuresSection, liveDemosSection, pageIndexSection]
     };
 
     // Mount the full page
@@ -448,12 +438,12 @@
 
     // ---- Stat strip ----
     (function() {
-      function renderStats(sizeStr) {
+      function renderStats(sizeStr, formatCount) {
         var stats = [
-          { value: sizeStr, label: 'Gzipped', sub: 'UMD bundle' },
+          { value: sizeStr, label: 'Gzipped', sub: 'core UMD bundle' },
           { value: '36+', label: 'Components', sub: 'ready to use' },
           { value: '0', label: 'Dependencies', sub: 'zero runtime deps' },
-          { value: '4', label: 'Formats', sub: 'UMD ESM CJS ES5' }
+          { value: 'IE11+', label: 'Browser Support', sub: 'modern & legacy' }
         ];
         bw.DOM('#stat-strip', stats.map(function(s) {
           return {
@@ -466,7 +456,7 @@
           };
         }));
       }
-      // Try to load dynamic size from builds.json
+      // Load dynamic size from builds.json
       try {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '../dist/builds.json', true);
@@ -475,16 +465,17 @@
             var data = JSON.parse(xhr.responseText);
             var umdMin = data.files.find(function(f) { return f.file === 'bitwrench.umd.min.js'; });
             if (umdMin && umdMin.gzipped) {
-              renderStats(Math.round(umdMin.gzipped / 1024) + ' KB');
+              var kb = (umdMin.gzipped / 1024).toFixed(1);
+              renderStats(kb + ' KB');
               return;
             }
           }
-          renderStats('~30 KB');
+          renderStats('~40 KB');
         };
-        xhr.onerror = function() { renderStats('~30 KB'); };
+        xhr.onerror = function() { renderStats('~40 KB'); };
         xhr.send();
       } catch(e) {
-        renderStats('~30 KB');
+        renderStats('~40 KB');
       }
     })();
 
@@ -531,28 +522,28 @@
     (function() {
       var features = [
         {
-          icon: '\u{1F3D7}', title: '36+ Components',
-          desc: 'Cards, buttons, tables, forms, modals, dropdowns, accordions, toasts, charts. Each returns a composable TACO object.'
+          icon: '\u{1F3D7}', title: '36+ Built-in Components',
+          desc: 'Buttons, cards, tables, forms, modals, charts, and more \u2014 ready to use or extend. Bring your own components just as easily: they\u2019re plain JS objects, not framework magic.'
         },
         {
           icon: '\u{1F3A8}', title: 'Palette-Driven Theming',
-          desc: 'Pick 2\u20133 colors and generateTheme() derives buttons, alerts, badges, hover states, focus rings, and dark mode.'
+          desc: 'Hand it 2\u20133 seed colors and get a complete theme: buttons, alerts, hover states, focus rings, and a dark mode alternate \u2014 all generated, all consistent.'
         },
         {
-          icon: '\u{1F504}', title: 'Server + Client Rendering',
-          desc: 'bw.html() renders to strings for SSR, emails, or static pages. bw.DOM() mounts live DOM. Same objects, both sides.'
+          icon: '\u{1F504}', title: 'Server + Client',
+          desc: 'Render static HTML for emails, docs, or SSR. Mount live UI in the browser. Push real-time updates from Node.js via the bwserve protocol \u2014 Streamlit-style, no React required.'
         },
         {
-          icon: '\u{1F4E1}', title: 'State Management',
-          desc: 'bw.patch() for targeted updates, bw.update() for re-renders, bw.pub()/bw.sub() for decoupled component communication.'
+          icon: '\u{1F4E1}', title: 'Reactive State',
+          desc: 'Patch individual values, re-render whole sections, or wire up decoupled pub/sub between components. State stays in sync without a framework telling you how.'
         },
         {
           icon: '\u{2328}', title: 'CLI Tool',
-          desc: 'Convert Markdown or HTML to styled, self-contained pages with one command. Apply themes and inject bitwrench.'
+          desc: 'Turn a Markdown file into a styled, self-contained HTML page with one command. Add a theme, inject bitwrench, serve with live reload.'
         },
         {
-          icon: '\u{26A1}', title: 'Works Everywhere',
-          desc: 'Under 30 KB gzipped. Zero dependencies. Modern browsers, IE11, Node.js, and embedded environments.'
+          icon: '\u{26A1}', title: 'Tiny Footprint',
+          desc: 'Under 40 KB gzipped, zero dependencies. Built for constrained targets: embedded dashboards, kiosks, legacy browsers (IE11), and Node.js CLI tools.'
         }
       ];
 
@@ -570,80 +561,169 @@
 
     // ---- Live Demos ----
     (function() {
-      // Left: component sampler
-      var componentDemo = {
-        t: 'div', c: [
-          { t: 'h4', a: { style: 'margin: 0 0 1rem; font-size: 1rem; font-weight: 600;' }, c: 'Component Sampler' },
-          // Alert
-          bw.makeAlert({
-            content: 'Alerts, badges, and progress bars \u2014 all from simple function calls.',
-            variant: 'info',
-            dismissible: false
-          }),
-          // Badge row
-          {
-            t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1rem 0;' },
-            c: [
-              bw.makeBadge({ text: 'HTML', variant: 'primary' }),
-              bw.makeBadge({ text: 'CSS', variant: 'secondary' }),
-              bw.makeBadge({ text: 'JavaScript', variant: 'success' }),
-              bw.makeBadge({ text: 'Node.js', variant: 'info' }),
-              bw.makeBadge({ text: 'IE11', variant: 'warning' })
-            ]
-          },
-          // Progress
-          bw.makeProgress({ value: 72, label: '72% coverage', variant: 'primary', striped: true }),
-          // Button row
-          {
-            t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;' },
-            c: [
-              bw.makeButton({ text: 'Primary', variant: 'primary', size: 'sm' }),
-              bw.makeButton({ text: 'Secondary', variant: 'secondary', size: 'sm' }),
-              bw.makeButton({ text: 'Outline', variant: 'outline-primary', size: 'sm' })
-            ]
-          }
-        ]
-      };
+      var hStyle = 'margin: 0 0 0.75rem; font-size: 1rem; font-weight: 600;';
 
-      // Right: data table + chart
-      var dataDemo = {
-        t: 'div', c: [
-          { t: 'h4', a: { style: 'margin: 0 0 1rem; font-size: 1rem; font-weight: 600;' }, c: 'Data Tables & Charts' },
-          bw.makeTable({
-            data: [
-              { format: 'UMD', file: 'bitwrench.umd.min.js', use: 'Browsers + Node' },
-              { format: 'ESM', file: 'bitwrench.esm.min.js', use: 'Modern bundlers' },
-              { format: 'CJS', file: 'bitwrench.cjs.min.js', use: 'Node require()' },
-              { format: 'ES5', file: 'bitwrench.es5.min.js', use: 'Legacy (IE11)' }
-            ],
-            columns: [
-              { key: 'format', label: 'Format' },
-              { key: 'file', label: 'File' },
-              { key: 'use', label: 'Use Case' }
-            ],
-            striped: true,
-            sortable: false
-          }),
-          {
-            t: 'div', a: { style: 'margin-top: 1rem;' },
-            c: bw.makeBarChart({
-              data: [
-                { label: 'Layout', value: 12 },
-                { label: 'Forms', value: 8 },
-                { label: 'Data', value: 6 },
-                { label: 'Nav', value: 5 },
-                { label: 'Feedback', value: 5 }
-              ],
-              title: 'Components by Category',
-              color: '#006666',
-              height: '120px',
-              showValues: true
+      // --- Left: Interactive Sample ---
+      var themes = [
+        { name: 'Ocean',  p: '#336699', s: '#cc6633', t: '#2e8b57' },
+        { name: 'Sunset', p: '#cc4400', s: '#6633cc', t: '#d4a017' },
+        { name: 'Forest', p: '#2d6a4f', s: '#b07d2b', t: '#5b8c5a' },
+        { name: 'Dark',   p: '#e0e0e0', s: '#80cbc4', t: '#b39ddb' },
+        { name: 'Slate',  p: '#4a5568', s: '#718096', t: '#48bb78' }
+      ];
+      var activeTheme = themes[0];
+
+      var tasks = [
+        { text: 'Design review', done: true },
+        { text: 'API integration', done: true },
+        { text: 'Write tests', done: false },
+        { text: 'Deploy to staging', done: false }
+      ];
+
+      function renderThemedCard() {
+        bw.generateTheme('homedemo', {
+          primary: activeTheme.p,
+          secondary: activeTheme.s,
+          tertiary: activeTheme.t,
+          inject: true
+        });
+        var done = tasks.filter(function(t) { return t.done; }).length;
+        var pct = Math.round((done / tasks.length) * 100);
+        bw.DOM('#theme-card', {
+          t: 'div', a: { class: 'homedemo' },
+          c: bw.makeCard({
+            title: 'Sprint Tasks',
+            content: [
+              bw.makeProgress({ value: pct, label: done + '/' + tasks.length + ' complete', variant: 'primary', striped: true }),
+              { t: 'div', a: { style: 'margin:0.75rem 0;display:flex;flex-direction:column;gap:0.35rem' },
+                c: tasks.map(function(task, i) {
+                  return {
+                    t: 'label', a: { style: 'display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;padding:0.25rem 0;' + (task.done ? 'text-decoration:line-through;opacity:0.6' : '') },
+                    c: [
+                      { t: 'input', a: { type: 'checkbox', checked: task.done || undefined, onchange: function() { tasks[i].done = !tasks[i].done; renderThemedCard(); } } },
+                      task.text
+                    ]
+                  };
+                })
+              },
+              { t: 'div', a: { style: 'display:flex;gap:0.5rem' }, c: [
+                bw.makeButton({ text: 'Add Task', variant: 'primary', size: 'sm', onclick: function() {
+                  tasks.push({ text: 'New task ' + (tasks.length + 1), done: false });
+                  renderThemedCard();
+                }}),
+                bw.makeButton({ text: 'Reset', variant: 'outline-secondary', size: 'sm', onclick: function() {
+                  tasks = [
+                    { text: 'Design review', done: true },
+                    { text: 'API integration', done: true },
+                    { text: 'Write tests', done: false },
+                    { text: 'Deploy to staging', done: false }
+                  ];
+                  renderThemedCard();
+                }})
+              ]}
+            ]
+          })
+        });
+      }
+
+      var themeSwitcher = {
+        t: 'div', a: { class: 'bw_live_demo_panel' }, c: [
+          { t: 'h4', a: { style: hStyle }, c: 'Interactive Sample' },
+          { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0 0 0.75rem' }, c: 'Check tasks, add items, switch palettes \u2014 all live.' },
+          { t: 'div', a: { id: 'theme-card' } },
+          { t: 'div', a: { style: 'display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap' },
+            c: themes.map(function(th) {
+              return {
+                t: 'button',
+                a: {
+                  style: 'display:inline-flex;align-items:center;gap:0.375rem;padding:0.3rem 0.75rem;border:1.5px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:0.8125rem;font-weight:500;transition:border-color 0.12s',
+                  onclick: function() { activeTheme = th; renderThemedCard(); }
+                },
+                c: [
+                  { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + th.p } },
+                  { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + th.s } },
+                  { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + th.t } },
+                  th.name
+                ]
+              };
             })
           }
         ]
       };
 
-      bw.DOM('#live-demos', [componentDemo, dataDemo]);
+      // --- Right: Mini Dashboard ---
+      var stats = { users: 1247, requests: 8432, uptime: 99.7 };
+
+      function renderDashboard() {
+        var items = [
+          { label: 'Users', value: stats.users.toLocaleString(), color: '#006666' },
+          { label: 'Requests/s', value: stats.requests.toLocaleString(), color: '#336699' },
+          { label: 'Uptime %', value: stats.uptime.toFixed(1), color: '#2d6a4f' }
+        ];
+        var traffic = [64, 42, 58, 71, 63, 89, 34].map(function(v) {
+          return v + Math.floor(Math.random() * 15 - 7);
+        });
+        var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        bw.DOM('#mini-dash', [
+          { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem' },
+            c: items.map(function(d) {
+              return {
+                t: 'div', a: { style: 'text-align:center;padding:0.6rem;background:var(--bw_card_bg,#fff);border:1px solid var(--bw_card_border,#e0e0e0);border-radius:6px' },
+                c: [
+                  { t: 'div', a: { style: 'font-size:1.35rem;font-weight:700;color:' + d.color + ';line-height:1' }, c: d.value },
+                  { t: 'div', a: { style: 'font-size:0.6875rem;font-weight:600;color:var(--bw_text_secondary);margin-top:0.25rem' }, c: d.label }
+                ]
+              };
+            })
+          },
+          bw.makeBarChart({
+            data: days.map(function(d, i) { return { label: d, value: Math.max(10, traffic[i]) }; }),
+            color: '#006666',
+            height: '100px',
+            showValues: true
+          }),
+          { t: 'div', a: { style: 'display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:center' },
+            c: [
+              {
+                t: 'button',
+                a: {
+                  class: 'bw_btn bw_btn_primary bw_btn_sm',
+                  onclick: function() {
+                    stats.users += Math.floor(Math.random() * 50);
+                    stats.requests += Math.floor(Math.random() * 200);
+                    stats.uptime = Math.min(100, +(stats.uptime + (Math.random() * 0.3 - 0.1)).toFixed(1));
+                    renderDashboard();
+                  }
+                },
+                c: 'Simulate Traffic'
+              },
+              {
+                t: 'button',
+                a: {
+                  class: 'bw_btn bw_btn_outline_secondary bw_btn_sm',
+                  onclick: function() {
+                    stats = { users: 1247, requests: 8432, uptime: 99.7 };
+                    renderDashboard();
+                  }
+                },
+                c: 'Reset'
+              }
+            ]
+          }
+        ]);
+      }
+
+      var dashboard = {
+        t: 'div', a: { class: 'bw_live_demo_panel' }, c: [
+          { t: 'h4', a: { style: hStyle }, c: 'Mini Dashboard' },
+          { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0 0 0.75rem' }, c: 'Interactive stats and chart \u2014 click Simulate to update.' },
+          { t: 'div', a: { id: 'mini-dash' } }
+        ]
+      };
+
+      bw.DOM('#live-demos', [themeSwitcher, dashboard]);
+      renderThemedCard();
+      renderDashboard();
     })();
 
     // ---- Page Index ----

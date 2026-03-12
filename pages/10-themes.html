@@ -62,8 +62,8 @@
         'border': '2px solid var(--bw_card_border)',
         'border-radius': 'var(--bw_radius)',
         'padding': '1.5rem',
-        'background': 'var(--bw_card_bg)',
-        'margin-top': '1rem'
+        'margin-top': '1rem',
+        'transition': 'background-color 0.3s ease, color 0.3s ease'
       },
       '.preview-section': {
         'margin-bottom': '1.5rem'
@@ -96,6 +96,11 @@
         'transform': 'translateY(-3px)',
         'box-shadow': '0 6px 16px rgba(0,0,0,0.12)'
       },
+      '.preset-card.active': {
+        'border-color': '#0077b6',
+        'box-shadow': '0 0 0 2px #0077b6',
+        'transform': 'translateY(-3px)'
+      },
       '.preset-card-colors': {
         'display': 'flex',
         'height': '48px'
@@ -123,8 +128,7 @@
       '.multi-theme-panel': {
         'border': '2px solid var(--bw_card_border)',
         'border-radius': 'var(--bw_radius)',
-        'padding': '1.25rem',
-        'background': 'var(--bw_card_bg)'
+        'padding': '1.25rem'
       },
       '.multi-theme-panel h4': {
         'margin': '0 0 1rem 0',
@@ -220,9 +224,10 @@
                   t: 'p', a: { style: descStyle }, c: [
                     'Click any preset to apply it to the preview area above. Each theme is generated from just three seed colors using ',
                     { t: 'code', c: 'bw.generateTheme()' },
-                    '.'
+                    '. Toggle between light and dark to see both palettes.'
                   ]
                 },
+                { t: 'div', a: { id: 'gallery-toggle' } },
                 { t: 'div', a: { id: 'preset-gallery' } }
               ]
             }
@@ -391,6 +396,8 @@
       radius:     'md',
       themeName:  'custom',
       lastResult: null,
+      isAlternate: false,
+      galleryDark: false,  // gallery light/dark toggle
       codeTheme:  'dark'  // 'dark' or 'light'
     };
 
@@ -400,8 +407,6 @@
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
-    var lastPageScope = '';
-
     function generateCurrentTheme() {
       bw.clearTheme();
       var config = {
@@ -417,13 +422,8 @@
       var result = bw.generateTheme(state.themeName, config);
       state.lastResult = result;
 
-      // Apply theme scope to #app (not body, so the navbar is unaffected)
-      var appEl = document.getElementById('app');
-      if (appEl) {
-        if (lastPageScope) appEl.classList.remove(lastPageScope);
-        lastPageScope = state.themeName;
-        appEl.classList.add(lastPageScope);
-      }
+      // Theme scope applied only to preview area (not #app), so page
+      // controls stay readable regardless of theme background color.
 
       // Re-inject multi-theme CSS so the scoped panels override the page theme
       bw.generateTheme('demo-ocean', {
@@ -710,15 +710,28 @@
                   }
                 ]
               },
-              // Generate button
+              // Generate + Toggle buttons
               {
-                t: 'div', a: { class: 'theme-control-group', style: 'display: flex; align-items: flex-end;' }, c: [
+                t: 'div', a: { class: 'theme-control-group', style: 'display: flex; align-items: flex-end; gap: 0.5rem;' }, c: [
                   bw.makeButton({
                     text: 'Generate',
                     variant: 'primary',
                     onclick: function() {
                       state.themeName = 'custom';
                       generateCurrentTheme();
+                      renderPreview();
+                      renderCodeExport();
+                      renderBgSurfaceExplainer();
+                      renderBgSurfaceDemo();
+                    }
+                  }),
+                  bw.makeButton({
+                    text: state.isAlternate ? 'Primary' : 'Alternate',
+                    variant: state.isAlternate ? 'warning' : 'secondary',
+                    onclick: function() {
+                      state.isAlternate = !state.isAlternate;
+                      generateCurrentTheme();
+                      renderGenerator();
                       renderPreview();
                       renderCodeExport();
                       renderBgSurfaceExplainer();
@@ -742,23 +755,107 @@
 
     function renderPreview() {
       var scope = state.themeName;
-      bw.DOM('#theme-preview', {
-        t: 'div', a: { class: 'preview-area ' + scope }, c: [
-          { t: 'h3', a: { style: 'margin: 0 0 1rem 0;' }, c: 'Live Preview' },
-          buildPreviewTaco()
-        ]
-      });
+      var result = state.lastResult;
+      var bgColor, textColor;
+
+      if (result && state.isAlternate && result.alternate) {
+        // Alternate mode: light.base is the dark background, dark.base is the light text
+        var altP = result.alternate.palette;
+        bgColor = altP.light.base || '#1a1a2e';
+        textColor = altP.dark.base || '#e8e8e8';
+      } else if (result) {
+        bgColor = result.palette.background || '#ffffff';
+        textColor = result.palette.dark.base || '#212529';
+      } else {
+        bgColor = '#ffffff';
+        textColor = '#212529';
+      }
+
+      var previewStyle = 'background-color: ' + bgColor + '; color: ' + textColor + ';';
+      var altClass = state.isAlternate ? ' bw_theme_alt' : '';
+      var modeLabel = state.isAlternate ? ' (Alternate)' : '';
+
+      // Use bw.$ for fresh DOM lookup — bw._el cache can go stale
+      // when #theme-preview is re-created by renderGenerator()
+      var tpEls = bw.$('#theme-preview');
+      if (tpEls.length) {
+        bw.DOM(tpEls[0], {
+          t: 'div', a: { class: 'preview-area ' + scope + altClass, style: previewStyle }, c: [
+            { t: 'h3', a: { style: 'margin: 0 0 1rem 0;' }, c: 'Live Preview' + modeLabel },
+            buildPreviewTaco()
+          ]
+        });
+      }
     }
 
     // ---------------------------------------------------------------
     // Section 2: Pre-built Gallery
     // ---------------------------------------------------------------
     function renderGallery() {
+      var isDark = state.galleryDark;
+
+      // Light/Dark toggle
+      bw.DOM('#gallery-toggle', {
+        t: 'div', a: { style: 'display:flex;gap:0.25rem;margin-bottom:1rem' }, c: [
+          {
+            t: 'button', c: 'Light',
+            a: {
+              style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:4px 0 0 4px;cursor:pointer;font-size:0.875rem;font-weight:600;' +
+                (!isDark ? 'background:#006666;color:#fff;border-color:#006666;' : 'background:#fff;color:#333;')
+            },
+            o: { mounted: function(el) { el.addEventListener('click', function() {
+              state.galleryDark = false;
+              state.isAlternate = false;
+              generateCurrentTheme();
+              renderGenerator();
+              renderGallery();
+              renderPreview();
+            }); }}
+          },
+          {
+            t: 'button', c: 'Dark',
+            a: {
+              style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:0 4px 4px 0;cursor:pointer;font-size:0.875rem;font-weight:600;' +
+                (isDark ? 'background:#006666;color:#fff;border-color:#006666;' : 'background:#fff;color:#333;')
+            },
+            o: { mounted: function(el) { el.addEventListener('click', function() {
+              state.galleryDark = true;
+              state.isAlternate = true;
+              generateCurrentTheme();
+              renderGenerator();
+              renderGallery();
+              renderPreview();
+            }); }}
+          }
+        ]
+      });
+
       var cards = Object.keys(presets).map(function(key) {
         var p = presets[key];
+        var isActive = state.themeName === key;
+
+        // Derive swatch colors: primary seeds or their alternates
+        var c1 = p.primary, c2 = p.secondary, c3 = p.tertiary;
+        if (isDark) {
+          c1 = bw.deriveAlternateSeed(p.primary);
+          c2 = bw.deriveAlternateSeed(p.secondary);
+          c3 = bw.deriveAlternateSeed(p.tertiary);
+        }
+        // Derive background tint for the card body
+        var priHsl = bw.hexToHsl(p.primary);
+        var cardBg, cardText;
+        if (isDark) {
+          cardBg = bw.hslToHex([priHsl[0], 15, 15]);
+          cardText = '#e0e0e0';
+        } else {
+          cardBg = bw.hslToHex([priHsl[0], 6, 98]);
+          cardText = '#333';
+        }
+
         return {
           t: 'div', a: {
-            class: 'preset-card',
+            class: 'preset-card' + (isActive ? ' active' : ''),
+            style: 'background:' + cardBg + ';color:' + cardText + ';',
             onclick: function() {
               state.primary    = p.primary;
               state.secondary  = p.secondary;
@@ -766,26 +863,32 @@
               state.background = '';
               state.surface    = '';
               state.themeName  = key;
+              state.isAlternate = isDark;
               generateCurrentTheme();
               renderGenerator();
+              renderGallery();
+              renderPreview();
               renderCodeExport();
               renderBgSurfaceExplainer();
               renderBgSurfaceDemo();
+              // Scroll preview into view
+              var previewEl = document.getElementById('theme-preview');
+              if (previewEl) previewEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
           },
           c: [
             // Color strip
             {
               t: 'div', a: { class: 'preset-card-colors' }, c: [
-                { t: 'div', a: { style: 'background:' + p.primary + ';' } },
-                { t: 'div', a: { style: 'background:' + p.secondary + ';' } },
-                { t: 'div', a: { style: 'background:' + p.tertiary + ';' } }
+                { t: 'div', a: { style: 'background:' + c1 + ';' } },
+                { t: 'div', a: { style: 'background:' + c2 + ';' } },
+                { t: 'div', a: { style: 'background:' + c3 + ';' } }
               ]
             },
             // Body
             {
               t: 'div', a: { class: 'preset-card-body' }, c: [
-                { t: 'h4', c: key.charAt(0).toUpperCase() + key.slice(1) }
+                { t: 'h4', a: { style: 'color:' + cardText }, c: key.charAt(0).toUpperCase() + key.slice(1) }
               ]
             }
           ]
@@ -1087,13 +1190,19 @@
           {
             t: 'div', a: { class: 'multi-theme-row' }, c: [
               {
-                t: 'div', a: { class: 'multi-theme-panel demo-ocean' }, c: [
+                t: 'div', a: {
+                  class: 'multi-theme-panel demo-ocean',
+                  style: 'background-color: ' + (themeA.palette.background || '#fff') + '; color: ' + themeA.palette.dark.base + ';'
+                }, c: [
                   { t: 'h4', c: 'Ocean Theme (.demo-ocean)' },
                   panelContent()
                 ]
               },
               {
-                t: 'div', a: { class: 'multi-theme-panel demo-sunset' }, c: [
+                t: 'div', a: {
+                  class: 'multi-theme-panel demo-sunset',
+                  style: 'background-color: ' + (themeB.palette.background || '#fff') + '; color: ' + themeB.palette.dark.base + ';'
+                }, c: [
                   { t: 'h4', c: 'Sunset Theme (.demo-sunset)' },
                   panelContent()
                 ]

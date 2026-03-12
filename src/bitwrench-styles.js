@@ -1280,7 +1280,8 @@ var structuralRules = {
     '.bw_badge': {
       'display': 'inline-block', 'font-size': '0.875rem',
       'font-weight': '600', 'line-height': '1.3', 'text-align': 'center',
-      'white-space': 'nowrap', 'vertical-align': 'baseline'
+      'white-space': 'nowrap', 'vertical-align': 'baseline',
+      'padding': '0.35rem 0.65rem', 'border-radius': '0.25rem'
     },
     '.bw_badge:empty': { 'display': 'none' },
     '.bw_badge_sm': { 'font-size': '0.75rem', 'padding': '0.25rem 0.5rem' },

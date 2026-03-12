@@ -309,12 +309,13 @@
       'var counter = bw.component({\n' +
       '  t: \'div\', c: [\n' +
       '    { t: \'h3\', c: \'Count: ${count}\' },\n' +
-      '    { t: \'button\', c: \'+1\', a: {\n' +
+      '    bw.makeButton({ text: \'+1\',\n' +
+      '      variant: \'primary\', size: \'sm\',\n' +
       '      onclick: function() {\n' +
       '        counter.set(\'count\',\n' +
       '          counter.get(\'count\') + 1);\n' +
       '      }\n' +
-      '    }}\n' +
+      '    })\n' +
       '  ],\n' +
       '  o: {\n' +
       '    state: { count: 0 },\n' +
@@ -469,27 +470,29 @@
       '  t: \'div\', c: [\n' +
       '    bw.makeCard({\n' +
       '      title: \'${title}\',\n' +
-      '      content: \'${status}\',\n' +
-      '      variant: \'${variant}\'\n' +
+      '      content: [\n' +
+      '        { t: \'p\', c: \'Status: ${status}\' },\n' +
+      '        { t: \'p\', c: \'Uptime: ${uptime}\' }\n' +
+      '      ]\n' +
       '    })\n' +
       '  ],\n' +
       '  o: {\n' +
       '    state: {\n' +
       '      title: \'Server Status\',\n' +
       '      status: \'Online\',\n' +
-      '      variant: \'success\'\n' +
+      '      uptime: \'99.7%\'\n' +
       '    },\n' +
       '    methods: {\n' +
       '      setOnline: function(comp) {\n' +
       '        comp.setState({\n' +
       '          status: \'Online\',\n' +
-      '          variant: \'success\'\n' +
+      '          uptime: \'99.7%\'\n' +
       '        });\n' +
       '      },\n' +
       '      setOffline: function(comp) {\n' +
       '        comp.setState({\n' +
       '          status: \'Offline\',\n' +
-      '          variant: \'danger\'\n' +
+      '          uptime: \'0%\'\n' +
       '        });\n' +
       '      }\n' +
       '    }\n' +
@@ -500,7 +503,6 @@
       '\n' +
       '// Update via handle API:\n' +
       'statusCard.set(\'status\', \'Maintenance\');\n' +
-      'statusCard.set(\'variant\', \'warning\');\n' +
       '\n' +
       '// Or use promoted methods:\n' +
       'statusCard.setOffline();';
