@@ -526,7 +526,13 @@
         // Content sections
         {
           t: 'div', a: { class: 'content-container wide' },
-          c: [section1, section2, section3, section4, section4b, section5, section5b, section6]
+          c: [
+            { t: 'div', a: { class: 'callout callout-concept' }, c: [
+                { t: 'h4', c: 'Levels 0 \u2192 1 \u2192 2' },
+                { t: 'p', c: ['This page walks through all three learning levels: data as TACO objects (Level 0), mounting to the DOM (Level 1), and managing state (Level 2). ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+            ]},
+            section1, section2, section3, section4, section4b, section5, section5b, section6
+          ]
         }
       ]
     };

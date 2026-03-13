@@ -1,86 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- bitwrench.js library examples  
-        (c) M A Chatterjee
-        deftio <at> deftio <dot> com
-        web   :  http:deftio.com/bitwrench
-        github:  http:github.com/deftio/bitwrench
-     -->
-    <script type="text/javascript" src="../bitwrench.js"></script>
-
-    <title>Bitwrench Examples</title>
-
-    <style>
-        ul {
-            list-style-type: none;
-        }
-
-        li {
-            left: 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench Examples</title>
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
 </head>
+<body>
+  <div id="app"></div>
+  <script>
+    bw.loadDefaultStyles();
 
-<body class="bw-def-page-setup bw-font-sans-serif">
-    <div class="container">
-        <h2 class="mb-8">Bitwrench Examples</h2>
-        <p>The following examples can help in getting started with using bitwrench</p>
-        <div id="examples"></div>
+    var modernExamples = [
+      { title: 'Coffee Shop Landing', href: 'ember_and_oak.html', desc: 'Full landing page with bw.generateTheme(), BCCL components, and custom CSS.' },
+      { title: 'Reactive UI (Todo)', href: 'reactive-ui/index.html', desc: 'Todo app using bw.component() with .set()/.get() and pub/sub.' },
+      { title: 'Static Page', href: 'static-page/index.html', desc: 'Marketing landing page built entirely with BCCL factories.' },
+      { title: 'Client-Server (bwserve)', href: 'client-server/', desc: 'Server-driven counter demo using SSE protocol. Run: node server.js' },
+      { title: 'LLM Chat (bwserve)', href: 'llm-chat/', desc: 'Chat UI driven by Ollama/OpenAI via bwserve. Run: node server.js' },
+      { title: 'Embedded IoT Dashboard', href: 'embedded/index.html', desc: 'ESP32-style sensor dashboard with SSE data push.' }
+    ];
 
-    </div>
-    <script>
+    var legacyExamples = [
+      { title: 'Basic Demo (v1)', href: 'example1.html', desc: 'Headings, paragraphs, sortable tables using v1 array syntax.' },
+      { title: 'Grid + Tables (v1)', href: 'example5.html', desc: 'Grid layout, multi-array, htmlTable() demo.' },
+      { title: 'Live Clock (v1)', href: 'example8.html', desc: 'Full-page clock with setInterval.' },
+      { title: 'Image Grid (v1)', href: 'example9.html', desc: 'Card grid generator.' }
+    ];
 
-        let ln = (title, url, desc) => {
-            return `<div><h2><a href="${url}">${title}</a></h2>${desc}</div>`;
-        }
-        function getCurrentPath() {
-            // Create a new URL object based on the current window location
-            const url = new URL(window.location.href);
+    function makeExampleCard(ex) {
+      return {
+        t: 'a', a: { href: ex.href, style: 'text-decoration:none; color:inherit; display:block' },
+        c: bw.makeCard({
+          title: ex.title,
+          content: ex.desc,
+          hoverable: true,
+          style: 'height:100%'
+        })
+      };
+    }
 
-            // Get the pathname from the URL
-            let pathname = url.pathname;
+    bw.DOM('#app', { t: 'div', a: { class: 'bw-container' }, c: [
+      { t: 'div', a: { style: 'text-align:center; padding:2rem 0 1rem' }, c: [
+        { t: 'h1', c: 'Bitwrench Examples' },
+        { t: 'p', a: { style: 'color:#666; margin-top:0.5rem' }, c: [
+          'For the full documentation site, visit ',
+          { t: 'a', a: { href: '../pages/' }, c: 'bitwrench pages' },
+          '.'
+        ]}
+      ]},
 
-            // Check if the pathname includes a file name by looking for a dot followed by a file extension at the end
-            if (pathname.includes('.')) {
-                // Remove the file name by truncating the pathname at the last slash
-                pathname = pathname.substring(0, pathname.lastIndexOf('/') + 1);
-            }
+      { t: 'h2', a: { style: 'margin:1.5rem 0 1rem' }, c: 'Modern Examples (v2)' },
+      { t: 'div', a: { style: 'display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem' },
+        c: modernExamples.map(makeExampleCard)
+      },
 
-            // Reconstruct the URL without the filename
-            url.pathname = pathname;
-            let path = url.toString();
-            path = path.endsWith("/") ? path : path + "/";
+      { t: 'h2', a: { style: 'margin:2rem 0 1rem' }, c: 'Legacy Demos (v1)' },
+      { t: 'p', a: { style: 'color:#666; margin-bottom:1rem' }, c: 'These use bitwrench v1.x syntax (array notation, deprecated APIs). Kept for reference.' },
+      { t: 'div', a: { style: 'display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem' },
+        c: legacyExamples.map(makeExampleCard)
+      },
 
-            // Return the modified URL as a string
-            return path;
-        }
-
-        // this hack is so that this works both local host and github pages w/o needing extra libraries
-        let examples = [
-            { title: "Bitwrench Basics", url: "example1.html", desc: "Simple setup with headings, paragraphs, and sortable tables." },
-            { title: "Tables and Colors", url: "example2.html", desc: "Tables and color bars" },
-            { title: "JSON formatting", url: "example3.html", desc: "Auto JSON formatting and printing" },
-            { title: "Full Banner", url: "example4.html", desc: "Full Page Banner / Sign with 2 lines" },
-            { title: "Full Demo with UMD", url: "example5.html", desc: "Headings, Left / Center / Right Justify, sortable tables, function support, grid demo" },
-            { title: "Grids", url: "example6.html", desc: "Grid text and alignment" },
-            { title: "Tab with Rendered and Raw content", url: "example7.html", desc: "Rendered Tabs and Code " },
-            { title: "Live Clock", url: "example8.html", desc: "Full Page Clock" },
-            { title: "Live Image Grid", url: "example9.html", desc: "Image Grid Generator with Puppies" },
-            { title: "Full Demo with ESM Module", url: "example10.html", desc: "Full demo but using ESM (JS module) version" },
-            { title: "Bitwrench ES Module and ES content", url: "example11.html", desc: "Bitwrench loaded as module and content loaded as module" },
-            { title: "Bitwrench ES Module and pico.css", url: "example12.html", desc: "Bitwrench loaded as module and using pico.css styling" }
-          
-        ], content = "";
-        for (i in examples)
-            content += ln(examples[i].title, getCurrentPath() + examples[i].url, examples[i].desc);
-        document.getElementById("examples").innerHTML = content;
-
-    </script>
+      { t: 'footer', a: { style: 'text-align:center; padding:2rem 0 1rem; color:#999; font-size:0.8rem' },
+        c: 'bitwrench \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause'
+      }
+    ]});
+  </script>
 </body>
-
 </html>

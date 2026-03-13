@@ -102,12 +102,12 @@
       footer: {
         t: 'div', a: { style: 'display: flex; gap: 0.5rem; justify-content: flex-end;' }, c: [
           bw.makeButton({ text: 'Cancel', variant: 'secondary', onclick: function() {
-            document.querySelector('.bw_modal').classList.remove('bw_modal_show');
-            document.body.style.overflow = '';
+            var m = bw.$('.bw_modal'); if (m.length) m[0].classList.remove('bw_modal_show');
+            bw.$('body')[0].style.overflow = '';
           }}),
           bw.makeButton({ text: 'Confirm', variant: 'primary', onclick: function() {
-            document.querySelector('.bw_modal').classList.remove('bw_modal_show');
-            document.body.style.overflow = '';
+            var m = bw.$('.bw_modal'); if (m.length) m[0].classList.remove('bw_modal_show');
+            bw.$('body')[0].style.overflow = '';
           }})
         ]
       }
@@ -134,6 +134,14 @@
         {
           t: 'div', a: { class: 'content-container wide' },
           c: [
+
+            // =================================================================
+            // Teaching callout
+            // =================================================================
+            { t: 'div', a: { class: 'callout callout-concept' }, c: [
+                { t: 'h4', c: 'Level 0 \u2014 Components' },
+                { t: 'p', c: ['BCCL factories like makeButton() and makeCard() return plain TACO objects. No magic \u2014 every component is a JS object you can inspect, compose, and extend. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+            ]},
 
             // =================================================================
             // Introduction
@@ -867,14 +875,14 @@
                     bw.makeButton({
                       text: 'Open Modal', variant: 'primary',
                       onclick: function() {
-                        document.querySelector('.bw_modal').classList.add('bw_modal_show');
-                        document.body.style.overflow = 'hidden';
+                        var m = bw.$('.bw_modal'); if (m.length) m[0].classList.add('bw_modal_show');
+                        bw.$('body')[0].style.overflow = 'hidden';
                       }
                     }),
                     modalTaco
                   ]
                 },
-                "var modal = bw.makeModal({\n  title: 'Confirm Action',\n  content: 'Are you sure?',\n  footer: {\n    t: 'div', c: [\n      bw.makeButton({ text: 'Cancel', variant: 'secondary' }),\n      bw.makeButton({ text: 'Confirm', variant: 'primary' })\n    ]\n  }\n});\n\n// Show the modal\ndocument.querySelector('.bw_modal').classList.add('bw_modal_show');"
+                "var modal = bw.makeModal({\n  title: 'Confirm Action',\n  content: 'Are you sure?',\n  footer: {\n    t: 'div', c: [\n      bw.makeButton({ text: 'Cancel', variant: 'secondary' }),\n      bw.makeButton({ text: 'Confirm', variant: 'primary' })\n    ]\n  }\n});\n\n// Show the modal\nbw.$('.bw_modal')[0].classList.add('bw_modal_show');"
               )
             ),
 

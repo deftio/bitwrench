@@ -195,6 +195,15 @@
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' }, c: [
 
+        // Teaching callout
+        {
+          t: 'div', a: { class: 'callout callout-concept' }, c: [
+            { t: 'h4', c: 'Level 0 \u2014 Theme Generation' },
+            { t: 'p', c: ['Themes are data: hand bw.generateTheme() seed colors and get a complete CSS palette with dark mode. Theme generation is pure computation \u2014 no DOM required. ',
+              { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+          ]
+        },
+
         // Section 1: Theme Generator
         {
           t: 'div', a: { class: 'demo-section' }, c: [
@@ -872,8 +881,8 @@
               renderBgSurfaceExplainer();
               renderBgSurfaceDemo();
               // Scroll preview into view
-              var previewEl = document.getElementById('theme-preview');
-              if (previewEl) previewEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              var previewEls = bw.$('#theme-preview');
+              if (previewEls.length) previewEls[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
           },
           c: [

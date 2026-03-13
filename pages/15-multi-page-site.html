@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Multi-Page Site Composition</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    mountExampleNav('#example-nav', '15-multi-page-site.html');
+    bw.loadDefaultStyles();
+
+    // =========================================================================
+    // Helper: read-only code block
+    // =========================================================================
+    function codeBlock(code, lang) {
+      return bw.codeEditor
+        ? bw.codeEditor({ code: code, lang: lang || 'js', readOnly: true, height: 'auto' })
+        : { t: 'pre', c: { t: 'code', c: code } };
+    }
+
+    // =========================================================================
+    // Page-specific CSS
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.site-preview': {
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        'max-height': '420px',
+        'overflow-y': 'auto',
+        background: 'var(--bw_card_bg)',
+        'margin-bottom': 'var(--bw_space_md)'
+      },
+      '.site-preview-toolbar': {
+        display: 'flex',
+        'flex-wrap': 'wrap',
+        gap: '0.5rem',
+        'margin-bottom': '0.75rem'
+      },
+      '.dual-preview': {
+        display: 'grid',
+        'grid-template-columns': '1fr 1fr',
+        gap: 'var(--bw_space_md)',
+        'margin-bottom': 'var(--bw_space_md)'
+      },
+      '@media (max-width: 768px)': {
+        '.dual-preview': {
+          'grid-template-columns': '1fr'
+        }
+      },
+      '.demo-section': {
+        'margin-bottom': '2.5rem'
+      },
+      '.demo-section h2': {
+        'font-size': '1.4rem',
+        'font-weight': '600',
+        'margin-bottom': '0.75rem',
+        color: 'var(--bw_teal_dark)',
+        'padding-bottom': '0.5rem',
+        'border-bottom': '2px solid var(--bw_teal)'
+      },
+      '.demo-section h3': {
+        'font-size': '1.1rem',
+        'font-weight': '600',
+        'margin-top': '1.25rem',
+        'margin-bottom': '0.5rem'
+      },
+      '.demo-section p': {
+        'margin-bottom': '0.75rem',
+        'line-height': '1.6'
+      },
+      '.preview-header': {
+        background: 'var(--bw_teal_dark, #1a3a5c)',
+        color: '#fff',
+        padding: '0.75rem 1rem',
+        'font-weight': '600',
+        'font-size': '0.95rem'
+      },
+      '.preview-nav': {
+        background: 'var(--bw_teal, #336699)',
+        padding: '0.5rem 1rem',
+        display: 'flex',
+        gap: '1rem'
+      },
+      '.preview-nav a, .preview-nav span': {
+        color: 'rgba(255,255,255,0.8)',
+        'text-decoration': 'none',
+        'font-size': '0.85rem',
+        cursor: 'pointer'
+      },
+      '.preview-nav .active': {
+        color: '#fff',
+        'font-weight': '600',
+        'border-bottom': '2px solid #fff'
+      },
+      '.preview-body': {
+        padding: '1.25rem'
+      },
+      '.preview-footer': {
+        background: 'var(--bw_bg_muted, #f5f5f5)',
+        padding: '0.75rem 1rem',
+        'font-size': '0.8rem',
+        color: 'var(--bw_text_secondary)',
+        'border-top': '1px solid var(--bw_card_border)',
+        'text-align': 'center'
+      },
+      '.preview-sidebar': {
+        background: 'var(--bw_bg_muted, #f8f9fa)',
+        padding: '1rem',
+        'border-right': '1px solid var(--bw_card_border)',
+        'min-width': '140px'
+      },
+      '.preview-sidebar ul': {
+        'list-style': 'none',
+        padding: '0',
+        margin: '0'
+      },
+      '.preview-sidebar li': {
+        padding: '0.35rem 0',
+        'font-size': '0.85rem',
+        color: 'var(--bw_text_secondary)'
+      },
+      '.callout': {
+        padding: '1rem 1.25rem',
+        'border-radius': 'var(--bw_radius)',
+        'margin-bottom': '1rem',
+        border: '1px solid var(--bw_card_border)',
+        background: 'var(--bw_teal_bg, rgba(51,102,153,0.05))'
+      },
+      '.callout h4': {
+        margin: '0 0 0.5rem 0',
+        'font-weight': '600'
+      },
+      '.toggle-group': {
+        display: 'inline-flex',
+        'border-radius': 'var(--bw_radius)',
+        overflow: 'hidden',
+        border: '1px solid var(--bw_card_border)',
+        'margin-right': '1rem',
+        'margin-bottom': '0.5rem'
+      },
+      '.toggle-group button': {
+        padding: '0.4rem 0.75rem',
+        border: 'none',
+        background: 'var(--bw_card_bg)',
+        cursor: 'pointer',
+        'font-size': '0.85rem',
+        'border-right': '1px solid var(--bw_card_border)',
+        transition: 'background 0.15s, color 0.15s'
+      },
+      '.toggle-group button:last-child': {
+        'border-right': 'none'
+      },
+      '.toggle-group button.active': {
+        background: 'var(--bw_teal)',
+        color: '#fff'
+      },
+      '.kit-label': {
+        'font-weight': '600',
+        'margin-bottom': '0.5rem',
+        'font-size': '0.9rem'
+      },
+      '.meta-annotation': {
+        background: 'var(--bw_teal_bg, rgba(51,102,153,0.06))',
+        'border-left': '3px solid var(--bw_teal)',
+        padding: '0.75rem 1rem',
+        'margin-bottom': '0.75rem',
+        'font-size': '0.9rem',
+        'border-radius': '0 var(--bw_radius) var(--bw_radius) 0'
+      },
+      '.patterns-table': {
+        width: '100%',
+        'border-collapse': 'collapse',
+        'margin-bottom': '1.5rem',
+        'font-size': '0.9rem'
+      },
+      '.patterns-table th': {
+        background: 'var(--bw_teal_dark)',
+        color: '#fff',
+        padding: '0.6rem 0.75rem',
+        'text-align': 'left',
+        'font-weight': '600',
+        'font-size': '0.8125rem'
+      },
+      '.patterns-table td': {
+        padding: '0.5rem 0.75rem',
+        'border-bottom': '1px solid var(--bw_card_border)'
+      },
+      '.patterns-table tr:nth-child(even) td': {
+        background: 'rgba(0,0,0,0.02)'
+      }
+    }), { id: 'multi-page-styles' });
+
+    // =========================================================================
+    // Section 1: The Dictionary Pattern
+    // =========================================================================
+    var dictPreviewItem = 'header';
+
+    function makeDictHeader(opts) {
+      opts = opts || {};
+      return {
+        t: 'div', a: { class: 'preview-header' },
+        c: opts.title || 'My Site'
+      };
+    }
+
+    function makeDictNav(opts) {
+      opts = opts || {};
+      var items = opts.items || ['Home', 'About', 'Blog', 'Contact'];
+      return {
+        t: 'div', a: { class: 'preview-nav' },
+        c: items.map(function(item) {
+          return {
+            t: 'span',
+            a: { class: opts.active === item ? 'active' : '' },
+            c: item
+          };
+        })
+      };
+    }
+
+    function makeDictFooter(opts) {
+      opts = opts || {};
+      return {
+        t: 'div', a: { class: 'preview-footer' },
+        c: opts.text || '\u00A9 2026 My Site \u00B7 All rights reserved'
+      };
+    }
+
+    function makeDictSidebar(opts) {
+      opts = opts || {};
+      var links = opts.links || ['Dashboard', 'Settings', 'Profile', 'Help'];
+      return {
+        t: 'div', a: { class: 'preview-sidebar' },
+        c: [
+          { t: 'strong', a: { style: 'font-size:0.85rem' }, c: opts.title || 'Menu' },
+          { t: 'ul', c: links.map(function(l) { return { t: 'li', c: l }; }) }
+        ]
+      };
+    }
+
+    function renderDictPreview() {
+      var items = {
+        header:  makeDictHeader({ title: 'My Site' }),
+        nav:     makeDictNav({ items: ['Home', 'About', 'Blog', 'Contact'], active: 'Home' }),
+        footer:  makeDictFooter(),
+        sidebar: makeDictSidebar()
+      };
+      bw.DOM('#dict-preview', {
+        t: 'div', a: { class: 'site-preview' },
+        c: items[dictPreviewItem] || items.header
+      });
+    }
+
+    var section1 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'dictionary-pattern' }, c: '1. The Dictionary Pattern' },
+        {
+          t: 'p',
+          c: 'The core idea: store reusable UI pieces in a plain JS object. Each entry is a function that returns a TACO. Because they\'re functions, they accept options \u2014 the same header can render with different titles, the same nav with different active states.'
+        },
+        codeBlock(
+          'var site = {\n' +
+          '  header: function(opts) {\n' +
+          '    return { t: \'div\', a: { class: \'site-header\' },\n' +
+          '             c: opts.title || \'My Site\' };\n' +
+          '  },\n' +
+          '  nav: function(opts) {\n' +
+          '    return { t: \'nav\', c: opts.items.map(function(item) {\n' +
+          '      return { t: \'a\', a: { href: item.href,\n' +
+          '        class: opts.active === item.text ? \'active\' : \'\' },\n' +
+          '        c: item.text };\n' +
+          '    })};\n' +
+          '  },\n' +
+          '  footer: function(opts) {\n' +
+          '    return { t: \'footer\', c: opts.text || \'\u00A9 2026\' };\n' +
+          '  }\n' +
+          '};'
+        ),
+        { t: 'h3', c: 'Try it \u2014 click each dictionary entry:' },
+        {
+          t: 'div', a: { class: 'site-preview-toolbar' },
+          c: ['header', 'nav', 'footer', 'sidebar'].map(function(key) {
+            return bw.makeButton({
+              text: key.charAt(0).toUpperCase() + key.slice(1),
+              variant: dictPreviewItem === key ? 'primary' : 'outline-secondary',
+              size: 'sm',
+              onclick: function() {
+                dictPreviewItem = key;
+                renderSection1Buttons();
+                renderDictPreview();
+              }
+            });
+          })
+        },
+        { t: 'div', a: { id: 'dict-preview' } },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'Key insight' },
+            { t: 'p', a: { style: 'margin:0' }, c: 'Each entry is just a function that returns a TACO object. There\'s no special registry, no class hierarchy, no framework API. A plain object of functions is all you need.' }
+          ]
+        }
+      ]
+    };
+
+    function renderSection1Buttons() {
+      var toolbar = bw.$('.site-preview-toolbar');
+      if (toolbar.length) {
+        bw.DOM(toolbar[0], {
+          t: 'div', a: { class: 'site-preview-toolbar', style: 'display:flex;flex-wrap:wrap;gap:0.5rem' },
+          c: ['header', 'nav', 'footer', 'sidebar'].map(function(key) {
+            return bw.makeButton({
+              text: key.charAt(0).toUpperCase() + key.slice(1),
+              variant: dictPreviewItem === key ? 'primary' : 'outline-secondary',
+              size: 'sm',
+              onclick: function() {
+                dictPreviewItem = key;
+                renderSection1Buttons();
+                renderDictPreview();
+              }
+            });
+          })
+        });
+      }
+    }
+
+    // =========================================================================
+    // Section 2: Composing Pages
+    // =========================================================================
+    var currentPage = 'home';
+
+    var site = {
+      header: makeDictHeader,
+      nav:    makeDictNav,
+      footer: makeDictFooter,
+      sidebar: makeDictSidebar
+    };
+
+    var pageContents = {
+      home: {
+        title: 'Welcome Home',
+        body: [
+          { t: 'p', c: 'This is the home page. Every page shares the same header, navigation, and footer \u2014 pulled from the site dictionary.' },
+          bw.makeCard({ title: 'Featured', content: 'A highlight card on the home page.', variant: 'primary' })
+        ]
+      },
+      about: {
+        title: 'About Us',
+        body: [
+          { t: 'p', c: 'The about page. Same chrome, different content.' },
+          { t: 'p', c: 'We build tools that treat UI as data, not templates.' }
+        ]
+      },
+      blog: {
+        title: 'Blog',
+        body: [
+          { t: 'p', c: 'Recent posts:' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'TACO vs JSX: A Comparison' },
+            { t: 'li', c: 'Building Server-Driven UIs' },
+            { t: 'li', c: 'Design Systems from Two Colors' }
+          ]}
+        ]
+      },
+      contact: {
+        title: 'Contact',
+        body: [
+          { t: 'p', c: 'Get in touch:' },
+          bw.makeInput({ placeholder: 'Your email', type: 'email' }),
+          { t: 'div', a: { style: 'margin-top:0.5rem' } },
+          bw.makeButton({ text: 'Send Message', variant: 'primary', size: 'sm' })
+        ]
+      }
+    };
+
+    function buildPage(pageName) {
+      var pg = pageContents[pageName] || pageContents.home;
+      return {
+        t: 'div', a: { class: 'site-preview' },
+        c: [
+          site.nav({ items: ['Home', 'About', 'Blog', 'Contact'], active: pageName.charAt(0).toUpperCase() + pageName.slice(1) }),
+          site.header({ title: pg.title }),
+          { t: 'div', a: { class: 'preview-body' }, c: pg.body },
+          site.footer()
+        ]
+      };
+    }
+
+    function renderSitePreview() {
+      bw.DOM('#site-preview', buildPage(currentPage));
+    }
+
+    function renderSection2Buttons() {
+      var toolbar = bw.$('#site-toolbar');
+      if (toolbar.length) {
+        bw.DOM(toolbar[0], {
+          t: 'div',
+          c: ['home', 'about', 'blog', 'contact'].map(function(pg) {
+            return bw.makeButton({
+              text: pg.charAt(0).toUpperCase() + pg.slice(1),
+              variant: currentPage === pg ? 'primary' : 'outline-secondary',
+              size: 'sm',
+              onclick: function() {
+                currentPage = pg;
+                renderSection2Buttons();
+                renderSitePreview();
+              }
+            });
+          })
+        });
+      }
+    }
+
+    var section2 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'composing-pages' }, c: '2. Composing Pages' },
+        {
+          t: 'p',
+          c: 'Each "page" is a function that pulls shared pieces from the dictionary and adds its own content. The page function decides the order and layout.'
+        },
+        codeBlock(
+          'function homePage(site) {\n' +
+          '  return { t: \'div\', c: [\n' +
+          '    site.nav({ active: \'Home\' }),\n' +
+          '    site.header({ title: \'Welcome\' }),\n' +
+          '    { t: \'div\', c: /* page-specific content */ },\n' +
+          '    site.footer()\n' +
+          '  ]};\n' +
+          '}\n' +
+          '\n' +
+          'function aboutPage(site) {\n' +
+          '  return { t: \'div\', c: [\n' +
+          '    site.nav({ active: \'About\' }),\n' +
+          '    site.header({ title: \'About Us\' }),\n' +
+          '    { t: \'div\', c: \'Different content, same shell.\' },\n' +
+          '    site.footer()\n' +
+          '  ]};\n' +
+          '}'
+        ),
+        { t: 'h3', c: 'Try it \u2014 switch between pages:' },
+        {
+          t: 'div', a: { id: 'site-toolbar', class: 'site-preview-toolbar' },
+          c: ['home', 'about', 'blog', 'contact'].map(function(pg) {
+            return bw.makeButton({
+              text: pg.charAt(0).toUpperCase() + pg.slice(1),
+              variant: currentPage === pg ? 'primary' : 'outline-secondary',
+              size: 'sm',
+              onclick: function() {
+                currentPage = pg;
+                renderSection2Buttons();
+                renderSitePreview();
+              }
+            });
+          })
+        },
+        { t: 'div', a: { id: 'site-preview' } },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'The aha moment' },
+            { t: 'p', a: { style: 'margin:0' }, c: 'Every page shares the same nav, header, and footer from the dictionary. Changing the footer function once changes it everywhere. This is the multi-page site pattern \u2014 composition by reference, not copy-paste.' }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Section 3: Mix and Match
+    // =========================================================================
+    var navMode = 'full';
+    var footerMode = 'full';
+
+    function makeFullNav(opts) {
+      opts = opts || {};
+      return {
+        t: 'div', a: { class: 'preview-nav' },
+        c: ['Home', 'About', 'Blog', 'Contact', 'Docs', 'Support'].map(function(item) {
+          return { t: 'span', a: { class: opts.active === item ? 'active' : '' }, c: item };
+        })
+      };
+    }
+
+    function makeMinimalNav(opts) {
+      opts = opts || {};
+      return {
+        t: 'div', a: { class: 'preview-nav', style: 'justify-content:space-between' },
+        c: [
+          { t: 'span', a: { style: 'font-weight:600' }, c: '\u2630 Menu' },
+          { t: 'span', c: opts.active || 'Home' }
+        ]
+      };
+    }
+
+    function makeFullFooter() {
+      return {
+        t: 'div', a: { class: 'preview-footer', style: 'text-align:left' },
+        c: {
+          t: 'div', a: { style: 'display:flex;gap:2rem;flex-wrap:wrap' },
+          c: [
+            { t: 'div', c: [
+              { t: 'strong', c: 'Company' },
+              { t: 'div', a: { style: 'font-size:0.8rem;margin-top:0.25rem' }, c: 'About \u00B7 Careers \u00B7 Press' }
+            ]},
+            { t: 'div', c: [
+              { t: 'strong', c: 'Support' },
+              { t: 'div', a: { style: 'font-size:0.8rem;margin-top:0.25rem' }, c: 'Docs \u00B7 FAQ \u00B7 Contact' }
+            ]},
+            { t: 'div', c: [
+              { t: 'strong', c: 'Legal' },
+              { t: 'div', a: { style: 'font-size:0.8rem;margin-top:0.25rem' }, c: 'Privacy \u00B7 Terms' }
+            ]}
+          ]
+        }
+      };
+    }
+
+    function makeSimpleFooter() {
+      return {
+        t: 'div', a: { class: 'preview-footer' },
+        c: '\u00A9 2026 My Site'
+      };
+    }
+
+    function renderMixPreview() {
+      var nav = navMode === 'full' ? makeFullNav({ active: 'Home' }) : makeMinimalNav({ active: 'Home' });
+      var footer = footerMode === 'full' ? makeFullFooter() : makeSimpleFooter();
+      bw.DOM('#mix-preview', {
+        t: 'div', a: { class: 'site-preview' },
+        c: [
+          nav,
+          makeDictHeader({ title: 'Same Content, Different Chrome' }),
+          { t: 'div', a: { class: 'preview-body' },
+            c: { t: 'p', c: 'The page content stays the same. Only the nav and footer change based on which variant you select.' }
+          },
+          footer
+        ]
+      });
+    }
+
+    function makeToggleGroup(label, options, current, onChange) {
+      return {
+        t: 'div', a: { style: 'display:inline-block;margin-right:1.5rem;margin-bottom:0.5rem' },
+        c: [
+          { t: 'span', a: { style: 'font-size:0.85rem;font-weight:600;margin-right:0.5rem' }, c: label + ':' },
+          {
+            t: 'span', a: { class: 'toggle-group' },
+            c: options.map(function(opt) {
+              return {
+                t: 'button',
+                a: {
+                  class: current === opt.value ? 'active' : '',
+                  onclick: function() { onChange(opt.value); }
+                },
+                c: opt.label
+              };
+            })
+          }
+        ]
+      };
+    }
+
+    function renderMixControls() {
+      bw.DOM('#mix-controls', {
+        t: 'div',
+        c: [
+          makeToggleGroup('Nav', [
+            { label: 'Full', value: 'full' },
+            { label: 'Minimal', value: 'minimal' }
+          ], navMode, function(v) {
+            navMode = v;
+            renderMixControls();
+            renderMixPreview();
+          }),
+          makeToggleGroup('Footer', [
+            { label: 'Full', value: 'full' },
+            { label: 'Simple', value: 'simple' }
+          ], footerMode, function(v) {
+            footerMode = v;
+            renderMixControls();
+            renderMixPreview();
+          })
+        ]
+      });
+    }
+
+    var section3 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'mix-and-match' }, c: '3. Mix and Match' },
+        {
+          t: 'p',
+          c: 'Because dictionary entries are just functions, you can define variants and swap them freely. A "full" nav and a "minimal" nav are both just functions that return a TACO \u2014 the page doesn\'t care which one it gets.'
+        },
+        codeBlock(
+          'var variants = {\n' +
+          '  fullNav:    function(opts) { /* 6 links */ },\n' +
+          '  minimalNav: function(opts) { /* hamburger + title */ },\n' +
+          '  fullFooter: function()     { /* 3-column links */ },\n' +
+          '  simpleFooter: function()   { /* one-line copyright */ }\n' +
+          '};\n' +
+          '\n' +
+          '// Swap at will:\n' +
+          'site.nav = variants.minimalNav;\n' +
+          'site.footer = variants.simpleFooter;\n' +
+          '// Re-render \u2014 same content, different chrome.'
+        ),
+        { t: 'h3', c: 'Try it \u2014 toggle nav and footer variants:' },
+        { t: 'div', a: { id: 'mix-controls' } },
+        { t: 'div', a: { id: 'mix-preview' } }
+      ]
+    };
+
+    // =========================================================================
+    // Section 4: Site Kit Factory
+    // =========================================================================
+    function createSiteKit(config) {
+      var theme = bw.generateTheme(config.name, {
+        primary: config.primary,
+        secondary: config.secondary,
+        inject: false
+      });
+      var palette = theme.palette;
+
+      return {
+        name: config.name,
+        css: theme.css,
+        header: function(opts) {
+          return {
+            t: 'div',
+            a: { style: 'background:' + palette.primary.base + ';color:' + palette.primary.textOn + ';padding:0.75rem 1rem;font-weight:600' },
+            c: (opts && opts.title) || config.siteName
+          };
+        },
+        nav: function(opts) {
+          var items = (opts && opts.items) || config.navItems || ['Home', 'About'];
+          return {
+            t: 'div',
+            a: { style: 'background:' + palette.primary.hover + ';padding:0.5rem 1rem;display:flex;gap:1rem' },
+            c: items.map(function(item) {
+              return {
+                t: 'span',
+                a: { style: 'color:' + palette.primary.textOn + ';font-size:0.85rem;opacity:' + ((opts && opts.active === item) ? '1' : '0.7') },
+                c: item
+              };
+            })
+          };
+        },
+        footer: function() {
+          return {
+            t: 'div',
+            a: { style: 'background:' + palette.surface.base + ';border-top:1px solid ' + palette.surface.border + ';padding:0.5rem 1rem;font-size:0.8rem;color:' + palette.surface.darkText + ';text-align:center' },
+            c: '\u00A9 2026 ' + config.siteName
+          };
+        },
+        card: function(opts) {
+          return {
+            t: 'div',
+            a: { style: 'border:1px solid ' + palette.primary.border + ';border-radius:var(--bw_radius);padding:1rem;margin:0.5rem 0;border-left:3px solid ' + palette.secondary.base },
+            c: [
+              { t: 'strong', c: (opts && opts.title) || '' },
+              { t: 'p', a: { style: 'margin:0.5rem 0 0;font-size:0.9rem' }, c: (opts && opts.content) || '' }
+            ]
+          };
+        }
+      };
+    }
+
+    var corporateKit = createSiteKit({
+      name: 'corporate',
+      siteName: 'Acme Corp',
+      primary: '#1a5276',
+      secondary: '#d4ac0d',
+      navItems: ['Home', 'Products', 'About']
+    });
+
+    var creativeKit = createSiteKit({
+      name: 'creative',
+      siteName: 'Studio Nine',
+      primary: '#c0392b',
+      secondary: '#e67e22',
+      navItems: ['Work', 'Process', 'Contact']
+    });
+
+    function kitPreview(kit) {
+      return {
+        t: 'div', a: { class: 'site-preview' },
+        c: [
+          kit.nav({ items: undefined, active: undefined }),
+          kit.header(),
+          { t: 'div', a: { style: 'padding:1rem' },
+            c: [
+              kit.card({ title: 'Feature One', content: 'Each kit generates its own colors from seed values.' }),
+              kit.card({ title: 'Feature Two', content: 'The same factory, different configuration.' })
+            ]
+          },
+          kit.footer()
+        ]
+      };
+    }
+
+    var section4 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'site-kit-factory' }, c: '4. Site Kit Factory' },
+        {
+          t: 'p',
+          c: 'Formalize the dictionary into a factory function. A "site kit" is a pre-configured set of components \u2014 header, nav, footer, card \u2014 all sharing the same theme colors.'
+        },
+        codeBlock(
+          'function createSiteKit(config) {\n' +
+          '  var theme = bw.generateTheme(config.name, {\n' +
+          '    primary: config.primary,\n' +
+          '    secondary: config.secondary\n' +
+          '  });\n' +
+          '  var palette = theme.palette;\n' +
+          '\n' +
+          '  return {\n' +
+          '    header: function(opts) {\n' +
+          '      return { t: \'div\',\n' +
+          '        a: { style: \'background:\' + palette.primary.base +\n' +
+          '             \';color:\' + palette.primary.textOn },\n' +
+          '        c: opts.title || config.siteName };\n' +
+          '    },\n' +
+          '    nav:    function(opts) { /* ... */ },\n' +
+          '    footer: function()     { /* ... */ },\n' +
+          '    card:   function(opts) { /* ... */ }\n' +
+          '  };\n' +
+          '}\n' +
+          '\n' +
+          'var corporate = createSiteKit({\n' +
+          '  name: \'corporate\', siteName: \'Acme Corp\',\n' +
+          '  primary: \'#1a5276\', secondary: \'#d4ac0d\'\n' +
+          '});\n' +
+          'var creative = createSiteKit({\n' +
+          '  name: \'creative\', siteName: \'Studio Nine\',\n' +
+          '  primary: \'#c0392b\', secondary: \'#e67e22\'\n' +
+          '});'
+        ),
+        { t: 'h3', c: 'Two kits, side by side:' },
+        {
+          t: 'div', a: { class: 'dual-preview' },
+          c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'kit-label' }, c: 'Corporate Kit' },
+              kitPreview(corporateKit)
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'kit-label' }, c: 'Creative Kit' },
+              kitPreview(creativeKit)
+            ]}
+          ]
+        },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'Why this matters' },
+            {
+              t: 'p', a: { style: 'margin:0' },
+              c: [
+                'The factory uses ',
+                { t: 'code', c: 'bw.generateTheme()' },
+                ' to derive a full color palette from two seed colors. Every component in the kit shares those colors. Change the seeds, the entire site updates. This is bitwrench\'s design-system-from-code approach.'
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Section 5: The Meta — This Site Is the Pattern
+    // =========================================================================
+    var navSourceExcerpt =
+      '// Primary nav items (main dark bar)\n' +
+      'var primaryItems = [\n' +
+      '  { text: \'Home\',       href: \'index.html\' },\n' +
+      '  { text: \'Quick Start\', href: \'00-quick-start.html\' },\n' +
+      '  { text: \'Components\', href: \'01-components.html\' },\n' +
+      '  { text: \'Styling\',    href: \'03-styling.html\' },\n' +
+      '  // ...\n' +
+      '];\n' +
+      '\n' +
+      '// Secondary nav items (sub-nav bar)\n' +
+      'var secondaryItems = [\n' +
+      '  { text: \'Tables & Forms\', href: \'02-tables-forms.html\' },\n' +
+      '  { text: \'Dashboard\',      href: \'04-dashboard.html\' },\n' +
+      '  { text: \'Multi-Page\',     href: \'15-multi-page-site.html\' },\n' +
+      '  // ...\n' +
+      '];';
+
+    var mountExcerpt =
+      '// Factory: returns TACO for primary + secondary nav\n' +
+      'function createExampleNav(currentPage, baseHref) {\n' +
+      '  var primaryLinks = primaryItems.map(function(item) {\n' +
+      '    return { t: \'li\', c: { t: \'a\', a: { href: rh }, c: item.text } };\n' +
+      '  });\n' +
+      '  return { primaryNav: ..., belowNav: [...] };\n' +
+      '}\n' +
+      '\n' +
+      '// Mount: composition step on every page\n' +
+      'function mountExampleNav(selector, currentPage, baseHref) {\n' +
+      '  var parts = createExampleNav(currentPage, baseHref);\n' +
+      '  bw.DOM(selector, parts.primaryNav);\n' +
+      '  // Insert sub-nav + mobile menu\n' +
+      '}';
+
+    var section5 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'the-meta' }, c: '5. The Meta \u2014 This Site Is the Pattern' },
+        {
+          t: 'p',
+          c: [
+            'The bitwrench docs site you\'re reading right now uses this exact pattern. Look at ',
+            { t: 'code', c: 'shared-nav.js' },
+            ' \u2014 it\'s a dictionary of nav items + a factory function + a mount step.'
+          ]
+        },
+        {
+          t: 'div', a: { class: 'meta-annotation' },
+          c: [
+            { t: 'strong', c: 'The dictionary: ' },
+            { t: 'code', c: 'primaryItems' },
+            ' and ',
+            { t: 'code', c: 'secondaryItems' },
+            ' are arrays of {text, href} objects \u2014 the same pattern as section 1.'
+          ]
+        },
+        codeBlock(navSourceExcerpt),
+        {
+          t: 'div', a: { class: 'meta-annotation' },
+          c: [
+            { t: 'strong', c: 'The factory: ' },
+            { t: 'code', c: 'createExampleNav()' },
+            ' maps the dictionary into TACO link elements. ',
+            { t: 'strong', c: 'The mount: ' },
+            { t: 'code', c: 'mountExampleNav()' },
+            ' renders primary nav + sub-nav + mobile menu.'
+          ]
+        },
+        codeBlock(mountExcerpt),
+        {
+          t: 'p',
+          c: [
+            'Every page in the docs site calls ',
+            { t: 'code', c: 'mountExampleNav(\'#example-nav\', \'page-name.html\')' },
+            ' \u2014 one line to get the full navigation. The pattern scales from this 15-page docs site to any size.'
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Section 6: Patterns Summary
+    // =========================================================================
+    var section6 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'patterns-summary' }, c: '6. Patterns Summary' },
+        {
+          t: 'table', a: { class: 'patterns-table' },
+          c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Pattern' },
+              { t: 'th', c: 'What It Is' },
+              { t: 'th', c: 'When To Use' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'strong', c: 'Dictionary' } },
+                { t: 'td', c: 'Object of functions returning TACOs' },
+                { t: 'td', c: 'Reusable site chrome (header, nav, footer)' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'strong', c: 'Page Composition' } },
+                { t: 'td', c: 'Functions that combine dictionary + unique content' },
+                { t: 'td', c: 'Multi-page sites, different views sharing layout' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'strong', c: 'Mix & Match' } },
+                { t: 'td', c: 'Variant functions for the same slot' },
+                { t: 'td', c: 'A/B testing, responsive layout, user prefs' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'strong', c: 'Site Kit Factory' } },
+                { t: 'td', c: 'Factory returning themed component dictionary' },
+                { t: 'td', c: 'White-label apps, multi-tenant, design systems' }
+              ]}
+            ]}
+          ]
+        },
+        { t: 'h3', c: 'Related Pages' },
+        {
+          t: 'ul',
+          c: [
+            { t: 'li', c: { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard' } },
+            { t: 'li', c: { t: 'a', a: { href: '01-components.html' }, c: 'Components' } },
+            { t: 'li', c: { t: 'a', a: { href: '03-styling.html' }, c: 'Styling & CSS' } },
+            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management' } },
+            { t: 'li', c: { t: 'a', a: { href: '10-themes.html' }, c: 'Theme Generation' } },
+            { t: 'li', c: { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' } }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Assemble and mount the page
+    // =========================================================================
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+        c: [
+          { t: 'h1', c: 'Multi-Page Site Composition' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Build websites from reusable TACO dictionaries \u2014 no framework required' }
+        ]
+      }
+    };
+
+    var page = {
+      t: 'div',
+      c: [
+        pageHeader,
+        {
+          t: 'div', a: { class: 'content-container wide' },
+          c: [section1, section2, section3, section4, section5, section6]
+        }
+      ]
+    };
+
+    bw.DOM('#app', page);
+
+    // Initial renders for interactive sections
+    renderDictPreview();
+    renderSitePreview();
+    renderMixControls();
+    renderMixPreview();
+  </script>
+</body>
+</html>

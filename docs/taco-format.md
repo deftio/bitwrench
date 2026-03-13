@@ -318,3 +318,7 @@ Because TACO objects are plain data, they work in contexts beyond browser render
 - **Testing**: TACO objects can be inspected and compared as data without needing a DOM
 
 This is a deliberate design choice. The separation between "what to render" (TACO) and "how to render it" (bw.DOM, bw.html) means the same component definition works across all these contexts.
+
+---
+
+For a deeper exploration of bitwrench's design philosophy, see [Thinking in Bitwrench](thinking-in-bitwrench.md).

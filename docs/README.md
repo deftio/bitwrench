@@ -6,6 +6,7 @@ These guides cover how to build UIs with bitwrench. Start with the TACO format, 
 
 | Guide | Description |
 |-------|-------------|
+| [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
 | [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
 | [Component Library](component-library.md) | All 52 `make*()` functions with signatures and examples |

@@ -717,12 +717,12 @@
       '  return {\n' +
       '    taco: taco, name: name, id: id,\n' +
       '    getCount: function() {\n' +
-      '      var el = document.getElementById(id);\n' +
+      '      var el = bw.$(\'#\' + id)[0];\n' +
       '      return el && el._bw_state\n' +
       '        ? el._bw_state.count : null;\n' +
       '    },\n' +
       '    setCount: function(n) {\n' +
-      '      var el = document.getElementById(id);\n' +
+      '      var el = bw.$(\'#\' + id)[0];\n' +
       '      if (el && el._bw_state) {\n' +
       '        el._bw_state.count = n;\n' +
       '        bw.update(el);\n' +
@@ -1426,11 +1426,13 @@
         name: name,
         id: id,
         getCount: function() {
-          var el = document.getElementById(id);
+          var els = bw.$('#' + id);
+          var el = els.length ? els[0] : null;
           return el && el._bw_state ? el._bw_state.count : null;
         },
         setCount: function(n) {
-          var el = document.getElementById(id);
+          var els = bw.$('#' + id);
+          var el = els.length ? els[0] : null;
           if (el && el._bw_state) {
             el._bw_state.count = n;
             bw.update(el);
@@ -1656,7 +1658,8 @@
     }
 
     function sendNotification() {
-      var input = document.getElementById('notif-input');
+      var inputs = bw.$('#notif-input');
+      var input = inputs.length ? inputs[0] : null;
       if (!input || !input.value.trim()) return;
       bw.pub('notification', { text: input.value.trim() });
       input.value = '';
@@ -1859,7 +1862,7 @@
         var text = code.textContent;
         var lines = text.split('\n').length;
         var h = Math.max(180, Math.min(lines * 19, 700)) + 'px';
-        var div = document.createElement('div');
+        var div = bw.createDOM({ t: 'div' });
         pre.parentNode.replaceChild(div, pre);
         bw.DOM(div, bw.codeEditor({
           code: text,

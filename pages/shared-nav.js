@@ -21,33 +21,33 @@
     { text: 'Styling', href: '03-styling.html' },
     { text: 'Themes', href: '10-themes.html' },
     { text: 'State', href: '05-state.html' },
-    { text: 'Examples', href: '02-tables.html' },
+    { text: 'Examples', href: '02-tables-forms.html' },
     { text: 'Server', href: '12-bwserve-protocol.html' },
     { text: 'Docs', href: '08-api-reference.html' }
   ];
 
   // Secondary nav items (sub-nav bar, shown only on example pages)
   var secondaryItems = [
-    { text: 'Tables', href: '02-tables.html' },
-    { text: 'Forms', href: '02-forms.html' },
+    { text: 'Tables & Forms', href: '02-tables-forms.html' },
     { text: 'Dashboard', href: '04-dashboard.html' },
-    { text: 'Code Editor', href: '11-code-editor.html' },
     { text: 'Digital Clock', href: '06-clock.html' },
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
-    { text: 'Comparison', href: '07-framework-comparison.html' }
+    { text: 'Comparison', href: '07-framework-comparison.html' },
+    { text: 'Multi-Page', href: '15-multi-page-site.html' }
   ];
 
   // Docs secondary nav items (sub-nav bar, shown only on docs pages)
   var docsSecondaryItems = [
     { text: 'Builds', href: '09-builds.html' },
     { text: 'Debugging', href: '11-debugging.html' },
+    { text: 'Code Editor', href: '13-code-editor.html' },
     { text: 'API Reference', href: '08-api-reference.html' }
   ];
 
   // bwserve secondary nav items
   var bwserveSecondaryItems = [
     { text: 'Protocol', href: '12-bwserve-protocol.html' },
-    { text: 'Sandbox', href: 'bwserve-sandbox.html' }
+    { text: 'Sandbox', href: '14-bwserve-sandbox.html' }
   ];
 
   // Set of secondary hrefs for quick lookup
@@ -275,10 +275,10 @@
                     title: 'Toggle menu',
                     'aria-label': 'Toggle navigation menu',
                     onclick: function() {
-                      var el = document.getElementById('bw_site_nav_mobile_menu');
-                      if (el) {
-                        el.classList.toggle('open');
-                        this.textContent = el.classList.contains('open') ? '\u2715' : '\u2630';
+                      var els = bw.$('#bw_site_nav_mobile_menu');
+                      if (els.length) {
+                        els[0].classList.toggle('open');
+                        this.textContent = els[0].classList.contains('open') ? '\u2715' : '\u2630';
                       }
                     }
                   },
@@ -351,7 +351,8 @@
       bw.DOM(selector, parts.primaryNav);
 
       // Insert sub-nav + mobile menu as siblings after the nav container
-      var navEl = document.querySelector(selector);
+      var navEls = bw.$(selector);
+      var navEl = navEls.length ? navEls[0] : null;
       if (navEl && parts.belowNav.length) {
         var belowWrapper = bw.createDOM({
           t: 'div', a: { class: 'bw_site_nav_wrapper' }, c: parts.belowNav
@@ -363,18 +364,21 @@
       var savedMode = bw.getCookie('bw_theme_mode');
       if (savedMode === 'alternate' || savedMode === 'primary') {
         bw.applyTheme(savedMode);
-        var btn = document.getElementById('bw_theme_toggle_btn');
-        if (btn) {
-          btn.textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
+        var btns = bw.$('#bw_theme_toggle_btn');
+        if (btns.length) {
+          btns[0].textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
         }
       }
 
-      // Append shared site footer
+      // Append shared site footer via bw.DOM on body
       var footerTaco = {
         t: 'footer', a: { class: 'bw_site_footer_shared' },
         c: { t: 'p', c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
       };
-      document.body.appendChild(bw.createDOM(footerTaco));
+      var body = bw.$('body');
+      if (body.length) {
+        body[0].appendChild(bw.createDOM(footerTaco));
+      }
     }
   }
 

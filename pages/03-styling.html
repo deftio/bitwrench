@@ -282,7 +282,13 @@
         // Content sections
         {
           t: 'div', a: { class: 'content-container wide' },
-          c: [section1, section2, section3, section4, section5, section6, section7, separator1, section8, separator2, section9, section10]
+          c: [
+            { t: 'div', a: { class: 'callout callout-concept' }, c: [
+                { t: 'h4', c: 'CSS Is Just Strings' },
+                { t: 'p', c: ['Bitwrench doesn\'t own your CSS. Use inline styles, bw.css() generation, any CSS file, or all three. CSS values are JS variables \u2014 compose them with Object.assign, generate them with functions. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+            ]},
+            section1, section2, section3, section4, section5, section6, section7, separator1, section8, separator2, section9, section10
+          ]
         }
       ]
     };

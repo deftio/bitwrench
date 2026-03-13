@@ -161,15 +161,15 @@
         'border-radius': 'var(--bw_radius)'
       },
       '.bw_stat_value': {
-        'font-size': '1.5rem',
+        'font-size': '1.75rem',
         'font-weight': '700',
         color: 'var(--bw_teal)',
-        'line-height': '1'
+        'line-height': '1.2'
       },
       '.bw_stat_label': {
         'font-size': '0.8125rem',
         'font-weight': '600',
-        'margin-top': '0.25rem',
+        'margin-top': '0.35rem',
         color: 'var(--bw_text)'
       },
       '.bw_stat_sub': {
@@ -417,10 +417,59 @@
       ]
     };
 
+    var learningPathSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Learning Path' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            { t: 'p', a: { class: 'demo-description' }, c: 'New to bitwrench? Follow this order to build understanding from basics to advanced patterns.' },
+            { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit, minmax(min(280px, 100%), 1fr));gap:1rem' },
+              c: [
+                { t: 'div', a: { class: 'bw_feature_card' }, c: [
+                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '1. Getting Started' },
+                  { t: 'p', c: [
+                    { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' }, ' \u2192 ',
+                    { t: 'a', a: { href: '01-components.html' }, c: 'Components' }, ' \u2192 ',
+                    { t: 'a', a: { href: '03-styling.html' }, c: 'Styling' }
+                  ]}
+                ]},
+                { t: 'div', a: { class: 'bw_feature_card' }, c: [
+                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '2. Building Apps' },
+                  { t: 'p', c: [
+                    { t: 'a', a: { href: '02-tables-forms.html' }, c: 'Tables & Forms' }, ' \u2192 ',
+                    { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard' }, ' \u2192 ',
+                    { t: 'a', a: { href: '05-state.html' }, c: 'State' }
+                  ]}
+                ]},
+                { t: 'div', a: { class: 'bw_feature_card' }, c: [
+                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '3. Tutorials' },
+                  { t: 'p', c: [
+                    { t: 'a', a: { href: '06-clock.html' }, c: 'Clock' }, ' \u2192 ',
+                    { t: 'a', a: { href: '06-tic-tac-toe-tutorial.html' }, c: 'Tic-Tac-Toe' }, ' \u2192 ',
+                    { t: 'a', a: { href: '07-framework-comparison.html' }, c: 'Comparison' }
+                  ]}
+                ]},
+                { t: 'div', a: { class: 'bw_feature_card' }, c: [
+                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '4. Advanced' },
+                  { t: 'p', c: [
+                    { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' }, ' \u2192 ',
+                    { t: 'a', a: { href: '12-bwserve-protocol.html' }, c: 'bwserve' }, ' \u2192 ',
+                    { t: 'a', a: { href: '11-debugging.html' }, c: 'Debugging' }
+                  ]}
+                ]}
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
     var pageIndexSection = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', c: 'Explore the Docs' },
+        { t: 'h2', c: 'All Pages' },
         {
           t: 'div', a: { class: 'demo-content' },
           c: [{ t: 'div', a: { id: 'page-index' } }]
@@ -430,7 +479,7 @@
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [statsSection, howItWorksSection, featuresSection, liveDemosSection, pageIndexSection]
+      c: [statsSection, howItWorksSection, featuresSection, liveDemosSection, learningPathSection, pageIndexSection]
     };
 
     // Mount the full page
@@ -740,17 +789,15 @@
         {
           category: 'Core Features',
           pages: [
+            { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, search, form inputs, validation' },
             { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },
-            { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, presets, dark mode' },
-            { title: 'Tables', href: '02-tables.html', desc: 'Sortable tables, search, pagination' },
-            { title: 'Forms', href: '02-forms.html', desc: 'Form inputs, validation, layout patterns' }
+            { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, presets, dark mode' }
           ]
         },
         {
           category: 'Examples',
           pages: [
             { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and grid layout' },
-            { title: 'Code Editor', href: '11-code-editor.html', desc: 'Lightweight syntax highlighting addon' },
             { title: 'Digital Clock', href: '06-clock.html', desc: 'Real-time clock with theme switching' },
             { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' },
             { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'Map React/Vue/Svelte patterns to bitwrench' }
@@ -761,7 +808,9 @@
           pages: [
             { title: 'API Reference', href: '08-api-reference.html', desc: 'Full function listing with signatures' },
             { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' },
-            { title: 'LLM Guide', href: 'https://github.com/deftio/bitwrench/blob/main/dev/llm-bitwrench-guide.md', desc: 'Single-file reference for AI-assisted development' }
+            { title: 'Code Editor', href: '13-code-editor.html', desc: 'Lightweight syntax highlighting addon' },
+            { title: 'Server (bwserve)', href: '12-bwserve-protocol.html', desc: 'Server-driven UI protocol and sandbox' },
+            { title: 'Debugging', href: '11-debugging.html', desc: 'Component inspector and lifecycle tools' }
           ]
         }
       ];

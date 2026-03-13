@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thinking in Bitwrench</title>
+  <meta name="description" content="A guide to building web UIs with plain JavaScript objects — the bitwrench design philosophy.">
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    mountExampleNav('#example-nav', 'thinking-in-bitwrench.html');
+
+    // Page-specific styles for the markdown content
+    bw.injectCSS(bw.css({
+      '#doc-content': {
+        'max-width': '52rem',
+        'line-height': '1.7'
+      },
+      '#doc-content h2': {
+        'font-size': '1.5rem',
+        'font-weight': '700',
+        color: 'var(--bw_teal_dark)',
+        'margin-top': '2.5rem',
+        'margin-bottom': '1rem',
+        'padding-bottom': '0.5rem',
+        'border-bottom': '2px solid var(--bw_teal)'
+      },
+      '#doc-content h3': {
+        'font-size': '1.2rem',
+        'font-weight': '600',
+        'margin-top': '2rem',
+        'margin-bottom': '0.75rem'
+      },
+      '#doc-content h4': {
+        'font-size': '1.05rem',
+        'font-weight': '600',
+        'margin-top': '1.5rem',
+        'margin-bottom': '0.5rem'
+      },
+      '#doc-content p': {
+        'margin-bottom': '1rem'
+      },
+      '#doc-content blockquote': {
+        'border-left': '4px solid var(--bw_teal)',
+        'margin-left': '0',
+        'padding': '0.75rem 1rem',
+        color: 'var(--bw_text_secondary)',
+        background: 'var(--bw_teal_bg)',
+        'border-radius': '0 var(--bw_radius) var(--bw_radius) 0',
+        'margin-bottom': '1rem',
+        'font-style': 'italic'
+      },
+      '#doc-content pre': {
+        'margin-bottom': '1.25rem'
+      },
+      '#doc-content code:not(pre code)': {
+        background: 'var(--bw_teal_light)',
+        color: 'var(--bw_teal_dark)',
+        padding: '0.15em 0.4em',
+        'border-radius': '3px',
+        'font-size': '0.85em',
+        'font-family': 'var(--bw_font_mono)'
+      },
+      '#doc-content ul, #doc-content ol': {
+        'margin-bottom': '1rem',
+        'padding-left': '1.5rem'
+      },
+      '#doc-content li': {
+        'margin-bottom': '0.35rem'
+      },
+      '#doc-content table': {
+        'width': '100%',
+        'border-collapse': 'collapse',
+        'margin-bottom': '1.5rem',
+        'font-size': '0.9rem'
+      },
+      '#doc-content th': {
+        background: 'var(--bw_teal_dark)',
+        color: '#fff',
+        padding: '0.6rem 0.75rem',
+        'text-align': 'left',
+        'font-weight': '600',
+        'font-size': '0.8125rem'
+      },
+      '#doc-content td': {
+        padding: '0.5rem 0.75rem',
+        'border-bottom': '1px solid var(--bw_card_border)'
+      },
+      '#doc-content tr:nth-child(even) td': {
+        background: 'rgba(0,0,0,0.02)'
+      },
+      '#doc-content hr': {
+        border: 'none',
+        'border-top': '1px solid var(--bw_card_border)',
+        margin: '2rem 0'
+      },
+      '#doc-content strong': {
+        'font-weight': '600'
+      },
+      '#doc-content em': {
+        color: 'var(--bw_text_secondary)'
+      }
+    }), { id: 'thinking-page-styles' });
+
+    // Mount page structure
+    bw.DOM('#app', {
+      t: 'div',
+      c: [
+        {
+          t: 'div', a: { class: 'page-header' },
+          c: {
+            t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+            c: [
+              { t: 'h1', c: 'Thinking in Bitwrench' },
+              { t: 'p', a: { class: 'subtitle' }, c: 'A guide to building web UIs with plain JavaScript objects' }
+            ]
+          }
+        },
+        { t: 'div', a: { class: 'content-container', id: 'doc-content' } }
+      ]
+    });
+
+    // Load and render the markdown content, then highlight code blocks
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '../docs/thinking-in-bitwrench.md', true);
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        var html;
+        if (bw._quikdown) {
+          html = bw._quikdown(xhr.responseText);
+        } else if (typeof quikdown !== 'undefined') {
+          html = quikdown(xhr.responseText);
+        }
+        if (html) {
+          bw.DOM('#doc-content', { t: 'div', c: bw.raw(html) });
+          // Replace <pre><code> blocks with bw.codeEditor
+          if (bw.codeEditor) {
+            var blocks = bw.$('#doc-content pre code');
+            blocks.forEach(function(codeEl) {
+              var pre = codeEl.parentNode;
+              var code = codeEl.textContent;
+              var lang = 'js';
+              // Detect lang from class (e.g. class="language-html")
+              var cls = codeEl.className || '';
+              if (cls.indexOf('html') !== -1) lang = 'html';
+              else if (cls.indexOf('css') !== -1) lang = 'css';
+              var editor = bw.codeEditor({ code: code, lang: lang, readOnly: true, height: 'auto' });
+              var editorEl = bw.createDOM(editor);
+              pre.parentNode.replaceChild(editorEl, pre);
+            });
+          }
+        }
+      }
+    };
+    xhr.send();
+  </script>
+</body>
+</html>

@@ -593,9 +593,9 @@
       }
 
       function showView(view) {
-        var renderedEl = document.getElementById(renderedId);
-        var sourceEl = document.getElementById(sourceId);
-        var tabBar = document.getElementById(renderedId + '-tabbar');
+        var renderedEl = bw.$('#' + renderedId)[0];
+        var sourceEl = bw.$('#' + sourceId)[0];
+        var tabBar = bw.$('#' + renderedId + '-tabbar')[0];
         if (!renderedEl || !sourceEl || !tabBar) return;
 
         renderedEl.style.display = view === 'rendered' ? '' : 'none';
@@ -687,17 +687,17 @@
 '  return {\n' +
 '    taco: taco, name: name, id: id,\n' +
 '    getCount: function() {\n' +
-'      var el = document.getElementById(id);\n' +
+'      var el = bw.$(\'#\' + id)[0];\n' +
 '      return el && el._bw_state ? el._bw_state.count : null;\n' +
 '    },\n' +
 '    setCount: function(n) {\n' +
-'      var el = document.getElementById(id);\n' +
+'      var el = bw.$(\'#\' + id)[0];\n' +
 '      if (el && el._bw_state) {\n' +
 '        el._bw_state.count = n;\n' +
 '        bw.update(el);                     // re-renders + emits event\n' +
 '      }\n' +
 '    },\n' +
-'    getElement: function() { return document.getElementById(id); }\n' +
+'    getElement: function() { return bw.$(\'#\' + id)[0]; }\n' +
 '  };\n' +
 '}';
 
@@ -818,8 +818,8 @@
               };
             })
       });
-      var box = document.getElementById('event-log-box');
-      if (box) box.scrollTop = box.scrollHeight;
+      var boxes = bw.$('#event-log-box');
+      if (boxes.length) boxes[0].scrollTop = boxes[0].scrollHeight;
     }
 
     // ============================================================
@@ -832,7 +832,7 @@
       var name = opts.label || 'Counter';
 
       function setFromInput(el) {
-        var input = document.getElementById(id + '-input');
+        var input = bw.$('#' + id + '-input')[0];
         if (!input) return;
         var n = parseInt(input.value, 10);
         if (isNaN(n)) return;
@@ -899,18 +899,18 @@
         name: name,
         id: id,
         getCount: function() {
-          var el = document.getElementById(id);
+          var el = bw.$('#' + id)[0];
           return el && el._bw_state ? el._bw_state.count : null;
         },
         setCount: function(n) {
-          var el = document.getElementById(id);
+          var el = bw.$('#' + id)[0];
           if (el && el._bw_state) {
             el._bw_state.count = n;
             bw.update(el);
           }
         },
         getElement: function() {
-          return document.getElementById(id);
+          return bw.$('#' + id)[0];
         }
       };
     }
@@ -1124,7 +1124,7 @@
     }
 
     function renderList() {
-      var listEl = document.getElementById('list-mount');
+      var listEl = bw.$('#list-mount')[0];
       if (!listEl) return;
 
       var itemRows = listItems.map(function(item) {
@@ -1292,8 +1292,8 @@
 
     function renderNotifDemo() {
       // Use bw.patch for log updates when possible to avoid re-creating DOM
-      var panelAEl = document.getElementById('notif-panel-a');
-      var panelBEl = document.getElementById('notif-panel-b');
+      var panelAEl = bw.$('#notif-panel-a')[0];
+      var panelBEl = bw.$('#notif-panel-b')[0];
 
       if (panelAEl && panelBEl && !subBDestroyed) {
         // Fast path: just update the log contents
@@ -1314,7 +1314,7 @@
     }
 
     function renderNotifLogA() {
-      var logA = document.getElementById('notif-log-a');
+      var logA = bw.$('#notif-log-a')[0];
       if (!logA) return;
       bw.DOM(logA, { t: 'div', c: notifMsgsA.length === 0
         ? [{ t: 'div', c: '(waiting for messages)' }]
@@ -1323,7 +1323,7 @@
     }
 
     function renderNotifLogB() {
-      var logB = document.getElementById('notif-log-b');
+      var logB = bw.$('#notif-log-b')[0];
       if (!logB) return;
       bw.DOM(logB, { t: 'div', c: notifMsgsB.length === 0
         ? [{ t: 'div', c: '(waiting for messages)' }]
@@ -1332,7 +1332,7 @@
     }
 
     function renderAuditLogContent() {
-      var auditBox = document.getElementById('audit-log-box');
+      var auditBox = bw.$('#audit-log-box')[0];
       if (!auditBox) return;
       bw.DOM(auditBox, { t: 'div', c: auditEntries.length === 0
         ? [{ t: 'div', c: '(no audit events yet \u2014 click counter card buttons)' }]
@@ -1437,7 +1437,7 @@
     }
 
     function sendNotification() {
-      var input = document.getElementById('notif-input');
+      var input = bw.$('#notif-input')[0];
       if (!input || !input.value.trim()) return;
       bw.pub('notification', { text: input.value.trim() });
       input.value = '';

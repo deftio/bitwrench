@@ -62,6 +62,7 @@
   </div>
 
   <div class="content-container wide">
+    <div id="teaching-callout"></div>
     <!-- Introduction -->
     <div class="demo-section">
       <h2>Data In, Table Out</h2>
@@ -142,6 +143,13 @@
   <script>
     // Mount the shared navigation
     mountExampleNav('#example-nav', '02-tables-forms.html');
+    bw.DOM('#teaching-callout', {
+      t: 'div', a: { class: 'callout callout-concept' }, c: [
+        { t: 'h4', c: 'Levels 0 + 1 \u2014 Data to UI' },
+        { t: 'p', c: ['Tables and forms show bitwrench\u2019s sweet spot: data-driven components that respond to user interaction via callbacks in the TACO object. ',
+          { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+      ]
+    });
     bw.DOM('#style-origin-callout', makeStyleOrigin());
 
     // ── Showcase data (programming languages) ──────────────────────
@@ -837,9 +845,7 @@ function createTableComponent() {
               const data = JSON.stringify(state.filteredEmployees, null, 2);
               const blob = new Blob([data], { type: 'application/json' });
               const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'employees.json';
+              const a = bw.createDOM({ t: 'a', a: { href: url, download: 'employees.json' } });
               a.click();
               URL.revokeObjectURL(url);
             }

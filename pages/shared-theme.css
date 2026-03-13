@@ -17,8 +17,16 @@
   --bw_card_shadow: 0 1px 3px rgba(0,0,0,0.08);
 
   --bw_text: #1a1a1a;
-  --bw_text_secondary: #555;
+  --bw_text_secondary: #444;
   --bw_text_muted: #666;
+
+  /* Callout tokens */
+  --bw_callout_tip_bg: #fff8e1;
+  --bw_callout_tip_border: #f9a825;
+  --bw_callout_tip_heading: #e65100;
+  --bw_callout_warn_bg: #fce4ec;
+  --bw_callout_warn_border: #c62828;
+  --bw_callout_warn_heading: #c62828;
 
   --bw_header_bg: #006666;
   --bw_header_text: #ffffff;
@@ -52,6 +60,14 @@
   --bw_text: #e0e0e0;
   --bw_text_secondary: #aaa;
   --bw_text_muted: #777;
+
+  /* Callout tokens (dark) */
+  --bw_callout_tip_bg: #2a2200;
+  --bw_callout_tip_border: #b77b1b;
+  --bw_callout_tip_heading: #fbbf24;
+  --bw_callout_warn_bg: #2a0000;
+  --bw_callout_warn_border: #ef4444;
+  --bw_callout_warn_heading: #fca5a5;
 
   --bw_header_bg: #006666;
   --bw_teal: #4db8b8;       /* lighter teal for dark backgrounds — 7:1 on #1e1e1e */
@@ -330,21 +346,22 @@ body {
 
 /* ---- Page Header ---- */
 .page-header {
-  background: var(--bw_header_bg);
+  background: linear-gradient(135deg, var(--bw_header_bg) 0%, #004d4d 100%);
   color: var(--bw_header_text);
-  padding: 2rem 0 1.75rem;
+  padding: 2.25rem 0 2rem;
 }
 .page-header h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.75rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.85rem;
   font-weight: 700;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
   color: inherit;
 }
 .page-header .subtitle {
   opacity: 0.85;
   font-size: 1.1rem;
   margin: 0;
+  line-height: 1.5;
 }
 
 /* ---- Content Container ---- */
@@ -479,17 +496,18 @@ body {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  padding: 0.25rem 0.6rem;
+  padding: 0.3rem 0.7rem;
   font-size: 0.7rem;
-  background: rgba(255,255,255,0.12);
-  color: #aaa;
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.18);
+  color: #ccc;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 4px;
   cursor: pointer;
   z-index: 2;
   font-family: inherit;
+  transition: all 0.15s;
 }
-.copy-btn:hover { background: rgba(255,255,255,0.22); color: #fff; }
+.copy-btn:hover { background: rgba(255,255,255,0.3); color: #fff; }
 
 /* ---- bitwrench tab overrides for better contrast ---- */
 .bw_nav_tabs {
@@ -613,17 +631,16 @@ a:hover { color: var(--bw_teal_dark); }
 .callout-concept h4 { color: var(--bw_teal_dark); }
 
 .callout-tip {
-  background: #fff8e1;
-  border-left: 4px solid #f9a825;
+  background: var(--bw_callout_tip_bg);
+  border-left: 4px solid var(--bw_callout_tip_border);
 }
-.callout-tip h4 { color: #e65100; }
-.bw_theme_alt .callout-tip { background: #2a2200; }
+.callout-tip h4 { color: var(--bw_callout_tip_heading); }
 
 .callout-warning {
-  background: #fce4ec;
-  border-left: 4px solid #c62828;
+  background: var(--bw_callout_warn_bg);
+  border-left: 4px solid var(--bw_callout_warn_border);
 }
-.callout-warning h4 { color: #c62828; }
+.callout-warning h4 { color: var(--bw_callout_warn_heading); }
 
 /* (dark mode toggle is .bw_site_nav_toggle, styled above) */
 
@@ -965,3 +982,47 @@ a:hover { color: var(--bw_teal_dark); }
 .bw_site_footer_shared a { color: var(--bw_text_secondary, #666); text-decoration: none; }
 .bw_site_footer_shared a:hover { color: var(--bw_teal, #006666); }
 .bw_site_footer_tm { font-size: 0.6875rem; opacity: 0.7; }
+
+/* ---- Focus Rings (Accessibility) ---- */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--bw_teal);
+  outline-offset: 2px;
+}
+
+/* ---- Feature Card Hover Polish ---- */
+.bw_feature_card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.bw_feature_card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.bw_theme_alt .bw_feature_card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* ---- Demo Section Title Accent ---- */
+.demo-section > h2,
+.demo-section-title {
+  border-left: 4px solid var(--bw_teal);
+}
+
+/* ---- Learning Level Badge ---- */
+.bw_level_badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+  background: var(--bw_teal);
+  color: #fff;
+  vertical-align: middle;
+  margin-right: 0.5em;
+}

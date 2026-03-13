@@ -326,7 +326,7 @@
       btns.forEach(function(b) { b.classList.remove('active'); });
       panels.forEach(function(p) { p.classList.remove('active'); });
       e.target.classList.add('active');
-      document.getElementById(showId).classList.add('active');
+      var showEls = bw.$('#' + showId); if (showEls.length) showEls[0].classList.add('active');
     }
 
     // ---- Shared: winner detection (used by steps 3-5) ----
@@ -1684,7 +1684,8 @@
 
     var completeExample = (function() {
       function getEditorCode() {
-        var editorEl = document.querySelector('#complete-code-panel .bw_ce');
+        var editorEls = bw.$('#complete-code-panel .bw_ce');
+        var editorEl = editorEls.length ? editorEls[0] : null;
         if (editorEl && editorEl._bwCodeEdit) {
           return editorEl._bwCodeEdit.getValue();
         }
@@ -1692,7 +1693,8 @@
       }
 
       function updateIframe() {
-        var iframe = document.getElementById('complete-preview-iframe');
+        var iframes = bw.$('#complete-preview-iframe');
+        var iframe = iframes.length ? iframes[0] : null;
         if (!iframe) return;
         var code = getEditorCode();
         // Replace CDN URLs with local paths for preview
@@ -1708,10 +1710,10 @@
       }
 
       function switchCompleteTab(tab) {
-        var codePanel = document.getElementById('complete-code-panel');
-        var previewPanel = document.getElementById('complete-preview-panel');
-        var codeTab = document.getElementById('complete-tab-code');
-        var previewTab = document.getElementById('complete-tab-preview');
+        var codePanel = bw.$('#complete-code-panel')[0];
+        var previewPanel = bw.$('#complete-preview-panel')[0];
+        var codeTab = bw.$('#complete-tab-code')[0];
+        var previewTab = bw.$('#complete-tab-preview')[0];
         if (!codePanel) return;
         if (tab === 'code') {
           codePanel.classList.add('active');
@@ -1820,6 +1822,13 @@
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
       c: [
+        {
+          t: 'div', a: { class: 'callout callout-concept' }, c: [
+            { t: 'h4', c: 'Level 1 \u2014 TACO as Computation' },
+            { t: 'p', c: ['Every TACO field is a JS expression. This tutorial shows .map(), conditionals, and IIFEs inside TACO to build interactive game logic. ',
+              { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+          ]
+        },
         step0,
         step1,
         step2,

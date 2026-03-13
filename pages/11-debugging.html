@@ -269,7 +269,7 @@
                 '<span class="console-prompt">&gt;</span> bw.inspect(\'#my-component\')',
                 '',
                 '<span class="console-comment">// By DOM element</span>',
-                '<span class="console-prompt">&gt;</span> bw.inspect(document.querySelector(\'.my-card\'))',
+                '<span class="console-prompt">&gt;</span> bw.inspect(bw.$(\'.my-card\')[0])',
                 '',
                 '<span class="console-comment">// By ComponentHandle directly</span>',
                 '<span class="console-prompt">&gt;</span> bw.inspect(myCardHandle)',
@@ -351,7 +351,7 @@
             '    }',
             '  }',
             '});',
-            'counter.mount(document.getElementById(\'app\'));',
+            'counter.mount(bw.$(\'#app\')[0]);',
             'counter.increment();   <span class="console-comment">// auto-re-renders</span>',
             'counter.get(\'count\');  <span class="console-comment">// 1</span>'
           ]),
@@ -540,7 +540,7 @@
             '  }',
             '});',
             'panel.userTag(\'dashboard_prod\');',
-            'panel.mount(document.getElementById(\'app\'));',
+            'panel.mount(bw.$(\'#app\')[0]);',
             '',
             '<span class="console-comment">// Dispatch from anywhere (or from server via SSE):</span>',
             'bw.message(\'dashboard_prod\', \'setStatus\', \'processing\');',
@@ -612,7 +612,7 @@
             'var list = makeMyList({ title: \'Team\', initial: [',
             '  { id: 1, name: \'Alice\' }, { id: 2, name: \'Bob\' }',
             ']});',
-            'list.mount(document.getElementById(\'app\'));',
+            'list.mount(bw.$(\'#app\')[0]);',
             'list.add({ id: 3, name: \'Carol\' });  <span class="console-comment">// appends one node</span>',
             'list.remove(1);                        <span class="console-comment">// removes Alice\'s node</span>',
             '',
@@ -866,7 +866,7 @@
         var text = code.textContent;
         var lines = text.split('\n').length;
         var h = Math.max(180, Math.min(lines * 19, 700)) + 'px';
-        var div = document.createElement('div');
+        var div = bw.createDOM({ t: 'div' });
         pre.parentNode.replaceChild(div, pre);
         bw.DOM(div, bw.codeEditor({
           code: text,

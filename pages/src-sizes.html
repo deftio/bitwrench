@@ -312,10 +312,10 @@ canvas { border: 1px solid #e0e0e0; border-radius: 4px; background: #fff; displa
       // Draw charts after DOM is rendered
       if (records.length > 1) {
         setTimeout(function() {
-          var c1 = document.getElementById('chart-umd-gz');
-          var c2 = document.getElementById('chart-lean-gz');
-          var c3 = document.getElementById('chart-lines');
-          var c4 = document.getElementById('chart-code-kb');
+          var c1 = bw.$('#chart-umd-gz')[0];
+          var c2 = bw.$('#chart-lean-gz')[0];
+          var c3 = bw.$('#chart-lines')[0];
+          var c4 = bw.$('#chart-code-kb')[0];
           if (c1) drawSparkline(c1, records, function(r) {
             var b = r.bundles.find(function(x) { return x.file === 'bitwrench.umd.min.js'; });
             return b ? b.gzipBytes / 1024 : 0;

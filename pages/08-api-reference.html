@@ -124,12 +124,13 @@
 
     
 (function() {
-  var input = document.getElementById('api-search');
+  var inputs = bw.$('#api-search');
+  var input = inputs.length ? inputs[0] : null;
   if (!input) return;
   input.addEventListener('input', function() {
     var q = this.value.toLowerCase().trim();
     // Filter TOC links
-    var tocLinks = document.querySelectorAll('.api-toc-link');
+    var tocLinks = bw.$('.api-toc-link');
     for (var i = 0; i < tocLinks.length; i++) {
       var name = tocLinks[i].getAttribute('data-api-name') || '';
       if (!q || name.indexOf(q) !== -1) {
@@ -139,7 +140,7 @@
       }
     }
     // Filter API entry cards
-    var entries = document.querySelectorAll('.api-entry');
+    var entries = bw.$('.api-entry');
     for (var j = 0; j < entries.length; j++) {
       var apiName = entries[j].getAttribute('data-api-name') || '';
       var text = entries[j].textContent.toLowerCase();
@@ -150,7 +151,7 @@
       }
     }
     // Hide empty category sections
-    var cats = document.querySelectorAll('.api-category');
+    var cats = bw.$('.api-category');
     for (var k = 0; k < cats.length; k++) {
       var visibleEntries = cats[k].querySelectorAll('.api-entry:not(.hidden)');
       if (!q || visibleEntries.length > 0) {

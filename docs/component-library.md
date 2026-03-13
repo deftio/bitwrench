@@ -837,6 +837,24 @@ bw.makeTable({
 })
 ```
 
+Each column definition can include a `render` function for custom cell rendering:
+
+```javascript
+bw.makeTable({
+  data: users,
+  columns: [
+    { key: 'name', label: 'Name' },
+    { key: 'status', label: 'Status', render: function(val, row) {
+      return {
+        t: 'span',
+        a: { class: val === 'active' ? 'badge-green' : 'badge-red' },
+        c: val
+      };
+    }}
+  ]
+})
+```
+
 ### makeTableFromArray
 
 Table from 2D arrays (CSV data, spreadsheets).

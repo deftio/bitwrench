@@ -660,6 +660,10 @@
       var dashboardContainer = {
         t: 'div', a: { id: 'dashboard-app', class: 'content-container wide' },
         c: [
+          { t: 'div', a: { class: 'callout callout-concept' }, c: [
+              { t: 'h4', c: 'Level 1 \u2014 Building Apps' },
+              { t: 'p', c: ['This dashboard uses bw.DOM() to re-render sections when data changes. No virtual DOM \u2014 just call your render function again. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+          ]},
           renderThemePicker(),
           { t: 'div', a: { style: 'height:1rem;' } },
           renderTabBar(),

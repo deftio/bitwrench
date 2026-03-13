@@ -1,4 +1,4 @@
-/*! bwserve v2.0.16 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join, extname } from 'path';
 import { createServer } from 'http';
