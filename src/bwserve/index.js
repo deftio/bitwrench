@@ -26,7 +26,16 @@ import { createServer } from 'http';
 import { readFileSync, existsSync, statSync } from 'fs';
 
 var __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Resolve dist/ — try source layout (src/bwserve/), then npm install layout,
+// then dist/ itself (when running from dist/bwserve.esm.js)
 var DIST_DIR = resolve(__dirname, '..', '..', 'dist');
+if (!existsSync(DIST_DIR)) {
+  DIST_DIR = resolve(__dirname, '..', 'dist');
+}
+if (!existsSync(DIST_DIR)) {
+  DIST_DIR = __dirname;
+}
 
 // MIME type lookup for static file serving
 var MIME_TYPES = {
@@ -73,6 +82,7 @@ class BwServeApp {
     this.staticDir = opts.static || null;
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
+    this.allowExec = opts.allowExec || false;
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
@@ -219,7 +229,8 @@ class BwServeApp {
         clientId: clientId2,
         title: this.title,
         theme: this.theme,
-        injectBitwrench: this.injectBitwrench
+        injectBitwrench: this.injectBitwrench,
+        allowExec: this.allowExec
       });
       // Store the page path for this client so SSE knows which handler to call
       this._clients.set(clientId2, { pagePath: path, client: null });

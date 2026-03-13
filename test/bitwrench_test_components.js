@@ -2466,3 +2466,121 @@ describe('makeChipInput DOM interaction', function() {
     document.body.removeChild(el);
   });
 });
+
+// =========================================================================
+// Coverage: makeCarousel keyboard navigation
+// =========================================================================
+describe('makeCarousel keyboard navigation', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should navigate with ArrowRight key', function() {
+    var taco = bw.makeCarousel({
+      items: [
+        { content: 'Slide 1' },
+        { content: 'Slide 2' },
+        { content: 'Slide 3' }
+      ]
+    });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+
+    document.body.removeChild(el);
+  });
+
+  it('should navigate with ArrowLeft key', function() {
+    var taco = bw.makeCarousel({
+      items: [
+        { content: 'Slide 1' },
+        { content: 'Slide 2' },
+        { content: 'Slide 3' }
+      ]
+    });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Move to slide 2 first
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+
+    // Move back to slide 1
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    assert.strictEqual(el.getAttribute('data-carousel-index'), '0');
+
+    document.body.removeChild(el);
+  });
+
+  it('should wrap around on ArrowLeft from first slide', function() {
+    var taco = bw.makeCarousel({
+      items: [
+        { content: 'Slide 1' },
+        { content: 'Slide 2' }
+      ]
+    });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+
+    document.body.removeChild(el);
+  });
+});
+
+// =========================================================================
+// Coverage: makeFileUpload drag-and-drop events
+// =========================================================================
+describe('makeFileUpload drag events', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should handle dragover event', function() {
+    var taco = bw.makeFileUpload({ label: 'Drop files here' });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var dropZone = el.querySelector('.bw_file_drop') || el;
+    var event = new window.Event('dragover', { bubbles: true, cancelable: true });
+    event.preventDefault = function() {};
+    event.dataTransfer = { dropEffect: '' };
+    dropZone.dispatchEvent(event);
+
+    document.body.removeChild(el);
+  });
+
+  it('should handle dragleave event', function() {
+    var taco = bw.makeFileUpload({ label: 'Drop files here' });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var dropZone = el.querySelector('.bw_file_drop') || el;
+    dropZone.dispatchEvent(new window.Event('dragleave', { bubbles: true }));
+
+    document.body.removeChild(el);
+  });
+
+  it('should handle drop event', function() {
+    var filesReceived = null;
+    var taco = bw.makeFileUpload({
+      label: 'Drop files here',
+      onChange: function(files) { filesReceived = files; }
+    });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var dropZone = el.querySelector('.bw_file_drop') || el;
+    var event = new window.Event('drop', { bubbles: true, cancelable: true });
+    event.preventDefault = function() {};
+    event.dataTransfer = { files: [] };
+    dropZone.dispatchEvent(event);
+
+    document.body.removeChild(el);
+  });
+});

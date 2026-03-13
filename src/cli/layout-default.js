@@ -1,6 +1,7 @@
 /**
  * Bitwrench CLI - Default page layout
- * Wraps converted content in a complete HTML document
+ * Wraps converted content in a complete HTML document.
+ * Delegates to bw.htmlPage() for document structure.
  */
 
 import bw from '../bitwrench.js';
@@ -77,7 +78,11 @@ const BASE_PAGE_CSS = `
 `;
 
 /**
- * Build a complete HTML page from content and options
+ * Build a complete HTML page from content and options.
+ * Delegates to bw.htmlPage() for document structure, adding CLI-specific
+ * concerns: .bw_cli_page wrapper, generator meta tag, highlight.js, and
+ * pre-resolved injection strings from inject.js.
+ *
  * @param {Object} opts
  * @param {string} opts.title - Page title
  * @param {string} opts.bodyHTML - Rendered HTML content for the body
@@ -99,44 +104,54 @@ export function makePageLayout(opts) {
         highlight = false
     } = opts;
 
-    const safeTitle = bw.escapeHTML(title);
-    const version = bw.version;
+    const version = bw.getVersion().version;
 
-    let faviconTag = '';
-    if (favicon) {
-        // Only escape quotes and angle brackets for attribute safety, not slashes
-        const safeFavicon = favicon.replace(/[&<>"']/g, c => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        })[c]);
-        faviconTag = `<link rel="icon" href="${safeFavicon}">`;
+    // Build extra <head> elements: generator meta, injection script, highlight.js CSS
+    const headElements = [];
+
+    // Generator meta tag (CLI-specific)
+    headElements.push({
+        t: 'meta', a: { name: 'generator', content: 'bitwrench v' + version }
+    });
+
+    // Injection script from inject.js (already pre-built HTML string)
+    if (headInjection) {
+        headElements.push(bw.raw(headInjection));
     }
 
-    let highlightHead = '';
-    let highlightBodyEnd = '';
+    // Highlight.js CSS
     if (highlight) {
-        highlightHead = '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github.min.css">';
-        highlightBodyEnd = '<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>\n<script>hljs.highlightAll();</script>';
+        headElements.push({
+            t: 'link', a: {
+                rel: 'stylesheet',
+                href: 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github.min.css'
+            }
+        });
     }
 
+    // Wrap body content in .bw_cli_page div (CLI-specific)
+    const wrappedBody = '<div class="bw_cli_page">\n' + bodyHTML + '\n</div>';
+
+    // Build body-end injection (highlight.js init)
+    let fullBodyEnd = bodyEndInjection || '';
+    if (highlight) {
+        fullBodyEnd += '<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>\n<script>hljs.highlightAll();</script>';
+    }
+
+    // Combine all CSS
     const allCSS = BASE_PAGE_CSS + (css ? '\n' + css : '');
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="bitwrench v${version}">
-<title>${safeTitle}</title>
-${faviconTag}${headInjection}${highlightHead}
-<style>${allCSS}</style>
-</head>
-<body>
-<div class="bw_cli_page">
-${bodyHTML}
-</div>
-${bodyEndInjection}${highlightBodyEnd}
-</body>
-</html>`;
+    // Use bw.htmlPage() with runtime:'none' since CLI handles injection itself
+    var page = bw.htmlPage({
+        title: title,
+        body: wrappedBody + (fullBodyEnd ? '\n' + fullBodyEnd : ''),
+        css: allCSS,
+        head: headElements,
+        favicon: favicon,
+        runtime: 'none'
+    });
+
+    return page;
 }
 
 export { BASE_PAGE_CSS };

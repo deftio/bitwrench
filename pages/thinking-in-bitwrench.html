@@ -125,43 +125,39 @@
             ]
           }
         },
-        { t: 'div', a: { class: 'content-container', id: 'doc-content' } }
+        { t: 'div', a: { class: 'content-container', id: 'doc-content' },
+          c: { t: 'p', a: { style: 'color:var(--bw_text_secondary)' }, c: 'Loading...' }
+        }
       ]
     });
+  </script>
 
-    // Load and render the markdown content, then highlight code blocks
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '../docs/thinking-in-bitwrench.md', true);
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        var html;
-        if (bw._quikdown) {
-          html = bw._quikdown(xhr.responseText);
-        } else if (typeof quikdown !== 'undefined') {
-          html = quikdown(xhr.responseText);
-        }
-        if (html) {
-          bw.DOM('#doc-content', { t: 'div', c: bw.raw(html) });
-          // Replace <pre><code> blocks with bw.codeEditor
-          if (bw.codeEditor) {
-            var blocks = bw.$('#doc-content pre code');
-            blocks.forEach(function(codeEl) {
-              var pre = codeEl.parentNode;
-              var code = codeEl.textContent;
-              var lang = 'js';
-              // Detect lang from class (e.g. class="language-html")
-              var cls = codeEl.className || '';
-              if (cls.indexOf('html') !== -1) lang = 'html';
-              else if (cls.indexOf('css') !== -1) lang = 'css';
-              var editor = bw.codeEditor({ code: code, lang: lang, readOnly: true, height: 'auto' });
-              var editorEl = bw.createDOM(editor);
-              pre.parentNode.replaceChild(editorEl, pre);
-            });
-          }
-        }
+  <script type="module">
+    import quikdown from '../src/vendor/quikdown.js';
+
+    // Fetch and render the markdown content
+    var resp = await fetch('../docs/thinking-in-bitwrench.md');
+    if (resp.ok) {
+      var md = await resp.text();
+      var html = quikdown(md);
+      bw.DOM('#doc-content', { t: 'div', c: bw.raw(html) });
+
+      // Replace <pre><code> blocks with bw.codeEditor for syntax highlighting
+      if (bw.codeEditor) {
+        var blocks = bw.$('#doc-content pre code');
+        blocks.forEach(function(codeEl) {
+          var pre = codeEl.parentNode;
+          var code = codeEl.textContent;
+          var lang = 'js';
+          var cls = codeEl.className || '';
+          if (cls.indexOf('html') !== -1) lang = 'html';
+          else if (cls.indexOf('css') !== -1) lang = 'css';
+          var editor = bw.codeEditor({ code: code, lang: lang, readOnly: true, height: 'auto' });
+          var editorEl = bw.createDOM(editor);
+          pre.parentNode.replaceChild(editorEl, pre);
+        });
       }
-    };
-    xhr.send();
+    }
   </script>
 </body>
 </html>

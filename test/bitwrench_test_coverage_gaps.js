@@ -978,3 +978,85 @@ describe("bw.clearTheme", function() {
     assert.ok(!document.documentElement.classList.contains('bw-theme-alt'));
   });
 });
+
+// =========================================================================
+// _resolveTemplate edge cases
+// =========================================================================
+describe("bw._resolveTemplate edge cases", function() {
+  it("should return non-string inputs unchanged", function() {
+    assert.strictEqual(bw._resolveTemplate(42, {}, false), 42);
+    assert.strictEqual(bw._resolveTemplate(null, {}, false), null);
+  });
+
+  it("should return strings without ${} unchanged", function() {
+    assert.strictEqual(bw._resolveTemplate('hello world', {}, false), 'hello world');
+  });
+
+  it("should resolve simple path in tier 1 mode (no compile)", function() {
+    var result = bw._resolveTemplate('Count: ${count}', { count: 5 }, false);
+    assert.strictEqual(result, 'Count: 5');
+  });
+
+  it("should resolve expression in tier 2 mode (compile)", function() {
+    var result = bw._resolveTemplate('${a + b}', { a: 3, b: 4 }, true);
+    assert.strictEqual(result, '7');
+  });
+
+  it("should handle invalid expressions gracefully in compile mode", function() {
+    var result = bw._resolveTemplate('${!!!}', {}, true);
+    assert.strictEqual(result, '');
+  });
+
+  it("should handle null/undefined state values as empty string", function() {
+    var result = bw._resolveTemplate('${missing}', {}, false);
+    assert.strictEqual(result, '');
+  });
+
+  it("should handle multiple bindings in one string", function() {
+    var result = bw._resolveTemplate('${a} and ${b}', { a: 'X', b: 'Y' }, false);
+    assert.strictEqual(result, 'X and Y');
+  });
+});
+
+// =========================================================================
+// applyTheme edge cases
+// =========================================================================
+describe("bw.applyTheme edge cases", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should handle 'light' mode", function() {
+    bw.generateTheme('light-test', {
+      primary: '#336699',
+      secondary: '#cc6633',
+      inject: true
+    });
+    var result = bw.applyTheme('light');
+    assert.ok(typeof result === 'string');
+  });
+
+  it("should handle 'dark' mode", function() {
+    bw.generateTheme('dark-test', {
+      primary: '#336699',
+      secondary: '#cc6633',
+      inject: true
+    });
+    var result = bw.applyTheme('dark');
+    assert.ok(typeof result === 'string');
+  });
+
+  it("should default to 'primary' for unknown mode", function() {
+    bw.generateTheme('unknown-test', {
+      primary: '#336699',
+      secondary: '#cc6633',
+      inject: true
+    });
+    var result = bw.applyTheme('garbage');
+    assert.strictEqual(result, 'primary');
+  });
+
+  it("should return mode string even without browser", function() {
+    // In Node without browser, applyTheme still returns a string
+    var result = bw.applyTheme('primary');
+    assert.ok(typeof result === 'string');
+  });
+});

@@ -1368,3 +1368,117 @@ describe("ComponentHandle in content arrays", function() {
     child.destroy();
   });
 });
+
+// =============================================================================
+// Bug Fix: Mixed content array bindings (Bug 3)
+// =============================================================================
+describe("Mixed content array bindings", function() {
+  beforeEach(function() { resetApp(); });
+
+  it("should handle ${expr} in array children without destroying siblings", function() {
+    var comp = bw.component({
+      t: 'div',
+      c: ['Label: ', '${count}'],
+      o: {
+        state: { count: 0 }
+      }
+    });
+    bw.DOM('#app', comp);
+    assert.ok(comp.mounted, 'should mount');
+
+    // Initial render should have both label and count
+    var text = comp.element.textContent;
+    assert.ok(text.indexOf('Label:') >= 0, 'should contain Label:');
+    assert.ok(text.indexOf('0') >= 0, 'should contain initial count 0');
+
+    // Update count — label should survive
+    comp.set('count', 42, { sync: true });
+    var newText = comp.element.textContent;
+    assert.ok(newText.indexOf('Label:') >= 0, 'Label: should survive after set()');
+    assert.ok(newText.indexOf('42') >= 0, 'should contain updated count 42');
+  });
+
+  it("should wrap ${expr} string children in display:contents span", function() {
+    var comp = bw.component({
+      t: 'p',
+      c: ['Static text ', '${value}', ' more text'],
+      o: {
+        state: { value: 'hello' }
+      }
+    });
+    bw.DOM('#app', comp);
+    // The ${value} child should be wrapped in a span with display:contents
+    var spans = comp.element.querySelectorAll('span[data-bw_ref]');
+    assert.ok(spans.length >= 1, 'should have at least one binding span');
+    assert.equal(spans[0].style.display, 'contents');
+  });
+
+  it("should not affect pure string content bindings", function() {
+    var comp = bw.component({
+      t: 'span',
+      c: '${name}',
+      o: {
+        state: { name: 'Alice' }
+      }
+    });
+    bw.DOM('#app', comp);
+    assert.equal(comp.element.textContent, 'Alice');
+    comp.set('name', 'Bob', { sync: true });
+    assert.equal(comp.element.textContent, 'Bob');
+  });
+});
+
+// =============================================================================
+// Bug Fix: o.render called on initial mount (Bug 4)
+// =============================================================================
+describe("o.render on initial mount", function() {
+  beforeEach(function() { resetApp(); });
+
+  it("should set el._bw_render from o.render", function() {
+    var renderCalled = false;
+    var comp = bw.component({
+      t: 'div',
+      c: 'test',
+      o: {
+        render: function(el, state) {
+          renderCalled = true;
+        }
+      }
+    });
+    bw.DOM('#app', comp);
+    assert.ok(comp.element._bw_render, '_bw_render should be set on element');
+    assert.ok(renderCalled, 'o.render should be called on initial mount');
+  });
+
+  it("should pass element and state to o.render on mount", function() {
+    var receivedEl = null;
+    var receivedState = null;
+    var comp = bw.component({
+      t: 'div',
+      c: 'test',
+      o: {
+        state: { count: 5 },
+        render: function(el, state) {
+          receivedEl = el;
+          receivedState = state;
+        }
+      }
+    });
+    bw.DOM('#app', comp);
+    assert.ok(receivedEl === comp.element, 'should pass the mounted element');
+    assert.equal(receivedState.count, 5, 'should pass the state');
+  });
+
+  it("should work without o.render (no error)", function() {
+    var comp = bw.component({
+      t: 'div',
+      c: 'no render',
+      o: {
+        state: { x: 1 }
+      }
+    });
+    bw.DOM('#app', comp);
+    assert.ok(comp.mounted, 'should mount without error');
+    assert.equal(comp.element._bw_render, undefined, '_bw_render should not exist');
+  });
+});

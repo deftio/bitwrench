@@ -64,6 +64,9 @@ export function generateShell(opts) {
   script.push('  var clientId = ' + JSON.stringify(clientId) + ';');
   script.push('  var conn = bw.clientConnect("/__bw/events/" + clientId, {');
   script.push('    actionUrl: "/__bw/action/" + clientId,');
+  if (opts.allowExec) {
+    script.push('    allowExec: true,');
+  }
   script.push('    onStatus: function(s) {');
   script.push('      if (typeof console !== "undefined") console.log("[bwserve] " + s);');
   script.push('    }');

@@ -43,15 +43,58 @@
       '.badge-call':     { 'background': '#0891b2' },
       '.badge-exec':     { 'background': '#dc2626' },
       '.arch-diagram': {
+        'margin': '1.25rem 0',
         'background': 'var(--bw_code_bg)',
-        'color': 'var(--bw_code_text)',
-        'padding': '1.25rem',
         'border-radius': '8px',
+        'padding': '0.75rem',
+        'overflow-x': 'auto'
+      },
+      '.arch-diagram svg': {
+        'width': '100%',
+        'height': 'auto',
+        'display': 'block'
+      },
+      '.arch-diagram .box-rect': {
+        'fill': 'var(--bw_card_bg)',
+        'stroke': 'var(--bw_card_border)',
+        'stroke-width': '1.5'
+      },
+      '.arch-diagram .box-title': {
+        'fill': 'var(--bw_code_text)',
+        'font-family': 'system-ui, sans-serif',
+        'font-size': '13px',
+        'font-weight': '600'
+      },
+      '.arch-diagram .box-line': {
+        'fill': 'var(--bw_code_text)',
         'font-family': 'var(--bw_font_mono)',
-        'font-size': '0.8rem',
-        'line-height': '1.4',
-        'overflow-x': 'auto',
-        'white-space': 'pre'
+        'font-size': '11px'
+      },
+      '.arch-diagram .box-line-bold': {
+        'fill': 'var(--bw_teal)',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '11.5px',
+        'font-weight': '600'
+      },
+      '.arch-diagram .arrow-line': {
+        'stroke': 'var(--bw_teal)',
+        'stroke-width': '2',
+        'fill': 'none'
+      },
+      '.arch-diagram .arrow-dash': {
+        'stroke': 'var(--bw_teal)',
+        'stroke-width': '2',
+        'stroke-dasharray': '6 3',
+        'fill': 'none'
+      },
+      '.arch-diagram .arrow-head': {
+        'fill': 'var(--bw_teal)'
+      },
+      '.arch-diagram .arrow-label': {
+        'fill': 'var(--bw_code_text)',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '10.5px',
+        'font-weight': '600'
       },
       '.proto-table': {
         'width': '100%',
@@ -125,6 +168,44 @@
       };
     }
 
+    // SVG architecture diagram helpers
+    var _markerId = 0;
+    function svgArrowDefs(idSuffix) {
+      return { t: 'defs', c: [
+        { t: 'marker', a: { id: 'aR' + idSuffix, viewBox: '0 0 10 6', refX: '10', refY: '3', markerWidth: '8', markerHeight: '6', orient: 'auto' },
+          c: { t: 'path', a: { d: 'M0,0 L10,3 L0,6Z', class: 'arrow-head' } } },
+        { t: 'marker', a: { id: 'aL' + idSuffix, viewBox: '0 0 10 6', refX: '0', refY: '3', markerWidth: '8', markerHeight: '6', orient: 'auto' },
+          c: { t: 'path', a: { d: 'M10,0 L0,3 L10,6Z', class: 'arrow-head' } } }
+      ]};
+    }
+
+    function svgBox(x, y, w, h, title, lines) {
+      var els = [
+        { t: 'rect', a: { class: 'box-rect', x: x, y: y, width: w, height: h, rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: x + w / 2, y: y - 10, 'text-anchor': 'middle' }, c: title }
+      ];
+      lines.forEach(function(ln, i) {
+        if (ln === '') return;
+        var cls = ln.charAt(0) === '*' ? 'box-line-bold' : 'box-line';
+        var text = ln.charAt(0) === '*' ? ln.slice(1) : ln;
+        els.push({ t: 'text', a: { class: cls, x: x + 14, y: y + 22 + i * 17 }, c: text });
+      });
+      return els;
+    }
+
+    function svgArrow(x1, y1, x2, y2, label, idSuffix, opts) {
+      opts = opts || {};
+      var dir = x2 > x1 ? 'R' : 'L';
+      var midX = (x1 + x2) / 2;
+      var els = [
+        { t: 'line', a: { class: opts.dash ? 'arrow-dash' : 'arrow-line', x1: x1, y1: y1, x2: x2, y2: y2, 'marker-end': 'url(#a' + dir + idSuffix + ')' } }
+      ];
+      if (label) {
+        els.push({ t: 'text', a: { class: 'arrow-label', x: midX, y: y1 - 6, 'text-anchor': 'middle' }, c: label });
+      }
+      return els;
+    }
+
     // =========================================================================
     // 1. Overview
     // =========================================================================
@@ -145,23 +226,29 @@
         ' or Phoenix LiveView \u2014 but instead of HTML strings, the wire format is the same TACO objects you already use.'
       ]},
 
-      { t: 'div', a: { class: 'arch-diagram' }, c: [
-'  Browser                            Server',
-' \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510               \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510',
-' \u2502 bitwrench.js     \u2502               \u2502 your server          \u2502',
-' \u2502                  \u2502   GET /       \u2502  (Node / Python / C) \u2502',
-' \u2502  bw.clientConnect\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500>  app.page(\'/\', fn)   \u2502',
-' \u2502  (opens SSE)     \u2502               \u2502                      \u2502',
-' \u2502                  \u2502<\u2500\u2500SSE\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500  client.render()     \u2502',
-' \u2502  bw.clientApply()\u2502  {TACO JSON}  \u2502  client.patch()      \u2502',
-' \u2502  renders UI      \u2502               \u2502  client.append()     \u2502',
-' \u2502                  \u2502               \u2502  client.remove()     \u2502',
-' \u2502                  \u2502               \u2502  app.broadcast()     \u2502',
-' \u2502  user clicks     \u2502               \u2502                      \u2502',
-' \u2502  data-bw-action  \u2502\u2500\u2500POST\u2500\u2500\u2500\u2500\u2500\u2500\u2500>                      \u2502',
-' \u2502                  \u2502  {action,data}\u2502  client.on(action,fn)\u2502',
-' \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518               \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518'
-      ].join('\n') },
+      { t: 'div', a: { class: 'arch-diagram' }, c:
+        { t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 280' }, c: [].concat(
+          svgArrowDefs('1'),
+          svgBox(15, 32, 230, 228, 'Browser', [
+            '*bitwrench.js', '',
+            'bw.clientConnect()', '(opens SSE)', '',
+            'bw.clientApply()', 'renders UI', '',
+            'user clicks', 'data-bw-action', '',
+            '', '{action, data}'
+          ]),
+          svgBox(440, 32, 245, 228, 'Server', [
+            '*your server', '(Node / Python / C)',
+            "app.page('/', fn)", '',
+            'client.render()', 'client.patch()',
+            'client.append()', 'client.remove()',
+            'app.broadcast()', '',
+            'client.on(action, fn)', '', '{TACO JSON}'
+          ]),
+          svgArrow(245, 80, 440, 80, 'GET /', '1'),
+          svgArrow(440, 140, 245, 140, 'SSE', '1', { dash: true }),
+          svgArrow(245, 200, 440, 200, 'POST', '1')
+        )}
+      },
 
       callout('concept', 'Why is this useful?', {
         t: 'div', c: [
@@ -613,14 +700,25 @@
         code('--stdin'), ' mode to pipe messages from stdin.'
       ]},
 
-      { t: 'div', a: { class: 'arch-diagram' }, c: [
-'  Your App (any language)          bwcli serve         Browser(s)',
-' \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510',
-' \u2502  curl / Python / C    \u2502    \u2502  web: :8080  \u2502<\u2500\u2500>\u2502  EventSource \u2502',
-' \u2502  POST to :9000        \u2502\u2500\u2500\u2500>\u2502  input: :9000\u2502    \u2502  bw.client.. \u2502',
-' \u2502  or pipe to stdin     \u2502    \u2502  --stdin     \u2502    \u2502             \u2502',
-' \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518'
-      ].join('\n') },
+      { t: 'div', a: { class: 'arch-diagram' }, c:
+        { t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
+          svgArrowDefs('2'),
+          svgBox(10, 32, 220, 95, 'Your App (any language)', [
+            'curl / Python / C', 'POST to :9000',
+            'or pipe to stdin'
+          ]),
+          svgBox(270, 32, 170, 95, 'bwcli serve', [
+            'web: :8080', 'input: :9000',
+            '--stdin'
+          ]),
+          svgBox(480, 32, 205, 95, 'Browser(s)', [
+            'EventSource', 'bw.clientConnect()',
+            'bw.clientApply()'
+          ]),
+          svgArrow(230, 72, 270, 72, 'POST / stdin', '2'),
+          svgArrow(440, 72, 480, 72, 'SSE', '2', { dash: true })
+        )}
+      },
 
       { t: 'h3', c: 'Usage' },
       codeBlock([

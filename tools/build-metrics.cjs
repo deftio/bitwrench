@@ -271,6 +271,29 @@ async function main() {
       pad((bwsGz / 1024).toFixed(1), 8));
   }
 
+  // Print CLI source analysis (if any cli sources present, includes vendor)
+  var cliSources = sources.filter(function(s) { return s.category === 'cli'; });
+  if (cliSources.length > 0) {
+    console.log('\n=== CLI Sources (bwcli) ===\n');
+    console.log(pad('File', 32) + pad('LOC', 7) + pad('Raw KB', 9) + pad('Min KB', 9) + pad('Gz KB', 8));
+    console.log('-'.repeat(65));
+    var cliLines = 0, cliBytes = 0, cliMin = 0, cliGz = 0;
+    cliSources.forEach(function(s) {
+      console.log(pad(s.file, 32) +
+        pad(String(s.lines), 7) +
+        pad((s.bytes / 1024).toFixed(1), 9) +
+        pad((s.minBytes / 1024).toFixed(1), 9) +
+        pad((s.gzipBytes / 1024).toFixed(1), 8));
+      cliLines += s.lines; cliBytes += s.bytes; cliMin += s.minBytes; cliGz += s.gzipBytes;
+    });
+    console.log('-'.repeat(65));
+    console.log(pad('TOTAL', 32) +
+      pad(String(cliLines), 7) +
+      pad((cliBytes / 1024).toFixed(1), 9) +
+      pad((cliMin / 1024).toFixed(1), 9) +
+      pad((cliGz / 1024).toFixed(1), 8));
+  }
+
   // Print dist bundle analysis — show .min.js variants + server bundles + CSS
   var minBundles = bundles.filter(function(b) {
     return b.file.indexOf('.min.') !== -1 || b.file === 'bitwrench.css'

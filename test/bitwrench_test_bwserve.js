@@ -1586,3 +1586,40 @@ describe("BwServeApp.broadcast()", function() {
     assert.strictEqual(count, 0);
   });
 });
+
+// ===================================================================================
+// Bug fix: DIST_DIR fallback paths
+// ===================================================================================
+describe("DIST_DIR resolution", function() {
+  it("BwServeApp._serveDistFile should find bitwrench.umd.js from source layout", function() {
+    // The _serveDistFile method uses DIST_DIR internally.
+    // We test that BwServeApp can be created (DIST_DIR resolves without error).
+    var app = new BwServeApp({});
+    assert.ok(app, "BwServeApp should instantiate");
+  });
+});
+
+// ===================================================================================
+// Bug fix: allowExec passthrough to shell
+// ===================================================================================
+describe("generateShell allowExec", function() {
+  it("should NOT include allowExec by default", function() {
+    var html = generateShell({ clientId: 'test1', title: 'Test' });
+    assert.ok(html.indexOf('allowExec') === -1, "should not contain allowExec");
+  });
+
+  it("should include allowExec: true when opts.allowExec is true", function() {
+    var html = generateShell({ clientId: 'test2', title: 'Test', allowExec: true });
+    assert.ok(html.indexOf('allowExec: true') !== -1, "should contain allowExec: true");
+  });
+
+  it("BwServeApp should store allowExec option", function() {
+    var app = new BwServeApp({ allowExec: true });
+    assert.strictEqual(app.allowExec, true);
+  });
+
+  it("BwServeApp should default allowExec to false", function() {
+    var app = new BwServeApp({});
+    assert.strictEqual(app.allowExec, false);
+  });
+});

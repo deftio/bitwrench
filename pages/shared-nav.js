@@ -28,6 +28,7 @@
 
   // Secondary nav items (sub-nav bar, shown only on example pages)
   var secondaryItems = [
+    { text: 'Thinking in BW', href: 'thinking-in-bitwrench.html' },
     { text: 'Tables & Forms', href: '02-tables-forms.html' },
     { text: 'Dashboard', href: '04-dashboard.html' },
     { text: 'Digital Clock', href: '06-clock.html' },
@@ -40,6 +41,7 @@
   var docsSecondaryItems = [
     { text: 'Builds', href: '09-builds.html' },
     { text: 'Debugging', href: '11-debugging.html' },
+    { text: 'HTML Gen', href: '15-html-generation.html' },
     { text: 'Code Editor', href: '13-code-editor.html' },
     { text: 'API Reference', href: '08-api-reference.html' }
   ];

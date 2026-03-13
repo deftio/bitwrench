@@ -5,6 +5,7 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.bw = factory());
 })(this, (function () { 'use strict';
 
+  var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
   function _arrayLikeToArray(r, a) {
     (null == a || a > r.length) && (a = r.length);
     for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
@@ -196,7 +197,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-13T10:13:18.631Z'
+    buildDate: '2026-03-13T17:46:16.642Z'
   };
 
   /**
@@ -5552,8 +5553,16 @@
       // Skip null, undefined, false
       if (value == null || value === false) continue;
 
-      // Skip event handlers (they're for DOM only)
-      if (key.startsWith('on')) continue;
+      // Serialize event handlers via funcRegister
+      if (key.startsWith('on')) {
+        if (typeof value === 'function') {
+          var fnId = bw.funcRegister(value);
+          attrStr += ' ' + key + '="' + bw.funcGetDispatchStr(fnId, 'event') + '"';
+        } else if (typeof value === 'string') {
+          attrStr += ' ' + key + '="' + bw.escapeHTML(value) + '"';
+        }
+        continue;
+      }
       if (key === 'style' && _typeof(value) === 'object') {
         // Convert style object to string
         var styleStr = Object.entries(value).filter(function (_ref) {
@@ -5611,6 +5620,178 @@
       contentStr = bw._resolveTemplate(contentStr, options.state, !!options.compile);
     }
     return "<".concat(tag).concat(attrStr, ">").concat(contentStr, "</").concat(tag, ">");
+  };
+
+  /**
+   * Generate a complete, self-contained HTML document from TACO content.
+   *
+   * Produces a full `<!DOCTYPE html>` page with configurable runtime injection,
+   * func registry emission (so serialized event handlers work), optional theme,
+   * and extra head elements. Designed for static site generation, offline/airgapped
+   * use, and the "static site that isn't static" workflow.
+   *
+   * @param {Object} [opts={}] - Page options
+   * @param {Object|string|Array} [opts.body=''] - Body content: TACO, string, or array
+   * @param {string} [opts.title='bitwrench'] - Page title
+   * @param {Object} [opts.state] - State for ${expr} resolution in bw.html()
+   * @param {string} [opts.runtime='shim'] - Runtime level: 'inline'|'cdn'|'shim'|'none'
+   * @param {string} [opts.css=''] - Additional CSS for <style> block
+   * @param {string|Object} [opts.theme=null] - Theme preset name or config object
+   * @param {Array} [opts.head=[]] - Extra TACO elements rendered into <head>
+   * @param {string} [opts.favicon=''] - Favicon URL
+   * @param {string} [opts.lang='en'] - HTML lang attribute
+   * @returns {string} Complete HTML document string
+   * @category DOM Generation
+   * @see bw.html
+   * @example
+   * bw.htmlPage({
+   *   title: 'My App',
+   *   body: { t: 'h1', c: 'Hello World' },
+   *   runtime: 'shim'
+   * })
+   */
+  bw.htmlPage = function (opts) {
+    opts = opts || {};
+    var title = opts.title || 'bitwrench';
+    var body = opts.body || '';
+    var state = opts.state || undefined;
+    var runtime = opts.runtime || 'shim';
+    var css = opts.css || '';
+    var theme = opts.theme || null;
+    var headExtra = opts.head || [];
+    var favicon = opts.favicon || '';
+    var lang = opts.lang || 'en';
+
+    // Snapshot funcRegistry counter before rendering
+    var fnCounterBefore = bw._fnIDCounter;
+
+    // Render body content
+    var bodyHTML = '';
+    if (typeof body === 'string') {
+      bodyHTML = body;
+    } else {
+      var htmlOpts = {};
+      if (state) htmlOpts.state = state;
+      bodyHTML = bw.html(body, htmlOpts);
+    }
+
+    // Collect functions registered during this render
+    var fnCounterAfter = bw._fnIDCounter;
+    var registryEntries = '';
+    for (var i = fnCounterBefore; i < fnCounterAfter; i++) {
+      var fnKey = 'bw_fn_' + i;
+      if (bw._fnRegistry[fnKey]) {
+        registryEntries += 'bw._fnRegistry[\'' + fnKey + '\']=' + bw._fnRegistry[fnKey].toString() + ';\n';
+      }
+    }
+
+    // Build runtime script for <head>
+    var runtimeHead = '';
+    if (runtime === 'inline') {
+      // Read UMD bundle synchronously if in Node.js
+      var umdSource = null;
+      if (bw._isNode) {
+        try {
+          var fs = typeof require === 'function' ? require('fs') : null;
+          var pathMod = typeof require === 'function' ? require('path') : null;
+          if (fs && pathMod) {
+            // Resolve dist/ relative to this source file
+            var srcDir = '';
+            try {
+              srcDir = pathMod.dirname(typeof __filename !== 'undefined' ? __filename : '');
+            } catch (e2) {/* ESM: __filename not available */}
+            if (!srcDir && typeof ({ url: (typeof document === 'undefined' && typeof location === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : typeof document === 'undefined' ? location.href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('bitwrench-lean.es5.js', document.baseURI).href)) }) !== 'undefined' && (typeof document === 'undefined' && typeof location === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : typeof document === 'undefined' ? location.href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('bitwrench-lean.es5.js', document.baseURI).href))) {
+              var url = typeof require === 'function' ? require('url') : null;
+              if (url && url.fileURLToPath) srcDir = pathMod.dirname(url.fileURLToPath((typeof document === 'undefined' && typeof location === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : typeof document === 'undefined' ? location.href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('bitwrench-lean.es5.js', document.baseURI).href))));
+            }
+            if (srcDir) {
+              var distPath = pathMod.resolve(srcDir, '../dist/bitwrench.umd.min.js');
+              umdSource = fs.readFileSync(distPath, 'utf8');
+            }
+          }
+        } catch (e) {/* fall through */}
+      }
+      if (umdSource) {
+        runtimeHead = '<script>' + umdSource + '</script>';
+      } else {
+        // Fallback to shim in browser or if dist not available
+        runtimeHead = '<script>' + bw._FUNC_REGISTRY_SHIM + '</script>';
+      }
+    } else if (runtime === 'cdn') {
+      runtimeHead = '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"></script>';
+    } else if (runtime === 'shim') {
+      runtimeHead = '<script>' + bw._FUNC_REGISTRY_SHIM + '</script>';
+    }
+    // runtime === 'none' → empty
+
+    // Theme CSS
+    var themeCSS = '';
+    if (theme) {
+      var themeConfig = typeof theme === 'string' ? THEME_PRESETS[theme.toLowerCase()] || null : theme;
+      if (themeConfig) {
+        var themeResult = bw.generateTheme('', Object.assign({}, themeConfig, {
+          inject: false
+        }));
+        themeCSS = themeResult.css;
+      }
+    }
+
+    // Extra <head> elements
+    var headHTML = '';
+    if (Array.isArray(headExtra) && headExtra.length > 0) {
+      headHTML = headExtra.map(function (el) {
+        return bw.html(el);
+      }).join('\n');
+    }
+
+    // Favicon
+    var faviconTag = '';
+    if (favicon) {
+      var safeFavicon = favicon.replace(/[&<>"']/g, function (c) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[c];
+      });
+      faviconTag = '<link rel="icon" href="' + safeFavicon + '">';
+    }
+
+    // Escaped title
+    var safeTitle = bw.escapeHTML(title);
+
+    // Combine all CSS
+    var allCSS = (themeCSS ? themeCSS + '\n' : '') + css;
+
+    // Body-end script: registry entries + optional loadDefaultStyles
+    var bodyEndScript = '';
+    var bodyEndParts = [];
+    if (registryEntries) {
+      bodyEndParts.push(registryEntries);
+    }
+    if (runtime === 'inline' || runtime === 'cdn') {
+      bodyEndParts.push('if(typeof bw!=="undefined"){bw.loadDefaultStyles();}');
+    }
+    if (bodyEndParts.length > 0) {
+      bodyEndScript = '<script>\n' + bodyEndParts.join('\n') + '\n</script>';
+    }
+
+    // Assemble document
+    var parts = ['<!DOCTYPE html>', '<html lang="' + lang + '">', '<head>', '<meta charset="UTF-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">'];
+    parts.push('<title>' + safeTitle + '</title>');
+    if (faviconTag) parts.push(faviconTag);
+    if (runtimeHead) parts.push(runtimeHead);
+    if (headHTML) parts.push(headHTML);
+    if (allCSS) parts.push('<style>' + allCSS + '</style>');
+    parts.push('</head>');
+    parts.push('<body>');
+    parts.push(bodyHTML);
+    if (bodyEndScript) parts.push(bodyEndScript);
+    parts.push('</body>');
+    parts.push('</html>');
+    return parts.join('\n');
   };
 
   /**
@@ -6547,6 +6728,16 @@
     return copy;
   };
 
+  /**
+   * Minimal runtime shim for funcRegister dispatch in static HTML.
+   * When embedded in a `<script>` tag, provides just enough infrastructure
+   * for `bw.funcGetById()` calls to resolve. The actual function bodies
+   * are emitted separately as `bw._fnRegistry['bw_fn_X'] = ...;` assignments.
+   * @type {string}
+   * @category Function Registry
+   */
+  bw._FUNC_REGISTRY_SHIM = '(function(){var bw=window.bw||(window.bw={});' + 'if(!bw._fnRegistry)bw._fnRegistry={};' + 'bw.funcGetById=function(n){return bw._fnRegistry[n]||function(){' + 'console.warn("bw: unregistered fn "+n)};};' + 'bw.funcRegister=function(fn,name){' + 'var id=name||("bw_fn_"+(bw._fnIDCounter=(bw._fnIDCounter||0)+1));' + 'bw._fnRegistry[id]=fn;return id;};' + 'window.bw=bw;})();';
+
   // ===================================================================================
   // Template Binding Utilities
   // ===================================================================================
@@ -6953,6 +7144,31 @@
       // Recurse into children
       if (Array.isArray(taco.c)) {
         for (var i = 0; i < taco.c.length; i++) {
+          // Wrap string children with ${expr} in a span so patches target the span, not the parent
+          if (typeof taco.c[i] === 'string' && taco.c[i].indexOf('${') >= 0) {
+            var mixedRefId = 'bw_ref_' + self._refCounter++;
+            var mixedParsed = bw._parseBindings(taco.c[i]);
+            var mixedDeps = [];
+            for (var mi = 0; mi < mixedParsed.length; mi++) {
+              mixedDeps = mixedDeps.concat(bw._extractDeps(mixedParsed[mi].expr, stateKeys));
+            }
+            self._bindings.push({
+              expr: taco.c[i],
+              type: 'content',
+              refId: mixedRefId,
+              deps: mixedDeps,
+              template: taco.c[i]
+            });
+            // Replace string with a span wrapper so textContent targets the span only
+            taco.c[i] = {
+              t: 'span',
+              a: {
+                'data-bw_ref': mixedRefId,
+                style: 'display:contents'
+              },
+              c: taco.c[i]
+            };
+          }
           if (taco.c[i] && _typeof(taco.c[i]) === 'object' && taco.c[i].t) {
             walkTaco(taco.c[i], path.concat(i));
           }
@@ -7064,6 +7280,11 @@
     this.element = bw.createDOM(tacoForDOM);
     this.element._bwComponentHandle = this;
     this.element.setAttribute('data-bw_comp_id', this._bwId);
+
+    // Restore o.render from original TACO (stripped by _tacoForDOM)
+    if (this.taco.o && this.taco.o.render) {
+      this.element._bw_render = this.taco.o.render;
+    }
     if (this._userTag) {
       this.element.classList.add(this._userTag);
     }
@@ -7085,6 +7306,11 @@
       } else {
         this._hooks.mounted(this);
       }
+    }
+
+    // Invoke o.render on initial mount (if present)
+    if (this.element._bw_render) {
+      this.element._bw_render(this.element, this._state);
     }
   };
 
