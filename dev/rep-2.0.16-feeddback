@@ -1,0 +1,69 @@
+Bitwrench v2.0.16 — Detailed Assessment  
+What it is  
+Bitwrench is a single-script UI library where you describe the entire UI as plain JavaScript objects (`{t, a, c, o}` — tag, attributes, content, options), then mount them to the DOM or render to HTML strings. Version 2.0.16 adds the `bw.component()` "Level 2" reactive system on top of the existing Level 0 (plain objects) and Level 1 (manual render) tiers.
+
+---
+
+Genuine Strengths  
+**1\. Zero build step, truly zero.**  
+Drop one `<script>` tag and you have a full UI toolkit — theming, 50+ components, reactive state, pub/sub, CSS-in-JS — working in any browser. There is no `npm install`, no `node_modules`, no transpiler. This is a real advantage for embedded dashboards, intranets, prototype tools, server-side rendering with Node.js, and IoT (the `bwserve` SSE protocol is genuinely clever). It also means the mental model is extremely flat: HTML page → script tag → build UI.
+
+**2\. The component library is surprisingly comprehensive.**  
+`makeStatCard`, `makeTimeline`, `makeFeatureGrid`, `makeTooltip`, `makeSearchInput`, `makeAccordion`, `makeBarChart`, `makeTable` (sortable\!), `makeCarousel`, `makeCodeDemo`, `makeProgress`, `makeStepper` — these all work with a single function call returning a composable object. For rapid internal tooling this eliminates a lot of boilerplate.
+
+**3\. `bw.generateTheme()` is legitimately useful.**  
+Passing two hex seeds and getting a complete design system (button variants, alerts, badges, cards, dark mode, forms) is a compelling DX win. Other UI toolkits require significant configuration to do this.
+
+**4\. CSS-in-JS via `bw.css()` is coherent.**  
+Defining styles as a nested JavaScript object (with support for media queries, pseudo-selectors, and keyframe animations as keys) is a natural fit for a library that already represents everything as JS objects. You get colocation, easy theming via variables, and no separate stylesheet to maintain.
+
+**5\. TACO is genuinely composable.**  
+Because every component factory returns a plain object, you can nest, map, filter, and transform components exactly like any other JavaScript data. There are no "slots", no "props drilling", no special syntax — just object composition. This is particularly clean when generating dynamic UIs from data arrays.
+
+**6\. The `o.mounted` lifecycle hook works reliably.**  
+Event handlers and post-render initialization set up in `mounted` work exactly as expected for Level 0/1 usage. The pattern of `o.mounted: function(el) { el.addEventListener(...) }` is clear and debuggable.
+
+**7\. `bw.pub()` / `bw.sub()` is a clean event bus.**  
+For decoupling components (e.g., cart updates broadcasting to the navbar), the pub/sub system is lightweight and effective. `handle.sub()` auto-cleans on component destroy, which is a nice detail.
+
+---
+
+Real Weaknesses  
+**1\. The Level 2 `bw.component()` system has sharp edges that break beginner intuitions.**  
+The most significant issue I ran into: when a `bw.component()` processes `${template}` bindings, it replaces bound text nodes. If the bound expression is inside a child element that also has an `o.mounted` hook with an event listener, the listener can be silently detached when the binding updates. The fix is to use `onclick: function() {}` in the `a:` attributes instead of `mounted` hooks — but this is non-obvious and not documented in the quick-start examples. Spent significant debugging time on this.
+
+**2\. Template binding scope is opaque.**  
+When `bw.component()` has deeply nested children, it's not clear which template bindings are "registered" and will receive updates vs. which will be silently ignored. In practice, bindings in complex nested structures (multiple levels of `c:` arrays inside the root TACO) sometimes didn't update, requiring fallback to direct DOM manipulation (`el.textContent = '...'`). Documentation doesn't clarify the scanning depth or what happens to bindings inside child elements that have their own `o:` options.
+
+**3\. Mixing Level 1 (`o.render`) and Level 2 (`bw.component()`) is discouraged but tempting.**  
+The natural instinct when building a filtered list is to use Level 2 for state tracking and write a custom `o.render` function for the dynamic DOM generation. This hybrid works but has subtle ordering issues — `o.render` isn't called on initial mount unless you explicitly trigger a state change. Documentation acknowledges this but the "correct" pattern is buried in examples.
+
+**4\. No routing whatsoever.**  
+A multi-page site would require bolt-on solutions (`wouter`, `page.js`, hash-based routing by hand). For anything larger than a single-page app, you're on your own. This is a fundamental scope limitation, not a bug, but worth flagging clearly.
+
+**5\. TACO is verbose for complex layouts.**  
+`{t:'div', a:{class:'row'}, c:[{t:'div', a:{class:'col'}, c:...}]}` gets unwieldy fast. JSX is irritating to some people, but `<div class="row"><div class="col">` is measurably more readable at scale. The object syntax becomes deeply nested and hard to scan visually when building multi-level layouts. The `make*()` factories help significantly but you can't always use them.
+
+**6\. Debugging reactive state is genuinely hard.**  
+`bw.inspect()` exists and works, but when a template binding silently fails to update, there's no console warning. You're left wondering whether the binding was never registered, whether the state update wasn't scheduled, or whether a re-render happened that replaced your element. React's DevTools and Vue DevTools set a high bar for reactive system debuggability that bitwrench doesn't come close to.
+
+**7\. CSS-in-JS quirks with compound selectors.**  
+Compound selectors like `.eo-cart-panel.open` work in `bw.css()` but aren't validated — if you make a typo or use an unsupported pattern, it silently produces invalid CSS. The nested structure also doesn't support true Sass-style `&` references, so you write the full selector path every time.
+
+**8\. `bw.component()` template bindings and `o.mounted` have a race condition on first render.**  
+When a component is first mounted, `mounted` fires for each element — but the template binding system may have already replaced some text nodes. The final rendered state is correct, but the ordering means any handler that reads the DOM immediately in `mounted` may see a partially-hydrated state.
+
+**9\. No TypeScript support in the core.**  
+Types must be hand-maintained or inferred. For a library that encourages large object definitions, this is a friction point — you won't get autocomplete on TACO properties, component prop shapes, or state keys.
+
+**10\. Limited table customization.**  
+`makeTable()` generates sortable tables well but offers no cell renderers, no row selection, no pagination built in. For any serious data table you end up re-implementing it manually.
+
+---
+
+Summary Verdict  
+Bitwrench is **genuinely excellent** for a specific niche: server-driven dashboards, IoT/embedded UIs, internal tooling, and rapid prototyping where you want zero build infrastructure and a batteries-included component set. The single-file constraint and `bw.generateTheme()` are real differentiators.
+
+For a customer-facing website or a production SPA, the verbosity of TACO at scale, the rough edges in `bw.component()` event handling, and the lack of routing/TypeScript/devtools make it harder to recommend over React \+ Vite (even with the build step overhead). The v2.0.16 reactive system is a significant step forward from v1's purely manual DOM management, but it hasn't yet closed the DX gap with established frameworks for large projects.
+
+The sweet spot: **a developer who knows what they're doing**, building a **focused tool or dashboard**, who **doesn't want to touch a build config**. In that context, bitwrench delivers.  

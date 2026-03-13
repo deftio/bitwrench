@@ -199,3 +199,114 @@ Pages converted:
 * [x] define --> font-size scale: TYPE_RATIO_PRESETS + generateTypeScale() — modular scale from ratio (tight/normal/relaxed/dramatic)
 * [x] define --> shadow elevation scale: ELEVATION_PRESETS (flat/sm/md/lg) wired into cards, modals, toasts, dropdowns
 * [x] define --> motion/transition curves: MOTION_PRESETS (reduced/standard/expressive × fast/normal/slow+easing). 3 tiers (0.15s/0.2s/0.3s), `@media (prefers-reduced-motion: reduce)` added
+
+---
+
+# QA Completed — v2.0.15 / v2.0.16
+
+## Reactivity system (Phase 1, v2.0.15) — IMPLEMENTED
+* [x] add --> ComponentHandle: unified reactive component class with .get()/.set()/.mount()/.destroy()
+* [x] add --> Function registry: bw.funcRegister(), funcGetById(), funcGetDispatchStr(), funcUnregister()
+* [x] add --> Template bindings: ${expr} in TACO content/attributes, Tier 1 (dot-path) + Tier 2 (new Function)
+* [x] add --> Microtask batching: Promise.resolve().then(flush) with bw.flush() for sync testing
+* [x] add --> Control flow: bw.when(expr, tacoTrue, tacoFalse), bw.each(expr, factory)
+* [x] add --> bw.component() factory, bw.compile() pre-compilation
+* [x] add --> Integration with bw.DOM(), bw.html(), bw.cleanup()
+* [x] add --> 77 new tests (bitwrench_test_component_handle.js)
+
+## Three-level component materialization (v2.0.15) — IMPLEMENTED
+* [x] implement --> o.methods promotion to ComponentHandle API
+* [x] implement --> ComponentHandle.prototype.userTag(id)
+* [x] implement --> bw.message(target, action, data)
+* [x] implement --> bw.inspect(el_or_selector)
+* [x] implement --> ComponentHandle detection in bw.createDOM() and bw.html() content walkers
+* [x] test --> 77 ComponentHandle tests, 880 total tests, 97.51% statement coverage
+* [x] docs --> pages/11-debugging.html, dev/llm-bitwrench-guide.md updated
+
+## QA fixes (v2.0.15)
+* [x] fix --> theme persistence, navbar clipping, logo sizing, install strip, builds page
+* [x] add --> SPACING_SCALE, palette.background/surface tokens, API markdown generator, self-load-test page
+* [x] doc --> 10-themes.html sections: applying themes, background/surface colors, mixed themes
+
+## Dead code elimination (v2.0.15)
+* [x] remove --> 5 old Handle classes, componentHandles registry, duplicate color functions (~498 lines)
+* [x] doc --> dev/dead-code-elimination-v2.0.15.md with recovery code
+
+## Doc cleanup (v2.0.16)
+* [x] archive --> moved `dev/bitwrench-serve-and-protocol.md` → `dev/archive/` (superseded by bw-client-server.md)
+* [x] archive --> moved `dev/bccl-component-redux.md` → `dev/archive/` (superseded by bccl-components-representation.md)
+* [x] scaffold --> bwserve library stubs (`src/bwserve/`) + CLI `bwcli serve` subcommand
+* [x] build --> bwserve integrated into rollup + package.json exports
+
+## Documentation Blitz (v2.0.16)
+* [x] create --> `docs/` directory with 8 markdown guides (README, taco-format, state-management, component-library, theming, cli, bwserve, llm-bitwrench-guide)
+* [x] update --> README.md: ComponentHandle as primary state pattern, updated API table, docs/ links
+* [x] update --> `docs/llm-bitwrench-guide.md`: three-level model, ComponentHandle API, all make*() functions, mental model callouts for LLMs conditioned on React/Vue
+
+## P0: Documentation Blitz — docs/ directory (v2.0.16)
+* [x] create --> `docs/` directory at repo root for user-facing documentation (markdown)
+* [x] create --> `docs/README.md` — index/table of contents for docs/ directory
+* [x] create --> `docs/taco-format.md` — standalone TACO format reference with "Coming from React/Vue?" callouts
+* [x] create --> `docs/state-management.md` — comprehensive three-level model guide with full ComponentHandle API
+* [x] create --> `docs/component-library.md` — all 50+ make*() functions with signatures, props, examples
+* [x] create --> `docs/theming.md` — theme generation guide (generateTheme, presets, palette, design tokens)
+* [x] create --> `docs/cli.md` — CLI reference (convert, flags, themes, standalone/cdn modes, serve subcommand)
+* [x] create --> `docs/bwserve.md` — bwserve placeholder (planned API, protocol, use cases)
+* [x] create --> `docs/llm-bitwrench-guide.md` — updated from dev/ version with ComponentHandle, three-level model, all make*() functions, mental model callouts
+* [x] update --> README.md: "Adding State" → ComponentHandle as primary pattern, Core API table updated, docs/ links added
+
+## P0: State page, quick start, tutorials (v2.0.16)
+* [x] update --> `pages/05-state.html`: Added Section 1b "ComponentHandle — The Recommended Pattern", reframed existing sections as "Low-Level Pattern"
+* [x] update --> `pages/05-state.html`: Added "Which Pattern to Use?" decision table, "Wrapping make*() in ComponentHandle" example, bw.message() example
+* [x] make --> `examples/llm-chat/` — Node.js + bwserve chat with LLM streaming (ollama/lm-studio/openrouter)
+* [x] rewrite --> `pages/00-quick-start.html`: proper onboarding from nothing to a working app (7 steps)
+* [x] create --> `docs/tutorial-website.md`: multi-section landing page tutorial (9 steps, ~120 lines JS)
+* [x] create --> `docs/tutorial-bwserve.md`: Streamlit-style server dashboard tutorial (6 steps)
+* [x] create --> `docs/tutorial-embedded.md`: ESP32 IoT dashboard tutorial (bwserve.h macros, SPIFFS, r-prefix JSON)
+
+## P0: Standalone examples (v2.0.16)
+* [x] create --> `examples/static-page/` — static page built with bitwrench (217 lines)
+* [x] create --> `examples/reactive-ui/` — interactive single-page app / todo list (295 lines)
+* [x] create --> `examples/client-server/` — bwserve client-server app (174 lines)
+* [x] create --> `examples/embedded/` — ESP32/IoT embedded dashboard
+
+## P0: Other documentation (v2.0.16)
+* [x] fix --> `pages/11-debugging.html`: contrast issues — added explicit bg/color to `.api-table code`
+* [x] update --> `dev/bitwrench-todo.md`: fixed stale items
+* [x] update --> navbar on all pages: "Docs" link present in shared-nav.js
+* [x] fix --> `dev/coming-from-other-frameworks.md` — updated all 8 framework bridge tables with ComponentHandle
+* [x] document --> Custom TACO without BCCL: added section to `docs/taco-format.md` + callout in `docs/llm-bitwrench-guide.md`
+
+## P0: Stale docs culled (v2.0.16)
+* [x] archived --> 9 superseded docs moved to `dev/archive/`
+* [x] fix --> `dev/bitwrench-todo.md` multiple stale items corrected
+
+## P1: Mobile Responsiveness (v2.0.16)
+* [x] fix --> `pages/index.html`: hero decorative circle hidden at 480px, tagline/subtitle max-width use `min(Npx, 90vw)`, 480px breakpoint added for hero text sizes
+* [x] audit --> `src/bitwrench-styles.js`: default styles have proper mobile breakpoints (575px, 768px), toast uses `calc(100vw - 2rem)`, tooltips use `min()`, modals covered at 575px
+* [x] audit --> `pages/shared-theme.css`: responsive at 480px/768px/1024px. Nav collapses at 900px, pipeline at 900px, try-it at 768px
+* [x] fix --> Generated theme CSS (`bw.generateTheme()`): verified themed components inherit responsive behavior
+* [x] test --> Add mobile viewport Playwright tests (375px width) for all 17 pages
+* [x] test --> Add tablet viewport Playwright tests (768px width) for all 17 pages
+* [x] test --> Playwright runs locally (not in CI)
+
+## P1: bwserve — Server-Driven UI (v2.0.16) — IMPLEMENTED
+* [x] implement --> `bw.clientConnect(url, opts)` — SSE/poll connection
+* [x] implement --> `bw.clientApply(msg)` — message dispatcher for 5 types + message
+* [x] implement --> Connection lifecycle
+* [x] implement --> `src/bwserve/index.js` — Full HTTP/SSE server (zero runtime deps)
+* [x] implement --> `src/bwserve/client.js` — BwServeClient with real SSE transport
+* [x] implement --> `src/bwserve/shell.js` — Page shell generator
+* [x] implement --> SSE stream management: configurable keep-alive
+* [x] implement --> `bwcli serve` pipe server
+* [x] create --> `pages/12-bwserve-protocol.html` — Protocol reference page
+* [x] update --> `docs/bwserve.md` — Full user guide
+* [x] update --> `pages/shared-nav.js` — bwserve primary nav item
+* [x] update --> `pages/bwserve-sandbox.html` — Linked from main nav
+* [x] test --> 109 tests in `test/bitwrench_test_bwserve.js` (100% coverage on bwserve files)
+* [x] create --> `examples/client-server/server.js`, `examples/llm-chat/server.js`, `examples/pipe-demo/sensor.sh`
+* [x] implement --> `bw.clientParse()` relaxed JSON state machine — 14 tests
+* [x] implement --> `client.register()` / `client.call()` / `client.exec()` three-tier execution model
+
+## P2.5: Bundle Size — three-tier build (v2.0.16)
+* [x] implement --> three-tier build: `bitwrench-lean` (core), `bitwrench-bccl` (components addon), `bitwrench` (full)

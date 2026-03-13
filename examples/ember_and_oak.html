@@ -1,0 +1,807 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ember & Oak Coffee Co. — Artisan Roasters Since 2018</title>
+  <meta name="description" content="Ember & Oak Coffee Co. crafts small-batch, single-origin coffees roasted to perfection.">
+  <meta property="og:title" content="Ember & Oak Coffee Co.">
+  <meta property="og:description" content="Small-batch, single-origin coffees roasted to perfection.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bitwrench@2.0.16/dist/bitwrench.umd.min.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+  (function() {
+    'use strict';
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('ember', { primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' });
+
+    // ─── CSS ──────────────────────────────────────────────────────────────────
+    bw.injectCSS(bw.css({
+      'body': { fontFamily: "'Inter', sans-serif", color: '#2d2017', background: '#faf8f5', overflowX: 'hidden' },
+      'h1,h2,h3,h4': { fontFamily: "'Playfair Display', serif" },
+      // Navbar
+      '.eo-nav': { position: 'fixed', top: '0', left: '0', right: '0', zIndex: '1000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.75rem 2rem', background: 'rgba(250,248,245,.96)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(139,69,19,.1)', transition: 'box-shadow .3s' },
+      '.eo-nav.scrolled': { boxShadow: '0 2px 20px rgba(139,69,19,.1)' },
+      '.eo-brand': { display: 'flex', alignItems: 'center', gap: '.75rem', textDecoration: 'none', color: '#2d2017' },
+      '.eo-brand-icon': { width: '40px', height: '40px', background: 'linear-gradient(135deg,#8B4513,#D2691E)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: '#fff' },
+      '.eo-brand-name': { fontFamily: "'Playfair Display', serif", fontSize: '1.35rem', fontWeight: '700' },
+      '.eo-nav-links': { display: 'flex', alignItems: 'center', gap: '2rem', listStyle: 'none', margin: '0', padding: '0' },
+      '.eo-nav-links a': { textDecoration: 'none', color: '#6b5443', fontWeight: '500', fontSize: '.88rem', letterSpacing: '.04em', textTransform: 'uppercase', transition: 'color .2s' },
+      '.eo-nav-links a:hover': { color: '#8B4513' },
+      '.eo-cart-btn': { display: 'flex', alignItems: 'center', gap: '.5rem', background: 'linear-gradient(135deg,#8B4513,#A0522D)', color: '#fff', border: 'none', borderRadius: '8px', padding: '.45rem 1.1rem', fontWeight: '600', fontSize: '.85rem', cursor: 'pointer', transition: 'transform .2s, box-shadow .2s' },
+      '.eo-cart-btn:hover': { transform: 'translateY(-1px)', boxShadow: '0 4px 14px rgba(139,69,19,.35)' },
+      '.eo-cart-badge': { background: '#D2691E', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.75rem', fontWeight: '700' },
+      // Hero
+      '.eo-hero': { minHeight: '100vh', background: 'linear-gradient(135deg,#1a0f08 0%,#2d1810 45%,#3d2214 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8rem 2rem 5rem', position: 'relative', overflow: 'hidden' },
+      '.eo-hero::before': { content: '""', position: 'absolute', inset: '0', background: 'radial-gradient(circle at 30% 50%,rgba(139,69,19,.15) 0%,transparent 60%),radial-gradient(circle at 70% 30%,rgba(210,105,30,.1) 0%,transparent 50%)', pointerEvents: 'none' },
+      '.eo-hero-inner': { maxWidth: '820px', textAlign: 'center', position: 'relative', zIndex: '1' },
+      '.eo-hero-pill': { display: 'inline-block', padding: '.4rem 1.2rem', background: 'rgba(210,105,30,.14)', border: '1px solid rgba(210,105,30,.28)', borderRadius: '50px', color: '#D2691E', fontWeight: '600', fontSize: '.78rem', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '2rem' },
+      '.eo-hero-title': { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2.4rem,6vw,4.5rem)', fontWeight: '800', color: '#faf8f5', lineHeight: '1.1', marginBottom: '1.5rem' },
+      '.eo-hero-title span': { background: 'linear-gradient(135deg,#D2691E,#DAA520)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
+      '.eo-hero-sub': { fontSize: 'clamp(.95rem,2vw,1.25rem)', color: 'rgba(250,248,245,.68)', maxWidth: '600px', margin: '0 auto 2.5rem', lineHeight: '1.75', fontWeight: '300' },
+      '.eo-hero-actions': { display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' },
+      '.eo-btn-p': { background: 'linear-gradient(135deg,#D2691E,#8B4513)', color: '#fff', padding: '1rem 2.5rem', borderRadius: '12px', border: 'none', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block' },
+      '.eo-btn-p:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 25px rgba(210,105,30,.4)' },
+      '.eo-btn-s': { background: 'rgba(250,248,245,.08)', color: '#faf8f5', padding: '1rem 2.5rem', borderRadius: '12px', border: '1px solid rgba(250,248,245,.2)', fontWeight: '500', fontSize: '1rem', cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block' },
+      '.eo-btn-s:hover': { background: 'rgba(250,248,245,.14)' },
+      '.eo-hero-stats': { display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid rgba(250,248,245,.1)', flexWrap: 'wrap' },
+      '.eo-stat-num': { display: 'block', fontFamily: "'Playfair Display', serif", fontSize: '2.5rem', fontWeight: '700', color: '#D2691E' },
+      '.eo-stat-lbl': { fontSize: '.82rem', color: 'rgba(250,248,245,.5)', textTransform: 'uppercase', letterSpacing: '.09em', marginTop: '.25rem' },
+      // Sections
+      '.eo-section': { padding: 'clamp(3rem,8vw,6rem) 2rem', maxWidth: '1200px', margin: '0 auto' },
+      '.eo-dark': { background: '#1a0f08', padding: 'clamp(3rem,8vw,6rem) 2rem' },
+      '.eo-warm': { background: '#f5ede4', padding: 'clamp(3rem,8vw,6rem) 2rem' },
+      '.eo-inner': { maxWidth: '1200px', margin: '0 auto' },
+      '.eo-sec-hd': { textAlign: 'center', marginBottom: '3.5rem' },
+      '.eo-label': { display: 'inline-block', color: '#D2691E', fontWeight: '600', fontSize: '.78rem', letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '.65rem' },
+      '.eo-h2': { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.75rem,4vw,2.75rem)', fontWeight: '700', color: '#2d2017', marginBottom: '.65rem' },
+      '.eo-h2-light': { color: '#faf8f5 !important' },
+      '.eo-sub': { color: '#8b7355', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.65' },
+      '.eo-sub-light': { color: 'rgba(250,248,245,.52) !important' },
+      // Filter bar
+      '.eo-filter-bar': { display: 'flex', gap: '.6rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem' },
+      '.eo-fb': { padding: '.38rem 1rem', borderRadius: '50px', border: '1.5px solid rgba(139,69,19,.2)', background: 'transparent', color: '#8b7355', fontWeight: '500', fontSize: '.85rem', cursor: 'pointer', transition: 'all .2s' },
+      '.eo-fb:hover': { borderColor: '#8B4513', color: '#8B4513' },
+      '.eo-fb.active': { background: '#8B4513', color: '#fff', borderColor: '#8B4513' },
+      // Coffee cards
+      '.eo-grid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5rem' },
+      '.eo-card': { background: '#fff', borderRadius: '16px', border: '1px solid rgba(139,69,19,.08)', overflow: 'hidden', transition: 'all .3s' },
+      '.eo-card:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 40px rgba(139,69,19,.13)' },
+      '.eo-card-img': { height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3.5rem' },
+      '.eo-card-body': { padding: '1.4rem' },
+      '.eo-origin': { fontSize: '.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '.12em', color: '#D2691E', marginBottom: '.3rem' },
+      '.eo-cname': { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', fontWeight: '700', marginBottom: '.4rem', color: '#2d2017', display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' },
+      '.eo-tags': { display: 'flex', gap: '.35rem', flexWrap: 'wrap', marginBottom: '.9rem' },
+      '.eo-tag': { fontSize: '.7rem', padding: '.18rem .55rem', borderRadius: '50px', background: 'rgba(139,69,19,.07)', color: '#8B4513', fontWeight: '500' },
+      '.eo-desc': { color: '#8b7355', fontSize: '.88rem', lineHeight: '1.55', marginBottom: '1rem' },
+      '.eo-foot': { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+      '.eo-price': { fontFamily: "'Playfair Display', serif", fontSize: '1.35rem', fontWeight: '700', color: '#8B4513' },
+      '.eo-add': { background: 'linear-gradient(135deg,#8B4513,#A0522D)', color: '#fff', border: 'none', borderRadius: '8px', padding: '.45rem 1.15rem', fontWeight: '600', fontSize: '.83rem', cursor: 'pointer', transition: 'all .2s' },
+      '.eo-add:hover': { transform: 'scale(1.04)', boxShadow: '0 4px 12px rgba(139,69,19,.3)' },
+      '.eo-noresult': { textAlign: 'center', color: '#8b7355', padding: '3rem 0', fontSize: '1rem', gridColumn: '1/-1' },
+      // Steps
+      '.eo-steps': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '2rem' },
+      '.eo-step': { textAlign: 'center', padding: '1.5rem 1rem' },
+      '.eo-step-n': { width: '56px', height: '56px', background: 'linear-gradient(135deg,#8B4513,#D2691E)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: '#fff', fontFamily: "'Playfair Display', serif", fontWeight: '700', margin: '0 auto 1rem' },
+      '.eo-step-t': { fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: '700', marginBottom: '.4rem', color: '#2d2017' },
+      '.eo-step-d': { color: '#8b7355', fontSize: '.88rem', lineHeight: '1.55' },
+      // Team
+      '.eo-team': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' },
+      '.eo-tcard': { background: '#fff', borderRadius: '16px', padding: '2rem 1.5rem', textAlign: 'center', border: '1px solid rgba(139,69,19,.08)' },
+      '.eo-tav': { width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff', fontWeight: '700', margin: '0 auto 1rem' },
+      '.eo-tname': { fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: '700', marginBottom: '.25rem', color: '#2d2017' },
+      '.eo-trole': { color: '#D2691E', fontSize: '.82rem', fontWeight: '600', marginBottom: '.5rem' },
+      '.eo-tbio':  { color: '#8b7355', fontSize: '.85rem', lineHeight: '1.55' },
+      // Testimonials
+      '.eo-testgrid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5rem' },
+      '.eo-test': { background: 'rgba(250,248,245,.06)', border: '1px solid rgba(250,248,245,.09)', borderRadius: '16px', padding: '2rem' },
+      '.eo-test-stars': { color: '#DAA520', fontSize: '1.1rem', marginBottom: '1rem' },
+      '.eo-test-text': { color: 'rgba(250,248,245,.8)', fontSize: '.98rem', lineHeight: '1.7', fontStyle: 'italic', marginBottom: '1.5rem' },
+      '.eo-test-auth': { display: 'flex', alignItems: 'center', gap: '.7rem' },
+      '.eo-test-av': { width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: '#fff', fontWeight: '600' },
+      '.eo-test-name': { color: '#faf8f5', fontWeight: '600', fontSize: '.88rem' },
+      '.eo-test-loc':  { color: 'rgba(250,248,245,.42)', fontSize: '.78rem' },
+      // Stats + charts
+      '.eo-stat-row': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1.5rem', marginBottom: '2.5rem' },
+      '.eo-chart-row': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(350px,1fr))', gap: '2rem' },
+      '.eo-box': { background: '#fff', borderRadius: '16px', padding: '2rem', border: '1px solid rgba(139,69,19,.08)' },
+      '.eo-box-title': { fontFamily: "'Playfair Display', serif", fontSize: '1.05rem', fontWeight: '700', marginBottom: '1.25rem', color: '#2d2017' },
+      // Contact
+      '.eo-cgrid': { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' },
+      '.eo-cinfo h3': { fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: '#2d2017' },
+      '.eo-cinfo p': { color: '#8b7355', lineHeight: '1.7', marginBottom: '1.5rem' },
+      '.eo-crow': { display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem', color: '#6b5443' },
+      '.eo-cicon': { width: '40px', height: '40px', flexShrink: '0', background: 'rgba(139,69,19,.08)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' },
+      // Cart panel
+      '.eo-cart-panel': { position: 'fixed', top: '0', right: '0', bottom: '0', zIndex: '2000', width: '360px', background: '#faf8f5', boxShadow: '-4px 0 30px rgba(0,0,0,.12)', transform: 'translateX(100%)', transition: 'transform .35s cubic-bezier(.4,0,.2,1)', display: 'flex', flexDirection: 'column' },
+      '.eo-cart-panel.open': { transform: 'translateX(0)' },
+      '.eo-cart-hdr': { padding: '1.5rem', borderBottom: '1px solid rgba(139,69,19,.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+      '.eo-cart-hdr h3': { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', fontWeight: '700', color: '#2d2017', margin: '0' },
+      '.eo-cart-x': { background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#8b7355', lineHeight: '1' },
+      '.eo-cart-body': { flex: '1', overflowY: 'auto', padding: '1.5rem' },
+      '.eo-cart-row': { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '.75rem 0', borderBottom: '1px solid rgba(139,69,19,.07)' },
+      '.eo-cart-rname': { fontWeight: '600', fontSize: '.9rem', color: '#2d2017' },
+      '.eo-cart-rprice': { color: '#8B4513', fontWeight: '700', fontSize: '.9rem' },
+      '.eo-cart-rm': { background: 'none', border: 'none', color: '#c0a898', cursor: 'pointer', fontSize: '1.1rem', marginLeft: '.5rem' },
+      '.eo-cart-ftr': { padding: '1.5rem', borderTop: '1px solid rgba(139,69,19,.1)' },
+      '.eo-cart-total': { display: 'flex', justifyContent: 'space-between', fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#2d2017' },
+      '.eo-checkout': { width: '100%', padding: '1rem', background: 'linear-gradient(135deg,#8B4513,#D2691E)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all .2s' },
+      '.eo-checkout:hover': { transform: 'translateY(-1px)' },
+      '.eo-cart-empty': { textAlign: 'center', padding: '3rem 0', color: '#8b7355', fontSize: '.95rem' },
+      '.eo-bdrop': { position: 'fixed', inset: '0', background: 'rgba(0,0,0,.4)', zIndex: '1999', opacity: '0', pointerEvents: 'none', transition: 'opacity .3s' },
+      '.eo-bdrop.open': { opacity: '1', pointerEvents: 'all' },
+      // Newsletter
+      '.eo-nl-row': { display: 'flex', gap: '.75rem', maxWidth: '450px', margin: '0 auto' },
+      '.eo-nl-in': { flex: '1', padding: '.85rem 1.25rem', borderRadius: '10px', border: '1px solid rgba(250,248,245,.15)', background: 'rgba(250,248,245,.07)', color: '#faf8f5', fontSize: '.94rem', outline: 'none' },
+      '.eo-nl-in::placeholder': { color: 'rgba(250,248,245,.4)' },
+      '.eo-nl-btn': { padding: '.85rem 1.75rem', borderRadius: '10px', background: 'linear-gradient(135deg,#D2691E,#8B4513)', color: '#fff', border: 'none', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '.94rem', transition: 'all .2s' },
+      '.eo-nl-btn:hover': { transform: 'translateY(-1px)' },
+      // Demo
+      '.eo-demo-grid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '2rem' },
+      '.eo-demo-ttl': { fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: '700', marginBottom: '1.25rem', color: '#2d2017', borderBottom: '2px solid rgba(139,69,19,.1)', paddingBottom: '.5rem' },
+      '.eo-ctr-disp': { fontFamily: "'Playfair Display', serif", fontSize: '3rem', fontWeight: '700', color: '#8B4513', minWidth: '80px', textAlign: 'center', lineHeight: '1', padding: '.5rem 1.25rem', background: 'rgba(139,69,19,.05)', borderRadius: '12px' },
+      '.eo-ctr-lbl': { fontSize: '.78rem', color: '#8b7355', textTransform: 'uppercase', letterSpacing: '.08em' },
+      '.eo-ctr-btns': { display: 'flex', gap: '.65rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
+      // Toast
+      '.eo-toasts': { position: 'fixed', top: '5rem', right: '1.5rem', zIndex: '3000', display: 'flex', flexDirection: 'column', gap: '.6rem' },
+      '.eo-toast': { background: '#fff', borderRadius: '12px', padding: '1rem 1.4rem', boxShadow: '0 8px 30px rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', gap: '.7rem', minWidth: '280px', border: '1px solid rgba(139,69,19,.08)', animation: 'eoToastIn .3s ease-out' },
+      '.eo-toast.success': { borderLeft: '4px solid #2F4F2F' },
+      '.eo-toast.info':    { borderLeft: '4px solid #4682B4' },
+      '.eo-toast.warning': { borderLeft: '4px solid #D2691E' },
+      '.eo-toast-t': { fontWeight: '700', fontSize: '.88rem', color: '#2d2017', marginBottom: '.1rem' },
+      '.eo-toast-m': { fontSize: '.82rem', color: '#8b7355' },
+      // Footer
+      '.eo-footer': { background: '#1a0f08', color: 'rgba(250,248,245,.55)', padding: '4rem 2rem 2rem' },
+      '.eo-footer-inner': { maxWidth: '1200px', margin: '0 auto' },
+      '.eo-footer-grid': { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '2rem', marginBottom: '3rem' },
+      '.eo-footer-brand': { fontFamily: "'Playfair Display', serif", fontSize: '1.45rem', fontWeight: '700', color: '#faf8f5', marginBottom: '.65rem' },
+      '.eo-footer-desc': { fontSize: '.88rem', lineHeight: '1.65', marginBottom: '1rem' },
+      '.eo-footer-hd': { fontWeight: '600', fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.12em', color: '#faf8f5', marginBottom: '.9rem' },
+      '.eo-footer-links': { listStyle: 'none', padding: '0', margin: '0' },
+      '.eo-footer-links li': { marginBottom: '.45rem' },
+      '.eo-footer-links a': { color: 'rgba(250,248,245,.48)', textDecoration: 'none', fontSize: '.88rem', transition: 'color .2s' },
+      '.eo-footer-links a:hover': { color: '#D2691E' },
+      '.eo-footer-btm': { borderTop: '1px solid rgba(250,248,245,.08)', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.82rem' },
+      '.eo-social': { display: 'flex', gap: '.75rem' },
+      '.eo-social a': { width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(250,248,245,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(250,248,245,.48)', textDecoration: 'none', fontSize: '1rem', transition: 'all .2s' },
+      '.eo-social a:hover': { background: 'rgba(210,105,30,.2)', color: '#D2691E' },
+      '.eo-scroll-top': { position: 'fixed', bottom: '2rem', right: '2rem', zIndex: '1000', width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg,#8B4513,#D2691E)', color: '#fff', border: 'none', fontSize: '1.2rem', cursor: 'pointer', boxShadow: '0 4px 14px rgba(139,69,19,.3)', transition: 'all .3s', opacity: '0', pointerEvents: 'none' },
+      '.eo-scroll-top.visible': { opacity: '1', pointerEvents: 'all' },
+      '.eo-scroll-top:hover': { transform: 'scale(1.1)' },
+      '@keyframes eoToastIn': { from: { transform: 'translateX(100%)', opacity: '0' }, to: { transform: 'translateX(0)', opacity: '1' } },
+      '@media (max-width:768px)': { '.eo-nav-links': { display: 'none' }, '.eo-cgrid': { gridTemplateColumns: '1fr' }, '.eo-footer-grid': { gridTemplateColumns: '1fr 1fr' }, '.eo-chart-row': { gridTemplateColumns: '1fr' }, '.eo-cart-panel': { width: '100vw' } }
+    }), { id: 'eo-styles' });
+
+    // ─── Data ─────────────────────────────────────────────────────────────────
+    var COFFEES = [
+      { id: 1, name: 'Ethiopian Yirgacheffe', origin: 'Ethiopia', region: 'Africa', price: 18.50, emoji: '☕', bg: 'linear-gradient(135deg,#8B6914,#DAA520)', tags: ['Floral','Citrus','Honey'], desc: 'Bright and floral with jasmine, lemon zest, and wild honey. A light roast that dances on the palate.', roast: 'Light', sca: 92 },
+      { id: 2, name: 'Colombian Supremo',     origin: 'Colombia', region: 'Americas', price: 16.00, emoji: '🫘', bg: 'linear-gradient(135deg,#8B4513,#CD853F)', tags: ['Caramel','Apple','Chocolate'], desc: 'Rich and balanced with caramel sweetness, red apple brightness, and a silky chocolate finish.', roast: 'Medium', sca: 88 },
+      { id: 3, name: 'Sumatra Mandheling',    origin: 'Indonesia', region: 'Asia', price: 19.00, emoji: '🌿', bg: 'linear-gradient(135deg,#2F4F2F,#556B2F)', tags: ['Earthy','Cedar','Chocolate'], desc: 'Deep and earthy with cedar, dark chocolate, and a lingering tobacco-like sweetness.', roast: 'Dark', sca: 87 },
+      { id: 4, name: 'Kenya AA',              origin: 'Kenya', region: 'Africa', price: 21.00, emoji: '🔥', bg: 'linear-gradient(135deg,#8B0000,#CD5C5C)', tags: ['Blackcurrant','Citrus','Bold'], desc: 'Complex and vibrant with blackcurrant, grapefruit, and brown sugar. Our boldest origin.', roast: 'Medium', sca: 91 },
+      { id: 5, name: 'Guatemala Antigua',     origin: 'Guatemala', region: 'Americas', price: 17.50, emoji: '🏔️', bg: 'linear-gradient(135deg,#4682B4,#5F9EA0)', tags: ['Chocolate','Almond','Spice'], desc: 'Velvety smooth with milk chocolate, toasted almond, and subtle warming spice notes.', roast: 'Dark', sca: 89 },
+      { id: 6, name: 'Costa Rica Tarrazú',    origin: 'Costa Rica', region: 'Americas', price: 20.00, emoji: '🌅', bg: 'linear-gradient(135deg,#D2691E,#F4A460)', tags: ['Peach','Vanilla','Maple'], desc: 'Bright acidity meets rich body — peach, vanilla, and maple syrup in perfect harmony.', roast: 'Light', sca: 90 },
+      { id: 7, name: 'Yemen Mokha',           origin: 'Yemen', region: 'Asia', price: 24.00, emoji: '🕌', bg: 'linear-gradient(135deg,#704214,#C87941)', tags: ['Wine','Blueberry','Spice'], desc: 'Rare and historic. Wild-fermented notes of dried fruit, cardamom, and dark wine.', roast: 'Medium', sca: 93 },
+      { id: 8, name: 'Brazil Cerrado',        origin: 'Brazil', region: 'Americas', price: 14.50, emoji: '⚡', bg: 'linear-gradient(135deg,#556B2F,#8FBC8F)', tags: ['Nutty','Brown Sugar','Smooth'], desc: 'The everyday hero. Clean and sweet with a nutty profile perfect for espresso or drip.', roast: 'Dark', sca: 85 }
+    ];
+    var FILTERS = ['All', 'Africa', 'Americas', 'Asia', 'Light', 'Medium', 'Dark'];
+
+    // ─── Toast ────────────────────────────────────────────────────────────────
+    function toast(title, msg, type) {
+      var wrap = document.getElementById('eo-toasts');
+      if (!wrap) { wrap = document.createElement('div'); wrap.id = 'eo-toasts'; wrap.className = 'eo-toasts'; document.body.appendChild(wrap); }
+      var el = document.createElement('div');
+      el.className = 'eo-toast ' + (type || 'info');
+      el.innerHTML = '<span style="font-size:1.3rem">' + (type === 'success' ? '✓' : type === 'warning' ? '⚠' : 'ℹ') + '</span><div><div class="eo-toast-t">' + bw.escapeHTML(title) + '</div><div class="eo-toast-m">' + bw.escapeHTML(msg) + '</div></div>';
+      wrap.appendChild(el);
+      setTimeout(function() { el.style.transition = 'all .3s'; el.style.opacity = '0'; el.style.transform = 'translateX(110%)'; setTimeout(function() { el.remove(); }, 320); }, 3500);
+    }
+
+    // ─── Cart (global state + direct DOM) ────────────────────────────────────
+    var cartItems = [];
+
+    function cartOpen()  {
+      var p = document.getElementById('eo-cart'), b = document.getElementById('eo-bdrop');
+      if (p) p.classList.add('open');
+      if (b) b.classList.add('open');
+    }
+    function cartClose() {
+      var p = document.getElementById('eo-cart'), b = document.getElementById('eo-bdrop');
+      if (p) p.classList.remove('open');
+      if (b) b.classList.remove('open');
+    }
+    // Expose globally so onclick attributes always have access
+    window._eoCartOpen  = cartOpen;
+    window._eoCartClose = cartClose;
+
+    function cartRender() {
+      var body = document.getElementById('eo-cart-body');
+      var ftr  = document.getElementById('eo-cart-ftr');
+      if (!body) return;
+      if (cartItems.length === 0) {
+        bw.DOM(body, { t: 'div', a: { class: 'eo-cart-empty' }, c: [
+          { t: 'div', a: { style: 'font-size:3rem;margin-bottom:.75rem' }, c: '☕' },
+          { t: 'p', c: 'Your cart is empty.' },
+          { t: 'p', a: { style: 'font-size:.82rem;color:#c0a898;margin-top:.25rem' }, c: 'Add a coffee to get started.' }
+        ]});
+        if (ftr) bw.DOM(ftr, { t: 'div' });
+      } else {
+        bw.DOM(body, { t: 'div', c: cartItems.map(function(item, i) {
+          return { t: 'div', a: { class: 'eo-cart-row' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'eo-cart-rname' }, c: item.name },
+              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355' }, c: item.origin }
+            ]},
+            { t: 'div', a: { style: 'display:flex;align-items:center;gap:.35rem' }, c: [
+              { t: 'span', a: { class: 'eo-cart-rprice' }, c: '$' + item.price.toFixed(2) },
+              { t: 'button', a: { class: 'eo-cart-rm', 'aria-label': 'Remove' }, c: '×',
+                o: { mounted: function(btn) { var idx = i; btn.addEventListener('click', function() { cartRemove(idx); }); } }
+              }
+            ]}
+          ]};
+        })});
+        var total = cartItems.reduce(function(s, c) { return s + c.price; }, 0);
+        if (ftr) {
+          bw.DOM(ftr, { t: 'div', c: [
+            { t: 'div', a: { class: 'eo-cart-total' }, c: [
+              { t: 'span', c: 'Total' },
+              { t: 'span', c: '$' + total.toFixed(2) }
+            ]},
+            { t: 'button', a: { class: 'eo-checkout', 'data-testid': 'button-checkout' }, c: 'Proceed to Checkout →',
+              o: { mounted: function(el) { el.addEventListener('click', function() { cartClose(); toast('Checkout', 'Redirecting to secure checkout…', 'info'); }); } }
+            }
+          ]});
+        }
+      }
+      // Update navbar badge
+      bw.pub('cart:updated', { count: cartItems.length });
+    }
+
+    function cartAdd(coffee) {
+      cartItems.push(coffee);
+      cartRender();
+      toast('Added to Cart', coffee.name + ' — $' + coffee.price.toFixed(2), 'success');
+    }
+
+    function cartRemove(idx) {
+      cartItems.splice(idx, 1);
+      cartRender();
+    }
+
+    // ─── NAVBAR — bw.component() Level 2 with ${cartCount} binding ───────────
+    var navbar = bw.component({
+      t: 'nav', a: { class: 'eo-nav', id: 'eo-navbar', 'data-testid': 'navbar' },
+      c: [
+        { t: 'a', a: { class: 'eo-brand', href: '#' }, c: [
+          { t: 'div', a: { class: 'eo-brand-icon' }, c: '🔥', o: { raw: true } },
+          { t: 'span', a: { class: 'eo-brand-name' }, c: 'Ember & Oak' }
+        ]},
+        { t: 'ul', a: { class: 'eo-nav-links' }, c: [
+          { t: 'li', c: { t: 'a', a: { href: '#coffees', 'data-testid': 'link-coffees' }, c: 'Coffees' } },
+          { t: 'li', c: { t: 'a', a: { href: '#story' }, c: 'Our Story' } },
+          { t: 'li', c: { t: 'a', a: { href: '#impact' }, c: 'Impact' } },
+          { t: 'li', c: { t: 'a', a: { href: '#contact' }, c: 'Contact' } },
+          { t: 'li', c: { t: 'button', a: { class: 'eo-cart-btn', 'data-testid': 'button-cart', onclick: function() { cartOpen(); } },
+            c: [
+              { t: 'span', c: '🛒 Cart ' },
+              { t: 'span', a: { class: 'eo-cart-badge' }, c: '${cartCount}' }
+            ]
+          }}
+        ]}
+      ],
+      o: {
+        state: { cartCount: 0 },
+        mounted: function() {
+          navbar.sub('cart:updated', function(d) { navbar.set('cartCount', d.count); });
+          window.addEventListener('scroll', function() {
+            var n = document.getElementById('eo-navbar');
+            if (n) { if (window.scrollY > 50) n.classList.add('scrolled'); else n.classList.remove('scrolled'); }
+            var s = document.getElementById('eo-scroll-top');
+            if (s) { if (window.scrollY > 600) s.classList.add('visible'); else s.classList.remove('visible'); }
+          });
+        }
+      }
+    });
+
+    // ─── COFFEE SECTION — Level 1: o.state + o.render ───────────────────────
+    var csFilter = 'All', csSearch = '';
+
+    function renderCoffeeSection(el) {
+      var filtered = COFFEES.filter(function(c) {
+        var mf = csFilter === 'All' || c.region === csFilter || c.roast === csFilter;
+        var ms = !csSearch || c.name.toLowerCase().indexOf(csSearch) >= 0 || c.origin.toLowerCase().indexOf(csSearch) >= 0 || c.tags.join(' ').toLowerCase().indexOf(csSearch) >= 0;
+        return mf && ms;
+      });
+      // Filter bar
+      var fb = el.querySelector('#eo-fb');
+      if (fb) {
+        bw.DOM(fb, { t: 'div', a: { class: 'eo-filter-bar' }, c: FILTERS.map(function(f) {
+          return { t: 'button', a: { class: 'eo-fb' + (csFilter === f ? ' active' : ''), 'data-testid': 'filter-' + f.toLowerCase() }, c: f,
+            o: { mounted: function(btn) { var ff = f; btn.addEventListener('click', function() { csFilter = ff; renderCoffeeSection(el); }); } }
+          };
+        })});
+      }
+      // Grid
+      var grid = el.querySelector('#eo-cgrid');
+      if (!grid) return;
+      if (filtered.length === 0) {
+        bw.DOM(grid, { t: 'div', a: { class: 'eo-noresult' }, c: '☕ No coffees found. Try a different filter.' });
+      } else {
+        bw.DOM(grid, { t: 'div', a: { class: 'eo-grid' }, c: filtered.map(function(c) {
+          return { t: 'div', a: { class: 'eo-card', 'data-testid': 'card-coffee-' + c.id }, c: [
+            { t: 'div', a: { class: 'eo-card-img', style: 'background:' + c.bg }, c: c.emoji },
+            { t: 'div', a: { class: 'eo-card-body' }, c: [
+              { t: 'div', a: { class: 'eo-origin' }, c: c.origin + ' · ' + c.roast },
+              { t: 'div', a: { class: 'eo-cname' }, c: [
+                c.name + ' ',
+                bw.makeTooltip({
+                  content: bw.makeBadge({ text: 'SCA ' + c.sca, variant: c.sca >= 90 ? 'success' : 'primary', pill: true }),
+                  text: 'SCA Cupping Score: ' + c.sca + '/100', placement: 'top'
+                })
+              ]},
+              { t: 'div', a: { class: 'eo-tags' }, c: c.tags.map(function(t) { return { t: 'span', a: { class: 'eo-tag' }, c: t }; }) },
+              { t: 'p', a: { class: 'eo-desc' }, c: c.desc },
+              { t: 'div', a: { class: 'eo-foot' }, c: [
+                { t: 'span', a: { class: 'eo-price' }, c: '$' + c.price.toFixed(2) },
+                { t: 'button', a: { class: 'eo-add', 'data-testid': 'button-add-' + c.id }, c: '+ Add to Cart',
+                  o: { mounted: function(btn) { var coffee = c; btn.addEventListener('click', function() { cartAdd(coffee); }); } }
+                }
+              ]}
+            ]}
+          ]};
+        })});
+      }
+    }
+
+    var coffeeSection = {
+      t: 'section', a: { class: 'eo-section', id: 'coffees', 'data-testid': 'section-coffees' },
+      c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Our Collection' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Single-Origin Coffees' },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'Each bag is a journey to a specific farm, terroir, and harvest moment.' }
+        ]},
+        { t: 'div', a: { style: 'max-width:420px;margin:0 auto 1.5rem' },
+          c: bw.makeSearchInput({
+            placeholder: 'Search coffees…',
+            onInput: function(e) { csSearch = e.target.value.toLowerCase().trim(); var cs = document.getElementById('coffees'); if (cs) renderCoffeeSection(cs); }
+          })
+        },
+        { t: 'div', a: { id: 'eo-fb' } },
+        { t: 'div', a: { id: 'eo-cgrid' } }
+      ],
+      o: { mounted: function(el) { renderCoffeeSection(el); } }
+    };
+
+    // ─── HOW IT WORKS ─────────────────────────────────────────────────────────
+    var howItWorks = {
+      t: 'section', a: { class: 'eo-warm', 'data-testid': 'section-process' },
+      c: { t: 'div', a: { class: 'eo-inner' }, c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'How It Works' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Farm to Cup in 4 Steps' }
+        ]},
+        { t: 'div', a: { class: 'eo-steps' }, c: [
+          { t: 'div', a: { class: 'eo-step' }, c: [ { t: 'div', a: { class: 'eo-step-n' }, c: '1' }, { t: 'div', a: { class: 'eo-step-t' }, c: 'We Source Directly' }, { t: 'p', a: { class: 'eo-step-d' }, c: 'Marcus travels to farms each harvest, cups hundreds of lots, and selects only those that move us.' }] },
+          { t: 'div', a: { class: 'eo-step' }, c: [ { t: 'div', a: { class: 'eo-step-n' }, c: '2' }, { t: 'div', a: { class: 'eo-step-t' }, c: 'Elena Profiles the Roast' }, { t: 'p', a: { class: 'eo-step-d' }, c: 'Each origin gets its own roast curve, developed over dozens of test batches on our Loring 15kg.' }] },
+          { t: 'div', a: { class: 'eo-step' }, c: [ { t: 'div', a: { class: 'eo-step-n' }, c: '3' }, { t: 'div', a: { class: 'eo-step-t' }, c: 'We Roast Your Order' }, { t: 'p', a: { class: 'eo-step-d' }, c: 'Orders placed by 3pm ship within 48 hours. Roasted fresh, never from stock.' }] },
+          { t: 'div', a: { class: 'eo-step' }, c: [ { t: 'div', a: { class: 'eo-step-n' }, c: '4' }, { t: 'div', a: { class: 'eo-step-t' }, c: 'It Arrives at Peak' }, { t: 'p', a: { class: 'eo-step-d' }, c: 'CO₂ off-gassing takes 3–5 days post-roast. Your coffee arrives exactly when it\'s ready.' }] }
+        ]}
+      ]}
+    };
+
+    // ─── OUR STORY — makeTimeline ─────────────────────────────────────────────
+    var ourStory = {
+      t: 'section', a: { class: 'eo-section', id: 'story', 'data-testid': 'section-story' },
+      c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Our Journey' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'From Seed to This Moment' },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'Every great coffee company has a story. Here is ours.' }
+        ]},
+        bw.makeTimeline({ items: [
+          { title: '2018 — The First Roast', content: 'Elena bought a 500g sample roaster off Craigslist. Her first Ethiopian Yirgacheffe scored 88. She quit her job the next day.', date: '2018', variant: 'primary' },
+          { title: '2019 — First Real Machine', content: 'Pooled savings to buy a used Loring 15kg. Moved into a 600 sq ft Portland warehouse.', date: '2019', variant: 'success' },
+          { title: '2020 — Direct Trade Begins', content: 'Marcus joined and made our first origin trip to Huila, Colombia. Paying above Fair Trade ever since.', date: '2020', variant: 'info' },
+          { title: '2022 — Tasting Room Opens', content: '427 SE Division St, Portland. Free cuppings every Saturday. Community found us.', date: '2022', variant: 'primary' },
+          { title: '2024 — Carbon Neutral', content: 'We offset 110% of our footprint. 18,500 trees planted across our source regions.', date: '2024', variant: 'success' },
+          { title: '2025 — 50,000 Bags Shipped', content: 'A milestone we never imagined. Still roasting with the same obsession as batch #1.', date: '2025', variant: 'warning' }
+        ]})
+      ]
+    };
+
+    // ─── FEATURES ─────────────────────────────────────────────────────────────
+    var features = {
+      t: 'section', a: { class: 'eo-warm' },
+      c: { t: 'div', a: { class: 'eo-inner' }, c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Why Ember & Oak' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Crafted with Intention' }
+        ]},
+        bw.makeFeatureGrid({ features: [
+          { icon: '🌱', title: 'Direct Trade', description: 'We pay 38% above Fair Trade and visit partner farms every harvest season.' },
+          { icon: '🔥', title: 'Small-Batch Roasted', description: 'Every lot gets its own roast profile on our Loring 15kg.' },
+          { icon: '📦', title: 'Roasted to Order', description: 'We roast and ship within 48 hours of your order. Always fresh.' },
+          { icon: '🧪', title: '84+ SCA Scored', description: 'We cup every lot. Only what moves us makes it to bags.' },
+          { icon: '♻️', title: 'Carbon Neutral', description: 'We offset 110% of our carbon footprint via reforestation projects.' },
+          { icon: '📋', title: 'Full Traceability', description: 'QR code on each bag links to farm, altitude, variety, and roast date.' }
+        ], columns: 3, centered: true })
+      ]}
+    };
+
+    // ─── TEAM ─────────────────────────────────────────────────────────────────
+    var teamSection = {
+      t: 'section', a: { class: 'eo-section', id: 'team', 'data-testid': 'section-team' },
+      c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'The People' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Meet Our Team' }
+        ]},
+        { t: 'div', a: { class: 'eo-team' }, c: [
+          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,#8B4513,#D2691E)' }, c: 'EV' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Elena Vasquez' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Founder & Head Roaster' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Former Q-grader with 15 years of specialty coffee experience. Fell in love with roasting during a trip to Huila, Colombia.' }] },
+          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,#2F4F2F,#556B2F)' }, c: 'MC' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Marcus Chen' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Green Coffee Buyer' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Travels to origin 6 months a year. Building relationships and discovering the world\'s finest lots.' }] },
+          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,#4682B4,#5F9EA0)' }, c: 'AO' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Aisha Okafor' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Head of Operations' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Supply chain wizard. Previously at Blue Bottle and Counter Culture.' }] }
+        ]}
+      ]
+    };
+
+    // ─── TESTIMONIALS ─────────────────────────────────────────────────────────
+    var testimonials = {
+      t: 'section', a: { class: 'eo-dark', 'data-testid': 'section-testimonials' },
+      c: { t: 'div', a: { class: 'eo-inner' }, c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Testimonials' },
+          { t: 'h2', a: { class: 'eo-h2 eo-h2-light' }, c: 'What Our Community Says' }
+        ]},
+        { t: 'div', a: { class: 'eo-testgrid' }, c: [
+          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"I\'ve been a subscriber two years now. Each month feels like unwrapping a gift. The freshness and complexity are unmatched."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,#D2691E,#DAA520)' }, c: 'S' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'Sarah Mitchell' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'Portland, OR' }] }] }] },
+          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"The Ethiopian Yirgacheffe changed how I think about coffee. It\'s not just a drink — it\'s an experience I look forward to every morning."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,#8B4513,#CD853F)' }, c: 'J' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'James Okonkwo' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'Brooklyn, NY' }] }] }] },
+          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"Their direct trade model is real. I visited the farms they source from. The impact on those communities is tangible and beautiful."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,#2F4F2F,#556B2F)' }, c: 'M' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'Mei-Lin Park' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'San Francisco, CA' }] }] }] }
+        ]}
+      ]}
+    };
+
+    // ─── IMPACT — makeStatCard (v2.0.16) ──────────────────────────────────────
+    var impactSection = {
+      t: 'section', a: { class: 'eo-section', id: 'impact', 'data-testid': 'section-impact' },
+      c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Our Impact' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Numbers That Matter' },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'Transparency is a core value. A look at 2025.' }
+        ]},
+        { t: 'div', a: { class: 'eo-stat-row' }, c: [
+          bw.makeStatCard({ value: 142,   label: 'Partner Farmers',     change: 18,   format: 'number' }),
+          bw.makeStatCard({ value: 52340, label: 'Bags Shipped',        change: 24.5, format: 'number' }),
+          bw.makeStatCard({ value: 38,    label: 'Above Fair Trade',    change: 4.2,  format: 'number', suffix: '%' }),
+          bw.makeStatCard({ value: 18500, label: 'Trees Planted',       change: 31,   format: 'number' })
+        ]},
+        { t: 'div', a: { class: 'eo-chart-row' }, c: [
+          { t: 'div', a: { class: 'eo-box' }, c: [
+            { t: 'div', a: { class: 'eo-box-title' }, c: 'Monthly Bags Shipped — 2025' },
+            bw.makeBarChart({ data: [{l:'Jan',v:3200},{l:'Feb',v:3800},{l:'Mar',v:4100},{l:'Apr',v:4500},{l:'May',v:5200},{l:'Jun',v:4900},{l:'Jul',v:5400},{l:'Aug',v:5800},{l:'Sep',v:5100},{l:'Oct',v:4700},{l:'Nov',v:5300},{l:'Dec',v:5500}], labelKey:'l', valueKey:'v', color:'#8B4513', height:'200px', formatValue:function(v){return (v/1000).toFixed(1)+'k';}, showValues:true, showLabels:true })
+          ]},
+          { t: 'div', a: { class: 'eo-box' }, c: [
+            { t: 'div', a: { class: 'eo-box-title' }, c: 'Revenue by Origin ($K)' },
+            bw.makeBarChart({ data: [{l:'Ethiopia',v:89},{l:'Colombia',v:72},{l:'Kenya',v:65},{l:'Indonesia',v:54},{l:'Guatemala',v:48},{l:'Yemen',v:38},{l:'Brazil',v:32}], labelKey:'l', valueKey:'v', color:'#D2691E', height:'200px', formatValue:function(v){return '$'+v+'K';}, showValues:true, showLabels:true })
+          ]}
+        ]},
+        { t: 'div', a: { style: 'margin-top:2.5rem' }, c: [
+          { t: 'div', a: { class: 'eo-box-title', style: 'margin-bottom:1rem' }, c: 'Full Menu & Cupping Scores' },
+          bw.makeTable({ data: COFFEES.map(function(c) { return { Coffee: c.name, Origin: c.origin, Region: c.region, Roast: c.roast, 'Tasting Notes': c.tags.join(', '), 'SCA Score': c.sca, Price: '$' + c.price.toFixed(2) }; }), sortable:true, hover:true, striped:true })
+        ]}
+      ]
+    };
+
+    // ─── FAQ ──────────────────────────────────────────────────────────────────
+    var faqSection = {
+      t: 'section', a: { class: 'eo-warm', 'data-testid': 'section-faq' },
+      c: { t: 'div', a: { style: 'max-width:800px;margin:0 auto;padding:0 1rem' }, c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'FAQ' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Common Questions' }
+        ]},
+        bw.makeAccordion({ multiOpen: false, items: [
+          { title: 'How fresh is your coffee?', content: 'Every bag is roasted to order. We roast Mon–Fri, ships within 48 hrs. The roast date is on every bag. Brew within 4 weeks for peak flavor.' },
+          { title: 'Do you offer subscriptions?', content: 'Yes — weekly, bi-weekly, or monthly. 8oz or 12oz. Specific origin or Roaster\'s Choice. Pause, skip, or cancel any time.' },
+          { title: 'What does "Direct Trade" really mean?', content: 'We visit partner farms every year, pay 38% above Fair Trade minimums on average, share cupping scores with farmers, and give ongoing feedback.' },
+          { title: 'Can I visit your roastery?', content: 'Absolutely. 427 SE Division St, Portland. Thu–Sun 8am–4pm. Free cuppings every Saturday at 10am. No reservation needed.' },
+          { title: 'Do you ship internationally?', content: 'Currently: US, Canada, UK. Adding Australia and the EU in 2026.' },
+          { title: 'What grind should I choose?', content: 'Whole bean + a good burr grinder is always best. We also offer drip, French press, espresso, AeroPress, and cold brew grinds.' }
+        ]})
+      ]}
+    };
+
+    // ─── CONTACT — bw.component() with ${statusMsg} binding ──────────────────
+    var contactComp = bw.component({
+      t: 'div', a: { class: 'eo-box', style: 'padding:2rem' },
+      c: [
+        { t: 'div', a: { id: 'eo-form-status', style: 'padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem;font-weight:500;background:#dcf5e7;color:#1a6335;border:1px solid rgba(26,99,53,.2);display:${statusVisible}' }, c: '${statusMsg}' },
+        bw.makeForm({ children: [
+          bw.makeFormGroup({ label: 'Your Name', id: 'cname', input: bw.makeInput({ id: 'cname', placeholder: 'Elena Vasquez', required: true }) }),
+          bw.makeFormGroup({ label: 'Email Address', id: 'cemail', input: bw.makeInput({ type: 'email', id: 'cemail', placeholder: 'you@example.com', required: true }) }),
+          bw.makeFormGroup({ label: 'Subject', id: 'csubject', input: bw.makeSelect({ id: 'csubject', options: [
+            { value: '', text: 'Choose a topic…' }, { value: 'order', text: 'Order Inquiry' }, { value: 'wholesale', text: 'Wholesale' }, { value: 'visit', text: 'Tasting Room' }, { value: 'other', text: 'Other' }
+          ]}) }),
+          bw.makeFormGroup({ label: 'Message', id: 'cmsg', input: bw.makeTextarea({ id: 'cmsg', placeholder: 'Tell us what\'s on your mind…', rows: 5 }) }),
+          bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw-btn-lg' })
+        ], onsubmit: function(e) {
+          e.preventDefault();
+          contactComp.setState({ statusMsg: '✓ Message sent! We\'ll reply within 24 hours.', statusVisible: 'block' });
+          e.target.reset();
+          toast('Message Sent', 'We\'ll get back to you within 24 hours.', 'success');
+        }})
+      ],
+      o: { state: { statusMsg: '', statusVisible: 'none' } }
+    });
+
+    var contactSection = {
+      t: 'section', a: { class: 'eo-section', id: 'contact', 'data-testid': 'section-contact' },
+      c: { t: 'div', a: { style: 'max-width:1200px;margin:0 auto' }, c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Get In Touch' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: "We'd Love to Hear From You" },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'Questions, wholesale inquiries, or just want to say hi?' }
+        ]},
+        { t: 'div', a: { class: 'eo-cgrid' }, c: [
+          { t: 'div', a: { class: 'eo-cinfo' }, c: [
+            { t: 'h3', c: 'Visit Our Tasting Room' },
+            { t: 'p', c: 'Open Thu–Sun. Free cuppings every Saturday at 10am. No reservation required.' },
+            { t: 'div', a: { class: 'eo-crow' }, c: [ { t: 'div', a: { class: 'eo-cicon' }, c: '📍' }, { t: 'span', c: '427 SE Division St, Portland, OR 97202' }] },
+            { t: 'div', a: { class: 'eo-crow' }, c: [ { t: 'div', a: { class: 'eo-cicon' }, c: '📞' }, { t: 'span', c: '(503) 555-0142' }] },
+            { t: 'div', a: { class: 'eo-crow' }, c: [ { t: 'div', a: { class: 'eo-cicon' }, c: '✉️' }, { t: 'span', c: 'hello@emberandoak.coffee' }] },
+            { t: 'div', a: { class: 'eo-crow' }, c: [ { t: 'div', a: { class: 'eo-cicon' }, c: '🕐' }, { t: 'span', c: 'Thu–Sun: 8:00 AM – 4:00 PM' }] },
+            { t: 'div', a: { style: 'margin-top:1.5rem' }, c: bw.makeAlert({ content: "We'd love to be on your menu. Email wholesale@emberandoak.coffee or choose Wholesale in the form.", variant: 'info', dismissible: true }) }
+          ]},
+          contactComp
+        ]}
+      ]}
+    };
+
+    // ─── NEWSLETTER — Level 1 TACO with direct DOM handler ───────────────────
+    // Using reliable direct DOM updates instead of bw.component() template binding
+    // (bw.component() is still used for navbar, contactComp, and counter demos)
+    var newsletter = {
+      t: 'section', a: { class: 'eo-dark', style: 'text-align:center', 'data-testid': 'section-newsletter' },
+      c: { t: 'div', a: { style: 'max-width:600px;margin:0 auto' }, c: [
+        { t: 'div', a: { style: 'font-size:2.5rem;margin-bottom:1rem' }, c: '☕' },
+        { t: 'h2', a: { style: "font-family:'Playfair Display',serif;font-size:2rem;color:#faf8f5;margin-bottom:.75rem" }, c: 'Join the Ember & Oak Family' },
+        { t: 'p', a: { style: 'color:rgba(250,248,245,.55);margin-bottom:2rem;line-height:1.65' }, c: 'First access to new arrivals, brewing tips, and 10% off your first order.' },
+        { t: 'div', a: { class: 'eo-nl-row' }, c: [
+          { t: 'input', a: { type: 'email', id: 'nl-email', class: 'eo-nl-in', placeholder: 'your@email.com', 'data-testid': 'input-newsletter' } },
+          { t: 'button', a: { class: 'eo-nl-btn', 'data-testid': 'button-subscribe' }, c: 'Subscribe',
+            o: { mounted: function(el) {
+              el.addEventListener('click', function() {
+                var inp = document.getElementById('nl-email');
+                if (!inp || !inp.value || inp.value.indexOf('@') < 0) {
+                  toast('Oops', 'Please enter a valid email address.', 'warning');
+                  return;
+                }
+                el.textContent = '✓ Subscribed!';
+                el.disabled = true;
+                toast('Welcome aboard!', 'Check your inbox for your 10% off code.', 'success');
+                inp.value = '';
+              });
+            }}
+          }
+        ]},
+        { t: 'p', a: { style: 'color:rgba(250,248,245,.3);font-size:.78rem;margin-top:1rem' }, c: 'No spam. Unsubscribe any time.' }
+      ]}
+    };
+
+    // ─── BITWRENCH SHOWCASE ───────────────────────────────────────────────────
+    // Live counter — bw.component() Level 2 with ${count} + methods
+    var counter = bw.component({
+      t: 'div', a: { style: 'display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1rem 0' },
+      c: [
+        { t: 'div', a: { class: 'eo-ctr-lbl' }, c: 'Counter Value' },
+        { t: 'div', a: { class: 'eo-ctr-disp' }, c: '${count}' },
+        { t: 'div', a: { class: 'eo-ctr-btns' }, c: [
+          bw.makeButton({ text: '−5', variant: 'outline-secondary', size: 'sm', onclick: function() { counter.decrement(5); } }),
+          bw.makeButton({ text: '−1', variant: 'secondary', size: 'sm', onclick: function() { counter.decrement(1); } }),
+          bw.makeButton({ text: 'Reset', variant: 'warning', size: 'sm', onclick: function() { counter.reset(); } }),
+          bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counter.increment(1); } }),
+          bw.makeButton({ text: '+5', variant: 'outline-primary', size: 'sm', onclick: function() { counter.increment(5); } })
+        ]},
+        { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'Template binding ${count} — updates automatically via bw.component()', o: { raw: false } }
+      ],
+      o: {
+        state: { count: 0 },
+        methods: {
+          increment: function(c, n) { c.set('count', c.get('count') + n); },
+          decrement: function(c, n) { c.set('count', Math.max(0, c.get('count') - n)); },
+          reset:     function(c) { c.set('count', 0); }
+        }
+      }
+    });
+
+    // Roast progress demo — bw.component() with setState batching
+    var progressComp = bw.component({
+      t: 'div', c: [
+        { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:#2d2017' }, c: 'Roast Stage: ${roastLabel}' },
+        { t: 'div', a: { id: 'prog-wrap' } },
+        { t: 'div', a: { style: 'display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap' }, c: [
+          bw.makeButton({ text: 'Drying Phase', variant: 'outline-primary', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'Drying Phase (0–150°C)', progress: 25 }); } }),
+          bw.makeButton({ text: 'Maillard', variant: 'outline-primary', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'Maillard Reaction (150–190°C)', progress: 50 }); } }),
+          bw.makeButton({ text: 'First Crack ⚡', variant: 'warning', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'First Crack (195°C)', progress: 72 }); } }),
+          bw.makeButton({ text: 'Drop ✓', variant: 'success', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'Drop & Cool (205°C)', progress: 100 }); } })
+        ]}
+      ],
+      o: {
+        state: { roastLabel: 'Not started', progress: 0 },
+        render: function() {
+          var p = progressComp.get('progress');
+          var wrap = document.getElementById('prog-wrap');
+          if (wrap) bw.DOM(wrap, bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }));
+        },
+        mounted: function() {
+          var wrap = document.getElementById('prog-wrap');
+          if (wrap) bw.DOM(wrap, bw.makeProgress({ value: 0, max: 100, variant: 'primary', striped: true, animated: true, label: '0%' }));
+        }
+      }
+    });
+
+    var codeExample = [
+      '// bw.component() = Level 2 reactive component',
+      'var counter = bw.component({',
+      "  t: 'div', c: 'Count: ${count}',",
+      '  o: {',
+      '    state: { count: 0 },',
+      '    methods: {',
+      "      inc:   function(c) { c.set('count', c.get('count') + 1); },",
+      "      reset: function(c) { c.set('count', 0); }",
+      '    }',
+      '  }',
+      '});',
+      '',
+      "bw.DOM('#app', counter);",
+      '',
+      '// Batched updates → single re-render:',
+      "counter.setState({ count: 42 });",
+      '',
+      '// Auto-cleaned pub/sub:',
+      "counter.sub('data:updated', handler);",
+      '',
+      '// Message any component by tag:',
+      "counter.userTag('my_counter');",
+      "bw.message('my_counter', 'reset');"
+    ].join('\n');
+
+    var showcase = {
+      t: 'section', a: { class: 'eo-warm', 'data-testid': 'section-showcase' },
+      c: { t: 'div', a: { class: 'eo-inner' }, c: [
+        { t: 'div', a: { class: 'eo-sec-hd' }, c: [
+          { t: 'div', a: { class: 'eo-label' }, c: 'Built with Bitwrench v2.0.16' },
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Reactive State. No Build Step.' },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses bw.component() for reactive state. No React. No Vite. One CDN script.' }
+        ]},
+        { t: 'div', a: { class: 'eo-demo-grid' }, c: [
+          { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Live Counter — bw.component() + methods' }, counter ] },
+          { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Roast Progress — setState() batching' }, progressComp ] },
+          { t: 'div', a: { class: 'eo-box', style: 'grid-column:1/-1' }, c: [
+            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'ComponentHandle Pattern (new in v2.0.16)' },
+            bw.makeCodeDemo({ title: '', description: '', code: codeExample, language: 'javascript' })
+          ]}
+        ]},
+        { t: 'div', a: { style: 'margin-top:2rem' }, c: { t: 'div', a: { class: 'eo-box' }, c: [
+          { t: 'div', a: { class: 'eo-box-title' }, c: 'Bitwrench v2.0.16 APIs Used on This Page' },
+          bw.makeTableFromArray({ headerRow: true, striped: true, hover: true, data: [
+            ['API', 'Level', 'Used For'],
+            ['bw.component()', 'Level 2', 'Navbar cart count, contact status, newsletter button'],
+            ['${template} bindings', 'Level 2', 'Cart count, newsletter btn label, form status visibility'],
+            ['handle.set() / setState()', 'Level 2', 'Auto-batched DOM updates'],
+            ['o.methods', 'Level 2', 'counter.increment(), counter.reset()'],
+            ['handle.sub()', 'Level 2', 'Navbar subscribes to cart:updated, auto-cleans'],
+            ['bw.pub() / bw.sub()', 'Level 1', 'Cart state broadcast to navbar'],
+            ['o.state + o.render (Level 1)', 'Level 1', 'Coffee section filter + search, roast progress'],
+            ['o.mounted lifecycle', 'Level 1', 'Initial renders, scroll listeners'],
+            ['bw.DOM()', 'Core', 'Mounting all sections + sub-tree updates'],
+            ['bw.makeStatCard()', 'BCCL', 'Impact section (new in v2.0.16)'],
+            ['bw.makeTimeline()', 'BCCL', 'Our Story milestones'],
+            ['bw.makeFeatureGrid()', 'BCCL', 'Why Ember & Oak'],
+            ['bw.makeTooltip()', 'BCCL', 'SCA score badges on coffee cards'],
+            ['bw.makeSearchInput()', 'BCCL', 'Coffee search box'],
+            ['bw.makeAccordion()', 'BCCL', 'FAQ section'],
+            ['bw.makeBarChart()', 'BCCL', 'Bags shipped + revenue charts'],
+            ['bw.makeTable()', 'BCCL', 'Coffee menu sortable table'],
+            ['bw.makeTableFromArray()', 'BCCL', 'This feature table'],
+            ['bw.makeAlert()', 'BCCL', 'Wholesale info in contact section'],
+            ['bw.makeCodeDemo()', 'BCCL', 'ComponentHandle code example'],
+            ['bw.makeProgress()', 'BCCL', 'Roast progress demo'],
+            ['bw.makeButton() variants', 'BCCL', 'CTAs, filter buttons, counter controls'],
+            ['bw.makeBadge() + makeTooltip()', 'BCCL', 'SCA score pills + hover info'],
+            ['bw.generateTheme()', 'Theming', 'Global ember theme from 2 seed colors'],
+            ['bw.css() + bw.injectCSS()', 'Styling', 'All custom styles — CSS-in-JS'],
+            ['bw.escapeHTML()', 'Utilities', 'Safe toast message rendering'],
+            ['bw.loadDefaultStyles()', 'Styling', 'Base stylesheet']
+          ]})
+        ]}},
+        { t: 'div', a: { style: 'display:flex;gap:.65rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem' }, c: [
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'Zero Dependencies', variant: 'success', pill: true }), text: 'No npm install for the frontend', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'No Build Step', variant: 'primary', pill: true }), text: 'Works directly in the browser via CDN', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'bw.component() Reactive', variant: 'info', pill: true }), text: '${expr} bindings auto-update the DOM on state changes', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'SSR Ready', variant: 'warning', pill: true }), text: 'bw.html() renders TACO to string in Node.js', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'IE11 Compatible', variant: 'secondary', pill: true }), text: 'Use bitwrench.es5.min.js for legacy browsers', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'MIT License', variant: 'dark', pill: true }), text: 'Free for commercial and personal use', placement: 'top' })
+        ]}
+      ]}
+    };
+
+    // ─── FOOTER ───────────────────────────────────────────────────────────────
+    var footer = {
+      t: 'footer', a: { class: 'eo-footer', 'data-testid': 'footer' },
+      c: { t: 'div', a: { class: 'eo-footer-inner' }, c: [
+        { t: 'div', a: { class: 'eo-footer-grid' }, c: [
+          { t: 'div', c: [ { t: 'div', a: { class: 'eo-footer-brand' }, c: '🔥 Ember & Oak', o: { raw: true } }, { t: 'p', a: { class: 'eo-footer-desc' }, c: 'Small-batch, single-origin coffees roasted with care in Portland, Oregon.' }] },
+          { t: 'div', c: [ { t: 'div', a: { class: 'eo-footer-hd' }, c: 'Shop' }, { t: 'ul', a: { class: 'eo-footer-links' }, c: [ { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'All Coffees' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Subscriptions' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Merchandise' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Gift Cards' }}] }] },
+          { t: 'div', c: [ { t: 'div', a: { class: 'eo-footer-hd' }, c: 'Company' }, { t: 'ul', a: { class: 'eo-footer-links' }, c: [ { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Our Story' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Sustainability' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Wholesale' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Careers' }}] }] },
+          { t: 'div', c: [ { t: 'div', a: { class: 'eo-footer-hd' }, c: 'Support' }, { t: 'ul', a: { class: 'eo-footer-links' }, c: [ { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'FAQ' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Shipping' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Returns' }}, { t: 'li', c: { t: 'a', a: { href: '#' }, c: 'Contact' }}] }] }
+        ]},
+        { t: 'div', a: { class: 'eo-footer-btm' }, c: [
+          { t: 'span', c: '© 2025 Ember & Oak Coffee Co. Built with bitwrench v2.0.16.' },
+          { t: 'div', a: { class: 'eo-social' }, c: [ { t: 'a', a: { href: '#', 'aria-label': 'Instagram' }, c: '📷' }, { t: 'a', a: { href: '#', 'aria-label': 'Twitter' }, c: '🐦' }, { t: 'a', a: { href: '#', 'aria-label': 'YouTube' }, c: '🎬' }] }
+        ]}
+      ]}
+    };
+
+    // ─── HERO ─────────────────────────────────────────────────────────────────
+    var hero = {
+      t: 'section', a: { class: 'eo-hero', 'data-testid': 'section-hero' },
+      c: { t: 'div', a: { class: 'eo-hero-inner' }, c: [
+        { t: 'div', a: { class: 'eo-hero-pill' }, c: '🌱 Sustainably Sourced · Small-Batch Roasted' },
+        { t: 'h1', a: { class: 'eo-hero-title', 'data-testid': 'text-hero-title' }, o: { mounted: function(el) { el.innerHTML = 'Coffee That<br>Tells a <span>Story</span>'; } } },
+        { t: 'p', a: { class: 'eo-hero-sub' }, c: 'From misty Ethiopian highlands to your morning cup — we roast single-origin coffees that honor the farmers and lands that grow them.' },
+        { t: 'div', a: { class: 'eo-hero-actions' }, c: [
+          { t: 'a', a: { class: 'eo-btn-p', href: '#coffees', 'data-testid': 'button-explore' }, c: 'Explore Our Coffees' },
+          { t: 'a', a: { class: 'eo-btn-s', href: '#story', 'data-testid': 'button-story' }, c: 'Our Story →' }
+        ]},
+        { t: 'div', a: { class: 'eo-hero-stats' }, c: [
+          { t: 'div', a: { style: 'text-align:center' }, c: [ { t: 'span', a: { class: 'eo-stat-num' }, c: '12' }, { t: 'span', a: { class: 'eo-stat-lbl' }, c: 'Origin Countries' }] },
+          { t: 'div', a: { style: 'text-align:center' }, c: [ { t: 'span', a: { class: 'eo-stat-num' }, c: '50k+' }, { t: 'span', a: { class: 'eo-stat-lbl' }, c: 'Bags Roasted' }] },
+          { t: 'div', a: { style: 'text-align:center' }, c: [ { t: 'span', a: { class: 'eo-stat-num' }, c: '98%' }, { t: 'span', a: { class: 'eo-stat-lbl' }, c: 'Customer Rating' }] },
+          { t: 'div', a: { style: 'text-align:center' }, c: [ { t: 'span', a: { class: 'eo-stat-num' }, c: '7' }, { t: 'span', a: { class: 'eo-stat-lbl' }, c: 'Years Roasting' }] }
+        ]}
+      ]}
+    };
+
+    // ─── CART DOM ─────────────────────────────────────────────────────────────
+    var cartDOM = {
+      t: 'div', a: { id: 'eo-cart-shell' },
+      c: [
+        { t: 'div', a: { class: 'eo-bdrop', id: 'eo-bdrop' }, o: { mounted: function(el) { el.addEventListener('click', cartClose); } } },
+        { t: 'div', a: { class: 'eo-cart-panel', id: 'eo-cart' }, c: [
+          { t: 'div', a: { class: 'eo-cart-hdr' }, c: [
+            { t: 'h3', c: '🛒 Your Cart' },
+            { t: 'button', a: { class: 'eo-cart-x', 'aria-label': 'Close cart' }, c: '×', o: { mounted: function(el) { el.addEventListener('click', cartClose); } } }
+          ]},
+          { t: 'div', a: { id: 'eo-cart-body', class: 'eo-cart-body' } },
+          { t: 'div', a: { id: 'eo-cart-ftr', class: 'eo-cart-ftr' } }
+        ]}
+      ],
+      o: { mounted: function() { cartRender(); } }
+    };
+
+    // ─── MOUNT ALL ────────────────────────────────────────────────────────────
+    bw.DOM('#app', {
+      t: 'div', a: { id: 'eo-site' },
+      c: [
+        navbar, hero, coffeeSection, howItWorks, features,
+        ourStory, teamSection, testimonials, impactSection,
+        faqSection, contactSection, newsletter, showcase,
+        footer, cartDOM,
+        { t: 'button', a: { class: 'eo-scroll-top', id: 'eo-scroll-top', 'data-testid': 'button-scroll-top', 'aria-label': 'Scroll to top' }, c: '↑',
+          o: { mounted: function(el) { el.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }); } }
+        }
+      ]
+    });
+
+  })();
+  </script>
+</body>
+</html>
