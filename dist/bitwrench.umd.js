@@ -19,7 +19,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-13T17:46:16.642Z'
+    buildDate: '2026-03-13T20:31:10.460Z'
   };
 
   /**
@@ -7002,7 +7002,7 @@
     __monkey_patch_is_nodejs__: {
       _value: 'ignore',
       set: function(x) {
-        this._value = (typeof x === 'boolean') ? x : 'ignore';
+        this._value = _is(x, 'boolean') ? x : 'ignore';
       },
       get: function() {
         return this._value;
@@ -7049,6 +7049,60 @@
     get: function() { return typeof document !== 'undefined' && typeof window !== 'undefined'; },
     configurable: true
   });
+
+  // ── Internal aliases ─────────────────────────────────────────────────────
+  // Short names for frequently-used builtins and internal methods.
+  // Same pattern as v1 (_to = bw.typeOf, etc.).
+  //
+  // Why: Terser can't shorten global property chains (console.warn,
+  // Object.prototype.hasOwnProperty, Array.isArray, document.createElement)
+  // because it can't prove they're side-effect-free. We can, so we alias
+  // them here. Each alias saves bytes in the minified output, and the short
+  // names also reduce visual noise in the hot paths (binding pipeline,
+  // createDOM, etc.).
+  //
+  // Alias       Target                                  Sites
+  // ─────────   ──────────────────────────────────────   ─────
+  // _hop        Object.prototype.hasOwnProperty          15
+  // _isA        Array.isArray                             25
+  // _keys       Object.keys                               7
+  // _to         bw.typeOf (type string)                   26
+  // _is         type check boolean: _is(x,'string')       ~50
+  // _cw         console.warn                               8
+  // _cl         console.log                               11
+  // _ce         console.error                              4
+  // _chp        ComponentHandle.prototype                 28  (defined after constructor)
+  //
+  // Note: document.createElement etc. are NOT aliased because they require
+  // `this === document` and .bind() would add overhead on every call.
+  // Console aliases use thin wrappers (not direct refs) so test monkey-
+  // patching of console.warn/log/error continues to work.
+  //
+  // `typeof x` for UNDECLARED globals (window, document, process, require,
+  // EventSource, navigator, Promise, __filename, import.meta) MUST stay as
+  // raw `typeof` — calling _to(x) when x doesn't exist throws ReferenceError.
+  //
+  // ── v1 functional type helpers (kept for reference, not currently used) ──
+  // _toa(x, type, trueVal, falseVal) — bw.typeAssign:
+  //   returns trueVal if _to(x)===type, else falseVal.
+  //   Replaces: (typeof x === 'string') ? A : B → _toa(x,'string',A,B)
+  // _toc(x, type, trueVal, falseVal) — bw.typeConvert:
+  //   same as _toa but if trueVal/falseVal are functions, calls them with x.
+  //   Replaces: typeof x === 'string' ? fn(x) : default → _toc(x,'string',fn,default)
+  // Uncomment if pattern frequency justifies them:
+  // var _toa = function(x, t, y, n) { return _to(x) === t ? y : n; };
+  // var _toc = function(x, t, y, n) { var r = _to(x)===t; return r ? (_to(y)==='function'?y(x):y) : (_to(n)==='function'?n(x):n); };
+  // ─────────────────────────────────────────────────────────────────────────
+  var _hop  = Object.prototype.hasOwnProperty;
+  var _isA  = Array.isArray;
+  var _keys = Object.keys;
+  var _to   = typeOf;  // imported from bitwrench-utils.js
+  var _is   = function(x, t) { var r = _to(x); return r === t || r.toLowerCase() === t; };
+  // Console aliases use thin wrappers (not direct references) so that test
+  // code can monkey-patch console.warn/log/error and the patches take effect.
+  var _cw   = function() { console.warn.apply(console, arguments); };
+  var _cl   = function() { console.log.apply(console, arguments); };
+  var _ce   = function() { console.error.apply(console, arguments); };
 
   /**
    * Lazy-resolve Node.js `fs` module.
@@ -7197,7 +7251,7 @@
    */
   bw._el = function(id) {
     // Pass-through for DOM elements
-    if (typeof id !== 'string') return id || null;
+    if (!_is(id, 'string')) return id || null;
     if (!id) return null;
     if (!bw._isBrowser) return null;
 
@@ -7293,7 +7347,7 @@
    * // => '&lt;b&gt;Hello&lt;&#x2F;b&gt; &amp; &quot;world&quot;'
    */
   bw.escapeHTML = function(str) {
-    if (typeof str !== 'string') return '';
+    if (!_is(str, 'string')) return '';
     
     const escapeMap = {
       '&': '&amp;',
@@ -7366,7 +7420,7 @@
     }
 
     // Handle arrays of TACOs
-    if (Array.isArray(taco)) {
+    if (_isA(taco)) {
       return taco.map(t => bw.html(t, options)).join('');
     }
 
@@ -7389,15 +7443,15 @@
     if (taco && taco._bwEach && options.state) {
       var eachExpr = taco.expr.replace(/^\$\{|\}$/g, '');
       var arr = bw._evaluatePath(options.state, eachExpr);
-      if (!Array.isArray(arr)) return '';
+      if (!_isA(arr)) return '';
       return arr.map(function(item, idx) { return bw.html(taco.factory(item, idx), options); }).join('');
     }
 
     // Handle primitives and non-TACO objects
-    if (typeof taco !== 'object' || !taco.t) {
+    if (!_is(taco, 'object') || !taco.t) {
       var str = options.raw ? String(taco) : bw.escapeHTML(String(taco));
       // Resolve template bindings if state provided
-      if (options.state && typeof str === 'string' && str.indexOf('${') >= 0) {
+      if (options.state && _is(str, 'string') && str.indexOf('${') >= 0) {
         str = bw._resolveTemplate(str, options.state, !!options.compile);
       }
       return str;
@@ -7419,16 +7473,16 @@
       
       // Serialize event handlers via funcRegister
       if (key.startsWith('on')) {
-        if (typeof value === 'function') {
+        if (_is(value, 'function')) {
           var fnId = bw.funcRegister(value);
           attrStr += ' ' + key + '="' + bw.funcGetDispatchStr(fnId, 'event') + '"';
-        } else if (typeof value === 'string') {
+        } else if (_is(value, 'string')) {
           attrStr += ' ' + key + '="' + bw.escapeHTML(value) + '"';
         }
         continue;
       }
       
-      if (key === 'style' && typeof value === 'object') {
+      if (key === 'style' && _is(value, 'object')) {
         // Convert style object to string
         const styleStr = Object.entries(value)
           .filter(([, v]) => v != null)
@@ -7439,7 +7493,7 @@
         }
       } else if (key === 'class') {
         // Handle class as array or string
-        const classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
+        const classStr = _isA(value) ? value.filter(Boolean).join(' ') : String(value);
         if (classStr) {
           attrStr += ` class="${bw.escapeHTML(classStr)}"`;
         }
@@ -7475,7 +7529,7 @@
     // Process content recursively
     let contentStr = content != null ? bw.html(content, options) : '';
     // Resolve template bindings in content if state provided
-    if (options.state && typeof contentStr === 'string' && contentStr.indexOf('${') >= 0) {
+    if (options.state && _is(contentStr, 'string') && contentStr.indexOf('${') >= 0) {
       contentStr = bw._resolveTemplate(contentStr, options.state, !!options.compile);
     }
 
@@ -7527,7 +7581,7 @@
 
     // Render body content
     var bodyHTML = '';
-    if (typeof body === 'string') {
+    if (_is(body, 'string')) {
       bodyHTML = body;
     } else {
       var htmlOpts = {};
@@ -7587,7 +7641,7 @@
     // Theme CSS
     var themeCSS = '';
     if (theme) {
-      var themeConfig = (typeof theme === 'string')
+      var themeConfig = _is(theme, 'string')
         ? (THEME_PRESETS[theme.toLowerCase()] || null)
         : theme;
       if (themeConfig) {
@@ -7598,7 +7652,7 @@
 
     // Extra <head> elements
     var headHTML = '';
-    if (Array.isArray(headExtra) && headExtra.length > 0) {
+    if (_isA(headExtra) && headExtra.length > 0) {
       headHTML = headExtra.map(function(el) { return bw.html(el); }).join('\n');
     }
 
@@ -7697,7 +7751,7 @@
     }
 
     // Handle text nodes
-    if (typeof taco !== 'object' || !taco.t) {
+    if (!_is(taco, 'object') || !taco.t) {
       return document.createTextNode(String(taco));
     }
 
@@ -7710,16 +7764,16 @@
     for (const [key, value] of Object.entries(attrs)) {
       if (value == null || value === false) continue;
       
-      if (key === 'style' && typeof value === 'object') {
+      if (key === 'style' && _is(value, 'object')) {
         // Apply styles directly
         Object.assign(el.style, value);
       } else if (key === 'class') {
         // Handle class as array or string
-        const classStr = Array.isArray(value) ? value.filter(Boolean).join(' ') : String(value);
+        const classStr = _isA(value) ? value.filter(Boolean).join(' ') : String(value);
         if (classStr) {
           el.className = classStr;
         }
-      } else if (key.startsWith('on') && typeof value === 'function') {
+      } else if (key.startsWith('on') && _is(value, 'function')) {
         // Event handlers
         const eventName = key.slice(2).toLowerCase();
         el.addEventListener(eventName, value);
@@ -7739,7 +7793,7 @@
     // Children with data-bw_id or id attributes get local refs on the parent,
     // so o.render functions can access them without any DOM lookup.
     if (content != null) {
-      if (Array.isArray(content)) {
+      if (_isA(content)) {
         content.forEach(child => {
           if (child != null) {
             // Handle ComponentHandle in content arrays (Level 2 children)
@@ -7759,20 +7813,20 @@
             if (childEl._bw_refs) {
               if (!el._bw_refs) el._bw_refs = {};
               for (var rk in childEl._bw_refs) {
-                if (Object.prototype.hasOwnProperty.call(childEl._bw_refs, rk)) {
+                if (_hop.call(childEl._bw_refs, rk)) {
                   el._bw_refs[rk] = childEl._bw_refs[rk];
                 }
               }
             }
           }
         });
-      } else if (typeof content === 'object' && content.__bw_raw) {
+      } else if (_is(content, 'object') && content.__bw_raw) {
         // Raw HTML content — inject via innerHTML
         el.innerHTML = content.v;
       } else if (content._bwComponent === true) {
         // Single ComponentHandle as content
         content.mount(el);
-      } else if (typeof content === 'object' && content.t) {
+      } else if (_is(content, 'object') && content.t) {
         var childEl = bw.createDOM(content, options);
         el.appendChild(childEl);
         var childBwId = content.a ? (content.a['data-bw_id'] || content.a.id) : null;
@@ -7783,7 +7837,7 @@
         if (childEl._bw_refs) {
           if (!el._bw_refs) el._bw_refs = {};
           for (var rk in childEl._bw_refs) {
-            if (Object.prototype.hasOwnProperty.call(childEl._bw_refs, rk)) {
+            if (_hop.call(childEl._bw_refs, rk)) {
               el._bw_refs[rk] = childEl._bw_refs[rk];
             }
           }
@@ -7816,7 +7870,7 @@
         el._bw_render = opts.render;
 
         if (opts.mounted) {
-          console.warn('bw.createDOM: o.render and o.mounted are mutually exclusive. o.render wins.');
+          _cw('bw.createDOM: o.render and o.mounted are mutually exclusive. o.render wins.');
         }
 
         // Queue initial render (same timing as mounted)
@@ -7889,7 +7943,7 @@
     const targetEl = bw._el(target);
       
     if (!targetEl) {
-      console.error('bw.DOM: Target element not found:', target);
+      _ce('bw.DOM: Target element not found:', target);
       return null;
     }
     
@@ -7929,7 +7983,7 @@
         targetEl.appendChild(taco.element);
       }
       // Handle arrays
-      else if (Array.isArray(taco)) {
+      else if (_isA(taco)) {
         taco.forEach(t => {
           if (t != null) {
             if (t._bwComponent === true) {
@@ -7965,7 +8019,7 @@
   bw.compileProps = function(handle, props = {}) {
     const compiledProps = {};
     
-    Object.keys(props).forEach(key => {
+    _keys(props).forEach(key => {
       // Create getter/setter for each prop
       Object.defineProperty(compiledProps, key, {
         get() {
@@ -8283,17 +8337,17 @@
     if (attr) {
       // Patch an attribute
       el.setAttribute(attr, String(content));
-    } else if (Array.isArray(content)) {
+    } else if (_isA(content)) {
       // Patch with array of children (strings and/or TACOs)
       el.innerHTML = '';
       content.forEach(function(item) {
-        if (typeof item === 'string' || typeof item === 'number') {
+        if (_is(item, 'string') || _is(item, 'number')) {
           el.appendChild(document.createTextNode(String(item)));
         } else if (item && item.t) {
           el.appendChild(bw.createDOM(item));
         }
       });
-    } else if (typeof content === 'object' && content !== null && content.t) {
+    } else if (_is(content, 'object') && content.t) {
       // Patch with a TACO — replace children
       el.innerHTML = '';
       el.appendChild(bw.createDOM(content));
@@ -8324,7 +8378,7 @@
   bw.patchAll = function(patches) {
     var results = {};
     for (var id in patches) {
-      if (Object.prototype.hasOwnProperty.call(patches, id)) {
+      if (_hop.call(patches, id)) {
         results[id] = bw.patch(id, patches[id]);
       }
     }
@@ -8421,7 +8475,7 @@
         snapshot[i].handler(detail);
         called++;
       } catch (err) {
-        console.warn('bw.pub: subscriber error on topic "' + topic + '":', err);
+        _cw('bw.pub: subscriber error on topic "' + topic + '":', err);
       }
     }
     return called;
@@ -8517,8 +8571,8 @@
    * @see bw.funcGetDispatchStr
    */
   bw.funcRegister = function(fn, name) {
-    if (typeof fn !== 'function') return '';
-    var fnID = (typeof name === 'string' && name.length > 0) ? name : ('bw_fn_' + bw._fnIDCounter++);
+    if (!_is(fn, 'function')) return '';
+    var fnID = (_is(name, 'string') && name.length > 0) ? name : ('bw_fn_' + bw._fnIDCounter++);
     bw._fnRegistry[fnID] = fn;
     return fnID;
   };
@@ -8537,7 +8591,7 @@
   bw.funcGetById = function(name, errFn) {
     name = String(name);
     if (name in bw._fnRegistry) return bw._fnRegistry[name];
-    return (typeof errFn === 'function') ? errFn : function() { console.warn('bw.funcGetById: unregistered fn "' + name + '"'); };
+    return _is(errFn, 'function') ? errFn : function() { _cw('bw.funcGetById: unregistered fn "' + name + '"'); };
   };
 
   /**
@@ -8578,7 +8632,7 @@
   bw.funcGetRegistry = function() {
     var copy = {};
     for (var k in bw._fnRegistry) {
-      if (Object.prototype.hasOwnProperty.call(bw._fnRegistry, k)) {
+      if (_hop.call(bw._fnRegistry, k)) {
         copy[k] = bw._fnRegistry[k];
       }
     }
@@ -8649,7 +8703,7 @@
    */
   bw._compiledExprs = {};
   bw._resolveTemplate = function(str, state, compile) {
-    if (typeof str !== 'string' || str.indexOf('${') < 0) return str;
+    if (!_is(str, 'string') || str.indexOf('${') < 0) return str;
     var bindings = bw._parseBindings(str);
     if (bindings.length === 0) return str;
 
@@ -8779,7 +8833,7 @@
     this._state = {};
     if (o.state) {
       for (var k in o.state) {
-        if (Object.prototype.hasOwnProperty.call(o.state, k)) {
+        if (_hop.call(o.state, k)) {
           this._state[k] = o.state[k];
         }
       }
@@ -8788,7 +8842,7 @@
     this._actions = {};
     if (o.actions) {
       for (var k2 in o.actions) {
-        if (Object.prototype.hasOwnProperty.call(o.actions, k2)) {
+        if (_hop.call(o.actions, k2)) {
           this._actions[k2] = o.actions[k2];
         }
       }
@@ -8798,7 +8852,7 @@
     if (o.methods) {
       var self = this;
       for (var k3 in o.methods) {
-        if (Object.prototype.hasOwnProperty.call(o.methods, k3)) {
+        if (_hop.call(o.methods, k3)) {
           this._methods[k3] = o.methods[k3];
           (function(methodName, methodFn) {
             self[methodName] = function() {
@@ -8833,12 +8887,16 @@
     this._refCounter = 0;
   }
 
+  // Short alias for ComponentHandle.prototype (see alias block at top of file).
+  // 28 method definitions × 25 chars = ~700B raw savings in minified output.
+  var _chp = ComponentHandle.prototype;
+
   // ── State Methods ──
 
   /**
    * Get a state value. Dot-path supported: `get('user.name')`
    */
-  ComponentHandle.prototype.get = function(key) {
+  _chp.get = function(key) {
     return bw._evaluatePath(this._state, key);
   };
 
@@ -8848,12 +8906,12 @@
    * @param {*} value - New value
    * @param {Object} [opts] - Options. `{sync: true}` for immediate flush.
    */
-  ComponentHandle.prototype.set = function(key, value, opts) {
+  _chp.set = function(key, value, opts) {
     // Dot-path set
     var parts = key.split('.');
     var obj = this._state;
     for (var i = 0; i < parts.length - 1; i++) {
-      if (obj[parts[i]] == null || typeof obj[parts[i]] !== 'object') {
+      if (!_is(obj[parts[i]], 'object')) {
         obj[parts[i]] = {};
       }
       obj = obj[parts[i]];
@@ -8873,10 +8931,10 @@
   /**
    * Get a shallow clone of the full state.
    */
-  ComponentHandle.prototype.getState = function() {
+  _chp.getState = function() {
     var clone = {};
     for (var k in this._state) {
-      if (Object.prototype.hasOwnProperty.call(this._state, k)) {
+      if (_hop.call(this._state, k)) {
         clone[k] = this._state[k];
       }
     }
@@ -8888,9 +8946,9 @@
    * @param {Object} updates - Key-value pairs to merge
    * @param {Object} [opts] - Options. `{sync: true}` for immediate flush.
    */
-  ComponentHandle.prototype.setState = function(updates, opts) {
+  _chp.setState = function(updates, opts) {
     for (var k in updates) {
-      if (Object.prototype.hasOwnProperty.call(updates, k)) {
+      if (_hop.call(updates, k)) {
         this._state[k] = updates[k];
         this._dirtyKeys[k] = true;
       }
@@ -8907,9 +8965,9 @@
   /**
    * Push a value onto an array in state. Clones the array.
    */
-  ComponentHandle.prototype.push = function(key, val) {
+  _chp.push = function(key, val) {
     var arr = this.get(key);
-    var newArr = Array.isArray(arr) ? arr.slice() : [];
+    var newArr = _isA(arr) ? arr.slice() : [];
     newArr.push(val);
     this.set(key, newArr);
   };
@@ -8917,9 +8975,9 @@
   /**
    * Splice an array in state. Clones the array.
    */
-  ComponentHandle.prototype.splice = function(key, start, deleteCount) {
+  _chp.splice = function(key, start, deleteCount) {
     var arr = this.get(key);
-    var newArr = Array.isArray(arr) ? arr.slice() : [];
+    var newArr = _isA(arr) ? arr.slice() : [];
     var args = [start, deleteCount].concat(Array.prototype.slice.call(arguments, 3));
     Array.prototype.splice.apply(newArr, args);
     this.set(key, newArr);
@@ -8927,7 +8985,7 @@
 
   // ── Scheduling ──
 
-  ComponentHandle.prototype._scheduleDirty = function() {
+  _chp._scheduleDirty = function() {
     if (!this._scheduled) {
       this._scheduled = true;
       bw._dirtyComponents.push(this);
@@ -8942,17 +9000,17 @@
    * Creates binding descriptors with refIds for targeted DOM updates.
    * @private
    */
-  ComponentHandle.prototype._compileBindings = function() {
+  _chp._compileBindings = function() {
     this._bindings = [];
     this._refCounter = 0;
-    var stateKeys = Object.keys(this._state);
+    var stateKeys = _keys(this._state);
     var self = this;
 
     function walkTaco(taco, path) {
-      if (taco == null || typeof taco !== 'object' || !taco.t) return taco;
+      if (!_is(taco, 'object') || !taco.t) return taco;
 
       // Check content for bindings
-      if (typeof taco.c === 'string' && taco.c.indexOf('${') >= 0) {
+      if (_is(taco.c, 'string') && taco.c.indexOf('${') >= 0) {
         var refId = 'bw_ref_' + self._refCounter++;
         var parsed = bw._parseBindings(taco.c);
         var deps = [];
@@ -8974,10 +9032,10 @@
       // Check attributes for bindings
       if (taco.a) {
         for (var attrName in taco.a) {
-          if (!Object.prototype.hasOwnProperty.call(taco.a, attrName)) continue;
+          if (!_hop.call(taco.a, attrName)) continue;
           if (attrName === 'data-bw_ref') continue;
           var attrVal = taco.a[attrName];
-          if (typeof attrVal === 'string' && attrVal.indexOf('${') >= 0) {
+          if (_is(attrVal, 'string') && attrVal.indexOf('${') >= 0) {
             var refId2 = 'bw_ref_' + self._refCounter++;
             var parsed2 = bw._parseBindings(attrVal);
             var deps2 = [];
@@ -9003,10 +9061,10 @@
       }
 
       // Recurse into children
-      if (Array.isArray(taco.c)) {
+      if (_isA(taco.c)) {
         for (var i = 0; i < taco.c.length; i++) {
           // Wrap string children with ${expr} in a span so patches target the span, not the parent
-          if (typeof taco.c[i] === 'string' && taco.c[i].indexOf('${') >= 0) {
+          if (_is(taco.c[i], 'string') && taco.c[i].indexOf('${') >= 0) {
             var mixedRefId = 'bw_ref_' + self._refCounter++;
             var mixedParsed = bw._parseBindings(taco.c[i]);
             var mixedDeps = [];
@@ -9023,7 +9081,7 @@
             // Replace string with a span wrapper so textContent targets the span only
             taco.c[i] = { t: 'span', a: { 'data-bw_ref': mixedRefId, style: 'display:contents' }, c: taco.c[i] };
           }
-          if (taco.c[i] && typeof taco.c[i] === 'object' && taco.c[i].t) {
+          if (_is(taco.c[i], 'object') && taco.c[i].t) {
             walkTaco(taco.c[i], path.concat(i));
           }
           // Handle bw.when/bw.each markers
@@ -9058,7 +9116,7 @@
             taco.c[i]._refId = eachRefId;
           }
         }
-      } else if (taco.c && typeof taco.c === 'object' && taco.c.t) {
+      } else if (_is(taco.c, 'object') && taco.c.t) {
         walkTaco(taco.c, path.concat(0));
       }
 
@@ -9074,7 +9132,7 @@
    * Build ref map from the live DOM after createDOM.
    * @private
    */
-  ComponentHandle.prototype._collectRefs = function() {
+  _chp._collectRefs = function() {
     this._bw_refs = {};
     if (!this.element) return;
     var els = this.element.querySelectorAll('[data-bw_ref]');
@@ -9095,7 +9153,7 @@
    * Creates DOM, compiles bindings, registers actions, and calls lifecycle hooks.
    * @param {Element} parentEl - DOM element to mount into
    */
-  ComponentHandle.prototype.mount = function(parentEl) {
+  _chp.mount = function(parentEl) {
     // willMount hook
     if (this._hooks.willMount) this._hooks.willMount(this);
 
@@ -9117,7 +9175,7 @@
     // Register named actions in function registry
     var self = this;
     for (var actionName in this._actions) {
-      if (Object.prototype.hasOwnProperty.call(this._actions, actionName)) {
+      if (_hop.call(this._actions, actionName)) {
         var registeredName = this._bwId + '_' + actionName;
         (function(aName) {
           bw.funcRegister(function(evt) {
@@ -9175,10 +9233,10 @@
    * Prepare TACO for initial render: resolve when/each markers.
    * @private
    */
-  ComponentHandle.prototype._prepareTaco = function(taco) {
-    if (!taco || typeof taco !== 'object') return;
+  _chp._prepareTaco = function(taco) {
+    if (!_is(taco, 'object')) return;
 
-    if (Array.isArray(taco.c)) {
+    if (_isA(taco.c)) {
       for (var i = taco.c.length - 1; i >= 0; i--) {
         var child = taco.c[i];
         if (child && child._bwWhen) {
@@ -9203,18 +9261,18 @@
           var eachExprStr = child.expr.replace(/^\$\{|\}$/g, '');
           var arr = bw._evaluatePath(this._state, eachExprStr);
           var items = [];
-          if (Array.isArray(arr)) {
+          if (_isA(arr)) {
             for (var j = 0; j < arr.length; j++) {
               items.push(child.factory(arr[j], j));
             }
           }
           taco.c[i] = { t: 'span', a: { 'data-bw_each': child._refId, style: 'display:contents' }, c: items };
         }
-        if (taco.c[i] && typeof taco.c[i] === 'object' && taco.c[i].t) {
+        if (_is(taco.c[i], 'object') && taco.c[i].t) {
           this._prepareTaco(taco.c[i]);
         }
       }
-    } else if (taco.c && typeof taco.c === 'object' && taco.c.t) {
+    } else if (_is(taco.c, 'object') && taco.c.t) {
       this._prepareTaco(taco.c);
     }
   };
@@ -9223,12 +9281,12 @@
    * Wire action name strings (in onclick etc.) to dispatch function calls.
    * @private
    */
-  ComponentHandle.prototype._wireActions = function(taco) {
-    if (!taco || typeof taco !== 'object' || !taco.t) return;
+  _chp._wireActions = function(taco) {
+    if (!_is(taco, 'object') || !taco.t) return;
     if (taco.a) {
       for (var key in taco.a) {
-        if (!Object.prototype.hasOwnProperty.call(taco.a, key)) continue;
-        if (key.startsWith('on') && typeof taco.a[key] === 'string') {
+        if (!_hop.call(taco.a, key)) continue;
+        if (key.startsWith('on') && _is(taco.a[key], 'string')) {
           var actionName = taco.a[key];
           if (actionName in this._actions) {
             var registeredName = this._bwId + '_' + actionName;
@@ -9242,11 +9300,11 @@
         }
       }
     }
-    if (Array.isArray(taco.c)) {
+    if (_isA(taco.c)) {
       for (var i = 0; i < taco.c.length; i++) {
         this._wireActions(taco.c[i]);
       }
-    } else if (taco.c && typeof taco.c === 'object' && taco.c.t) {
+    } else if (_is(taco.c, 'object') && taco.c.t) {
       this._wireActions(taco.c);
     }
   };
@@ -9255,7 +9313,7 @@
    * Deep-clone a TACO tree, preserving _bwWhen/_bwEach markers and their factories.
    * @private
    */
-  ComponentHandle.prototype._deepCloneTaco = function(taco) {
+  _chp._deepCloneTaco = function(taco) {
     if (taco == null) return taco;
     // Preserve _bwWhen / _bwEach markers (contain functions)
     if (taco._bwWhen) {
@@ -9267,18 +9325,18 @@
     if (taco._bwEach) {
       return { _bwEach: true, expr: taco.expr, factory: taco.factory, _refId: taco._refId };
     }
-    if (typeof taco !== 'object' || !taco.t) return taco;
+    if (!_is(taco, 'object') || !taco.t) return taco;
     var result = { t: taco.t };
     if (taco.a) {
       result.a = {};
       for (var k in taco.a) {
-        if (Object.prototype.hasOwnProperty.call(taco.a, k)) result.a[k] = taco.a[k];
+        if (_hop.call(taco.a, k)) result.a[k] = taco.a[k];
       }
     }
     if (taco.c != null) {
-      if (Array.isArray(taco.c)) {
+      if (_isA(taco.c)) {
         result.c = taco.c.map(function(child) { return this._deepCloneTaco(child); }.bind(this));
-      } else if (typeof taco.c === 'object') {
+      } else if (_is(taco.c, 'object')) {
         result.c = this._deepCloneTaco(taco.c);
       } else {
         result.c = taco.c;
@@ -9292,14 +9350,14 @@
    * Create a copy of TACO suitable for createDOM (strips o to prevent double lifecycle).
    * @private
    */
-  ComponentHandle.prototype._tacoForDOM = function(taco) {
-    if (!taco || typeof taco !== 'object' || !taco.t) return taco;
+  _chp._tacoForDOM = function(taco) {
+    if (!_is(taco, 'object') || !taco.t) return taco;
     var result = { t: taco.t };
     if (taco.a) result.a = taco.a;
     if (taco.c != null) {
-      if (Array.isArray(taco.c)) {
+      if (_isA(taco.c)) {
         result.c = taco.c.map(function(child) { return this._tacoForDOM(child); }.bind(this));
-      } else if (typeof taco.c === 'object' && taco.c.t) {
+      } else if (_is(taco.c, 'object') && taco.c.t) {
         result.c = this._tacoForDOM(taco.c);
       } else {
         result.c = taco.c;
@@ -9312,7 +9370,7 @@
   /**
    * Unmount: remove from DOM, deactivate, preserve state for re-mount.
    */
-  ComponentHandle.prototype.unmount = function() {
+  _chp.unmount = function() {
     if (!this.mounted) return;
 
     // unmount hook
@@ -9347,7 +9405,7 @@
   /**
    * Destroy: unmount + clear state + unregister actions.
    */
-  ComponentHandle.prototype.destroy = function() {
+  _chp.destroy = function() {
     // willDestroy hook
     if (this._hooks.willDestroy) {
       this._hooks.willDestroy(this);
@@ -9379,9 +9437,9 @@
    * Flush dirty state: resolve changed bindings and apply to DOM.
    * @private
    */
-  ComponentHandle.prototype._flush = function() {
+  _chp._flush = function() {
     this._scheduled = false;
-    var changedKeys = Object.keys(this._dirtyKeys);
+    var changedKeys = _keys(this._dirtyKeys);
     this._dirtyKeys = {};
     if (changedKeys.length === 0 || !this.mounted) return;
 
@@ -9423,7 +9481,7 @@
    * Returns list of patches to apply.
    * @private
    */
-  ComponentHandle.prototype._resolveBindings = function(changedKeys) {
+  _chp._resolveBindings = function(changedKeys) {
     var patches = [];
     for (var i = 0; i < this._bindings.length; i++) {
       var b = this._bindings[i];
@@ -9459,7 +9517,7 @@
    * Apply patches to DOM.
    * @private
    */
-  ComponentHandle.prototype._applyPatches = function(patches) {
+  _chp._applyPatches = function(patches) {
     for (var i = 0; i < patches.length; i++) {
       var p = patches[i];
       var el = this._bw_refs[p.refId];
@@ -9480,7 +9538,7 @@
    * Resolve all bindings and apply (used for initial render).
    * @private
    */
-  ComponentHandle.prototype._resolveAndApplyAll = function() {
+  _chp._resolveAndApplyAll = function() {
     var patches = [];
     for (var i = 0; i < this._bindings.length; i++) {
       var b = this._bindings[i];
@@ -9503,7 +9561,7 @@
    * Full re-render for structural changes (when/each branch switches).
    * @private
    */
-  ComponentHandle.prototype._render = function() {
+  _chp._render = function() {
     if (!this.element || !this.element.parentNode) return;
     var parent = this.element.parentNode;
     var nextSibling = this.element.nextSibling;
@@ -9543,7 +9601,7 @@
    * @param {string} event - Event name (e.g., 'click')
    * @param {Function} handler - Event handler
    */
-  ComponentHandle.prototype.on = function(event, handler) {
+  _chp.on = function(event, handler) {
     if (this.element) {
       this.element.addEventListener(event, handler);
     }
@@ -9555,7 +9613,7 @@
    * @param {string} event - Event name
    * @param {Function} handler - Handler to remove
    */
-  ComponentHandle.prototype.off = function(event, handler) {
+  _chp.off = function(event, handler) {
     if (this.element) {
       this.element.removeEventListener(event, handler);
     }
@@ -9570,7 +9628,7 @@
    * @param {Function} handler - Handler function
    * @returns {Function} Unsubscribe function
    */
-  ComponentHandle.prototype.sub = function(topic, handler) {
+  _chp.sub = function(topic, handler) {
     var unsub = bw.sub(topic, handler);
     this._subs.push(unsub);
     return unsub;
@@ -9581,10 +9639,10 @@
    * @param {string} name - Action name
    * @param {...*} args - Arguments passed after comp
    */
-  ComponentHandle.prototype.action = function(name) {
+  _chp.action = function(name) {
     var fn = this._actions[name];
     if (!fn) {
-      console.warn('ComponentHandle.action: unknown action "' + name + '"');
+      _cw('ComponentHandle.action: unknown action "' + name + '"');
       return;
     }
     var args = [this].concat(Array.prototype.slice.call(arguments, 1));
@@ -9596,7 +9654,7 @@
    * @param {string} sel - CSS selector
    * @returns {Element|null}
    */
-  ComponentHandle.prototype.select = function(sel) {
+  _chp.select = function(sel) {
     return this.element ? this.element.querySelector(sel) : null;
   };
 
@@ -9605,7 +9663,7 @@
    * @param {string} sel - CSS selector
    * @returns {Element[]}
    */
-  ComponentHandle.prototype.selectAll = function(sel) {
+  _chp.selectAll = function(sel) {
     if (!this.element) return [];
     return Array.prototype.slice.call(this.element.querySelectorAll(sel));
   };
@@ -9616,7 +9674,7 @@
    * @param {string} tag - User-defined identifier (e.g. 'dashboard_prod_east')
    * @returns {ComponentHandle} this (for chaining)
    */
-  ComponentHandle.prototype.userTag = function(tag) {
+  _chp.userTag = function(tag) {
     this._userTag = tag;
     if (this.element) {
       this.element.classList.add(tag);
@@ -9717,8 +9775,8 @@
     }
     if (!el || !el._bwComponentHandle) return false;
     var comp = el._bwComponentHandle;
-    if (typeof comp[action] !== 'function') {
-      console.warn('bw.message: unknown action "' + action + '" on component ' + target);
+    if (!_is(comp[action], 'function')) {
+      _cw('bw.message: unknown action "' + action + '" on component ' + target);
       return false;
     }
     comp[action](data);
@@ -9755,7 +9813,7 @@
     },
     focus: function(selector) {
       var el = bw._el(selector);
-      if (el && typeof el.focus === 'function') el.focus();
+      if (el && _is(el.focus, 'function')) el.focus();
     },
     download: function(filename, content, mimeType) {
       if (typeof document === 'undefined') return;
@@ -9920,12 +9978,12 @@
     } else if (type === 'remove') {
       var toRemove = bw._el(target);
       if (!toRemove) return false;
-      if (typeof bw.cleanup === 'function') bw.cleanup(toRemove);
+      if (_is(bw.cleanup, 'function')) bw.cleanup(toRemove);
       toRemove.remove();
       return true;
 
     } else if (type === 'batch') {
-      if (!Array.isArray(msg.ops)) return false;
+      if (!_isA(msg.ops)) return false;
       var allOk = true;
       msg.ops.forEach(function(op) {
         if (!bw.clientApply(op)) allOk = false;
@@ -9941,26 +9999,26 @@
         bw._clientFunctions[msg.name] = new Function('return ' + msg.body)();
         return true;
       } catch (e) {
-        console.error('[bw] register error:', msg.name, e);
+        _ce('[bw] register error:', msg.name, e);
         return false;
       }
 
     } else if (type === 'call') {
       if (!msg.name) return false;
       var fn = bw._clientFunctions[msg.name] || bw._builtinClientFunctions[msg.name];
-      if (typeof fn !== 'function') return false;
+      if (!_is(fn, 'function')) return false;
       try {
-        var args = Array.isArray(msg.args) ? msg.args : [];
+        var args = _isA(msg.args) ? msg.args : [];
         fn.apply(null, args);
         return true;
       } catch (e) {
-        console.error('[bw] call error:', msg.name, e);
+        _ce('[bw] call error:', msg.name, e);
         return false;
       }
 
     } else if (type === 'exec') {
       if (!bw._allowExec) {
-        console.warn('[bw] exec rejected: allowExec is not enabled');
+        _cw('[bw] exec rejected: allowExec is not enabled');
         return false;
       }
       if (!msg.code) return false;
@@ -9968,7 +10026,7 @@
         new Function(msg.code)();
         return true;
       } catch (e) {
-        console.error('[bw] exec error:', e);
+        _ce('[bw] exec error:', e);
         return false;
       }
     }
@@ -10016,7 +10074,7 @@
 
     function handleMessage(data) {
       try {
-        var msg = typeof data === 'string' ? bw.clientParse(data) : data;
+        var msg = _is(data, 'string') ? bw.clientParse(data) : data;
         if (onMessage) onMessage(msg);
         if (handlers.message) handlers.message(msg);
         bw.clientApply(msg);
@@ -10054,7 +10112,7 @@
       setStatus('connected');
       conn._pollTimer = setInterval(function() {
         fetch(url).then(function(r) { return r.json(); }).then(function(msgs) {
-          if (Array.isArray(msgs)) {
+          if (_isA(msgs)) {
             msgs.forEach(handleMessage);
           } else if (msgs && msgs.type) {
             handleMessage(msgs);
@@ -10136,33 +10194,33 @@
       el = target.element;
       comp = target;
     } else {
-      if (typeof target === 'string') {
+      if (_is(target, 'string')) {
         el = bw.$(target)[0];
       }
       if (!el) {
-        console.warn('bw.inspect: element not found');
+        _cw('bw.inspect: element not found');
         return null;
       }
       comp = el._bwComponentHandle;
     }
     if (!comp) {
-      console.log('bw.inspect: no ComponentHandle on this element');
-      console.log('  Tag:', el.tagName);
-      console.log('  Classes:', el.className);
-      console.log('  _bw_state:', el._bw_state || '(none)');
+      _cl('bw.inspect: no ComponentHandle on this element');
+      _cl('  Tag:', el.tagName);
+      _cl('  Classes:', el.className);
+      _cl('  _bw_state:', el._bw_state || '(none)');
       return null;
     }
     var deps = comp._bindings.reduce(function(s, b) {
       return s.concat(b.deps || []);
     }, []).filter(function(v, i, a) { return a.indexOf(v) === i; });
     console.group('Component: ' + comp._bwId);
-    console.log('State:', comp._state);
-    console.log('Bindings:', comp._bindings.length, '(deps:', deps, ')');
-    console.log('Methods:', Object.keys(comp._methods));
-    console.log('Actions:', Object.keys(comp._actions));
-    console.log('User tag:', comp._userTag || '(none)');
-    console.log('Mounted:', comp.mounted);
-    console.log('Element:', comp.element);
+    _cl('State:', comp._state);
+    _cl('Bindings:', comp._bindings.length, '(deps:', deps, ')');
+    _cl('Methods:', _keys(comp._methods));
+    _cl('Actions:', _keys(comp._actions));
+    _cl('User tag:', comp._userTag || '(none)');
+    _cl('Mounted:', comp.mounted);
+    _cl('Element:', comp.element);
     console.groupEnd();
     return comp;
   };
@@ -10185,8 +10243,8 @@
     // Pre-extract all binding expressions
     var precompiled = [];
     function walkExpressions(node) {
-      if (!node || typeof node !== 'object') return;
-      if (typeof node.c === 'string' && node.c.indexOf('${') >= 0) {
+      if (!_is(node, 'object')) return;
+      if (_is(node.c, 'string') && node.c.indexOf('${') >= 0) {
         var parsed = bw._parseBindings(node.c);
         for (var i = 0; i < parsed.length; i++) {
           try {
@@ -10201,9 +10259,9 @@
       }
       if (node.a) {
         for (var key in node.a) {
-          if (Object.prototype.hasOwnProperty.call(node.a, key)) {
+          if (_hop.call(node.a, key)) {
             var v = node.a[key];
-            if (typeof v === 'string' && v.indexOf('${') >= 0) {
+            if (_is(v, 'string') && v.indexOf('${') >= 0) {
               var parsed2 = bw._parseBindings(v);
               for (var j = 0; j < parsed2.length; j++) {
                 try {
@@ -10219,9 +10277,9 @@
           }
         }
       }
-      if (Array.isArray(node.c)) {
+      if (_isA(node.c)) {
         for (var k = 0; k < node.c.length; k++) walkExpressions(node.c[k]);
-      } else if (node.c && typeof node.c === 'object' && node.c.t) {
+      } else if (_is(node.c, 'object') && node.c.t) {
         walkExpressions(node.c);
       }
     }
@@ -10233,7 +10291,7 @@
       handle._precompiledBindings = precompiled;
       if (initialState) {
         for (var k in initialState) {
-          if (Object.prototype.hasOwnProperty.call(initialState, k)) {
+          if (_hop.call(initialState, k)) {
             handle._state[k] = initialState[k];
           }
         }
@@ -10264,18 +10322,18 @@
   bw.css = function(rules, options = {}) {
     const { minify = false, pretty = !minify } = options;
 
-    if (typeof rules === 'string') return rules;
+    if (_is(rules, 'string')) return rules;
 
     let css = '';
     const indent = pretty ? '  ' : '';
     const newline = pretty ? '\n' : '';
     const space = pretty ? ' ' : '';
 
-    if (Array.isArray(rules)) {
+    if (_isA(rules)) {
       css = rules.map(rule => bw.css(rule, options)).join(newline);
-    } else if (typeof rules === 'object') {
+    } else if (_is(rules, 'object')) {
       Object.entries(rules).forEach(([selector, styles]) => {
-        if (typeof styles === 'object' && !Array.isArray(styles)) {
+        if (_is(styles, 'object')) {
           // Handle @media, @keyframes, @supports — recurse into nested block
           if (selector.charAt(0) === '@') {
             const inner = bw.css(styles, options);
@@ -10324,7 +10382,7 @@
    */
   bw.injectCSS = function(css, options = {}) {
     if (!bw._isBrowser) {
-      console.warn('bw.injectCSS requires a DOM environment');
+      _cw('bw.injectCSS requires a DOM environment');
       return null;
     }
     
@@ -10341,7 +10399,7 @@
     }
     
     // Convert CSS if needed
-    const cssStr = typeof css === 'string' ? css : bw.css(css, options);
+    const cssStr = _is(css, 'string') ? css : bw.css(css, options);
     
     // Set or append CSS
     if (append && styleEl.textContent) {
@@ -10371,7 +10429,7 @@
     var result = {};
     for (var i = 0; i < arguments.length; i++) {
       var arg = arguments[i];
-      if (arg && typeof arg === 'object') Object.assign(result, arg);
+      if (_is(arg, 'object')) Object.assign(result, arg);
     }
     return result;
   };
@@ -10494,7 +10552,7 @@
   bw.responsive = function(selector, breakpoints) {
     var sizes = { sm: '576px', md: '768px', lg: '992px', xl: '1200px' };
     var parts = [];
-    Object.keys(breakpoints).forEach(function(key) {
+    _keys(breakpoints).forEach(function(key) {
       var rules = {};
       if (key === 'base') {
         rules[selector] = breakpoints[key];
@@ -10566,18 +10624,18 @@
       if (!selector) return [];
       
       // Already an array
-      if (Array.isArray(selector)) return selector;
+      if (_isA(selector)) return selector;
       
       // Single element
       if (selector.nodeType) return [selector];
       
       // NodeList or HTMLCollection
-      if (selector.length !== undefined && typeof selector !== 'string') {
+      if (selector.length !== undefined && !_is(selector, 'string')) {
         return Array.from(selector);
       }
       
       // CSS selector string
-      if (typeof selector === 'string') {
+      if (_is(selector, 'string')) {
         return Array.from(document.querySelectorAll(selector));
       }
       
@@ -11081,7 +11139,7 @@
     
     // Auto-detect columns if not provided
     const cols = columns || (data.length > 0 
-      ? Object.keys(data[0]).map(key => ({ key, label: key }))
+      ? _keys(data[0]).map(key => ({ key, label: key }))
       : []);
       
     // Current sort state
@@ -11096,7 +11154,7 @@
         const bVal = b[currentSortColumn];
         
         // Handle different types
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
+        if (_is(aVal, 'number') && _is(bVal, 'number')) {
           return currentSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
         }
         
@@ -11206,7 +11264,7 @@
   bw.makeTableFromArray = function(config) {
     const { data = [], headerRow = true, columns, ...rest } = config;
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!_isA(data) || data.length === 0) {
       return bw.makeTable({ data: [], columns: columns || [], ...rest });
     }
 
@@ -11288,7 +11346,7 @@
       className = ''
     } = config;
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!_isA(data) || data.length === 0) {
       return { t: 'div', a: { class: ('bw_bar_chart_container ' + className).trim() }, c: '' };
     }
 
@@ -11437,7 +11495,7 @@
    */
   bw.render = function(element, position, taco) {
     // Get target element
-    const targetEl = typeof element === 'string' 
+    const targetEl = _is(element, 'string')
       ? document.querySelector(element) 
       : element;
       
@@ -11587,7 +11645,7 @@
       setContent(content) {
         this._taco.c = content;
         if (this.element) {
-          if (typeof content === 'string') {
+          if (_is(content, 'string')) {
             this.element.textContent = content;
           } else {
             // Re-render for complex content

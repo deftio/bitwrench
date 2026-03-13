@@ -19,7 +19,7 @@ Every UI element is `{t, a, c, o}` — Tag, Attributes, Content, Options:
 - `t` — tag name (defaults to `'div'` if omitted)
 - `a` — object of HTML attributes
 - `c` — string, TACO, or array of TACOs (nested arbitrarily deep)
-- `o` — bitwrench-only metadata (lifecycle, state, methods) — never in HTML output
+- `o` — bitwrench-only metadata (lifecycle, state, methods) — used by DOM path, not serialized to HTML
 
 Content is HTML-escaped by default. Use `bw.raw(str)` or `o: { raw: true }` for raw HTML.
 `null`, `undefined`, `false` in content arrays are silently skipped.
@@ -119,7 +119,8 @@ Most UI should be Level 0. Escalate only when needed.
 
 | Function | Description |
 |----------|-------------|
-| `bw.html(taco)` | TACO → HTML string (browser + Node.js) |
+| `bw.html(taco)` | TACO → HTML string (browser + Node.js). Event handler functions are serialized via `funcRegister`. |
+| `bw.htmlPage(opts)` | TACO → complete HTML document. Options: `body`, `title`, `runtime`, `css`, `theme`, `head`, `favicon`, `lang`, `state`. |
 | `bw.createDOM(taco)` | TACO → detached DOM element |
 | `bw.DOM(selector, taco)` | Mount TACO into existing element |
 | `bw.raw(str)` | Mark string as pre-escaped HTML |
@@ -453,19 +454,48 @@ app.listen();
 **Client**: `bw.clientConnect('http://localhost:7902')` — auto-applies all messages.
 **Language-agnostic**: any server that writes SSE works (Python, Go, Rust, C, shell).
 
+## HTML Generation & Static Sites
+
+`bw.html()` serializes event handler functions automatically via `funcRegister`:
+
+```javascript
+bw.html({ t: 'button', a: { onclick: function() { alert('hi'); } }, c: 'Click' })
+// => '<button onclick="bw.funcGetById(\'bw_fn_0\')(event)">Click</button>'
+```
+
+`bw.htmlPage()` generates a complete self-contained HTML document:
+
+```javascript
+var page = bw.htmlPage({
+  title: 'My App',
+  body: [
+    { t: 'h1', c: 'Hello' },
+    bw.makeButton({ text: 'Click', onclick: function() { alert('works!'); } })
+  ],
+  runtime: 'shim',  // 'inline'|'cdn'|'shim'|'none'
+  theme: 'ocean',   // preset name or { primary: '#336699', secondary: '#cc6633' }
+  css: '.custom { color: red; }'
+});
+// page is a complete <!DOCTYPE html> string with working event handlers
+```
+
+**Runtime levels**: `'inline'` = full UMD bundle embedded (~120KB, offline/airgapped), `'cdn'` = jsdelivr script tag, `'shim'` = minimal funcRegistry dispatch (~500B), `'none'` = no bitwrench injection.
+
+The shim (`bw._FUNC_REGISTRY_SHIM`) provides just enough runtime for serialized event handlers to work without loading the full library.
+
 ## CLI
 
 ```bash
 npm install -g bitwrench
 
-bitwrench input.md -o output.html                # basic conversion
-bitwrench input.md -o output.html --theme ocean   # with theme
-bitwrench input.md -o output.html --standalone    # bitwrench inlined (offline)
-bitwrench input.md -o output.html --cdn           # jsdelivr CDN
-bitwrench input.md --theme "#336699,#cc6633"      # custom colors
+bwcli input.md -o output.html                # basic conversion
+bwcli input.md -o output.html --theme ocean   # with theme
+bwcli input.md -o output.html --standalone    # bitwrench inlined (offline)
+bwcli input.md -o output.html --cdn           # jsdelivr CDN
+bwcli input.md --theme "#336699,#cc6633"      # custom colors
 
-bitwrench serve                                   # dev server (port 7902)
-bitwrench serve ./site --port 8080 --open         # serve directory
+bwcli serve                                   # dev server (port 7902)
+bwcli serve ./site --port 8080 --open         # serve directory
 ```
 
 ## Common Patterns
