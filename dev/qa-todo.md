@@ -103,13 +103,13 @@ but the docs don't push it as the primary pattern. Most buttons use the verbose 
 
 ### Critical fixes
 
-* [ ] fix --> `_applyPatches()` binding updates destroy sibling event listeners (CRITICAL)
+* [x] fix --> `_applyPatches()` binding updates destroy sibling event listeners (CRITICAL)
   - `el.textContent = newValue` nukes sibling children + their listeners in mixed content
   - Fix: wrap `${expr}` strings in `{t:'span', a:{'data-bw_ref':refId, style:'display:contents'}}` to isolate
   - Files: `src/bitwrench.js` — `_compileBindings`, `_applyPatches`
   - Tests: 8-10 new (mixed content bindings, listener survival after .set(), nested children)
 
-* [ ] fix --> `o.render` not called on initial mount
+* [x] fix --> `o.render` not called on initial mount
   - `_tacoForDOM()` strips all `o:` from root, including `o.render`
   - Fix: in `mount()`, after `_resolveAndApplyAll()`, check+invoke original `o.render`
   - Files: `src/bitwrench.js` — `mount()`
@@ -117,35 +117,35 @@ but the docs don't push it as the primary pattern. Most buttons use the verbose 
 
 ### Debug and warnings
 
-* [ ] implement --> `bw.debug(enable)` flag + binding debug warnings
+* [x] implement --> `bw.debug` flag + binding debug warnings
   - When true: warn on unknown state keys in `${expr}`, null `_bw_refs[refId]`, undefined expression values
-  - Files: `src/bitwrench.js` — `_compileBindings`, `_applyPatches`, `_resolveBindings`, new `bw.debug()`
-  - Tests: 5-6 new (warnings when debug=true, silent when debug=false)
+  - Files: `src/bitwrench.js` — `_evaluatePath`, `_resolveTemplate`, `_applyPatches`, `set()`
+  - Tests: 5 new (warnings when debug=true, silent when debug=false)
 
-* [ ] implement --> warn when child `o.mounted` is stripped by ComponentHandle
+* [x] implement --> warn when child `o.mounted` is stripped by ComponentHandle
   - `_tacoForDOM()` silently strips child `o:` with `mounted/render/unmount` — correctness issue
   - Fix: emit `console.warn()` always (not gated by debug flag), recommend `a: {onclick: fn}` instead
   - Files: `src/bitwrench.js` — `_tacoForDOM`
-  - Tests: 3-4 new
+  - Tests: 3 new
 
 ### Component ownership
 
-* [ ] implement --> child component ownership + destroy cascade
+* [x] implement --> child component ownership + destroy cascade
   - Nested ComponentHandles mounted independently with no parent tracking
   - Fix: `_children = []` / `_parent = null` in constructor; scan `[data-bw_comp_id]` after mount;
     `destroy()` cascades depth-first
-  - Files: `src/bitwrench.js` — constructor, `mount()`, `destroy()`, `unmount()`
-  - Tests: 5-6 new (parent.destroy() cascades, _children populated, deeply nested cascade)
+  - Files: `src/bitwrench.js` — constructor, `mount()`, `destroy()`
+  - Tests: 5 new (parent.destroy() cascades, _children populated, deeply nested cascade)
 
 ### Factory rebuild (make*() + ComponentHandle bridge)
 
-* [ ] implement --> factory `_factory` stash on BCCL TACOs (for .set() triggering factory rebuild)
+* [x] implement --> factory `_factory` stash on BCCL TACOs (for .set() triggering factory rebuild)
   - Wrapper around BCCL registry (~8 lines), not per-function edits
-  - Files: `src/bitwrench-bccl.js` — BCCL registry wrapper
-* [ ] implement --> factory rebuild in `ComponentHandle._flush()` (~25 lines)
+  - Files: `src/bitwrench-bccl.js` — `make()` function
+* [x] implement --> factory rebuild in `ComponentHandle._flush()` (~25 lines)
   - When `_factory` exists and changed keys overlap factory props, call `bw.make(type, mergedProps)`
   - Files: `src/bitwrench.js` — constructor, `_flush()`
-  - Tests: 6-8 new (factory stashed, rebuild on prop .set(), normal binding for non-props)
+  - Tests: 6 new (factory stashed, rebuild on prop .set(), normal binding for non-props)
 * [ ] discuss --> should `make*()` accept `{ reactive: true }` flag that auto-wraps in `bw.component()`?
 * [ ] discuss --> or provide `bw.reactive(makeCard({...}))` as explicit sugar?
 

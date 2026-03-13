@@ -183,6 +183,13 @@ var _cl   = function() { console.log.apply(console, arguments); };
 var _ce   = function() { console.error.apply(console, arguments); };
 
 /**
+ * Debug flag. When true, emits console.warn for silent binding failures
+ * (missing paths, null refs, auto-created intermediate objects).
+ * @type {boolean}
+ */
+bw.debug = false;
+
+/**
  * Lazy-resolve Node.js `fs` module.
  * Tries require('fs') first (available in CJS/UMD Node.js builds),
  * then falls back to dynamic import('fs') for ESM.
@@ -1761,7 +1768,10 @@ bw._evaluatePath = function(state, path) {
   var parts = path.split('.');
   var val = state;
   for (var i = 0; i < parts.length; i++) {
-    if (val == null) return '';
+    if (val == null) {
+      if (bw.debug) _cw('bw.debug: _evaluatePath — null at key "' + parts[i] + '" in path "' + path + '"');
+      return '';
+    }
     val = val[parts[i]];
   }
   return (val == null) ? '' : val;
@@ -1803,6 +1813,7 @@ bw._resolveTemplate = function(str, state, compile) {
       try {
         val = bw._compiledExprs[b.expr](state);
       } catch (e) {
+        if (bw.debug) _cw('bw.debug: _resolveTemplate — Tier 2 eval failed for "${' + b.expr + '}":', e.message);
         val = '';
       }
     } else {
@@ -1963,6 +1974,11 @@ function ComponentHandle(taco) {
   this._compile = !!o.compile;
   this._bw_refs = {};
   this._refCounter = 0;
+  // Child component ownership (Bug #5)
+  this._children = [];
+  this._parent = null;
+  // Factory metadata for BCCL rebuild (Bug #6)
+  this._factory = taco._bwFactory || null;
 }
 
 // Short alias for ComponentHandle.prototype (see alias block at top of file).
@@ -1990,6 +2006,7 @@ _chp.set = function(key, value, opts) {
   var obj = this._state;
   for (var i = 0; i < parts.length - 1; i++) {
     if (!_is(obj[parts[i]], 'object')) {
+      if (bw.debug) _cw('bw.debug: set() — auto-creating intermediate "' + parts[i] + '" in path "' + key + '"');
       obj[parts[i]] = {};
     }
     obj = obj[parts[i]];
@@ -2292,6 +2309,16 @@ _chp.mount = function(parentEl) {
 
   this.mounted = true;
 
+  // Scan for child ComponentHandles and link parent/child (Bug #5)
+  var childEls = this.element.querySelectorAll('[data-bw_comp_id]');
+  for (var ci = 0; ci < childEls.length; ci++) {
+    var ch = childEls[ci]._bwComponentHandle;
+    if (ch && ch !== this && !ch._parent) {
+      ch._parent = this;
+      this._children.push(ch);
+    }
+  }
+
   // mounted hook (backward compat: fn.length === 2 wraps (el, state))
   if (this._hooks.mounted) {
     if (this._hooks.mounted.length === 2) {
@@ -2442,6 +2469,10 @@ _chp._tacoForDOM = function(taco) {
     }
   }
   // Intentionally strip o (no mounted/unmount/state/render on sub-elements)
+  if (taco.o && (taco.o.mounted || taco.o.render || taco.o.unmount)) {
+    _cw('bw: _tacoForDOM stripped o.mounted/render/unmount from child <' + taco.t +
+      '>. Use onclick attribute or bw.component() for child interactivity.');
+  }
   return result;
 };
 
@@ -2489,6 +2520,17 @@ _chp.destroy = function() {
     this._hooks.willDestroy(this);
   }
 
+  // Cascade destroy to children depth-first (Bug #5)
+  for (var ci = this._children.length - 1; ci >= 0; ci--) {
+    this._children[ci].destroy();
+  }
+  this._children = [];
+  if (this._parent) {
+    var idx = this._parent._children.indexOf(this);
+    if (idx >= 0) this._parent._children.splice(idx, 1);
+    this._parent = null;
+  }
+
   this.unmount();
 
   // Unregister actions from function registry
@@ -2520,6 +2562,30 @@ _chp._flush = function() {
   var changedKeys = _keys(this._dirtyKeys);
   this._dirtyKeys = {};
   if (changedKeys.length === 0 || !this.mounted) return;
+
+  // Factory rebuild: if a BCCL factory exists and changed keys overlap factory props,
+  // rebuild the TACO from the factory with merged state (Bug #6)
+  if (this._factory) {
+    var rebuildNeeded = false;
+    for (var fi = 0; fi < changedKeys.length; fi++) {
+      if (_hop.call(this._factory.props, changedKeys[fi])) {
+        rebuildNeeded = true; break;
+      }
+    }
+    if (rebuildNeeded) {
+      var merged = {};
+      for (var mk in this._factory.props) if (_hop.call(this._factory.props, mk)) merged[mk] = this._factory.props[mk];
+      for (var sk in this._state) if (_hop.call(this._state, sk)) merged[sk] = this._state[sk];
+      this._factory.props = merged;
+      var newTaco = bw.make(this._factory.type, merged);
+      newTaco._bwFactory = this._factory;
+      this.taco = newTaco;
+      this._originalTaco = this._deepCloneTaco(newTaco);
+      this._render();
+      if (this._hooks.onUpdate) this._hooks.onUpdate(this, changedKeys);
+      return;
+    }
+  }
 
   // willUpdate hook
   if (this._hooks.willUpdate) {
@@ -2599,7 +2665,10 @@ _chp._applyPatches = function(patches) {
   for (var i = 0; i < patches.length; i++) {
     var p = patches[i];
     var el = this._bw_refs[p.refId];
-    if (!el) continue;
+    if (!el) {
+      if (bw.debug) _cw('bw.debug: _applyPatches — ref "' + p.refId + '" not found in DOM');
+      continue;
+    }
     if (p.type === 'content') {
       el.textContent = p.value;
     } else if (p.type === 'attribute') {

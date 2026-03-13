@@ -6,9 +6,11 @@
   <title>Bitwrench - HTML Generation</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
   <link rel="stylesheet" href="shared-theme.css">
   <script src="shared-nav.js"></script>
+  <script src="shared-tryit.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
@@ -18,238 +20,488 @@
     mountExampleNav('#example-nav', '15-html-generation.html');
 
     // =========================================================================
-    // Page CSS
+    // Page-specific CSS (only styles NOT in shared-theme.css)
     // =========================================================================
     bw.injectCSS(bw.css({
-      '.demo-section': {
-        'margin-bottom': '2rem',
-        'padding': '0 1rem'
-      },
-      '.demo-section h2': {
-        'border-bottom': '2px solid #eee',
-        'padding-bottom': '0.5rem',
-        'margin-top': '2rem'
-      },
-      '.code-block': {
-        'background': '#f5f5f5',
-        'border': '1px solid #ddd',
-        'border-radius': '4px',
-        'padding': '1rem',
-        'overflow-x': 'auto',
-        'font-family': '"SF Mono", "Fira Code", Menlo, Courier, monospace',
-        'font-size': '0.85rem',
-        'line-height': '1.5',
-        'white-space': 'pre'
-      },
       '.output-block': {
-        'background': '#f0f8ff',
-        'border': '1px solid #b8d4e8',
-        'border-radius': '4px',
+        'background': 'var(--bw_teal_bg, #f0faf9)',
+        'border': '1px solid var(--bw_card_border, #d8d8d8)',
+        'border-radius': 'var(--bw_radius, 8px)',
         'padding': '1rem',
         'margin-top': '0.5rem',
-        'font-family': '"SF Mono", "Fira Code", Menlo, Courier, monospace',
-        'font-size': '0.85rem',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '0.8125rem',
         'white-space': 'pre-wrap',
         'word-break': 'break-all'
       },
-      '.callout': {
-        'border-left': '4px solid #0366d6',
-        'padding': '0.75rem 1rem',
-        'margin': '1rem 0',
-        'background': '#f6f8fa'
+      '.html-dual': {
+        'display': 'grid',
+        'grid-template-columns': '1fr 1fr',
+        'gap': '1rem',
+        'margin': '1rem 0'
       },
-      '.callout h4': { 'margin': '0 0 0.5rem 0' },
-      '.runtime-table': { 'width': '100%', 'margin': '1rem 0' },
-      '.runtime-table th': { 'text-align': 'left', 'padding': '0.5rem' },
-      '.runtime-table td': { 'padding': '0.5rem', 'vertical-align': 'top' },
-      '.demo-result': {
-        'border': '2px solid #ddd',
-        'border-radius': '4px',
-        'padding': '1rem',
-        'margin': '0.5rem 0',
-        'background': '#fff'
+      '.html-dual-col': {
+        'min-width': '0'
       },
-      '.page-header': {
-        'max-width': '50rem',
-        'margin': '0 auto',
-        'padding': '1rem'
+      '.html-dual-label': {
+        'font-size': '0.6875rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.06em',
+        'font-weight': '600',
+        'color': 'var(--bw_text_secondary)',
+        'margin-bottom': 'var(--bw_space_xs)'
       },
-      '.page-content': {
-        'max-width': '50rem',
-        'margin': '0 auto'
+      '@media (max-width: 700px)': {
+        '.html-dual': { 'grid-template-columns': '1fr' }
+      },
+      '.flow-steps': {
+        'display': 'grid',
+        'grid-template-columns': 'repeat(4, 1fr)',
+        'gap': '0.75rem',
+        'margin': '1rem 0'
+      },
+      '.flow-step': {
+        'text-align': 'center',
+        'padding': '0.75rem',
+        'background': 'var(--bw_teal_bg)',
+        'border': '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)'
+      },
+      '.flow-step-num': {
+        'font-size': '1.5rem',
+        'font-weight': '700',
+        'color': 'var(--bw_teal)',
+        'line-height': '1.2'
+      },
+      '.flow-step-label': {
+        'font-size': '0.8125rem',
+        'font-weight': '600',
+        'margin-top': '0.25rem'
+      },
+      '.flow-step-desc': {
+        'font-size': '0.75rem',
+        'color': 'var(--bw_text_secondary)',
+        'margin-top': '0.15rem'
+      },
+      '@media (max-width: 600px)': {
+        '.flow-steps': { 'grid-template-columns': 'repeat(2, 1fr)' }
       }
-    }));
+    }), { id: 'page15-styles' });
 
     // =========================================================================
-    // Helper
+    // Helpers
     // =========================================================================
+    function callout(type, title, content) {
+      return {
+        t: 'div', a: { class: 'callout callout-' + type },
+        c: [
+          { t: 'h4', c: title },
+          typeof content === 'string' ? { t: 'p', c: content } : content
+        ]
+      };
+    }
+
     function codeBlock(text) {
-      return { t: 'div', a: { class: 'code-block' }, c: text };
+      if (typeof bw.codeEditor === 'function') {
+        return bw.codeEditor({ code: text, lang: 'js', readOnly: true, height: 'auto' });
+      }
+      return { t: 'pre', c: { t: 'code', c: text } };
     }
-    function outputBlock(text) {
-      return { t: 'div', a: { class: 'output-block' }, c: text };
+
+    function shellBlock(text) {
+      if (typeof bw.codeEditor === 'function') {
+        return bw.codeEditor({ code: text, lang: 'bash', readOnly: true, height: 'auto' });
+      }
+      return { t: 'pre', c: { t: 'code', c: text } };
+    }
+
+    /**
+     * showHtmlOutput — dual-panel: HTML string (left) + rendered result (right)
+     */
+    function showHtmlOutput(label, htmlStr) {
+      return {
+        t: 'div', a: { style: 'margin: 1rem 0;' },
+        c: [
+          label ? { t: 'p', a: { style: 'font-weight: 600; margin-bottom: 0.5rem;' }, c: label } : '',
+          {
+            t: 'div', a: { class: 'html-dual' },
+            c: [
+              {
+                t: 'div', a: { class: 'html-dual-col' },
+                c: [
+                  { t: 'div', a: { class: 'html-dual-label' }, c: 'HTML String' },
+                  { t: 'div', a: { class: 'output-block' }, c: htmlStr }
+                ]
+              },
+              {
+                t: 'div', a: { class: 'html-dual-col' },
+                c: [
+                  { t: 'div', a: { class: 'html-dual-label' }, c: 'Rendered' },
+                  { t: 'div', a: { class: 'bw_demo_result' }, c: bw.raw(htmlStr) }
+                ]
+              }
+            ]
+          }
+        ]
+      };
     }
 
     // =========================================================================
-    // Section 1: bw.html() Basics
+    // Section 1: The Simplest bw.html() Call
     // =========================================================================
     var section1 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-basics' },
+      t: 'div', a: { class: 'demo-section', id: 'section-simplest' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-basics' }, c: 'bw.html() Basics' } },
-        { t: 'p', c: 'bw.html() converts a TACO object to an HTML string. It works in both Node.js and browsers, making it the foundation for server-side rendering and static site generation.' },
+        { t: 'h2', c: { t: 'a', a: { href: '#section-simplest' }, c: '1. The Simplest bw.html() Call' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: 'bw.html() takes a TACO object and returns a string. Not a DOM node, not a virtual element \u2014 a plain JavaScript string:' },
 
-        { t: 'h3', c: 'Simple rendering' },
-        codeBlock("bw.html({ t: 'h1', c: 'Hello World' })\n// => '<h1>Hello World</h1>'"),
+          makeTryIt({
+            code: "var result = bw.html({ t: 'h1', c: 'Hello World' });\n\n// It's a string!\ntarget.innerHTML = '<p><strong>typeof:</strong> ' + typeof result + '</p>'\n  + '<p><strong>Raw string:</strong></p>'\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px\">' + bw.escapeHTML(result) + '</pre>'\n  + '<p><strong>Rendered:</strong></p>'\n  + result;",
+            label: 'Edit & Run',
+            height: '220px'
+          }),
 
-        { t: 'h3', c: 'Nested TACOs' },
-        codeBlock("bw.html({\n  t: 'div', a: { class: 'card' },\n  c: [\n    { t: 'h3', c: 'Title' },\n    { t: 'p', c: 'Body text' }\n  ]\n})\n// => '<div class=\"card\"><h3>Title</h3><p>Body text</p></div>'"),
-
-        { t: 'h3', c: 'State resolution' },
-        { t: 'p', c: 'Template expressions (${expr}) are resolved when state is provided:' },
-        codeBlock("bw.html(\n  { t: 'span', c: 'Hello ${name}!' },\n  { state: { name: 'World' } }\n)\n// => '<span>Hello World!</span>'")
-      ]
-    };
-
-    // =========================================================================
-    // Section 2: Function Serialization
-    // =========================================================================
-    var fnExample = bw.html({
-      t: 'button',
-      a: { onclick: function() { alert('clicked!'); } },
-      c: 'Click Me'
-    });
-
-    var section2 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-functions' },
-      c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-functions' }, c: 'Function Serialization' } },
-        { t: 'p', c: 'bw.html() automatically serializes event handler functions via funcRegister. The function is registered in bw._fnRegistry and a dispatch string is emitted:' },
-
-        codeBlock("bw.html({\n  t: 'button',\n  a: { onclick: function() { alert('clicked!'); } },\n  c: 'Click Me'\n})"),
-
-        { t: 'p', c: 'Produces:' },
-        outputBlock(bw.escapeHTML(fnExample)),
-
-        { t: 'div', a: { class: 'callout' }, c: [
-          { t: 'h4', c: 'How it works' },
-          { t: 'p', c: 'When bw.html() encounters an on* attribute with a function value, it calls bw.funcRegister(fn) to store the function, then emits bw.funcGetById(\'bw_fn_N\')(event) as the attribute value. String values are emitted directly (HTML-escaped).' }
-        ]},
-
-        { t: 'h3', c: 'Live demo' },
-        { t: 'p', c: 'This button was generated by bw.html() with a function onclick:' },
-        { t: 'div', a: { class: 'demo-result' }, c: bw.raw(fnExample) }
-      ]
-    };
-
-    // =========================================================================
-    // Section 3: bw.htmlPage()
-    // =========================================================================
-    var section3 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-htmlpage' },
-      c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-htmlpage' }, c: 'bw.htmlPage() - Full Document Generation' } },
-        { t: 'p', c: 'bw.htmlPage() generates a complete, self-contained HTML document. It handles runtime injection, func registry emission, themes, and more.' },
-
-        { t: 'h3', c: 'Basic usage' },
-        codeBlock("var html = bw.htmlPage({\n  title: 'My App',\n  body: {\n    t: 'div', c: [\n      { t: 'h1', c: 'Hello World' },\n      { t: 'button',\n        a: { onclick: function() { alert('Works!'); } },\n        c: 'Click Me' }\n    ]\n  },\n  runtime: 'shim'\n});"),
-
-        { t: 'h3', c: 'Options' },
-        bw.makeTable({
-          headers: ['Option', 'Type', 'Default', 'Description'],
-          rows: [
-            ['body', 'TACO/string/array', "''", 'Page content'],
-            ['title', 'string', "'bitwrench'", 'Document title'],
-            ['state', 'object', 'undefined', 'State for ${expr} resolution'],
-            ['runtime', 'string', "'shim'", "'inline'|'cdn'|'shim'|'none'"],
-            ['css', 'string', "''", 'Additional CSS'],
-            ['theme', 'string/object', 'null', 'Theme preset or config'],
-            ['head', 'array', '[]', 'Extra TACO elements for <head>'],
-            ['favicon', 'string', "''", 'Favicon URL'],
-            ['lang', 'string', "'en'", 'HTML lang attribute']
-          ]
-        })
-      ]
-    };
-
-    // =========================================================================
-    // Section 4: Runtime Levels
-    // =========================================================================
-    var section4 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-runtimes' },
-      c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-runtimes' }, c: 'Runtime Levels' } },
-        { t: 'p', c: 'The runtime option controls how much bitwrench infrastructure is included in the generated page:' },
-
-        bw.makeTable({
-          headers: ['Level', "What's Injected", 'Size', 'Use Case'],
-          rows: [
-            ["'inline'", 'Full UMD bundle in <script>', '~120KB', 'Offline, airgapped, USB stick'],
-            ["'cdn'", 'jsdelivr <script src>', '~200B', 'Normal web hosting'],
-            ["'shim'", 'Minimal registry shim + fn entries', '~1KB', 'Event handlers only, no full library'],
-            ["'none'", 'Nothing', '0', 'Consumer provides bw externally']
-          ]
-        }),
-
-        { t: 'div', a: { class: 'callout' }, c: [
-          { t: 'h4', c: 'The shim' },
-          { t: 'p', c: 'The shim (bw._FUNC_REGISTRY_SHIM) is a ~500-byte IIFE that sets up window.bw._fnRegistry and bw.funcGetById(). It provides just enough infrastructure for serialized event handlers to work, without loading the full library. The actual function bodies are emitted as separate bw._fnRegistry assignments in a body-end script.' }
+          callout('concept', 'Key insight', {
+            t: 'p', c: [
+              { t: 'code', c: 'bw.html()' },
+              ' always returns a string. This is what makes it work everywhere: Node.js scripts, Express routes, file generators, email templates, embedded devices \u2014 anywhere you can produce a string, you can use ',
+              { t: 'code', c: 'bw.html()' },
+              '. Compare with ',
+              { t: 'code', c: 'bw.DOM()' },
+              ' which mounts live DOM elements (browser only).'
+            ]
+          })
         ]}
       ]
     };
 
     // =========================================================================
-    // Section 5: Static Sites That Aren't Static
+    // Section 2: Attributes, Nesting, Arrays
     // =========================================================================
-    var section5 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-workflow' },
+    var section2 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-nesting' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-workflow' }, c: "Static Sites That Aren't Static" } },
-        { t: 'p', c: 'bw.htmlPage() enables a powerful workflow: generate a single HTML file with working interactivity, no server needed, works offline and airgapped.' },
+        { t: 'h2', c: { t: 'a', a: { href: '#section-nesting' }, c: '2. Attributes, Nesting, Arrays' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: 'TACO objects nest naturally. Arrays become sibling elements. Attributes go in the a: property. Self-closing tags (img, br, hr, input) are handled automatically.' },
 
-        { t: 'h3', c: 'How it works' },
-        { t: 'ol', c: [
-          { t: 'li', c: 'Define your UI as TACO objects with event handlers' },
-          { t: 'li', c: "Call bw.htmlPage() with runtime:'shim' or runtime:'inline'" },
-          { t: 'li', c: 'Save the returned string to a .html file' },
-          { t: 'li', c: 'Open in any browser - event handlers work immediately' }
-        ]},
-
-        { t: 'h3', c: 'Embedded/Airgapped use' },
-        { t: 'p', c: "With runtime:'inline', the generated HTML file is completely self-contained. No network requests, no CDN, no build step. Open from a USB stick, email as attachment, or serve from an ESP32. This makes embedded and airgapped users first-class citizens." },
-
-        { t: 'h3', c: 'Two rendering paths' },
-        { t: 'p', c: 'The same TACO object works in both paths:' },
-        bw.makeTable({
-          headers: ['Path', 'Events', 'Lifecycle', 'Best For'],
-          rows: [
-            ['bw.createDOM() / bw.DOM()', 'addEventListener', 'mounted/unmount hooks', 'Interactive SPAs'],
-            ['bw.html() + bw.htmlPage()', 'funcRegister dispatch', 'Initial state only', 'SSR, static files, offline']
-          ]
-        })
+          makeTryIt({
+            code: "var card = {\n  t: 'div', a: { class: 'bw_card', style: 'max-width:320px' },\n  c: [{\n    t: 'div', a: { class: 'bw_card_body' },\n    c: [\n      { t: 'h5', a: { class: 'bw_card_title' }, c: 'Nested Card' },\n      { t: 'p', c: 'Attributes, arrays, nesting \u2014 all plain JS.' },\n      { t: 'hr' },\n      { t: 'small', c: 'Self-closing tags just work.' }\n    ]\n  }]\n};\n\nvar html = bw.html(card);\ntarget.innerHTML = '<p><strong>HTML string:</strong></p>'\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px;white-space:pre-wrap;word-break:break-all;font-size:0.8rem\">' + bw.escapeHTML(html) + '</pre>'\n  + '<p><strong>Rendered:</strong></p>' + html;",
+            label: 'Edit & Run',
+            height: '280px'
+          })
+        ]}
       ]
     };
 
     // =========================================================================
-    // Section 6: CLI Integration
+    // Section 3: Content Escaping and bw.raw()
+    // =========================================================================
+    var section3 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-escaping' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-escaping' }, c: '3. Content Escaping and bw.raw()' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: 'By default, bw.html() escapes all content to prevent XSS. Use bw.raw() to opt out when you trust the HTML:' },
+
+          makeTryIt({
+            code: "// 1. Default: escaped (safe)\nvar safe = bw.html({ t: 'p', c: '<b>This is escaped</b>' });\n\n// 2. bw.raw(): unescaped (you trust it)\nvar raw = bw.html({ t: 'p', c: bw.raw('<b>This is bold</b>') });\n\n// 3. Template expressions with state\nvar tmpl = bw.html(\n  { t: 'p', c: 'Hello ${name}, you have ${count} items' },\n  { state: { name: 'Alice', count: 42 } }\n);\n\ntarget.innerHTML = '<h4>1. Escaped (default, XSS-safe):</h4>' + safe\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.8rem\">' + bw.escapeHTML(safe) + '</pre>'\n  + '<h4>2. bw.raw() (trusted HTML):</h4>' + raw\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.8rem\">' + bw.escapeHTML(raw) + '</pre>'\n  + '<h4>3. Template state:</h4>' + tmpl\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.8rem\">' + bw.escapeHTML(tmpl) + '</pre>';",
+            label: 'Edit & Run',
+            height: '320px'
+          }),
+
+          callout('warning', 'Security note', {
+            t: 'p', c: [
+              'Default escaping means user-supplied strings are safe to render. Only use ',
+              { t: 'code', c: 'bw.raw()' },
+              ' with trusted content (your own HTML snippets, not user input).'
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 4: Function Serialization
+    // =========================================================================
+    var fnExample = bw.html({
+      t: 'button',
+      a: {
+        class: 'bw_btn bw_btn_primary',
+        onclick: function() { alert('This button was generated by bw.html()!'); }
+      },
+      c: 'Click Me'
+    });
+
+    var section4 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-functions' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-functions' }, c: '4. Function Serialization' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: 'bw.html() serializes event handler functions so they work even in static HTML strings. Functions are stored in bw._fnRegistry and a dispatch string is emitted as the attribute value:' },
+
+          codeBlock("bw.html({\n  t: 'button',\n  a: {\n    class: 'bw_btn bw_btn_primary',\n    onclick: function() { alert('clicked!'); }\n  },\n  c: 'Click Me'\n})"),
+
+          showHtmlOutput('Produces this HTML string (left) which renders as (right):', fnExample),
+
+          callout('concept', 'How it works', {
+            t: 'div', c: [
+              { t: 'p', c: [
+                'When ',
+                { t: 'code', c: 'bw.html()' },
+                ' encounters an ',
+                { t: 'code', c: 'on*' },
+                ' attribute with a function value, it calls ',
+                { t: 'code', c: 'bw.funcRegister(fn)' },
+                ' to store the function in ',
+                { t: 'code', c: 'bw._fnRegistry' },
+                ', then emits ',
+                { t: 'code', c: "bw.funcGetById('bw_fn_N')(event)" },
+                ' as the attribute value.'
+              ]},
+              { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
+                'This is what enables ',
+                { t: 'code', c: 'bw.htmlPage()' },
+                ' to produce standalone HTML files with working interactivity \u2014 the functions are serialized alongside the HTML.'
+              ]}
+            ]
+          }),
+
+          { t: 'p', c: { t: 'strong', c: 'Try the live button above \u2014 it was generated entirely from bw.html(), not bw.DOM().' } }
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 5: bw.htmlPage() — Complete Documents
+    // =========================================================================
+    var section5 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-htmlpage' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-htmlpage' }, c: '5. bw.htmlPage() \u2014 Complete Documents' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            { t: 'code', c: 'bw.htmlPage()' },
+            ' takes the string output of ',
+            { t: 'code', c: 'bw.html()' },
+            ' to its logical conclusion: it generates a complete ',
+            { t: 'code', c: '<!DOCTYPE html>' },
+            ' document with runtime injection, function registry, themes, favicon, and more.'
+          ]},
+
+          makeTryIt({
+            code: "var fullPage = bw.htmlPage({\n  title: 'My Generated Page',\n  body: {\n    t: 'div', a: { style: 'font-family:system-ui;padding:2rem;max-width:500px;margin:0 auto' },\n    c: [\n      { t: 'h1', c: 'Generated Page' },\n      { t: 'p', c: 'This entire document was created by bw.htmlPage().' },\n      { t: 'button',\n        a: { onclick: function() { alert('Working!'); },\n             style: 'padding:0.5rem 1rem;cursor:pointer' },\n        c: 'Click me \u2014 event handlers work!' }\n    ]\n  },\n  runtime: 'shim'\n});\n\n// Show the first 600 chars of the generated document\ntarget.innerHTML = '<p><strong>typeof:</strong> ' + typeof fullPage\n  + ' (' + fullPage.length + ' chars)</p>'\n  + '<pre style=\"background:#f5f5f5;padding:0.75rem;border-radius:4px;font-size:0.78rem;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto\">' + bw.escapeHTML(fullPage.substring(0, 600)) + '\\n...</pre>';",
+            label: 'Edit & Run',
+            height: '330px'
+          }),
+
+          { t: 'h3', c: 'Options' },
+          bw.makeTable({
+            headers: ['Option', 'Type', 'Default', 'Description'],
+            rows: [
+              ['body', 'TACO / string / array', "''", 'Page content \u2014 TACO objects are rendered via bw.html()'],
+              ['title', 'string', "'bitwrench'", 'Document title'],
+              ['state', 'object', 'undefined', 'State for ${expr} template resolution'],
+              ['runtime', 'string', "'shim'", "Runtime injection level: 'inline' | 'cdn' | 'shim' | 'none'"],
+              ['css', 'string', "''", 'Additional CSS injected into a <style> tag'],
+              ['theme', 'string / object', 'null', "Theme preset name ('ocean', 'sunset', etc.) or config object"],
+              ['head', 'array', '[]', 'Extra TACO elements appended to <head>'],
+              ['favicon', 'string', "''", 'Favicon URL'],
+              ['lang', 'string', "'en'", 'HTML lang attribute']
+            ]
+          }),
+
+          callout('tip', 'Preview trick', {
+            t: 'p', c: [
+              'Since ',
+              { t: 'code', c: 'bw.htmlPage()' },
+              ' returns a string, you can preview it in an iframe: ',
+              { t: 'code', c: "iframe.srcdoc = bw.htmlPage({...})" },
+              '. Try it in the editor above \u2014 change the last line to ',
+              { t: 'code', c: "target.innerHTML = '<iframe srcdoc=\"' + fullPage.replace(/\"/g, '&quot;') + '\" style=\"width:100%;height:200px;border:1px solid #ccc\"></iframe>'" },
+              '.'
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 6: Runtime Levels
     // =========================================================================
     var section6 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-runtimes' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-runtimes' }, c: '6. Runtime Levels' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            'The ',
+            { t: 'code', c: 'runtime' },
+            ' option controls how much bitwrench infrastructure is included in the generated page. The levels range from nothing at all to the full library embedded inline:'
+          ]},
+
+          bw.makeTable({
+            headers: ['Level', 'Functions?', 'Bitwrench loaded?', 'Added size', 'Use case'],
+            rows: [
+              ["'none'", 'No', 'No', '0', 'Pure static HTML \u2014 no event handlers, no bitwrench API. The consumer provides bitwrench externally if needed.'],
+              ["'shim'", 'Yes', 'No', '~1 KB', 'A tiny shim is injected so that onclick and other serialized event handlers work. Bitwrench itself is NOT loaded \u2014 no BCCL components, no bw.DOM(), no theming at runtime.'],
+              ["'cdn'", 'Yes', 'Yes (CDN)', '~200 B tag', 'A <script> tag loads the full bitwrench library from jsdelivr. The page has full bitwrench capability (BCCL, themes, bw.DOM) but requires an internet connection on first load.'],
+              ["'inline'", 'Yes', 'Yes (embedded)', '~120 KB', 'The entire bitwrench UMD bundle is embedded in a <script> tag inside the file. Completely self-contained \u2014 works offline, from a USB stick, in an email, or from an ESP32.']
+            ]
+          }),
+
+          { t: 'p', c: [
+            'In short: ',
+            { t: 'code', c: "'none'" }, ' and ',
+            { t: 'code', c: "'shim'" },
+            ' produce lightweight pages where bitwrench is only used at build time to generate the HTML. ',
+            { t: 'code', c: "'cdn'" }, ' and ',
+            { t: 'code', c: "'inline'" },
+            ' produce pages where bitwrench is available at runtime in the browser.'
+          ]},
+
+          { t: 'h3', c: 'Example: each runtime level' },
+          codeBlock("// No bitwrench, no functions \u2014 pure static HTML\nvar page1 = bw.htmlPage({\n  title: 'Static Report',\n  body: { t: 'h1', c: 'Q4 Results' },\n  runtime: 'none'\n});\n\n// Function shims only \u2014 onclick works, bitwrench not loaded\nvar page2 = bw.htmlPage({\n  title: 'Interactive Form',\n  body: { t: 'button',\n    a: { onclick: function() { alert('submitted'); } },\n    c: 'Submit' },\n  runtime: 'shim'\n});\n\n// Full bitwrench via CDN \u2014 BCCL components work at runtime\nvar page3 = bw.htmlPage({\n  title: 'Dashboard',\n  body: bw.makeCard({ title: 'Stats', content: '...' }),\n  runtime: 'cdn'\n});\n\n// Full bitwrench embedded \u2014 works offline, no network needed\nvar page4 = bw.htmlPage({\n  title: 'Offline App',\n  body: bw.makeCard({ title: 'Offline', content: '...' }),\n  runtime: 'inline'\n});"),
+
+          callout('concept', 'How the shim works', {
+            t: 'div', c: [
+              { t: 'p', c: [
+                'The shim is a ~500-byte IIFE that creates ',
+                { t: 'code', c: 'window.bw._fnRegistry' },
+                ' and ',
+                { t: 'code', c: 'bw.funcGetById()' },
+                '. When ',
+                { t: 'code', c: 'bw.html()' },
+                ' serializes an ',
+                { t: 'code', c: 'onclick: function() {...}' },
+                ', it stores the function body and emits a dispatch string like ',
+                { t: 'code', c: "bw.funcGetById('bw_fn_3')(event)" },
+                ' as the HTML attribute. The shim + serialized function entries are all that\u2019s needed for these handlers to fire in the browser.'
+              ]}
+            ]
+          }),
+
+          callout('warning', 'When do you need full bitwrench at runtime?', {
+            t: 'div', c: [
+              { t: 'p', c: [
+                'If your generated page uses any bitwrench API beyond simple event handlers \u2014 BCCL components (',
+                { t: 'code', c: 'bw.makeCard()' }, ', ',
+                { t: 'code', c: 'bw.makeTable()' },
+                ', etc.), themes (',
+                { t: 'code', c: 'bw.generateTheme()' },
+                '), live DOM mounting (',
+                { t: 'code', c: 'bw.DOM()' },
+                '), or pub/sub \u2014 then you need ',
+                { t: 'code', c: "'cdn'" }, ' or ',
+                { t: 'code', c: "'inline'" },
+                '. The shim only provides the function dispatch registry, not the library itself.'
+              ]}
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 7: The Full Workflow
+    // =========================================================================
+    var section7 = {
+      t: 'div', a: { class: 'demo-section', id: 'section-workflow' },
+      c: [
+        { t: 'h2', c: { t: 'a', a: { href: '#section-workflow' }, c: '7. The Full Workflow' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: 'The complete path from TACO object to working HTML document:' },
+
+          {
+            t: 'div', a: { class: 'flow-steps' },
+            c: [
+              { t: 'div', a: { class: 'flow-step' }, c: [
+                { t: 'div', a: { class: 'flow-step-num' }, c: '1' },
+                { t: 'div', a: { class: 'flow-step-label' }, c: 'Define' },
+                { t: 'div', a: { class: 'flow-step-desc' }, c: 'TACO objects + event handlers' }
+              ]},
+              { t: 'div', a: { class: 'flow-step' }, c: [
+                { t: 'div', a: { class: 'flow-step-num' }, c: '2' },
+                { t: 'div', a: { class: 'flow-step-label' }, c: 'Generate' },
+                { t: 'div', a: { class: 'flow-step-desc' }, c: 'bw.htmlPage() \u2192 string' }
+              ]},
+              { t: 'div', a: { class: 'flow-step' }, c: [
+                { t: 'div', a: { class: 'flow-step-num' }, c: '3' },
+                { t: 'div', a: { class: 'flow-step-label' }, c: 'Save / Serve' },
+                { t: 'div', a: { class: 'flow-step-desc' }, c: 'fs.writeFile or res.send' }
+              ]},
+              { t: 'div', a: { class: 'flow-step' }, c: [
+                { t: 'div', a: { class: 'flow-step-num' }, c: '4' },
+                { t: 'div', a: { class: 'flow-step-label' }, c: 'Open' },
+                { t: 'div', a: { class: 'flow-step-desc' }, c: 'Browser renders with events' }
+              ]}
+            ]
+          },
+
+          { t: 'h3', c: 'Two rendering paths' },
+          { t: 'p', c: 'The same TACO object works in both paths \u2014 choose based on your use case:' },
+
+          bw.makeTable({
+            headers: ['Path', 'Function', 'Events', 'Lifecycle', 'Best For'],
+            rows: [
+              ['Client-side', 'bw.DOM() / bw.createDOM()', 'addEventListener', 'mounted / unmount hooks', 'Interactive SPAs, live dashboards'],
+              ['Server-side', 'bw.html() + bw.htmlPage()', 'funcRegister dispatch', 'Initial state only', 'SSR, static files, emails, offline']
+            ]
+          }),
+
+          { t: 'h3', c: 'Node.js example' },
+          codeBlock("const bw = require('bitwrench');\nconst fs = require('fs');\n\nvar page = bw.htmlPage({\n  title: 'Report',\n  body: [\n    { t: 'h1', c: 'Monthly Report' },\n    bw.makeTable({\n      headers: ['Month', 'Revenue', 'Growth'],\n      rows: data.map(function(r) {\n        return [r.month, '$' + r.revenue, r.growth + '%'];\n      })\n    })\n  ],\n  theme: 'ocean',\n  runtime: 'none'   // static report, no interactivity needed\n});\n\nfs.writeFileSync('report.html', page);\nconsole.log('Report generated!');"),
+
+          callout('concept', 'Embedded / airgapped use', {
+            t: 'p', c: [
+              "With runtime:'inline', the generated HTML file is completely self-contained. No network requests, no CDN, no build step. Open from a USB stick, email as an attachment, or serve from an ESP32. This makes embedded and airgapped users first-class citizens."
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 8: CLI Integration
+    // =========================================================================
+    var section8 = {
       t: 'div', a: { class: 'demo-section', id: 'section-cli' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-cli' }, c: 'CLI Integration' } },
-        { t: 'p', c: "The bwcli command uses bw.htmlPage() internally. The --standalone and --cdn flags map to runtime levels:" },
+        { t: 'h2', c: { t: 'a', a: { href: '#section-cli' }, c: '8. CLI Integration' } },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' }, c: [
+            'The ',
+            { t: 'code', c: 'bwcli' },
+            ' command uses ',
+            { t: 'code', c: 'bw.htmlPage()' },
+            ' internally. CLI flags map directly to runtime levels:'
+          ]},
 
-        bw.makeTable({
-          headers: ['CLI Flag', 'Runtime Level', 'Effect'],
-          rows: [
-            ['--standalone', "'inline'", 'Full UMD bundle embedded in the file'],
-            ['--cdn', "'cdn'", 'jsdelivr script tag with SRI'],
-            ['(default)', "'none'", 'No bitwrench injection']
-          ]
-        }),
+          bw.makeTable({
+            headers: ['CLI Flag', 'Runtime Level', 'Effect'],
+            rows: [
+              ['--standalone / -s', "'inline'", 'Full UMD bundle embedded in the output file'],
+              ['--cdn', "'cdn'", 'jsdelivr script tag with SRI hash'],
+              ['(default)', "'none'", 'No bitwrench injection']
+            ]
+          }),
 
-        { t: 'h3', c: 'Example' },
-        codeBlock("# Convert markdown to self-contained HTML\nbwcli README.md --standalone -o readme.html\n\n# Convert with theme and CDN loading\nbwcli page.md --cdn --theme ocean -o page.html")
+          { t: 'h3', c: 'Examples' },
+          shellBlock("# Convert markdown to self-contained HTML (offline-ready)\nbwcli README.md --standalone -o readme.html\n\n# Convert with theme and CDN loading\nbwcli page.md --cdn --theme ocean -o page.html\n\n# Convert with custom CSS\nbwcli notes.md --css styles.css -o notes.html\n\n# Just convert, no bitwrench injection\nbwcli doc.md -o doc.html"),
+
+          callout('concept', 'Full circle', {
+            t: 'p', c: [
+              'The progression on this page mirrors the actual architecture: ',
+              { t: 'code', c: 'bw.html()' },
+              ' produces strings \u2192 ',
+              { t: 'code', c: 'bw.htmlPage()' },
+              ' wraps them in documents \u2192 the CLI wraps ',
+              { t: 'code', c: 'bw.htmlPage()' },
+              ' in a command-line tool. Each layer adds convenience but the foundation is always the same: TACO in, string out.'
+            ]
+          })
+        ]}
       ]
     };
 
@@ -258,18 +510,28 @@
     // =========================================================================
     bw.DOM('#app', {
       t: 'div', c: [
-        { t: 'div', a: { class: 'page-header' }, c: [
-          { t: 'h1', c: 'HTML Generation' },
-          { t: 'p', c: 'Generate HTML strings and complete documents from TACO objects, with working event handlers.' }
-        ]},
-        { t: 'div', a: { class: 'page-content' }, c: [
-          section1,
-          section2,
-          section3,
-          section4,
-          section5,
-          section6
-        ]}
+        // Hero header — matches shared-theme.css .page-header pattern
+        {
+          t: 'div', a: { class: 'page-header' },
+          c: {
+            t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+            c: [
+              { t: 'h1', c: 'HTML Generation' },
+              { t: 'p', a: { class: 'subtitle' }, c: [
+                'Bitwrench can also generate HTML snippets and full pages, including interactivity and functions, in the same way that it generates web applications. It does this by serializing {taco} streams to true HTML strings, including shims for CSS and functions as needed, using the ',
+                { t: 'code', a: { style: 'background: rgba(255,255,255,0.15); color: #fff;' }, c: 'bw.html()' },
+                ' and ',
+                { t: 'code', a: { style: 'background: rgba(255,255,255,0.15); color: #fff;' }, c: 'bw.htmlPage()' },
+                ' functions.'
+              ]}
+            ]
+          }
+        },
+        // Content sections — matches shared-theme.css .content-container pattern
+        {
+          t: 'div', a: { class: 'content-container wide' },
+          c: [section1, section2, section3, section4, section5, section6, section7, section8]
+        }
       ]
     });
   </script>

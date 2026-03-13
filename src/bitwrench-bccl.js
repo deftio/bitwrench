@@ -3610,5 +3610,9 @@ export var BCCL = {
 export function make(type, props) {
   var def = BCCL[type];
   if (!def) throw new Error('bw.make: unknown component type "' + type + '". Available: ' + Object.keys(BCCL).join(', '));
-  return def.make(props || {});
+  var taco = def.make(props || {});
+  if (taco && typeof taco === 'object') {
+    taco._bwFactory = { type: type, props: props || {} };
+  }
+  return taco;
 }

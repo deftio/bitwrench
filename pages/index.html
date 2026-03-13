@@ -539,7 +539,8 @@
         + '        c: \'Hello bitwrench\' },\n'
         + '      { t: \'p\', c: \'UI as native JS objects.\' },\n'
         + '      bw.makeButton({ text: \'Click me\',\n'
-        + '        variant: \'primary\' })\n'
+        + '        variant: \'primary\',\n'
+        + '        onclick: function() { alert(\'Hello!\') } })\n'
         + '    ]\n'
         + '  }]\n'
         + '};\n\n'
@@ -562,7 +563,8 @@
         title: 'Hello bitwrench',
         content: [
           { t: 'p', c: 'UI as native JS objects.' },
-          bw.makeButton({ text: 'Click me', variant: 'primary' })
+          bw.makeButton({ text: 'Click me', variant: 'primary',
+            onclick: function() { alert('Hello from bitwrench!'); } })
         ]
       }));
     })();

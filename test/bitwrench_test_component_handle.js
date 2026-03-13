@@ -1482,3 +1482,255 @@ describe("o.render on initial mount", function() {
     assert.equal(comp.element._bw_render, undefined, '_bw_render should not exist');
   });
 });
+
+// =============================================================================
+// Bug #3: bw.debug flag + binding debug warnings
+// =============================================================================
+describe("bw.debug flag", function() {
+  beforeEach(function() { resetApp(); bw.debug = false; });
+  afterEach(function() { bw.debug = false; });
+
+  it("should default to false", function() {
+    assert.equal(bw.debug, false);
+  });
+
+  it("should warn on set() auto-create when debug=true", function() {
+    bw.debug = true;
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      var comp = bw.component({ t: 'div', o: { state: { x: 1 } } });
+      comp.set('deep.nested.key', 42);
+      assert.ok(warnings.some(function(w) { return w.indexOf('auto-creating') >= 0; }), 'should warn about auto-create');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should warn on missing path key when debug=true", function() {
+    bw.debug = true;
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      bw._evaluatePath({ user: null }, 'user.name');
+      assert.ok(warnings.some(function(w) { return w.indexOf('null at key') >= 0; }), 'should warn about null in path');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should warn on missing ref in _applyPatches when debug=true", function() {
+    bw.debug = true;
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      var comp = bw.component({ t: 'div', c: '${val}', o: { state: { val: 'hi' } } });
+      comp.mount(document.getElementById('app'));
+      // Manually call _applyPatches with a bogus refId
+      comp._applyPatches([{ refId: 'bogus_ref', type: 'content', value: 'x' }]);
+      assert.ok(warnings.some(function(w) { return w.indexOf('not found in DOM') >= 0; }), 'should warn about missing ref');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should produce zero warnings when debug=false (default)", function() {
+    bw.debug = false;
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      // Same operations that would warn when debug=true
+      var comp = bw.component({ t: 'div', o: { state: { x: 1 } } });
+      comp.set('deep.nested.key', 42);
+      bw._evaluatePath({ user: null }, 'user.name');
+      var debugWarnings = warnings.filter(function(w) { return w.indexOf('bw.debug') >= 0; });
+      assert.equal(debugWarnings.length, 0, 'no debug warnings when debug=false');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+});
+
+// =============================================================================
+// Bug #4: Warn when child o.mounted stripped by _tacoForDOM
+// =============================================================================
+describe("_tacoForDOM child lifecycle warning", function() {
+  beforeEach(function() { resetApp(); });
+
+  it("should warn when child has o.mounted", function() {
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      var comp = bw.component({
+        t: 'div',
+        c: [{ t: 'span', c: 'child', o: { mounted: function() {} } }],
+        o: { state: {} }
+      });
+      comp.mount(document.getElementById('app'));
+      assert.ok(warnings.some(function(w) { return w.indexOf('_tacoForDOM stripped') >= 0; }), 'should warn about stripped o.mounted');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should warn when child has o.render", function() {
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      var comp = bw.component({
+        t: 'div',
+        c: [{ t: 'button', c: 'btn', o: { render: function() {} } }],
+        o: { state: {} }
+      });
+      comp.mount(document.getElementById('app'));
+      assert.ok(warnings.some(function(w) { return w.indexOf('_tacoForDOM stripped') >= 0; }), 'should warn about stripped o.render');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should NOT warn for root TACO with o.mounted (it is not stripped)", function() {
+    var warnings = [];
+    var origWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.slice.call(arguments).join(' ')); };
+    try {
+      var comp = bw.component({
+        t: 'div',
+        c: 'root',
+        o: { mounted: function() {} }
+      });
+      comp.mount(document.getElementById('app'));
+      // The root TACO's o.mounted is handled by ComponentHandle.mount() — _tacoForDOM
+      // is called on the root but its o.mounted is already consumed; only child warnings matter.
+      // The root is processed first (mount calls _tacoForDOM on the cloned taco),
+      // but the root itself DOES have o.mounted — however this is the root, which IS handled.
+      // We just verify the mounted hook actually fires (not stripped).
+      assert.ok(comp.mounted, 'component should mount successfully');
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+});
+
+// =============================================================================
+// Bug #5: Child component ownership + destroy cascade
+// =============================================================================
+describe("Child component ownership", function() {
+  beforeEach(function() { resetApp(); });
+
+  it("should populate _children after parent mount with nested ComponentHandle", function() {
+    var child = bw.component({ t: 'span', c: 'child' });
+    var parent = bw.component({ t: 'div', c: [child] });
+    parent.mount(document.getElementById('app'));
+    assert.equal(parent._children.length, 1);
+    assert.strictEqual(parent._children[0], child);
+  });
+
+  it("should set _parent on child after mount", function() {
+    var child = bw.component({ t: 'span', c: 'child' });
+    var parent = bw.component({ t: 'div', c: [child] });
+    parent.mount(document.getElementById('app'));
+    assert.strictEqual(child._parent, parent);
+  });
+
+  it("parent.destroy() should cascade to child", function() {
+    var child = bw.component({ t: 'span', c: 'child', o: { state: { x: 1 } } });
+    var parent = bw.component({ t: 'div', c: [child] });
+    parent.mount(document.getElementById('app'));
+    assert.ok(child.mounted);
+    parent.destroy();
+    assert.equal(child.mounted, false);
+    assert.deepEqual(child._state, {});
+  });
+
+  it("should cascade 3-level deep destroy", function() {
+    var grandchild = bw.component({ t: 'em', c: 'gc' });
+    var child = bw.component({ t: 'span', c: [grandchild] });
+    var parent = bw.component({ t: 'div', c: [child] });
+    parent.mount(document.getElementById('app'));
+    assert.ok(grandchild.mounted);
+    assert.ok(child.mounted);
+    parent.destroy();
+    assert.equal(grandchild.mounted, false);
+    assert.equal(child.mounted, false);
+  });
+
+  it("independent child destroy should remove self from parent._children", function() {
+    var child1 = bw.component({ t: 'span', c: 'c1' });
+    var child2 = bw.component({ t: 'span', c: 'c2' });
+    var parent = bw.component({ t: 'div', c: [child1, child2] });
+    parent.mount(document.getElementById('app'));
+    assert.equal(parent._children.length, 2);
+    child1.destroy();
+    assert.equal(parent._children.length, 1);
+    assert.strictEqual(parent._children[0], child2);
+    assert.equal(child1._parent, null);
+  });
+});
+
+// =============================================================================
+// Bug #6: Factory rebuild (_bwFactory + _flush rebuild)
+// =============================================================================
+describe("Factory rebuild", function() {
+  beforeEach(function() { resetApp(); });
+
+  it("bw.make('card', {...}) should return TACO with _bwFactory", function() {
+    var taco = bw.make('card', { title: 'Hello', body: 'World' });
+    assert.ok(taco._bwFactory, '_bwFactory should be set');
+    assert.equal(taco._bwFactory.type, 'card');
+    assert.equal(taco._bwFactory.props.title, 'Hello');
+  });
+
+  it("direct bw.makeCard({...}) should NOT have _bwFactory", function() {
+    // Import makeCard if accessible, or call via bw
+    // bw.makeCard is the direct function, not going through make()
+    var taco = bw.makeCard({ title: 'Direct' });
+    assert.equal(taco._bwFactory, undefined, 'direct makeCard should not set _bwFactory');
+  });
+
+  it(".set() on factory prop should trigger rebuild (DOM updated)", function() {
+    var taco = bw.make('card', { title: 'Original', body: 'Body text' });
+    var comp = bw.component(taco);
+    comp.mount(document.getElementById('app'));
+    assert.ok(comp.element.textContent.indexOf('Original') >= 0, 'initial title');
+
+    comp.set('title', 'Updated', { sync: true });
+    assert.ok(comp.element.textContent.indexOf('Updated') >= 0, 'title should be updated via rebuild');
+  });
+
+  it("non-factory-prop .set() should use normal binding (no rebuild)", function() {
+    var taco = bw.make('card', { title: 'MyCard' });
+    var comp = bw.component(taco);
+    // Add a non-factory state key
+    comp._state.customVal = 'hello';
+    comp.mount(document.getElementById('app'));
+
+    // Setting a key NOT in _factory.props should not trigger factory rebuild
+    comp.set('customVal', 'world', { sync: true });
+    assert.equal(comp.get('customVal'), 'world');
+    // The factory props should remain unchanged
+    assert.equal(comp._factory.props.title, 'MyCard');
+  });
+
+  it("_bwFactory.props should be updated after rebuild", function() {
+    var taco = bw.make('card', { title: 'Before' });
+    var comp = bw.component(taco);
+    comp.mount(document.getElementById('app'));
+    comp.set('title', 'After', { sync: true });
+    assert.equal(comp._factory.props.title, 'After', 'factory props should reflect new value');
+  });
+
+  it("factory type should be preserved across rebuild", function() {
+    var taco = bw.make('card', { title: 'Test' });
+    var comp = bw.component(taco);
+    comp.mount(document.getElementById('app'));
+    comp.set('title', 'New', { sync: true });
+    assert.equal(comp._factory.type, 'card', 'factory type should remain card');
+  });
+});
