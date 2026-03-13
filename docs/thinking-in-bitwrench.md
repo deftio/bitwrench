@@ -1,10 +1,3 @@
-# Thinking in Bitwrench
-
-> A guide to building web UIs with plain JavaScript objects.
-> Assumes familiarity with HTML, CSS, and JavaScript.
-
----
-
 ## 0. The Problem and the Idea
 
 Building web UIs with raw HTML, CSS, and JavaScript works — but it's painful. HTML is verbose. Styling the same element across a page means copying CSS rules or managing class hierarchies. Adding interactivity means wiring up event listeners, tracking state in variables, and manually updating the DOM when things change. The more complex the UI, the more copy-paste, the more boilerplate, the more places things can go wrong.

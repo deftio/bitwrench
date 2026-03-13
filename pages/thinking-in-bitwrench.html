@@ -19,95 +19,102 @@
   <script>
     mountExampleNav('#example-nav', 'thinking-in-bitwrench.html');
 
-    // Page-specific styles for the markdown content
+    // Page-specific styles for markdown content.
+    // The .doc-card container is a card (demo-section pattern).
+    // h2 headings use the same callout-concept accent as other pages.
     bw.injectCSS(bw.css({
-      '#doc-content': {
-        'max-width': '52rem',
-        'line-height': '1.7'
+      '.doc-card': {
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        'box-shadow': 'var(--bw_card_shadow)',
+        padding: '1.5rem',
+        'margin-bottom': '1.5rem',
+        overflow: 'hidden'
       },
-      '#doc-content h2': {
-        'font-size': '1.5rem',
-        'font-weight': '700',
-        color: 'var(--bw_teal_dark)',
-        'margin-top': '2.5rem',
-        'margin-bottom': '1rem',
-        'padding-bottom': '0.5rem',
-        'border-bottom': '2px solid var(--bw_teal)'
-      },
-      '#doc-content h3': {
-        'font-size': '1.2rem',
+      '.doc-card h2': {
+        'font-size': '1.15rem',
         'font-weight': '600',
-        'margin-top': '2rem',
-        'margin-bottom': '0.75rem'
+        color: 'var(--bw_text)',
+        margin: '2rem -1.5rem 1rem',
+        padding: '1rem 1.5rem',
+        background: 'var(--bw_teal_bg)',
+        'border-bottom': '1px solid var(--bw_card_border)',
+        'border-top': '1px solid var(--bw_card_border)',
+        'border-left': '4px solid var(--bw_teal)'
       },
-      '#doc-content h4': {
-        'font-size': '1.05rem',
+      '.doc-card h2:first-child': {
+        'margin-top': '-1.5rem',
+        'margin-left': '-1.5rem',
+        'margin-right': '-1.5rem',
+        'border-top': 'none'
+      },
+      '.doc-card h3': {
+        'font-size': '1rem',
         'font-weight': '600',
         'margin-top': '1.5rem',
         'margin-bottom': '0.5rem'
       },
-      '#doc-content p': {
-        'margin-bottom': '1rem'
+      '.doc-card h4': {
+        'font-size': '0.95rem',
+        'font-weight': '600',
+        'margin-top': '1.25rem',
+        'margin-bottom': '0.4rem'
       },
-      '#doc-content blockquote': {
-        'border-left': '4px solid var(--bw_teal)',
-        'margin-left': '0',
-        'padding': '0.75rem 1rem',
-        color: 'var(--bw_text_secondary)',
-        background: 'var(--bw_teal_bg)',
-        'border-radius': '0 var(--bw_radius) var(--bw_radius) 0',
+      '.doc-card p': {
         'margin-bottom': '1rem',
-        'font-style': 'italic'
+        'line-height': '1.6'
       },
-      '#doc-content pre': {
+      '.doc-card blockquote': {
+        'padding': '1rem 1.25rem',
+        'border-radius': 'var(--bw_radius)',
+        margin: '1rem 0',
+        'font-size': '0.9rem',
+        background: 'var(--bw_teal_light)',
+        'border-left': '4px solid var(--bw_teal)',
+        'font-style': 'normal'
+      },
+      '.doc-card blockquote p': {
+        margin: '0.25rem 0'
+      },
+      '.doc-card pre': {
         'margin-bottom': '1.25rem'
       },
-      '#doc-content code:not(pre code)': {
-        background: 'var(--bw_teal_light)',
-        color: 'var(--bw_teal_dark)',
-        padding: '0.15em 0.4em',
-        'border-radius': '3px',
-        'font-size': '0.85em',
-        'font-family': 'var(--bw_font_mono)'
-      },
-      '#doc-content ul, #doc-content ol': {
+      '.doc-card ul, .doc-card ol': {
         'margin-bottom': '1rem',
         'padding-left': '1.5rem'
       },
-      '#doc-content li': {
-        'margin-bottom': '0.35rem'
+      '.doc-card li': {
+        'margin-bottom': '0.35rem',
+        'font-size': '0.9rem'
       },
-      '#doc-content table': {
+      '.doc-card table': {
         'width': '100%',
         'border-collapse': 'collapse',
         'margin-bottom': '1.5rem',
-        'font-size': '0.9rem'
+        'font-size': '0.9rem',
+        'max-width': '100%'
       },
-      '#doc-content th': {
-        background: 'var(--bw_teal_dark)',
-        color: '#fff',
+      '.doc-card th': {
+        background: 'var(--bw_teal_bg)',
+        color: 'var(--bw_text)',
         padding: '0.6rem 0.75rem',
         'text-align': 'left',
         'font-weight': '600',
-        'font-size': '0.8125rem'
+        'font-size': '0.8125rem',
+        'border-bottom': '2px solid var(--bw_card_border)'
       },
-      '#doc-content td': {
+      '.doc-card td': {
         padding: '0.5rem 0.75rem',
         'border-bottom': '1px solid var(--bw_card_border)'
       },
-      '#doc-content tr:nth-child(even) td': {
+      '.doc-card tr:nth-child(even) td': {
         background: 'rgba(0,0,0,0.02)'
       },
-      '#doc-content hr': {
+      '.doc-card hr': {
         border: 'none',
         'border-top': '1px solid var(--bw_card_border)',
         margin: '2rem 0'
-      },
-      '#doc-content strong': {
-        'font-weight': '600'
-      },
-      '#doc-content em': {
-        color: 'var(--bw_text_secondary)'
       }
     }), { id: 'thinking-page-styles' });
 
@@ -121,12 +128,14 @@
             t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
             c: [
               { t: 'h1', c: 'Thinking in Bitwrench' },
-              { t: 'p', a: { class: 'subtitle' }, c: 'A guide to building web UIs with plain JavaScript objects' }
+              { t: 'p', a: { class: 'subtitle' }, c: 'A guide to building web UIs with plain JavaScript objects. Assumes familiarity with HTML, CSS, and JavaScript.' }
             ]
           }
         },
-        { t: 'div', a: { class: 'content-container', id: 'doc-content' },
-          c: { t: 'p', a: { style: 'color:var(--bw_text_secondary)' }, c: 'Loading...' }
+        { t: 'div', a: { class: 'content-container wide' },
+          c: { t: 'div', a: { class: 'doc-card', id: 'doc-content' },
+            c: { t: 'p', a: { style: 'color:var(--bw_text_secondary)' }, c: 'Loading...' }
+          }
         }
       ]
     });

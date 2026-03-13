@@ -1,9 +1,8 @@
 /**
  * Shared navigation component for bitwrench docs site.
  * Two-tier nav: primary bar (dark) + conditional secondary sub-nav.
- * Sub-nav only appears when viewing an example page.
+ * Sub-nav appears when viewing a Learn, Examples, Server, or Docs page.
  * Collapses to a single hamburger menu on mobile.
- * Supports dropdown menus for grouped items.
  *
  * @param {string} currentPage - filename of the current page for active highlighting
  * @param {string} [baseHref] - prefix for page links when loaded from a different directory
@@ -13,23 +12,30 @@
 (function() {
   'use strict';
 
-  // Primary nav items (main dark bar)
+  // Primary nav items (main dark bar) — 6 items
   var primaryItems = [
     { text: 'Home', href: 'index.html' },
-    { text: 'Quick Start', href: '00-quick-start.html' },
-    { text: 'Components', href: '01-components.html' },
-    { text: 'Styling', href: '03-styling.html' },
-    { text: 'Themes', href: '10-themes.html' },
-    { text: 'State', href: '05-state.html' },
-    { text: 'Examples', href: '02-tables-forms.html' },
+    { text: 'Learn', href: '00-quick-start.html' },
+    { text: 'Examples', href: '04-dashboard.html' },
     { text: 'Server', href: '12-bwserve-protocol.html' },
+    { text: 'Downloads', href: '09-builds.html' },
     { text: 'Docs', href: '08-api-reference.html' }
   ];
 
-  // Secondary nav items (sub-nav bar, shown only on example pages)
-  var secondaryItems = [
+  // Learn sub-nav (ordered reading path)
+  var learnSecondaryItems = [
+    { text: 'Quick Start', href: '00-quick-start.html' },
     { text: 'Thinking in BW', href: 'thinking-in-bitwrench.html' },
+    { text: 'Components', href: '01-components.html' },
+    { text: 'Styling', href: '03-styling.html' },
+    { text: 'Themes', href: '10-themes.html' },
     { text: 'Tables & Forms', href: '02-tables-forms.html' },
+    { text: 'State', href: '05-state.html' },
+    { text: 'HTML Gen', href: '15-html-generation.html' }
+  ];
+
+  // Examples sub-nav
+  var secondaryItems = [
     { text: 'Dashboard', href: '04-dashboard.html' },
     { text: 'Digital Clock', href: '06-clock.html' },
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
@@ -37,22 +43,23 @@
     { text: 'Multi-Page', href: '15-multi-page-site.html' }
   ];
 
-  // Docs secondary nav items (sub-nav bar, shown only on docs pages)
+  // Docs sub-nav
   var docsSecondaryItems = [
-    { text: 'Builds', href: '09-builds.html' },
+    { text: 'API Reference', href: '08-api-reference.html' },
     { text: 'Debugging', href: '11-debugging.html' },
-    { text: 'HTML Gen', href: '15-html-generation.html' },
-    { text: 'Code Editor', href: '13-code-editor.html' },
-    { text: 'API Reference', href: '08-api-reference.html' }
+    { text: 'Code Editor', href: '13-code-editor.html' }
   ];
 
-  // bwserve secondary nav items
+  // bwserve sub-nav (unchanged)
   var bwserveSecondaryItems = [
     { text: 'Protocol', href: '12-bwserve-protocol.html' },
     { text: 'Sandbox', href: '14-bwserve-sandbox.html' }
   ];
 
-  // Set of secondary hrefs for quick lookup
+  // Set of hrefs for quick lookup
+  var learnSecondaryHrefs = {};
+  learnSecondaryItems.forEach(function(item) { learnSecondaryHrefs[item.href] = true; });
+
   var secondaryHrefs = {};
   secondaryItems.forEach(function(item) { secondaryHrefs[item.href] = true; });
 
@@ -69,6 +76,13 @@
 
   function isActive(itemHref, currentPage, resolvedHref) {
     return itemHref === currentPage || resolvedHref === currentPage;
+  }
+
+  function isLearnPage(currentPage) {
+    for (var href in learnSecondaryHrefs) {
+      if (currentPage === href) return true;
+    }
+    return false;
   }
 
   function isExamplePage(currentPage) {
@@ -95,8 +109,8 @@
   function createExampleNav(currentPage, baseHref) {
     var homeHref = resolveHref(primaryItems[0].href, baseHref);
     var ver = window.bw && window.bw.version || '2.0.4';
+    var onLearnPage = isLearnPage(currentPage);
     var onExamplePage = isExamplePage(currentPage);
-
     var onDocsPage = isDocsPage(currentPage);
     var onBwservePage = isBwservePage(currentPage);
 
@@ -104,7 +118,9 @@
     var primaryLinks = primaryItems.map(function(item) {
       var rh = resolveHref(item.href, baseHref);
       var active;
-      if (item.text === 'Examples') {
+      if (item.text === 'Learn') {
+        active = onLearnPage;
+      } else if (item.text === 'Examples') {
         active = onExamplePage;
       } else if (item.text === 'Docs') {
         active = onDocsPage;
@@ -127,7 +143,21 @@
       };
     });
 
-    // Build secondary link items
+    // Build learn secondary links
+    var learnSecondaryLinks = learnSecondaryItems.map(function(item) {
+      var rh = resolveHref(item.href, baseHref);
+      var active = isActive(item.href, currentPage, rh);
+      return {
+        t: 'a',
+        a: {
+          href: rh,
+          class: 'bw_site_subnav_link' + (active ? ' active' : '')
+        },
+        c: item.text
+      };
+    });
+
+    // Build example secondary links
     var secondaryLinks = secondaryItems.map(function(item) {
       var rh = resolveHref(item.href, baseHref);
       var active = isActive(item.href, currentPage, rh);
@@ -169,34 +199,28 @@
       };
     });
 
-    // Build mobile menu (all items, flat)
+    // Build mobile menu (all items, flat — deduplicated)
     var mobileItems = [];
+    var seen = {};
     primaryItems.forEach(function(item) {
       mobileItems.push(item);
+      seen[item.href] = true;
     });
-    // Add docs sub-items
-    docsSecondaryItems.forEach(function(s) {
-      var isDup = false;
-      primaryItems.forEach(function(p) {
-        if (p.href === s.href) isDup = true;
-      });
-      if (!isDup) mobileItems.push(s);
+    // Add learn sub-items
+    learnSecondaryItems.forEach(function(s) {
+      if (!seen[s.href]) { mobileItems.push(s); seen[s.href] = true; }
     });
     // Add example sub-items
     secondaryItems.forEach(function(s) {
-      var isDup = false;
-      primaryItems.forEach(function(p) {
-        if (p.href === s.href) isDup = true;
-      });
-      if (!isDup) mobileItems.push(s);
+      if (!seen[s.href]) { mobileItems.push(s); seen[s.href] = true; }
+    });
+    // Add docs sub-items
+    docsSecondaryItems.forEach(function(s) {
+      if (!seen[s.href]) { mobileItems.push(s); seen[s.href] = true; }
     });
     // Add bwserve sub-items
     bwserveSecondaryItems.forEach(function(s) {
-      var isDup = false;
-      primaryItems.forEach(function(p) {
-        if (p.href === s.href) isDup = true;
-      });
-      if (!isDup) mobileItems.push(s);
+      if (!seen[s.href]) { mobileItems.push(s); seen[s.href] = true; }
     });
 
     var mobileLinks = mobileItems.map(function(item) {
@@ -222,7 +246,6 @@
           a: { class: 'bw_site_nav_inner' },
           c: [
             // Left: logo + version
-            // Homepage shows full logo with text; sub-pages show icon only
             {
               t: 'a',
               a: {
@@ -296,8 +319,20 @@
     // Secondary items: sub-nav + mobile menu (inserted after #example-nav)
     var belowNav = [];
 
-    // Show sub-nav when on an example page or docs page
-    if (onExamplePage) {
+    // Show sub-nav when on a learn, example, docs, or bwserve page
+    if (onLearnPage) {
+      belowNav.push({
+        t: 'div',
+        a: { class: 'bw_site_subnav' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'bw_site_subnav_inner' },
+            c: learnSecondaryLinks
+          }
+        ]
+      });
+    } else if (onExamplePage) {
       belowNav.push({
         t: 'div',
         a: { class: 'bw_site_subnav' },

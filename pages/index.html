@@ -431,32 +431,32 @@
                   { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '1. Getting Started' },
                   { t: 'p', c: [
                     { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' }, ' \u2192 ',
-                    { t: 'a', a: { href: '01-components.html' }, c: 'Components' }, ' \u2192 ',
-                    { t: 'a', a: { href: '03-styling.html' }, c: 'Styling' }
+                    { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in BW' }, ' \u2192 ',
+                    { t: 'a', a: { href: '01-components.html' }, c: 'Components' }
                   ]}
                 ]},
                 { t: 'div', a: { class: 'bw_feature_card' }, c: [
                   { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '2. Building Apps' },
                   { t: 'p', c: [
+                    { t: 'a', a: { href: '03-styling.html' }, c: 'Styling' }, ' \u2192 ',
                     { t: 'a', a: { href: '02-tables-forms.html' }, c: 'Tables & Forms' }, ' \u2192 ',
-                    { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard' }, ' \u2192 ',
                     { t: 'a', a: { href: '05-state.html' }, c: 'State' }
                   ]}
                 ]},
                 { t: 'div', a: { class: 'bw_feature_card' }, c: [
-                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '3. Tutorials' },
+                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '3. Advanced' },
                   { t: 'p', c: [
-                    { t: 'a', a: { href: '06-clock.html' }, c: 'Clock' }, ' \u2192 ',
-                    { t: 'a', a: { href: '06-tic-tac-toe-tutorial.html' }, c: 'Tic-Tac-Toe' }, ' \u2192 ',
-                    { t: 'a', a: { href: '07-framework-comparison.html' }, c: 'Comparison' }
+                    { t: 'a', a: { href: '15-html-generation.html' }, c: 'HTML Gen' }, ' \u2192 ',
+                    { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' }
                   ]}
                 ]},
                 { t: 'div', a: { class: 'bw_feature_card' }, c: [
-                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '4. Advanced' },
+                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '4. Tutorials & Examples' },
                   { t: 'p', c: [
-                    { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' }, ' \u2192 ',
-                    { t: 'a', a: { href: '12-bwserve-protocol.html' }, c: 'bwserve' }, ' \u2192 ',
-                    { t: 'a', a: { href: '11-debugging.html' }, c: 'Debugging' }
+                    { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard' }, ' \u2192 ',
+                    { t: 'a', a: { href: '06-clock.html' }, c: 'Clock' }, ' \u2192 ',
+                    { t: 'a', a: { href: '06-tic-tac-toe-tutorial.html' }, c: 'Tic-Tac-Toe' }, ' \u2192 ',
+                    { t: 'a', a: { href: '07-framework-comparison.html' }, c: 'Comparison' }
                   ]}
                 ]}
               ]
@@ -781,19 +781,16 @@
     (function() {
       var sections = [
         {
-          category: 'Getting Started',
+          category: 'Learn',
           pages: [
             { title: 'Quick Start', href: '00-quick-start.html', desc: 'First steps with TACO and bw.DOM()' },
+            { title: 'Thinking in BW', href: 'thinking-in-bitwrench.html', desc: 'Design philosophy and mental model' },
             { title: 'Components', href: '01-components.html', desc: 'All 36+ UI components with live demos' },
-            { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' }
-          ]
-        },
-        {
-          category: 'Core Features',
-          pages: [
+            { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' },
             { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, search, form inputs, validation' },
             { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },
-            { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, presets, dark mode' }
+            { title: 'HTML Generation', href: '15-html-generation.html', desc: 'bw.html() rendering pipeline and options' },
+            { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, presets, palette toggle' }
           ]
         },
         {
@@ -802,17 +799,29 @@
             { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and grid layout' },
             { title: 'Digital Clock', href: '06-clock.html', desc: 'Real-time clock with theme switching' },
             { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' },
-            { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'Map React/Vue/Svelte patterns to bitwrench' }
+            { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'Map React/Vue/Svelte patterns to bitwrench' },
+            { title: 'Multi-Page Site', href: '15-multi-page-site.html', desc: 'Multi-page app with shared state' }
           ]
         },
         {
-          category: 'Reference',
+          category: 'Server',
+          pages: [
+            { title: 'bwserve Protocol', href: '12-bwserve-protocol.html', desc: 'Server-driven UI protocol and sandbox' },
+            { title: 'bwserve Sandbox', href: '14-bwserve-sandbox.html', desc: 'Interactive bwserve playground' }
+          ]
+        },
+        {
+          category: 'Downloads',
+          pages: [
+            { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' }
+          ]
+        },
+        {
+          category: 'Docs',
           pages: [
             { title: 'API Reference', href: '08-api-reference.html', desc: 'Full function listing with signatures' },
-            { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' },
-            { title: 'Code Editor', href: '13-code-editor.html', desc: 'Lightweight syntax highlighting addon' },
-            { title: 'Server (bwserve)', href: '12-bwserve-protocol.html', desc: 'Server-driven UI protocol and sandbox' },
-            { title: 'Debugging', href: '11-debugging.html', desc: 'Component inspector and lifecycle tools' }
+            { title: 'Debugging', href: '11-debugging.html', desc: 'Component inspector and lifecycle tools' },
+            { title: 'Code Editor', href: '13-code-editor.html', desc: 'Lightweight syntax highlighting addon' }
           ]
         }
       ];
