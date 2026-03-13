@@ -197,7 +197,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-13T21:09:49.654Z'
+    buildDate: '2026-03-13T23:12:44.681Z'
   };
 
   /**
@@ -9081,7 +9081,14 @@
   function make(type, props) {
     var def = BCCL[type];
     if (!def) throw new Error('bw.make: unknown component type "' + type + '". Available: ' + Object.keys(BCCL).join(', '));
-    return def.make(props || {});
+    var taco = def.make(props || {});
+    if (taco && _typeof(taco) === 'object') {
+      taco._bwFactory = {
+        type: type,
+        props: props || {}
+      };
+    }
+    return taco;
   }
 
   var components = /*#__PURE__*/Object.freeze({
@@ -11113,6 +11120,11 @@
     this._compile = !!o.compile;
     this._bw_refs = {};
     this._refCounter = 0;
+    // Child component ownership (Bug #5)
+    this._children = [];
+    this._parent = null;
+    // Factory metadata for BCCL rebuild (Bug #6)
+    this._factory = taco._bwFactory || null;
   }
 
   // Short alias for ComponentHandle.prototype (see alias block at top of file).
@@ -11446,6 +11458,16 @@
     this._resolveAndApplyAll();
     this.mounted = true;
 
+    // Scan for child ComponentHandles and link parent/child (Bug #5)
+    var childEls = this.element.querySelectorAll('[data-bw_comp_id]');
+    for (var ci = 0; ci < childEls.length; ci++) {
+      var ch = childEls[ci]._bwComponentHandle;
+      if (ch && ch !== this && !ch._parent) {
+        ch._parent = this;
+        this._children.push(ch);
+      }
+    }
+
     // mounted hook (backward compat: fn.length === 2 wraps (el, state))
     if (this._hooks.mounted) {
       if (this._hooks.mounted.length === 2) {
@@ -11681,6 +11703,17 @@
     if (this._hooks.willDestroy) {
       this._hooks.willDestroy(this);
     }
+
+    // Cascade destroy to children depth-first (Bug #5)
+    for (var ci = this._children.length - 1; ci >= 0; ci--) {
+      this._children[ci].destroy();
+    }
+    this._children = [];
+    if (this._parent) {
+      var idx = this._parent._children.indexOf(this);
+      if (idx >= 0) this._parent._children.splice(idx, 1);
+      this._parent = null;
+    }
     this.unmount();
 
     // Unregister actions from function registry
@@ -11712,6 +11745,31 @@
     var changedKeys = _keys(this._dirtyKeys);
     this._dirtyKeys = {};
     if (changedKeys.length === 0 || !this.mounted) return;
+
+    // Factory rebuild: if a BCCL factory exists and changed keys overlap factory props,
+    // rebuild the TACO from the factory with merged state (Bug #6)
+    if (this._factory) {
+      var rebuildNeeded = false;
+      for (var fi = 0; fi < changedKeys.length; fi++) {
+        if (_hop.call(this._factory.props, changedKeys[fi])) {
+          rebuildNeeded = true;
+          break;
+        }
+      }
+      if (rebuildNeeded) {
+        var merged = {};
+        for (var mk in this._factory.props) if (_hop.call(this._factory.props, mk)) merged[mk] = this._factory.props[mk];
+        for (var sk in this._state) if (_hop.call(this._state, sk)) merged[sk] = this._state[sk];
+        this._factory.props = merged;
+        var newTaco = bw.make(this._factory.type, merged);
+        newTaco._bwFactory = this._factory;
+        this.taco = newTaco;
+        this._originalTaco = this._deepCloneTaco(newTaco);
+        this._render();
+        if (this._hooks.onUpdate) this._hooks.onUpdate(this, changedKeys);
+        return;
+      }
+    }
 
     // willUpdate hook
     if (this._hooks.willUpdate) {

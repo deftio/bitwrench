@@ -1,4 +1,4 @@
-/*! bwserve v2.0.16 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -258,6 +258,9 @@ function generateShell(opts) {
   script.push('  var clientId = ' + JSON.stringify(clientId) + ';');
   script.push('  var conn = bw.clientConnect("/__bw/events/" + clientId, {');
   script.push('    actionUrl: "/__bw/action/" + clientId,');
+  if (opts.allowExec) {
+    script.push('    allowExec: true,');
+  }
   script.push('    onStatus: function(s) {');
   script.push('      if (typeof console !== "undefined") console.log("[bwserve] " + s);');
   script.push('    }');
@@ -316,7 +319,16 @@ function generateShell(opts) {
 
 
 var __dirname$1 = path.dirname(url.fileURLToPath((typeof document === 'undefined' ? require('u' + 'rl').pathToFileURL(__filename).href : (_documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === 'SCRIPT' && _documentCurrentScript.src || new URL('bwserve.cjs.js', document.baseURI).href))));
+
+// Resolve dist/ — try source layout (src/bwserve/), then npm install layout,
+// then dist/ itself (when running from dist/bwserve.esm.js)
 var DIST_DIR = path.resolve(__dirname$1, '..', '..', 'dist');
+if (!fs.existsSync(DIST_DIR)) {
+  DIST_DIR = path.resolve(__dirname$1, '..', 'dist');
+}
+if (!fs.existsSync(DIST_DIR)) {
+  DIST_DIR = __dirname$1;
+}
 
 // MIME type lookup for static file serving
 var MIME_TYPES = {
@@ -363,6 +375,7 @@ class BwServeApp {
     this.staticDir = opts.static || null;
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
+    this.allowExec = opts.allowExec || false;
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
@@ -509,7 +522,8 @@ class BwServeApp {
         clientId: clientId2,
         title: this.title,
         theme: this.theme,
-        injectBitwrench: this.injectBitwrench
+        injectBitwrench: this.injectBitwrench,
+        allowExec: this.allowExec
       });
       // Store the page path for this client so SSE knows which handler to call
       this._clients.set(clientId2, { pagePath: path$1, client: null });

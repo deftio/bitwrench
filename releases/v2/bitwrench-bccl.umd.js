@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.16 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -3617,7 +3617,11 @@
   function make(type, props) {
     var def = BCCL[type];
     if (!def) throw new Error('bw.make: unknown component type "' + type + '". Available: ' + Object.keys(BCCL).join(', '));
-    return def.make(props || {});
+    var taco = def.make(props || {});
+    if (taco && typeof taco === 'object') {
+      taco._bwFactory = { type: type, props: props || {} };
+    }
+    return taco;
   }
 
   var components = /*#__PURE__*/Object.freeze({
