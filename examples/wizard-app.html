@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup Wizard - Bitwrench Example</title>
+  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Signup Wizard — bw.component() with state transitions
+    //
+    // Demonstrates:
+    //   - bw.component() with multi-step state (step: 1 → 2 → 3 → 4)
+    //   - onclick in a: attributes surviving re-renders (the footgun fix)
+    //   - bw.raw() for formatted confirmation summary
+    //   - Conditional rendering with ternaries
+    //   - bw.makeInput(), bw.makeSelect(), bw.makeButton(),
+    //     bw.makeStepper(), bw.makeAlert(), bw.makeCard()
+    //   - Theme token usage in step indicators
+    //
+    // No build step. No framework. Zero raw DOM. Just bitwrench.
+    // =====================================================================
+
+    (function() {
+      'use strict';
+
+      bw.loadDefaultStyles();
+      var theme = bw.generateTheme('wizard', {
+        primary: '#6366f1',
+        secondary: '#06b6d4',
+        spacing: 'normal',
+        radius: 'md'
+      });
+
+      var P = theme.palette;
+
+      bw.injectCSS(bw.css({
+        'body': {
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          background: P.surface.light,
+          margin: '0'
+        },
+        '.wiz-wrap': {
+          maxWidth: '600px',
+          margin: '2rem auto',
+          padding: '0 1rem'
+        },
+        '.wiz-header': {
+          textAlign: 'center',
+          marginBottom: '2rem'
+        },
+        '.wiz-header h1': {
+          fontSize: '1.75rem',
+          color: P.primary.base,
+          margin: '0 0 0.25rem'
+        },
+        '.wiz-header p': {
+          color: P.muted.base,
+          margin: '0',
+          fontSize: '0.9rem'
+        },
+        '.wiz-card': {
+          background: '#fff',
+          border: '1px solid ' + P.muted.border,
+          borderRadius: '12px',
+          padding: '2rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          marginBottom: '1.5rem'
+        },
+        '.wiz-step-title': {
+          fontSize: '1.15rem',
+          fontWeight: '600',
+          marginBottom: '1.25rem',
+          color: P.primary.darkText
+        },
+        '.wiz-field': {
+          marginBottom: '1rem'
+        },
+        '.wiz-field label': {
+          display: 'block',
+          fontSize: '0.85rem',
+          fontWeight: '600',
+          marginBottom: '0.35rem',
+          color: P.primary.darkText
+        },
+        '.wiz-actions': {
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '0.75rem',
+          marginTop: '1.5rem'
+        },
+        '.wiz-summary dt': {
+          fontWeight: '600',
+          color: P.primary.darkText,
+          marginTop: '0.75rem'
+        },
+        '.wiz-summary dd': {
+          margin: '0.15rem 0 0',
+          color: P.muted.base
+        },
+        '@keyframes checkmark': {
+          '0%': { transform: 'scale(0)', opacity: '0' },
+          '50%': { transform: 'scale(1.2)' },
+          '100%': { transform: 'scale(1)', opacity: '1' }
+        },
+        '.wiz-done-icon': {
+          fontSize: '3rem',
+          textAlign: 'center',
+          animation: 'checkmark 0.5s ease-out',
+          margin: '1rem 0'
+        }
+      }));
+
+      // -- Wizard state & data ----------------------------------------------
+      var step = 1;
+      var formData = { name: '', email: '', plan: 'starter', newsletter: true };
+      var plans = [
+        { value: 'starter', text: 'Starter (Free)' },
+        { value: 'pro', text: 'Pro ($9/mo)' },
+        { value: 'enterprise', text: 'Enterprise ($29/mo)' }
+      ];
+      var stepLabels = [
+        { label: 'Account' },
+        { label: 'Preferences' },
+        { label: 'Review' },
+        { label: 'Done' }
+      ];
+
+      // -- Read form values from DOM ----------------------------------------
+      function readField(id) {
+        var els = bw.$('#' + id);
+        return els.length ? els[0].value : '';
+      }
+
+      function readChecked(id) {
+        var els = bw.$('#' + id);
+        return els.length ? els[0].checked : false;
+      }
+
+      // -- Step renderers ---------------------------------------------------
+      function stepAccount() {
+        return { t: 'div', c: [
+          { t: 'div', a: { class: 'wiz-step-title' }, c: 'Create Your Account' },
+          { t: 'div', a: { class: 'wiz-field' }, c: [
+            { t: 'label', a: { for: 'wiz-name' }, c: 'Full Name' },
+            bw.makeInput({ id: 'wiz-name', placeholder: 'Jane Smith', value: formData.name })
+          ]},
+          { t: 'div', a: { class: 'wiz-field' }, c: [
+            { t: 'label', a: { for: 'wiz-email' }, c: 'Email Address' },
+            bw.makeInput({ type: 'email', id: 'wiz-email', placeholder: 'jane@example.com', value: formData.email })
+          ]}
+        ]};
+      }
+
+      function stepPreferences() {
+        return { t: 'div', c: [
+          { t: 'div', a: { class: 'wiz-step-title' }, c: 'Choose Your Plan' },
+          { t: 'div', a: { class: 'wiz-field' }, c: [
+            { t: 'label', a: { for: 'wiz-plan' }, c: 'Plan' },
+            bw.makeSelect({ id: 'wiz-plan', options: plans, value: formData.plan })
+          ]},
+          { t: 'div', a: { class: 'wiz-field' }, c: [
+            bw.makeCheckbox({ id: 'wiz-newsletter', label: 'Subscribe to newsletter', checked: formData.newsletter })
+          ]}
+        ]};
+      }
+
+      function stepReview() {
+        var planLabel = plans.filter(function(p) { return p.value === formData.plan; })[0].text;
+        var summaryHtml = '<dl class="wiz-summary">' +
+          '<dt>Name</dt><dd>' + bw.escapeHTML(formData.name || '(not provided)') + '</dd>' +
+          '<dt>Email</dt><dd>' + bw.escapeHTML(formData.email || '(not provided)') + '</dd>' +
+          '<dt>Plan</dt><dd>' + bw.escapeHTML(planLabel) + '</dd>' +
+          '<dt>Newsletter</dt><dd>' + (formData.newsletter ? 'Yes' : 'No') + '</dd>' +
+          '</dl>';
+
+        return { t: 'div', c: [
+          { t: 'div', a: { class: 'wiz-step-title' }, c: 'Review Your Details' },
+          bw.makeAlert({ content: 'Please review your information before submitting.', variant: 'info' }),
+          { t: 'div', c: bw.raw(summaryHtml) }
+        ]};
+      }
+
+      function stepDone() {
+        return { t: 'div', a: { style: bw.s(bw.u.textCenter) }, c: [
+          { t: 'div', a: { class: 'wiz-done-icon' }, c: '\u2705' },
+          { t: 'h2', a: { style: 'color:' + P.success.base }, c: 'Welcome aboard!' },
+          { t: 'p', a: { style: 'color:' + P.muted.base },
+            c: 'Your account has been created. Check your email for next steps.' },
+          { t: 'div', a: { style: 'margin-top:1.5rem' }, c:
+            bw.makeButton({ text: 'Start Over', variant: 'outline_primary', onclick: function() {
+              step = 1;
+              formData = { name: '', email: '', plan: 'starter', newsletter: true };
+              renderWizard();
+            }})
+          }
+        ]};
+      }
+
+      // -- Navigation actions (onclick in a: — survives re-renders!) --------
+      function saveAndNext() {
+        if (step === 1) {
+          formData.name = readField('wiz-name');
+          formData.email = readField('wiz-email');
+        } else if (step === 2) {
+          formData.plan = readField('wiz-plan');
+          formData.newsletter = readChecked('wiz-newsletter');
+        }
+        step = Math.min(step + 1, 4);
+        renderWizard();
+      }
+
+      function goBack() {
+        if (step === 1) return;
+        if (step === 2) {
+          formData.plan = readField('wiz-plan');
+          formData.newsletter = readChecked('wiz-newsletter');
+        }
+        step = Math.max(step - 1, 1);
+        renderWizard();
+      }
+
+      // -- Main render function (Level 1 — manual re-render) ---------------
+      function renderWizard() {
+        var stepContent = step === 1 ? stepAccount() :
+                          step === 2 ? stepPreferences() :
+                          step === 3 ? stepReview() :
+                          stepDone();
+
+        var nav = step < 4 ? {
+          t: 'div', a: { class: 'wiz-actions' },
+          c: [
+            step > 1
+              ? bw.makeButton({ text: '\u2190 Back', variant: 'outline_secondary', onclick: goBack })
+              : { t: 'span' },
+            bw.makeButton({
+              text: step === 3 ? 'Submit \u2713' : 'Next \u2192',
+              variant: 'primary',
+              onclick: saveAndNext
+            })
+          ]
+        } : null;
+
+        bw.DOM('#wizard-content', {
+          t: 'div', c: [
+            bw.makeStepper({ steps: stepLabels, currentStep: step - 1 }),
+            { t: 'div', a: { class: 'wiz-card' }, c: [stepContent, nav] }
+          ]
+        });
+      }
+
+      // -- Mount page structure ---------------------------------------------
+      bw.DOM('#app', {
+        t: 'div', a: { class: 'wiz-wrap' },
+        c: [
+          { t: 'div', a: { class: 'wiz-header' }, c: [
+            { t: 'h1', c: 'Create Account' },
+            { t: 'p', c: 'Multi-step wizard \u2014 built with bitwrench' }
+          ]},
+          { t: 'div', a: { id: 'wizard-content' } }
+        ]
+      });
+
+      renderWizard();
+    })();
+  </script>
+</body>
+</html>

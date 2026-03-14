@@ -1,6 +1,11 @@
 # Bitwrench Documentation
 
-These guides cover how to build UIs with bitwrench. Start with the TACO format, then explore state management and the component library.
+These guides cover how to build UIs with bitwrench.
+
+## Start Here
+
+- **[Thinking in Bitwrench](thinking-in-bitwrench.md)** — The complete guide to building with bitwrench. Covers TACO basics, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, the three-level component model, events (and why `onclick` goes in `a:`, not `o.mounted`), bwserve, and common patterns. **Read this first.**
+- **[LLM Guide](llm-bitwrench-guide.md)** — Compact single-file reference for AI-assisted development. All APIs, patterns, and rules in one document. Also useful as a quick-reference cheat sheet for humans.
 
 ## Guides
 

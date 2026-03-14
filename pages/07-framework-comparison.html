@@ -137,6 +137,16 @@
       '#honest-summary .callout pre': {
         'overflow-x': 'auto'
       },
+      '#translation-table': {
+        'overflow-x': 'auto',
+        '-webkit-overflow-scrolling': 'touch'
+      },
+      '#translation-table .cmp-table td': {
+        'white-space': 'nowrap',
+        'max-width': '220px',
+        'overflow': 'hidden',
+        'text-overflow': 'ellipsis'
+      },
       '@media (max-width: 768px)': {
         '#honest-summary > div': {
           'grid-template-columns': '1fr !important'
@@ -308,6 +318,21 @@
       ]
     };
 
+    // -- Operation-by-operation translation table --
+    var translationSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Operation-by-Operation Translation' },
+        { t: 'div', a: { class: 'demo-section-body' },
+          c: [
+            { t: 'p', a: { class: 'intro-text' },
+              c: 'How common UI operations map across frameworks. Each cell shows the idiomatic one-liner.' },
+            { t: 'div', a: { id: 'translation-table' } }
+          ]
+        }
+      ]
+    };
+
     // -- Common concerns --
     var concernsSection = {
       t: 'div', a: { class: 'demo-section' },
@@ -351,6 +376,7 @@
         todoSection,
         styleSection,
         summarySection,
+        translationSection,
         concernsSection,
         useCasesSection
       ]
@@ -2580,6 +2606,75 @@
         c: [
           { t: 'thead', c: headerRow },
           { t: 'tbody', c: rows.map(dataRow) }
+        ]
+      });
+    })();
+
+    // ---- Operation-by-operation translation table ----
+    (function() {
+      var rows = [
+        { op: 'Render element',         react: '<div className="card">Hi</div>',               vue: '<div class="card">Hi</div>',              vanilla: "el.innerHTML = '<div>Hi</div>'",          svelte: '<div class="card">Hi</div>',           solid: '<div class="card">Hi</div>',            bw: "bw.DOM('#x', {t:'div', a:{class:'card'}, c:'Hi'})" },
+        { op: 'Update text',            react: "setText('new') via useState",                   vue: "msg.value = 'new'",                        vanilla: "el.textContent = 'new'",                  svelte: "msg = 'new'",                          solid: "setMsg('new')",                          bw: "handle.set('msg', 'new')" },
+        { op: 'Conditional render',      react: '{show && <Comp/>}',                             vue: 'v-if="show"',                              vanilla: "if (show) el.style.display = ''",         svelte: '{#if show}<Comp/>{/if}',               solid: '<Show when={show}>...</Show>',           bw: "show ? taco : null in c: array" },
+        { op: 'List rendering',          react: '{items.map(i => <Li key/>)}',                   vue: 'v-for="i in items" :key',                  vanilla: 'el.innerHTML = items.map(...)',            svelte: '{#each items as i (i.id)}',            solid: '<For each={items}>...</For>',            bw: "c: items.map(function(i) { return {t:'li', c:i.name} })" },
+        { op: 'Event handler',           react: 'onClick={handler}',                             vue: '@click="handler"',                         vanilla: "el.addEventListener('click', fn)",        svelte: 'onclick={handler}',                    solid: 'onClick={handler}',                      bw: 'a: { onclick: fn }' },
+        { op: 'State declaration',       react: 'const [x, setX] = useState(0)',                 vue: 'const x = ref(0)',                         vanilla: 'let x = 0',                               svelte: 'let x = $state(0)',                    solid: 'const [x, setX] = createSignal(0)',      bw: 'o: { state: { x: 0 } }' },
+        { op: 'State update',            react: 'setX(42)',                                      vue: 'x.value = 42',                             vanilla: 'x = 42; render()',                        svelte: 'x = 42',                               solid: 'setX(42)',                               bw: "handle.set('x', 42)" },
+        { op: 'Computed / derived',      react: 'useMemo(() => x * 2, [x])',                    vue: 'computed(() => x.value * 2)',              vanilla: 'function get() { return x * 2; }',        svelte: 'let d = $derived(x * 2)',               solid: 'const d = () => x() * 2',                bw: "c: '${x}' with '${x * 2}'" },
+        { op: 'Side effect',             react: 'useEffect(() => {...}, [])',                    vue: 'onMounted(() => {...})',                    vanilla: "window.addEventListener('load', fn)",     svelte: '$effect(() => {...})',                  solid: 'onMount(() => {...})',                    bw: 'o: { mounted: function(el) {...} }' },
+        { op: 'Cleanup on unmount',      react: 'useEffect return cleanup',                     vue: 'onUnmounted(() => {...})',                  vanilla: 'manual',                                  svelte: 'return () => {...} in $effect',         solid: 'onCleanup(() => {...})',                  bw: 'o: { unmount: fn } or bw.cleanup(el)' },
+        { op: 'Style inline',            react: "style={{color: 'red'}}",                       vue: ':style="{color: \'red\'}"',                vanilla: "el.style.color = 'red'",                  svelte: 'style="color:red"',                    solid: "style={{color: 'red'}}",                 bw: "a: { style: bw.s({ color: 'red' }) }" },
+        { op: 'Style composition',       react: '{...base, ...override}',                       vue: '[baseStyle, overrideStyle]',               vanilla: 'Object.assign({}, base, over)',            svelte: '{...base, ...override}',               solid: '{...base, ...override}',                 bw: 'bw.s(bw.u.flex, bw.u.p4, { color: accent })' },
+        { op: 'CSS class conditional',   react: "className={active ? 'on' : ''}",               vue: ':class="{on: active}"',                    vanilla: "el.classList.toggle('on')",                svelte: 'class:on={active}',                    solid: 'classList={{on: active()}}',              bw: "a: { class: 'btn ' + (active ? 'on' : '') }" },
+        { op: 'Generate stylesheet',     react: 'styled-components / emotion',                  vue: '<style scoped>',                           vanilla: 'style.textContent = css',                  svelte: '<style> block',                        solid: 'css`...`',                               bw: "bw.injectCSS(bw.css({ '.card': { padding: '1rem' } }))" },
+        { op: 'Responsive styles',       react: 'media query in CSS/styled',                    vue: '@media in <style>',                        vanilla: '@media in CSS file',                       svelte: '@media in <style>',                    solid: '@media in CSS',                          bw: "bw.responsive('.grid', { md: { columns: '1fr 1fr' } })" },
+        { op: 'Animation',               react: '@keyframes in CSS file',                       vue: '@keyframes in <style>',                    vanilla: '@keyframes in CSS',                        svelte: 'animate:fn or CSS',                    solid: 'CSS or WAAPI',                           bw: "bw.css({ '@keyframes fade': { '0%': {opacity:'0'} } })" },
+        { op: 'Raw HTML',                react: 'dangerouslySetInnerHTML',                      vue: 'v-html="str"',                             vanilla: 'el.innerHTML = str',                       svelte: '{@html str}',                          solid: 'innerHTML={str}',                        bw: 'bw.raw(str) in c:' },
+        { op: 'Cross-component events',  react: 'Context + Zustand',                            vue: 'provide/inject or Pinia',                  vanilla: 'CustomEvent / EventTarget',                svelte: 'stores',                               solid: 'Context or signals',                     bw: 'bw.pub(topic, data) / bw.sub(topic, fn)' },
+        { op: 'Form input binding',      react: 'value={x} onChange={...}',                     vue: 'v-model="x"',                              vanilla: 'input.value',                              svelte: 'bind:value={x}',                       solid: 'value={x()} onInput={...}',              bw: "bw.$('#id')[0].value or bw.makeInput({oninput:fn})" },
+        { op: 'Theme / design tokens',   react: 'ThemeProvider / CSS vars',                     vue: 'CSS vars / provide',                       vanilla: 'CSS custom properties',                    svelte: 'CSS vars',                             solid: 'CSS vars / createContext',               bw: "bw.generateTheme('name', { primary: '#hex' })" },
+        { op: 'Build step required',     react: 'Yes (Babel/Vite/webpack)',                     vue: 'Yes (Vite or Vue CLI)',                    vanilla: 'No',                                       svelte: 'Yes (Svelte compiler)',                solid: 'Yes (Vite/Babel)',                       bw: 'No' },
+        { op: 'Bundle size',             react: '~45 KB (React + ReactDOM)',                    vue: '~33 KB (Vue 3)',                           vanilla: '0 KB',                                     svelte: '~2 KB (runtime)',                      solid: '~7 KB',                                  bw: '~39 KB (includes 50+ components + CSS gen)' }
+      ];
+
+      var headers = ['Operation', 'React', 'Vue 3', 'Vanilla JS', 'Svelte 5', 'SolidJS', 'Bitwrench'];
+      var headerRow = {
+        t: 'tr',
+        c: headers.map(function(h) { return { t: 'th', c: h }; })
+      };
+
+      var dataRow = function(row) {
+        return {
+          t: 'tr',
+          c: [
+            { t: 'td', c: { t: 'strong', c: row.op } },
+            { t: 'td', c: row.react },
+            { t: 'td', c: row.vue },
+            { t: 'td', c: row.vanilla },
+            { t: 'td', c: row.svelte },
+            { t: 'td', c: row.solid },
+            { t: 'td', c: row.bw }
+          ]
+        };
+      };
+
+      bw.DOM('#translation-table', {
+        t: 'div', c: [
+          {
+            t: 'table',
+            a: { class: 'cmp-table', style: 'font-size: 0.8rem;' },
+            c: [
+              { t: 'thead', c: headerRow },
+              { t: 'tbody', c: rows.map(dataRow) }
+            ]
+          },
+          { t: 'p', a: { style: 'margin-top: 1rem; font-size: 0.85rem; color: var(--bw_text_secondary);' },
+            c: [
+              'See the full ',
+              { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/blob/master/docs/framework-translation-table.md' }, c: 'Framework Translation Table' },
+              ' for details.'
+            ]
+          }
         ]
       });
     })();

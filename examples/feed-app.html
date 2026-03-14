@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Feed - Bitwrench Example</title>
+  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Live Feed — Level 1 manual render + bw.patch() + animations
+    //
+    // Demonstrates:
+    //   - Level 1 manual render with bw.DOM() re-render on filter change
+    //   - bw.createDOM() + appendChild for appending items into container
+    //   - bw.cleanup() for removing old items
+    //   - bw.css({ '@keyframes slideIn': {...} }) for entry animation
+    //   - bw.patch() for updating counters without full re-render
+    //   - bw.patchAll() for batch counter updates
+    //   - bw.makeButton() filter bar, bw.makeBadge(), bw.makeAlert()
+    //
+    // No build step. No framework. Zero raw DOM. Just bitwrench.
+    // =====================================================================
+
+    (function() {
+      'use strict';
+
+      bw.loadDefaultStyles();
+      var theme = bw.generateTheme('feed', {
+        primary: '#0f766e',
+        secondary: '#be185d',
+        tertiary: '#c2410c',
+        spacing: 'normal',
+        radius: 'md'
+      });
+
+      var P = theme.palette;
+
+      // -- CSS with slide-in animation --------------------------------------
+      bw.injectCSS(bw.css({
+        'body': {
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          background: P.surface.light,
+          margin: '0'
+        },
+        '.feed-wrap': {
+          maxWidth: '700px',
+          margin: '0 auto',
+          padding: '1.5rem 1rem'
+        },
+        '.feed-header': {
+          textAlign: 'center',
+          marginBottom: '1.5rem'
+        },
+        '.feed-header h1': {
+          fontSize: '1.5rem',
+          color: P.primary.base,
+          margin: '0 0 0.25rem'
+        },
+        '.feed-header p': {
+          color: P.muted.base,
+          margin: '0',
+          fontSize: '0.9rem'
+        },
+        '.feed-toolbar': {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          marginBottom: '1rem'
+        },
+        '.feed-filters': {
+          display: 'flex',
+          gap: '0.35rem',
+          flexWrap: 'wrap'
+        },
+        '.feed-counters': {
+          display: 'flex',
+          gap: '0.5rem',
+          fontSize: '0.8rem'
+        },
+        '.feed-list': {
+          minHeight: '200px'
+        },
+        '@keyframes slideIn': {
+          '0%': { opacity: '0', transform: 'translateX(-20px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' }
+        },
+        '.feed-item': {
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.75rem',
+          padding: '0.85rem 1rem',
+          background: '#fff',
+          border: '1px solid ' + P.muted.border,
+          borderRadius: '8px',
+          marginBottom: '0.5rem',
+          animation: 'slideIn 0.3s ease-out',
+          transition: 'opacity 0.3s ease'
+        },
+        '.feed-item-body': {
+          flex: '1',
+          fontSize: '0.9rem'
+        },
+        '.feed-item-meta': {
+          fontSize: '0.75rem',
+          color: P.muted.base,
+          marginTop: '0.25rem'
+        },
+        '.feed-empty': {
+          textAlign: 'center',
+          color: P.muted.base,
+          padding: '3rem 1rem'
+        }
+      }));
+
+      // -- State ------------------------------------------------------------
+      var activeFilter = 'all';
+      var feedItems = [];
+      var nextId = 1;
+      var counts = { info: 0, warning: 0, error: 0, success: 0 };
+      var MAX_ITEMS = 20;
+      var ITEM_LIFETIME = 30000; // 30s
+
+      // -- UUID for counter badges ------------------------------------------
+      var countInfoId = bw.uuid('cnt-info');
+      var countWarnId = bw.uuid('cnt-warn');
+      var countErrId = bw.uuid('cnt-err');
+      var countSuccId = bw.uuid('cnt-succ');
+      var countIds = { info: countInfoId, warning: countWarnId, error: countErrId, success: countSuccId };
+
+      // -- Feed item templates ----------------------------------------------
+      var templates = {
+        info: [
+          'User {user} logged in from {city}',
+          'Build #{num} completed in {sec}s',
+          'Config updated by {user}',
+          'Deployment started for v{ver}'
+        ],
+        warning: [
+          'High memory usage on node-{node} ({pct}%)',
+          'API response time > {ms}ms on /api/{ep}',
+          'Rate limit approaching for key {key}',
+          'Certificate expires in {days} days'
+        ],
+        error: [
+          'Connection refused: db-replica-{node}',
+          'HTTP 500 on POST /api/{ep}',
+          'Disk space critical on vol-{node} ({pct}% used)',
+          'Auth failure for user {user} (attempt #{num})'
+        ],
+        success: [
+          'Backup completed: {size}GB in {sec}s',
+          'Health check passed: all {num} services OK',
+          'Migration {ver} applied successfully',
+          'Scale-up complete: {num} → {num2} instances'
+        ]
+      };
+
+      var cities = ['NYC', 'London', 'Tokyo', 'Berlin', 'Sydney'];
+      var users = ['alice', 'bob', 'carol', 'dave', 'eve'];
+      var endpoints = ['users', 'orders', 'payments', 'search', 'webhooks'];
+
+      function fillTemplate(tmpl) {
+        return tmpl
+          .replace('{user}', users[Math.floor(Math.random() * users.length)])
+          .replace('{city}', cities[Math.floor(Math.random() * cities.length)])
+          .replace('{num}', Math.floor(100 + Math.random() * 900))
+          .replace('{num2}', Math.floor(4 + Math.random() * 8))
+          .replace('{sec}', (Math.random() * 30 + 1).toFixed(1))
+          .replace('{ms}', Math.floor(200 + Math.random() * 2000))
+          .replace('{pct}', Math.floor(75 + Math.random() * 20))
+          .replace('{node}', Math.floor(1 + Math.random() * 5))
+          .replace('{key}', 'sk_' + Math.random().toString(36).slice(2, 8))
+          .replace('{days}', Math.floor(1 + Math.random() * 14))
+          .replace('{ep}', endpoints[Math.floor(Math.random() * endpoints.length)])
+          .replace('{ver}', (Math.floor(Math.random() * 3) + 1) + '.' + Math.floor(Math.random() * 10) + '.' + Math.floor(Math.random() * 20))
+          .replace('{size}', (Math.random() * 50 + 1).toFixed(1));
+      }
+
+      function randomType() {
+        var r = Math.random();
+        if (r < 0.4) return 'info';
+        if (r < 0.65) return 'warning';
+        if (r < 0.8) return 'error';
+        return 'success';
+      }
+
+      // -- Create a feed item TACO -----------------------------------------
+      function makeFeedItem(item) {
+        var variantMap = { info: 'info', warning: 'warning', error: 'danger', success: 'success' };
+        return {
+          t: 'div', a: { class: 'feed-item', 'data-type': item.type, 'data-id': item.id.toString() },
+          c: [
+            bw.makeBadge({ text: item.type, variant: variantMap[item.type] || 'info' }),
+            { t: 'div', a: { class: 'feed-item-body' }, c: [
+              { t: 'div', c: item.message },
+              { t: 'div', a: { class: 'feed-item-meta' }, c: item.time }
+            ]}
+          ]
+        };
+      }
+
+      // -- Add item to feed -------------------------------------------------
+      function addItem() {
+        var type = randomType();
+        var tmpls = templates[type];
+        var message = fillTemplate(tmpls[Math.floor(Math.random() * tmpls.length)]);
+        var now = new Date();
+        var item = {
+          id: nextId++,
+          type: type,
+          message: message,
+          time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          expires: now.getTime() + ITEM_LIFETIME
+        };
+
+        feedItems.unshift(item);
+        counts[type]++;
+
+        // Append new item into the visible feed via bw.createDOM
+        if (activeFilter === 'all' || activeFilter === type) {
+          var listEl = bw.$('#feed-list')[0];
+          if (listEl) {
+            var domItem = bw.createDOM(makeFeedItem(item));
+            listEl.insertBefore(domItem, listEl.firstChild);
+          }
+        }
+
+        // Update counter badges via bw.patchAll
+        var patches = {};
+        patches['.' + countIds[type]] = counts[type].toString();
+        bw.patchAll(patches);
+      }
+
+      // -- Remove expired items ---------------------------------------------
+      function cleanupExpired() {
+        var now = Date.now();
+        var removed = false;
+
+        feedItems = feedItems.filter(function(item) {
+          if (item.expires < now) {
+            // Remove from DOM
+            var els = bw.$('[data-id="' + item.id + '"]');
+            if (els.length) {
+              bw.cleanup(els[0]);
+              els[0].remove();
+            }
+            removed = true;
+            return false;
+          }
+          return true;
+        });
+
+        if (removed) {
+          // Show empty state if filtered list is empty
+          var visibleCount = activeFilter === 'all'
+            ? feedItems.length
+            : feedItems.filter(function(i) { return i.type === activeFilter; }).length;
+          if (visibleCount === 0) {
+            var listEl = bw.$('#feed-list')[0];
+            if (listEl && !listEl.children.length) {
+              bw.DOM('#feed-list', { t: 'div', a: { class: 'feed-empty' }, c: 'No items to show. New events will appear shortly.' });
+            }
+          }
+        }
+      }
+
+      // Enforce max items
+      function enforceMax() {
+        while (feedItems.length > MAX_ITEMS) {
+          var old = feedItems.pop();
+          var els = bw.$('[data-id="' + old.id + '"]');
+          if (els.length) {
+            bw.cleanup(els[0]);
+            els[0].remove();
+          }
+        }
+      }
+
+      // -- Re-render full list (on filter change) ---------------------------
+      function renderList() {
+        var visible = activeFilter === 'all'
+          ? feedItems
+          : feedItems.filter(function(i) { return i.type === activeFilter; });
+
+        if (visible.length === 0) {
+          bw.DOM('#feed-list', { t: 'div', a: { class: 'feed-empty' },
+            c: 'No ' + (activeFilter === 'all' ? '' : activeFilter + ' ') + 'items. Events will appear shortly.' });
+          return;
+        }
+
+        bw.DOM('#feed-list', { t: 'div', c: visible.map(makeFeedItem) });
+      }
+
+      // -- Filter bar -------------------------------------------------------
+      function renderToolbar() {
+        var filters = ['all', 'info', 'warning', 'error', 'success'];
+        var variantMap = { all: 'dark', info: 'info', warning: 'warning', error: 'danger', success: 'success' };
+
+        bw.DOM('#feed-toolbar', {
+          t: 'div', a: { class: 'feed-toolbar' },
+          c: [
+            { t: 'div', a: { class: 'feed-filters' }, c: filters.map(function(f) {
+              return bw.makeButton({
+                text: f.charAt(0).toUpperCase() + f.slice(1),
+                variant: activeFilter === f ? variantMap[f] : 'outline_secondary',
+                size: 'sm',
+                onclick: function() {
+                  activeFilter = f;
+                  renderToolbar();
+                  renderList();
+                }
+              });
+            })},
+            { t: 'div', a: { class: 'feed-counters' }, c: [
+              { t: 'span', c: ['Info: ', { t: 'strong', a: { class: countInfoId }, c: '0' }] },
+              { t: 'span', c: ['Warn: ', { t: 'strong', a: { class: countWarnId }, c: '0' }] },
+              { t: 'span', c: ['Err: ', { t: 'strong', a: { class: countErrId }, c: '0' }] },
+              { t: 'span', c: ['OK: ', { t: 'strong', a: { class: countSuccId }, c: '0' }] }
+            ]}
+          ]
+        });
+      }
+
+      // -- Mount page -------------------------------------------------------
+      bw.DOM('#app', {
+        t: 'div', a: { class: 'feed-wrap' },
+        c: [
+          { t: 'div', a: { class: 'feed-header' }, c: [
+            { t: 'h1', c: 'Live Feed' },
+            { t: 'p', c: 'Real-time event stream \u2014 built with bitwrench' }
+          ]},
+          { t: 'div', a: { id: 'feed-toolbar' } },
+          { t: 'div', a: { id: 'feed-list', class: 'feed-list' } }
+        ]
+      });
+
+      renderToolbar();
+      bw.DOM('#feed-list', { t: 'div', a: { class: 'feed-empty' }, c: 'Waiting for events...' });
+
+      // -- Start simulation -------------------------------------------------
+      // Burst of initial items
+      for (var i = 0; i < 5; i++) {
+        addItem();
+      }
+
+      setInterval(function() {
+        addItem();
+        enforceMax();
+      }, 2000);
+
+      setInterval(cleanupExpired, 5000);
+    })();
+  </script>
+</body>
+</html>

@@ -66,6 +66,24 @@ Every key is optional. These are all valid TACOs:
 
 If `t` is omitted, it defaults to `'div'`.
 
+### Raw HTML in content — bw.raw()
+
+By default, bitwrench escapes all content — `<b>bold</b>` renders as the literal text `<b>bold</b>`, not bold text. This prevents XSS and is almost always what you want.
+
+When you need actual HTML inside a TACO (line breaks, inline formatting, HTML entities), use `bw.raw()`:
+
+```js
+// Without bw.raw() — the <br> and <span> are escaped to visible text
+{ t: 'h1', c: 'Coffee That<br>Tells a <span>Story</span>' }
+// Renders: Coffee That&lt;br&gt;Tells a &lt;span&gt;Story&lt;/span&gt;
+
+// With bw.raw() — the HTML is rendered as-is
+{ t: 'h1', c: bw.raw('Coffee That<br>Tells a <span class="accent">Story</span>') }
+// Renders: Coffee That (line break) Tells a Story (styled)
+```
+
+`bw.raw()` returns a sentinel object `{ __bw_raw: true, v: str }` — it doesn't modify the string, it marks it. Bitwrench checks for this marker during rendering and skips escaping. Never use `bw.raw()` on user-provided input.
+
 ### Nesting — TACOs inside TACOs
 
 Content (`c:`) can be a string, another TACO, or an array of both. This nesting is recursive — TACOs go as deep as your UI requires:
@@ -279,6 +297,73 @@ bw.injectCSS(bw.css({
 ```
 
 `generateTheme()` isn't a black box. It returns the full palette as JavaScript values. You can mix theme-generated CSS with your own `bw.css()` rules using the same colors.
+
+### @keyframes and nested at-rules
+
+`bw.css()` handles `@media`, `@keyframes`, and all `@`-prefix rules recursively:
+
+```js
+bw.injectCSS(bw.css({
+  '@keyframes fadeIn': {
+    '0%': { opacity: '0', transform: 'translateY(-10px)' },
+    '100%': { opacity: '1', transform: 'translateY(0)' }
+  },
+  '.toast': {
+    animation: 'fadeIn 0.3s ease-out',
+    padding: '0.75rem 1rem',
+    borderRadius: '8px'
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    '.toast': { animation: 'none' }
+  }
+}));
+```
+
+All `@`-prefix keys are treated as nested blocks. No special syntax needed — it's the same JS object structure used everywhere else.
+
+### Style composition — bw.s() and bw.u
+
+When inline styles get complex, string concatenation becomes fragile. `bw.s()` merges style objects into a style string, and `bw.u` provides pre-built utility objects for common CSS patterns:
+
+```js
+// bw.u has utilities for flex, spacing, text, etc.
+{ t: 'div', a: { style: bw.s(bw.u.flex, bw.u.alignCenter, bw.u.gap4) }, c: [
+    { t: 'img', a: { src: 'avatar.png', style: bw.s(bw.u.rounded, { width: '40px' }) } },
+    { t: 'span', c: 'Alice' }
+]}
+
+// Mix utilities with custom properties
+var cardHeader = bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.p4, {
+  borderBottom: '1px solid #eee',
+  background: theme.palette.primary.light
+});
+
+// Conditional styles
+{ t: 'div', a: {
+    style: bw.s(bw.u.p4, isActive ? bw.u.bold : null, { color: accent })
+  }, c: 'Status'
+}
+```
+
+`bw.s()` skips `null`/`undefined` arguments, so conditional composition works cleanly. Available utilities include `bw.u.flex`, `bw.u.flexCol`, `bw.u.alignCenter`, `bw.u.justifyBetween`, `bw.u.gap2`-`bw.u.gap8`, `bw.u.p2`-`bw.u.p8`, `bw.u.m2`-`bw.u.m8`, `bw.u.bold`, `bw.u.textCenter`, `bw.u.rounded`, and more.
+
+This is runtime-composable — unlike Tailwind class strings, you can store base styles in variables, merge them with `bw.s()`, and override individual properties. It's `Object.assign` for CSS, with a string output.
+
+### Responsive breakpoints — bw.responsive()
+
+`bw.responsive()` generates `@media` rules from a JavaScript object, using bitwrench's standard breakpoints:
+
+```js
+bw.injectCSS([
+  bw.css({ '.hero h1': { fontSize: '1.5rem', padding: '1rem' } }),
+  bw.responsive('.hero h1', {
+    md: { fontSize: '2.5rem', padding: '2rem' },
+    xl: { fontSize: '3.5rem' }
+  })
+].join('\n'));
+```
+
+The breakpoints (`sm`, `md`, `lg`, `xl`) match bitwrench's grid system. `bw.responsive()` returns a CSS string — join it with `bw.css()` output and pass the combined string to `bw.injectCSS()`.
 
 ### Built-in styles
 
@@ -635,23 +720,27 @@ and you want automatic DOM updates?
 
 ### Event handlers — use onclick, not o.mounted
 
+> **Warning: Never attach event handlers in `o.mounted`.** When a Level 2 component re-renders (after `.set()` or `.setState()`), the old DOM element is replaced. Any listeners attached via `addEventListener` in `o.mounted` are silently lost — no error, no warning. The click handler simply stops working after the first state change. This is the most common mistake new bitwrench developers make.
+
 ```js
-// Primary pattern — clean and simple
+// CORRECT — onclick in attributes. Re-attached automatically on every render.
 bw.makeButton({
   text: 'Save',
   onclick: function() { save(); }
 })
 
-// Also good — inline in TACO
+// CORRECT — inline in TACO
 { t: 'button', a: { onclick: function() { save(); } }, c: 'Save' }
 
-// Works but verbose — use only when you need the element reference
+// WRONG — handler silently lost when component re-renders
 { t: 'button', c: 'Save',
   o: { mounted: function(el) { el.addEventListener('click', save); } }
 }
 ```
 
-`onclick` in attributes is the primary event pattern. Use `o.mounted` only when you need the actual DOM element reference — for example, setting up an IntersectionObserver, initializing a third-party library, or measuring element dimensions.
+`onclick` (and `onchange`, `oninput`, `onsubmit`, etc.) in `a:` is the only safe event pattern for components that re-render. Bitwrench re-attaches attribute handlers on every render automatically.
+
+**When is `o.mounted` appropriate?** Only for non-event setup that needs the actual DOM element reference — IntersectionObserver, ResizeObserver, third-party library initialization, measuring element dimensions. Never for click/input/change handlers.
 
 ### Cross-component communication — pub/sub
 
@@ -1003,18 +1092,90 @@ bw.injectCSS(bw.css({
 ### Ephemeral UI (toasts, notifications)
 
 ```js
+// Add a toast container to your page layout (once)
+bw.DOM('#app', [
+  { t: 'div', a: { id: 'toast-container',
+      style: 'position:fixed;top:1rem;right:1rem;z-index:9999' } },
+  // ... rest of your page
+]);
+
+// Show a toast by appending to the container
 function showToast(message, variant) {
-  var toast = bw.createDOM(
-    bw.makeAlert({ content: message, variant: variant || 'info', dismissible: true })
-  );
-  toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:280px';
-  document.body.appendChild(toast);
-  setTimeout(function() { toast.remove(); }, 3500);
+  var toastId = bw.uuid('toast');
+  var toast = {
+    t: 'div', a: { class: toastId, style: 'min-width:280px;margin-bottom:0.5rem' },
+    c: bw.makeAlert({ content: message, variant: variant || 'info', dismissible: true })
+  };
+  var container = bw.$('#toast-container')[0];
+  if (container) {
+    container.appendChild(bw.createDOM(toast));
+    setTimeout(function() {
+      var el = bw.$('.' + toastId)[0];
+      if (el) { bw.cleanup(el); el.remove(); }
+    }, 3500);
+  }
 }
 showToast('Item added to cart', 'success');
 ```
 
-This is one of the few places where direct DOM insertion is the right call — the toast lives outside the application's TACO tree.
+The toast container is part of the TACO tree. Individual toasts append into it and auto-remove after a delay. `bw.cleanup()` ensures any lifecycle hooks are properly torn down.
+
+### Dashboard card — theme tokens + bw.s() + responsive + component
+
+This compact example combines the key patterns: theme palette tokens (no hardcoded hex), `bw.s()` + `bw.u` for inline styles, `bw.responsive()` for breakpoints, and `bw.component()` for live-updating stat cards.
+
+```js
+bw.loadDefaultStyles();
+var theme = bw.generateTheme('dash', { primary: '#1e40af', secondary: '#059669' });
+var P = theme.palette;
+
+// Responsive grid — base stacks, md goes 2-col, lg goes 4-col
+bw.injectCSS(bw.css({
+  '.stat-grid': { display: 'grid', gap: '1rem', marginBottom: '1.5rem' }
+}));
+bw.injectCSS(bw.responsive('.stat-grid', {
+  base: { gridTemplateColumns: '1fr' },
+  md:   { gridTemplateColumns: 'repeat(2, 1fr)' },
+  lg:   { gridTemplateColumns: 'repeat(4, 1fr)' }
+}));
+
+// Stat cards — palette tokens, not hex literals
+var metrics = { users: 2847, revenue: 48920, orders: 384, rate: 3.2 };
+
+function renderStats() {
+  bw.DOM('#stats', { t: 'div', a: { class: 'stat-grid' }, c: [
+    bw.makeStatCard({ value: metrics.users.toLocaleString(), label: 'Users', variant: 'primary' }),
+    bw.makeStatCard({ value: '$' + metrics.revenue.toLocaleString(), label: 'Revenue', variant: 'success' }),
+    bw.makeStatCard({ value: metrics.orders.toString(), label: 'Orders', variant: 'info' }),
+    bw.makeStatCard({ value: metrics.rate + '%', label: 'Conversion' })
+  ]});
+}
+
+// Layout uses bw.s() + bw.u — no inline style strings
+bw.DOM('#app', { t: 'div', c: [
+  { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.alignCenter,
+    { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
+    c: [
+      { t: 'h1', a: { style: bw.s({ margin: '0', fontSize: '1.5rem' }) }, c: 'Dashboard' },
+      { t: 'span', a: { style: bw.s({ opacity: '0.8', fontSize: '0.85rem' }) }, c: 'Live' }
+    ]
+  },
+  { t: 'div', a: { id: 'stats', style: bw.s(bw.u.p4, { maxWidth: '1200px', margin: '0 auto' }) } }
+]});
+
+renderStats();
+setInterval(function() {
+  metrics.users += Math.round(Math.random() * 20 - 5);
+  metrics.revenue += Math.round(Math.random() * 500 - 100);
+  renderStats();
+}, 3000);
+```
+
+Key things this example proves:
+- **No hardcoded hex in layout** — colors come from `theme.palette`
+- **No inline style strings** — `bw.s(bw.u.flex, bw.u.p4, ...)` composes style objects
+- **Responsive without media queries in HTML** — `bw.responsive()` generates `@media` CSS
+- **Re-render is just calling `bw.DOM()` again** — Level 1, no framework magic
 
 ---
 
@@ -1046,8 +1207,11 @@ This is one of the few places where direct DOM insertion is the right call — t
 
 | Function | What it does |
 |----------|-------------|
-| `bw.css(rules)` | JS object to CSS string |
+| `bw.css(rules)` | JS object to CSS string (supports `@media`, `@keyframes` recursively) |
 | `bw.injectCSS(css)` | Insert CSS string into document |
+| `bw.s(...styles)` | Merge style objects into a style string |
+| `bw.u` | Pre-built utility objects (`bw.u.flex`, `bw.u.p4`, `bw.u.bold`, etc.) |
+| `bw.responsive(sel, bp)` | Generate responsive `@media` CSS from breakpoint object |
 | `bw.loadDefaultStyles()` | Load built-in component CSS |
 | `bw.generateTheme(name, cfg)` | Generate themed CSS from seed colors |
 
@@ -1099,20 +1263,34 @@ This is one of the few places where direct DOM insertion is the right call — t
 
 ---
 
-## Appendix: For React/Vue/Svelte Developers
+## Appendix: Framework Translation Table
 
-| React/Vue/Svelte | Bitwrench |
-|-----------------|-----------|
-| JSX / `<template>` | TACO object `{t, a, c, o}` |
-| `useState` / `ref()` / `$state` | `bw.component()` + `.set()` |
-| `useEffect` / `onMounted` / `onMount` | `o: { mounted: fn }` |
-| `props` | Function arguments (TACO factories) |
-| `children` / `<slot>` | `c:` array |
-| `className` conditional | String concatenation or ternary |
-| `map()` in JSX | `.map()` in `c:` array (same thing) |
-| CSS Modules / styled-components | `bw.css()` + `bw.injectCSS()` |
-| Context / Redux / Zustand | `bw.pub()` / `bw.sub()` |
-| `npm run dev` (vite/webpack) | Open the HTML file |
+How common UI operations map across frameworks. Each cell is the idiomatic one-liner for that framework.
+
+| Operation | What it is | React | Vue 3 | Vanilla JS | Svelte 5 | Solid | Bitwrench |
+|-----------|-----------|-------|-------|------------|----------|-------|-----------|
+| **Render element** | Create and display a UI element | `<div className="card">Hi</div>` | `<div class="card">Hi</div>` | `el.innerHTML = '<div>Hi</div>'` | `<div class="card">Hi</div>` | `<div class="card">Hi</div>` | `bw.DOM('#x', {t:'div', a:{class:'card'}, c:'Hi'})` |
+| **Update text** | Change text content after render | `setText('new')` via `useState` | `msg.value = 'new'` | `el.textContent = 'new'` | `msg = 'new'` | `setMsg('new')` | `handle.set('msg', 'new')` or `bw.patch(id, 'new')` |
+| **Conditional render** | Show/hide based on state | `{show && <Comp/>}` | `v-if="show"` | `if (show) el.style.display = ''` | `{#if show}<Comp/>{/if}` | `<Show when={show}><Comp/></Show>` | `show ? taco : null` in `c:` array |
+| **List rendering** | Render array of items | `{items.map(i => <Li key={i.id}/>)}` | `v-for="i in items" :key="i.id"` | `el.innerHTML = items.map(...)` | `{#each items as i (i.id)}` | `<For each={items}>{i => ...}</For>` | `c: items.map(function(i) { return {t:'li', c:i.name} })` |
+| **Event handler** | Attach click/input handler | `onClick={handler}` | `@click="handler"` | `el.addEventListener('click', fn)` | `onclick={handler}` | `onClick={handler}` | `a: { onclick: fn }` |
+| **State declaration** | Declare reactive state | `const [x, setX] = useState(0)` | `const x = ref(0)` | `let x = 0` | `let x = $state(0)` | `const [x, setX] = createSignal(0)` | `o: { state: { x: 0 } }` |
+| **State update** | Change state and trigger re-render | `setX(42)` | `x.value = 42` | `x = 42; render()` | `x = 42` | `setX(42)` | `handle.set('x', 42)` (auto-renders) |
+| **Computed / derived** | Derive value from state | `useMemo(() => x * 2, [x])` | `computed(() => x.value * 2)` | `function get() { return x * 2; }` | `let d = $derived(x * 2)` | `const d = () => x() * 2` | `c: '${x}'` with Tier 2: `'${x * 2}'` |
+| **Side effect** | Run code on mount/change | `useEffect(() => {...}, [])` | `onMounted(() => {...})` | `window.addEventListener('load', fn)` | `$effect(() => {...})` | `onMount(() => {...})` | `o: { mounted: function(el) {...} }` |
+| **Cleanup on unmount** | Tear down timers/listeners | `useEffect return cleanup` | `onUnmounted(() => {...})` | manual | `return () => {...}` in `$effect` | `onCleanup(() => {...})` | `o: { unmount: fn }` or `bw.cleanup(el)` |
+| **Style inline** | Apply inline styles | `style={{color: 'red'}}` | `:style="{color: 'red'}"` | `el.style.color = 'red'` | `style="color:red"` | `style={{color: 'red'}}` | `a: { style: bw.s({ color: 'red' }) }` |
+| **Style composition** | Compose/merge styles | `{...base, ...override}` | `[baseStyle, overrideStyle]` | `Object.assign({}, base, over)` | `{...base, ...override}` | `{...base, ...override}` | `bw.s(bw.u.flex, bw.u.p4, { color: accent })` |
+| **CSS class conditional** | Toggle classes | `className={active ? 'on' : ''}` | `:class="{on: active}"` | `el.classList.toggle('on')` | `class:on={active}` | `classList={{on: active()}}` | `a: { class: 'btn ' + (active ? 'on' : '') }` |
+| **Generate stylesheet** | Create CSS rules in JS | styled-components / emotion | `<style scoped>` | `style.textContent = css` | `<style>` block | `css\`...\`` | `bw.injectCSS(bw.css({ '.card': { padding: '1rem' } }))` |
+| **Responsive styles** | Breakpoint-based CSS | media query in CSS/styled | `@media` in `<style>` | `@media` in CSS file | `@media` in `<style>` | `@media` in CSS | `bw.responsive('.grid', { md: { columns: '1fr 1fr' } })` |
+| **Animation** | CSS keyframe animation | `@keyframes` in CSS file | `@keyframes` in `<style>` | `@keyframes` in CSS | `animate:fn` or CSS | CSS or WAAPI | `bw.css({ '@keyframes fade': { '0%': {opacity:'0'}, '100%': {opacity:'1'} } })` |
+| **Raw HTML** | Render unescaped HTML | `dangerouslySetInnerHTML` | `v-html="str"` | `el.innerHTML = str` | `{@html str}` | `innerHTML={str}` | `bw.raw(str)` in `c:` |
+| **Cross-component events** | Decouple communication | Context + useReducer / Zustand | provide/inject or Pinia | CustomEvent / EventTarget | stores | Context or signals | `bw.pub(topic, data)` / `bw.sub(topic, fn)` |
+| **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
+| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.generateTheme('name', { primary: '#hex' })` → `theme.palette` |
+| **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** — open the HTML file |
+| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (bitwrench UMD gzipped, includes 50+ components + CSS gen) |
 
 ---
 

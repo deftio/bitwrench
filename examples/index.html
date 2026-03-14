@@ -3,68 +3,313 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench Examples</title>
+  <title>Bitwrench Examples - Complete App Demos</title>
+  <meta name="description" content="Full application examples built with bitwrench: coffee shop landing, reactive UI, IoT dashboards, server-driven apps, and more.">
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
+  <link rel="stylesheet" href="../pages/shared-theme.css">
+  <script src="../pages/shared-nav.js"></script>
 </head>
 <body>
+  <div id="example-nav"></div>
   <div id="app"></div>
+
   <script>
-    bw.loadDefaultStyles();
+    // Mount site nav — baseHref resolves page links relative to examples/
+    mountExampleNav('#example-nav', '', '../pages/');
 
-    var modernExamples = [
-      { title: 'Coffee Shop Landing', href: 'ember_and_oak.html', desc: 'Full landing page with bw.generateTheme(), BCCL components, and custom CSS.' },
-      { title: 'Reactive UI (Todo)', href: 'reactive-ui/index.html', desc: 'Todo app using bw.component() with .set()/.get() and pub/sub.' },
-      { title: 'Static Page', href: 'static-page/index.html', desc: 'Marketing landing page built entirely with BCCL factories.' },
-      { title: 'Client-Server (bwserve)', href: 'client-server/', desc: 'Server-driven counter demo using SSE protocol. Run: node server.js' },
-      { title: 'LLM Chat (bwserve)', href: 'llm-chat/', desc: 'Chat UI driven by Ollama/OpenAI via bwserve. Run: node server.js' },
-      { title: 'Embedded IoT Dashboard', href: 'embedded/index.html', desc: 'ESP32-style sensor dashboard with SSE data push.' }
+    // ---- Page CSS ----
+    bw.injectCSS(bw.css({
+      '.ex_hero': {
+        background: 'linear-gradient(135deg, var(--bw_header_bg) 0%, #004d4d 100%)',
+        color: '#fff',
+        padding: '2.5rem 0 2rem'
+      },
+      '.ex_hero h1': {
+        margin: '0 0 0.4rem',
+        'font-size': '1.85rem',
+        'font-weight': '700',
+        'letter-spacing': '-0.4px'
+      },
+      '.ex_hero p': {
+        opacity: '0.8',
+        'font-size': '1.05rem',
+        margin: '0',
+        'line-height': '1.55'
+      },
+      '.ex_grid': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))',
+        gap: '1.25rem'
+      },
+      '.ex_card_link': {
+        'text-decoration': 'none',
+        color: 'inherit',
+        display: 'block'
+      },
+      '.ex_card': {
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        'box-shadow': 'var(--bw_card_shadow)',
+        padding: '1.5rem',
+        height: '100%',
+        transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
+        display: 'flex',
+        'flex-direction': 'column'
+      },
+      '.ex_card:hover': {
+        transform: 'translateY(-3px)',
+        'box-shadow': '0 6px 20px rgba(0,0,0,0.1)'
+      },
+      '.bw_theme_alt .ex_card:hover': {
+        'box-shadow': '0 6px 20px rgba(0,0,0,0.35)'
+      },
+      '.ex_card_icon': {
+        'font-size': '2rem',
+        'margin-bottom': '0.75rem',
+        display: 'block'
+      },
+      '.ex_card h3': {
+        margin: '0 0 0.35rem',
+        'font-size': '1.05rem',
+        'font-weight': '600',
+        color: 'var(--bw_text)'
+      },
+      '.ex_card p': {
+        margin: '0 0 0.75rem',
+        'font-size': '0.875rem',
+        color: 'var(--bw_text_secondary)',
+        'line-height': '1.55',
+        flex: '1'
+      },
+      '.ex_card_tags': {
+        display: 'flex',
+        gap: '0.35rem',
+        'flex-wrap': 'wrap'
+      },
+      '.ex_tag': {
+        'font-size': '0.6875rem',
+        padding: '0.15rem 0.5rem',
+        'border-radius': '50px',
+        background: 'var(--bw_teal_light)',
+        color: 'var(--bw_teal_dark)',
+        'font-weight': '500'
+      },
+      '.ex_tag_server': {
+        background: '#fef3c7',
+        color: '#92400e'
+      },
+      '.bw_theme_alt .ex_tag_server': {
+        background: '#422006',
+        color: '#fbbf24'
+      },
+      '.ex_tag_embedded': {
+        background: '#dcfce7',
+        color: '#166534'
+      },
+      '.bw_theme_alt .ex_tag_embedded': {
+        background: '#052e16',
+        color: '#4ade80'
+      },
+      '.ex_prereq': {
+        'font-size': '0.75rem',
+        color: 'var(--bw_text_muted)',
+        'margin-top': '0.5rem',
+        'font-style': 'italic'
+      },
+      '.ex_category': {
+        'font-size': '0.6875rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.08em',
+        'font-weight': '600',
+        color: 'var(--bw_teal)',
+        'margin-bottom': '0.75rem'
+      },
+      '@media (max-width: 768px)': {
+        '.ex_hero': { padding: '1.5rem 0 1.25rem' },
+        '.ex_hero h1': { 'font-size': '1.35rem' }
+      }
+    }), { id: 'ex-page-styles' });
+
+    // ---- Example Data ----
+    var examples = [
+      {
+        category: 'Full Applications',
+        items: [
+          {
+            title: 'Ember & Oak Coffee Co.',
+            href: 'ember_and_oak.html',
+            icon: '☕',
+            desc: 'Full-page landing with custom theme, reactive cart, search + filter, charts, accordion, timeline, and 27 BCCL components in one page.',
+            tags: ['bw.component()', 'generateTheme()', 'pub/sub'],
+            prereq: null
+          },
+          {
+            title: 'Reactive Todo App',
+            href: 'reactive-ui/index.html',
+            icon: '✅',
+            desc: 'Todo app using bw.component() with .set()/.get(), pub/sub for cross-component communication, and Level 2 template bindings.',
+            tags: ['bw.component()', 'Level 2', 'pub/sub'],
+            prereq: null
+          },
+          {
+            title: 'Static Marketing Page',
+            href: 'static-page/index.html',
+            icon: '📄',
+            desc: 'Marketing landing page built entirely with BCCL factories. No custom CSS, no state management \u2014 just component composition.',
+            tags: ['BCCL', 'makeCard()', 'makeHero()'],
+            prereq: null
+          },
+          {
+            title: 'Metrics Dashboard',
+            href: 'dashboard-app.html',
+            icon: '\uD83D\uDCCA',
+            desc: 'Live-updating admin dashboard with stat cards, bar chart, progress bars, and activity feed. Theme tokens, bw.s()/bw.u, responsive layout, pub/sub.',
+            tags: ['bw.s()/bw.u', 'bw.responsive()', 'pub/sub', 'theme tokens'],
+            prereq: null
+          },
+          {
+            title: 'Signup Wizard',
+            href: 'wizard-app.html',
+            icon: '\uD83E\uDDD9',
+            desc: 'Multi-step form with validation, state transitions, and bw.raw() for formatted summaries. Proves onclick in attributes survives re-renders.',
+            tags: ['bw.raw()', 'makeStepper()', 'makeForm()', 'state transitions'],
+            prereq: null
+          },
+          {
+            title: 'Live Feed',
+            href: 'feed-app.html',
+            icon: '\uD83D\uDCE1',
+            desc: 'Real-time event stream with filter bar, slide-in animations, bw.patch() counters, and auto-expiring items via bw.cleanup().',
+            tags: ['bw.patch()', '@keyframes', 'bw.cleanup()', 'Level 1'],
+            prereq: null
+          }
+        ]
+      },
+      {
+        category: 'Server-Driven',
+        items: [
+          {
+            title: 'Counter (bwserve)',
+            href: 'client-server/',
+            icon: '🔄',
+            desc: 'Server-driven counter using SSE protocol. State lives on the server; UI updates push to the browser in real-time.',
+            tags: [{ text: 'bwserve', cls: 'ex_tag_server' }, 'SSE', 'data-bw-action'],
+            prereq: 'Run: node server.js'
+          },
+          {
+            title: 'LLM Chat Interface',
+            href: 'llm-chat/',
+            icon: '🤖',
+            desc: 'Chat UI driven by Ollama or OpenAI via bwserve. Streaming responses, auto-scroll, and server-side state management.',
+            tags: [{ text: 'bwserve', cls: 'ex_tag_server' }, 'LLM', 'streaming'],
+            prereq: 'Run: node server.js (requires Ollama or OpenAI key)'
+          }
+        ]
+      },
+      {
+        category: 'Embedded / IoT',
+        items: [
+          {
+            title: 'IoT Sensor Dashboard',
+            href: 'embedded/index.html',
+            icon: '📡',
+            desc: 'ESP32-style sensor dashboard with SSE data push, mock sensor readings, and device control buttons. Works standalone in the browser with simulated data.',
+            tags: [{ text: 'embedded', cls: 'ex_tag_embedded' }, 'SSE', 'bw.patch()'],
+            prereq: null
+          }
+        ]
+      }
     ];
 
-    var legacyExamples = [
-      { title: 'Basic Demo (v1)', href: 'example1.html', desc: 'Headings, paragraphs, sortable tables using v1 array syntax.' },
-      { title: 'Grid + Tables (v1)', href: 'example5.html', desc: 'Grid layout, multi-array, htmlTable() demo.' },
-      { title: 'Live Clock (v1)', href: 'example8.html', desc: 'Full-page clock with setInterval.' },
-      { title: 'Image Grid (v1)', href: 'example9.html', desc: 'Card grid generator.' }
-    ];
+    // ---- Build page ----
+    var hero = {
+      t: 'div', a: { class: 'ex_hero' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+        c: [
+          { t: 'h1', c: 'Example Applications' },
+          { t: 'p', c: 'Complete apps and demos built with bitwrench. Each is a self-contained example you can study, modify, and build on.' }
+        ]
+      }
+    };
 
     function makeExampleCard(ex) {
+      var tags = (ex.tags || []).map(function(tag) {
+        if (typeof tag === 'object') {
+          return { t: 'span', a: { class: 'ex_tag ' + tag.cls }, c: tag.text };
+        }
+        return { t: 'span', a: { class: 'ex_tag' }, c: tag };
+      });
+
+      var content = [
+        { t: 'span', a: { class: 'ex_card_icon' }, c: ex.icon },
+        { t: 'h3', c: ex.title },
+        { t: 'p', c: ex.desc },
+        { t: 'div', a: { class: 'ex_card_tags' }, c: tags }
+      ];
+
+      if (ex.prereq) {
+        content.push({ t: 'div', a: { class: 'ex_prereq' }, c: ex.prereq });
+      }
+
       return {
-        t: 'a', a: { href: ex.href, style: 'text-decoration:none; color:inherit; display:block' },
-        c: bw.makeCard({
-          title: ex.title,
-          content: ex.desc,
-          hoverable: true,
-          style: 'height:100%'
-        })
+        t: 'a', a: { href: ex.href, class: 'ex_card_link' },
+        c: { t: 'div', a: { class: 'ex_card' }, c: content }
       };
     }
 
-    bw.DOM('#app', { t: 'div', a: { class: 'bw-container' }, c: [
-      { t: 'div', a: { style: 'text-align:center; padding:2rem 0 1rem' }, c: [
-        { t: 'h1', c: 'Bitwrench Examples' },
-        { t: 'p', a: { style: 'color:#666; margin-top:0.5rem' }, c: [
-          'For the full documentation site, visit ',
-          { t: 'a', a: { href: '../pages/' }, c: 'bitwrench pages' },
-          '.'
-        ]}
-      ]},
+    var sections = examples.map(function(section) {
+      return {
+        t: 'div', a: { class: 'demo-section', style: 'margin-bottom:1.5rem' },
+        c: [
+          { t: 'h2', c: section.category },
+          {
+            t: 'div', a: { class: 'demo-content' },
+            c: {
+              t: 'div', a: { class: 'ex_grid' },
+              c: section.items.map(makeExampleCard)
+            }
+          }
+        ]
+      };
+    });
 
-      { t: 'h2', a: { style: 'margin:1.5rem 0 1rem' }, c: 'Modern Examples (v2)' },
-      { t: 'div', a: { style: 'display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem' },
-        c: modernExamples.map(makeExampleCard)
-      },
+    // Source code callout
+    var sourceCallout = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Source Code' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            { t: 'p', a: { style: 'margin:0 0 0.75rem;color:var(--bw_text_secondary);font-size:0.9rem;line-height:1.6' },
+              c: [
+                'Every example is a single HTML file (or a small set of files) with no build step. View the source on ',
+                { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/master/examples' }, c: 'GitHub' },
+                ', or open any example and hit View Source in your browser.'
+              ]
+            },
+            { t: 'p', a: { style: 'margin:0;color:var(--bw_text_secondary);font-size:0.9rem;line-height:1.6' },
+              c: [
+                'For guided tutorials and the full component library, visit the ',
+                { t: 'a', a: { href: '../pages/' }, c: 'documentation site' },
+                '.'
+              ]
+            }
+          ]
+        }
+      ]
+    };
 
-      { t: 'h2', a: { style: 'margin:2rem 0 1rem' }, c: 'Legacy Demos (v1)' },
-      { t: 'p', a: { style: 'color:#666; margin-bottom:1rem' }, c: 'These use bitwrench v1.x syntax (array notation, deprecated APIs). Kept for reference.' },
-      { t: 'div', a: { style: 'display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem' },
-        c: legacyExamples.map(makeExampleCard)
-      },
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: sections.concat([sourceCallout])
+    };
 
-      { t: 'footer', a: { style: 'text-align:center; padding:2rem 0 1rem; color:#999; font-size:0.8rem' },
-        c: 'bitwrench \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause'
-      }
-    ]});
+    bw.DOM('#app', [hero, contentWrapper]);
   </script>
 </body>
 </html>

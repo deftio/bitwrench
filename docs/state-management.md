@@ -160,6 +160,8 @@ Level 1 components can respond to mount and unmount events:
 }
 ```
 
+> **Warning: Never use `o.mounted` to attach event handlers.** When a Level 2 component re-renders (after `.set()`), the old DOM element is replaced and any listeners attached via `addEventListener` in `mounted` are silently lost. Always put event handlers in `a: { onclick: fn }` — bitwrench re-attaches them on every render. Use `o.mounted` only for non-event setup: timers, observers, third-party library init, measuring dimensions.
+
 ### Targeted updates with `bw.patch()`
 
 For fine-grained updates without re-rendering an entire component, use `bw.patch()`:

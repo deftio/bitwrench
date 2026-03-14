@@ -60,10 +60,12 @@ var brand = '#336699', radius = '12px';
 var base = { borderRadius: radius, padding: '1rem', border: '1px solid #ddd' };
 var success = Object.assign({}, base, { background: '#e8f5e9' });
 
-// Generated classes
+// Generated classes — bw.css() handles @media, @keyframes, and all @-prefix rules recursively
 bw.injectCSS(bw.css({
   '.card': { borderRadius: radius, boxShadow: '0 2px 8px rgba(0,0,0,.08)' },
   '.card:hover': { boxShadow: '0 4px 12px rgba(0,0,0,.12)' },
+  '@keyframes fadeIn': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+  '.card': { animation: 'fadeIn 0.3s ease-out' },
   '@media (max-width: 768px)': { '.card': { padding: '0.5rem' } }
 }));
 
@@ -373,10 +375,16 @@ bw.generateTheme('ocean', bw.THEME_PRESETS.ocean);
 
 ## Events Pattern
 
+> **Critical: Always put event handlers in `a: { onclick: fn }`, never in `o.mounted` with `addEventListener`.** When a Level 2 component re-renders (after `.set()`), the old DOM element is replaced. Listeners attached in `o.mounted` are silently lost — no error, the handler just stops working. This is the #1 mistake new bitwrench developers make.
+
 ```javascript
-// Primary: onclick in attributes
+// CORRECT — onclick in attributes (re-attached on every render)
 { t: 'button', a: { onclick: function() { save(); } }, c: 'Save' }
 bw.makeButton({ text: 'Save', onclick: function() { save(); } })
+
+// WRONG — silently breaks after first .set() call
+{ t: 'button', c: 'Save',
+  o: { mounted: function(el) { el.addEventListener('click', save); } } }
 
 // Pub/sub (app-wide, not DOM-scoped)
 bw.pub('cart:updated', { count: cart.length });
@@ -545,17 +553,101 @@ badge.sub('cart:updated', function(d) { badge.set('n', d.count); });
 bw.pub('cart:updated', { count: cart.length });
 ```
 
+### Raw HTML in content
+```javascript
+// Default: content is HTML-escaped (safe)
+{ t: 'p', c: '<b>bold</b>' }  // renders literal "<b>bold</b>"
+
+// bw.raw(): render HTML as-is (use only for trusted content)
+{ t: 'h1', c: bw.raw('Coffee That<br>Tells a <span class="accent">Story</span>') }
+```
+
+### Style composition (bw.s + bw.u)
+```javascript
+// bw.u has pre-built style objects; bw.s() merges them into a style string
+{ t: 'div', a: { style: bw.s(bw.u.flex, bw.u.alignCenter, bw.u.gap4, { padding: '1rem' }) },
+  c: [
+    { t: 'img', a: { src: 'avatar.png', style: bw.s(bw.u.rounded, { width: '40px' }) } },
+    { t: 'span', c: 'Alice' }
+  ]
+}
+
+// Conditional: null/undefined args are skipped
+{ t: 'div', a: { style: bw.s(bw.u.p4, isActive ? bw.u.bold : null) }, c: label }
+```
+
+### Responsive breakpoints
+```javascript
+// bw.responsive() returns CSS string — join with bw.css() output
+bw.injectCSS([
+  bw.css({ '.hero': { fontSize: '1.5rem' } }),
+  bw.responsive('.hero', { md: { fontSize: '2.5rem' }, xl: { fontSize: '3.5rem' } })
+].join('\n'));
+```
+
+### Mini dashboard (theme tokens + bw.s + responsive + live update)
+```javascript
+bw.loadDefaultStyles();
+var theme = bw.generateTheme('dash', { primary: '#1e40af', secondary: '#059669' });
+var P = theme.palette;  // use palette tokens, never hardcoded hex
+
+bw.injectCSS(bw.css({ '.sg': { display: 'grid', gap: '1rem' } }));
+bw.injectCSS(bw.responsive('.sg', {
+  base: { gridTemplateColumns: '1fr' },
+  md: { gridTemplateColumns: 'repeat(2, 1fr)' },
+  lg: { gridTemplateColumns: 'repeat(4, 1fr)' }
+}));
+
+var m = { users: 2847, revenue: 48920, orders: 384 };
+function renderStats() {
+  bw.DOM('#stats', { t: 'div', a: { class: 'sg' }, c: [
+    bw.makeStatCard({ value: m.users.toLocaleString(), label: 'Users', variant: 'primary' }),
+    bw.makeStatCard({ value: '$' + m.revenue.toLocaleString(), label: 'Revenue', variant: 'success' }),
+    bw.makeStatCard({ value: m.orders.toString(), label: 'Orders', variant: 'info' }),
+    bw.makeStatCard({ value: '3.2%', label: 'Conversion' })
+  ]});
+}
+bw.DOM('#app', { t: 'div', c: [
+  { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.alignCenter,
+    { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
+    c: { t: 'h1', a: { style: bw.s({ margin: '0', fontSize: '1.5rem' }) }, c: 'Dashboard' }
+  },
+  { t: 'div', a: { id: 'stats', style: bw.s(bw.u.p4, { maxWidth: '1200px', margin: '0 auto' }) } }
+]});
+renderStats();
+setInterval(function() { m.users += Math.round(Math.random() * 20 - 5); renderStats(); }, 3000);
+```
+
+## Framework Translation Table (condensed)
+
+The full 22-row table is in `docs/thinking-in-bitwrench.md`. These are the 10 most important operations:
+
+| Operation | React | Vue 3 | Vanilla JS | Bitwrench |
+|-----------|-------|-------|------------|-----------|
+| **Render element** | `<div>Hi</div>` | `<div>Hi</div>` | `el.innerHTML = '...'` | `bw.DOM('#x', {t:'div', c:'Hi'})` |
+| **State + update** | `useState` + `setX(42)` | `ref()` + `x.value = 42` | `x = 42; render()` | `o:{state:{x:0}}` + `handle.set('x', 42)` |
+| **Conditional** | `{show && <C/>}` | `v-if="show"` | `if (show) ...` | `show ? taco : null` |
+| **List** | `items.map(i => <Li/>)` | `v-for="i in items"` | `items.map(...).join('')` | `c: items.map(fn)` |
+| **Event handler** | `onClick={fn}` | `@click="fn"` | `el.addEventListener` | `a: { onclick: fn }` |
+| **Generate CSS** | styled-components | `<style scoped>` | `style.textContent` | `bw.injectCSS(bw.css({...}))` |
+| **Responsive** | media query in CSS | `@media` in `<style>` | `@media` in CSS | `bw.responsive('.x', {md:{...}})` |
+| **Cross-component** | Context / Zustand | provide/inject | CustomEvent | `bw.pub()` / `bw.sub()` |
+| **Theme tokens** | ThemeProvider | CSS vars | CSS vars | `bw.generateTheme()` → `palette` |
+| **Build step** | Yes (Vite/webpack) | Yes (Vite) | No | **No** — open the HTML file |
+
 ## Key Rules
 
-1. **Call `bw.loadDefaultStyles()`** before rendering (browser).
-2. **Content is escaped by default.** Use `bw.raw(str)` for raw HTML.
-3. **All `make*()` return Level 0 TACOs** — pass to `bw.DOM()` or `bw.html()`.
-4. **Use `bw.DOM()` to mount** — handles lifecycle + cleanup.
-5. **For reactive state, use `bw.component()`** — `.set()` auto-renders.
-6. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`.
-7. **Variants**: `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`.
-8. **No raw DOM** — use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
-9. **TACO is computation** — every field is a JS expression. Use variables, functions, `.map()`, ternaries.
-10. **CSS is just strings** — store in variables, compose with `Object.assign`, generate with functions.
-11. **Three levels are explicit** — you always know if you have data (L0), DOM (L1), or a managed component (L2).
-12. **Console is DevTools**: `bw.inspect($0)`, `$0._bw_state`, `$0._bwComponentHandle`.
+1. **Event handlers go in `a: { onclick: fn }`, never in `o.mounted`** — mounted handlers are silently lost when a component re-renders. This is the #1 mistake.
+2. **Call `bw.loadDefaultStyles()`** before rendering (browser).
+3. **Content is escaped by default.** Use `bw.raw(str)` for raw HTML.
+4. **All `make*()` return Level 0 TACOs** — pass to `bw.DOM()` or `bw.html()`.
+5. **Use `bw.DOM()` to mount** — handles lifecycle + cleanup.
+6. **For reactive state, use `bw.component()`** — `.set()` auto-renders.
+7. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`.
+8. **Variants**: `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`.
+9. **No raw DOM** — use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
+10. **TACO is computation** — every field is a JS expression. Use variables, functions, `.map()`, ternaries.
+11. **CSS is just strings** — store in variables, compose with `bw.s()` and `bw.u` utilities, generate with `bw.css()`.
+12. **`bw.css()` handles `@keyframes` and `@media`** — all `@`-prefix keys are nested blocks. No raw CSS strings needed.
+13. **Three levels are explicit** — you always know if you have data (L0), DOM (L1), or a managed component (L2).
+14. **Console is DevTools**: `bw.inspect($0)`, `$0._bw_state`, `$0._bwComponentHandle`.

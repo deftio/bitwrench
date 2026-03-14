@@ -219,6 +219,9 @@ Create a bwserve application.
 | `static` | string | null | Static file directory |
 | `theme` | string/object | null | Theme preset name or config |
 | `injectBitwrench` | boolean | true | Auto-inject bitwrench UMD + CSS |
+| `allowExec` | boolean | false | Enable `exec` messages on client (see warning below) |
+
+> **Start without `allowExec`.** The `register/call` pattern (Tier 1 + Tier 2) handles 95% of use cases — send named functions once, invoke them by name with safe argument passing. Only enable `allowExec: true` if you genuinely need to evaluate arbitrary code strings on the client. When in doubt, leave it off.
 
 ### `app.page(path, handler)`
 
@@ -344,7 +347,9 @@ client.call('log', 'Debug: user count =', users.length);
 
 ### Tier 3: `client.exec(code)`
 
-Execute arbitrary JavaScript on the client. **Requires opt-in:** the client connection must be created with `{ allowExec: true }`. Without this flag, exec messages are silently rejected.
+Execute arbitrary JavaScript on the client. **Requires opt-in:** the server must be created with `allowExec: true` and/or the client connection with `{ allowExec: true }`. Without this flag, exec messages are silently rejected.
+
+> **You probably don't need this.** If you're reaching for `exec`, consider whether `register` + `call` would work instead. `register` sends the function once; `call` invokes it by name with arguments. This covers scroll, focus, download, format, animate — essentially any reusable client-side behavior. `exec` is for truly one-off operations where registering a function would be wasteful.
 
 ```javascript
 // Server side
@@ -362,9 +367,11 @@ client.exec("window.scrollTo(0, 0)");
 | Simple button click | `data-bw-action` | Zero code, just an attribute |
 | Scroll after append | `call("scrollTo", sel)` | Built-in, no registration |
 | Trigger file download | `call("download", ...)` | Built-in, safe |
-| Reusable client logic | `register` + `call` | Send once, invoke many times |
-| Quick one-off operation | `exec` | No registration overhead |
+| Reusable client logic | `register` + `call` | **Default choice.** Send once, invoke many times |
+| Quick one-off operation | `exec` | Last resort. No registration overhead but requires `allowExec` |
 | Production security | `call` (never `exec`) | Arguments can't inject code |
+
+> **Rule of thumb:** Start with `data-bw-action` + DOM operations. When you need client-side behavior, use `register` + `call`. Only reach for `exec` if you have a genuine one-off need and understand the security implications.
 
 ## Client API Reference
 

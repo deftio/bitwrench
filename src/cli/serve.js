@@ -29,6 +29,7 @@ Options:
       --stdin                Read protocol messages from stdin (newline-delimited JSON)
   -t, --theme <name>         Theme preset or hex colors ("#pri,#sec")
       --title <string>       Page title (default: "bwcli serve")
+      --allow-exec           Enable exec messages (runs JS in browser, use for dev only)
       --open                 Open browser on start
   -v, --verbose              Verbose output
   -h, --help                 Print this help
@@ -148,6 +149,7 @@ export function runServe(argv) {
                 stdin:   { type: 'boolean' },
                 theme:   { type: 'string', short: 't' },
                 title:   { type: 'string' },
+                'allow-exec': { type: 'boolean' },
                 open:    { type: 'boolean' },
                 verbose: { type: 'boolean', short: 'v' },
                 help:    { type: 'boolean', short: 'h' }
@@ -193,7 +195,8 @@ export function runServe(argv) {
             theme: theme,
             title: title,
             verbose: verbose,
-            open: !!values.open
+            open: !!values.open,
+            allowExec: !!values['allow-exec']
         });
     }).catch(function(err) {
         console.error('Failed to load bwserve: ' + err.message);
@@ -209,7 +212,8 @@ function startServer(bwserve, opts) {
         port: opts.webPort,
         title: opts.title,
         static: opts.dir,
-        theme: opts.theme
+        theme: opts.theme,
+        allowExec: opts.allowExec
     });
 
     // Register a passthrough page handler — just keeps clients alive

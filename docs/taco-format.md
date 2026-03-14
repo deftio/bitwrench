@@ -65,6 +65,14 @@ Style can also be an object:
 a: { style: { marginTop: '1rem', color: '#333' } }
 ```
 
+For composable styles, use `bw.s()` with `bw.u` utility objects:
+
+```javascript
+a: { style: bw.s(bw.u.flex, bw.u.alignCenter, bw.u.gap4, { marginTop: '1rem' }) }
+```
+
+`bw.s()` merges style objects into a style string, `bw.u` provides pre-built utilities (`bw.u.flex`, `bw.u.p4`, `bw.u.bold`, etc.). See [Thinking in Bitwrench](thinking-in-bitwrench.md) for full coverage.
+
 > **Coming from React?** Attribute names use standard HTML casing (`class`, `onclick`, `tabindex`), not React's camelCase (`className`, `onClick`, `tabIndex`).
 
 ### `c` — Content

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metrics Dashboard - Bitwrench Example</title>
+  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Metrics Dashboard — Level 2 components + pub/sub + theme tokens
+    //
+    // Demonstrates:
+    //   - bw.generateTheme() with palette tokens used in bw.css() rules
+    //   - bw.s() + bw.u for all inline styles
+    //   - bw.responsive() for layout breakpoints
+    //   - bw.css({ '@keyframes': {...} }) for pulse animation
+    //   - bw.component() with .set() for stat cards
+    //   - bw.pub() / bw.sub() for cross-widget communication
+    //   - bw.makeStatCard(), bw.makeBarChart(), bw.makeProgress(),
+    //     bw.makeCard(), bw.makeBadge()
+    //
+    // No build step. No framework. Zero raw DOM. Just bitwrench.
+    // =====================================================================
+
+    (function() {
+      'use strict';
+
+      bw.loadDefaultStyles();
+      var theme = bw.generateTheme('dashboard', {
+        primary: '#1e40af',
+        secondary: '#059669',
+        tertiary: '#7c3aed',
+        spacing: 'normal',
+        radius: 'md'
+      });
+
+      // -- Palette tokens (no hardcoded hex in CSS rules) -------------------
+      var P = theme.palette;
+      var primary = P.primary.base;
+      var primaryLight = P.primary.light;
+      var secondary = P.secondary.base;
+      var secondaryLight = P.secondary.light;
+      var tertiary = P.tertiary.base;
+      var tertiaryLight = P.tertiary.light;
+      var surfaceBg = P.surface.light;
+      var borderColor = P.muted.border;
+
+      // -- Page CSS using theme tokens + @keyframes -------------------------
+      bw.injectCSS(bw.css({
+        'body': {
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          background: surfaceBg,
+          margin: '0'
+        },
+        '.dash-header': {
+          background: 'linear-gradient(135deg, ' + primary + ', ' + tertiary + ')',
+          color: '#fff',
+          padding: '1.5rem 2rem'
+        },
+        '.dash-header h1': { margin: '0', fontSize: '1.5rem', fontWeight: '700' },
+        '.dash-header p': { margin: '0.25rem 0 0', opacity: '0.8', fontSize: '0.9rem' },
+        '.dash-live': {
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          fontSize: '0.8rem',
+          opacity: '0.9'
+        },
+        '.dash-dot': {
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          background: '#4ade80',
+          animation: 'pulse 2s ease-in-out infinite'
+        },
+        '@keyframes pulse': {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.5', transform: 'scale(1.3)' }
+        },
+        '.dash-body': {
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '1.5rem'
+        },
+        '.dash-stats': {
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '1rem',
+          marginBottom: '1.5rem'
+        },
+        '.dash-row': {
+          display: 'grid',
+          gridTemplateColumns: '2fr 1fr',
+          gap: '1rem',
+          marginBottom: '1.5rem'
+        },
+        '.dash-panel': {
+          background: '#fff',
+          border: '1px solid ' + borderColor,
+          borderRadius: '8px',
+          padding: '1.25rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+        },
+        '.dash-panel h3': {
+          margin: '0 0 1rem',
+          fontSize: '1rem',
+          fontWeight: '600',
+          color: primary
+        },
+        '.feed-item': {
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.6rem 0',
+          borderBottom: '1px solid ' + borderColor,
+          fontSize: '0.85rem'
+        },
+        '.feed-item:last-child': { borderBottom: 'none' },
+        '.feed-time': { color: '#999', fontSize: '0.75rem', flexShrink: '0' }
+      }));
+
+      // -- Responsive rules -------------------------------------------------
+      bw.injectCSS(bw.responsive('.dash-stats', {
+        base: { gridTemplateColumns: '1fr' },
+        sm: { gridTemplateColumns: 'repeat(2, 1fr)' },
+        lg: { gridTemplateColumns: 'repeat(4, 1fr)' }
+      }));
+      bw.injectCSS(bw.responsive('.dash-row', {
+        base: { gridTemplateColumns: '1fr' },
+        md: { gridTemplateColumns: '2fr 1fr' }
+      }));
+
+      // -- Simulated data ---------------------------------------------------
+      var metrics = { users: 2847, revenue: 48920, orders: 384, conversion: 3.2 };
+      var monthlyData = [
+        { label: 'Jan', value: 12400 }, { label: 'Feb', value: 15800 },
+        { label: 'Mar', value: 9200 },  { label: 'Apr', value: 18600 },
+        { label: 'May', value: 22100 }, { label: 'Jun', value: 19300 }
+      ];
+      var activityLog = [];
+
+      function randomDelta(base, pct) {
+        return base + Math.round(base * (Math.random() * pct * 2 - pct));
+      }
+
+      function timeStr() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+
+      // -- Components -------------------------------------------------------
+      var statCards = bw.component({
+        t: 'div', a: { class: 'dash-stats' },
+        c: '${statsContent}',
+        o: { state: { statsContent: '' } }
+      });
+
+      function updateStats() {
+        metrics.users = randomDelta(metrics.users, 0.02);
+        metrics.revenue = randomDelta(metrics.revenue, 0.03);
+        metrics.orders = randomDelta(metrics.orders, 0.04);
+        metrics.conversion = Math.round((3 + Math.random() * 1.5) * 10) / 10;
+
+        var cards = [
+          bw.makeStatCard({ value: metrics.users.toLocaleString(), label: 'Active Users', icon: '\uD83D\uDC64', change: +(Math.random() * 8 - 2).toFixed(1), variant: 'primary' }),
+          bw.makeStatCard({ value: '$' + metrics.revenue.toLocaleString(), label: 'Revenue', icon: '\uD83D\uDCB0', change: +(Math.random() * 12 - 3).toFixed(1), variant: 'success' }),
+          bw.makeStatCard({ value: metrics.orders.toString(), label: 'Orders', icon: '\uD83D\uDCE6', change: +(Math.random() * 6 - 1).toFixed(1), variant: 'info' }),
+          bw.makeStatCard({ value: metrics.conversion + '%', label: 'Conversion', icon: '\uD83D\uDCC8', change: +(Math.random() * 4 - 1.5).toFixed(1) })
+        ];
+
+        bw.DOM('#stat-cards', { t: 'div', a: { class: 'dash-stats' }, c: cards });
+        bw.pub('metrics:updated', metrics);
+      }
+
+      // -- Activity feed (append + cleanup) ---------------------------------
+      var feedMessages = [
+        'New user signed up', 'Order #${id} completed', 'Payment received',
+        'Product viewed 50 times', 'Support ticket resolved', 'New review posted'
+      ];
+
+      function addFeedItem() {
+        var msg = feedMessages[Math.floor(Math.random() * feedMessages.length)]
+          .replace('${id}', Math.floor(1000 + Math.random() * 9000));
+        var variants = ['primary', 'success', 'info', 'warning'];
+        var variant = variants[Math.floor(Math.random() * variants.length)];
+
+        activityLog.unshift({ msg: msg, time: timeStr(), variant: variant });
+        if (activityLog.length > 8) activityLog.length = 8;
+
+        bw.DOM('#activity-feed', {
+          t: 'div',
+          c: activityLog.map(function(item) {
+            return {
+              t: 'div', a: { class: 'feed-item' },
+              c: [
+                bw.makeBadge({ text: item.variant, variant: item.variant }),
+                { t: 'span', c: item.msg },
+                { t: 'span', a: { class: 'feed-time' }, c: item.time }
+              ]
+            };
+          })
+        });
+      }
+
+      // -- Progress panel (subscribes to metrics) ---------------------------
+      function renderProgress() {
+        var targets = [
+          { label: 'User Goal (3000)', pct: Math.min(100, Math.round(metrics.users / 30)), variant: 'primary' },
+          { label: 'Revenue Target ($50k)', pct: Math.min(100, Math.round(metrics.revenue / 500)), variant: 'success' },
+          { label: 'Order Target (400)', pct: Math.min(100, Math.round(metrics.orders / 4)), variant: 'info' }
+        ];
+
+        bw.DOM('#progress-panel', {
+          t: 'div',
+          c: targets.map(function(t) {
+            return { t: 'div', a: { style: bw.s(bw.u.mb4) }, c: [
+              { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.mb2, { fontSize: '0.85rem' }) }, c: [
+                { t: 'span', c: t.label },
+                { t: 'span', a: { style: bw.s(bw.u.bold) }, c: t.pct + '%' }
+              ]},
+              bw.makeProgress({ value: t.pct, variant: t.variant })
+            ]};
+          })
+        });
+      }
+
+      bw.sub('metrics:updated', renderProgress);
+
+      // -- Page structure ---------------------------------------------------
+      var header = {
+        t: 'div', a: { class: 'dash-header' },
+        c: {
+          t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.alignCenter, { maxWidth: '1200px', margin: '0 auto' }) },
+          c: [
+            { t: 'div', c: [
+              { t: 'h1', c: 'Metrics Dashboard' },
+              { t: 'p', c: 'Real-time analytics overview' }
+            ]},
+            { t: 'div', a: { class: 'dash-live' }, c: [
+              { t: 'span', a: { class: 'dash-dot' } },
+              { t: 'span', c: 'Live' }
+            ]}
+          ]
+        }
+      };
+
+      var chartPanel = {
+        t: 'div', a: { class: 'dash-panel' },
+        c: [
+          { t: 'h3', c: 'Monthly Revenue' },
+          bw.makeBarChart({
+            data: monthlyData,
+            title: '',
+            color: primary,
+            height: '180px',
+            formatValue: function(v) { return '$' + (v / 1000).toFixed(1) + 'k'; }
+          })
+        ]
+      };
+
+      var feedPanel = {
+        t: 'div', a: { class: 'dash-panel' },
+        c: [
+          { t: 'h3', c: 'Activity Feed' },
+          { t: 'div', a: { id: 'activity-feed' }, c: { t: 'div', a: { style: bw.s(bw.u.textCenter, { color: '#999', padding: '2rem' }) }, c: 'Waiting for events...' } }
+        ]
+      };
+
+      var progressPanel = {
+        t: 'div', a: { class: 'dash-panel' },
+        c: [
+          { t: 'h3', c: 'Goal Progress' },
+          { t: 'div', a: { id: 'progress-panel' } }
+        ]
+      };
+
+      bw.DOM('#app', {
+        t: 'div',
+        c: [
+          header,
+          { t: 'div', a: { class: 'dash-body' }, c: [
+            { t: 'div', a: { id: 'stat-cards' } },
+            { t: 'div', a: { class: 'dash-row' }, c: [chartPanel, feedPanel] },
+            progressPanel
+          ]}
+        ]
+      });
+
+      // -- Start timers -----------------------------------------------------
+      updateStats();
+      renderProgress();
+      addFeedItem();
+      setInterval(updateStats, 3000);
+      setInterval(addFeedItem, 2500);
+    })();
+  </script>
+</body>
+</html>
