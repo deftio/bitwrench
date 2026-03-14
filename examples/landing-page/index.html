@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SunForge Analytics - Built with Bitwrench</title>
+  <script src="../../dist/bitwrench.umd.js"></script>
+  <link rel="stylesheet" href="../../dist/bitwrench.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Landing Page — Level 0 TACO composition only (no reactive state)
+    //
+    // Demonstrates bitwrench as a static site generator using only BCCL
+    // composition. No bw.component(), no pub/sub, no custom state.
+    //
+    // BCCL Components Used:
+    //   bw.makeNavbar(), bw.makeHero(), bw.makeFeatureGrid(),
+    //   bw.makeSection(), bw.makeStatCard(), bw.makeCard(),
+    //   bw.makeAccordion(), bw.makeButton(), bw.makeForm(),
+    //   bw.makeFormGroup(), bw.makeInput(), bw.makeTextarea(),
+    //   bw.makeAlert()
+    //
+    // Theme: Sunset orange (#ea580c, #dc2626, #f59e0b) — warm and energetic
+    //
+    // No build step. No framework. Just component composition.
+    // =====================================================================
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('sunrise', {
+      primary: '#ea580c',
+      secondary: '#dc2626',
+      tertiary: '#f59e0b',
+      spacing: 'normal',
+      radius: 'md'
+    });
+
+    // -- Custom page CSS using theme palette ---------------------------------
+    var theme = bw.generateTheme('sunrise', {
+      primary: '#ea580c',
+      secondary: '#dc2626',
+      tertiary: '#f59e0b',
+      inject: false
+    });
+    var P = theme.palette;
+
+    bw.injectCSS(bw.css({
+      'body': {
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        margin: '0',
+        color: '#1a1a1a'
+      },
+      '.sf-hero-bg': {
+        background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #f59e0b 100%)',
+        color: '#fff',
+        padding: '5rem 2rem 4rem',
+        textAlign: 'center'
+      },
+      '.sf-hero-bg h1': {
+        fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+        fontWeight: '800',
+        margin: '0 0 1rem',
+        lineHeight: '1.15'
+      },
+      '.sf-hero-bg p': {
+        fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+        opacity: '0.9',
+        maxWidth: '640px',
+        margin: '0 auto 2rem',
+        lineHeight: '1.7'
+      },
+      '.sf-hero-actions': {
+        display: 'flex',
+        gap: '1rem',
+        justifyContent: 'center',
+        flexWrap: 'wrap'
+      },
+      '.sf-section': {
+        padding: 'clamp(2.5rem, 6vw, 5rem) 2rem',
+        maxWidth: '1100px',
+        margin: '0 auto'
+      },
+      '.sf-section-alt': {
+        background: '#fef7f0',
+        padding: 'clamp(2.5rem, 6vw, 5rem) 2rem'
+      },
+      '.sf-section-dark': {
+        background: '#1a1a1a',
+        color: '#f5f5f5',
+        padding: 'clamp(2.5rem, 6vw, 5rem) 2rem'
+      },
+      '.sf-inner': {
+        maxWidth: '1100px',
+        margin: '0 auto'
+      },
+      '.sf-center': { textAlign: 'center', marginBottom: '2.5rem' },
+      '.sf-center h2': { fontSize: '2rem', fontWeight: '700', margin: '0 0 0.5rem' },
+      '.sf-center p': { color: '#666', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' },
+      '.sf-stats': {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '1.5rem',
+        margin: '2rem 0'
+      },
+      '.sf-pricing': {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1.5rem',
+        alignItems: 'start'
+      },
+      '.sf-price-card': {
+        background: '#fff',
+        border: '1px solid #e5e5e5',
+        borderRadius: '12px',
+        padding: '2rem',
+        textAlign: 'center',
+        transition: 'transform 0.2s, box-shadow 0.2s'
+      },
+      '.sf-price-card:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.08)'
+      },
+      '.sf-price-card.featured': {
+        border: '2px solid #ea580c',
+        position: 'relative'
+      },
+      '.sf-price-badge': {
+        position: 'absolute',
+        top: '-12px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        background: '#ea580c',
+        color: '#fff',
+        padding: '0.2rem 1rem',
+        borderRadius: '50px',
+        fontSize: '0.75rem',
+        fontWeight: '700'
+      },
+      '.sf-price-name': { fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem' },
+      '.sf-price-amount': { fontSize: '2.5rem', fontWeight: '800', color: '#ea580c' },
+      '.sf-price-period': { fontSize: '0.9rem', color: '#888' },
+      '.sf-price-list': { listStyle: 'none', padding: '0', margin: '1.5rem 0', textAlign: 'left' },
+      '.sf-price-list li': { padding: '0.4rem 0', fontSize: '0.9rem', color: '#555' },
+      '.sf-price-list li::before': { content: '"\\2713 "', color: '#ea580c', fontWeight: '700' },
+      '.sf-testimonials': {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '1.5rem'
+      },
+      '.sf-test-card': {
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '12px',
+        padding: '1.5rem'
+      },
+      '.sf-test-text': { fontStyle: 'italic', lineHeight: '1.7', marginBottom: '1rem', opacity: '0.9' },
+      '.sf-test-author': { fontWeight: '600', fontSize: '0.9rem' },
+      '.sf-test-role': { fontSize: '0.8rem', opacity: '0.6' },
+      '.sf-faq': { maxWidth: '800px', margin: '0 auto' },
+      '.sf-cta': {
+        background: 'linear-gradient(135deg, #ea580c, #dc2626)',
+        color: '#fff',
+        padding: '4rem 2rem',
+        textAlign: 'center',
+        borderRadius: '0'
+      },
+      '.sf-cta h2': { fontSize: '2rem', fontWeight: '700', margin: '0 0 0.75rem' },
+      '.sf-cta p': { opacity: '0.9', maxWidth: '500px', margin: '0 auto 2rem', lineHeight: '1.6' },
+      '.sf-footer': {
+        background: '#111',
+        color: '#888',
+        padding: '2rem',
+        textAlign: 'center',
+        fontSize: '0.85rem'
+      },
+      '.sf-footer a': { color: '#ea580c' },
+      '.sf-contact': { maxWidth: '600px', margin: '0 auto' },
+      '@media (max-width: 640px)': {
+        '.sf-pricing': { gridTemplateColumns: '1fr' }
+      }
+    }));
+
+    // -- Navigation --------------------------------------------------------
+    var nav = bw.makeNavbar({
+      brand: 'SunForge',
+      variant: 'primary',
+      items: [
+        { text: 'Features', href: '#features' },
+        { text: 'Pricing', href: '#pricing' },
+        { text: 'FAQ', href: '#faq' },
+        { text: 'Contact', href: '#contact' }
+      ]
+    });
+
+    // -- Hero section ------------------------------------------------------
+    var hero = {
+      t: 'section', a: { class: 'sf-hero-bg' },
+      c: [
+        { t: 'h1', c: 'Analytics That Move As Fast As You Do' },
+        { t: 'p', c: 'SunForge gives your team real-time dashboards, predictive insights, and automated reports \u2014 all without a single line of SQL.' },
+        { t: 'div', a: { class: 'sf-hero-actions' }, c: [
+          bw.makeButton({ text: 'Start Free Trial', variant: 'light', size: 'lg', onclick: function() { window.location.hash = '#contact'; } }),
+          bw.makeButton({ text: 'Watch Demo', variant: 'outline_light', size: 'lg' })
+        ]}
+      ]
+    };
+
+    // -- Stats section -----------------------------------------------------
+    var stats = {
+      t: 'div', a: { class: 'sf-section' },
+      c: [
+        { t: 'div', a: { class: 'sf-stats' }, c: [
+          bw.makeStatCard({ value: '10M+', label: 'Events Processed Daily', icon: '\u26A1' }),
+          bw.makeStatCard({ value: '99.99%', label: 'Uptime SLA', icon: '\u2705' }),
+          bw.makeStatCard({ value: '2,400+', label: 'Companies', icon: '\uD83C\uDFE2' }),
+          bw.makeStatCard({ value: '< 100ms', label: 'Dashboard Load', icon: '\u23F1\uFE0F' })
+        ]}
+      ]
+    };
+
+    // -- Feature grid ------------------------------------------------------
+    var features = bw.makeSection({
+      title: 'Everything Your Data Team Needs',
+      subtitle: 'From raw events to board-ready reports in minutes.',
+      id: 'features',
+      children: [
+        bw.makeFeatureGrid({
+          columns: 3,
+          features: [
+            { icon: '\u26A1', title: 'Real-Time Streaming', description: 'Ingest millions of events per second. See results in under 100ms.' },
+            { icon: '\uD83D\uDCC8', title: 'Smart Dashboards', description: 'AI-generated visualizations from your schema. Drag, drop, done.' },
+            { icon: '\uD83D\uDD12', title: 'Enterprise Security', description: 'SOC 2 Type II. Row-level access control. SSO with SAML and OIDC.' },
+            { icon: '\uD83E\uDDE9', title: '200+ Integrations', description: 'Connect to Postgres, BigQuery, Snowflake, S3, Kafka, and more.' },
+            { icon: '\uD83D\uDE80', title: 'Zero Infrastructure', description: 'Fully managed. No clusters, no Kubernetes, no DevOps team needed.' },
+            { icon: '\uD83E\uDD16', title: 'AI Copilot', description: 'Ask questions in plain English. Get SQL, charts, and anomaly alerts.' }
+          ]
+        })
+      ]
+    });
+
+    // -- Pricing table -----------------------------------------------------
+    var pricing = {
+      t: 'div', a: { class: 'sf-section-alt', id: 'pricing' },
+      c: { t: 'div', a: { class: 'sf-inner' }, c: [
+        { t: 'div', a: { class: 'sf-center' }, c: [
+          { t: 'h2', c: 'Simple, Transparent Pricing' },
+          { t: 'p', c: 'Start free. Scale when you are ready. No surprises.' }
+        ]},
+        { t: 'div', a: { class: 'sf-pricing' }, c: [
+          { t: 'div', a: { class: 'sf-price-card' }, c: [
+            { t: 'div', a: { class: 'sf-price-name' }, c: 'Starter' },
+            { t: 'div', a: { class: 'sf-price-amount' }, c: 'Free' },
+            { t: 'div', a: { class: 'sf-price-period' }, c: 'Up to 100K events/mo' },
+            { t: 'ul', a: { class: 'sf-price-list' }, c: [
+              { t: 'li', c: '3 dashboards' },
+              { t: 'li', c: '7-day retention' },
+              { t: 'li', c: '2 team members' },
+              { t: 'li', c: 'Community support' }
+            ]},
+            bw.makeButton({ text: 'Get Started', variant: 'outline_primary', size: 'lg' })
+          ]},
+          { t: 'div', a: { class: 'sf-price-card featured' }, c: [
+            { t: 'span', a: { class: 'sf-price-badge' }, c: 'Most Popular' },
+            { t: 'div', a: { class: 'sf-price-name' }, c: 'Pro' },
+            { t: 'div', c: [
+              { t: 'span', a: { class: 'sf-price-amount' }, c: '$49' },
+              { t: 'span', a: { class: 'sf-price-period' }, c: ' /month' }
+            ]},
+            { t: 'div', a: { class: 'sf-price-period' }, c: 'Up to 10M events/mo' },
+            { t: 'ul', a: { class: 'sf-price-list' }, c: [
+              { t: 'li', c: 'Unlimited dashboards' },
+              { t: 'li', c: '90-day retention' },
+              { t: 'li', c: '10 team members' },
+              { t: 'li', c: 'AI Copilot included' },
+              { t: 'li', c: 'Priority support' }
+            ]},
+            bw.makeButton({ text: 'Start Free Trial', variant: 'primary', size: 'lg' })
+          ]},
+          { t: 'div', a: { class: 'sf-price-card' }, c: [
+            { t: 'div', a: { class: 'sf-price-name' }, c: 'Enterprise' },
+            { t: 'div', a: { class: 'sf-price-amount' }, c: 'Custom' },
+            { t: 'div', a: { class: 'sf-price-period' }, c: 'Unlimited events' },
+            { t: 'ul', a: { class: 'sf-price-list' }, c: [
+              { t: 'li', c: 'Everything in Pro' },
+              { t: 'li', c: 'Unlimited retention' },
+              { t: 'li', c: 'Unlimited team members' },
+              { t: 'li', c: 'SSO / SAML' },
+              { t: 'li', c: 'Dedicated support & SLA' }
+            ]},
+            bw.makeButton({ text: 'Contact Sales', variant: 'outline_primary', size: 'lg' })
+          ]}
+        ]}
+      ]}
+    };
+
+    // -- Testimonials ------------------------------------------------------
+    var testimonials = {
+      t: 'div', a: { class: 'sf-section-dark' },
+      c: { t: 'div', a: { class: 'sf-inner' }, c: [
+        { t: 'div', a: { class: 'sf-center' }, c: [
+          { t: 'h2', a: { style: 'color:#f5f5f5' }, c: 'Trusted by Data Teams Everywhere' }
+        ]},
+        { t: 'div', a: { class: 'sf-testimonials' }, c: [
+          { t: 'div', a: { class: 'sf-test-card' }, c: [
+            { t: 'p', a: { class: 'sf-test-text' }, c: '"SunForge replaced Looker and Metabase for us. Setup took 20 minutes. Our analysts were productive on day one."' },
+            { t: 'div', a: { class: 'sf-test-author' }, c: 'Sarah Kim' },
+            { t: 'div', a: { class: 'sf-test-role' }, c: 'Head of Analytics, Meridian Health' }
+          ]},
+          { t: 'div', a: { class: 'sf-test-card' }, c: [
+            { t: 'p', a: { class: 'sf-test-text' }, c: '"The AI copilot saves our team 12 hours per week on ad-hoc queries. It understands our schema better than we do."' },
+            { t: 'div', a: { class: 'sf-test-author' }, c: 'James Oduya' },
+            { t: 'div', a: { class: 'sf-test-role' }, c: 'Data Engineering Lead, Skyline Logistics' }
+          ]},
+          { t: 'div', a: { class: 'sf-test-card' }, c: [
+            { t: 'p', a: { class: 'sf-test-text' }, c: '"Best developer experience I have seen in an analytics tool. The API is clean, the docs are great, and it just works."' },
+            { t: 'div', a: { class: 'sf-test-author' }, c: 'Priya Mehta' },
+            { t: 'div', a: { class: 'sf-test-role' }, c: 'CTO, Canopy Fintech' }
+          ]}
+        ]}
+      ]}
+    };
+
+    // -- FAQ ---------------------------------------------------------------
+    var faq = bw.makeSection({
+      title: 'Frequently Asked Questions',
+      id: 'faq',
+      children: [
+        { t: 'div', a: { class: 'sf-faq' }, c:
+          bw.makeAccordion({ multiOpen: false, items: [
+            { title: 'How long does setup take?', content: 'Most teams are running dashboards within 30 minutes. Connect your data source, and SunForge auto-discovers your schema and suggests visualizations.' },
+            { title: 'Do I need to write SQL?', content: 'Never required. The AI Copilot lets you ask questions in plain English. Power users can drop into SQL mode any time.' },
+            { title: 'Is my data secure?', content: 'SOC 2 Type II certified. All data encrypted at rest (AES-256) and in transit (TLS 1.3). Row-level access control and audit logs included.' },
+            { title: 'Can I export dashboards?', content: 'Yes \u2014 PDF, PNG, CSV, and scheduled email reports. Embed dashboards in your app with our iframe or React SDK.' },
+            { title: 'What happens when I hit my event limit?', content: 'We notify you at 80% and 100%. You can upgrade instantly or wait until next month. We never drop your data.' },
+            { title: 'Do you offer a self-hosted option?', content: 'Enterprise plans include a self-hosted option deployed via Docker or Kubernetes. Contact sales for details.' }
+          ]})
+        }
+      ]
+    });
+
+    // -- Contact form ------------------------------------------------------
+    var contact = bw.makeSection({
+      title: 'Get in Touch',
+      subtitle: 'Questions? Demo request? We respond within 4 hours.',
+      id: 'contact',
+      children: [{
+        t: 'div', a: { class: 'sf-contact' },
+        c: bw.makeForm({
+          onsubmit: function(e) {
+            e.preventDefault();
+            bw.DOM('#form-status', bw.makeAlert({
+              content: 'Thanks! Our team will reach out within 4 hours.',
+              variant: 'success',
+              dismissible: true
+            }));
+          },
+          children: [
+            bw.makeFormGroup({
+              label: 'Name', id: 'name', required: true,
+              input: bw.makeInput({ id: 'name', placeholder: 'Your name', required: true })
+            }),
+            bw.makeFormGroup({
+              label: 'Work Email', id: 'email', required: true,
+              input: bw.makeInput({ type: 'email', id: 'email', placeholder: 'you@company.com', required: true })
+            }),
+            bw.makeFormGroup({
+              label: 'Message', id: 'message',
+              input: bw.makeTextarea({ id: 'message', placeholder: 'Tell us about your data stack...', rows: 4 })
+            }),
+            { t: 'div', a: { class: 'bw_mt_3' }, c: bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', size: 'lg' }) },
+            { t: 'div', a: { id: 'form-status', class: 'bw_mt_3' } }
+          ]
+        })
+      }]
+    });
+
+    // -- CTA section -------------------------------------------------------
+    var cta = {
+      t: 'section', a: { class: 'sf-cta' },
+      c: [
+        { t: 'h2', c: 'Ready to See Your Data Clearly?' },
+        { t: 'p', c: 'Join 2,400+ companies already using SunForge. Free plan, no credit card required.' },
+        { t: 'div', a: { class: 'sf-hero-actions' }, c: [
+          bw.makeButton({ text: 'Start Free Trial', variant: 'light', size: 'lg' }),
+          bw.makeButton({ text: 'Schedule Demo', variant: 'outline_light', size: 'lg' })
+        ]}
+      ]
+    };
+
+    // -- Footer ------------------------------------------------------------
+    var footer = {
+      t: 'footer', a: { class: 'sf-footer' },
+      c: [
+        { t: 'p', c: 'SunForge Analytics \u00A9 2026. Built with bitwrench.' },
+        { t: 'p', c: { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'View bitwrench on GitHub' } }
+      ]
+    };
+
+    // -- Mount everything --------------------------------------------------
+    bw.DOM('#app', {
+      t: 'div',
+      c: [nav, hero, stats, features, pricing, testimonials, faq, contact, cta, footer]
+    });
+  </script>
+</body>
+</html>

@@ -11,11 +11,60 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bitwrench@2.0.16/dist/bitwrench.umd.min.js"></script>
+  <script src="../../dist/bitwrench.umd.js"></script>
 </head>
 <body>
   <div id="app"></div>
   <script>
+  // =====================================================================
+  // Ember & Oak Coffee Co. — Full-Page Application Example
+  //
+  // This is the most comprehensive bitwrench example. It demonstrates:
+  //
+  // BCCL Components Used (27):
+  //   bw.component()         — Navbar (cart count), Contact form (status),
+  //                            Counter demo, Progress demo
+  //   bw.makeStatCard()      — Impact metrics (4 cards)
+  //   bw.makeBarChart()      — Monthly bags shipped, Revenue by origin
+  //   bw.makeTable()         — Full coffee menu with sorting
+  //   bw.makeTableFromArray()— API feature reference table
+  //   bw.makeTimeline()      — Company history (Our Story)
+  //   bw.makeFeatureGrid()   — "Why Ember & Oak" grid
+  //   bw.makeAccordion()     — FAQ section
+  //   bw.makeSearchInput()   — Coffee search box
+  //   bw.makeTooltip()       — SCA score hover info
+  //   bw.makeBadge()         — SCA score pills, showcase badges
+  //   bw.makeProgress()      — Roast progress demo
+  //   bw.makeButton()        — CTAs, filter bar, counter, cart
+  //   bw.makeCard()          — (via other components)
+  //   bw.makeAlert()         — Wholesale info callout
+  //   bw.makeCodeDemo()      — ComponentHandle code example
+  //   bw.makeForm()          — Contact form
+  //   bw.makeFormGroup()     — Form field wrappers
+  //   bw.makeInput()         — Name, email inputs
+  //   bw.makeSelect()        — Subject dropdown
+  //   bw.makeTextarea()      — Message textarea
+  //   bw.makeCheckbox()      — (in todo example, not here)
+  //   bw.makeNavbar()        — (custom nav used here instead)
+  //
+  // Architecture:
+  //   - Cart state managed via bw.pub('cart:updated') — navbar subscribes
+  //   - Coffee filter uses Level 1 (o.mounted + manual re-render)
+  //   - Contact form uses Level 2 bw.component() with ${statusMsg} binding
+  //   - Counter uses Level 2 bw.component() with o.methods
+  //   - Toast notification system uses bw.createDOM() for append pattern
+  //   - Theme: bw.generateTheme('ember', { '#8B4513', '#D2691E', '#2F4F2F' })
+  //
+  // Key Patterns to Study:
+  //   1. Pub/sub cart: cartAdd() → bw.pub('cart:updated') → navbar.sub()
+  //   2. Component Level 2: ${count} template binding + handle.set()
+  //   3. Filter pattern: renderCoffeeSection() re-renders on filter change
+  //   4. Toast append: bw.createDOM() + DOM insertion for transient UI
+  //   5. Theme tokens: All colors derived from 3 seed hex values
+  //
+  // No build step. No framework. Just bitwrench.
+  // =====================================================================
+
   (function() {
     'use strict';
 
@@ -192,27 +241,39 @@
     ];
     var FILTERS = ['All', 'Africa', 'Americas', 'Asia', 'Light', 'Medium', 'Dark'];
 
-    // ─── Toast ────────────────────────────────────────────────────────────────
+    // ─── Toast — uses bw.createDOM() for append pattern ─────────────────────
     function toast(title, msg, type) {
-      var wrap = document.getElementById('eo-toasts');
-      if (!wrap) { wrap = document.createElement('div'); wrap.id = 'eo-toasts'; wrap.className = 'eo-toasts'; document.body.appendChild(wrap); }
-      var el = document.createElement('div');
-      el.className = 'eo-toast ' + (type || 'info');
-      el.innerHTML = '<span style="font-size:1.3rem">' + (type === 'success' ? '✓' : type === 'warning' ? '⚠' : 'ℹ') + '</span><div><div class="eo-toast-t">' + bw.escapeHTML(title) + '</div><div class="eo-toast-m">' + bw.escapeHTML(msg) + '</div></div>';
-      wrap.appendChild(el);
-      setTimeout(function() { el.style.transition = 'all .3s'; el.style.opacity = '0'; el.style.transform = 'translateX(110%)'; setTimeout(function() { el.remove(); }, 320); }, 3500);
+      var wraps = bw.$('#eo-toasts');
+      var wrap = wraps.length ? wraps[0] : null;
+      if (!wrap) {
+        wrap = bw.createDOM({ t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
+        bw.$('body')[0].appendChild(wrap);
+      }
+      var icons = { success: '\u2713', warning: '\u26A0', info: '\u2139' };
+      var toastEl = bw.createDOM({
+        t: 'div', a: { class: 'eo-toast ' + (type || 'info') },
+        c: [
+          { t: 'span', a: { style: 'font-size:1.3rem' }, c: icons[type] || icons.info },
+          { t: 'div', c: [
+            { t: 'div', a: { class: 'eo-toast-t' }, c: title },
+            { t: 'div', a: { class: 'eo-toast-m' }, c: msg }
+          ]}
+        ]
+      });
+      wrap.appendChild(toastEl);
+      setTimeout(function() { toastEl.style.transition = 'all .3s'; toastEl.style.opacity = '0'; toastEl.style.transform = 'translateX(110%)'; setTimeout(function() { toastEl.remove(); }, 320); }, 3500);
     }
 
     // ─── Cart (global state + direct DOM) ────────────────────────────────────
     var cartItems = [];
 
     function cartOpen()  {
-      var p = document.getElementById('eo-cart'), b = document.getElementById('eo-bdrop');
+      var p = bw.$('#eo-cart')[0], b = bw.$('#eo-bdrop')[0];
       if (p) p.classList.add('open');
       if (b) b.classList.add('open');
     }
     function cartClose() {
-      var p = document.getElementById('eo-cart'), b = document.getElementById('eo-bdrop');
+      var p = bw.$('#eo-cart')[0], b = bw.$('#eo-bdrop')[0];
       if (p) p.classList.remove('open');
       if (b) b.classList.remove('open');
     }
@@ -221,8 +282,8 @@
     window._eoCartClose = cartClose;
 
     function cartRender() {
-      var body = document.getElementById('eo-cart-body');
-      var ftr  = document.getElementById('eo-cart-ftr');
+      var body = bw.$('#eo-cart-body')[0];
+      var ftr  = bw.$('#eo-cart-ftr')[0];
       if (!body) return;
       if (cartItems.length === 0) {
         bw.DOM(body, { t: 'div', a: { class: 'eo-cart-empty' }, c: [
@@ -300,9 +361,9 @@
         mounted: function() {
           navbar.sub('cart:updated', function(d) { navbar.set('cartCount', d.count); });
           window.addEventListener('scroll', function() {
-            var n = document.getElementById('eo-navbar');
+            var n = bw.$('#eo-navbar')[0];
             if (n) { if (window.scrollY > 50) n.classList.add('scrolled'); else n.classList.remove('scrolled'); }
-            var s = document.getElementById('eo-scroll-top');
+            var s = bw.$('#eo-scroll-top')[0];
             if (s) { if (window.scrollY > 600) s.classList.add('visible'); else s.classList.remove('visible'); }
           });
         }
@@ -319,7 +380,7 @@
         return mf && ms;
       });
       // Filter bar
-      var fb = el.querySelector('#eo-fb');
+      var fb = bw.$('#eo-fb')[0];
       if (fb) {
         bw.DOM(fb, { t: 'div', a: { class: 'eo-filter-bar' }, c: FILTERS.map(function(f) {
           return { t: 'button', a: { class: 'eo-fb' + (csFilter === f ? ' active' : ''), 'data-testid': 'filter-' + f.toLowerCase() }, c: f,
@@ -328,7 +389,7 @@
         })});
       }
       // Grid
-      var grid = el.querySelector('#eo-cgrid');
+      var grid = bw.$('#eo-cgrid')[0];
       if (!grid) return;
       if (filtered.length === 0) {
         bw.DOM(grid, { t: 'div', a: { class: 'eo-noresult' }, c: '☕ No coffees found. Try a different filter.' });
@@ -370,7 +431,7 @@
         { t: 'div', a: { style: 'max-width:420px;margin:0 auto 1.5rem' },
           c: bw.makeSearchInput({
             placeholder: 'Search coffees…',
-            onInput: function(e) { csSearch = e.target.value.toLowerCase().trim(); var cs = document.getElementById('coffees'); if (cs) renderCoffeeSection(cs); }
+            onInput: function(e) { csSearch = e.target.value.toLowerCase().trim(); var cs = bw.$('#coffees')[0]; if (cs) renderCoffeeSection(cs); }
           })
         },
         { t: 'div', a: { id: 'eo-fb' } },
@@ -578,7 +639,7 @@
           { t: 'button', a: { class: 'eo-nl-btn', 'data-testid': 'button-subscribe' }, c: 'Subscribe',
             o: { mounted: function(el) {
               el.addEventListener('click', function() {
-                var inp = document.getElementById('nl-email');
+                var inp = bw.$('#nl-email')[0];
                 if (!inp || !inp.value || inp.value.indexOf('@') < 0) {
                   toast('Oops', 'Please enter a valid email address.', 'warning');
                   return;
@@ -637,11 +698,11 @@
         state: { roastLabel: 'Not started', progress: 0 },
         render: function() {
           var p = progressComp.get('progress');
-          var wrap = document.getElementById('prog-wrap');
+          var wrap = bw.$('#prog-wrap')[0];
           if (wrap) bw.DOM(wrap, bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }));
         },
         mounted: function() {
-          var wrap = document.getElementById('prog-wrap');
+          var wrap = bw.$('#prog-wrap')[0];
           if (wrap) bw.DOM(wrap, bw.makeProgress({ value: 0, max: 100, variant: 'primary', striped: true, animated: true, label: '0%' }));
         }
       }
@@ -755,7 +816,7 @@
       t: 'section', a: { class: 'eo-hero', 'data-testid': 'section-hero' },
       c: { t: 'div', a: { class: 'eo-hero-inner' }, c: [
         { t: 'div', a: { class: 'eo-hero-pill' }, c: '🌱 Sustainably Sourced · Small-Batch Roasted' },
-        { t: 'h1', a: { class: 'eo-hero-title', 'data-testid': 'text-hero-title' }, o: { mounted: function(el) { el.innerHTML = 'Coffee That<br>Tells a <span>Story</span>'; } } },
+        { t: 'h1', a: { class: 'eo-hero-title', 'data-testid': 'text-hero-title' }, c: bw.raw('Coffee That<br>Tells a <span>Story</span>') },
         { t: 'p', a: { class: 'eo-hero-sub' }, c: 'From misty Ethiopian highlands to your morning cup — we roast single-origin coffees that honor the farmers and lands that grow them.' },
         { t: 'div', a: { class: 'eo-hero-actions' }, c: [
           { t: 'a', a: { class: 'eo-btn-p', href: '#coffees', 'data-testid': 'button-explore' }, c: 'Explore Our Coffees' },

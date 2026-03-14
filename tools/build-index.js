@@ -37,8 +37,8 @@ const navbar = {
       {
         t: 'ul', a: { class: 'nav-links' },
         c: [
-          { t: 'li', c: { t: 'a', a: { href: './examples_v2r2/index.html' }, c: 'Examples' } },
-          { t: 'li', c: { t: 'a', a: { href: './examples_v2r2/00-taco-srmc-fundamentals.html' }, c: 'Docs' } },
+          { t: 'li', c: { t: 'a', a: { href: './examples/' }, c: 'Examples' } },
+          { t: 'li', c: { t: 'a', a: { href: './pages/00-quick-start.html' }, c: 'Docs' } },
           { t: 'li', c: { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'GitHub' } },
           { t: 'li', c: { t: 'a', a: { href: 'https://www.npmjs.com/package/bitwrench' }, c: 'npm' } },
         ]
@@ -81,7 +81,7 @@ const html = bw.html(ui);` } }
       {
         t: 'div', a: { style: 'display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1.5rem' },
         c: [
-          { t: 'a', a: { class: 'btn-primary', href: './examples_v2r2/index.html' }, c: 'View Examples' },
+          { t: 'a', a: { class: 'btn-primary', href: './examples/' }, c: 'View Examples' },
           { t: 'a', a: { class: 'btn-outline', href: '#getting-started' }, c: 'Get Started' },
           { t: 'span', a: { style: 'align-self:center;font-size:0.8rem;color:#888' }, c: 'BSD-2-Clause | npm install bitwrench' }
         ]
@@ -193,13 +193,13 @@ const apiSection = {
 
 // ─── Examples ────────────────────────────────────────────────────────────────
 const examples = [
-  { num: '00', title: 'Fundamentals', href: '00-taco-srmc-fundamentals.html' },
-  { num: '01', title: 'Component Library', href: '01-basic-components.html' },
-  { num: '02', title: 'Tables & Forms', href: '02-interactive-tables-forms.html' },
-  { num: '03', title: 'Themes & Styling', href: '03-themes-styling.html' },
-  { num: '04', title: 'Dashboard App', href: '04-dashboard-app.html' },
-  { num: '05', title: 'Advanced Features', href: '05-advanced-features.html' },
-  { num: '06', title: 'Tic Tac Toe Tutorial', href: '06-tic-tac-toe-tutorial.html' },
+  { num: '00', title: 'Quick Start', href: '00-quick-start.html' },
+  { num: '01', title: 'Components', href: '01-components.html' },
+  { num: '02', title: 'Tables & Forms', href: '02-tables-forms.html' },
+  { num: '03', title: 'Styling', href: '03-styling.html' },
+  { num: '04', title: 'Dashboard', href: '04-dashboard.html' },
+  { num: '05', title: 'State', href: '05-state.html' },
+  { num: '06', title: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
 ];
 
 const examplesSection = {
@@ -209,7 +209,7 @@ const examplesSection = {
     c: [
       { t: 'h2', c: 'Examples' },
       { t: 'div', a: { class: 'example-grid' }, c: examples.map(ex => (
-        { t: 'a', a: { href: `./examples_v2r2/${ex.href}`, class: 'example-link' }, c: [
+        { t: 'a', a: { href: `./pages/${ex.href}`, class: 'example-link' }, c: [
           { t: 'span', a: { class: 'example-num' }, c: ex.num },
           { t: 'span', c: ex.title }
         ]}
@@ -230,7 +230,7 @@ const footer = {
           { t: 'p', a: { style: 'margin:0;font-size:0.8rem;color:#888' }, c: 'BSD-2-Clause License. Created by Manu Chatterjee.' }
         ]},
         { t: 'div', a: { class: 'footer-links' }, c: [
-          { t: 'a', a: { href: './examples_v2r2/index.html' }, c: 'Examples' },
+          { t: 'a', a: { href: './examples/' }, c: 'Examples' },
           { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'GitHub' },
           { t: 'a', a: { href: 'https://www.npmjs.com/package/bitwrench' }, c: 'npm' },
         ]}
