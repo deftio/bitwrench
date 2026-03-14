@@ -463,6 +463,12 @@ function generateTables(scope, palette, layout) {
   rules[scopeSelector(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
     'background-color': palette.primary.focus
   };
+  rules[scopeSelector(scope, '.bw_table_selectable > tbody > tr')] = {
+    'cursor': 'pointer'
+  };
+  rules[scopeSelector(scope, '.bw_table > tbody > tr.bw_table_row_selected > *')] = {
+    'background-color': palette.primary.light
+  };
   rules[scopeSelector(scope, '.bw_table_bordered')] = {
     'border-color': palette.light.border
   };
@@ -986,10 +992,27 @@ function generatePaletteClasses(scope, palette) {
     rules[scopeSelector(scope, '.bw_progress_bar.bw_' + k)] = {
       'color': '#fff'
     };
+
+    // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
+    rules[scopeSelector(scope, '.bw_bg_' + k)] = {
+      'background-color': s.base,
+      'color': s.textOn
+    };
+
+    // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
+    rules[scopeSelector(scope, '.bw_text_' + k)] = {
+      'color': s.base
+    };
   });
 
-  // Text muted
-  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
+  // Text muted — always a neutral gray, never a brand color
+  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': '#6c757d' };
+
+  // Common bg/text utilities that aren't per-variant
+  rules[scopeSelector(scope, '.bw_bg_dark')] = { 'background-color': '#212529', 'color': '#f8f9fa' };
+  rules[scopeSelector(scope, '.bw_bg_light')] = { 'background-color': '#f8f9fa', 'color': '#212529' };
+  rules[scopeSelector(scope, '.bw_text_light')] = { 'color': '#f8f9fa' };
+  rules[scopeSelector(scope, '.bw_text_dark')] = { 'color': '#212529' };
 
   return rules;
 }
@@ -1259,6 +1282,8 @@ var structuralRules = {
     },
     '.bw_table caption': { 'font-size': '0.875rem', 'caption-side': 'bottom' },
     '.bw_table_bordered > :not(caption) > * > *': { 'border-width': '1px', 'border-style': 'solid' },
+    '.bw_table_selectable > tbody > tr': { 'cursor': 'pointer' },
+    '.bw_table > tbody > tr.bw_table_row_selected > *': { 'background-color': 'rgba(0, 102, 102, 0.1)' },
     '.bw_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' }
   },
 
@@ -1666,7 +1691,13 @@ var structuralRules = {
 
   // ---- Stat card ----
   statCard: {
-    '.bw_stat_card': { 'border-left': '4px solid transparent' },
+    '.bw_stat_card': {
+      'padding': '1.25rem',
+      'border-left': '4px solid transparent',
+      'border-radius': '0.375rem',
+      'background-color': 'inherit',
+      'transition': 'transform 0.15s ease'
+    },
     '.bw_stat_card:hover': { 'transform': 'translateY(-1px)' },
     '.bw_stat_icon': { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' },
     '.bw_stat_value': { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' },

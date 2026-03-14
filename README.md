@@ -271,14 +271,15 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Example apps** (in `examples/`):
 
-- [Ember & Oak Coffee Co.](examples/ember_and_oak.html) — full landing page: theme, cart, search, charts, accordion, timeline
-- [Reactive Todo](examples/reactive-ui/) — bw.component() with pub/sub
+- [Ember & Oak Coffee Co.](examples/ember-and-oak/) — full landing page: theme, cart, search, charts, accordion, timeline
+- [SunForge Landing Page](examples/landing-page/) — polished marketing page with zero reactive state, pure BCCL composition
+- [Todo App](examples/todo-app/) — bw.component() with pub/sub
+- [Metrics Dashboard](examples/dashboard/) — live stat cards, bar chart, pub/sub, responsive layout
+- [Signup Wizard](examples/wizard/) — multi-step form, state transitions, bw.raw()
+- [Live Feed](examples/live-feed/) — real-time stream, bw.patch(), slide-in animation
 - [IoT Dashboard](examples/embedded/) — ESP32-style sensor dashboard with SSE
 - [bwserve Counter](examples/client-server/) — server-driven UI demo
 - [LLM Chat](examples/llm-chat/) — streaming chat via bwserve + Ollama/OpenAI
-- [Metrics Dashboard](examples/dashboard-app.html) — live stat cards, bar chart, pub/sub, responsive layout
-- [Signup Wizard](examples/wizard-app.html) — multi-step form, state transitions, bw.raw()
-- [Live Feed](examples/feed-app.html) — real-time stream, bw.patch(), slide-in animation
 
 ## FAQ
 

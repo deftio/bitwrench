@@ -201,7 +201,7 @@ This produces a self-contained HTML file with the ocean theme baked in — works
 
 ## Next steps
 
-- [Component Library](component-library.md) — all 52 `make*()` functions
+- [Component Library](component-library.md) — all 50+ `make*()` functions
 - [Theming](theming.md) — customize colors, spacing, and radius
 - [State Management](state-management.md) — add interactivity with `bw.component()`
 - [bwserve](bwserve.md) — server-driven dynamic pages

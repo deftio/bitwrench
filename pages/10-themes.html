@@ -164,12 +164,131 @@
         'gap': '0.5rem',
         'align-items': 'center'
       },
+      '.color-role-grid': {
+        'display': 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(280px, 1fr))',
+        'gap': '1rem',
+        'margin': '1.25rem 0'
+      },
+      '.color-role-card': {
+        'border': '1px solid var(--bw_card_border)',
+        'border-radius': '8px',
+        'overflow': 'hidden'
+      },
+      '.color-role-swatch': {
+        'height': '48px',
+        'display': 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'font-weight': '600',
+        'font-size': '0.8125rem'
+      },
+      '.color-role-body': {
+        'padding': '0.75rem 1rem'
+      },
+      '.color-role-body h4': {
+        'margin': '0 0 0.25rem 0',
+        'font-size': '0.9375rem',
+        'border-bottom': 'none',
+        'text-transform': 'none',
+        'letter-spacing': '0',
+        'padding-bottom': '0'
+      },
+      '.color-role-body p': {
+        'margin': '0',
+        'font-size': '0.8125rem',
+        'color': 'var(--bw_text_secondary)',
+        'line-height': '1.5'
+      },
+      '.shade-strip': {
+        'display': 'flex',
+        'height': '24px',
+        'border-radius': '4px',
+        'overflow': 'hidden',
+        'margin-top': '0.5rem'
+      },
+      '.shade-strip > div': {
+        'flex': '1'
+      },
+      '.color-flow-diagram': {
+        'display': 'grid',
+        'grid-template-columns': '1fr auto 1fr auto 1fr',
+        'gap': '0.75rem',
+        'align-items': 'center',
+        'margin': '1.5rem 0',
+        'padding': '1.25rem',
+        'border': '1px solid var(--bw_card_border)',
+        'border-radius': '8px',
+        'background': 'var(--bw_card_bg)'
+      },
+      '.color-flow-step': {
+        'text-align': 'center',
+        'padding': '0.75rem'
+      },
+      '.color-flow-step h4': {
+        'margin': '0 0 0.375rem 0',
+        'font-size': '0.875rem',
+        'border-bottom': 'none',
+        'text-transform': 'none',
+        'letter-spacing': '0',
+        'padding-bottom': '0'
+      },
+      '.color-flow-step p': {
+        'margin': '0',
+        'font-size': '0.75rem',
+        'color': 'var(--bw_text_secondary)'
+      },
+      '.color-flow-arrow': {
+        'text-align': 'center',
+        'font-size': '1.5rem',
+        'color': 'var(--bw_text_secondary)'
+      },
+      '.shade-table': {
+        'width': '100%',
+        'font-size': '0.8125rem',
+        'border-collapse': 'collapse',
+        'margin': '1rem 0'
+      },
+      '.shade-table th': {
+        'text-align': 'left',
+        'padding': '0.5rem 0.75rem',
+        'border-bottom': '2px solid var(--bw_card_border)',
+        'font-weight': '600',
+        'font-size': '0.75rem',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.03em',
+        'color': 'var(--bw_text_secondary)'
+      },
+      '.shade-table td': {
+        'padding': '0.375rem 0.75rem',
+        'border-bottom': '1px solid var(--bw_card_border)',
+        'vertical-align': 'middle'
+      },
+      '.shade-table code': {
+        'font-size': '0.75rem'
+      },
+      '.shade-swatch-inline': {
+        'display': 'inline-block',
+        'width': '16px',
+        'height': '16px',
+        'border-radius': '3px',
+        'border': '1px solid rgba(0,0,0,0.1)',
+        'vertical-align': 'middle',
+        'margin-right': '0.375rem'
+      },
       '@media (max-width: 768px)': {
         '.multi-theme-row': {
           'grid-template-columns': '1fr'
         },
         '.theme-controls': {
           'grid-template-columns': '1fr 1fr'
+        },
+        '.color-flow-diagram': {
+          'grid-template-columns': '1fr',
+          'gap': '0.25rem'
+        },
+        '.color-flow-arrow': {
+          'transform': 'rotate(90deg)'
         }
       }
     }));
@@ -201,6 +320,91 @@
             { t: 'h4', c: 'Level 0 \u2014 Theme Generation' },
             { t: 'p', c: ['Themes are data: hand bw.generateTheme() seed colors and get a complete CSS palette with dark mode. Theme generation is pure computation \u2014 no DOM required. ',
               { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+          ]
+        },
+
+        // Section: How Theme Colors Work
+        {
+          t: 'div', a: { class: 'demo-section' }, c: [
+            { t: 'h2', c: 'How Theme Colors Work' },
+            {
+              t: 'div', a: { class: 'demo-content' }, c: [
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'A bitwrench theme starts with <strong>three seed colors</strong>. Everything else is derived automatically. ' +
+                    'Here is how the pieces fit together.'
+                  )
+                },
+
+                // Flow diagram: seeds → derivation → palette
+                {
+                  t: 'div', a: { class: 'color-flow-diagram' }, c: [
+                    {
+                      t: 'div', a: { class: 'color-flow-step' }, c: [
+                        { t: 'h4', c: '1. Seed Colors' },
+                        { t: 'p', c: 'You pick primary, secondary, tertiary' }
+                      ]
+                    },
+                    { t: 'div', a: { class: 'color-flow-arrow' }, c: '\u2192' },
+                    {
+                      t: 'div', a: { class: 'color-flow-step' }, c: [
+                        { t: 'h4', c: '2. Derivation' },
+                        { t: 'p', c: 'Semantic colors, surfaces, and 8 shades per role are computed' }
+                      ]
+                    },
+                    { t: 'div', a: { class: 'color-flow-arrow' }, c: '\u2192' },
+                    {
+                      t: 'div', a: { class: 'color-flow-step' }, c: [
+                        { t: 'h4', c: '3. CSS Output' },
+                        { t: 'p', c: 'Scoped CSS rules for every bw-* component' }
+                      ]
+                    }
+                  ]
+                },
+
+                // Color roles heading
+                { t: 'h3', a: { style: 'margin: 1.75rem 0 0.5rem 0; font-size: 1.1rem;' }, c: 'Color Roles' },
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'The palette has <strong>11 color slots</strong>. You provide 3 seed colors; the other 8 are auto-derived with sensible defaults. ' +
+                    'You can override any of them in the config.'
+                  )
+                },
+                { t: 'div', a: { id: 'color-roles-grid' } },
+
+                // Shade derivation heading
+                { t: 'h3', a: { style: 'margin: 1.75rem 0 0.5rem 0; font-size: 1.1rem;' }, c: 'Shade Derivation' },
+                {
+                  t: 'p', a: { style: descStyle }, c: bw.raw(
+                    'Each of the 9 color roles (primary through dark) is expanded into <strong>8 shade variants</strong> via <code>deriveShades(hex)</code>. ' +
+                    'Components reference these shades instead of raw hex values.'
+                  )
+                },
+                { t: 'div', a: { id: 'shade-derivation-table' } },
+
+                // Where colors appear
+                { t: 'h3', a: { style: 'margin: 1.75rem 0 0.5rem 0; font-size: 1.1rem;' }, c: 'Where Each Color Appears' },
+                {
+                  t: 'p', a: { style: descStyle }, c:
+                    'This table maps color roles to the components that use them. Every component references the palette, so changing a seed color automatically updates every component in the theme.'
+                },
+                { t: 'div', a: { id: 'color-usage-map' } },
+
+                // Harmonization callout
+                {
+                  t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1.25rem;' },
+                  c: [
+                    { t: 'h4', c: 'Harmonization' },
+                    { t: 'p', c: bw.raw(
+                      'Semantic colors (success, danger, warning, info) are automatically <em>harmonized</em> toward the primary hue. ' +
+                      'This shifts their hue 20% toward primary, so a green "success" in an ocean-blue theme becomes slightly blue-green. ' +
+                      'The result is a cohesive palette where nothing looks out of place. ' +
+                      'Set <code>harmonize: 0</code> to disable this.'
+                    )}
+                  ]
+                }
+              ]
+            }
           ]
         },
 
@@ -416,6 +620,13 @@
     // ---------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------
+    // Refresh all documentation sections that depend on current colors
+    function refreshColorDocs() {
+      if (typeof renderColorRolesGrid === 'function') renderColorRolesGrid();
+      if (typeof renderShadeDerivationTable === 'function') renderShadeDerivationTable();
+      if (typeof renderColorUsageMap === 'function') renderColorUsageMap();
+    }
+
     function generateCurrentTheme() {
       bw.clearTheme();
       var config = {
@@ -652,6 +863,7 @@
                           renderCodeExport();
                           renderBgSurfaceExplainer();
                           renderBgSurfaceDemo();
+                          refreshColorDocs();
                         }
                       })
                     ]
@@ -685,6 +897,7 @@
                           renderCodeExport();
                           renderBgSurfaceExplainer();
                           renderBgSurfaceDemo();
+                          refreshColorDocs();
                         }
                       })
                     ]
@@ -732,6 +945,7 @@
                       renderCodeExport();
                       renderBgSurfaceExplainer();
                       renderBgSurfaceDemo();
+                      refreshColorDocs();
                     }
                   }),
                   bw.makeButton({
@@ -745,6 +959,7 @@
                       renderCodeExport();
                       renderBgSurfaceExplainer();
                       renderBgSurfaceDemo();
+                      refreshColorDocs();
                     }
                   })
                 ]
@@ -880,6 +1095,7 @@
               renderCodeExport();
               renderBgSurfaceExplainer();
               renderBgSurfaceDemo();
+              refreshColorDocs();
               // Scroll preview into view
               var previewEls = bw.$('#theme-preview');
               if (previewEls.length) previewEls[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1388,8 +1604,270 @@
     }
 
     // ---------------------------------------------------------------
+    // Section: How Theme Colors Work (color roles, shades, usage map)
+    // ---------------------------------------------------------------
+    function renderColorRolesGrid() {
+      var roles = [
+        {
+          name: 'primary',
+          label: 'Primary',
+          desc: 'Main brand color. Used for primary buttons, active nav items, hero backgrounds, links, and focus rings.',
+          source: 'You choose this',
+          hex: state.primary
+        },
+        {
+          name: 'secondary',
+          label: 'Secondary',
+          desc: 'Supporting accent. Secondary buttons, alternative badges, card borders, and less prominent actions.',
+          source: 'You choose this',
+          hex: state.secondary
+        },
+        {
+          name: 'tertiary',
+          label: 'Tertiary',
+          desc: 'Third accent for variety. Useful when primary and secondary are already in use nearby, e.g. a third stat card, chart series, or CTA alternative.',
+          source: 'You choose this',
+          hex: state.tertiary
+        },
+        {
+          name: 'success',
+          label: 'Success',
+          desc: 'Positive outcomes. Confirmation alerts, "active" badges, completed states, and form validation.',
+          source: 'Auto (green, harmonized)',
+          hex: null
+        },
+        {
+          name: 'danger',
+          label: 'Danger',
+          desc: 'Destructive or error states. Delete buttons, error alerts, validation messages, "offline" badges.',
+          source: 'Auto (red, harmonized)',
+          hex: null
+        },
+        {
+          name: 'warning',
+          label: 'Warning',
+          desc: 'Caution or attention. Warning alerts, "pending" badges, approaching-limit indicators.',
+          source: 'Auto (amber, harmonized)',
+          hex: null
+        },
+        {
+          name: 'info',
+          label: 'Info',
+          desc: 'Neutral informational. Info alerts, tips, help text backgrounds.',
+          source: 'Auto (cyan, harmonized)',
+          hex: null
+        },
+        {
+          name: 'light',
+          label: 'Light',
+          desc: 'Near-white surface tinted with primary hue. Table row stripes, light badge fills, subtle backgrounds.',
+          source: 'Auto (from primary hue)',
+          hex: null
+        },
+        {
+          name: 'dark',
+          label: 'Dark',
+          desc: 'Near-black tinted with primary hue. Dark navbar backgrounds, footer backgrounds, dark text color.',
+          source: 'Auto (from primary hue)',
+          hex: null
+        }
+      ];
+
+      // Generate a quick palette to show live colors
+      var tempPalette = bw.derivePalette({
+        primary: state.primary,
+        secondary: state.secondary,
+        tertiary: state.tertiary
+      });
+
+      var cards = roles.map(function(role) {
+        var shades = tempPalette[role.name];
+        var baseColor = shades.base;
+        var textColor = shades.textOn;
+
+        return {
+          t: 'div', a: { class: 'color-role-card' }, c: [
+            {
+              t: 'div', a: {
+                class: 'color-role-swatch',
+                style: 'background-color: ' + baseColor + '; color: ' + textColor + ';'
+              }, c: role.label
+            },
+            {
+              t: 'div', a: { class: 'shade-strip' }, c: [
+                { t: 'div', a: { style: 'background:' + shades.light + ';' } },
+                { t: 'div', a: { style: 'background:' + shades.border + ';' } },
+                { t: 'div', a: { style: 'background:' + shades.base + ';' } },
+                { t: 'div', a: { style: 'background:' + shades.hover + ';' } },
+                { t: 'div', a: { style: 'background:' + shades.active + ';' } },
+                { t: 'div', a: { style: 'background:' + shades.darkText + ';' } }
+              ]
+            },
+            {
+              t: 'div', a: { class: 'color-role-body' }, c: [
+                { t: 'h4', c: role.label },
+                { t: 'p', c: role.desc },
+                { t: 'p', a: { style: 'margin-top: 0.375rem; font-size: 0.75rem; font-style: italic;' }, c: role.source }
+              ]
+            }
+          ]
+        };
+      });
+
+      // Add background and surface as special (non-shade) entries
+      var bgColor = tempPalette.background;
+      var surColor = tempPalette.surface;
+
+      cards.push({
+        t: 'div', a: { class: 'color-role-card' }, c: [
+          {
+            t: 'div', a: {
+              class: 'color-role-swatch',
+              style: 'background-color: ' + bgColor + '; color: #333; border-bottom: 1px solid #e0e0e0;'
+            }, c: 'Background'
+          },
+          {
+            t: 'div', a: { class: 'color-role-body' }, c: [
+              { t: 'h4', c: 'Background' },
+              { t: 'p', c: bw.raw('Page body background. Nearly white with a subtle tint from the primary hue. Not derived from the primary <em>color</em> \u2014 only its hue.') },
+              { t: 'p', a: { style: 'margin-top: 0.375rem; font-size: 0.75rem; font-style: italic;' }, c: 'Auto (hue from primary, L=98)' }
+            ]
+          }
+        ]
+      });
+
+      cards.push({
+        t: 'div', a: { class: 'color-role-card' }, c: [
+          {
+            t: 'div', a: {
+              class: 'color-role-swatch',
+              style: 'background-color: ' + surColor + '; color: #333; border-bottom: 1px solid #e0e0e0;'
+            }, c: 'Surface'
+          },
+          {
+            t: 'div', a: { class: 'color-role-body' }, c: [
+              { t: 'h4', c: 'Surface' },
+              { t: 'p', c: 'Elevated surfaces: cards, inputs, modals, dropdowns. Slightly different from background to create depth without shadows.' },
+              { t: 'p', a: { style: 'margin-top: 0.375rem; font-size: 0.75rem; font-style: italic;' }, c: 'Auto (hue from primary, L=96)' }
+            ]
+          }
+        ]
+      });
+
+      bw.DOM('#color-roles-grid', {
+        t: 'div', a: { class: 'color-role-grid' }, c: cards
+      });
+    }
+
+    function renderShadeDerivationTable() {
+      var shades = bw.deriveShades(state.primary);
+
+      var rows = [
+        { key: 'base',     label: 'base',     desc: 'The seed color itself', used: 'Button fills, badge fills, alert accents' },
+        { key: 'hover',    label: 'hover',     desc: '10% darker',           used: 'Button hover state, link hover' },
+        { key: 'active',   label: 'active',    desc: '15% darker',           used: 'Button active/pressed state' },
+        { key: 'light',    label: 'light',     desc: '85% toward white',     used: 'Alert backgrounds, light badge fills' },
+        { key: 'darkText', label: 'darkText',  desc: '40% darker',           used: 'Text on light backgrounds (alert text)' },
+        { key: 'border',   label: 'border',    desc: '60% toward white',     used: 'Alert borders, card accent borders' },
+        { key: 'focus',    label: 'focus',     desc: '25% opacity ring',     used: 'Focus ring around inputs and buttons' },
+        { key: 'textOn',   label: 'textOn',    desc: '#fff or #000 for contrast', used: 'Text color on base-colored fills' }
+      ];
+
+      var tableRows = rows.map(function(r) {
+        var color = shades[r.key];
+        var isFocus = r.key === 'focus';
+        var swatchStyle = isFocus
+          ? 'background: ' + state.primary + '; box-shadow: 0 0 0 3px ' + color + ';'
+          : 'background: ' + color + ';';
+
+        return {
+          t: 'tr', c: [
+            { t: 'td', c: [
+              { t: 'span', a: { class: 'shade-swatch-inline', style: swatchStyle } },
+              { t: 'code', c: r.label }
+            ]},
+            { t: 'td', c: r.desc },
+            { t: 'td', a: { style: 'color: var(--bw_text_secondary);' }, c: r.used },
+            { t: 'td', c: { t: 'code', a: { style: 'font-size: 0.6875rem;' }, c: color } }
+          ]
+        };
+      });
+
+      bw.DOM('#shade-derivation-table', {
+        t: 'div', a: { style: 'overflow-x: auto;' }, c: {
+          t: 'table', a: { class: 'shade-table' }, c: [
+            {
+              t: 'thead', c: { t: 'tr', c: [
+                { t: 'th', c: 'Shade' },
+                { t: 'th', c: 'Derivation' },
+                { t: 'th', c: 'Used For' },
+                { t: 'th', c: 'Current Value' }
+              ]}
+            },
+            { t: 'tbody', c: tableRows }
+          ]
+        }
+      });
+    }
+
+    function renderColorUsageMap() {
+      var usageData = [
+        { role: 'primary',    components: 'Buttons (primary), hero section, CTA block, active nav items, link color, focus rings, progress bars (primary), stat card left border' },
+        { role: 'secondary',  components: 'Buttons (secondary), secondary badges, alternative card accents, input focus highlight (some themes)' },
+        { role: 'tertiary',   components: 'Third-option buttons, additional chart colors, accent where primary and secondary are already in use' },
+        { role: 'success',    components: 'Success alerts, "active"/"done" badges, form validation (valid), switch (on state)' },
+        { role: 'danger',     components: 'Danger alerts, error badges, form validation (invalid), delete/destructive buttons' },
+        { role: 'warning',    components: 'Warning alerts, "pending"/"away" badges, approaching-limit indicators' },
+        { role: 'info',       components: 'Info alerts, tip callouts, informational badges' },
+        { role: 'light',      components: 'Table striped rows, light button variant, near-white badge fills, card subtle backgrounds' },
+        { role: 'dark',       components: 'Dark navbar, footer background, dark button variant, dark text color for body copy' },
+        { role: 'background', components: bw.raw('Page <code>&lt;body&gt;</code> background color. Auto-set on the scoped theme class.') },
+        { role: 'surface',    components: 'Card backgrounds, input field backgrounds, modal/dropdown backgrounds, table header background' }
+      ];
+
+      var tempPalette = bw.derivePalette({
+        primary: state.primary,
+        secondary: state.secondary,
+        tertiary: state.tertiary
+      });
+
+      var tableRows = usageData.map(function(row) {
+        var paletteEntry = tempPalette[row.role];
+        var color = typeof paletteEntry === 'string' ? paletteEntry : paletteEntry.base;
+        var isLight = bw.relativeLuminance(color) > 0.5;
+
+        return {
+          t: 'tr', c: [
+            { t: 'td', c: [
+              { t: 'span', a: { class: 'shade-swatch-inline', style: 'background: ' + color + ';' } },
+              { t: 'code', c: row.role }
+            ]},
+            { t: 'td', c: row.components }
+          ]
+        };
+      });
+
+      bw.DOM('#color-usage-map', {
+        t: 'div', a: { style: 'overflow-x: auto;' }, c: {
+          t: 'table', a: { class: 'shade-table' }, c: [
+            {
+              t: 'thead', c: { t: 'tr', c: [
+                { t: 'th', a: { style: 'width: 140px;' }, c: 'Color Role' },
+                { t: 'th', c: 'Components & Usage' }
+              ]}
+            },
+            { t: 'tbody', c: tableRows }
+          ]
+        }
+      });
+    }
+
+    // ---------------------------------------------------------------
     // Initialize everything
     // ---------------------------------------------------------------
+    renderColorRolesGrid();
+    renderShadeDerivationTable();
+    renderColorUsageMap();
     renderGenerator();
     renderGallery();
     renderApplyThemeDocs();

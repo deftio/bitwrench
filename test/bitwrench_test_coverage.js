@@ -1622,6 +1622,192 @@ describe("bw.raw", function() {
 });
 
 // =========================================================================
+// bw.h — TACO constructor
+// =========================================================================
+describe("bw.h", function() {
+  it("should return a TACO object with tag only", function() {
+    const result = bw.h('div');
+    assert.deepStrictEqual(result, { t: 'div' });
+  });
+
+  it("should include attrs when provided", function() {
+    const result = bw.h('p', { class: 'bw_text_muted' });
+    assert.deepStrictEqual(result, { t: 'p', a: { class: 'bw_text_muted' } });
+  });
+
+  it("should skip attrs when null", function() {
+    const result = bw.h('span', null, 'hello');
+    assert.deepStrictEqual(result, { t: 'span', c: 'hello' });
+    assert.strictEqual(result.a, undefined);
+  });
+
+  it("should skip attrs when undefined", function() {
+    const result = bw.h('span', undefined, 'hello');
+    assert.deepStrictEqual(result, { t: 'span', c: 'hello' });
+    assert.strictEqual(result.a, undefined);
+  });
+
+  it("should include string content", function() {
+    const result = bw.h('p', null, 'Hello world');
+    assert.deepStrictEqual(result, { t: 'p', c: 'Hello world' });
+  });
+
+  it("should include numeric content", function() {
+    const result = bw.h('span', null, 42);
+    assert.deepStrictEqual(result, { t: 'span', c: 42 });
+  });
+
+  it("should include zero as content", function() {
+    const result = bw.h('span', null, 0);
+    assert.deepStrictEqual(result, { t: 'span', c: 0 });
+  });
+
+  it("should include empty string as content", function() {
+    const result = bw.h('span', null, '');
+    assert.deepStrictEqual(result, { t: 'span', c: '' });
+  });
+
+  it("should include false as content", function() {
+    const result = bw.h('span', null, false);
+    assert.deepStrictEqual(result, { t: 'span', c: false });
+  });
+
+  it("should omit content when undefined", function() {
+    const result = bw.h('div', { id: 'x' });
+    assert.deepStrictEqual(result, { t: 'div', a: { id: 'x' } });
+    assert.strictEqual(result.c, undefined);
+  });
+
+  it("should include TACO object as content", function() {
+    const inner = { t: 'em', c: 'bold' };
+    const result = bw.h('p', null, inner);
+    assert.deepStrictEqual(result, { t: 'p', c: { t: 'em', c: 'bold' } });
+  });
+
+  it("should include array of children as content", function() {
+    const result = bw.h('ul', null, [
+      bw.h('li', null, 'one'),
+      bw.h('li', null, 'two')
+    ]);
+    assert.deepStrictEqual(result, {
+      t: 'ul', c: [
+        { t: 'li', c: 'one' },
+        { t: 'li', c: 'two' }
+      ]
+    });
+  });
+
+  it("should include options when provided", function() {
+    const mountFn = function(el) {};
+    const result = bw.h('div', { class: 'x' }, 'hi', { mounted: mountFn });
+    assert.strictEqual(result.t, 'div');
+    assert.deepStrictEqual(result.a, { class: 'x' });
+    assert.strictEqual(result.c, 'hi');
+    assert.strictEqual(result.o.mounted, mountFn);
+  });
+
+  it("should include state in options", function() {
+    const result = bw.h('div', {}, 'content', { state: { count: 0 } });
+    assert.deepStrictEqual(result.o, { state: { count: 0 } });
+  });
+
+  it("should omit options when undefined", function() {
+    const result = bw.h('div', null, 'hello');
+    assert.strictEqual(result.o, undefined);
+  });
+
+  it("should coerce tag to string", function() {
+    const result = bw.h(42);
+    assert.strictEqual(result.t, '42');
+  });
+
+  it("should produce JSON-serializable output (no functions)", function() {
+    const result = bw.h('div', { id: 'test', class: 'bw_card' }, [
+      bw.h('h3', null, 'Title'),
+      bw.h('p', null, 'Body text')
+    ]);
+    const json = JSON.stringify(result);
+    const parsed = JSON.parse(json);
+    assert.deepStrictEqual(parsed, result);
+  });
+
+  it("should work with all four arguments", function() {
+    const render = function(el) { return el; };
+    const result = bw.h('section', { id: 'main' }, 'content', { render: render, state: { v: 1 } });
+    assert.strictEqual(result.t, 'section');
+    assert.deepStrictEqual(result.a, { id: 'main' });
+    assert.strictEqual(result.c, 'content');
+    assert.strictEqual(result.o.render, render);
+    assert.strictEqual(result.o.state.v, 1);
+  });
+
+  it("should work with empty attrs object", function() {
+    const result = bw.h('div', {}, 'hello');
+    assert.deepStrictEqual(result.a, {});
+    assert.strictEqual(result.c, 'hello');
+  });
+
+  it("should handle nested h() calls deeply", function() {
+    const result = bw.h('div', null, [
+      bw.h('section', null, [
+        bw.h('article', null, [
+          bw.h('p', null, 'deep')
+        ])
+      ])
+    ]);
+    assert.strictEqual(result.c[0].c[0].c[0].c, 'deep');
+  });
+
+  it("should work with bw.html() for rendering", function() {
+    const taco = bw.h('p', { class: 'test' }, 'Hello');
+    const html = bw.html(taco);
+    assert.ok(html.includes('<p'));
+    assert.ok(html.includes('class="test"'));
+    assert.ok(html.includes('Hello'));
+    assert.ok(html.includes('</p>'));
+  });
+
+  it("should produce output compatible with bw.DOM-style usage", function() {
+    // Verify structure matches hand-written TACO
+    const handwritten = { t: 'div', a: { class: 'bw_card' }, c: 'test' };
+    const fromH = bw.h('div', { class: 'bw_card' }, 'test');
+    assert.deepStrictEqual(fromH, handwritten);
+  });
+
+  it("should handle mixed children (strings, TACOs, h() returns)", function() {
+    const result = bw.h('div', null, [
+      'plain text',
+      { t: 'em', c: 'emphasis' },
+      bw.h('strong', null, 'bold'),
+      42
+    ]);
+    assert.strictEqual(result.c.length, 4);
+    assert.strictEqual(result.c[0], 'plain text');
+    assert.deepStrictEqual(result.c[1], { t: 'em', c: 'emphasis' });
+    assert.deepStrictEqual(result.c[2], { t: 'strong', c: 'bold' });
+    assert.strictEqual(result.c[3], 42);
+  });
+
+  it("should handle bw.raw() as content", function() {
+    const result = bw.h('div', null, bw.raw('<b>raw</b>'));
+    assert.strictEqual(result.c.__bw_raw, true);
+    assert.strictEqual(result.c.v, '<b>raw</b>');
+  });
+
+  it("should handle multiple attrs", function() {
+    const result = bw.h('input', { type: 'text', name: 'email', placeholder: 'you@example.com' });
+    assert.strictEqual(result.a.type, 'text');
+    assert.strictEqual(result.a.name, 'email');
+    assert.strictEqual(result.a.placeholder, 'you@example.com');
+  });
+
+  it("should handle null content explicitly", function() {
+    const result = bw.h('br', null, null);
+    assert.strictEqual(result.c, null);
+  });
+});
+
+// =========================================================================
 // __monkey_patch_is_nodejs__
 // =========================================================================
 describe("__monkey_patch_is_nodejs__", function() {
@@ -1955,6 +2141,234 @@ describe("makeTable sortable", function() {
     const idx20 = html.indexOf('>20<');
     assert.ok(idx5 < idx10, '5 before 10 in asc');
     assert.ok(idx10 < idx20, '10 before 20 in asc');
+  });
+});
+
+// =========================================================================
+// makeTable selectable
+// =========================================================================
+describe("makeTable selectable", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should add bw_table_selectable class when selectable is true", function() {
+    const taco = bw.makeTable({
+      data: [{ name: 'Alice' }],
+      selectable: true
+    });
+    const html = bw.html(taco);
+    assert.ok(html.includes('bw_table_selectable'), 'should have selectable class');
+    assert.ok(html.includes('bw_table_hover'), 'selectable implies hover');
+  });
+
+  it("should not add selectable class when selectable is false", function() {
+    const taco = bw.makeTable({
+      data: [{ name: 'Alice' }],
+      selectable: false
+    });
+    const html = bw.html(taco);
+    assert.ok(!html.includes('bw_table_selectable'), 'should not have selectable class');
+  });
+
+  it("should toggle bw_table_row_selected class on click", function() {
+    const taco = bw.makeTable({
+      data: [{ name: 'Alice' }, { name: 'Bob' }],
+      selectable: true
+    });
+    const el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    const rows = el.querySelectorAll('tbody tr');
+    assert.ok(rows.length >= 2, 'should have rows');
+
+    // Click first row
+    rows[0].click();
+    assert.ok(rows[0].classList.contains('bw_table_row_selected'), 'row should be selected');
+
+    // Click again to deselect
+    rows[0].click();
+    assert.ok(!rows[0].classList.contains('bw_table_row_selected'), 'row should be deselected');
+
+    document.body.removeChild(el);
+  });
+
+  it("should call onRowClick with row data and index", function() {
+    var clickedRow = null, clickedIdx = null;
+    const taco = bw.makeTable({
+      data: [{ name: 'Alice' }, { name: 'Bob' }],
+      onRowClick: function(row, idx) {
+        clickedRow = row;
+        clickedIdx = idx;
+      }
+    });
+    const el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    const rows = el.querySelectorAll('tbody tr');
+    rows[1].click();
+    assert.strictEqual(clickedRow.name, 'Bob');
+    assert.strictEqual(clickedIdx, 1);
+    document.body.removeChild(el);
+  });
+
+  it("should add cursor pointer style when onRowClick is set", function() {
+    const taco = bw.makeTable({
+      data: [{ name: 'Alice' }],
+      onRowClick: function() {}
+    });
+    const html = bw.html(taco);
+    assert.ok(html.includes('cursor:pointer'), 'should have pointer cursor');
+  });
+});
+
+// =========================================================================
+// makeTable pagination
+// =========================================================================
+describe("makeTable pagination", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should show only pageSize rows", function() {
+    const data = [];
+    for (var i = 1; i <= 25; i++) data.push({ id: i });
+    const taco = bw.makeTable({
+      data: data,
+      pageSize: 10,
+      currentPage: 1
+    });
+    const html = bw.html(taco);
+    // Should contain rows 1-10 but not 11-25
+    assert.ok(html.includes('>1<'), 'should have row 1');
+    assert.ok(html.includes('>10<'), 'should have row 10');
+    assert.ok(!html.includes('>11<'), 'should not have row 11');
+  });
+
+  it("should show second page rows", function() {
+    const data = [];
+    for (var i = 1; i <= 25; i++) data.push({ id: i });
+    const taco = bw.makeTable({
+      data: data,
+      pageSize: 10,
+      currentPage: 2
+    });
+    const html = bw.html(taco);
+    assert.ok(html.includes('>11<'), 'should have row 11');
+    assert.ok(html.includes('>20<'), 'should have row 20');
+    assert.ok(!html.includes('>21<'), 'should not have row 21');
+  });
+
+  it("should show last page with fewer rows", function() {
+    const data = [];
+    for (var i = 1; i <= 25; i++) data.push({ id: i });
+    const taco = bw.makeTable({
+      data: data,
+      pageSize: 10,
+      currentPage: 3
+    });
+    const html = bw.html(taco);
+    assert.ok(html.includes('>21<'), 'should have row 21');
+    assert.ok(html.includes('>25<'), 'should have row 25');
+  });
+
+  it("should wrap table in paginated container", function() {
+    const taco = bw.makeTable({
+      data: [{ id: 1 }, { id: 2 }],
+      pageSize: 10
+    });
+    assert.strictEqual(taco.t, 'div');
+    assert.ok(taco.a.class.includes('bw_table_paginated'));
+    // Should contain table + pagination controls
+    assert.ok(Array.isArray(taco.c));
+    assert.strictEqual(taco.c[0].t, 'table');
+  });
+
+  it("should show page info text", function() {
+    const data = [];
+    for (var i = 1; i <= 50; i++) data.push({ id: i });
+    const taco = bw.makeTable({
+      data: data,
+      pageSize: 10,
+      currentPage: 3
+    });
+    const html = bw.html(taco);
+    assert.ok(html.includes('Page 3 of 5'), 'should show page info');
+  });
+
+  it("should disable Prev button on first page", function() {
+    const taco = bw.makeTable({
+      data: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      pageSize: 2,
+      currentPage: 1
+    });
+    const html = bw.html(taco);
+    // The Prev button should have disabled attribute
+    assert.ok(html.includes('disabled') && html.includes('Prev'), 'Prev should be disabled on page 1');
+  });
+
+  it("should disable Next button on last page", function() {
+    const taco = bw.makeTable({
+      data: [{ id: 1 }, { id: 2 }, { id: 3 }],
+      pageSize: 2,
+      currentPage: 2
+    });
+    const html = bw.html(taco);
+    // Next button should be disabled on last page
+    const nextIdx = html.lastIndexOf('Next');
+    const disabledBefore = html.lastIndexOf('disabled', nextIdx);
+    assert.ok(disabledBefore > 0, 'Next should be disabled on last page');
+  });
+
+  it("should return table directly when no pageSize", function() {
+    const taco = bw.makeTable({
+      data: [{ id: 1 }]
+    });
+    assert.strictEqual(taco.t, 'table', 'should be bare table without pagination');
+  });
+
+  it("should call onPageChange when page button clicked", function() {
+    var newPage = null;
+    const data = [];
+    for (var i = 1; i <= 10; i++) data.push({ id: i });
+    const taco = bw.makeTable({
+      data: data,
+      pageSize: 5,
+      currentPage: 1,
+      onPageChange: function(p) { newPage = p; }
+    });
+    const el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    // Click the Next button
+    const buttons = el.querySelectorAll('button');
+    var nextBtn = null;
+    buttons.forEach(function(b) { if (b.textContent === 'Next') nextBtn = b; });
+    if (nextBtn) nextBtn.click();
+    assert.strictEqual(newPage, 2, 'should navigate to page 2');
+    document.body.removeChild(el);
+  });
+
+  it("should clamp currentPage to valid range", function() {
+    const taco = bw.makeTable({
+      data: [{ id: 1 }, { id: 2 }],
+      pageSize: 10,
+      currentPage: 99
+    });
+    const html = bw.html(taco);
+    assert.ok(html.includes('Page 1 of 1'), 'should clamp to last page');
+  });
+
+  it("should pass correct global index to onRowClick with pagination", function() {
+    var clickedIdx = null;
+    const data = [];
+    for (var i = 1; i <= 20; i++) data.push({ id: i });
+    const taco = bw.makeTable({
+      data: data,
+      pageSize: 10,
+      currentPage: 2,
+      onRowClick: function(row, idx) { clickedIdx = idx; }
+    });
+    const el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    const rows = el.querySelectorAll('tbody tr');
+    // First row on page 2 should have global index 10
+    rows[0].click();
+    assert.strictEqual(clickedIdx, 10, 'global index should be 10 for first row on page 2');
+    document.body.removeChild(el);
   });
 });
 

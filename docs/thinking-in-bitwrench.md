@@ -1201,6 +1201,7 @@ Key things this example proves:
 | `bw.html(taco)` | TACO to HTML string |
 | `bw.createDOM(taco)` | TACO to detached DOM element |
 | `bw.DOM(sel, taco)` | Mount TACO into existing element |
+| `bw.h(tag, attrs, c, o)` | TACO constructor — returns plain `{t,a,c,o}` from positional args |
 | `bw.raw(str)` | Mark string as pre-escaped HTML |
 
 ### CSS
@@ -1250,6 +1251,7 @@ Key things this example proves:
 | Function | What it does |
 |----------|-------------|
 | `bw.$('selector')` | querySelectorAll as array |
+| `bw.h(tag, attrs, c, o)` | TACO constructor (positional args → `{t,a,c,o}`) |
 | `bw.escapeHTML(str)` | Escape HTML special chars |
 | `bw.uuid(prefix)` | Generate unique ID |
 | `bw.typeOf(x)` | Enhanced typeof |

@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
@@ -8,14 +8,14 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  */
 
 const VERSION_INFO = {
-  version: '2.0.17',
+  version: '2.0.18',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-13T23:12:44.681Z'
+  buildDate: '2026-03-14T22:13:39.038Z'
 };
 
 /**
@@ -914,6 +914,12 @@ function generateTables(scope, palette, layout) {
   rules[scopeSelector(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
     'background-color': palette.primary.focus
   };
+  rules[scopeSelector(scope, '.bw_table_selectable > tbody > tr')] = {
+    'cursor': 'pointer'
+  };
+  rules[scopeSelector(scope, '.bw_table > tbody > tr.bw_table_row_selected > *')] = {
+    'background-color': palette.primary.light
+  };
   rules[scopeSelector(scope, '.bw_table_bordered')] = {
     'border-color': palette.light.border
   };
@@ -1437,10 +1443,27 @@ function generatePaletteClasses(scope, palette) {
     rules[scopeSelector(scope, '.bw_progress_bar.bw_' + k)] = {
       'color': '#fff'
     };
+
+    // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
+    rules[scopeSelector(scope, '.bw_bg_' + k)] = {
+      'background-color': s.base,
+      'color': s.textOn
+    };
+
+    // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
+    rules[scopeSelector(scope, '.bw_text_' + k)] = {
+      'color': s.base
+    };
   });
 
-  // Text muted
-  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
+  // Text muted — always a neutral gray, never a brand color
+  rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': '#6c757d' };
+
+  // Common bg/text utilities that aren't per-variant
+  rules[scopeSelector(scope, '.bw_bg_dark')] = { 'background-color': '#212529', 'color': '#f8f9fa' };
+  rules[scopeSelector(scope, '.bw_bg_light')] = { 'background-color': '#f8f9fa', 'color': '#212529' };
+  rules[scopeSelector(scope, '.bw_text_light')] = { 'color': '#f8f9fa' };
+  rules[scopeSelector(scope, '.bw_text_dark')] = { 'color': '#212529' };
 
   return rules;
 }
@@ -1710,6 +1733,8 @@ var structuralRules = {
     },
     '.bw_table caption': { 'font-size': '0.875rem', 'caption-side': 'bottom' },
     '.bw_table_bordered > :not(caption) > * > *': { 'border-width': '1px', 'border-style': 'solid' },
+    '.bw_table_selectable > tbody > tr': { 'cursor': 'pointer' },
+    '.bw_table > tbody > tr.bw_table_row_selected > *': { 'background-color': 'rgba(0, 102, 102, 0.1)' },
     '.bw_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' }
   },
 
@@ -2117,7 +2142,13 @@ var structuralRules = {
 
   // ---- Stat card ----
   statCard: {
-    '.bw_stat_card': { 'border-left': '4px solid transparent' },
+    '.bw_stat_card': {
+      'padding': '1.25rem',
+      'border-left': '4px solid transparent',
+      'border-radius': '0.375rem',
+      'background-color': 'inherit',
+      'transition': 'transform 0.15s ease'
+    },
     '.bw_stat_card:hover': { 'transform': 'translateY(-1px)' },
     '.bw_stat_icon': { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' },
     '.bw_stat_value': { 'font-size': '2rem', 'font-weight': '700', 'line-height': '1.2' },
@@ -3594,7 +3625,7 @@ function makeCol(props = {}) {
       if (breakpoint === 'xs') {
         classes.push(`bw_col_${value}`);
       } else {
-        classes.push(`bw_col_${breakpoint}-${value}`);
+        classes.push(`bw_col_${breakpoint}_${value}`);
       }
     });
   } else if (size) {
@@ -7388,6 +7419,42 @@ bw.raw = function(str) {
   return { __bw_raw: true, v: String(str) };
 };
 
+/**
+ * Hyperscript-style TACO constructor.
+ *
+ * A convenience helper that returns a canonical TACO object from positional
+ * arguments. The return value is a plain object — serializable, works with
+ * bwserve, and accepted everywhere TACO is accepted.
+ *
+ * @param {string} tag - HTML tag name (e.g. 'div', 'p', 'section')
+ * @param {Object|null} [attrs] - HTML attributes object. Pass null or omit to skip.
+ * @param {*} [content] - Content: string, number, TACO object, or array of children.
+ * @param {Object} [options] - TACO options (state, lifecycle hooks, render fn).
+ * @returns {Object} Plain TACO object {t, a?, c?, o?}
+ * @category Utilities
+ * @see bw.html
+ * @see bw.createDOM
+ * @see bw.DOM
+ * @example
+ * bw.h('div')
+ * // => { t: 'div' }
+ *
+ * bw.h('p', { class: 'bw_text_muted' }, 'Hello')
+ * // => { t: 'p', a: { class: 'bw_text_muted' }, c: 'Hello' }
+ *
+ * bw.h('ul', null, [
+ *   bw.h('li', null, 'one'),
+ *   bw.h('li', null, 'two')
+ * ])
+ * // => { t: 'ul', c: [{ t: 'li', c: 'one' }, { t: 'li', c: 'two' }] }
+ */
+bw.h = function(tag, attrs, content, options) {
+  var taco = { t: String(tag) };
+  if (attrs !== null && attrs !== undefined) taco.a = attrs;
+  if (content !== undefined) taco.c = content;
+  if (options !== undefined) taco.o = options;
+  return taco;
+};
 
 /**
  * Convert a TACO object (or array of TACOs) to an HTML string.
@@ -8881,7 +8948,7 @@ function ComponentHandle(taco) {
     willMount: o.willMount || null,
     mounted: o.mounted || null,
     willUpdate: o.willUpdate || null,
-    onUpdate: o.onUpdate || null,
+    onUpdate: o.onUpdate || o.updated || null,
     unmount: o.unmount || null,
     willDestroy: o.willDestroy || null
   };
@@ -10847,6 +10914,17 @@ bw.generateTheme = function(name, config) {
     bw.injectCSS(altCssStr, { id: altStyleId, append: false });
 
     bw._activeThemeStyleIds = [styleId, altStyleId];
+
+    // Auto-apply the theme class to <body> so scoped CSS rules match
+    if (name) {
+      var body = document.body;
+      // Remove previous named theme class if present
+      if (bw._activeThemeClass && bw._activeThemeClass !== name) {
+        body.classList.remove(bw._activeThemeClass);
+      }
+      body.classList.add(name);
+      bw._activeThemeClass = name;
+    }
   }
 
   // Update bw.u color entries to reflect the palette
@@ -10943,6 +11021,11 @@ bw.clearTheme = function() {
       if (el) el.remove();
     });
     bw._activeThemeStyleIds = null;
+  }
+  // Remove named theme class from body
+  if (bw._activeThemeClass && bw._isBrowser) {
+    document.body.classList.remove(bw._activeThemeClass);
+    bw._activeThemeClass = null;
   }
   bw._activeTheme = null;
   bw._activeThemeMode = 'primary';
@@ -11168,10 +11251,15 @@ bw.copyToClipboard = function(text) {
  * @param {Object} config - Table configuration
  * @param {Array<Object>} config.data - Array of row objects to display
  * @param {Array<Object>} [config.columns] - Column definitions with key, label, render
- * @param {string} [config.className='table'] - CSS class for table element
+ * @param {string} [config.className=''] - Additional CSS classes for table element
  * @param {boolean} [config.sortable=true] - Enable click-to-sort headers
  * @param {Function} [config.onSort] - Sort callback (column, direction)
- * @returns {Object} TACO object for table
+ * @param {boolean} [config.selectable=false] - Enable row selection on click
+ * @param {Function} [config.onRowClick] - Row click callback (row, index, event)
+ * @param {number} [config.pageSize] - Rows per page (enables pagination when set)
+ * @param {number} [config.currentPage=1] - Current page number (1-based)
+ * @param {Function} [config.onPageChange] - Page change callback (newPage)
+ * @returns {Object} TACO object for table (with optional pagination controls)
  * @category Component Builders
  * @see bw.makeDataTable
  * @example
@@ -11183,7 +11271,12 @@ bw.copyToClipboard = function(text) {
  *   columns: [
  *     { key: 'name', label: 'Name' },
  *     { key: 'age', label: 'Age' }
- *   ]
+ *   ],
+ *   selectable: true,
+ *   onRowClick: function(row, i) { console.log('clicked', row.name); },
+ *   pageSize: 10,
+ *   currentPage: 1,
+ *   onPageChange: function(page) { console.log('page', page); }
  * });
  */
 bw.makeTable = function(config) {
@@ -11196,41 +11289,47 @@ bw.makeTable = function(config) {
     sortable = true,
     onSort,
     sortColumn,
-    sortDirection = 'asc'
+    sortDirection = 'asc',
+    selectable = false,
+    onRowClick,
+    pageSize,
+    currentPage = 1,
+    onPageChange
   } = config;
 
-  // Build class list: always include bw_table, add striped/hover, append user className
+  // Build class list: always include bw_table, add striped/hover/selectable, append user className
   let cls = 'bw_table';
   if (striped) cls += ' bw_table_striped';
-  if (hover) cls += ' bw_table_hover';
+  if (hover || selectable) cls += ' bw_table_hover';
+  if (selectable) cls += ' bw_table_selectable';
   if (className) cls += ' ' + className;
   cls = cls.trim();
-  
+
   // Auto-detect columns if not provided
-  const cols = columns || (data.length > 0 
+  const cols = columns || (data.length > 0
     ? _keys(data[0]).map(key => ({ key, label: key }))
     : []);
-    
+
   // Current sort state
   let currentSortColumn = sortColumn || null;
   let currentSortDirection = sortDirection;
-  
+
   // Sort data if column specified
   let sortedData = [...data];
   if (currentSortColumn) {
     sortedData.sort((a, b) => {
       const aVal = a[currentSortColumn];
       const bVal = b[currentSortColumn];
-      
+
       // Handle different types
       if (_is(aVal, 'number') && _is(bVal, 'number')) {
         return currentSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
+
       // String comparison
       const aStr = String(aVal || '').toLowerCase();
       const bStr = String(bVal || '').toLowerCase();
-      
+
       if (currentSortDirection === 'asc') {
         return aStr.localeCompare(bStr);
       } else {
@@ -11238,23 +11337,32 @@ bw.makeTable = function(config) {
       }
     });
   }
-  
+
+  // Pagination
+  const totalRows = sortedData.length;
+  const totalPages = pageSize ? Math.max(1, Math.ceil(totalRows / pageSize)) : 1;
+  const page = Math.max(1, Math.min(currentPage, totalPages));
+  if (pageSize) {
+    const start = (page - 1) * pageSize;
+    sortedData = sortedData.slice(start, start + pageSize);
+  }
+
   // Create sort handler
   const handleSort = (column) => {
     if (!sortable) return;
-    
+
     if (currentSortColumn === column) {
       currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
       currentSortColumn = column;
       currentSortDirection = 'asc';
     }
-    
+
     if (onSort) {
       onSort(column, currentSortDirection);
     }
   };
-  
+
   // Build table header
   const thead = {
     t: 'thead',
@@ -11277,23 +11385,86 @@ bw.makeTable = function(config) {
       }))
     }
   };
-  
-  // Build table body
+
+  // Build table body with selectable/onRowClick support
   const tbody = {
     t: 'tbody',
-    c: sortedData.map(row => ({
-      t: 'tr',
-      c: cols.map(col => ({
-        t: 'td',
-        c: col.render ? col.render(row[col.key], row) : String(row[col.key] || '')
-      }))
-    }))
+    c: sortedData.map((row, idx) => {
+      const globalIdx = pageSize ? (page - 1) * pageSize + idx : idx;
+      const rowAttrs = {};
+      if (selectable || onRowClick) {
+        rowAttrs.style = 'cursor:pointer;';
+        rowAttrs.onclick = function(e) {
+          if (selectable) {
+            // Toggle selected class on this row
+            var tr = e.currentTarget;
+            tr.classList.toggle('bw_table_row_selected');
+          }
+          if (onRowClick) {
+            onRowClick(row, globalIdx, e);
+          }
+        };
+      }
+      return {
+        t: 'tr',
+        a: rowAttrs,
+        c: cols.map(col => ({
+          t: 'td',
+          c: col.render ? col.render(row[col.key], row) : String(row[col.key] || '')
+        }))
+      };
+    })
   };
-  
-  return {
+
+  const table = {
     t: 'table',
     a: { class: cls },
     c: [thead, tbody]
+  };
+
+  // If no pagination, return table directly
+  if (!pageSize) return table;
+
+  // Build pagination controls
+  const pageButtons = [];
+  // Previous button
+  pageButtons.push({
+    t: 'button',
+    a: {
+      class: 'bw_btn bw_btn_sm',
+      disabled: page <= 1 ? 'disabled' : undefined,
+      onclick: page > 1 && onPageChange ? function() { onPageChange(page - 1); } : undefined
+    },
+    c: 'Prev'
+  });
+  // Page info
+  pageButtons.push({
+    t: 'span',
+    a: { style: 'margin:0 0.5rem;font-size:0.875rem;' },
+    c: 'Page ' + page + ' of ' + totalPages
+  });
+  // Next button
+  pageButtons.push({
+    t: 'button',
+    a: {
+      class: 'bw_btn bw_btn_sm',
+      disabled: page >= totalPages ? 'disabled' : undefined,
+      onclick: page < totalPages && onPageChange ? function() { onPageChange(page + 1); } : undefined
+    },
+    c: 'Next'
+  });
+
+  return {
+    t: 'div',
+    a: { class: 'bw_table_paginated' },
+    c: [
+      table,
+      {
+        t: 'div',
+        a: { class: 'bw_table_pagination', style: 'display:flex;align-items:center;justify-content:flex-end;padding:0.5rem 0;gap:0.25rem;' },
+        c: pageButtons
+      }
+    ]
   };
 };
 

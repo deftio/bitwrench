@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -334,7 +334,7 @@
         if (breakpoint === 'xs') {
           classes.push(`bw_col_${value}`);
         } else {
-          classes.push(`bw_col_${breakpoint}-${value}`);
+          classes.push(`bw_col_${breakpoint}_${value}`);
         }
       });
     } else if (size) {

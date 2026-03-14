@@ -1727,8 +1727,8 @@ describe('makeCol responsive sizes', function() {
     var taco = bw.makeCol({ content: 'X', size: { xs: 12, md: 6, lg: 4 } });
     var html = bw.html(taco);
     assert.ok(html.includes('bw_col_12'), 'should have xs column class');
-    assert.ok(html.includes('bw_col_md-6'), 'should have md column class');
-    assert.ok(html.includes('bw_col_lg-4'), 'should have lg column class');
+    assert.ok(html.includes('bw_col_md_6'), 'should have md column class');
+    assert.ok(html.includes('bw_col_lg_4'), 'should have lg column class');
   });
   it('should support offset/push/pull', function() {
     var taco = bw.makeCol({ content: 'X', size: 6, offset: 3 });

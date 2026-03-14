@@ -500,6 +500,36 @@ describe("Reactivity and Batching", function() {
     assert.ok(onKeys);
     assert.ok(onKeys.indexOf('count') >= 0);
   });
+
+  it("should accept 'updated' as alias for onUpdate", function() {
+    var updatedKeys = null;
+    var comp = bw.component({
+      t: 'div', c: [{ t: 'span', c: '${val}' }],
+      o: {
+        state: { val: 'a' },
+        updated: function(c, keys) { updatedKeys = keys; }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.set('val', 'b', { sync: true });
+    assert.ok(updatedKeys);
+    assert.ok(updatedKeys.indexOf('val') >= 0);
+  });
+
+  it("onUpdate takes precedence over updated alias", function() {
+    var source = null;
+    var comp = bw.component({
+      t: 'div', c: '${x}',
+      o: {
+        state: { x: 1 },
+        onUpdate: function() { source = 'onUpdate'; },
+        updated: function() { source = 'updated'; }
+      }
+    });
+    comp.mount(document.getElementById('app'));
+    comp.set('x', 2, { sync: true });
+    assert.equal(source, 'onUpdate');
+  });
 });
 
 // =============================================================================

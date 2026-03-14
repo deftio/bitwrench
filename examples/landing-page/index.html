@@ -30,22 +30,13 @@
     // =====================================================================
 
     bw.loadDefaultStyles();
-    bw.generateTheme('sunrise', {
+    var theme = bw.generateTheme('sunrise', {
       primary: '#ea580c',
       secondary: '#dc2626',
       tertiary: '#f59e0b',
       spacing: 'normal',
       radius: 'md'
     });
-
-    // -- Custom page CSS using theme palette ---------------------------------
-    var theme = bw.generateTheme('sunrise', {
-      primary: '#ea580c',
-      secondary: '#dc2626',
-      tertiary: '#f59e0b',
-      inject: false
-    });
-    var P = theme.palette;
 
     bw.injectCSS(bw.css({
       'body': {

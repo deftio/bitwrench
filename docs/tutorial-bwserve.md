@@ -262,6 +262,6 @@ For production, put a reverse proxy (nginx, Caddy) in front for TLS and static a
 ## Next steps
 
 - [bwserve Reference](bwserve.md) — full API documentation
-- [Component Library](component-library.md) — all 52 `make*()` components work in bwserve
+- [Component Library](component-library.md) — all 50+ `make*()` components work in bwserve
 - [Tutorial: Embedded](tutorial-embedded.md) — same protocol on ESP32
 - [examples/client-server/](../examples/client-server/) — runnable example

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench Examples - App Gallery</title>
-  <meta name="description" content="Full application examples built with bitwrench: coffee shop, dashboard, todo app, IoT, server-driven apps, and more.">
+  <meta name="description" content="Full application examples built with bitwrench: landing pages, dashboards, embedded IoT, server-driven apps, and more.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.js"></script>
   <link rel="stylesheet" href="../dist/bitwrench.css">
@@ -142,6 +142,56 @@
         fontStyle: 'italic',
         marginTop: '0.5rem'
       },
+      '.gal_orient': {
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        borderRadius: 'var(--bw_radius)',
+        padding: '1.25rem 1.5rem',
+        marginBottom: '1.5rem',
+        lineHeight: '1.6'
+      },
+      '.gal_orient p': {
+        margin: '0 0 0.75rem',
+        fontSize: '0.9rem',
+        color: 'var(--bw_text_secondary)'
+      },
+      '.gal_orient p:last-child': { margin: '0' },
+      '.gal_orient_modes': {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: '0.5rem',
+        margin: '0.75rem 0'
+      },
+      '.gal_orient_mode': {
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: '0.5rem',
+        fontSize: '0.88rem',
+        color: 'var(--bw_text_secondary)'
+      },
+      '.gal_orient_mode strong': { color: 'var(--bw_text)', whiteSpace: 'nowrap' },
+      '.gal_orient_clone': {
+        display: 'inline-block',
+        background: 'rgba(0,102,102,0.06)',
+        padding: '0.3rem 0.6rem',
+        borderRadius: '4px',
+        fontFamily: '"SF Mono", Monaco, Consolas, monospace',
+        fontSize: '0.82rem',
+        color: 'var(--bw_text)',
+        marginTop: '0.25rem',
+        userSelect: 'all'
+      },
+      '.bw_theme_alt .gal_orient_clone': { background: 'rgba(255,255,255,0.08)' },
+      '.gal_embedded_intro': {
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        borderRadius: 'var(--bw_radius)',
+        padding: '1rem 1.25rem',
+        marginBottom: '1rem',
+        fontSize: '0.88rem',
+        color: 'var(--bw_text_secondary)',
+        lineHeight: '1.6'
+      },
       '@media (max-width: 640px)': {
         '.gal_hero': { padding: '1.5rem 0 1.25rem' },
         '.gal_hero h1': { fontSize: '1.35rem' },
@@ -152,42 +202,37 @@
     // ---- Example Data ----
     var examples = [
       {
-        category: 'Full Applications',
+        category: 'Browser Examples',
+        intro: null,
         items: [
           {
-            title: 'Ember & Oak Coffee Co.',
-            href: 'ember-and-oak/',
-            icon: '\u2615',
-            oneliner: 'Complete e-commerce landing with reactive cart and 27 BCCL components',
-            audience: 'Advanced',
-            themeColor: '#8B4513',
-            desc: 'A full-page coffee shop with navbar, hero, product grid with search + filter, shopping cart (pub/sub), timeline, charts, FAQ accordion, contact form, and newsletter signup. The most comprehensive bitwrench example.',
+            title: 'Basic Landing Page',
+            href: 'showcase/',
+            icon: '\u2728',
+            oneliner: 'Marketing page in ~110 lines, no CSS needed. Start here.',
+            audience: 'Beginner',
+            themeColor: '#4f46e5',
+            desc: 'A fictional analytics product page with navbar, hero, stats, feature grid, testimonials, pricing cards, FAQ, and footer. Built entirely from built-in components and a generated color theme \u2014 no CSS to write. Good first example to see what bitwrench gives you out of the box.',
             teaches: [
-              '<code>bw.component()</code> with template bindings and <code>o.methods</code>',
-              '<code>bw.pub()</code> / <code>bw.sub()</code> for cart state broadcast',
-              '<code>bw.generateTheme()</code> with warm brown/chocolate palette',
-              '<code>bw.makeBarChart()</code>, <code>bw.makeTimeline()</code>, <code>bw.makeAccordion()</code>',
-              '<code>bw.makeSearchInput()</code> with live filter pattern',
-              '<code>bw.createDOM()</code> for toast append pattern',
-              'Level 1 + Level 2 components side by side'
+              'Setting up a color theme with <code>bw.generateTheme()</code>',
+              '18 built-in components (Navbar, Hero, Card, Button, Accordion, etc.)',
+              'Utility classes for spacing and alignment',
+              'Composing a full page from component building blocks'
             ],
             prereq: null
           },
           {
-            title: 'Metrics Dashboard',
-            href: 'dashboard/',
-            icon: '\uD83D\uDCCA',
-            oneliner: 'Live-updating admin dashboard with charts and theme tokens',
-            audience: 'Intermediate',
-            themeColor: '#1e40af',
-            desc: 'Real-time dashboard with stat cards, bar chart, progress bars, and activity feed. Demonstrates theme palette tokens, bw.s()/bw.u utility styles, responsive layouts, and pub/sub for cross-widget communication.',
+            title: 'Styled Landing Page',
+            href: 'landing-page/',
+            icon: '\uD83C\uDF05',
+            oneliner: 'Same idea, but with custom CSS on top. Compare the two.',
+            audience: 'Beginner',
+            themeColor: '#ea580c',
+            desc: 'Same page structure as the Basic Landing Page but adds custom CSS for gradient backgrounds, pricing card polish, and responsive tweaks. Compare the two side-by-side to see how much the defaults handle and where custom styling helps.',
             teaches: [
-              '<code>bw.s()</code> / <code>bw.u</code> for inline style composition',
-              '<code>bw.responsive()</code> for layout breakpoints',
-              'Theme palette tokens (<code>P.primary.base</code>, <code>P.muted.border</code>)',
-              '<code>bw.css({ \'@keyframes\': {...} })</code> for animations',
-              '<code>bw.pub()</code> / <code>bw.sub()</code> for metrics broadcast',
-              '<code>bw.makeStatCard()</code>, <code>bw.makeBarChart()</code>, <code>bw.makeProgress()</code>'
+              'Writing custom CSS with <code>bw.css()</code> and <code>bw.injectCSS()</code>',
+              'Layering custom styles on top of built-in component styles',
+              'Responsive design adjustments'
             ],
             prereq: null
           },
@@ -195,33 +240,14 @@
             title: 'Todo App',
             href: 'todo-app/',
             icon: '\u2705',
-            oneliner: 'Reactive todo with pub/sub and component composition',
+            oneliner: 'Classic todo list with add, complete, filter, and delete.',
             audience: 'Beginner',
             themeColor: '#6366f1',
-            desc: 'Classic todo app using bw.component() with .set()/.get(), pub/sub for cross-component communication, and filter bar. A great starting point for understanding reactive patterns.',
+            desc: 'A working todo application with an input field, checkboxes, a filter bar (all/active/completed), and delete. Shows how components communicate \u2014 checking a todo in one part of the page updates the count badge elsewhere.',
             teaches: [
-              '<code>bw.component()</code> Level 2 pattern',
-              '<code>bw.pub()</code> / <code>bw.sub()</code> for state change events',
-              '<code>bw.makeButton()</code> with dynamic variant switching',
-              '<code>bw.makeCheckbox()</code>, <code>bw.makeInput()</code>',
-              'Filter pattern (all/active/completed)'
-            ],
-            prereq: null
-          },
-          {
-            title: 'Landing Page',
-            href: 'landing-page/',
-            icon: '\uD83C\uDF05',
-            oneliner: 'Marketing page using pure BCCL composition \u2014 no state',
-            audience: 'Beginner',
-            themeColor: '#ea580c',
-            desc: 'A polished marketing site built entirely with BCCL factories. Hero, feature grid, pricing table, testimonials, FAQ accordion, contact form, and CTA. Proves that component composition alone can produce professional pages.',
-            teaches: [
-              '<code>bw.makeNavbar()</code>, <code>bw.makeHero()</code>, <code>bw.makeSection()</code>',
-              '<code>bw.makeFeatureGrid()</code>, <code>bw.makeStatCard()</code>',
-              '<code>bw.makeAccordion()</code> for FAQ',
-              '<code>bw.makeForm()</code> / <code>bw.makeFormGroup()</code>',
-              'Level 0 \u2014 zero reactive state, pure composition'
+              'Stateful components with <code>bw.component()</code>',
+              'Cross-component communication with <code>bw.pub()</code> / <code>bw.sub()</code>',
+              'Buttons, checkboxes, inputs, and filter patterns'
             ],
             prereq: null
           },
@@ -229,16 +255,31 @@
             title: 'Signup Wizard',
             href: 'wizard/',
             icon: '\uD83E\uDDD9',
-            oneliner: 'Multi-step form with state transitions and validation',
+            oneliner: 'Multi-step form: account \u2192 profile \u2192 preferences \u2192 confirm.',
             audience: 'Intermediate',
             themeColor: '#6366f1',
-            desc: 'Multi-step wizard with form validation, step navigation, and bw.raw() for formatted summaries. Demonstrates that onclick handlers in TACO attributes survive re-renders.',
+            desc: 'A 4-step signup flow with form inputs, validation, a step indicator, and a confirmation summary. Demonstrates how to manage multi-page form state and navigate between steps without a router.',
             teaches: [
-              '<code>bw.raw()</code> for pre-escaped HTML content',
-              '<code>bw.makeStepper()</code> for step indicators',
-              '<code>bw.makeInput()</code>, <code>bw.makeSelect()</code>, <code>bw.makeCheckbox()</code>',
-              'State transitions (step 1 \u2192 2 \u2192 3 \u2192 4)',
-              'Level 1 manual render pattern'
+              'Step indicator with <code>bw.makeStepper()</code>',
+              'Form inputs, selects, and checkboxes',
+              'State transitions and validation logic',
+              'Rendering a summary from collected form data'
+            ],
+            prereq: null
+          },
+          {
+            title: 'Metrics Dashboard',
+            href: 'dashboard/',
+            icon: '\uD83D\uDCCA',
+            oneliner: 'Live stat cards, bar chart, and activity feed.',
+            audience: 'Intermediate',
+            themeColor: '#1e40af',
+            desc: 'A simulated analytics dashboard with KPI cards, a bar chart, progress indicators, and an activity feed that updates in real time. Multiple widgets react to the same data stream independently.',
+            teaches: [
+              'Real-time updates with pub/sub messaging',
+              'Stat cards, bar charts, and progress bars',
+              'Using theme palette colors in custom layouts',
+              'Responsive grid layout'
             ],
             prereq: null
           },
@@ -246,16 +287,118 @@
             title: 'Live Feed',
             href: 'live-feed/',
             icon: '\uD83D\uDCE1',
-            oneliner: 'Real-time event stream with filters, animations, and auto-expiry',
+            oneliner: 'Streaming events with filters, animations, and auto-cleanup.',
             audience: 'Intermediate',
             themeColor: '#0f766e',
-            desc: 'Simulated real-time event feed with filter bar, slide-in animations via @keyframes, counter badges updated by bw.patchAll(), and auto-expiring items cleaned up by bw.cleanup().',
+            desc: 'A simulated event stream (like a log viewer or notification feed). New items slide in at the top, old items expire automatically, and a filter bar lets you show only certain event types. Counter badges update in real time.',
             teaches: [
-              '<code>bw.patch()</code> / <code>bw.patchAll()</code> for targeted DOM updates',
-              '<code>bw.createDOM()</code> + insertBefore for append pattern',
-              '<code>bw.cleanup()</code> for element lifecycle management',
-              '<code>bw.css({ \'@keyframes slideIn\': {...} })</code>',
-              '<code>bw.uuid()</code> for counter badge addressing'
+              'Targeted DOM updates with <code>bw.patch()</code>',
+              'CSS animations via <code>bw.css()</code> keyframes',
+              'Element lifecycle cleanup',
+              'UUID-based addressing for live counters'
+            ],
+            prereq: null
+          },
+          {
+            title: 'Ember & Oak Coffee Co.',
+            href: 'ember-and-oak/',
+            icon: '\u2615',
+            oneliner: 'Full e-commerce site with cart, search, charts. The biggest example.',
+            audience: 'Advanced',
+            themeColor: '#8B4513',
+            desc: 'A complete fictional coffee shop website: product catalog with search and filters, shopping cart with add/remove, order history chart, company timeline, FAQ, contact form, and newsletter signup. Shows how all the pieces come together in a real-world-sized app.',
+            teaches: [
+              'Stateful components for the shopping cart',
+              'Pub/sub for cart updates across the page',
+              'Custom theme with brand colors',
+              'Search/filter pattern for product grid',
+              'Combining many component types in one app'
+            ],
+            prereq: null
+          }
+        ]
+      },
+      {
+        category: 'Embedded / IoT',
+        intro: 'These examples simulate embedded device dashboards. Each runs in your browser with mock data. On real hardware (ESP32, Raspberry Pi, etc.), the device serves this HTML page and pushes updates via SSE or WebSocket. bitwrench handles all rendering \u2014 the device never generates HTML.',
+        items: [
+          {
+            title: 'ESP32 Sensor Dashboard',
+            href: 'embedded/',
+            icon: '\uD83D\uDCE1',
+            oneliner: 'Temperature, humidity, pressure on a dark compact screen.',
+            audience: 'Intermediate',
+            themeColor: '#059669',
+            desc: 'A sensor dashboard designed for small screens and microcontrollers. Shows live-updating temperature, humidity, and pressure readings with gauges, control buttons, and an event log. Uses simulated data in the browser.',
+            teaches: [
+              'Compact theme for small/embedded screens',
+              'Device control buttons',
+              'Dark theme with custom CSS',
+              'Mock data pattern (swap in real device endpoints)'
+            ],
+            prereq: null
+          },
+          {
+            title: 'GPIO Controller',
+            href: 'embedded-gpio/',
+            icon: '\uD83E\uDD6B',
+            oneliner: 'Toggle 8 hardware pins with a state table and activity log.',
+            audience: 'Intermediate',
+            themeColor: '#10b981',
+            desc: 'Simulates a Raspberry Pi GPIO interface. Toggle individual pins HIGH/LOW, switch pin direction (input/output), and watch a live state table and activity log update as you interact.',
+            teaches: [
+              'Buttons and button groups for hardware controls',
+              'Tables for live state overview',
+              'Status badges (HIGH/LOW, IN/OUT)',
+              'Event-driven re-rendering'
+            ],
+            prereq: null
+          },
+          {
+            title: 'Industrial HMI',
+            href: 'embedded-industrial/',
+            icon: '\uD83C\uDFED',
+            oneliner: 'Process gauges, alarm indicators, and an emergency stop.',
+            audience: 'Intermediate',
+            themeColor: '#dc2626',
+            desc: 'A factory floor control panel showing 4 process variables (pressure, flow, temperature, pH) with color-coded alarm thresholds, pump and mixer controls, and an emergency stop button. Values drift realistically via simulation.',
+            teaches: [
+              'Stat cards as process variable displays',
+              'Progress bars as gauge indicators',
+              'Alerts for alarm states (normal/warning/critical)',
+              'Simulated sensor data with random walk'
+            ],
+            prereq: null
+          },
+          {
+            title: 'Network Monitor',
+            href: 'embedded-network/',
+            icon: '\uD83D\uDD0C',
+            oneliner: '4 network ports with traffic, errors, and enable/disable.',
+            audience: 'Intermediate',
+            themeColor: '#0891b2',
+            desc: 'A network switch dashboard showing 4 interfaces with UP/DOWN status, link speed, TX/RX traffic counters, load bars, and error tracking. Toggle ports on and off and watch traffic patterns change.',
+            teaches: [
+              'Stat cards for overview metrics',
+              'Progress bars for TX/RX load',
+              'Status badges (UP/DOWN)',
+              'Simulated burst traffic patterns'
+            ],
+            prereq: null
+          },
+          {
+            title: 'Home Automation',
+            href: 'embedded-home/',
+            icon: '\uD83C\uDFE0',
+            oneliner: 'Room sensors, light dimmers, thermostat, door locks.',
+            audience: 'Intermediate',
+            themeColor: '#8b5cf6',
+            desc: 'A smart home control panel with 4 rooms. Each room shows temperature and humidity, has light on/off toggles with brightness sliders, and door lock controls. A thermostat section lets you switch between heat, cool, and auto modes. A summary table shows the state of every room at a glance.',
+            teaches: [
+              'Cards for room panels with mixed controls',
+              'Range sliders for brightness',
+              'Button groups for mode selection',
+              'Badges for sensor readings and lock status'
             ],
             prereq: null
           }
@@ -263,92 +406,73 @@
       },
       {
         category: 'Server-Driven',
+        intro: null,
         items: [
           {
             title: 'Counter (bwserve)',
             href: 'client-server/',
             icon: '\uD83D\uDD04',
-            oneliner: 'Server-driven counter using SSE protocol',
+            oneliner: 'A simple counter where the server controls the UI.',
             audience: 'Intermediate',
             themeColor: '#006666',
-            desc: 'Server-driven counter using the bwserve SSE protocol. State lives on the server; UI updates push to the browser in real-time. The simplest bwserve example.',
+            desc: 'The simplest server-driven example. A counter lives on the server, and clicking buttons in the browser sends requests that update it. The server pushes UI changes back in real time via SSE (Server-Sent Events).',
             teaches: [
-              'bwserve SSE protocol (replace, patch)',
-              '<code>data-bw-action</code> attributes for server events',
-              'Server-side state management with Node.js'
+              'bwserve protocol basics (replace, patch)',
+              'Server-side state with Node.js',
+              'Real-time UI updates without page reload'
             ],
-            prereq: 'Run: node server.js'
-          },
-          {
-            title: 'LLM Chat Interface',
-            href: 'llm-chat/',
-            icon: '\uD83E\uDD16',
-            oneliner: 'Chat UI driven by Ollama or OpenAI via bwserve',
-            audience: 'Advanced',
-            themeColor: '#7c3aed',
-            desc: 'Full chat application with streaming LLM responses, auto-scroll, and server-side state management via bwserve. Works with Ollama (local) or OpenAI API.',
-            teaches: [
-              'bwserve streaming responses',
-              'Server-driven append pattern',
-              'LLM API integration (Ollama / OpenAI)'
-            ],
-            prereq: 'Run: node server.js (requires Ollama or OpenAI key)'
+            prereq: 'Run: <code>node server.js</code>'
           },
           {
             title: 'Pipe Demo',
             href: 'pipe-demo/',
             icon: '\uD83D\uDD27',
-            oneliner: 'Unix pipe to bwserve \u2014 stream any CLI output to a dashboard',
+            oneliner: 'Pipe any shell command into a live browser dashboard.',
             audience: 'Intermediate',
             themeColor: '#059669',
-            desc: 'Shows how to pipe shell command output through bwserve to create live dashboards from any CLI tool. A bash script streams sensor data to the browser.',
+            desc: 'Connects a Unix shell pipe to a browser dashboard. Any command-line tool that prints output (sensor readings, log tails, system stats) becomes a live-updating web page.',
             teaches: [
               'Unix pipe integration with bwserve',
-              'Shell scripting with bwserve protocol',
-              'Real-time CLI visualization'
+              'Turning CLI output into a web dashboard',
+              'Real-time visualization of streaming data'
             ],
-            prereq: 'Run: bash sensor.sh | node ../client-server/server.js'
-          }
-        ]
-      },
-      {
-        category: 'Embedded / IoT',
-        items: [
+            prereq: 'Run: <code>bash sensor.sh | node ../client-server/server.js</code>'
+          },
           {
-            title: 'IoT Sensor Dashboard',
-            href: 'embedded/',
-            icon: '\uD83D\uDCE1',
-            oneliner: 'ESP32-style dashboard with mock sensor data and SSE updates',
-            audience: 'Intermediate',
-            themeColor: '#059669',
-            desc: 'Dark-themed IoT dashboard designed for ESP32 microcontrollers. Sensor cards with live-updating values, progress bars, device control buttons, and an event log. Works standalone with simulated data.',
+            title: 'LLM Chat Interface',
+            href: 'llm-chat/',
+            icon: '\uD83E\uDD16',
+            oneliner: 'Chat with an AI model. Responses stream in token by token.',
+            audience: 'Advanced',
+            themeColor: '#7c3aed',
+            desc: 'A chat interface that connects to a local or cloud LLM. Messages stream in token by token with auto-scroll, just like ChatGPT. Works with Ollama (free, runs on your machine), LM Studio, or any OpenAI-compatible API.',
             teaches: [
-              '<code>bw.generateTheme()</code> with compact spacing for small screens',
-              '<code>bw.makeButton()</code> for device control commands',
-              'Custom <code>bw.css()</code> for dark embedded UI',
-              'Mock data pattern (replace with real <code>fetch()</code> / <code>EventSource</code>)'
+              'Streaming server-driven UI updates',
+              'Append pattern for token-by-token rendering',
+              'LLM API integration'
             ],
-            prereq: null
+            prereq: 'Run: <code>node server.js</code> (connect to Ollama, LM Studio, or any OpenAI-compatible API)'
           }
         ]
       },
       {
         category: 'AI-Powered',
+        intro: null,
         items: [
           {
             title: 'On-The-Fly UI',
             href: 'OnTheFlyUI/',
             icon: '\uD83E\uDDE0',
-            oneliner: 'AI-generated bitwrench UIs via Python + LLM',
+            oneliner: 'Ask an AI to build a UI, and it appears in your browser.',
             audience: 'Advanced',
             themeColor: '#7c3aed',
-            desc: 'Python application that uses LLMs to generate bitwrench TACO code on the fly. Demonstrates that TACO format is LLM-friendly \u2014 models can generate valid UI without JSX compilation.',
+            desc: 'Describe a UI in plain English and an LLM generates the page for you. Works because bitwrench\'s format (plain JSON objects) is easy for AI models to produce \u2014 no compilation step needed. The generated UI appears instantly in your browser.',
             teaches: [
               'LLM-driven UI generation',
               'Python + bitwrench integration',
-              'TACO as an LLM-friendly format'
+              'Why JSON-based UI is LLM-friendly'
             ],
-            prereq: 'Run: python otfui.py (requires Python 3 + LLM API key)'
+            prereq: 'Run: <code>python otfui.py</code> (requires Python 3 and an LLM API \u2014 local or cloud)'
           }
         ]
       }
@@ -389,7 +513,7 @@
 
       var detailContent = [
         { t: 'p', c: ex.desc },
-        { t: 'h4', c: 'What It Teaches' },
+        { t: 'h4', c: 'Topics Covered' },
         { t: 'ul', c: teachItems }
       ];
 
@@ -420,9 +544,62 @@
         t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
         c: [
           { t: 'h1', c: 'App Gallery' },
-          { t: 'p', c: 'Complete applications and demos built with bitwrench. Click any entry to see what it teaches and how to run it.' }
+          { t: 'p', c: 'Complete applications and demos built with bitwrench. Each example lives in its own subdirectory with source code and a README.' }
         ]
       }
+    };
+
+    var orientBox = {
+      t: 'div', a: { class: 'gal_orient' },
+      c: [
+        { t: 'p', c: [
+          'This gallery is separate from the ',
+          { t: 'a', a: { href: '../pages/' }, c: 'tutorial and reference pages' },
+          '. Those are interactive docs hosted on the live site. The examples below are full applications you can study, modify, and run.'
+        ]},
+        { t: 'div', a: { class: 'gal_orient_modes' }, c: [
+          { t: 'div', a: { class: 'gal_orient_mode' }, c: [
+            { t: 'span', c: '\uD83C\uDF10' },
+            { t: 'span', c: [
+              { t: 'strong', c: 'Browser examples' },
+              ' \u2014 open directly in any browser. No build step, no server. They also work on the ',
+              { t: 'a', a: { href: 'https://deftio.github.io/bitwrench/examples/' }, c: 'live site' },
+              '.'
+            ]}
+          ]},
+          { t: 'div', a: { class: 'gal_orient_mode' }, c: [
+            { t: 'span', c: '\uD83D\uDCBB' },
+            { t: 'span', c: [
+              { t: 'strong', c: 'Embedded / IoT examples' },
+              ' \u2014 simulate device dashboards in the browser. On real hardware, the device serves this page and pushes updates via SSE.'
+            ]}
+          ]},
+          { t: 'div', a: { class: 'gal_orient_mode' }, c: [
+            { t: 'span', c: '\uD83D\uDDA5' },
+            { t: 'span', c: [
+              { t: 'strong', c: 'Server-driven examples' },
+              ' \u2014 require cloning the repo and running ',
+              { t: 'code', c: 'node server.js' },
+              '. See each README for setup.'
+            ]}
+          ]},
+          { t: 'div', a: { class: 'gal_orient_mode' }, c: [
+            { t: 'span', c: '\uD83E\uDDE0' },
+            { t: 'span', c: [
+              { t: 'strong', c: 'AI-powered examples' },
+              ' \u2014 require Python 3 and an LLM API (local or cloud).'
+            ]}
+          ]}
+        ]},
+        { t: 'p', c: [
+          'To run any example locally: ',
+          { t: 'code', a: { class: 'gal_orient_clone' }, c: 'git clone https://github.com/deftio/bitwrench.git' },
+          { t: 'br' },
+          'The ',
+          { t: 'code', c: 'dist/' },
+          ' directory ships in the repo \u2014 no build step is needed to open the browser examples.'
+        ]}
+      ]
     };
 
     var itemIdx = 0;
@@ -430,29 +607,31 @@
       var items = section.items.map(function(ex) {
         return makeExampleItem(ex, itemIdx++);
       });
-      return {
-        t: 'div',
-        c: [
-          { t: 'div', a: { class: 'gal_category' }, c: section.category },
-          { t: 'div', c: items }
-        ]
-      };
+
+      var sectionContent = [];
+
+      // Category heading
+      sectionContent.push({ t: 'div', a: { class: 'gal_category' }, c: section.category });
+
+      // Optional intro paragraph for the section
+      if (section.intro) {
+        sectionContent.push({ t: 'div', a: { class: 'gal_embedded_intro' }, c: section.intro });
+      }
+
+      sectionContent.push({ t: 'div', c: items });
+
+      return { t: 'div', c: sectionContent };
     });
 
     // Source code callout
     var sourceCallout = {
       t: 'div', a: { style: 'margin-top:2rem;padding:1.25rem;background:var(--bw_card_bg);border:1px solid var(--bw_card_border);border-radius:var(--bw_radius)' },
       c: [
-        { t: 'p', a: { style: 'margin:0 0 0.5rem;color:var(--bw_text_secondary);font-size:0.9rem;line-height:1.6' },
-          c: [
-            'Every example is a single HTML file with no build step. View the source on ',
-            { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/master/examples' }, c: 'GitHub' },
-            ', or open any example and hit View Source in your browser.'
-          ]
-        },
         { t: 'p', a: { style: 'margin:0;color:var(--bw_text_secondary);font-size:0.9rem;line-height:1.6' },
           c: [
-            'For guided tutorials and the full component library, visit the ',
+            'Every browser example is a single HTML file \u2014 open any and hit View Source. Full source on ',
+            { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/master/examples' }, c: 'GitHub' },
+            '. For guided tutorials and the component library, visit the ',
             { t: 'a', a: { href: '../pages/' }, c: 'documentation site' },
             '.'
           ]
@@ -462,7 +641,7 @@
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: sections.concat([sourceCallout])
+      c: [orientBox].concat(sections, [sourceCallout])
     };
 
     bw.DOM('#app', [hero, contentWrapper]);

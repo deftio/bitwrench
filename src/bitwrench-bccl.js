@@ -327,7 +327,7 @@ export function makeCol(props = {}) {
       if (breakpoint === 'xs') {
         classes.push(`bw_col_${value}`);
       } else {
-        classes.push(`bw_col_${breakpoint}-${value}`);
+        classes.push(`bw_col_${breakpoint}_${value}`);
       }
     });
   } else if (size) {

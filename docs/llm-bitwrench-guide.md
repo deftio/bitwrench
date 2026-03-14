@@ -126,6 +126,7 @@ Most UI should be Level 0. Escalate only when needed.
 | `bw.createDOM(taco)` | TACO → detached DOM element |
 | `bw.DOM(selector, taco)` | Mount TACO into existing element |
 | `bw.raw(str)` | Mark string as pre-escaped HTML |
+| `bw.h(tag, attrs?, c?, o?)` | TACO constructor: `bw.h('p', {class:'x'}, 'Hi')` → `{t:'p', a:{class:'x'}, c:'Hi'}` |
 
 ### CSS & Styling
 
@@ -262,13 +263,20 @@ counter.destroy();            // cleanup
 
 ### Lifecycle Hooks
 
+Primary hooks (use these):
+
+| Hook | When | Signature |
+|------|------|-----------|
+| `mounted` | After DOM insertion | `fn(handle)` |
+| `updated` | After re-render (alias: `onUpdate`) | `fn(handle, changedKeys)` |
+| `unmount` | Before DOM removal | `fn(handle)` |
+
+Additional hooks (rarely needed):
+
 | Hook | When | Signature |
 |------|------|-----------|
 | `willMount` | Before first DOM insertion | `fn(handle)` |
-| `mounted` | After DOM insertion | `fn(handle)` |
 | `willUpdate` | Before re-render | `fn(handle, changedKeys)` |
-| `onUpdate` | After re-render | `fn(handle, changedKeys)` |
-| `unmount` | Before DOM removal | `fn(handle)` |
 | `willDestroy` | Before destruction | `fn(handle)` |
 
 ## BCCL — Component Library
@@ -344,10 +352,13 @@ bw.makeTooltip({ content, text, placement })
 
 ### Tables
 ```javascript
-bw.makeTable({ data, columns, sortable, striped, hover })
+bw.makeTable({ data, columns, sortable, striped, hover, selectable, onRowClick, pageSize, currentPage, onPageChange })
 bw.makeTableFromArray({ data, headerRow, striped, sortable })
 bw.makeDataTable({ title, data, columns, responsive, striped })
 bw.makeBarChart({ data, labelKey, valueKey, title, color, height })
+// col.render: columns: [{ key, label, render: function(val, row) { return taco_or_string } }]
+// selectable: true → rows toggle bw_table_row_selected class on click
+// pageSize: N → shows N rows per page with Prev/Next controls
 ```
 
 ## Theming

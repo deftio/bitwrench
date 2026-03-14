@@ -14,7 +14,7 @@ These guides cover how to build UIs with bitwrench.
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
 | [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
-| [Component Library](component-library.md) | All 52 `make*()` functions with signatures and examples |
+| [Component Library](component-library.md) | All 50+ `make*()` functions with signatures and examples |
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
 | [CLI](cli.md) | The `bwcli` command: file conversion, themes, standalone pages |
 | [bwserve](bwserve.md) | Server-driven UI: SSE protocol, pipe server, embedded devices, relaxed JSON |
@@ -51,7 +51,7 @@ Bitwrench describes UI as plain JavaScript objects. There is no JSX, no template
 The library provides three things:
 
 1. **A rendering engine** that turns objects into HTML or DOM
-2. **A component library** of 52 ready-made UI elements
+2. **A component library** of 50+ ready-made UI elements
 3. **A reactivity system** that updates the DOM when state changes
 
 Everything else — styling, theming, event handling, server communication — builds on these three pieces.

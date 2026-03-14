@@ -94,12 +94,12 @@ but the docs don't push it as the primary pattern. Most buttons use the verbose 
 
 ### Docs gaps surfaced by Ember & Oak
 
-* [ ] doc --> `bw.raw()` needs a spotlight — user used innerHTML for hero title when `bw.raw()` was the answer
-* [ ] doc --> `onclick` (and other event attributes) as primary event pattern — simpler than `o.mounted` + `addEventListener`
-* [ ] doc --> pattern for ephemeral UI (toasts, slide-over panels) without raw DOM
-* [ ] doc --> pattern for data-driven filtered lists in `bw.component()` (coffee filter/search use case)
-* [ ] doc --> theme palette tokens accessible in custom `bw.css()` — show how to reference palette colors
-* [ ] doc --> pattern for child widget updates within a ComponentHandle (progress bar use case)
+* [x] doc --> `bw.raw()` spotlight — documented in `thinking-in-bitwrench.md` § Raw HTML in content
+* [x] doc --> `onclick` as primary event pattern — documented in `thinking-in-bitwrench.md` § Event handlers
+* [x] doc --> pattern for ephemeral UI (toasts, slide-over panels) — documented in `thinking-in-bitwrench.md` § Ephemeral UI
+* [x] doc --> pattern for data-driven filtered lists — documented in `thinking-in-bitwrench.md` § Data-driven filtered list
+* [x] doc --> theme palette tokens in custom `bw.css()` — documented in `thinking-in-bitwrench.md` § Theme + custom CSS
+* [x] doc --> pattern for child widget updates within a ComponentHandle — documented in `state-management.md` § Updating child widgets
 
 ### Critical fixes
 
@@ -151,15 +151,15 @@ but the docs don't push it as the primary pattern. Most buttons use the verbose 
 
 ### Table enhancements
 
-* [ ] implement --> `selectable` prop + `onRowClick` callback + `bw_table_row_selected` CSS class on `makeTable()`
-* [ ] implement --> `pageSize`/`currentPage`/`onPageChange` props — pagination for `makeTable()`
-* [ ] document --> existing `col.render` cell renderer in `docs/component-library.md`
+* [x] implement --> `selectable` prop + `onRowClick` callback + `bw_table_row_selected` CSS class on `makeTable()`
+* [x] implement --> `pageSize`/`currentPage`/`onPageChange` props — pagination for `makeTable()`
+* [x] document --> `col.render` cell renderer + selectable + pagination in `docs/component-library.md`
 
 ### Lifecycle cleanup
 
-* [ ] implement --> `updated` as alias for `onUpdate` (1 line)
-* [ ] doc --> `mounted`/`updated`/`unmount` as the "primary three" in docs
-* [ ] doc --> soft-deprecate `willUpdate`/`willDestroy` in docs only (no code removal)
+* [x] implement --> `updated` as alias for `onUpdate` (1 line)
+* [x] doc --> `mounted`/`updated`/`unmount` as the "primary three" in `state-management.md` + `llm-bitwrench-guide.md`
+* [x] doc --> soft-deprecate `willUpdate`/`willDestroy` as "rarely needed" in docs
 
 ### ComponentHandle cleanup (deferred)
 
@@ -170,10 +170,10 @@ but the docs don't push it as the primary pattern. Most buttons use the verbose 
 
 ## P2.5: Bundle Size Management
 
-Current sizes (v2.0.16):
-- **bitwrench.umd.min.js** (full): 146KB raw, **38.9KB gzipped** — under 45KB budget
-- **bitwrench-lean.umd.min.js** (no BCCL): 113KB raw, **29.9KB gzipped**
-- **BCCL layer**: ~9KB gzipped delta (50+ make*() components)
+Current sizes (v2.0.18):
+- **bitwrench.umd.min.js** (full): **42.8KB gzipped** — under 45KB budget (was 38.9KB in v2.0.16)
+- Growth: table selectable/pagination, bw.h(), bw.component() enhancements
+- **Only ~2KB headroom remaining** — monitor closely
 
 Source breakdown: core 4222 LOC (40%), styles 2236 LOC (21%), BCCL 3614 LOC (34%), color 438 LOC (4%).
 
@@ -196,15 +196,167 @@ Source breakdown: core 4222 LOC (40%), styles 2236 LOC (21%), BCCL 3614 LOC (34%
 
 ---
 
+## P4: TACO Shorthand (v2.0.x / v2.1.0)
+
+Design doc: `dev/array_to_taco.md`
+
+### bw.h() — TACO constructor (v2.0.x, low risk)
+
+* [x] implement --> `bw.h(tag, attrs, content, opts)` — returns plain `{t,a,c,o}` TACO object (~5 lines)
+  - All args optional except tag. Skippable: `bw.h('p', 'hello')` = `{t:'p', c:'hello'}`
+  - Returns a plain serializable object, NOT a vnode — preserves bitwrench's differentiator
+  - Files: `src/bitwrench.js`
+  - Tests: 10+ (all arg combos, serializability, nested h() calls, undefined args omitted)
+
+### Array shorthand (v2.1.0, needs compat audit)
+
+* [ ] audit --> backward compatibility with existing `c: [child, child]` arrays
+  - CRITICAL: `bw.html()` and `bw.createDOM()` already treat arrays in `c` as children lists
+  - Array shorthand `[t, a, c, o]` must be unambiguously distinguishable from children arrays
+  - Run full TDD suite from `dev/array_to_taco.md` against real examples before shipping
+* [ ] implement --> `bw.normalizeTaco(node)` — converts array shorthand + strings to canonical `{t,a,c,o}`
+  - Strict positional: `[c]`, `[t,c]`, `[t,a,c]`, `[t,a,c,o]`
+  - Recursively normalizes children
+  - Files: `src/bitwrench.js`
+  - Tests: 30+ (see TDD section in `dev/array_to_taco.md`)
+* [ ] decide --> double-bracket problem: `['p', [['a', {href:'...'}, 'link']]]` is unnatural
+  - Alternative: require `{c:[...]}` wrapper when c is an array
+  - This is the hardest UX question — needs real developer testing
+* [ ] doc --> documentation strategy: teach {taco} first, introduce array shorthand as convenience layer
+  - Users must understand TACO before seeing shorthand (shorthand is sugar, not the model)
+  - Caveats section: when shorthand doesn't work (complex `o`, edge cases)
+  - See `dev/array_to_taco.md` § Documentation Strategy
+
+---
+
+## P5: bwserve Screenshot (v2.0.19 / v2.1.0)
+
+Design doc: `dev/bw-screenshot-design.md`
+
+**Killer feature**: Any server — LLM, embedded device, CI pipeline — can *see*
+what it built. Visual feedback loop without Playwright/Puppeteer.
+
+### Phase 1: Core protocol
+
+* [ ] implement --> `client.screenshot(selector?, options?)` on `BwServeClient`
+  - Returns `Promise<{ data: Buffer, width, height, format }>`
+  - Options: format (png/jpeg), quality, maxWidth, maxHeight, scale, timeout
+  - Uses requestId correlation: call → client captures → POST-back → resolve
+  - Files: `src/bwserve/client.js`
+* [ ] implement --> `_resolveScreenshot(requestId, result)` on `BwServeClient`
+  - Resolves pending Promise, converts data URL to Buffer
+  - Files: `src/bwserve/client.js`
+* [ ] implement --> `/__bw/screenshot/:clientId` POST route in `BwServeApp`
+  - Receives screenshot data from client, dispatches to `_resolveScreenshot()`
+  - Files: `src/bwserve/index.js`
+* [ ] implement --> `/__bw/vendor/:filename` GET route in `BwServeApp`
+  - Serves vendored libraries (allowlisted filenames only)
+  - Files: `src/bwserve/index.js`
+* [ ] vendor --> `src/vendor/html2canvas.min.js` (v1.4.1, ~43KB, MIT license)
+  - Load priority: window.html2canvas → vendor route → CDN fallback
+  - NOT bundled into bitwrench.js — loaded on demand, first screenshot only
+* [ ] implement --> Client-side capture function (registered as string)
+  - html2canvas(element) → optional resize → toDataURL → POST back
+  - Client-side resize via canvas drawImage (bilinear interpolation)
+  - Files: string constant in `src/bwserve/client.js`
+* [ ] implement --> `allowScreenshot` opt-in flag
+  - Off by default. Set via `bwserve.create({ allowScreenshot: true })`
+  - When off: `client.screenshot()` rejects immediately
+* [ ] test --> Protocol round-trip unit tests (~15-20 tests)
+  - call message structure, timeout rejection, error propagation
+  - Opt-in enforcement, options pass-through, rate limiting
+  - Files: `test/bitwrench_test_bwserve.js`
+
+### Phase 2: Demos and playground
+
+* [ ] make --> `examples/client-server/screenshot-demo/` — dashboard screenshot to disk
+* [ ] make --> Add Screenshot button to `pages/bwserve-sandbox.html`
+  - Displays returned image inline, shows metadata (dimensions, format, size)
+* [ ] make --> `examples/client-server/llm-screenshot/` — LLM visual feedback loop
+  - Generate TACO → render → screenshot → vision model evaluates → refine
+  - Uses Ollama (local, free) with llava or similar vision model
+
+### Phase 3: Polish
+
+* [ ] implement --> Rate limiting (default 1/sec per client, configurable)
+* [ ] implement --> Visual indicator option (brief border flash, off by default)
+* [ ] implement --> `client.inspect(selector)` — layout metadata without pixels
+  - Returns { width, height, scrollHeight, childCount, computedStyles }
+  - Same call + POST-back protocol, much cheaper than screenshot
+* [ ] test --> Playwright integration tests (real rendering, image validation)
+* [ ] doc --> Screenshot section in `docs/bwserve.md`
+
+---
+
+## P6: bitwrench-chart — Separate SVG Charting Library
+
+Design doc: `dev/bw-chart-design.md`
+
+**Separate package** (`bitwrench-chart` on npm). SVG-based, TACO-native, zero
+runtime deps. No bundle size limit. Charts return `{t:'svg', ...}` TACO objects —
+serializable, patchable via bwserve, themeable via palette.
+
+### Phase 1: Core + MVP charts
+
+* [ ] setup --> Create repo/package structure, build config, test harness
+* [ ] implement --> Scale functions (linear, band, time) — pure functions, ~50 lines each
+* [ ] implement --> Axis generation (ticks, labels, gridlines) — ~150 lines
+* [ ] implement --> `barChart(config)` — vertical bars with axes, labels, palette
+* [ ] implement --> `lineChart(config)` — straight segments, area fill, multi-series
+* [ ] implement --> `sparkline(config)` — inline mini chart, no axes, for table cells
+* [ ] implement --> `pieChart(config)` — pie + donut variants, center label
+* [ ] implement --> Responsive wrapper (viewBox-based, width:100%)
+* [ ] implement --> Default categorical palette (8 colors, colorblind-safe)
+* [ ] implement --> Accessibility (<title>, <desc>, role="img") on all charts
+* [ ] test --> Unit tests for scales, axes, all 4 chart types (~100 tests)
+* [ ] doc --> README with examples, API reference
+
+### Phase 2: More chart types + integration
+
+* [ ] implement --> `gauge(config)` — semi-circle/full with needle, threshold zones
+* [ ] implement --> `scatterChart(config)` — dots, optional bubble sizing, regression line
+* [ ] implement --> `heatmap(config)` — 2D grid, sequential/diverging color scales
+* [ ] implement --> `radarChart(config)` — N-axis polygon, multi-series overlay
+* [ ] implement --> `arrayImage(config)` — 2D array → SVG rects or data-URL image (from bw 1.x)
+* [ ] implement --> bitwrench theme adapter (`fromTheme(palette)` → color array)
+* [ ] implement --> Legend component
+* [ ] implement --> Tooltip component (hover)
+* [ ] implement --> Animation CSS (opt-in, CSS transitions/keyframes)
+* [ ] test --> Tests for Phase 2 chart types (~100 tests)
+
+### Phase 3: Advanced charts + polish
+
+* [ ] implement --> `treemap(config)` — squarified layout, nested rectangles
+* [ ] implement --> `chord(config)` — circular flow diagram, matrix input
+* [ ] implement --> Bar variants (horizontal, stacked, grouped)
+* [ ] implement --> Line curves (monotone cubic interpolation)
+* [ ] implement --> Pattern fills (stripes, dots) for colorblind accessibility
+* [ ] implement --> Keyboard navigation for interactive charts
+* [ ] doc --> Full documentation site
+* [ ] release --> v1.0.0
+
+---
+
 ## Deferred / Future
 
+### Core
+* [ ] implement --> `bw.make(type, props)` factory dispatcher — thin delegation to `bw.makeCard`, `bw.makeButton`, etc. Enables data-driven component creation. Audit which make*() functions earn their keep.
+* [ ] implement --> `bw.morph(target, newTaco)` — update DOM in-place, preserving state of unchanged subtrees
+* [ ] implement --> Component structural/cosmetic CSS split — separate structural styles (layout, display) from cosmetic (colors, shadows) in `bitwrench-styles.js`. Base CSS structural-only; `generateTheme()` handles cosmetic layer.
+
+### bwserve
 * [ ] implement --> Declarative events (`o.events`) in `bw.createDOM()` — sendValue, debounce, throttle, sendForm
 * [ ] implement --> DOM morphing for `replace` — preserve local state (scroll pos, expanded accordions)
 * [ ] implement --> Form data serialization in actions (sendForm: '#my-form')
 * [ ] implement --> WebSocket transport option
-* [ ] implement --> `bwcli serve` file watching and live reload
-* [ ] implement --> `bw.morph(target, newTaco)` — update DOM in-place, preserving state of unchanged subtrees
 * [ ] decide --> Optimistic updates: client-side immediate response while waiting for server
 * [ ] decide --> Event batching: multiple actions in same frame → single POST
-* [ ] implement --> Remote screenshot via bwcli debug protocol
+
+### CLI
+* [ ] implement --> `bwcli serve` file watching and live reload
+* [ ] implement --> `bwcli build` — static site generation from directory of .md/.html files
+* [ ] implement --> `bwcli init` — scaffold a new bitwrench project
+
+### Docs / DX
+* [ ] improve --> API reference: fix JSDoc (@example, @category), use `comment-parser` devDep, improve CSS/layout (cards, search)
 * [ ] make --> `examples/llm-chat-advance` (deferred to separate repo — requires markdown rendering + image display)

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse Analytics - Built with Bitwrench</title>
+  <script src="../../dist/bitwrench.umd.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // Pulse Analytics — a fictional developer analytics product.
+    //
+    // This page is built entirely with bitwrench component factories.
+    // Two lines set up the design system, then ~100 lines of make*()
+    // calls compose the whole page. View Source to see how it works.
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('pulse', {
+      primary: '#4f46e5',
+      secondary: '#d97706',
+      tertiary: '#06b6d4',
+      spacing: 'normal',
+      radius: 'md'
+    });
+
+    // -- Navbar ------------------------------------------------------------
+    var nav = bw.makeNavbar({
+      brand: 'Pulse',
+      items: [
+        { text: 'Features', href: '#features' },
+        { text: 'How It Works', href: '#how' },
+        { text: 'Pricing', href: '#pricing' },
+        { text: 'FAQ', href: '#faq' }
+      ],
+      dark: true
+    });
+
+    // -- Hero --------------------------------------------------------------
+    var hero = bw.makeHero({
+      title: 'Developer Analytics That Just Work',
+      subtitle: 'Pulse gives your engineering team deploy frequency, error budgets, and DORA metrics \u2014 in one dashboard, with zero configuration.',
+      variant: 'primary',
+      size: 'lg',
+      actions: [
+        bw.makeButton({ text: 'Start Free', variant: 'light', size: 'lg' }),
+        bw.makeButton({ text: 'Watch Demo', variant: 'outline_light', size: 'lg' })
+      ]
+    });
+
+    // -- Alert banner ------------------------------------------------------
+    var alert = bw.makeAlert({
+      content: 'New: AI-powered root cause analysis is now in beta. Try it free.',
+      variant: 'info',
+      dismissible: true
+    });
+
+    // -- Stats row ---------------------------------------------------------
+    var stats = {
+      t: 'div', a: { class: 'bw_container bw_py_4' },
+      c: bw.makeRow({
+        children: [
+          bw.makeCol({ size: { xs: 6, md: 3 }, content: bw.makeStatCard({ value: '4.2M', label: 'Deploys Tracked', icon: '\u26A1' }) }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content: bw.makeStatCard({ value: '99.97%', label: 'Uptime SLA', icon: '\u2705' }) }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content: bw.makeStatCard({ value: '1,800+', label: 'Teams', icon: '\uD83D\uDC65' }) }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content: bw.makeStatCard({ value: '< 50ms', label: 'P95 Latency', icon: '\u23F1\uFE0F' }) })
+        ]
+      })
+    };
+
+    // -- Features ----------------------------------------------------------
+    var features = bw.makeSection({
+      title: 'Everything Your Team Needs',
+      subtitle: 'From commit to deploy, Pulse tracks the metrics that matter.',
+      id: 'features',
+      content: bw.makeFeatureGrid({
+        columns: 3,
+        features: [
+          { icon: '\uD83D\uDCC8', title: 'DORA Metrics', description: 'Deploy frequency, lead time, MTTR, and change failure rate \u2014 computed automatically from your CI/CD pipeline.' },
+          { icon: '\uD83D\uDD14', title: 'Error Budgets', description: 'Set SLOs per service. Get alerted when your budget burns too fast, not after it is gone.' },
+          { icon: '\uD83E\uDD16', title: 'AI Root Cause', description: 'When an incident occurs, Pulse correlates deploys, config changes, and traffic patterns to suggest probable cause.' },
+          { icon: '\uD83D\uDD0C', title: '60+ Integrations', description: 'GitHub, GitLab, Jenkins, ArgoCD, Datadog, PagerDuty, Slack \u2014 connect in under 2 minutes.' },
+          { icon: '\uD83D\uDEE1\uFE0F', title: 'SOC 2 Compliant', description: 'Enterprise-grade security with SSO, audit logs, and role-based access control.' },
+          { icon: '\uD83D\uDE80', title: 'Zero Config', description: 'Point Pulse at your repo. It auto-discovers pipelines, environments, and deploys. No YAML required.' }
+        ]
+      })
+    });
+
+    // -- How It Works (Timeline) -------------------------------------------
+    var howItWorks = bw.makeSection({
+      title: 'Up and Running in 5 Minutes',
+      subtitle: 'No agents to install. No infrastructure to manage.',
+      id: 'how',
+      content: bw.makeTimeline({
+        items: [
+          { title: 'Connect Your Repo', content: 'Authorize GitHub, GitLab, or Bitbucket. Pulse reads commit and deploy metadata \u2014 never your source code.' },
+          { title: 'Auto-Discover Pipelines', content: 'Pulse detects your CI/CD tool (GitHub Actions, Jenkins, ArgoCD) and starts tracking deploy events immediately.' },
+          { title: 'Set Your SLOs', content: 'Define error budgets and targets per service. Pulse calculates burn rate and alerts before you breach.' },
+          { title: 'Ship With Confidence', content: 'Your team gets a live dashboard with DORA metrics, deploy diffs, and AI-generated incident summaries.' }
+        ]
+      })
+    });
+
+    // -- Testimonials ------------------------------------------------------
+    var testimonials = bw.makeSection({
+      title: 'Trusted by Engineering Teams',
+      content: bw.makeRow({ children: [
+        bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
+          content: '\u201CPulse replaced three internal tools. Our DORA metrics went from a quarterly spreadsheet to a live dashboard in one afternoon.\u201D',
+          footer: 'Sarah Chen \u2014 VP Engineering, Meridian Health'
+        })}),
+        bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
+          content: '\u201CThe AI root cause feature saved us 6 hours on our last P1. It correlated a config change none of us remembered making.\u201D',
+          footer: 'James Oduya \u2014 SRE Lead, Skyline Logistics'
+        })}),
+        bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
+          content: '\u201CWe went from deploying weekly to daily after seeing our lead time data. Pulse made the bottlenecks obvious.\u201D',
+          footer: 'Priya Mehta \u2014 CTO, Canopy Fintech'
+        })})
+      ]})
+    });
+
+    // -- Pricing -----------------------------------------------------------
+    var pricing = bw.makeSection({
+      title: 'Simple Pricing',
+      subtitle: 'Start free. Upgrade when your team grows.',
+      id: 'pricing',
+      content: bw.makeRow({ children: [
+        bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
+          title: 'Starter',
+          content: [
+            { t: 'div', a: { class: 'bw_text_center bw_mb_3' }, c: [
+              { t: 'div', a: { class: 'bw_h2' }, c: 'Free' },
+              { t: 'div', a: { class: 'bw_text_muted' }, c: 'Up to 5 services' }
+            ]},
+            bw.makeListGroup({ items: ['3 dashboards', '30-day retention', '5 team members', 'Community support'] }),
+            { t: 'div', a: { class: 'bw_mt_3' }, c: bw.makeButton({ text: 'Get Started', variant: 'outline_primary' }) }
+          ]
+        })}),
+        bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
+          title: 'Pro',
+          className: 'bw_border_primary',
+          content: [
+            { t: 'div', a: { class: 'bw_text_center bw_mb_3' }, c: [
+              { t: 'div', a: { class: 'bw_h2' }, c: '$49/mo' },
+              { t: 'div', a: { class: 'bw_text_muted' }, c: 'Up to 50 services' }
+            ]},
+            bw.makeListGroup({ items: ['Unlimited dashboards', '1-year retention', '25 team members', 'AI Root Cause', 'Priority support'] }),
+            { t: 'div', a: { class: 'bw_mt_3' }, c: bw.makeButton({ text: 'Start Free Trial', variant: 'primary' }) }
+          ]
+        })}),
+        bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
+          title: 'Enterprise',
+          content: [
+            { t: 'div', a: { class: 'bw_text_center bw_mb_3' }, c: [
+              { t: 'div', a: { class: 'bw_h2' }, c: 'Custom' },
+              { t: 'div', a: { class: 'bw_text_muted' }, c: 'Unlimited services' }
+            ]},
+            bw.makeListGroup({ items: ['Everything in Pro', 'Unlimited retention', 'Unlimited team members', 'SSO / SAML', 'Dedicated support & SLA'] }),
+            { t: 'div', a: { class: 'bw_mt_3' }, c: bw.makeButton({ text: 'Contact Sales', variant: 'outline_primary' }) }
+          ]
+        })})
+      ]})
+    });
+
+    // -- FAQ ---------------------------------------------------------------
+    var faq = bw.makeSection({
+      title: 'Frequently Asked Questions',
+      id: 'faq',
+      content: bw.makeAccordion({
+        items: [
+          { title: 'Does Pulse read my source code?', content: 'No. Pulse reads commit metadata (author, timestamp, message) and deploy events. It never clones or accesses your source code.' },
+          { title: 'What CI/CD tools are supported?', content: 'GitHub Actions, GitLab CI, Jenkins, CircleCI, ArgoCD, Buildkite, and 40+ more. Custom webhooks are also supported for any pipeline.' },
+          { title: 'How is the AI root cause feature different from log search?', content: 'Log search is reactive \u2014 you look after something breaks. Pulse AI correlates deploys, config changes, and traffic anomalies proactively and ranks probable causes by confidence.' },
+          { title: 'Can I self-host Pulse?', content: 'Enterprise plans include a self-hosted option via Docker or Kubernetes. Contact sales for details.' },
+          { title: 'What happens when I hit my service limit?', content: 'We notify you at 80% and 100%. You can upgrade instantly. We never stop collecting data for existing services.' }
+        ]
+      })
+    });
+
+    // -- CTA ---------------------------------------------------------------
+    var cta = bw.makeCTA({
+      title: 'Ready to See Your Engineering Metrics?',
+      description: 'Join 1,800+ teams shipping with confidence. Free plan, no credit card required.',
+      variant: 'primary',
+      actions: [
+        bw.makeButton({ text: 'Start Free', variant: 'light', size: 'lg' }),
+        bw.makeButton({ text: 'Schedule Demo', variant: 'outline_light', size: 'lg' })
+      ]
+    });
+
+    // -- Footer ------------------------------------------------------------
+    var footer = {
+      t: 'footer', a: { class: 'bw_bg_dark bw_text_light bw_py_4 bw_text_center' },
+      c: [
+        { t: 'p', a: { class: 'bw_mb_1' }, c: 'Pulse Analytics \u00A9 2026. Built with bitwrench.' },
+        { t: 'p', a: { class: 'bw_text_muted' }, c: {
+          t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'View bitwrench on GitHub'
+        }}
+      ]
+    };
+
+    // -- Mount everything --------------------------------------------------
+    bw.DOM('#app', [nav, hero, alert, stats, features, howItWorks, testimonials, pricing, faq, cta, footer]);
+  </script>
+</body>
+</html>

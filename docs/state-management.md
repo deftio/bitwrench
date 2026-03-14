@@ -443,16 +443,23 @@ bw.inspect('#counter').set('count', 99);
 
 ### Lifecycle hooks
 
-ComponentHandle supports six lifecycle hooks:
+ComponentHandle supports six lifecycle hooks. The **primary three** cover most use cases:
+
+| Hook | When it fires | Typical use |
+|------|--------------|-------------|
+| **`mounted`** | After DOM insertion | Start timers, attach observers, measure dimensions |
+| **`updated`** | After re-render (alias: `onUpdate`) | Scroll to element, focus input, sync external state |
+| **`unmount`** | Before DOM removal (state preserved) | Pause timers, detach observers |
+
+Additional hooks (rarely needed):
 
 | Hook | When it fires | Typical use |
 |------|--------------|-------------|
 | `willMount` | Before first DOM insertion | Fetch initial data |
-| `mounted` | After DOM insertion | Start timers, attach external listeners |
 | `willUpdate` | Before re-render (state changed) | Validate state, cancel updates |
-| `onUpdate` | After re-render | Scroll to element, focus input |
-| `unmount` | Before DOM removal (state preserved) | Pause timers |
 | `willDestroy` | Before full destruction | Final cleanup |
+
+> `updated` and `onUpdate` are interchangeable — use whichever reads better. If both are specified, `onUpdate` takes precedence. `willUpdate` and `willDestroy` still work but are rarely needed in practice.
 
 ```javascript
 var timer = bw.component({
@@ -706,6 +713,51 @@ bw.message('notifications', 'addAlert', {
 This pattern decouples the sender from the receiver. The sender does not need a reference to the notifications component — it only needs to know the tag name and the method signature.
 
 > **Coming from Angular?** `bw.message()` is similar to a service with `Subject.next()`, but without dependency injection. The addressing is by tag name rather than by service class.
+
+### Updating child widgets within a parent component
+
+When a parent component contains child sub-components (like a progress bar inside a dashboard card), use pub/sub or references to update the child without reaching into the DOM:
+
+```javascript
+// Parent component owns the data, child just displays it
+var progress = bw.component({
+  t: 'div', c: [
+    bw.makeProgress({ value: '${pct}', label: '${pct}%' })
+  ],
+  o: { state: { pct: 0 } }
+});
+
+var dashboard = bw.component({
+  t: 'div', c: [
+    { t: 'h2', c: 'Upload Progress' },
+    progress,
+    bw.makeButton({ text: 'Start', onclick: function() {
+      var pct = 0;
+      var interval = setInterval(function() {
+        pct += 10;
+        progress.set('pct', pct);
+        if (pct >= 100) clearInterval(interval);
+      }, 500);
+    }})
+  ]
+});
+
+bw.DOM('#app', dashboard);
+```
+
+The parent holds a reference to the child component and calls `.set()` on it directly. The child re-renders itself — no DOM queries, no `getElementById`, no manual DOM manipulation.
+
+For decoupled updates (when the parent doesn't hold a direct reference), use pub/sub:
+
+```javascript
+// Child subscribes
+progress.sub('upload:progress', function(d) {
+  progress.set('pct', d.pct);
+});
+
+// Anywhere else publishes
+bw.pub('upload:progress', { pct: 75 });
+```
 
 ---
 

@@ -817,7 +817,7 @@ bw.makeCodeDemo({
 
 ### makeTable
 
-Sortable data table from an array of objects.
+Sortable data table from an array of objects. Supports row selection, custom cell rendering, and pagination.
 
 ```javascript
 bw.makeTable({
@@ -833,11 +833,16 @@ bw.makeTable({
   sortable: true,            // click column headers to sort
   striped: false,
   hover: false,
+  selectable: false,         // click rows to toggle selection
+  onRowClick: null,          // function(row, index, event) — fires on row click
+  pageSize: undefined,       // set to enable pagination (e.g. 10)
+  currentPage: 1,            // current page (1-based)
+  onPageChange: null,        // function(newPage) — fires on page navigation
   className: ''
 })
 ```
 
-Each column definition can include a `render` function for custom cell rendering:
+**Cell renderers** — each column definition can include a `render` function for custom cell rendering. The function receives the cell value and the full row object, and can return a string or TACO:
 
 ```javascript
 bw.makeTable({
@@ -845,14 +850,48 @@ bw.makeTable({
   columns: [
     { key: 'name', label: 'Name' },
     { key: 'status', label: 'Status', render: function(val, row) {
-      return {
-        t: 'span',
-        a: { class: val === 'active' ? 'badge-green' : 'badge-red' },
-        c: val
-      };
+      return bw.makeBadge({ text: val, variant: val === 'active' ? 'success' : 'danger' });
+    }},
+    { key: 'age', label: 'Age', render: function(val) {
+      return val >= 18 ? String(val) : bw.raw('<em>' + val + '</em>');
     }}
   ]
 })
+```
+
+**Row selection** — enables click-to-select with visual feedback:
+
+```javascript
+bw.makeTable({
+  data: users,
+  selectable: true,
+  onRowClick: function(row, index, event) {
+    console.log('Selected:', row.name, 'at index', index);
+  }
+})
+```
+
+Clicking a row toggles the `bw_table_row_selected` CSS class. The `selectable` flag also enables hover highlighting automatically.
+
+**Pagination** — set `pageSize` to limit visible rows:
+
+```javascript
+var page = 1;
+function renderTable() {
+  bw.DOM('#table', bw.makeTable({
+    data: allData,        // full dataset — makeTable slices internally
+    pageSize: 10,
+    currentPage: page,
+    onPageChange: function(newPage) {
+      page = newPage;
+      renderTable();      // re-render with new page
+    }
+  }));
+}
+renderTable();
+```
+
+When `pageSize` is set, the table is wrapped in a container with Prev/Next controls and a page indicator. The `onRowClick` index is the global index into the full dataset, not the page-local index.
 ```
 
 ### makeTableFromArray

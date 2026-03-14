@@ -182,6 +182,35 @@ bw.DOM('#app', { t: 'div', c: 'Hello' });
 
 `bw.DOM()` cleans up any previous content (running unmount hooks, clearing state) before mounting new content. This prevents memory leaks when re-rendering.
 
+## bw.h() — concise TACO constructor
+
+`bw.h()` is a helper that produces TACO objects from positional arguments. It's a convenience — the return value is a plain `{t, a, c, o}` object, identical to what you'd write by hand.
+
+```javascript
+bw.h('div')                                  // { t: 'div' }
+bw.h('p', { class: 'intro' }, 'Hello')       // { t: 'p', a: { class: 'intro' }, c: 'Hello' }
+bw.h('span', null, 'text')                   // { t: 'span', c: 'text' }  (null attrs omitted)
+bw.h('div', null, [                          // { t: 'div', c: [...] }
+  bw.h('li', null, 'one'),
+  bw.h('li', null, 'two')
+])
+```
+
+A common pattern is to alias `bw.h` for compact code:
+
+```javascript
+var h = bw.h;
+
+var footer = h('footer', { class: 'bw_bg_dark bw_text_light bw_py_4' }, [
+  h('p', null, 'Built with bitwrench.'),
+  h('p', null, h('a', { href: '/about' }, 'About'))
+]);
+```
+
+The output is serializable (assuming no function values), works with `bw.html()`, `bw.DOM()`, `bw.createDOM()`, bwserve, and everywhere else TACO is accepted. Mix `bw.h()` calls freely with `make*()` returns and hand-written TACO — they all produce the same thing.
+
+> **When to use `bw.h()` vs. hand-written TACO**: Use `bw.h()` for structural glue — wrapper divs, footers, headings — where the `{t:, a:, c:}` key syntax feels heavy. For complex nodes with `o:` (state, lifecycle), write full TACO — the named keys are clearer.
+
 ## Composition patterns
 
 Because TACO is just JavaScript, you compose UI with standard language features:

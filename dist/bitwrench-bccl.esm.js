@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 /**
  * Bitwrench v2 Components
  *
@@ -328,7 +328,7 @@ function makeCol(props = {}) {
       if (breakpoint === 'xs') {
         classes.push(`bw_col_${value}`);
       } else {
-        classes.push(`bw_col_${breakpoint}-${value}`);
+        classes.push(`bw_col_${breakpoint}_${value}`);
       }
     });
   } else if (size) {

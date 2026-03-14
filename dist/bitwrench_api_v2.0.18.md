@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.17 |
-| Generated | 2026-03-13 |
-| Total APIs | 103 |
-| Categories | 12 |
-| bitwrench.js | 4959 lines |
+| Version | 2.0.18 |
+| Generated | 2026-03-14 |
+| Total APIs | 104 |
+| Categories | 13 |
+| bitwrench.js | 5099 lines |
 | bitwrench-bccl.js | 3619 lines |
 
 ## Table of Contents
@@ -22,6 +22,7 @@
 - [CSS & Styling](#css-styling) (10)
 - [Component Builders](#component-builders) (50)
 - [Browser Utilities](#browser-utilities) (4)
+- [Utilities](#utilities) (1)
 - [Function Registry](#function-registry) (5)
 - [Component](#component) (7)
 - [Server](#server) (3)
@@ -686,15 +687,20 @@ Create a sortable TACO table from an array of row objects. Returns a bare `<tabl
 | `config` | `Object` | - Table configuration |
 | `config.data` | `Array<Object>` | - Array of row objects to display |
 | `config.columns` | `Array<Object>` | - Column definitions with key, label, render |
-| `config.className` | `string` | - CSS class for table element |
+| `config.className` | `string` | - Additional CSS classes for table element |
 | `config.sortable` | `boolean` | - Enable click-to-sort headers |
 | `config.onSort` | `Function` | - Sort callback (column, direction) |
+| `config.selectable` | `boolean` | - Enable row selection on click |
+| `config.onRowClick` | `Function` | - Row click callback (row, index, event) |
+| `config.pageSize` | `number` | - Rows per page (enables pagination when set) |
+| `config.currentPage` | `number` | - Current page number (1-based) |
+| `config.onPageChange` | `Function` | - Page change callback (newPage) |
 
-**Returns:** `Object` — object for table
+**Returns:** `Object` — object for table (with optional pagination controls)
 
 **Example:**
 ```javascript
-bw.makeTable({ data: [ { name: 'Alice', age: 30 }, { name: 'Bob', age: 25 } ], columns: [ { key: 'name', label: 'Name' }, { key: 'age', label: 'Age' } ] });
+bw.makeTable({ data: [ { name: 'Alice', age: 30 }, { name: 'Bob', age: 25 } ], columns: [ { key: 'name', label: 'Name' }, { key: 'age', label: 'Age' } ], selectable: true, onRowClick: function(row, i) { console.log('clicked', row.name); }, pageSize: 10, currentPage: 1, onPageChange: function(page) { console.log('page', page); } });
 ```
 
 ---
@@ -2025,6 +2031,30 @@ Copy text to the system clipboard (browser only). Uses the modern Clipboard API 
 | `text` | `string` | - Text to copy |
 
 **Returns:** `Promise` — that resolves when copy is complete
+
+---
+
+## Utilities
+
+### `bw.h(tag, attrs, content, options)`
+
+Hyperscript-style TACO constructor. A convenience helper that returns a canonical TACO object from positional arguments. The return value is a plain object — serializable, works with bwserve, and accepted everywhere TACO is accepted.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `tag` | `string` | - HTML tag name (e.g. 'div', 'p', 'section') |
+| `attrs` | `Object|null` | - HTML attributes object. Pass null or omit to skip. |
+| `content` | `*` | - Content: string, number, TACO object, or array of children. |
+| `options` | `Object` | - TACO options (state, lifecycle hooks, render fn). |
+
+**Returns:** `Object` — TACO object {t, a?, c?, o?}
+
+**Example:**
+```javascript
+bw.h('div') // => { t: 'div' } bw.h('p', { class: 'bw_text_muted' }, 'Hello') // => { t: 'p', a: { class: 'bw_text_muted' }, c: 'Hello' } bw.h('ul', null, [ bw.h('li', null, 'one'), bw.h('li', null, 'two') ]) // => { t: 'ul', c: [{ t: 'li', c: 'one' }, { t: 'li', c: 'two' }] }
+```
 
 ---
 
