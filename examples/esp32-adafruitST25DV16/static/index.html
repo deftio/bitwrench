@@ -28,9 +28,7 @@
       secondary: '#8b5cf6',
       tertiary:  '#10b981',
       spacing:   'normal',
-      radius:    'md',
-      elevation: 'md',
-      motion:    'standard'
+      radius:    'md'
     });
 
     // ---- App state ----
@@ -190,41 +188,39 @@
     }
 
     // ---- Stat cards with stable IDs for patching ----
+    // Uses makeStatCard() for proper BCCL styling, then injects an id
+    // onto the value element so bw.clientApply() can patch it in-place.
+    function patchableStatCard(id, value, label, variant) {
+      var card = bw.makeStatCard({ value: value, label: label, variant: variant });
+      if (card.c) {
+        for (var i = 0; i < card.c.length; i++) {
+          if (card.c[i] && card.c[i].a && card.c[i].a.class &&
+              card.c[i].a.class.indexOf('bw_stat_value') >= 0) {
+            card.c[i].a.id = id;
+            break;
+          }
+        }
+      }
+      return card;
+    }
+
     function buildStatCards() {
       var s = state.stats;
       var live = state.live || {};
       var eh = live.energy_harvest || {};
 
-      // Each value element has an id like "stat-scans" that the server
-      // patches directly via bw.clientApply() - no full rebuild needed.
       return bw.makeRow({ gap: '1rem', children: [
         bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
-            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-primary, #0ea5e9);', id: 'stat-scans' },
-              c: String(s.scan_count || 0) },
-            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'Scans' }
-          ]}, shadow: 'sm' })
+          patchableStatCard('stat-scans', String(s.scan_count || 0), 'Scans', 'primary')
         ]}),
         bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
-            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-success, #10b981);', id: 'stat-records' },
-              c: String(state.ndef.length) },
-            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'NDEF Records' }
-          ]}, shadow: 'sm' })
+          patchableStatCard('stat-records', String(state.ndef.length), 'NDEF Records', 'success')
         ]}),
         bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
-            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-warning, #f59e0b);', id: 'stat-rf' },
-              c: eh.field_on ? 'Active' : 'None' },
-            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'RF Field' }
-          ]}, shadow: 'sm' })
+          patchableStatCard('stat-rf', eh.field_on ? 'Active' : 'None', 'RF Field', 'warning')
         ]}),
         bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
-            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-info, #06b6d4);', id: 'stat-uptime' },
-              c: s.uptime || '--' },
-            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'Uptime' }
-          ]}, shadow: 'sm' })
+          patchableStatCard('stat-uptime', s.uptime || '--', 'Uptime', 'info')
         ]})
       ]});
     }
@@ -431,44 +427,39 @@
       var eh = live.energy_harvest || {};
       var mb = live.mailbox || {};
 
-      // Interrupt flags - each value span has a stable id for patching
-      var flags = [
-        { label: 'RF Activity',      id: 'live-rf-activity',   on: it.rf_activity },
-        { label: 'RF Field Rising',   id: 'live-field-rising',  on: it.field_rising },
-        { label: 'RF Field Falling',  id: 'live-field-falling', on: it.field_falling },
-        { label: 'RF Write',          id: 'live-rf-write',      on: it.rf_write },
-        { label: 'RF Put Msg',        id: 'live-rf-put',        on: it.rf_put_msg },
-        { label: 'RF Get Msg',        id: 'live-rf-get',        on: it.rf_get_msg }
+      // Helper: key-value row with a patchable id on the value span.
+      // Uses bw_list_group_item for consistent styling from the design system.
+      function liveRow(label, id, value) {
+        return {
+          t: 'div',
+          a: { class: 'bw_list_group_item', style: 'display:flex; justify-content:space-between;' },
+          c: [
+            { t: 'span', c: label },
+            { t: 'span', a: { id: id, style: 'font-weight:600;' }, c: value }
+          ]
+        };
+      }
+
+      var flagRows = [
+        liveRow('RF Activity',     'live-rf-activity',   it.rf_activity ? 'YES' : 'no'),
+        liveRow('RF Field Rising', 'live-field-rising',  it.field_rising ? 'YES' : 'no'),
+        liveRow('RF Field Falling','live-field-falling', it.field_falling ? 'YES' : 'no'),
+        liveRow('RF Write',        'live-rf-write',      it.rf_write ? 'YES' : 'no'),
+        liveRow('RF Put Msg',      'live-rf-put',        it.rf_put_msg ? 'YES' : 'no'),
+        liveRow('RF Get Msg',      'live-rf-get',        it.rf_get_msg ? 'YES' : 'no')
       ];
 
-      var flagRows = flags.map(function(f) {
-        return { t: 'div', a: { style: 'display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--bw-border, #e2e8f0);' }, c: [
-          { t: 'span', c: f.label },
-          { t: 'span', a: { id: f.id, style: 'font-weight:600;' }, c: f.on ? 'YES' : 'no' }
-        ]};
-      });
-
       var ehRows = [
-        { label: 'Energy Harvesting', id: 'live-eh', value: eh.eh_on ? 'Active' : 'Off' },
-        { label: 'RF Field Present',  id: 'live-field', value: eh.field_on ? 'Yes' : 'No' },
-        { label: 'VCC Present',       id: 'live-vcc', value: eh.vcc_on ? 'Yes' : 'No' }
-      ].map(function(item) {
-        return { t: 'div', a: { style: 'display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--bw-border, #e2e8f0);' }, c: [
-          { t: 'span', c: item.label },
-          { t: 'span', a: { id: item.id, style: 'font-weight:600;' }, c: item.value }
-        ]};
-      });
+        liveRow('Energy Harvesting', 'live-eh',    eh.eh_on ? 'Active' : 'Off'),
+        liveRow('RF Field Present',  'live-field', eh.field_on ? 'Yes' : 'No'),
+        liveRow('VCC Present',       'live-vcc',   eh.vcc_on ? 'Yes' : 'No')
+      ];
 
       var mbRows = [
-        { label: 'Mailbox Enabled', id: 'live-mb-en', value: mb.mb_enabled ? 'Yes' : 'No' },
-        { label: 'Host Put Msg',    id: 'live-mb-host', value: mb.host_put_msg ? 'Yes' : 'No' },
-        { label: 'RF Put Msg',      id: 'live-mb-rf', value: mb.rf_put_msg ? 'Yes' : 'No' }
-      ].map(function(item) {
-        return { t: 'div', a: { style: 'display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--bw-border, #e2e8f0);' }, c: [
-          { t: 'span', c: item.label },
-          { t: 'span', a: { id: item.id, style: 'font-weight:600;' }, c: item.value }
-        ]};
-      });
+        liveRow('Mailbox Enabled', 'live-mb-en',   mb.mb_enabled ? 'Yes' : 'No'),
+        liveRow('Host Put Msg',    'live-mb-host', mb.host_put_msg ? 'Yes' : 'No'),
+        liveRow('RF Put Msg',      'live-mb-rf',   mb.rf_put_msg ? 'Yes' : 'No')
+      ];
 
       return { t: 'div', c: [
         bw.makeButton({ text: 'Refresh', variant: 'primary', onclick: fetchFullStatus }),
@@ -502,40 +493,20 @@
             title: 'System',
             content: bw.makeRow({ gap: '0.5rem', children: [
               bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-                { t: 'div', a: { style: 'text-align:center;' }, c: [
-                  { t: 'div', a: { id: 'sys-temp', style: 'font-size:1.4rem; font-weight:700;' },
-                    c: (state.stats.cpu_temp_c || '--') + '\u00B0C' },
-                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'CPU Temp' }
-                ]}
+                patchableStatCard('sys-temp', (state.stats.cpu_temp_c || '--') + '\u00B0C', 'CPU Temp')
               ]}),
               bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-                { t: 'div', a: { style: 'text-align:center;' }, c: [
-                  { t: 'div', a: { id: 'sys-ip', style: 'font-size:1.4rem; font-weight:700;' },
-                    c: state.stats.ip || '--' },
-                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'IP Address' }
-                ]}
+                patchableStatCard('sys-ip', state.stats.ip || '--', 'IP Address')
               ]}),
               bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-                { t: 'div', a: { style: 'text-align:center;' }, c: [
-                  { t: 'div', a: { id: 'sys-lastscan', style: 'font-size:1.4rem; font-weight:700;' },
-                    c: state.stats.last_scan || '--' },
-                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'Last Scan' }
-                ]}
+                patchableStatCard('sys-lastscan', state.stats.last_scan || '--', 'Last Scan')
               ]}),
               bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-                { t: 'div', a: { style: 'text-align:center;' }, c: [
-                  { t: 'div', a: { id: 'sys-history', style: 'font-size:1.4rem; font-weight:700;' },
-                    c: String(state.stats.history_size || 0) },
-                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'History' }
-                ]}
+                patchableStatCard('sys-history', String(state.stats.history_size || 0), 'History')
               ]}),
               bw.makeCol({ size: { xs: 6, md: 3 }, children: [
-                { t: 'div', a: { style: 'text-align:center;' }, c: [
-                  { t: 'div', a: { id: 'sys-nfc', style: 'font-size:1.4rem; font-weight:700; color:' +
-                    (state.nfcConnected ? 'var(--bw-success, #10b981)' : 'var(--bw-danger, #ef4444)') + ';' },
-                    c: state.nfcConnected ? 'Connected' : 'Not found' },
-                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'NFC Tag' }
-                ]}
+                patchableStatCard('sys-nfc', state.nfcConnected ? 'Connected' : 'Not found',
+                  'NFC Tag', state.nfcConnected ? 'success' : 'danger')
               ]})
             ]})
           })

@@ -168,6 +168,89 @@ export class BwServeClient {
     }
 
     /**
+     * Capture a screenshot of the client's page or a specific element.
+     *
+     * Requires the server to be created with `{ allowScreenshot: true }`.
+     * Uses html2canvas on the client side (lazy-loaded on first call).
+     *
+     * @param {string} [selector='body'] - CSS selector of element to capture
+     * @param {Object} [options]
+     * @param {string} [options.format='png'] - 'png' or 'jpeg'
+     * @param {number} [options.quality=0.85] - JPEG quality 0-1 (ignored for PNG)
+     * @param {number} [options.maxWidth] - Resize if wider (preserves aspect ratio)
+     * @param {number} [options.maxHeight] - Resize if taller (preserves aspect ratio)
+     * @param {number} [options.scale=1] - Device pixel ratio override
+     * @param {number} [options.timeout=10000] - Reject after ms
+     * @returns {Promise<Object>} { data: Buffer, width, height, format }
+     */
+    screenshot(selector, options) {
+        var self = this;
+        var opts = options || {};
+        var requestId = 'ss_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        var timeout = opts.timeout || 10000;
+
+        if (!self._allowScreenshot) {
+            return Promise.reject(new Error('Screenshot not enabled. Set allowScreenshot: true in server options.'));
+        }
+
+        return new Promise(function(resolve, reject) {
+            var timer = setTimeout(function() {
+                delete self._pendingScreenshots[requestId];
+                reject(new Error('Screenshot timeout after ' + timeout + 'ms'));
+            }, timeout);
+
+            if (!self._pendingScreenshots) self._pendingScreenshots = {};
+            self._pendingScreenshots[requestId] = { resolve: resolve, reject: reject, timer: timer };
+
+            // Register capture function on first call
+            if (!self._screenshotRegistered) {
+                self.register('_bw_screenshot', CAPTURE_FN_SOURCE);
+                self._screenshotRegistered = true;
+            }
+
+            // Call the capture function
+            self.call('_bw_screenshot', {
+                clientId: self.id,
+                requestId: requestId,
+                selector: selector || 'body',
+                format: opts.format || 'png',
+                quality: opts.quality || 0.85,
+                maxWidth: opts.maxWidth || null,
+                maxHeight: opts.maxHeight || null,
+                scale: opts.scale || 1,
+                captureUrl: '/__bw/vendor/html2canvas.min.js'
+            });
+        });
+    }
+
+    /**
+     * Resolve a pending screenshot request (called by server route handler).
+     * @private
+     */
+    _resolveScreenshot(requestId, result) {
+        if (!this._pendingScreenshots) return false;
+        var pending = this._pendingScreenshots[requestId];
+        if (!pending) return false;
+
+        clearTimeout(pending.timer);
+        delete this._pendingScreenshots[requestId];
+
+        if (result.error) {
+            pending.reject(new Error(result.error));
+        } else {
+            // Convert data URL to Buffer
+            var base64 = result.data.split(',')[1];
+            pending.resolve({
+                data: Buffer.from(base64, 'base64'),
+                width: result.width,
+                height: result.height,
+                format: result.format
+            });
+        }
+        return true;
+    }
+
+    /**
      * Dispatch an incoming action from the client.
      * @private
      */
@@ -180,3 +263,68 @@ export class BwServeClient {
         return false;
     }
 }
+
+/**
+ * Client-side capture function source.
+ * Registered via client.register('_bw_screenshot', ...) on first screenshot call.
+ * @private
+ */
+var CAPTURE_FN_SOURCE = 'function(opts) {'
+    + 'var sel = opts.selector || "body";'
+    + 'var el = document.querySelector(sel);'
+    + 'if (!el) {'
+    + '  return fetch("/__bw/screenshot/" + opts.clientId, {'
+    + '    method: "POST",'
+    + '    headers: { "Content-Type": "application/json" },'
+    + '    body: JSON.stringify({ requestId: opts.requestId, error: "Element not found: " + sel })'
+    + '  });'
+    + '}'
+    + 'function _loadScript(url) {'
+    + '  return new Promise(function(resolve, reject) {'
+    + '    var s = document.createElement("script");'
+    + '    s.src = url;'
+    + '    s.onload = function() { resolve(window.html2canvas); };'
+    + '    s.onerror = function() { reject(new Error("Failed to load html2canvas")); };'
+    + '    document.head.appendChild(s);'
+    + '  });'
+    + '}'
+    + 'var p = window.html2canvas'
+    + '  ? Promise.resolve(window.html2canvas)'
+    + '  : _loadScript(opts.captureUrl);'
+    + 'p.then(function(html2canvas) {'
+    + '  return html2canvas(el, { scale: opts.scale || 1, useCORS: true });'
+    + '}).then(function(canvas) {'
+    + '  var out = canvas;'
+    + '  var mw = opts.maxWidth;'
+    + '  var mh = opts.maxHeight;'
+    + '  if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {'
+    + '    var sw = mw ? mw / canvas.width : 1;'
+    + '    var sh = mh ? mh / canvas.height : 1;'
+    + '    var scale = Math.min(sw, sh);'
+    + '    out = document.createElement("canvas");'
+    + '    out.width = Math.round(canvas.width * scale);'
+    + '    out.height = Math.round(canvas.height * scale);'
+    + '    out.getContext("2d").drawImage(canvas, 0, 0, out.width, out.height);'
+    + '  }'
+    + '  var fmt = opts.format === "jpeg" ? "image/jpeg" : "image/png";'
+    + '  var quality = opts.format === "jpeg" ? (opts.quality || 0.85) : undefined;'
+    + '  var dataUrl = out.toDataURL(fmt, quality);'
+    + '  return fetch("/__bw/screenshot/" + opts.clientId, {'
+    + '    method: "POST",'
+    + '    headers: { "Content-Type": "application/json" },'
+    + '    body: JSON.stringify({'
+    + '      requestId: opts.requestId,'
+    + '      data: dataUrl,'
+    + '      width: out.width,'
+    + '      height: out.height,'
+    + '      format: opts.format || "png"'
+    + '    })'
+    + '  });'
+    + '}).catch(function(err) {'
+    + '  fetch("/__bw/screenshot/" + opts.clientId, {'
+    + '    method: "POST",'
+    + '    headers: { "Content-Type": "application/json" },'
+    + '    body: JSON.stringify({ requestId: opts.requestId, error: err.message || String(err) })'
+    + '  });'
+    + '});'
+    + '}';

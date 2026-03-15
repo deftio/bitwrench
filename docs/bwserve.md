@@ -220,6 +220,8 @@ Create a bwserve application.
 | `theme` | string/object | null | Theme preset name or config |
 | `injectBitwrench` | boolean | true | Auto-inject bitwrench UMD + CSS |
 | `allowExec` | boolean | false | Enable `exec` messages on client (see warning below) |
+| `allowScreenshot` | boolean | false | Enable `client.screenshot()` capability |
+| `keepAliveInterval` | number | 15000 | SSE keep-alive interval in ms |
 
 > **Start without `allowExec`.** The `register/call` pattern (Tier 1 + Tier 2) handles 95% of use cases — send named functions once, invoke them by name with safe argument passing. Only enable `allowExec: true` if you genuinely need to evaluate arbitrary code strings on the client. When in doubt, leave it off.
 
@@ -297,6 +299,71 @@ app.broadcast({
 |--------|-------------|
 | `client.on(action, handler)` | Register handler for client actions |
 | `client.close()` | Disconnect this client |
+
+## Screenshots
+
+The server can capture what the client is displaying as a PNG or JPEG image. This uses html2canvas on the client side (lazy-loaded on first call, vendored at ~194 KB).
+
+### `client.screenshot(selector?, options?)`
+
+Capture a screenshot of the client page or a specific element. Returns a Promise.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `selector` | string | `'body'` | CSS selector of element to capture |
+| `format` | string | `'png'` | `'png'` or `'jpeg'` |
+| `quality` | number | 0.85 | JPEG quality 0–1 (ignored for PNG) |
+| `maxWidth` | number | null | Resize if wider (preserves aspect ratio) |
+| `maxHeight` | number | null | Resize if taller (preserves aspect ratio) |
+| `scale` | number | 1 | Device pixel ratio override |
+| `timeout` | number | 10000 | Reject after ms |
+
+**Returns:** `Promise<{ data: Buffer, width: number, height: number, format: string }>`
+
+### Setup
+
+Screenshot is **disabled by default**. Enable via the server option:
+
+```javascript
+var app = bwserve.create({ port: 7902, allowScreenshot: true });
+```
+
+### Examples
+
+```javascript
+// Full page screenshot
+var img = await client.screenshot();
+require('fs').writeFileSync('page.png', img.data);
+
+// Element screenshot with resize
+var img = await client.screenshot('#dashboard', {
+  format: 'jpeg',
+  quality: 0.8,
+  maxWidth: 512
+});
+
+// LLM visual feedback loop
+client.render('#app', myCard);
+var img = await client.screenshot('#app', { maxWidth: 800 });
+var feedback = await visionModel.evaluate(img.data);
+// refine TACO based on feedback...
+```
+
+### How it works
+
+1. Server calls `client.screenshot(selector, options)` — returns a Promise
+2. On first call, a capture function is registered on the client via the `register` protocol
+3. The capture function is invoked via `call` with the selector and options
+4. Client lazy-loads html2canvas (vendored, served from `/__bw/vendor/html2canvas.min.js`)
+5. html2canvas renders the DOM element to a `<canvas>`
+6. Client POSTs the base64 image data back to `/__bw/screenshot/:clientId`
+7. Server converts the data URL to a Buffer and resolves the Promise
+
+### Security
+
+- **Opt-in only:** `allowScreenshot: true` must be set in server options
+- **DOM-level capture:** html2canvas reads the DOM — it cannot see other tabs, OS windows, or anything outside the page
+- **No external requests:** html2canvas is vendored locally, not loaded from a CDN
 
 ## Server-to-Client Execution
 
@@ -455,6 +522,8 @@ bwserve supports multiple transports:
 | `POST /__bw/action/:clientId` | POST | User action dispatch |
 | `GET /__bw/bitwrench.umd.js` | GET | Serve bitwrench client JS |
 | `GET /__bw/bitwrench.css` | GET | Serve bitwrench CSS |
+| `POST /__bw/screenshot/:clientId` | POST | Screenshot POST-back from client |
+| `GET /__bw/vendor/:filename` | GET | Serve vendored libraries (allowlisted) |
 
 ### SSE Frame Format
 
@@ -710,14 +779,15 @@ client.on('export', function(data) {
 
 - **Streamlit-style apps**: Data dashboards, ML experiment UIs, admin panels — server computes, browser displays
 - **Embedded device dashboards**: ESP32/Raspberry Pi serves a web UI using lightweight polling
-- **Agent-driven UI**: An AI agent pushes UI updates to a browser session
+- **Agent-driven UI**: An AI agent pushes UI updates and uses `client.screenshot()` for visual feedback
 - **Prototyping**: Server-side Node.js logic with zero frontend build step
 - **Internal tools**: Quick admin panels without frontend framework overhead
 
 ## Related
 
 - [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 9 message types
-- [Sandbox](../pages/bwserve-sandbox.html) — Try bwserve protocol in the browser (no server needed)
+- [Sandbox](../pages/14-bwserve-sandbox.html) — Try bwserve protocol in the browser (no server needed)
+- [Screenshot Example](../examples/client-server/screenshot-server.js) — Runnable screenshot demo
 - [Design Document](../dev/bw-client-server.md) — Protocol design decisions and architecture
 - [CLI](cli.md) — The `bwcli` command for file conversion and pipe server
 - [Embedded Tutorial](tutorial-embedded.md) — ESP32 IoT dashboard with C macros and r-prefix JSON

@@ -234,6 +234,93 @@
           '});'
         ].join('\n')
       },
+      screenshot: {
+        label: 'Screenshot',
+        desc: 'register + call \u2014 capture page as image',
+        code: [
+          '// Screenshot: the server captures what the client is displaying.',
+          '// In a real bwserve app, client.screenshot() returns a Promise',
+          '// with { data: Buffer, width, height, format }. The server can',
+          '// save it, analyze it, or send it elsewhere.',
+          '//',
+          '// Options include maxWidth/maxHeight to resize before transfer:',
+          '//   client.screenshot("#app", { maxWidth: 800, maxHeight: 600 })',
+          '//',
+          '// This sandbox simulates the protocol. The captured image appears',
+          '// in the Protocol Messages log below (C\u2192S direction), just like',
+          '// the real POST-back to the server.',
+          '',
+          'client.render("#app", {',
+          '  t: "div", a: { style: "padding:24px" }, c: [',
+          '    { t: "h2", c: "Screenshot Demo" },',
+          '    bw.makeAlert({ content: "Click Capture to screenshot this page. The image appears in the Protocol Messages log below (C\\u2192S) \\u2014 that\\u2019s where the server receives it.", variant: "info" }),',
+          '    bw.makeCard({ title: "Sample Content", content: {',
+          '      t: "div", c: [',
+          '        { t: "div", a: { id: "stats-grid", style: "display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px" }, c: [',
+          '          bw.makeStatCard({ title: "Users", value: "1,247", variant: "primary" }),',
+          '          bw.makeStatCard({ title: "Revenue", value: "$48.2k", variant: "success" }),',
+          '          bw.makeStatCard({ title: "Orders", value: "384", variant: "warning" }),',
+          '          bw.makeStatCard({ title: "Errors", value: "2", variant: "danger" })',
+          '        ]},',
+          '        { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
+          '          action(bw.makeButton({ text: "Capture Full Page", variant: "primary" }), "capture-full"),',
+          '          action(bw.makeButton({ text: "Capture Stats Only", variant: "outline-primary" }), "capture-stats")',
+          '        ]}',
+          '      ]',
+          '    }})',
+          '  ]',
+          '});',
+          '',
+          '// Register a capture function on the client.',
+          '// In production, client.screenshot() does this automatically.',
+          'client.register("_demo_capture", "function(opts) {"',
+          '  + "var el = document.querySelector(opts.selector || \\"body\\");"',
+          '  + "if (!el) return;"',
+          '  + "function _load(url) {"',
+          '  + "  return new Promise(function(r, j) {"',
+          '  + "    if (window.html2canvas) return r(window.html2canvas);"',
+          '  + "    var s = document.createElement(\\"script\\");"',
+          '  + "    s.src = url; s.onload = function() { r(window.html2canvas); };"',
+          '  + "    s.onerror = function() { j(new Error(\\"Failed to load html2canvas\\")); };"',
+          '  + "    document.head.appendChild(s);"',
+          '  + "  });"',
+          '  + "}"',
+          '  + "_load(opts.h2cUrl).then(function(h2c) {"',
+          '  + "  return h2c(el, { scale: opts.scale || 1, useCORS: true });"',
+          '  + "}).then(function(canvas) {"',
+          '  + "  var out = canvas;"',
+          '  + "  var mw = opts.maxWidth; var mh = opts.maxHeight;"',
+          '  + "  if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {"',
+          '  + "    var sw = mw ? mw / canvas.width : 1;"',
+          '  + "    var sh = mh ? mh / canvas.height : 1;"',
+          '  + "    var sc = Math.min(sw, sh);"',
+          '  + "    out = document.createElement(\\"canvas\\");"',
+          '  + "    out.width = Math.round(canvas.width * sc);"',
+          '  + "    out.height = Math.round(canvas.height * sc);"',
+          '  + "    out.getContext(\\"2d\\").drawImage(canvas, 0, 0, out.width, out.height);"',
+          '  + "  }"',
+          '  + "  window.parent.postMessage({"',
+          '  + "    _bwScreenshot: true,"',
+          '  + "    data: out.toDataURL(\\"image/png\\"),"',
+          '  + "    width: out.width, height: out.height, format: \\"png\\""',
+          '  + "  }, \\"*\\");"',
+          '  + "}).catch(function(e) {"',
+          '  + "  window.parent.postMessage({ _bwScreenshot: true, error: e.message }, \\"*\\");"',
+          '  + "});"',
+          '  + "}"',
+          ');',
+          '',
+          'onAction("capture-full", function() {',
+          '  client.call("_demo_capture", { selector: "body", h2cUrl: "' + new URL('../src/vendor/html2canvas.min.js', location.href.replace(/[^/]*$/, '')).href + '" });',
+          '});',
+          '',
+          'onAction("capture-stats", function() {',
+          '  // maxWidth resizes the image before sending to the server.',
+          '  // Useful for reducing payload size on real deployments.',
+          '  client.call("_demo_capture", { selector: "#stats-grid", maxWidth: 400, h2cUrl: "' + new URL('../src/vendor/html2canvas.min.js', location.href.replace(/[^/]*$/, '')).href + '" });',
+          '});'
+        ].join('\n')
+      },
       raw: {
         label: 'Raw Protocol',
         desc: 'type protocol JSON directly',
@@ -339,9 +426,19 @@
           },
           {
             t: 'pre', a: { style: 'margin:0;padding:0;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;color:' + textColor + ';background:transparent;border:none' },
-            c: JSON.stringify(entry.msg, null, 2)
+            c: entry.msg.type === 'screenshot'
+              ? '{ type: "screenshot", ' + (entry.msg.error
+                  ? 'error: "' + entry.msg.error + '"'
+                  : entry.msg.width + '\u00d7' + entry.msg.height + ' ' + entry.msg.format + ', ' + Math.round((entry.msg.dataUrl || '').length * 0.75 / 1024) + ' KB')
+                + ' }'
+              : JSON.stringify(entry.msg, null, 2)
           }
-        ]
+        ].concat(entry.msg.type === 'screenshot' && entry.msg.dataUrl ? [{
+          t: 'img', a: {
+            src: entry.msg.dataUrl,
+            style: 'max-width:100%;max-height:200px;margin-top:4px;border:1px solid #ccc;border-radius:3px;display:block'
+          }
+        }] : [])
       });
       logEl.appendChild(div);
       logEl.scrollTop = logEl.scrollHeight;
@@ -430,6 +527,13 @@
       };
       client.message = function(target, action, data) {
         send({ type: 'message', target: target, action: action, data: data });
+      };
+      client.register = function(name, body) {
+        send({ type: 'register', name: name, body: body });
+      };
+      client.call = function(name) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        send({ type: 'call', name: name, args: args });
       };
 
       // Also expose raw send for the "Raw Protocol" preset
@@ -554,6 +658,7 @@
     // Run user code
     // =========================================================================
     var actionHandlers = {};
+    var currentPreset = 'counter';
 
     function runCode() {
       var editorEl = bw.$('#sandbox-editor')[0];
@@ -571,6 +676,11 @@
         // Set up action listener from iframe
         window.removeEventListener('message', window._bwSandboxMsgHandler);
         window._bwSandboxMsgHandler = function(e) {
+          if (e.data && e.data._bwScreenshot) {
+            // Screenshot POST-back: client captured an image and sent it to the server
+            logMessage({ type: 'screenshot', width: e.data.width, height: e.data.height, format: e.data.format, dataUrl: e.data.data, error: e.data.error }, 'client');
+            return;
+          }
           if (e.data && e.data.action) {
             logMessage({ type: 'action', action: e.data.action, data: e.data }, 'client');
             var handler = actionHandlers[e.data.action];
@@ -620,6 +730,7 @@
     function loadPreset(name, skipRun) {
       var preset = PRESETS[name];
       if (!preset) return;
+      currentPreset = name;
       var editorEl = bw.$('#sandbox-editor')[0];
       if (editorEl && editorEl._bwCodeEdit) {
         editorEl._bwCodeEdit.setValue(preset.code);
@@ -710,7 +821,7 @@
                                 t: 'button',
                                 a: {
                                   class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
-                                  onclick: function() { loadPreset('counter'); }
+                                  onclick: function() { loadPreset(currentPreset); }
                                 },
                                 c: 'Reset'
                               }
@@ -855,6 +966,8 @@
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.append(target, taco)' } }, { t: 'td', c: 'Append a TACO child to target' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.remove(target)' } }, { t: 'td', c: 'Remove element from DOM' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.batch(ops)' } }, { t: 'td', c: 'Send multiple operations at once' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.register(name, body)' } }, { t: 'td', c: 'Register a named function on the client' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } }, { t: 'td', c: 'Call a registered function on the client' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'onAction(name, handler)' } }, { t: 'td', c: 'Handle actions from client (button clicks etc.)' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'action(taco, name, extra)' } }, { t: 'td', c: 'Add data-bw-action attribute to a BCCL component TACO' }] }

@@ -66,7 +66,7 @@ Or include directly in a page:
 - **Built-in reactivity** — `bw.component()` wraps any TACO in a reactive handle with `.get()/.set()` and `${template}` bindings. Lower-level: `bw.update()` re-renders via `o.render`, `bw.patch()` updates individual elements by ID, `bw.pub()`/`bw.sub()` provides decoupled messaging
 - **CSS and theme generation** — `bw.css()` generates stylesheets from objects, `bw.s()` composes inline styles from `bw.u` utility objects, `bw.responsive()` generates `@media` rules from JS objects. `bw.generateTheme()` derives a complete visual theme from 2-3 seed colors with `bw.toggleTheme()` for light/dark switching
 - **50+ ready-made components** — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards, bar charts, carousels, skeleton loaders — each a single `make*()` call that returns a composable TACO object
-- **Server-driven UI (bwserve)** — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the `bwcli serve` pipe server
+- **Server-driven UI (bwserve)** — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the `bwcli serve` pipe server. `client.screenshot()` captures the rendered page back to the server as a PNG/JPEG Buffer for visual feedback loops, testing, or LLM vision
 - **Static site CLI** — the `bwcli` command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support
 - **Utilities** — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js
 

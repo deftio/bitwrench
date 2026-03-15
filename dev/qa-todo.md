@@ -209,6 +209,21 @@ Source breakdown: core 4222 LOC (40%), styles 2236 LOC (21%), BCCL 3614 LOC (34%
 * [x] make --> `examples/live-feed/` — real-time event stream
 * [x] make --> `examples/todo-app/` — reactive todo app
 
+## P3.6: UUID Addressing (v2.0.18)
+
+Design doc: `dev/bw-uuid-addressing-design.md`
+
+* [x] implement --> `bw.assignUUID(taco, forceNew)` — explicit UUID assignment to TACO objects
+* [x] implement --> `bw.getUUID(tacoOrElement)` — read UUID from TACO or DOM element
+* [x] implement --> `createDOM()` UUID registration in `_nodeMap`
+* [x] implement --> `_el()` class-based fallback for `bw_uuid_*` tokens
+* [x] implement --> `cleanup()` UUID deregistration (element + descendants)
+* [x] implement --> `message()` UUID lookup via `_el()` (enables server-driven method dispatch by UUID)
+* [x] test --> 23 UUID addressing tests in `test/bitwrench_test_uuid.js`
+* [ ] doc --> Update State Management docs with "Level 0.5" embedded dashboard pattern
+* [ ] doc --> Update LLM guide with UUID addressing API
+* [ ] doc --> Add "Embedded Dashboard Golden Path" recipe
+
 ---
 
 ## P4: TACO Shorthand (v2.0.x / v2.1.0)
@@ -253,33 +268,33 @@ what it built. Visual feedback loop without Playwright/Puppeteer.
 
 ### Phase 1: Core protocol
 
-* [ ] implement --> `client.screenshot(selector?, options?)` on `BwServeClient`
+* [x] implement --> `client.screenshot(selector?, options?)` on `BwServeClient`
   - Returns `Promise<{ data: Buffer, width, height, format }>`
   - Options: format (png/jpeg), quality, maxWidth, maxHeight, scale, timeout
   - Uses requestId correlation: call → client captures → POST-back → resolve
   - Files: `src/bwserve/client.js`
-* [ ] implement --> `_resolveScreenshot(requestId, result)` on `BwServeClient`
+* [x] implement --> `_resolveScreenshot(requestId, result)` on `BwServeClient`
   - Resolves pending Promise, converts data URL to Buffer
   - Files: `src/bwserve/client.js`
-* [ ] implement --> `/__bw/screenshot/:clientId` POST route in `BwServeApp`
+* [x] implement --> `/__bw/screenshot/:clientId` POST route in `BwServeApp`
   - Receives screenshot data from client, dispatches to `_resolveScreenshot()`
   - Files: `src/bwserve/index.js`
-* [ ] implement --> `/__bw/vendor/:filename` GET route in `BwServeApp`
+* [x] implement --> `/__bw/vendor/:filename` GET route in `BwServeApp`
   - Serves vendored libraries (allowlisted filenames only)
   - Files: `src/bwserve/index.js`
-* [ ] vendor --> `src/vendor/html2canvas.min.js` (v1.4.1, ~43KB, MIT license)
+* [x] vendor --> `src/vendor/html2canvas.min.js` (v1.4.1, ~194KB minified, MIT license)
   - Load priority: window.html2canvas → vendor route → CDN fallback
   - NOT bundled into bitwrench.js — loaded on demand, first screenshot only
-* [ ] implement --> Client-side capture function (registered as string)
+* [x] implement --> Client-side capture function (registered as string)
   - html2canvas(element) → optional resize → toDataURL → POST back
   - Client-side resize via canvas drawImage (bilinear interpolation)
   - Files: string constant in `src/bwserve/client.js`
-* [ ] implement --> `allowScreenshot` opt-in flag
+* [x] implement --> `allowScreenshot` opt-in flag
   - Off by default. Set via `bwserve.create({ allowScreenshot: true })`
   - When off: `client.screenshot()` rejects immediately
-* [ ] test --> Protocol round-trip unit tests (~15-20 tests)
+* [x] test --> Protocol round-trip unit tests (14 tests)
   - call message structure, timeout rejection, error propagation
-  - Opt-in enforcement, options pass-through, rate limiting
+  - Opt-in enforcement, options pass-through, resolve/reject
   - Files: `test/bitwrench_test_bwserve.js`
 
 ### Phase 2: Demos and playground

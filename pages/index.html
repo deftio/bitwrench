@@ -161,10 +161,11 @@
         'border-radius': 'var(--bw_radius)'
       },
       '.bw_stat_value': {
-        'font-size': '1.75rem',
+        'font-size': '1.35rem',
         'font-weight': '700',
         color: 'var(--bw_teal)',
-        'line-height': '1.2'
+        'line-height': '1.2',
+        'white-space': 'nowrap'
       },
       '.bw_stat_label': {
         'font-size': '0.8125rem',
@@ -180,7 +181,7 @@
       '@media (max-width: 600px)': {
         '.bw_stat_strip': { 'grid-template-columns': 'repeat(2, 1fr)', gap: '0.5rem' },
         '.bw_stat_item': { padding: '0.5rem' },
-        '.bw_stat_value': { 'font-size': '1.25rem' }
+        '.bw_stat_value': { 'font-size': '1.1rem' }
       },
       '.bw_how_grid': {
         display: 'grid',
@@ -308,7 +309,7 @@
           { t: 'h1', a: { class: 'bw_hero_tagline' }, c: 'Build UI from plain JavaScript objects' },
           {
             t: 'p', a: { class: 'bw_hero_sub' },
-            c: '36+ built-in components as plain JS objects. Render client-side or server-side. No JSX, no virtual DOM, no build step. Zero dependencies.'
+            c: 'UI as plain JavaScript objects. Render client-side or push from the server. No JSX, no virtual DOM, no build step. Zero dependencies.'
           },
           {
             t: 'div', a: { class: 'bw_hero_actions' },
@@ -368,7 +369,7 @@
             {
               t: 'div', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1.25rem; line-height: 1.65;' },
               c: [
-                { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Bitwrench represents UI as plain JavaScript objects &mdash; composition, layout, styles, and theming are all regular JS calls. A built-in library of 36+ components covers common elements; custom components are objects in the same format.') },
+                { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Bitwrench represents UI as plain JavaScript objects &mdash; composition, layout, styles, and theming are all regular JS calls. A built-in library of 47 components covers common elements; custom components are objects in the same format.') },
                 { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Rendering works client-side in the browser or server-side in Node.js, with partial updates and streaming via the bwserve protocol. CSS collapses to JS strings, so theming can be applied dynamically at the object, component, or page level &mdash; no CSS compilation step.') },
                 { t: 'p', a: { style: 'margin: 0 0 1rem;' }, c: bw.raw('The object format is called <strong>TACO</strong>: <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions. Objects nest, loop, and compose with standard JS. They serialize to compact JSON and render with <code>bw.html()</code> (strings) or <code>bw.DOM()</code> (live DOM).') }
               ]
@@ -487,45 +488,22 @@
 
     // ---- Stat strip ----
     (function() {
-      function renderStats(sizeStr, formatCount) {
-        var stats = [
-          { value: sizeStr, label: 'Gzipped', sub: 'core UMD bundle' },
-          { value: '36+', label: 'Components', sub: 'ready to use' },
-          { value: '0', label: 'Dependencies', sub: 'zero runtime deps' },
-          { value: 'IE11+', label: 'Browser Support', sub: 'modern & legacy' }
-        ];
-        bw.DOM('#stat-strip', stats.map(function(s) {
-          return {
-            t: 'div', a: { class: 'bw_stat_item' },
-            c: [
-              { t: 'div', a: { class: 'bw_stat_value' }, c: s.value },
-              { t: 'div', a: { class: 'bw_stat_label' }, c: s.label },
-              { t: 'div', a: { class: 'bw_stat_sub' }, c: s.sub }
-            ]
-          };
-        }));
-      }
-      // Load dynamic size from builds.json
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '../dist/builds.json', true);
-        xhr.onload = function() {
-          if (xhr.status === 200) {
-            var data = JSON.parse(xhr.responseText);
-            var umdMin = data.files.find(function(f) { return f.file === 'bitwrench.umd.min.js'; });
-            if (umdMin && umdMin.gzipped) {
-              var kb = (umdMin.gzipped / 1024).toFixed(1);
-              renderStats(kb + ' KB');
-              return;
-            }
-          }
-          renderStats('~40 KB');
+      var stats = [
+        { value: 'No Build Step', label: 'Just Works', sub: '<script src> and go' },
+        { value: 'Client + Server', label: 'Same Objects', sub: 'browser, Node.js, SSE' },
+        { value: 'Zero Deps', label: 'Self-Contained', sub: 'nothing to install' },
+        { value: 'Runs Anywhere', label: 'Any Target', sub: 'ESP32 to enterprise' }
+      ];
+      bw.DOM('#stat-strip', stats.map(function(s) {
+        return {
+          t: 'div', a: { class: 'bw_stat_item' },
+          c: [
+            { t: 'div', a: { class: 'bw_stat_value' }, c: s.value },
+            { t: 'div', a: { class: 'bw_stat_label' }, c: s.label },
+            { t: 'div', a: { class: 'bw_stat_sub' }, c: s.sub }
+          ]
         };
-        xhr.onerror = function() { renderStats('~40 KB'); };
-        xhr.send();
-      } catch(e) {
-        renderStats('~40 KB');
-      }
+      }));
     })();
 
     // ---- How It Works ----
@@ -573,8 +551,8 @@
     (function() {
       var features = [
         {
-          icon: '\u{1F3D7}', title: '36+ Built-in Components',
-          desc: 'Buttons, cards, tables, forms, modals, charts, and more \u2014 ready to use or extend. Bring your own components just as easily: they\u2019re plain JS objects, not framework magic.'
+          icon: '\u{1F3D7}', title: '47 Built-in Components',
+          desc: 'Buttons, cards, tables, forms, modals, and more \u2014 ready to use or extend. Bring your own components just as easily: they\u2019re plain JS objects, not framework magic.'
         },
         {
           icon: '\u{1F3A8}', title: 'Palette-Driven Theming',
@@ -594,7 +572,7 @@
         },
         {
           icon: '\u{26A1}', title: 'Tiny Footprint',
-          desc: 'Under 40 KB gzipped, zero dependencies. Built for constrained targets: embedded dashboards, kiosks, legacy browsers (IE11), and Node.js CLI tools.'
+          desc: 'Under 45 KB gzipped, zero dependencies. Tree-shakeable ESM for modern bundlers. Built for constrained targets: embedded dashboards, kiosks, and Node.js CLI tools.'
         }
       ];
 
@@ -785,7 +763,7 @@
           pages: [
             { title: 'Quick Start', href: '00-quick-start.html', desc: 'First steps with TACO and bw.DOM()' },
             { title: 'Thinking in BW', href: 'thinking-in-bitwrench.html', desc: 'Design philosophy and mental model' },
-            { title: 'Components', href: '01-components.html', desc: 'All 36+ UI components with live demos' },
+            { title: 'Components', href: '01-components.html', desc: 'All 47 UI components with live demos' },
             { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' },
             { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, search, form inputs, validation' },
             { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },

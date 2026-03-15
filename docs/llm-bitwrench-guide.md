@@ -145,10 +145,12 @@ Most UI should be Level 0. Escalate only when needed.
 | Function | Description |
 |----------|-------------|
 | `bw.uuid(prefix?)` | Generate unique ID: `"bw_card_a1b2c3"` |
-| `bw.patch(id, content, attr?)` | Update element by UUID |
+| `bw.assignUUID(taco, forceNew?)` | Add/get UUID class on TACO → `"bw_uuid_abc123"` |
+| `bw.getUUID(tacoOrElement)` | Extract UUID from TACO or DOM element |
+| `bw.patch(id, content, attr?)` | Update element by id or UUID |
 | `bw.patchAll({ id: content })` | Batch patch |
 | `bw.update(el)` | Call element's `o.render` function |
-| `bw.cleanup(el)` | Run unmount hooks, clear state |
+| `bw.cleanup(el)` | Run unmount hooks, clear state, deregister UUIDs |
 
 ### State — Level 2 (Managed)
 
@@ -472,6 +474,7 @@ app.listen();
 **Protocol**: `replace`, `patch`, `append`, `remove`, `batch`, `message`, `register`, `call`, `exec`.
 **Client**: `bw.clientConnect('http://localhost:7902')` — auto-applies all messages.
 **Language-agnostic**: any server that writes SSE works (Python, Go, Rust, C, shell).
+**Screenshot**: `await client.screenshot(selector?, { maxWidth?, maxHeight?, format?, quality? })` → `{ data: Buffer, width, height, format }`. Requires `allowScreenshot: true` in server options. Uses html2canvas (vendored, lazy-loaded). Use for LLM visual feedback loops: render TACO → screenshot → vision model evaluates → refine.
 
 ## HTML Generation & Static Sites
 

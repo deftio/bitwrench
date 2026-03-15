@@ -179,6 +179,89 @@ class BwServeClient {
     }
 
     /**
+     * Capture a screenshot of the client's page or a specific element.
+     *
+     * Requires the server to be created with `{ allowScreenshot: true }`.
+     * Uses html2canvas on the client side (lazy-loaded on first call).
+     *
+     * @param {string} [selector='body'] - CSS selector of element to capture
+     * @param {Object} [options]
+     * @param {string} [options.format='png'] - 'png' or 'jpeg'
+     * @param {number} [options.quality=0.85] - JPEG quality 0-1 (ignored for PNG)
+     * @param {number} [options.maxWidth] - Resize if wider (preserves aspect ratio)
+     * @param {number} [options.maxHeight] - Resize if taller (preserves aspect ratio)
+     * @param {number} [options.scale=1] - Device pixel ratio override
+     * @param {number} [options.timeout=10000] - Reject after ms
+     * @returns {Promise<Object>} { data: Buffer, width, height, format }
+     */
+    screenshot(selector, options) {
+        var self = this;
+        var opts = options || {};
+        var requestId = 'ss_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        var timeout = opts.timeout || 10000;
+
+        if (!self._allowScreenshot) {
+            return Promise.reject(new Error('Screenshot not enabled. Set allowScreenshot: true in server options.'));
+        }
+
+        return new Promise(function(resolve, reject) {
+            var timer = setTimeout(function() {
+                delete self._pendingScreenshots[requestId];
+                reject(new Error('Screenshot timeout after ' + timeout + 'ms'));
+            }, timeout);
+
+            if (!self._pendingScreenshots) self._pendingScreenshots = {};
+            self._pendingScreenshots[requestId] = { resolve: resolve, reject: reject, timer: timer };
+
+            // Register capture function on first call
+            if (!self._screenshotRegistered) {
+                self.register('_bw_screenshot', CAPTURE_FN_SOURCE);
+                self._screenshotRegistered = true;
+            }
+
+            // Call the capture function
+            self.call('_bw_screenshot', {
+                clientId: self.id,
+                requestId: requestId,
+                selector: selector || 'body',
+                format: opts.format || 'png',
+                quality: opts.quality || 0.85,
+                maxWidth: opts.maxWidth || null,
+                maxHeight: opts.maxHeight || null,
+                scale: opts.scale || 1,
+                captureUrl: '/__bw/vendor/html2canvas.min.js'
+            });
+        });
+    }
+
+    /**
+     * Resolve a pending screenshot request (called by server route handler).
+     * @private
+     */
+    _resolveScreenshot(requestId, result) {
+        if (!this._pendingScreenshots) return false;
+        var pending = this._pendingScreenshots[requestId];
+        if (!pending) return false;
+
+        clearTimeout(pending.timer);
+        delete this._pendingScreenshots[requestId];
+
+        if (result.error) {
+            pending.reject(new Error(result.error));
+        } else {
+            // Convert data URL to Buffer
+            var base64 = result.data.split(',')[1];
+            pending.resolve({
+                data: Buffer.from(base64, 'base64'),
+                width: result.width,
+                height: result.height,
+                format: result.format
+            });
+        }
+        return true;
+    }
+
+    /**
      * Dispatch an incoming action from the client.
      * @private
      */
@@ -191,6 +274,71 @@ class BwServeClient {
         return false;
     }
 }
+
+/**
+ * Client-side capture function source.
+ * Registered via client.register('_bw_screenshot', ...) on first screenshot call.
+ * @private
+ */
+var CAPTURE_FN_SOURCE = 'function(opts) {'
+    + 'var sel = opts.selector || "body";'
+    + 'var el = document.querySelector(sel);'
+    + 'if (!el) {'
+    + '  return fetch("/__bw/screenshot/" + opts.clientId, {'
+    + '    method: "POST",'
+    + '    headers: { "Content-Type": "application/json" },'
+    + '    body: JSON.stringify({ requestId: opts.requestId, error: "Element not found: " + sel })'
+    + '  });'
+    + '}'
+    + 'function _loadScript(url) {'
+    + '  return new Promise(function(resolve, reject) {'
+    + '    var s = document.createElement("script");'
+    + '    s.src = url;'
+    + '    s.onload = function() { resolve(window.html2canvas); };'
+    + '    s.onerror = function() { reject(new Error("Failed to load html2canvas")); };'
+    + '    document.head.appendChild(s);'
+    + '  });'
+    + '}'
+    + 'var p = window.html2canvas'
+    + '  ? Promise.resolve(window.html2canvas)'
+    + '  : _loadScript(opts.captureUrl);'
+    + 'p.then(function(html2canvas) {'
+    + '  return html2canvas(el, { scale: opts.scale || 1, useCORS: true });'
+    + '}).then(function(canvas) {'
+    + '  var out = canvas;'
+    + '  var mw = opts.maxWidth;'
+    + '  var mh = opts.maxHeight;'
+    + '  if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {'
+    + '    var sw = mw ? mw / canvas.width : 1;'
+    + '    var sh = mh ? mh / canvas.height : 1;'
+    + '    var scale = Math.min(sw, sh);'
+    + '    out = document.createElement("canvas");'
+    + '    out.width = Math.round(canvas.width * scale);'
+    + '    out.height = Math.round(canvas.height * scale);'
+    + '    out.getContext("2d").drawImage(canvas, 0, 0, out.width, out.height);'
+    + '  }'
+    + '  var fmt = opts.format === "jpeg" ? "image/jpeg" : "image/png";'
+    + '  var quality = opts.format === "jpeg" ? (opts.quality || 0.85) : undefined;'
+    + '  var dataUrl = out.toDataURL(fmt, quality);'
+    + '  return fetch("/__bw/screenshot/" + opts.clientId, {'
+    + '    method: "POST",'
+    + '    headers: { "Content-Type": "application/json" },'
+    + '    body: JSON.stringify({'
+    + '      requestId: opts.requestId,'
+    + '      data: dataUrl,'
+    + '      width: out.width,'
+    + '      height: out.height,'
+    + '      format: opts.format || "png"'
+    + '    })'
+    + '  });'
+    + '}).catch(function(err) {'
+    + '  fetch("/__bw/screenshot/" + opts.clientId, {'
+    + '    method: "POST",'
+    + '    headers: { "Content-Type": "application/json" },'
+    + '    body: JSON.stringify({ requestId: opts.requestId, error: err.message || String(err) })'
+    + '  });'
+    + '});'
+    + '}';
 
 /**
  * bwserve shell — generates the HTML page shell served to browsers.
@@ -357,6 +505,7 @@ var MIME_TYPES = {
  * @param {string} [opts.static] - Directory to serve static files from
  * @param {boolean} [opts.injectBitwrench=true] - Auto-inject bitwrench client JS
  * @param {string|Object} [opts.theme] - Theme preset name or config object
+ * @param {boolean} [opts.allowScreenshot=false] - Enable client.screenshot() capability
  * @returns {BwServeApp} Application instance
  */
 function create(opts) {
@@ -376,11 +525,12 @@ class BwServeApp {
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
     this.allowExec = opts.allowExec || false;
+    this.allowScreenshot = opts.allowScreenshot || false;
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
-    this._server = null;
     this._clientCounter = 0;
+    this._server = null;
   }
 
   /**
@@ -515,6 +665,18 @@ class BwServeApp {
       return this._handleAction(req, res, actionClientId);
     }
 
+    // /__bw/screenshot/:clientId — screenshot POST-back
+    if (path$1.startsWith('/__bw/screenshot/') && method === 'POST') {
+      var ssClientId = path$1.slice('/__bw/screenshot/'.length);
+      return this._handleScreenshot(req, res, ssClientId);
+    }
+
+    // /__bw/vendor/:filename — serve vendored libraries (allowlisted)
+    if (path$1.startsWith('/__bw/vendor/') && method === 'GET') {
+      var vendorFile = path$1.slice('/__bw/vendor/'.length);
+      return this._serveVendorFile(res, vendorFile);
+    }
+
     // Registered page routes — serve shell HTML
     if (method === 'GET' && this._pages.has(path$1)) {
       var clientId2 = 'c' + (++this._clientCounter);
@@ -588,6 +750,7 @@ class BwServeApp {
 
     // Create client instance
     var client = new BwServeClient(clientId, res);
+    client._allowScreenshot = this.allowScreenshot;
 
     // Look up the pending client record (set during page serve)
     var pending = self._clients.get(clientId);
@@ -648,6 +811,59 @@ class BwServeApp {
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+  }
+
+  /**
+   * Handle a screenshot POST-back from a client.
+   * @private
+   */
+  _handleScreenshot(req, res, clientId) {
+    var record = this._clients.get(clientId);
+    if (!record || !record.client) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unknown client' }));
+      return;
+    }
+
+    var body = '';
+    req.on('data', function(chunk) { body += chunk; });
+    req.on('end', function() {
+      try {
+        var data = JSON.parse(body);
+        record.client._resolveScreenshot(data.requestId, data);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+  }
+
+  /**
+   * Serve a vendored library file (allowlisted filenames only).
+   * @private
+   */
+  _serveVendorFile(res, filename) {
+    var allowed = ['html2canvas.min.js'];
+    if (allowed.indexOf(filename) === -1) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+      return;
+    }
+    var vendorDir = path.resolve(__dirname$1, '..', 'vendor');
+    var filePath = path.join(vendorDir, filename);
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Vendor file not found: ' + filename);
+      return;
+    }
+    var content = fs.readFileSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': 'application/javascript; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.end(content);
   }
 }
 

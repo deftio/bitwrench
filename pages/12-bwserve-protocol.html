@@ -266,11 +266,14 @@
       }),
 
       { t: 'p', c: [
-        'Three ways to use it: ',
+        'Three ways to use it:',
+        { t: 'br' },
         { t: 'strong', c: '1) Node.js library' },
-        ' \u2014 ', code('import bwserve from "bitwrench/bwserve"'), ', ',
+        ' \u2014 ', code('import bwserve from "bitwrench/bwserve"'),
+        { t: 'br' },
         { t: 'strong', c: '2) bwcli serve' },
-        ' \u2014 a pipe server that lets any language (Python, shell, etc.) drive the UI, ',
+        ' \u2014 a pipe server that lets any language (Python, shell, etc.) drive the UI',
+        { t: 'br' },
         { t: 'strong', c: '3) Embedded C/Python/Rust' },
         ' \u2014 header-only macros for microcontrollers.'
       ]}

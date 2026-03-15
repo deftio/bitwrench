@@ -364,7 +364,12 @@ bw._el = function(id) {
     el = document.querySelector('[data-bw_id="' + id + '"]');
   }
 
-  // 5. Cache the result for next time
+  // 5. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
+  if (!el && id.indexOf('bw_uuid_') === 0) {
+    el = document.querySelector('.' + id);
+  }
+
+  // 6. Cache the result for next time
   if (el) {
     bw._nodeMap[id] = el;
   }
@@ -415,6 +420,84 @@ bw._deregisterNode = function(el, bwId) {
   if (htmlId) {
     delete bw._nodeMap[htmlId];
   }
+};
+
+// ===================================================================================
+// bw.assignUUID() / bw.getUUID() — Explicit UUID addressing for TACO objects
+// ===================================================================================
+
+/**
+ * Regex to match a bw_uuid_* token in a class string.
+ * @private
+ */
+var _UUID_RE = /\bbw_uuid_[a-z0-9_]+\b/;
+
+/**
+ * Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`.
+ *
+ * Idempotent by default — calling twice returns the same UUID. Pass `forceNew=true`
+ * to replace an existing UUID (useful in loops where each TACO needs a unique ID).
+ *
+ * @param {Object} taco - A TACO object `{t, a, c, o}`
+ * @param {boolean} [forceNew=false] - If true, replaces any existing UUID with a new one
+ * @returns {string} The UUID string (e.g. 'bw_uuid_a1b2c3d4e5')
+ * @category Identifiers
+ * @example
+ * var card = bw.makeStatCard({ value: '0', label: 'Scans' });
+ * var uuid = bw.assignUUID(card);        // 'bw_uuid_a1b2c3d4e5'
+ * var same = bw.assignUUID(card);        // same UUID (idempotent)
+ * var diff = bw.assignUUID(card, true);  // new UUID (forced)
+ */
+bw.assignUUID = function(taco, forceNew) {
+  if (!taco || !_is(taco, 'object')) return null;
+
+  // Ensure taco.a exists
+  if (!taco.a) taco.a = {};
+  if (!_is(taco.a.class, 'string')) taco.a.class = taco.a.class ? String(taco.a.class) : '';
+
+  var existing = taco.a.class.match(_UUID_RE);
+
+  if (existing && !forceNew) {
+    return existing[0];
+  }
+
+  // Remove old UUID if forceNew
+  if (existing) {
+    taco.a.class = taco.a.class.replace(_UUID_RE, '').replace(/\s+/g, ' ').trim();
+  }
+
+  var uuid = bw.uuid('uuid');
+  taco.a.class = (taco.a.class ? taco.a.class + ' ' : '') + uuid;
+  return uuid;
+};
+
+/**
+ * Read the UUID from a TACO object or DOM element. Pure getter, no side effects.
+ *
+ * @param {Object|Element} tacoOrElement - A TACO object or DOM element
+ * @returns {string|null} The UUID string, or null if none assigned
+ * @category Identifiers
+ * @example
+ * bw.getUUID(card)       // 'bw_uuid_a1b2c3d4e5' (from TACO)
+ * bw.getUUID(domEl)      // 'bw_uuid_a1b2c3d4e5' (from DOM element)
+ * bw.getUUID({t:'div'})  // null (no UUID)
+ */
+bw.getUUID = function(tacoOrElement) {
+  if (!tacoOrElement) return null;
+
+  var classStr;
+  // DOM element: check className
+  if (tacoOrElement.className !== undefined && tacoOrElement.tagName) {
+    classStr = tacoOrElement.className;
+  }
+  // TACO object: check a.class
+  else if (tacoOrElement.a && _is(tacoOrElement.a.class, 'string')) {
+    classStr = tacoOrElement.a.class;
+  }
+
+  if (!classStr) return null;
+  var match = classStr.match(_UUID_RE);
+  return match ? match[0] : null;
 };
 
 /**
@@ -973,6 +1056,14 @@ bw.createDOM = function(taco, options = {}) {
     bw._registerNode(el, null);
   }
 
+  // Register UUID class in node cache (bw_uuid_* tokens in class string)
+  if (el.className) {
+    var uuidMatch = el.className.match(_UUID_RE);
+    if (uuidMatch) {
+      bw._nodeMap[uuidMatch[0]] = el;
+    }
+  }
+
   // Handle lifecycle hooks and state
   if (opts.mounted || opts.unmount || opts.render || opts.state) {
     const id = attrs['data-bw_id'] || bw.uuid();
@@ -1345,6 +1436,16 @@ bw.renderComponent = function(taco, options = {}) {
 bw.cleanup = function(element) {
   if (!bw._isBrowser || !element) return;
 
+  // Deregister UUID classes from node cache (element + descendants)
+  // Covers elements that have UUID but no data-bw_id
+  var selfUuidMatch = element.className && element.className.match(_UUID_RE);
+  if (selfUuidMatch) delete bw._nodeMap[selfUuidMatch[0]];
+  var uuidEls = element.querySelectorAll('[class*="bw_uuid_"]');
+  uuidEls.forEach(function(uel) {
+    var m = uel.className && uel.className.match(_UUID_RE);
+    if (m) delete bw._nodeMap[m[0]];
+  });
+
   // Find all elements with data-bw_id
   const elements = element.querySelectorAll('[data-bw_id]');
 
@@ -1359,6 +1460,10 @@ bw.cleanup = function(element) {
 
     // Deregister from node cache
     bw._deregisterNode(el, id);
+
+    // Deregister UUID class from node cache
+    var uuidMatch = el.className && el.className.match(_UUID_RE);
+    if (uuidMatch) delete bw._nodeMap[uuidMatch[0]];
 
     // Clean up pub/sub subscriptions tied to this element
     if (el._bw_subs) {
@@ -1383,6 +1488,10 @@ bw.cleanup = function(element) {
 
     // Deregister from node cache
     bw._deregisterNode(element, id);
+
+    // Deregister UUID class from node cache
+    var elemUuidMatch = element.className && element.className.match(_UUID_RE);
+    if (elemUuidMatch) delete bw._nodeMap[elemUuidMatch[0]];
 
     // Clean up pub/sub subscriptions tied to element itself
     if (element._bw_subs) {
@@ -2934,7 +3043,7 @@ bw.component = function(taco) {
  * and calls the named method. This is the bitwrench equivalent of
  * Win32 SendMessage(hwnd, msg, wParam, lParam).
  *
- * @param {string} target - Component UUID (data-bw_comp_id) or user tag (CSS class)
+ * @param {string} target - Component UUID (bw_uuid_*), comp ID (data-bw_comp_id), or user tag (CSS class)
  * @param {string} action - Method name to call on the component
  * @param {*} data - Data to pass to the method
  * @returns {boolean} True if message was dispatched successfully
@@ -2951,9 +3060,14 @@ bw.component = function(taco) {
  * };
  */
 bw.message = function(target, action, data) {
-  // Try data-bw_comp_id attribute first, then CSS class (user tag)
-  var el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
-  if (!el) {
+  // Try bw._el() first (handles UUID class, nodeMap cache, getElementById)
+  var el = bw._el(target);
+  // Then try data-bw_comp_id attribute
+  if (!el || !el._bwComponentHandle) {
+    el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
+  }
+  // Then try CSS class (user tag)
+  if (!el || !el._bwComponentHandle) {
     el = bw.$('.' + target)[0];
   }
   if (!el || !el._bwComponentHandle) return false;

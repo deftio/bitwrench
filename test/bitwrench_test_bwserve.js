@@ -1623,3 +1623,202 @@ describe("generateShell allowExec", function() {
     assert.strictEqual(app.allowExec, false);
   });
 });
+
+// ===================================================================================
+// Screenshot protocol tests
+// ===================================================================================
+
+describe("client.screenshot()", function() {
+  it("should reject when allowScreenshot is false (default)", function() {
+    var client = new BwServeClient('ss-test-1', null);
+    // _allowScreenshot is not set (defaults to undefined/falsy)
+    return client.screenshot().then(
+      function() { assert.fail('should have rejected'); },
+      function(err) {
+        assert.ok(err.message.indexOf('not enabled') !== -1);
+      }
+    );
+  });
+
+  it("should reject when allowScreenshot is explicitly false", function() {
+    var client = new BwServeClient('ss-test-2', null);
+    client._allowScreenshot = false;
+    return client.screenshot('#app').then(
+      function() { assert.fail('should have rejected'); },
+      function(err) {
+        assert.ok(err.message.indexOf('not enabled') !== -1);
+      }
+    );
+  });
+
+  it("should send register + call messages when allowed", function() {
+    var client = new BwServeClient('ss-test-3', null);
+    client._allowScreenshot = true;
+    // Don't await — just trigger the send
+    var p = client.screenshot('#app', { format: 'jpeg', quality: 0.8, timeout: 500 });
+
+    // Check sent messages
+    assert.strictEqual(client._sent.length, 2, 'should send 2 messages');
+
+    // First message: register
+    var reg = client._sent[0];
+    assert.strictEqual(reg.type, 'register');
+    assert.strictEqual(reg.name, '_bw_screenshot');
+    assert.ok(reg.body.indexOf('html2canvas') !== -1, 'capture fn should reference html2canvas');
+
+    // Second message: call
+    var call = client._sent[1];
+    assert.strictEqual(call.type, 'call');
+    assert.strictEqual(call.name, '_bw_screenshot');
+    assert.strictEqual(call.args[0].selector, '#app');
+    assert.strictEqual(call.args[0].format, 'jpeg');
+    assert.strictEqual(call.args[0].quality, 0.8);
+    assert.strictEqual(call.args[0].clientId, 'ss-test-3');
+    assert.ok(call.args[0].requestId, 'should have requestId');
+
+    // Clean up: let the timeout reject
+    return p.catch(function() {});
+  });
+
+  it("should only register capture function once", function() {
+    var client = new BwServeClient('ss-test-4', null);
+    client._allowScreenshot = true;
+    var p1 = client.screenshot('#a', { timeout: 500 });
+    var p2 = client.screenshot('#b', { timeout: 500 });
+
+    // Should have 3 messages: 1 register + 2 calls
+    assert.strictEqual(client._sent.length, 3);
+    assert.strictEqual(client._sent[0].type, 'register');
+    assert.strictEqual(client._sent[1].type, 'call');
+    assert.strictEqual(client._sent[2].type, 'call');
+
+    return Promise.all([p1.catch(function() {}), p2.catch(function() {})]);
+  });
+
+  it("should pass default options when none specified", function() {
+    var client = new BwServeClient('ss-test-5', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot(undefined, { timeout: 500 });
+
+    var call = client._sent[1];
+    assert.strictEqual(call.args[0].selector, 'body');
+    assert.strictEqual(call.args[0].format, 'png');
+    assert.strictEqual(call.args[0].quality, 0.85);
+    assert.strictEqual(call.args[0].scale, 1);
+    assert.strictEqual(call.args[0].maxWidth, null);
+    assert.strictEqual(call.args[0].maxHeight, null);
+
+    return p.catch(function() {});
+  });
+
+  it("should pass maxWidth and maxHeight options", function() {
+    var client = new BwServeClient('ss-test-6', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { maxWidth: 1024, maxHeight: 768, timeout: 500 });
+
+    var call = client._sent[1];
+    assert.strictEqual(call.args[0].maxWidth, 1024);
+    assert.strictEqual(call.args[0].maxHeight, 768);
+
+    return p.catch(function() {});
+  });
+
+  it("should timeout and reject after specified ms", function() {
+    var client = new BwServeClient('ss-test-7', null);
+    client._allowScreenshot = true;
+    var start = Date.now();
+    return client.screenshot('#app', { timeout: 100 }).then(
+      function() { assert.fail('should have rejected'); },
+      function(err) {
+        assert.ok(err.message.indexOf('timeout') !== -1);
+        assert.ok(Date.now() - start >= 90, 'should wait at least ~100ms');
+      }
+    );
+  });
+});
+
+describe("client._resolveScreenshot()", function() {
+  it("should resolve pending promise with image data", function() {
+    var client = new BwServeClient('ss-resolve-1', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { timeout: 5000 });
+
+    // Get the requestId from the call message
+    var requestId = client._sent[1].args[0].requestId;
+
+    // Simulate client POST-back
+    var fakeDataUrl = 'data:image/png;base64,' + Buffer.from('fake-png-data').toString('base64');
+    client._resolveScreenshot(requestId, {
+      data: fakeDataUrl,
+      width: 800,
+      height: 600,
+      format: 'png'
+    });
+
+    return p.then(function(result) {
+      assert.strictEqual(result.width, 800);
+      assert.strictEqual(result.height, 600);
+      assert.strictEqual(result.format, 'png');
+      assert.ok(Buffer.isBuffer(result.data), 'data should be a Buffer');
+      assert.strictEqual(result.data.toString(), 'fake-png-data');
+    });
+  });
+
+  it("should reject pending promise on error", function() {
+    var client = new BwServeClient('ss-resolve-2', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { timeout: 5000 });
+
+    var requestId = client._sent[1].args[0].requestId;
+
+    client._resolveScreenshot(requestId, {
+      error: 'Element not found: #nonexistent'
+    });
+
+    return p.then(
+      function() { assert.fail('should have rejected'); },
+      function(err) {
+        assert.ok(err.message.indexOf('Element not found') !== -1);
+      }
+    );
+  });
+
+  it("should return false for unknown requestId", function() {
+    var client = new BwServeClient('ss-resolve-3', null);
+    assert.strictEqual(client._resolveScreenshot('unknown_id', {}), false);
+  });
+
+  it("should clear timeout on resolve", function() {
+    var client = new BwServeClient('ss-resolve-4', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { timeout: 200 });
+
+    var requestId = client._sent[1].args[0].requestId;
+
+    // Resolve immediately
+    var fakeDataUrl = 'data:image/jpeg;base64,' + Buffer.from('jpeg-data').toString('base64');
+    client._resolveScreenshot(requestId, {
+      data: fakeDataUrl,
+      width: 512,
+      height: 384,
+      format: 'jpeg'
+    });
+
+    return p.then(function(result) {
+      assert.strictEqual(result.format, 'jpeg');
+      // If timeout wasn't cleared, this test would fail with unhandled rejection
+    });
+  });
+});
+
+describe("BwServeApp screenshot config", function() {
+  it("should store allowScreenshot option", function() {
+    var app = new BwServeApp({ allowScreenshot: true });
+    assert.strictEqual(app.allowScreenshot, true);
+  });
+
+  it("should default allowScreenshot to false", function() {
+    var app = new BwServeApp({});
+    assert.strictEqual(app.allowScreenshot, false);
+  });
+});

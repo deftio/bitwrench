@@ -19,7 +19,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-15T03:06:53.958Z'
+    buildDate: '2026-03-15T18:03:40.379Z'
   };
 
   /**
@@ -501,10 +501,12 @@
     5: '1.5rem',    // 24px
     6: '2rem'};
 
+  let _S=SPACING_SCALE;
+
   var SPACING_PRESETS = {
-    compact:  { btn: SPACING_SCALE[1] + ' ' + SPACING_SCALE[3],  card: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4], alert: SPACING_SCALE[2] + ' ' + SPACING_SCALE[4], cell: SPACING_SCALE[2] + ' ' + SPACING_SCALE[3], input: SPACING_SCALE[1] + ' ' + SPACING_SCALE[3] },
-    normal:   { btn: SPACING_SCALE[2] + ' ' + SPACING_SCALE[4],  card: SPACING_SCALE[5] + ' ' + SPACING_SCALE[5], alert: SPACING_SCALE[3] + ' ' + SPACING_SCALE[5], cell: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4], input: SPACING_SCALE[2] + ' ' + SPACING_SCALE[3] },
-    spacious: { btn: SPACING_SCALE[3] + ' ' + SPACING_SCALE[5],  card: SPACING_SCALE[6] + ' ' + SPACING_SCALE[6], alert: SPACING_SCALE[4] + ' ' + SPACING_SCALE[5], cell: SPACING_SCALE[4] + ' ' + SPACING_SCALE[5], input: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4] }
+    compact:  { btn: _S[1] + ' ' + _S[3],  card: _S[3] + ' ' + _S[4], alert: _S[2] + ' ' + _S[4], cell: _S[2] + ' ' + _S[3], input: _S[1] + ' ' + _S[3] },
+    normal:   { btn: _S[2] + ' ' + _S[4],  card: _S[5] + ' ' + _S[5], alert: _S[3] + ' ' + _S[5], cell: _S[3] + ' ' + _S[4], input: _S[2] + ' ' + _S[3] },
+    spacious: { btn: _S[3] + ' ' + _S[5],  card: _S[6] + ' ' + _S[6], alert: _S[4] + ' ' + _S[5], cell: _S[4] + ' ' + _S[5], input: _S[3] + ' ' + _S[4] }
   };
 
   var RADIUS_PRESETS = {
@@ -676,6 +678,7 @@
     if (sel.includes(',')) return sel.split(',').map(function(s) { return '.' + name + ' ' + s.trim(); }).join(', ');
     return '.' + name + ' ' + sel;
   }
+  var _sx=scopeSelector;
 
   // =========================================================================
   // Themed CSS generators
@@ -684,12 +687,12 @@
   function generateTypographyThemed(scope, palette, layout) {
     var mot = layout.motion;
     var rules = {};
-    rules[scopeSelector(scope, 'a')] = {
+    rules[_sx(scope, 'a')] = {
       'color': palette.primary.base,
       'text-decoration': 'none',
       'transition': 'color ' + mot.fast + ' ' + mot.easing
     };
-    rules[scopeSelector(scope, 'a:hover')] = {
+    rules[_sx(scope, 'a:hover')] = {
       'color': palette.primary.hover,
       'text-decoration': 'underline'
     };
@@ -702,11 +705,11 @@
     var rd = layout.radius;
 
     // Base button (only when scoped — unscoped uses defaultStyles)
-    rules[scopeSelector(scope, '.bw_btn')] = {
+    rules[_sx(scope, '.bw_btn')] = {
       'padding': sp.btn,
       'border-radius': rd.btn
     };
-    rules[scopeSelector(scope, '.bw_btn:focus-visible')] = {
+    rules[_sx(scope, '.bw_btn:focus-visible')] = {
       'outline': '2px solid currentColor',
       'outline-offset': '2px',
       'box-shadow': '0 0 0 3px ' + palette.primary.focus
@@ -715,12 +718,12 @@
     // Variant colors handled by palette class on component root
 
     // Size variants (structural, reuse layout radius)
-    rules[scopeSelector(scope, '.bw_btn_lg')] = {
+    rules[_sx(scope, '.bw_btn_lg')] = {
       'padding': '0.625rem 1.5rem',
       'font-size': '1rem',
       'border-radius': rd.btn === '50rem' ? '50rem' : (parseInt(rd.btn) + 2) + 'px'
     };
-    rules[scopeSelector(scope, '.bw_btn_sm')] = {
+    rules[_sx(scope, '.bw_btn_sm')] = {
       'padding': '0.25rem 0.75rem',
       'font-size': '0.8125rem',
       'border-radius': rd.btn === '50rem' ? '50rem' : (Math.max(parseInt(rd.btn) - 1, 0)) + 'px'
@@ -734,7 +737,7 @@
     var sp = layout.spacing;
     var rd = layout.radius;
 
-    rules[scopeSelector(scope, '.bw_alert')] = {
+    rules[_sx(scope, '.bw_alert')] = {
       'padding': sp.alert,
       'border-radius': rd.alert
     };
@@ -753,36 +756,36 @@
 
     var elev = layout.elevation;
     var motion = layout.motion;
-    rules[scopeSelector(scope, '.bw_card')] = {
+    rules[_sx(scope, '.bw_card')] = {
       'background-color': palette.surface || '#fff',
       'border': '1px solid ' + palette.light.border,
       'border-radius': rd.card,
       'box-shadow': elev.sm,
       'transition': 'box-shadow ' + motion.normal + ' ' + motion.easing + ', transform ' + motion.normal + ' ' + motion.easing
     };
-    rules[scopeSelector(scope, '.bw_card:hover')] = {
+    rules[_sx(scope, '.bw_card:hover')] = {
       'box-shadow': elev.md
     };
-    rules[scopeSelector(scope, '.bw_card_hoverable:hover')] = {
+    rules[_sx(scope, '.bw_card_hoverable:hover')] = {
       'box-shadow': elev.lg
     };
-    rules[scopeSelector(scope, '.bw_card_body')] = {
+    rules[_sx(scope, '.bw_card_body')] = {
       'padding': sp.card
     };
-    rules[scopeSelector(scope, '.bw_card_header')] = {
+    rules[_sx(scope, '.bw_card_header')] = {
       'padding': sp.card.split(' ').map(function(v) { return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem'; }).join(' '),
       'background-color': palette.light.light,
       'border-bottom': '1px solid ' + palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_card_footer')] = {
+    rules[_sx(scope, '.bw_card_footer')] = {
       'background-color': palette.light.light,
       'border-top': '1px solid ' + palette.light.border,
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_card_title')] = {
+    rules[_sx(scope, '.bw_card_title')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_card_subtitle')] = {
+    rules[_sx(scope, '.bw_card_subtitle')] = {
       'color': palette.secondary.base
     };
 
@@ -796,55 +799,55 @@
     var sp = layout.spacing;
     var rd = layout.radius;
 
-    rules[scopeSelector(scope, '.bw_form_control')] = {
+    rules[_sx(scope, '.bw_form_control')] = {
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_form_control:focus')] = {
+    rules[_sx(scope, '.bw_form_control:focus')] = {
       'border-color': palette.primary.border,
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '-1px',
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_form_control::placeholder')] = {
+    rules[_sx(scope, '.bw_form_control::placeholder')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_form_label')] = {
+    rules[_sx(scope, '.bw_form_label')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_form_text')] = {
+    rules[_sx(scope, '.bw_form_text')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_form_check_input:checked')] = {
+    rules[_sx(scope, '.bw_form_check_input:checked')] = {
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_form_check_input:focus')] = {
+    rules[_sx(scope, '.bw_form_check_input:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     // Validation states
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_valid')] = { 'border-color': palette.success.base };
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_valid:focus')] = {
+    rules[_sx(scope, '.bw_form_control.bw_is_valid')] = { 'border-color': palette.success.base };
+    rules[_sx(scope, '.bw_form_control.bw_is_valid:focus')] = {
       'border-color': palette.success.base,
       'box-shadow': '0 0 0 0.2rem ' + palette.success.focus
     };
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_invalid')] = { 'border-color': palette.danger.base };
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_invalid:focus')] = {
+    rules[_sx(scope, '.bw_form_control.bw_is_invalid')] = { 'border-color': palette.danger.base };
+    rules[_sx(scope, '.bw_form_control.bw_is_invalid:focus')] = {
       'border-color': palette.danger.base,
       'box-shadow': '0 0 0 0.2rem ' + palette.danger.focus
     };
     // Form select
-    rules[scopeSelector(scope, '.bw_form_select')] = {
+    rules[_sx(scope, '.bw_form_select')] = {
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_form_select:focus')] = {
+    rules[_sx(scope, '.bw_form_select:focus')] = {
       'border-color': palette.primary.border,
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
@@ -854,41 +857,41 @@
 
   function generateNavigation(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_navbar')] = {
+    rules[_sx(scope, '.bw_navbar')] = {
       'background-color': palette.light.light,
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_navbar_brand')] = {
+    rules[_sx(scope, '.bw_navbar_brand')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link')] = {
+    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
+    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
       'color': palette.primary.base,
       'background-color': palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark')] = {
+    rules[_sx(scope, '.bw_navbar_dark')] = {
       'background-color': palette.dark.base,
       'border-bottom-color': palette.dark.hover
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_navbar_brand')] = {
+    rules[_sx(scope, '.bw_navbar_dark .bw_navbar_brand')] = {
       'color': palette.light.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link')] = {
+    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link')] = {
       'color': 'rgba(255,255,255,.65)'
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
+    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
       'color': '#fff'
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
       'color': '#fff',
       'font-weight': '600'
     };
-    rules[scopeSelector(scope, '.bw_nav_pills .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_nav_pills .bw_nav_link.active')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base
     };
@@ -899,35 +902,35 @@
     var rules = {};
     var sp = layout.spacing;
 
-    rules[scopeSelector(scope, '.bw_table')] = {
+    rules[_sx(scope, '.bw_table')] = {
       'color': palette.dark.base,
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_table > :not(caption) > * > *')] = {
+    rules[_sx(scope, '.bw_table > :not(caption) > * > *')] = {
       'padding': sp.cell,
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_table > thead > tr > *')] = {
+    rules[_sx(scope, '.bw_table > thead > tr > *')] = {
       'color': palette.secondary.base,
       'border-bottom-color': palette.light.border,
       'background-color': palette.light.light
     };
-    rules[scopeSelector(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
+    rules[_sx(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
       'background-color': 'rgba(0, 0, 0, 0.05)'
     };
-    rules[scopeSelector(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
+    rules[_sx(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
       'background-color': palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_table_selectable > tbody > tr')] = {
+    rules[_sx(scope, '.bw_table_selectable > tbody > tr')] = {
       'cursor': 'pointer'
     };
-    rules[scopeSelector(scope, '.bw_table > tbody > tr.bw_table_row_selected > *')] = {
+    rules[_sx(scope, '.bw_table > tbody > tr.bw_table_row_selected > *')] = {
       'background-color': palette.primary.light
     };
-    rules[scopeSelector(scope, '.bw_table_bordered')] = {
+    rules[_sx(scope, '.bw_table_bordered')] = {
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_table caption')] = {
+    rules[_sx(scope, '.bw_table caption')] = {
       'color': palette.secondary.base
     };
 
@@ -936,17 +939,17 @@
 
   function generateTabs(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_nav_tabs')] = {
+    rules[_sx(scope, '.bw_nav_tabs')] = {
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_nav_link')] = {
+    rules[_sx(scope, '.bw_nav_link')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
+    rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
       'color': palette.dark.base,
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
       'color': palette.primary.base,
       'border-bottom': '2px solid ' + palette.primary.base
     };
@@ -957,22 +960,22 @@
     var rules = {};
     var sp = layout.spacing;
 
-    rules[scopeSelector(scope, '.bw_list_group_item')] = {
+    rules[_sx(scope, '.bw_list_group_item')] = {
       'padding': sp.cell,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, 'a.bw_list_group_item:hover')] = {
+    rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
       'background-color': palette.light.light,
       'color': palette.dark.hover
     };
-    rules[scopeSelector(scope, '.bw_list_group_item.active')] = {
+    rules[_sx(scope, '.bw_list_group_item.active')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_list_group_item.disabled')] = {
+    rules[_sx(scope, '.bw_list_group_item.disabled')] = {
       'color': palette.secondary.base,
       'background-color': palette.surface || '#fff'
     };
@@ -982,26 +985,26 @@
 
   function generatePagination(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_page_link')] = {
+    rules[_sx(scope, '.bw_page_link')] = {
       'color': palette.primary.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_page_link:hover')] = {
+    rules[_sx(scope, '.bw_page_link:hover')] = {
       'color': palette.primary.hover,
       'background-color': palette.light.light,
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_page_link:focus')] = {
+    rules[_sx(scope, '.bw_page_link:focus')] = {
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '-2px'
     };
-    rules[scopeSelector(scope, '.bw_page_item.bw_active .bw_page_link')] = {
+    rules[_sx(scope, '.bw_page_item.bw_active .bw_page_link')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
+    rules[_sx(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
       'color': palette.secondary.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
@@ -1011,11 +1014,11 @@
 
   function generateProgress(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_progress')] = {
+    rules[_sx(scope, '.bw_progress')] = {
       'background-color': palette.light.light,
       'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
     };
-    rules[scopeSelector(scope, '.bw_progress_bar')] = {
+    rules[_sx(scope, '.bw_progress_bar')] = {
       'color': '#fff',
       'background-color': palette.primary.base,
       'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
@@ -1035,7 +1038,7 @@
       'color': palette.dark.base,
       'background-color': bg
     };
-    rules[scopeSelector(scope, 'body')] = baseReset;
+    rules[_sx(scope, 'body')] = baseReset;
     // Also apply to the scope element itself so themes work on any container, not just body
     if (scope) {
       rules['.' + scope] = baseReset;
@@ -1045,13 +1048,13 @@
 
   function generateBreadcrumbThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
+    rules[_sx(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_breadcrumb_item.active')] = {
+    rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_breadcrumb_item a:hover')] = {
+    rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
       'color': palette.primary.hover,
       'text-decoration': 'underline'
     };
@@ -1062,11 +1065,11 @@
 
   function generateCloseButtonThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_close')] = {
+    rules[_sx(scope, '.bw_close')] = {
       'color': palette.dark.base,
       'opacity': '0.5'
     };
-    rules[scopeSelector(scope, '.bw_close:focus')] = {
+    rules[_sx(scope, '.bw_close:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     return rules;
@@ -1074,13 +1077,13 @@
 
   function generateSectionsThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_section_subtitle')] = {
+    rules[_sx(scope, '.bw_section_subtitle')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_feature_description')] = {
+    rules[_sx(scope, '.bw_feature_description')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_cta_description')] = {
+    rules[_sx(scope, '.bw_cta_description')] = {
       'color': palette.secondary.base
     };
     return rules;
@@ -1088,27 +1091,27 @@
 
   function generateAccordionThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_accordion_item')] = {
+    rules[_sx(scope, '.bw_accordion_item')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_accordion_button')] = {
+    rules[_sx(scope, '.bw_accordion_button')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
+    rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
       'color': palette.primary.darkText,
       'background-color': palette.primary.light
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:hover')] = {
+    rules[_sx(scope, '.bw_accordion_button:hover')] = {
       'background-color': palette.light.light
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
+    rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
       'background-color': palette.primary.hover
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:focus-visible')] = {
+    rules[_sx(scope, '.bw_accordion_button:focus-visible')] = {
       'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_accordion_body')] = {
+    rules[_sx(scope, '.bw_accordion_body')] = {
       'border-top': '1px solid ' + palette.light.border
     };
     return rules;
@@ -1116,20 +1119,20 @@
 
   function generateCarouselThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_carousel')] = {
+    rules[_sx(scope, '.bw_carousel')] = {
       'background-color': palette.light.light
     };
-    rules[scopeSelector(scope, '.bw_carousel_indicator.active')] = {
+    rules[_sx(scope, '.bw_carousel_indicator.active')] = {
       'background-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_carousel_control')] = {
+    rules[_sx(scope, '.bw_carousel_control')] = {
       'background-color': 'rgba(0,0,0,0.4)',
       'color': '#fff'
     };
-    rules[scopeSelector(scope, '.bw_carousel_control:hover')] = {
+    rules[_sx(scope, '.bw_carousel_control:hover')] = {
       'background-color': 'rgba(0,0,0,0.6)'
     };
-    rules[scopeSelector(scope, '.bw_carousel_caption')] = {
+    rules[_sx(scope, '.bw_carousel_caption')] = {
       'background': 'linear-gradient(transparent, rgba(0,0,0,0.6))',
       'color': '#fff'
     };
@@ -1138,18 +1141,18 @@
 
   function generateModalThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_modal_content')] = {
+    rules[_sx(scope, '.bw_modal_content')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
       'box-shadow': layout.elevation.lg
     };
-    rules[scopeSelector(scope, '.bw_modal_header')] = {
+    rules[_sx(scope, '.bw_modal_header')] = {
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_modal_footer')] = {
+    rules[_sx(scope, '.bw_modal_footer')] = {
       'border-top-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_modal_title')] = {
+    rules[_sx(scope, '.bw_modal_title')] = {
       'color': palette.dark.base
     };
     return rules;
@@ -1157,12 +1160,12 @@
 
   function generateToastThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_toast')] = {
+    rules[_sx(scope, '.bw_toast')] = {
       'background-color': palette.surface || '#fff',
       'border-color': 'rgba(0,0,0,0.1)',
       'box-shadow': layout.elevation.lg
     };
-    rules[scopeSelector(scope, '.bw_toast_header')] = {
+    rules[_sx(scope, '.bw_toast_header')] = {
       'border-bottom-color': 'rgba(0,0,0,0.05)'
     };
     // Variant toast borders handled by palette class
@@ -1171,22 +1174,22 @@
 
   function generateDropdownThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_dropdown_menu')] = {
+    rules[_sx(scope, '.bw_dropdown_menu')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
       'box-shadow': layout.elevation.md
     };
-    rules[scopeSelector(scope, '.bw_dropdown_item')] = {
+    rules[_sx(scope, '.bw_dropdown_item')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_dropdown_item:hover')] = {
+    rules[_sx(scope, '.bw_dropdown_item:hover')] = {
       'color': palette.dark.hover,
       'background-color': palette.light.light
     };
-    rules[scopeSelector(scope, '.bw_dropdown_item.disabled')] = {
+    rules[_sx(scope, '.bw_dropdown_item.disabled')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_dropdown_divider')] = {
+    rules[_sx(scope, '.bw_dropdown_divider')] = {
       'border-top-color': palette.light.border
     };
     return rules;
@@ -1194,15 +1197,15 @@
 
   function generateSwitchThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input')] = {
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input')] = {
       'background-color': palette.secondary.base,
       'border-color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input:checked')] = {
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input:checked')] = {
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input:focus')] = {
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     return rules;
@@ -1210,7 +1213,7 @@
 
   function generateSkeletonThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_skeleton')] = {
+    rules[_sx(scope, '.bw_skeleton')] = {
       'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
     };
     return rules;
@@ -1221,56 +1224,56 @@
   function generateStatCardThemed(scope, palette) {
     var rules = {};
     // Variant border colors handled by palette class
-    rules[scopeSelector(scope, '.bw_stat_change_up')] = { 'color': palette.success.base };
-    rules[scopeSelector(scope, '.bw_stat_change_down')] = { 'color': palette.danger.base };
+    rules[_sx(scope, '.bw_stat_change_up')] = { 'color': palette.success.base };
+    rules[_sx(scope, '.bw_stat_change_down')] = { 'color': palette.danger.base };
     return rules;
   }
 
   function generateTimelineThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_timeline::before')] = { 'background-color': palette.light.border };
+    rules[_sx(scope, '.bw_timeline::before')] = { 'background-color': palette.light.border };
     // Variant marker colors handled by palette class
-    rules[scopeSelector(scope, '.bw_timeline_date')] = { 'color': palette.secondary.base };
+    rules[_sx(scope, '.bw_timeline_date')] = { 'color': palette.secondary.base };
     return rules;
   }
 
   function generateStepperThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_step_indicator')] = {
+    rules[_sx(scope, '.bw_step_indicator')] = {
       'background-color': palette.light.light,
       'border': '2px solid ' + palette.light.border,
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_step + .bw_step::before')] = { 'background-color': palette.light.border };
-    rules[scopeSelector(scope, '.bw_step_active .bw_step_indicator')] = {
+    rules[_sx(scope, '.bw_step + .bw_step::before')] = { 'background-color': palette.light.border };
+    rules[_sx(scope, '.bw_step_active .bw_step_indicator')] = {
       'background-color': palette.primary.base,
       'color': palette.primary.textOn
     };
-    rules[scopeSelector(scope, '.bw_step_active .bw_step_label')] = {
+    rules[_sx(scope, '.bw_step_active .bw_step_label')] = {
       'color': palette.dark.base,
       'font-weight': '600'
     };
-    rules[scopeSelector(scope, '.bw_step_completed .bw_step_indicator')] = {
+    rules[_sx(scope, '.bw_step_completed .bw_step_indicator')] = {
       'background-color': palette.primary.base,
       'color': palette.primary.textOn
     };
-    rules[scopeSelector(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.primary.base };
-    rules[scopeSelector(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.primary.base };
+    rules[_sx(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.primary.base };
+    rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.primary.base };
     return rules;
   }
 
   function generateChipInputThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_chip_input')] = { 'border-color': palette.light.border };
-    rules[scopeSelector(scope, '.bw_chip_input:focus-within')] = {
+    rules[_sx(scope, '.bw_chip_input')] = { 'border-color': palette.light.border };
+    rules[_sx(scope, '.bw_chip_input:focus-within')] = {
       'border-color': palette.primary.base,
       'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_chip')] = {
+    rules[_sx(scope, '.bw_chip')] = {
       'background-color': palette.light.light,
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_chip_remove:hover')] = {
+    rules[_sx(scope, '.bw_chip_remove:hover')] = {
       'color': palette.danger.base,
       'background-color': palette.danger.light
     };
@@ -1279,19 +1282,19 @@
 
   function generateFileUploadThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_file_upload')] = {
+    rules[_sx(scope, '.bw_file_upload')] = {
       'border-color': palette.light.border,
       'background-color': palette.light.light
     };
-    rules[scopeSelector(scope, '.bw_file_upload:hover')] = {
+    rules[_sx(scope, '.bw_file_upload:hover')] = {
       'border-color': palette.primary.base,
       'background-color': palette.primary.light
     };
-    rules[scopeSelector(scope, '.bw_file_upload:focus')] = {
+    rules[_sx(scope, '.bw_file_upload:focus')] = {
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '2px'
     };
-    rules[scopeSelector(scope, '.bw_file_upload.bw_file_upload_active')] = {
+    rules[_sx(scope, '.bw_file_upload.bw_file_upload_active')] = {
       'border-color': palette.primary.base,
       'background-color': palette.primary.light,
       'border-style': 'solid'
@@ -1301,14 +1304,14 @@
 
   function generateRangeThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_range')] = { 'background-color': palette.light.border };
-    rules[scopeSelector(scope, '.bw_range::-webkit-slider-thumb')] = {
+    rules[_sx(scope, '.bw_range')] = { 'background-color': palette.light.border };
+    rules[_sx(scope, '.bw_range::-webkit-slider-thumb')] = {
       'background-color': palette.primary.base,
       'border-color': '#fff',
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
       'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
     };
-    rules[scopeSelector(scope, '.bw_range::-moz-range-thumb')] = {
+    rules[_sx(scope, '.bw_range::-moz-range-thumb')] = {
       'background-color': palette.primary.base,
       'border-color': '#fff',
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)'
@@ -1318,18 +1321,18 @@
 
   function generateSearchThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_search_clear:hover')] = { 'color': palette.dark.base };
+    rules[_sx(scope, '.bw_search_clear:hover')] = { 'color': palette.dark.base };
     return rules;
   }
 
   function generateCodeDemoThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_code_copy_btn_copied')] = {
+    rules[_sx(scope, '.bw_code_copy_btn_copied')] = {
       'background': palette.success.base,
       'color': palette.success.textOn,
       'border-color': palette.success.base
     };
-    rules[scopeSelector(scope, '.bw_copy_btn:hover')] = {
+    rules[_sx(scope, '.bw_copy_btn:hover')] = {
       'background': 'rgba(255,255,255,0.2)',
       'color': '#fff'
     };
@@ -1339,7 +1342,7 @@
   function generateNavPillsThemed(scope, palette, layout) {
     var rules = {};
     var rd = layout.radius;
-    rules[scopeSelector(scope, '.bw_nav_pills .bw_nav_link')] = { 'border-radius': rd.btn };
+    rules[_sx(scope, '.bw_nav_pills .bw_nav_link')] = { 'border-radius': rd.btn };
     return rules;
   }
 
@@ -1365,21 +1368,21 @@
       var s = palette[k];
 
       // --- Root palette class: sets default bg/color/border ---
-      rules[scopeSelector(scope, '.bw_' + k)] = {
+      rules[_sx(scope, '.bw_' + k)] = {
         'background-color': s.base,
         'color': s.textOn,
         'border-color': s.base
       };
 
       // --- Pseudo-states (shared across all components) ---
-      rules[scopeSelector(scope, '.bw_' + k + ':hover')] = {
+      rules[_sx(scope, '.bw_' + k + ':hover')] = {
         'background-color': s.hover,
         'border-color': s.active
       };
-      rules[scopeSelector(scope, '.bw_' + k + ':active')] = {
+      rules[_sx(scope, '.bw_' + k + ':active')] = {
         'background-color': s.active
       };
-      rules[scopeSelector(scope, '.bw_' + k + ':focus-visible')] = {
+      rules[_sx(scope, '.bw_' + k + ':focus-visible')] = {
         'box-shadow': '0 0 0 3px ' + s.focus,
         'outline': 'none'
       };
@@ -1387,87 +1390,87 @@
       // --- Component-specific overrides ---
 
       // Alerts: light bg, dark text, subtle border
-      rules[scopeSelector(scope, '.bw_alert.bw_' + k)] = {
+      rules[_sx(scope, '.bw_alert.bw_' + k)] = {
         'background-color': s.light,
         'color': s.darkText,
         'border-color': s.border
       };
 
       // Toast: inherit bg, left border accent
-      rules[scopeSelector(scope, '.bw_toast.bw_' + k)] = {
+      rules[_sx(scope, '.bw_toast.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left': '4px solid ' + s.base
       };
 
       // Stat card: inherit bg, left border accent
-      rules[scopeSelector(scope, '.bw_stat_card.bw_' + k)] = {
+      rules[_sx(scope, '.bw_stat_card.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left-color': s.base
       };
 
       // Card accent: left border accent, inherit bg
-      rules[scopeSelector(scope, '.bw_card.bw_' + k)] = {
+      rules[_sx(scope, '.bw_card.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left': '4px solid ' + s.base
       };
 
       // Timeline marker: colored dot
-      rules[scopeSelector(scope, '.bw_timeline_marker.bw_' + k)] = {
+      rules[_sx(scope, '.bw_timeline_marker.bw_' + k)] = {
         'box-shadow': '0 0 0 2px ' + s.base
       };
 
       // Spinner: text color only, transparent bg
-      rules[scopeSelector(scope, '.bw_spinner_border.bw_' + k + ',\n' + scopeSelector(scope, '.bw_spinner_grow.bw_' + k))] = {
+      rules[_sx(scope, '.bw_spinner_border.bw_' + k + ',\n' + _sx(scope, '.bw_spinner_grow.bw_' + k))] = {
         'background-color': 'transparent',
         'color': s.base,
         'border-color': 'currentColor'
       };
 
       // Outline button: transparent bg, colored border+text, solid on hover
-      rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k)] = {
+      rules[_sx(scope, '.bw_btn_outline.bw_' + k)] = {
         'background-color': 'transparent',
         'color': s.base,
         'border-color': s.base
       };
-      rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
+      rules[_sx(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
         'background-color': s.base,
         'color': s.textOn
       };
 
       // Hero: gradient background
-      rules[scopeSelector(scope, '.bw_hero.bw_' + k)] = {
+      rules[_sx(scope, '.bw_hero.bw_' + k)] = {
         'background': 'linear-gradient(135deg, ' + s.base + ' 0%, ' + s.hover + ' 100%)',
         'color': s.textOn
       };
 
       // Progress bar: white text on colored bg (default is fine, just ensure text)
-      rules[scopeSelector(scope, '.bw_progress_bar.bw_' + k)] = {
+      rules[_sx(scope, '.bw_progress_bar.bw_' + k)] = {
         'color': '#fff'
       };
 
       // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
-      rules[scopeSelector(scope, '.bw_bg_' + k)] = {
+      rules[_sx(scope, '.bw_bg_' + k)] = {
         'background-color': s.base,
         'color': s.textOn
       };
 
       // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
-      rules[scopeSelector(scope, '.bw_text_' + k)] = {
+      rules[_sx(scope, '.bw_text_' + k)] = {
         'color': s.base
       };
     });
 
     // Text muted — always a neutral gray, never a brand color
-    rules[scopeSelector(scope, '.bw_text_muted')] = { 'color': '#6c757d' };
+    rules[_sx(scope, '.bw_text_muted')] = { 'color': '#6c757d' };
 
     // Common bg/text utilities that aren't per-variant
-    rules[scopeSelector(scope, '.bw_bg_dark')] = { 'background-color': '#212529', 'color': '#f8f9fa' };
-    rules[scopeSelector(scope, '.bw_bg_light')] = { 'background-color': '#f8f9fa', 'color': '#212529' };
-    rules[scopeSelector(scope, '.bw_text_light')] = { 'color': '#f8f9fa' };
-    rules[scopeSelector(scope, '.bw_text_dark')] = { 'color': '#212529' };
+    rules[_sx(scope, '.bw_bg_dark')] = { 'background-color': '#212529', 'color': '#f8f9fa' };
+    rules[_sx(scope, '.bw_bg_light')] = { 'background-color': '#f8f9fa', 'color': '#212529' };
+    rules[_sx(scope, '.bw_text_light')] = { 'color': '#f8f9fa' };
+    rules[_sx(scope, '.bw_text_dark')] = { 'color': '#212529' };
 
     return rules;
   }
@@ -7321,7 +7324,12 @@
       el = document.querySelector('[data-bw_id="' + id + '"]');
     }
 
-    // 5. Cache the result for next time
+    // 5. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
+    if (!el && id.indexOf('bw_uuid_') === 0) {
+      el = document.querySelector('.' + id);
+    }
+
+    // 6. Cache the result for next time
     if (el) {
       bw._nodeMap[id] = el;
     }
@@ -7372,6 +7380,84 @@
     if (htmlId) {
       delete bw._nodeMap[htmlId];
     }
+  };
+
+  // ===================================================================================
+  // bw.assignUUID() / bw.getUUID() — Explicit UUID addressing for TACO objects
+  // ===================================================================================
+
+  /**
+   * Regex to match a bw_uuid_* token in a class string.
+   * @private
+   */
+  var _UUID_RE = /\bbw_uuid_[a-z0-9_]+\b/;
+
+  /**
+   * Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`.
+   *
+   * Idempotent by default — calling twice returns the same UUID. Pass `forceNew=true`
+   * to replace an existing UUID (useful in loops where each TACO needs a unique ID).
+   *
+   * @param {Object} taco - A TACO object `{t, a, c, o}`
+   * @param {boolean} [forceNew=false] - If true, replaces any existing UUID with a new one
+   * @returns {string} The UUID string (e.g. 'bw_uuid_a1b2c3d4e5')
+   * @category Identifiers
+   * @example
+   * var card = bw.makeStatCard({ value: '0', label: 'Scans' });
+   * var uuid = bw.assignUUID(card);        // 'bw_uuid_a1b2c3d4e5'
+   * var same = bw.assignUUID(card);        // same UUID (idempotent)
+   * var diff = bw.assignUUID(card, true);  // new UUID (forced)
+   */
+  bw.assignUUID = function(taco, forceNew) {
+    if (!taco || !_is(taco, 'object')) return null;
+
+    // Ensure taco.a exists
+    if (!taco.a) taco.a = {};
+    if (!_is(taco.a.class, 'string')) taco.a.class = taco.a.class ? String(taco.a.class) : '';
+
+    var existing = taco.a.class.match(_UUID_RE);
+
+    if (existing && !forceNew) {
+      return existing[0];
+    }
+
+    // Remove old UUID if forceNew
+    if (existing) {
+      taco.a.class = taco.a.class.replace(_UUID_RE, '').replace(/\s+/g, ' ').trim();
+    }
+
+    var uuid = bw.uuid('uuid');
+    taco.a.class = (taco.a.class ? taco.a.class + ' ' : '') + uuid;
+    return uuid;
+  };
+
+  /**
+   * Read the UUID from a TACO object or DOM element. Pure getter, no side effects.
+   *
+   * @param {Object|Element} tacoOrElement - A TACO object or DOM element
+   * @returns {string|null} The UUID string, or null if none assigned
+   * @category Identifiers
+   * @example
+   * bw.getUUID(card)       // 'bw_uuid_a1b2c3d4e5' (from TACO)
+   * bw.getUUID(domEl)      // 'bw_uuid_a1b2c3d4e5' (from DOM element)
+   * bw.getUUID({t:'div'})  // null (no UUID)
+   */
+  bw.getUUID = function(tacoOrElement) {
+    if (!tacoOrElement) return null;
+
+    var classStr;
+    // DOM element: check className
+    if (tacoOrElement.className !== undefined && tacoOrElement.tagName) {
+      classStr = tacoOrElement.className;
+    }
+    // TACO object: check a.class
+    else if (tacoOrElement.a && _is(tacoOrElement.a.class, 'string')) {
+      classStr = tacoOrElement.a.class;
+    }
+
+    if (!classStr) return null;
+    var match = classStr.match(_UUID_RE);
+    return match ? match[0] : null;
   };
 
   /**
@@ -7930,6 +8016,14 @@
       bw._registerNode(el, null);
     }
 
+    // Register UUID class in node cache (bw_uuid_* tokens in class string)
+    if (el.className) {
+      var uuidMatch = el.className.match(_UUID_RE);
+      if (uuidMatch) {
+        bw._nodeMap[uuidMatch[0]] = el;
+      }
+    }
+
     // Handle lifecycle hooks and state
     if (opts.mounted || opts.unmount || opts.render || opts.state) {
       const id = attrs['data-bw_id'] || bw.uuid();
@@ -8302,6 +8396,16 @@
   bw.cleanup = function(element) {
     if (!bw._isBrowser || !element) return;
 
+    // Deregister UUID classes from node cache (element + descendants)
+    // Covers elements that have UUID but no data-bw_id
+    var selfUuidMatch = element.className && element.className.match(_UUID_RE);
+    if (selfUuidMatch) delete bw._nodeMap[selfUuidMatch[0]];
+    var uuidEls = element.querySelectorAll('[class*="bw_uuid_"]');
+    uuidEls.forEach(function(uel) {
+      var m = uel.className && uel.className.match(_UUID_RE);
+      if (m) delete bw._nodeMap[m[0]];
+    });
+
     // Find all elements with data-bw_id
     const elements = element.querySelectorAll('[data-bw_id]');
 
@@ -8316,6 +8420,10 @@
 
       // Deregister from node cache
       bw._deregisterNode(el, id);
+
+      // Deregister UUID class from node cache
+      var uuidMatch = el.className && el.className.match(_UUID_RE);
+      if (uuidMatch) delete bw._nodeMap[uuidMatch[0]];
 
       // Clean up pub/sub subscriptions tied to this element
       if (el._bw_subs) {
@@ -8340,6 +8448,10 @@
 
       // Deregister from node cache
       bw._deregisterNode(element, id);
+
+      // Deregister UUID class from node cache
+      var elemUuidMatch = element.className && element.className.match(_UUID_RE);
+      if (elemUuidMatch) delete bw._nodeMap[elemUuidMatch[0]];
 
       // Clean up pub/sub subscriptions tied to element itself
       if (element._bw_subs) {
@@ -9891,7 +10003,7 @@
    * and calls the named method. This is the bitwrench equivalent of
    * Win32 SendMessage(hwnd, msg, wParam, lParam).
    *
-   * @param {string} target - Component UUID (data-bw_comp_id) or user tag (CSS class)
+   * @param {string} target - Component UUID (bw_uuid_*), comp ID (data-bw_comp_id), or user tag (CSS class)
    * @param {string} action - Method name to call on the component
    * @param {*} data - Data to pass to the method
    * @returns {boolean} True if message was dispatched successfully
@@ -9908,9 +10020,14 @@
    * };
    */
   bw.message = function(target, action, data) {
-    // Try data-bw_comp_id attribute first, then CSS class (user tag)
-    var el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
-    if (!el) {
+    // Try bw._el() first (handles UUID class, nodeMap cache, getElementById)
+    var el = bw._el(target);
+    // Then try data-bw_comp_id attribute
+    if (!el || !el._bwComponentHandle) {
+      el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
+    }
+    // Then try CSS class (user tag)
+    if (!el || !el._bwComponentHandle) {
       el = bw.$('.' + target)[0];
     }
     if (!el || !el._bwComponentHandle) return false;

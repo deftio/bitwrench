@@ -243,7 +243,37 @@ Browser                              Server (Node.js)
 | `remove` | `client.remove(target)` | Remove element from DOM |
 | `batch` | `client.batch(op1, op2, ...)` | Multiple ops in one frame |
 | `message` | `client.message(level, text)` | Show notification |
-| `call` | `client.call(fn, args)` | Invoke built-in client function |
+| `call` | `client.call(name, ...args)` | Invoke registered or built-in function |
+| `exec` | `client.exec(code)` | Run arbitrary JS (requires `allowExec`) |
+| `register` | `client.register(name, body)` | Send named function to client |
+
+### Screenshots
+
+The server can capture what the browser is displaying:
+
+```javascript
+// Enable in server options
+var app = create({ port: 7902, allowScreenshot: true });
+
+app.page('/', function(client) {
+  client.render('#app', myDashboard);
+
+  client.on('capture', async function() {
+    // Capture the full page as PNG
+    var img = await client.screenshot();
+    require('fs').writeFileSync('screenshot.png', img.data);
+
+    // Capture a specific element, resized to max 800px wide
+    var thumb = await client.screenshot('#chart', {
+      maxWidth: 800,
+      format: 'jpeg',
+      quality: 0.8
+    });
+  });
+});
+```
+
+Uses html2canvas (vendored, lazy-loaded). See [screenshot example](../examples/client-server/screenshot-server.js).
 
 ## Deployment
 

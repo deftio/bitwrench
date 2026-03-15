@@ -43,12 +43,37 @@ Browser                    Server (Node.js)
   |  <-- SSE: patch #counter  |   (server updates, pushes back)
 ```
 
+## Screenshot Example
+
+A separate server demonstrates the `client.screenshot()` API — the server captures
+what the browser is rendering and gets the image back as a Node.js Buffer.
+
+```bash
+node screenshot-server.js
+# Open http://localhost:7903
+```
+
+Click "Capture Full Page" or "Capture Stats Only" to trigger a screenshot.
+The server receives the image, converts it to a data URL, and sends it back
+to the browser for display.
+
+### How Screenshot Works
+
+1. Server calls `client.screenshot(selector, options)` — returns a Promise
+2. Client lazy-loads html2canvas (vendored, ~194 KB)
+3. html2canvas renders the DOM element to a `<canvas>`
+4. Client POSTs the image data URL back to `/__bw/screenshot/:clientId`
+5. Server resolves the Promise with `{ data: Buffer, width, height, format }`
+
+Requires `allowScreenshot: true` in the server options (off by default).
+
 ## Structure
 
 ```
 client-server/
-  server.js     ← bwserve app with counter + dashboard pages (~150 lines)
-  README.md     ← this file
+  server.js              ← bwserve counter + dashboard (~150 lines)
+  screenshot-server.js   ← screenshot capture demo (~130 lines)
+  README.md              ← this file
 ```
 
 ## Requirements

@@ -230,7 +230,7 @@
             callout('concept', [
               { t: 'h4', c: 'Cosmetic (theme)' },
               { t: 'p', c: bw.raw('Colors, backgrounds, shadows, border-colors, border-radius. These are <strong>derived from your palette</strong> by <code>bw.generateTheme()</code>. Swap palettes without touching layout.') },
-              { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\nbw.generateTheme(\'ocean\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n// injects themed CSS (id="bw_theme_ocean")' } }
+              { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\n// First arg is YOUR name \u2014 any string you choose\nbw.generateTheme(\'myapp\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n// injects a <style id="bw_theme_myapp"> tag' } }
             ])
           ]
         },

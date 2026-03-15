@@ -52,7 +52,7 @@ const babelConfig = {
   };
   
   export default [
-    // Modern builds (UMD, CJS, ESM)
+    // Modern builds — UMD + CJS (default export only, no named exports)
     {
       input: 'src/bitwrench.js',
       output: [
@@ -90,6 +90,20 @@ const babelConfig = {
           plugins: [terser()],
           sourcemap: true,
         },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+      ],
+    },
+
+    // Modern builds — ESM (default + named exports for tree-shaking)
+    // Uses bitwrench-esm-entry.js which re-exports BCCL functions as
+    // named exports. Bundlers (Vite, webpack, esbuild) can tree-shake:
+    //   import { makeCard, makeButton } from 'bitwrench';
+    {
+      input: 'src/bitwrench-esm-entry.js',
+      output: [
         // ESM (non-minified)
         {
           file: 'dist/bitwrench.esm.js',
@@ -109,8 +123,6 @@ const babelConfig = {
       plugins: [
         resolve(),
         commonjs(),
-        // We could include Babel here as well if needed for partial transpilation
-        // but typically "modern" outputs can skip full ES5 transpilation.
       ],
     },
   

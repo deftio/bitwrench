@@ -456,6 +456,22 @@
             prereq: 'Run: <code>node server.js</code>'
           },
           {
+            title: 'Screenshot Capture',
+            href: 'client-server/',
+            icon: '\uD83D\uDCF7',
+            oneliner: 'Server captures what the browser is displaying as an image.',
+            audience: 'Intermediate',
+            themeColor: '#0891b2',
+            desc: 'The server calls client.screenshot() to capture the browser\'s rendered page and receives it as a Node.js Buffer. Uses html2canvas under the hood (lazy-loaded, vendored). Shows how to capture specific elements or the full page.',
+            teaches: [
+              '<code>client.screenshot()</code> API with selector and options',
+              'register + call protocol (three-tier execution model)',
+              'Sending image data back from client to server',
+              '<code>allowScreenshot: true</code> opt-in security'
+            ],
+            prereq: 'Run: <code>node screenshot-server.js</code>'
+          },
+          {
             title: 'Pipe Demo',
             href: 'pipe-demo/',
             icon: '\uD83D\uDD27',

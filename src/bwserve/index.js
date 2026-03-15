@@ -64,6 +64,7 @@ var MIME_TYPES = {
  * @param {string} [opts.static] - Directory to serve static files from
  * @param {boolean} [opts.injectBitwrench=true] - Auto-inject bitwrench client JS
  * @param {string|Object} [opts.theme] - Theme preset name or config object
+ * @param {boolean} [opts.allowScreenshot=false] - Enable client.screenshot() capability
  * @returns {BwServeApp} Application instance
  */
 export function create(opts) {
@@ -83,11 +84,12 @@ class BwServeApp {
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
     this.allowExec = opts.allowExec || false;
+    this.allowScreenshot = opts.allowScreenshot || false;
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
-    this._server = null;
     this._clientCounter = 0;
+    this._server = null;
   }
 
   /**
@@ -222,6 +224,18 @@ class BwServeApp {
       return this._handleAction(req, res, actionClientId);
     }
 
+    // /__bw/screenshot/:clientId — screenshot POST-back
+    if (path.startsWith('/__bw/screenshot/') && method === 'POST') {
+      var ssClientId = path.slice('/__bw/screenshot/'.length);
+      return this._handleScreenshot(req, res, ssClientId);
+    }
+
+    // /__bw/vendor/:filename — serve vendored libraries (allowlisted)
+    if (path.startsWith('/__bw/vendor/') && method === 'GET') {
+      var vendorFile = path.slice('/__bw/vendor/'.length);
+      return this._serveVendorFile(res, vendorFile);
+    }
+
     // Registered page routes — serve shell HTML
     if (method === 'GET' && this._pages.has(path)) {
       var clientId2 = 'c' + (++this._clientCounter);
@@ -295,6 +309,7 @@ class BwServeApp {
 
     // Create client instance
     var client = new BwServeClient(clientId, res);
+    client._allowScreenshot = this.allowScreenshot;
 
     // Look up the pending client record (set during page serve)
     var pending = self._clients.get(clientId);
@@ -355,6 +370,59 @@ class BwServeApp {
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+  }
+
+  /**
+   * Handle a screenshot POST-back from a client.
+   * @private
+   */
+  _handleScreenshot(req, res, clientId) {
+    var record = this._clients.get(clientId);
+    if (!record || !record.client) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unknown client' }));
+      return;
+    }
+
+    var body = '';
+    req.on('data', function(chunk) { body += chunk; });
+    req.on('end', function() {
+      try {
+        var data = JSON.parse(body);
+        record.client._resolveScreenshot(data.requestId, data);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+  }
+
+  /**
+   * Serve a vendored library file (allowlisted filenames only).
+   * @private
+   */
+  _serveVendorFile(res, filename) {
+    var allowed = ['html2canvas.min.js'];
+    if (allowed.indexOf(filename) === -1) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+      return;
+    }
+    var vendorDir = resolve(__dirname, '..', 'vendor');
+    var filePath = join(vendorDir, filename);
+    if (!existsSync(filePath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Vendor file not found: ' + filename);
+      return;
+    }
+    var content = readFileSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': 'application/javascript; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.end(content);
   }
 }
 
