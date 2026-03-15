@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Themes</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
-  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
@@ -628,31 +627,20 @@
     }
 
     function generateCurrentTheme() {
-      bw.clearTheme();
+      // Generate theme WITHOUT injecting globally — preview-only scoping
+      // The CSS is embedded in the preview container by renderPreview()
       var config = {
         primary:   state.primary,
         secondary: state.secondary,
         tertiary:  state.tertiary,
         spacing:   state.spacing,
         radius:    state.radius,
-        inject:    true
+        inject:    false
       };
       if (state.background) config.background = state.background;
       if (state.surface)    config.surface    = state.surface;
       var result = bw.generateTheme(state.themeName, config);
       state.lastResult = result;
-
-      // Theme scope applied only to preview area (not #app), so page
-      // controls stay readable regardless of theme background color.
-
-      // Re-inject multi-theme CSS so the scoped panels override the page theme
-      bw.generateTheme('demo-ocean', {
-        primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8', inject: true
-      });
-      bw.generateTheme('demo-sunset', {
-        primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a', inject: true
-      });
-
       return result;
     }
 
@@ -1003,8 +991,11 @@
       // when #theme-preview is re-created by renderGenerator()
       var tpEls = bw.$('#theme-preview');
       if (tpEls.length) {
+        // Include scoped theme CSS inside the preview container
+        var scopedCSS = result ? result.css + (result.alternate ? result.alternate.css : '') : '';
         bw.DOM(tpEls[0], {
           t: 'div', a: { class: 'preview-area ' + scope + altClass, style: previewStyle }, c: [
+            { t: 'style', c: bw.raw(scopedCSS) },
             { t: 'h3', a: { style: 'margin: 0 0 1rem 0;' }, c: 'Live Preview' + modeLabel },
             buildPreviewTaco()
           ]
@@ -1337,14 +1328,14 @@
     // Section 5: Mixed Themes on One Page
     // ---------------------------------------------------------------
     function renderMultiTheme() {
-      // Generate two scoped themes side by side
+      // Generate two scoped themes side by side (inject: false — scoped to container)
       var themeA = bw.generateTheme('demo-ocean', {
         primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8',
-        inject: true
+        inject: false
       });
       var themeB = bw.generateTheme('demo-sunset', {
         primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a',
-        inject: true
+        inject: false
       });
 
       // Shared component set for both panels
@@ -1412,6 +1403,7 @@
 
       bw.DOM('#multi-theme-demo', {
         t: 'div', c: [
+          { t: 'style', c: bw.raw(themeA.css + themeB.css) },
           {
             t: 'div', a: { class: 'multi-theme-row' }, c: [
               {
@@ -1564,7 +1556,9 @@
                   variant: 'primary',
                   onclick: function() {
                     isAlt = !isAlt;
-                    bw.applyTheme(isAlt ? 'alternate' : 'primary');
+                    // Toggle alternate class on preview only, not globally
+                    state.isAlternate = isAlt;
+                    renderPreview();
                     bw.DOM('#theme-toggle-demo', buildToggleDemo());
                   }
                 }),
@@ -1573,7 +1567,8 @@
                   variant: 'secondary',
                   onclick: function() {
                     isAlt = !isAlt;
-                    bw.toggleTheme();
+                    state.isAlternate = isAlt;
+                    renderPreview();
                     bw.DOM('#theme-toggle-demo', buildToggleDemo());
                   }
                 }),

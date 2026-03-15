@@ -594,9 +594,8 @@ const html = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - API Reference</title>
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"><\/script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"><\/script>
+  <script src="shared-theme.js"><\/script>
   <script src="shared-nav.js"><\/script>
 </head>
 <body>
@@ -605,6 +604,8 @@ const html = `<!DOCTYPE html>
 
   <script>
     mountExampleNav('#example-nav', '08-api-reference.html');
+
+    bw.loadDefaultStyles();
 
     bw.injectCSS(bw.css(${pageCssObj}));
 

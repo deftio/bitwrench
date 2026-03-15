@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Source Size Analysis</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
   <style>
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 1rem 2rem; background: #fafafa; color: #222; }
 h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
@@ -41,6 +40,7 @@ canvas { border: 1px solid #e0e0e0; border-radius: 4px; background: #fff; displa
 <body>
   <div id="app"></div>
   <script>
+  bw.loadDefaultStyles();
   (function() {
     var JSONL_PATH = '../dbg/build-metrics.jsonl';
 

@@ -6,9 +6,8 @@
   <meta name="generator" content="bitwrench v2.0.18">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-  <script src="dist/bitwrench.umd.js"></script>
-  <link rel="stylesheet" href="dist/bitwrench.css">
-  <link rel="stylesheet" href="pages/shared-theme.css">
+  <script src="dist/bitwrench.umd.min.js"></script>
+  <script src="pages/shared-theme.js"></script>
   <script src="pages/shared-nav.js"></script>
   <style>
 .quikdown-h1 { font-size:2em;font-weight:600;margin:.67em 0;text-align:left;color:#333 }
@@ -145,7 +144,7 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
 <li class="quikdown-li"><strong class="quikdown-strong">Built-in reactivity</strong> — <code class="quikdown-code">bw.component()</code> wraps any TACO in a reactive handle with <code class="quikdown-code">.get()/.set()</code> and <code class="quikdown-code">${template}</code> bindings. Lower-level: <code class="quikdown-code">bw.update()</code> re-renders via <code class="quikdown-code">o.render</code>, <code class="quikdown-code">bw.patch()</code> updates individual elements by ID, <code class="quikdown-code">bw.pub()</code>/<code class="quikdown-code">bw.sub()</code> provides decoupled messaging</li>
 <li class="quikdown-li"><strong class="quikdown-strong">CSS and theme generation</strong> — <code class="quikdown-code">bw.css()</code> generates stylesheets from objects, <code class="quikdown-code">bw.s()</code> composes inline styles from <code class="quikdown-code">bw.u</code> utility objects, <code class="quikdown-code">bw.responsive()</code> generates <code class="quikdown-code">@media</code> rules from JS objects. <code class="quikdown-code">bw.generateTheme()</code> derives a complete visual theme from 2-3 seed colors with <code class="quikdown-code">bw.toggleTheme()</code> for light/dark switching</li>
 <li class="quikdown-li"><strong class="quikdown-strong">50+ ready-made components</strong> — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards, bar charts, carousels, skeleton loaders — each a single <code class="quikdown-code">make*()</code> call that returns a composable TACO object</li>
-<li class="quikdown-li"><strong class="quikdown-strong">Server-driven UI (bwserve)</strong> — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the <code class="quikdown-code">bwcli serve</code> pipe server</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Server-driven UI (bwserve)</strong> — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the <code class="quikdown-code">bwcli serve</code> pipe server. <code class="quikdown-code">client.screenshot()</code> captures the rendered page back to the server as a PNG/JPEG Buffer for visual feedback loops, testing, or LLM vision</li>
 <li class="quikdown-li"><strong class="quikdown-strong">Static site CLI</strong> — the <code class="quikdown-code">bwcli</code> command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support</li>
 <li class="quikdown-li"><strong class="quikdown-strong">Utilities</strong> — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js</li>
 </ul><h2 class="quikdown-h2">Getting Started</h2>

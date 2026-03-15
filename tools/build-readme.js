@@ -5,7 +5,7 @@
  * Usage: node tools/build-readme.js
  *
  * Converts README.md to HTML via quikdown, then wraps it in the
- * pages/ layout (shared-theme.css, shared-nav.js, page-header).
+ * pages/ layout (shared-theme.js, shared-nav.js, page-header).
  * The result looks like a page in the docs site, not a bare CLI output.
  */
 
@@ -36,9 +36,8 @@ const html = `<!DOCTYPE html>
   <meta name="generator" content="bitwrench v${pkg.version}">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-  <script src="dist/bitwrench.umd.js"><\/script>
-  <link rel="stylesheet" href="dist/bitwrench.css">
-  <link rel="stylesheet" href="pages/shared-theme.css">
+  <script src="dist/bitwrench.umd.min.js"><\/script>
+  <script src="pages/shared-theme.js"><\/script>
   <script src="pages/shared-nav.js"><\/script>
   <style>
 ${quikdownCSS}

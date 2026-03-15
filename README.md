@@ -6,7 +6,7 @@
 
 [![bitwrench](./images/bitwrench-logo-med.png)](https://deftio.github.io/bitwrench/pages/)
 
-Bitwrench builds UI from plain JavaScript objects — one format for components, styling, state, and server rendering, with no build step and zero dependencies.
+Bitwrench builds UI from plain JavaScript objects — one format for components, styling, state, and server rendering, with no build step and zero dependencies.  In bitwrench structure, styles, and state (including client/server) are rendered and managed as javascript objects.
 
 ```javascript
 // Describe UI as a JavaScript object (a "TACO")
@@ -25,7 +25,16 @@ bw.html(page);                 // → HTML string (Node.js, emails, SSR)
 
 Each object has four keys: **t** (tag), **a** (attributes), **c** (content), **o** (options for state/lifecycle). Nest them, loop them, compose them — it's just JavaScript.
 
-### What bitwrench replaces
+>>put image of what the bove renders to here
+
+>> expand this: bitwrench is friendly to mobile devices as small as micronctrollers becase {compact exmplanation} 
+put more features here
+
+
+
+### Coming from other Frameworks
+
+Bitwrench uses javascript equivalents for most forms of front end developement.  Here is a quick mapping (see the docs(link) and also Thinking in Bitwrench (link to md) ) for more details.
 
 | You're using | For | Bitwrench equivalent |
 |---|---|---|
@@ -142,18 +151,6 @@ bw.sub('item-added', function(detail) {
 bw.pub('item-added', { name: 'Widget' });
 ```
 
-## Theming
-
-Generate a complete theme from two seed colors. All components — buttons, alerts, badges, cards, forms, tables — are styled automatically:
-
-```javascript
-bw.generateTheme('my-theme', {
-  primary: '#336699',
-  secondary: '#cc6633'
-});
-
-bw.toggleTheme();  // switch between primary and alternate palettes
-```
 
 ## CSS from JavaScript
 
@@ -174,6 +171,22 @@ bw.responsive('.hero', {
   md:   { fontSize: '2.5rem' }
 });
 ```
+
+## Theming
+
+>> This section needs better lead in for a new to bitwrench reader, plus scoping is not clear
+
+Generate a complete theme from two seed colors. All components — buttons, alerts, badges, cards, forms, tables — are styled automatically:
+
+```javascript
+bw.generateTheme('my-theme', {
+  primary: '#336699',
+  secondary: '#cc6633'
+});
+
+bw.toggleTheme();  // switch between primary and alternate palettes
+```
+
 
 ## Core API
 

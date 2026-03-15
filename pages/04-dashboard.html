@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Dashboard</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <script src="../dist/bitwrench-code-edit.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
 </head>
 <body>
@@ -18,6 +17,8 @@
   <script>
     // Mount the shared navigation
     mountExampleNav('#example-nav', '04-dashboard.html');
+
+    bw.loadDefaultStyles();
 
     // ── Dashboard CSS (injected via bw.css / bw.injectCSS) ──────────
     bw.injectCSS(bw.css({

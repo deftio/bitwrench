@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Framework Comparison</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <script src="../dist/bitwrench-code-edit.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
 </head>
 <body>
@@ -18,20 +17,12 @@
   <script>
     mountExampleNav('#example-nav', '07-framework-comparison.html');
 
+    bw.loadDefaultStyles();
+
     // =========================================================================
     // Page-specific CSS via bw.css() + bw.injectCSS()
     // =========================================================================
     bw.injectCSS(bw.css({
-      '.intro-text': {
-        'font-size': '0.9375rem',
-        'line-height': '1.7',
-        'color': 'var(--bw_text)',
-        'margin': '0 0 1rem',
-        'max-width': '720px'
-      },
-      '.intro-text:last-child': {
-        'margin-bottom': '0'
-      },
       '.preview-box': {
         'background': 'var(--bw_card_bg)',
         'border': '2px solid var(--bw_teal)',
@@ -68,36 +59,6 @@
       },
       '.cmp-table tr:hover': {
         'background': 'var(--bw_teal_bg)'
-      },
-      '.todo-input-row': {
-        'display': 'flex',
-        'gap': '0.5rem',
-        'margin-bottom': '0.75rem'
-      },
-      '.todo-input-row input': {
-        'flex': '1',
-        'padding': '0.4rem 0.75rem',
-        'border': '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
-        'font-size': '0.875rem'
-      },
-      '.todo-item': {
-        'display': 'flex',
-        'align-items': 'center',
-        'gap': '0.5rem',
-        'padding': '0.5rem 0',
-        'border-bottom': '1px solid var(--bw_card_border)',
-        'font-size': '0.875rem'
-      },
-      '.todo-item:last-child': {
-        'border-bottom': 'none'
-      },
-      '.todo-item.done span': {
-        'text-decoration': 'line-through',
-        'color': 'var(--bw_text_secondary)'
-      },
-      '.todo-item span': {
-        'flex': '1'
       },
       '.theme-card': {
         'padding': '1.25rem',

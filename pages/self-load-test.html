@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Self Load Test</title>
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="shared-theme.js"></script>
   <script>window.__bw_load_start = performance.now();</script>
-  <script src="../dist/bitwrench.umd.js"></script>
+  <script src="../dist/bitwrench.umd.min.js"></script>
   <script>window.__bw_load_end = performance.now();</script>
   <script src="shared-nav.js"></script>
 </head>
@@ -18,6 +17,7 @@
 
   <script>
     mountExampleNav('#example-nav', 'self-load-test.html');
+    bw.loadDefaultStyles();
 
     var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
     var GZIP_WARN_KB = 40;

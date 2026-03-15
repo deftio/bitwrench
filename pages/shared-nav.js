@@ -289,7 +289,7 @@
                     onclick: function() {
                       var mode = bw.toggleTheme();
                       this.textContent = mode === 'alternate' ? '\u2600' : '\u263D';
-                      bw.setCookie('bw_theme_mode', mode, 365);
+                      bw.setCookie('bw_theme_mode', mode, 365, { path: '/' });
                     }
                   },
                   c: '\u263D'
@@ -398,13 +398,25 @@
         navEl.parentNode.insertBefore(belowWrapper, navEl.nextSibling);
       }
 
-      // Restore saved theme preference from cookie
+      // Restore saved theme preference from cookie — only if a theme
+      // was generated on this page (bw._activeTheme set by generateTheme).
+      // Otherwise ensure clean state: remove stale alt class and cookie.
       var savedMode = bw.getCookie('bw_theme_mode');
-      if (savedMode === 'alternate' || savedMode === 'primary') {
+      if ((savedMode === 'alternate' || savedMode === 'primary') && bw._activeTheme) {
         bw.applyTheme(savedMode);
         var btns = bw.$('#bw_theme_toggle_btn');
         if (btns.length) {
           btns[0].textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
+        }
+      } else {
+        // No active theme — force clean state
+        document.documentElement.classList.remove('bw_theme_alt');
+        if (savedMode) {
+          // Clear stale cookie (try all likely paths)
+          bw.setCookie('bw_theme_mode', '', -1);
+          bw.setCookie('bw_theme_mode', '', -1, { path: '/' });
+          bw.setCookie('bw_theme_mode', '', -1, { path: '/pages/' });
+          bw.setCookie('bw_theme_mode', '', -1, { path: '/pages' });
         }
       }
 

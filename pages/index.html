@@ -6,10 +6,9 @@
   <title>bitwrench.js - Lightweight JavaScript UI Library</title>
   <meta name="description" content="Build HTML from plain JavaScript objects. No JSX, no virtual DOM, no build step. Under 30KB gzipped.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <script src="../dist/bitwrench-code-edit.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
 </head>
 <body>
@@ -19,6 +18,8 @@
   <script>
     // Mount nav
     mountExampleNav('#example-nav', 'index.html');
+
+    bw.loadDefaultStyles();
 
     // ---- Page CSS via bw.injectCSS ----
     bw.injectCSS(bw.css({

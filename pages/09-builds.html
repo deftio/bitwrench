@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Builds &amp; Downloads</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
-  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <!-- Page styles injected via bw.css() below -->
 </head>
 <body>
@@ -18,6 +17,8 @@
 
   <script>
     mountExampleNav('#example-nav', '09-builds.html');
+
+    bw.loadDefaultStyles();
 
     bw.injectCSS(bw.css({
       '.builds-header': { 'margin-bottom': '0.5rem' },

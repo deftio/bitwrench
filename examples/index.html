@@ -6,9 +6,8 @@
   <title>Bitwrench Examples - App Gallery</title>
   <meta name="description" content="Full application examples built with bitwrench: landing pages, dashboards, embedded IoT, server-driven apps, and more.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="../pages/shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../pages/shared-theme.js"></script>
   <script src="../pages/shared-nav.js"></script>
 </head>
 <body>
@@ -18,6 +17,7 @@
   <script>
     // Mount site nav
     mountExampleNav('#example-nav', '', '../pages/');
+    bw.loadDefaultStyles();
 
     // ---- Page CSS ----
     bw.injectCSS(bw.css({

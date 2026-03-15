@@ -6,11 +6,10 @@
   <title>Thinking in Bitwrench</title>
   <meta name="description" content="A guide to building web UIs with plain JavaScript objects — the bitwrench design philosophy.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
-  <script src="../dist/bitwrench.umd.js"></script>
-  <link rel="stylesheet" href="../dist/bitwrench.css">
-  <link rel="stylesheet" href="shared-theme.css">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
-  <script src="../dist/bitwrench-code-edit.umd.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
@@ -18,6 +17,8 @@
 
   <script>
     mountExampleNav('#example-nav', 'thinking-in-bitwrench.html');
+
+    bw.loadDefaultStyles();
 
     // Page-specific styles for markdown content.
     // The .doc-card container is a card (demo-section pattern).

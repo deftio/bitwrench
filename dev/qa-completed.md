@@ -310,3 +310,96 @@ Pages converted:
 
 ## P2.5: Bundle Size — three-tier build (v2.0.16)
 * [x] implement --> three-tier build: `bitwrench-lean` (core), `bitwrench-bccl` (components addon), `bitwrench` (full)
+
+---
+
+# QA Completed — v2.0.17 / v2.0.18
+
+## P2: Component ergonomics (v2.0.17) — COMPLETED
+
+Informed by real-world feedback: a developer built `examples/ember_and_oak.html` (a full
+coffee-ordering site, ~800 lines) using only bitwrench v2.0.16 + docs.
+
+### Docs gaps surfaced by Ember & Oak
+
+* [x] doc --> `bw.raw()` spotlight — documented in `thinking-in-bitwrench.md` § Raw HTML in content
+* [x] doc --> `onclick` as primary event pattern — documented in `thinking-in-bitwrench.md` § Event handlers
+* [x] doc --> pattern for ephemeral UI (toasts, slide-over panels) — documented in `thinking-in-bitwrench.md` § Ephemeral UI
+* [x] doc --> pattern for data-driven filtered lists — documented in `thinking-in-bitwrench.md` § Data-driven filtered list
+* [x] doc --> theme palette tokens in custom `bw.css()` — documented in `thinking-in-bitwrench.md` § Theme + custom CSS
+* [x] doc --> pattern for child widget updates within a ComponentHandle — documented in `state-management.md` § Updating child widgets
+
+### Critical fixes
+
+* [x] fix --> `_applyPatches()` binding updates destroy sibling event listeners (CRITICAL)
+* [x] fix --> `o.render` not called on initial mount
+
+### Debug and warnings
+
+* [x] implement --> `bw.debug` flag + binding debug warnings
+* [x] implement --> warn when child `o.mounted` is stripped by ComponentHandle
+
+### Component ownership
+
+* [x] implement --> child component ownership + destroy cascade
+
+### Factory rebuild (make*() + ComponentHandle bridge)
+
+* [x] implement --> factory `_factory` stash on BCCL TACOs (for .set() triggering factory rebuild)
+* [x] implement --> factory rebuild in `ComponentHandle._flush()` (~25 lines)
+
+### Table enhancements
+
+* [x] implement --> `selectable` prop + `onRowClick` callback + `bw_table_row_selected` CSS class on `makeTable()`
+* [x] implement --> `pageSize`/`currentPage`/`onPageChange` props — pagination for `makeTable()`
+* [x] document --> `col.render` cell renderer + selectable + pagination in `docs/component-library.md`
+
+### Lifecycle cleanup
+
+* [x] implement --> `updated` as alias for `onUpdate` (1 line)
+* [x] doc --> `mounted`/`updated`/`unmount` as the "primary three" in `state-management.md` + `llm-bitwrench-guide.md`
+* [x] doc --> soft-deprecate `willUpdate`/`willDestroy` as "rarely needed" in docs
+
+## P3.5: Examples Gallery (v2.0.18) — COMPLETED
+
+* [x] make --> `examples/showcase/` — zero-CSS marketing page, 18 components, ~110 lines
+* [x] make --> `examples/embedded-gpio/` — Raspberry Pi GPIO controller
+* [x] make --> `examples/embedded-industrial/` — Industrial HMI panel
+* [x] make --> `examples/embedded-network/` — Network device monitor
+* [x] make --> `examples/embedded-home/` — Home automation panel
+* [x] make --> `examples/embedded-pico-w/` — Raspberry Pi Pico W microcontroller dashboard
+* [x] make --> `examples/embedded-rpi/` — Raspberry Pi (full Linux) system monitor
+* [x] rewrite --> `examples/index.html` gallery — new ordering, categories, descriptions
+* [x] make --> `examples/dashboard/` — live-updating metrics dashboard
+* [x] make --> `examples/wizard/` — multi-step signup form
+* [x] make --> `examples/live-feed/` — real-time event stream
+* [x] make --> `examples/todo-app/` — reactive todo app
+
+## P3.6: UUID Addressing — Implementation (v2.0.18) — COMPLETED
+
+Design doc: `dev/bw-uuid-addressing-design.md`
+
+* [x] implement --> `bw.assignUUID(taco, forceNew)` — explicit UUID assignment to TACO objects
+* [x] implement --> `bw.getUUID(tacoOrElement)` — read UUID from TACO or DOM element
+* [x] implement --> `createDOM()` UUID registration in `_nodeMap`
+* [x] implement --> `_el()` class-based fallback for `bw_uuid_*` tokens
+* [x] implement --> `cleanup()` UUID deregistration (element + descendants)
+* [x] implement --> `message()` UUID lookup via `_el()` (enables server-driven method dispatch by UUID)
+* [x] test --> 23 UUID addressing tests in `test/bitwrench_test_uuid.js`
+
+## P4: bw.h() — TACO constructor (v2.0.18) — COMPLETED
+
+* [x] implement --> `bw.h(tag, attrs, content, opts)` — returns plain `{t,a,c,o}` TACO object (~5 lines)
+
+## P5: bwserve Screenshot — Phase 1: Core protocol (v2.0.18) — COMPLETED
+
+Design doc: `dev/bw-screenshot-design.md`
+
+* [x] implement --> `client.screenshot(selector?, options?)` on `BwServeClient`
+* [x] implement --> `_resolveScreenshot(requestId, result)` on `BwServeClient`
+* [x] implement --> `/__bw/screenshot/:clientId` POST route in `BwServeApp`
+* [x] implement --> `/__bw/vendor/:filename` GET route in `BwServeApp`
+* [x] vendor --> `src/vendor/html2canvas.min.js` (v1.4.1, ~194KB minified, MIT license)
+* [x] implement --> Client-side capture function (registered as string)
+* [x] implement --> `allowScreenshot` opt-in flag
+* [x] test --> Protocol round-trip unit tests (14 tests)
