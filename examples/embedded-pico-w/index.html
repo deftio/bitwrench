@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raspberry Pi Pico W Dashboard</title>
+  <script src="../../dist/bitwrench.umd.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Raspberry Pi Pico W — Embedded Device Dashboard
+    //
+    // The Pico W (RP2040 + CYW43 WiFi) serves this HTML page and exposes:
+    //   GET  /api/sensors    — onboard temp, ADC channels, digital inputs
+    //   POST /api/led        — { state: 0|1 } onboard LED
+    //   POST /api/pwm/:ch    — { duty: 0-65535 } PWM output
+    //   GET  /events         — SSE stream of sensor updates
+    //
+    // MicroPython on the Pico W serves files from flash (~2MB).
+    // bitwrench.umd.min.js (~42KB) fits easily.
+    //
+    // SIMULATION: All state is local. Replace mock functions with
+    // fetch()/EventSource to connect to real hardware.
+    // =====================================================================
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('pico', {
+      primary: '#e11d48',
+      secondary: '#0ea5e9',
+      spacing: 'compact',
+      radius: 'sm'
+    });
+
+    bw.injectCSS(bw.css({
+      'body': { background: '#0f172a', color: '#e2e8f0', margin: '0' }
+    }));
+
+    // -- Mock device state ------------------------------------------------
+    var state = {
+      onboardTemp: 26.3,    // RP2040 internal temp sensor
+      led: 0,               // onboard LED (GP25 on Pico, CYW43 on Pico W)
+      adc: [1.65, 0.82, 2.41],  // ADC0-2 (GP26-28), 0-3.3V range
+      pwm: [0, 0, 0, 0],    // PWM channels (GP0-3), duty 0-100%
+      digitalIn: [1, 0, 1, 0],  // GP4-7 digital inputs
+      uptime: 0,
+      freeMemory: 192512,   // bytes (~188KB free of 264KB)
+      wifiRssi: -62         // dBm
+    };
+
+    var logEntries = [];
+
+    function addLog(msg) {
+      var ts = new Date().toLocaleTimeString();
+      logEntries.unshift(ts + ' \u2014 ' + msg);
+      if (logEntries.length > 20) logEntries.pop();
+    }
+
+    addLog('Pico W connected via WiFi (RSSI: ' + state.wifiRssi + ' dBm)');
+    addLog('Running in simulation mode');
+
+    // -- Mock actions -----------------------------------------------------
+    function toggleLed() {
+      state.led = state.led ? 0 : 1;
+      addLog('Onboard LED ' + (state.led ? 'ON' : 'OFF'));
+      render();
+    }
+
+    function setPwm(ch, val) {
+      state.pwm[ch] = Math.max(0, Math.min(100, val));
+      addLog('PWM' + ch + ' set to ' + state.pwm[ch] + '%');
+      render();
+    }
+
+    // -- Render -----------------------------------------------------------
+    function render() {
+      var uptimeStr = Math.floor(state.uptime / 3600) + 'h ' +
+        Math.floor((state.uptime % 3600) / 60) + 'm ' +
+        (state.uptime % 60) + 's';
+      var memPct = Math.round((1 - state.freeMemory / 264000) * 100);
+
+      // System info cards
+      var sysCards = bw.makeRow({
+        children: [
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: state.onboardTemp.toFixed(1) + '\u00B0C', label: 'RP2040 Temp', variant: state.onboardTemp > 50 ? 'danger' : 'primary' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: state.wifiRssi + ' dBm', label: 'WiFi RSSI', variant: state.wifiRssi > -50 ? 'success' : state.wifiRssi > -70 ? 'warning' : 'danger' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: Math.round(state.freeMemory / 1024) + ' KB', label: 'Free Memory', variant: memPct > 80 ? 'danger' : 'info' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: uptimeStr, label: 'Uptime' })
+          })
+        ]
+      });
+
+      // LED control
+      var ledSection = bw.makeCard({
+        title: 'Onboard LED (CYW43)',
+        className: 'bw_mb_3',
+        content: [
+          bw.makeBadge({ text: state.led ? 'ON' : 'OFF', variant: state.led ? 'success' : 'secondary', pill: true }),
+          ' ',
+          bw.makeButton({ text: state.led ? 'Turn Off' : 'Turn On', variant: state.led ? 'danger' : 'success', size: 'sm', onclick: toggleLed })
+        ]
+      });
+
+      // ADC readings
+      var adcCards = state.adc.map(function(v, i) {
+        var pct = Math.round((v / 3.3) * 100);
+        return bw.makeCol({ size: { xs: 12, md: 4 }, content:
+          bw.makeCard({
+            title: 'ADC' + i + ' (GP' + (26 + i) + ')',
+            className: 'bw_mb_2',
+            content: [
+              { t: 'div', a: { class: 'bw_mb_1' }, c: v.toFixed(3) + ' V' },
+              bw.makeProgress({ value: pct, label: pct + '%', variant: pct > 80 ? 'danger' : pct > 50 ? 'warning' : 'primary' })
+            ]
+          })
+        });
+      });
+
+      // PWM controls
+      var pwmControls = state.pwm.map(function(duty, ch) {
+        return bw.makeCol({ size: { xs: 6, md: 3 }, content:
+          bw.makeCard({
+            title: 'PWM' + ch + ' (GP' + ch + ')',
+            className: 'bw_mb_2',
+            content: [
+              bw.makeProgress({ value: duty, label: duty + '%', variant: 'info' }),
+              { t: 'div', a: { class: 'bw_mt_1' }, c: [
+                bw.makeButtonGroup({
+                  buttons: [
+                    { text: '0%', size: 'sm', variant: duty === 0 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 0); } },
+                    { text: '25%', size: 'sm', variant: duty === 25 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 25); } },
+                    { text: '50%', size: 'sm', variant: duty === 50 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 50); } },
+                    { text: '100%', size: 'sm', variant: duty === 100 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 100); } }
+                  ]
+                })
+              ]}
+            ]
+          })
+        });
+      });
+
+      // Digital inputs table
+      var diTable = bw.makeTable({
+        data: state.digitalIn.map(function(v, i) {
+          return { Pin: 'GP' + (4 + i), State: v ? 'HIGH' : 'LOW', Logic: v ? '1' : '0' };
+        }),
+        columns: [
+          { key: 'Pin', label: 'Pin' },
+          { key: 'State', label: 'State', render: function(val) {
+            return bw.makeBadge({ text: val, variant: val === 'HIGH' ? 'success' : 'secondary', pill: true });
+          }},
+          { key: 'Logic', label: 'Logic Level' }
+        ],
+        striped: true,
+        hover: true
+      });
+
+      bw.DOM('#app', bw.makeContainer({
+        className: 'bw_py_3',
+        children: [
+          bw.makeAlert({
+            content: 'Running in simulation mode \u2014 on real Pico W hardware, replace mock functions with MicroPython endpoints (urequests, uasyncio, microdot).',
+            variant: 'warning',
+            dismissible: true
+          }),
+          { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: 'Raspberry Pi Pico W Dashboard' },
+          sysCards,
+          bw.makeRow({
+            children: [
+              bw.makeCol({ size: { xs: 12, md: 4 }, content: ledSection }),
+              bw.makeCol({ size: { xs: 12, md: 8 }, content:
+                bw.makeSection({ title: 'ADC Channels (12-bit, 0\u20133.3V)', children: [bw.makeRow({ children: adcCards })] })
+              })
+            ]
+          }),
+          bw.makeSection({ title: 'PWM Outputs', children: [bw.makeRow({ children: pwmControls })] }),
+          bw.makeSection({ title: 'Digital Inputs (GP4\u2013GP7)', children: [diTable] }),
+          bw.makeSection({
+            title: 'Event Log',
+            children: [bw.makeListGroup({
+              items: logEntries.length ? logEntries : ['Waiting for events...']
+            })]
+          })
+        ]
+      }));
+    }
+
+    render();
+
+    // Simulate sensor drift
+    setInterval(function() {
+      state.uptime++;
+      state.onboardTemp += (Math.random() - 0.5) * 0.3;
+      state.onboardTemp = Math.max(20, Math.min(55, state.onboardTemp));
+      state.adc = state.adc.map(function(v) {
+        return Math.max(0, Math.min(3.3, v + (Math.random() - 0.5) * 0.05));
+      });
+      state.digitalIn = state.digitalIn.map(function(v) {
+        return Math.random() > 0.95 ? (v ? 0 : 1) : v;
+      });
+      state.wifiRssi = Math.max(-90, Math.min(-30, state.wifiRssi + (Math.random() - 0.5) * 2));
+      state.freeMemory = Math.max(100000, Math.min(220000, state.freeMemory + Math.round((Math.random() - 0.5) * 2000)));
+      render();
+    }, 2000);
+
+    // =====================================================================
+    // MicroPython server example (Pico W with microdot):
+    //
+    //   from microdot import Microdot
+    //   from machine import Pin, ADC, PWM
+    //   import network, ujson
+    //
+    //   app = Microdot()
+    //   led = Pin('LED', Pin.OUT)
+    //   adc0 = ADC(26)
+    //
+    //   @app.get('/api/sensors')
+    //   def sensors(req):
+    //       return ujson.dumps({
+    //           'onboardTemp': machine.cpu_temp(),  # RP2040 internal sensor
+    //           'adc': [adc0.read_u16() * 3.3 / 65535],
+    //           'led': led.value()
+    //       })
+    //
+    //   @app.post('/api/led')
+    //   def set_led(req):
+    //       led.value(req.json['state'])
+    //       return {'ok': True}
+    //
+    //   @app.post('/api/pwm/<ch>')
+    //   def set_pwm(req, ch):
+    //       pwm = PWM(Pin(int(ch)))
+    //       pwm.freq(1000)
+    //       pwm.duty_u16(int(req.json['duty'] * 655.35))
+    //       return {'ok': True}
+    //
+    //   wlan = network.WLAN(network.STA_IF)
+    //   wlan.active(True)
+    //   wlan.connect('SSID', 'PASSWORD')
+    //   app.run(port=80)
+    // =====================================================================
+  </script>
+</body>
+</html>

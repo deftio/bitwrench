@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFC Tag Scanner</title>
+  <!-- Served locally from ESP32, pre-gzipped ~40KB -->
+  <script src="/bitwrench.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    /* ============================================================
+       NFC Tag Scanner Web App
+       Built entirely with bitwrench.js - no other deps.
+
+       Update strategy:
+       - Initial load: full render via bw.DOM()
+       - Polling: fetch /api/patches -> bw.clientApply() (no DOM rebuild)
+       - NDEF/history change: detected via ndef_version, triggers full render
+       - Tab switch: full render of new tab content
+       ============================================================ */
+
+    // ---- Init bitwrench ----
+    bw.loadDefaultStyles();
+    bw.generateTheme('nfc', {
+      primary:   '#0ea5e9',
+      secondary: '#8b5cf6',
+      tertiary:  '#10b981',
+      spacing:   'normal',
+      radius:    'md',
+      elevation: 'md',
+      motion:    'standard'
+    });
+
+    // ---- App state ----
+    var state = {
+      tag: null,
+      nfcConnected: false,
+      ndef: [],
+      stats: {},
+      live: {},
+      history: [],
+      loading: true,
+      error: null,
+      autoRefresh: true,
+      rawMemory: null,
+      activeTab: 0,
+      ndefVersion: -1
+    };
+
+    var refreshTimer = null;
+
+    // ---- API helpers ----
+    function fetchJSON(url, cb) {
+      fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { cb(null, data); })
+        .catch(function(e) { cb(e, null); });
+    }
+
+    // Full status fetch - used on initial load and when ndef_version changes
+    function fetchFullStatus() {
+      fetchJSON('/api/status', function(err, data) {
+        if (err) {
+          state.error = 'Connection lost: ' + err.message;
+          fullRender();
+          return;
+        }
+        state.error = null;
+        state.tag = data.tag;
+        state.nfcConnected = data.nfc_connected;
+        state.ndef = data.ndef || [];
+        state.stats = data.stats || {};
+        state.live = data.live || {};
+        state.history = data.history || [];
+        state.ndefVersion = data.ndef_version;
+        state.loading = false;
+        fullRender();
+      });
+    }
+
+    // Lightweight patch fetch - used for polling live data
+    function fetchPatches() {
+      fetchJSON('/api/patches', function(err, data) {
+        if (err) {
+          state.error = 'Connection lost: ' + err.message;
+          fullRender();
+          return;
+        }
+        if (state.error) {
+          state.error = null;
+          fullRender();
+          return;
+        }
+
+        // If NFC connection state changed, do a full re-fetch
+        if (data.nfc_connected !== state.nfcConnected) {
+          fetchFullStatus();
+          return;
+        }
+
+        // If NDEF content changed, do a full re-fetch
+        if (data.ndef_version !== state.ndefVersion) {
+          fetchFullStatus();
+          return;
+        }
+
+        // Apply bwserve-compatible patch batch directly to DOM - no rebuild!
+        bw.clientApply(data);
+      });
+    }
+
+    function triggerScan() {
+      fetchJSON('/api/scan', function(err, data) {
+        if (!err) fetchFullStatus();
+      });
+    }
+
+    function fetchRawMemory(start, length) {
+      fetchJSON('/api/raw?start=' + start + '&length=' + length, function(err, data) {
+        if (!err) {
+          state.rawMemory = data;
+          fullRender();
+        }
+      });
+    }
+
+    // ---- Rendering ----
+    // Full render: replaces entire DOM. Used for initial load, tab switch,
+    // NDEF changes. NOT used for live data polling.
+    function fullRender() {
+      bw.DOM('#app', buildApp());
+    }
+
+    function buildApp() {
+      return bw.makeContainer({ children: [
+        buildNavbar(),
+        { t: 'div', a: { style: 'padding: 1rem 0;' }, c: [
+          state.loading ? buildLoading() : buildContent()
+        ]}
+      ]});
+    }
+
+    // ---- Navbar ----
+    function buildNavbar() {
+      var statusText = state.error ? 'ESP32: Offline' :
+                       state.nfcConnected ? 'NFC: Connected' : 'NFC: Not Found';
+      return bw.makeNavbar({
+        brand: 'NFC Tag Scanner',
+        brandHref: '/',
+        dark: true,
+        items: [
+          { text: statusText, href: '#' },
+          { text: state.stats.ip || '...', href: '#' }
+        ]
+      });
+    }
+
+    // ---- Loading state ----
+    function buildLoading() {
+      return bw.makeSection({
+        title: 'Connecting...',
+        content: { t: 'div', a: { style: 'text-align:center; padding:3rem;' }, c: [
+          bw.makeSpinner({ variant: 'primary', size: 'lg' }),
+          { t: 'p', a: { style: 'margin-top:1rem;' }, c: 'Connecting to ST25DV16...' }
+        ]}
+      });
+    }
+
+    // ---- Main content ----
+    function buildContent() {
+      if (state.error) {
+        return { t: 'div', c: [
+          bw.makeAlert({ title: 'Error', content: state.error, variant: 'danger' }),
+          bw.makeCard({ title: 'Dashboard', content: { t: 'p', c: 'Waiting for connection to ESP32...' } })
+        ]};
+      }
+      var parts = [];
+      if (!state.nfcConnected) {
+        parts.push(bw.makeAlert({
+          title: 'NFC Tag Not Connected',
+          content: 'ST25DV16 not found on I2C bus. Check the STEMMA QT cable. The board will keep retrying every 5 seconds.',
+          variant: 'warning'
+        }));
+      }
+      parts.push(buildStatCards());
+      parts.push(buildTabView());
+      return { t: 'div', c: parts };
+    }
+
+    // ---- Stat cards with stable IDs for patching ----
+    function buildStatCards() {
+      var s = state.stats;
+      var live = state.live || {};
+      var eh = live.energy_harvest || {};
+
+      // Each value element has an id like "stat-scans" that the server
+      // patches directly via bw.clientApply() - no full rebuild needed.
+      return bw.makeRow({ gap: '1rem', children: [
+        bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
+            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-primary, #0ea5e9);', id: 'stat-scans' },
+              c: String(s.scan_count || 0) },
+            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'Scans' }
+          ]}, shadow: 'sm' })
+        ]}),
+        bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
+            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-success, #10b981);', id: 'stat-records' },
+              c: String(state.ndef.length) },
+            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'NDEF Records' }
+          ]}, shadow: 'sm' })
+        ]}),
+        bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
+            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-warning, #f59e0b);', id: 'stat-rf' },
+              c: eh.field_on ? 'Active' : 'None' },
+            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'RF Field' }
+          ]}, shadow: 'sm' })
+        ]}),
+        bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+          bw.makeCard({ content: { t: 'div', a: { style: 'text-align:center; padding:0.5rem;' }, c: [
+            { t: 'div', a: { style: 'font-size:1.8rem; font-weight:700; color:var(--bw-info, #06b6d4);', id: 'stat-uptime' },
+              c: s.uptime || '--' },
+            { t: 'div', a: { style: 'font-size:0.8rem; text-transform:uppercase; opacity:0.7;' }, c: 'Uptime' }
+          ]}, shadow: 'sm' })
+        ]})
+      ]});
+    }
+
+    // ---- Tab view ----
+    function buildTabView() {
+      var tabs = [
+        { label: 'NDEF Records', build: buildNdefPanel },
+        { label: 'Tag Info',     build: buildTagInfoPanel },
+        { label: 'Live Status',  build: buildLivePanel },
+        { label: 'Scan History', build: buildHistoryPanel },
+        { label: 'Raw Memory',   build: buildRawMemPanel }
+      ];
+
+      return { t: 'div', a: { style: 'margin-top: 1.5rem;' }, c: [
+        bw.makeNav({
+          items: tabs.map(function(tab, i) {
+            return {
+              text: tab.label,
+              active: i === state.activeTab,
+              onclick: function() { state.activeTab = i; fullRender(); }
+            };
+          }),
+          pills: true
+        }),
+        { t: 'div', a: { style: 'margin-top: 1rem;' }, c: [
+          tabs[state.activeTab].build()
+        ]}
+      ]};
+    }
+
+    // ---- NDEF Records panel ----
+    function buildNdefPanel() {
+      var controls = bw.makeButtonGroup({ children: [
+        bw.makeButton({ text: 'Scan Now', variant: 'primary', onclick: triggerScan }),
+        bw.makeButton({
+          text: state.autoRefresh ? 'Auto: ON' : 'Auto: OFF',
+          variant: state.autoRefresh ? 'success' : 'secondary',
+          onclick: function() {
+            state.autoRefresh = !state.autoRefresh;
+            setupAutoRefresh();
+            fullRender();
+          }
+        })
+      ]});
+
+      if (state.ndef.length === 0) {
+        return { t: 'div', c: [
+          controls,
+          { t: 'div', a: { style: 'margin-top:1rem;' }, c: [
+            bw.makeAlert({
+              title: 'No NDEF Records',
+              content: 'No NDEF data found on the tag. Tap an NFC phone to write a record, then scan again.',
+              variant: 'info'
+            })
+          ]}
+        ]};
+      }
+
+      var cards = state.ndef.map(function(rec, i) {
+        return buildNdefRecordCard(rec, i);
+      });
+
+      return { t: 'div', c: [controls].concat(cards) };
+    }
+
+    function buildNdefRecordCard(rec, index) {
+      var variantMap = {
+        uri: 'primary', text: 'success', smart_poster: 'warning',
+        media: 'info', external: 'secondary', empty: 'light', unknown: 'dark'
+      };
+      var variant = variantMap[rec.record_kind] || 'dark';
+
+      var headerContent = [
+        bw.makeBadge({ text: rec.record_kind.toUpperCase(), variant: variant, pill: true }),
+        { t: 'span', a: { style: 'margin-left: 0.5rem;' },
+          c: rec.type_str || 'Record #' + (index + 1) }
+      ];
+
+      var bodyParts = [];
+
+      if (rec.decoded) {
+        if (rec.record_kind === 'uri') {
+          bodyParts.push(bw.makeCard({
+            content: { t: 'div', c: [
+              { t: 'div', a: { style: 'font-size:0.75rem; text-transform:uppercase; opacity:0.7; margin-bottom:0.25rem;' }, c: 'URL' },
+              { t: 'a', a: { href: rec.decoded, target: '_blank', rel: 'noopener', style: 'word-break:break-all; font-size:1.1rem;' }, c: rec.decoded }
+            ]},
+            variant: 'light'
+          }));
+        } else if (rec.record_kind === 'text') {
+          bodyParts.push(bw.makeCard({
+            content: { t: 'div', c: [
+              { t: 'div', a: { style: 'font-size:0.75rem; text-transform:uppercase; opacity:0.7;' },
+                c: 'Text' + (rec.language ? ' (' + rec.language + ')' : '') },
+              { t: 'p', a: { style: 'font-size:1.1rem; margin:0.25rem 0 0;' }, c: String(rec.decoded) }
+            ]},
+            variant: 'light'
+          }));
+        } else if (rec.record_kind === 'smart_poster' && Array.isArray(rec.decoded)) {
+          bodyParts.push({ t: 'div', a: { style: 'margin:0.5rem 0;' }, c: [
+            { t: 'strong', c: 'Smart Poster contains:' },
+            { t: 'div', a: { style: 'padding-left:1rem;' }, c:
+              rec.decoded.map(function(sub, j) { return buildNdefRecordCard(sub, j); })
+            }
+          ]});
+        } else {
+          bodyParts.push(bw.makeCard({
+            content: { t: 'div', c: [
+              { t: 'div', a: { style: 'font-size:0.75rem; text-transform:uppercase; opacity:0.7;' }, c: 'Content' },
+              { t: 'p', a: { style: 'margin:0.25rem 0 0;' }, c: String(rec.decoded) }
+            ]},
+            variant: 'light'
+          }));
+        }
+      }
+
+      // Technical details in a collapsible
+      bodyParts.push({ t: 'details', a: { style: 'margin-top:0.5rem;' }, c: [
+        { t: 'summary', a: { style: 'cursor:pointer; font-size:0.85rem; opacity:0.8;' }, c: 'Technical Details' },
+        bw.makeTable({
+          data: [
+            { Field: 'TNF', Value: String(rec.tnf) },
+            { Field: 'Type', Value: rec.type_str },
+            { Field: 'Payload', Value: rec.payload_len + ' bytes' },
+            { Field: 'Hex', Value: rec.payload_hex || 'empty' }
+          ],
+          columns: [
+            { key: 'Field', label: 'Field' },
+            { key: 'Value', label: 'Value' }
+          ],
+          striped: true
+        })
+      ]});
+
+      return bw.makeCard({
+        header: { t: 'div', a: { style: 'display:flex; align-items:center;' }, c: headerContent },
+        content: { t: 'div', c: bodyParts },
+        shadow: 'sm'
+      });
+    }
+
+    // ---- Tag Info panel ----
+    function buildTagInfoPanel() {
+      if (!state.tag) {
+        return bw.makeAlert({
+          title: 'No Tag Info',
+          content: state.nfcConnected ? 'Loading...' : 'ST25DV16 not connected. Check the STEMMA QT cable.',
+          variant: state.nfcConnected ? 'info' : 'warning'
+        });
+      }
+
+      var tag = state.tag;
+      var cc = tag.cc || {};
+
+      return bw.makeRow({ gap: '1rem', children: [
+        bw.makeCol({ size: { xs: 12, md: 6 }, children: [
+          bw.makeCard({
+            title: 'Tag Identity',
+            content: bw.makeTable({
+              data: [
+                { Property: 'UID', Value: tag.uid },
+                { Property: 'Memory', Value: tag.memory_bytes + ' bytes' },
+                { Property: 'IC Reference', Value: tag.ic_ref },
+                { Property: 'IC Revision', Value: tag.ic_rev }
+              ],
+              columns: [
+                { key: 'Property', label: 'Property' },
+                { key: 'Value', label: 'Value' }
+              ],
+              striped: true
+            }),
+            variant: 'primary'
+          })
+        ]}),
+        bw.makeCol({ size: { xs: 12, md: 6 }, children: [
+          bw.makeCard({
+            title: 'Capability Container',
+            content: bw.makeTable({
+              data: [
+                { Field: 'Magic', Value: '0x' + (cc.magic ? cc.magic.toString(16).toUpperCase() : '??') },
+                { Field: 'Valid', Value: cc.valid ? 'Yes' : 'No' },
+                { Field: 'Version', Value: String(cc.version || '?') },
+                { Field: 'Memory Size', Value: (cc.memory_size || '?') + ' bytes' },
+                { Field: 'Features', Value: '0x' + (cc.features ? cc.features.toString(16).toUpperCase() : '??') }
+              ],
+              columns: [
+                { key: 'Field', label: 'Field' },
+                { key: 'Value', label: 'Value' }
+              ],
+              striped: true
+            }),
+            variant: 'secondary'
+          })
+        ]})
+      ]});
+    }
+
+    // ---- Live status panel ----
+    // Uses stable IDs so bw.clientApply() can patch values in-place
+    function buildLivePanel() {
+      var live = state.live || {};
+      var it = live.interrupts || {};
+      var eh = live.energy_harvest || {};
+      var mb = live.mailbox || {};
+
+      // Interrupt flags - each value span has a stable id for patching
+      var flags = [
+        { label: 'RF Activity',      id: 'live-rf-activity',   on: it.rf_activity },
+        { label: 'RF Field Rising',   id: 'live-field-rising',  on: it.field_rising },
+        { label: 'RF Field Falling',  id: 'live-field-falling', on: it.field_falling },
+        { label: 'RF Write',          id: 'live-rf-write',      on: it.rf_write },
+        { label: 'RF Put Msg',        id: 'live-rf-put',        on: it.rf_put_msg },
+        { label: 'RF Get Msg',        id: 'live-rf-get',        on: it.rf_get_msg }
+      ];
+
+      var flagRows = flags.map(function(f) {
+        return { t: 'div', a: { style: 'display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--bw-border, #e2e8f0);' }, c: [
+          { t: 'span', c: f.label },
+          { t: 'span', a: { id: f.id, style: 'font-weight:600;' }, c: f.on ? 'YES' : 'no' }
+        ]};
+      });
+
+      var ehRows = [
+        { label: 'Energy Harvesting', id: 'live-eh', value: eh.eh_on ? 'Active' : 'Off' },
+        { label: 'RF Field Present',  id: 'live-field', value: eh.field_on ? 'Yes' : 'No' },
+        { label: 'VCC Present',       id: 'live-vcc', value: eh.vcc_on ? 'Yes' : 'No' }
+      ].map(function(item) {
+        return { t: 'div', a: { style: 'display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--bw-border, #e2e8f0);' }, c: [
+          { t: 'span', c: item.label },
+          { t: 'span', a: { id: item.id, style: 'font-weight:600;' }, c: item.value }
+        ]};
+      });
+
+      var mbRows = [
+        { label: 'Mailbox Enabled', id: 'live-mb-en', value: mb.mb_enabled ? 'Yes' : 'No' },
+        { label: 'Host Put Msg',    id: 'live-mb-host', value: mb.host_put_msg ? 'Yes' : 'No' },
+        { label: 'RF Put Msg',      id: 'live-mb-rf', value: mb.rf_put_msg ? 'Yes' : 'No' }
+      ].map(function(item) {
+        return { t: 'div', a: { style: 'display:flex; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid var(--bw-border, #e2e8f0);' }, c: [
+          { t: 'span', c: item.label },
+          { t: 'span', a: { id: item.id, style: 'font-weight:600;' }, c: item.value }
+        ]};
+      });
+
+      return { t: 'div', c: [
+        bw.makeButton({ text: 'Refresh', variant: 'primary', onclick: fetchFullStatus }),
+        { t: 'div', a: { style: 'margin-top:1rem;' }, c: [
+          bw.makeRow({ gap: '1rem', children: [
+            bw.makeCol({ size: { xs: 12, md: 4 }, children: [
+              bw.makeCard({
+                title: 'Interrupt Flags',
+                content: { t: 'div', c: flagRows },
+                variant: 'primary'
+              })
+            ]}),
+            bw.makeCol({ size: { xs: 12, md: 4 }, children: [
+              bw.makeCard({
+                title: 'Energy Harvesting',
+                content: { t: 'div', c: ehRows },
+                variant: 'success'
+              })
+            ]}),
+            bw.makeCol({ size: { xs: 12, md: 4 }, children: [
+              bw.makeCard({
+                title: 'Mailbox (FTM)',
+                content: { t: 'div', c: mbRows },
+                variant: 'info'
+              })
+            ]})
+          ]})
+        ]},
+        { t: 'div', a: { style: 'margin-top:1rem;' }, c: [
+          bw.makeCard({
+            title: 'System',
+            content: bw.makeRow({ gap: '0.5rem', children: [
+              bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+                { t: 'div', a: { style: 'text-align:center;' }, c: [
+                  { t: 'div', a: { id: 'sys-temp', style: 'font-size:1.4rem; font-weight:700;' },
+                    c: (state.stats.cpu_temp_c || '--') + '\u00B0C' },
+                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'CPU Temp' }
+                ]}
+              ]}),
+              bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+                { t: 'div', a: { style: 'text-align:center;' }, c: [
+                  { t: 'div', a: { id: 'sys-ip', style: 'font-size:1.4rem; font-weight:700;' },
+                    c: state.stats.ip || '--' },
+                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'IP Address' }
+                ]}
+              ]}),
+              bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+                { t: 'div', a: { style: 'text-align:center;' }, c: [
+                  { t: 'div', a: { id: 'sys-lastscan', style: 'font-size:1.4rem; font-weight:700;' },
+                    c: state.stats.last_scan || '--' },
+                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'Last Scan' }
+                ]}
+              ]}),
+              bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+                { t: 'div', a: { style: 'text-align:center;' }, c: [
+                  { t: 'div', a: { id: 'sys-history', style: 'font-size:1.4rem; font-weight:700;' },
+                    c: String(state.stats.history_size || 0) },
+                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'History' }
+                ]}
+              ]}),
+              bw.makeCol({ size: { xs: 6, md: 3 }, children: [
+                { t: 'div', a: { style: 'text-align:center;' }, c: [
+                  { t: 'div', a: { id: 'sys-nfc', style: 'font-size:1.4rem; font-weight:700; color:' +
+                    (state.nfcConnected ? 'var(--bw-success, #10b981)' : 'var(--bw-danger, #ef4444)') + ';' },
+                    c: state.nfcConnected ? 'Connected' : 'Not found' },
+                  { t: 'div', a: { style: 'font-size:0.75rem; opacity:0.7;' }, c: 'NFC Tag' }
+                ]}
+              ]})
+            ]})
+          })
+        ]}
+      ]};
+    }
+
+    // ---- Scan History panel ----
+    function buildHistoryPanel() {
+      if (state.history.length === 0) {
+        return bw.makeAlert({
+          title: 'No scan history yet',
+          content: 'Tap an NFC-capable phone on the ST25DV16 antenna to generate scan events.',
+          variant: 'info'
+        });
+      }
+
+      var items = state.history.slice().reverse().map(function(scan) {
+        var recSummary = (scan.records || []).map(function(r) {
+          var kind = (r.record_kind || 'unknown').toUpperCase();
+          var val = r.decoded ? String(r.decoded).substring(0, 80) : '(no data)';
+          return kind + ': ' + val;
+        }).join('; ');
+
+        var intFlags = [];
+        var it = scan.interrupts || {};
+        if (it.rf_activity) intFlags.push('RF Activity');
+        if (it.field_rising) intFlags.push('Field On');
+        if (it.rf_write) intFlags.push('RF Write');
+        if (it.rf_put_msg) intFlags.push('Msg In');
+
+        return {
+          title: 'Scan #' + (scan.scan_number || '?'),
+          subtitle: scan.time_str || '?',
+          content: { t: 'div', c: [
+            { t: 'div', c: recSummary || 'No NDEF records' },
+            intFlags.length > 0
+              ? { t: 'div', a: { style: 'margin-top:0.25rem; display:flex; gap:0.25rem; flex-wrap:wrap;' }, c:
+                  intFlags.map(function(f) { return bw.makeBadge({ text: f, variant: 'warning', pill: true }); })
+                }
+              : null
+          ].filter(Boolean) }
+        };
+      });
+
+      return { t: 'div', c: [
+        bw.makeButton({ text: 'Refresh', variant: 'primary', onclick: fetchFullStatus }),
+        { t: 'div', a: { style: 'margin-top:1rem;' }, c: [
+          bw.makeTimeline({ items: items })
+        ]}
+      ]};
+    }
+
+    // ---- Raw Memory panel ----
+    function buildRawMemPanel() {
+      var controls = bw.makeButtonGroup({ children: [
+        bw.makeButton({ text: '0x0000 (64B)', variant: 'primary', onclick: function() { fetchRawMemory(0, 64); } }),
+        bw.makeButton({ text: '0x0000 (256B)', variant: 'secondary', onclick: function() { fetchRawMemory(0, 256); } }),
+        bw.makeButton({ text: '0x0100 (64B)', variant: 'secondary', onclick: function() { fetchRawMemory(256, 64); } })
+      ]});
+
+      if (!state.rawMemory) {
+        return { t: 'div', c: [
+          controls,
+          { t: 'div', a: { style: 'margin-top:1rem;' }, c: [
+            bw.makeAlert({ content: 'Click a button to read raw EEPROM memory.', variant: 'info' })
+          ]}
+        ]};
+      }
+
+      var raw = state.rawMemory;
+      if (raw.error) {
+        return { t: 'div', c: [
+          controls,
+          bw.makeAlert({ title: 'Read Error', content: raw.error, variant: 'danger' })
+        ]};
+      }
+
+      // Build hex dump table data
+      var hexRows = [];
+      var bytes = raw.bytes || [];
+      for (var i = 0; i < bytes.length; i += 16) {
+        var addr = ('0000' + (raw.start + i).toString(16).toUpperCase()).slice(-4);
+        var hexParts = [];
+        var asciiParts = [];
+        for (var j = 0; j < 16 && (i + j) < bytes.length; j++) {
+          var b = bytes[i + j];
+          hexParts.push(('00' + b.toString(16).toUpperCase()).slice(-2));
+          asciiParts.push((b >= 32 && b < 127) ? String.fromCharCode(b) : '.');
+        }
+        hexRows.push({
+          Addr: '0x' + addr,
+          Hex: hexParts.join(' '),
+          ASCII: asciiParts.join('')
+        });
+      }
+
+      return { t: 'div', c: [
+        controls,
+        { t: 'div', a: { style: 'margin-top:1rem;' }, c: [
+          bw.makeCard({
+            title: 'Memory @ 0x' + ('0000' + raw.start.toString(16).toUpperCase()).slice(-4) + ' (' + raw.length + ' bytes)',
+            content: bw.makeTable({
+              data: hexRows,
+              columns: [
+                { key: 'Addr', label: 'Addr' },
+                { key: 'Hex', label: 'Hex Data' },
+                { key: 'ASCII', label: 'ASCII' }
+              ],
+              striped: true
+            }),
+            variant: 'dark'
+          })
+        ]}
+      ]};
+    }
+
+    // ---- Auto-refresh using patches (efficient) ----
+    function setupAutoRefresh() {
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+      if (state.autoRefresh) {
+        // Use lightweight patch polling instead of full status re-fetch
+        refreshTimer = setInterval(fetchPatches, 3000);
+      }
+    }
+
+    // ---- Boot ----
+    // Render immediately so the user sees something before fetch completes
+    fullRender();
+
+    fetchFullStatus();
+    setupAutoRefresh();
+  </script>
+</body>
+</html>

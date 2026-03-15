@@ -194,6 +194,21 @@ Source breakdown: core 4222 LOC (40%), styles 2236 LOC (21%), BCCL 3614 LOC (34%
 * [ ] audit --> visual quality: do all components look beautiful with default palette?
 * [ ] audit --> theme consistency: do all 12 preset themes look good with all components?
 
+## P3.5: Examples Gallery (v2.0.18)
+
+* [x] make --> `examples/showcase/` — zero-CSS marketing page, 18 components, ~110 lines
+* [x] make --> `examples/embedded-gpio/` — Raspberry Pi GPIO controller
+* [x] make --> `examples/embedded-industrial/` — Industrial HMI panel
+* [x] make --> `examples/embedded-network/` — Network device monitor
+* [x] make --> `examples/embedded-home/` — Home automation panel
+* [x] make --> `examples/embedded-pico-w/` — Raspberry Pi Pico W microcontroller dashboard
+* [x] make --> `examples/embedded-rpi/` — Raspberry Pi (full Linux) system monitor
+* [x] rewrite --> `examples/index.html` gallery — new ordering, categories, descriptions
+* [x] make --> `examples/dashboard/` — live-updating metrics dashboard
+* [x] make --> `examples/wizard/` — multi-step signup form
+* [x] make --> `examples/live-feed/` — real-time event stream
+* [x] make --> `examples/todo-app/` — reactive todo app
+
 ---
 
 ## P4: TACO Shorthand (v2.0.x / v2.1.0)

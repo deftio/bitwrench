@@ -401,6 +401,38 @@
               'Badges for sensor readings and lock status'
             ],
             prereq: null
+          },
+          {
+            title: 'Pico W Dashboard',
+            href: 'embedded-pico-w/',
+            icon: '\uD83E\uDE84',
+            oneliner: 'RP2040 microcontroller: ADC, PWM, digital I/O, onboard LED.',
+            audience: 'Intermediate',
+            themeColor: '#e11d48',
+            desc: 'A Raspberry Pi Pico W dashboard showing the RP2040 onboard temperature sensor, 3 ADC channels (12-bit, 0\u20133.3V) with voltage display, 4 PWM outputs with duty cycle controls, 4 digital inputs, onboard LED toggle, WiFi RSSI, and free memory. Includes a commented MicroPython microdot server example.',
+            teaches: [
+              'Stat cards for sensor readings',
+              'Progress bars for ADC voltages and PWM duty cycles',
+              'Button groups for preset PWM values',
+              'MicroPython deployment pattern for microcontrollers'
+            ],
+            prereq: null
+          },
+          {
+            title: 'RPi System Monitor',
+            href: 'embedded-rpi/',
+            icon: '\uD83E\uDD67',
+            oneliner: 'Full Linux SBC: CPU cores, memory, disk, GPIO, processes.',
+            audience: 'Intermediate',
+            themeColor: '#c51a4a',
+            desc: 'A Raspberry Pi (full Linux) system monitor with per-core CPU usage bars, CPU temperature, RAM and swap progress bars, disk usage, network throughput, a sortable process table, and 6 GPIO pins (3 output toggles, 3 input read-only). Includes commented deployment code for both bwserve (Node.js) and Flask (Python).',
+            teaches: [
+              'Per-core CPU progress bars',
+              'Sortable process table',
+              'GPIO toggle buttons with state badges',
+              'Two server deployment options (bwserve vs REST API)'
+            ],
+            prereq: null
           }
         ]
       },

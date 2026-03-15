@@ -1,0 +1,6 @@
+# WiFi credentials - update these for your network
+CIRCUITPY_WIFI_SSID = "YOUR_WIFI_SSID"
+CIRCUITPY_WIFI_PASSWORD = "YOUR_WIFI_PASSWORD"
+
+# Web workflow password (optional, for CircuitPython web editor)
+CIRCUITPY_WEB_API_PASSWORD = "changeme"

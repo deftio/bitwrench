@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raspberry Pi System Monitor</title>
+  <script src="../../dist/bitwrench.umd.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Raspberry Pi System Monitor — Linux SBC Dashboard
+    //
+    // Unlike the Pico W (microcontroller), a regular Raspberry Pi runs
+    // full Linux. It can run Node.js and bwserve directly, or serve this
+    // static page from nginx/Python and push updates via SSE.
+    //
+    // Two deployment options:
+    //   A) bwserve: node server.js — server owns all state and UI
+    //   B) Static + API: serve this HTML, expose REST endpoints:
+    //      GET  /api/system     — CPU temp, load, memory, disk
+    //      GET  /api/processes  — top processes
+    //      GET  /api/gpio       — GPIO pin states (via pigpio/gpiod)
+    //      POST /api/gpio/:pin  — set pin { value: 0|1 }
+    //      GET  /events         — SSE stream of system metrics
+    //
+    // SIMULATION: All data is mock. Replace with fetch()/EventSource.
+    // =====================================================================
+
+    bw.loadDefaultStyles();
+    bw.generateTheme('rpi', {
+      primary: '#c51a4a',
+      secondary: '#2563eb',
+      spacing: 'compact',
+      radius: 'sm'
+    });
+
+    bw.injectCSS(bw.css({
+      'body': { background: '#0f172a', color: '#e2e8f0', margin: '0' }
+    }));
+
+    // -- Mock system state ------------------------------------------------
+    var sys = {
+      model: 'Raspberry Pi 5 (8GB)',
+      os: 'Raspbian Bookworm',
+      kernel: '6.6.51-v8+',
+      hostname: 'raspberrypi',
+      ip: '192.168.1.42',
+      cpuTemp: 48.3,
+      cpuUsage: [12, 8, 15, 22],   // per-core %
+      loadAvg: [0.42, 0.38, 0.35],
+      memTotal: 8192,    // MB
+      memUsed: 2847,     // MB
+      swapTotal: 2048,
+      swapUsed: 128,
+      diskTotal: 64,     // GB
+      diskUsed: 18.4,    // GB
+      uptime: 172834,    // seconds
+      netRx: 0,          // bytes/sec
+      netTx: 0
+    };
+
+    var processes = [
+      { pid: 1, name: 'systemd', cpu: 0.1, mem: 12.4 },
+      { pid: 842, name: 'node server.js', cpu: 2.3, mem: 84.2 },
+      { pid: 1204, name: 'python3 app.py', cpu: 5.1, mem: 142.8 },
+      { pid: 1567, name: 'chromium-browser', cpu: 8.4, mem: 312.6 },
+      { pid: 2001, name: 'mosquitto', cpu: 0.3, mem: 8.1 },
+      { pid: 2150, name: 'pigpiod', cpu: 0.2, mem: 4.8 }
+    ];
+
+    var gpioState = [
+      { pin: 17, label: 'Status LED', mode: 'OUT', value: 1 },
+      { pin: 27, label: 'Relay 1', mode: 'OUT', value: 0 },
+      { pin: 22, label: 'Relay 2', mode: 'OUT', value: 0 },
+      { pin: 23, label: 'Button', mode: 'IN', value: 0 },
+      { pin: 24, label: 'Motion Sensor', mode: 'IN', value: 0 },
+      { pin: 25, label: 'Door Sensor', mode: 'IN', value: 1 }
+    ];
+
+    var logEntries = [];
+
+    function addLog(msg) {
+      var ts = new Date().toLocaleTimeString();
+      logEntries.unshift(ts + ' \u2014 ' + msg);
+      if (logEntries.length > 25) logEntries.pop();
+    }
+
+    addLog('Connected to ' + sys.hostname + ' (' + sys.ip + ')');
+    addLog('Running in simulation mode');
+
+    function toggleGpio(idx) {
+      if (gpioState[idx].mode !== 'OUT') return;
+      gpioState[idx].value = gpioState[idx].value ? 0 : 1;
+      addLog('GPIO ' + gpioState[idx].pin + ' (' + gpioState[idx].label + ') set to ' + (gpioState[idx].value ? 'HIGH' : 'LOW'));
+      render();
+    }
+
+    // -- Render -----------------------------------------------------------
+    function render() {
+      var uptimeDays = Math.floor(sys.uptime / 86400);
+      var uptimeHrs = Math.floor((sys.uptime % 86400) / 3600);
+      var uptimeMin = Math.floor((sys.uptime % 3600) / 60);
+      var uptimeStr = uptimeDays + 'd ' + uptimeHrs + 'h ' + uptimeMin + 'm';
+
+      var cpuAvg = Math.round(sys.cpuUsage.reduce(function(a, b) { return a + b; }, 0) / sys.cpuUsage.length);
+      var memPct = Math.round(sys.memUsed / sys.memTotal * 100);
+      var diskPct = Math.round(sys.diskUsed / sys.diskTotal * 100);
+
+      // System overview cards
+      var overviewCards = bw.makeRow({
+        children: [
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: sys.cpuTemp.toFixed(1) + '\u00B0C', label: 'CPU Temp', variant: sys.cpuTemp > 70 ? 'danger' : sys.cpuTemp > 55 ? 'warning' : 'success' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: cpuAvg + '%', label: 'CPU Usage', variant: cpuAvg > 80 ? 'danger' : cpuAvg > 50 ? 'warning' : 'primary' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: memPct + '%', label: 'Memory (' + Math.round(sys.memUsed) + '/' + sys.memTotal + ' MB)', variant: memPct > 85 ? 'danger' : memPct > 60 ? 'warning' : 'info' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: diskPct + '%', label: 'Disk (' + sys.diskUsed.toFixed(1) + '/' + sys.diskTotal + ' GB)', variant: diskPct > 90 ? 'danger' : diskPct > 70 ? 'warning' : 'info' })
+          })
+        ]
+      });
+
+      // CPU per-core bars
+      var cpuBars = bw.makeCard({
+        title: 'CPU Cores',
+        className: 'bw_mb_3',
+        content: sys.cpuUsage.map(function(usage, i) {
+          return { t: 'div', a: { class: 'bw_mb_1' }, c: [
+            { t: 'div', a: { style: 'display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:2px' }, c: [
+              { t: 'span', c: 'Core ' + i },
+              { t: 'span', c: usage + '%' }
+            ]},
+            bw.makeProgress({ value: usage, variant: usage > 80 ? 'danger' : usage > 50 ? 'warning' : 'primary' })
+          ]};
+        })
+      });
+
+      // Memory details
+      var memCard = bw.makeCard({
+        title: 'Memory',
+        className: 'bw_mb_3',
+        content: [
+          { t: 'div', a: { class: 'bw_mb_2' }, c: [
+            { t: 'div', a: { style: 'font-size:0.8rem;margin-bottom:2px' }, c: 'RAM: ' + Math.round(sys.memUsed) + ' / ' + sys.memTotal + ' MB' },
+            bw.makeProgress({ value: memPct, variant: memPct > 85 ? 'danger' : 'primary' })
+          ]},
+          { t: 'div', c: [
+            { t: 'div', a: { style: 'font-size:0.8rem;margin-bottom:2px' }, c: 'Swap: ' + sys.swapUsed + ' / ' + sys.swapTotal + ' MB' },
+            bw.makeProgress({ value: Math.round(sys.swapUsed / sys.swapTotal * 100), variant: 'info' })
+          ]}
+        ]
+      });
+
+      // System info table
+      var infoTable = bw.makeTable({
+        data: [
+          { Property: 'Model', Value: sys.model },
+          { Property: 'OS', Value: sys.os },
+          { Property: 'Kernel', Value: sys.kernel },
+          { Property: 'Hostname', Value: sys.hostname },
+          { Property: 'IP Address', Value: sys.ip },
+          { Property: 'Uptime', Value: uptimeStr },
+          { Property: 'Load Average', Value: sys.loadAvg.map(function(v) { return v.toFixed(2); }).join(', ') },
+          { Property: 'Network RX', Value: formatBytes(sys.netRx) + '/s' },
+          { Property: 'Network TX', Value: formatBytes(sys.netTx) + '/s' }
+        ],
+        striped: true,
+        sortable: false
+      });
+
+      // Process table
+      var procTable = bw.makeTable({
+        data: processes.map(function(p) {
+          return { PID: p.pid, Process: p.name, CPU: p.cpu + '%', Memory: p.mem.toFixed(1) + ' MB' };
+        }),
+        columns: [
+          { key: 'PID', label: 'PID' },
+          { key: 'Process', label: 'Process' },
+          { key: 'CPU', label: 'CPU %' },
+          { key: 'Memory', label: 'Memory' }
+        ],
+        striped: true,
+        hover: true,
+        sortable: true
+      });
+
+      // GPIO controls
+      var gpioCards = gpioState.map(function(g, i) {
+        var isOut = g.mode === 'OUT';
+        return bw.makeCol({ size: { xs: 6, md: 4 }, content:
+          bw.makeCard({
+            title: 'GPIO ' + g.pin + ' \u2014 ' + g.label,
+            className: 'bw_mb_2',
+            content: [
+              { t: 'div', a: { class: 'bw_mb_1' }, c: [
+                bw.makeBadge({ text: g.mode, variant: isOut ? 'primary' : 'warning', pill: true }),
+                ' ',
+                bw.makeBadge({ text: g.value ? 'HIGH' : 'LOW', variant: g.value ? 'success' : 'secondary', pill: true })
+              ]},
+              isOut ? bw.makeButton({
+                text: g.value ? 'Turn Off' : 'Turn On',
+                variant: g.value ? 'danger' : 'success',
+                size: 'sm',
+                onclick: function() { toggleGpio(i); }
+              }) : { t: 'span', a: { style: 'font-size:0.8rem;opacity:0.6' }, c: 'Read-only input' }
+            ]
+          })
+        });
+      });
+
+      bw.DOM('#app', bw.makeContainer({
+        className: 'bw_py_3',
+        children: [
+          bw.makeAlert({
+            content: 'Running in simulation mode \u2014 on a real Raspberry Pi, run this as a bwserve app (node server.js) or serve statically with a Python/Node.js API backend.',
+            variant: 'warning',
+            dismissible: true
+          }),
+          { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: 'Raspberry Pi System Monitor' },
+          overviewCards,
+          bw.makeRow({
+            children: [
+              bw.makeCol({ size: { xs: 12, md: 6 }, content: cpuBars }),
+              bw.makeCol({ size: { xs: 12, md: 6 }, content: memCard })
+            ]
+          }),
+          bw.makeSection({
+            title: 'GPIO Controls',
+            children: [bw.makeRow({ children: gpioCards })]
+          }),
+          bw.makeRow({
+            children: [
+              bw.makeCol({ size: { xs: 12, md: 6 }, content:
+                bw.makeSection({ title: 'Processes', children: [procTable] })
+              }),
+              bw.makeCol({ size: { xs: 12, md: 6 }, content:
+                bw.makeSection({ title: 'System Info', children: [infoTable] })
+              })
+            ]
+          }),
+          bw.makeSection({
+            title: 'Event Log',
+            children: [bw.makeListGroup({
+              items: logEntries.length ? logEntries : ['Waiting for events...']
+            })]
+          })
+        ]
+      }));
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    render();
+
+    // Simulate system metrics drift
+    setInterval(function() {
+      sys.uptime++;
+      sys.cpuTemp += (Math.random() - 0.5) * 0.5;
+      sys.cpuTemp = Math.max(35, Math.min(75, sys.cpuTemp));
+      sys.cpuUsage = sys.cpuUsage.map(function(u) {
+        return Math.max(0, Math.min(100, u + Math.round((Math.random() - 0.5) * 10)));
+      });
+      sys.memUsed += (Math.random() - 0.5) * 50;
+      sys.memUsed = Math.max(1000, Math.min(sys.memTotal * 0.95, sys.memUsed));
+      sys.loadAvg = sys.loadAvg.map(function(l) {
+        return Math.max(0, +(l + (Math.random() - 0.5) * 0.1).toFixed(2));
+      });
+      sys.netRx = Math.max(0, Math.round(Math.random() * 500000));
+      sys.netTx = Math.max(0, Math.round(Math.random() * 200000));
+
+      // Simulate process CPU fluctuation
+      processes.forEach(function(p) {
+        p.cpu = Math.max(0, +(p.cpu + (Math.random() - 0.5) * 1).toFixed(1));
+        p.mem = Math.max(1, +(p.mem + (Math.random() - 0.5) * 5).toFixed(1));
+      });
+
+      // Simulate input pin changes
+      gpioState.forEach(function(g) {
+        if (g.mode === 'IN' && Math.random() > 0.92) {
+          g.value = g.value ? 0 : 1;
+          addLog('GPIO ' + g.pin + ' (' + g.label + ') changed to ' + (g.value ? 'HIGH' : 'LOW'));
+        }
+      });
+
+      render();
+    }, 2000);
+
+    // =====================================================================
+    // Deployment options for real Raspberry Pi:
+    //
+    // Option A: bwserve (recommended — server owns UI)
+    //
+    //   import bwserve from 'bitwrench/bwserve';
+    //   import { execSync } from 'child_process';
+    //   import fs from 'fs';
+    //
+    //   var app = bwserve.create({ port: 7902, title: 'RPi Monitor', theme: 'slate' });
+    //
+    //   app.page('/', function(client) {
+    //     setInterval(function() {
+    //       var temp = parseFloat(fs.readFileSync('/sys/class/thermal/thermal_zone0/temp')) / 1000;
+    //       var mem = execSync('free -m').toString();
+    //       client.batch(
+    //         { type: 'patch', target: 'cpu-temp', content: temp.toFixed(1) + 'C' },
+    //         { type: 'patch', target: 'mem-used', content: parseMemUsed(mem) + ' MB' }
+    //       );
+    //     }, 2000);
+    //   });
+    //
+    //   app.listen();
+    //
+    // Option B: Python + Flask (static page + REST API)
+    //
+    //   from flask import Flask, jsonify
+    //   import psutil, gpiod
+    //
+    //   app = Flask(__name__, static_folder='.')
+    //
+    //   @app.get('/api/system')
+    //   def system():
+    //       return jsonify({
+    //           'cpuTemp': psutil.sensors_temperatures()['cpu_thermal'][0].current,
+    //           'cpuUsage': psutil.cpu_percent(percpu=True),
+    //           'memUsed': psutil.virtual_memory().used // (1024*1024),
+    //           'diskUsed': psutil.disk_usage('/').used // (1024*1024*1024)
+    //       })
+    //
+    //   app.run(host='0.0.0.0', port=8080)
+    // =====================================================================
+  </script>
+</body>
+</html>
