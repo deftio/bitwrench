@@ -197,7 +197,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-16T05:51:37.408Z'
+    buildDate: '2026-03-16T07:14:24.592Z'
   };
 
   /**
@@ -814,68 +814,13 @@
    * Built-in theme presets — named color combinations
    * Each preset provides primary, secondary, and tertiary seed colors.
    */
-  var THEME_PRESETS = {
-    teal: {
-      primary: '#006666',
-      secondary: '#6c757d',
-      tertiary: '#006666'
-    },
-    ocean: {
-      primary: '#0077b6',
-      secondary: '#90e0ef',
-      tertiary: '#00b4d8'
-    },
-    sunset: {
-      primary: '#e76f51',
-      secondary: '#264653',
-      tertiary: '#e9c46a'
-    },
-    forest: {
-      primary: '#2d6a4f',
-      secondary: '#95d5b2',
-      tertiary: '#52b788'
-    },
-    slate: {
-      primary: '#343a40',
-      secondary: '#adb5bd',
-      tertiary: '#6c757d'
-    },
-    rose: {
-      primary: '#e11d48',
-      secondary: '#fda4af',
-      tertiary: '#fb7185'
-    },
-    indigo: {
-      primary: '#4f46e5',
-      secondary: '#a5b4fc',
-      tertiary: '#818cf8'
-    },
-    amber: {
-      primary: '#d97706',
-      secondary: '#fbbf24',
-      tertiary: '#f59e0b'
-    },
-    emerald: {
-      primary: '#059669',
-      secondary: '#6ee7b7',
-      tertiary: '#34d399'
-    },
-    nord: {
-      primary: '#5e81ac',
-      secondary: '#88c0d0',
-      tertiary: '#81a1c1'
-    },
-    coral: {
-      primary: '#ef6461',
-      secondary: '#4a7c7e',
-      tertiary: '#e8a87c'
-    },
-    midnight: {
-      primary: '#1e3a5f',
-      secondary: '#7c8db5',
-      tertiary: '#3d5a80'
-    }
-  };
+  var THEME_PRESETS = Object.fromEntries([['teal', '#006666', '#6c757d', '#006666'], ['ocean', '#0077b6', '#90e0ef', '#00b4d8'], ['sunset', '#e76f51', '#264653', '#e9c46a'], ['forest', '#2d6a4f', '#95d5b2', '#52b788'], ['slate', '#343a40', '#adb5bd', '#6c757d'], ['rose', '#e11d48', '#fda4af', '#fb7185'], ['indigo', '#4f46e5', '#a5b4fc', '#818cf8'], ['amber', '#d97706', '#fbbf24', '#f59e0b'], ['emerald', '#059669', '#6ee7b7', '#34d399'], ['nord', '#5e81ac', '#88c0d0', '#81a1c1'], ['coral', '#ef6461', '#4a7c7e', '#e8a87c'], ['midnight', '#1e3a5f', '#7c8db5', '#3d5a80']].map(function (e) {
+    return [e[0], {
+      primary: e[1],
+      secondary: e[2],
+      tertiary: e[3]
+    }];
+  }));
 
   /**
    * Resolve layout config to spacing, radius, typeScale, elevation, and motion objects.
@@ -1124,13 +1069,13 @@
       'color': palette.light.base
     };
     rules[_sx(scope, '.bw_navbar_dark .bw_nav_link')] = {
-      'color': 'rgba(255,255,255,.65)'
+      'color': palette.light.border
     };
     rules[_sx(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
-      'color': '#fff'
+      'color': palette.light.base
     };
     rules[_sx(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
-      'color': '#fff',
+      'color': palette.light.base,
       'font-weight': '600'
     };
     rules[_sx(scope, '.bw_nav_pills .bw_nav_link.active')] = {
@@ -1156,7 +1101,7 @@
       'background-color': palette.light.light
     };
     rules[_sx(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-      'background-color': 'rgba(0, 0, 0, 0.05)'
+      'background-color': palette.light.light
     };
     rules[_sx(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
       'background-color': palette.primary.focus
@@ -1175,13 +1120,15 @@
     };
     return rules;
   }
-  function generateTabs(scope, palette) {
-    var rules = {};
+  function generateTabs(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
     rules[_sx(scope, '.bw_nav_tabs')] = {
       'border-bottom-color': palette.light.border
     };
     rules[_sx(scope, '.bw_nav_link')] = {
-      'color': palette.secondary.base
+      'color': palette.secondary.base,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
       'color': palette.dark.base,
@@ -1196,11 +1143,13 @@
   function generateListGroups(scope, palette, layout) {
     var rules = {};
     var sp = layout.spacing;
+    var mo = layout.motion;
     rules[_sx(scope, '.bw_list_group_item')] = {
       'padding': sp.cell,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
-      'border-color': palette.light.border
+      'border-color': palette.light.border,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
       'background-color': palette.light.light,
@@ -1217,12 +1166,14 @@
     };
     return rules;
   }
-  function generatePagination(scope, palette) {
-    var rules = {};
+  function generatePagination(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
     rules[_sx(scope, '.bw_page_link')] = {
       'color': palette.primary.base,
       'background-color': palette.surface || '#fff',
-      'border-color': palette.light.border
+      'border-color': palette.light.border,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, '.bw_page_link:hover')] = {
       'color': palette.primary.hover,
@@ -1252,7 +1203,7 @@
       'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
     };
     rules[_sx(scope, '.bw_progress_bar')] = {
-      'color': '#fff',
+      'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
     };
@@ -1274,13 +1225,17 @@
     rules[_sx(scope, 'body')] = baseReset;
     return rules;
   }
-  function generateBreadcrumbThemed(scope, palette) {
-    var rules = {};
+  function generateBreadcrumbThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
     rules[_sx(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
       'color': palette.secondary.base
     };
     rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
       'color': palette.secondary.base
+    };
+    rules[_sx(scope, '.bw_breadcrumb_item a')] = {
+      'transition': 'color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
       'color': palette.primary.hover,
@@ -1351,15 +1306,15 @@
       'background-color': palette.primary.base
     };
     rules[_sx(scope, '.bw_carousel_control')] = {
-      'background-color': 'rgba(0,0,0,0.4)',
-      'color': '#fff'
+      'background-color': palette.dark.base,
+      'color': palette.dark.textOn
     };
     rules[_sx(scope, '.bw_carousel_control:hover')] = {
-      'background-color': 'rgba(0,0,0,0.6)'
+      'background-color': palette.dark.hover
     };
     rules[_sx(scope, '.bw_carousel_caption')] = {
-      'background': 'linear-gradient(transparent, rgba(0,0,0,0.6))',
-      'color': '#fff'
+      'background': 'linear-gradient(transparent, ' + palette.dark.base + ')',
+      'color': palette.dark.textOn
     };
     return rules;
   }
@@ -1385,11 +1340,11 @@
     var rules = {};
     rules[_sx(scope, '.bw_toast')] = {
       'background-color': palette.surface || '#fff',
-      'border-color': 'rgba(0,0,0,0.1)',
+      'border-color': palette.light.border,
       'box-shadow': layout.elevation.lg
     };
     rules[_sx(scope, '.bw_toast_header')] = {
-      'border-bottom-color': 'rgba(0,0,0,0.05)'
+      'border-bottom-color': palette.light.border
     };
     // Variant toast borders handled by palette class
     return rules;
@@ -1402,7 +1357,8 @@
       'box-shadow': layout.elevation.md
     };
     rules[_sx(scope, '.bw_dropdown_item')] = {
-      'color': palette.dark.base
+      'color': palette.dark.base,
+      'transition': 'background-color ' + layout.motion.fast + ' ' + layout.motion.easing
     };
     rules[_sx(scope, '.bw_dropdown_item:hover')] = {
       'color': palette.dark.hover,
@@ -1441,8 +1397,17 @@
 
   // generateAvatarThemed: removed — palette class on root handles variants
 
-  function generateStatCardThemed(scope, palette) {
-    var rules = {};
+  function generateStatCardThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion,
+      el = layout.elevation;
+    rules[_sx(scope, '.bw_stat_card')] = {
+      'box-shadow': el.sm,
+      'transition': 'box-shadow ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+    };
+    rules[_sx(scope, '.bw_stat_card:hover')] = {
+      'box-shadow': el.md
+    };
     // Variant border colors handled by palette class
     rules[_sx(scope, '.bw_stat_change_up')] = {
       'color': palette.success.base
@@ -1512,11 +1477,13 @@
     };
     return rules;
   }
-  function generateFileUploadThemed(scope, palette) {
-    var rules = {};
+  function generateFileUploadThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
     rules[_sx(scope, '.bw_file_upload')] = {
       'border-color': palette.light.border,
-      'background-color': palette.light.light
+      'background-color': palette.light.light,
+      'transition': 'border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, '.bw_file_upload:hover')] = {
       'border-color': palette.primary.base,
@@ -1540,19 +1507,63 @@
     };
     rules[_sx(scope, '.bw_range::-webkit-slider-thumb')] = {
       'background-color': palette.primary.base,
-      'border-color': '#fff',
+      'border-color': palette.surface || '#fff',
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
       'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
     };
     rules[_sx(scope, '.bw_range::-moz-range-thumb')] = {
       'background-color': palette.primary.base,
-      'border-color': '#fff',
+      'border-color': palette.surface || '#fff',
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)'
     };
     return rules;
   }
-  function generateSearchThemed(scope, palette) {
-    var rules = {};
+  function generateTooltipThemed(scope, palette, layout) {
+    var rules = {},
+      sp = layout.spacing,
+      rd = layout.radius,
+      el = layout.elevation,
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_tooltip')] = {
+      'background-color': palette.dark.base,
+      'color': palette.dark.textOn,
+      'padding': sp.input,
+      'border-radius': rd.badge,
+      'box-shadow': el.md,
+      'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+    };
+    return rules;
+  }
+  function generatePopoverThemed(scope, palette, layout) {
+    var rules = {},
+      sp = layout.spacing,
+      rd = layout.radius,
+      el = layout.elevation,
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_popover')] = {
+      'background-color': palette.surface || '#fff',
+      'color': palette.dark.base,
+      'border': '1px solid ' + palette.light.border,
+      'border-radius': rd.card,
+      'box-shadow': el.lg,
+      'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+    };
+    rules[_sx(scope, '.bw_popover_header')] = {
+      'background-color': palette.light.light,
+      'border-bottom': '1px solid ' + palette.light.border,
+      'padding': sp.input
+    };
+    rules[_sx(scope, '.bw_popover_body')] = {
+      'padding': sp.card
+    };
+    return rules;
+  }
+  function generateSearchThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_search_clear')] = {
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+    };
     rules[_sx(scope, '.bw_search_clear:hover')] = {
       'color': palette.dark.base
     };
@@ -1680,9 +1691,9 @@
         'color': s.textOn
       };
 
-      // Progress bar: white text on colored bg (default is fine, just ensure text)
+      // Progress bar: contrasting text on colored bg
       rules[_sx(scope, '.bw_progress_bar.bw_' + k)] = {
-        'color': '#fff'
+        'color': s.textOn
       };
 
       // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
@@ -1730,7 +1741,7 @@
    * @returns {Object} CSS rules object
    */
   function generateThemedCSS(scopeName, palette, layout) {
-    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette), generateProgress(scopeName, palette), generateBreadcrumbThemed(scopeName, palette), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette), generateFileUploadThemed(scopeName, palette), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette), generateCodeDemoThemed(scopeName, palette), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
+    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette, layout), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette, layout), generateProgress(scopeName, palette), generateBreadcrumbThemed(scopeName, palette, layout), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette, layout), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette), generateFileUploadThemed(scopeName, palette, layout), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette, layout), generateTooltipThemed(scopeName, palette, layout), generatePopoverThemed(scopeName, palette, layout), generateCodeDemoThemed(scopeName, palette), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
   }
 
   // =========================================================================
@@ -4249,6 +4260,52 @@
     };
     rules['.list-inline-item:not(:last-child)'] = {
       'margin-right': '.5rem'
+    };
+
+    // Typography — bw_ prefixed utilities via loops
+    var _imp = function _imp(p, v) {
+      var o = {};
+      o[p] = v + ' !important';
+      return o;
+    };
+    [['fs', {
+      'xs': '0.75rem',
+      'sm': '0.875rem',
+      'base': '1rem',
+      'lg': '1.125rem',
+      'xl': '1.25rem',
+      '2xl': '1.5rem'
+    }, 'font-size'], ['fw', {
+      light: '300',
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700'
+    }, 'font-weight'], ['lh', {
+      tight: '1.25',
+      normal: '1.5',
+      relaxed: '1.75'
+    }, 'line-height']].forEach(function (d) {
+      for (var dk in d[1]) rules['.bw_' + d[0] + '_' + dk] = _imp(d[2], d[1][dk]);
+    });
+
+    // Flex utilities
+    rules['.bw_flex'] = {
+      'display': 'flex'
+    };
+    rules['.bw_flex_column'] = {
+      'flex-direction': 'column'
+    };
+    rules['.bw_flex_wrap'] = {
+      'flex-wrap': 'wrap'
+    };
+    rules['.bw_flex_center'] = {
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center'
+    };
+    for (var gk in spacingValues) rules['.bw_gap_' + gk] = {
+      'gap': spacingValues[gk] + ' !important'
     };
 
     // Visibility
