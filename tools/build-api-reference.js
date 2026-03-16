@@ -605,7 +605,7 @@ const html = `<!DOCTYPE html>
   <script>
     mountExampleNav('#example-nav', '08-api-reference.html');
 
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     bw.injectCSS(bw.css(${pageCssObj}));
 

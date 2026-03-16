@@ -28,15 +28,16 @@
     (function() {
       'use strict';
 
-      bw.loadDefaultStyles();
-      var theme = bw.generateTheme('wizard', {
+      bw.loadStyles();
+      var styles = bw.makeStyles({
         primary: '#6366f1',
         secondary: '#06b6d4',
         spacing: 'normal',
         radius: 'md'
       });
+      bw.applyStyles(styles);
 
-      var P = theme.palette;
+      var P = styles.palette;
 
       bw.injectCSS(bw.css({
         'body': {
@@ -186,7 +187,7 @@
       }
 
       function stepDone() {
-        return { t: 'div', a: { style: bw.s(bw.u.textCenter) }, c: [
+        return { t: 'div', a: { style: bw.s({ textAlign: 'center' }) }, c: [
           { t: 'div', a: { class: 'wiz-done-icon' }, c: '\u2705' },
           { t: 'h2', a: { style: 'color:' + P.success.base }, c: 'Welcome aboard!' },
           { t: 'p', a: { style: 'color:' + P.muted.base },

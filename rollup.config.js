@@ -18,6 +18,7 @@ const banner = `/*! bitwrench v${pkg.version} | ${pkg.license} | ${pkg.homepage}
 const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const bwserveBanner = `/*! bwserve v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const bcclBanner = `/*! bitwrench-bccl v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+const utilCssBanner = `/*! bitwrench-util-css v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 
 // Inline plugin: redirect component imports to empty stub (for lean build)
 function stubComponents() {
@@ -375,6 +376,91 @@ const babelConfig = {
       plugins: [
         resolve(),
         commonjs(),
+      ],
+    },
+
+    // Util CSS addon — modern builds (UMD, CJS, ESM)
+    {
+      input: 'src/bitwrench-util-css.js',
+      output: [
+        {
+          file: 'dist/bitwrench-util-css.umd.js',
+          format: 'umd',
+          name: 'bwUtilCSS',
+          exports: 'named',
+          banner: utilCssBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-util-css.umd.min.js',
+          format: 'umd',
+          name: 'bwUtilCSS',
+          exports: 'named',
+          banner: utilCssBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-util-css.cjs.js',
+          format: 'cjs',
+          exports: 'named',
+          banner: utilCssBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-util-css.cjs.min.js',
+          format: 'cjs',
+          exports: 'named',
+          banner: utilCssBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-util-css.esm.js',
+          format: 'esm',
+          banner: utilCssBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-util-css.esm.min.js',
+          format: 'esm',
+          banner: utilCssBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+      ],
+    },
+
+    // Util CSS addon — ES5 build (legacy browsers)
+    {
+      input: 'src/bitwrench-util-css.js',
+      output: [
+        {
+          file: 'dist/bitwrench-util-css.es5.js',
+          format: 'umd',
+          name: 'bwUtilCSS',
+          exports: 'named',
+          banner: utilCssBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-util-css.es5.min.js',
+          format: 'umd',
+          name: 'bwUtilCSS',
+          exports: 'named',
+          banner: utilCssBanner,
+          plugins: [terser()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+        babel(babelConfig),
       ],
     },
 

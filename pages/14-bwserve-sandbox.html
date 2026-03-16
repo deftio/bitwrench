@@ -17,7 +17,7 @@
   <script>
     // bwserve sandbox — linked from bwserve sub-nav
     mountExampleNav('#example-nav', '14-bwserve-sandbox.html');
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // =========================================================================
     // Preset examples
@@ -598,8 +598,8 @@
       '</head><body style="margin:0">',
       '<div id="app" style="padding:16px;color:#888;font-family:system-ui,sans-serif">Waiting for server code...</div>',
       '<script>',
-      'bw.loadDefaultStyles();',
-      'bw.generateTheme("sandbox", { primary: "#006666", secondary: "#333333", inject: true });',
+      'bw.loadStyles();',
+      'bw.loadStyles({ primary: "#006666", secondary: "#333333" });',
       'window._bwReady = true;',
       // Wire up data-bw-action click delegation
       'document.addEventListener("click", function(e) {',

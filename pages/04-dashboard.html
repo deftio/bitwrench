@@ -18,7 +18,7 @@
     // Mount the shared navigation
     mountExampleNav('#example-nav', '04-dashboard.html');
 
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // ── Dashboard CSS (injected via bw.css / bw.injectCSS) ──────────
     bw.injectCSS(bw.css({
@@ -235,10 +235,9 @@
 
     // ── Apply Theme ──────────────────────────────────────────────
     function applyTheme() {
-      bw.generateTheme('dashboard-theme', {
+      bw.loadStyles({
         primary: currentTheme.primary,
-        secondary: currentTheme.secondary,
-        inject: true
+        secondary: currentTheme.secondary
       });
     }
     applyTheme(); // Apply initial theme
@@ -515,13 +514,12 @@
       'var currentTheme = themePresets[0];',
       '',
       '// ---- Apply Theme ----',
-      '// bw.generateTheme() creates scoped CSS for all bw-* components.',
+      '// bw.loadStyles() creates scoped CSS for all bw-* components.',
       '// Custom elements use currentTheme colors via inline styles.',
       'function applyTheme() {',
-      '  bw.generateTheme("dashboard-theme", {',
+      '  bw.loadStyles({',
       '    primary: currentTheme.primary,',
-      '    secondary: currentTheme.secondary,',
-      '    inject: true',
+      '    secondary: currentTheme.secondary',
       '  });',
       '}',
       '',

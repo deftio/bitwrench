@@ -239,18 +239,19 @@ describe("Component Functions", function() {
   });
 });
 
-describe("Theming API", function() {
-  describe("#applyTheme() and #toggleTheme()", function() {
-    it("applyTheme should return mode string", function() {
-      var mode = bw.applyTheme('primary');
-      assert.equal(mode, 'primary');
+describe("Styles API", function() {
+  describe("#toggleStyles()", function() {
+    it("toggleStyles should return mode string", function() {
+      var mode = bw.toggleStyles();
+      assert.ok(mode === 'primary' || mode === 'alternate');
     });
 
-    it("toggleTheme should flip between primary and alternate", function() {
-      bw._activeThemeMode = 'primary';
-      var result = bw.toggleTheme();
+    it("toggleStyles should flip between primary and alternate", function() {
+      // Ensure clean state
+      document.body.classList.remove('bw_theme_alt');
+      var result = bw.toggleStyles();
       assert.equal(result, 'alternate');
-      result = bw.toggleTheme();
+      result = bw.toggleStyles();
       assert.equal(result, 'primary');
     });
   });

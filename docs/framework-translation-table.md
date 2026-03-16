@@ -23,7 +23,7 @@ How common UI operations map across frameworks. Each cell shows the idiomatic on
 | **Raw HTML** | Render unescaped HTML | `dangerouslySetInnerHTML` | `v-html="str"` | `el.innerHTML = str` | `{@html str}` | `innerHTML={str}` | `bw.raw(str)` in `c:` |
 | **Cross-component events** | Decouple communication | Context + useReducer / Zustand | provide/inject or Pinia | CustomEvent / EventTarget | stores | Context or signals | `bw.pub(topic, data)` / `bw.sub(topic, fn)` |
 | **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
-| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.generateTheme('name', { primary: '#hex' })` |
+| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` → `styles.palette` |
 | **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** |
 | **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (includes 50+ components + CSS gen) |
 

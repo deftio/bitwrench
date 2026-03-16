@@ -1,10 +1,10 @@
 /**
- * Tests for bw.generateTheme() and color utility functions
+ * Tests for bw.makeStyles() and color utility functions
  */
 
 import assert from "assert";
 import bw from "../src/bitwrench.js";
-import { getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout } from "../src/bitwrench-styles.js";
+import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -295,72 +295,44 @@ describe('Palette Derivation', function() {
 
 describe('Theme Generation', function() {
 
-  describe('bw.generateTheme', function() {
-    it('should return { css, palette, name }', function() {
-      const result = bw.generateTheme('test-theme', {
+  describe('bw.makeStyles', function() {
+    it('should return { css, palette, alternateCss, alternateRules, alternatePalette, isLightPrimary }', function() {
+      const result = bw.makeStyles({
         primary: '#0077b6',
         secondary: '#90e0ef',
-        tertiary: '#00b4d8',
-        inject: false
+        tertiary: '#00b4d8'
       });
       assert.ok('css' in result, 'should have css');
       assert.ok('palette' in result, 'should have palette');
-      assert.ok('name' in result, 'should have name');
-      assert.strictEqual(result.name, 'test-theme');
+      assert.ok('alternateCss' in result, 'should have alternateCss');
+      assert.ok('alternateRules' in result, 'should have alternateRules');
+      assert.ok('alternatePalette' in result, 'should have alternatePalette');
+      assert.strictEqual(typeof result.isLightPrimary, 'boolean', 'should have isLightPrimary');
       assert.strictEqual(typeof result.css, 'string');
       assert.strictEqual(typeof result.palette, 'object');
     });
 
-    it('should throw if primary is missing', function() {
-      assert.throws(function() {
-        bw.generateTheme('x', { secondary: '#aaa' });
-      }, /primary/);
+    it('should work with no args (all params optional)', function() {
+      const result = bw.makeStyles();
+      assert.ok('css' in result, 'should have css');
+      assert.ok('palette' in result, 'should have palette');
+      assert.ok(result.css.length > 100, 'should produce substantial CSS');
     });
 
-    it('should throw if secondary is missing', function() {
-      assert.throws(function() {
-        bw.generateTheme('x', { primary: '#aaa' });
-      }, /secondary/);
+    it('should work with only primary specified', function() {
+      const result = bw.makeStyles({ primary: '#aaa' });
+      assert.ok(result.css.length > 100, 'should produce CSS with only primary');
     });
 
-    it('scoped selectors should start with .name', function() {
-      const result = bw.generateTheme('ocean', {
-        primary: '#0077b6',
-        secondary: '#90e0ef',
-        inject: false
-      });
-      // All non-empty lines that look like selectors should be scoped
-      const lines = result.css.split('\n');
-      const selectorLines = lines.filter(function(l) { return l.includes('{') && !l.startsWith('}'); });
-      selectorLines.forEach(function(line) {
-        const sel = line.split('{')[0].trim();
-        if (sel) {
-          assert.ok(sel.includes('.ocean'), 'selector should contain .ocean: ' + sel);
-        }
-      });
-    });
-
-    it('unscoped theme should have no scope prefix', function() {
-      const result = bw.generateTheme('', {
-        primary: '#0077b6',
-        secondary: '#90e0ef',
-        inject: false
-      });
-      const lines = result.css.split('\n');
-      const selectorLines = lines.filter(function(l) { return l.includes('{') && !l.startsWith('}'); });
-      selectorLines.forEach(function(line) {
-        const sel = line.split('{')[0].trim();
-        if (sel) {
-          assert.ok(!sel.includes('.ocean'), 'unscoped selector should not contain .ocean');
-        }
-      });
+    it('should work with only secondary specified', function() {
+      const result = bw.makeStyles({ secondary: '#aaa' });
+      assert.ok(result.css.length > 100, 'should produce CSS with only secondary');
     });
 
     it('should contain palette class selectors for all variants', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#006666',
-        secondary: '#6c757d',
-        inject: false
+        secondary: '#6c757d'
       });
       // Single palette class per variant: .bw_primary, .bw_secondary, etc.
       assert.ok(result.css.includes('.bw_primary'), 'should have .bw_primary');
@@ -374,10 +346,9 @@ describe('Theme Generation', function() {
     });
 
     it('should contain outline button variants', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#006666',
-        secondary: '#6c757d',
-        inject: false
+        secondary: '#6c757d'
       });
       // Outline buttons: .bw_btn_outline.bw_primary
       assert.ok(result.css.includes('.bw_btn_outline.bw_primary'), 'should have outline-primary');
@@ -385,10 +356,9 @@ describe('Theme Generation', function() {
     });
 
     it('should contain alert variant selectors', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#006666',
-        secondary: '#6c757d',
-        inject: false
+        secondary: '#6c757d'
       });
       // Alerts: .bw_alert.bw_primary with light bg override
       assert.ok(result.css.includes('.bw_alert.bw_primary'), 'should have .bw_alert.bw_primary');
@@ -397,10 +367,9 @@ describe('Theme Generation', function() {
     });
 
     it('should contain badge variant selectors', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#006666',
-        secondary: '#6c757d',
-        inject: false
+        secondary: '#6c757d'
       });
       // Badges use the root palette class: .bw_primary
       assert.ok(result.css.includes('.bw_primary'), 'should have .bw_primary for badges');
@@ -408,10 +377,9 @@ describe('Theme Generation', function() {
     });
 
     it('should contain palette color selectors', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#006666',
-        secondary: '#6c757d',
-        inject: false
+        secondary: '#6c757d'
       });
       // Single palette class handles bg+color+border
       assert.ok(result.css.includes('.bw_primary'), 'should have .bw_primary');
@@ -419,10 +387,9 @@ describe('Theme Generation', function() {
     });
 
     it('should contain underscore palette selectors', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#006666',
-        secondary: '#6c757d',
-        inject: false
+        secondary: '#6c757d'
       });
       // Palette classes use underscores: .bw_primary
       assert.ok(result.css.includes('.bw_primary'),
@@ -430,31 +397,28 @@ describe('Theme Generation', function() {
     });
 
     it('should use default semantic colors when harmonize is 0', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#0077b6',
         secondary: '#90e0ef',
-        harmonize: 0,
-        inject: false
+        harmonize: 0
       });
       // Success should be exact default green when harmonize=0
       assert.strictEqual(result.palette.success.base, '#198754');
     });
 
     it('palette should have tertiary', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#0077b6',
         secondary: '#90e0ef',
-        tertiary: '#00b4d8',
-        inject: false
+        tertiary: '#00b4d8'
       });
       assert.strictEqual(result.palette.tertiary.base, '#00b4d8');
     });
 
     it('should default tertiary to primary when not specified', function() {
-      const result = bw.generateTheme('t', {
+      const result = bw.makeStyles({
         primary: '#0077b6',
-        secondary: '#90e0ef',
-        inject: false
+        secondary: '#90e0ef'
       });
       assert.strictEqual(result.palette.tertiary.base, '#0077b6');
     });
@@ -503,17 +467,15 @@ describe('Layout Presets', function() {
   });
 
   it('spacing preset should affect generated CSS', function() {
-    const compact = bw.generateTheme('compact-test', {
+    const compact = bw.makeStyles({
       primary: '#006666',
       secondary: '#6c757d',
-      spacing: 'compact',
-      inject: false
+      spacing: 'compact'
     });
-    const spacious = bw.generateTheme('spacious-test', {
+    const spacious = bw.makeStyles({
       primary: '#006666',
       secondary: '#6c757d',
-      spacing: 'spacious',
-      inject: false
+      spacing: 'spacious'
     });
     // Both should generate CSS
     assert.ok(compact.css.length > 0, 'compact should generate CSS');
@@ -523,17 +485,15 @@ describe('Layout Presets', function() {
   });
 
   it('radius preset should affect generated CSS', function() {
-    const none = bw.generateTheme('none-test', {
+    const none = bw.makeStyles({
       primary: '#006666',
       secondary: '#6c757d',
-      radius: 'none',
-      inject: false
+      radius: 'none'
     });
-    const pill = bw.generateTheme('pill-test', {
+    const pill = bw.makeStyles({
       primary: '#006666',
       secondary: '#6c757d',
-      radius: 'pill',
-      inject: false
+      radius: 'pill'
     });
     assert.notStrictEqual(none.css, pill.css);
   });
@@ -578,14 +538,14 @@ describe('Harmonize', function() {
     assert.strictEqual(resHsl[0], tgtHsl[0]);
   });
 
-  it('generateTheme should accept harmonize parameter', function() {
-    const result0 = bw.generateTheme('h0', {
+  it('makeStyles should accept harmonize parameter', function() {
+    const result0 = bw.makeStyles({
       primary: '#006666', secondary: '#cc6633',
-      harmonize: 0, inject: false
+      harmonize: 0
     });
-    const result40 = bw.generateTheme('h40', {
+    const result40 = bw.makeStyles({
       primary: '#006666', secondary: '#cc6633',
-      harmonize: 0.40, inject: false
+      harmonize: 0.40
     });
     // Different harmonize amounts produce different palettes
     assert.notStrictEqual(result0.palette.success.base, result40.palette.success.base);
@@ -677,14 +637,14 @@ describe('Elevation Presets', function() {
     assert.strictEqual(layout.elevation.md, '0 2px 4px black');
   });
 
-  it('elevation should affect generated theme CSS', function() {
-    const flat = bw.generateTheme('elev-flat', {
+  it('elevation should affect generated CSS', function() {
+    const flat = bw.makeStyles({
       primary: '#006666', secondary: '#6c757d',
-      elevation: 'flat', inject: false
+      elevation: 'flat'
     });
-    const lg = bw.generateTheme('elev-lg', {
+    const lg = bw.makeStyles({
       primary: '#006666', secondary: '#6c757d',
-      elevation: 'lg', inject: false
+      elevation: 'lg'
     });
     assert.notStrictEqual(flat.css, lg.css);
     assert.ok(flat.css.includes('none'), 'flat theme should contain none shadows');
@@ -726,14 +686,14 @@ describe('Motion Presets', function() {
     assert.strictEqual(layout.motion.fast, '50ms');
   });
 
-  it('motion should affect generated theme CSS', function() {
-    const reduced = bw.generateTheme('mot-reduced', {
+  it('motion should affect generated CSS', function() {
+    const reduced = bw.makeStyles({
       primary: '#006666', secondary: '#6c757d',
-      motion: 'reduced', inject: false
+      motion: 'reduced'
     });
-    const expressive = bw.generateTheme('mot-expressive', {
+    const expressive = bw.makeStyles({
       primary: '#006666', secondary: '#6c757d',
-      motion: 'expressive', inject: false
+      motion: 'expressive'
     });
     assert.notStrictEqual(reduced.css, expressive.css);
     assert.ok(reduced.css.includes('0ms'), 'reduced theme should contain 0ms transitions');
@@ -742,15 +702,15 @@ describe('Motion Presets', function() {
 
 describe('Backwards Compatibility', function() {
 
-  it('loadDefaultStyles should still be a function', function() {
-    assert.strictEqual(typeof bw.loadDefaultStyles, 'function');
+  it('loadStyles should be a function', function() {
+    assert.strictEqual(typeof bw.loadStyles, 'function');
   });
 
-  it('applyTheme should be a function', function() {
-    assert.strictEqual(typeof bw.applyTheme, 'function');
+  it('toggleStyles should be a function', function() {
+    assert.strictEqual(typeof bw.toggleStyles, 'function');
   });
-  it('toggleTheme should be a function', function() {
-    assert.strictEqual(typeof bw.toggleTheme, 'function');
+  it('clearStyles should be a function', function() {
+    assert.strictEqual(typeof bw.clearStyles, 'function');
   });
 
   it('bw.css should handle @media queries', function() {
@@ -805,78 +765,68 @@ describe('Integration (jsdom)', function() {
     freshDOM();
   });
 
-  it('should inject theme styles into DOM', function() {
-    const result = bw.generateTheme('inject-test', {
+  it('should inject styles into DOM via applyStyles', function() {
+    const styles = bw.makeStyles({
       primary: '#0077b6',
-      secondary: '#90e0ef',
-      inject: true
+      secondary: '#90e0ef'
     });
-    const el = document.getElementById('bw_theme_inject_test');
+    const el = bw.applyStyles(styles);
     assert.ok(el !== null, 'style element should exist');
+    assert.strictEqual(el.id, 'bw_style_global');
     assert.ok(el.textContent.includes('.bw_primary'), 'should contain .bw_primary palette class');
-    // Clean up
-    el.remove();
   });
 
-  it('should replace existing theme on re-generate', function() {
-    bw.generateTheme('replace-test', {
+  it('should replace existing styles on re-apply', function() {
+    const styles1 = bw.makeStyles({
       primary: '#ff0000',
-      secondary: '#00ff00',
-      inject: true
+      secondary: '#00ff00'
     });
-    bw.generateTheme('replace-test', {
+    bw.applyStyles(styles1);
+    const styles2 = bw.makeStyles({
       primary: '#0000ff',
-      secondary: '#ff00ff',
-      inject: true
+      secondary: '#ff00ff'
     });
-    const el = document.getElementById('bw_theme_replace_test');
+    bw.applyStyles(styles2);
+    const el = document.getElementById('bw_style_global');
     assert.ok(el !== null, 'style element should exist');
     // Should contain the second theme's color, not the first
     assert.ok(el.textContent.includes('#0000ff'), 'should contain the second theme color');
-    // Clean up
-    el.remove();
   });
 
-  it('multiple themes should get separate style elements', function() {
-    bw.generateTheme('multi-a', {
+  it('multiple scoped styles should get separate style elements', function() {
+    const stylesA = bw.makeStyles({
       primary: '#ff0000',
-      secondary: '#00ff00',
-      inject: true
+      secondary: '#00ff00'
     });
-    bw.generateTheme('multi-b', {
+    const stylesB = bw.makeStyles({
       primary: '#0000ff',
-      secondary: '#ff00ff',
-      inject: true
+      secondary: '#ff00ff'
     });
-    const elA = document.getElementById('bw_theme_multi_a');
-    const elB = document.getElementById('bw_theme_multi_b');
+    bw.applyStyles(stylesA, '#scope-a');
+    bw.applyStyles(stylesB, '#scope-b');
+    const elA = document.getElementById('bw_style_scope_a');
+    const elB = document.getElementById('bw_style_scope_b');
     assert.ok(elA !== null, 'style element A should exist');
     assert.ok(elB !== null, 'style element B should exist');
     assert.notStrictEqual(elA, elB);
-    // Clean up
-    elA.remove();
-    elB.remove();
   });
 
-  it('unscoped theme should use bw_theme_default id', function() {
-    bw.generateTheme('', {
+  it('global applyStyles should use bw_style_global id', function() {
+    const styles = bw.makeStyles({
       primary: '#006666',
-      secondary: '#6c757d',
-      inject: true
+      secondary: '#6c757d'
     });
-    const el = document.getElementById('bw_theme_default');
-    assert.ok(el !== null, 'style element should exist with bw_theme_default id');
-    // Clean up
-    el.remove();
+    bw.applyStyles(styles);
+    const el = document.getElementById('bw_style_global');
+    assert.ok(el !== null, 'style element should exist with bw_style_global id');
   });
 
-  it('inject: false should not create style element', function() {
-    bw.generateTheme('no-inject', {
+  it('makeStyles should not create style element (pure)', function() {
+    bw.makeStyles({
       primary: '#006666',
-      secondary: '#6c757d',
-      inject: false
+      secondary: '#6c757d'
     });
-    const el = document.getElementById('bw_theme_no_inject');
+    const el = document.getElementById('bw_style_global');
     assert.strictEqual(el, null, 'no style element should be created');
   });
 });
@@ -1070,16 +1020,14 @@ describe('Alternate Palette', function() {
     assert.ok(alt.danger, 'should have danger');
   });
 
-  it('generateTheme should return alternate property', function() {
-    var result = bw.generateTheme('test-alt', {
+  it('makeStyles should return alternateCss and alternatePalette', function() {
+    var result = bw.makeStyles({
       primary: '#006666',
-      secondary: '#cc6633',
-      inject: false
+      secondary: '#cc6633'
     });
-    assert.ok(result.alternate, 'result should have alternate');
-    assert.ok(result.alternate.css, 'alternate should have css');
-    assert.ok(result.alternate.palette, 'alternate should have palette');
-    assert.ok(result.alternate.css.includes('bw_theme_alt'), 'alt CSS should use .bw_theme_alt scope');
+    assert.ok(result.alternateCss, 'result should have alternateCss');
+    assert.ok(result.alternatePalette, 'result should have alternatePalette');
+    assert.ok(result.alternateRules, 'result should have alternateRules');
     assert.strictEqual(typeof result.isLightPrimary, 'boolean', 'should have isLightPrimary');
   });
 
@@ -1103,9 +1051,9 @@ describe('Alternate Palette', function() {
     assert.ok(css.includes('.ocean.bw_theme_alt'), 'should use compound selector .ocean.bw_theme_alt');
   });
 
-  it('applyTheme and toggleTheme should be callable', function() {
-    assert.strictEqual(typeof bw.applyTheme, 'function');
-    assert.strictEqual(typeof bw.toggleTheme, 'function');
+  it('toggleStyles and clearStyles should be callable', function() {
+    assert.strictEqual(typeof bw.toggleStyles, 'function');
+    assert.strictEqual(typeof bw.clearStyles, 'function');
   });
 });
 
@@ -1138,11 +1086,11 @@ describe('Structural + Cosmetic = Full Coverage', function() {
     });
   });
 
-  it('loadDefaultStyles combined output should cover structural + themed', function() {
+  it('loadStyles combined output should cover structural + themed', function() {
     freshDOM();
-    bw.loadDefaultStyles();
+    bw.loadStyles();
     const structEl = document.getElementById('bw_structural');
-    const themeEl = document.getElementById('bw_theme_default');
+    const themeEl = document.getElementById('bw_style_global');
     assert.ok(structEl !== null, 'structural styles should be injected');
     assert.ok(themeEl !== null, 'themed styles should be injected');
     // Structural should have layout properties
@@ -1151,5 +1099,360 @@ describe('Structural + Cosmetic = Full Coverage', function() {
     // Themed should have color properties
     assert.ok(themeEl.textContent.includes('color'), 'themed should contain color');
     assert.ok(themeEl.textContent.includes('background'), 'themed should contain background');
+  });
+});
+
+// =========================================================================
+// v2.0.18 Clean Styles API Tests
+// =========================================================================
+
+describe('bw.makeStyles', function() {
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.makeStyles, 'function');
+  });
+
+  it('should return an object with expected keys', function() {
+    var result = bw.makeStyles();
+    assert.ok(result.css, 'should have css');
+    assert.ok(result.alternateCss, 'should have alternateCss');
+    assert.ok(result.rules, 'should have rules');
+    assert.ok(result.alternateRules, 'should have alternateRules');
+    assert.ok(result.palette, 'should have palette');
+    assert.ok(result.alternatePalette, 'should have alternatePalette');
+    assert.strictEqual(typeof result.isLightPrimary, 'boolean', 'should have isLightPrimary boolean');
+  });
+
+  it('should work with no arguments (all defaults)', function() {
+    var result = bw.makeStyles();
+    assert.ok(result.css.length > 100, 'should produce substantial CSS');
+    assert.ok(result.palette.primary, 'should have primary palette');
+    assert.ok(result.palette.secondary, 'should have secondary palette');
+  });
+
+  it('should accept custom primary and secondary colors', function() {
+    var result = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    assert.ok(result.css.includes('#4f46e5') || result.css.includes('4f46e5'), 'CSS should reference primary color');
+    assert.strictEqual(result.palette.primary.base, '#4f46e5');
+  });
+
+  it('should be pure — no DOM side effects', function() {
+    freshDOM();
+    var stylesBefore = document.querySelectorAll('style').length;
+    bw.makeStyles({ primary: '#ff0000', secondary: '#00ff00' });
+    var stylesAfter = document.querySelectorAll('style').length;
+    assert.strictEqual(stylesBefore, stylesAfter, 'should not inject any <style> elements');
+  });
+
+  it('alternateCss should have no .bw_theme_alt prefix', function() {
+    var result = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    assert.ok(!result.alternateCss.includes('.bw_theme_alt'), 'alternateCss should not contain .bw_theme_alt');
+  });
+
+  it('should accept spacing and radius config', function() {
+    var compact = bw.makeStyles({ primary: '#006666', secondary: '#cc6633', spacing: 'compact' });
+    var spacious = bw.makeStyles({ primary: '#006666', secondary: '#cc6633', spacing: 'spacious' });
+    assert.ok(compact.css !== spacious.css, 'different spacing should produce different CSS');
+
+    var none = bw.makeStyles({ primary: '#006666', secondary: '#cc6633', radius: 'none' });
+    var pill = bw.makeStyles({ primary: '#006666', secondary: '#cc6633', radius: 'pill' });
+    assert.ok(none.css !== pill.css, 'different radius should produce different CSS');
+  });
+
+  it('should return rules objects suitable for bw.css()', function() {
+    var result = bw.makeStyles();
+    assert.strictEqual(typeof result.rules, 'object');
+    assert.strictEqual(typeof result.alternateRules, 'object');
+    // Should have selectors as keys
+    var keys = Object.keys(result.rules);
+    assert.ok(keys.length > 10, 'should have many rule selectors');
+  });
+
+  it('palette should have standard color roles', function() {
+    var result = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    var p = result.palette;
+    assert.ok(p.primary.base, 'palette.primary.base');
+    assert.ok(p.primary.hover, 'palette.primary.hover');
+    assert.ok(p.primary.textOn, 'palette.primary.textOn');
+    assert.ok(p.secondary.base, 'palette.secondary.base');
+    assert.ok(p.success, 'palette.success');
+    assert.ok(p.danger, 'palette.danger');
+    assert.ok(p.warning, 'palette.warning');
+    assert.ok(p.info, 'palette.info');
+  });
+
+  it('alternatePalette should be luminance-inverted', function() {
+    var result = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    // Primary and alternate should differ
+    assert.notStrictEqual(result.palette.primary.base, result.alternatePalette.primary.base);
+  });
+});
+
+describe('bw.applyStyles', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.applyStyles, 'function');
+  });
+
+  it('should inject a <style> element with correct id (global)', function() {
+    var styles = bw.makeStyles();
+    var el = bw.applyStyles(styles);
+    assert.ok(el, 'should return a <style> element');
+    assert.strictEqual(el.id, 'bw_style_global');
+    assert.ok(el.textContent.length > 100, 'should have CSS content');
+  });
+
+  it('should inject a <style> element with scoped id', function() {
+    var styles = bw.makeStyles();
+    var el = bw.applyStyles(styles, '#my-dashboard');
+    assert.ok(el, 'should return a <style> element');
+    assert.strictEqual(el.id, 'bw_style_my_dashboard');
+  });
+
+  it('scoped CSS should wrap selectors under scope', function() {
+    var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    var el = bw.applyStyles(styles, '#my-dashboard');
+    var css = el.textContent;
+    assert.ok(css.includes('#my-dashboard'), 'CSS should contain scope selector');
+  });
+
+  it('alternate CSS should be wrapped with .bw_theme_alt (global)', function() {
+    var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    var el = bw.applyStyles(styles);
+    var css = el.textContent;
+    assert.ok(css.includes('.bw_theme_alt'), 'CSS should contain .bw_theme_alt');
+  });
+
+  it('alternate CSS should use compound selector when scoped', function() {
+    var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    var el = bw.applyStyles(styles, '#my-dashboard');
+    var css = el.textContent;
+    assert.ok(css.includes('#my-dashboard.bw_theme_alt'), 'CSS should contain compound scope+alt selector');
+  });
+
+  it('should be idempotent (replace existing <style> with same id)', function() {
+    var styles1 = bw.makeStyles({ primary: '#ff0000', secondary: '#00ff00' });
+    var styles2 = bw.makeStyles({ primary: '#0000ff', secondary: '#ffff00' });
+    bw.applyStyles(styles1);
+    bw.applyStyles(styles2);
+    var styleEls = document.querySelectorAll('#bw_style_global');
+    assert.strictEqual(styleEls.length, 1, 'should have exactly one global <style>');
+  });
+
+  it('should return null for invalid styles', function() {
+    var el = bw.applyStyles(null);
+    assert.strictEqual(el, null);
+    var el2 = bw.applyStyles({});
+    assert.strictEqual(el2, null);
+  });
+});
+
+describe('bw.loadStyles', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.loadStyles, 'function');
+  });
+
+  it('should work with no arguments', function() {
+    var el = bw.loadStyles();
+    assert.ok(el, 'should return a <style> element');
+    assert.strictEqual(el.id, 'bw_style_global');
+  });
+
+  it('should inject structural CSS alongside themed CSS', function() {
+    bw.loadStyles();
+    var structEl = document.getElementById('bw_structural');
+    var themeEl = document.getElementById('bw_style_global');
+    assert.ok(structEl, 'structural styles should be injected');
+    assert.ok(themeEl, 'themed styles should be injected');
+  });
+
+  it('should accept config with custom colors', function() {
+    var el = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    assert.ok(el, 'should return a <style> element');
+    assert.ok(el.textContent.length > 100, 'should have CSS content');
+  });
+
+  it('should accept scope parameter', function() {
+    var el = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' }, '#preview');
+    assert.strictEqual(el.id, 'bw_style_preview');
+    assert.ok(el.textContent.includes('#preview'), 'CSS should be scoped');
+  });
+
+  it('structural CSS should only be injected once', function() {
+    bw.loadStyles();
+    bw.loadStyles({ primary: '#ff0000', secondary: '#00ff00' });
+    var structEls = document.querySelectorAll('#bw_structural');
+    assert.strictEqual(structEls.length, 1, 'should have exactly one structural <style>');
+  });
+});
+
+describe('bw.loadReset', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.loadReset, 'function');
+  });
+
+  it('should inject a <style> with id bw_style_reset', function() {
+    var el = bw.loadReset();
+    assert.ok(el, 'should return a <style> element');
+    assert.strictEqual(el.id, 'bw_style_reset');
+  });
+
+  it('should contain box-sizing rule', function() {
+    var el = bw.loadReset();
+    assert.ok(el.textContent.includes('box-sizing'), 'should contain box-sizing');
+  });
+
+  it('should be idempotent', function() {
+    var el1 = bw.loadReset();
+    var el2 = bw.loadReset();
+    assert.strictEqual(el1, el2, 'should return same element on second call');
+    var els = document.querySelectorAll('#bw_style_reset');
+    assert.strictEqual(els.length, 1, 'should have exactly one reset <style>');
+  });
+});
+
+describe('bw.toggleStyles', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.toggleStyles, 'function');
+  });
+
+  it('should toggle bw_theme_alt on <body> (global)', function() {
+    var mode1 = bw.toggleStyles();
+    assert.strictEqual(mode1, 'alternate');
+    assert.ok(document.body.classList.contains('bw_theme_alt'), 'body should have bw_theme_alt');
+
+    var mode2 = bw.toggleStyles();
+    assert.strictEqual(mode2, 'primary');
+    assert.ok(!document.body.classList.contains('bw_theme_alt'), 'body should not have bw_theme_alt');
+  });
+
+  it('should toggle bw_theme_alt on scoped element', function() {
+    var app = document.getElementById('app');
+    var mode1 = bw.toggleStyles('#app');
+    assert.strictEqual(mode1, 'alternate');
+    assert.ok(app.classList.contains('bw_theme_alt'), '#app should have bw_theme_alt');
+
+    var mode2 = bw.toggleStyles('#app');
+    assert.strictEqual(mode2, 'primary');
+    assert.ok(!app.classList.contains('bw_theme_alt'), '#app should not have bw_theme_alt');
+  });
+
+  it('should return primary for nonexistent scope', function() {
+    var mode = bw.toggleStyles('#nonexistent');
+    assert.strictEqual(mode, 'primary');
+  });
+});
+
+describe('bw.clearStyles', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.clearStyles, 'function');
+  });
+
+  it('should remove global <style> by default', function() {
+    bw.loadStyles();
+    assert.ok(document.getElementById('bw_style_global'), 'global style should exist');
+    bw.clearStyles();
+    assert.strictEqual(document.getElementById('bw_style_global'), null, 'global style should be removed');
+  });
+
+  it('should remove scoped <style>', function() {
+    var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    bw.applyStyles(styles, '#my-dashboard');
+    assert.ok(document.getElementById('bw_style_my_dashboard'), 'scoped style should exist');
+    bw.clearStyles('#my-dashboard');
+    assert.strictEqual(document.getElementById('bw_style_my_dashboard'), null, 'scoped style should be removed');
+  });
+
+  it('should remove reset <style>', function() {
+    bw.loadReset();
+    assert.ok(document.getElementById('bw_style_reset'), 'reset style should exist');
+    bw.clearStyles('reset');
+    assert.strictEqual(document.getElementById('bw_style_reset'), null, 'reset style should be removed');
+  });
+
+  it('should remove bw_theme_alt class from body on global clear', function() {
+    bw.toggleStyles(); // adds bw_theme_alt to body
+    assert.ok(document.body.classList.contains('bw_theme_alt'));
+    bw.clearStyles();
+    assert.ok(!document.body.classList.contains('bw_theme_alt'), 'bw_theme_alt should be removed from body');
+  });
+
+  it('should be safe to call when no styles exist', function() {
+    assert.doesNotThrow(function() { bw.clearStyles(); });
+    assert.doesNotThrow(function() { bw.clearStyles('#nonexistent'); });
+  });
+});
+
+describe('_scopeToStyleId (via clearStyles/applyStyles)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should convert #my-dashboard to bw_style_my_dashboard', function() {
+    var styles = bw.makeStyles();
+    var el = bw.applyStyles(styles, '#my-dashboard');
+    assert.strictEqual(el.id, 'bw_style_my_dashboard');
+  });
+
+  it('should convert .preview to bw_style_preview', function() {
+    var styles = bw.makeStyles();
+    var el = bw.applyStyles(styles, '.preview');
+    assert.strictEqual(el.id, 'bw_style_preview');
+  });
+
+  it('no scope should produce bw_style_global', function() {
+    var styles = bw.makeStyles();
+    var el = bw.applyStyles(styles);
+    assert.strictEqual(el.id, 'bw_style_global');
+  });
+});
+
+describe('getResetStyles (bitwrench-styles.js)', function() {
+  it('should return an object with reset rules', function() {
+    var rules = getResetStyles();
+    assert.ok(rules['*'], 'should have * selector');
+    assert.ok(rules['html'], 'should have html selector');
+    assert.ok(rules['body'], 'should have body selector');
+  });
+
+  it('should include box-sizing rule', function() {
+    var rules = getResetStyles();
+    assert.strictEqual(rules['*']['box-sizing'], 'border-box');
+  });
+
+  it('should include reduced-motion media query', function() {
+    var rules = getResetStyles();
+    assert.ok(rules['@media (prefers-reduced-motion: reduce)'], 'should have reduced-motion query');
+  });
+});
+
+describe('scopeRulesUnder (bitwrench-styles.js)', function() {
+  it('should prefix all selectors with scope', function() {
+    var rules = { '.bw_card': { color: 'red' }, '.bw_btn': { color: 'blue' } };
+    var scoped = scopeRulesUnder(rules, '#app');
+    assert.ok(scoped['#app .bw_card'], 'should have scoped .bw_card');
+    assert.ok(scoped['#app .bw_btn'], 'should have scoped .bw_btn');
+  });
+
+  it('should handle comma-separated selectors', function() {
+    var rules = { '.bw_card, .bw_panel': { color: 'red' } };
+    var scoped = scopeRulesUnder(rules, '#app');
+    var key = Object.keys(scoped)[0];
+    assert.ok(key.includes('#app .bw_card'), 'should scope first part');
+    assert.ok(key.includes('#app .bw_panel'), 'should scope second part');
+  });
+
+  it('should handle @media blocks', function() {
+    var rules = { '@media (min-width: 768px)': { '.bw_card': { padding: '1rem' } } };
+    var scoped = scopeRulesUnder(rules, '#app');
+    assert.ok(scoped['@media (min-width: 768px)'], 'should preserve @media key');
+    var inner = scoped['@media (min-width: 768px)'];
+    assert.ok(inner['#app .bw_card'], 'should scope inner selector');
   });
 });

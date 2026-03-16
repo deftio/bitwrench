@@ -18,7 +18,7 @@
   <script>
     mountExampleNav('#example-nav', '15-html-generation.html');
 
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // =========================================================================
     // Page-specific CSS (only styles NOT in shared-theme.css)
@@ -390,7 +390,7 @@
                 { t: 'code', c: 'bw.makeCard()' }, ', ',
                 { t: 'code', c: 'bw.makeTable()' },
                 ', etc.), themes (',
-                { t: 'code', c: 'bw.generateTheme()' },
+                { t: 'code', c: 'bw.makeStyles()' },
                 '), live DOM mounting (',
                 { t: 'code', c: 'bw.DOM()' },
                 '), or pub/sub \u2014 then you need ',

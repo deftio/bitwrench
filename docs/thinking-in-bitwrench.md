@@ -284,19 +284,20 @@ This is Sass mixins without Sass. And it's more powerful — the function can do
 ### Theme palettes — complete design systems from two colors
 
 ```js
-var theme = bw.generateTheme('brand', { primary: '#336699', secondary: '#cc6633' });
+var styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+bw.applyStyles(styles);
 
-// theme.palette has every derived color as JS values
+// styles.palette has every derived color as JS values
 bw.injectCSS(bw.css({
   '.my-header': {
-    background: theme.palette.primary.base,
-    color: theme.palette.primary.textOn,
-    borderBottom: '3px solid ' + theme.palette.secondary.base
+    background: styles.palette.primary.base,
+    color: styles.palette.primary.textOn,
+    borderBottom: '3px solid ' + styles.palette.secondary.base
   }
 }));
 ```
 
-`generateTheme()` isn't a black box. It returns the full palette as JavaScript values. You can mix theme-generated CSS with your own `bw.css()` rules using the same colors.
+`makeStyles()` isn't a black box. It returns the full palette as JavaScript values. You can mix theme-generated CSS with your own `bw.css()` rules using the same colors.
 
 ### @keyframes and nested at-rules
 
@@ -367,7 +368,7 @@ The breakpoints (`sm`, `md`, `lg`, `xl`) match bitwrench's grid system. `bw.resp
 
 ### Built-in styles
 
-Bitwrench ships with Bootstrap-inspired classes (`bw-card`, `bw-btn`, `bw-table`, etc.) that you can load with `bw.loadDefaultStyles()`. Use them, ignore them, or override them.
+Bitwrench ships with Bootstrap-inspired classes (`bw-card`, `bw-btn`, `bw-table`, etc.) that you can load with `bw.loadStyles()`. Use them, ignore them, or override them.
 
 ### The key insight
 
@@ -943,7 +944,7 @@ bw.deriveShades('#336699');          // { base, hover, active, light, darkText, 
 bw.derivePalette({ primary: '#336699', secondary: '#cc6633' }); // full 9-group palette
 ```
 
-`deriveShades()` and `derivePalette()` are the building blocks behind `generateTheme()`. You can use them directly for custom color systems.
+`deriveShades()` and `derivePalette()` are the building blocks behind `makeStyles()`. You can use them directly for custom color systems.
 
 ### URL and data utilities
 
@@ -991,8 +992,7 @@ Unquoted keys, single quotes, trailing commas — all accepted. Especially usefu
 ### Static page composition
 
 ```js
-bw.loadDefaultStyles();
-bw.generateTheme('brand', { primary: '#336699', secondary: '#cc6633' });
+bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
 
 bw.DOM('#app', [
   bw.makeNavbar({ brand: 'Acme', items: [
@@ -1076,9 +1076,10 @@ function addToCart(item) {
 ### Theme + custom CSS
 
 ```js
-var theme = bw.generateTheme('brand', { primary: '#336699', secondary: '#cc6633' });
-var accent = theme.palette.secondary.base;
-var accentLight = theme.palette.secondary.light;
+var styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+bw.applyStyles(styles);
+var accent = styles.palette.secondary.base;
+var accentLight = styles.palette.secondary.light;
 
 bw.injectCSS(bw.css({
   '.hero': {
@@ -1125,9 +1126,9 @@ The toast container is part of the TACO tree. Individual toasts append into it a
 This compact example combines the key patterns: theme palette tokens (no hardcoded hex), `bw.s()` + `bw.u` for inline styles, `bw.responsive()` for breakpoints, and `bw.component()` for live-updating stat cards.
 
 ```js
-bw.loadDefaultStyles();
-var theme = bw.generateTheme('dash', { primary: '#1e40af', secondary: '#059669' });
-var P = theme.palette;
+var styles = bw.makeStyles({ primary: '#1e40af', secondary: '#059669' });
+bw.applyStyles(styles);
+var P = styles.palette;
 
 // Responsive grid — base stacks, md goes 2-col, lg goes 4-col
 bw.injectCSS(bw.css({
@@ -1213,8 +1214,8 @@ Key things this example proves:
 | `bw.s(...styles)` | Merge style objects into a style string |
 | `bw.u` | Pre-built utility objects (`bw.u.flex`, `bw.u.p4`, `bw.u.bold`, etc.) |
 | `bw.responsive(sel, bp)` | Generate responsive `@media` CSS from breakpoint object |
-| `bw.loadDefaultStyles()` | Load built-in component CSS |
-| `bw.generateTheme(name, cfg)` | Generate themed CSS from seed colors |
+| `bw.loadStyles()` | Load built-in component CSS (or pass config to theme) |
+| `bw.makeStyles(cfg)` | Generate themed CSS from seed colors (returns styles object) |
 
 ### State (Level 2)
 
@@ -1290,7 +1291,7 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 | **Raw HTML** | Render unescaped HTML | `dangerouslySetInnerHTML` | `v-html="str"` | `el.innerHTML = str` | `{@html str}` | `innerHTML={str}` | `bw.raw(str)` in `c:` |
 | **Cross-component events** | Decouple communication | Context + useReducer / Zustand | provide/inject or Pinia | CustomEvent / EventTarget | stores | Context or signals | `bw.pub(topic, data)` / `bw.sub(topic, fn)` |
 | **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
-| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.generateTheme('name', { primary: '#hex' })` → `theme.palette` |
+| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` → `styles.palette` |
 | **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** — open the HTML file |
 | **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (bitwrench UMD gzipped, includes 50+ components + CSS gen) |
 

@@ -77,8 +77,9 @@ function cardStyles(accent) {
 bw.injectCSS(bw.css({ '.warn': cardStyles('#e67e22'), '.ok': cardStyles('#27ae60') }));
 
 // Theme palette — complete design system from 2 colors
-var theme = bw.generateTheme('brand', { primary: '#336699', secondary: '#cc6633' });
-// theme.palette.primary.base, theme.palette.secondary.light, etc.
+var styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+bw.applyStyles(styles);
+// styles.palette.primary.base, styles.palette.secondary.light, etc.
 ```
 
 ## Three Levels
@@ -105,7 +106,7 @@ Most UI should be Level 0. Escalate only when needed.
 <body>
   <div id="app"></div>
   <script>
-    bw.loadDefaultStyles();
+    bw.loadStyles();
     bw.DOM('#app', {
       t: 'div', a: { class: 'bw-container' },
       c: [ bw.makeCard({ title: 'Hello', content: 'Built with bitwrench.' }) ]
@@ -134,8 +135,8 @@ Most UI should be Level 0. Escalate only when needed.
 |----------|-------------|
 | `bw.css(rules)` | JS object → CSS string. CamelCase auto-converts. |
 | `bw.injectCSS(css, { id })` | Insert CSS into `<head>` |
-| `bw.loadDefaultStyles()` | Load built-in Bootstrap-like styles (call once) |
-| `bw.generateTheme(name, config)` | Generate scoped theme from seed colors |
+| `bw.loadStyles()` | Load built-in Bootstrap-like styles (call once); pass config to theme |
+| `bw.makeStyles(config)` | Generate scoped theme from seed colors (returns styles object) |
 | `bw.s(...styles)` | Merge style objects: `bw.s(bw.u.flex, { gap: '1rem' })` |
 | `bw.u` | Pre-built utilities: `bw.u.flex`, `bw.u.textCenter`, `bw.u.p4`, `bw.u.bold` |
 | `bw.responsive(sel, breakpoints)` | Generate responsive CSS |
@@ -366,9 +367,9 @@ bw.makeBarChart({ data, labelKey, valueKey, title, color, height })
 ## Theming
 
 ```javascript
-bw.loadDefaultStyles();  // call once
+bw.loadStyles();  // call once (no args = built-in defaults)
 
-bw.generateTheme('mytheme', {
+bw.loadStyles({
   primary: '#336699',
   secondary: '#cc6633',
   tertiary: '#339966',     // optional
@@ -379,11 +380,10 @@ bw.generateTheme('mytheme', {
   harmonize: 0.20          // hue shift semantics toward primary (0-1)
 });
 
-bw.toggleTheme();           // primary ↔ alternate
-bw.applyTheme('primary');   // or 'alternate', 'light', 'dark'
+bw.toggleStyles();          // primary ↔ alternate
 
 // Presets: teal, ocean, sunset, forest, slate, rose, indigo, amber, emerald, nord, coral, midnight
-bw.generateTheme('ocean', bw.THEME_PRESETS.ocean);
+bw.loadStyles(bw.THEME_PRESETS.ocean);
 ```
 
 ## Events Pattern
@@ -524,8 +524,7 @@ bwcli serve ./site --port 8080 --open         # serve directory
 
 ### Static page (Level 0)
 ```javascript
-bw.loadDefaultStyles();
-bw.generateTheme('brand', { primary: '#336699', secondary: '#cc6633' });
+bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
 bw.DOM('#app', [
   bw.makeNavbar({ brand: 'Acme', items: [{ text: 'Home', href: '#' }] }),
   bw.makeHero({ title: 'Welcome', subtitle: 'Built with bitwrench' }),
@@ -601,9 +600,9 @@ bw.injectCSS([
 
 ### Mini dashboard (theme tokens + bw.s + responsive + live update)
 ```javascript
-bw.loadDefaultStyles();
-var theme = bw.generateTheme('dash', { primary: '#1e40af', secondary: '#059669' });
-var P = theme.palette;  // use palette tokens, never hardcoded hex
+var styles = bw.makeStyles({ primary: '#1e40af', secondary: '#059669' });
+bw.applyStyles(styles);
+var P = styles.palette;  // use palette tokens, never hardcoded hex
 
 bw.injectCSS(bw.css({ '.sg': { display: 'grid', gap: '1rem' } }));
 bw.injectCSS(bw.responsive('.sg', {
@@ -646,13 +645,13 @@ The full 22-row table is in `docs/thinking-in-bitwrench.md`. These are the 10 mo
 | **Generate CSS** | styled-components | `<style scoped>` | `style.textContent` | `bw.injectCSS(bw.css({...}))` |
 | **Responsive** | media query in CSS | `@media` in `<style>` | `@media` in CSS | `bw.responsive('.x', {md:{...}})` |
 | **Cross-component** | Context / Zustand | provide/inject | CustomEvent | `bw.pub()` / `bw.sub()` |
-| **Theme tokens** | ThemeProvider | CSS vars | CSS vars | `bw.generateTheme()` → `palette` |
+| **Theme tokens** | ThemeProvider | CSS vars | CSS vars | `bw.loadStyles(cfg)` or `bw.makeStyles(cfg)` → `palette` |
 | **Build step** | Yes (Vite/webpack) | Yes (Vite) | No | **No** — open the HTML file |
 
 ## Key Rules
 
 1. **Event handlers go in `a: { onclick: fn }`, never in `o.mounted`** — mounted handlers are silently lost when a component re-renders. This is the #1 mistake.
-2. **Call `bw.loadDefaultStyles()`** before rendering (browser).
+2. **Call `bw.loadStyles()`** before rendering (browser).
 3. **Content is escaped by default.** Use `bw.raw(str)` for raw HTML.
 4. **All `make*()` return Level 0 TACOs** — pass to `bw.DOM()` or `bw.html()`.
 5. **Use `bw.DOM()` to mount** — handles lifecycle + cleanup.

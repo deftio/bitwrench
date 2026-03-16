@@ -17,7 +17,7 @@
 
   <script>
     mountExampleNav('#example-nav', 'self-load-test.html');
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
     var GZIP_WARN_KB = 40;
@@ -208,8 +208,8 @@
                         ' bw.DOM() available'
                       ]},
                       { t: 'p', c: [
-                        typeof bw.generateTheme === 'function' ? '\u2705' : '\u274C',
-                        ' bw.generateTheme() available'
+                        typeof bw.makeStyles === 'function' ? '\u2705' : '\u274C',
+                        ' bw.makeStyles() available'
                       ]},
                       { t: 'p', c: [
                         typeof bw.makeCard === 'function' ? '\u2705' : '\u274C',

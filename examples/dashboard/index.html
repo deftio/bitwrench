@@ -14,7 +14,7 @@
     // Metrics Dashboard — Level 2 components + pub/sub + theme tokens
     //
     // Demonstrates:
-    //   - bw.generateTheme() with palette tokens used in bw.css() rules
+    //   - bw.makeStyles() with palette tokens used in bw.css() rules
     //   - bw.s() + bw.u for all inline styles
     //   - bw.responsive() for layout breakpoints
     //   - bw.css({ '@keyframes': {...} }) for pulse animation
@@ -29,17 +29,18 @@
     (function() {
       'use strict';
 
-      bw.loadDefaultStyles();
-      var theme = bw.generateTheme('dashboard', {
+      bw.loadStyles();
+      var styles = bw.makeStyles({
         primary: '#1e40af',
         secondary: '#059669',
         tertiary: '#7c3aed',
         spacing: 'normal',
         radius: 'md'
       });
+      bw.applyStyles(styles);
 
       // -- Palette tokens (no hardcoded hex in CSS rules) -------------------
-      var P = theme.palette;
+      var P = styles.palette;
       var primary = P.primary.base;
       var primaryLight = P.primary.light;
       var secondary = P.secondary.base;
@@ -216,10 +217,10 @@
         bw.DOM('#progress-panel', {
           t: 'div',
           c: targets.map(function(t) {
-            return { t: 'div', a: { style: bw.s(bw.u.mb4) }, c: [
-              { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.mb2, { fontSize: '0.85rem' }) }, c: [
+            return { t: 'div', a: { style: bw.s({ marginBottom: '1rem' }) }, c: [
+              { t: 'div', a: { style: bw.s({ display: 'flex' }, { justifyContent: 'space-between' }, { marginBottom: '0.5rem' }, { fontSize: '0.85rem' }) }, c: [
                 { t: 'span', c: t.label },
-                { t: 'span', a: { style: bw.s(bw.u.bold) }, c: t.pct + '%' }
+                { t: 'span', a: { style: bw.s({ fontWeight: '700' }) }, c: t.pct + '%' }
               ]},
               bw.makeProgress({ value: t.pct, variant: t.variant })
             ]};
@@ -233,7 +234,7 @@
       var header = {
         t: 'div', a: { class: 'dash-header' },
         c: {
-          t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.alignCenter, { maxWidth: '1200px', margin: '0 auto' }) },
+          t: 'div', a: { style: bw.s({ display: 'flex' }, { justifyContent: 'space-between' }, { alignItems: 'center' }, { maxWidth: '1200px', margin: '0 auto' }) },
           c: [
             { t: 'div', c: [
               { t: 'h1', c: 'Metrics Dashboard' },
@@ -265,7 +266,7 @@
         t: 'div', a: { class: 'dash-panel' },
         c: [
           { t: 'h3', c: 'Activity Feed' },
-          { t: 'div', a: { id: 'activity-feed' }, c: { t: 'div', a: { style: bw.s(bw.u.textCenter, { color: '#999', padding: '2rem' }) }, c: 'Waiting for events...' } }
+          { t: 'div', a: { id: 'activity-feed' }, c: { t: 'div', a: { style: bw.s({ textAlign: 'center' }, { color: '#999', padding: '2rem' }) }, c: 'Waiting for events...' } }
         ]
       };
 

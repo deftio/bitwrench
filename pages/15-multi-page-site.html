@@ -16,7 +16,7 @@
 
   <script>
     mountExampleNav('#example-nav', '15-multi-page-site.html');
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // =========================================================================
     // Helper: read-only code block
@@ -625,10 +625,9 @@
     // Section 4: Site Kit Factory
     // =========================================================================
     function createSiteKit(config) {
-      var theme = bw.generateTheme(config.name, {
+      var theme = bw.makeStyles({
         primary: config.primary,
-        secondary: config.secondary,
-        inject: false
+        secondary: config.secondary
       });
       var palette = theme.palette;
 
@@ -719,7 +718,7 @@
         },
         codeBlock(
           'function createSiteKit(config) {\n' +
-          '  var theme = bw.generateTheme(config.name, {\n' +
+          '  var theme = bw.makeStyles({\n' +
           '    primary: config.primary,\n' +
           '    secondary: config.secondary\n' +
           '  });\n' +
@@ -769,7 +768,7 @@
               t: 'p', a: { style: 'margin:0' },
               c: [
                 'The factory uses ',
-                { t: 'code', c: 'bw.generateTheme()' },
+                { t: 'code', c: 'bw.makeStyles()' },
                 ' to derive a full color palette from two seed colors. Every component in the kit shares those colors. Change the seeds, the entire site updates. This is bitwrench\'s design-system-from-code approach.'
               ]
             }

@@ -18,7 +18,7 @@
   <script>
     mountExampleNav('#example-nav', '00-quick-start.html');
 
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // =========================================================================
     // Helper: callout box
@@ -396,7 +396,7 @@
         { t: 'h2', c: { t: 'a', a: { href: '#section-theming' }, c: 'Theming in One Call' } },
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' }, c: [
-            { t: 'code', c: 'bw.generateTheme()' },
+            { t: 'code', c: 'bw.loadStyles()' },
             ' creates a complete design system from 2\u20133 seed colors. Every ',
             { t: 'code', c: 'bw_*' },
             ' component picks up the new palette automatically.'
@@ -404,15 +404,15 @@
           makeTryIt({
             code: [
               '// Generate a theme from seed colors',
-              'bw.generateTheme(\'demo\', {',
+              'bw.loadStyles({',
               '  primary: \'#336699\',',
               '  secondary: \'#cc6633\',',
               '  tertiary: \'#2e8b57\'',
               '});',
               '',
-              '// Wrap output in the theme class',
+              '// Output now uses the loaded theme',
               'bw.DOM(target, {',
-              '  t: \'div\', a: { class: \'demo\' }, c: [',
+              '  t: \'div\', c: [',
               '    bw.makeCard({',
               '      title: \'Themed Card\',',
               '      content: [',

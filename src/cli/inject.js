@@ -48,7 +48,7 @@ export function getInjectionHead(mode) {
  */
 export function getInjectionBodyEnd(mode) {
     if (mode === 'standalone' || mode === 'cdn') {
-        return `<script>if(typeof bw!=='undefined'){bw.loadDefaultStyles();}</script>`;
+        return `<script>if(typeof bw!=='undefined'){bw.loadStyles();}</script>`;
     }
     // mode === 'none'
     return '';

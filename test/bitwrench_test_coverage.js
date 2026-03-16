@@ -47,8 +47,8 @@ describe("Style Merge (bw.s)", function() {
     assert.deepEqual(bw.s(), {});
   });
 
-  it("should work with bw.u utilities", function() {
-    const result = bw.s(bw.u.flex, bw.u.gap4);
+  it("should work with style objects", function() {
+    const result = bw.s({ display: 'flex' }, { gap: '1rem' });
     assert.equal(result.display, 'flex');
     assert.equal(result.gap, '1rem');
   });
@@ -198,23 +198,22 @@ describe("DOM Selector (bw.$)", function() {
 });
 
 // =========================================================================
-// bw.loadDefaultStyles()
+// bw.loadStyles()
 // =========================================================================
-describe("Default Styles (bw.loadDefaultStyles)", function() {
+describe("Default Styles (bw.loadStyles)", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should inject styles and return theme result", function() {
-    const result = bw.loadDefaultStyles();
+  it("should inject styles and return style element", function() {
+    const result = bw.loadStyles();
     assert.ok(result);
-    assert.ok('css' in result, 'should have css');
-    assert.ok('palette' in result, 'should have palette');
-    assert.ok(result.css.length > 100, 'css should have content');
+    assert.ok(result.id === 'bw_style_global', 'should have global style id');
+    assert.ok(result.textContent.length > 100, 'css should have content');
     // Check structural styles were injected
     const structEl = document.getElementById('bw_structural');
     assert.ok(structEl !== null, 'structural style element should exist');
     // Check themed styles were injected
-    const themeEl = document.getElementById('bw_theme_default');
-    assert.ok(themeEl !== null, 'theme style element should exist');
+    const themeEl = document.getElementById('bw_style_global');
+    assert.ok(themeEl !== null, 'themed style element should exist');
   });
 });
 

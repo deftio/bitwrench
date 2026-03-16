@@ -67,7 +67,7 @@ function resolveInjectionMode(flags) {
 /**
  * Resolve theme config from --theme flag value
  * @param {string} themeValue - Preset name or hex colors ("primary,secondary" or "primary,secondary,tertiary")
- * @returns {Object} Config for bw.generateTheme
+ * @returns {Object} Config for bw.makeStyles
  */
 function resolveTheme(themeValue) {
     if (!themeValue) return null;
@@ -165,10 +165,7 @@ export function convertFile(inputPath, flags = {}) {
     if (flags.theme) {
         const themeConfig = resolveTheme(flags.theme);
         if (themeConfig) {
-            const result = bw.generateTheme('', {
-                ...themeConfig,
-                inject: false
-            });
+            const result = bw.makeStyles(themeConfig);
             css += '\n' + result.css;
         }
     }

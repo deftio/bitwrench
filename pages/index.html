@@ -19,7 +19,7 @@
     // Mount nav
     mountExampleNav('#example-nav', 'index.html');
 
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // ---- Page CSS via bw.injectCSS ----
     bw.injectCSS(bw.css({
@@ -611,11 +611,10 @@
       ];
 
       function renderThemedCard() {
-        bw.generateTheme('homedemo', {
+        bw.loadStyles({
           primary: activeTheme.p,
           secondary: activeTheme.s,
-          tertiary: activeTheme.t,
-          inject: true
+          tertiary: activeTheme.t
         });
         var done = tasks.filter(function(t) { return t.done; }).length;
         var pct = Math.round((done / tasks.length) * 100);

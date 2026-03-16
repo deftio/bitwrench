@@ -263,14 +263,14 @@ describe('CLI: inject.js', function () {
         assert.ok(head.length > 1000); // UMD bundle is large
     });
 
-    it('should return loadDefaultStyles script for cdn body injection', function () {
+    it('should return loadStyles script for cdn body injection', function () {
         const body = getInjectionBodyEnd('cdn');
-        assert.ok(body.includes('bw.loadDefaultStyles'));
+        assert.ok(body.includes('bw.loadStyles'));
     });
 
-    it('should return loadDefaultStyles script for standalone body injection', function () {
+    it('should return loadStyles script for standalone body injection', function () {
         const body = getInjectionBodyEnd('standalone');
-        assert.ok(body.includes('bw.loadDefaultStyles'));
+        assert.ok(body.includes('bw.loadStyles'));
     });
 });
 

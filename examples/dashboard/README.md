@@ -37,6 +37,6 @@ open examples/dashboard/index.html
 ## Key Patterns to Study
 
 1. **Theme token usage**: No hardcoded hex values in CSS — everything derives from `theme.palette`
-2. **Utility styles**: `bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.mb4)` composes inline styles
+2. **Utility styles**: `bw.s({ display: 'flex' }, { justifyContent: 'space-between' }, { marginBottom: '1rem' })` composes inline styles
 3. **Responsive**: `bw.responsive('.dash-stats', { base: {...}, lg: {...} })` generates media queries
 4. **Pub/sub decoupling**: `updateStats()` publishes data; `renderProgress()` subscribes independently

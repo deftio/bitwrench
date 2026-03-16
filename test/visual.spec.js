@@ -496,11 +496,10 @@ test.describe('CSS and Styling', () => {
 
     // Generate a custom theme on the page
     await page.evaluate(() => {
-      if (typeof bw !== 'undefined' && bw.generateTheme) {
-        bw.generateTheme('test-responsive', {
+      if (typeof bw !== 'undefined' && bw.loadStyles) {
+        bw.loadStyles({
           primary: '#336699',
-          secondary: '#cc6633',
-          inject: true
+          secondary: '#cc6633'
         });
       }
     });

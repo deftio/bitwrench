@@ -206,14 +206,14 @@ describe("bw.htmlPage()", function() {
     assert.ok(result.includes('World'));
   });
 
-  it("should include loadDefaultStyles for cdn runtime", function() {
+  it("should include loadStyles for cdn runtime", function() {
     var result = bw.htmlPage({ runtime: 'cdn' });
-    assert.ok(result.includes('bw.loadDefaultStyles()'));
+    assert.ok(result.includes('bw.loadStyles()'));
   });
 
-  it("should not include loadDefaultStyles for shim runtime", function() {
+  it("should not include loadStyles for shim runtime", function() {
     var result = bw.htmlPage({ runtime: 'shim', body: 'test' });
-    assert.ok(!result.includes('bw.loadDefaultStyles()'));
+    assert.ok(!result.includes('bw.loadStyles()'));
   });
 
   it("should handle theme as config object", function() {

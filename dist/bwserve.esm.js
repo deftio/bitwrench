@@ -340,8 +340,8 @@ var CAPTURE_FN_SOURCE = 'function(opts) {'
  *
  * The shell is a minimal HTML doc that:
  * - Loads bitwrench UMD + CSS from /__bw/ routes
- * - Calls bw.loadDefaultStyles()
- * - Optionally applies a theme
+ * - Calls bw.loadStyles()
+ * - Optionally applies a custom theme
  * - Creates a #app div
  * - Opens an SSE connection via bw.clientConnect()
  * - Delegates data-bw-action clicks to the server via POST
@@ -387,11 +387,11 @@ function generateShell(opts) {
     '<script>',
     '(function() {',
     '  "use strict";',
-    '  bw.loadDefaultStyles();'
+    '  bw.loadStyles();'
   ];
 
   if (opts.theme) {
-    script.push('  bw.generateTheme("bwserve", ' + JSON.stringify(
+    script.push('  bw.loadStyles(' + JSON.stringify(
       typeof opts.theme === 'string'
         ? { primary: '#006666', secondary: '#333333' }
         : opts.theme

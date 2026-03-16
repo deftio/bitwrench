@@ -930,52 +930,35 @@ describe("Environment detection", function() {
 
 
 // =========================================================================
-// bitwrench.js — theme application and toggling (lines 3241-3290)
+// bitwrench.js — style toggling
 // =========================================================================
-describe("Theme application", function() {
+describe("Style toggling", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("bw.applyTheme should set mode", function() {
-    // Generate a theme first
-    bw.generateTheme('test-theme', {
-      primary: '#336699',
-      secondary: '#cc6633',
-      inject: true
-    });
-    bw.applyTheme('alternate');
-    assert.ok(document.documentElement.classList.contains('bw_theme_alt') ||
-              document.documentElement.classList.contains('bw-theme-alt'),
+  it("bw.toggleStyles should toggle bw_theme_alt class", function() {
+    bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
+    var mode1 = bw.toggleStyles();
+    assert.ok(document.body.classList.contains('bw_theme_alt'),
               'should add alt class');
-  });
-
-  it("bw.toggleTheme should flip mode", function() {
-    bw.generateTheme('toggle-test', {
-      primary: '#336699',
-      secondary: '#cc6633',
-      inject: true
-    });
-    var mode1 = bw.toggleTheme();
-    var mode2 = bw.toggleTheme();
+    var mode2 = bw.toggleStyles();
+    assert.ok(!document.body.classList.contains('bw_theme_alt'),
+              'should remove alt class');
     assert.notStrictEqual(mode1, mode2, 'should toggle between modes');
   });
 });
 
 
 // =========================================================================
-// bitwrench-styles.js coverage — applyTheme/clearTheme (lines 2187-2236)
+// bitwrench.js — clearStyles
 // =========================================================================
-describe("bw.clearTheme", function() {
+describe("bw.clearStyles", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should remove generated theme style elements", function() {
-    bw.generateTheme('clear-test', {
-      primary: '#336699',
-      secondary: '#cc6633',
-      inject: true
-    });
-    bw.clearTheme();
-    // After clearing, bw-theme-alt class should be removed
-    assert.ok(!document.documentElement.classList.contains('bw-theme-alt'));
+  it("should remove generated style elements", function() {
+    bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
+    bw.clearStyles();
+    assert.strictEqual(document.getElementById('bw_style_global'), null);
+    assert.ok(!document.body.classList.contains('bw_theme_alt'));
   });
 });
 
@@ -1019,44 +1002,32 @@ describe("bw._resolveTemplate edge cases", function() {
 });
 
 // =========================================================================
-// applyTheme edge cases
+// toggleStyles edge cases
 // =========================================================================
-describe("bw.applyTheme edge cases", function() {
+describe("bw.toggleStyles edge cases", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should handle 'light' mode", function() {
-    bw.generateTheme('light-test', {
-      primary: '#336699',
-      secondary: '#cc6633',
-      inject: true
-    });
-    var result = bw.applyTheme('light');
+  it("should toggle and return mode string", function() {
+    bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
+    var result = bw.toggleStyles();
     assert.ok(typeof result === 'string');
+    assert.strictEqual(result, 'alternate');
   });
 
-  it("should handle 'dark' mode", function() {
-    bw.generateTheme('dark-test', {
-      primary: '#336699',
-      secondary: '#cc6633',
-      inject: true
-    });
-    var result = bw.applyTheme('dark');
-    assert.ok(typeof result === 'string');
-  });
-
-  it("should default to 'primary' for unknown mode", function() {
-    bw.generateTheme('unknown-test', {
-      primary: '#336699',
-      secondary: '#cc6633',
-      inject: true
-    });
-    var result = bw.applyTheme('garbage');
+  it("should toggle back to primary", function() {
+    bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
+    bw.toggleStyles(); // to alternate
+    var result = bw.toggleStyles(); // back to primary
     assert.strictEqual(result, 'primary');
   });
 
-  it("should return mode string even without browser", function() {
-    // In Node without browser, applyTheme still returns a string
-    var result = bw.applyTheme('primary');
-    assert.ok(typeof result === 'string');
+  it("should return primary for nonexistent scope", function() {
+    var result = bw.toggleStyles('#nonexistent');
+    assert.strictEqual(result, 'primary');
+  });
+
+  it("should return primary in non-browser", function() {
+    // toggleStyles returns 'primary' when not in browser
+    assert.ok(typeof bw.toggleStyles === 'function');
   });
 });

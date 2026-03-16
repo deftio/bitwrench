@@ -28,16 +28,17 @@
     (function() {
       'use strict';
 
-      bw.loadDefaultStyles();
-      var theme = bw.generateTheme('feed', {
+      bw.loadStyles();
+      var styles = bw.makeStyles({
         primary: '#0f766e',
         secondary: '#be185d',
         tertiary: '#c2410c',
         spacing: 'normal',
         radius: 'md'
       });
+      bw.applyStyles(styles);
 
-      var P = theme.palette;
+      var P = styles.palette;
 
       // -- CSS with slide-in animation --------------------------------------
       bw.injectCSS(bw.css({

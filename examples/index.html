@@ -17,7 +17,7 @@
   <script>
     // Mount site nav
     mountExampleNav('#example-nav', '', '../pages/');
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // ---- Page CSS ----
     bw.injectCSS(bw.css({
@@ -214,7 +214,7 @@
             themeColor: '#4f46e5',
             desc: 'A fictional analytics product page with navbar, hero, stats, feature grid, testimonials, pricing cards, FAQ, and footer. Built entirely from built-in components and a generated color theme \u2014 no CSS to write. Good first example to see what bitwrench gives you out of the box.',
             teaches: [
-              'Setting up a color theme with <code>bw.generateTheme()</code>',
+              'Setting up a color theme with <code>bw.loadStyles()</code>',
               '18 built-in components (Navbar, Hero, Card, Button, Accordion, etc.)',
               'Utility classes for spacing and alignment',
               'Composing a full page from component building blocks'

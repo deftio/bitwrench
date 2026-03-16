@@ -6,7 +6,7 @@ A full-page e-commerce landing built entirely with bitwrench — the most compre
 
 - `bw.component()` Level 2 with `${template}` bindings and `o.methods`
 - `bw.pub()` / `bw.sub()` for cart state broadcast (navbar subscribes to `cart:updated`)
-- `bw.generateTheme('ember', ...)` with warm brown/chocolate palette
+- `bw.loadStyles({ primary: '#8B4513', ... })` with warm brown/chocolate palette
 - `bw.makeBarChart()`, `bw.makeTimeline()`, `bw.makeAccordion()`, `bw.makeTable()`
 - `bw.makeSearchInput()` with live filter pattern
 - `bw.createDOM()` for toast append pattern (transient UI)
@@ -56,4 +56,4 @@ The page is organized as a sequence of TACO sections mounted via a single `bw.DO
 2. **Component Level 2**: `${count}` template bindings auto-update DOM when `handle.set()` is called
 3. **Filter pattern**: `renderCoffeeSection()` re-renders the product grid based on search text and selected filter
 4. **Toast append**: `bw.createDOM()` creates transient notifications that auto-dismiss after 3.5 seconds
-5. **Theme tokens**: All colors derived from 3 seed hex values via `bw.generateTheme()`
+5. **Theme tokens**: All colors derived from 3 seed hex values via `bw.loadStyles()`

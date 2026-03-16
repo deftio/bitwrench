@@ -109,8 +109,8 @@ Key bitwrench functions available:
 - bw.html(taco) — TACO to HTML string
 - bw.css(rules) — JS object to CSS string
 - bw.injectCSS(css) — inject CSS into page
-- bw.loadDefaultStyles() — load Bootstrap-like defaults
-- bw.generateTheme(name, {primary:'#hex', secondary:'#hex'}) — generate themed CSS
+- bw.loadStyles() — load Bootstrap-like defaults
+- bw.loadStyles({primary:'#hex', secondary:'#hex'}) — load themed CSS
 - bw.makeCard({title, content, variant}) — card component
 - bw.makeButton({label, variant, size}) — button
 - bw.makeTable({headers, rows, striped, hover}) — table
@@ -131,8 +131,8 @@ Stat card example (not a built-in — build from TACO):
 
 ## Batching multiple operations
 {"type":"batch","ops":[
-  {"type":"exec","code":"bw.loadDefaultStyles()"},
-  {"type":"exec","code":"bw.generateTheme('app',{primary:'#2563eb',secondary:'#64748b'})"},
+  {"type":"exec","code":"bw.loadStyles()"},
+  {"type":"exec","code":"bw.loadStyles({primary:'#2563eb',secondary:'#64748b'})"},
   {"type":"exec","code":"bw.DOM('#app', bw.makeCard({title:'Dashboard', content:'Ready'}))"}
 ]}
 
@@ -141,7 +141,7 @@ Stat card example (not a built-in — build from TACO):
 2. Always target #app for the main content area.
 3. For complex layouts, use exec mode with bw.DOM() and bitwrench components.
 4. Use batch to combine multiple operations (e.g., load styles + render content).
-5. On the FIRST request, always include bw.loadDefaultStyles() or bw.generateTheme() in a batch.
+5. On the FIRST request, always include bw.loadStyles() in a batch.
 6. Use semantic HTML and bitwrench CSS classes (bw-card, bw-btn, bw-alert, etc.).
 7. Keep JavaScript in exec messages concise — single expressions or IIFEs.
 """
@@ -368,7 +368,7 @@ def send_welcome(cfg):
     welcome = {
         "type": "batch",
         "ops": [
-            {"type": "exec", "code": "bw.loadDefaultStyles()"},
+            {"type": "exec", "code": "bw.loadStyles()"},
             {
                 "type": "replace",
                 "target": "#app",

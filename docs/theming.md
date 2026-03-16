@@ -7,7 +7,7 @@ There is no CSS preprocessor, no build step, and no external stylesheet to manag
 ## Quick start
 
 ```javascript
-bw.generateTheme('myapp', {
+bw.loadStyles({
   primary: '#0077b6',
   secondary: '#90e0ef'
 });
@@ -44,13 +44,13 @@ Bitwrench ships with 12 built-in presets:
 Use a preset by name:
 
 ```javascript
-bw.generateTheme('ocean', bw.THEME_PRESETS.ocean);
+bw.loadStyles(bw.THEME_PRESETS.ocean);
 ```
 
 Or pass the preset colors directly:
 
 ```javascript
-bw.generateTheme('ocean', {
+bw.loadStyles({
   primary: '#0077b6',
   secondary: '#90e0ef',
   tertiary: '#00b4d8'
@@ -62,7 +62,7 @@ bw.generateTheme('ocean', {
 The full config object:
 
 ```javascript
-bw.generateTheme('myapp', {
+bw.loadStyles({
   // Seed colors (primary and secondary are required)
   primary:   '#0077b6',        // Brand color
   secondary: '#90e0ef',        // Accent color
@@ -156,30 +156,31 @@ Control transition timing:
 
 ## The palette
 
-`bw.generateTheme()` returns an object with the full generated palette:
+`bw.makeStyles()` returns an object with the full generated palette:
 
 ```javascript
-var theme = bw.generateTheme('myapp', {
+var styles = bw.makeStyles({
   primary: '#0077b6',
   secondary: '#90e0ef'
 });
+bw.applyStyles(styles);
 
-// theme.palette contains 9 color families, each with 8 shades:
-theme.palette.primary.base;      // '#0077b6' — the seed color
-theme.palette.primary.hover;     // darker variant for hover states
-theme.palette.primary.active;    // darker still for active/pressed states
-theme.palette.primary.light;     // very light tint for backgrounds
-theme.palette.primary.darkText;  // dark variant for text
-theme.palette.primary.border;    // medium-light for borders
-theme.palette.primary.focus;     // semi-transparent for focus rings
-theme.palette.primary.textOn;    // '#fff' or '#000' — readable text on base
+// styles.palette contains 9 color families, each with 8 shades:
+styles.palette.primary.base;      // '#0077b6' — the seed color
+styles.palette.primary.hover;     // darker variant for hover states
+styles.palette.primary.active;    // darker still for active/pressed states
+styles.palette.primary.light;     // very light tint for backgrounds
+styles.palette.primary.darkText;  // dark variant for text
+styles.palette.primary.border;    // medium-light for borders
+styles.palette.primary.focus;     // semi-transparent for focus rings
+styles.palette.primary.textOn;    // '#fff' or '#000' — readable text on base
 
 // Same 8 shades available for:
 // secondary, tertiary, success, danger, warning, info, light, dark
 
 // Surface colors (raw hex strings):
-theme.palette.background;  // '#ffffff'
-theme.palette.surface;     // '#f8f9fa'
+styles.palette.background;  // '#ffffff'
+styles.palette.surface;     // '#f8f9fa'
 ```
 
 ### How shade derivation works
@@ -211,30 +212,21 @@ Every theme has two palettes: primary and alternate. The alternate is derived au
 - If your primary palette is dark, the alternate will be light
 
 ```javascript
-var theme = bw.generateTheme('ocean', {
+var styles = bw.makeStyles({
   primary: '#0077b6',
   secondary: '#90e0ef'
 });
+bw.applyStyles(styles);
 
-theme.isLightPrimary;        // false — ocean primary is a dark blue
-theme.alternate.palette;     // light-inverted version of ocean
+styles.isLightPrimary;        // false — ocean primary is a dark blue
+styles.alternate.palette;     // light-inverted version of ocean
 ```
 
 ### Switching between palettes
 
 ```javascript
-// Switch to alternate palette
-bw.applyTheme('alternate');
-
-// Switch back to primary
-bw.applyTheme('primary');
-
-// Toggle between the two
-bw.toggleTheme();
-
-// Use semantic names (bitwrench picks the right one)
-bw.applyTheme('light');    // whichever palette is lighter
-bw.applyTheme('dark');     // whichever palette is darker
+// Toggle between primary and alternate palettes
+bw.toggleStyles();
 ```
 
 The toggle works by adding or removing the CSS class `.bw-theme-alt` on the `<html>` element. Both primary and alternate stylesheets are injected at theme generation time, so switching is instant — no re-generation needed.
@@ -242,28 +234,28 @@ The toggle works by adding or removing the CSS class `.bw-theme-alt` on the `<ht
 ### Clearing a theme
 
 ```javascript
-bw.clearTheme();
+bw.clearStyles();
 ```
 
-This removes the injected `<style>` elements and clears the internal theme cache. Call this before generating a new theme with a different name to prevent CSS accumulation.
+This removes the injected `<style>` elements and clears the internal theme cache. Call this before generating new styles with different colors to prevent CSS accumulation.
 
 ## Using themes without injection
 
 Set `inject: false` to get the CSS without adding it to the document:
 
 ```javascript
-var theme = bw.generateTheme('export', {
+var styles = bw.makeStyles({
   primary: '#0077b6',
   secondary: '#90e0ef',
   inject: false
 });
 
 // Use the CSS string however you want
-console.log(theme.css);           // primary CSS
-console.log(theme.alternate.css); // alternate CSS
+console.log(styles.css);           // primary CSS
+console.log(styles.alternate.css); // alternate CSS
 
 // Write to a file in Node.js
-fs.writeFileSync('theme.css', theme.css + '\n' + theme.alternate.css);
+fs.writeFileSync('theme.css', styles.css + '\n' + styles.alternate.css);
 ```
 
 This is useful for:
@@ -277,8 +269,8 @@ This is useful for:
 Themes are scoped by CSS class name. You can have multiple themes active simultaneously:
 
 ```javascript
-bw.generateTheme('ocean', { primary: '#0077b6', secondary: '#90e0ef' });
-bw.generateTheme('sunset', { primary: '#e76f51', secondary: '#264653' });
+bw.loadStyles({ primary: '#0077b6', secondary: '#90e0ef' });
+bw.loadStyles({ primary: '#e76f51', secondary: '#264653' });
 ```
 
 Apply themes to different sections by adding the theme name as a class:
@@ -314,4 +306,4 @@ These functions are available for custom color work:
 
 > **Coming from Tailwind?** Bitwrench's shade derivation is similar to Tailwind's color scale (50–900), but generated algorithmically from a single seed rather than hand-tuned. The 8 shades map to specific UI roles (hover, active, focus ring) rather than numeric levels.
 
-> **Coming from Bootstrap?** Bitwrench's theme generation replaces Bootstrap's Sass `$theme-colors` map and `tint-color()`/`shade-color()` functions. Instead of a build step with Sass variables, you call `bw.generateTheme()` at runtime.
+> **Coming from Bootstrap?** Bitwrench's theme generation replaces Bootstrap's Sass `$theme-colors` map and `tint-color()`/`shade-color()` functions. Instead of a build step with Sass variables, you call `bw.loadStyles()` at runtime.

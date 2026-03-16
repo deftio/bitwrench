@@ -31,7 +31,7 @@ Create `index.html`:
   <div id="app"></div>
   <script>
     // We'll build everything here
-    bw.loadDefaultStyles();
+    bw.loadStyles();
     bw.DOM('#app', { t: 'h1', c: 'Hello bitwrench!' });
   </script>
 </body>
@@ -45,8 +45,8 @@ Open it in a browser. You should see styled "Hello bitwrench!" text.
 Replace the script contents with:
 
 ```javascript
-bw.loadDefaultStyles();
-bw.generateTheme('brand', {
+bw.loadStyles();
+bw.loadStyles({
   primary: '#2563eb',
   secondary: '#7c3aed',
   spacing: 'normal',

@@ -287,7 +287,7 @@
                     id: 'bw_theme_toggle_btn',
                     title: 'Toggle theme palette',
                     onclick: function() {
-                      var mode = bw.toggleTheme();
+                      var mode = bw.toggleStyles();
                       this.textContent = mode === 'alternate' ? '\u2600' : '\u263D';
                       bw.setCookie('bw_theme_mode', mode, 365, { path: '/' });
                     }
@@ -398,12 +398,12 @@
         navEl.parentNode.insertBefore(belowWrapper, navEl.nextSibling);
       }
 
-      // Restore saved theme preference from cookie — only if a theme
-      // was generated on this page (bw._activeTheme set by generateTheme).
+      // Restore saved theme preference from cookie — only if styles
+      // were generated on this page (bw_style_global injected by applyStyles).
       // Otherwise ensure clean state: remove stale alt class and cookie.
       var savedMode = bw.getCookie('bw_theme_mode');
-      if ((savedMode === 'alternate' || savedMode === 'primary') && bw._activeTheme) {
-        bw.applyTheme(savedMode);
+      if ((savedMode === 'alternate' || savedMode === 'primary') && document.getElementById('bw_style_global')) {
+        bw.toggleStyles();
         var btns = bw.$('#bw_theme_toggle_btn');
         if (btns.length) {
           btns[0].textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';

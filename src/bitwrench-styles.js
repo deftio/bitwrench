@@ -2123,6 +2123,26 @@ export function getStructuralStyles() {
   return getStructuralCSS();
 }
 
+/**
+ * Get CSS reset rules only (box-sizing, html/body font, reduced-motion).
+ * Separate from themed/structural rules for independent injection.
+ * @returns {Object} CSS rules object for the reset layer
+ */
+export function getResetStyles() {
+  var rules = {};
+  Object.assign(rules, structuralRules.base);
+  // Include reduced-motion preference
+  rules['@media (prefers-reduced-motion: reduce)'] = {
+    '*, *::before, *::after': {
+      'animation-duration': '0.01ms !important',
+      'animation-iteration-count': '1 !important',
+      'transition-duration': '0.01ms !important',
+      'scroll-behavior': 'auto !important'
+    }
+  };
+  return rules;
+}
+
 // =========================================================================
 // defaultStyles — backward-compatible categorized view
 // =========================================================================
@@ -2160,7 +2180,7 @@ export function getAllStyles() {
 }
 
 // =========================================================================
-// Theme configuration object (deprecated — use generateTheme())
+// Theme configuration object (deprecated — use makeStyles())
 // =========================================================================
 
 export let theme = {
@@ -2263,6 +2283,44 @@ export function generateAlternateCSS(name, altPalette, layout) {
   };
 
   return altRules;
+}
+
+/**
+ * Prefix every selector in a rules object with a scope selector.
+ * Handles @media/@keyframes blocks and comma-separated selectors.
+ * @param {Object} rules - CSS rules object
+ * @param {string} prefix - Scope prefix (e.g. '#my-dashboard', '.bw_theme_alt')
+ * @param {boolean} [compound=false] - If true, use compound selector (no space)
+ *   for the first segment: `#scope.bw_theme_alt .sel` vs `#scope .sel`
+ * @returns {Object} New rules object with scoped selectors
+ */
+export function scopeRulesUnder(rules, prefix, compound) {
+  var scoped = {};
+  for (var sel in rules) {
+    if (!rules.hasOwnProperty(sel)) continue;
+    if (sel.charAt(0) === '@') {
+      // @media / @keyframes — recurse into the block
+      var innerBlock = rules[sel];
+      var scopedInner = {};
+      for (var innerSel in innerBlock) {
+        if (!innerBlock.hasOwnProperty(innerSel)) continue;
+        scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
+      }
+      scoped[sel] = scopedInner;
+    } else {
+      scoped[_prefixSelector(sel, prefix)] = rules[sel];
+    }
+  }
+  return scoped;
+}
+
+function _prefixSelector(sel, prefix) {
+  var parts = sel.split(',');
+  var result = [];
+  for (var i = 0; i < parts.length; i++) {
+    result.push(prefix + ' ' + parts[i].trim());
+  }
+  return result.join(', ');
 }
 
 export function deepMerge(target, source) {

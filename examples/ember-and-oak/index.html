@@ -53,7 +53,7 @@
   //   - Contact form uses Level 2 bw.component() with ${statusMsg} binding
   //   - Counter uses Level 2 bw.component() with o.methods
   //   - Toast notification system uses bw.createDOM() for append pattern
-  //   - Theme: bw.generateTheme('ember', { '#8B4513', '#D2691E', '#2F4F2F' })
+  //   - Theme: bw.loadStyles({ '#8B4513', '#D2691E', '#2F4F2F' })
   //
   // Key Patterns to Study:
   //   1. Pub/sub cart: cartAdd() → bw.pub('cart:updated') → navbar.sub()
@@ -68,8 +68,7 @@
   (function() {
     'use strict';
 
-    bw.loadDefaultStyles();
-    bw.generateTheme('ember', { primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' });
+    bw.loadStyles({ primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' });
 
     // ─── CSS ──────────────────────────────────────────────────────────────────
     bw.injectCSS(bw.css({
@@ -777,10 +776,10 @@
             ['bw.makeProgress()', 'BCCL', 'Roast progress demo'],
             ['bw.makeButton() variants', 'BCCL', 'CTAs, filter buttons, counter controls'],
             ['bw.makeBadge() + makeTooltip()', 'BCCL', 'SCA score pills + hover info'],
-            ['bw.generateTheme()', 'Theming', 'Global ember theme from 2 seed colors'],
+            ['bw.loadStyles()', 'Theming', 'Global ember theme from 2 seed colors'],
             ['bw.css() + bw.injectCSS()', 'Styling', 'All custom styles — CSS-in-JS'],
             ['bw.escapeHTML()', 'Utilities', 'Safe toast message rendering'],
-            ['bw.loadDefaultStyles()', 'Styling', 'Base stylesheet']
+            ['bw.loadStyles()', 'Styling', 'Base stylesheet']
           ]})
         ]}},
         { t: 'div', a: { style: 'display:flex;gap:.65rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem' }, c: [

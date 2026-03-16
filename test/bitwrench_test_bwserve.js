@@ -890,20 +890,20 @@ describe("generateShell()", function() {
     assert.ok(html.includes('<title>bwserve</title>'));
   });
 
-  it("should include theme generation when theme is provided as string", function() {
+  it("should include theme loading when theme is provided as string", function() {
     var html = generateShell({ clientId: 'c1', theme: 'ocean' });
-    assert.ok(html.includes('generateTheme'));
+    assert.ok(html.includes('loadStyles'));
   });
 
-  it("should include theme generation when theme is provided as object", function() {
+  it("should include theme loading when theme is provided as object", function() {
     var html = generateShell({ clientId: 'c1', theme: { primary: '#336699', secondary: '#cc6633' } });
-    assert.ok(html.includes('generateTheme'));
+    assert.ok(html.includes('loadStyles'));
     assert.ok(html.includes('#336699'));
   });
 
-  it("should include loadDefaultStyles call", function() {
+  it("should include loadStyles call", function() {
     var html = generateShell({ clientId: 'c1' });
-    assert.ok(html.includes('loadDefaultStyles'));
+    assert.ok(html.includes('loadStyles'));
   });
 
   it("should include meta viewport", function() {

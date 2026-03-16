@@ -18,7 +18,7 @@
   <script>
     mountExampleNav('#example-nav', '03-styling.html');
 
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // ── Inject the media query CSS that was previously in <style> ──
     bw.injectCSS(bw.css({
@@ -49,8 +49,8 @@
           c: [
             callout('concept', [
               { t: 'h4', c: '1. Inline Styles' },
-              { t: 'p', c: bw.raw('No CSS file needed. Use <code>bw.s()</code> and <code>bw.u</code> to compose style objects directly on elements. JavaScript IS your style system.') },
-              { t: 'pre', c: { t: 'code', c: 'a: { style: bw.s(bw.u.flex, bw.u.p4) }' } }
+              { t: 'p', c: bw.raw('No CSS file needed. Use <code>bw.s()</code> to compose style objects directly on elements. JavaScript IS your style system.') },
+              { t: 'pre', c: { t: 'code', c: "a: { style: bw.s({ display: 'flex' }, { padding: '1rem' }) }" } }
             ]),
             callout('concept', [
               { t: 'h4', c: '2. Generated Classes' },
@@ -79,7 +79,7 @@
       c: [
         { t: 'h2', c: bw.raw('Inline Styles &mdash; No CSS File Needed') },
         { t: 'p', a: { style: 'padding: 0 0.25rem;' },
-          c: bw.raw('<code>bw.s()</code> merges style objects (like <code>Object.assign</code>). <code>bw.u</code> provides ~50 pre-built utilities. Together they replace CSS variables, preprocessors, and utility class frameworks &mdash; because <strong>JavaScript variables ARE your variables</strong>.') },
+          c: bw.raw('<code>bw.s()</code> merges style objects (like <code>Object.assign</code>). Pass any number of plain objects and they get merged left-to-right. This replaces CSS variables, preprocessors, and utility class frameworks &mdash; because <strong>JavaScript variables ARE your variables</strong>.') },
         { t: 'div', a: { id: 'tryit-style-objects' } },
         callout('concept', [
           { t: 'h4', c: 'Why CSS variables aren\'t needed' },
@@ -173,7 +173,7 @@
             ]),
             callout('concept', [
               { t: 'h4', c: 'Runtime generation' },
-              { t: 'pre', c: { t: 'code', c: 'bw.loadDefaultStyles();' } },
+              { t: 'pre', c: { t: 'code', c: 'bw.loadStyles();' } },
               { t: 'p', c: 'Generate the same styles from JS at runtime. Useful for embedded widgets or single-file deployments.' }
             ])
           ]
@@ -181,7 +181,7 @@
         { t: 'p', c: bw.raw('Both produce the same <code>bw_btn</code>, <code>bw_card</code>, <code>bw_table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.') },
         callout('tip', [
           { t: 'strong', c: 'Custom palettes:' },
-          bw.raw(' Need different colors? <code>bw.generateTheme()</code> derives a complete palette from just 2-3 seed colors &mdash; buttons, alerts, badges, hover states, and contrast text, all scoped to a CSS class. See the <a href="10-themes.html">Themes page</a> for an interactive generator, presets, multi-theme demos, and code export.')
+          bw.raw(' Need different colors? <code>bw.makeStyles()</code> derives a complete palette from just 2-3 seed colors &mdash; buttons, alerts, badges, hover states, and contrast text. Call <code>bw.applyStyles()</code> to inject them. See the <a href="10-themes.html">Themes page</a> for an interactive generator, presets, multi-theme demos, and code export.')
         ], 'margin-top: 1rem;')
       ]
     };
@@ -198,7 +198,7 @@
       t: 'div', a: { class: 'demo-section' },
       c: [
         { t: 'h2', c: bw.raw('Theming &mdash; Generate Complete Palettes') },
-        { t: 'p', c: bw.raw('<code>bw.generateTheme(name, config)</code> replaces manual color wrangling. Give it 2-3 seed colors and it derives hover states, active states, light backgrounds, border colors, focus rings, and contrast text for every component.') },
+        { t: 'p', c: bw.raw('<code>bw.makeStyles(config)</code> replaces manual color wrangling. Give it 2-3 seed colors and it derives hover states, active states, light backgrounds, border colors, focus rings, and contrast text for every component. Call <code>bw.applyStyles(result)</code> to inject.') },
         { t: 'div', a: { id: 'tryit-theme' } },
         { t: 'div', a: { id: 'theme-preview-area', style: 'margin-top: 1rem;' } },
         callout('concept', [
@@ -226,16 +226,16 @@
             callout('concept', [
               { t: 'h4', c: 'Structural (layout)' },
               { t: 'p', c: bw.raw('Display, flex, sizing, spacing, cursor, font metrics. These <strong>never change</strong> with themes. A button is always <code>display: inline-block</code> and <code>cursor: pointer</code> regardless of color.') },
-              { t: 'pre', c: { t: 'code', c: '// Loaded once, never changes\nbw.loadDefaultStyles();\n// injects structural CSS (id="bw_structural")' } }
+              { t: 'pre', c: { t: 'code', c: '// Loaded once, never changes\nbw.loadStyles();\n// injects structural CSS (id="bw_structural")' } }
             ]),
             callout('concept', [
               { t: 'h4', c: 'Cosmetic (theme)' },
-              { t: 'p', c: bw.raw('Colors, backgrounds, shadows, border-colors, border-radius. These are <strong>derived from your palette</strong> by <code>bw.generateTheme()</code>. Swap palettes without touching layout.') },
-              { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\n// First arg is YOUR name \u2014 any string you choose\nbw.generateTheme(\'myapp\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n// injects a <style id="bw_theme_myapp"> tag' } }
+              { t: 'p', c: bw.raw('Colors, backgrounds, shadows, border-colors, border-radius. These are <strong>derived from your palette</strong> by <code>bw.makeStyles()</code>. Swap palettes without touching layout.') },
+              { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n// injects a <style id="bw_style_global"> tag' } }
             ])
           ]
         },
-        { t: 'p', c: bw.raw('When you call <code>bw.loadDefaultStyles()</code>, both layers are injected automatically &mdash; structural CSS plus the default palette. Call <code>bw.generateTheme()</code> to swap just the cosmetic layer while keeping the same structural foundation.') }
+        { t: 'p', c: bw.raw('When you call <code>bw.loadStyles()</code>, both layers are injected automatically &mdash; structural CSS plus the default palette. Call <code>bw.makeStyles()</code> + <code>bw.applyStyles()</code> to swap just the cosmetic layer while keeping the same structural foundation.') }
       ]
     };
 
@@ -303,21 +303,23 @@
         'var isDark = false;\n' +
         '\n' +
         'bw.DOM(target, {\n' +
-        '  t: \'div\', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.p4) },\n' +
+        '  t: \'div\', a: { style: bw.s({ display: "flex" }, { gap: "1rem" }, { padding: "1rem" }) },\n' +
         '  c: [\n' +
         '    { t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.p4, bw.u.rounded, bw.u.textCenter,\n' +
-        '        { background: accent, color: \'#fff\' }) },\n' +
+        '      a: { style: bw.s({ padding: "1rem" }, { borderRadius: "0.375rem" },\n' +
+        '        { textAlign: "center" }, { background: accent, color: \'#fff\' }) },\n' +
         '      c: \'Uses accent var\' },\n' +
         '    { t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.p4, bw.u.rounded, bw.u.textCenter, bw.u.border,\n' +
+        '      a: { style: bw.s({ padding: "1rem" }, { borderRadius: "0.375rem" },\n' +
+        '        { textAlign: "center" }, { border: "1px solid #d8d8d8" },\n' +
         '        { background: isDark ? \'#333\' : \'#fff\',\n' +
         '          color: isDark ? \'#fff\' : \'#333\' }) },\n' +
         '      c: \'Ternary = conditional style\' },\n' +
         '    { t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.bgTeal, bw.u.p4, bw.u.rounded,\n' +
-        '        bw.u.textCenter, { opacity: \'0.7\' }) },\n' +
-        '      c: \'bw.u utilities\'}\n' +
+        '      a: { style: bw.s({ background: "#006666", color: "#fff" },\n' +
+        '        { padding: "1rem" }, { borderRadius: "0.375rem" },\n' +
+        '        { textAlign: "center" }, { opacity: \'0.7\' }) },\n' +
+        '      c: \'Inline style objects\'}\n' +
         '  ]\n' +
         '});',
       height: '300px'
@@ -333,7 +335,7 @@
         '];\n' +
         '\n' +
         'bw.DOM(target, {\n' +
-        '  t: \'div\', a: { style: bw.s(bw.u.flex, bw.u.flexCol, bw.u.gap2) },\n' +
+        '  t: \'div\', a: { style: bw.s({ display: "flex", flexDirection: "column" }, { gap: "0.5rem" }) },\n' +
         '  c: items.map(function(item) {\n' +
         '    // String concatenation builds the class name\n' +
         '    return {\n' +
@@ -350,13 +352,14 @@
     bw.DOM('#tryit-css-classes', makeTryIt({
       code: '// Generate a CSS class with :hover\n' +
         'bw.injectCSS(bw.css({\n' +
-        '  \'.my-btn\': bw.s(bw.u.bgTeal, bw.u.p3, bw.u.rounded,\n' +
-        '    { cursor: \'pointer\', border: \'none\', color: \'#fff\', fontSize: \'1rem\' }),\n' +
+        '  \'.my-btn\': bw.s({ background: "#006666", color: "#fff" },\n' +
+        '    { padding: "0.75rem" }, { borderRadius: "0.375rem" },\n' +
+        '    { cursor: \'pointer\', border: \'none\', fontSize: \'1rem\' }),\n' +
         '  \'.my-btn:hover\': { background: \'#004d4d\', transform: \'translateY(-1px)\' }\n' +
         '}));\n' +
         '\n' +
         'bw.DOM(target, {\n' +
-        '  t: \'div\', a: { style: bw.s(bw.u.flex, bw.u.gap3) },\n' +
+        '  t: \'div\', a: { style: bw.s({ display: "flex" }, { gap: "0.75rem" }) },\n' +
         '  c: [\n' +
         '    { t: \'button\', a: { class: \'my-btn\' }, c: \'Hover me\' },\n' +
         '    { t: \'button\', a: { class: \'my-btn\', style: bw.s({ background: \'#28a745\' }) }, c: \'Green\' }\n' +
@@ -369,7 +372,8 @@
     bw.DOM('#tryit-responsive', makeTryIt({
       code: '// Responsive box — resize your browser to see it change\n' +
         'bw.injectCSS(bw.responsive(\'.responsive-demo\', {\n' +
-        '  base: bw.s(bw.u.p3, bw.u.rounded, bw.u.textCenter, bw.u.bold,\n' +
+        '  base: bw.s({ padding: "0.75rem" }, { borderRadius: "0.375rem" },\n' +
+        '    { textAlign: "center" }, { fontWeight: "700" },\n' +
         '    { background: \'#e8e8e8\', border: \'2px solid #ccc\' }),\n' +
         '  md: { background: \'#c8e6c9\', borderColor: \'#4caf50\' },\n' +
         '  lg: { background: \'#bbdefb\', borderColor: \'#2196f3\', padding: \'2rem\' }\n' +
@@ -402,7 +406,7 @@
         '    // + generated class for :hover\n' +
         '    class: \'bw_card status-card\',\n' +
         '    // Inline style for the dynamic part (computed from JS)\n' +
-        '    style: bw.s(bw.u.p4, bw.u.transition, {\n' +
+        '    style: bw.s({ padding: "1rem" }, { transition: "all 0.2s ease" }, {\n' +
         '      borderLeft: \'4px solid \' + (isOnline ? \'#28a745\' : \'#dc3545\'),\n' +
         '      cursor: \'pointer\'\n' +
         '    })\n' +
@@ -418,21 +422,21 @@
     // ── Section 8: Theming — Generate Complete Palettes ──
     bw.DOM('#tryit-theme', makeTryIt({
       code: '// Generate a complete theme from 2 seed colors\n' +
-        'var result = bw.generateTheme(\'demo\', {\n' +
+        'var result = bw.makeStyles({\n' +
         '  primary:   \'#2196f3\',\n' +
-        '  secondary: \'#607d8b\',\n' +
-        '  inject: false  // don\\\'t inject, just preview\n' +
+        '  secondary: \'#607d8b\'\n' +
         '});\n' +
         '\n' +
         '// Show the derived palette as color swatches\n' +
         'var keys = [\'primary\', \'secondary\', \'success\', \'danger\', \'warning\', \'info\'];\n' +
         'bw.DOM(target, {\n' +
-        '  t: \'div\', a: { style: bw.s(bw.u.flex, { flexWrap: \'wrap\', gap: \'0.5rem\' }) },\n' +
+        '  t: \'div\', a: { style: bw.s({ display: "flex" }, { flexWrap: \'wrap\', gap: \'0.5rem\' }) },\n' +
         '  c: keys.map(function(k) {\n' +
         '    var color = result.palette[k].base;\n' +
         '    return {\n' +
         '      t: \'div\',\n' +
-        '      a: { style: bw.s(bw.u.p3, bw.u.rounded, bw.u.textCenter, bw.u.bold,\n' +
+        '      a: { style: bw.s({ padding: "0.75rem" }, { borderRadius: "0.375rem" },\n' +
+        '        { textAlign: "center" }, { fontWeight: "700" },\n' +
         '        { background: color, color: bw.textOnColor(color),\n' +
         '          minWidth: \'100px\', fontSize: \'0.85rem\' }) },\n' +
         '      c: k + \'\\n\' + color\n' +
@@ -447,11 +451,10 @@
       var colors = { primary: '#006666', secondary: '#6c757d', tertiary: '#17a2b8' };
 
       function renderPreview() {
-        var result = bw.generateTheme('styling-preview', {
+        var result = bw.makeStyles({
           primary: colors.primary,
           secondary: colors.secondary,
-          tertiary: colors.tertiary,
-          inject: false
+          tertiary: colors.tertiary
         });
         var pal = result.palette;
 
@@ -463,10 +466,10 @@
               c: [
                 // Color pickers row
                 {
-                  t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.mb3, { alignItems: 'center' }) },
+                  t: 'div', a: { style: bw.s({ display: 'flex' }, { gap: '1rem' }, { marginBottom: '0.75rem' }, { alignItems: 'center' }) },
                   c: ['primary', 'secondary', 'tertiary'].map(function(key) {
                     return {
-                      t: 'label', a: { style: bw.s(bw.u.flex, { alignItems: 'center', gap: '0.5rem' }) },
+                      t: 'label', a: { style: bw.s({ display: 'flex' }, { alignItems: 'center', gap: '0.5rem' }) },
                       c: [
                         { t: 'span', c: key.charAt(0).toUpperCase() + key.slice(1) },
                         { t: 'input', a: {
@@ -479,12 +482,12 @@
                 },
                 // Buttons preview
                 {
-                  t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap2, bw.u.mb3, { flexWrap: 'wrap' }) },
+                  t: 'div', a: { style: bw.s({ display: 'flex' }, { gap: '0.5rem' }, { marginBottom: '0.75rem' }, { flexWrap: 'wrap' }) },
                   c: ['primary', 'secondary', 'success', 'danger', 'warning', 'info'].map(function(v) {
                     var base = pal[v].base;
                     return {
                       t: 'button',
-                      a: { style: bw.s(bw.u.p2, bw.u.rounded, bw.u.bold, {
+                      a: { style: bw.s({ padding: '0.5rem' }, { borderRadius: '0.375rem' }, { fontWeight: '700' }, {
                         background: base, color: bw.textOnColor(base),
                         border: 'none', cursor: 'pointer', fontSize: '0.85rem', padding: '0.4rem 0.9rem'
                       }) },
@@ -494,11 +497,11 @@
                 },
                 // Alerts preview
                 {
-                  t: 'div', a: { style: bw.s(bw.u.flexCol, bw.u.gap2) },
+                  t: 'div', a: { style: bw.s({ display: 'flex', flexDirection: 'column' }, { gap: '0.5rem' }) },
                   c: ['success', 'danger', 'warning'].map(function(v) {
                     return {
                       t: 'div',
-                      a: { style: bw.s(bw.u.p3, bw.u.rounded, {
+                      a: { style: bw.s({ padding: '0.75rem' }, { borderRadius: '0.375rem' }, {
                         background: pal[v].light,
                         border: '1px solid ' + pal[v].border,
                         color: pal[v].darkText

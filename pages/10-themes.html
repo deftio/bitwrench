@@ -19,7 +19,7 @@
     mountExampleNav('#example-nav', '10-themes.html');
 
     // Load default styles so bw-* classes work
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     // ---------------------------------------------------------------
     // Page CSS (injected via bw.css)
@@ -301,7 +301,7 @@
           { t: 'h1', c: 'Themes' },
           { t: 'p', a: { class: 'subtitle' }, c: [
             'Generate complete, scoped themes from seed colors with ',
-            { t: 'code', c: 'bw.generateTheme()' },
+            { t: 'code', c: 'bw.makeStyles()' },
             '.'
           ]}
         ]
@@ -317,7 +317,7 @@
         {
           t: 'div', a: { class: 'callout callout-concept' }, c: [
             { t: 'h4', c: 'Level 0 \u2014 Theme Generation' },
-            { t: 'p', c: ['Themes are data: hand bw.generateTheme() seed colors and get a complete CSS palette with dark mode. Theme generation is pure computation \u2014 no DOM required. ',
+            { t: 'p', c: ['Themes are data: hand bw.makeStyles() seed colors and get a complete CSS palette with dark mode. Theme generation is pure computation \u2014 no DOM required. ',
               { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
           ]
         },
@@ -435,7 +435,7 @@
                 {
                   t: 'p', a: { style: descStyle }, c: [
                     'Click any preset to apply it to the preview area above. Each theme is generated from just three seed colors using ',
-                    { t: 'code', c: 'bw.generateTheme()' },
+                    { t: 'code', c: 'bw.makeStyles()' },
                     '. Toggle between light and dark to see both palettes.'
                   ]
                 },
@@ -454,9 +454,9 @@
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
-                    'Themes in bitwrench are <strong>CSS-scoped</strong>. Every call to <code>bw.generateTheme(name, config)</code> ' +
-                    'produces CSS rules scoped under the class <code>.name</code>. To apply a theme, add that class to a container element. ' +
-                    'Every <code>bw-*</code> component inside that container automatically inherits the theme.'
+                    'Themes in bitwrench are <strong>CSS-scoped</strong>. Every call to <code>bw.makeStyles(config)</code> ' +
+                    'produces CSS rules scoped under a global class. Call <code>bw.applyStyles(result)</code> to inject them. ' +
+                    'Every <code>bw-*</code> component inside the scoped container automatically inherits the theme.'
                   )
                 },
                 // Whole-page application
@@ -482,7 +482,7 @@
                 { t: 'h3', a: { style: 'margin: 1.5rem 0 0.75rem 0; font-size: 1.05rem;' }, c: 'Switching themes' },
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
-                    'To switch from one theme to another, call <code>bw.clearTheme()</code> first to remove the ' +
+                    'To switch from one theme to another, call <code>bw.clearStyles()</code> first to remove the ' +
                     'previous theme\'s injected <code>&lt;style&gt;</code> elements, then generate the new theme. ' +
                     'This prevents stale CSS from accumulating in the DOM.'
                   )
@@ -577,12 +577,12 @@
               t: 'div', a: { class: 'demo-content' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: [
-                    { t: 'code', c: 'bw.generateTheme()' },
+                    { t: 'code', c: 'bw.makeStyles()' },
                     ' always produces two complementary palettes: ',
                     { t: 'strong', c: 'primary' },
                     ' (your seed colors) and ',
                     { t: 'strong', c: 'alternate' },
-                    bw.raw(' (luminance-inverted). Use <code>bw.applyTheme()</code> or <code>bw.toggleTheme()</code> to switch.')
+                    bw.raw(' (luminance-inverted). Use <code>bw.toggleStyles()</code> to switch.')
                   ]
                 },
                 { t: 'div', a: { id: 'theme-toggle-demo' } }
@@ -634,12 +634,11 @@
         secondary: state.secondary,
         tertiary:  state.tertiary,
         spacing:   state.spacing,
-        radius:    state.radius,
-        inject:    false
+        radius:    state.radius
       };
       if (state.background) config.background = state.background;
       if (state.surface)    config.surface    = state.surface;
-      var result = bw.generateTheme(state.themeName, config);
+      var result = bw.makeStyles(config);
       state.lastResult = result;
       return result;
     }
@@ -970,9 +969,9 @@
       var result = state.lastResult;
       var bgColor, textColor;
 
-      if (result && state.isAlternate && result.alternate) {
+      if (result && state.isAlternate && result.alternatePalette) {
         // Alternate mode: light.base is the dark background, dark.base is the light text
-        var altP = result.alternate.palette;
+        var altP = result.alternatePalette;
         bgColor = altP.light.base || '#1a1a2e';
         textColor = altP.dark.base || '#e8e8e8';
       } else if (result) {
@@ -992,7 +991,7 @@
       var tpEls = bw.$('#theme-preview');
       if (tpEls.length) {
         // Include scoped theme CSS inside the preview container
-        var scopedCSS = result ? result.css + (result.alternate ? result.alternate.css : '') : '';
+        var scopedCSS = result ? result.css + (result.alternateCss || '') : '';
         bw.DOM(tpEls[0], {
           t: 'div', a: { class: 'preview-area ' + scope + altClass, style: previewStyle }, c: [
             { t: 'style', c: bw.raw(scopedCSS) },
@@ -1125,16 +1124,15 @@
 
       // Whole-page theme code
       var wholePageCode =
-        "// Generate and inject the theme CSS\n" +
-        "var theme = bw.generateTheme('ocean', {\n" +
+        "// Generate and inject the theme CSS in one call\n" +
+        "bw.loadStyles({\n" +
         "  primary:   '#0077b6',\n" +
         "  secondary: '#90e0ef',\n" +
         "  tertiary:  '#00b4d8'\n" +
         "});\n\n" +
-        "// Apply to the entire page\n" +
-        "document.body.classList.add('ocean');\n\n" +
         "// The body background, text color, and all bw-*\n" +
-        "// components inside <body> now use the ocean theme.";
+        "// components now use the ocean theme.\n" +
+        "// loadStyles = makeStyles + applyStyles in one call.";
 
       bw.DOM('#apply-theme-code', useCE
         ? bw.codeEditor({ code: wholePageCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
@@ -1144,15 +1142,17 @@
       // Scoped container code
       var scopedCode =
         "// Generate two themes on the same page\n" +
-        "bw.generateTheme('ocean',  { primary: '#0077b6', secondary: '#90e0ef' });\n" +
-        "bw.generateTheme('sunset', { primary: '#e76f51', secondary: '#264653' });\n\n" +
+        "var ocean  = bw.makeStyles({ primary: '#0077b6', secondary: '#90e0ef' });\n" +
+        "var sunset = bw.makeStyles({ primary: '#e76f51', secondary: '#264653' });\n" +
+        "bw.applyStyles(ocean);\n" +
+        "bw.applyStyles(sunset);\n\n" +
         "// Scope each theme to a container\n" +
         "bw.DOM('#sidebar', {\n" +
-        "  t: 'div', a: { class: 'ocean' },  // ocean theme here\n" +
+        "  t: 'div',  // ocean theme here\n" +
         "  c: bw.makeCard({ title: 'Nav', content: '...' })\n" +
         "});\n\n" +
         "bw.DOM('#main', {\n" +
-        "  t: 'div', a: { class: 'sunset' }, // sunset theme here\n" +
+        "  t: 'div',  // sunset theme here\n" +
         "  c: bw.makeCard({ title: 'Content', content: '...' })\n" +
         "});";
 
@@ -1164,14 +1164,12 @@
       // Switching themes code
       var switchCode =
         "// Remove the current theme's injected <style> elements\n" +
-        "bw.clearTheme();\n" +
-        "document.body.classList.remove('ocean');\n\n" +
+        "bw.clearStyles();\n\n" +
         "// Generate and apply the new theme\n" +
-        "bw.generateTheme('sunset', {\n" +
+        "bw.loadStyles({\n" +
         "  primary: '#e76f51', secondary: '#264653'\n" +
-        "});\n" +
-        "document.body.classList.add('sunset');\n\n" +
-        "// Without bw.clearTheme(), the old 'ocean' <style>\n" +
+        "});\n\n" +
+        "// Without bw.clearStyles(), the old <style>\n" +
         "// elements would remain in the DOM, wasting memory\n" +
         "// and potentially causing CSS specificity conflicts.";
 
@@ -1261,7 +1259,7 @@
 
       var bgColor  = palette.background || '#ffffff';
       var surColor = palette.surface    || '#f8f9fa';
-      var altPalette = result.alternate && result.alternate.palette;
+      var altPalette = result.alternatePalette;
       var altBg  = altPalette ? (altPalette.background || '#1a1a2e') : '—';
       var altSur = altPalette ? (altPalette.surface    || '#252540') : '—';
 
@@ -1283,14 +1281,15 @@
       var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
       var overrideCode =
         "// Override the default background and surface\n" +
-        "var theme = bw.generateTheme('custom', {\n" +
+        "var styles = bw.makeStyles({\n" +
         "  primary:    '#0077b6',\n" +
         "  secondary:  '#90e0ef',\n" +
         "  background: '#fefce8',  // warm cream instead of white\n" +
         "  surface:    '#fef9c3'   // slightly tinted panels\n" +
-        "});\n\n" +
-        "// theme.palette.background === '#fefce8'\n" +
-        "// theme.palette.surface    === '#fef9c3'";
+        "});\n" +
+        "bw.applyStyles(styles);\n\n" +
+        "// styles.palette.background === '#fefce8'\n" +
+        "// styles.palette.surface    === '#fef9c3'";
 
       bw.DOM('#bg-surface-demo', {
         t: 'div', c: [
@@ -1328,14 +1327,12 @@
     // Section 5: Mixed Themes on One Page
     // ---------------------------------------------------------------
     function renderMultiTheme() {
-      // Generate two scoped themes side by side (inject: false — scoped to container)
-      var themeA = bw.generateTheme('demo-ocean', {
-        primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8',
-        inject: false
+      // Generate two scoped themes side by side (pure — no injection, scoped to container)
+      var themeA = bw.makeStyles({
+        primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8'
       });
-      var themeB = bw.generateTheme('demo-sunset', {
-        primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a',
-        inject: false
+      var themeB = bw.makeStyles({
+        primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a'
       });
 
       // Shared component set for both panels
@@ -1432,10 +1429,10 @@
               {
                 t: 'p', c: [
                   'Each call to ',
-                  { t: 'code', c: 'bw.generateTheme(name, config)' },
-                  ' scopes all generated CSS rules under the ',
-                  { t: 'code', c: '.name' },
-                  ' class. Add that class to any container element and every bw-* component inside inherits the theme. Multiple themes coexist without conflicts.'
+                  { t: 'code', c: 'bw.makeStyles(config)' },
+                  ' generates scoped CSS rules. Call ',
+                  { t: 'code', c: 'bw.applyStyles(result)' },
+                  ' to inject them. Every bw-* component inside the scoped container inherits the theme. Multiple themes coexist without conflicts.'
                 ]
               }
             ]
@@ -1453,7 +1450,7 @@
         result = generateCurrentTheme();
       }
 
-      var jsCall = "bw.generateTheme('" + state.themeName + "', {\n" +
+      var jsCall = "var styles = bw.makeStyles({\n" +
         "  primary:   '" + state.primary + "',\n" +
         "  secondary: '" + state.secondary + "',\n" +
         "  tertiary:  '" + state.tertiary + "',\n" +
@@ -1461,7 +1458,8 @@
         (state.surface    ? "  surface:    '" + state.surface    + "',\n" : '') +
         "  spacing:   '" + state.spacing + "',\n" +
         "  radius:    '" + state.radius + "'\n" +
-        "});";
+        "});\n" +
+        "bw.applyStyles(styles);";
 
       var cssText = result.css || '/* Generate a theme first */';
 
@@ -1526,7 +1524,7 @@
                   'Copy the CSS above into a ',
                   { t: 'code', c: '.css' },
                   ' file to use the theme without any runtime JavaScript. Or run ',
-                  { t: 'code', c: "bw.generateTheme(name, { inject: false })" },
+                  { t: 'code', c: "bw.makeStyles(config)" },
                   ' in Node.js and write ',
                   { t: 'code', c: 'result.css' },
                   ' to disk during your build step.'
@@ -1583,7 +1581,7 @@
                 { t: 'h4', c: 'How it works' },
                 { t: 'p', c: bw.raw('Every theme has two sides: <strong>primary</strong> (your seed colors) and <strong>alternate</strong> (luminance-inverted). If your primary is light, the alternate is dark, and vice versa. Both go through the same derivation pipeline.') },
                 (function() {
-                  var toggleCode = '// Generate theme (always produces both palettes)\nvar theme = bw.generateTheme(\'ocean\', {\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\n\n// Switch modes\nbw.applyTheme(\'alternate\');  // activate alternate\nbw.applyTheme(\'primary\');    // back to primary\nbw.applyTheme(\'dark\');       // whichever is darker\nbw.toggleTheme();            // flip between them';
+                  var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Toggle between primary and alternate\nbw.toggleStyles();           // flip between them';
                   var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
                   return typeof bw.codeEditor === 'function'
                     ? bw.codeEditor({ code: toggleCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })

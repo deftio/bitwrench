@@ -2,8 +2,8 @@
 
 A complete marketing landing page built with **zero custom CSS**. No `bw.css()`, no `bw.injectCSS()`, no inline `style:` attributes. Everything comes from:
 
-- `bw.loadDefaultStyles()` — base component styles
-- `bw.generateTheme('pulse', { primary: '#4f46e5', secondary: '#d97706' })` — indigo/amber theme
+- `bw.loadStyles()` — base component styles
+- `bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' })` — indigo/amber theme
 - `bw.make*()` component factories — 18 different components
 - Utility classes (`bw_mt_4`, `bw_text_center`, etc.)
 

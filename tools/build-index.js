@@ -132,7 +132,7 @@ const gettingStarted = {
           { t: 'pre', c: { t: 'code', c:
 `<script src="bitwrench.umd.js"></script>
 <script>
-  bw.loadDefaultStyles();
+  bw.loadStyles();
   bw.DOM("#app", {
     t: "div", c: "Hello bitwrench!"
   });
@@ -159,9 +159,9 @@ const apiRows = [
   ['bw.createDOM(taco)', 'Create a live DOM element from TACO'],
   ['bw.DOM(sel, taco)', 'Mount TACO into a DOM target'],
   ['bw.css(rules)', 'Generate CSS from JS objects'],
-  ['bw.loadDefaultStyles()', 'Inject full default stylesheet'],
-  ['bw.setTheme(overrides)', 'Customize theme tokens'],
-  ['bw.toggleDarkMode()', 'Switch light/dark themes'],
+  ['bw.loadStyles()', 'Inject full default stylesheet'],
+  ['bw.makeStyles(config)', 'Generate themed CSS from seed colors'],
+  ['bw.toggleStyles()', 'Toggle primary/alternate palette'],
   ['bw.htmlTable(data, opts)', 'Sortable table from 2D array'],
   ['bw.colorInterp()', 'Interpolate between colors'],
   ['bw.loremIpsum(n)', 'Generate placeholder text'],

@@ -224,7 +224,7 @@
                 { t: 'li', c: [{ t: 'strong', c: 'Inline styles' }, ' \u2014 JS objects via ', { t: 'code', c: 'bw.s()' }, ', no CSS file needed'] },
                 { t: 'li', c: [{ t: 'strong', c: 'Your own CSS' }, ' \u2014 any classes (Bootstrap, Tailwind, hand-written)'] },
                 { t: 'li', c: [{ t: 'strong', c: 'Generated classes' }, ' \u2014 ', { t: 'code', c: 'bw.css()' }, ' + ', { t: 'code', c: 'bw.injectCSS()' }, ' for :hover, media queries'] },
-                { t: 'li', c: [{ t: 'strong', c: 'bitwrench.css' }, ' \u2014 built-in starter kit (or ', { t: 'code', c: 'bw.loadDefaultStyles()' }, ' to generate at runtime)'] }
+                { t: 'li', c: [{ t: 'strong', c: 'bitwrench.css' }, ' \u2014 built-in starter kit (or ', { t: 'code', c: 'bw.loadStyles()' }, ' to generate at runtime)'] }
               ]
             },
             {

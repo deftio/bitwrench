@@ -68,7 +68,7 @@ By default, the CLI produces plain HTML without bitwrench. Three flags control h
 | `--cdn` | CDN | A `<script>` tag loads bitwrench from jsDelivr with an SRI hash for integrity. Requires internet access. |
 | `--no-bw` | None | No bitwrench is included. Plain HTML output. This is the default. |
 
-When bitwrench is included (`--standalone` or `--cdn`), a small script runs after the page loads to call `bw.loadDefaultStyles()`, applying bitwrench's default component styles.
+When bitwrench is included (`--standalone` or `--cdn`), a small script runs after the page loads to call `bw.loadStyles()`, applying bitwrench's default component styles.
 
 ## Themes
 

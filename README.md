@@ -35,7 +35,7 @@ Structure, styling, state, and server rendering are all handled as JavaScript ob
 
 - **No build toolchain** — works with a `<script>` tag
 - **50+ ready-made components** — buttons, tables, modals, forms, charts, toasts — one `make*()` call each, returns a composable TACO
-- **CSS from JavaScript** — `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.generateTheme()` derives a complete theme from 2 seed colors
+- **CSS from JavaScript** — `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.loadStyles()` or `bw.makeStyles()` derives a complete theme from 2 seed colors
 - **Reactive state** — `bw.component()` provides `.get()/.set()` with `${template}` bindings; `bw.pub()`/`bw.sub()` for cross-component messaging
 - **Dual rendering** — same object renders to live DOM (`bw.DOM()`) or HTML string (`bw.html()`) for SSR, emails, or static sites
 - **Server-driven UI** — push UI updates from any backend (Python, C, Rust, Go) over SSE; `client.screenshot()` captures the page back as PNG/JPEG
@@ -54,7 +54,7 @@ Bitwrench uses JavaScript equivalents for most forms of front-end development. H
 | JSX / templates | Markup-in-JS | Native JS objects — no compiler |
 | Tailwind / CSS-in-JS | Styling | `bw.css()`, `bw.s()`, `bw.u` utilities |
 | Sass / PostCSS | CSS generation | `bw.css()` from JS objects (supports @media, @keyframes) |
-| ThemeProvider / CSS vars | Theming | `bw.generateTheme()` from 2 seed colors |
+| ThemeProvider / CSS vars | Theming | `bw.loadStyles()` / `bw.makeStyles()` from 2 seed colors |
 | Streamlit / Gradio | Server-driven UI | bwserve SSE — from any language (Python, Go, C, Rust) |
 | Redux / Zustand / Pinia | State management | `bw.component()` `.get()/.set()` + `bw.pub()/sub()` |
 | Vite / webpack / Babel | Build tooling | Not needed — open the HTML file |
@@ -92,7 +92,7 @@ Or include directly in a page:
 <body>
   <div id="app"></div>
   <script>
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     bw.DOM('#app', {
       t: 'div', a: { class: 'bw-container' },
@@ -176,15 +176,15 @@ bw.responsive('.hero', {
 
 ## Theming
 
-`bw.generateTheme()` derives a design system — buttons, alerts, badges, cards, forms, tables, hover states, focus rings — from two seed colors. Themes are scoped to DOM subtrees, so different sections of a page can use different themes. `toggleTheme()` switches between primary and alternate palettes:
+`bw.loadStyles()` derives a design system — buttons, alerts, badges, cards, forms, tables, hover states, focus rings — from two seed colors. Themes are scoped to DOM subtrees, so different sections of a page can use different themes. `toggleStyles()` switches between primary and alternate palettes:
 
 ```javascript
-bw.generateTheme('my-theme', {
+bw.loadStyles({
   primary: '#336699',
   secondary: '#cc6633'
 });
 
-bw.toggleTheme();  // switch between primary and alternate palettes
+bw.toggleStyles();  // switch between primary and alternate palettes
 ```
 
 
@@ -199,9 +199,9 @@ bw.toggleTheme();  // switch between primary and alternate palettes
 | `bw.css(rules)` | Generate CSS from a JS object |
 | `bw.s(...objs)` | Compose inline style objects into a style string |
 | `bw.responsive(sel, breakpoints)` | Generate `@media` CSS rules from JS |
-| `bw.loadDefaultStyles()` | Inject the built-in stylesheet |
-| `bw.generateTheme(name, config)` | Generate a scoped theme from seed colors |
-| `bw.toggleTheme()` | Switch between primary and alternate palettes |
+| `bw.loadStyles()` | Inject the built-in stylesheet (or pass config to theme) |
+| `bw.makeStyles(config)` | Generate a scoped theme from seed colors (returns styles object) |
+| `bw.toggleStyles()` | Switch between primary and alternate palettes |
 | `bw.patch(id, content)` | Update a specific element by UUID |
 | `bw.update(el)` | Re-render via the element's `o.render` function |
 | `bw.message(target, action, data)` | Send a message to a component by tag name |
@@ -302,7 +302,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **How does bitwrench compare to React/Vue?** — They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine — use whichever fits the job.
 
-**How does CSS work?** — Bitwrench doesn't own your CSS. Use any external stylesheet, Tailwind, or CSS file you want — bitwrench doesn't interfere. On top of that, `bw.css()` generates CSS from JS objects (with `@media`, `@keyframes`, pseudo-classes), `bw.s()` composes inline style objects, and `bw.generateTheme()` derives a complete theme from 2 seed colors. You can use all three together or none at all.
+**How does CSS work?** — Bitwrench doesn't own your CSS. Use any external stylesheet, Tailwind, or CSS file you want — bitwrench doesn't interfere. On top of that, `bw.css()` generates CSS from JS objects (with `@media`, `@keyframes`, pseudo-classes), `bw.s()` composes inline style objects, and `bw.loadStyles()` or `bw.makeStyles()` derives a complete theme from 2 seed colors. You can use all three together or none at all.
 
 **What's the difference between `bw.DOM()` and `bw.html()`?** — Same TACO input, two outputs. `bw.DOM('#app', taco)` mounts live DOM elements in a browser. `bw.html(taco)` returns an HTML string — use it in Node.js scripts, email generators, static site builds, or anywhere you need markup without a browser. One object format, two rendering modes.
 

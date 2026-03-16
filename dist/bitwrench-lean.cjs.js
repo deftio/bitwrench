@@ -15,7 +15,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-15T23:22:54.003Z'
+  buildDate: '2026-03-16T04:38:16.500Z'
 };
 
 /**
@@ -1035,10 +1035,6 @@ function generateResetThemed(scope, palette) {
     'background-color': bg
   };
   rules[_sx(scope, 'body')] = baseReset;
-  // Also apply to the scope element itself so themes work on any container, not just body
-  if (scope) {
-    rules['.' + scope] = baseReset;
-  }
   return rules;
 }
 
@@ -2574,6 +2570,26 @@ function getStructuralStyles() {
   return getStructuralCSS();
 }
 
+/**
+ * Get CSS reset rules only (box-sizing, html/body font, reduced-motion).
+ * Separate from themed/structural rules for independent injection.
+ * @returns {Object} CSS rules object for the reset layer
+ */
+function getResetStyles() {
+  var rules = {};
+  Object.assign(rules, structuralRules.base);
+  // Include reduced-motion preference
+  rules['@media (prefers-reduced-motion: reduce)'] = {
+    '*, *::before, *::after': {
+      'animation-duration': '0.01ms !important',
+      'animation-iteration-count': '1 !important',
+      'transition-duration': '0.01ms !important',
+      'scroll-behavior': 'auto !important'
+    }
+  };
+  return rules;
+}
+
 // =========================================================================
 // defaultStyles — backward-compatible categorized view
 // =========================================================================
@@ -2603,60 +2619,41 @@ Object.assign({}, structuralRules, {
 });
 
 /**
- * Generate alternate-palette CSS scoped under `.bw_theme_alt`.
- * Uses the same `generateThemedCSS()` pipeline as the primary palette —
- * both sides go through identical code paths.
- *
- * @param {string} name - Theme scope name (e.g. 'ocean'). '' for global.
- * @param {Object} altPalette - From derivePalette(deriveAlternateConfig(...))
- * @param {Object} layout - From resolveLayout()
- * @returns {Object} CSS rules object scoped under .bw_theme_alt (+ optional .name)
+ * Prefix every selector in a rules object with a scope selector.
+ * Handles @media/@keyframes blocks and comma-separated selectors.
+ * @param {Object} rules - CSS rules object
+ * @param {string} prefix - Scope prefix (e.g. '#my-dashboard', '.bw_theme_alt')
+ * @param {boolean} [compound=false] - If true, use compound selector (no space)
+ *   for the first segment: `#scope.bw_theme_alt .sel` vs `#scope .sel`
+ * @returns {Object} New rules object with scoped selectors
  */
-function generateAlternateCSS(name, altPalette, layout) {
-  // Generate themed CSS using the same pipeline as primary
-  var rawRules = generateThemedCSS('', altPalette, layout);
-
-  // Re-scope every selector under .bw_theme_alt (+ optional theme name)
-  var altPrefix = name ? '.' + name + '.bw_theme_alt' : '.bw_theme_alt';
-  var altRules = {};
-
-  for (var sel in rawRules) {
-    if (!rawRules.hasOwnProperty(sel)) continue;
-
+function scopeRulesUnder(rules, prefix, compound) {
+  var scoped = {};
+  for (var sel in rules) {
+    if (!rules.hasOwnProperty(sel)) continue;
     if (sel.charAt(0) === '@') {
       // @media / @keyframes — recurse into the block
-      var innerBlock = rawRules[sel];
-      var altInner = {};
+      var innerBlock = rules[sel];
+      var scopedInner = {};
       for (var innerSel in innerBlock) {
         if (!innerBlock.hasOwnProperty(innerSel)) continue;
-        altInner[altPrefix + ' ' + innerSel] = innerBlock[innerSel];
+        scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
       }
-      altRules[sel] = altInner;
+      scoped[sel] = scopedInner;
     } else {
-      // Regular selector — prefix with alt scope
-      // Handle comma-separated selectors
-      var parts = sel.split(',');
-      var scopedParts = [];
-      for (var i = 0; i < parts.length; i++) {
-        var s = parts[i].trim();
-        // 'body' selector gets special treatment: .bw_theme_alt body
-        if (s === 'body' || s.indexOf('body') === 0) {
-          scopedParts.push(altPrefix + ' ' + s);
-        } else {
-          scopedParts.push(altPrefix + ' ' + s);
-        }
-      }
-      altRules[scopedParts.join(', ')] = rawRules[sel];
+      scoped[_prefixSelector(sel, prefix)] = rules[sel];
     }
   }
+  return scoped;
+}
 
-  // Add body-level overrides for the alternate surface
-  altRules[altPrefix + ' body, :root' + altPrefix + ' body'] = {
-    'color': altPalette.dark.base,
-    'background-color': altPalette.light.base
-  };
-
-  return altRules;
+function _prefixSelector(sel, prefix) {
+  var parts = sel.split(',');
+  var result = [];
+  for (var i = 0; i < parts.length; i++) {
+    result.push(prefix + ' ' + parts[i].trim());
+  }
+  return result.join(', ');
 }
 
 /**
@@ -4149,7 +4146,7 @@ bw.htmlPage = function(opts) {
       ? (THEME_PRESETS[theme.toLowerCase()] || null)
       : theme;
     if (themeConfig) {
-      var themeResult = bw.generateTheme('', Object.assign({}, themeConfig, { inject: false }));
+      var themeResult = bw.makeStyles(themeConfig);
       themeCSS = themeResult.css;
     }
   }
@@ -4175,14 +4172,14 @@ bw.htmlPage = function(opts) {
   // Combine all CSS
   var allCSS = (themeCSS ? themeCSS + '\n' : '') + css;
 
-  // Body-end script: registry entries + optional loadDefaultStyles
+  // Body-end script: registry entries + optional loadStyles
   var bodyEndScript = '';
   var bodyEndParts = [];
   if (registryEntries) {
     bodyEndParts.push(registryEntries);
   }
   if (runtime === 'inline' || runtime === 'cdn') {
-    bodyEndParts.push('if(typeof bw!=="undefined"){bw.loadDefaultStyles();}');
+    bodyEndParts.push('if(typeof bw!=="undefined"){bw.loadStyles();}');
   }
   if (bodyEndParts.length > 0) {
     bodyEndScript = '<script>\n' + bodyEndParts.join('\n') + '\n</script>';
@@ -6972,7 +6969,7 @@ bw.css = function(rules, options = {}) {
  * @returns {Element} The style element
  * @category CSS & Styling
  * @see bw.css
- * @see bw.loadDefaultStyles
+ * @see bw.loadStyles
  * @example
  * bw.injectCSS('.my-class { color: red; }');
  * bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' });
@@ -7017,9 +7014,8 @@ bw.injectCSS = function(css, options = {}) {
  * @param {...Object} styles - Style objects to merge (left-to-right)
  * @returns {Object} Merged style object
  * @category CSS & Styling
- * @see bw.u
  * @example
- * var style = bw.s(bw.u.flex, bw.u.gap4, { color: 'red' });
+ * var style = bw.s({ display: 'flex' }, { gap: '1rem' }, { color: 'red' });
  * // => { display: 'flex', gap: '1rem', color: 'red' }
  */
 bw.s = function() {
@@ -7029,99 +7025,6 @@ bw.s = function() {
     if (_is(arg, 'object')) Object.assign(result, arg);
   }
   return result;
-};
-
-/**
- * Pre-built CSS utility objects (like Tailwind utilities, but in JS).
- *
- * Compose with `bw.s()` to build inline styles without writing raw CSS strings.
- * Includes flex, padding, margin, typography, color, border, and transition utilities.
- *
- * @category CSS & Styling
- * @see bw.s
- * @example
- * { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.p4) },
- *   c: 'Flexbox with 1rem gap and padding' }
- */
-bw.u = {
-  // Display
-  flex: { display: 'flex' },
-  flexCol: { display: 'flex', flexDirection: 'column' },
-  flexRow: { display: 'flex', flexDirection: 'row' },
-  flexWrap: { display: 'flex', flexWrap: 'wrap' },
-  block: { display: 'block' },
-  inline: { display: 'inline' },
-  hidden: { display: 'none' },
-
-  // Flex alignment
-  justifyCenter: { justifyContent: 'center' },
-  justifyBetween: { justifyContent: 'space-between' },
-  justifyEnd: { justifyContent: 'flex-end' },
-  alignCenter: { alignItems: 'center' },
-  alignStart: { alignItems: 'flex-start' },
-  alignEnd: { alignItems: 'flex-end' },
-
-  // Gap (0.25rem increments)
-  gap1: { gap: '0.25rem' },
-  gap2: { gap: '0.5rem' },
-  gap3: { gap: '0.75rem' },
-  gap4: { gap: '1rem' },
-  gap6: { gap: '1.5rem' },
-  gap8: { gap: '2rem' },
-
-  // Padding
-  p0: { padding: '0' },
-  p1: { padding: '0.25rem' },
-  p2: { padding: '0.5rem' },
-  p3: { padding: '0.75rem' },
-  p4: { padding: '1rem' },
-  p6: { padding: '1.5rem' },
-  p8: { padding: '2rem' },
-  px4: { paddingLeft: '1rem', paddingRight: '1rem' },
-  py2: { paddingTop: '0.5rem', paddingBottom: '0.5rem' },
-  py4: { paddingTop: '1rem', paddingBottom: '1rem' },
-
-  // Margin (same scale)
-  m0: { margin: '0' },
-  m4: { margin: '1rem' },
-  mt2: { marginTop: '0.5rem' },
-  mt4: { marginTop: '1rem' },
-  mb2: { marginBottom: '0.5rem' },
-  mb4: { marginBottom: '1rem' },
-  mx_auto: { marginLeft: 'auto', marginRight: 'auto' },
-
-  // Typography
-  textSm: { fontSize: '0.875rem' },
-  textBase: { fontSize: '1rem' },
-  textLg: { fontSize: '1.125rem' },
-  textXl: { fontSize: '1.25rem' },
-  text2xl: { fontSize: '1.5rem' },
-  text3xl: { fontSize: '1.875rem' },
-  bold: { fontWeight: '700' },
-  semibold: { fontWeight: '600' },
-  italic: { fontStyle: 'italic' },
-  textCenter: { textAlign: 'center' },
-  textRight: { textAlign: 'right' },
-
-  // Colors (from design tokens)
-  bgWhite: { background: '#ffffff' },
-  bgTeal: { background: '#006666', color: '#ffffff' },
-  textWhite: { color: '#ffffff' },
-  textTeal: { color: '#006666' },
-  textMuted: { color: '#888' },
-
-  // Borders
-  rounded: { borderRadius: '0.375rem' },
-  roundedLg: { borderRadius: '0.5rem' },
-  roundedFull: { borderRadius: '9999px' },
-  border: { border: '1px solid #d8d8d8' },
-
-  // Sizing
-  wFull: { width: '100%' },
-  hFull: { height: '100%' },
-
-  // Transitions
-  transition: { transition: 'all 0.2s ease' }
 };
 
 /**
@@ -7245,103 +7148,49 @@ if (bw._isBrowser) {
   };
 }
 
+
+// =========================================================================
+// v2.0.18 Clean Styles API — makeStyles / applyStyles / loadStyles / etc.
+// =========================================================================
+
 /**
- * Load the built-in Bootstrap-inspired default stylesheet.
- *
- * Injects bitwrench's batteries-included CSS (buttons, cards, grids, forms,
- * alerts, badges, nav, tabs, etc.) into the document head. Call once at app startup.
- * Returns null in Node.js (no DOM).
- *
- * @param {Object} [options] - Style loading options
- * @param {boolean} [options.minify=true] - Minify the CSS output
- * @returns {Element|null} Style element if in browser, null in Node.js
- * @category CSS & Styling
- * @see bw.setTheme
- * @see bw.applyTheme
- * @see bw.toggleTheme
- * @example
- * bw.loadDefaultStyles();  // inject all default CSS
+ * Convert a scope selector to a <style> element id.
+ * @private
+ * @param {string} [scope] - Scope selector (e.g. '#my-dashboard', '.preview')
+ * @returns {string} Style element id (e.g. 'bw_style_my_dashboard')
  */
-bw.loadDefaultStyles = function(options = {}) {
-  const { minify = true, palette } = options;
-
-  // 1. Inject structural CSS (layout, sizing — never changes with theme)
-  if (bw._isBrowser) {
-    var structuralCSS = bw.css(getStructuralStyles());
-    bw.injectCSS(structuralCSS, { id: 'bw_structural', append: false, minify: minify });
-  }
-
-  // 2. Inject cosmetic CSS via generateTheme (colors, shadows, radii)
-  var paletteConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, palette || {});
-  var result = bw.generateTheme('', Object.assign({}, paletteConfig, { inject: true }));
-  return result;
-};
-
+function _scopeToStyleId(scope) {
+  if (!scope || scope === '' || scope === 'global') return 'bw_style_global';
+  if (scope === 'reset') return 'bw_style_reset';
+  // Strip leading # or . and convert - to _
+  var clean = scope.replace(/^[#.]/, '').replace(/-/g, '_');
+  return 'bw_style_' + clean;
+}
 
 /**
- * Generate a complete, scoped theme from seed colors.
+ * Generate a complete styles object from seed colors and layout config.
+ * Pure function — no DOM, no state, no side effects.
  *
- * Produces CSS for all themed components (buttons, alerts, badges, cards,
- * forms, nav, tables, tabs, list groups, pagination, progress, hero, utilities)
- * scoped under `.name` class. Multiple themes can coexist in the stylesheet.
- * Swap themes by changing the class on a container element.
+ * All parameters are optional. Defaults to the bitwrench default palette.
  *
- * @param {string} name - CSS scope class (e.g. 'ocean'). Empty string = unscoped global.
- * @param {Object} config - Theme configuration
- * @param {string} config.primary - Primary brand color hex
- * @param {string} config.secondary - Secondary color hex
- * @param {string} [config.tertiary] - Tertiary/accent color hex (defaults to primary)
- * @param {string} [config.success='#198754'] - Success color hex
- * @param {string} [config.danger='#dc3545'] - Danger color hex
- * @param {string} [config.warning='#ffc107'] - Warning color hex
- * @param {string} [config.info='#0dcaf0'] - Info color hex
- * @param {string} [config.light='#f8f9fa'] - Light color hex
- * @param {string} [config.dark='#212529'] - Dark color hex
- * @param {string} [config.background] - Page background hex (default: '#ffffff' light, derived dark)
- * @param {string} [config.surface] - Surface/card background hex (default: '#f8f9fa' light, derived dark)
+ * @param {Object} [config] - Style configuration
+ * @param {string} [config.primary='#006666'] - Primary brand color hex
+ * @param {string} [config.secondary='#6c757d'] - Secondary color hex
+ * @param {string} [config.tertiary] - Tertiary color hex (defaults to primary)
  * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
  * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
- * @param {number} [config.fontSize=1.0] - Base font size scale factor
- * @param {string|number} [config.typeRatio='normal'] - 'tight' | 'normal' | 'relaxed' | 'dramatic' or a number
- * @param {string} [config.elevation='md'] - 'flat' | 'sm' | 'md' | 'lg'
- * @param {string} [config.motion='standard'] - 'reduced' | 'standard' | 'expressive'
- * @param {number} [config.harmonize=0.20] - 0-1, semantic color hue shift toward primary
- * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
- * @returns {Object} { css, palette, name, isLightPrimary, alternate: { css, palette } }
+ * @returns {Object} { css, alternateCss, rules, alternateRules, palette, alternatePalette, isLightPrimary }
  * @category CSS & Styling
- * @see bw.applyTheme
- * @see bw.toggleTheme
- * @see bw.loadDefaultStyles
+ * @see bw.applyStyles
+ * @see bw.loadStyles
  * @example
- * // Generate and inject an ocean theme (primary + alternate)
- * var theme = bw.generateTheme('ocean', {
- *   primary: '#0077b6',
- *   secondary: '#90e0ef',
- *   tertiary: '#00b4d8'
- * });
- *
- * // Apply to a container
- * document.getElementById('app').classList.add('ocean');
- *
- * // Toggle to alternate palette
- * bw.toggleTheme();
- *
- * // Generate CSS for static export (Node.js)
- * var result = bw.generateTheme('sunset', {
- *   primary: '#e76f51',
- *   secondary: '#264653',
- *   inject: false
- * });
- * fs.writeFileSync('sunset.css', result.css + result.alternate.css);
+ * var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+ * console.log(styles.palette.primary.base); // '#4f46e5'
+ * // styles.css contains all themed CSS — nothing injected
  */
-bw.generateTheme = function(name, config) {
-  if (!config || !config.primary || !config.secondary) {
-    throw new Error('bw.generateTheme requires config.primary and config.secondary');
-  }
-
-  // Merge with defaults; if user didn't supply tertiary, default to their primary
-  var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
-  if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
+bw.makeStyles = function(config) {
+  var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config || {});
+  if (config && !config.tertiary) fullConfig.tertiary = fullConfig.primary;
 
   // Derive primary palette
   var palette = derivePalette(fullConfig);
@@ -7349,147 +7198,199 @@ bw.generateTheme = function(name, config) {
   // Resolve layout
   var layout = resolveLayout(fullConfig);
 
-  // Generate primary themed CSS rules
-  var themedRules = generateThemedCSS(name, palette, layout);
+  // Generate primary themed CSS rules (unscoped)
+  var themedRules = generateThemedCSS('', palette, layout);
   var cssStr = bw.css(themedRules);
 
   // Derive alternate palette (luminance-inverted)
   var altConfig = deriveAlternateConfig(fullConfig);
   var altPalette = derivePalette(altConfig);
 
-  // Generate alternate CSS scoped under .bw_theme_alt
-  var altRules = generateAlternateCSS(name, altPalette, layout);
-  var altCssStr = bw.css(altRules);
+  // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
+  // applyStyles() wraps them appropriately based on scope
+  var altRawRules = generateThemedCSS('', altPalette, layout);
+  var altCssStr = bw.css(altRawRules);
 
   // Determine if primary is light-flavored
   var lightPrimary = isLightPalette(fullConfig);
 
-  // Inject both CSS sets into DOM if requested
-  var shouldInject = config.inject !== false;
-  if (shouldInject && bw._isBrowser) {
-    var safeName = name ? name.replace(/-/g, '_') : '';
-    var styleId = safeName ? 'bw_theme_' + safeName : 'bw_theme_default';
-    var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
-
-    bw.injectCSS(cssStr, { id: styleId, append: false });
-    bw.injectCSS(altCssStr, { id: altStyleId, append: false });
-
-    bw._activeThemeStyleIds = [styleId, altStyleId];
-
-    // Auto-apply the theme class to <body> so scoped CSS rules match
-    if (name) {
-      var body = document.body;
-      // Remove previous named theme class if present
-      if (bw._activeThemeClass && bw._activeThemeClass !== name) {
-        body.classList.remove(bw._activeThemeClass);
-      }
-      body.classList.add(name);
-      bw._activeThemeClass = name;
-    }
-  }
-
-  // Update bw.u color entries to reflect the palette
-  if (!name) {
-    bw.u.bgTeal = { background: palette.primary.base, color: palette.primary.textOn };
-    bw.u.textTeal = { color: palette.primary.base };
-    bw.u.bgWhite = { background: '#ffffff' };
-    bw.u.textWhite = { color: '#ffffff' };
-  }
-
-  // Store active theme state
-  var result = {
+  return {
     css: cssStr,
+    alternateCss: altCssStr,
+    rules: themedRules,
+    alternateRules: altRawRules,
     palette: palette,
-    name: name,
-    isLightPrimary: lightPrimary,
-    alternate: {
-      css: altCssStr,
-      palette: altPalette
-    }
+    alternatePalette: altPalette,
+    isLightPrimary: lightPrimary
   };
-  bw._activeTheme = result;
-  bw._activeThemeMode = 'primary';
-
-  return result;
 };
 
 /**
- * Apply a theme mode. Switches between primary and alternate palettes
- * by adding/removing the `bw_theme_alt` class on `<html>`.
+ * Inject styles into the DOM with optional scoping.
  *
- * @param {string} mode - 'primary' | 'alternate' | 'light' | 'dark'
- * @returns {string} Active mode: 'primary' or 'alternate'
+ * Takes a styles object from `makeStyles()` and creates a single `<style>`
+ * element in `<head>`. If a scope selector is provided, all CSS rules are
+ * wrapped under that selector. Alternate CSS is wrapped under `.bw_theme_alt`.
+ *
+ * @param {Object} styles - Result of `bw.makeStyles()`
+ * @param {string} [scope] - Scope selector (e.g. '#my-dashboard', '.preview'). Omit for global.
+ * @returns {Element|null} The `<style>` element, or null in Node.js
  * @category CSS & Styling
- * @see bw.generateTheme
- * @see bw.toggleTheme
+ * @see bw.makeStyles
+ * @see bw.loadStyles
+ * @see bw.clearStyles
  * @example
- * bw.applyTheme('alternate');  // switch to alternate palette
- * bw.applyTheme('dark');       // switch to whichever palette is darker
- * bw.applyTheme('primary');    // switch back to primary palette
+ * var styles = bw.makeStyles({ primary: '#4f46e5' });
+ * bw.applyStyles(styles);                     // global
+ * bw.applyStyles(styles, '#my-dashboard');     // scoped
  */
-bw.applyTheme = function(mode) {
-  if (!bw._isBrowser) return mode || 'primary';
-  var root = document.documentElement;
-  var isLight = bw._activeTheme ? bw._activeTheme.isLightPrimary : true;
-
-  var wantAlt;
-  if (mode === 'primary')        wantAlt = false;
-  else if (mode === 'alternate') wantAlt = true;
-  else if (mode === 'light')     wantAlt = !isLight;
-  else if (mode === 'dark')      wantAlt = isLight;
-  else                           wantAlt = false;
-
-  if (wantAlt) {
-    root.classList.add('bw_theme_alt');
-  } else {
-    root.classList.remove('bw_theme_alt');
+bw.applyStyles = function(styles, scope) {
+  if (!bw._isBrowser) return null;
+  if (!styles || !styles.rules) {
+    _cw('bw.applyStyles: invalid styles object');
+    return null;
   }
 
-  bw._activeThemeMode = wantAlt ? 'alternate' : 'primary';
-  return bw._activeThemeMode;
+  var styleId = _scopeToStyleId(scope);
+
+  // Scope the primary rules if a scope is provided
+  var primaryRules = styles.rules;
+  if (scope) {
+    primaryRules = scopeRulesUnder(primaryRules, scope);
+  }
+
+  // Wrap alternate rules with .bw_theme_alt
+  var altRules = styles.alternateRules;
+  if (altRules) {
+    if (scope) {
+      // Scoped compound: #scope.bw_theme_alt .bw_card
+      altRules = scopeRulesUnder(altRules, scope + '.bw_theme_alt');
+    } else {
+      // Global: .bw_theme_alt .bw_card
+      altRules = scopeRulesUnder(altRules, '.bw_theme_alt');
+    }
+  }
+
+  // Combine primary + alternate into one CSS string
+  var combined = bw.css(primaryRules);
+  if (altRules) {
+    combined += '\n' + bw.css(altRules);
+  }
+
+  return bw.injectCSS(combined, { id: styleId, append: false });
 };
 
 /**
- * Toggle between primary and alternate theme palettes.
+ * Generate and apply styles in one call. Convenience wrapper.
  *
+ * Equivalent to: `bw.applyStyles(bw.makeStyles(config), scope)`
+ *
+ * @param {Object} [config] - Style configuration (same as `makeStyles`)
+ * @param {string} [scope] - Scope selector (same as `applyStyles`)
+ * @returns {Element|null} The `<style>` element, or null in Node.js
+ * @category CSS & Styling
+ * @see bw.makeStyles
+ * @see bw.applyStyles
+ * @example
+ * bw.loadStyles();                                          // defaults, global
+ * bw.loadStyles({ primary: '#4f46e5' });                    // custom, global
+ * bw.loadStyles({ primary: '#4f46e5' }, '#my-dashboard');   // custom, scoped
+ */
+bw.loadStyles = function(config, scope) {
+  // Also inject structural CSS first (only once)
+  if (bw._isBrowser) {
+    var existing = document.getElementById('bw_structural');
+    if (!existing) {
+      var structuralCSS = bw.css(getStructuralStyles());
+      bw.injectCSS(structuralCSS, { id: 'bw_structural', append: false });
+    }
+  }
+  return bw.applyStyles(bw.makeStyles(config), scope);
+};
+
+/**
+ * Inject the CSS reset (box-sizing, html/body font, reduced-motion).
+ * Idempotent — if already injected, returns the existing `<style>` element.
+ *
+ * @returns {Element|null} The `<style>` element, or null in Node.js
+ * @category CSS & Styling
+ * @see bw.loadStyles
+ * @see bw.clearStyles
+ * @example
+ * bw.loadReset();  // inject once, safe to call multiple times
+ */
+bw.loadReset = function() {
+  if (!bw._isBrowser) return null;
+  var existing = document.getElementById('bw_style_reset');
+  if (existing) return existing;
+  return bw.injectCSS(bw.css(getResetStyles()), { id: 'bw_style_reset', append: false });
+};
+
+/**
+ * Toggle between primary and alternate palettes.
+ *
+ * Adds/removes the `bw_theme_alt` class on the scoping element.
+ * Without a scope, toggles on `<body>` (global).
+ * With a scope, toggles on the first matching element.
+ *
+ * @param {string} [scope] - Scope selector (e.g. '#my-dashboard'). Omit for global.
  * @returns {string} Active mode after toggle: 'primary' or 'alternate'
  * @category CSS & Styling
- * @see bw.applyTheme
- * @see bw.generateTheme
+ * @see bw.applyStyles
+ * @see bw.clearStyles
  * @example
- * bw.toggleTheme();  // flip between primary and alternate
+ * bw.toggleStyles();                   // global toggle on <body>
+ * bw.toggleStyles('#my-dashboard');    // scoped toggle
  */
-bw.toggleTheme = function() {
-  var current = bw._activeThemeMode || 'primary';
-  return bw.applyTheme(current === 'primary' ? 'alternate' : 'primary');
+bw.toggleStyles = function(scope) {
+  if (!bw._isBrowser) return 'primary';
+  var target;
+  if (scope) {
+    var els = bw.$(scope);
+    target = els[0];
+  } else {
+    target = document.body;
+  }
+  if (!target) return 'primary';
+
+  var hasAlt = target.classList.contains('bw_theme_alt');
+  if (hasAlt) {
+    target.classList.remove('bw_theme_alt');
+    return 'primary';
+  } else {
+    target.classList.add('bw_theme_alt');
+    return 'alternate';
+  }
 };
 
 /**
- * Remove the currently active theme's injected style elements from the DOM.
- * Use this before generating a new theme with a different name to prevent
- * stale CSS accumulation.
+ * Remove injected styles for a given scope.
  *
+ * Finds the `<style>` element by id and removes it. Also removes
+ * the `bw_theme_alt` class from the relevant element.
+ *
+ * @param {string} [scope] - Scope selector. Omit to remove global styles.
  * @category CSS & Styling
- * @see bw.generateTheme
+ * @see bw.applyStyles
+ * @see bw.loadStyles
  * @example
- * bw.clearTheme();                   // remove current theme styles
- * bw.generateTheme('sunset', conf);  // inject fresh theme
+ * bw.clearStyles();                    // remove global styles
+ * bw.clearStyles('#my-dashboard');     // remove scoped styles
+ * bw.clearStyles('reset');             // remove the CSS reset
  */
-bw.clearTheme = function() {
-  if (bw._activeThemeStyleIds && bw._isBrowser) {
-    bw._activeThemeStyleIds.forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.remove();
-    });
-    bw._activeThemeStyleIds = null;
+bw.clearStyles = function(scope) {
+  if (!bw._isBrowser) return;
+  var styleId = _scopeToStyleId(scope);
+  var el = document.getElementById(styleId);
+  if (el) el.remove();
+
+  // Also remove bw_theme_alt from the relevant element
+  if (scope && scope !== 'reset' && scope !== 'global') {
+    var targets = bw.$(scope);
+    if (targets[0]) targets[0].classList.remove('bw_theme_alt');
+  } else if (!scope || scope === 'global') {
+    document.body.classList.remove('bw_theme_alt');
   }
-  // Remove named theme class from body
-  if (bw._activeThemeClass && bw._isBrowser) {
-    document.body.classList.remove(bw._activeThemeClass);
-    bw._activeThemeClass = null;
-  }
-  bw._activeTheme = null;
-  bw._activeThemeMode = 'primary';
 };
 
 // Expose color utility functions on bw namespace
