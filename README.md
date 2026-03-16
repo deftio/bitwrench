@@ -52,7 +52,7 @@ Bitwrench uses JavaScript equivalents for most forms of front-end development. H
 |---|---|---|
 | React / Vue / Svelte | Components + reactivity | `{t, a, c, o}` objects + `bw.component()` |
 | JSX / templates | Markup-in-JS | Native JS objects — no compiler |
-| Tailwind / CSS-in-JS | Styling | `bw.css()`, `bw.s()`, `bw.u` utilities |
+| Tailwind / CSS-in-JS | Styling | `bw.css()`, `bw.s()` style composition |
 | Sass / PostCSS | CSS generation | `bw.css()` from JS objects (supports @media, @keyframes) |
 | ThemeProvider / CSS vars | Theming | `bw.loadStyles()` / `bw.makeStyles()` from 2 seed colors |
 | Streamlit / Gradio | Server-driven UI | bwserve SSE — from any language (Python, Go, C, Rust) |
@@ -164,8 +164,8 @@ bw.injectCSS(bw.css({
   '.my-card': { padding: '1rem', borderRadius: '8px' }
 }));
 
-// Compose inline styles from utilities
-{ t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap4, { padding: '1rem' }) } }
+// Compose inline styles from objects
+{ t: 'div', a: { style: bw.s({ display: 'flex' }, { gap: '1rem' }, { padding: '1rem' }) } }
 
 // Responsive breakpoints
 bw.responsive('.hero', {

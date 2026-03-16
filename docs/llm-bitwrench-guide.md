@@ -137,8 +137,7 @@ Most UI should be Level 0. Escalate only when needed.
 | `bw.injectCSS(css, { id })` | Insert CSS into `<head>` |
 | `bw.loadStyles()` | Load built-in Bootstrap-like styles (call once); pass config to theme |
 | `bw.makeStyles(config)` | Generate scoped theme from seed colors (returns styles object) |
-| `bw.s(...styles)` | Merge style objects: `bw.s(bw.u.flex, { gap: '1rem' })` |
-| `bw.u` | Pre-built utilities: `bw.u.flex`, `bw.u.textCenter`, `bw.u.p4`, `bw.u.bold` |
+| `bw.s(...styles)` | Merge style objects: `bw.s({ display: 'flex' }, { gap: '1rem' })` |
 | `bw.responsive(sel, breakpoints)` | Generate responsive CSS |
 
 ### State — Level 1 (Manual)
@@ -575,18 +574,18 @@ bw.pub('cart:updated', { count: cart.length });
 { t: 'h1', c: bw.raw('Coffee That<br>Tells a <span class="accent">Story</span>') }
 ```
 
-### Style composition (bw.s + bw.u)
+### Style composition — bw.s()
 ```javascript
-// bw.u has pre-built style objects; bw.s() merges them into a style string
-{ t: 'div', a: { style: bw.s(bw.u.flex, bw.u.alignCenter, bw.u.gap4, { padding: '1rem' }) },
+// bw.s() merges style objects into a style string
+{ t: 'div', a: { style: bw.s({ display: 'flex' }, { alignItems: 'center' }, { gap: '1rem' }, { padding: '1rem' }) },
   c: [
-    { t: 'img', a: { src: 'avatar.png', style: bw.s(bw.u.rounded, { width: '40px' }) } },
+    { t: 'img', a: { src: 'avatar.png', style: bw.s({ borderRadius: '0.375rem' }, { width: '40px' }) } },
     { t: 'span', c: 'Alice' }
   ]
 }
 
 // Conditional: null/undefined args are skipped
-{ t: 'div', a: { style: bw.s(bw.u.p4, isActive ? bw.u.bold : null) }, c: label }
+{ t: 'div', a: { style: bw.s({ padding: '1rem' }, isActive ? { fontWeight: '700' } : null) }, c: label }
 ```
 
 ### Responsive breakpoints
@@ -621,11 +620,11 @@ function renderStats() {
   ]});
 }
 bw.DOM('#app', { t: 'div', c: [
-  { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.alignCenter,
-    { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
+  { t: 'div', a: { style: bw.s({ display: 'flex' }, { justifyContent: 'space-between' },
+    { alignItems: 'center' }, { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
     c: { t: 'h1', a: { style: bw.s({ margin: '0', fontSize: '1.5rem' }) }, c: 'Dashboard' }
   },
-  { t: 'div', a: { id: 'stats', style: bw.s(bw.u.p4, { maxWidth: '1200px', margin: '0 auto' }) } }
+  { t: 'div', a: { id: 'stats', style: bw.s({ padding: '1rem' }, { maxWidth: '1200px', margin: '0 auto' }) } }
 ]});
 renderStats();
 setInterval(function() { m.users += Math.round(Math.random() * 20 - 5); renderStats(); }, 3000);
@@ -660,7 +659,7 @@ The full 22-row table is in `docs/thinking-in-bitwrench.md`. These are the 10 mo
 8. **Variants**: `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`.
 9. **No raw DOM** — use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
 10. **TACO is computation** — every field is a JS expression. Use variables, functions, `.map()`, ternaries.
-11. **CSS is just strings** — store in variables, compose with `bw.s()` and `bw.u` utilities, generate with `bw.css()`.
+11. **CSS is just strings** — store in variables, compose with `bw.s()`, generate with `bw.css()`.
 12. **`bw.css()` handles `@keyframes` and `@media`** — all `@`-prefix keys are nested blocks. No raw CSS strings needed.
 13. **Three levels are explicit** — you always know if you have data (L0), DOM (L1), or a managed component (L2).
 14. **Console is DevTools**: `bw.inspect($0)`, `$0._bw_state`, `$0._bwComponentHandle`.

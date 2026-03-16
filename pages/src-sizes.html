@@ -6,41 +6,50 @@
   <title>Bitwrench - Source Size Analysis</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 1rem 2rem; background: #fafafa; color: #222; }
-h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
-.subtitle { color: #666; font-size: 0.85rem; margin-bottom: 1.5rem; }
-.section { margin-bottom: 2rem; }
-.section h2 { font-size: 1.1rem; border-bottom: 2px solid #006666; padding-bottom: 0.4rem; margin-bottom: 0.75rem; }
-.sz { text-align: right; font-variant-numeric: tabular-nums; }
-.pct { text-align: right; font-variant-numeric: tabular-nums; color: #666; font-size: 0.85em; }
-.table-wrap { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.table-wrap .bw_table { margin-bottom: 0; }
-.table-wrap .bw_table > thead > tr > * { background: #004d4d; color: #fff; font-size: 0.8rem; }
-.table-wrap .bw_table > tbody > tr > * { font-size: 0.8rem; }
-.table-wrap .bw_table > tbody > tr:nth-of-type(odd) > * { background-color: rgba(0,0,0,0.025); }
-.table-wrap .bw_table > tfoot > tr > * { font-weight: 700; background: #f0f0f0; font-size: 0.8rem; }
-.bar { display: inline-block; height: 14px; background: #006666; border-radius: 2px; vertical-align: middle; min-width: 2px; }
-.bar-doc { background: #90c0c0; }
-.bar-wrap { display: flex; gap: 1px; align-items: center; }
-.legend { display: flex; gap: 1rem; margin: 0.5rem 0; font-size: 0.75rem; color: #666; }
-.legend-item { display: flex; align-items: center; gap: 0.3rem; }
-.legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
-canvas { border: 1px solid #e0e0e0; border-radius: 4px; background: #fff; display: block; max-width: 100%; }
-.chart-title { font-size: 0.85rem; font-weight: 600; margin: 1rem 0 0.4rem; }
-.summary-cards { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.summary-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 0.75rem 1rem; min-width: 140px; }
-.summary-card .label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
-.summary-card .value { font-size: 1.4rem; font-weight: 700; color: #006666; }
-.summary-card .detail { font-size: 0.75rem; color: #666; }
-.build-selector { margin-bottom: 1rem; }
-.build-selector select { padding: 0.3rem 0.5rem; font-size: 0.85rem; border: 1px solid #ccc; border-radius: 4px; }
-  </style>
+  <script src="shared-theme.js"></script>
+  <script src="shared-nav.js"></script>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="example-nav"></div>
+  <div id="app" class="content-container wide"></div>
   <script>
+  mountExampleNav('#example-nav', 'src-sizes.html');
   bw.loadStyles();
+
+  // Page-specific CSS
+  bw.injectCSS(bw.css({
+    '.section': { marginBottom: '2rem' },
+    '.section h2': { fontSize: '1.1rem', borderBottom: '2px solid var(--bw_teal)', paddingBottom: '0.4rem', marginBottom: '0.75rem' },
+    '.sz': { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
+    '.pct': { textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: 'var(--bw_text_secondary)', fontSize: '0.85em' },
+    '.table-wrap': {
+      background: 'var(--bw_card_bg)', border: '1px solid var(--bw_card_border)',
+      borderRadius: 'var(--bw_radius)', overflow: 'hidden', boxShadow: 'var(--bw_card_shadow)'
+    },
+    '.table-wrap .bw_table': { marginBottom: '0' },
+    '.table-wrap .bw_table > thead > tr > *': { background: '#004d4d', color: '#fff', fontSize: '0.8rem' },
+    '.table-wrap .bw_table > tbody > tr > *': { fontSize: '0.8rem' },
+    '.table-wrap .bw_table > tbody > tr:nth-of-type(odd) > *': { backgroundColor: 'rgba(0,0,0,0.025)' },
+    '.table-wrap .bw_table > tfoot > tr > *': { fontWeight: '700', background: 'var(--bw_page_bg)', fontSize: '0.8rem' },
+    '.bar': { display: 'inline-block', height: '14px', background: 'var(--bw_teal)', borderRadius: '2px', verticalAlign: 'middle', minWidth: '2px' },
+    '.bar-doc': { background: '#90c0c0' },
+    '.bar-wrap': { display: 'flex', gap: '1px', alignItems: 'center' },
+    '.legend': { display: 'flex', gap: '1rem', margin: '0.5rem 0', fontSize: '0.75rem', color: 'var(--bw_text_secondary)' },
+    '.legend-item': { display: 'flex', alignItems: 'center', gap: '0.3rem' },
+    '.legend-swatch': { width: '12px', height: '12px', borderRadius: '2px' },
+    'canvas': { border: '1px solid var(--bw_card_border)', borderRadius: '4px', background: 'var(--bw_card_bg)', display: 'block', maxWidth: '100%' },
+    '.chart-title': { fontSize: '0.85rem', fontWeight: '600', margin: '1rem 0 0.4rem' },
+    '.summary-cards': { display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' },
+    '.summary-card': {
+      background: 'var(--bw_card_bg)', border: '1px solid var(--bw_card_border)',
+      borderRadius: 'var(--bw_radius)', padding: '0.75rem 1rem', minWidth: '140px'
+    },
+    '.summary-card .label': { fontSize: '0.7rem', color: 'var(--bw_text_muted)', textTransform: 'uppercase', letterSpacing: '0.05em' },
+    '.summary-card .value': { fontSize: '1.4rem', fontWeight: '700', color: 'var(--bw_teal)' },
+    '.summary-card .detail': { fontSize: '0.75rem', color: 'var(--bw_text_secondary)' },
+    '.build-selector': { marginBottom: '1rem' },
+    '.build-selector select': { padding: '0.3rem 0.5rem', fontSize: '0.85rem', border: '1px solid var(--bw_card_border)', borderRadius: '4px' }
+  }), { id: 'bw_src_sizes_css' });
   (function() {
     var JSONL_PATH = '../dbg/build-metrics.jsonl';
 

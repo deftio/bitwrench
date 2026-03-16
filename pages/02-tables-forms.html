@@ -10,44 +10,6 @@
   <script src="shared-nav.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
-  <style>
-    /* Page-specific overrides (shared-theme.css handles the rest) */
-    .controls {
-      margin-bottom: 0;
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      align-items: center;
-      padding: 0.875rem 1.25rem;
-      background: var(--bw_card_bg);
-      border-radius: var(--bw_radius) var(--bw_radius) 0 0;
-      border: 1px solid var(--bw_card_border);
-      border-bottom: none;
-    }
-    .table-card {
-      background: var(--bw_card_bg);
-      border: 1px solid var(--bw_card_border);
-      border-radius: var(--bw_radius);
-      box-shadow: var(--bw_card_shadow);
-      overflow: hidden;
-    }
-    .table-card .bw_table { margin-bottom: 0; }
-    /* Give step-demo tables a visible border so they don't blend into the card */
-    .bw_code_demo .bw_table {
-      border: 1px solid var(--bw_card_border);
-      border-radius: var(--bw_radius);
-      overflow: hidden;
-    }
-    .table-info {
-      padding: 0.625rem 1.25rem;
-      background: var(--bw_card_bg);
-      border: 1px solid var(--bw_card_border);
-      border-top: none;
-      border-radius: 0 0 var(--bw_radius) var(--bw_radius);
-      font-size: 0.8125rem;
-      color: var(--bw_text_secondary);
-    }
-  </style>
 </head>
 <body>
   <!-- Shared Navigation -->
@@ -144,6 +106,27 @@
     mountExampleNav('#example-nav', '02-tables-forms.html');
 
     bw.loadStyles();
+
+    // Page-specific CSS (shared-theme.js handles .table-card)
+    bw.injectCSS(bw.css({
+      '.controls': {
+        marginBottom: '0', display: 'flex', gap: '0.5rem', flexWrap: 'wrap',
+        alignItems: 'center', padding: '0.875rem 1.25rem',
+        background: 'var(--bw_card_bg)',
+        borderRadius: 'var(--bw_radius) var(--bw_radius) 0 0',
+        border: '1px solid var(--bw_card_border)', borderBottom: 'none'
+      },
+      '.bw_code_demo .bw_table': {
+        border: '1px solid var(--bw_card_border)',
+        borderRadius: 'var(--bw_radius)', overflow: 'hidden'
+      },
+      '.table-info': {
+        padding: '0.625rem 1.25rem', background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)', borderTop: 'none',
+        borderRadius: '0 0 var(--bw_radius) var(--bw_radius)',
+        fontSize: '0.8125rem', color: 'var(--bw_text_secondary)'
+      }
+    }), { id: 'bw_tables_forms_css' });
 
     bw.DOM('#teaching-callout', {
       t: 'div', a: { class: 'callout callout-concept' }, c: [

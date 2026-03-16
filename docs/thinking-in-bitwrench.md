@@ -322,33 +322,31 @@ bw.injectCSS(bw.css({
 
 All `@`-prefix keys are treated as nested blocks. No special syntax needed — it's the same JS object structure used everywhere else.
 
-### Style composition — bw.s() and bw.u
+### Style composition — bw.s()
 
-When inline styles get complex, string concatenation becomes fragile. `bw.s()` merges style objects into a style string, and `bw.u` provides pre-built utility objects for common CSS patterns:
+When inline styles get complex, string concatenation becomes fragile. `bw.s()` merges any number of style objects into a style string:
 
 ```js
-// bw.u has utilities for flex, spacing, text, etc.
-{ t: 'div', a: { style: bw.s(bw.u.flex, bw.u.alignCenter, bw.u.gap4) }, c: [
-    { t: 'img', a: { src: 'avatar.png', style: bw.s(bw.u.rounded, { width: '40px' }) } },
+// Compose style objects — bw.s() merges them left-to-right
+{ t: 'div', a: { style: bw.s({ display: 'flex' }, { alignItems: 'center' }, { gap: '1rem' }) }, c: [
+    { t: 'img', a: { src: 'avatar.png', style: bw.s({ borderRadius: '0.375rem' }, { width: '40px' }) } },
     { t: 'span', c: 'Alice' }
 ]}
 
-// Mix utilities with custom properties
-var cardHeader = bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.p4, {
+// Store base styles in variables, merge with custom properties
+var cardHeader = bw.s({ display: 'flex' }, { justifyContent: 'space-between' }, { padding: '1rem' }, {
   borderBottom: '1px solid #eee',
   background: theme.palette.primary.light
 });
 
-// Conditional styles
+// Conditional styles — null/undefined args are skipped
 { t: 'div', a: {
-    style: bw.s(bw.u.p4, isActive ? bw.u.bold : null, { color: accent })
+    style: bw.s({ padding: '1rem' }, isActive ? { fontWeight: '700' } : null, { color: accent })
   }, c: 'Status'
 }
 ```
 
-`bw.s()` skips `null`/`undefined` arguments, so conditional composition works cleanly. Available utilities include `bw.u.flex`, `bw.u.flexCol`, `bw.u.alignCenter`, `bw.u.justifyBetween`, `bw.u.gap2`-`bw.u.gap8`, `bw.u.p2`-`bw.u.p8`, `bw.u.m2`-`bw.u.m8`, `bw.u.bold`, `bw.u.textCenter`, `bw.u.rounded`, and more.
-
-This is runtime-composable — unlike Tailwind class strings, you can store base styles in variables, merge them with `bw.s()`, and override individual properties. It's `Object.assign` for CSS, with a string output.
+`bw.s()` skips `null`/`undefined` arguments, so conditional composition works cleanly. It's `Object.assign` for CSS with a string output — runtime-composable. Unlike Tailwind class strings, you can store base styles in variables, merge them with `bw.s()`, and override individual properties.
 
 ### Responsive breakpoints — bw.responsive()
 
@@ -1123,7 +1121,7 @@ The toast container is part of the TACO tree. Individual toasts append into it a
 
 ### Dashboard card — theme tokens + bw.s() + responsive + component
 
-This compact example combines the key patterns: theme palette tokens (no hardcoded hex), `bw.s()` + `bw.u` for inline styles, `bw.responsive()` for breakpoints, and `bw.component()` for live-updating stat cards.
+This compact example combines the key patterns: theme palette tokens (no hardcoded hex), `bw.s()` for inline style composition, `bw.responsive()` for breakpoints, and `bw.component()` for live-updating stat cards.
 
 ```js
 var styles = bw.makeStyles({ primary: '#1e40af', secondary: '#059669' });
@@ -1152,16 +1150,16 @@ function renderStats() {
   ]});
 }
 
-// Layout uses bw.s() + bw.u — no inline style strings
+// Layout uses bw.s() — no inline style strings
 bw.DOM('#app', { t: 'div', c: [
-  { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.justifyBetween, bw.u.alignCenter,
-    { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
+  { t: 'div', a: { style: bw.s({ display: 'flex' }, { justifyContent: 'space-between' },
+    { alignItems: 'center' }, { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
     c: [
       { t: 'h1', a: { style: bw.s({ margin: '0', fontSize: '1.5rem' }) }, c: 'Dashboard' },
       { t: 'span', a: { style: bw.s({ opacity: '0.8', fontSize: '0.85rem' }) }, c: 'Live' }
     ]
   },
-  { t: 'div', a: { id: 'stats', style: bw.s(bw.u.p4, { maxWidth: '1200px', margin: '0 auto' }) } }
+  { t: 'div', a: { id: 'stats', style: bw.s({ padding: '1rem' }, { maxWidth: '1200px', margin: '0 auto' }) } }
 ]});
 
 renderStats();
@@ -1174,7 +1172,7 @@ setInterval(function() {
 
 Key things this example proves:
 - **No hardcoded hex in layout** — colors come from `theme.palette`
-- **No inline style strings** — `bw.s(bw.u.flex, bw.u.p4, ...)` composes style objects
+- **No inline style strings** — `bw.s({ display: 'flex' }, { padding: '1rem' }, ...)` composes style objects
 - **Responsive without media queries in HTML** — `bw.responsive()` generates `@media` CSS
 - **Re-render is just calling `bw.DOM()` again** — Level 1, no framework magic
 
@@ -1212,7 +1210,6 @@ Key things this example proves:
 | `bw.css(rules)` | JS object to CSS string (supports `@media`, `@keyframes` recursively) |
 | `bw.injectCSS(css)` | Insert CSS string into document |
 | `bw.s(...styles)` | Merge style objects into a style string |
-| `bw.u` | Pre-built utility objects (`bw.u.flex`, `bw.u.p4`, `bw.u.bold`, etc.) |
 | `bw.responsive(sel, bp)` | Generate responsive `@media` CSS from breakpoint object |
 | `bw.loadStyles()` | Load built-in component CSS (or pass config to theme) |
 | `bw.makeStyles(cfg)` | Generate themed CSS from seed colors (returns styles object) |
@@ -1283,7 +1280,7 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 | **Side effect** | Run code on mount/change | `useEffect(() => {...}, [])` | `onMounted(() => {...})` | `window.addEventListener('load', fn)` | `$effect(() => {...})` | `onMount(() => {...})` | `o: { mounted: function(el) {...} }` |
 | **Cleanup on unmount** | Tear down timers/listeners | `useEffect return cleanup` | `onUnmounted(() => {...})` | manual | `return () => {...}` in `$effect` | `onCleanup(() => {...})` | `o: { unmount: fn }` or `bw.cleanup(el)` |
 | **Style inline** | Apply inline styles | `style={{color: 'red'}}` | `:style="{color: 'red'}"` | `el.style.color = 'red'` | `style="color:red"` | `style={{color: 'red'}}` | `a: { style: bw.s({ color: 'red' }) }` |
-| **Style composition** | Compose/merge styles | `{...base, ...override}` | `[baseStyle, overrideStyle]` | `Object.assign({}, base, over)` | `{...base, ...override}` | `{...base, ...override}` | `bw.s(bw.u.flex, bw.u.p4, { color: accent })` |
+| **Style composition** | Compose/merge styles | `{...base, ...override}` | `[baseStyle, overrideStyle]` | `Object.assign({}, base, over)` | `{...base, ...override}` | `{...base, ...override}` | `bw.s({ display: 'flex' }, { padding: '1rem' }, { color: accent })` |
 | **CSS class conditional** | Toggle classes | `className={active ? 'on' : ''}` | `:class="{on: active}"` | `el.classList.toggle('on')` | `class:on={active}` | `classList={{on: active()}}` | `a: { class: 'btn ' + (active ? 'on' : '') }` |
 | **Generate stylesheet** | Create CSS rules in JS | styled-components / emotion | `<style scoped>` | `style.textContent = css` | `<style>` block | `css\`...\`` | `bw.injectCSS(bw.css({ '.card': { padding: '1rem' } }))` |
 | **Responsive styles** | Breakpoint-based CSS | media query in CSS/styled | `@media` in `<style>` | `@media` in CSS file | `@media` in `<style>` | `@media` in CSS | `bw.responsive('.grid', { md: { columns: '1fr 1fr' } })` |
