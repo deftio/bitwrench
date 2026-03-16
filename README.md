@@ -25,16 +25,28 @@ bw.html(page);                 // → HTML string (Node.js, emails, SSR)
 
 Each object has four keys: **t** (tag), **a** (attributes), **c** (content), **o** (options for state/lifecycle). Nest them, loop them, compose them — it's just JavaScript.
 
->>put image of what the bove renders to here
+![Hero example output](./images/hero-example.png)
 
->> expand this: bitwrench is friendly to mobile devices as small as micronctrollers becase {compact exmplanation} 
-put more features here
+### Why bitwrench?
+
+**One file, everywhere.** At ~39KB gzipped with zero dependencies, bitwrench runs on anything with a browser — phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.
+
+Structure, styling, state, and server rendering are all handled as JavaScript objects:
+
+- **No build toolchain** — works with a `<script>` tag
+- **50+ ready-made components** — buttons, tables, modals, forms, charts, toasts — one `make*()` call each, returns a composable TACO
+- **CSS from JavaScript** — `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.generateTheme()` derives a complete theme from 2 seed colors
+- **Reactive state** — `bw.component()` provides `.get()/.set()` with `${template}` bindings; `bw.pub()`/`bw.sub()` for cross-component messaging
+- **Dual rendering** — same object renders to live DOM (`bw.DOM()`) or HTML string (`bw.html()`) for SSR, emails, or static sites
+- **Server-driven UI** — push UI updates from any backend (Python, C, Rust, Go) over SSE; `client.screenshot()` captures the page back as PNG/JPEG
+- **CLI** — `bwcli` converts Markdown, HTML, and JSON to styled standalone pages
+- **Utilities** — color interpolation, random data, lorem ipsum, cookies, URL params, file I/O
 
 
 
 ### Coming from other Frameworks
 
-Bitwrench uses javascript equivalents for most forms of front end developement.  Here is a quick mapping (see the docs(link) and also Thinking in Bitwrench (link to md) ) for more details.
+Bitwrench uses JavaScript equivalents for most forms of front-end development. Here is a quick mapping (see the [docs](docs/README.md) and [Thinking in Bitwrench](docs/thinking-in-bitwrench.md) for more details).
 
 | You're using | For | Bitwrench equivalent |
 |---|---|---|
@@ -68,16 +80,6 @@ Or include directly in a page:
 ```html
 <script src="https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js"></script>
 ```
-
-## Features
-
-- **HTML from plain objects** — describe UI as JavaScript objects, render to live DOM with `bw.DOM()` or to HTML strings with `bw.html()` for server-side rendering, emails, and static pages. Use `bw.raw()` when you need pre-escaped HTML content inside a TACO object
-- **Built-in reactivity** — `bw.component()` wraps any TACO in a reactive handle with `.get()/.set()` and `${template}` bindings. Lower-level: `bw.update()` re-renders via `o.render`, `bw.patch()` updates individual elements by ID, `bw.pub()`/`bw.sub()` provides decoupled messaging
-- **CSS and theme generation** — `bw.css()` generates stylesheets from objects, `bw.s()` composes inline styles from `bw.u` utility objects, `bw.responsive()` generates `@media` rules from JS objects. `bw.generateTheme()` derives a complete visual theme from 2-3 seed colors with `bw.toggleTheme()` for light/dark switching
-- **50+ ready-made components** — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards, bar charts, carousels, skeleton loaders — each a single `make*()` call that returns a composable TACO object
-- **Server-driven UI (bwserve)** — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the `bwcli serve` pipe server. `client.screenshot()` captures the rendered page back to the server as a PNG/JPEG Buffer for visual feedback loops, testing, or LLM vision
-- **Static site CLI** — the `bwcli` command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support
-- **Utilities** — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js
 
 ## Getting Started
 
@@ -174,9 +176,7 @@ bw.responsive('.hero', {
 
 ## Theming
 
->> This section needs better lead in for a new to bitwrench reader, plus scoping is not clear
-
-Generate a complete theme from two seed colors. All components — buttons, alerts, badges, cards, forms, tables — are styled automatically:
+`bw.generateTheme()` derives a design system — buttons, alerts, badges, cards, forms, tables, hover states, focus rings — from two seed colors. Themes are scoped to DOM subtrees, so different sections of a page can use different themes. `toggleTheme()` switches between primary and alternate palettes:
 
 ```javascript
 bw.generateTheme('my-theme', {
@@ -300,13 +300,13 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Does it scale to large apps?** — Bitwrench targets single-page tools, dashboards, prototypes, embedded UIs, and content sites — apps where a single HTML file or a handful of files is the right form factor. For a 500-route SPA with team-scale state management, React or Vue is a better fit.
 
-**How does bitwrench compare to React/Vue?** — They solve different problems at different scales. React and Vue give you a component model, virtual DOM, and ecosystem for large team-built SPAs — at the cost of a build step and toolchain. Bitwrench gives you the same rendering and state primitives in a single script with no build step, optimized for single-file tools, dashboards, embedded devices, and server-driven UIs. If your project already uses React, keep using it. If you're reaching for `create-react-app` just to render a data table with some buttons, bitwrench might be a better fit.
+**How does bitwrench compare to React/Vue?** — They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine — use whichever fits the job.
 
 **How does CSS work?** — Bitwrench doesn't own your CSS. Use any external stylesheet, Tailwind, or CSS file you want — bitwrench doesn't interfere. On top of that, `bw.css()` generates CSS from JS objects (with `@media`, `@keyframes`, pseudo-classes), `bw.s()` composes inline style objects, and `bw.generateTheme()` derives a complete theme from 2 seed colors. You can use all three together or none at all.
 
 **What's the difference between `bw.DOM()` and `bw.html()`?** — Same TACO input, two outputs. `bw.DOM('#app', taco)` mounts live DOM elements in a browser. `bw.html(taco)` returns an HTML string — use it in Node.js scripts, email generators, static site builds, or anywhere you need markup without a browser. One object format, two rendering modes.
 
-**What is bwserve? How does it compare to Streamlit/Gradio?** — bwserve lets any server push UI updates to a browser over SSE. The server sends TACO objects as JSON; the browser renders them. Unlike Streamlit and Gradio, bwserve is language-agnostic — the server can be Python, Go, Rust, C, or a shell script. Anything that can write JSON to an HTTP response can drive a bitwrench UI. See the [bwserve docs](docs/bwserve.md).
+**What is bwserve?** — bwserve lets any server push UI updates to a browser over SSE. The server sends TACO objects as JSON; the browser renders them. It's language-agnostic — the server can be Python, Go, Rust, C, or a shell script. Anything that can write JSON to an HTTP response can drive a bitwrench UI. See the [bwserve docs](docs/bwserve.md).
 
 **Can I use bitwrench on embedded devices?** — Yes — this is a primary use case. An ESP32 or Raspberry Pi serves one HTML page with bitwrench loaded, then pushes sensor data as JSON patches over SSE. The device never generates HTML. See the [ESP32 tutorial](docs/tutorial-embedded.md).
 

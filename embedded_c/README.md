@@ -36,7 +36,7 @@ lib/
 ### CMake / esp-idf
 
 Add the `embedded_c/` directory to your include path:
-
+ ``
 ```cmake
 target_include_directories(my_app PRIVATE path/to/embedded_c)
 ```
