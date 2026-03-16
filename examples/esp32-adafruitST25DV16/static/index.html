@@ -16,7 +16,7 @@
 
        Update strategy:
        - Initial load: full render via bw.DOM()
-       - Polling: fetch /api/patches -> bw.clientApply() (no DOM rebuild)
+       - Polling: fetch /api/patches -> bw.apply() (no DOM rebuild)
        - NDEF/history change: detected via ndef_version, triggers full render
        - Tab switch: full render of new tab content
        ============================================================ */
@@ -104,7 +104,7 @@
         }
 
         // Apply bwserve-compatible patch batch directly to DOM - no rebuild!
-        bw.clientApply(data);
+        bw.apply(data);
       });
     }
 
@@ -188,7 +188,7 @@
 
     // ---- Stat cards with stable IDs for patching ----
     // Uses makeStatCard() for proper BCCL styling, then injects an id
-    // onto the value element so bw.clientApply() can patch it in-place.
+    // onto the value element so bw.apply() can patch it in-place.
     function patchableStatCard(id, value, label, variant) {
       var card = bw.makeStatCard({ value: value, label: label, variant: variant });
       if (card.c) {
@@ -419,7 +419,7 @@
     }
 
     // ---- Live status panel ----
-    // Uses stable IDs so bw.clientApply() can patch values in-place
+    // Uses stable IDs so bw.apply() can patch values in-place
     function buildLivePanel() {
       var live = state.live || {};
       var it = live.interrupts || {};

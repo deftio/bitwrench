@@ -2,11 +2,12 @@
  * Bitwrench bwserve Test Suite
  *
  * Tests for:
- * - bw.clientApply() — all 5 message types + message dispatch
- * - bw.clientConnect() — connection object API
- * - BwServeClient — message format, handler dispatch
+ * - bw.apply() — all 9 message types + message dispatch
+ * - BwServeClient — message format, handler dispatch, query, mount, screenshot
  * - BwServeApp — page registration, app lifecycle
- * - Round-trip: client.render() → _sent → clientApply() → DOM check
+ * - Round-trip: client.render() → _sent → bw.apply() → DOM check
+ * - _pend / _resolvePending — unified pending promise mechanism
+ * - Unified return channel: /bw/return/<route>/<clientId>
  */
 
 import assert from "assert";
@@ -17,7 +18,7 @@ const { JSDOM } = jsdom;
 // bwserve server-side imports
 import bwserve from "../src/bwserve/index.js";
 const { BwServeApp, BwServeClient } = bwserve;
-import { generateShell } from "../src/bwserve/shell.js";
+import { generateShell } from "../src/bwserve/bwshell.js";
 
 function resetApp() {
   var dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
@@ -37,23 +38,23 @@ function resetApp() {
 resetApp();
 
 // ===================================================================================
-// bw.clientApply() tests
+// bw.apply() tests
 // ===================================================================================
 
-describe("bw.clientApply()", function() {
+describe("bw.apply()", function() {
   beforeEach(function() {
     resetApp();
   });
 
   it("should return false for null/undefined/missing type", function() {
-    assert.strictEqual(bw.clientApply(null), false);
-    assert.strictEqual(bw.clientApply(undefined), false);
-    assert.strictEqual(bw.clientApply({}), false);
+    assert.strictEqual(bw.apply(null), false);
+    assert.strictEqual(bw.apply(undefined), false);
+    assert.strictEqual(bw.apply({}), false);
   });
 
   describe("replace", function() {
     it("should replace #app content with a TACO", function() {
-      bw.clientApply({
+      bw.apply({
         type: 'replace',
         target: '#app',
         node: { t: 'div', a: { id: 'hello' }, c: 'Hello World' }
@@ -67,7 +68,7 @@ describe("bw.clientApply()", function() {
       bw.DOM('#app', { t: 'p', c: 'Old content' });
       assert.ok(document.querySelector('#app p'));
 
-      bw.clientApply({
+      bw.apply({
         type: 'replace',
         target: '#app',
         node: { t: 'span', c: 'New content' }
@@ -77,7 +78,7 @@ describe("bw.clientApply()", function() {
     });
 
     it("should return false for unknown target", function() {
-      var result = bw.clientApply({
+      var result = bw.apply({
         type: 'replace',
         target: '#nonexistent',
         node: { t: 'div', c: 'test' }
@@ -89,7 +90,7 @@ describe("bw.clientApply()", function() {
   describe("patch", function() {
     it("should patch text content by id", function() {
       bw.DOM('#app', { t: 'span', a: { id: 'counter' }, c: '0' });
-      bw.clientApply({
+      bw.apply({
         type: 'patch',
         target: 'counter',
         content: '42'
@@ -99,7 +100,7 @@ describe("bw.clientApply()", function() {
     });
 
     it("should return false for unknown target", function() {
-      var result = bw.clientApply({
+      var result = bw.apply({
         type: 'patch',
         target: 'nonexistent',
         content: 'test'
@@ -111,7 +112,7 @@ describe("bw.clientApply()", function() {
   describe("append", function() {
     it("should append a child to target", function() {
       bw.DOM('#app', { t: 'ul', a: { id: 'list' } });
-      bw.clientApply({
+      bw.apply({
         type: 'append',
         target: '#list',
         node: { t: 'li', c: 'Item 1' }
@@ -123,15 +124,15 @@ describe("bw.clientApply()", function() {
 
     it("should append multiple children in sequence", function() {
       bw.DOM('#app', { t: 'ul', a: { id: 'list' } });
-      bw.clientApply({ type: 'append', target: '#list', node: { t: 'li', c: 'A' } });
-      bw.clientApply({ type: 'append', target: '#list', node: { t: 'li', c: 'B' } });
-      bw.clientApply({ type: 'append', target: '#list', node: { t: 'li', c: 'C' } });
+      bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'A' } });
+      bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'B' } });
+      bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'C' } });
       var items = document.querySelectorAll('#list li');
       assert.strictEqual(items.length, 3);
     });
 
     it("should return false for unknown parent", function() {
-      var result = bw.clientApply({
+      var result = bw.apply({
         type: 'append',
         target: '#nonexistent',
         node: { t: 'li', c: 'test' }
@@ -148,13 +149,13 @@ describe("bw.clientApply()", function() {
       ]);
       assert.ok(document.getElementById('item-1'));
 
-      bw.clientApply({ type: 'remove', target: '#item-1' });
+      bw.apply({ type: 'remove', target: '#item-1' });
       assert.ok(!document.getElementById('item-1'), "item-1 should be removed");
       assert.ok(document.getElementById('item-2'), "item-2 should remain");
     });
 
     it("should return false for unknown target", function() {
-      var result = bw.clientApply({ type: 'remove', target: '#nonexistent' });
+      var result = bw.apply({ type: 'remove', target: '#nonexistent' });
       assert.strictEqual(result, false);
     });
   });
@@ -168,7 +169,7 @@ describe("bw.clientApply()", function() {
         ]
       });
 
-      bw.clientApply({
+      bw.apply({
         type: 'batch',
         ops: [
           { type: 'patch', target: 'val', content: '99' },
@@ -182,12 +183,12 @@ describe("bw.clientApply()", function() {
     });
 
     it("should return false for non-array ops", function() {
-      assert.strictEqual(bw.clientApply({ type: 'batch', ops: 'bad' }), false);
+      assert.strictEqual(bw.apply({ type: 'batch', ops: 'bad' }), false);
     });
   });
 
   it("should return false for unknown message type", function() {
-    var result = bw.clientApply({ type: 'unknown', target: '#app' });
+    var result = bw.apply({ type: 'unknown', target: '#app' });
     assert.strictEqual(result, false);
   });
 
@@ -197,7 +198,7 @@ describe("bw.clientApply()", function() {
     });
 
     it("should register a named function from body string", function() {
-      var result = bw.clientApply({
+      var result = bw.apply({
         type: 'register',
         name: 'greet',
         body: 'function(name) { return "Hello " + name; }'
@@ -208,15 +209,15 @@ describe("bw.clientApply()", function() {
     });
 
     it("should return false for missing name", function() {
-      assert.strictEqual(bw.clientApply({ type: 'register', body: 'function(){}' }), false);
+      assert.strictEqual(bw.apply({ type: 'register', body: 'function(){}' }), false);
     });
 
     it("should return false for missing body", function() {
-      assert.strictEqual(bw.clientApply({ type: 'register', name: 'foo' }), false);
+      assert.strictEqual(bw.apply({ type: 'register', name: 'foo' }), false);
     });
 
     it("should return false for invalid body syntax", function() {
-      var result = bw.clientApply({
+      var result = bw.apply({
         type: 'register',
         name: 'bad',
         body: 'not valid javascript {{{}'
@@ -225,8 +226,8 @@ describe("bw.clientApply()", function() {
     });
 
     it("should overwrite a previously registered function", function() {
-      bw.clientApply({ type: 'register', name: 'fn', body: 'function() { return 1; }' });
-      bw.clientApply({ type: 'register', name: 'fn', body: 'function() { return 2; }' });
+      bw.apply({ type: 'register', name: 'fn', body: 'function() { return 1; }' });
+      bw.apply({ type: 'register', name: 'fn', body: 'function() { return 2; }' });
       assert.strictEqual(bw._clientFunctions.fn(), 2);
     });
   });
@@ -239,56 +240,50 @@ describe("bw.clientApply()", function() {
     it("should call a registered function", function() {
       var callLog = [];
       bw._clientFunctions.myFn = function(a, b) { callLog.push(a + b); };
-      var result = bw.clientApply({ type: 'call', name: 'myFn', args: [3, 4] });
+      var result = bw.apply({ type: 'call', name: 'myFn', args: [3, 4] });
       assert.strictEqual(result, true);
       assert.deepStrictEqual(callLog, [7]);
     });
 
-    it("should call a built-in function (log)", function() {
+    it("should call a registered log function", function() {
+      bw._clientFunctions.log = function() { console.log.apply(console, arguments); };
       var origLog = console.log;
       var logged = [];
       console.log = function() { logged.push([].slice.call(arguments)); };
-      var result = bw.clientApply({ type: 'call', name: 'log', args: ['hello', 'world'] });
+      var result = bw.apply({ type: 'call', name: 'log', args: ['hello', 'world'] });
       console.log = origLog;
       assert.strictEqual(result, true);
       assert.deepStrictEqual(logged, [['hello', 'world']]);
     });
 
-    it("should call built-in focus function", function() {
+    it("should call a registered focus function", function() {
+      bw._clientFunctions.focus = function(sel) { var el = bw._el(sel); if (el && typeof el.focus === 'function') el.focus(); };
       bw.DOM('#app', { t: 'input', a: { id: 'inp' } });
       var focused = false;
       document.getElementById('inp').focus = function() { focused = true; };
-      var result = bw.clientApply({ type: 'call', name: 'focus', args: ['#inp'] });
+      var result = bw.apply({ type: 'call', name: 'focus', args: ['#inp'] });
       assert.strictEqual(result, true);
       assert.strictEqual(focused, true);
     });
 
-    it("should call built-in scrollTo function", function() {
+    it("should call a registered scrollTo function", function() {
+      bw._clientFunctions.scrollTo = function(sel) { var el = bw._el(sel); if (el) el.scrollTop = el.scrollHeight; };
       bw.DOM('#app', { t: 'div', a: { id: 'scrollable' } });
-      var el = document.getElementById('scrollable');
-      // jsdom doesn't fully support scroll, but we can verify the function runs
-      var result = bw.clientApply({ type: 'call', name: 'scrollTo', args: ['#scrollable'] });
+      var result = bw.apply({ type: 'call', name: 'scrollTo', args: ['#scrollable'] });
       assert.strictEqual(result, true);
     });
 
     it("should return false for missing name", function() {
-      assert.strictEqual(bw.clientApply({ type: 'call', args: [] }), false);
+      assert.strictEqual(bw.apply({ type: 'call', args: [] }), false);
     });
 
     it("should return false for unknown function name", function() {
-      assert.strictEqual(bw.clientApply({ type: 'call', name: 'nonexistent', args: [] }), false);
-    });
-
-    it("should prefer registered over built-in if same name", function() {
-      var called = '';
-      bw._clientFunctions.log = function() { called = 'registered'; };
-      bw.clientApply({ type: 'call', name: 'log', args: [] });
-      assert.strictEqual(called, 'registered');
+      assert.strictEqual(bw.apply({ type: 'call', name: 'nonexistent', args: [] }), false);
     });
 
     it("should handle missing args gracefully", function() {
       bw._clientFunctions.noArgs = function() { return 42; };
-      var result = bw.clientApply({ type: 'call', name: 'noArgs' });
+      var result = bw.apply({ type: 'call', name: 'noArgs' });
       assert.strictEqual(result, true);
     });
   });
@@ -300,14 +295,14 @@ describe("bw.clientApply()", function() {
 
     it("should reject exec when allowExec is false", function() {
       bw._allowExec = false;
-      var result = bw.clientApply({ type: 'exec', code: 'var x = 1;' });
+      var result = bw.apply({ type: 'exec', code: 'var x = 1;' });
       assert.strictEqual(result, false);
     });
 
     it("should execute code when allowExec is true", function() {
       bw._allowExec = true;
       global._execTest = 0;
-      var result = bw.clientApply({ type: 'exec', code: '_execTest = 42;' });
+      var result = bw.apply({ type: 'exec', code: '_execTest = 42;' });
       assert.strictEqual(result, true);
       assert.strictEqual(global._execTest, 42);
       delete global._execTest;
@@ -315,13 +310,13 @@ describe("bw.clientApply()", function() {
 
     it("should return false for empty code", function() {
       bw._allowExec = true;
-      assert.strictEqual(bw.clientApply({ type: 'exec' }), false);
-      assert.strictEqual(bw.clientApply({ type: 'exec', code: '' }), false);
+      assert.strictEqual(bw.apply({ type: 'exec' }), false);
+      assert.strictEqual(bw.apply({ type: 'exec', code: '' }), false);
     });
 
     it("should return false for code with syntax errors", function() {
       bw._allowExec = true;
-      var result = bw.clientApply({ type: 'exec', code: 'if if if {{{' });
+      var result = bw.apply({ type: 'exec', code: 'if if if {{{' });
       assert.strictEqual(result, false);
     });
   });
@@ -538,6 +533,140 @@ describe("BwServeClient", function() {
 });
 
 // ===================================================================================
+// _pend / _resolvePending tests
+// ===================================================================================
+
+describe("BwServeClient _pend/_resolvePending", function() {
+  it("should create a pending request with unique requestId", function() {
+    var client = new BwServeClient('pend-1', null);
+    var p = client._pend(5000);
+    assert.ok(p.requestId, 'should have requestId');
+    assert.ok(p.requestId.startsWith('req_'), 'should start with req_');
+    assert.ok(p.promise instanceof Promise, 'should return a promise');
+    client._resolvePending(p.requestId, { result: 'ok' });
+  });
+
+  it("should resolve pending promise with result", function() {
+    var client = new BwServeClient('pend-2', null);
+    var p = client._pend(5000);
+    client._resolvePending(p.requestId, { result: 42 });
+    return p.promise.then(function(val) {
+      assert.strictEqual(val, 42);
+    });
+  });
+
+  it("should reject pending promise on error", function() {
+    var client = new BwServeClient('pend-3', null);
+    var p = client._pend(5000);
+    client._resolvePending(p.requestId, { error: 'Something went wrong' });
+    return p.promise.then(
+      function() { assert.fail('should have rejected'); },
+      function(err) { assert.ok(err.message.indexOf('Something went wrong') !== -1); }
+    );
+  });
+
+  it("should timeout and reject after specified ms", function() {
+    var client = new BwServeClient('pend-4', null);
+    var p = client._pend(100);
+    return p.promise.then(
+      function() { assert.fail('should have rejected'); },
+      function(err) { assert.ok(err.message.indexOf('timeout') !== -1); }
+    );
+  });
+
+  it("should return false for unknown requestId", function() {
+    var client = new BwServeClient('pend-5', null);
+    assert.strictEqual(client._resolvePending('unknown_id', {}), false);
+  });
+
+  it("should not double-resolve", function() {
+    var client = new BwServeClient('pend-6', null);
+    var p = client._pend(5000);
+    assert.strictEqual(client._resolvePending(p.requestId, { result: 1 }), true);
+    assert.strictEqual(client._resolvePending(p.requestId, { result: 2 }), false);
+    return p.promise.then(function(val) {
+      assert.strictEqual(val, 1);
+    });
+  });
+});
+
+// ===================================================================================
+// client.query() tests
+// ===================================================================================
+
+describe("client.query()", function() {
+  it("should send a call to _bw_query with code and requestId", function() {
+    var client = new BwServeClient('q-1', null);
+    var p = client.query('return 42', { timeout: 500 });
+    assert.strictEqual(client._sent.length, 1);
+    var msg = client._sent[0];
+    assert.strictEqual(msg.type, 'call');
+    assert.strictEqual(msg.name, '_bw_query');
+    assert.strictEqual(msg.args[0].code, 'return 42');
+    assert.ok(msg.args[0].requestId);
+    client._resolvePending(msg.args[0].requestId, { result: 42 });
+    return p;
+  });
+
+  it("should resolve with query result", function() {
+    var client = new BwServeClient('q-2', null);
+    var p = client.query('return window.innerWidth', { timeout: 500 });
+    var requestId = client._sent[0].args[0].requestId;
+    client._resolvePending(requestId, { result: 1024 });
+    return p.then(function(val) {
+      assert.strictEqual(val, 1024);
+    });
+  });
+
+  it("should reject on timeout", function() {
+    var client = new BwServeClient('q-3', null);
+    return client.query('return 1', { timeout: 100 }).then(
+      function() { assert.fail('should have rejected'); },
+      function(err) { assert.ok(err.message.indexOf('timeout') !== -1); }
+    );
+  });
+});
+
+// ===================================================================================
+// client.mount() tests
+// ===================================================================================
+
+describe("client.mount()", function() {
+  it("should send a call to _bw_mount with target, factory, and props", function() {
+    var client = new BwServeClient('m-1', null);
+    var p = client.mount('#app', 'accordion', { items: [] }, { timeout: 500 });
+    assert.strictEqual(client._sent.length, 1);
+    var msg = client._sent[0];
+    assert.strictEqual(msg.type, 'call');
+    assert.strictEqual(msg.name, '_bw_mount');
+    assert.strictEqual(msg.args[0].target, '#app');
+    assert.strictEqual(msg.args[0].factory, 'accordion');
+    assert.deepStrictEqual(msg.args[0].props, { items: [] });
+    assert.ok(msg.args[0].requestId);
+    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
+    return p;
+  });
+
+  it("should resolve with mount confirmation", function() {
+    var client = new BwServeClient('m-2', null);
+    var p = client.mount('#app', 'card', { title: 'Test' }, { timeout: 500 });
+    var requestId = client._sent[0].args[0].requestId;
+    client._resolvePending(requestId, { result: { mounted: true } });
+    return p.then(function(val) {
+      assert.strictEqual(val.mounted, true);
+    });
+  });
+
+  it("should reject on timeout", function() {
+    var client = new BwServeClient('m-3', null);
+    return client.mount('#app', 'bad', {}, { timeout: 100 }).then(
+      function() { assert.fail('should have rejected'); },
+      function(err) { assert.ok(err.message.indexOf('timeout') !== -1); }
+    );
+  });
+});
+
+// ===================================================================================
 // BwServeApp tests
 // ===================================================================================
 
@@ -579,7 +708,7 @@ describe("BwServeApp", function() {
   describe("#listen() and #close()", function() {
     it("should start and stop server", async function() {
       this.timeout(5000);
-      var app = bwserve.create({ port: 0 }); // port 0 = random available port
+      var app = bwserve.create({ port: 0 });
       app.page('/', function(client) {
         client.render('#app', { t: 'div', c: 'Hello' });
       });
@@ -594,7 +723,7 @@ describe("BwServeApp", function() {
 });
 
 // ===================================================================================
-// Round-trip tests: client.render() → _sent → clientApply() → DOM
+// Round-trip tests: client.render() → _sent → bw.apply() → DOM
 // ===================================================================================
 
 describe("bwserve round-trip", function() {
@@ -602,16 +731,13 @@ describe("bwserve round-trip", function() {
     resetApp();
   });
 
-  it("should render a TACO via client → apply to DOM", function() {
+  it("should render a TACO via client then apply to DOM", function() {
     var client = new BwServeClient('rt-1', null);
     client.render('#app', {
       t: 'div', a: { id: 'greeting' }, c: 'Hello from server'
     });
-
-    // Simulate: grab what the server sent, apply it client-side
     var msg = client._sent[0];
-    bw.clientApply(msg);
-
+    bw.apply(msg);
     var el = document.getElementById('greeting');
     assert.ok(el);
     assert.strictEqual(el.textContent, 'Hello from server');
@@ -619,41 +745,29 @@ describe("bwserve round-trip", function() {
 
   it("should render then patch via round-trip", function() {
     var client = new BwServeClient('rt-2', null);
-
-    // Server renders initial UI
     client.render('#app', {
       t: 'div', c: [
         { t: 'span', a: { id: 'count' }, c: '0' }
       ]
     });
-    bw.clientApply(client._sent[0]);
+    bw.apply(client._sent[0]);
     assert.strictEqual(document.getElementById('count').textContent, '0');
-
-    // Server patches the counter
     client.patch('count', '42');
-    bw.clientApply(client._sent[1]);
+    bw.apply(client._sent[1]);
     assert.strictEqual(document.getElementById('count').textContent, '42');
   });
 
   it("should render then append then remove via round-trip", function() {
     var client = new BwServeClient('rt-3', null);
-
-    // Initial list
-    client.render('#app', {
-      t: 'ul', a: { id: 'list' }
-    });
-    bw.clientApply(client._sent[0]);
-
-    // Append items
+    client.render('#app', { t: 'ul', a: { id: 'list' } });
+    bw.apply(client._sent[0]);
     client.append('#list', { t: 'li', a: { id: 'i1' }, c: 'Item 1' });
     client.append('#list', { t: 'li', a: { id: 'i2' }, c: 'Item 2' });
-    bw.clientApply(client._sent[1]);
-    bw.clientApply(client._sent[2]);
+    bw.apply(client._sent[1]);
+    bw.apply(client._sent[2]);
     assert.strictEqual(document.querySelectorAll('#list li').length, 2);
-
-    // Remove first item
     client.remove('#i1');
-    bw.clientApply(client._sent[3]);
+    bw.apply(client._sent[3]);
     assert.strictEqual(document.querySelectorAll('#list li').length, 1);
     assert.ok(!document.getElementById('i1'));
     assert.ok(document.getElementById('i2'));
@@ -661,7 +775,6 @@ describe("bwserve round-trip", function() {
 
   it("should handle batch round-trip", function() {
     var client = new BwServeClient('rt-4', null);
-
     client.render('#app', {
       t: 'div', c: [
         { t: 'span', a: { id: 'a' }, c: '-' },
@@ -669,15 +782,13 @@ describe("bwserve round-trip", function() {
         { t: 'ul', a: { id: 'list' } }
       ]
     });
-    bw.clientApply(client._sent[0]);
-
+    bw.apply(client._sent[0]);
     client.batch([
       { type: 'patch', target: 'a', content: 'X' },
       { type: 'patch', target: 'b', content: 'Y' },
       { type: 'append', target: '#list', node: { t: 'li', c: 'batch-item' } }
     ]);
-    bw.clientApply(client._sent[1]);
-
+    bw.apply(client._sent[1]);
     assert.strictEqual(document.getElementById('a').textContent, 'X');
     assert.strictEqual(document.getElementById('b').textContent, 'Y');
     assert.strictEqual(document.querySelectorAll('#list li').length, 1);
@@ -697,29 +808,25 @@ describe("bwserve round-trip: register/call/exec", function() {
 
   it("should register via server then call via round-trip", function() {
     var client = new BwServeClient('rt-reg', null);
-
-    // Server registers a function
     client.register('setTitle', 'function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }');
-    bw.clientApply(client._sent[0]);
+    bw.apply(client._sent[0]);
     assert.strictEqual(typeof bw._clientFunctions.setTitle, 'function');
-
-    // Server renders some content, then calls the registered function
     client.render('#app', { t: 'h1', a: { id: 'title' }, c: 'Original' });
-    bw.clientApply(client._sent[1]);
+    bw.apply(client._sent[1]);
     assert.strictEqual(document.getElementById('title').textContent, 'Original');
-
     client.call('setTitle', 'title', 'Updated by call');
-    bw.clientApply(client._sent[2]);
+    bw.apply(client._sent[2]);
     assert.strictEqual(document.getElementById('title').textContent, 'Updated by call');
   });
 
-  it("should call built-in log via server round-trip", function() {
+  it("should call registered log via server round-trip", function() {
     var client = new BwServeClient('rt-log', null);
+    bw._clientFunctions.log = function() { console.log.apply(console, arguments); };
     var origLog = console.log;
     var logged = [];
     console.log = function() { logged.push([].slice.call(arguments)); };
     client.call('log', 'server says hello');
-    bw.clientApply(client._sent[0]);
+    bw.apply(client._sent[0]);
     console.log = origLog;
     assert.deepStrictEqual(logged, [['server says hello']]);
   });
@@ -727,7 +834,7 @@ describe("bwserve round-trip: register/call/exec", function() {
   it("should reject exec in round-trip when not opted in", function() {
     var client = new BwServeClient('rt-exec-no', null);
     client.exec('var x = 1;');
-    var result = bw.clientApply(client._sent[0]);
+    var result = bw.apply(client._sent[0]);
     assert.strictEqual(result, false);
   });
 
@@ -736,7 +843,7 @@ describe("bwserve round-trip: register/call/exec", function() {
     var client = new BwServeClient('rt-exec-yes', null);
     global._execRoundTrip = 0;
     client.exec('_execRoundTrip = 99;');
-    var result = bw.clientApply(client._sent[0]);
+    var result = bw.apply(client._sent[0]);
     assert.strictEqual(result, true);
     assert.strictEqual(global._execRoundTrip, 99);
     delete global._execRoundTrip;
@@ -744,75 +851,14 @@ describe("bwserve round-trip: register/call/exec", function() {
 
   it("should batch register + call in one round-trip", function() {
     var client = new BwServeClient('rt-batch-call', null);
-
-    // Render content first
     client.render('#app', { t: 'div', a: { id: 'status' }, c: 'waiting' });
-    bw.clientApply(client._sent[0]);
-
-    // Batch: register a function then call it
+    bw.apply(client._sent[0]);
     client.batch([
       { type: 'register', name: 'markDone', body: 'function(id) { var el = document.getElementById(id); if (el) el.textContent = "done"; }' },
       { type: 'call', name: 'markDone', args: ['status'] }
     ]);
-    bw.clientApply(client._sent[1]);
+    bw.apply(client._sent[1]);
     assert.strictEqual(document.getElementById('status').textContent, 'done');
-  });
-});
-
-// ===================================================================================
-// bw.clientConnect() tests (limited — no real EventSource in jsdom)
-// ===================================================================================
-
-describe("bw.clientConnect()", function() {
-  it("should be a function", function() {
-    assert.strictEqual(typeof bw.clientConnect, 'function');
-  });
-
-  it("should return a connection object with expected API", function() {
-    // No EventSource in jsdom, so transport won't actually connect
-    // but we can verify the returned object shape
-    var conn = bw.clientConnect('/__bw/events/test', {
-      transport: 'poll',
-      interval: 999999 // don't actually poll
-    });
-    assert.strictEqual(typeof conn.sendAction, 'function');
-    assert.strictEqual(typeof conn.on, 'function');
-    assert.strictEqual(typeof conn.close, 'function');
-    assert.ok('status' in conn);
-    conn.close(); // cleanup
-  });
-
-  it("should derive actionUrl from event url", function() {
-    var conn = bw.clientConnect('/__bw/events/c1', {
-      transport: 'poll',
-      interval: 999999
-    });
-    // Internal check: actionUrl should be /__bw/action/c1
-    // We can't directly inspect, but the conn exists
-    assert.ok(conn);
-    conn.close();
-  });
-
-  it("should set bw._allowExec when allowExec option is true", function() {
-    bw._allowExec = false;
-    var conn = bw.clientConnect('/__bw/events/c2', {
-      transport: 'poll',
-      interval: 999999,
-      allowExec: true
-    });
-    assert.strictEqual(bw._allowExec, true);
-    conn.close();
-    bw._allowExec = false; // cleanup
-  });
-
-  it("should not set bw._allowExec when allowExec option is absent", function() {
-    bw._allowExec = true; // pre-set
-    var conn = bw.clientConnect('/__bw/events/c3', {
-      transport: 'poll',
-      interval: 999999
-    });
-    assert.strictEqual(bw._allowExec, false);
-    conn.close();
   });
 });
 
@@ -843,16 +889,16 @@ describe("generateShell()", function() {
     assert.ok(html.includes('<title>My Dashboard</title>'));
   });
 
-  it("should include bitwrench script and CSS by default", function() {
+  it("should include bitwrench script and CSS from /bw/lib/", function() {
     var html = generateShell({ clientId: 'c1' });
-    assert.ok(html.includes('/__bw/bitwrench.umd.js'));
-    assert.ok(html.includes('/__bw/bitwrench.css'));
+    assert.ok(html.includes('/bw/lib/bitwrench.umd.js'));
+    assert.ok(html.includes('/bw/lib/bitwrench.css'));
   });
 
   it("should not include bitwrench when injectBitwrench is false", function() {
     var html = generateShell({ clientId: 'c1', injectBitwrench: false });
-    assert.ok(!html.includes('/__bw/bitwrench.umd.js'));
-    assert.ok(!html.includes('/__bw/bitwrench.css'));
+    assert.ok(!html.includes('/bw/lib/bitwrench.umd.js'));
+    assert.ok(!html.includes('/bw/lib/bitwrench.css'));
   });
 
   it("should include #app div", function() {
@@ -860,14 +906,14 @@ describe("generateShell()", function() {
     assert.ok(html.includes('<div id="app"></div>'));
   });
 
-  it("should include clientConnect with correct clientId", function() {
+  it("should include bwclient inline and correct clientId", function() {
     var html = generateShell({ clientId: 'my-client-42' });
     assert.ok(html.includes('"my-client-42"'));
-    assert.ok(html.includes('/__bw/events/'));
-    assert.ok(html.includes('/__bw/action/'));
+    assert.ok(html.includes('_bwClient'));
+    assert.ok(html.includes('/bw/events/'));
   });
 
-  it("should include data-bw-action click delegation", function() {
+  it("should include data-bw-action delegation via bwclient", function() {
     var html = generateShell({ clientId: 'c1' });
     assert.ok(html.includes('data-bw-action'));
     assert.ok(html.includes('sendAction'));
@@ -919,7 +965,7 @@ describe("generateShell()", function() {
 });
 
 // ===================================================================================
-// BwServeClient edge case tests (error branches)
+// BwServeClient edge case tests
 // ===================================================================================
 
 describe("BwServeClient edge cases", function() {
@@ -941,7 +987,6 @@ describe("BwServeClient edge cases", function() {
       end: function() { throw new Error('stream already closed'); }
     };
     var client = new BwServeClient('c-close-err', mockRes);
-    // Should not throw
     client.close();
     assert.strictEqual(client._closed, true);
   });
@@ -951,7 +996,6 @@ describe("BwServeClient edge cases", function() {
       write: function() { throw new Error('write after end'); }
     };
     var client = new BwServeClient('c-write-err', mockRes);
-    // Should not throw, should still store in _sent
     client.render('#app', { t: 'div', c: 'test' });
     assert.strictEqual(client._sent.length, 1);
   });
@@ -972,7 +1016,7 @@ describe("BwServeClient edge cases", function() {
 // ===================================================================================
 
 describe("BwServeApp HTTP integration", function() {
-  var apps = [];  // track all apps for cleanup
+  var apps = [];
 
   function createApp(opts) {
     var a = bwserve.create(Object.assign({ port: 0 }, opts || {}));
@@ -1014,13 +1058,13 @@ describe("BwServeApp HTTP integration", function() {
     assert.strictEqual(res.status, 404);
   });
 
-  it("should serve bitwrench.umd.js from /__bw/", async function() {
+  it("should serve bitwrench.umd.js from /bw/lib/", async function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-    var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.umd.js');
+    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench.umd.js');
     assert.strictEqual(res.status, 200);
     var contentType = res.headers.get('content-type');
     assert.ok(contentType.includes('javascript'));
@@ -1028,23 +1072,23 @@ describe("BwServeApp HTTP integration", function() {
     assert.ok(body.length > 1000, "bitwrench.umd.js should be > 1KB");
   });
 
-  it("should serve bitwrench.umd.min.js from /__bw/", async function() {
+  it("should serve bitwrench.umd.min.js from /bw/lib/", async function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-    var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.umd.min.js');
+    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench.umd.min.js');
     assert.strictEqual(res.status, 200);
   });
 
-  it("should serve bitwrench.css from /__bw/", async function() {
+  it("should serve bitwrench.css from /bw/lib/", async function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-    var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.css');
+    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench.css');
     assert.strictEqual(res.status, 200);
     var contentType = res.headers.get('content-type');
     assert.ok(contentType.includes('css'));
@@ -1055,30 +1099,25 @@ describe("BwServeApp HTTP integration", function() {
     var app = createApp();
     app.page('/', function(client) {
       client.render('#app', { t: 'div', c: 'Hello from SSE test' });
-      // Close client after sending to allow fetch to complete
       setTimeout(function() { client.close(); }, 50);
     });
     await app.listen();
     var port = app._server.address().port;
-
     var pageRes = await fetch('http://localhost:' + port + '/');
     var html = await pageRes.text();
-
     var match = html.match(/"(c\d+)"/);
     assert.ok(match, "should have a client ID in the shell");
     var clientId = match[1];
-
-    var sseRes = await fetch('http://localhost:' + port + '/__bw/events/' + clientId);
+    var sseRes = await fetch('http://localhost:' + port + '/bw/events/' + clientId);
     assert.strictEqual(sseRes.status, 200);
     var sseType = sseRes.headers.get('content-type');
     assert.ok(sseType.includes('text/event-stream'));
-
     var body = await sseRes.text();
     assert.ok(body.includes('"type":"replace"'), "SSE should contain replace message");
     assert.ok(body.includes('Hello from SSE test'), "SSE should contain our content");
   });
 
-  it("should handle action POST", async function() {
+  it("should handle action POST via unified return channel", async function() {
     this.timeout(5000);
     var actionCalled = false;
     var app = createApp();
@@ -1090,19 +1129,16 @@ describe("BwServeApp HTTP integration", function() {
     });
     await app.listen();
     var port = app._server.address().port;
-
     var pageRes = await fetch('http://localhost:' + port + '/');
     var html = await pageRes.text();
     var match = html.match(/"(c\d+)"/);
     var clientId = match[1];
-
-    fetch('http://localhost:' + port + '/__bw/events/' + clientId).catch(function() {});
+    fetch('http://localhost:' + port + '/bw/events/' + clientId).catch(function() {});
     await new Promise(function(r) { setTimeout(r, 100); });
-
-    var actionRes = await fetch('http://localhost:' + port + '/__bw/action/' + clientId, {
+    var actionRes = await fetch('http://localhost:' + port + '/bw/return/action/' + clientId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'myAction', data: { test: true } })
+      body: JSON.stringify({ result: { action: 'myAction', data: { test: true } } })
     });
     assert.strictEqual(actionRes.status, 200);
     var actionBody = await actionRes.json();
@@ -1110,13 +1146,13 @@ describe("BwServeApp HTTP integration", function() {
     assert.strictEqual(actionCalled, true);
   });
 
-  it("should return 404 for action with unknown client", async function() {
+  it("should return 404 for return with unknown client", async function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-    var res = await fetch('http://localhost:' + port + '/__bw/action/unknown-client', {
+    var res = await fetch('http://localhost:' + port + '/bw/return/action/unknown-client', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'test' })
@@ -1124,7 +1160,7 @@ describe("BwServeApp HTTP integration", function() {
     assert.strictEqual(res.status, 404);
   });
 
-  it("should return 400 for malformed action POST body", async function() {
+  it("should return 400 for malformed return POST body", async function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function(client) {
@@ -1132,16 +1168,13 @@ describe("BwServeApp HTTP integration", function() {
     });
     await app.listen();
     var port = app._server.address().port;
-
     var pageRes = await fetch('http://localhost:' + port + '/');
     var html = await pageRes.text();
     var match = html.match(/"(c\d+)"/);
     var clientId = match[1];
-
-    fetch('http://localhost:' + port + '/__bw/events/' + clientId).catch(function() {});
+    fetch('http://localhost:' + port + '/bw/events/' + clientId).catch(function() {});
     await new Promise(function(r) { setTimeout(r, 100); });
-
-    var res = await fetch('http://localhost:' + port + '/__bw/action/' + clientId, {
+    var res = await fetch('http://localhost:' + port + '/bw/return/action/' + clientId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'not valid json{{{}'
@@ -1157,20 +1190,16 @@ describe("BwServeApp HTTP integration", function() {
     });
     await app.listen();
     var port = app._server.address().port;
-
     var pageRes = await fetch('http://localhost:' + port + '/');
     var html = await pageRes.text();
     var match = html.match(/"(c\d+)"/);
     var clientId = match[1];
-
     var controller = new AbortController();
-    fetch('http://localhost:' + port + '/__bw/events/' + clientId, {
+    fetch('http://localhost:' + port + '/bw/events/' + clientId, {
       signal: controller.signal
     }).catch(function() {});
-
     await new Promise(function(r) { setTimeout(r, 100); });
     assert.ok(app.clientCount >= 1);
-
     controller.abort();
     await app.close();
     assert.strictEqual(app.clientCount, 0);
@@ -1193,10 +1222,8 @@ describe("BwServeApp HTTP integration", function() {
     });
     await app.listen();
     var port = app._server.address().port;
-
     var homeRes = await fetch('http://localhost:' + port + '/');
     assert.strictEqual(homeRes.status, 200);
-
     var aboutRes = await fetch('http://localhost:' + port + '/about');
     assert.strictEqual(aboutRes.status, 200);
   });
@@ -1209,23 +1236,18 @@ describe("BwServeApp HTTP integration", function() {
     var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
     fs.writeFileSync(path.join(tmpDir, 'hello.txt'), 'static content');
     fs.writeFileSync(path.join(tmpDir, 'data.json'), '{"key":"value"}');
-
     var app = createApp({ static: tmpDir });
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-
     var res = await fetch('http://localhost:' + port + '/hello.txt');
     assert.strictEqual(res.status, 200);
     var body = await res.text();
     assert.strictEqual(body, 'static content');
-
     var jsonRes = await fetch('http://localhost:' + port + '/data.json');
     assert.strictEqual(jsonRes.status, 200);
     var ct = jsonRes.headers.get('content-type');
     assert.ok(ct.includes('json'));
-
-    // Cleanup temp dir
     fs.unlinkSync(path.join(tmpDir, 'hello.txt'));
     fs.unlinkSync(path.join(tmpDir, 'data.json'));
     fs.rmdirSync(tmpDir);
@@ -1237,43 +1259,35 @@ describe("BwServeApp HTTP integration", function() {
     var os = await import('os');
     var path = await import('path');
     var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
-
     var app = createApp({ static: tmpDir });
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-
     var res = await fetch('http://localhost:' + port + '/nonexistent.txt');
     assert.strictEqual(res.status, 404);
-
     fs.rmdirSync(tmpDir);
   });
 
   it("should handle page handler that throws", async function() {
     this.timeout(5000);
     var app = createApp();
-    app.page('/', function(client) {
+    app.page('/', function() {
       throw new Error('test handler error');
     });
     await app.listen();
     var port = app._server.address().port;
-
-    // Get the page to create a client ID
     var pageRes = await fetch('http://localhost:' + port + '/');
     var html = await pageRes.text();
     var match = html.match(/"(c\d+)"/);
     var clientId = match[1];
-
-    // Connect SSE — the handler will throw but server should not crash
     var controller = new AbortController();
     var sseRes = await Promise.race([
-      fetch('http://localhost:' + port + '/__bw/events/' + clientId, {
+      fetch('http://localhost:' + port + '/bw/events/' + clientId, {
         signal: controller.signal
       }),
       new Promise(function(r) { setTimeout(function() { r({ status: 200 }); }, 200); })
     ]);
     controller.abort();
-    // Server should still be running
     var res2 = await fetch('http://localhost:' + port + '/');
     assert.strictEqual(res2.status, 200);
   });
@@ -1282,18 +1296,15 @@ describe("BwServeApp HTTP integration", function() {
     this.timeout(5000);
     var app = createApp({ keepAliveInterval: 50 });
     app.page('/', function(client) {
-      // Close after enough time for keep-alive to fire
       setTimeout(function() { client.close(); }, 150);
     });
     await app.listen();
     var port = app._server.address().port;
-
     var pageRes = await fetch('http://localhost:' + port + '/');
     var html = await pageRes.text();
     var match = html.match(/"(c\d+)"/);
     var clientId = match[1];
-
-    var sseRes = await fetch('http://localhost:' + port + '/__bw/events/' + clientId);
+    var sseRes = await fetch('http://localhost:' + port + '/bw/events/' + clientId);
     var body = await sseRes.text();
     assert.ok(body.includes(':keepalive'), "SSE stream should contain keep-alive comment");
   });
@@ -1305,206 +1316,186 @@ describe("BwServeApp HTTP integration", function() {
     var distDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'dist');
     var cssPath = path.join(distDir, 'bitwrench.css');
     var backupPath = cssPath + '.bak';
-
-    // Temporarily rename the CSS file to simulate missing dist file
     fs.renameSync(cssPath, backupPath);
-
     try {
       var app = createApp();
       app.page('/', function() {});
       await app.listen();
       var port = app._server.address().port;
-
-      var res = await fetch('http://localhost:' + port + '/__bw/bitwrench.css');
+      var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench.css');
       assert.strictEqual(res.status, 404);
       var body = await res.text();
       assert.ok(body.includes('Not Found'));
     } finally {
-      // Restore the CSS file
       fs.renameSync(backupPath, cssPath);
     }
   });
 });
 
 // ===================================================================================
-// bw.clientParse() — relaxed JSON parser
+// bw.parseJSONFlex() — relaxed JSON parser
 // ===================================================================================
 
-describe("bw.clientParse()", function() {
+describe("bw.parseJSONFlex()", function() {
   it("should parse strict JSON (no r-prefix)", function() {
-    var msg = bw.clientParse('{"type":"patch","target":"temp","content":"23.5"}');
+    var msg = bw.parseJSONFlex('{"type":"patch","target":"temp","content":"23.5"}');
     assert.strictEqual(msg.type, 'patch');
     assert.strictEqual(msg.target, 'temp');
     assert.strictEqual(msg.content, '23.5');
   });
 
   it("should parse r-prefixed single-quoted strings", function() {
-    var msg = bw.clientParse("r{'type':'patch','target':'temp','content':'23.5'}");
+    var msg = bw.parseJSONFlex("r{'type':'patch','target':'temp','content':'23.5'}");
     assert.strictEqual(msg.type, 'patch');
     assert.strictEqual(msg.target, 'temp');
     assert.strictEqual(msg.content, '23.5');
   });
 
   it("should handle escaped single quotes", function() {
-    var msg = bw.clientParse("r{'content':'it\\'s hot'}");
+    var msg = bw.parseJSONFlex("r{'content':'it\\'s hot'}");
     assert.strictEqual(msg.content, "it's hot");
   });
 
   it("should handle double quotes inside single-quoted strings", function() {
-    var msg = bw.clientParse("r{'msg':'say \"hello\"'}");
+    var msg = bw.parseJSONFlex("r{'msg':'say \"hello\"'}");
     assert.strictEqual(msg.msg, 'say "hello"');
   });
 
   it("should strip trailing commas", function() {
-    var msg = bw.clientParse("r{'a':1,'b':[2,3,],}");
+    var msg = bw.parseJSONFlex("r{'a':1,'b':[2,3,],}");
     assert.strictEqual(msg.a, 1);
     assert.deepStrictEqual(msg.b, [2, 3]);
   });
 
   it("should handle mixed strict JSON inside r-prefix", function() {
-    var msg = bw.clientParse('r{"already":"valid json"}');
+    var msg = bw.parseJSONFlex('r{"already":"valid json"}');
     assert.strictEqual(msg.already, 'valid json');
   });
 
   it("should handle nested objects", function() {
-    var msg = bw.clientParse("r{'type':'replace','target':'#app','node':{'t':'div','c':'hi'}}");
+    var msg = bw.parseJSONFlex("r{'type':'replace','target':'#app','node':{'t':'div','c':'hi'}}");
     assert.strictEqual(msg.type, 'replace');
     assert.strictEqual(msg.node.t, 'div');
     assert.strictEqual(msg.node.c, 'hi');
   });
 
   it("should handle arrays in values", function() {
-    var msg = bw.clientParse("r{'ops':[{'type':'patch','target':'a','content':'1'},{'type':'patch','target':'b','content':'2'}]}");
+    var msg = bw.parseJSONFlex("r{'ops':[{'type':'patch','target':'a','content':'1'},{'type':'patch','target':'b','content':'2'}]}");
     assert.strictEqual(msg.ops.length, 2);
     assert.strictEqual(msg.ops[0].target, 'a');
     assert.strictEqual(msg.ops[1].target, 'b');
   });
 
   it("should handle whitespace in input", function() {
-    var msg = bw.clientParse("  r{ 'type' : 'patch' , 'target' : 'x' , 'content' : '1' }  ");
+    var msg = bw.parseJSONFlex("  r{ 'type' : 'patch' , 'target' : 'x' , 'content' : '1' }  ");
     assert.strictEqual(msg.type, 'patch');
     assert.strictEqual(msg.target, 'x');
   });
 
   it("should throw on invalid JSON", function() {
-    assert.throws(function() {
-      bw.clientParse("not json");
-    });
+    assert.throws(function() { bw.parseJSONFlex("not json"); });
   });
 
   it("should throw on invalid r-prefixed JSON", function() {
-    assert.throws(function() {
-      bw.clientParse("r{broken");
-    });
+    assert.throws(function() { bw.parseJSONFlex("r{broken"); });
   });
 
   it("should handle empty/null input", function() {
-    assert.throws(function() { bw.clientParse(''); });
-    assert.throws(function() { bw.clientParse(null); });
+    assert.throws(function() { bw.parseJSONFlex(''); });
+    assert.throws(function() { bw.parseJSONFlex(null); });
   });
 
   it("should handle numeric values", function() {
-    var msg = bw.clientParse("r{'count':42,'pi':3.14,'neg':-1}");
+    var msg = bw.parseJSONFlex("r{'count':42,'pi':3.14,'neg':-1}");
     assert.strictEqual(msg.count, 42);
     assert.strictEqual(msg.pi, 3.14);
     assert.strictEqual(msg.neg, -1);
   });
 
   it("should handle boolean and null values", function() {
-    var msg = bw.clientParse("r{'a':true,'b':false,'c':null}");
+    var msg = bw.parseJSONFlex("r{'a':true,'b':false,'c':null}");
     assert.strictEqual(msg.a, true);
     assert.strictEqual(msg.b, false);
     assert.strictEqual(msg.c, null);
   });
 
-  // --- Real-world content with apostrophes ---
-
   it("should handle apostrophe in value (escaped)", function() {
-    var msg = bw.clientParse("r{'content':'Barry\\'s food'}");
+    var msg = bw.parseJSONFlex("r{'content':'Barry\\'s food'}");
     assert.strictEqual(msg.content, "Barry's food");
   });
 
   it("should handle multiple apostrophes in value", function() {
-    var msg = bw.clientParse("r{'content':'it\\'s Barry\\'s food and it\\'s great'}");
+    var msg = bw.parseJSONFlex("r{'content':'it\\'s Barry\\'s food and it\\'s great'}");
     assert.strictEqual(msg.content, "it's Barry's food and it's great");
   });
 
   it("should handle apostrophe in target value", function() {
-    var msg = bw.clientParse("r{'type':'patch','target':'room-name','content':'Barry\\'s Room'}");
+    var msg = bw.parseJSONFlex("r{'type':'patch','target':'room-name','content':'Barry\\'s Room'}");
     assert.strictEqual(msg.content, "Barry's Room");
     assert.strictEqual(msg.type, 'patch');
   });
 
   it("should handle backslash in value", function() {
-    var msg = bw.clientParse("r{'path':'C:\\\\Users\\\\data'}");
+    var msg = bw.parseJSONFlex("r{'path':'C:\\\\Users\\\\data'}");
     assert.strictEqual(msg.path, "C:\\Users\\data");
   });
 
   it("should handle double quotes inside single-quoted values (C literal scenario)", function() {
-    // In C: "r{'msg':'say \"hello\"'}"
-    var msg = bw.clientParse("r{'msg':'say \"hello\"'}");
+    var msg = bw.parseJSONFlex("r{'msg':'say \"hello\"'}");
     assert.strictEqual(msg.msg, 'say "hello"');
   });
 
   it("should handle newline escape in value", function() {
-    var msg = bw.clientParse("r{'text':'line1\\nline2'}");
+    var msg = bw.parseJSONFlex("r{'text':'line1\\nline2'}");
     assert.strictEqual(msg.text, "line1\nline2");
   });
 
   it("should handle tab escape in value", function() {
-    var msg = bw.clientParse("r{'text':'col1\\tcol2'}");
+    var msg = bw.parseJSONFlex("r{'text':'col1\\tcol2'}");
     assert.strictEqual(msg.text, "col1\tcol2");
   });
 
-  // --- Nested TACO with content containing apostrophes ---
-
   it("should handle nested TACO with apostrophe in content", function() {
-    var msg = bw.clientParse("r{'type':'replace','target':'#app','node':{'t':'p','c':'Don\\'t panic'}}");
+    var msg = bw.parseJSONFlex("r{'type':'replace','target':'#app','node':{'t':'p','c':'Don\\'t panic'}}");
     assert.strictEqual(msg.type, 'replace');
     assert.strictEqual(msg.node.t, 'p');
     assert.strictEqual(msg.node.c, "Don't panic");
   });
 
   it("should handle batch with apostrophes in multiple ops", function() {
-    var msg = bw.clientParse("r{'type':'batch','ops':[{'type':'patch','target':'a','content':'it\\'s'},{'type':'patch','target':'b','content':'they\\'re'}]}");
+    var msg = bw.parseJSONFlex("r{'type':'batch','ops':[{'type':'patch','target':'a','content':'it\\'s'},{'type':'patch','target':'b','content':'they\\'re'}]}");
     assert.strictEqual(msg.ops[0].content, "it's");
     assert.strictEqual(msg.ops[1].content, "they're");
   });
 
-  // --- Edge cases ---
-
   it("should handle empty single-quoted string", function() {
-    var msg = bw.clientParse("r{'content':''}");
+    var msg = bw.parseJSONFlex("r{'content':''}");
     assert.strictEqual(msg.content, '');
   });
 
   it("should handle single char value", function() {
-    var msg = bw.clientParse("r{'c':'x'}");
+    var msg = bw.parseJSONFlex("r{'c':'x'}");
     assert.strictEqual(msg.c, 'x');
   });
 
   it("should handle value that is only an escaped apostrophe", function() {
-    var msg = bw.clientParse("r{'c':'\\''}");
+    var msg = bw.parseJSONFlex("r{'c':'\\''}");
     assert.strictEqual(msg.c, "'");
   });
 
   it("should handle consecutive escaped apostrophes", function() {
-    var msg = bw.clientParse("r{'c':'\\'\\'\\'\\''}");
+    var msg = bw.parseJSONFlex("r{'c':'\\'\\'\\'\\''}");
     assert.strictEqual(msg.c, "''''");
   });
 
-  // --- ESP32 / embedded simulation: BW_PATCH output ---
-
   it("should parse simulated BW_PATCH output (sensor value)", function() {
-    // Simulates: BW_PATCH(msg, "val-temp", "23.5 C")
-    var msg = bw.clientParse("r{'type':'patch','target':'val-temp','content':'23.5 C'}");
+    var msg = bw.parseJSONFlex("r{'type':'patch','target':'val-temp','content':'23.5 C'}");
     assert.strictEqual(msg.target, 'val-temp');
     assert.strictEqual(msg.content, '23.5 C');
   });
 
   it("should parse simulated BW_BATCH output (multiple sensors)", function() {
-    // Simulates batch of 3 sensor patches
-    var msg = bw.clientParse("r{'type':'batch','ops':[{'type':'patch','target':'val-temp','content':'23.5 C'},{'type':'patch','target':'val-humidity','content':'45%'},{'type':'patch','target':'val-uptime','content':'3600s'}]}");
+    var msg = bw.parseJSONFlex("r{'type':'batch','ops':[{'type':'patch','target':'val-temp','content':'23.5 C'},{'type':'patch','target':'val-humidity','content':'45%'},{'type':'patch','target':'val-uptime','content':'3600s'}]}");
     assert.strictEqual(msg.type, 'batch');
     assert.strictEqual(msg.ops.length, 3);
     assert.strictEqual(msg.ops[0].content, '23.5 C');
@@ -1512,16 +1503,14 @@ describe("bw.clientParse()", function() {
   });
 
   it("should parse simulated BW_REPLACE with TACO node", function() {
-    // Simulates: BW_REPLACE(msg, "#app", taco)
-    var msg = bw.clientParse("r{'type':'replace','target':'#app','node':{'t':'h1','c':'Hello World'}}");
+    var msg = bw.parseJSONFlex("r{'type':'replace','target':'#app','node':{'t':'h1','c':'Hello World'}}");
     assert.strictEqual(msg.type, 'replace');
     assert.strictEqual(msg.node.t, 'h1');
     assert.strictEqual(msg.node.c, 'Hello World');
   });
 
   it("should parse simulated BW_TACO_ATTR output", function() {
-    // Simulates: BW_TACO_ATTR(buf, "button", "'data-bw-action':'increment','class':'bw-btn'", "+1")
-    var msg = bw.clientParse("r{'t':'button','a':{'data-bw-action':'increment','class':'bw-btn'},'c':'+1'}");
+    var msg = bw.parseJSONFlex("r{'t':'button','a':{'data-bw-action':'increment','class':'bw-btn'},'c':'+1'}");
     assert.strictEqual(msg.t, 'button');
     assert.strictEqual(msg.a['data-bw-action'], 'increment');
     assert.strictEqual(msg.c, '+1');
@@ -1535,12 +1524,10 @@ describe("bw.clientParse()", function() {
 describe("BwServeApp.broadcast()", function() {
   it("should send message to all connected clients", function() {
     var app = new BwServeApp({});
-    // Simulate two connected clients
     var client1 = new BwServeClient('c1', null);
     var client2 = new BwServeClient('c2', null);
     app._clients.set('c1', { pagePath: '/', client: client1 });
     app._clients.set('c2', { pagePath: '/', client: client2 });
-
     var count = app.broadcast({ type: 'patch', target: 'test', content: 'hello' });
     assert.strictEqual(count, 2);
     assert.strictEqual(client1._sent.length, 1);
@@ -1554,11 +1541,10 @@ describe("BwServeApp.broadcast()", function() {
     var client2 = new BwServeClient('c2', null);
     app._clients.set('c1', { pagePath: '/', client: client1 });
     app._clients.set('c2', { pagePath: '/', client: client2 });
-
     var count = app.broadcast({ type: 'patch', target: 'test', content: 'only-c1', clientId: 'c1' });
     assert.strictEqual(count, 1);
     assert.strictEqual(client1._sent.length, 1);
-    assert.strictEqual(client2._sent, undefined); // never initialized
+    assert.strictEqual(client2._sent, undefined);
   });
 
   it("should skip closed clients", function() {
@@ -1568,7 +1554,6 @@ describe("BwServeApp.broadcast()", function() {
     client2._closed = true;
     app._clients.set('c1', { pagePath: '/', client: client1 });
     app._clients.set('c2', { pagePath: '/', client: client2 });
-
     var count = app.broadcast({ type: 'patch', target: 'test', content: 'x' });
     assert.strictEqual(count, 1);
     assert.strictEqual(client1._sent.length, 1);
@@ -1592,25 +1577,29 @@ describe("BwServeApp.broadcast()", function() {
 // ===================================================================================
 describe("DIST_DIR resolution", function() {
   it("BwServeApp._serveDistFile should find bitwrench.umd.js from source layout", function() {
-    // The _serveDistFile method uses DIST_DIR internally.
-    // We test that BwServeApp can be created (DIST_DIR resolves without error).
     var app = new BwServeApp({});
     assert.ok(app, "BwServeApp should instantiate");
   });
 });
 
 // ===================================================================================
-// Bug fix: allowExec passthrough to shell
+// generateShell allowExec
 // ===================================================================================
 describe("generateShell allowExec", function() {
-  it("should NOT include allowExec by default", function() {
+  it("should NOT include allowExec in init script by default", function() {
     var html = generateShell({ clientId: 'test1', title: 'Test' });
-    assert.ok(html.indexOf('allowExec') === -1, "should not contain allowExec");
+    // The bwclient source always contains _allowExec inside attach() as part of an if-statement.
+    // The init script puts it on its own line after the clientId declaration.
+    // Count occurrences — without allowExec, only bwclient's attach handler should have it.
+    var count = html.split('bw._allowExec = true').length - 1;
+    assert.strictEqual(count, 1, "only bwclient attach handler should contain _allowExec, not the init script");
   });
 
-  it("should include allowExec: true when opts.allowExec is true", function() {
+  it("should include _allowExec = true when opts.allowExec is true", function() {
     var html = generateShell({ clientId: 'test2', title: 'Test', allowExec: true });
-    assert.ok(html.indexOf('allowExec: true') !== -1, "should contain allowExec: true");
+    // Should have 2 occurrences: one in bwclient attach handler, one in init script
+    var count = html.split('bw._allowExec = true').length - 1;
+    assert.strictEqual(count, 2, "should contain _allowExec in both bwclient and init script");
   });
 
   it("BwServeApp should store allowExec option", function() {
@@ -1625,18 +1614,15 @@ describe("generateShell allowExec", function() {
 });
 
 // ===================================================================================
-// Screenshot protocol tests
+// Screenshot protocol tests (using unified pending)
 // ===================================================================================
 
 describe("client.screenshot()", function() {
   it("should reject when allowScreenshot is false (default)", function() {
     var client = new BwServeClient('ss-test-1', null);
-    // _allowScreenshot is not set (defaults to undefined/falsy)
     return client.screenshot().then(
       function() { assert.fail('should have rejected'); },
-      function(err) {
-        assert.ok(err.message.indexOf('not enabled') !== -1);
-      }
+      function(err) { assert.ok(err.message.indexOf('not enabled') !== -1); }
     );
   });
 
@@ -1645,69 +1631,36 @@ describe("client.screenshot()", function() {
     client._allowScreenshot = false;
     return client.screenshot('#app').then(
       function() { assert.fail('should have rejected'); },
-      function(err) {
-        assert.ok(err.message.indexOf('not enabled') !== -1);
-      }
+      function(err) { assert.ok(err.message.indexOf('not enabled') !== -1); }
     );
   });
 
-  it("should send register + call messages when allowed", function() {
+  it("should send a call to _bw_screenshot when allowed", function() {
     var client = new BwServeClient('ss-test-3', null);
     client._allowScreenshot = true;
-    // Don't await — just trigger the send
     var p = client.screenshot('#app', { format: 'jpeg', quality: 0.8, timeout: 500 });
-
-    // Check sent messages
-    assert.strictEqual(client._sent.length, 2, 'should send 2 messages');
-
-    // First message: register
-    var reg = client._sent[0];
-    assert.strictEqual(reg.type, 'register');
-    assert.strictEqual(reg.name, '_bw_screenshot');
-    assert.ok(reg.body.indexOf('html2canvas') !== -1, 'capture fn should reference html2canvas');
-
-    // Second message: call
-    var call = client._sent[1];
+    assert.strictEqual(client._sent.length, 1);
+    var call = client._sent[0];
     assert.strictEqual(call.type, 'call');
     assert.strictEqual(call.name, '_bw_screenshot');
     assert.strictEqual(call.args[0].selector, '#app');
     assert.strictEqual(call.args[0].format, 'jpeg');
     assert.strictEqual(call.args[0].quality, 0.8);
-    assert.strictEqual(call.args[0].clientId, 'ss-test-3');
     assert.ok(call.args[0].requestId, 'should have requestId');
-
-    // Clean up: let the timeout reject
     return p.catch(function() {});
-  });
-
-  it("should only register capture function once", function() {
-    var client = new BwServeClient('ss-test-4', null);
-    client._allowScreenshot = true;
-    var p1 = client.screenshot('#a', { timeout: 500 });
-    var p2 = client.screenshot('#b', { timeout: 500 });
-
-    // Should have 3 messages: 1 register + 2 calls
-    assert.strictEqual(client._sent.length, 3);
-    assert.strictEqual(client._sent[0].type, 'register');
-    assert.strictEqual(client._sent[1].type, 'call');
-    assert.strictEqual(client._sent[2].type, 'call');
-
-    return Promise.all([p1.catch(function() {}), p2.catch(function() {})]);
   });
 
   it("should pass default options when none specified", function() {
     var client = new BwServeClient('ss-test-5', null);
     client._allowScreenshot = true;
     var p = client.screenshot(undefined, { timeout: 500 });
-
-    var call = client._sent[1];
+    var call = client._sent[0];
     assert.strictEqual(call.args[0].selector, 'body');
     assert.strictEqual(call.args[0].format, 'png');
     assert.strictEqual(call.args[0].quality, 0.85);
     assert.strictEqual(call.args[0].scale, 1);
     assert.strictEqual(call.args[0].maxWidth, null);
     assert.strictEqual(call.args[0].maxHeight, null);
-
     return p.catch(function() {});
   });
 
@@ -1715,11 +1668,9 @@ describe("client.screenshot()", function() {
     var client = new BwServeClient('ss-test-6', null);
     client._allowScreenshot = true;
     var p = client.screenshot('#app', { maxWidth: 1024, maxHeight: 768, timeout: 500 });
-
-    var call = client._sent[1];
+    var call = client._sent[0];
     assert.strictEqual(call.args[0].maxWidth, 1024);
     assert.strictEqual(call.args[0].maxHeight, 768);
-
     return p.catch(function() {});
   });
 
@@ -1737,24 +1688,16 @@ describe("client.screenshot()", function() {
   });
 });
 
-describe("client._resolveScreenshot()", function() {
+describe("Screenshot resolve via _resolvePending", function() {
   it("should resolve pending promise with image data", function() {
     var client = new BwServeClient('ss-resolve-1', null);
     client._allowScreenshot = true;
     var p = client.screenshot('#app', { timeout: 5000 });
-
-    // Get the requestId from the call message
-    var requestId = client._sent[1].args[0].requestId;
-
-    // Simulate client POST-back
+    var requestId = client._sent[0].args[0].requestId;
     var fakeDataUrl = 'data:image/png;base64,' + Buffer.from('fake-png-data').toString('base64');
-    client._resolveScreenshot(requestId, {
-      data: fakeDataUrl,
-      width: 800,
-      height: 600,
-      format: 'png'
+    client._resolvePending(requestId, {
+      result: { data: fakeDataUrl, width: 800, height: 600, format: 'png' }
     });
-
     return p.then(function(result) {
       assert.strictEqual(result.width, 800);
       assert.strictEqual(result.height, 600);
@@ -1768,45 +1711,25 @@ describe("client._resolveScreenshot()", function() {
     var client = new BwServeClient('ss-resolve-2', null);
     client._allowScreenshot = true;
     var p = client.screenshot('#app', { timeout: 5000 });
-
-    var requestId = client._sent[1].args[0].requestId;
-
-    client._resolveScreenshot(requestId, {
-      error: 'Element not found: #nonexistent'
-    });
-
+    var requestId = client._sent[0].args[0].requestId;
+    client._resolvePending(requestId, { error: 'Element not found: #nonexistent' });
     return p.then(
       function() { assert.fail('should have rejected'); },
-      function(err) {
-        assert.ok(err.message.indexOf('Element not found') !== -1);
-      }
+      function(err) { assert.ok(err.message.indexOf('Element not found') !== -1); }
     );
-  });
-
-  it("should return false for unknown requestId", function() {
-    var client = new BwServeClient('ss-resolve-3', null);
-    assert.strictEqual(client._resolveScreenshot('unknown_id', {}), false);
   });
 
   it("should clear timeout on resolve", function() {
     var client = new BwServeClient('ss-resolve-4', null);
     client._allowScreenshot = true;
     var p = client.screenshot('#app', { timeout: 200 });
-
-    var requestId = client._sent[1].args[0].requestId;
-
-    // Resolve immediately
+    var requestId = client._sent[0].args[0].requestId;
     var fakeDataUrl = 'data:image/jpeg;base64,' + Buffer.from('jpeg-data').toString('base64');
-    client._resolveScreenshot(requestId, {
-      data: fakeDataUrl,
-      width: 512,
-      height: 384,
-      format: 'jpeg'
+    client._resolvePending(requestId, {
+      result: { data: fakeDataUrl, width: 512, height: 384, format: 'jpeg' }
     });
-
     return p.then(function(result) {
       assert.strictEqual(result.format, 'jpeg');
-      // If timeout wasn't cleared, this test would fail with unhandled rejection
     });
   });
 });

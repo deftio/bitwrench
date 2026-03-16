@@ -7,7 +7,7 @@
  * - createDOM() UUID registration in _nodeMap
  * - bw._el() class-based fallback for bw_uuid_* tokens
  * - bw.patch() via UUID
- * - bw.clientApply() via UUID
+ * - bw.apply() via UUID
  * - bw.message() via UUID
  * - bw.cleanup() deregistration
  * - Loop pattern with forceNew
@@ -216,7 +216,7 @@ describe('bw.patch() via UUID', function() {
   });
 });
 
-describe('bw.clientApply() via UUID', function() {
+describe('bw.apply() via UUID', function() {
   beforeEach(function() {
     setupDOM();
   });
@@ -226,7 +226,7 @@ describe('bw.clientApply() via UUID', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.createDOM(taco);
     document.body.appendChild(el);
-    var result = bw.clientApply({
+    var result = bw.apply({
       type: 'patch',
       target: uuid,
       content: '99'
@@ -245,7 +245,7 @@ describe('bw.clientApply() via UUID', function() {
     var el2 = bw.createDOM(taco2);
     document.body.appendChild(el1);
     document.body.appendChild(el2);
-    bw.clientApply({
+    bw.apply({
       type: 'batch',
       ops: [
         { type: 'patch', target: uuid1, content: 'A' },

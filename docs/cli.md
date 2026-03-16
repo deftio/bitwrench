@@ -223,10 +223,10 @@ Options:
 ### How it works
 
 1. Browser opens `http://localhost:8080` and gets an auto-generated page shell
-2. Shell loads bitwrench, opens SSE connection to `/__bw/events/:clientId`
+2. Shell loads bitwrench, opens SSE connection to `/bw/events/:clientId`
 3. Your app POSTs protocol messages to `http://localhost:9000`
 4. `bwcli serve` broadcasts each message to all connected browsers via SSE
-5. Browser's `bw.clientApply()` updates the DOM
+5. Browser's `bw.apply()` updates the DOM
 
 Both strict JSON and r-prefix relaxed JSON are accepted on the input port. See [bwserve](bwserve.md) for the full protocol reference.
 

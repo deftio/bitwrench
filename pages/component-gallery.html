@@ -18,40 +18,38 @@
     bw.loadStyles();
 
     // =========================================================================
-    // Theme controls
+    // Theme switcher — all 12 presets + dark toggle
     // =========================================================================
-    var themes = [
-      { label: 'Default (Teal)', config: null },
-      { label: 'Indigo-Amber', config: { primary: '#4f46e5', secondary: '#d97706' } },
-      { label: 'Ocean', config: { primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8' } },
-      { label: 'Rose', config: { primary: '#e11d48', secondary: '#fda4af' } }
-    ];
+    var presetNames = Object.keys(bw.THEME_PRESETS);
 
-    function applyTheme(config) {
-      if (config) {
-        bw.loadStyles({ palette: config });
-      } else {
-        bw.loadStyles();
-      }
+    function applyPreset(name) {
+      var config = bw.THEME_PRESETS[name];
+      bw.loadStyles(config);
+      // Update swatch active state
+      bw.$('.theme-swatch').forEach(function(el) {
+        el.style.outline = el.dataset.theme === name ? '2px solid currentColor' : 'none';
+      });
     }
 
-    var themeControls = {
-      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;' },
+    var themeSwitcher = {
+      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;padding:0.75rem 0;margin-bottom:0.5rem;border-bottom:1px solid rgba(128,128,128,0.2);' },
       c: [
-        { t: 'strong', c: 'Theme: ' }
-      ].concat(themes.map(function(th) {
-        return bw.makeButton({
-          label: th.label,
-          variant: 'primary',
-          size: 'sm',
-          onClick: function() { applyTheme(th.config); }
-        });
+        { t: 'span', a: { style: 'font-weight:600;font-size:0.8125rem;margin-right:0.25rem;' }, c: 'Theme' }
+      ].concat(presetNames.map(function(name) {
+        var p = bw.THEME_PRESETS[name];
+        return {
+          t: 'button', a: {
+            class: 'theme-swatch',
+            'data-theme': name,
+            title: name,
+            style: 'width:1.5rem;height:1.5rem;border-radius:50%;border:2px solid rgba(128,128,128,0.3);cursor:pointer;background:' + p.primary + ';outline:none;padding:0;',
+            onclick: function() { applyPreset(name); }
+          }
+        };
       })).concat([
-        bw.makeButton({
-          label: 'Toggle Dark',
-          variant: 'dark',
-          size: 'sm',
-          onClick: function() { bw.toggleStyles(); }
+        { t: 'span', a: { style: 'width:1px;height:1.25rem;background:rgba(128,128,128,0.3);margin:0 0.25rem;' } },
+        bw.makeButton({ text: 'Toggle Dark', variant: 'dark', size: 'sm',
+          onclick: function() { bw.toggleStyles(); }
         })
       ])
     };
@@ -59,13 +57,12 @@
     // =========================================================================
     // Section helper
     // =========================================================================
-    function section(title, content) {
+    function section(title, desc, content) {
+      var heading = [{ t: 'h2', a: { style: 'margin-bottom:0.25rem;' }, c: title }];
+      if (desc) heading.push({ t: 'p', a: { style: 'font-size:0.8125rem;opacity:0.7;margin-bottom:0.75rem;' }, c: desc });
       return {
-        t: 'div', a: { class: 'demo-section', style: 'margin-bottom:1.5rem;' },
-        c: [
-          { t: 'h2', a: { class: 'demo-section-title' }, c: title },
-          { t: 'div', a: { class: 'demo-section-body' }, c: content }
-        ]
+        t: 'div', a: { style: 'margin-bottom:2rem;' },
+        c: heading.concat(Array.isArray(content) ? content : [content])
       };
     }
 
@@ -74,59 +71,55 @@
     // =========================================================================
 
     // Buttons
-    var buttonDemo = section('Buttons', [
-      { t: 'h3', c: 'Solid Variants' },
+    var buttonDemo = section('Buttons', null, [
       { t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;' },
         c: ['primary','secondary','success','danger','warning','info','dark','light'].map(function(v) {
-          return bw.makeButton({ label: v, variant: v });
+          return bw.makeButton({ text: v, variant: v });
         })
       },
-      { t: 'h3', c: 'Outline Variants' },
       { t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;' },
         c: ['primary','secondary','success','danger'].map(function(v) {
-          return bw.makeButton({ label: 'outline-' + v, variant: 'outline_' + v });
+          return bw.makeButton({ text: 'outline-' + v, variant: 'outline_' + v });
         })
       },
-      { t: 'h3', c: 'Sizes' },
       { t: 'div', a: { style: 'display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;' },
         c: [
-          bw.makeButton({ label: 'Small', variant: 'primary', size: 'sm' }),
-          bw.makeButton({ label: 'Default', variant: 'primary' }),
-          bw.makeButton({ label: 'Large', variant: 'primary', size: 'lg' }),
-          bw.makeButton({ label: 'Disabled', variant: 'primary', disabled: true })
+          bw.makeButton({ text: 'Small', variant: 'primary', size: 'sm' }),
+          bw.makeButton({ text: 'Default', variant: 'primary' }),
+          bw.makeButton({ text: 'Large', variant: 'primary', size: 'lg' }),
+          bw.makeButton({ text: 'Disabled', variant: 'primary', disabled: true })
         ]
       }
     ]);
 
     // Cards
-    var cardDemo = section('Cards', [
-      { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;' },
+    var cardDemo = section('Cards', null, [
+      { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;' },
         c: [
-          bw.makeCard({ title: 'Basic Card', content: 'A simple card with just a title and content.' }),
-          bw.makeCard({ title: 'With Header', header: 'Featured', content: 'Card with header section.', footer: 'Footer text' }),
-          bw.makeCard({ title: 'Primary Accent', content: 'Card with variant accent border.', variant: 'primary' }),
+          bw.makeCard({ title: 'Basic Card', content: 'Simple card with title and content.' }),
+          bw.makeCard({ title: 'With Header', header: 'Featured', content: 'Card with header and footer.', footer: 'Footer text' }),
+          bw.makeCard({ title: 'Primary Accent', content: 'Variant accent border.', variant: 'primary' }),
           bw.makeCard({ title: 'Hoverable', content: 'Hover to see lift effect.', hoverable: true })
         ]
       }
     ]);
 
     // Alerts
-    var alertDemo = section('Alerts', [
+    var alertDemo = section('Alerts', null, [
       { t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.5rem;' },
-        c: ['primary','secondary','success','danger','warning','info'].map(function(v) {
+        c: ['primary','success','danger','warning','info'].map(function(v) {
           return bw.makeAlert({ content: 'This is a ' + v + ' alert.', variant: v });
         })
       }
     ]);
 
     // Badges
-    var badgeDemo = section('Badges', [
-      { t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;' },
+    var badgeDemo = section('Badges', null, [
+      { t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;' },
         c: ['primary','secondary','success','danger','warning','info','dark','light'].map(function(v) {
           return bw.makeBadge({ text: v, variant: v });
         })
       },
-      { t: 'h3', c: 'Pill Badges' },
       { t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;' },
         c: ['primary','success','danger'].map(function(v) {
           return bw.makeBadge({ text: v + ' pill', variant: v, pill: true });
@@ -135,423 +128,482 @@
     ]);
 
     // Form controls
-    var formDemo = section('Form Controls', [
-      bw.makeFormGroup({
-        label: 'Text Input',
-        input: bw.makeInput({ placeholder: 'Enter text...', name: 'demo-text' }),
-        helpText: 'Helper text for the input.'
-      }),
-      bw.makeFormGroup({
-        label: 'Email Input',
-        input: bw.makeInput({ type: 'email', placeholder: 'user@example.com', name: 'demo-email' })
-      }),
-      bw.makeFormGroup({
-        label: 'Textarea',
-        input: bw.makeTextarea({ placeholder: 'Write something...', name: 'demo-textarea', rows: 3 })
-      }),
-      bw.makeFormGroup({
-        label: 'Select',
-        input: bw.makeSelect({
-          options: [
-            { value: '', label: 'Choose an option...' },
-            { value: '1', label: 'Option 1' },
-            { value: '2', label: 'Option 2' },
-            { value: '3', label: 'Option 3' }
-          ],
-          name: 'demo-select'
-        })
-      }),
-      { t: 'div', a: { style: 'display:flex;gap:2rem;flex-wrap:wrap;' },
-        c: [
-          { t: 'div', c: [
-            { t: 'h4', c: 'Checkboxes' },
-            bw.makeCheckbox({ label: 'Option A', name: 'chk-a', checked: true }),
-            bw.makeCheckbox({ label: 'Option B', name: 'chk-b' }),
-            bw.makeCheckbox({ label: 'Disabled', name: 'chk-c', disabled: true })
-          ]},
-          { t: 'div', c: [
-            { t: 'h4', c: 'Radio Buttons' },
-            bw.makeRadio({ label: 'Choice 1', name: 'radio-demo', value: '1', checked: true }),
-            bw.makeRadio({ label: 'Choice 2', name: 'radio-demo', value: '2' }),
-            bw.makeRadio({ label: 'Choice 3', name: 'radio-demo', value: '3' })
-          ]},
-          { t: 'div', c: [
-            { t: 'h4', c: 'Switch' },
-            bw.makeSwitch({ label: 'Dark mode', name: 'switch-demo' }),
-            bw.makeSwitch({ label: 'Notifications', name: 'switch-demo2', checked: true })
-          ]}
-        ]
-      }
+    var formDemo = section('Form Controls', null, [
+      { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1rem;' }, c: [
+        bw.makeFormGroup({ label: 'Text Input', input: bw.makeInput({ placeholder: 'Enter text...', name: 'demo-text' }), help: 'Helper text for the input.' }),
+        bw.makeFormGroup({ label: 'Select', input: bw.makeSelect({ options: [{ value: '', label: 'Choose...' }, { value: '1', label: 'Option 1' }, { value: '2', label: 'Option 2' }], name: 'demo-select' }) })
+      ]},
+      bw.makeFormGroup({ label: 'Textarea', input: bw.makeTextarea({ placeholder: 'Write something...', name: 'demo-textarea', rows: 2 }) }),
+      { t: 'div', a: { style: 'display:flex;gap:2rem;flex-wrap:wrap;' }, c: [
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.875rem;' }, c: 'Checkboxes' },
+          bw.makeCheckbox({ label: 'Option A', name: 'chk-a', checked: true }),
+          bw.makeCheckbox({ label: 'Option B', name: 'chk-b' })
+        ]},
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.875rem;' }, c: 'Radio' },
+          bw.makeRadio({ label: 'Choice 1', name: 'radio-demo', value: '1', checked: true }),
+          bw.makeRadio({ label: 'Choice 2', name: 'radio-demo', value: '2' })
+        ]},
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.875rem;' }, c: 'Switches' },
+          bw.makeSwitch({ label: 'Dark mode', name: 'switch-demo' }),
+          bw.makeSwitch({ label: 'Notifications', name: 'switch-demo2', checked: true })
+        ]}
+      ]}
     ]);
 
     // Progress
-    var progressDemo = section('Progress', [
-      { t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.75rem;' },
-        c: [
-          bw.makeProgress({ value: 25, label: '25%' }),
-          bw.makeProgress({ value: 50, variant: 'success', label: '50%' }),
-          bw.makeProgress({ value: 75, variant: 'warning', striped: true, label: '75%' }),
-          bw.makeProgress({ value: 90, variant: 'danger', striped: true, animated: true, label: '90%' })
-        ]
-      }
+    var progressDemo = section('Progress', null, [
+      { t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.75rem;' }, c: [
+        bw.makeProgress({ value: 25, label: '25%' }),
+        bw.makeProgress({ value: 50, variant: 'success', label: '50%' }),
+        bw.makeProgress({ value: 75, variant: 'warning', striped: true, label: '75%' }),
+        bw.makeProgress({ value: 90, variant: 'danger', striped: true, animated: true, label: '90%' })
+      ]}
     ]);
 
-    // Spinner
-    var spinnerDemo = section('Spinner', [
-      { t: 'div', a: { style: 'display:flex;gap:1rem;align-items:center;flex-wrap:wrap;' },
-        c: [
-          bw.makeSpinner({ variant: 'primary' }),
-          bw.makeSpinner({ variant: 'secondary' }),
-          bw.makeSpinner({ variant: 'success' }),
-          bw.makeSpinner({ type: 'grow', variant: 'danger' }),
-          bw.makeSpinner({ variant: 'primary', size: 'sm' }),
-          bw.makeSpinner({ variant: 'primary', size: 'lg' })
-        ]
-      }
+    // Spinner — shown in context (loading card + inline)
+    var spinnerDemo = section('Spinner', 'Animated loading indicator. Use inside buttons, cards, or inline with text.', [
+      { t: 'div', a: { style: 'display:flex;gap:1.5rem;align-items:flex-start;flex-wrap:wrap;' }, c: [
+        bw.makeCard({ content: {
+          t: 'div', a: { style: 'display:flex;flex-direction:column;align-items:center;gap:0.75rem;padding:1rem;' },
+          c: [
+            bw.makeSpinner({ variant: 'primary' }),
+            { t: 'span', a: { style: 'font-size:0.875rem;opacity:0.7;' }, c: 'Loading data...' }
+          ]
+        }}),
+        { t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.75rem;' }, c: [
+          { t: 'div', a: { style: 'display:flex;gap:0.5rem;align-items:center;' }, c: [
+            bw.makeSpinner({ variant: 'primary', size: 'sm' }),
+            { t: 'span', c: 'Processing...' }
+          ]},
+          bw.makeButton({ text: 'Loading', variant: 'primary', disabled: true,
+            content: [bw.makeSpinner({ variant: 'light', size: 'sm' }), { t: 'span', c: ' Saving...' }]
+          }),
+          { t: 'div', a: { style: 'display:flex;gap:0.75rem;' }, c: [
+            bw.makeSpinner({ variant: 'success' }),
+            bw.makeSpinner({ variant: 'danger' }),
+            bw.makeSpinner({ variant: 'warning' }),
+            bw.makeSpinner({ type: 'grow', variant: 'info' })
+          ]}
+        ]}
+      ]}
     ]);
 
     // Table
-    var tableDemo = section('Table', [
-      bw.makeTable({
-        headers: ['Name', 'Role', 'Status', 'Score'],
-        rows: [
+    var tableDemo = section('Table', null, [
+      bw.makeTableFromArray({
+        data: [
+          ['Name', 'Role', 'Status', 'Score'],
           ['Alice', 'Engineer', 'Active', '95'],
           ['Bob', 'Designer', 'Active', '88'],
           ['Charlie', 'Manager', 'Away', '72'],
           ['Diana', 'Analyst', 'Active', '91']
         ],
         striped: true,
-        hover: true,
-        sortable: true
+        hover: true
       })
     ]);
 
     // List Group
-    var listGroupDemo = section('List Group', [
-      bw.makeListGroup({
+    var listGroupDemo = section('List Group', null, [
+      { t: 'div', a: { style: 'max-width:400px;' }, c: [
+        bw.makeListGroup({
+          items: [
+            { text: 'Inbox', badge: '14', active: true },
+            { text: 'Drafts', badge: '3' },
+            { text: 'Sent' },
+            { text: 'Spam', disabled: true }
+          ]
+        })
+      ]}
+    ]);
+
+    // Tabs — richer content so switching is obvious
+    var tabsDemo = section('Tabs', 'Click tabs to switch content panels.', [
+      bw.makeTabs({
+        tabs: [
+          { label: 'Overview', active: true, content: [
+            { t: 'h4', c: 'Dashboard Overview' },
+            { t: 'p', c: 'Tabs switch content panels. Each tab can hold any TACO content including nested components.' },
+            bw.makeProgress({ value: 68, variant: 'primary', label: '68% complete' })
+          ]},
+          { label: 'Details', content: [
+            { t: 'h4', c: 'Project Details' },
+            bw.makeListGroup({ items: [
+              { text: 'Framework: Bitwrench v2' },
+              { text: 'Components: 40+ BCCL helpers' },
+              { text: 'Bundle: 42KB gzipped' }
+            ]})
+          ]},
+          { label: 'Settings', content: [
+            { t: 'h4', c: 'Preferences' },
+            bw.makeSwitch({ label: 'Enable notifications', name: 'tab-notif', checked: true }),
+            bw.makeSwitch({ label: 'Dark mode', name: 'tab-dark' })
+          ]}
+        ]
+      })
+    ]);
+
+    // Accordion — richer content, first section open
+    var accordionDemo = section('Accordion', 'Click headers to expand/collapse panels.', [
+      bw.makeAccordion({
         items: [
-          { content: 'First item', active: true },
-          { content: 'Second item' },
-          { content: 'Third item' },
-          { content: 'Disabled item', disabled: true }
+          { title: 'What is Bitwrench?', content: {
+            t: 'div', c: [
+              { t: 'p', c: 'Bitwrench is a lightweight JavaScript UI library using the TACO format (Tag, Attributes, Content, Options). It generates HTML from plain JS objects with zero build steps.' },
+              bw.makeBadge({ text: 'Open Source', variant: 'success' })
+            ]
+          }, open: true },
+          { title: 'How does theming work?', content: 'Call bw.loadStyles() with a palette config containing primary and secondary colors. The design system derives a complete set of shades, surfaces, and semantic colors from just two seed hex values.' },
+          { title: 'What about dark mode?', content: 'Call bw.toggleStyles() to switch between primary and alternate palettes. The alternate palette is automatically derived with inverted luminance.' }
         ]
       })
     ]);
 
     // Nav
-    var navDemo = section('Nav', [
-      bw.makeNav({
-        items: [
-          { label: 'Home', active: true },
-          { label: 'Profile' },
-          { label: 'Messages' },
-          { label: 'Settings' }
-        ]
-      })
+    var navDemo = section('Nav', 'Static navigation links. Use makeTabs for switchable content.', [
+      { t: 'div', a: { style: 'display:flex;gap:2rem;flex-wrap:wrap;' }, c: [
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.8125rem;display:block;margin-bottom:0.25rem;' }, c: 'Tabs style' },
+          bw.makeNav({ items: [
+            { text: 'Home', active: true },
+            { text: 'Profile' },
+            { text: 'Settings' }
+          ]})
+        ]},
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.8125rem;display:block;margin-bottom:0.25rem;' }, c: 'Pills style' },
+          bw.makeNav({ items: [
+            { text: 'Home', active: true },
+            { text: 'Profile' },
+            { text: 'Messages' }
+          ], pills: true })
+        ]}
+      ]}
     ]);
 
     // Breadcrumb
-    var breadcrumbDemo = section('Breadcrumb', [
-      bw.makeBreadcrumb({
-        items: [
-          { label: 'Home', href: '#' },
-          { label: 'Library', href: '#' },
-          { label: 'Data', active: true }
-        ]
-      })
+    var breadcrumbDemo = section('Breadcrumb', null, [
+      bw.makeBreadcrumb({ items: [
+        { text: 'Home', href: '#' },
+        { text: 'Library', href: '#' },
+        { text: 'Data', active: true }
+      ]})
     ]);
 
     // Pagination
-    var paginationDemo = section('Pagination', [
-      bw.makePagination({
-        currentPage: 3,
-        totalPages: 10
-      })
+    var paginationDemo = section('Pagination', null, [
+      bw.makePagination({ currentPage: 3, pages: 10 })
     ]);
 
     // Button Group
-    var buttonGroupDemo = section('Button Group', [
-      { t: 'div', a: { style: 'display:flex;gap:1rem;flex-wrap:wrap;' },
-        c: [
-          bw.makeButtonGroup({
-            buttons: [
-              { label: 'Left', variant: 'primary' },
-              { label: 'Middle', variant: 'primary' },
-              { label: 'Right', variant: 'primary' }
-            ]
-          }),
-          bw.makeButtonGroup({
-            buttons: [
-              { label: 'A', variant: 'outline_secondary' },
-              { label: 'B', variant: 'outline_secondary' },
-              { label: 'C', variant: 'outline_secondary' }
-            ]
-          })
-        ]
-      }
+    var buttonGroupDemo = section('Button Group', null, [
+      { t: 'div', a: { style: 'display:flex;gap:1rem;flex-wrap:wrap;' }, c: [
+        bw.makeButtonGroup({ children: [
+          bw.makeButton({ text: 'Left', variant: 'primary' }),
+          bw.makeButton({ text: 'Middle', variant: 'primary' }),
+          bw.makeButton({ text: 'Right', variant: 'primary' })
+        ]}),
+        bw.makeButtonGroup({ children: [
+          bw.makeButton({ text: '1', variant: 'outline_secondary' }),
+          bw.makeButton({ text: '2', variant: 'outline_secondary' }),
+          bw.makeButton({ text: '3', variant: 'outline_secondary' })
+        ]})
+      ]}
     ]);
 
-    // Tabs
-    var tabsDemo = section('Tabs', [
-      bw.makeTabs({
-        tabs: [
-          { label: 'Overview', content: { t: 'p', c: 'This is the overview tab content.' }, active: true },
-          { label: 'Details', content: { t: 'p', c: 'Detailed information goes here.' } },
-          { label: 'Settings', content: { t: 'p', c: 'Settings panel content.' } }
-        ]
-      })
-    ]);
-
-    // Accordion
-    var accordionDemo = section('Accordion', [
-      bw.makeAccordion({
-        items: [
-          { header: 'Section 1', body: 'Content for the first section.', open: true },
-          { header: 'Section 2', body: 'Content for the second section.' },
-          { header: 'Section 3', body: 'Content for the third section.' }
-        ]
-      })
+    // Dropdown — with instruction
+    var dropdownDemo = section('Dropdown', 'Click the button to open the menu.', [
+      { t: 'div', a: { style: 'display:flex;gap:1rem;flex-wrap:wrap;' }, c: [
+        bw.makeDropdown({
+          trigger: 'Actions', variant: 'primary',
+          items: [
+            { text: 'Edit' },
+            { text: 'Duplicate' },
+            { divider: true },
+            { text: 'Delete' }
+          ]
+        }),
+        bw.makeDropdown({
+          trigger: 'Filter', variant: 'outline_secondary',
+          items: [
+            { text: 'All items' },
+            { text: 'Active only' },
+            { text: 'Archived' }
+          ]
+        })
+      ]}
     ]);
 
     // Modal
-    var modalDemo = section('Modal', [
+    var modalDemo = section('Modal', null, [
       bw.makeButton({
-        label: 'Open Modal',
-        variant: 'primary',
-        onClick: function() {
+        text: 'Open Modal', variant: 'primary',
+        onclick: function() {
           var modal = bw.makeModal({
-            title: 'Example Modal',
-            body: { t: 'p', c: 'This is a modal dialog. It demonstrates the modal component with header, body, and footer.' },
+            title: 'Confirm Action',
+            content: { t: 'p', c: 'Are you sure you want to proceed? This demonstrates the modal component with header, body, and footer.' },
             footer: [
-              bw.makeButton({ label: 'Close', variant: 'secondary', onClick: function() { bw.$('.bw_modal')[0].classList.remove('bw_modal_show'); } }),
-              bw.makeButton({ label: 'Save Changes', variant: 'primary' })
-            ],
-            show: true
+              bw.makeButton({ text: 'Cancel', variant: 'secondary', onclick: function() { bw.$('.bw_modal')[0].classList.remove('bw_modal_show'); } }),
+              bw.makeButton({ text: 'Confirm', variant: 'primary' })
+            ]
           });
           bw.DOM('body', modal, { mode: 'append' });
+          setTimeout(function() {
+            var modals = bw.$('.bw_modal');
+            if (modals.length) modals[modals.length - 1].classList.add('bw_modal_show');
+          }, 10);
         }
       })
     ]);
 
     // Toast
-    var toastDemo = section('Toast', [
+    var toastDemo = section('Toast', null, [
       { t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap;' },
-        c: ['primary','success','danger','warning'].map(function(v) {
+        c: ['success','danger','warning','info'].map(function(v) {
           return bw.makeButton({
-            label: 'Show ' + v + ' toast',
-            variant: v,
-            size: 'sm',
-            onClick: function() {
-              var toast = bw.makeToast({
-                title: v.charAt(0).toUpperCase() + v.slice(1) + ' Toast',
-                body: 'This is a ' + v + ' notification message.',
-                variant: v,
-                autohide: 3000
-              });
-              bw.DOM('body', toast, { mode: 'append' });
+            text: v, variant: v, size: 'sm',
+            onclick: function() {
+              bw.DOM('body', bw.makeToast({
+                title: v.charAt(0).toUpperCase() + v.slice(1),
+                content: 'This is a ' + v + ' notification.',
+                variant: v, delay: 3000
+              }), { mode: 'append' });
             }
           });
         })
       }
     ]);
 
-    // Dropdown
-    var dropdownDemo = section('Dropdown', [
-      bw.makeDropdown({
-        label: 'Dropdown Menu',
-        variant: 'primary',
-        items: [
-          { label: 'Action' },
-          { label: 'Another action' },
-          { divider: true },
-          { label: 'Something else' }
-        ]
-      })
-    ]);
-
     // Tooltip
-    var tooltipDemo = section('Tooltip', [
-      { t: 'div', a: { style: 'display:flex;gap:1.5rem;flex-wrap:wrap;' },
-        c: ['top','bottom','left','right'].map(function(pos) {
+    var tooltipDemo = section('Tooltip', 'Hover over buttons to see tooltips.', [
+      { t: 'div', a: { style: 'display:flex;gap:1rem;flex-wrap:wrap;padding:1rem 0;' },
+        c: ['top','right','bottom','left'].map(function(pos) {
           return bw.makeTooltip({
-            content: bw.makeButton({ label: 'Tooltip ' + pos, variant: 'secondary', size: 'sm' }),
+            content: bw.makeButton({ text: pos, variant: 'secondary', size: 'sm' }),
             text: 'Tooltip on ' + pos,
-            position: pos
+            placement: pos
           });
         })
       }
     ]);
 
     // Popover
-    var popoverDemo = section('Popover', [
+    var popoverDemo = section('Popover', 'Click to toggle.', [
       bw.makePopover({
-        trigger: bw.makeButton({ label: 'Toggle Popover', variant: 'primary' }),
+        trigger: bw.makeButton({ text: 'Toggle Popover', variant: 'primary' }),
         title: 'Popover Title',
-        content: 'This is the popover body content. Click the button to toggle.',
-        position: 'bottom'
+        content: 'Popovers display rich content on click. They dismiss when clicking elsewhere.',
+        placement: 'right'
       })
     ]);
 
-    // Carousel
-    var carouselDemo = section('Carousel', [
+    // Carousel — polished slides using cards
+    var carouselDemo = section('Carousel', 'Use arrows or indicators to navigate slides.', [
       bw.makeCarousel({
         items: [
-          { content: { t: 'div', a: { style: 'background:#006666;color:#fff;padding:3rem;text-align:center;' }, c: { t: 'h3', c: 'Slide 1' } }, caption: 'First slide' },
-          { content: { t: 'div', a: { style: 'background:#0077b6;color:#fff;padding:3rem;text-align:center;' }, c: { t: 'h3', c: 'Slide 2' } }, caption: 'Second slide' },
-          { content: { t: 'div', a: { style: 'background:#e76f51;color:#fff;padding:3rem;text-align:center;' }, c: { t: 'h3', c: 'Slide 3' } }, caption: 'Third slide' }
+          { content: { t: 'div', a: { style: 'padding:2.5rem 3rem;text-align:center;' }, c: [
+            { t: 'h3', a: { style: 'margin-bottom:0.5rem;' }, c: 'Pure JavaScript' },
+            { t: 'p', a: { style: 'opacity:0.8;margin:0;' }, c: 'No JSX, no virtual DOM, no build step required.' }
+          ]}, caption: 'Slide 1 of 3' },
+          { content: { t: 'div', a: { style: 'padding:2.5rem 3rem;text-align:center;' }, c: [
+            { t: 'h3', a: { style: 'margin-bottom:0.5rem;' }, c: 'TACO Format' },
+            { t: 'p', a: { style: 'opacity:0.8;margin:0;' }, c: 'Tag, Attributes, Content, Options — UI as plain objects.' }
+          ]}, caption: 'Slide 2 of 3' },
+          { content: { t: 'div', a: { style: 'padding:2.5rem 3rem;text-align:center;' }, c: [
+            { t: 'h3', a: { style: 'margin-bottom:0.5rem;' }, c: 'Design System' },
+            { t: 'p', a: { style: 'opacity:0.8;margin:0;' }, c: 'Complete theme from two seed colors. 12 presets included.' }
+          ]}, caption: 'Slide 3 of 3' }
         ],
-        height: '200px'
+        height: '180px'
       })
     ]);
 
     // File Upload
-    var fileUploadDemo = section('File Upload', [
+    var fileUploadDemo = section('File Upload', null, [
       bw.makeFileUpload({ accept: '.jpg,.png,.pdf', multiple: true })
     ]);
 
     // Range
-    var rangeDemo = section('Range', [
-      bw.makeRange({ label: 'Volume', min: 0, max: 100, value: 65, name: 'volume' }),
-      bw.makeRange({ label: 'Brightness', min: 0, max: 100, value: 30, name: 'brightness' })
+    var rangeDemo = section('Range', null, [
+      { t: 'div', a: { style: 'max-width:400px;' }, c: [
+        bw.makeRange({ label: 'Volume', min: 0, max: 100, value: 65, name: 'volume' }),
+        bw.makeRange({ label: 'Brightness', min: 0, max: 100, value: 30, name: 'brightness' })
+      ]}
     ]);
 
     // Timeline
-    var timelineDemo = section('Timeline', [
-      bw.makeTimeline({
-        items: [
-          { date: 'Jan 2024', title: 'Project Started', text: 'Initial commit and setup.', variant: 'primary' },
-          { date: 'Mar 2024', title: 'Beta Release', text: 'First public beta.', variant: 'success' },
-          { date: 'Jun 2024', title: 'v1.0 Launch', text: 'Production release.', variant: 'info' }
-        ]
-      })
+    var timelineDemo = section('Timeline', null, [
+      bw.makeTimeline({ items: [
+        { date: 'Jan 2024', title: 'Project Started', text: 'Initial commit and setup.', variant: 'primary' },
+        { date: 'Mar 2024', title: 'Beta Release', text: 'First public beta.', variant: 'success' },
+        { date: 'Jun 2024', title: 'v1.0 Launch', text: 'Production release.', variant: 'info' }
+      ]})
     ]);
 
-    // Stepper
-    var stepperDemo = section('Stepper', [
-      bw.makeStepper({
-        steps: [
-          { label: 'Account', description: 'Create account', completed: true },
-          { label: 'Profile', description: 'Set up profile', active: true },
-          { label: 'Review', description: 'Review details' },
-          { label: 'Complete', description: 'All done' }
+    // Stepper — interactive with Next/Back buttons
+    var stepperStep = 1;
+    function renderStepper() {
+      bw.DOM('#stepper-container', {
+        t: 'div', c: [
+          bw.makeStepper({
+            steps: [
+              { label: 'Account', description: 'Create account' },
+              { label: 'Profile', description: 'Set up profile' },
+              { label: 'Review', description: 'Review details' },
+              { label: 'Done', description: 'All set' }
+            ],
+            currentStep: stepperStep
+          }),
+          { t: 'div', a: { style: 'display:flex;gap:0.5rem;margin-top:0.75rem;' }, c: [
+            bw.makeButton({ text: 'Back', variant: 'outline_secondary', size: 'sm', disabled: stepperStep <= 0,
+              onclick: function() { if (stepperStep > 0) { stepperStep--; renderStepper(); } }
+            }),
+            bw.makeButton({ text: 'Next', variant: 'primary', size: 'sm', disabled: stepperStep >= 3,
+              onclick: function() { if (stepperStep < 3) { stepperStep++; renderStepper(); } }
+            })
+          ]}
         ]
-      })
+      });
+    }
+    var stepperDemo = section('Stepper', 'Progress indicator for multi-step flows. Use Next/Back to advance.', [
+      { t: 'div', a: { id: 'stepper-container' } }
     ]);
 
     // Stat Cards
-    var statCardDemo = section('Stat Cards', [
-      { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;' },
-        c: [
-          bw.makeStatCard({ label: 'Revenue', value: '$12,450', change: '+12.5%', changeDirection: 'up', variant: 'primary', icon: '$' }),
-          bw.makeStatCard({ label: 'Users', value: '1,284', change: '+8.2%', changeDirection: 'up', variant: 'success', icon: '#' }),
-          bw.makeStatCard({ label: 'Bounce Rate', value: '32.1%', change: '-2.4%', changeDirection: 'down', variant: 'warning', icon: '%' }),
-          bw.makeStatCard({ label: 'Errors', value: '23', change: '+5', changeDirection: 'up', variant: 'danger', icon: '!' })
-        ]
-      }
+    var statCardDemo = section('Stat Cards', null, [
+      { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;' }, c: [
+        bw.makeStatCard({ label: 'Revenue', value: 12450, format: 'currency', change: 12.5, variant: 'primary', icon: '$' }),
+        bw.makeStatCard({ label: 'Users', value: 1284, format: 'number', change: 8.2, variant: 'success', icon: '#' }),
+        bw.makeStatCard({ label: 'Bounce', value: 32.1, suffix: '%', change: -2.4, variant: 'warning', icon: '%' }),
+        bw.makeStatCard({ label: 'Errors', value: 23, format: 'number', change: 5, variant: 'danger', icon: '!' })
+      ]}
     ]);
 
     // Hero
-    var heroDemo = section('Hero', [
+    var heroDemo = section('Hero', null, [
       bw.makeHero({
         title: 'Welcome to Bitwrench',
         subtitle: 'Build beautiful UIs with pure JavaScript.',
         variant: 'primary',
         actions: [
-          bw.makeButton({ label: 'Get Started', variant: 'light', size: 'lg' }),
-          bw.makeButton({ label: 'Documentation', variant: 'outline_light', size: 'lg' })
+          bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),
+          bw.makeButton({ text: 'Learn More', variant: 'outline_light', size: 'lg' })
         ]
       })
     ]);
 
     // Feature Grid
-    var featureGridDemo = section('Feature Grid', [
-      bw.makeFeatureGrid({
-        features: [
-          { icon: '{}', title: 'TACO Format', description: 'Pure JS objects for UI.' },
-          { icon: '#', title: 'CSS-in-JS', description: 'Generate styles from code.' },
-          { icon: '~', title: 'Themes', description: 'Full design system from seed colors.' },
-          { icon: '>', title: 'No Build Step', description: 'Zero compilation required.' }
-        ]
-      })
+    var featureGridDemo = section('Feature Grid', null, [
+      bw.makeFeatureGrid({ features: [
+        { icon: '{}', title: 'TACO Format', description: 'Pure JS objects for UI.' },
+        { icon: '#', title: 'CSS-in-JS', description: 'Styles from code.' },
+        { icon: '~', title: 'Themes', description: 'Design system from seed colors.' },
+        { icon: '>', title: 'No Build Step', description: 'Zero compilation required.' }
+      ]})
     ]);
 
-    // Skeleton
-    var skeletonDemo = section('Skeleton', [
-      { t: 'div', a: { style: 'max-width:400px;' },
-        c: [
-          bw.makeSkeleton({ variant: 'text', count: 3 }),
-          { t: 'div', a: { style: 'margin-top:1rem;display:flex;gap:1rem;align-items:center;' },
-            c: [
-              bw.makeSkeleton({ variant: 'circle', width: '3rem', height: '3rem' }),
-              { t: 'div', a: { style: 'flex:1;' }, c: [
-                bw.makeSkeleton({ variant: 'text', count: 2 })
-              ]}
-            ]
-          }
-        ]
-      }
+    // Skeleton — shown as loading placeholder pattern
+    var skeletonDemo = section('Skeleton', 'Animated placeholder shown while content loads. Shimmer effect indicates pending data.', [
+      { t: 'div', a: { style: 'display:flex;gap:1.5rem;flex-wrap:wrap;' }, c: [
+        bw.makeCard({ content: {
+          t: 'div', a: { style: 'width:220px;' }, c: [
+            bw.makeSkeleton({ variant: 'rect', width: '100%', height: '6rem' }),
+            { t: 'div', a: { style: 'padding:0.75rem 0;' }, c: [
+              bw.makeSkeleton({ variant: 'text', count: 2 }),
+              { t: 'div', a: { style: 'margin-top:0.5rem;' }, c: bw.makeSkeleton({ variant: 'text', width: '60%' }) }
+            ]}
+          ]
+        }}),
+        bw.makeCard({ content: {
+          t: 'div', a: { style: 'width:220px;display:flex;gap:0.75rem;align-items:flex-start;' }, c: [
+            bw.makeSkeleton({ variant: 'circle', width: '2.5rem', height: '2.5rem' }),
+            { t: 'div', a: { style: 'flex:1;' }, c: [
+              bw.makeSkeleton({ variant: 'text', width: '80%' }),
+              bw.makeSkeleton({ variant: 'text' }),
+              bw.makeSkeleton({ variant: 'text', width: '40%' })
+            ]}
+          ]
+        }})
+      ]}
     ]);
 
     // Avatar
-    var avatarDemo = section('Avatar', [
-      { t: 'div', a: { style: 'display:flex;gap:1rem;align-items:center;' },
-        c: [
-          bw.makeAvatar({ initials: 'AB', size: 'sm', variant: 'primary' }),
-          bw.makeAvatar({ initials: 'CD', size: 'md', variant: 'success' }),
-          bw.makeAvatar({ initials: 'EF', size: 'lg', variant: 'danger' }),
-          bw.makeAvatar({ initials: 'GH', size: 'xl', variant: 'info' })
-        ]
-      }
+    var avatarDemo = section('Avatar', null, [
+      { t: 'div', a: { style: 'display:flex;gap:0.75rem;align-items:center;' }, c: [
+        bw.makeAvatar({ initials: 'AB', size: 'sm', variant: 'primary' }),
+        bw.makeAvatar({ initials: 'CD', size: 'md', variant: 'success' }),
+        bw.makeAvatar({ initials: 'EF', size: 'lg', variant: 'danger' }),
+        bw.makeAvatar({ initials: 'GH', size: 'xl', variant: 'info' })
+      ]}
     ]);
 
     // Search Input
-    var searchDemo = section('Search Input', [
-      bw.makeSearchInput({ placeholder: 'Search components...', name: 'search-demo' })
+    var searchDemo = section('Search Input', null, [
+      { t: 'div', a: { style: 'max-width:400px;' }, c: [
+        bw.makeSearchInput({ placeholder: 'Search components...', name: 'search-demo' })
+      ]}
     ]);
 
     // Chip Input
-    var chipInputDemo = section('Chip Input', [
-      bw.makeChipInput({
-        chips: ['JavaScript', 'CSS', 'HTML'],
-        placeholder: 'Add a tag...',
-        name: 'chip-demo'
-      })
+    var chipInputDemo = section('Chip Input', null, [
+      { t: 'div', a: { style: 'max-width:400px;' }, c: [
+        bw.makeChipInput({ chips: ['JavaScript', 'CSS', 'HTML'], placeholder: 'Add a tag...' })
+      ]}
     ]);
 
     // Code Demo
-    var codeDemoSection = section('Code Demo', [
+    var codeDemoSection = section('Code Demo', null, [
       bw.makeCodeDemo({
-        code: 'var greeting = "Hello, Bitwrench!";\nconsole.log(greeting);',
+        code: "bw.makeButton({ text: 'Click me', variant: 'primary' });",
+        result: bw.makeButton({ text: 'Click me', variant: 'primary' }),
         language: 'javascript'
       })
     ]);
 
     // Media Object
-    var mediaObjectDemo = section('Media Object', [
+    var svgDataUri = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="#006666" width="64" height="64" rx="32"/><text x="32" y="36" text-anchor="middle" fill="#fff" font-size="20">BW</text></svg>');
+    var mediaObjectDemo = section('Media Object', null, [
       bw.makeMediaObject({
-        image: { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect fill="#006666" width="64" height="64" rx="32"/><text x="32" y="36" text-anchor="middle" fill="#fff" font-size="20">BW</text></svg>'), size: 64 },
+        src: svgDataUri, alt: 'BW logo',
         title: 'Media Object',
-        content: 'This is a media object component with an image and text content side by side.'
+        content: 'Image and text content side by side. Useful for comment threads, user profiles, or notifications.',
+        imageSize: '3.5rem'
       })
     ]);
 
-    // Section component
-    var sectionDemo = section('Section', [
-      bw.makeSection({
-        title: 'Section Title',
-        subtitle: 'Optional subtitle for the section.',
-        content: { t: 'p', c: 'Section body content goes here.' }
-      })
+    // Stack
+    var stackDemo = section('Stack', null, [
+      { t: 'div', a: { style: 'display:flex;gap:2rem;flex-wrap:wrap;' }, c: [
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.8125rem;display:block;margin-bottom:0.25rem;' }, c: 'Vertical' },
+          bw.makeStack({ children: [
+            bw.makeBadge({ text: 'Item 1', variant: 'primary' }),
+            bw.makeBadge({ text: 'Item 2', variant: 'success' }),
+            bw.makeBadge({ text: 'Item 3', variant: 'info' })
+          ], direction: 'vertical', gap: 2 })
+        ]},
+        { t: 'div', c: [
+          { t: 'strong', a: { style: 'font-size:0.8125rem;display:block;margin-bottom:0.25rem;' }, c: 'Horizontal' },
+          bw.makeStack({ children: [
+            bw.makeButton({ text: 'Save', variant: 'primary', size: 'sm' }),
+            bw.makeButton({ text: 'Cancel', variant: 'secondary', size: 'sm' }),
+            bw.makeButton({ text: 'Delete', variant: 'outline_danger', size: 'sm' })
+          ], direction: 'horizontal', gap: 2 })
+        ]}
+      ]}
     ]);
 
     // CTA
-    var ctaDemo = section('CTA (Call to Action)', [
+    var ctaDemo = section('CTA (Call to Action)', null, [
       bw.makeCTA({
         title: 'Ready to get started?',
-        description: 'Join thousands of developers building with Bitwrench.',
+        description: 'Build UIs with pure JavaScript and zero build steps.',
         actions: [
-          bw.makeButton({ label: 'Sign Up Free', variant: 'primary', size: 'lg' }),
-          bw.makeButton({ label: 'Learn More', variant: 'outline_primary' })
+          bw.makeButton({ text: 'Get Started', variant: 'primary', size: 'lg' }),
+          bw.makeButton({ text: 'Learn More', variant: 'outline_primary' })
         ]
       })
     ]);
@@ -561,59 +613,56 @@
     // =========================================================================
     bw.DOM('#app', {
       t: 'div', c: [
-        // Page header
-        {
-          t: 'div', a: { class: 'page-header' },
+        { t: 'div', a: { class: 'page-header' },
           c: { t: 'div', a: { class: 'content-container' }, c: [
             { t: 'h1', c: 'Component Gallery' },
-            { t: 'p', a: { class: 'subtitle' }, c: 'Every BCCL component rendered with bw.loadStyles() and zero custom CSS. Visual proof that defaults work.' }
+            { t: 'p', a: { class: 'subtitle' }, c: 'Every BCCL component with bw.loadStyles() and zero custom CSS.' }
           ]}
         },
-        // Content
-        {
-          t: 'div', a: { class: 'content-container' },
-          c: [
-            themeControls,
-            buttonDemo,
-            cardDemo,
-            alertDemo,
-            badgeDemo,
-            formDemo,
-            progressDemo,
-            spinnerDemo,
-            tableDemo,
-            listGroupDemo,
-            navDemo,
-            breadcrumbDemo,
-            paginationDemo,
-            buttonGroupDemo,
-            tabsDemo,
-            accordionDemo,
-            modalDemo,
-            toastDemo,
-            dropdownDemo,
-            tooltipDemo,
-            popoverDemo,
-            carouselDemo,
-            fileUploadDemo,
-            rangeDemo,
-            timelineDemo,
-            stepperDemo,
-            statCardDemo,
-            heroDemo,
-            featureGridDemo,
-            skeletonDemo,
-            avatarDemo,
-            searchDemo,
-            chipInputDemo,
-            codeDemoSection,
-            mediaObjectDemo,
-            sectionDemo,
-            ctaDemo
-          ]
-        }
+        { t: 'div', a: { class: 'content-container' }, c: [
+          themeSwitcher,
+          buttonDemo,
+          cardDemo,
+          alertDemo,
+          badgeDemo,
+          formDemo,
+          progressDemo,
+          spinnerDemo,
+          tableDemo,
+          listGroupDemo,
+          tabsDemo,
+          accordionDemo,
+          navDemo,
+          breadcrumbDemo,
+          paginationDemo,
+          buttonGroupDemo,
+          dropdownDemo,
+          modalDemo,
+          toastDemo,
+          tooltipDemo,
+          popoverDemo,
+          carouselDemo,
+          fileUploadDemo,
+          rangeDemo,
+          timelineDemo,
+          stepperDemo,
+          statCardDemo,
+          heroDemo,
+          featureGridDemo,
+          skeletonDemo,
+          avatarDemo,
+          searchDemo,
+          chipInputDemo,
+          codeDemoSection,
+          mediaObjectDemo,
+          stackDemo,
+          ctaDemo
+        ]}
       ]
     });
+
+    // Render stepper after mount
+    renderStepper();
   </script>
 </body>
 </html>

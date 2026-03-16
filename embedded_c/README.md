@@ -160,7 +160,7 @@ BW_PATCH(buf, "temp", "23.5");
 // → r{'type':'patch','target':'temp','content':'23.5'}
 ```
 
-The browser's `bw.clientParse()` normalizes to strict JSON before processing.
+The browser's `bw.parseJSONFlex()` normalizes to strict JSON before processing.
 r-prefix is outbound only (device to browser). The browser always sends strict JSON back.
 
 ## Batch Updates

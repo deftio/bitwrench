@@ -54,7 +54,7 @@ extern "C" {
  * TACO builders — compose r-prefix relaxed JSON TACO nodes
  *
  * All output is r-prefixed:  r{'t':'tag','c':'content'}
- * The browser's bw.clientParse() normalizes to strict JSON.
+ * The browser's bw.parseJSONFlex() normalizes to strict JSON.
  * ======================================================================== */
 
 /**

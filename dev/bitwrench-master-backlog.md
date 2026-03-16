@@ -60,7 +60,7 @@ Legend: **Type** = bug / dx / docs / feature / bloat-risk | **Scope** = core / b
 | **BWSERVE: bugs** | | | | | | | |
 | 20 | DIST_DIR path broken when installed from npm | bug | bwserve | PR1, FB | XS | 0 | CRITICAL. Blocks all npm users. Easy fix |
 | 21 | `client.exec()` blocked — no `allowExec` in bwserve.create() | bug | bwserve | PR1, FB | XS | 0 | Config plumbing |
-| 22 | POST to `/__bw/action/<clientId>` returns 404 intermittently | bug | bwserve | PR1 | M | 0 | Race condition in client registration? |
+| 22 | POST to `/bw/return/action/<clientId>` returns 404 intermittently | bug | bwserve | PR1 | M | 0 | Race condition in client registration? |
 | **BWSERVE: DX improvements** | | | | | | | |
 | 23 | Shell customization (headScripts, headStyles, favicon) | dx | bwserve | PR1, FB | M | ~0.2KB | Unblocks third-party lib integration |
 | 24 | `register()` accept function refs (`.toString()`) | dx | bwserve | PR1, FB | S | ~0.1KB | Biggest bwserve DX pain point |

@@ -3081,58 +3081,23 @@ bw.message = function(target, action, data) {
 };
 
 // ===================================================================================
-// bw.clientApply() / bw.clientConnect() — Server-driven UI protocol
+// bw.apply() / bw.parseJSONFlex() — Server-driven UI protocol
 // ===================================================================================
 
 /**
  * Registry of named functions sent via register messages.
- * Populated by clientApply({ type: 'register', name, body }).
- * Invoked by clientApply({ type: 'call', name, args }).
+ * Populated by bw.apply({ type: 'register', name, body }).
+ * Invoked by bw.apply({ type: 'call', name, args }).
  * @private
  */
 bw._clientFunctions = {};
 
 /**
- * Whether exec messages are allowed. Set by clientConnect opts.allowExec.
+ * Whether exec messages are allowed. Set by bwclient connect opts.allowExec.
  * Default false — exec messages are rejected unless explicitly opted in.
  * @private
  */
 bw._allowExec = false;
-
-/**
- * Built-in client functions available via call() without registration.
- * @private
- */
-bw._builtinClientFunctions = {
-  scrollTo: function(selector) {
-    var el = bw._el(selector);
-    if (el) el.scrollTop = el.scrollHeight;
-  },
-  focus: function(selector) {
-    var el = bw._el(selector);
-    if (el && _is(el.focus, 'function')) el.focus();
-  },
-  download: function(filename, content, mimeType) {
-    if (typeof document === 'undefined') return;
-    var blob = new Blob([content], { type: mimeType || 'text/plain' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  },
-  clipboard: function(text) {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-    }
-  },
-  redirect: function(url) {
-    if (typeof window !== 'undefined') window.location.href = url;
-  },
-  log: function() {
-    console.log.apply(console, arguments);
-  }
-};
 
 /**
  * Parse a bwserve protocol message string, supporting both strict JSON
@@ -3148,9 +3113,9 @@ bw._builtinClientFunctions = {
  * @param {string} str - JSON or r-prefixed relaxed JSON string
  * @returns {Object} Parsed message object
  * @throws {SyntaxError} If the string is not valid JSON or relaxed JSON
- * @category Server
+ * @category Core
  */
-bw.clientParse = function(str) {
+bw.parseJSONFlex = function(str) {
   str = (str || '').trim();
   if (str.charAt(0) !== 'r') return JSON.parse(str);
   str = str.slice(1);
@@ -3235,10 +3200,10 @@ bw.clientParse = function(str) {
  *   append   — target.appendChild(bw.createDOM(node))
  *   remove   — bw.cleanup(target); target.remove()
  *   patch    — bw.patch(target, content, attr)
- *   batch    — iterate ops, call clientApply for each
+ *   batch    — iterate ops, call bw.apply for each
  *   message  — bw.message(target, action, data)
  *   register — store a named function for later call()
- *   call     — invoke a registered or built-in function
+ *   call     — invoke a registered function
  *   exec     — execute arbitrary JS (requires allowExec)
  *
  * Target resolution:
@@ -3247,9 +3212,9 @@ bw.clientParse = function(str) {
  *
  * @param {Object} msg - Protocol message
  * @returns {boolean} true if the message was applied successfully
- * @category Server
+ * @category Core
  */
-bw.clientApply = function(msg) {
+bw.apply = function(msg) {
   if (!msg || !msg.type) return false;
 
   var type = msg.type;
@@ -3283,7 +3248,7 @@ bw.clientApply = function(msg) {
     if (!_isA(msg.ops)) return false;
     var allOk = true;
     msg.ops.forEach(function(op) {
-      if (!bw.clientApply(op)) allOk = false;
+      if (!bw.apply(op)) allOk = false;
     });
     return allOk;
 
@@ -3302,7 +3267,7 @@ bw.clientApply = function(msg) {
 
   } else if (type === 'call') {
     if (!msg.name) return false;
-    var fn = bw._clientFunctions[msg.name] || bw._builtinClientFunctions[msg.name];
+    var fn = bw._clientFunctions[msg.name];
     if (!_is(fn, 'function')) return false;
     try {
       var args = _isA(msg.args) ? msg.args : [];
@@ -3331,139 +3296,6 @@ bw.clientApply = function(msg) {
   return false;
 };
 
-/**
- * Connect to a bwserve SSE endpoint and apply protocol messages automatically.
- *
- * Returns a connection object with sendAction(), on(), and close() methods.
- *
- * @param {string} url - SSE endpoint URL (e.g., '/__bw/events/client-1')
- * @param {Object} [opts] - Connection options
- * @param {string} [opts.transport='sse'] - Transport type: 'sse' (default) or 'poll'
- * @param {number} [opts.interval=2000] - Poll interval in ms (only for 'poll' transport)
- * @param {string} [opts.actionUrl] - POST endpoint for actions (default: derived from url)
- * @param {boolean} [opts.reconnect=true] - Auto-reconnect on disconnect
- * @param {boolean} [opts.allowExec=false] - Enable exec message type (arbitrary JS execution)
- * @param {Function} [opts.onStatus] - Status callback: 'connecting'|'connected'|'disconnected'
- * @param {Function} [opts.onMessage] - Raw message callback (before clientApply)
- * @returns {Object} Connection object { sendAction, on, close, status }
- * @category Server
- */
-bw.clientConnect = function(url, opts) {
-  opts = opts || {};
-  var transport = opts.transport || 'sse';
-  var actionUrl = opts.actionUrl || url.replace(/\/events\//, '/action/');
-  var reconnect = opts.reconnect !== false;
-  var onStatus = opts.onStatus || function() {};
-  var onMessage = opts.onMessage || null;
-  var handlers = {};
-  // Set the global allowExec flag from connection options
-  bw._allowExec = !!opts.allowExec;
-  var conn = {
-    status: 'connecting',
-    _es: null,
-    _pollTimer: null
-  };
-
-  function setStatus(s) {
-    conn.status = s;
-    onStatus(s);
-  }
-
-  function handleMessage(data) {
-    try {
-      var msg = _is(data, 'string') ? bw.clientParse(data) : data;
-      if (onMessage) onMessage(msg);
-      if (handlers.message) handlers.message(msg);
-      bw.clientApply(msg);
-    } catch (e) {
-      if (handlers.error) handlers.error(e);
-    }
-  }
-
-  if (transport === 'sse' && typeof EventSource !== 'undefined') {
-    setStatus('connecting');
-    var es = new EventSource(url);
-    conn._es = es;
-
-    es.onopen = function() {
-      setStatus('connected');
-      if (handlers.open) handlers.open();
-    };
-
-    es.onmessage = function(e) {
-      handleMessage(e.data);
-    };
-
-    es.onerror = function() {
-      if (conn.status === 'connected') {
-        setStatus('disconnected');
-      }
-      if (handlers.error) handlers.error(new Error('SSE connection error'));
-      if (!reconnect) {
-        es.close();
-      }
-      // EventSource auto-reconnects by default when reconnect=true
-    };
-  } else if (transport === 'poll') {
-    var interval = opts.interval || 2000;
-    setStatus('connected');
-    conn._pollTimer = setInterval(function() {
-      fetch(url).then(function(r) { return r.json(); }).then(function(msgs) {
-        if (_isA(msgs)) {
-          msgs.forEach(handleMessage);
-        } else if (msgs && msgs.type) {
-          handleMessage(msgs);
-        }
-      }).catch(function(e) {
-        if (handlers.error) handlers.error(e);
-      });
-    }, interval);
-  }
-
-  /**
-   * Send an action to the server via POST.
-   * @param {string} action - Action name
-   * @param {Object} [data] - Action payload
-   */
-  conn.sendAction = function(action, data) {
-    var body = JSON.stringify({ type: 'action', action: action, data: data || {} });
-    fetch(actionUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body
-    }).catch(function(e) {
-      if (handlers.error) handlers.error(e);
-    });
-  };
-
-  /**
-   * Register an event handler.
-   * @param {string} event - 'open'|'message'|'error'|'close'
-   * @param {Function} handler
-   */
-  conn.on = function(event, handler) {
-    handlers[event] = handler;
-    return conn;
-  };
-
-  /**
-   * Close the connection.
-   */
-  conn.close = function() {
-    if (conn._es) {
-      conn._es.close();
-      conn._es = null;
-    }
-    if (conn._pollTimer) {
-      clearInterval(conn._pollTimer);
-      conn._pollTimer = null;
-    }
-    setStatus('disconnected');
-    if (handlers.close) handlers.close();
-  };
-
-  return conn;
-};
 
 // ===================================================================================
 // bw.inspect() — Debug utility
@@ -3912,6 +3744,14 @@ bw.makeStyles = function(config) {
   // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
   // applyStyles() wraps them appropriately based on scope
   var altRawRules = generateThemedCSS('', altPalette, layout);
+
+  // Add body-level surface overrides for the alternate palette.
+  // When .bw_theme_alt is on <html>, ".bw_theme_alt body" correctly matches.
+  altRawRules['body'] = {
+    'color': altPalette.dark.base,
+    'background-color': altPalette.surface || altPalette.light.base
+  };
+
   var altCssStr = bw.css(altRawRules);
 
   // Determine if primary is light-flavored
@@ -4033,7 +3873,7 @@ bw.loadReset = function() {
  * Toggle between primary and alternate palettes.
  *
  * Adds/removes the `bw_theme_alt` class on the scoping element.
- * Without a scope, toggles on `<body>` (global).
+ * Without a scope, toggles on `<html>` (global).
  * With a scope, toggles on the first matching element.
  *
  * @param {string} [scope] - Scope selector (e.g. '#my-dashboard'). Omit for global.
@@ -4042,7 +3882,7 @@ bw.loadReset = function() {
  * @see bw.applyStyles
  * @see bw.clearStyles
  * @example
- * bw.toggleStyles();                   // global toggle on <body>
+ * bw.toggleStyles();                   // global toggle on <html>
  * bw.toggleStyles('#my-dashboard');    // scoped toggle
  */
 bw.toggleStyles = function(scope) {
@@ -4052,7 +3892,7 @@ bw.toggleStyles = function(scope) {
     var els = bw.$(scope);
     target = els[0];
   } else {
-    target = document.body;
+    target = document.documentElement;
   }
   if (!target) return 'primary';
 
@@ -4092,7 +3932,7 @@ bw.clearStyles = function(scope) {
     var targets = bw.$(scope);
     if (targets[0]) targets[0].classList.remove('bw_theme_alt');
   } else if (!scope || scope === 'global') {
-    document.body.classList.remove('bw_theme_alt');
+    document.documentElement.classList.remove('bw_theme_alt');
   }
 };
 

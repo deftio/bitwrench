@@ -34,7 +34,7 @@ Source breakdown: core 4222 LOC (40%), styles 2236 LOC (21%), BCCL 3614 LOC (34%
 * [ ] analyze --> identify CSS generation bloat in bitwrench-styles.js (largest growth risk)
 * [ ] consider --> tree-shakeable ESM build where unused make*() functions are eliminated
 * [ ] monitor --> Phase 2 (make*() → ComponentHandle) adds ~1-2KB gzipped — still within budget
-* [ ] monitor --> bwserve client-side additions (clientConnect, clientApply, declarative events) add ~3-5KB gzipped
+* [ ] monitor --> bwserve client-side additions (bw.apply, bwclient.js, declarative events) add ~3-5KB gzipped
 
 ---
 

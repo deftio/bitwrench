@@ -471,7 +471,7 @@ app.listen();
 ```
 
 **Protocol**: `replace`, `patch`, `append`, `remove`, `batch`, `message`, `register`, `call`, `exec`.
-**Client**: `bw.clientConnect('http://localhost:7902')` — auto-applies all messages.
+**Client**: The shell auto-connects via SSE and calls `bw.apply()` for each incoming message.
 **Language-agnostic**: any server that writes SSE works (Python, Go, Rust, C, shell).
 **Screenshot**: `await client.screenshot(selector?, { maxWidth?, maxHeight?, format?, quality? })` → `{ data: Buffer, width, height, format }`. Requires `allowScreenshot: true` in server options. Uses html2canvas (vendored, lazy-loaded). Use for LLM visual feedback loops: render TACO → screenshot → vision model evaluates → refine.
 

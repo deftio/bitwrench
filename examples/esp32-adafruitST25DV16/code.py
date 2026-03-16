@@ -134,7 +134,7 @@ def format_uptime(seconds):
 
 def build_patches_json():
     """Build a bwserve-compatible batch of patch operations for live-updating
-    elements. The browser applies these with bw.clientApply() - no full
+    elements. The browser applies these with bw.apply() - no full
     DOM re-render needed."""
     uptime = time.monotonic() - boot_time
 
@@ -291,7 +291,7 @@ def serve_bitwrench(request: Request):
 def api_patches(request: Request):
     """Return bwserve-compatible patch ops for live-updating elements.
     Lightweight alternative to /api/status - only sends changed values,
-    browser applies with bw.clientApply(). Also returns ndef_version so
+    browser applies with bw.apply(). Also returns ndef_version so
     the browser knows when to do a full re-fetch."""
     data = build_patches_json()
     return Response(request, json.dumps(data), content_type="application/json")

@@ -12,7 +12,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-16T07:14:24.592Z'
+  buildDate: '2026-03-16T16:42:33.898Z'
 };
 
 /**
@@ -306,13 +306,18 @@ function harmonize(sourceHex, targetHex, amount) {
  */
 function deriveShades(hex) {
   var rgb = colorParse(hex);
+  // For light input colors (L > 75), mixing toward white produces invisible borders.
+  // Darken instead so borders remain visible against light backgrounds.
+  var borderColor = hexToHsl(hex)[2] > 75
+    ? adjustLightness(hex, -18)
+    : mixColor(hex, '#ffffff', 0.60);
   return {
     base: hex,
     hover: adjustLightness(hex, -10),
     active: adjustLightness(hex, -15),
     light: mixColor(hex, '#ffffff', 0.85),
     darkText: adjustLightness(hex, -40),
-    border: mixColor(hex, '#ffffff', 0.60),
+    border: borderColor,
     focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
     textOn: textOnColor(hex)
   };
@@ -371,19 +376,27 @@ function deriveAlternateConfig(config) {
   alt.secondary = deriveAlternateSeed(config.secondary);
   alt.tertiary = config.tertiary ? deriveAlternateSeed(config.tertiary) : alt.primary;
 
-  // Derive alternate surface colors from primary hue
+  // Derive alternate surface colors from primary hue.
+  // Check actual page surface brightness (not seed color brightness) to decide
+  // whether alternate should be dark or light.  The page surface is what the
+  // user sees; seeds can be dark while the page is still light (default L=96).
   var priHsl = hexToHsl(config.primary);
   var h = priHsl[0];
-  var isLight = isLightPalette(config);
+  var primarySurface = config.surface || hslToHex([h, 8, 96]);
+  var isLight = relativeLuminance(primarySurface) > 0.179;
 
   if (isLight) {
-    // Primary is light → alternate needs dark surfaces
+    // Page surface is light → alternate needs dark surfaces
     alt.light = hslToHex([h, Math.min(priHsl[1], 15), 15]);
     alt.dark = hslToHex([h, 5, 88]);
+    alt.surface = hslToHex([h, 12, 18]);
+    alt.background = hslToHex([h, 10, 14]);
   } else {
-    // Primary is dark → alternate needs light surfaces
+    // Page surface is dark → alternate needs light surfaces
     alt.light = hslToHex([h, Math.min(priHsl[1], 10), 96]);
     alt.dark = hslToHex([h, 10, 18]);
+    alt.surface = hslToHex([h, 8, 96]);
+    alt.background = hslToHex([h, 6, 98]);
   }
 
   // Semantic colors: harmonize toward primary, then invert for alternate
@@ -431,10 +444,18 @@ function derivePalette(config) {
   var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
   // Background & surface tokens — tinted with primary hue for theme personality.
-  // Very subtle: bg at L=98/S=6, surface at L=96/S=8.
+  // Saturation high enough that the hue is visible (each theme feels distinct)
+  // but low enough to stay neutral and readable.
   // User can override with config.background / config.surface.
-  var bgBase = config.background || hslToHex([h, 6, 98]);
-  var surfBase = config.surface || hslToHex([h, 8, 96]);
+  var bgBase = config.background || hslToHex([h, 22, 96]);
+  var surfBase = config.surface || hslToHex([h, 25, 94]);
+
+  // surfaceAlt: subtle background variant for striped rows, hover states, headers.
+  // Slightly lighter than surface in dark mode, slightly darker in light mode.
+  var surfHsl = hexToHsl(surfBase);
+  var surfAlt = surfHsl[2] <= 50
+    ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)])
+    : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]);
 
   var palette = {
     primary:    deriveShades(config.primary),
@@ -447,7 +468,8 @@ function derivePalette(config) {
     light:      deriveShades(lightBase),
     dark:       deriveShades(darkBase),
     background: bgBase,
-    surface:    surfBase
+    surface:    surfBase,
+    surfaceAlt: surfAlt
   };
 
   return palette;
@@ -761,11 +783,11 @@ function generateCards(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_card_header')] = {
     'padding': sp.card.split(' ').map(function(v) { return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem'; }).join(' '),
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-bottom': '1px solid ' + palette.light.border
   };
   rules[_sx(scope, '.bw_card_footer')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-top': '1px solid ' + palette.light.border,
     'color': palette.secondary.base
   };
@@ -842,24 +864,27 @@ function generateForms(scope, palette, layout) {
   return rules;
 }
 
-function generateNavigation(scope, palette) {
+function generateNavigation(scope, palette, layout) {
   var rules = {};
   rules[_sx(scope, '.bw_navbar')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-bottom-color': palette.light.border
   };
   rules[_sx(scope, '.bw_navbar_brand')] = {
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
-    'color': palette.secondary.base
+    'color': palette.secondary.base,
+    'border-radius': layout.radius.btn
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
-    'color': palette.dark.base
+    'color': palette.dark.base,
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
     'color': palette.primary.base,
-    'background-color': palette.primary.focus
+    'background-color': palette.primary.focus,
+    'font-weight': '600'
   };
   rules[_sx(scope, '.bw_navbar_dark')] = {
     'background-color': palette.dark.base,
@@ -900,10 +925,10 @@ function generateTables(scope, palette, layout) {
   rules[_sx(scope, '.bw_table > thead > tr > *')] = {
     'color': palette.secondary.base,
     'border-bottom-color': palette.light.border,
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
     'background-color': palette.primary.focus
@@ -935,10 +960,12 @@ function generateTabs(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
     'color': palette.dark.base,
+    'background-color': palette.surfaceAlt,
     'border-bottom-color': palette.light.border
   };
   rules[_sx(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
     'color': palette.primary.base,
+    'background-color': palette.primary.focus,
     'border-bottom': '2px solid ' + palette.primary.base
   };
   return rules;
@@ -957,7 +984,7 @@ function generateListGroups(scope, palette, layout) {
     'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'color': palette.dark.hover
   };
   rules[_sx(scope, '.bw_list_group_item.active')] = {
@@ -974,7 +1001,15 @@ function generateListGroups(scope, palette, layout) {
 }
 
 function generatePagination(scope, palette, layout) {
-  var rules = {}, mo = layout.motion;
+  var rules = {}, mo = layout.motion, rd = layout.radius;
+  rules[_sx(scope, '.bw_page_item:first-child .bw_page_link')] = {
+    'border-top-left-radius': rd.btn,
+    'border-bottom-left-radius': rd.btn
+  };
+  rules[_sx(scope, '.bw_page_item:last-child .bw_page_link')] = {
+    'border-top-right-radius': rd.btn,
+    'border-bottom-right-radius': rd.btn
+  };
   rules[_sx(scope, '.bw_page_link')] = {
     'color': palette.primary.base,
     'background-color': palette.surface || '#fff',
@@ -983,7 +1018,7 @@ function generatePagination(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_page_link:hover')] = {
     'color': palette.primary.hover,
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-color': palette.light.border
   };
   rules[_sx(scope, '.bw_page_link:focus')] = {
@@ -1006,7 +1041,7 @@ function generatePagination(scope, palette, layout) {
 function generateProgress(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_progress')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
   };
   rules[_sx(scope, '.bw_progress_bar')] = {
@@ -1035,18 +1070,24 @@ function generateResetThemed(scope, palette) {
 
 function generateBreadcrumbThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
+  rules[_sx(scope, '.bw_breadcrumb')] = {
+    'background-color': palette.surfaceAlt,
+    'padding': '0.625rem 1rem',
+    'border-radius': layout.radius.btn
+  };
   rules[_sx(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
     'color': palette.secondary.base
   };
-  rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
-    'color': palette.secondary.base
-  };
   rules[_sx(scope, '.bw_breadcrumb_item a')] = {
+    'color': palette.primary.base,
     'transition': 'color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
     'color': palette.primary.hover,
     'text-decoration': 'underline'
+  };
+  rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
+    'color': palette.dark.base
   };
   return rules;
 }
@@ -1079,30 +1120,42 @@ function generateSectionsThemed(scope, palette) {
   return rules;
 }
 
-function generateAccordionThemed(scope, palette) {
+function generateAccordionThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '8px' };
   rules[_sx(scope, '.bw_accordion_item')] = {
     'background-color': palette.surface || '#fff',
     'border-color': palette.light.border
+  };
+  rules[_sx(scope, '.bw_accordion_item:first-child')] = {
+    'border-top-left-radius': rd.card,
+    'border-top-right-radius': rd.card
+  };
+  rules[_sx(scope, '.bw_accordion_item:last-child')] = {
+    'border-bottom-left-radius': rd.card,
+    'border-bottom-right-radius': rd.card
   };
   rules[_sx(scope, '.bw_accordion_button')] = {
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
     'color': palette.primary.darkText,
-    'background-color': palette.primary.light
+    'background-color': palette.primary.light,
+    'border-left': '3px solid ' + palette.primary.base
   };
   rules[_sx(scope, '.bw_accordion_button:hover')] = {
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
-    'background-color': palette.primary.hover
+    'background-color': palette.primary.base,
+    'color': palette.primary.textOn
   };
   rules[_sx(scope, '.bw_accordion_button:focus-visible')] = {
     'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
   };
   rules[_sx(scope, '.bw_accordion_body')] = {
-    'border-top': '1px solid ' + palette.light.border
+    'border-top': '1px solid ' + palette.light.border,
+    'background-color': palette.surfaceAlt
   };
   return rules;
 }
@@ -1110,7 +1163,7 @@ function generateAccordionThemed(scope, palette) {
 function generateCarouselThemed(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_carousel')] = {
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_carousel_indicator.active')] = {
     'background-color': palette.primary.base
@@ -1175,7 +1228,7 @@ function generateDropdownThemed(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_dropdown_item:hover')] = {
     'color': palette.dark.hover,
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_dropdown_item.disabled')] = {
     'color': palette.secondary.base
@@ -1205,7 +1258,7 @@ function generateSwitchThemed(scope, palette) {
 function generateSkeletonThemed(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_skeleton')] = {
-    'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
+    'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.surfaceAlt + ' 37%, ' + palette.light.border + ' 63%)'
   };
   return rules;
 }
@@ -1213,8 +1266,12 @@ function generateSkeletonThemed(scope, palette) {
 // generateAvatarThemed: removed — palette class on root handles variants
 
 function generateStatCardThemed(scope, palette, layout) {
-  var rules = {}, mo = layout.motion, el = layout.elevation;
+  var rules = {}, mo = layout.motion, el = layout.elevation, rd = layout.radius;
   rules[_sx(scope, '.bw_stat_card')] = {
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base,
+    'border': '1px solid ' + palette.light.border,
+    'border-radius': rd.card,
     'box-shadow': el.sm,
     'transition': 'box-shadow ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
   };
@@ -1236,7 +1293,7 @@ function generateTimelineThemed(scope, palette) {
 function generateStepperThemed(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_step_indicator')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border': '2px solid ' + palette.light.border,
     'color': palette.secondary.base
   };
@@ -1260,13 +1317,17 @@ function generateStepperThemed(scope, palette) {
 
 function generateChipInputThemed(scope, palette) {
   var rules = {};
-  rules[_sx(scope, '.bw_chip_input')] = { 'border-color': palette.light.border };
+  rules[_sx(scope, '.bw_chip_input')] = {
+    'border-color': palette.light.border,
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base
+  };
   rules[_sx(scope, '.bw_chip_input:focus-within')] = {
     'border-color': palette.primary.base,
     'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
   };
   rules[_sx(scope, '.bw_chip')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_chip_remove:hover')] = {
@@ -1280,7 +1341,7 @@ function generateFileUploadThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
   rules[_sx(scope, '.bw_file_upload')] = {
     'border-color': palette.light.border,
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'transition': 'border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_file_upload:hover')] = {
@@ -1334,7 +1395,7 @@ function generatePopoverThemed(scope, palette, layout) {
     'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_popover_header')] = {
-    'background-color': palette.light.light, 'border-bottom': '1px solid ' + palette.light.border,
+    'background-color': palette.surfaceAlt, 'border-bottom': '1px solid ' + palette.light.border,
     'padding': sp.input
   };
   rules[_sx(scope, '.bw_popover_body')] = { 'padding': sp.card };
@@ -1343,6 +1404,10 @@ function generatePopoverThemed(scope, palette, layout) {
 
 function generateSearchThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
+  rules[_sx(scope, '.bw_search_input')] = {
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base
+  };
   rules[_sx(scope, '.bw_search_clear')] = {
     'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
@@ -1350,8 +1415,14 @@ function generateSearchThemed(scope, palette, layout) {
   return rules;
 }
 
-function generateCodeDemoThemed(scope, palette) {
+function generateCodeDemoThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '0.375rem' };
+  rules[_sx(scope, '.bw_code_demo')] = {
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base,
+    'border-radius': rd.card
+  };
   rules[_sx(scope, '.bw_code_copy_btn_copied')] = {
     'background': palette.success.base,
     'color': palette.success.textOn,
@@ -1447,11 +1518,23 @@ function generatePaletteClasses(scope, palette) {
       'box-shadow': '0 0 0 2px ' + s.base
     };
 
-    // Spinner: text color only, transparent bg
-    rules[_sx(scope, '.bw_spinner_border.bw_' + k + ',\n' + _sx(scope, '.bw_spinner_grow.bw_' + k))] = {
+    // Spinner: set color, re-apply border pattern so the root palette class
+    // border-color doesn't fill in the transparent gap that makes it spin.
+    // Also neutralize hover/active which would override border-right-color.
+    rules[_sx(scope, '.bw_spinner_border.bw_' + k)] = {
       'background-color': 'transparent',
       'color': s.base,
-      'border-color': 'currentColor'
+      'border-color': s.base,
+      'border-right-color': 'transparent'
+    };
+    rules[_sx(scope, '.bw_spinner_border.bw_' + k + ':hover')] = {
+      'background-color': 'transparent',
+      'border-color': s.base,
+      'border-right-color': 'transparent'
+    };
+    rules[_sx(scope, '.bw_spinner_grow.bw_' + k)] = {
+      'background-color': s.base,
+      'color': s.base
     };
 
     // Outline button: transparent bg, colored border+text, solid on hover
@@ -1517,7 +1600,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateAlerts(scopeName, palette, layout),
     generateCards(scopeName, palette, layout),
     generateForms(scopeName, palette, layout),
-    generateNavigation(scopeName, palette),
+    generateNavigation(scopeName, palette, layout),
     generateTables(scopeName, palette, layout),
     generateTabs(scopeName, palette, layout),
     generateListGroups(scopeName, palette, layout),
@@ -1526,7 +1609,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateBreadcrumbThemed(scopeName, palette, layout),
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
-    generateAccordionThemed(scopeName, palette),
+    generateAccordionThemed(scopeName, palette, layout),
     generateCarouselThemed(scopeName, palette),
     generateModalThemed(scopeName, palette, layout),
     generateToastThemed(scopeName, palette, layout),
@@ -1542,7 +1625,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateSearchThemed(scopeName, palette, layout),
     generateTooltipThemed(scopeName, palette, layout),
     generatePopoverThemed(scopeName, palette, layout),
-    generateCodeDemoThemed(scopeName, palette),
+    generateCodeDemoThemed(scopeName, palette, layout),
     generateNavPillsThemed(scopeName, palette, layout),
     generatePaletteClasses(scopeName, palette)
   );
@@ -1822,6 +1905,7 @@ var structuralRules = {
     '.bw_nav_tabs .bw_nav_item': { 'margin-bottom': '-2px' },
     '.bw_nav_link': {
       'display': 'block', 'font-size': '0.875rem', 'font-weight': '500',
+      'padding': '0.625rem 1rem',
       'text-decoration': 'none', 'cursor': 'pointer',
       'border': 'none', 'background': 'transparent', 'font-family': 'inherit'
     },
@@ -1856,10 +1940,11 @@ var structuralRules = {
     '.bw_page_item': { 'display': 'list-item', 'list-style': 'none' },
     '.bw_page_link': {
       'position': 'relative', 'display': 'block', 'padding': '0.375rem 0.75rem',
-      'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none'
+      'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none',
+      'border': '1px solid transparent', 'cursor': 'pointer',
+      'font-family': 'inherit', 'font-size': 'inherit', 'background': 'none'
     },
-    '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0', 'border-top-left-radius': '0.375rem', 'border-bottom-left-radius': '0.375rem' },
-    '.bw_page_item:last-child .bw_page_link': { 'border-top-right-radius': '0.375rem', 'border-bottom-right-radius': '0.375rem' },
+    '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0' },
     '.bw_page_link:focus-visible': { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' }
   },
 
@@ -2016,6 +2101,7 @@ var structuralRules = {
     '.bw_accordion_header': { 'margin': '0' },
     '.bw_accordion_button': {
       'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
+      'padding': '0.875rem 1.25rem',
       'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
       'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
       'font-family': 'inherit'
@@ -2027,10 +2113,9 @@ var structuralRules = {
       'background-repeat': 'no-repeat', 'background-size': '1.25rem'
     },
     '.bw_accordion_button:not(.bw_collapsed)::after': { 'transform': 'rotate(-180deg)' },
-    '.bw_accordion_collapse': { 'max-height': '0', 'overflow': 'hidden' },
-    '.bw_accordion_collapse.bw_collapse_show': { 'max-height': 'none' },
-    '.bw_accordion_item:first-child': { 'border-top-left-radius': '8px', 'border-top-right-radius': '8px' },
-    '.bw_accordion_item:last-child': { 'border-bottom-left-radius': '8px', 'border-bottom-right-radius': '8px' }
+    '.bw_accordion_body': { 'padding': '1rem 1.25rem' },
+    '.bw_accordion_collapse': { 'max-height': '0', 'overflow': 'hidden', 'transition': 'max-height 0.3s ease' },
+    '.bw_accordion_collapse.bw_collapse_show': { 'max-height': 'none' }
   },
 
   // ---- Carousel ----
@@ -5057,8 +5142,8 @@ function makePagination(props = {}) {
     t: 'li',
     a: { class: `bw_page_item ${currentPage <= 1 ? 'bw_disabled' : ''}`.trim() },
     c: {
-      t: 'a',
-      a: { class: 'bw_page_link', href: '#', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous' },
+      t: 'button',
+      a: { class: 'bw_page_link', type: 'button', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous', disabled: currentPage <= 1 ? true : undefined },
       c: '\u2039'
     }
   });
@@ -5070,8 +5155,8 @@ function makePagination(props = {}) {
         t: 'li',
         a: { class: `bw_page_item ${pageNum === currentPage ? 'bw_active' : ''}`.trim() },
         c: {
-          t: 'a',
-          a: { class: 'bw_page_link', href: '#', onclick: handleClick(pageNum) },
+          t: 'button',
+          a: { class: 'bw_page_link', type: 'button', onclick: handleClick(pageNum), 'aria-current': pageNum === currentPage ? 'page' : undefined },
           c: '' + pageNum
         }
       });
@@ -5083,8 +5168,8 @@ function makePagination(props = {}) {
     t: 'li',
     a: { class: `bw_page_item ${currentPage >= pages ? 'bw_disabled' : ''}`.trim() },
     c: {
-      t: 'a',
-      a: { class: 'bw_page_link', href: '#', onclick: handleClick(currentPage + 1), 'aria-label': 'Next' },
+      t: 'button',
+      a: { class: 'bw_page_link', type: 'button', onclick: handleClick(currentPage + 1), 'aria-label': 'Next', disabled: currentPage >= pages ? true : undefined },
       c: '\u203A'
     }
   });
@@ -10083,58 +10168,23 @@ bw.message = function(target, action, data) {
 };
 
 // ===================================================================================
-// bw.clientApply() / bw.clientConnect() — Server-driven UI protocol
+// bw.apply() / bw.parseJSONFlex() — Server-driven UI protocol
 // ===================================================================================
 
 /**
  * Registry of named functions sent via register messages.
- * Populated by clientApply({ type: 'register', name, body }).
- * Invoked by clientApply({ type: 'call', name, args }).
+ * Populated by bw.apply({ type: 'register', name, body }).
+ * Invoked by bw.apply({ type: 'call', name, args }).
  * @private
  */
 bw._clientFunctions = {};
 
 /**
- * Whether exec messages are allowed. Set by clientConnect opts.allowExec.
+ * Whether exec messages are allowed. Set by bwclient connect opts.allowExec.
  * Default false — exec messages are rejected unless explicitly opted in.
  * @private
  */
 bw._allowExec = false;
-
-/**
- * Built-in client functions available via call() without registration.
- * @private
- */
-bw._builtinClientFunctions = {
-  scrollTo: function(selector) {
-    var el = bw._el(selector);
-    if (el) el.scrollTop = el.scrollHeight;
-  },
-  focus: function(selector) {
-    var el = bw._el(selector);
-    if (el && _is(el.focus, 'function')) el.focus();
-  },
-  download: function(filename, content, mimeType) {
-    if (typeof document === 'undefined') return;
-    var blob = new Blob([content], { type: mimeType || 'text/plain' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  },
-  clipboard: function(text) {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-    }
-  },
-  redirect: function(url) {
-    if (typeof window !== 'undefined') window.location.href = url;
-  },
-  log: function() {
-    console.log.apply(console, arguments);
-  }
-};
 
 /**
  * Parse a bwserve protocol message string, supporting both strict JSON
@@ -10150,9 +10200,9 @@ bw._builtinClientFunctions = {
  * @param {string} str - JSON or r-prefixed relaxed JSON string
  * @returns {Object} Parsed message object
  * @throws {SyntaxError} If the string is not valid JSON or relaxed JSON
- * @category Server
+ * @category Core
  */
-bw.clientParse = function(str) {
+bw.parseJSONFlex = function(str) {
   str = (str || '').trim();
   if (str.charAt(0) !== 'r') return JSON.parse(str);
   str = str.slice(1);
@@ -10237,10 +10287,10 @@ bw.clientParse = function(str) {
  *   append   — target.appendChild(bw.createDOM(node))
  *   remove   — bw.cleanup(target); target.remove()
  *   patch    — bw.patch(target, content, attr)
- *   batch    — iterate ops, call clientApply for each
+ *   batch    — iterate ops, call bw.apply for each
  *   message  — bw.message(target, action, data)
  *   register — store a named function for later call()
- *   call     — invoke a registered or built-in function
+ *   call     — invoke a registered function
  *   exec     — execute arbitrary JS (requires allowExec)
  *
  * Target resolution:
@@ -10249,9 +10299,9 @@ bw.clientParse = function(str) {
  *
  * @param {Object} msg - Protocol message
  * @returns {boolean} true if the message was applied successfully
- * @category Server
+ * @category Core
  */
-bw.clientApply = function(msg) {
+bw.apply = function(msg) {
   if (!msg || !msg.type) return false;
 
   var type = msg.type;
@@ -10285,7 +10335,7 @@ bw.clientApply = function(msg) {
     if (!_isA(msg.ops)) return false;
     var allOk = true;
     msg.ops.forEach(function(op) {
-      if (!bw.clientApply(op)) allOk = false;
+      if (!bw.apply(op)) allOk = false;
     });
     return allOk;
 
@@ -10304,7 +10354,7 @@ bw.clientApply = function(msg) {
 
   } else if (type === 'call') {
     if (!msg.name) return false;
-    var fn = bw._clientFunctions[msg.name] || bw._builtinClientFunctions[msg.name];
+    var fn = bw._clientFunctions[msg.name];
     if (!_is(fn, 'function')) return false;
     try {
       var args = _isA(msg.args) ? msg.args : [];
@@ -10333,139 +10383,6 @@ bw.clientApply = function(msg) {
   return false;
 };
 
-/**
- * Connect to a bwserve SSE endpoint and apply protocol messages automatically.
- *
- * Returns a connection object with sendAction(), on(), and close() methods.
- *
- * @param {string} url - SSE endpoint URL (e.g., '/__bw/events/client-1')
- * @param {Object} [opts] - Connection options
- * @param {string} [opts.transport='sse'] - Transport type: 'sse' (default) or 'poll'
- * @param {number} [opts.interval=2000] - Poll interval in ms (only for 'poll' transport)
- * @param {string} [opts.actionUrl] - POST endpoint for actions (default: derived from url)
- * @param {boolean} [opts.reconnect=true] - Auto-reconnect on disconnect
- * @param {boolean} [opts.allowExec=false] - Enable exec message type (arbitrary JS execution)
- * @param {Function} [opts.onStatus] - Status callback: 'connecting'|'connected'|'disconnected'
- * @param {Function} [opts.onMessage] - Raw message callback (before clientApply)
- * @returns {Object} Connection object { sendAction, on, close, status }
- * @category Server
- */
-bw.clientConnect = function(url, opts) {
-  opts = opts || {};
-  var transport = opts.transport || 'sse';
-  var actionUrl = opts.actionUrl || url.replace(/\/events\//, '/action/');
-  var reconnect = opts.reconnect !== false;
-  var onStatus = opts.onStatus || function() {};
-  var onMessage = opts.onMessage || null;
-  var handlers = {};
-  // Set the global allowExec flag from connection options
-  bw._allowExec = !!opts.allowExec;
-  var conn = {
-    status: 'connecting',
-    _es: null,
-    _pollTimer: null
-  };
-
-  function setStatus(s) {
-    conn.status = s;
-    onStatus(s);
-  }
-
-  function handleMessage(data) {
-    try {
-      var msg = _is(data, 'string') ? bw.clientParse(data) : data;
-      if (onMessage) onMessage(msg);
-      if (handlers.message) handlers.message(msg);
-      bw.clientApply(msg);
-    } catch (e) {
-      if (handlers.error) handlers.error(e);
-    }
-  }
-
-  if (transport === 'sse' && typeof EventSource !== 'undefined') {
-    setStatus('connecting');
-    var es = new EventSource(url);
-    conn._es = es;
-
-    es.onopen = function() {
-      setStatus('connected');
-      if (handlers.open) handlers.open();
-    };
-
-    es.onmessage = function(e) {
-      handleMessage(e.data);
-    };
-
-    es.onerror = function() {
-      if (conn.status === 'connected') {
-        setStatus('disconnected');
-      }
-      if (handlers.error) handlers.error(new Error('SSE connection error'));
-      if (!reconnect) {
-        es.close();
-      }
-      // EventSource auto-reconnects by default when reconnect=true
-    };
-  } else if (transport === 'poll') {
-    var interval = opts.interval || 2000;
-    setStatus('connected');
-    conn._pollTimer = setInterval(function() {
-      fetch(url).then(function(r) { return r.json(); }).then(function(msgs) {
-        if (_isA(msgs)) {
-          msgs.forEach(handleMessage);
-        } else if (msgs && msgs.type) {
-          handleMessage(msgs);
-        }
-      }).catch(function(e) {
-        if (handlers.error) handlers.error(e);
-      });
-    }, interval);
-  }
-
-  /**
-   * Send an action to the server via POST.
-   * @param {string} action - Action name
-   * @param {Object} [data] - Action payload
-   */
-  conn.sendAction = function(action, data) {
-    var body = JSON.stringify({ type: 'action', action: action, data: data || {} });
-    fetch(actionUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body
-    }).catch(function(e) {
-      if (handlers.error) handlers.error(e);
-    });
-  };
-
-  /**
-   * Register an event handler.
-   * @param {string} event - 'open'|'message'|'error'|'close'
-   * @param {Function} handler
-   */
-  conn.on = function(event, handler) {
-    handlers[event] = handler;
-    return conn;
-  };
-
-  /**
-   * Close the connection.
-   */
-  conn.close = function() {
-    if (conn._es) {
-      conn._es.close();
-      conn._es = null;
-    }
-    if (conn._pollTimer) {
-      clearInterval(conn._pollTimer);
-      conn._pollTimer = null;
-    }
-    setStatus('disconnected');
-    if (handlers.close) handlers.close();
-  };
-
-  return conn;
-};
 
 // ===================================================================================
 // bw.inspect() — Debug utility
@@ -10914,6 +10831,14 @@ bw.makeStyles = function(config) {
   // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
   // applyStyles() wraps them appropriately based on scope
   var altRawRules = generateThemedCSS('', altPalette, layout);
+
+  // Add body-level surface overrides for the alternate palette.
+  // When .bw_theme_alt is on <html>, ".bw_theme_alt body" correctly matches.
+  altRawRules['body'] = {
+    'color': altPalette.dark.base,
+    'background-color': altPalette.surface || altPalette.light.base
+  };
+
   var altCssStr = bw.css(altRawRules);
 
   // Determine if primary is light-flavored
@@ -11035,7 +10960,7 @@ bw.loadReset = function() {
  * Toggle between primary and alternate palettes.
  *
  * Adds/removes the `bw_theme_alt` class on the scoping element.
- * Without a scope, toggles on `<body>` (global).
+ * Without a scope, toggles on `<html>` (global).
  * With a scope, toggles on the first matching element.
  *
  * @param {string} [scope] - Scope selector (e.g. '#my-dashboard'). Omit for global.
@@ -11044,7 +10969,7 @@ bw.loadReset = function() {
  * @see bw.applyStyles
  * @see bw.clearStyles
  * @example
- * bw.toggleStyles();                   // global toggle on <body>
+ * bw.toggleStyles();                   // global toggle on <html>
  * bw.toggleStyles('#my-dashboard');    // scoped toggle
  */
 bw.toggleStyles = function(scope) {
@@ -11054,7 +10979,7 @@ bw.toggleStyles = function(scope) {
     var els = bw.$(scope);
     target = els[0];
   } else {
-    target = document.body;
+    target = document.documentElement;
   }
   if (!target) return 'primary';
 
@@ -11094,7 +11019,7 @@ bw.clearStyles = function(scope) {
     var targets = bw.$(scope);
     if (targets[0]) targets[0].classList.remove('bw_theme_alt');
   } else if (!scope || scope === 'global') {
-    document.body.classList.remove('bw_theme_alt');
+    document.documentElement.classList.remove('bw_theme_alt');
   }
 };
 

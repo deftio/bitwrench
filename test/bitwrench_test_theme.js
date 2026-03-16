@@ -281,7 +281,7 @@ describe('Palette Derivation', function() {
       const shadeKeys = ['base', 'hover', 'active', 'light', 'darkText', 'border', 'focus', 'textOn'];
       Object.entries(palette).forEach(function([name, shades]) {
         // background and surface are plain strings, not shade objects
-        if (name === 'background' || name === 'surface') {
+        if (name === 'background' || name === 'surface' || name === 'surfaceAlt') {
           assert.ok(typeof shades === 'string', name + ' should be a string');
           return;
         }
@@ -1322,14 +1322,14 @@ describe('bw.toggleStyles', function() {
     assert.strictEqual(typeof bw.toggleStyles, 'function');
   });
 
-  it('should toggle bw_theme_alt on <body> (global)', function() {
+  it('should toggle bw_theme_alt on <html> (global)', function() {
     var mode1 = bw.toggleStyles();
     assert.strictEqual(mode1, 'alternate');
-    assert.ok(document.body.classList.contains('bw_theme_alt'), 'body should have bw_theme_alt');
+    assert.ok(document.documentElement.classList.contains('bw_theme_alt'), 'html should have bw_theme_alt');
 
     var mode2 = bw.toggleStyles();
     assert.strictEqual(mode2, 'primary');
-    assert.ok(!document.body.classList.contains('bw_theme_alt'), 'body should not have bw_theme_alt');
+    assert.ok(!document.documentElement.classList.contains('bw_theme_alt'), 'html should not have bw_theme_alt');
   });
 
   it('should toggle bw_theme_alt on scoped element', function() {
@@ -1378,11 +1378,11 @@ describe('bw.clearStyles', function() {
     assert.strictEqual(document.getElementById('bw_style_reset'), null, 'reset style should be removed');
   });
 
-  it('should remove bw_theme_alt class from body on global clear', function() {
-    bw.toggleStyles(); // adds bw_theme_alt to body
-    assert.ok(document.body.classList.contains('bw_theme_alt'));
+  it('should remove bw_theme_alt class from html on global clear', function() {
+    bw.toggleStyles(); // adds bw_theme_alt to html
+    assert.ok(document.documentElement.classList.contains('bw_theme_alt'));
     bw.clearStyles();
-    assert.ok(!document.body.classList.contains('bw_theme_alt'), 'bw_theme_alt should be removed from body');
+    assert.ok(!document.documentElement.classList.contains('bw_theme_alt'), 'bw_theme_alt should be removed from html');
   });
 
   it('should be safe to call when no styles exist', function() {

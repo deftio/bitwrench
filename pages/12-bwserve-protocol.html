@@ -230,8 +230,8 @@
           svgArrowDefs('1'),
           svgBox(15, 32, 230, 228, 'Browser', [
             '*bitwrench.js', '',
-            'bw.clientConnect()', '(opens SSE)', '',
-            'bw.clientApply()', 'renders UI', '',
+            'bwclient.js', '(opens SSE)', '',
+            'bw.apply()', 'renders UI', '',
             'user clicks', 'data-bw-action', '',
             '', '{action, data}'
           ]),
@@ -291,7 +291,7 @@
           [badge('patch'), 'Update text content or attributes', code('bw.patch(target, content, attr)')],
           [badge('append'), 'Add a new child element', code('target.appendChild(bw.createDOM(node))')],
           [badge('remove'), 'Remove an element from the DOM', code('bw.cleanup(el); el.remove()')],
-          [badge('batch'), 'Execute multiple operations atomically', code('ops.forEach(bw.clientApply)')],
+          [badge('batch'), 'Execute multiple operations atomically', code('ops.forEach(bw.apply)')],
           [badge('message'), 'Send notification/dispatch to component', code('bw.pub() or component dispatch')],
           [badge('register'), 'Register a named function for later call', code('bw._clientFunctions[name] = fn')],
           [badge('call'), 'Invoke a registered or built-in function', code('fn.apply(null, args)')],
@@ -377,7 +377,7 @@
       { t: 'p', c: [
         'Executes arbitrary JavaScript on the client. ',
         { t: 'strong', c: 'Requires opt-in:' },
-        ' ', code('bw.clientConnect(url, { allowExec: true })'), '.'
+        ' ', code('allowExec: true'), ' in the connection options.'
       ]},
       codeBlock('{ type: "exec", code: "document.title = \'Updated\'" }'),
 
@@ -411,7 +411,7 @@
     var secActions = section('actions', 'Actions (Client to Server)', [
       { t: 'p', a: { class: 'demo-description' }, c: 'When a user clicks a button or submits a form, the client sends an action to the server via HTTP POST.' },
       codeBlock([
-        'POST /__bw/action/:clientId',
+        'POST /bw/return/action/:clientId',
         'Content-Type: application/json',
         '',
         '{ "action": "increment", "data": { "inputValue": "hello" } }'
@@ -467,10 +467,10 @@
         ['Endpoint', 'Method', 'Purpose'],
         [
           [code('GET /'), 'GET', 'Serve page shell HTML (auto-generated)'],
-          [code('GET /__bw/events/:clientId'), 'GET', 'SSE event stream'],
-          [code('POST /__bw/action/:clientId'), 'POST', 'User action dispatch'],
-          [code('GET /__bw/bitwrench.umd.js'), 'GET', 'Serve bitwrench library'],
-          [code('GET /__bw/bitwrench.css'), 'GET', 'Serve bitwrench stylesheet']
+          [code('GET /bw/events/:clientId'), 'GET', 'SSE event stream'],
+          [code('POST /bw/return/action/:clientId'), 'POST', 'User action dispatch'],
+          [code('GET /bw/lib/bitwrench.umd.js'), 'GET', 'Serve bitwrench library'],
+          [code('GET /bw/lib/bitwrench.css'), 'GET', 'Serve bitwrench stylesheet']
         ]
       ),
 
@@ -479,13 +479,13 @@
         'For embedded C/C++ systems, composing JSON with double-quoted strings is painful. bwserve supports ',
         { t: 'strong', c: 'r-prefix relaxed JSON' },
         ': single-quoted strings with an ', code('r'), ' prefix character. The browser\'s ',
-        code('bw.clientParse()'), ' normalizes this to strict JSON before processing.'
+        code('bw.parseJSONFlex()'), ' normalizes this to strict JSON before processing.'
       ]},
       codeBlock([
         '// r-prefix relaxed JSON (sent by ESP32):',
         "r{'type':'patch','target':'temp','content':'23.5 C'}",
         '',
-        '// Normalized to strict JSON by bw.clientParse():',
+        '// Normalized to strict JSON by bw.parseJSONFlex():',
         '{"type":"patch","target":"temp","content":"23.5 C"}'
       ]),
 
@@ -586,55 +586,39 @@
     var secClientApi = section('client-api', 'Client API (Browser)', [
       { t: 'p', a: { class: 'demo-description' }, c: 'The client-side API lives in bitwrench.js. The shell page calls these automatically, but they can be used standalone.' },
 
-      { t: 'h3', c: 'bw.clientConnect(url, opts)' },
-      { t: 'p', c: 'Opens an SSE connection and auto-applies incoming protocol messages.' },
-      codeBlock([
-        'var conn = bw.clientConnect("/__bw/events/c1", {',
-        '  transport: "sse",            // "sse" (default) or "poll"',
-        '  interval: 2000,              // poll interval (ms), ignored for SSE',
-        '  actionUrl: "/__bw/action/c1",// POST endpoint for actions',
-        '  reconnect: true,             // auto-reconnect (default)',
-        '  allowExec: false,            // enable exec messages (default: false)',
-        '  onStatus: function(s) {      // "connecting"|"connected"|"disconnected"',
-        '    console.log("Status:", s);',
-        '  }',
-        '});',
-        '',
-        'conn.sendAction("increment", { count: 1 });',
-        'conn.close();'
-      ]),
+      { t: 'h3', c: 'Connection (bwclient.js)' },
+      { t: 'p', c: 'SSE connection management has moved to bwclient.js (auto-generated by the shell). The shell handles opening the EventSource, reconnection, and action dispatch.' },
 
-      { t: 'h3', c: 'bw.clientApply(msg)' },
+      { t: 'h3', c: 'bw.apply(msg)' },
       { t: 'p', c: [
-        'Applies a single protocol message to the DOM. Called automatically by ',
-        code('clientConnect'), ', but usable standalone for testing or custom transports. Handles all 9 message types.'
+        'Applies a single protocol message to the DOM. Called automatically by the shell connection, but usable standalone for testing or custom transports. Handles all 9 message types.'
       ]},
       codeBlock([
-        'bw.clientApply({ type: "replace", target: "#app", node: { t: "div", c: "Hello" } });',
-        'bw.clientApply({ type: "patch", target: "counter", content: "42" });',
-        'bw.clientApply({ type: "batch", ops: [ msg1, msg2 ] });'
+        'bw.apply({ type: "replace", target: "#app", node: { t: "div", c: "Hello" } });',
+        'bw.apply({ type: "patch", target: "counter", content: "42" });',
+        'bw.apply({ type: "batch", ops: [ msg1, msg2 ] });'
       ]),
 
-      { t: 'h3', c: 'bw.clientParse(str)' },
+      { t: 'h3', c: 'bw.parseJSONFlex(str)' },
       { t: 'p', c: [
         'Parses both strict JSON and r-prefix relaxed JSON. A state-machine parser that converts single-quoted strings to double-quoted, strips trailing commas, and handles escape sequences (',
         code("\\'"), ', ', code('\\\\'), ', ', code('\\n'), ', ', code('\\t'), '). Falls back to ', code('JSON.parse()'), ' for strict JSON (no r-prefix).'
       ]},
       codeBlock([
         '// Strict JSON:',
-        'bw.clientParse(\'{"type":"patch","target":"t","content":"42"}\');',
+        'bw.parseJSONFlex(\'{"type":"patch","target":"t","content":"42"}\');',
         '',
         '// r-prefix relaxed JSON (from ESP32):',
-        "bw.clientParse(\"r{'type':'patch','target':'t','content':'42'}\");",
+        "bw.parseJSONFlex(\"r{'type':'patch','target':'t','content':'42'}\");",
         '',
         '// Handles apostrophes:',
-        "bw.clientParse(\"r{'content':'Barry\\\\'s Room'}\");",
+        "bw.parseJSONFlex(\"r{'content':'Barry\\\\'s Room'}\");",
         '// \u2192 { content: "Barry\'s Room" }'
       ]),
 
-      callout('concept', 'clientParse is automatic', {
+      callout('concept', 'parseJSONFlex is automatic', {
         t: 'p', c: [
-          code('bw.clientConnect()'), ' calls ', code('bw.clientParse()'),
+          'The shell connection calls ', code('bw.parseJSONFlex()'),
           ' on every incoming SSE message. You only need to call it directly if you\'re building a custom transport.'
         ]
       })
@@ -714,8 +698,8 @@
             '--stdin'
           ]),
           svgBox(480, 32, 205, 95, 'Browser(s)', [
-            'EventSource', 'bw.clientConnect()',
-            'bw.clientApply()'
+            'EventSource', 'bwclient.js',
+            'bw.apply()'
           ]),
           svgArrow(230, 72, 270, 72, 'POST / stdin', '2'),
           svgArrow(440, 72, 480, 72, 'SSE', '2', { dash: true })

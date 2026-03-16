@@ -17,7 +17,8 @@
  */
 
 import { BwServeClient } from './client.js';
-import { generateShell } from './shell.js';
+import { generateShell } from './bwshell.js';
+import { VERSION } from '../version.js';
 
 // Resolve dist/ paths relative to the package root
 import { fileURLToPath } from 'url';
@@ -197,42 +198,44 @@ class BwServeApp {
     // Parse URL path (strip query string)
     var path = url.split('?')[0];
 
-    // /__bw/bitwrench.umd.js — serve bitwrench client library
-    if (path === '/__bw/bitwrench.umd.js' && method === 'GET') {
+    // /bw/lib/bitwrench.umd.js — serve bitwrench client library
+    if (path === '/bw/lib/bitwrench.umd.js' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.umd.js');
     }
 
-    // /__bw/bitwrench.umd.min.js — serve minified
-    if (path === '/__bw/bitwrench.umd.min.js' && method === 'GET') {
+    // /bw/lib/bitwrench.umd.min.js — serve minified
+    if (path === '/bw/lib/bitwrench.umd.min.js' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.umd.min.js');
     }
 
-    // /__bw/bitwrench.css — serve bitwrench CSS
-    if (path === '/__bw/bitwrench.css' && method === 'GET') {
+    // /bw/lib/bitwrench.css — serve bitwrench CSS
+    if (path === '/bw/lib/bitwrench.css' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.css');
     }
 
-    // /__bw/events/:clientId — SSE stream
-    if (path.startsWith('/__bw/events/') && method === 'GET') {
-      var clientId = path.slice('/__bw/events/'.length);
+    // /bw/events/:clientId — SSE stream
+    if (path.startsWith('/bw/events/') && method === 'GET') {
+      var clientId = path.slice('/bw/events/'.length);
       return this._handleSSE(req, res, clientId);
     }
 
-    // /__bw/action/:clientId — action POST
-    if (path.startsWith('/__bw/action/') && method === 'POST') {
-      var actionClientId = path.slice('/__bw/action/'.length);
-      return this._handleAction(req, res, actionClientId);
+    // /bw/return/<route>/<clientId> — unified return channel
+    if (method === 'POST' && path.startsWith('/bw/return/')) {
+      var rest = path.slice('/bw/return/'.length);
+      var slash = rest.indexOf('/');
+      if (slash === -1) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid return path' }));
+        return;
+      }
+      var route = rest.slice(0, slash);
+      var returnClientId = rest.slice(slash + 1);
+      return this._handleReturn(req, res, route, returnClientId);
     }
 
-    // /__bw/screenshot/:clientId — screenshot POST-back
-    if (path.startsWith('/__bw/screenshot/') && method === 'POST') {
-      var ssClientId = path.slice('/__bw/screenshot/'.length);
-      return this._handleScreenshot(req, res, ssClientId);
-    }
-
-    // /__bw/vendor/:filename — serve vendored libraries (allowlisted)
-    if (path.startsWith('/__bw/vendor/') && method === 'GET') {
-      var vendorFile = path.slice('/__bw/vendor/'.length);
+    // /bw/lib/vendor/:filename — serve vendored libraries (allowlisted)
+    if (path.startsWith('/bw/lib/vendor/') && method === 'GET') {
+      var vendorFile = path.slice('/bw/lib/vendor/'.length);
       return this._serveVendorFile(res, vendorFile);
     }
 
@@ -342,41 +345,18 @@ class BwServeApp {
   }
 
   /**
-   * Handle an action POST from a client.
+   * Unified return channel handler.
+   * Handles all client-to-server POST-backs via /bw/return/<route>/<clientId>.
+   *
+   * Routes:
+   *   action     — fire-and-forget action dispatch (no requestId)
+   *   query      — resolve pending query promise
+   *   mount      — resolve pending mount promise
+   *   screenshot — resolve pending screenshot promise
+   *
    * @private
    */
-  _handleAction(req, res, clientId) {
-    var record = this._clients.get(clientId);
-    if (!record || !record.client) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unknown client' }));
-      return;
-    }
-
-    var body = '';
-    req.on('data', function(chunk) {
-      body += chunk;
-    });
-    req.on('end', function() {
-      try {
-        var data = JSON.parse(body);
-        var action = data.action;
-        var payload = data.data || data;
-        record.client._dispatch(action, payload);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true }));
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-  }
-
-  /**
-   * Handle a screenshot POST-back from a client.
-   * @private
-   */
-  _handleScreenshot(req, res, clientId) {
+  _handleReturn(req, res, route, clientId) {
     var record = this._clients.get(clientId);
     if (!record || !record.client) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -389,7 +369,15 @@ class BwServeApp {
     req.on('end', function() {
       try {
         var data = JSON.parse(body);
-        record.client._resolveScreenshot(data.requestId, data);
+        if (route === 'action') {
+          // Action dispatch (no requestId/pending pattern)
+          var action = data.result ? data.result.action : data.action;
+          var payload = data.result ? data.result.data : data.data || data;
+          record.client._dispatch(action, payload);
+        } else {
+          // All other routes: resolve pending promise
+          record.client._resolvePending(data.requestId, data);
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
@@ -426,6 +414,8 @@ class BwServeApp {
   }
 }
 
-export { BwServeApp, BwServeClient };
+export var version = VERSION;
 
-export default { create, BwServeApp, BwServeClient };
+export { BwServeApp, BwServeClient, generateShell };
+
+export default { create, version: VERSION, BwServeApp, BwServeClient, generateShell };

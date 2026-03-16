@@ -8,7 +8,7 @@
 //! r{'type':'patch','target':'temp','content':'23.5'}
 //! ```
 //!
-//! The browser's `bw.clientParse()` normalizes this to strict JSON.
+//! The browser's `bw.parseJSONFlex()` normalizes this to strict JSON.
 //!
 //! ## Features
 //!

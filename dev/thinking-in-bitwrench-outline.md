@@ -782,7 +782,7 @@ them. No client-side application logic required.
 ```
 Server (any language)          Browser
   │                              │
-  ├─ SSE: {replace, #app, taco} ──→ bw.clientApply() → DOM update
+  ├─ SSE: {replace, #app, taco} ──→ bw.apply() → DOM update
   ├─ SSE: {patch, #counter, "42"} ─→ targeted text update
   ├─ SSE: {append, #log, taco} ───→ new child added
   │                              │

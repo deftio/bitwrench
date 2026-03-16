@@ -17,15 +17,20 @@
  * @module bwserve/client
  */
 
+import { VERSION } from '../version.js';
+
 /**
  * BwServeClient — one connected browser tab.
  */
 export class BwServeClient {
+    /** bwserve version (from package.json) */
+    static version = VERSION;
     constructor(id, res) {
         this.id = id;
         this._res = res;       // SSE response stream (null in stub)
         this._handlers = {};   // action name → handler
         this._closed = false;
+        this._pending = {};    // requestId → { resolve, reject, timer }
     }
 
     /**
@@ -104,7 +109,7 @@ export class BwServeClient {
     /**
      * Call a previously registered or built-in function on the client.
      *
-     * Built-in functions (always available, no registration needed):
+     * Built-in functions (registered by bwclient on connection):
      *   scrollTo, focus, download, clipboard, redirect, log
      *
      * @param {string} name - Function name (registered or built-in)
@@ -167,6 +172,99 @@ export class BwServeClient {
         }
     }
 
+    // ── Pending promise mechanism ──
+
+    /**
+     * Create a pending promise with a unique requestId and timeout.
+     *
+     * @param {number} [timeout=10000] - Timeout in ms
+     * @returns {{ requestId: string, promise: Promise }}
+     * @private
+     */
+    _pend(timeout) {
+        var self = this;
+        timeout = timeout || 10000;
+        var requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+        var promise = new Promise(function(resolve, reject) {
+            var timer = setTimeout(function() {
+                delete self._pending[requestId];
+                reject(new Error('Request timeout after ' + timeout + 'ms'));
+            }, timeout);
+
+            self._pending[requestId] = { resolve: resolve, reject: reject, timer: timer };
+        });
+
+        return { requestId: requestId, promise: promise };
+    }
+
+    /**
+     * Resolve a pending promise by requestId.
+     * Called by the server route handler when a POST-back arrives.
+     *
+     * @param {string} requestId
+     * @param {Object} data - Response data (may contain .error)
+     * @returns {boolean} true if a pending request was found and resolved
+     * @private
+     */
+    _resolvePending(requestId, data) {
+        var pending = this._pending[requestId];
+        if (!pending) return false;
+
+        clearTimeout(pending.timer);
+        delete this._pending[requestId];
+
+        if (data.error) {
+            pending.reject(new Error(data.error));
+        } else {
+            pending.resolve(data.result !== undefined ? data.result : data);
+        }
+        return true;
+    }
+
+    // ── Query ──
+
+    /**
+     * Execute code on the client and get the result back.
+     *
+     * @param {string} code - JavaScript code to evaluate (return value is sent back)
+     * @param {Object} [options]
+     * @param {number} [options.timeout=5000] - Timeout in ms
+     * @returns {Promise<*>} The result of evaluating the code
+     */
+    query(code, options) {
+        var opts = options || {};
+        var pend = this._pend(opts.timeout || 5000);
+        this.call('_bw_query', { code: code, requestId: pend.requestId });
+        return pend.promise;
+    }
+
+    // ── Mount ──
+
+    /**
+     * Mount a BCCL component or factory function on the client.
+     *
+     * @param {string} selector - CSS selector of target element
+     * @param {string} factory - BCCL component name (e.g. 'accordion') or JS factory code
+     * @param {Object} [props] - Props to pass to the component/factory
+     * @param {Object} [options]
+     * @param {number} [options.timeout=10000] - Timeout in ms
+     * @returns {Promise<Object>} Resolves with { mounted: true } on success
+     */
+    mount(selector, factory, props, options) {
+        var opts = options || {};
+        var pend = this._pend(opts.timeout || 10000);
+        this.call('_bw_mount', {
+            target: selector,
+            factory: factory,
+            props: props || {},
+            requestId: pend.requestId
+        });
+        return pend.promise;
+    }
+
+    // ── Screenshot ──
+
     /**
      * Capture a screenshot of the client's page or a specific element.
      *
@@ -186,68 +284,37 @@ export class BwServeClient {
     screenshot(selector, options) {
         var self = this;
         var opts = options || {};
-        var requestId = 'ss_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
         var timeout = opts.timeout || 10000;
 
         if (!self._allowScreenshot) {
             return Promise.reject(new Error('Screenshot not enabled. Set allowScreenshot: true in server options.'));
         }
 
-        return new Promise(function(resolve, reject) {
-            var timer = setTimeout(function() {
-                delete self._pendingScreenshots[requestId];
-                reject(new Error('Screenshot timeout after ' + timeout + 'ms'));
-            }, timeout);
+        var pend = self._pend(timeout);
 
-            if (!self._pendingScreenshots) self._pendingScreenshots = {};
-            self._pendingScreenshots[requestId] = { resolve: resolve, reject: reject, timer: timer };
-
-            // Register capture function on first call
-            if (!self._screenshotRegistered) {
-                self.register('_bw_screenshot', CAPTURE_FN_SOURCE);
-                self._screenshotRegistered = true;
-            }
-
-            // Call the capture function
-            self.call('_bw_screenshot', {
-                clientId: self.id,
-                requestId: requestId,
-                selector: selector || 'body',
-                format: opts.format || 'png',
-                quality: opts.quality || 0.85,
-                maxWidth: opts.maxWidth || null,
-                maxHeight: opts.maxHeight || null,
-                scale: opts.scale || 1,
-                captureUrl: '/__bw/vendor/html2canvas.min.js'
-            });
+        // Call the bwclient-registered capture function
+        self.call('_bw_screenshot', {
+            requestId: pend.requestId,
+            selector: selector || 'body',
+            format: opts.format || 'png',
+            quality: opts.quality || 0.85,
+            maxWidth: opts.maxWidth || null,
+            maxHeight: opts.maxHeight || null,
+            scale: opts.scale || 1,
+            captureUrl: '/bw/lib/vendor/html2canvas.min.js'
         });
-    }
 
-    /**
-     * Resolve a pending screenshot request (called by server route handler).
-     * @private
-     */
-    _resolveScreenshot(requestId, result) {
-        if (!this._pendingScreenshots) return false;
-        var pending = this._pendingScreenshots[requestId];
-        if (!pending) return false;
-
-        clearTimeout(pending.timer);
-        delete this._pendingScreenshots[requestId];
-
-        if (result.error) {
-            pending.reject(new Error(result.error));
-        } else {
-            // Convert data URL to Buffer
+        // Transform the raw response into { data: Buffer, width, height, format }
+        return pend.promise.then(function(result) {
+            if (!result || !result.data) return result;
             var base64 = result.data.split(',')[1];
-            pending.resolve({
+            return {
                 data: Buffer.from(base64, 'base64'),
                 width: result.width,
                 height: result.height,
                 format: result.format
-            });
-        }
-        return true;
+            };
+        });
     }
 
     /**
@@ -263,68 +330,3 @@ export class BwServeClient {
         return false;
     }
 }
-
-/**
- * Client-side capture function source.
- * Registered via client.register('_bw_screenshot', ...) on first screenshot call.
- * @private
- */
-var CAPTURE_FN_SOURCE = 'function(opts) {'
-    + 'var sel = opts.selector || "body";'
-    + 'var el = document.querySelector(sel);'
-    + 'if (!el) {'
-    + '  return fetch("/__bw/screenshot/" + opts.clientId, {'
-    + '    method: "POST",'
-    + '    headers: { "Content-Type": "application/json" },'
-    + '    body: JSON.stringify({ requestId: opts.requestId, error: "Element not found: " + sel })'
-    + '  });'
-    + '}'
-    + 'function _loadScript(url) {'
-    + '  return new Promise(function(resolve, reject) {'
-    + '    var s = document.createElement("script");'
-    + '    s.src = url;'
-    + '    s.onload = function() { resolve(window.html2canvas); };'
-    + '    s.onerror = function() { reject(new Error("Failed to load html2canvas")); };'
-    + '    document.head.appendChild(s);'
-    + '  });'
-    + '}'
-    + 'var p = window.html2canvas'
-    + '  ? Promise.resolve(window.html2canvas)'
-    + '  : _loadScript(opts.captureUrl);'
-    + 'p.then(function(html2canvas) {'
-    + '  return html2canvas(el, { scale: opts.scale || 1, useCORS: true });'
-    + '}).then(function(canvas) {'
-    + '  var out = canvas;'
-    + '  var mw = opts.maxWidth;'
-    + '  var mh = opts.maxHeight;'
-    + '  if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {'
-    + '    var sw = mw ? mw / canvas.width : 1;'
-    + '    var sh = mh ? mh / canvas.height : 1;'
-    + '    var scale = Math.min(sw, sh);'
-    + '    out = document.createElement("canvas");'
-    + '    out.width = Math.round(canvas.width * scale);'
-    + '    out.height = Math.round(canvas.height * scale);'
-    + '    out.getContext("2d").drawImage(canvas, 0, 0, out.width, out.height);'
-    + '  }'
-    + '  var fmt = opts.format === "jpeg" ? "image/jpeg" : "image/png";'
-    + '  var quality = opts.format === "jpeg" ? (opts.quality || 0.85) : undefined;'
-    + '  var dataUrl = out.toDataURL(fmt, quality);'
-    + '  return fetch("/__bw/screenshot/" + opts.clientId, {'
-    + '    method: "POST",'
-    + '    headers: { "Content-Type": "application/json" },'
-    + '    body: JSON.stringify({'
-    + '      requestId: opts.requestId,'
-    + '      data: dataUrl,'
-    + '      width: out.width,'
-    + '      height: out.height,'
-    + '      format: opts.format || "png"'
-    + '    })'
-    + '  });'
-    + '}).catch(function(err) {'
-    + '  fetch("/__bw/screenshot/" + opts.clientId, {'
-    + '    method: "POST",'
-    + '    headers: { "Content-Type": "application/json" },'
-    + '    body: JSON.stringify({ requestId: opts.requestId, error: err.message || String(err) })'
-    + '  });'
-    + '});'
-    + '}';

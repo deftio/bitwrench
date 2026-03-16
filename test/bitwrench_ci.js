@@ -248,7 +248,7 @@ describe("Styles API", function() {
 
     it("toggleStyles should flip between primary and alternate", function() {
       // Ensure clean state
-      document.body.classList.remove('bw_theme_alt');
+      document.documentElement.classList.remove('bw_theme_alt');
       var result = bw.toggleStyles();
       assert.equal(result, 'alternate');
       result = bw.toggleStyles();

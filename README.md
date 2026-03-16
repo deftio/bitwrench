@@ -208,8 +208,7 @@ bw.toggleStyles();  // switch between primary and alternate palettes
 | `bw.pub(topic, detail)` | Publish a message to subscribers |
 | `bw.sub(topic, handler)` | Subscribe to a topic; returns an unsub function |
 | `bw.inspect(target)` | Debug a component in the browser console |
-| `bw.clientConnect(url, opts)` | Connect to a bwserve SSE endpoint |
-| `bw.clientApply(msg)` | Apply a bwserve protocol message to the DOM |
+| `bw.apply(msg)` | Apply a bwserve protocol message to the DOM |
 
 See the full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html) for all functions.
 

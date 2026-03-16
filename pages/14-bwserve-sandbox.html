@@ -502,9 +502,9 @@
       function send(msg) {
         logMessage(msg, 'server');
         try {
-          iframeWindow.bw.clientApply(msg);
+          iframeWindow.bw.apply(msg);
         } catch (e) {
-          // clientApply may not exist yet — fall back to manual DOM ops
+          // bw.apply may not exist yet — fall back to manual DOM ops
           applyFallback(iframeWindow, msg);
         }
       }
@@ -541,8 +541,8 @@
       return client;
     }
 
-    // Fallback: apply protocol messages without bw.clientApply
-    // (handles the case before clientApply is implemented)
+    // Fallback: apply protocol messages without bw.apply
+    // (handles the case before bw.apply is available)
     function applyFallback(win, msg) {
       var doc = win.document;
       if (!doc) return;

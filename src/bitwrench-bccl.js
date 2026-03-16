@@ -1710,8 +1710,8 @@ export function makePagination(props = {}) {
     t: 'li',
     a: { class: `bw_page_item ${currentPage <= 1 ? 'bw_disabled' : ''}`.trim() },
     c: {
-      t: 'a',
-      a: { class: 'bw_page_link', href: '#', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous' },
+      t: 'button',
+      a: { class: 'bw_page_link', type: 'button', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous', disabled: currentPage <= 1 ? true : undefined },
       c: '\u2039'
     }
   });
@@ -1723,8 +1723,8 @@ export function makePagination(props = {}) {
         t: 'li',
         a: { class: `bw_page_item ${pageNum === currentPage ? 'bw_active' : ''}`.trim() },
         c: {
-          t: 'a',
-          a: { class: 'bw_page_link', href: '#', onclick: handleClick(pageNum) },
+          t: 'button',
+          a: { class: 'bw_page_link', type: 'button', onclick: handleClick(pageNum), 'aria-current': pageNum === currentPage ? 'page' : undefined },
           c: '' + pageNum
         }
       });
@@ -1736,8 +1736,8 @@ export function makePagination(props = {}) {
     t: 'li',
     a: { class: `bw_page_item ${currentPage >= pages ? 'bw_disabled' : ''}`.trim() },
     c: {
-      t: 'a',
-      a: { class: 'bw_page_link', href: '#', onclick: handleClick(currentPage + 1), 'aria-label': 'Next' },
+      t: 'button',
+      a: { class: 'bw_page_link', type: 'button', onclick: handleClick(currentPage + 1), 'aria-label': 'Next', disabled: currentPage >= pages ? true : undefined },
       c: '\u203A'
     }
   });

@@ -17,7 +17,7 @@ This was identified independently by two external developers building real appli
 - An NFC tag scanner on an ESP32-S3 microcontroller (CircuitPython + bitwrench)
 - A Streamlit-like LLM chat app (Node.js + bwserve)
 
-Both developers wrote the same workaround: abandon `make*()`, hand-build TACO with explicit IDs, use `bw.patch()` or `bw.clientApply()` for surgical updates. Both noted this undermines the component library for its most natural audience.
+Both developers wrote the same workaround: abandon `make*()`, hand-build TACO with explicit IDs, use `bw.patch()` or `bw.apply()` for surgical updates. Both noted this undermines the component library for its most natural audience.
 
 ## Design Principles
 
@@ -92,9 +92,9 @@ This is a safety net for elements created outside bitwrench APIs or after cache 
 |--------|---------------|-------|
 | `bw.patch(id, content, attr)` | None | Uses `bw._el()`, which will find UUID-addressed elements |
 | `bw.patchAll(patches)` | None | Same |
-| `bw.clientApply(msg)` | None | Uses `bw._el()` for target resolution |
+| `bw.apply(msg)` | None | Uses `bw._el()` for target resolution |
 | `bw.update(el)` | None | Uses `bw._el()` |
-| `bw.message(target, action, data)` | Minor | Use `bw._el()` first for UUID lookup, fall back to current `bw.$()` path. Enables `clientApply({ type:'message' })` with UUID targets. |
+| `bw.message(target, action, data)` | Minor | Use `bw._el()` first for UUID lookup, fall back to current `bw.$()` path. Enables `bw.apply({ type:'message' })` with UUID targets. |
 | `bw.cleanup(el)` | Minor | Should remove `bw_uuid_*` entries from `_nodeMap` |
 | `data-bw_id` | None | Separate concern (lifecycle hooks). Coexists without conflict. |
 
@@ -159,7 +159,7 @@ response = json.dumps({"type": "batch", "ops": ops})
 setInterval(function() {
     fetch('/api/patches')
         .then(function(r) { return r.json(); })
-        .then(bw.clientApply);  // applies batch directly
+        .then(bw.apply);  // applies batch directly
 }, 3000);
 ```
 
@@ -178,7 +178,7 @@ function poll() {
             fetchFullState();
         } else {
             // Values only — surgical patch
-            bw.clientApply(data);
+            bw.apply(data);
         }
     });
 }
@@ -238,10 +238,10 @@ bwserve already supports the companion library pattern:
 3. **`client.call()`**: Once a function exists on the client (via `<script>` tag or `register()`), the server invokes it by name:
    ```js
    client.call('handleClick', [{ id: 42 }]);
-   // → bw.clientApply({ type: 'call', name: 'handleClick', args: [{ id: 42 }] })
+   // → bw.apply({ type: 'call', name: 'handleClick', args: [{ id: 42 }] })
    ```
 
-4. **`bw.message()`**: Dispatches method calls to components by UUID or user tag. Already available as a `clientApply` message type:
+4. **`bw.message()`**: Dispatches method calls to components by UUID or user tag. Already available as a `bw.apply` message type:
    ```js
    client.send({ type: 'message', target: 'dashboard_prod', action: 'addAlert', data: { text: 'CPU spike' } });
    ```
@@ -266,13 +266,13 @@ client.invoke('bw_uuid_def456', 'sort', { column: 'name', dir: 'asc' });
 ```
 
 ```js
-// Client side handler (in bw.clientApply)
+// Client side handler (in bw.apply)
 // 1. Find element by UUID → bw._el('bw_uuid_abc123')
 // 2. Find ComponentHandle → el._bwComponentHandle
 // 3. Call method → comp.set({ value: '42' })
 ```
 
-**Why this might not be needed**: `bw.message()` already does exactly this — it finds a component by UUID/tag and dispatches a method call. The `clientApply` `message` type already bridges this to the server. The only missing piece is that `bw.message()` currently looks up by `data-bw_comp_id` or CSS class, not by `bw_uuid_*` class. Once UUID addressing lands, `bw.message()` can use `bw._el()` which will find UUID-addressed elements.
+**Why this might not be needed**: `bw.message()` already does exactly this — it finds a component by UUID/tag and dispatches a method call. The `bw.apply` `message` type already bridges this to the server. The only missing piece is that `bw.message()` currently looks up by `data-bw_comp_id` or CSS class, not by `bw_uuid_*` class. Once UUID addressing lands, `bw.message()` can use `bw._el()` which will find UUID-addressed elements.
 
 **Decision**: Do not implement `clientInvoke` as a separate mechanism. Instead, ensure `bw.message()` works with UUID-addressed components (minor change to use `bw._el()` for lookup). The existing `message` protocol type then covers this use case completely.
 
@@ -296,7 +296,7 @@ This mirrors LLM tool schemas. It would only matter for fully dynamic UIs where 
 - `_el()` fallback: ~3 lines
 - `cleanup()` deregistration: ~3 lines
 - `message()` UUID lookup: ~3 lines (try `bw._el()` before `bw.$()`)
-- Tests: ~20 tests (assign, idempotent, forceNew, getUUID on TACO, getUUID on element, patch via UUID, clientApply via UUID, loop pattern, cleanup, message via UUID)
+- Tests: ~20 tests (assign, idempotent, forceNew, getUUID on TACO, getUUID on element, patch via UUID, bw.apply via UUID, loop pattern, cleanup, message via UUID)
 - Docs: update State Management, LLM guide, add "Embedded Dashboard Golden Path" recipe
 
 Total: ~55 lines of implementation + ~100 lines of tests

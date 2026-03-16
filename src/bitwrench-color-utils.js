@@ -289,13 +289,18 @@ export function harmonize(sourceHex, targetHex, amount) {
  */
 export function deriveShades(hex) {
   var rgb = colorParse(hex);
+  // For light input colors (L > 75), mixing toward white produces invisible borders.
+  // Darken instead so borders remain visible against light backgrounds.
+  var borderColor = hexToHsl(hex)[2] > 75
+    ? adjustLightness(hex, -18)
+    : mixColor(hex, '#ffffff', 0.60);
   return {
     base: hex,
     hover: adjustLightness(hex, -10),
     active: adjustLightness(hex, -15),
     light: mixColor(hex, '#ffffff', 0.85),
     darkText: adjustLightness(hex, -40),
-    border: mixColor(hex, '#ffffff', 0.60),
+    border: borderColor,
     focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
     textOn: textOnColor(hex)
   };
@@ -354,19 +359,27 @@ export function deriveAlternateConfig(config) {
   alt.secondary = deriveAlternateSeed(config.secondary);
   alt.tertiary = config.tertiary ? deriveAlternateSeed(config.tertiary) : alt.primary;
 
-  // Derive alternate surface colors from primary hue
+  // Derive alternate surface colors from primary hue.
+  // Check actual page surface brightness (not seed color brightness) to decide
+  // whether alternate should be dark or light.  The page surface is what the
+  // user sees; seeds can be dark while the page is still light (default L=96).
   var priHsl = hexToHsl(config.primary);
   var h = priHsl[0];
-  var isLight = isLightPalette(config);
+  var primarySurface = config.surface || hslToHex([h, 8, 96]);
+  var isLight = relativeLuminance(primarySurface) > 0.179;
 
   if (isLight) {
-    // Primary is light → alternate needs dark surfaces
+    // Page surface is light → alternate needs dark surfaces
     alt.light = hslToHex([h, Math.min(priHsl[1], 15), 15]);
     alt.dark = hslToHex([h, 5, 88]);
+    alt.surface = hslToHex([h, 12, 18]);
+    alt.background = hslToHex([h, 10, 14]);
   } else {
-    // Primary is dark → alternate needs light surfaces
+    // Page surface is dark → alternate needs light surfaces
     alt.light = hslToHex([h, Math.min(priHsl[1], 10), 96]);
     alt.dark = hslToHex([h, 10, 18]);
+    alt.surface = hslToHex([h, 8, 96]);
+    alt.background = hslToHex([h, 6, 98]);
   }
 
   // Semantic colors: harmonize toward primary, then invert for alternate
@@ -414,10 +427,18 @@ export function derivePalette(config) {
   var darkBase  = config.dark  || hslToHex([h, 10, 13]);
 
   // Background & surface tokens — tinted with primary hue for theme personality.
-  // Very subtle: bg at L=98/S=6, surface at L=96/S=8.
+  // Saturation high enough that the hue is visible (each theme feels distinct)
+  // but low enough to stay neutral and readable.
   // User can override with config.background / config.surface.
-  var bgBase = config.background || hslToHex([h, 6, 98]);
-  var surfBase = config.surface || hslToHex([h, 8, 96]);
+  var bgBase = config.background || hslToHex([h, 22, 96]);
+  var surfBase = config.surface || hslToHex([h, 25, 94]);
+
+  // surfaceAlt: subtle background variant for striped rows, hover states, headers.
+  // Slightly lighter than surface in dark mode, slightly darker in light mode.
+  var surfHsl = hexToHsl(surfBase);
+  var surfAlt = surfHsl[2] <= 50
+    ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)])
+    : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]);
 
   var palette = {
     primary:    deriveShades(config.primary),
@@ -430,7 +451,8 @@ export function derivePalette(config) {
     light:      deriveShades(lightBase),
     dark:       deriveShades(darkBase),
     background: bgBase,
-    surface:    surfBase
+    surface:    surfBase,
+    surfaceAlt: surfAlt
   };
 
   return palette;

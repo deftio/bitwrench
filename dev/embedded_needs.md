@@ -162,7 +162,7 @@ navigation.
 
 1. **Hero**: "bitwrench for Embedded Devices" — one-sentence pitch
 2. **Size comparison**: Visual bar chart showing bitwrench vs ESPUI vs ESP-DASH vs React, relative to ESP32 flash
-3. **Architecture diagram**: ASCII/SVG showing ESP32 → SSE → browser → bw.clientApply() → DOM
+3. **Architecture diagram**: ASCII/SVG showing ESP32 → SSE → browser → bw.apply() → DOM
 4. **Quick start code**: Minimal Arduino sketch + HTML (copy-pasteable)
 5. **Supported platforms**: Table of C/Python/Rust/Node.js with links to respective embedded_* dirs
 6. **Example gallery**: Cards linking to sensor-dashboard, control-panel, system-info examples

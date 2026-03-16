@@ -313,11 +313,11 @@ function generateCards(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_card_header')] = {
     'padding': sp.card.split(' ').map(function(v) { return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem'; }).join(' '),
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-bottom': '1px solid ' + palette.light.border
   };
   rules[_sx(scope, '.bw_card_footer')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-top': '1px solid ' + palette.light.border,
     'color': palette.secondary.base
   };
@@ -394,24 +394,27 @@ function generateForms(scope, palette, layout) {
   return rules;
 }
 
-function generateNavigation(scope, palette) {
+function generateNavigation(scope, palette, layout) {
   var rules = {};
   rules[_sx(scope, '.bw_navbar')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-bottom-color': palette.light.border
   };
   rules[_sx(scope, '.bw_navbar_brand')] = {
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
-    'color': palette.secondary.base
+    'color': palette.secondary.base,
+    'border-radius': layout.radius.btn
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
-    'color': palette.dark.base
+    'color': palette.dark.base,
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
     'color': palette.primary.base,
-    'background-color': palette.primary.focus
+    'background-color': palette.primary.focus,
+    'font-weight': '600'
   };
   rules[_sx(scope, '.bw_navbar_dark')] = {
     'background-color': palette.dark.base,
@@ -452,10 +455,10 @@ function generateTables(scope, palette, layout) {
   rules[_sx(scope, '.bw_table > thead > tr > *')] = {
     'color': palette.secondary.base,
     'border-bottom-color': palette.light.border,
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
     'background-color': palette.primary.focus
@@ -487,10 +490,12 @@ function generateTabs(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
     'color': palette.dark.base,
+    'background-color': palette.surfaceAlt,
     'border-bottom-color': palette.light.border
   };
   rules[_sx(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
     'color': palette.primary.base,
+    'background-color': palette.primary.focus,
     'border-bottom': '2px solid ' + palette.primary.base
   };
   return rules;
@@ -509,7 +514,7 @@ function generateListGroups(scope, palette, layout) {
     'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'color': palette.dark.hover
   };
   rules[_sx(scope, '.bw_list_group_item.active')] = {
@@ -526,7 +531,15 @@ function generateListGroups(scope, palette, layout) {
 }
 
 function generatePagination(scope, palette, layout) {
-  var rules = {}, mo = layout.motion;
+  var rules = {}, mo = layout.motion, rd = layout.radius;
+  rules[_sx(scope, '.bw_page_item:first-child .bw_page_link')] = {
+    'border-top-left-radius': rd.btn,
+    'border-bottom-left-radius': rd.btn
+  };
+  rules[_sx(scope, '.bw_page_item:last-child .bw_page_link')] = {
+    'border-top-right-radius': rd.btn,
+    'border-bottom-right-radius': rd.btn
+  };
   rules[_sx(scope, '.bw_page_link')] = {
     'color': palette.primary.base,
     'background-color': palette.surface || '#fff',
@@ -535,7 +548,7 @@ function generatePagination(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_page_link:hover')] = {
     'color': palette.primary.hover,
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border-color': palette.light.border
   };
   rules[_sx(scope, '.bw_page_link:focus')] = {
@@ -558,7 +571,7 @@ function generatePagination(scope, palette, layout) {
 function generateProgress(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_progress')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
   };
   rules[_sx(scope, '.bw_progress_bar')] = {
@@ -591,18 +604,24 @@ function generateResetThemed(scope, palette) {
 
 function generateBreadcrumbThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
+  rules[_sx(scope, '.bw_breadcrumb')] = {
+    'background-color': palette.surfaceAlt,
+    'padding': '0.625rem 1rem',
+    'border-radius': layout.radius.btn
+  };
   rules[_sx(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
     'color': palette.secondary.base
   };
-  rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
-    'color': palette.secondary.base
-  };
   rules[_sx(scope, '.bw_breadcrumb_item a')] = {
+    'color': palette.primary.base,
     'transition': 'color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
     'color': palette.primary.hover,
     'text-decoration': 'underline'
+  };
+  rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
+    'color': palette.dark.base
   };
   return rules;
 }
@@ -635,30 +654,42 @@ function generateSectionsThemed(scope, palette) {
   return rules;
 }
 
-function generateAccordionThemed(scope, palette) {
+function generateAccordionThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '8px' };
   rules[_sx(scope, '.bw_accordion_item')] = {
     'background-color': palette.surface || '#fff',
     'border-color': palette.light.border
+  };
+  rules[_sx(scope, '.bw_accordion_item:first-child')] = {
+    'border-top-left-radius': rd.card,
+    'border-top-right-radius': rd.card
+  };
+  rules[_sx(scope, '.bw_accordion_item:last-child')] = {
+    'border-bottom-left-radius': rd.card,
+    'border-bottom-right-radius': rd.card
   };
   rules[_sx(scope, '.bw_accordion_button')] = {
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
     'color': palette.primary.darkText,
-    'background-color': palette.primary.light
+    'background-color': palette.primary.light,
+    'border-left': '3px solid ' + palette.primary.base
   };
   rules[_sx(scope, '.bw_accordion_button:hover')] = {
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
-    'background-color': palette.primary.hover
+    'background-color': palette.primary.base,
+    'color': palette.primary.textOn
   };
   rules[_sx(scope, '.bw_accordion_button:focus-visible')] = {
     'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
   };
   rules[_sx(scope, '.bw_accordion_body')] = {
-    'border-top': '1px solid ' + palette.light.border
+    'border-top': '1px solid ' + palette.light.border,
+    'background-color': palette.surfaceAlt
   };
   return rules;
 }
@@ -666,7 +697,7 @@ function generateAccordionThemed(scope, palette) {
 function generateCarouselThemed(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_carousel')] = {
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_carousel_indicator.active')] = {
     'background-color': palette.primary.base
@@ -731,7 +762,7 @@ function generateDropdownThemed(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_dropdown_item:hover')] = {
     'color': palette.dark.hover,
-    'background-color': palette.light.light
+    'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_dropdown_item.disabled')] = {
     'color': palette.secondary.base
@@ -761,7 +792,7 @@ function generateSwitchThemed(scope, palette) {
 function generateSkeletonThemed(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_skeleton')] = {
-    'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
+    'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.surfaceAlt + ' 37%, ' + palette.light.border + ' 63%)'
   };
   return rules;
 }
@@ -769,8 +800,12 @@ function generateSkeletonThemed(scope, palette) {
 // generateAvatarThemed: removed — palette class on root handles variants
 
 function generateStatCardThemed(scope, palette, layout) {
-  var rules = {}, mo = layout.motion, el = layout.elevation;
+  var rules = {}, mo = layout.motion, el = layout.elevation, rd = layout.radius;
   rules[_sx(scope, '.bw_stat_card')] = {
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base,
+    'border': '1px solid ' + palette.light.border,
+    'border-radius': rd.card,
     'box-shadow': el.sm,
     'transition': 'box-shadow ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
   };
@@ -792,7 +827,7 @@ function generateTimelineThemed(scope, palette) {
 function generateStepperThemed(scope, palette) {
   var rules = {};
   rules[_sx(scope, '.bw_step_indicator')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'border': '2px solid ' + palette.light.border,
     'color': palette.secondary.base
   };
@@ -816,13 +851,17 @@ function generateStepperThemed(scope, palette) {
 
 function generateChipInputThemed(scope, palette) {
   var rules = {};
-  rules[_sx(scope, '.bw_chip_input')] = { 'border-color': palette.light.border };
+  rules[_sx(scope, '.bw_chip_input')] = {
+    'border-color': palette.light.border,
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base
+  };
   rules[_sx(scope, '.bw_chip_input:focus-within')] = {
     'border-color': palette.primary.base,
     'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
   };
   rules[_sx(scope, '.bw_chip')] = {
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_chip_remove:hover')] = {
@@ -836,7 +875,7 @@ function generateFileUploadThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
   rules[_sx(scope, '.bw_file_upload')] = {
     'border-color': palette.light.border,
-    'background-color': palette.light.light,
+    'background-color': palette.surfaceAlt,
     'transition': 'border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_file_upload:hover')] = {
@@ -890,7 +929,7 @@ function generatePopoverThemed(scope, palette, layout) {
     'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_popover_header')] = {
-    'background-color': palette.light.light, 'border-bottom': '1px solid ' + palette.light.border,
+    'background-color': palette.surfaceAlt, 'border-bottom': '1px solid ' + palette.light.border,
     'padding': sp.input
   };
   rules[_sx(scope, '.bw_popover_body')] = { 'padding': sp.card };
@@ -899,6 +938,10 @@ function generatePopoverThemed(scope, palette, layout) {
 
 function generateSearchThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
+  rules[_sx(scope, '.bw_search_input')] = {
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base
+  };
   rules[_sx(scope, '.bw_search_clear')] = {
     'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
@@ -906,8 +949,14 @@ function generateSearchThemed(scope, palette, layout) {
   return rules;
 }
 
-function generateCodeDemoThemed(scope, palette) {
+function generateCodeDemoThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '0.375rem' };
+  rules[_sx(scope, '.bw_code_demo')] = {
+    'background-color': palette.surface || '#fff',
+    'color': palette.dark.base,
+    'border-radius': rd.card
+  };
   rules[_sx(scope, '.bw_code_copy_btn_copied')] = {
     'background': palette.success.base,
     'color': palette.success.textOn,
@@ -1003,11 +1052,23 @@ function generatePaletteClasses(scope, palette) {
       'box-shadow': '0 0 0 2px ' + s.base
     };
 
-    // Spinner: text color only, transparent bg
-    rules[_sx(scope, '.bw_spinner_border.bw_' + k + ',\n' + _sx(scope, '.bw_spinner_grow.bw_' + k))] = {
+    // Spinner: set color, re-apply border pattern so the root palette class
+    // border-color doesn't fill in the transparent gap that makes it spin.
+    // Also neutralize hover/active which would override border-right-color.
+    rules[_sx(scope, '.bw_spinner_border.bw_' + k)] = {
       'background-color': 'transparent',
       'color': s.base,
-      'border-color': 'currentColor'
+      'border-color': s.base,
+      'border-right-color': 'transparent'
+    };
+    rules[_sx(scope, '.bw_spinner_border.bw_' + k + ':hover')] = {
+      'background-color': 'transparent',
+      'border-color': s.base,
+      'border-right-color': 'transparent'
+    };
+    rules[_sx(scope, '.bw_spinner_grow.bw_' + k)] = {
+      'background-color': s.base,
+      'color': s.base
     };
 
     // Outline button: transparent bg, colored border+text, solid on hover
@@ -1073,7 +1134,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateAlerts(scopeName, palette, layout),
     generateCards(scopeName, palette, layout),
     generateForms(scopeName, palette, layout),
-    generateNavigation(scopeName, palette),
+    generateNavigation(scopeName, palette, layout),
     generateTables(scopeName, palette, layout),
     generateTabs(scopeName, palette, layout),
     generateListGroups(scopeName, palette, layout),
@@ -1082,7 +1143,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateBreadcrumbThemed(scopeName, palette, layout),
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
-    generateAccordionThemed(scopeName, palette),
+    generateAccordionThemed(scopeName, palette, layout),
     generateCarouselThemed(scopeName, palette),
     generateModalThemed(scopeName, palette, layout),
     generateToastThemed(scopeName, palette, layout),
@@ -1098,7 +1159,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateSearchThemed(scopeName, palette, layout),
     generateTooltipThemed(scopeName, palette, layout),
     generatePopoverThemed(scopeName, palette, layout),
-    generateCodeDemoThemed(scopeName, palette),
+    generateCodeDemoThemed(scopeName, palette, layout),
     generateNavPillsThemed(scopeName, palette, layout),
     generatePaletteClasses(scopeName, palette)
   );
@@ -1378,6 +1439,7 @@ var structuralRules = {
     '.bw_nav_tabs .bw_nav_item': { 'margin-bottom': '-2px' },
     '.bw_nav_link': {
       'display': 'block', 'font-size': '0.875rem', 'font-weight': '500',
+      'padding': '0.625rem 1rem',
       'text-decoration': 'none', 'cursor': 'pointer',
       'border': 'none', 'background': 'transparent', 'font-family': 'inherit'
     },
@@ -1412,10 +1474,11 @@ var structuralRules = {
     '.bw_page_item': { 'display': 'list-item', 'list-style': 'none' },
     '.bw_page_link': {
       'position': 'relative', 'display': 'block', 'padding': '0.375rem 0.75rem',
-      'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none'
+      'margin-left': '-1px', 'line-height': '1.25', 'text-decoration': 'none',
+      'border': '1px solid transparent', 'cursor': 'pointer',
+      'font-family': 'inherit', 'font-size': 'inherit', 'background': 'none'
     },
-    '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0', 'border-top-left-radius': '0.375rem', 'border-bottom-left-radius': '0.375rem' },
-    '.bw_page_item:last-child .bw_page_link': { 'border-top-right-radius': '0.375rem', 'border-bottom-right-radius': '0.375rem' },
+    '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0' },
     '.bw_page_link:focus-visible': { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' }
   },
 
@@ -1572,6 +1635,7 @@ var structuralRules = {
     '.bw_accordion_header': { 'margin': '0' },
     '.bw_accordion_button': {
       'position': 'relative', 'display': 'flex', 'align-items': 'center', 'width': '100%',
+      'padding': '0.875rem 1.25rem',
       'font-size': '1rem', 'font-weight': '500', 'text-align': 'left',
       'background-color': 'transparent', 'border': '0', 'overflow-anchor': 'none', 'cursor': 'pointer',
       'font-family': 'inherit'
@@ -1583,10 +1647,9 @@ var structuralRules = {
       'background-repeat': 'no-repeat', 'background-size': '1.25rem'
     },
     '.bw_accordion_button:not(.bw_collapsed)::after': { 'transform': 'rotate(-180deg)' },
-    '.bw_accordion_collapse': { 'max-height': '0', 'overflow': 'hidden' },
-    '.bw_accordion_collapse.bw_collapse_show': { 'max-height': 'none' },
-    '.bw_accordion_item:first-child': { 'border-top-left-radius': '8px', 'border-top-right-radius': '8px' },
-    '.bw_accordion_item:last-child': { 'border-bottom-left-radius': '8px', 'border-bottom-right-radius': '8px' }
+    '.bw_accordion_body': { 'padding': '1rem 1.25rem' },
+    '.bw_accordion_collapse': { 'max-height': '0', 'overflow': 'hidden', 'transition': 'max-height 0.3s ease' },
+    '.bw_accordion_collapse.bw_collapse_show': { 'max-height': 'none' }
   },
 
   // ---- Carousel ----

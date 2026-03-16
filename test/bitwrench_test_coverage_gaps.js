@@ -938,10 +938,10 @@ describe("Style toggling", function() {
   it("bw.toggleStyles should toggle bw_theme_alt class", function() {
     bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
     var mode1 = bw.toggleStyles();
-    assert.ok(document.body.classList.contains('bw_theme_alt'),
+    assert.ok(document.documentElement.classList.contains('bw_theme_alt'),
               'should add alt class');
     var mode2 = bw.toggleStyles();
-    assert.ok(!document.body.classList.contains('bw_theme_alt'),
+    assert.ok(!document.documentElement.classList.contains('bw_theme_alt'),
               'should remove alt class');
     assert.notStrictEqual(mode1, mode2, 'should toggle between modes');
   });
@@ -958,7 +958,7 @@ describe("bw.clearStyles", function() {
     bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
     bw.clearStyles();
     assert.strictEqual(document.getElementById('bw_style_global'), null);
-    assert.ok(!document.body.classList.contains('bw_theme_alt'));
+    assert.ok(!document.documentElement.classList.contains('bw_theme_alt'));
   });
 });
 

@@ -291,8 +291,8 @@ Pages converted:
 * [x] test --> Playwright runs locally (not in CI)
 
 ## P1: bwserve — Server-Driven UI (v2.0.16) — IMPLEMENTED
-* [x] implement --> `bw.clientConnect(url, opts)` — SSE/poll connection
-* [x] implement --> `bw.clientApply(msg)` — message dispatcher for 5 types + message
+* [x] implement --> `bw.apply(msg)` (was `bw.clientApply`) — message dispatcher for 5 types + message
+* [x] implement --> SSE/poll connection (was `bw.clientConnect`, now in bwclient.js)
 * [x] implement --> Connection lifecycle
 * [x] implement --> `src/bwserve/index.js` — Full HTTP/SSE server (zero runtime deps)
 * [x] implement --> `src/bwserve/client.js` — BwServeClient with real SSE transport
@@ -305,7 +305,7 @@ Pages converted:
 * [x] update --> `pages/bwserve-sandbox.html` — Linked from main nav
 * [x] test --> 109 tests in `test/bitwrench_test_bwserve.js` (100% coverage on bwserve files)
 * [x] create --> `examples/client-server/server.js`, `examples/llm-chat/server.js`, `examples/pipe-demo/sensor.sh`
-* [x] implement --> `bw.clientParse()` relaxed JSON state machine — 14 tests
+* [x] implement --> `bw.parseJSONFlex()` (was `bw.clientParse`) relaxed JSON state machine — 14 tests
 * [x] implement --> `client.register()` / `client.call()` / `client.exec()` three-tier execution model
 
 ## P2.5: Bundle Size — three-tier build (v2.0.16)
@@ -397,8 +397,8 @@ Design doc: `dev/bw-screenshot-design.md`
 
 * [x] implement --> `client.screenshot(selector?, options?)` on `BwServeClient`
 * [x] implement --> `_resolveScreenshot(requestId, result)` on `BwServeClient`
-* [x] implement --> `/__bw/screenshot/:clientId` POST route in `BwServeApp`
-* [x] implement --> `/__bw/vendor/:filename` GET route in `BwServeApp`
+* [x] implement --> `/bw/return/screenshot/:clientId` POST route in `BwServeApp`
+* [x] implement --> `/bw/lib/vendor/:filename` GET route in `BwServeApp`
 * [x] vendor --> `src/vendor/html2canvas.min.js` (v1.4.1, ~194KB minified, MIT license)
 * [x] implement --> Client-side capture function (registered as string)
 * [x] implement --> `allowScreenshot` opt-in flag

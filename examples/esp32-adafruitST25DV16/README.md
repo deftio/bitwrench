@@ -158,7 +158,7 @@ Server started on http://192.168.1.42
 2. Browser loads `index.html` and `bitwrench.js` (both served from the ESP32)
 3. On page load, browser fetches `/api/status` for full state, renders UI with `bw.DOM()`
 4. Every 3 seconds, browser polls `/api/patches` for lightweight bwserve-compatible patch ops
-5. `bw.clientApply()` applies patches to specific DOM elements by ID (no full rebuild)
+5. `bw.apply()` applies patches to specific DOM elements by ID (no full rebuild)
 6. When NDEF content changes (detected via `ndef_version`), browser does a full re-fetch
 7. ESP32 polls the ST25DV16 every 500ms for RF activity via the IT_STS_Dyn register
 8. On RF activity (phone tap), a full NDEF scan runs automatically
@@ -168,7 +168,7 @@ Server started on http://192.168.1.42
 | Scenario | Endpoint | Rendering | Frequency |
 |----------|----------|-----------|-----------|
 | Page load, tab switch, new NDEF records | `/api/status` | Full `bw.DOM()` rebuild | On change only |
-| Live data (uptime, RF flags, CPU temp) | `/api/patches` | `bw.clientApply()` patches | Every 3s |
+| Live data (uptime, RF flags, CPU temp) | `/api/patches` | `bw.apply()` patches | Every 3s |
 
 ### API Endpoints
 

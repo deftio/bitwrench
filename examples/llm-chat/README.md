@@ -60,11 +60,11 @@ Browser                              Server (Node.js + bwserve)
   |  GET /                               |
   |  <── HTML shell (auto-generated)     |
   |                                      |
-  |  SSE /__bw/events/:id                |
+  |  SSE /bw/events/:id                  |
   |  <── {replace: chat UI}              |
   |                                      |
   |  User types "Hello"                  |
-  |  POST /__bw/action/:id               |
+  |  POST /bw/return/action/:id           |
   |  {action:"send", inputValue:"Hello"} |
   |                                      |  → POST to LLM API (streaming)
   |  <── {append: user bubble}           |

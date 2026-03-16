@@ -126,7 +126,7 @@ All functions produce r-prefixed relaxed JSON:
 r{'type':'patch','target':'temp','content':'23.5 C'}
 ```
 
-The browser's `bw.clientParse()` normalizes this to strict JSON. The `r`
+The browser's `bw.parseJSONFlex()` normalizes this to strict JSON. The `r`
 prefix is outbound only (device to browser). The browser sends strict JSON
 back via POST.
 

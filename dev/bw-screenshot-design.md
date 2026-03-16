@@ -52,7 +52,7 @@ Server                               Client (Browser)
   |                                    | resize canvas (optional)
   |                                    | canvas.toDataURL()
   |   <-------------------------------  |
-  |   POST /__bw/screenshot/:clientId  |
+  |   POST /bw/return/screenshot/:clientId  |
   |     { requestId, data, width,      |
   |       height, format }             |
   |                                    |
@@ -143,7 +143,7 @@ bitwrench.js.
 
 **Loading strategy** (in order of preference):
 1. If `window.html2canvas` is already defined, use it (user loaded it manually)
-2. If bwserve is serving vendored copy, load from `/__bw/vendor/html2canvas.min.js`
+2. If bwserve is serving vendored copy, load from `/bw/lib/vendor/html2canvas.min.js`
 3. Fall back to CDN: `https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js`
 
 The vendored copy lives at `src/vendor/html2canvas.min.js` and is served
@@ -160,7 +160,7 @@ function _bw_screenshot(opts) {
   var sel = opts.selector || 'body';
   var el = document.querySelector(sel);
   if (!el) {
-    return fetch('/__bw/screenshot/' + opts.clientId, {
+    return fetch('/bw/return/screenshot/' + opts.clientId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -197,7 +197,7 @@ function _bw_screenshot(opts) {
     var quality = opts.format === 'jpeg' ? (opts.quality || 0.85) : undefined;
     var dataUrl = out.toDataURL(fmt, quality);
 
-    return fetch('/__bw/screenshot/' + opts.clientId, {
+    return fetch('/bw/return/screenshot/' + opts.clientId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -209,7 +209,7 @@ function _bw_screenshot(opts) {
       })
     });
   }).catch(function(err) {
-    fetch('/__bw/screenshot/' + opts.clientId, {
+    fetch('/bw/return/screenshot/' + opts.clientId, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -277,7 +277,7 @@ screenshot(selector, options) {
     }
 
     // Determine capture library URL
-    var captureUrl = '/__bw/vendor/html2canvas.min.js';
+    var captureUrl = '/bw/lib/vendor/html2canvas.min.js';
 
     // Call the capture function
     self.call('_bw_screenshot', {
@@ -329,15 +329,15 @@ Add one new route (~20 lines):
 ```javascript
 // In _handleRequest(), after the action route:
 
-// /__bw/screenshot/:clientId — screenshot POST-back
-if (path.startsWith('/__bw/screenshot/') && method === 'POST') {
-  var ssClientId = path.slice('/__bw/screenshot/'.length);
+// /bw/return/screenshot/:clientId — screenshot POST-back
+if (path.startsWith('/bw/return/screenshot/') && method === 'POST') {
+  var ssClientId = path.slice('/bw/return/screenshot/'.length);
   return this._handleScreenshot(req, res, ssClientId);
 }
 
-// /__bw/vendor/:filename — serve vendored libraries
-if (path.startsWith('/__bw/vendor/') && method === 'GET') {
-  var vendorFile = path.slice('/__bw/vendor/'.length);
+// /bw/lib/vendor/:filename — serve vendored libraries
+if (path.startsWith('/bw/lib/vendor/') && method === 'GET') {
+  var vendorFile = path.slice('/bw/lib/vendor/'.length);
   return this._serveVendorFile(res, vendorFile);
 }
 ```
@@ -399,7 +399,7 @@ _serveVendorFile(res, filename) {
 Screenshot is disabled by default. Enable with:
 
 ```javascript
-bw.clientConnect(url, { allowScreenshot: true });
+// allowScreenshot: true must be set in the server options
 ```
 
 Or on the server side:
@@ -455,13 +455,13 @@ For headless/embedded/LLM use, the indicator is unnecessary and stays off.
 - `html2canvas.min.js` v1.4.1 (latest stable, ~43KB minified)
 - MIT license — compatible with bitwrench BSD-2-Clause
 - File location: `src/vendor/html2canvas.min.js`
-- Served by bwserve at `/__bw/vendor/html2canvas.min.js`
+- Served by bwserve at `/bw/lib/vendor/html2canvas.min.js`
 
 ### Loading priority
 
 1. `window.html2canvas` already defined → use it (user loaded manually or from
    a different CDN)
-2. bwserve vendor route available → load from `/__bw/vendor/html2canvas.min.js`
+2. bwserve vendor route available → load from `/bw/lib/vendor/html2canvas.min.js`
 3. CDN fallback → `https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js`
 
 ### Not bundled into bitwrench.js
@@ -611,11 +611,11 @@ Playwright can load the real page and verify:
 
 1. Add `_pendingScreenshots` map and `screenshot()` method to `BwServeClient`
 2. Add `_resolveScreenshot()` to `BwServeClient`
-3. Add `/__bw/screenshot/:clientId` POST route to `BwServeApp`
-4. Add `/__bw/vendor/:filename` GET route to `BwServeApp` (allowlisted)
+3. Add `/bw/return/screenshot/:clientId` POST route to `BwServeApp`
+4. Add `/bw/lib/vendor/:filename` GET route to `BwServeApp` (allowlisted)
 5. Vendor `html2canvas.min.js` into `src/vendor/`
 6. Write client-side capture function as string constant
-7. Add `allowScreenshot` option to `create()` and `clientConnect()`
+7. Add `allowScreenshot` option to `create()` (connection setup in bwclient.js)
 8. Unit tests for protocol round-trip, timeout, error, opt-in
 
 ### Phase 2: Demos and playground

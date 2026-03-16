@@ -29,7 +29,7 @@ This assumes the file is at `src/bwserve/index.js` (2 levels deep from project r
 - **Expected:** `node_modules/bitwrench/dist/` (where bitwrench.umd.js lives)
 - **Actual:** `node_modules/dist/` (does not exist)
 
-Result: `/__bw/bitwrench.umd.js` and `/__bw/bitwrench.css` both 404.
+Result: `/bw/lib/bitwrench.umd.js` and `/bw/lib/bitwrench.css` both 404.
 
 **Workaround:** Create symlinks: `mkdir -p node_modules/dist && ln -s ../bitwrench/dist/bitwrench.umd.js node_modules/dist/`
 
@@ -37,11 +37,11 @@ Result: `/__bw/bitwrench.umd.js` and `/__bw/bitwrench.css` both 404.
 
 ### BUG: `client.exec()` is blocked by default shell — no way to enable it
 
-The auto-generated shell in `shell.js` calls `bw.clientConnect()` **without** `allowExec: true`. But there's no bwserve option to configure this. So `client.exec()` always silently fails for apps using the standard shell.
+The auto-generated shell in `shell.js` sets up the SSE connection **without** `allowExec: true`. But there's no bwserve option to configure this. So `client.exec()` always silently fails for apps using the standard shell.
 
 **Workaround:** Use `client.register()` + `client.call()` instead, which work without `allowExec`.
 
-**Fix suggestion:** Add an `allowExec` option to `bwserve.create()` that gets passed through to the shell's `bw.clientConnect()` call.
+**Fix suggestion:** Add an `allowExec` option to `bwserve.create()` that gets passed through to the shell's connection setup.
 
 ---
 

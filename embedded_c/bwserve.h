@@ -15,8 +15,8 @@
  * All macros produce r-prefixed relaxed JSON:
  *   r{'type':'replace','target':'#app','node':{'t':'h1','c':'Hello'}}
  *
- * The browser's bw.clientParse() normalizes this to strict JSON before
- * passing to bw.clientApply().
+ * The browser's bw.parseJSONFlex() normalizes this to strict JSON before
+ * passing to bw.apply().
  *
  * License: BSD-2-Clause
  * Copyright (c) 2026 Manu Chatterjee / deftio
@@ -192,7 +192,7 @@ extern "C" {
     "<div id=\"app\">Connecting...</div>" \
     "<script>" \
     "bw.loadDefaultStyles();" \
-    "bw.clientConnect('/events');" \
+    /* SSE connection setup omitted — managed by bwclient.js or inline polling */ \
     "</script>" \
     "</body></html>"
 
