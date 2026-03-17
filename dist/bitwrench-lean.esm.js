@@ -12,7 +12,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-16T21:59:49.105Z'
+  buildDate: '2026-03-17T00:43:51.827Z'
 };
 
 /**
