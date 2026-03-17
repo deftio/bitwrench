@@ -71,7 +71,7 @@
 <h1 class="quikdown-h1">bitwrench.js</h1>
 <a class="quikdown-a" href="https://opensource.org/licenses/BSD-2-Clause" rel="noopener noreferrer"><img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License"></a>
 <a class="quikdown-a" href="https://www.npmjs.com/package/bitwrench" rel="noopener noreferrer"><img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version"></a>
-<a class="quikdown-a" href="https://github.com/deftio/bitwrench/actions/workflows/ci.yml" rel="noopener noreferrer"><img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI"></a></p><p><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/" rel="noopener noreferrer"><img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench"></a></p><p>Bitwrench builds UI from plain JavaScript objects — one format for components, styling, state, and server rendering, with no build step and zero dependencies.</p><pre class="quikdown-pre"><code class="language-javascript">// Describe UI as a JavaScript object (a &quot;TACO&quot;)
+<a class="quikdown-a" href="https://github.com/deftio/bitwrench/actions/workflows/ci.yml" rel="noopener noreferrer"><img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI"></a></p><p><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/" rel="noopener noreferrer"><img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench"></a></p><p>Bitwrench builds UI from plain JavaScript objects — one format for components, styling, state, and server rendering, with no build step and zero dependencies.  In bitwrench structure, styles, and state (including client/server) are rendered and managed as javascript objects.</p><pre class="quikdown-pre"><code class="language-javascript">// Describe UI as a JavaScript object (a &quot;TACO&quot;)
 var page = {
   t: &#39;div&#39;, a: { class: &#39;card&#39; },
   c: [
@@ -82,8 +82,18 @@ var page = {
 };
 
 bw.DOM(&#39;#app&#39;, page);          // → live DOM
-bw.html(page);                 // → HTML string (Node.js, emails, SSR)</code></pre><p>Each object has four keys: <strong class="quikdown-strong">t</strong> (tag), <strong class="quikdown-strong">a</strong> (attributes), <strong class="quikdown-strong">c</strong> (content), <strong class="quikdown-strong">o</strong> (options for state/lifecycle). Nest them, loop them, compose them — it&#39;s just JavaScript.</p><h3 class="quikdown-h3">What bitwrench replaces</h3>
-<table class="quikdown-table">
+bw.html(page);                 // → HTML string (Node.js, emails, SSR)</code></pre><p>Each object has four keys: <strong class="quikdown-strong">t</strong> (tag), <strong class="quikdown-strong">a</strong> (attributes), <strong class="quikdown-strong">c</strong> (content), <strong class="quikdown-strong">o</strong> (options for state/lifecycle). Nest them, loop them, compose them — it&#39;s just JavaScript.</p><p><img class="quikdown-img" src="./images/hero-example.png" alt="Hero example output"></p><h3 class="quikdown-h3">Why bitwrench?</h3>
+<strong class="quikdown-strong">One file, everywhere.</strong> At ~39KB gzipped with zero dependencies, bitwrench runs on anything with a browser — phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.</p><p>Structure, styling, state, and server rendering are all handled as JavaScript objects:</p><ul class="quikdown-ul">
+<li class="quikdown-li"><strong class="quikdown-strong">No build toolchain</strong> — works with a <code class="quikdown-code">&lt;script&gt;</code> tag</li>
+<li class="quikdown-li"><strong class="quikdown-strong">50+ ready-made components</strong> — buttons, tables, modals, forms, charts, toasts — one <code class="quikdown-code">make*()</code> call each, returns a composable TACO</li>
+<li class="quikdown-li"><strong class="quikdown-strong">CSS from JavaScript</strong> — <code class="quikdown-code">bw.css()</code> generates stylesheets, <code class="quikdown-code">bw.s()</code> composes inline styles, <code class="quikdown-code">bw.loadStyles()</code> or <code class="quikdown-code">bw.makeStyles()</code> derives a complete theme from 2 seed colors</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Reactive state</strong> — <code class="quikdown-code">bw.component()</code> provides <code class="quikdown-code">.get()/.set()</code> with <code class="quikdown-code">${template}</code> bindings; <code class="quikdown-code">bw.pub()</code>/<code class="quikdown-code">bw.sub()</code> for cross-component messaging</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Dual rendering</strong> — same object renders to live DOM (<code class="quikdown-code">bw.DOM()</code>) or HTML string (<code class="quikdown-code">bw.html()</code>) for SSR, emails, or static sites</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Server-driven UI</strong> — push UI updates from any backend (Python, C, Rust, Go) over SSE; <code class="quikdown-code">client.screenshot()</code> captures the page back as PNG/JPEG</li>
+<li class="quikdown-li"><strong class="quikdown-strong">CLI</strong> — <code class="quikdown-code">bwcli</code> converts Markdown, HTML, and JSON to styled standalone pages</li>
+<li class="quikdown-li"><strong class="quikdown-strong">Utilities</strong> — color interpolation, random data, lorem ipsum, cookies, URL params, file I/O</li>
+</ul><h3 class="quikdown-h3">Coming from other Frameworks</h3>
+<p>Bitwrench uses JavaScript equivalents for most forms of front-end development. Here is a quick mapping (see the <a class="quikdown-a" href="docs/README.md">docs</a> and <a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a> for more details).</p><table class="quikdown-table">
 <thead class="quikdown-thead">
 <tr class="quikdown-tr">
 <th class="quikdown-th">You&#39;re using</th>
@@ -105,7 +115,7 @@ bw.html(page);                 // → HTML string (Node.js, emails, SSR)</code><
 <tr class="quikdown-tr">
 <td class="quikdown-td">Tailwind / CSS-in-JS</td>
 <td class="quikdown-td">Styling</td>
-<td class="quikdown-td"><code class="quikdown-code">bw.css()</code>, <code class="quikdown-code">bw.s()</code>, <code class="quikdown-code">bw.u</code> utilities</td>
+<td class="quikdown-td"><code class="quikdown-code">bw.css()</code>, <code class="quikdown-code">bw.s()</code> style composition</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td">Sass / PostCSS</td>
@@ -115,7 +125,7 @@ bw.html(page);                 // → HTML string (Node.js, emails, SSR)</code><
 <tr class="quikdown-tr">
 <td class="quikdown-td">ThemeProvider / CSS vars</td>
 <td class="quikdown-td">Theming</td>
-<td class="quikdown-td"><code class="quikdown-code">bw.generateTheme()</code> from 2 seed colors</td>
+<td class="quikdown-td"><code class="quikdown-code">bw.loadStyles()</code> / <code class="quikdown-code">bw.makeStyles()</code> from 2 seed colors</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td">Streamlit / Gradio</td>
@@ -138,16 +148,7 @@ bw.html(page);                 // → HTML string (Node.js, emails, SSR)</code><
 import bw from &#39;bitwrench&#39;;
 
 // CommonJS
-const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a page:</p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js&quot;&gt;&lt;/script&gt;</code></pre><h2 class="quikdown-h2">Features</h2>
-<ul class="quikdown-ul">
-<li class="quikdown-li"><strong class="quikdown-strong">HTML from plain objects</strong> — describe UI as JavaScript objects, render to live DOM with <code class="quikdown-code">bw.DOM()</code> or to HTML strings with <code class="quikdown-code">bw.html()</code> for server-side rendering, emails, and static pages. Use <code class="quikdown-code">bw.raw()</code> when you need pre-escaped HTML content inside a TACO object</li>
-<li class="quikdown-li"><strong class="quikdown-strong">Built-in reactivity</strong> — <code class="quikdown-code">bw.component()</code> wraps any TACO in a reactive handle with <code class="quikdown-code">.get()/.set()</code> and <code class="quikdown-code">${template}</code> bindings. Lower-level: <code class="quikdown-code">bw.update()</code> re-renders via <code class="quikdown-code">o.render</code>, <code class="quikdown-code">bw.patch()</code> updates individual elements by ID, <code class="quikdown-code">bw.pub()</code>/<code class="quikdown-code">bw.sub()</code> provides decoupled messaging</li>
-<li class="quikdown-li"><strong class="quikdown-strong">CSS and theme generation</strong> — <code class="quikdown-code">bw.css()</code> generates stylesheets from objects, <code class="quikdown-code">bw.s()</code> composes inline styles from <code class="quikdown-code">bw.u</code> utility objects, <code class="quikdown-code">bw.responsive()</code> generates <code class="quikdown-code">@media</code> rules from JS objects. <code class="quikdown-code">bw.generateTheme()</code> derives a complete visual theme from 2-3 seed colors with <code class="quikdown-code">bw.toggleTheme()</code> for light/dark switching</li>
-<li class="quikdown-li"><strong class="quikdown-strong">50+ ready-made components</strong> — cards, buttons, sortable tables, form inputs, modals, dropdowns, accordions, tooltips, popovers, toasts, timelines, steppers, file uploads, stat cards, bar charts, carousels, skeleton loaders — each a single <code class="quikdown-code">make*()</code> call that returns a composable TACO object</li>
-<li class="quikdown-li"><strong class="quikdown-strong">Server-driven UI (bwserve)</strong> — push TACO rendering commands from Node.js to the browser over SSE; same protocol works from C (ESP32), Python, Rust, or any language via the <code class="quikdown-code">bwcli serve</code> pipe server. <code class="quikdown-code">client.screenshot()</code> captures the rendered page back to the server as a PNG/JPEG Buffer for visual feedback loops, testing, or LLM vision</li>
-<li class="quikdown-li"><strong class="quikdown-strong">Static site CLI</strong> — the <code class="quikdown-code">bwcli</code> command converts Markdown, HTML, and JSON files into styled, self-contained pages with theme support</li>
-<li class="quikdown-li"><strong class="quikdown-strong">Utilities</strong> — color interpolation, random data generation, lorem ipsum, cookies, URL params, file I/O for both browser and Node.js</li>
-</ul><h2 class="quikdown-h2">Getting Started</h2>
+const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a page:</p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js&quot;&gt;&lt;/script&gt;</code></pre><h2 class="quikdown-h2">Getting Started</h2>
 <p><pre class="quikdown-pre"><code class="language-html">&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
@@ -156,7 +157,7 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
 &lt;body&gt;
   &lt;div id=&quot;app&quot;&gt;&lt;/div&gt;
   &lt;script&gt;
-    bw.loadDefaultStyles();
+    bw.loadStyles();
 
     bw.DOM(&#39;#app&#39;, {
       t: &#39;div&#39;, a: { class: &#39;bw-container&#39; },
@@ -197,26 +198,26 @@ counter.reset();             // methods from o.methods are callable on the handl
   console.log(&#39;New item:&#39;, detail.name);
 });
 
-bw.pub(&#39;item-added&#39;, { name: &#39;Widget&#39; });</code></pre><h2 class="quikdown-h2">Theming</h2>
-<p>Generate a complete theme from two seed colors. All components — buttons, alerts, badges, cards, forms, tables — are styled automatically:</p><pre class="quikdown-pre"><code class="language-javascript">bw.generateTheme(&#39;my-theme&#39;, {
-  primary: &#39;#336699&#39;,
-  secondary: &#39;#cc6633&#39;
-});
-
-bw.toggleTheme();  // switch between primary and alternate palettes</code></pre><h2 class="quikdown-h2">CSS from JavaScript</h2>
+bw.pub(&#39;item-added&#39;, { name: &#39;Widget&#39; });</code></pre><h2 class="quikdown-h2">CSS from JavaScript</h2>
 <p><code class="quikdown-code">bw.css()</code> generates CSS from objects. <code class="quikdown-code">bw.s()</code> composes inline styles from reusable utility objects:</p><pre class="quikdown-pre"><code class="language-javascript">// Generate and inject a stylesheet
 bw.injectCSS(bw.css({
   &#39;.my-card&#39;: { padding: &#39;1rem&#39;, borderRadius: &#39;8px&#39; }
 }));
 
-// Compose inline styles from utilities
-{ t: &#39;div&#39;, a: { style: bw.s(bw.u.flex, bw.u.gap4, { padding: &#39;1rem&#39; }) } }
+// Compose inline styles from objects
+{ t: &#39;div&#39;, a: { style: bw.s({ display: &#39;flex&#39; }, { gap: &#39;1rem&#39; }, { padding: &#39;1rem&#39; }) } }
 
 // Responsive breakpoints
 bw.responsive(&#39;.hero&#39;, {
   base: { fontSize: &#39;1.5rem&#39; },
   md:   { fontSize: &#39;2.5rem&#39; }
-});</code></pre><h2 class="quikdown-h2">Core API</h2>
+});</code></pre><h2 class="quikdown-h2">Theming</h2>
+<p><code class="quikdown-code">bw.loadStyles()</code> derives a design system — buttons, alerts, badges, cards, forms, tables, hover states, focus rings — from two seed colors. Themes are scoped to DOM subtrees, so different sections of a page can use different themes. <code class="quikdown-code">toggleStyles()</code> switches between primary and alternate palettes:</p><pre class="quikdown-pre"><code class="language-javascript">bw.loadStyles({
+  primary: &#39;#336699&#39;,
+  secondary: &#39;#cc6633&#39;
+});
+
+bw.toggleStyles();  // switch between primary and alternate palettes</code></pre><h2 class="quikdown-h2">Core API</h2>
 <table class="quikdown-table">
 <thead class="quikdown-thead">
 <tr class="quikdown-tr">
@@ -254,15 +255,15 @@ bw.responsive(&#39;.hero&#39;, {
 <td class="quikdown-td">Generate <code class="quikdown-code">@media</code> CSS rules from JS</td>
 </tr>
 <tr class="quikdown-tr">
-<td class="quikdown-td"><code class="quikdown-code">bw.loadDefaultStyles()</code></td>
-<td class="quikdown-td">Inject the built-in stylesheet</td>
+<td class="quikdown-td"><code class="quikdown-code">bw.loadStyles()</code></td>
+<td class="quikdown-td">Inject the built-in stylesheet (or pass config to theme)</td>
 </tr>
 <tr class="quikdown-tr">
-<td class="quikdown-td"><code class="quikdown-code">bw.generateTheme(name, config)</code></td>
-<td class="quikdown-td">Generate a scoped theme from seed colors</td>
+<td class="quikdown-td"><code class="quikdown-code">bw.makeStyles(config)</code></td>
+<td class="quikdown-td">Generate a scoped theme from seed colors (returns styles object)</td>
 </tr>
 <tr class="quikdown-tr">
-<td class="quikdown-td"><code class="quikdown-code">bw.toggleTheme()</code></td>
+<td class="quikdown-td"><code class="quikdown-code">bw.toggleStyles()</code></td>
 <td class="quikdown-td">Switch between primary and alternate palettes</td>
 </tr>
 <tr class="quikdown-tr">
@@ -369,7 +370,7 @@ curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&
 <li class="quikdown-li"><a class="quikdown-a" href="examples/client-server/">bwserve Counter</a> — server-driven UI demo</li>
 <li class="quikdown-li"><a class="quikdown-a" href="examples/llm-chat/">LLM Chat</a> — streaming chat via bwserve + Ollama/OpenAI</li>
 </ul><h2 class="quikdown-h2">FAQ</h2>
-<strong class="quikdown-strong">Is this a framework?</strong> — No. Bitwrench is a library (~39KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.</p><p><strong class="quikdown-strong">Does it scale to large apps?</strong> — Bitwrench targets single-page tools, dashboards, prototypes, embedded UIs, and content sites — apps where a single HTML file or a handful of files is the right form factor. For a 500-route SPA with team-scale state management, React or Vue is a better fit.</p><p><strong class="quikdown-strong">How does bitwrench compare to React/Vue?</strong> — They solve different problems at different scales. React and Vue give you a component model, virtual DOM, and ecosystem for large team-built SPAs — at the cost of a build step and toolchain. Bitwrench gives you the same rendering and state primitives in a single script with no build step, optimized for single-file tools, dashboards, embedded devices, and server-driven UIs. If your project already uses React, keep using it. If you&#39;re reaching for <code class="quikdown-code">create-react-app</code> just to render a data table with some buttons, bitwrench might be a better fit.</p><p><strong class="quikdown-strong">How does CSS work?</strong> — Bitwrench doesn&#39;t own your CSS. Use any external stylesheet, Tailwind, or CSS file you want — bitwrench doesn&#39;t interfere. On top of that, <code class="quikdown-code">bw.css()</code> generates CSS from JS objects (with <code class="quikdown-code">@media</code>, <code class="quikdown-code">@keyframes</code>, pseudo-classes), <code class="quikdown-code">bw.s()</code> composes inline style objects, and <code class="quikdown-code">bw.generateTheme()</code> derives a complete theme from 2 seed colors. You can use all three together or none at all.</p><p><strong class="quikdown-strong">What&#39;s the difference between <code class="quikdown-code">bw.DOM()</code> and <code class="quikdown-code">bw.html()</code>?</strong> — Same TACO input, two outputs. <code class="quikdown-code">bw.DOM(&#39;#app&#39;, taco)</code> mounts live DOM elements in a browser. <code class="quikdown-code">bw.html(taco)</code> returns an HTML string — use it in Node.js scripts, email generators, static site builds, or anywhere you need markup without a browser. One object format, two rendering modes.</p><p><strong class="quikdown-strong">What is bwserve? How does it compare to Streamlit/Gradio?</strong> — bwserve lets any server push UI updates to a browser over SSE. The server sends TACO objects as JSON; the browser renders them. Unlike Streamlit and Gradio, bwserve is language-agnostic — the server can be Python, Go, Rust, C, or a shell script. Anything that can write JSON to an HTTP response can drive a bitwrench UI. See the <a class="quikdown-a" href="docs/bwserve.md">bwserve docs</a>.</p><p><strong class="quikdown-strong">Can I use bitwrench on embedded devices?</strong> — Yes — this is a primary use case. An ESP32 or Raspberry Pi serves one HTML page with bitwrench loaded, then pushes sensor data as JSON patches over SSE. The device never generates HTML. See the <a class="quikdown-a" href="docs/tutorial-embedded.md">ESP32 tutorial</a>.</p><p><strong class="quikdown-strong">Can I use it with TypeScript?</strong> — Yes. Type declarations are included. TACO objects are plain JSON-compatible objects that TypeScript infers naturally.</p><p><strong class="quikdown-strong">What about accessibility?</strong> — BCCL components emit semantic HTML with ARIA attributes where applicable. You can add any <code class="quikdown-code">aria-*</code> attribute via <code class="quikdown-code">a: { &#39;aria-label&#39;: &#39;...&#39; }</code>.</p><h2 class="quikdown-h2">Development</h2>
+<strong class="quikdown-strong">Is this a framework?</strong> — No. Bitwrench is a library (~39KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.</p><p><strong class="quikdown-strong">Does it scale to large apps?</strong> — Bitwrench targets single-page tools, dashboards, prototypes, embedded UIs, and content sites — apps where a single HTML file or a handful of files is the right form factor. For a 500-route SPA with team-scale state management, React or Vue is a better fit.</p><p><strong class="quikdown-strong">How does bitwrench compare to React/Vue?</strong> — They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine — use whichever fits the job.</p><p><strong class="quikdown-strong">How does CSS work?</strong> — Bitwrench doesn&#39;t own your CSS. Use any external stylesheet, Tailwind, or CSS file you want — bitwrench doesn&#39;t interfere. On top of that, <code class="quikdown-code">bw.css()</code> generates CSS from JS objects (with <code class="quikdown-code">@media</code>, <code class="quikdown-code">@keyframes</code>, pseudo-classes), <code class="quikdown-code">bw.s()</code> composes inline style objects, and <code class="quikdown-code">bw.loadStyles()</code> or <code class="quikdown-code">bw.makeStyles()</code> derives a complete theme from 2 seed colors. You can use all three together or none at all.</p><p><strong class="quikdown-strong">What&#39;s the difference between <code class="quikdown-code">bw.DOM()</code> and <code class="quikdown-code">bw.html()</code>?</strong> — Same TACO input, two outputs. <code class="quikdown-code">bw.DOM(&#39;#app&#39;, taco)</code> mounts live DOM elements in a browser. <code class="quikdown-code">bw.html(taco)</code> returns an HTML string — use it in Node.js scripts, email generators, static site builds, or anywhere you need markup without a browser. One object format, two rendering modes.</p><p><strong class="quikdown-strong">What is bwserve?</strong> — bwserve lets any server push UI updates to a browser over SSE. The server sends TACO objects as JSON; the browser renders them. It&#39;s language-agnostic — the server can be Python, Go, Rust, C, or a shell script. Anything that can write JSON to an HTTP response can drive a bitwrench UI. See the <a class="quikdown-a" href="docs/bwserve.md">bwserve docs</a>.</p><p><strong class="quikdown-strong">Can I use bitwrench on embedded devices?</strong> — Yes — this is a primary use case. An ESP32 or Raspberry Pi serves one HTML page with bitwrench loaded, then pushes sensor data as JSON patches over SSE. The device never generates HTML. See the <a class="quikdown-a" href="docs/tutorial-embedded.md">ESP32 tutorial</a>.</p><p><strong class="quikdown-strong">Can I use it with TypeScript?</strong> — Yes. Type declarations are included. TACO objects are plain JSON-compatible objects that TypeScript infers naturally.</p><p><strong class="quikdown-strong">What about accessibility?</strong> — BCCL components emit semantic HTML with ARIA attributes where applicable. You can add any <code class="quikdown-code">aria-*</code> attribute via <code class="quikdown-code">a: { &#39;aria-label&#39;: &#39;...&#39; }</code>.</p><h2 class="quikdown-h2">Development</h2>
 <p><pre class="quikdown-pre"><code class="language-bash">npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
 npm test             # run unit tests (1000+ tests)

@@ -1,4 +1,4 @@
-/*! bwserve v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -9,6 +9,13 @@ var http = require('http');
 var fs = require('fs');
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
+/**
+ * Auto-generated version file from package.json
+ * DO NOT EDIT DIRECTLY - Use npm run generate-version
+ */
+
+const VERSION = '2.0.18';
+
 /**
  * BwServeClient — per-client connection for bwserve.
  *
@@ -28,15 +35,19 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  * @module bwserve/client
  */
 
+
 /**
  * BwServeClient — one connected browser tab.
  */
 class BwServeClient {
+    /** bwserve version (from package.json) */
+    static version = VERSION;
     constructor(id, res) {
         this.id = id;
         this._res = res;       // SSE response stream (null in stub)
         this._handlers = {};   // action name → handler
         this._closed = false;
+        this._pending = {};    // requestId → { resolve, reject, timer }
     }
 
     /**
@@ -115,7 +126,7 @@ class BwServeClient {
     /**
      * Call a previously registered or built-in function on the client.
      *
-     * Built-in functions (always available, no registration needed):
+     * Built-in functions (registered by bwclient on connection):
      *   scrollTo, focus, download, clipboard, redirect, log
      *
      * @param {string} name - Function name (registered or built-in)
@@ -178,6 +189,151 @@ class BwServeClient {
         }
     }
 
+    // ── Pending promise mechanism ──
+
+    /**
+     * Create a pending promise with a unique requestId and timeout.
+     *
+     * @param {number} [timeout=10000] - Timeout in ms
+     * @returns {{ requestId: string, promise: Promise }}
+     * @private
+     */
+    _pend(timeout) {
+        var self = this;
+        timeout = timeout || 10000;
+        var requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+        var promise = new Promise(function(resolve, reject) {
+            var timer = setTimeout(function() {
+                delete self._pending[requestId];
+                reject(new Error('Request timeout after ' + timeout + 'ms'));
+            }, timeout);
+
+            self._pending[requestId] = { resolve: resolve, reject: reject, timer: timer };
+        });
+
+        return { requestId: requestId, promise: promise };
+    }
+
+    /**
+     * Resolve a pending promise by requestId.
+     * Called by the server route handler when a POST-back arrives.
+     *
+     * @param {string} requestId
+     * @param {Object} data - Response data (may contain .error)
+     * @returns {boolean} true if a pending request was found and resolved
+     * @private
+     */
+    _resolvePending(requestId, data) {
+        var pending = this._pending[requestId];
+        if (!pending) return false;
+
+        clearTimeout(pending.timer);
+        delete this._pending[requestId];
+
+        if (data.error) {
+            pending.reject(new Error(data.error));
+        } else {
+            pending.resolve(data.result !== undefined ? data.result : data);
+        }
+        return true;
+    }
+
+    // ── Query ──
+
+    /**
+     * Execute code on the client and get the result back.
+     *
+     * @param {string} code - JavaScript code to evaluate (return value is sent back)
+     * @param {Object} [options]
+     * @param {number} [options.timeout=5000] - Timeout in ms
+     * @returns {Promise<*>} The result of evaluating the code
+     */
+    query(code, options) {
+        var opts = options || {};
+        var pend = this._pend(opts.timeout || 5000);
+        this.call('_bw_query', { code: code, requestId: pend.requestId });
+        return pend.promise;
+    }
+
+    // ── Mount ──
+
+    /**
+     * Mount a BCCL component or factory function on the client.
+     *
+     * @param {string} selector - CSS selector of target element
+     * @param {string} factory - BCCL component name (e.g. 'accordion') or JS factory code
+     * @param {Object} [props] - Props to pass to the component/factory
+     * @param {Object} [options]
+     * @param {number} [options.timeout=10000] - Timeout in ms
+     * @returns {Promise<Object>} Resolves with { mounted: true } on success
+     */
+    mount(selector, factory, props, options) {
+        var opts = options || {};
+        var pend = this._pend(opts.timeout || 10000);
+        this.call('_bw_mount', {
+            target: selector,
+            factory: factory,
+            props: props || {},
+            requestId: pend.requestId
+        });
+        return pend.promise;
+    }
+
+    // ── Screenshot ──
+
+    /**
+     * Capture a screenshot of the client's page or a specific element.
+     *
+     * Requires the server to be created with `{ allowScreenshot: true }`.
+     * Uses html2canvas on the client side (lazy-loaded on first call).
+     *
+     * @param {string} [selector='body'] - CSS selector of element to capture
+     * @param {Object} [options]
+     * @param {string} [options.format='png'] - 'png' or 'jpeg'
+     * @param {number} [options.quality=0.85] - JPEG quality 0-1 (ignored for PNG)
+     * @param {number} [options.maxWidth] - Resize if wider (preserves aspect ratio)
+     * @param {number} [options.maxHeight] - Resize if taller (preserves aspect ratio)
+     * @param {number} [options.scale=1] - Device pixel ratio override
+     * @param {number} [options.timeout=10000] - Reject after ms
+     * @returns {Promise<Object>} { data: Buffer, width, height, format }
+     */
+    screenshot(selector, options) {
+        var self = this;
+        var opts = options || {};
+        var timeout = opts.timeout || 10000;
+
+        if (!self._allowScreenshot) {
+            return Promise.reject(new Error('Screenshot not enabled. Set allowScreenshot: true in server options.'));
+        }
+
+        var pend = self._pend(timeout);
+
+        // Call the bwclient-registered capture function
+        self.call('_bw_screenshot', {
+            requestId: pend.requestId,
+            selector: selector || 'body',
+            format: opts.format || 'png',
+            quality: opts.quality || 0.85,
+            maxWidth: opts.maxWidth || null,
+            maxHeight: opts.maxHeight || null,
+            scale: opts.scale || 1,
+            captureUrl: '/bw/lib/vendor/html2canvas.min.js'
+        });
+
+        // Transform the raw response into { data: Buffer, width, height, format }
+        return pend.promise.then(function(result) {
+            if (!result || !result.data) return result;
+            var base64 = result.data.split(',')[1];
+            return {
+                data: Buffer.from(base64, 'base64'),
+                width: result.width,
+                height: result.height,
+                format: result.format
+            };
+        });
+    }
+
     /**
      * Dispatch an incoming action from the client.
      * @private
@@ -193,18 +349,159 @@ class BwServeClient {
 }
 
 /**
+ * bwclient.js — Browser-side protocol client for bwserve.
+ *
+ * Injected inline by bwshell. Requires window.bw (bitwrench loaded first).
+ * NOT bundled into bitwrench dist — this is a bwserve runtime asset.
+ *
+ * Responsibilities:
+ * - SSE connection lifecycle (connect, reconnect, status)
+ * - Unified POST-back via /bw/return/<route>/<clientId>
+ * - Register built-in client functions (scrollTo, focus, etc.)
+ * - data-bw-action click/key delegation
+ * - Attach mode for remote-controlling any bitwrench page
+ *
+ * @module bwserve/bwclient
+ */
+
+
+/**
+ * Return the bwclient source as a string for inline injection into the shell.
+ * The version is embedded at serve-time from package.json via version.js.
+ * @returns {string} JavaScript source code
+ */
+function getBwClientSource() {
+  return BWCLIENT_SOURCE.replace('__BW_VERSION__', VERSION);
+}
+
+var BWCLIENT_SOURCE = '(function(bw) {\n'
+  + '  "use strict";\n'
+  + '  if (!bw) return;\n'
+  + '\n'
+  + '  var _client = {\n'
+  + '    id: null,\n'
+  + '    version: "__BW_VERSION__",\n'
+  + '    status: "idle",\n'
+  + '    _es: null\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Unified POST-back ──\n'
+  + '  _client.respond = function(route, requestId, result, error) {\n'
+  + '    fetch("/bw/return/" + route + "/" + _client.id, {\n'
+  + '      method: "POST",\n'
+  + '      headers: { "Content-Type": "application/json" },\n'
+  + '      body: JSON.stringify({ requestId: requestId, route: route, result: result, error: error || null })\n'
+  + '    }).catch(function() {});\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── SSE connect ──\n'
+  + '  _client.connect = function(url, opts) {\n'
+  + '    opts = opts || {};\n'
+  + '    var onStatus = opts.onStatus || function() {};\n'
+  + '    function setStatus(s) { _client.status = s; onStatus(s); }\n'
+  + '    setStatus("connecting");\n'
+  + '    if (typeof EventSource === "undefined") return;\n'
+  + '    var es = new EventSource(url);\n'
+  + '    _client._es = es;\n'
+  + '    es.onopen = function() { setStatus("connected"); };\n'
+  + '    es.onmessage = function(e) {\n'
+  + '      try {\n'
+  + '        var msg = typeof e.data === "string" ? bw.parseJSONFlex(e.data) : e.data;\n'
+  + '        bw.apply(msg);\n'
+  + '      } catch (err) {\n'
+  + '        if (typeof console !== "undefined") console.error("[bwclient]", err);\n'
+  + '      }\n'
+  + '    };\n'
+  + '    es.onerror = function() {\n'
+  + '      if (_client.status === "connected") setStatus("disconnected");\n'
+  + '    };\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Attach mode ──\n'
+  + '  _client.attach = function(url, opts) {\n'
+  + '    opts = opts || {};\n'
+  + '    _client.id = opts.clientId || "att_" + Math.random().toString(36).slice(2, 10);\n'
+  + '    if (opts.allowExec) bw._allowExec = true;\n'
+  + '    _client._registerBuiltins();\n'
+  + '    _client._wireActions();\n'
+  + '    _client.connect(url + "/bw/events/" + _client.id, opts);\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Send action to server ──\n'
+  + '  _client.sendAction = function(action, data) {\n'
+  + '    _client.respond("action", null, { action: action, data: data || {} });\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Register built-in functions ──\n'
+  + '  _client._registerBuiltins = function() {\n'
+  + '    var builtins = {\n'
+  + '      scrollTo: "function(sel){var el=bw._el(sel);if(el)el.scrollTop=el.scrollHeight;}",\n'
+  + '      focus: "function(sel){var el=bw._el(sel);if(el&&typeof el.focus===\\"function\\")el.focus();}",\n'
+  + '      download: "function(fn,c,m){if(typeof document===\\"undefined\\")return;var b=new Blob([c],{type:m||\\"text/plain\\"});var a=document.createElement(\\"a\\");a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href);}",\n'
+  + '      clipboard: "function(t){if(typeof navigator!==\\"undefined\\"&&navigator.clipboard)navigator.clipboard.writeText(t);}",\n'
+  + '      redirect: "function(u){if(typeof window!==\\"undefined\\")window.location.href=u;}",\n'
+  + '      log: "function(){console.log.apply(console,arguments);}",\n'
+  + '      _bw_query: "function(opts){if(!bw._bwClient)return;try{var r=new Function(opts.code)();if(r&&typeof r.then===\\"function\\"){r.then(function(v){bw._bwClient.respond(\\"query\\",opts.requestId,v);}).catch(function(e){bw._bwClient.respond(\\"query\\",opts.requestId,null,e.message);});}else{bw._bwClient.respond(\\"query\\",opts.requestId,r);}}catch(e){bw._bwClient.respond(\\"query\\",opts.requestId,null,e.message);}}",\n'
+  + '      _bw_mount: "function(opts){if(!bw._bwClient)return;try{var taco;var f=opts.factory;var n=f.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});if(bw.BCCL&&bw.BCCL[n]){taco=bw.make(n,opts.props||{});}else if(bw._allowExec){taco=new Function(\\"props\\",f)(opts.props||{});}else{throw new Error(\\"Unknown component and allowExec disabled\\");}bw.DOM(opts.target,taco);bw._bwClient.respond(\\"mount\\",opts.requestId,{mounted:true});}catch(e){bw._bwClient.respond(\\"mount\\",opts.requestId,null,e.message);}}",\n'
+  + '      _bw_screenshot: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var el=document.querySelector(sel);if(!el){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,\\"Element not found: \\"+sel);return;}function _ls(url){return new Promise(function(res,rej){var s=document.createElement(\\"script\\");s.src=url;s.onload=function(){res(window.html2canvas);};s.onerror=function(){rej(new Error(\\"Failed to load html2canvas\\"));};document.head.appendChild(s);});}var p=window.html2canvas?Promise.resolve(window.html2canvas):_ls(opts.captureUrl||\\"/bw/lib/vendor/html2canvas.min.js\\");p.then(function(h2c){return h2c(el,{scale:opts.scale||1,useCORS:true});}).then(function(canvas){var out=canvas;var mw=opts.maxWidth;var mh=opts.maxHeight;if((mw&&canvas.width>mw)||(mh&&canvas.height>mh)){var sw=mw?mw/canvas.width:1;var sh=mh?mh/canvas.height:1;var sc=Math.min(sw,sh);out=document.createElement(\\"canvas\\");out.width=Math.round(canvas.width*sc);out.height=Math.round(canvas.height*sc);out.getContext(\\"2d\\").drawImage(canvas,0,0,out.width,out.height);}var fmt=opts.format===\\"jpeg\\"?\\"image/jpeg\\":\\"image/png\\";var q=opts.format===\\"jpeg\\"?(opts.quality||0.85):undefined;var dataUrl=out.toDataURL(fmt,q);bw._bwClient.respond(\\"screenshot\\",opts.requestId,{data:dataUrl,width:out.width,height:out.height,format:opts.format||\\"png\\"});}).catch(function(err){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,err.message||String(err));});}",\n'
+  + '      _bw_tree: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var depth=opts.depth||3;function walk(el,d){if(!el||d>depth)return null;var info={tag:el.tagName?el.tagName.toLowerCase():\\"#text\\"};if(el.id)info.id=el.id;if(el.className&&typeof el.className===\\"string\\")info.cls=el.className.split(\\" \\").slice(0,5).join(\\" \\");if(el.children&&el.children.length>0&&d<depth){info.children=[];for(var i=0;i<Math.min(el.children.length,20);i++){var c=walk(el.children[i],d+1);if(c)info.children.push(c);}}return info;}var root=document.querySelector(sel);bw._bwClient.respond(\\"query\\",opts.requestId,walk(root,0));}",\n'
+  + '      _bw_listen: "function(opts){if(!bw._bwClient)return;if(!bw._bwClient._listeners)bw._bwClient._listeners={};var key=opts.selector+\\":::\\"+opts.event;if(bw._bwClient._listeners[key])return;var fn=function(e){var el=e.target.closest?e.target.closest(opts.selector):null;if(!el)return;bw._bwClient.respond(\\"event\\",null,{event:opts.event,selector:opts.selector,tagName:el.tagName,id:el.id||null,text:(el.textContent||\\"\\").slice(0,100)});};document.addEventListener(opts.event,fn,true);bw._bwClient._listeners[key]={fn:fn,event:opts.event};}",\n'
+  + '      _bw_unlisten: "function(opts){if(!bw._bwClient||!bw._bwClient._listeners)return;var key=opts.selector+\\":::\\"+opts.event;var entry=bw._bwClient._listeners[key];if(!entry)return;document.removeEventListener(entry.event,entry.fn,true);delete bw._bwClient._listeners[key];}"\n'
+  + '    };\n'
+  + '    Object.keys(builtins).forEach(function(name) {\n'
+  + '      bw.apply({ type: "register", name: name, body: builtins[name] });\n'
+  + '    });\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Wire up data-bw-action click delegation ──\n'
+  + '  _client._wireActions = function() {\n'
+  + '    document.addEventListener("click", function(e) {\n'
+  + '      var el = e.target.closest ? e.target.closest("[data-bw-action]") : null;\n'
+  + '      if (!el) return;\n'
+  + '      e.preventDefault();\n'
+  + '      var actionData = {};\n'
+  + '      if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");\n'
+  + '      var form = el.closest("div") || document;\n'
+  + '      var inp = form.querySelector("input[type=text],input:not([type])");\n'
+  + '      if (inp) { actionData.inputValue = inp.value; inp.value = ""; }\n'
+  + '      _client.sendAction(el.getAttribute("data-bw-action"), actionData);\n'
+  + '    });\n'
+  + '    document.addEventListener("keydown", function(e) {\n'
+  + '      if (e.key === "Enter" && e.target.tagName === "INPUT") {\n'
+  + '        var form = e.target.closest("div") || document;\n'
+  + '        var btn = form.querySelector("[data-bw-action]");\n'
+  + '        if (btn) {\n'
+  + '          _client.sendAction(btn.getAttribute("data-bw-action"), { inputValue: e.target.value });\n'
+  + '          e.target.value = "";\n'
+  + '        }\n'
+  + '      }\n'
+  + '    });\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Event delegation helper ──\n'
+  + '  _client.listen = function(selector, event, action) {\n'
+  + '    document.addEventListener(event, function(e) {\n'
+  + '      var el = e.target.closest ? e.target.closest(selector) : null;\n'
+  + '      if (el) _client.sendAction(action, { selector: selector, event: event });\n'
+  + '    });\n'
+  + '  };\n'
+  + '\n'
+  + '  bw._bwClient = _client;\n'
+  + '})(window.bw);\n';
+
+/**
  * bwserve shell — generates the HTML page shell served to browsers.
  *
  * The shell is a minimal HTML doc that:
- * - Loads bitwrench UMD + CSS from /__bw/ routes
- * - Calls bw.loadDefaultStyles()
- * - Optionally applies a theme
+ * - Loads bitwrench UMD + CSS from /bw/lib/ routes
+ * - Calls bw.loadStyles()
+ * - Optionally applies a custom theme
  * - Creates a #app div
- * - Opens an SSE connection via bw.clientConnect()
- * - Delegates data-bw-action clicks to the server via POST
+ * - Inlines bwclient.js for SSE, action delegation, and built-ins
  *
- * @module bwserve/shell
+ * @module bwserve/bwshell
  */
+
 
 /**
  * Generate the shell HTML page for a bwserve app.
@@ -214,6 +511,7 @@ class BwServeClient {
  * @param {string} [opts.title='bwserve'] - Page title
  * @param {string} [opts.theme] - Theme preset name or config
  * @param {boolean} [opts.injectBitwrench=true] - Whether to inject bitwrench scripts
+ * @param {boolean} [opts.allowExec=false] - Enable exec message type
  * @returns {string} Complete HTML document
  */
 function generateShell(opts) {
@@ -228,12 +526,13 @@ function generateShell(opts) {
     '<head>',
     '<meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-    '<title>' + title + '</title>'
+    '<title>' + title + '</title>',
+    '<meta name="generator" content="bwserve ' + VERSION + '">'
   ];
 
   if (inject) {
-    head.push('<script src="/__bw/bitwrench.umd.js"></script>');
-    head.push('<link rel="stylesheet" href="/__bw/bitwrench.css">');
+    head.push('<script src="/bw/lib/bitwrench.umd.js"></script>');
+    head.push('<link rel="stylesheet" href="/bw/lib/bitwrench.css">');
   }
 
   head.push('</head>');
@@ -244,60 +543,108 @@ function generateShell(opts) {
     '<script>',
     '(function() {',
     '  "use strict";',
-    '  bw.loadDefaultStyles();'
+    '  bw.loadStyles();'
   ];
 
   if (opts.theme) {
-    script.push('  bw.generateTheme("bwserve", ' + JSON.stringify(
+    script.push('  bw.loadStyles(' + JSON.stringify(
       typeof opts.theme === 'string'
         ? { primary: '#006666', secondary: '#333333' }
         : opts.theme
     ) + ');');
   }
 
+  script.push('})();');
+  script.push('</script>');
+
+  // Inline bwclient.js
+  script.push('<script>');
+  script.push(getBwClientSource());
+  script.push('</script>');
+
+  // Init script: wire up bwclient
+  script.push('<script>');
+  script.push('(function() {');
+  script.push('  "use strict";');
   script.push('  var clientId = ' + JSON.stringify(clientId) + ';');
-  script.push('  var conn = bw.clientConnect("/__bw/events/" + clientId, {');
-  script.push('    actionUrl: "/__bw/action/" + clientId,');
   if (opts.allowExec) {
-    script.push('    allowExec: true,');
+    script.push('  bw._allowExec = true;');
   }
+  script.push('  bw._bwClient.id = clientId;');
+  script.push('  bw._bwClient._registerBuiltins();');
+  script.push('  bw._bwClient._wireActions();');
+  script.push('  bw._bwClient.connect("/bw/events/" + clientId, {');
   script.push('    onStatus: function(s) {');
   script.push('      if (typeof console !== "undefined") console.log("[bwserve] " + s);');
   script.push('    }');
   script.push('  });');
-
-  // data-bw-action click delegation
-  script.push('  document.addEventListener("click", function(e) {');
-  script.push('    var el = e.target.closest ? e.target.closest("[data-bw-action]") : null;');
-  script.push('    if (!el) return;');
-  script.push('    e.preventDefault();');
-  script.push('    var actionData = {};');
-  script.push('    if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");');
-  script.push('    var form = el.closest("div") || document;');
-  script.push('    var inp = form.querySelector("input[type=text],input:not([type])");');
-  script.push('    if (inp) { actionData.inputValue = inp.value; inp.value = ""; }');
-  script.push('    conn.sendAction(el.getAttribute("data-bw-action"), actionData);');
-  script.push('  });');
-
-  // Enter key on inputs
-  script.push('  document.addEventListener("keydown", function(e) {');
-  script.push('    if (e.key === "Enter" && e.target.tagName === "INPUT") {');
-  script.push('      var form = e.target.closest("div") || document;');
-  script.push('      var btn = form.querySelector("[data-bw-action]");');
-  script.push('      if (btn) {');
-  script.push('        conn.sendAction(btn.getAttribute("data-bw-action"), { inputValue: e.target.value });');
-  script.push('        e.target.value = "";');
-  script.push('      }');
-  script.push('    }');
-  script.push('  });');
-
   script.push('})();');
   script.push('</script>');
+
   script.push('</body>');
   script.push('</html>');
 
   return head.concat(script).join('\n');
 }
+
+/** bwshell version (from package.json) */
+generateShell.version = VERSION;
+
+/**
+ * bwserve attach — self-contained drop-in script generator.
+ *
+ * Generates JS that loads bitwrench + bwclient and auto-connects
+ * to a bwserve instance. When loaded in any browser page, it
+ * establishes an SSE connection for remote debugging.
+ *
+ * Usage:
+ *   <script src="http://localhost:7902/bw/attach.js"></script>
+ *
+ * @module bwserve/attach
+ */
+
+
+/**
+ * Generate the self-contained attach script.
+ *
+ * The returned JS string, when evaluated in a browser:
+ * 1. Checks if bw is already loaded; if not, injects bitwrench UMD
+ * 2. Evaluates bwclient source to set up bw._bwClient
+ * 3. Calls bw._bwClient.attach() to connect via SSE
+ *
+ * @param {Object} [opts]
+ * @param {string} [opts.origin=''] - Server origin (empty = same origin)
+ * @returns {string} JavaScript source code
+ */
+function generateAttachScript(opts) {
+  opts = opts || {};
+  var origin = opts.origin || '';
+
+  var clientSource = getBwClientSource();
+
+  return '(function() {\n'
+    + '  "use strict";\n'
+    + '  var origin = ' + JSON.stringify(origin) + ';\n'
+    + '  function _go() {\n'
+    + '    ' + clientSource + '\n'
+    + '    bw._bwClient.attach(origin, {\n'
+    + '      allowExec: true,\n'
+    + '      onStatus: function(s) { console.log("[bw-attach] " + s); }\n'
+    + '    });\n'
+    + '    console.log("[bw-attach] v' + VERSION + ' connecting to " + (origin || location.origin));\n'
+    + '  }\n'
+    + '  if (window.bw) { _go(); return; }\n'
+    + '  var s = document.createElement("script");\n'
+    + '  s.src = (origin || "") + "/bw/lib/bitwrench.umd.js";\n'
+    + '  s.onload = function() {\n'
+    + '    if (typeof bw !== "undefined" && bw.loadStyles) bw.loadStyles();\n'
+    + '    _go();\n'
+    + '  };\n'
+    + '  document.head.appendChild(s);\n'
+    + '})();\n';
+}
+
+generateAttachScript.version = VERSION;
 
 /**
  * bwserve — Server-driven UI library for bitwrench
@@ -357,6 +704,7 @@ var MIME_TYPES = {
  * @param {string} [opts.static] - Directory to serve static files from
  * @param {boolean} [opts.injectBitwrench=true] - Auto-inject bitwrench client JS
  * @param {string|Object} [opts.theme] - Theme preset name or config object
+ * @param {boolean} [opts.allowScreenshot=false] - Enable client.screenshot() capability
  * @returns {BwServeApp} Application instance
  */
 function create(opts) {
@@ -376,11 +724,12 @@ class BwServeApp {
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
     this.allowExec = opts.allowExec || false;
+    this.allowScreenshot = opts.allowScreenshot || false;
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
-    this._server = null;
     this._clientCounter = 0;
+    this._server = null;
   }
 
   /**
@@ -488,31 +837,61 @@ class BwServeApp {
     // Parse URL path (strip query string)
     var path$1 = url.split('?')[0];
 
-    // /__bw/bitwrench.umd.js — serve bitwrench client library
-    if (path$1 === '/__bw/bitwrench.umd.js' && method === 'GET') {
+    // /bw/attach.js — self-contained attach script for remote debugging
+    if (path$1 === '/bw/attach.js' && method === 'GET') {
+      return this._serveAttachScript(req, res);
+    }
+
+    // /bw/lib/bitwrench.umd.js — serve bitwrench client library
+    if (path$1 === '/bw/lib/bitwrench.umd.js' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.umd.js');
     }
 
-    // /__bw/bitwrench.umd.min.js — serve minified
-    if (path$1 === '/__bw/bitwrench.umd.min.js' && method === 'GET') {
+    // /bw/lib/bitwrench.umd.min.js — serve minified
+    if (path$1 === '/bw/lib/bitwrench.umd.min.js' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.umd.min.js');
     }
 
-    // /__bw/bitwrench.css — serve bitwrench CSS
-    if (path$1 === '/__bw/bitwrench.css' && method === 'GET') {
+    // /bw/lib/bitwrench.css — serve bitwrench CSS
+    if (path$1 === '/bw/lib/bitwrench.css' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.css');
     }
 
-    // /__bw/events/:clientId — SSE stream
-    if (path$1.startsWith('/__bw/events/') && method === 'GET') {
-      var clientId = path$1.slice('/__bw/events/'.length);
+    // /bw/events/:clientId — SSE stream
+    if (path$1.startsWith('/bw/events/') && method === 'GET') {
+      var clientId = path$1.slice('/bw/events/'.length);
       return this._handleSSE(req, res, clientId);
     }
 
-    // /__bw/action/:clientId — action POST
-    if (path$1.startsWith('/__bw/action/') && method === 'POST') {
-      var actionClientId = path$1.slice('/__bw/action/'.length);
-      return this._handleAction(req, res, actionClientId);
+    // CORS preflight for /bw/return/ (needed for cross-origin attach)
+    if (method === 'OPTIONS' && path$1.startsWith('/bw/return/')) {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    // /bw/return/<route>/<clientId> — unified return channel
+    if (method === 'POST' && path$1.startsWith('/bw/return/')) {
+      var rest = path$1.slice('/bw/return/'.length);
+      var slash = rest.indexOf('/');
+      if (slash === -1) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid return path' }));
+        return;
+      }
+      var route = rest.slice(0, slash);
+      var returnClientId = rest.slice(slash + 1);
+      return this._handleReturn(req, res, route, returnClientId);
+    }
+
+    // /bw/lib/vendor/:filename — serve vendored libraries (allowlisted)
+    if (path$1.startsWith('/bw/lib/vendor/') && method === 'GET') {
+      var vendorFile = path$1.slice('/bw/lib/vendor/'.length);
+      return this._serveVendorFile(res, vendorFile);
     }
 
     // Registered page routes — serve shell HTML
@@ -588,6 +967,7 @@ class BwServeApp {
 
     // Create client instance
     var client = new BwServeClient(clientId, res);
+    client._allowScreenshot = this.allowScreenshot;
 
     // Look up the pending client record (set during page serve)
     var pending = self._clients.get(clientId);
@@ -620,41 +1000,107 @@ class BwServeApp {
   }
 
   /**
-   * Handle an action POST from a client.
+   * Unified return channel handler.
+   * Handles all client-to-server POST-backs via /bw/return/<route>/<clientId>.
+   *
+   * Routes:
+   *   action     — fire-and-forget action dispatch (no requestId)
+   *   query      — resolve pending query promise
+   *   mount      — resolve pending mount promise
+   *   screenshot — resolve pending screenshot promise
+   *
    * @private
    */
-  _handleAction(req, res, clientId) {
+  _handleReturn(req, res, route, clientId) {
     var record = this._clients.get(clientId);
     if (!record || !record.client) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: 'Unknown client' }));
       return;
     }
 
     var body = '';
-    req.on('data', function(chunk) {
-      body += chunk;
-    });
+    req.on('data', function(chunk) { body += chunk; });
     req.on('end', function() {
       try {
         var data = JSON.parse(body);
-        var action = data.action;
-        var payload = data.data || data;
-        record.client._dispatch(action, payload);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        if (route === 'action' || route === 'event') {
+          // Action/event dispatch (no requestId/pending pattern)
+          var action = route === 'event'
+            ? '_bw_event'
+            : (data.result ? data.result.action : data.action);
+          var payload = route === 'event'
+            ? (data.result || data)
+            : (data.result ? data.result.data : data.data || data);
+          record.client._dispatch(action, payload);
+        } else {
+          // All other routes: resolve pending promise
+          record.client._resolvePending(data.requestId, data);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ error: e.message }));
       }
     });
   }
+
+  /**
+   * Serve the self-contained attach script at /bw/attach.js.
+   * Loads bitwrench + bwclient and auto-connects via SSE.
+   * @private
+   */
+  _serveAttachScript(req, res) {
+    try {
+      var js = generateAttachScript({ origin: '' });
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
+      });
+      res.end(js);
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Error generating attach script: ' + err.message);
+    }
+  }
+
+  /**
+   * Serve a vendored library file (allowlisted filenames only).
+   * @private
+   */
+  _serveVendorFile(res, filename) {
+    var allowed = ['html2canvas.min.js'];
+    if (allowed.indexOf(filename) === -1) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+      return;
+    }
+    var vendorDir = path.resolve(__dirname$1, '..', 'vendor');
+    var filePath = path.join(vendorDir, filename);
+    if (!fs.existsSync(filePath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Vendor file not found: ' + filename);
+      return;
+    }
+    var content = fs.readFileSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': 'application/javascript; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.end(content);
+  }
 }
 
-var index = { create, BwServeApp, BwServeClient };
+var version = VERSION;
+
+var index = { create, version: VERSION, BwServeApp, BwServeClient, generateShell };
 
 exports.BwServeApp = BwServeApp;
 exports.BwServeClient = BwServeClient;
 exports.create = create;
 exports.default = index;
+exports.generateShell = generateShell;
+exports.version = version;
 //# sourceMappingURL=bwserve.cjs.js.map

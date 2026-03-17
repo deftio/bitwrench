@@ -5,17 +5,17 @@
 | Field | Value |
 |-------|-------|
 | Version | 2.0.18 |
-| Generated | 2026-03-14 |
-| Total APIs | 104 |
-| Categories | 13 |
-| bitwrench.js | 5099 lines |
+| Generated | 2026-03-17 |
+| Total APIs | 105 |
+| Categories | 12 |
+| bitwrench.js | 4957 lines |
 | bitwrench-bccl.js | 3619 lines |
 
 ## Table of Contents
 
-- [Core](#core) (3)
+- [Core](#core) (5)
 - [DOM Generation](#dom-generation) (11)
-- [Identifiers](#identifiers) (2)
+- [Identifiers](#identifiers) (4)
 - [State Management](#state-management) (3)
 - [Events (DOM)](#events-dom-) (2)
 - [Pub/Sub](#pub-sub) (3)
@@ -25,7 +25,6 @@
 - [Utilities](#utilities) (1)
 - [Function Registry](#function-registry) (5)
 - [Component](#component) (7)
-- [Server](#server) (3)
 
 ---
 
@@ -41,6 +40,34 @@ Detect if running in Node.js environment. Useful for writing isomorphic code tha
 ```javascript
 if (bw.isNodeJS()) { console.log('Running in Node.js'); } else { console.log('Running in browser'); }
 ```
+
+---
+
+### `bw.parseJSONFlex(str)`
+
+Parse a bwserve protocol message string, supporting both strict JSON and r-prefixed relaxed JSON (single-quoted strings, trailing commas). The r-prefix format is designed for C/C++ string literals where double-quote escaping is painful. The parser is a state machine that walks character by character — not a regex replace. Escaping: apostrophes inside single-quoted values must be escaped with backslash: r{'name':'Barry\'s room'}
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `str` | `string` | - JSON or r-prefixed relaxed JSON string |
+
+**Returns:** `Object` — message object
+
+---
+
+### `bw.apply(msg)`
+
+Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.createDOM(node)) remove   — bw.cleanup(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call bw.apply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `msg` | `Object` | - Protocol message |
+
+**Returns:** `boolean` — if the message was applied successfully
 
 ---
 
@@ -296,6 +323,45 @@ bw.uuid()          // => "bw_m3x9k_1_7f2h4j6a8" bw.uuid('card')    // => "bw_car
 
 ---
 
+### `bw.assignUUID(taco, forceNew)`
+
+Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`. Idempotent by default — calling twice returns the same UUID. Pass `forceNew=true` to replace an existing UUID (useful in loops where each TACO needs a unique ID).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `taco` | `Object` | - A TACO object `{t, a, c, o}` |
+| `forceNew` | `boolean` | - If true, replaces any existing UUID with a new one |
+
+**Returns:** `string` — UUID string (e.g. 'bw_uuid_a1b2c3d4e5')
+
+**Example:**
+```javascript
+var card = bw.makeStatCard({ value: '0', label: 'Scans' }); var uuid = bw.assignUUID(card);        // 'bw_uuid_a1b2c3d4e5' var same = bw.assignUUID(card);        // same UUID (idempotent) var diff = bw.assignUUID(card, true);  // new UUID (forced)
+```
+
+---
+
+### `bw.getUUID(tacoOrElement)`
+
+Read the UUID from a TACO object or DOM element. Pure getter, no side effects.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `tacoOrElement` | `Object|Element` | - A TACO object or DOM element |
+
+**Returns:** `string|null` — UUID string, or null if none assigned
+
+**Example:**
+```javascript
+bw.getUUID(card)       // 'bw_uuid_a1b2c3d4e5' (from TACO) bw.getUUID(domEl)      // 'bw_uuid_a1b2c3d4e5' (from DOM element) bw.getUUID({t:'div'})  // null (no UUID)
+```
+
+---
+
 ### `bw.escapeHTML(str)`
 
 Escape HTML special characters to prevent XSS. Converts &, <, >, ", ', and / to their HTML entity equivalents. Used automatically by `bw.html()` unless raw mode is enabled.
@@ -535,19 +601,7 @@ Merge multiple style objects into one (left-to-right). Like `Object.assign()` fo
 
 **Example:**
 ```javascript
-var style = bw.s(bw.u.flex, bw.u.gap4, { color: 'red' }); // => { display: 'flex', gap: '1rem', color: 'red' }
-```
-
----
-
-### `bw.u`
-
-Pre-built CSS utility objects (like Tailwind utilities, but in JS). Compose with `bw.s()` to build inline styles without writing raw CSS strings. Includes flex, padding, margin, typography, color, border, and transition utilities.
-
-**Example:**
-```javascript
-{ t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.p4) },
-  c: 'Flexbox with 1rem gap and padding' }
+var style = bw.s({ display: 'flex' }, { gap: '1rem' }, { color: 'red' }); // => { display: 'flex', gap: '1rem', color: 'red' }
 ```
 
 ---
@@ -572,104 +626,115 @@ var css = bw.responsive('.grid', { base: { gridTemplateColumns: '1fr' }, md:   {
 
 ---
 
-### `bw.loadDefaultStyles(options = {})`
+### `bw.makeStyles(config)`
 
-Load the built-in Bootstrap-inspired default stylesheet. Injects bitwrench's batteries-included CSS (buttons, cards, grids, forms, alerts, badges, nav, tabs, etc.) into the document head. Call once at app startup. Returns null in Node.js (no DOM).
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `options` | `Object` | - Style loading options |
-| `options.minify` | `boolean` | - Minify the CSS output |
-
-**Returns:** `Element|null` — element if in browser, null in Node.js
-
-**Example:**
-```javascript
-bw.loadDefaultStyles();  // inject all default CSS
-```
-
----
-
-### `bw.generateTheme(name, config)`
-
-Generate a complete, scoped theme from seed colors. Produces CSS for all themed components (buttons, alerts, badges, cards, forms, nav, tables, tabs, list groups, pagination, progress, hero, utilities) scoped under `.name` class. Multiple themes can coexist in the stylesheet. Swap themes by changing the class on a container element.
+Generate a complete styles object from seed colors and layout config. Pure function — no DOM, no state, no side effects. All parameters are optional. Defaults to the bitwrench default palette.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `name` | `string` | - CSS scope class (e.g. 'ocean'). Empty string = unscoped global. |
-| `config` | `Object` | - Theme configuration |
+| `config` | `Object` | - Style configuration |
 | `config.primary` | `string` | - Primary brand color hex |
 | `config.secondary` | `string` | - Secondary color hex |
-| `config.tertiary` | `string` | - Tertiary/accent color hex (defaults to primary) |
-| `config.success` | `string` | - Success color hex |
-| `config.danger` | `string` | - Danger color hex |
-| `config.warning` | `string` | - Warning color hex |
-| `config.info` | `string` | - Info color hex |
-| `config.light` | `string` | - Light color hex |
-| `config.dark` | `string` | - Dark color hex |
-| `config.background` | `string` | - Page background hex (default: '#ffffff' light, derived dark) |
-| `config.surface` | `string` | - Surface/card background hex (default: '#f8f9fa' light, derived dark) |
+| `config.tertiary` | `string` | - Tertiary color hex (defaults to primary) |
 | `config.spacing` | `string` | - 'compact' | 'normal' | 'spacious' |
 | `config.radius` | `string` | - 'none' | 'sm' | 'md' | 'lg' | 'pill' |
-| `config.fontSize` | `number` | - Base font size scale factor |
-| `config.typeRatio` | `string|number` | - 'tight' | 'normal' | 'relaxed' | 'dramatic' or a number |
-| `config.elevation` | `string` | - 'flat' | 'sm' | 'md' | 'lg' |
-| `config.motion` | `string` | - 'reduced' | 'standard' | 'expressive' |
-| `config.harmonize` | `number` | - 0-1, semantic color hue shift toward primary |
-| `config.inject` | `boolean` | - Inject into DOM (browser only) |
 
-**Returns:** `Object` — css, palette, name, isLightPrimary, alternate: { css, palette } }
+**Returns:** `Object` — css, alternateCss, rules, alternateRules, palette, alternatePalette, isLightPrimary }
 
 **Example:**
 ```javascript
-// Generate and inject an ocean theme (primary + alternate) var theme = bw.generateTheme('ocean', { primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8' }); // Apply to a container document.getElementById('app').classList.add('ocean'); // Toggle to alternate palette bw.toggleTheme(); // Generate CSS for static export (Node.js) var result = bw.generateTheme('sunset', { primary: '#e76f51', secondary: '#264653', inject: false }); fs.writeFileSync('sunset.css', result.css + result.alternate.css);
+var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' }); console.log(styles.palette.primary.base); // '#4f46e5' // styles.css contains all themed CSS — nothing injected
 ```
 
 ---
 
-### `bw.applyTheme(mode)`
+### `bw.applyStyles(styles, scope)`
 
-Apply a theme mode. Switches between primary and alternate palettes by adding/removing the `bw_theme_alt` class on `<html>`.
+Inject styles into the DOM with optional scoping. Takes a styles object from `makeStyles()` and creates a single `<style>` element in `<head>`. If a scope selector is provided, all CSS rules are wrapped under that selector. Alternate CSS is wrapped under `.bw_theme_alt`.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `mode` | `string` | - 'primary' | 'alternate' | 'light' | 'dark' |
+| `styles` | `Object` | - Result of `bw.makeStyles()` |
+| `scope` | `string` | - Scope selector (e.g. '#my-dashboard', '.preview'). Omit for global. |
 
-**Returns:** `string` — mode: 'primary' or 'alternate'
+**Returns:** `Element|null` — `<style>` element, or null in Node.js
 
 **Example:**
 ```javascript
-bw.applyTheme('alternate');  // switch to alternate palette bw.applyTheme('dark');       // switch to whichever palette is darker bw.applyTheme('primary');    // switch back to primary palette
+var styles = bw.makeStyles({ primary: '#4f46e5' }); bw.applyStyles(styles);                     // global bw.applyStyles(styles, '#my-dashboard');     // scoped
 ```
 
 ---
 
-### `bw.toggleTheme()`
+### `bw.loadStyles(config, scope)`
 
-Toggle between primary and alternate theme palettes.
+Generate and apply styles in one call. Convenience wrapper. Equivalent to: `bw.applyStyles(bw.makeStyles(config), scope)`
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `config` | `Object` | - Style configuration (same as `makeStyles`) |
+| `scope` | `string` | - Scope selector (same as `applyStyles`) |
+
+**Returns:** `Element|null` — `<style>` element, or null in Node.js
+
+**Example:**
+```javascript
+bw.loadStyles();                                          // defaults, global bw.loadStyles({ primary: '#4f46e5' });                    // custom, global bw.loadStyles({ primary: '#4f46e5' }, '#my-dashboard');   // custom, scoped
+```
+
+---
+
+### `bw.loadReset()`
+
+Inject the CSS reset (box-sizing, html/body font, reduced-motion). Idempotent — if already injected, returns the existing `<style>` element.
+
+**Returns:** `Element|null` — `<style>` element, or null in Node.js
+
+**Example:**
+```javascript
+bw.loadReset();  // inject once, safe to call multiple times
+```
+
+---
+
+### `bw.toggleStyles(scope)`
+
+Toggle between primary and alternate palettes. Adds/removes the `bw_theme_alt` class on the scoping element. Without a scope, toggles on `<html>` (global). With a scope, toggles on the first matching element.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `scope` | `string` | - Scope selector (e.g. '#my-dashboard'). Omit for global. |
 
 **Returns:** `string` — mode after toggle: 'primary' or 'alternate'
 
 **Example:**
 ```javascript
-bw.toggleTheme();  // flip between primary and alternate
+bw.toggleStyles();                   // global toggle on <html> bw.toggleStyles('#my-dashboard');    // scoped toggle
 ```
 
 ---
 
-### `bw.clearTheme()`
+### `bw.clearStyles(scope)`
 
-Remove the currently active theme's injected style elements from the DOM. Use this before generating a new theme with a different name to prevent stale CSS accumulation.
+Remove injected styles for a given scope. Finds the `<style>` element by id and removes it. Also removes the `bw_theme_alt` class from the relevant element.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `scope` | `string` | - Scope selector. Omit to remove global styles. |
 
 **Example:**
 ```javascript
-bw.clearTheme();                   // remove current theme styles bw.generateTheme('sunset', conf);  // inject fresh theme
+bw.clearStyles();                    // remove global styles bw.clearStyles('#my-dashboard');     // remove scoped styles bw.clearStyles('reset');             // remove the CSS reset
 ```
 
 ---
@@ -2193,7 +2258,7 @@ Dispatch a message to a component by UUID or user tag. Finds the component's DOM
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string` | - Component UUID (data-bw_comp_id) or user tag (CSS class) |
+| `target` | `string` | - Component UUID (bw_uuid_*), comp ID (data-bw_comp_id), or user tag (CSS class) |
 | `action` | `string` | - Method name to call on the component |
 | `data` | `*` | - Data to pass to the method |
 
@@ -2236,57 +2301,5 @@ Pre-compile a TACO definition into a factory function. The factory produces Comp
 | `taco` | `Object` | - TACO definition |
 
 **Returns:** `Function` — function(initialState?) → ComponentHandle
-
----
-
-## Server
-
-### `bw.clientParse(str)`
-
-Parse a bwserve protocol message string, supporting both strict JSON and r-prefixed relaxed JSON (single-quoted strings, trailing commas). The r-prefix format is designed for C/C++ string literals where double-quote escaping is painful. The parser is a state machine that walks character by character — not a regex replace. Escaping: apostrophes inside single-quoted values must be escaped with backslash: r{'name':'Barry\'s room'}
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `str` | `string` | - JSON or r-prefixed relaxed JSON string |
-
-**Returns:** `Object` — message object
-
----
-
-### `bw.clientApply(msg)`
-
-Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.createDOM(node)) remove   — bw.cleanup(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call clientApply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered or built-in function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `msg` | `Object` | - Protocol message |
-
-**Returns:** `boolean` — if the message was applied successfully
-
----
-
-### `bw.clientConnect(url, opts)`
-
-Connect to a bwserve SSE endpoint and apply protocol messages automatically. Returns a connection object with sendAction(), on(), and close() methods.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `url` | `string` | - SSE endpoint URL (e.g., '/__bw/events/client-1') |
-| `opts` | `Object` | - Connection options |
-| `opts.transport` | `string` | - Transport type: 'sse' (default) or 'poll' |
-| `opts.interval` | `number` | - Poll interval in ms (only for 'poll' transport) |
-| `opts.actionUrl` | `string` | - POST endpoint for actions (default: derived from url) |
-| `opts.reconnect` | `boolean` | - Auto-reconnect on disconnect |
-| `opts.allowExec` | `boolean` | - Enable exec message type (arbitrary JS execution) |
-| `opts.onStatus` | `Function` | - Status callback: 'connecting'|'connected'|'disconnected' |
-| `opts.onMessage` | `Function` | - Raw message callback (before clientApply) |
-
-**Returns:** `Object` — object { sendAction, on, close, status }
 
 ---

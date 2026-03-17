@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 /**
  * Bitwrench v2 Components
  *
@@ -328,7 +328,7 @@ function makeCol(props = {}) {
       if (breakpoint === 'xs') {
         classes.push(`bw_col_${value}`);
       } else {
-        classes.push(`bw_col_${breakpoint}-${value}`);
+        classes.push(`bw_col_${breakpoint}_${value}`);
       }
     });
   } else if (size) {
@@ -1711,8 +1711,8 @@ function makePagination(props = {}) {
     t: 'li',
     a: { class: `bw_page_item ${currentPage <= 1 ? 'bw_disabled' : ''}`.trim() },
     c: {
-      t: 'a',
-      a: { class: 'bw_page_link', href: '#', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous' },
+      t: 'button',
+      a: { class: 'bw_page_link', type: 'button', onclick: handleClick(currentPage - 1), 'aria-label': 'Previous', disabled: currentPage <= 1 ? true : undefined },
       c: '\u2039'
     }
   });
@@ -1724,8 +1724,8 @@ function makePagination(props = {}) {
         t: 'li',
         a: { class: `bw_page_item ${pageNum === currentPage ? 'bw_active' : ''}`.trim() },
         c: {
-          t: 'a',
-          a: { class: 'bw_page_link', href: '#', onclick: handleClick(pageNum) },
+          t: 'button',
+          a: { class: 'bw_page_link', type: 'button', onclick: handleClick(pageNum), 'aria-current': pageNum === currentPage ? 'page' : undefined },
           c: '' + pageNum
         }
       });
@@ -1737,8 +1737,8 @@ function makePagination(props = {}) {
     t: 'li',
     a: { class: `bw_page_item ${currentPage >= pages ? 'bw_disabled' : ''}`.trim() },
     c: {
-      t: 'a',
-      a: { class: 'bw_page_link', href: '#', onclick: handleClick(currentPage + 1), 'aria-label': 'Next' },
+      t: 'button',
+      a: { class: 'bw_page_link', type: 'button', onclick: handleClick(currentPage + 1), 'aria-label': 'Next', disabled: currentPage >= pages ? true : undefined },
       c: '\u203A'
     }
   });

@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.17 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -190,14 +190,14 @@
    */
 
   var VERSION_INFO = {
-    version: '2.0.17',
+    version: '2.0.18',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-13T23:12:44.681Z'
+    buildDate: '2026-03-17T00:47:43.527Z'
   };
 
   /**
@@ -486,13 +486,16 @@
    */
   function deriveShades(hex) {
     var rgb = colorParse(hex);
+    // For light input colors (L > 75), mixing toward white produces invisible borders.
+    // Darken instead so borders remain visible against light backgrounds.
+    var borderColor = hexToHsl(hex)[2] > 75 ? adjustLightness(hex, -18) : mixColor(hex, '#ffffff', 0.60);
     return {
       base: hex,
       hover: adjustLightness(hex, -10),
       active: adjustLightness(hex, -15),
       light: mixColor(hex, '#ffffff', 0.85),
       darkText: adjustLightness(hex, -40),
-      border: mixColor(hex, '#ffffff', 0.60),
+      border: borderColor,
       focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
       textOn: textOnColor(hex)
     };
@@ -551,18 +554,26 @@
     alt.secondary = deriveAlternateSeed(config.secondary);
     alt.tertiary = config.tertiary ? deriveAlternateSeed(config.tertiary) : alt.primary;
 
-    // Derive alternate surface colors from primary hue
+    // Derive alternate surface colors from primary hue.
+    // Check actual page surface brightness (not seed color brightness) to decide
+    // whether alternate should be dark or light.  The page surface is what the
+    // user sees; seeds can be dark while the page is still light (default L=96).
     var priHsl = hexToHsl(config.primary);
     var h = priHsl[0];
-    var isLight = isLightPalette(config);
+    var primarySurface = config.surface || hslToHex([h, 8, 96]);
+    var isLight = relativeLuminance(primarySurface) > 0.179;
     if (isLight) {
-      // Primary is light → alternate needs dark surfaces
+      // Page surface is light → alternate needs dark surfaces
       alt.light = hslToHex([h, Math.min(priHsl[1], 15), 15]);
       alt.dark = hslToHex([h, 5, 88]);
+      alt.surface = hslToHex([h, 12, 18]);
+      alt.background = hslToHex([h, 10, 14]);
     } else {
-      // Primary is dark → alternate needs light surfaces
+      // Page surface is dark → alternate needs light surfaces
       alt.light = hslToHex([h, Math.min(priHsl[1], 10), 96]);
       alt.dark = hslToHex([h, 10, 18]);
+      alt.surface = hslToHex([h, 8, 96]);
+      alt.background = hslToHex([h, 6, 98]);
     }
 
     // Semantic colors: harmonize toward primary, then invert for alternate
@@ -611,10 +622,16 @@
     var darkBase = config.dark || hslToHex([h, 10, 13]);
 
     // Background & surface tokens — tinted with primary hue for theme personality.
-    // Very subtle: bg at L=98/S=6, surface at L=96/S=8.
+    // Saturation high enough that the hue is visible (each theme feels distinct)
+    // but low enough to stay neutral and readable.
     // User can override with config.background / config.surface.
-    var bgBase = config.background || hslToHex([h, 6, 98]);
-    var surfBase = config.surface || hslToHex([h, 8, 96]);
+    var bgBase = config.background || hslToHex([h, 22, 96]);
+    var surfBase = config.surface || hslToHex([h, 25, 94]);
+
+    // surfaceAlt: subtle background variant for striped rows, hover states, headers.
+    // Slightly lighter than surface in dark mode, slightly darker in light mode.
+    var surfHsl = hexToHsl(surfBase);
+    var surfAlt = surfHsl[2] <= 50 ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)]) : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]);
     var palette = {
       primary: deriveShades(config.primary),
       secondary: deriveShades(config.secondary),
@@ -626,7 +643,8 @@
       light: deriveShades(lightBase),
       dark: deriveShades(darkBase),
       background: bgBase,
-      surface: surfBase
+      surface: surfBase,
+      surfaceAlt: surfAlt
     };
     return palette;
   }
@@ -651,27 +669,28 @@
     5: '1.5rem',
     // 24px
     6: '2rem'};
+  var _S = SPACING_SCALE;
   var SPACING_PRESETS = {
     compact: {
-      btn: SPACING_SCALE[1] + ' ' + SPACING_SCALE[3],
-      card: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4],
-      alert: SPACING_SCALE[2] + ' ' + SPACING_SCALE[4],
-      cell: SPACING_SCALE[2] + ' ' + SPACING_SCALE[3],
-      input: SPACING_SCALE[1] + ' ' + SPACING_SCALE[3]
+      btn: _S[1] + ' ' + _S[3],
+      card: _S[3] + ' ' + _S[4],
+      alert: _S[2] + ' ' + _S[4],
+      cell: _S[2] + ' ' + _S[3],
+      input: _S[1] + ' ' + _S[3]
     },
     normal: {
-      btn: SPACING_SCALE[2] + ' ' + SPACING_SCALE[4],
-      card: SPACING_SCALE[5] + ' ' + SPACING_SCALE[5],
-      alert: SPACING_SCALE[3] + ' ' + SPACING_SCALE[5],
-      cell: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4],
-      input: SPACING_SCALE[2] + ' ' + SPACING_SCALE[3]
+      btn: _S[2] + ' ' + _S[4],
+      card: _S[5] + ' ' + _S[5],
+      alert: _S[3] + ' ' + _S[5],
+      cell: _S[3] + ' ' + _S[4],
+      input: _S[2] + ' ' + _S[3]
     },
     spacious: {
-      btn: SPACING_SCALE[3] + ' ' + SPACING_SCALE[5],
-      card: SPACING_SCALE[6] + ' ' + SPACING_SCALE[6],
-      alert: SPACING_SCALE[4] + ' ' + SPACING_SCALE[5],
-      cell: SPACING_SCALE[4] + ' ' + SPACING_SCALE[5],
-      input: SPACING_SCALE[3] + ' ' + SPACING_SCALE[4]
+      btn: _S[3] + ' ' + _S[5],
+      card: _S[6] + ' ' + _S[6],
+      alert: _S[4] + ' ' + _S[5],
+      cell: _S[4] + ' ' + _S[5],
+      input: _S[3] + ' ' + _S[4]
     }
   };
   var RADIUS_PRESETS = {
@@ -813,68 +832,13 @@
    * Built-in theme presets — named color combinations
    * Each preset provides primary, secondary, and tertiary seed colors.
    */
-  var THEME_PRESETS = {
-    teal: {
-      primary: '#006666',
-      secondary: '#6c757d',
-      tertiary: '#006666'
-    },
-    ocean: {
-      primary: '#0077b6',
-      secondary: '#90e0ef',
-      tertiary: '#00b4d8'
-    },
-    sunset: {
-      primary: '#e76f51',
-      secondary: '#264653',
-      tertiary: '#e9c46a'
-    },
-    forest: {
-      primary: '#2d6a4f',
-      secondary: '#95d5b2',
-      tertiary: '#52b788'
-    },
-    slate: {
-      primary: '#343a40',
-      secondary: '#adb5bd',
-      tertiary: '#6c757d'
-    },
-    rose: {
-      primary: '#e11d48',
-      secondary: '#fda4af',
-      tertiary: '#fb7185'
-    },
-    indigo: {
-      primary: '#4f46e5',
-      secondary: '#a5b4fc',
-      tertiary: '#818cf8'
-    },
-    amber: {
-      primary: '#d97706',
-      secondary: '#fbbf24',
-      tertiary: '#f59e0b'
-    },
-    emerald: {
-      primary: '#059669',
-      secondary: '#6ee7b7',
-      tertiary: '#34d399'
-    },
-    nord: {
-      primary: '#5e81ac',
-      secondary: '#88c0d0',
-      tertiary: '#81a1c1'
-    },
-    coral: {
-      primary: '#ef6461',
-      secondary: '#4a7c7e',
-      tertiary: '#e8a87c'
-    },
-    midnight: {
-      primary: '#1e3a5f',
-      secondary: '#7c8db5',
-      tertiary: '#3d5a80'
-    }
-  };
+  var THEME_PRESETS = Object.fromEntries([['teal', '#006666', '#6c757d', '#006666'], ['ocean', '#0077b6', '#90e0ef', '#00b4d8'], ['sunset', '#e76f51', '#264653', '#e9c46a'], ['forest', '#2d6a4f', '#95d5b2', '#52b788'], ['slate', '#343a40', '#adb5bd', '#6c757d'], ['rose', '#e11d48', '#fda4af', '#fb7185'], ['indigo', '#4f46e5', '#a5b4fc', '#818cf8'], ['amber', '#d97706', '#fbbf24', '#f59e0b'], ['emerald', '#059669', '#6ee7b7', '#34d399'], ['nord', '#5e81ac', '#88c0d0', '#81a1c1'], ['coral', '#ef6461', '#4a7c7e', '#e8a87c'], ['midnight', '#1e3a5f', '#7c8db5', '#3d5a80']].map(function (e) {
+    return [e[0], {
+      primary: e[1],
+      secondary: e[2],
+      tertiary: e[3]
+    }];
+  }));
 
   /**
    * Resolve layout config to spacing, radius, typeScale, elevation, and motion objects.
@@ -922,6 +886,7 @@
     }).join(', ');
     return '.' + name + ' ' + sel;
   }
+  var _sx = scopeSelector;
 
   // =========================================================================
   // Themed CSS generators
@@ -930,12 +895,12 @@
   function generateTypographyThemed(scope, palette, layout) {
     var mot = layout.motion;
     var rules = {};
-    rules[scopeSelector(scope, 'a')] = {
+    rules[_sx(scope, 'a')] = {
       'color': palette.primary.base,
       'text-decoration': 'none',
       'transition': 'color ' + mot.fast + ' ' + mot.easing
     };
-    rules[scopeSelector(scope, 'a:hover')] = {
+    rules[_sx(scope, 'a:hover')] = {
       'color': palette.primary.hover,
       'text-decoration': 'underline'
     };
@@ -947,11 +912,11 @@
     var rd = layout.radius;
 
     // Base button (only when scoped — unscoped uses defaultStyles)
-    rules[scopeSelector(scope, '.bw_btn')] = {
+    rules[_sx(scope, '.bw_btn')] = {
       'padding': sp.btn,
       'border-radius': rd.btn
     };
-    rules[scopeSelector(scope, '.bw_btn:focus-visible')] = {
+    rules[_sx(scope, '.bw_btn:focus-visible')] = {
       'outline': '2px solid currentColor',
       'outline-offset': '2px',
       'box-shadow': '0 0 0 3px ' + palette.primary.focus
@@ -960,12 +925,12 @@
     // Variant colors handled by palette class on component root
 
     // Size variants (structural, reuse layout radius)
-    rules[scopeSelector(scope, '.bw_btn_lg')] = {
+    rules[_sx(scope, '.bw_btn_lg')] = {
       'padding': '0.625rem 1.5rem',
       'font-size': '1rem',
       'border-radius': rd.btn === '50rem' ? '50rem' : parseInt(rd.btn) + 2 + 'px'
     };
-    rules[scopeSelector(scope, '.bw_btn_sm')] = {
+    rules[_sx(scope, '.bw_btn_sm')] = {
       'padding': '0.25rem 0.75rem',
       'font-size': '0.8125rem',
       'border-radius': rd.btn === '50rem' ? '50rem' : Math.max(parseInt(rd.btn) - 1, 0) + 'px'
@@ -976,7 +941,7 @@
     var rules = {};
     var sp = layout.spacing;
     var rd = layout.radius;
-    rules[scopeSelector(scope, '.bw_alert')] = {
+    rules[_sx(scope, '.bw_alert')] = {
       'padding': sp.alert,
       'border-radius': rd.alert
     };
@@ -994,38 +959,38 @@
     var rd = layout.radius;
     var elev = layout.elevation;
     var motion = layout.motion;
-    rules[scopeSelector(scope, '.bw_card')] = {
+    rules[_sx(scope, '.bw_card')] = {
       'background-color': palette.surface || '#fff',
       'border': '1px solid ' + palette.light.border,
       'border-radius': rd.card,
       'box-shadow': elev.sm,
       'transition': 'box-shadow ' + motion.normal + ' ' + motion.easing + ', transform ' + motion.normal + ' ' + motion.easing
     };
-    rules[scopeSelector(scope, '.bw_card:hover')] = {
+    rules[_sx(scope, '.bw_card:hover')] = {
       'box-shadow': elev.md
     };
-    rules[scopeSelector(scope, '.bw_card_hoverable:hover')] = {
+    rules[_sx(scope, '.bw_card_hoverable:hover')] = {
       'box-shadow': elev.lg
     };
-    rules[scopeSelector(scope, '.bw_card_body')] = {
+    rules[_sx(scope, '.bw_card_body')] = {
       'padding': sp.card
     };
-    rules[scopeSelector(scope, '.bw_card_header')] = {
+    rules[_sx(scope, '.bw_card_header')] = {
       'padding': sp.card.split(' ').map(function (v) {
         return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem';
       }).join(' '),
-      'background-color': palette.light.light,
+      'background-color': palette.surfaceAlt,
       'border-bottom': '1px solid ' + palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_card_footer')] = {
-      'background-color': palette.light.light,
+    rules[_sx(scope, '.bw_card_footer')] = {
+      'background-color': palette.surfaceAlt,
       'border-top': '1px solid ' + palette.light.border,
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_card_title')] = {
+    rules[_sx(scope, '.bw_card_title')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_card_subtitle')] = {
+    rules[_sx(scope, '.bw_card_subtitle')] = {
       'color': palette.secondary.base
     };
 
@@ -1037,101 +1002,104 @@
     var rules = {};
     var sp = layout.spacing;
     var rd = layout.radius;
-    rules[scopeSelector(scope, '.bw_form_control')] = {
+    rules[_sx(scope, '.bw_form_control')] = {
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_form_control:focus')] = {
+    rules[_sx(scope, '.bw_form_control:focus')] = {
       'border-color': palette.primary.border,
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '-1px',
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_form_control::placeholder')] = {
+    rules[_sx(scope, '.bw_form_control::placeholder')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_form_label')] = {
+    rules[_sx(scope, '.bw_form_label')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_form_text')] = {
+    rules[_sx(scope, '.bw_form_text')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_form_check_input:checked')] = {
+    rules[_sx(scope, '.bw_form_check_input:checked')] = {
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_form_check_input:focus')] = {
+    rules[_sx(scope, '.bw_form_check_input:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     // Validation states
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_valid')] = {
+    rules[_sx(scope, '.bw_form_control.bw_is_valid')] = {
       'border-color': palette.success.base
     };
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_valid:focus')] = {
+    rules[_sx(scope, '.bw_form_control.bw_is_valid:focus')] = {
       'border-color': palette.success.base,
       'box-shadow': '0 0 0 0.2rem ' + palette.success.focus
     };
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_invalid')] = {
+    rules[_sx(scope, '.bw_form_control.bw_is_invalid')] = {
       'border-color': palette.danger.base
     };
-    rules[scopeSelector(scope, '.bw_form_control.bw_is_invalid:focus')] = {
+    rules[_sx(scope, '.bw_form_control.bw_is_invalid:focus')] = {
       'border-color': palette.danger.base,
       'box-shadow': '0 0 0 0.2rem ' + palette.danger.focus
     };
     // Form select
-    rules[scopeSelector(scope, '.bw_form_select')] = {
+    rules[_sx(scope, '.bw_form_select')] = {
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_form_select:focus')] = {
+    rules[_sx(scope, '.bw_form_select:focus')] = {
       'border-color': palette.primary.border,
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     return rules;
   }
-  function generateNavigation(scope, palette) {
+  function generateNavigation(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_navbar')] = {
-      'background-color': palette.light.light,
+    rules[_sx(scope, '.bw_navbar')] = {
+      'background-color': palette.surfaceAlt,
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_navbar_brand')] = {
+    rules[_sx(scope, '.bw_navbar_brand')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link')] = {
-      'color': palette.secondary.base
+    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
+      'color': palette.secondary.base,
+      'border-radius': layout.radius.btn
     };
-    rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
-      'color': palette.dark.base
+    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
+      'color': palette.dark.base,
+      'background-color': palette.surfaceAlt
     };
-    rules[scopeSelector(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
       'color': palette.primary.base,
-      'background-color': palette.primary.focus
+      'background-color': palette.primary.focus,
+      'font-weight': '600'
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark')] = {
+    rules[_sx(scope, '.bw_navbar_dark')] = {
       'background-color': palette.dark.base,
       'border-bottom-color': palette.dark.hover
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_navbar_brand')] = {
+    rules[_sx(scope, '.bw_navbar_dark .bw_navbar_brand')] = {
       'color': palette.light.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link')] = {
-      'color': 'rgba(255,255,255,.65)'
+    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link')] = {
+      'color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
-      'color': '#fff'
+    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
+      'color': palette.light.base
     };
-    rules[scopeSelector(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
-      'color': '#fff',
+    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
+      'color': palette.light.base,
       'font-weight': '600'
     };
-    rules[scopeSelector(scope, '.bw_nav_pills .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_nav_pills .bw_nav_link.active')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base
     };
@@ -1140,47 +1108,57 @@
   function generateTables(scope, palette, layout) {
     var rules = {};
     var sp = layout.spacing;
-    rules[scopeSelector(scope, '.bw_table')] = {
+    rules[_sx(scope, '.bw_table')] = {
       'color': palette.dark.base,
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_table > :not(caption) > * > *')] = {
+    rules[_sx(scope, '.bw_table > :not(caption) > * > *')] = {
       'padding': sp.cell,
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_table > thead > tr > *')] = {
+    rules[_sx(scope, '.bw_table > thead > tr > *')] = {
       'color': palette.secondary.base,
       'border-bottom-color': palette.light.border,
-      'background-color': palette.light.light
+      'background-color': palette.surfaceAlt
     };
-    rules[scopeSelector(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-      'background-color': 'rgba(0, 0, 0, 0.05)'
+    rules[_sx(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
+      'background-color': palette.surfaceAlt
     };
-    rules[scopeSelector(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
+    rules[_sx(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
       'background-color': palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_table_bordered')] = {
+    rules[_sx(scope, '.bw_table_selectable > tbody > tr')] = {
+      'cursor': 'pointer'
+    };
+    rules[_sx(scope, '.bw_table > tbody > tr.bw_table_row_selected > *')] = {
+      'background-color': palette.primary.light
+    };
+    rules[_sx(scope, '.bw_table_bordered')] = {
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_table caption')] = {
+    rules[_sx(scope, '.bw_table caption')] = {
       'color': palette.secondary.base
     };
     return rules;
   }
-  function generateTabs(scope, palette) {
-    var rules = {};
-    rules[scopeSelector(scope, '.bw_nav_tabs')] = {
+  function generateTabs(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_nav_tabs')] = {
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_nav_link')] = {
-      'color': palette.secondary.base
+    rules[_sx(scope, '.bw_nav_link')] = {
+      'color': palette.secondary.base,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
-    rules[scopeSelector(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
+    rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
       'color': palette.dark.base,
+      'background-color': palette.surfaceAlt,
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
       'color': palette.primary.base,
+      'background-color': palette.primary.focus,
       'border-bottom': '2px solid ' + palette.primary.base
     };
     return rules;
@@ -1188,49 +1166,62 @@
   function generateListGroups(scope, palette, layout) {
     var rules = {};
     var sp = layout.spacing;
-    rules[scopeSelector(scope, '.bw_list_group_item')] = {
+    var mo = layout.motion;
+    rules[_sx(scope, '.bw_list_group_item')] = {
       'padding': sp.cell,
       'color': palette.dark.base,
       'background-color': palette.surface || '#fff',
-      'border-color': palette.light.border
+      'border-color': palette.light.border,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
-    rules[scopeSelector(scope, 'a.bw_list_group_item:hover')] = {
-      'background-color': palette.light.light,
+    rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
+      'background-color': palette.surfaceAlt,
       'color': palette.dark.hover
     };
-    rules[scopeSelector(scope, '.bw_list_group_item.active')] = {
+    rules[_sx(scope, '.bw_list_group_item.active')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_list_group_item.disabled')] = {
+    rules[_sx(scope, '.bw_list_group_item.disabled')] = {
       'color': palette.secondary.base,
       'background-color': palette.surface || '#fff'
     };
     return rules;
   }
-  function generatePagination(scope, palette) {
-    var rules = {};
-    rules[scopeSelector(scope, '.bw_page_link')] = {
+  function generatePagination(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion,
+      rd = layout.radius;
+    rules[_sx(scope, '.bw_page_item:first-child .bw_page_link')] = {
+      'border-top-left-radius': rd.btn,
+      'border-bottom-left-radius': rd.btn
+    };
+    rules[_sx(scope, '.bw_page_item:last-child .bw_page_link')] = {
+      'border-top-right-radius': rd.btn,
+      'border-bottom-right-radius': rd.btn
+    };
+    rules[_sx(scope, '.bw_page_link')] = {
       'color': palette.primary.base,
       'background-color': palette.surface || '#fff',
-      'border-color': palette.light.border
+      'border-color': palette.light.border,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
-    rules[scopeSelector(scope, '.bw_page_link:hover')] = {
+    rules[_sx(scope, '.bw_page_link:hover')] = {
       'color': palette.primary.hover,
-      'background-color': palette.light.light,
+      'background-color': palette.surfaceAlt,
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_page_link:focus')] = {
+    rules[_sx(scope, '.bw_page_link:focus')] = {
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '-2px'
     };
-    rules[scopeSelector(scope, '.bw_page_item.bw_active .bw_page_link')] = {
+    rules[_sx(scope, '.bw_page_item.bw_active .bw_page_link')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
+    rules[_sx(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
       'color': palette.secondary.base,
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
@@ -1239,12 +1230,12 @@
   }
   function generateProgress(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_progress')] = {
-      'background-color': palette.light.light,
+    rules[_sx(scope, '.bw_progress')] = {
+      'background-color': palette.surfaceAlt,
       'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
     };
-    rules[scopeSelector(scope, '.bw_progress_bar')] = {
-      'color': '#fff',
+    rules[_sx(scope, '.bw_progress_bar')] = {
+      'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
     };
@@ -1263,24 +1254,30 @@
       'color': palette.dark.base,
       'background-color': bg
     };
-    rules[scopeSelector(scope, 'body')] = baseReset;
-    // Also apply to the scope element itself so themes work on any container, not just body
-    if (scope) {
-      rules['.' + scope] = baseReset;
-    }
+    rules[_sx(scope, 'body')] = baseReset;
     return rules;
   }
-  function generateBreadcrumbThemed(scope, palette) {
-    var rules = {};
-    rules[scopeSelector(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
+  function generateBreadcrumbThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_breadcrumb')] = {
+      'background-color': palette.surfaceAlt,
+      'padding': '0.625rem 1rem',
+      'border-radius': layout.radius.btn
+    };
+    rules[_sx(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_breadcrumb_item.active')] = {
-      'color': palette.secondary.base
+    rules[_sx(scope, '.bw_breadcrumb_item a')] = {
+      'color': palette.primary.base,
+      'transition': 'color ' + mo.fast + ' ' + mo.easing
     };
-    rules[scopeSelector(scope, '.bw_breadcrumb_item a:hover')] = {
+    rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
       'color': palette.primary.hover,
       'text-decoration': 'underline'
+    };
+    rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
+      'color': palette.dark.base
     };
     return rules;
   }
@@ -1289,240 +1286,273 @@
 
   function generateCloseButtonThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_close')] = {
+    rules[_sx(scope, '.bw_close')] = {
       'color': palette.dark.base,
       'opacity': '0.5'
     };
-    rules[scopeSelector(scope, '.bw_close:focus')] = {
+    rules[_sx(scope, '.bw_close:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     return rules;
   }
   function generateSectionsThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_section_subtitle')] = {
+    rules[_sx(scope, '.bw_section_subtitle')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_feature_description')] = {
+    rules[_sx(scope, '.bw_feature_description')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_cta_description')] = {
+    rules[_sx(scope, '.bw_cta_description')] = {
       'color': palette.secondary.base
     };
     return rules;
   }
-  function generateAccordionThemed(scope, palette) {
+  function generateAccordionThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_accordion_item')] = {
+    var rd = layout ? layout.radius : {
+      card: '8px'
+    };
+    rules[_sx(scope, '.bw_accordion_item')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_accordion_button')] = {
+    rules[_sx(scope, '.bw_accordion_item:first-child')] = {
+      'border-top-left-radius': rd.card,
+      'border-top-right-radius': rd.card
+    };
+    rules[_sx(scope, '.bw_accordion_item:last-child')] = {
+      'border-bottom-left-radius': rd.card,
+      'border-bottom-right-radius': rd.card
+    };
+    rules[_sx(scope, '.bw_accordion_button')] = {
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
+    rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
       'color': palette.primary.darkText,
-      'background-color': palette.primary.light
+      'background-color': palette.primary.light,
+      'border-left': '3px solid ' + palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:hover')] = {
-      'background-color': palette.light.light
+    rules[_sx(scope, '.bw_accordion_button:hover')] = {
+      'background-color': palette.surfaceAlt
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
-      'background-color': palette.primary.hover
+    rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
+      'background-color': palette.primary.base,
+      'color': palette.primary.textOn
     };
-    rules[scopeSelector(scope, '.bw_accordion_button:focus-visible')] = {
+    rules[_sx(scope, '.bw_accordion_button:focus-visible')] = {
       'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_accordion_body')] = {
-      'border-top': '1px solid ' + palette.light.border
+    rules[_sx(scope, '.bw_accordion_body')] = {
+      'border-top': '1px solid ' + palette.light.border,
+      'background-color': palette.surfaceAlt
     };
     return rules;
   }
   function generateCarouselThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_carousel')] = {
-      'background-color': palette.light.light
+    rules[_sx(scope, '.bw_carousel')] = {
+      'background-color': palette.surfaceAlt
     };
-    rules[scopeSelector(scope, '.bw_carousel_indicator.active')] = {
+    rules[_sx(scope, '.bw_carousel_indicator.active')] = {
       'background-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_carousel_control')] = {
-      'background-color': 'rgba(0,0,0,0.4)',
-      'color': '#fff'
+    rules[_sx(scope, '.bw_carousel_control')] = {
+      'background-color': palette.dark.base,
+      'color': palette.dark.textOn
     };
-    rules[scopeSelector(scope, '.bw_carousel_control:hover')] = {
-      'background-color': 'rgba(0,0,0,0.6)'
+    rules[_sx(scope, '.bw_carousel_control:hover')] = {
+      'background-color': palette.dark.hover
     };
-    rules[scopeSelector(scope, '.bw_carousel_caption')] = {
-      'background': 'linear-gradient(transparent, rgba(0,0,0,0.6))',
-      'color': '#fff'
+    rules[_sx(scope, '.bw_carousel_caption')] = {
+      'background': 'linear-gradient(transparent, ' + palette.dark.base + ')',
+      'color': palette.dark.textOn
     };
     return rules;
   }
   function generateModalThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_modal_content')] = {
+    rules[_sx(scope, '.bw_modal_content')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
       'box-shadow': layout.elevation.lg
     };
-    rules[scopeSelector(scope, '.bw_modal_header')] = {
+    rules[_sx(scope, '.bw_modal_header')] = {
       'border-bottom-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_modal_footer')] = {
+    rules[_sx(scope, '.bw_modal_footer')] = {
       'border-top-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_modal_title')] = {
+    rules[_sx(scope, '.bw_modal_title')] = {
       'color': palette.dark.base
     };
     return rules;
   }
   function generateToastThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_toast')] = {
+    rules[_sx(scope, '.bw_toast')] = {
       'background-color': palette.surface || '#fff',
-      'border-color': 'rgba(0,0,0,0.1)',
+      'border-color': palette.light.border,
       'box-shadow': layout.elevation.lg
     };
-    rules[scopeSelector(scope, '.bw_toast_header')] = {
-      'border-bottom-color': 'rgba(0,0,0,0.05)'
+    rules[_sx(scope, '.bw_toast_header')] = {
+      'border-bottom-color': palette.light.border
     };
     // Variant toast borders handled by palette class
     return rules;
   }
   function generateDropdownThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_dropdown_menu')] = {
+    rules[_sx(scope, '.bw_dropdown_menu')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
       'box-shadow': layout.elevation.md
     };
-    rules[scopeSelector(scope, '.bw_dropdown_item')] = {
-      'color': palette.dark.base
+    rules[_sx(scope, '.bw_dropdown_item')] = {
+      'color': palette.dark.base,
+      'transition': 'background-color ' + layout.motion.fast + ' ' + layout.motion.easing
     };
-    rules[scopeSelector(scope, '.bw_dropdown_item:hover')] = {
+    rules[_sx(scope, '.bw_dropdown_item:hover')] = {
       'color': palette.dark.hover,
-      'background-color': palette.light.light
+      'background-color': palette.surfaceAlt
     };
-    rules[scopeSelector(scope, '.bw_dropdown_item.disabled')] = {
+    rules[_sx(scope, '.bw_dropdown_item.disabled')] = {
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_dropdown_divider')] = {
+    rules[_sx(scope, '.bw_dropdown_divider')] = {
       'border-top-color': palette.light.border
     };
     return rules;
   }
   function generateSwitchThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input')] = {
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input')] = {
       'background-color': palette.secondary.base,
       'border-color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input:checked')] = {
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input:checked')] = {
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_form_switch .bw_switch_input:focus')] = {
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
     };
     return rules;
   }
   function generateSkeletonThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_skeleton')] = {
-      'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.light.light + ' 37%, ' + palette.light.border + ' 63%)'
+    rules[_sx(scope, '.bw_skeleton')] = {
+      'background': 'linear-gradient(90deg, ' + palette.light.border + ' 25%, ' + palette.surfaceAlt + ' 37%, ' + palette.light.border + ' 63%)'
     };
     return rules;
   }
 
   // generateAvatarThemed: removed — palette class on root handles variants
 
-  function generateStatCardThemed(scope, palette) {
-    var rules = {};
+  function generateStatCardThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion,
+      el = layout.elevation,
+      rd = layout.radius;
+    rules[_sx(scope, '.bw_stat_card')] = {
+      'background-color': palette.surface || '#fff',
+      'color': palette.dark.base,
+      'border': '1px solid ' + palette.light.border,
+      'border-radius': rd.card,
+      'box-shadow': el.sm,
+      'transition': 'box-shadow ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+    };
+    rules[_sx(scope, '.bw_stat_card:hover')] = {
+      'box-shadow': el.md
+    };
     // Variant border colors handled by palette class
-    rules[scopeSelector(scope, '.bw_stat_change_up')] = {
+    rules[_sx(scope, '.bw_stat_change_up')] = {
       'color': palette.success.base
     };
-    rules[scopeSelector(scope, '.bw_stat_change_down')] = {
+    rules[_sx(scope, '.bw_stat_change_down')] = {
       'color': palette.danger.base
     };
     return rules;
   }
   function generateTimelineThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_timeline::before')] = {
+    rules[_sx(scope, '.bw_timeline::before')] = {
       'background-color': palette.light.border
     };
     // Variant marker colors handled by palette class
-    rules[scopeSelector(scope, '.bw_timeline_date')] = {
+    rules[_sx(scope, '.bw_timeline_date')] = {
       'color': palette.secondary.base
     };
     return rules;
   }
   function generateStepperThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_step_indicator')] = {
-      'background-color': palette.light.light,
+    rules[_sx(scope, '.bw_step_indicator')] = {
+      'background-color': palette.surfaceAlt,
       'border': '2px solid ' + palette.light.border,
       'color': palette.secondary.base
     };
-    rules[scopeSelector(scope, '.bw_step + .bw_step::before')] = {
+    rules[_sx(scope, '.bw_step + .bw_step::before')] = {
       'background-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_step_active .bw_step_indicator')] = {
+    rules[_sx(scope, '.bw_step_active .bw_step_indicator')] = {
       'background-color': palette.primary.base,
       'color': palette.primary.textOn
     };
-    rules[scopeSelector(scope, '.bw_step_active .bw_step_label')] = {
+    rules[_sx(scope, '.bw_step_active .bw_step_label')] = {
       'color': palette.dark.base,
       'font-weight': '600'
     };
-    rules[scopeSelector(scope, '.bw_step_completed .bw_step_indicator')] = {
+    rules[_sx(scope, '.bw_step_completed .bw_step_indicator')] = {
       'background-color': palette.primary.base,
       'color': palette.primary.textOn
     };
-    rules[scopeSelector(scope, '.bw_step_completed .bw_step_label')] = {
+    rules[_sx(scope, '.bw_step_completed .bw_step_label')] = {
       'color': palette.primary.base
     };
-    rules[scopeSelector(scope, '.bw_step_completed + .bw_step::before')] = {
+    rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = {
       'background-color': palette.primary.base
     };
     return rules;
   }
   function generateChipInputThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_chip_input')] = {
-      'border-color': palette.light.border
+    rules[_sx(scope, '.bw_chip_input')] = {
+      'border-color': palette.light.border,
+      'background-color': palette.surface || '#fff',
+      'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_chip_input:focus-within')] = {
+    rules[_sx(scope, '.bw_chip_input:focus-within')] = {
       'border-color': palette.primary.base,
       'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
     };
-    rules[scopeSelector(scope, '.bw_chip')] = {
-      'background-color': palette.light.light,
+    rules[_sx(scope, '.bw_chip')] = {
+      'background-color': palette.surfaceAlt,
       'color': palette.dark.base
     };
-    rules[scopeSelector(scope, '.bw_chip_remove:hover')] = {
+    rules[_sx(scope, '.bw_chip_remove:hover')] = {
       'color': palette.danger.base,
       'background-color': palette.danger.light
     };
     return rules;
   }
-  function generateFileUploadThemed(scope, palette) {
-    var rules = {};
-    rules[scopeSelector(scope, '.bw_file_upload')] = {
+  function generateFileUploadThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_file_upload')] = {
       'border-color': palette.light.border,
-      'background-color': palette.light.light
+      'background-color': palette.surfaceAlt,
+      'transition': 'border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
-    rules[scopeSelector(scope, '.bw_file_upload:hover')] = {
+    rules[_sx(scope, '.bw_file_upload:hover')] = {
       'border-color': palette.primary.base,
       'background-color': palette.primary.light
     };
-    rules[scopeSelector(scope, '.bw_file_upload:focus')] = {
+    rules[_sx(scope, '.bw_file_upload:focus')] = {
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '2px'
     };
-    rules[scopeSelector(scope, '.bw_file_upload.bw_file_upload_active')] = {
+    rules[_sx(scope, '.bw_file_upload.bw_file_upload_active')] = {
       'border-color': palette.primary.base,
       'background-color': palette.primary.light,
       'border-style': 'solid'
@@ -1531,37 +1561,93 @@
   }
   function generateRangeThemed(scope, palette) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_range')] = {
+    rules[_sx(scope, '.bw_range')] = {
       'background-color': palette.light.border
     };
-    rules[scopeSelector(scope, '.bw_range::-webkit-slider-thumb')] = {
+    rules[_sx(scope, '.bw_range::-webkit-slider-thumb')] = {
       'background-color': palette.primary.base,
-      'border-color': '#fff',
+      'border-color': palette.surface || '#fff',
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
       'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
     };
-    rules[scopeSelector(scope, '.bw_range::-moz-range-thumb')] = {
+    rules[_sx(scope, '.bw_range::-moz-range-thumb')] = {
       'background-color': palette.primary.base,
-      'border-color': '#fff',
+      'border-color': palette.surface || '#fff',
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)'
     };
     return rules;
   }
-  function generateSearchThemed(scope, palette) {
-    var rules = {};
-    rules[scopeSelector(scope, '.bw_search_clear:hover')] = {
+  function generateTooltipThemed(scope, palette, layout) {
+    var rules = {},
+      sp = layout.spacing,
+      rd = layout.radius,
+      el = layout.elevation,
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_tooltip')] = {
+      'background-color': palette.dark.base,
+      'color': palette.dark.textOn,
+      'padding': sp.input,
+      'border-radius': rd.badge,
+      'box-shadow': el.md,
+      'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+    };
+    return rules;
+  }
+  function generatePopoverThemed(scope, palette, layout) {
+    var rules = {},
+      sp = layout.spacing,
+      rd = layout.radius,
+      el = layout.elevation,
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_popover')] = {
+      'background-color': palette.surface || '#fff',
+      'color': palette.dark.base,
+      'border': '1px solid ' + palette.light.border,
+      'border-radius': rd.card,
+      'box-shadow': el.lg,
+      'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+    };
+    rules[_sx(scope, '.bw_popover_header')] = {
+      'background-color': palette.surfaceAlt,
+      'border-bottom': '1px solid ' + palette.light.border,
+      'padding': sp.input
+    };
+    rules[_sx(scope, '.bw_popover_body')] = {
+      'padding': sp.card
+    };
+    return rules;
+  }
+  function generateSearchThemed(scope, palette, layout) {
+    var rules = {},
+      mo = layout.motion;
+    rules[_sx(scope, '.bw_search_input')] = {
+      'background-color': palette.surface || '#fff',
+      'color': palette.dark.base
+    };
+    rules[_sx(scope, '.bw_search_clear')] = {
+      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+    };
+    rules[_sx(scope, '.bw_search_clear:hover')] = {
       'color': palette.dark.base
     };
     return rules;
   }
-  function generateCodeDemoThemed(scope, palette) {
+  function generateCodeDemoThemed(scope, palette, layout) {
     var rules = {};
-    rules[scopeSelector(scope, '.bw_code_copy_btn_copied')] = {
+    var rd = layout ? layout.radius : {
+      card: '0.375rem'
+    };
+    rules[_sx(scope, '.bw_code_demo')] = {
+      'background-color': palette.surface || '#fff',
+      'color': palette.dark.base,
+      'border-radius': rd.card
+    };
+    rules[_sx(scope, '.bw_code_copy_btn_copied')] = {
       'background': palette.success.base,
       'color': palette.success.textOn,
       'border-color': palette.success.base
     };
-    rules[scopeSelector(scope, '.bw_copy_btn:hover')] = {
+    rules[_sx(scope, '.bw_copy_btn:hover')] = {
       'background': 'rgba(255,255,255,0.2)',
       'color': '#fff'
     };
@@ -1570,7 +1656,7 @@
   function generateNavPillsThemed(scope, palette, layout) {
     var rules = {};
     var rd = layout.radius;
-    rules[scopeSelector(scope, '.bw_nav_pills .bw_nav_link')] = {
+    rules[_sx(scope, '.bw_nav_pills .bw_nav_link')] = {
       'border-radius': rd.btn
     };
     return rules;
@@ -1598,21 +1684,21 @@
       var s = palette[k];
 
       // --- Root palette class: sets default bg/color/border ---
-      rules[scopeSelector(scope, '.bw_' + k)] = {
+      rules[_sx(scope, '.bw_' + k)] = {
         'background-color': s.base,
         'color': s.textOn,
         'border-color': s.base
       };
 
       // --- Pseudo-states (shared across all components) ---
-      rules[scopeSelector(scope, '.bw_' + k + ':hover')] = {
+      rules[_sx(scope, '.bw_' + k + ':hover')] = {
         'background-color': s.hover,
         'border-color': s.active
       };
-      rules[scopeSelector(scope, '.bw_' + k + ':active')] = {
+      rules[_sx(scope, '.bw_' + k + ':active')] = {
         'background-color': s.active
       };
-      rules[scopeSelector(scope, '.bw_' + k + ':focus-visible')] = {
+      rules[_sx(scope, '.bw_' + k + ':focus-visible')] = {
         'box-shadow': '0 0 0 3px ' + s.focus,
         'outline': 'none'
       };
@@ -1620,71 +1706,110 @@
       // --- Component-specific overrides ---
 
       // Alerts: light bg, dark text, subtle border
-      rules[scopeSelector(scope, '.bw_alert.bw_' + k)] = {
+      rules[_sx(scope, '.bw_alert.bw_' + k)] = {
         'background-color': s.light,
         'color': s.darkText,
         'border-color': s.border
       };
 
       // Toast: inherit bg, left border accent
-      rules[scopeSelector(scope, '.bw_toast.bw_' + k)] = {
+      rules[_sx(scope, '.bw_toast.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left': '4px solid ' + s.base
       };
 
       // Stat card: inherit bg, left border accent
-      rules[scopeSelector(scope, '.bw_stat_card.bw_' + k)] = {
+      rules[_sx(scope, '.bw_stat_card.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left-color': s.base
       };
 
       // Card accent: left border accent, inherit bg
-      rules[scopeSelector(scope, '.bw_card.bw_' + k)] = {
+      rules[_sx(scope, '.bw_card.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left': '4px solid ' + s.base
       };
 
       // Timeline marker: colored dot
-      rules[scopeSelector(scope, '.bw_timeline_marker.bw_' + k)] = {
+      rules[_sx(scope, '.bw_timeline_marker.bw_' + k)] = {
         'box-shadow': '0 0 0 2px ' + s.base
       };
 
-      // Spinner: text color only, transparent bg
-      rules[scopeSelector(scope, '.bw_spinner_border.bw_' + k + ',\n' + scopeSelector(scope, '.bw_spinner_grow.bw_' + k))] = {
+      // Spinner: set color, re-apply border pattern so the root palette class
+      // border-color doesn't fill in the transparent gap that makes it spin.
+      // Also neutralize hover/active which would override border-right-color.
+      rules[_sx(scope, '.bw_spinner_border.bw_' + k)] = {
         'background-color': 'transparent',
         'color': s.base,
-        'border-color': 'currentColor'
+        'border-color': s.base,
+        'border-right-color': 'transparent'
+      };
+      rules[_sx(scope, '.bw_spinner_border.bw_' + k + ':hover')] = {
+        'background-color': 'transparent',
+        'border-color': s.base,
+        'border-right-color': 'transparent'
+      };
+      rules[_sx(scope, '.bw_spinner_grow.bw_' + k)] = {
+        'background-color': s.base,
+        'color': s.base
       };
 
       // Outline button: transparent bg, colored border+text, solid on hover
-      rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k)] = {
+      rules[_sx(scope, '.bw_btn_outline.bw_' + k)] = {
         'background-color': 'transparent',
         'color': s.base,
         'border-color': s.base
       };
-      rules[scopeSelector(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
+      rules[_sx(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
         'background-color': s.base,
         'color': s.textOn
       };
 
       // Hero: gradient background
-      rules[scopeSelector(scope, '.bw_hero.bw_' + k)] = {
+      rules[_sx(scope, '.bw_hero.bw_' + k)] = {
         'background': 'linear-gradient(135deg, ' + s.base + ' 0%, ' + s.hover + ' 100%)',
         'color': s.textOn
       };
 
-      // Progress bar: white text on colored bg (default is fine, just ensure text)
-      rules[scopeSelector(scope, '.bw_progress_bar.bw_' + k)] = {
-        'color': '#fff'
+      // Progress bar: contrasting text on colored bg
+      rules[_sx(scope, '.bw_progress_bar.bw_' + k)] = {
+        'color': s.textOn
+      };
+
+      // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
+      rules[_sx(scope, '.bw_bg_' + k)] = {
+        'background-color': s.base,
+        'color': s.textOn
+      };
+
+      // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
+      rules[_sx(scope, '.bw_text_' + k)] = {
+        'color': s.base
       };
     });
 
-    // Text muted
-    rules[scopeSelector(scope, '.bw_text_muted')] = {
-      'color': palette.secondary.base
+    // Text muted — always a neutral gray, never a brand color
+    rules[_sx(scope, '.bw_text_muted')] = {
+      'color': '#6c757d'
+    };
+
+    // Common bg/text utilities that aren't per-variant
+    rules[_sx(scope, '.bw_bg_dark')] = {
+      'background-color': '#212529',
+      'color': '#f8f9fa'
+    };
+    rules[_sx(scope, '.bw_bg_light')] = {
+      'background-color': '#f8f9fa',
+      'color': '#212529'
+    };
+    rules[_sx(scope, '.bw_text_light')] = {
+      'color': '#f8f9fa'
+    };
+    rules[_sx(scope, '.bw_text_dark')] = {
+      'color': '#212529'
     };
     return rules;
   }
@@ -1699,7 +1824,7 @@
    * @returns {Object} CSS rules object
    */
   function generateThemedCSS(scopeName, palette, layout) {
-    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette), generateProgress(scopeName, palette), generateBreadcrumbThemed(scopeName, palette), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette), generateFileUploadThemed(scopeName, palette), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette), generateCodeDemoThemed(scopeName, palette), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
+    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette, layout), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette, layout), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette, layout), generateProgress(scopeName, palette), generateBreadcrumbThemed(scopeName, palette, layout), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette, layout), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette, layout), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette), generateFileUploadThemed(scopeName, palette, layout), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette, layout), generateTooltipThemed(scopeName, palette, layout), generatePopoverThemed(scopeName, palette, layout), generateCodeDemoThemed(scopeName, palette, layout), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
   }
 
   // =========================================================================
@@ -2194,6 +2319,12 @@
         'border-width': '1px',
         'border-style': 'solid'
       },
+      '.bw_table_selectable > tbody > tr': {
+        'cursor': 'pointer'
+      },
+      '.bw_table > tbody > tr.bw_table_row_selected > *': {
+        'background-color': 'rgba(0, 102, 102, 0.1)'
+      },
       '.bw_table_responsive': {
         'overflow-x': 'auto',
         '-webkit-overflow-scrolling': 'touch'
@@ -2307,6 +2438,7 @@
         'display': 'block',
         'font-size': '0.875rem',
         'font-weight': '500',
+        'padding': '0.625rem 1rem',
         'text-decoration': 'none',
         'cursor': 'pointer',
         'border': 'none',
@@ -2409,16 +2541,15 @@
         'padding': '0.375rem 0.75rem',
         'margin-left': '-1px',
         'line-height': '1.25',
-        'text-decoration': 'none'
+        'text-decoration': 'none',
+        'border': '1px solid transparent',
+        'cursor': 'pointer',
+        'font-family': 'inherit',
+        'font-size': 'inherit',
+        'background': 'none'
       },
       '.bw_page_item:first-child .bw_page_link': {
-        'margin-left': '0',
-        'border-top-left-radius': '0.375rem',
-        'border-bottom-left-radius': '0.375rem'
-      },
-      '.bw_page_item:last-child .bw_page_link': {
-        'border-top-right-radius': '0.375rem',
-        'border-bottom-right-radius': '0.375rem'
+        'margin-left': '0'
       },
       '.bw_page_link:focus-visible': {
         'z-index': '3',
@@ -2789,6 +2920,7 @@
         'display': 'flex',
         'align-items': 'center',
         'width': '100%',
+        'padding': '0.875rem 1.25rem',
         'font-size': '1rem',
         'font-weight': '500',
         'text-align': 'left',
@@ -2811,20 +2943,16 @@
       '.bw_accordion_button:not(.bw_collapsed)::after': {
         'transform': 'rotate(-180deg)'
       },
+      '.bw_accordion_body': {
+        'padding': '1rem 1.25rem'
+      },
       '.bw_accordion_collapse': {
         'max-height': '0',
-        'overflow': 'hidden'
+        'overflow': 'hidden',
+        'transition': 'max-height 0.3s ease'
       },
       '.bw_accordion_collapse.bw_collapse_show': {
         'max-height': 'none'
-      },
-      '.bw_accordion_item:first-child': {
-        'border-top-left-radius': '8px',
-        'border-top-right-radius': '8px'
-      },
-      '.bw_accordion_item:last-child': {
-        'border-bottom-left-radius': '8px',
-        'border-bottom-right-radius': '8px'
       }
     },
     // ---- Carousel ----
@@ -3192,7 +3320,11 @@
     // ---- Stat card ----
     statCard: {
       '.bw_stat_card': {
-        'border-left': '4px solid transparent'
+        'padding': '1.25rem',
+        'border-left': '4px solid transparent',
+        'border-radius': '0.375rem',
+        'background-color': 'inherit',
+        'transition': 'transform 0.15s ease'
       },
       '.bw_stat_card:hover': {
         'transform': 'translateY(-1px)'
@@ -4210,6 +4342,52 @@
       'margin-right': '.5rem'
     };
 
+    // Typography — bw_ prefixed utilities via loops
+    var _imp = function _imp(p, v) {
+      var o = {};
+      o[p] = v + ' !important';
+      return o;
+    };
+    [['fs', {
+      'xs': '0.75rem',
+      'sm': '0.875rem',
+      'base': '1rem',
+      'lg': '1.125rem',
+      'xl': '1.25rem',
+      '2xl': '1.5rem'
+    }, 'font-size'], ['fw', {
+      light: '300',
+      normal: '400',
+      medium: '500',
+      semibold: '600',
+      bold: '700'
+    }, 'font-weight'], ['lh', {
+      tight: '1.25',
+      normal: '1.5',
+      relaxed: '1.75'
+    }, 'line-height']].forEach(function (d) {
+      for (var dk in d[1]) rules['.bw_' + d[0] + '_' + dk] = _imp(d[2], d[1][dk]);
+    });
+
+    // Flex utilities
+    rules['.bw_flex'] = {
+      'display': 'flex'
+    };
+    rules['.bw_flex_column'] = {
+      'flex-direction': 'column'
+    };
+    rules['.bw_flex_wrap'] = {
+      'flex-wrap': 'wrap'
+    };
+    rules['.bw_flex_center'] = {
+      'display': 'flex',
+      'align-items': 'center',
+      'justify-content': 'center'
+    };
+    for (var gk in spacingValues) rules['.bw_gap_' + gk] = {
+      'gap': spacingValues[gk] + ' !important'
+    };
+
     // Visibility
     rules['.bw_visible, .visible'] = {
       'visibility': 'visible !important'
@@ -4288,6 +4466,26 @@
     return getStructuralCSS();
   }
 
+  /**
+   * Get CSS reset rules only (box-sizing, html/body font, reduced-motion).
+   * Separate from themed/structural rules for independent injection.
+   * @returns {Object} CSS rules object for the reset layer
+   */
+  function getResetStyles() {
+    var rules = {};
+    Object.assign(rules, structuralRules.base);
+    // Include reduced-motion preference
+    rules['@media (prefers-reduced-motion: reduce)'] = {
+      '*, *::before, *::after': {
+        'animation-duration': '0.01ms !important',
+        'animation-iteration-count': '1 !important',
+        'transition-duration': '0.01ms !important',
+        'scroll-behavior': 'auto !important'
+      }
+    };
+    return rules;
+  }
+
   // =========================================================================
   // defaultStyles — backward-compatible categorized view
   // =========================================================================
@@ -4322,57 +4520,40 @@
   });
 
   /**
-   * Generate alternate-palette CSS scoped under `.bw_theme_alt`.
-   * Uses the same `generateThemedCSS()` pipeline as the primary palette —
-   * both sides go through identical code paths.
-   *
-   * @param {string} name - Theme scope name (e.g. 'ocean'). '' for global.
-   * @param {Object} altPalette - From derivePalette(deriveAlternateConfig(...))
-   * @param {Object} layout - From resolveLayout()
-   * @returns {Object} CSS rules object scoped under .bw_theme_alt (+ optional .name)
+   * Prefix every selector in a rules object with a scope selector.
+   * Handles @media/@keyframes blocks and comma-separated selectors.
+   * @param {Object} rules - CSS rules object
+   * @param {string} prefix - Scope prefix (e.g. '#my-dashboard', '.bw_theme_alt')
+   * @param {boolean} [compound=false] - If true, use compound selector (no space)
+   *   for the first segment: `#scope.bw_theme_alt .sel` vs `#scope .sel`
+   * @returns {Object} New rules object with scoped selectors
    */
-  function generateAlternateCSS(name, altPalette, layout) {
-    // Generate themed CSS using the same pipeline as primary
-    var rawRules = generateThemedCSS('', altPalette, layout);
-
-    // Re-scope every selector under .bw_theme_alt (+ optional theme name)
-    var altPrefix = name ? '.' + name + '.bw_theme_alt' : '.bw_theme_alt';
-    var altRules = {};
-    for (var sel in rawRules) {
-      if (!rawRules.hasOwnProperty(sel)) continue;
+  function scopeRulesUnder(rules, prefix, compound) {
+    var scoped = {};
+    for (var sel in rules) {
+      if (!rules.hasOwnProperty(sel)) continue;
       if (sel.charAt(0) === '@') {
         // @media / @keyframes — recurse into the block
-        var innerBlock = rawRules[sel];
-        var altInner = {};
+        var innerBlock = rules[sel];
+        var scopedInner = {};
         for (var innerSel in innerBlock) {
           if (!innerBlock.hasOwnProperty(innerSel)) continue;
-          altInner[altPrefix + ' ' + innerSel] = innerBlock[innerSel];
+          scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
         }
-        altRules[sel] = altInner;
+        scoped[sel] = scopedInner;
       } else {
-        // Regular selector — prefix with alt scope
-        // Handle comma-separated selectors
-        var parts = sel.split(',');
-        var scopedParts = [];
-        for (var i = 0; i < parts.length; i++) {
-          var s = parts[i].trim();
-          // 'body' selector gets special treatment: .bw_theme_alt body
-          if (s === 'body' || s.indexOf('body') === 0) {
-            scopedParts.push(altPrefix + ' ' + s);
-          } else {
-            scopedParts.push(altPrefix + ' ' + s);
-          }
-        }
-        altRules[scopedParts.join(', ')] = rawRules[sel];
+        scoped[_prefixSelector(sel, prefix)] = rules[sel];
       }
     }
-
-    // Add body-level overrides for the alternate surface
-    altRules[altPrefix + ' body, :root' + altPrefix + ' body'] = {
-      'color': altPalette.dark.base,
-      'background-color': altPalette.light.base
-    };
-    return altRules;
+    return scoped;
+  }
+  function _prefixSelector(sel, prefix) {
+    var parts = sel.split(',');
+    var result = [];
+    for (var i = 0; i < parts.length; i++) {
+      result.push(prefix + ' ' + parts[i].trim());
+    }
+    return result.join(', ');
   }
 
   /**
@@ -5414,7 +5595,7 @@
         if (breakpoint === 'xs') {
           classes.push("bw_col_".concat(value));
         } else {
-          classes.push("bw_col_".concat(breakpoint, "-").concat(value));
+          classes.push("bw_col_".concat(breakpoint, "_").concat(value));
         }
       });
     } else if (size) {
@@ -6939,12 +7120,13 @@
         "class": "bw_page_item ".concat(currentPage <= 1 ? 'bw_disabled' : '').trim()
       },
       c: {
-        t: 'a',
+        t: 'button',
         a: {
           "class": 'bw_page_link',
-          href: '#',
+          type: 'button',
           onclick: handleClick(currentPage - 1),
-          'aria-label': 'Previous'
+          'aria-label': 'Previous',
+          disabled: currentPage <= 1 ? true : undefined
         },
         c: "\u2039"
       }
@@ -6959,11 +7141,12 @@
             "class": "bw_page_item ".concat(pageNum === currentPage ? 'bw_active' : '').trim()
           },
           c: {
-            t: 'a',
+            t: 'button',
             a: {
               "class": 'bw_page_link',
-              href: '#',
-              onclick: handleClick(pageNum)
+              type: 'button',
+              onclick: handleClick(pageNum),
+              'aria-current': pageNum === currentPage ? 'page' : undefined
             },
             c: '' + pageNum
           }
@@ -6978,12 +7161,13 @@
         "class": "bw_page_item ".concat(currentPage >= pages ? 'bw_disabled' : '').trim()
       },
       c: {
-        t: 'a',
+        t: 'button',
         a: {
           "class": 'bw_page_link',
-          href: '#',
+          type: 'button',
           onclick: handleClick(currentPage + 1),
-          'aria-label': 'Next'
+          'aria-label': 'Next',
+          disabled: currentPage >= pages ? true : undefined
         },
         c: "\u203A"
       }
@@ -9496,7 +9680,12 @@
       el = document.querySelector('[data-bw_id="' + id + '"]');
     }
 
-    // 5. Cache the result for next time
+    // 5. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
+    if (!el && id.indexOf('bw_uuid_') === 0) {
+      el = document.querySelector('.' + id);
+    }
+
+    // 6. Cache the result for next time
     if (el) {
       bw._nodeMap[id] = el;
     }
@@ -9546,6 +9735,79 @@
     if (htmlId) {
       delete bw._nodeMap[htmlId];
     }
+  };
+
+  // ===================================================================================
+  // bw.assignUUID() / bw.getUUID() — Explicit UUID addressing for TACO objects
+  // ===================================================================================
+
+  /**
+   * Regex to match a bw_uuid_* token in a class string.
+   * @private
+   */
+  var _UUID_RE = /\bbw_uuid_[a-z0-9_]+\b/;
+
+  /**
+   * Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`.
+   *
+   * Idempotent by default — calling twice returns the same UUID. Pass `forceNew=true`
+   * to replace an existing UUID (useful in loops where each TACO needs a unique ID).
+   *
+   * @param {Object} taco - A TACO object `{t, a, c, o}`
+   * @param {boolean} [forceNew=false] - If true, replaces any existing UUID with a new one
+   * @returns {string} The UUID string (e.g. 'bw_uuid_a1b2c3d4e5')
+   * @category Identifiers
+   * @example
+   * var card = bw.makeStatCard({ value: '0', label: 'Scans' });
+   * var uuid = bw.assignUUID(card);        // 'bw_uuid_a1b2c3d4e5'
+   * var same = bw.assignUUID(card);        // same UUID (idempotent)
+   * var diff = bw.assignUUID(card, true);  // new UUID (forced)
+   */
+  bw.assignUUID = function (taco, forceNew) {
+    if (!taco || !_is(taco, 'object')) return null;
+
+    // Ensure taco.a exists
+    if (!taco.a) taco.a = {};
+    if (!_is(taco.a["class"], 'string')) taco.a["class"] = taco.a["class"] ? String(taco.a["class"]) : '';
+    var existing = taco.a["class"].match(_UUID_RE);
+    if (existing && !forceNew) {
+      return existing[0];
+    }
+
+    // Remove old UUID if forceNew
+    if (existing) {
+      taco.a["class"] = taco.a["class"].replace(_UUID_RE, '').replace(/\s+/g, ' ').trim();
+    }
+    var uuid = bw.uuid('uuid');
+    taco.a["class"] = (taco.a["class"] ? taco.a["class"] + ' ' : '') + uuid;
+    return uuid;
+  };
+
+  /**
+   * Read the UUID from a TACO object or DOM element. Pure getter, no side effects.
+   *
+   * @param {Object|Element} tacoOrElement - A TACO object or DOM element
+   * @returns {string|null} The UUID string, or null if none assigned
+   * @category Identifiers
+   * @example
+   * bw.getUUID(card)       // 'bw_uuid_a1b2c3d4e5' (from TACO)
+   * bw.getUUID(domEl)      // 'bw_uuid_a1b2c3d4e5' (from DOM element)
+   * bw.getUUID({t:'div'})  // null (no UUID)
+   */
+  bw.getUUID = function (tacoOrElement) {
+    if (!tacoOrElement) return null;
+    var classStr;
+    // DOM element: check className
+    if (tacoOrElement.className !== undefined && tacoOrElement.tagName) {
+      classStr = tacoOrElement.className;
+    }
+    // TACO object: check a.class
+    else if (tacoOrElement.a && _is(tacoOrElement.a["class"], 'string')) {
+      classStr = tacoOrElement.a["class"];
+    }
+    if (!classStr) return null;
+    var match = classStr.match(_UUID_RE);
+    return match ? match[0] : null;
   };
 
   /**
@@ -9598,6 +9860,45 @@
       __bw_raw: true,
       v: String(str)
     };
+  };
+
+  /**
+   * Hyperscript-style TACO constructor.
+   *
+   * A convenience helper that returns a canonical TACO object from positional
+   * arguments. The return value is a plain object — serializable, works with
+   * bwserve, and accepted everywhere TACO is accepted.
+   *
+   * @param {string} tag - HTML tag name (e.g. 'div', 'p', 'section')
+   * @param {Object|null} [attrs] - HTML attributes object. Pass null or omit to skip.
+   * @param {*} [content] - Content: string, number, TACO object, or array of children.
+   * @param {Object} [options] - TACO options (state, lifecycle hooks, render fn).
+   * @returns {Object} Plain TACO object {t, a?, c?, o?}
+   * @category Utilities
+   * @see bw.html
+   * @see bw.createDOM
+   * @see bw.DOM
+   * @example
+   * bw.h('div')
+   * // => { t: 'div' }
+   *
+   * bw.h('p', { class: 'bw_text_muted' }, 'Hello')
+   * // => { t: 'p', a: { class: 'bw_text_muted' }, c: 'Hello' }
+   *
+   * bw.h('ul', null, [
+   *   bw.h('li', null, 'one'),
+   *   bw.h('li', null, 'two')
+   * ])
+   * // => { t: 'ul', c: [{ t: 'li', c: 'one' }, { t: 'li', c: 'two' }] }
+   */
+  bw.h = function (tag, attrs, content, options) {
+    var taco = {
+      t: String(tag)
+    };
+    if (attrs !== null && attrs !== undefined) taco.a = attrs;
+    if (content !== undefined) taco.c = content;
+    if (options !== undefined) taco.o = options;
+    return taco;
   };
 
   /**
@@ -9874,9 +10175,7 @@
     if (theme) {
       var themeConfig = _is(theme, 'string') ? THEME_PRESETS[theme.toLowerCase()] || null : theme;
       if (themeConfig) {
-        var themeResult = bw.generateTheme('', Object.assign({}, themeConfig, {
-          inject: false
-        }));
+        var themeResult = bw.makeStyles(themeConfig);
         themeCSS = themeResult.css;
       }
     }
@@ -9910,14 +10209,14 @@
     // Combine all CSS
     var allCSS = (themeCSS ? themeCSS + '\n' : '') + css;
 
-    // Body-end script: registry entries + optional loadDefaultStyles
+    // Body-end script: registry entries + optional loadStyles
     var bodyEndScript = '';
     var bodyEndParts = [];
     if (registryEntries) {
       bodyEndParts.push(registryEntries);
     }
     if (runtime === 'inline' || runtime === 'cdn') {
-      bodyEndParts.push('if(typeof bw!=="undefined"){bw.loadDefaultStyles();}');
+      bodyEndParts.push('if(typeof bw!=="undefined"){bw.loadStyles();}');
     }
     if (bodyEndParts.length > 0) {
       bodyEndScript = '<script>\n' + bodyEndParts.join('\n') + '\n</script>';
@@ -10089,6 +10388,14 @@
     // Register element in node cache if it has an id attribute
     if (attrs.id) {
       bw._registerNode(el, null);
+    }
+
+    // Register UUID class in node cache (bw_uuid_* tokens in class string)
+    if (el.className) {
+      var uuidMatch = el.className.match(_UUID_RE);
+      if (uuidMatch) {
+        bw._nodeMap[uuidMatch[0]] = el;
+      }
     }
 
     // Handle lifecycle hooks and state
@@ -10450,6 +10757,16 @@
   bw.cleanup = function (element) {
     if (!bw._isBrowser || !element) return;
 
+    // Deregister UUID classes from node cache (element + descendants)
+    // Covers elements that have UUID but no data-bw_id
+    var selfUuidMatch = element.className && element.className.match(_UUID_RE);
+    if (selfUuidMatch) delete bw._nodeMap[selfUuidMatch[0]];
+    var uuidEls = element.querySelectorAll('[class*="bw_uuid_"]');
+    uuidEls.forEach(function (uel) {
+      var m = uel.className && uel.className.match(_UUID_RE);
+      if (m) delete bw._nodeMap[m[0]];
+    });
+
     // Find all elements with data-bw_id
     var elements = element.querySelectorAll('[data-bw_id]');
     elements.forEach(function (el) {
@@ -10462,6 +10779,10 @@
 
       // Deregister from node cache
       bw._deregisterNode(el, id);
+
+      // Deregister UUID class from node cache
+      var uuidMatch = el.className && el.className.match(_UUID_RE);
+      if (uuidMatch) delete bw._nodeMap[uuidMatch[0]];
 
       // Clean up pub/sub subscriptions tied to this element
       if (el._bw_subs) {
@@ -10488,6 +10809,10 @@
 
       // Deregister from node cache
       bw._deregisterNode(element, id);
+
+      // Deregister UUID class from node cache
+      var elemUuidMatch = element.className && element.className.match(_UUID_RE);
+      if (elemUuidMatch) delete bw._nodeMap[elemUuidMatch[0]];
 
       // Clean up pub/sub subscriptions tied to element itself
       if (element._bw_subs) {
@@ -11105,7 +11430,7 @@
       willMount: o.willMount || null,
       mounted: o.mounted || null,
       willUpdate: o.willUpdate || null,
-      onUpdate: o.onUpdate || null,
+      onUpdate: o.onUpdate || o.updated || null,
       unmount: o.unmount || null,
       willDestroy: o.willDestroy || null
     };
@@ -12090,7 +12415,7 @@
    * and calls the named method. This is the bitwrench equivalent of
    * Win32 SendMessage(hwnd, msg, wParam, lParam).
    *
-   * @param {string} target - Component UUID (data-bw_comp_id) or user tag (CSS class)
+   * @param {string} target - Component UUID (bw_uuid_*), comp ID (data-bw_comp_id), or user tag (CSS class)
    * @param {string} action - Method name to call on the component
    * @param {*} data - Data to pass to the method
    * @returns {boolean} True if message was dispatched successfully
@@ -12107,9 +12432,14 @@
    * };
    */
   bw.message = function (target, action, data) {
-    // Try data-bw_comp_id attribute first, then CSS class (user tag)
-    var el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
-    if (!el) {
+    // Try bw._el() first (handles UUID class, nodeMap cache, getElementById)
+    var el = bw._el(target);
+    // Then try data-bw_comp_id attribute
+    if (!el || !el._bwComponentHandle) {
+      el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
+    }
+    // Then try CSS class (user tag)
+    if (!el || !el._bwComponentHandle) {
       el = bw.$('.' + target)[0];
     }
     if (!el || !el._bwComponentHandle) return false;
@@ -12123,60 +12453,23 @@
   };
 
   // ===================================================================================
-  // bw.clientApply() / bw.clientConnect() — Server-driven UI protocol
+  // bw.apply() / bw.parseJSONFlex() — Server-driven UI protocol
   // ===================================================================================
 
   /**
    * Registry of named functions sent via register messages.
-   * Populated by clientApply({ type: 'register', name, body }).
-   * Invoked by clientApply({ type: 'call', name, args }).
+   * Populated by bw.apply({ type: 'register', name, body }).
+   * Invoked by bw.apply({ type: 'call', name, args }).
    * @private
    */
   bw._clientFunctions = {};
 
   /**
-   * Whether exec messages are allowed. Set by clientConnect opts.allowExec.
+   * Whether exec messages are allowed. Set by bwclient connect opts.allowExec.
    * Default false — exec messages are rejected unless explicitly opted in.
    * @private
    */
   bw._allowExec = false;
-
-  /**
-   * Built-in client functions available via call() without registration.
-   * @private
-   */
-  bw._builtinClientFunctions = {
-    scrollTo: function scrollTo(selector) {
-      var el = bw._el(selector);
-      if (el) el.scrollTop = el.scrollHeight;
-    },
-    focus: function focus(selector) {
-      var el = bw._el(selector);
-      if (el && _is(el.focus, 'function')) el.focus();
-    },
-    download: function download(filename, content, mimeType) {
-      if (typeof document === 'undefined') return;
-      var blob = new Blob([content], {
-        type: mimeType || 'text/plain'
-      });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    },
-    clipboard: function clipboard(text) {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        navigator.clipboard.writeText(text);
-      }
-    },
-    redirect: function redirect(url) {
-      if (typeof window !== 'undefined') window.location.href = url;
-    },
-    log: function log() {
-      console.log.apply(console, arguments);
-    }
-  };
 
   /**
    * Parse a bwserve protocol message string, supporting both strict JSON
@@ -12192,9 +12485,9 @@
    * @param {string} str - JSON or r-prefixed relaxed JSON string
    * @returns {Object} Parsed message object
    * @throws {SyntaxError} If the string is not valid JSON or relaxed JSON
-   * @category Server
+   * @category Core
    */
-  bw.clientParse = function (str) {
+  bw.parseJSONFlex = function (str) {
     str = (str || '').trim();
     if (str.charAt(0) !== 'r') return JSON.parse(str);
     str = str.slice(1);
@@ -12272,10 +12565,10 @@
    *   append   — target.appendChild(bw.createDOM(node))
    *   remove   — bw.cleanup(target); target.remove()
    *   patch    — bw.patch(target, content, attr)
-   *   batch    — iterate ops, call clientApply for each
+   *   batch    — iterate ops, call bw.apply for each
    *   message  — bw.message(target, action, data)
    *   register — store a named function for later call()
-   *   call     — invoke a registered or built-in function
+   *   call     — invoke a registered function
    *   exec     — execute arbitrary JS (requires allowExec)
    *
    * Target resolution:
@@ -12284,9 +12577,9 @@
    *
    * @param {Object} msg - Protocol message
    * @returns {boolean} true if the message was applied successfully
-   * @category Server
+   * @category Core
    */
-  bw.clientApply = function (msg) {
+  bw.apply = function (msg) {
     if (!msg || !msg.type) return false;
     var type = msg.type;
     var target = msg.target;
@@ -12314,7 +12607,7 @@
       if (!_isA(msg.ops)) return false;
       var allOk = true;
       msg.ops.forEach(function (op) {
-        if (!bw.clientApply(op)) allOk = false;
+        if (!bw.apply(op)) allOk = false;
       });
       return allOk;
     } else if (type === 'message') {
@@ -12330,7 +12623,7 @@
       }
     } else if (type === 'call') {
       if (!msg.name) return false;
-      var fn = bw._clientFunctions[msg.name] || bw._builtinClientFunctions[msg.name];
+      var fn = bw._clientFunctions[msg.name];
       if (!_is(fn, 'function')) return false;
       try {
         var args = _isA(msg.args) ? msg.args : [];
@@ -12355,141 +12648,6 @@
       }
     }
     return false;
-  };
-
-  /**
-   * Connect to a bwserve SSE endpoint and apply protocol messages automatically.
-   *
-   * Returns a connection object with sendAction(), on(), and close() methods.
-   *
-   * @param {string} url - SSE endpoint URL (e.g., '/__bw/events/client-1')
-   * @param {Object} [opts] - Connection options
-   * @param {string} [opts.transport='sse'] - Transport type: 'sse' (default) or 'poll'
-   * @param {number} [opts.interval=2000] - Poll interval in ms (only for 'poll' transport)
-   * @param {string} [opts.actionUrl] - POST endpoint for actions (default: derived from url)
-   * @param {boolean} [opts.reconnect=true] - Auto-reconnect on disconnect
-   * @param {boolean} [opts.allowExec=false] - Enable exec message type (arbitrary JS execution)
-   * @param {Function} [opts.onStatus] - Status callback: 'connecting'|'connected'|'disconnected'
-   * @param {Function} [opts.onMessage] - Raw message callback (before clientApply)
-   * @returns {Object} Connection object { sendAction, on, close, status }
-   * @category Server
-   */
-  bw.clientConnect = function (url, opts) {
-    opts = opts || {};
-    var transport = opts.transport || 'sse';
-    var actionUrl = opts.actionUrl || url.replace(/\/events\//, '/action/');
-    var reconnect = opts.reconnect !== false;
-    var onStatus = opts.onStatus || function () {};
-    var onMessage = opts.onMessage || null;
-    var handlers = {};
-    // Set the global allowExec flag from connection options
-    bw._allowExec = !!opts.allowExec;
-    var conn = {
-      status: 'connecting',
-      _es: null,
-      _pollTimer: null
-    };
-    function setStatus(s) {
-      conn.status = s;
-      onStatus(s);
-    }
-    function handleMessage(data) {
-      try {
-        var msg = _is(data, 'string') ? bw.clientParse(data) : data;
-        if (onMessage) onMessage(msg);
-        if (handlers.message) handlers.message(msg);
-        bw.clientApply(msg);
-      } catch (e) {
-        if (handlers.error) handlers.error(e);
-      }
-    }
-    if (transport === 'sse' && typeof EventSource !== 'undefined') {
-      setStatus('connecting');
-      var es = new EventSource(url);
-      conn._es = es;
-      es.onopen = function () {
-        setStatus('connected');
-        if (handlers.open) handlers.open();
-      };
-      es.onmessage = function (e) {
-        handleMessage(e.data);
-      };
-      es.onerror = function () {
-        if (conn.status === 'connected') {
-          setStatus('disconnected');
-        }
-        if (handlers.error) handlers.error(new Error('SSE connection error'));
-        if (!reconnect) {
-          es.close();
-        }
-        // EventSource auto-reconnects by default when reconnect=true
-      };
-    } else if (transport === 'poll') {
-      var interval = opts.interval || 2000;
-      setStatus('connected');
-      conn._pollTimer = setInterval(function () {
-        fetch(url).then(function (r) {
-          return r.json();
-        }).then(function (msgs) {
-          if (_isA(msgs)) {
-            msgs.forEach(handleMessage);
-          } else if (msgs && msgs.type) {
-            handleMessage(msgs);
-          }
-        })["catch"](function (e) {
-          if (handlers.error) handlers.error(e);
-        });
-      }, interval);
-    }
-
-    /**
-     * Send an action to the server via POST.
-     * @param {string} action - Action name
-     * @param {Object} [data] - Action payload
-     */
-    conn.sendAction = function (action, data) {
-      var body = JSON.stringify({
-        type: 'action',
-        action: action,
-        data: data || {}
-      });
-      fetch(actionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: body
-      })["catch"](function (e) {
-        if (handlers.error) handlers.error(e);
-      });
-    };
-
-    /**
-     * Register an event handler.
-     * @param {string} event - 'open'|'message'|'error'|'close'
-     * @param {Function} handler
-     */
-    conn.on = function (event, handler) {
-      handlers[event] = handler;
-      return conn;
-    };
-
-    /**
-     * Close the connection.
-     */
-    conn.close = function () {
-      if (conn._es) {
-        conn._es.close();
-        conn._es = null;
-      }
-      if (conn._pollTimer) {
-        clearInterval(conn._pollTimer);
-        conn._pollTimer = null;
-      }
-      setStatus('disconnected');
-      if (handlers.close) handlers.close();
-    };
-    return conn;
   };
 
   // ===================================================================================
@@ -12720,7 +12878,7 @@
    * @returns {Element} The style element
    * @category CSS & Styling
    * @see bw.css
-   * @see bw.loadDefaultStyles
+   * @see bw.loadStyles
    * @example
    * bw.injectCSS('.my-class { color: red; }');
    * bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' });
@@ -12766,9 +12924,8 @@
    * @param {...Object} styles - Style objects to merge (left-to-right)
    * @returns {Object} Merged style object
    * @category CSS & Styling
-   * @see bw.u
    * @example
-   * var style = bw.s(bw.u.flex, bw.u.gap4, { color: 'red' });
+   * var style = bw.s({ display: 'flex' }, { gap: '1rem' }, { color: 'red' });
    * // => { display: 'flex', gap: '1rem', color: 'red' }
    */
   bw.s = function () {
@@ -12778,216 +12935,6 @@
       if (_is(arg, 'object')) Object.assign(result, arg);
     }
     return result;
-  };
-
-  /**
-   * Pre-built CSS utility objects (like Tailwind utilities, but in JS).
-   *
-   * Compose with `bw.s()` to build inline styles without writing raw CSS strings.
-   * Includes flex, padding, margin, typography, color, border, and transition utilities.
-   *
-   * @category CSS & Styling
-   * @see bw.s
-   * @example
-   * { t: 'div', a: { style: bw.s(bw.u.flex, bw.u.gap4, bw.u.p4) },
-   *   c: 'Flexbox with 1rem gap and padding' }
-   */
-  bw.u = {
-    // Display
-    flex: {
-      display: 'flex'
-    },
-    flexCol: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    flexRow: {
-      display: 'flex',
-      flexDirection: 'row'
-    },
-    flexWrap: {
-      display: 'flex',
-      flexWrap: 'wrap'
-    },
-    block: {
-      display: 'block'
-    },
-    inline: {
-      display: 'inline'
-    },
-    hidden: {
-      display: 'none'
-    },
-    // Flex alignment
-    justifyCenter: {
-      justifyContent: 'center'
-    },
-    justifyBetween: {
-      justifyContent: 'space-between'
-    },
-    justifyEnd: {
-      justifyContent: 'flex-end'
-    },
-    alignCenter: {
-      alignItems: 'center'
-    },
-    alignStart: {
-      alignItems: 'flex-start'
-    },
-    alignEnd: {
-      alignItems: 'flex-end'
-    },
-    // Gap (0.25rem increments)
-    gap1: {
-      gap: '0.25rem'
-    },
-    gap2: {
-      gap: '0.5rem'
-    },
-    gap3: {
-      gap: '0.75rem'
-    },
-    gap4: {
-      gap: '1rem'
-    },
-    gap6: {
-      gap: '1.5rem'
-    },
-    gap8: {
-      gap: '2rem'
-    },
-    // Padding
-    p0: {
-      padding: '0'
-    },
-    p1: {
-      padding: '0.25rem'
-    },
-    p2: {
-      padding: '0.5rem'
-    },
-    p3: {
-      padding: '0.75rem'
-    },
-    p4: {
-      padding: '1rem'
-    },
-    p6: {
-      padding: '1.5rem'
-    },
-    p8: {
-      padding: '2rem'
-    },
-    px4: {
-      paddingLeft: '1rem',
-      paddingRight: '1rem'
-    },
-    py2: {
-      paddingTop: '0.5rem',
-      paddingBottom: '0.5rem'
-    },
-    py4: {
-      paddingTop: '1rem',
-      paddingBottom: '1rem'
-    },
-    // Margin (same scale)
-    m0: {
-      margin: '0'
-    },
-    m4: {
-      margin: '1rem'
-    },
-    mt2: {
-      marginTop: '0.5rem'
-    },
-    mt4: {
-      marginTop: '1rem'
-    },
-    mb2: {
-      marginBottom: '0.5rem'
-    },
-    mb4: {
-      marginBottom: '1rem'
-    },
-    mx_auto: {
-      marginLeft: 'auto',
-      marginRight: 'auto'
-    },
-    // Typography
-    textSm: {
-      fontSize: '0.875rem'
-    },
-    textBase: {
-      fontSize: '1rem'
-    },
-    textLg: {
-      fontSize: '1.125rem'
-    },
-    textXl: {
-      fontSize: '1.25rem'
-    },
-    text2xl: {
-      fontSize: '1.5rem'
-    },
-    text3xl: {
-      fontSize: '1.875rem'
-    },
-    bold: {
-      fontWeight: '700'
-    },
-    semibold: {
-      fontWeight: '600'
-    },
-    italic: {
-      fontStyle: 'italic'
-    },
-    textCenter: {
-      textAlign: 'center'
-    },
-    textRight: {
-      textAlign: 'right'
-    },
-    // Colors (from design tokens)
-    bgWhite: {
-      background: '#ffffff'
-    },
-    bgTeal: {
-      background: '#006666',
-      color: '#ffffff'
-    },
-    textWhite: {
-      color: '#ffffff'
-    },
-    textTeal: {
-      color: '#006666'
-    },
-    textMuted: {
-      color: '#888'
-    },
-    // Borders
-    rounded: {
-      borderRadius: '0.375rem'
-    },
-    roundedLg: {
-      borderRadius: '0.5rem'
-    },
-    roundedFull: {
-      borderRadius: '9999px'
-    },
-    border: {
-      border: '1px solid #d8d8d8'
-    },
-    // Sizing
-    wFull: {
-      width: '100%'
-    },
-    hFull: {
-      height: '100%'
-    },
-    // Transitions
-    transition: {
-      transition: 'all 0.2s ease'
-    }
   };
 
   /**
@@ -13115,111 +13062,48 @@
     };
   }
 
+  // =========================================================================
+  // v2.0.18 Clean Styles API — makeStyles / applyStyles / loadStyles / etc.
+  // =========================================================================
+
   /**
-   * Load the built-in Bootstrap-inspired default stylesheet.
-   *
-   * Injects bitwrench's batteries-included CSS (buttons, cards, grids, forms,
-   * alerts, badges, nav, tabs, etc.) into the document head. Call once at app startup.
-   * Returns null in Node.js (no DOM).
-   *
-   * @param {Object} [options] - Style loading options
-   * @param {boolean} [options.minify=true] - Minify the CSS output
-   * @returns {Element|null} Style element if in browser, null in Node.js
-   * @category CSS & Styling
-   * @see bw.setTheme
-   * @see bw.applyTheme
-   * @see bw.toggleTheme
-   * @example
-   * bw.loadDefaultStyles();  // inject all default CSS
+   * Convert a scope selector to a <style> element id.
+   * @private
+   * @param {string} [scope] - Scope selector (e.g. '#my-dashboard', '.preview')
+   * @returns {string} Style element id (e.g. 'bw_style_my_dashboard')
    */
-  bw.loadDefaultStyles = function () {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _options$minify2 = options.minify,
-      minify = _options$minify2 === void 0 ? true : _options$minify2,
-      palette = options.palette;
-
-    // 1. Inject structural CSS (layout, sizing — never changes with theme)
-    if (bw._isBrowser) {
-      var structuralCSS = bw.css(getStructuralStyles());
-      bw.injectCSS(structuralCSS, {
-        id: 'bw_structural',
-        append: false,
-        minify: minify
-      });
-    }
-
-    // 2. Inject cosmetic CSS via generateTheme (colors, shadows, radii)
-    var paletteConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, palette || {});
-    var result = bw.generateTheme('', Object.assign({}, paletteConfig, {
-      inject: true
-    }));
-    return result;
-  };
+  function _scopeToStyleId(scope) {
+    if (!scope || scope === '' || scope === 'global') return 'bw_style_global';
+    if (scope === 'reset') return 'bw_style_reset';
+    // Strip leading # or . and convert - to _
+    var clean = scope.replace(/^[#.]/, '').replace(/-/g, '_');
+    return 'bw_style_' + clean;
+  }
 
   /**
-   * Generate a complete, scoped theme from seed colors.
+   * Generate a complete styles object from seed colors and layout config.
+   * Pure function — no DOM, no state, no side effects.
    *
-   * Produces CSS for all themed components (buttons, alerts, badges, cards,
-   * forms, nav, tables, tabs, list groups, pagination, progress, hero, utilities)
-   * scoped under `.name` class. Multiple themes can coexist in the stylesheet.
-   * Swap themes by changing the class on a container element.
+   * All parameters are optional. Defaults to the bitwrench default palette.
    *
-   * @param {string} name - CSS scope class (e.g. 'ocean'). Empty string = unscoped global.
-   * @param {Object} config - Theme configuration
-   * @param {string} config.primary - Primary brand color hex
-   * @param {string} config.secondary - Secondary color hex
-   * @param {string} [config.tertiary] - Tertiary/accent color hex (defaults to primary)
-   * @param {string} [config.success='#198754'] - Success color hex
-   * @param {string} [config.danger='#dc3545'] - Danger color hex
-   * @param {string} [config.warning='#ffc107'] - Warning color hex
-   * @param {string} [config.info='#0dcaf0'] - Info color hex
-   * @param {string} [config.light='#f8f9fa'] - Light color hex
-   * @param {string} [config.dark='#212529'] - Dark color hex
-   * @param {string} [config.background] - Page background hex (default: '#ffffff' light, derived dark)
-   * @param {string} [config.surface] - Surface/card background hex (default: '#f8f9fa' light, derived dark)
+   * @param {Object} [config] - Style configuration
+   * @param {string} [config.primary='#006666'] - Primary brand color hex
+   * @param {string} [config.secondary='#6c757d'] - Secondary color hex
+   * @param {string} [config.tertiary] - Tertiary color hex (defaults to primary)
    * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
    * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
-   * @param {number} [config.fontSize=1.0] - Base font size scale factor
-   * @param {string|number} [config.typeRatio='normal'] - 'tight' | 'normal' | 'relaxed' | 'dramatic' or a number
-   * @param {string} [config.elevation='md'] - 'flat' | 'sm' | 'md' | 'lg'
-   * @param {string} [config.motion='standard'] - 'reduced' | 'standard' | 'expressive'
-   * @param {number} [config.harmonize=0.20] - 0-1, semantic color hue shift toward primary
-   * @param {boolean} [config.inject=true] - Inject into DOM (browser only)
-   * @returns {Object} { css, palette, name, isLightPrimary, alternate: { css, palette } }
+   * @returns {Object} { css, alternateCss, rules, alternateRules, palette, alternatePalette, isLightPrimary }
    * @category CSS & Styling
-   * @see bw.applyTheme
-   * @see bw.toggleTheme
-   * @see bw.loadDefaultStyles
+   * @see bw.applyStyles
+   * @see bw.loadStyles
    * @example
-   * // Generate and inject an ocean theme (primary + alternate)
-   * var theme = bw.generateTheme('ocean', {
-   *   primary: '#0077b6',
-   *   secondary: '#90e0ef',
-   *   tertiary: '#00b4d8'
-   * });
-   *
-   * // Apply to a container
-   * document.getElementById('app').classList.add('ocean');
-   *
-   * // Toggle to alternate palette
-   * bw.toggleTheme();
-   *
-   * // Generate CSS for static export (Node.js)
-   * var result = bw.generateTheme('sunset', {
-   *   primary: '#e76f51',
-   *   secondary: '#264653',
-   *   inject: false
-   * });
-   * fs.writeFileSync('sunset.css', result.css + result.alternate.css);
+   * var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+   * console.log(styles.palette.primary.base); // '#4f46e5'
+   * // styles.css contains all themed CSS — nothing injected
    */
-  bw.generateTheme = function (name, config) {
-    if (!config || !config.primary || !config.secondary) {
-      throw new Error('bw.generateTheme requires config.primary and config.secondary');
-    }
-
-    // Merge with defaults; if user didn't supply tertiary, default to their primary
-    var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config);
-    if (!config.tertiary) fullConfig.tertiary = fullConfig.primary;
+  bw.makeStyles = function (config) {
+    var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config || {});
+    if (config && !config.tertiary) fullConfig.tertiary = fullConfig.primary;
 
     // Derive primary palette
     var palette = derivePalette(fullConfig);
@@ -13227,136 +13111,211 @@
     // Resolve layout
     var layout = resolveLayout(fullConfig);
 
-    // Generate primary themed CSS rules
-    var themedRules = generateThemedCSS(name, palette, layout);
+    // Generate primary themed CSS rules (unscoped)
+    var themedRules = generateThemedCSS('', palette, layout);
     var cssStr = bw.css(themedRules);
 
     // Derive alternate palette (luminance-inverted)
     var altConfig = deriveAlternateConfig(fullConfig);
     var altPalette = derivePalette(altConfig);
 
-    // Generate alternate CSS scoped under .bw_theme_alt
-    var altRules = generateAlternateCSS(name, altPalette, layout);
-    var altCssStr = bw.css(altRules);
+    // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
+    // applyStyles() wraps them appropriately based on scope
+    var altRawRules = generateThemedCSS('', altPalette, layout);
+
+    // Add body-level surface overrides for the alternate palette.
+    // When .bw_theme_alt is on <html>, ".bw_theme_alt body" correctly matches.
+    altRawRules['body'] = {
+      'color': altPalette.dark.base,
+      'background-color': altPalette.surface || altPalette.light.base
+    };
+    var altCssStr = bw.css(altRawRules);
 
     // Determine if primary is light-flavored
     var lightPrimary = isLightPalette(fullConfig);
-
-    // Inject both CSS sets into DOM if requested
-    var shouldInject = config.inject !== false;
-    if (shouldInject && bw._isBrowser) {
-      var safeName = name ? name.replace(/-/g, '_') : '';
-      var styleId = safeName ? 'bw_theme_' + safeName : 'bw_theme_default';
-      var altStyleId = safeName ? 'bw_theme_' + safeName + '_alt' : 'bw_theme_default_alt';
-      bw.injectCSS(cssStr, {
-        id: styleId,
-        append: false
-      });
-      bw.injectCSS(altCssStr, {
-        id: altStyleId,
-        append: false
-      });
-      bw._activeThemeStyleIds = [styleId, altStyleId];
-    }
-
-    // Update bw.u color entries to reflect the palette
-    if (!name) {
-      bw.u.bgTeal = {
-        background: palette.primary.base,
-        color: palette.primary.textOn
-      };
-      bw.u.textTeal = {
-        color: palette.primary.base
-      };
-      bw.u.bgWhite = {
-        background: '#ffffff'
-      };
-      bw.u.textWhite = {
-        color: '#ffffff'
-      };
-    }
-
-    // Store active theme state
-    var result = {
+    return {
       css: cssStr,
+      alternateCss: altCssStr,
+      rules: themedRules,
+      alternateRules: altRawRules,
       palette: palette,
-      name: name,
-      isLightPrimary: lightPrimary,
-      alternate: {
-        css: altCssStr,
-        palette: altPalette
-      }
+      alternatePalette: altPalette,
+      isLightPrimary: lightPrimary
     };
-    bw._activeTheme = result;
-    bw._activeThemeMode = 'primary';
-    return result;
   };
 
   /**
-   * Apply a theme mode. Switches between primary and alternate palettes
-   * by adding/removing the `bw_theme_alt` class on `<html>`.
+   * Inject styles into the DOM with optional scoping.
    *
-   * @param {string} mode - 'primary' | 'alternate' | 'light' | 'dark'
-   * @returns {string} Active mode: 'primary' or 'alternate'
+   * Takes a styles object from `makeStyles()` and creates a single `<style>`
+   * element in `<head>`. If a scope selector is provided, all CSS rules are
+   * wrapped under that selector. Alternate CSS is wrapped under `.bw_theme_alt`.
+   *
+   * @param {Object} styles - Result of `bw.makeStyles()`
+   * @param {string} [scope] - Scope selector (e.g. '#my-dashboard', '.preview'). Omit for global.
+   * @returns {Element|null} The `<style>` element, or null in Node.js
    * @category CSS & Styling
-   * @see bw.generateTheme
-   * @see bw.toggleTheme
+   * @see bw.makeStyles
+   * @see bw.loadStyles
+   * @see bw.clearStyles
    * @example
-   * bw.applyTheme('alternate');  // switch to alternate palette
-   * bw.applyTheme('dark');       // switch to whichever palette is darker
-   * bw.applyTheme('primary');    // switch back to primary palette
+   * var styles = bw.makeStyles({ primary: '#4f46e5' });
+   * bw.applyStyles(styles);                     // global
+   * bw.applyStyles(styles, '#my-dashboard');     // scoped
    */
-  bw.applyTheme = function (mode) {
-    if (!bw._isBrowser) return mode || 'primary';
-    var root = document.documentElement;
-    var isLight = bw._activeTheme ? bw._activeTheme.isLightPrimary : true;
-    var wantAlt;
-    if (mode === 'primary') wantAlt = false;else if (mode === 'alternate') wantAlt = true;else if (mode === 'light') wantAlt = !isLight;else if (mode === 'dark') wantAlt = isLight;else wantAlt = false;
-    if (wantAlt) {
-      root.classList.add('bw_theme_alt');
-    } else {
-      root.classList.remove('bw_theme_alt');
+  bw.applyStyles = function (styles, scope) {
+    if (!bw._isBrowser) return null;
+    if (!styles || !styles.rules) {
+      _cw('bw.applyStyles: invalid styles object');
+      return null;
     }
-    bw._activeThemeMode = wantAlt ? 'alternate' : 'primary';
-    return bw._activeThemeMode;
+    var styleId = _scopeToStyleId(scope);
+
+    // Scope the primary rules if a scope is provided
+    var primaryRules = styles.rules;
+    if (scope) {
+      primaryRules = scopeRulesUnder(primaryRules, scope);
+    }
+
+    // Wrap alternate rules with .bw_theme_alt
+    var altRules = styles.alternateRules;
+    if (altRules) {
+      if (scope) {
+        // Scoped compound: #scope.bw_theme_alt .bw_card
+        altRules = scopeRulesUnder(altRules, scope + '.bw_theme_alt');
+      } else {
+        // Global: .bw_theme_alt .bw_card
+        altRules = scopeRulesUnder(altRules, '.bw_theme_alt');
+      }
+    }
+
+    // Combine primary + alternate into one CSS string
+    var combined = bw.css(primaryRules);
+    if (altRules) {
+      combined += '\n' + bw.css(altRules);
+    }
+    return bw.injectCSS(combined, {
+      id: styleId,
+      append: false
+    });
   };
 
   /**
-   * Toggle between primary and alternate theme palettes.
+   * Generate and apply styles in one call. Convenience wrapper.
    *
+   * Equivalent to: `bw.applyStyles(bw.makeStyles(config), scope)`
+   *
+   * @param {Object} [config] - Style configuration (same as `makeStyles`)
+   * @param {string} [scope] - Scope selector (same as `applyStyles`)
+   * @returns {Element|null} The `<style>` element, or null in Node.js
+   * @category CSS & Styling
+   * @see bw.makeStyles
+   * @see bw.applyStyles
+   * @example
+   * bw.loadStyles();                                          // defaults, global
+   * bw.loadStyles({ primary: '#4f46e5' });                    // custom, global
+   * bw.loadStyles({ primary: '#4f46e5' }, '#my-dashboard');   // custom, scoped
+   */
+  bw.loadStyles = function (config, scope) {
+    // Also inject structural CSS first (only once)
+    if (bw._isBrowser) {
+      var existing = document.getElementById('bw_structural');
+      if (!existing) {
+        var structuralCSS = bw.css(getStructuralStyles());
+        bw.injectCSS(structuralCSS, {
+          id: 'bw_structural',
+          append: false
+        });
+      }
+    }
+    return bw.applyStyles(bw.makeStyles(config), scope);
+  };
+
+  /**
+   * Inject the CSS reset (box-sizing, html/body font, reduced-motion).
+   * Idempotent — if already injected, returns the existing `<style>` element.
+   *
+   * @returns {Element|null} The `<style>` element, or null in Node.js
+   * @category CSS & Styling
+   * @see bw.loadStyles
+   * @see bw.clearStyles
+   * @example
+   * bw.loadReset();  // inject once, safe to call multiple times
+   */
+  bw.loadReset = function () {
+    if (!bw._isBrowser) return null;
+    var existing = document.getElementById('bw_style_reset');
+    if (existing) return existing;
+    return bw.injectCSS(bw.css(getResetStyles()), {
+      id: 'bw_style_reset',
+      append: false
+    });
+  };
+
+  /**
+   * Toggle between primary and alternate palettes.
+   *
+   * Adds/removes the `bw_theme_alt` class on the scoping element.
+   * Without a scope, toggles on `<html>` (global).
+   * With a scope, toggles on the first matching element.
+   *
+   * @param {string} [scope] - Scope selector (e.g. '#my-dashboard'). Omit for global.
    * @returns {string} Active mode after toggle: 'primary' or 'alternate'
    * @category CSS & Styling
-   * @see bw.applyTheme
-   * @see bw.generateTheme
+   * @see bw.applyStyles
+   * @see bw.clearStyles
    * @example
-   * bw.toggleTheme();  // flip between primary and alternate
+   * bw.toggleStyles();                   // global toggle on <html>
+   * bw.toggleStyles('#my-dashboard');    // scoped toggle
    */
-  bw.toggleTheme = function () {
-    var current = bw._activeThemeMode || 'primary';
-    return bw.applyTheme(current === 'primary' ? 'alternate' : 'primary');
+  bw.toggleStyles = function (scope) {
+    if (!bw._isBrowser) return 'primary';
+    var target;
+    if (scope) {
+      var els = bw.$(scope);
+      target = els[0];
+    } else {
+      target = document.documentElement;
+    }
+    if (!target) return 'primary';
+    var hasAlt = target.classList.contains('bw_theme_alt');
+    if (hasAlt) {
+      target.classList.remove('bw_theme_alt');
+      return 'primary';
+    } else {
+      target.classList.add('bw_theme_alt');
+      return 'alternate';
+    }
   };
 
   /**
-   * Remove the currently active theme's injected style elements from the DOM.
-   * Use this before generating a new theme with a different name to prevent
-   * stale CSS accumulation.
+   * Remove injected styles for a given scope.
    *
+   * Finds the `<style>` element by id and removes it. Also removes
+   * the `bw_theme_alt` class from the relevant element.
+   *
+   * @param {string} [scope] - Scope selector. Omit to remove global styles.
    * @category CSS & Styling
-   * @see bw.generateTheme
+   * @see bw.applyStyles
+   * @see bw.loadStyles
    * @example
-   * bw.clearTheme();                   // remove current theme styles
-   * bw.generateTheme('sunset', conf);  // inject fresh theme
+   * bw.clearStyles();                    // remove global styles
+   * bw.clearStyles('#my-dashboard');     // remove scoped styles
+   * bw.clearStyles('reset');             // remove the CSS reset
    */
-  bw.clearTheme = function () {
-    if (bw._activeThemeStyleIds && bw._isBrowser) {
-      bw._activeThemeStyleIds.forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.remove();
-      });
-      bw._activeThemeStyleIds = null;
+  bw.clearStyles = function (scope) {
+    if (!bw._isBrowser) return;
+    var styleId = _scopeToStyleId(scope);
+    var el = document.getElementById(styleId);
+    if (el) el.remove();
+
+    // Also remove bw_theme_alt from the relevant element
+    if (scope && scope !== 'reset' && scope !== 'global') {
+      var targets = bw.$(scope);
+      if (targets[0]) targets[0].classList.remove('bw_theme_alt');
+    } else if (!scope || scope === 'global') {
+      document.documentElement.classList.remove('bw_theme_alt');
     }
-    bw._activeTheme = null;
-    bw._activeThemeMode = 'primary';
   };
 
   // Expose color utility functions on bw namespace
@@ -13578,10 +13537,15 @@
    * @param {Object} config - Table configuration
    * @param {Array<Object>} config.data - Array of row objects to display
    * @param {Array<Object>} [config.columns] - Column definitions with key, label, render
-   * @param {string} [config.className='table'] - CSS class for table element
+   * @param {string} [config.className=''] - Additional CSS classes for table element
    * @param {boolean} [config.sortable=true] - Enable click-to-sort headers
    * @param {Function} [config.onSort] - Sort callback (column, direction)
-   * @returns {Object} TACO object for table
+   * @param {boolean} [config.selectable=false] - Enable row selection on click
+   * @param {Function} [config.onRowClick] - Row click callback (row, index, event)
+   * @param {number} [config.pageSize] - Rows per page (enables pagination when set)
+   * @param {number} [config.currentPage=1] - Current page number (1-based)
+   * @param {Function} [config.onPageChange] - Page change callback (newPage)
+   * @returns {Object} TACO object for table (with optional pagination controls)
    * @category Component Builders
    * @see bw.makeDataTable
    * @example
@@ -13593,7 +13557,12 @@
    *   columns: [
    *     { key: 'name', label: 'Name' },
    *     { key: 'age', label: 'Age' }
-   *   ]
+   *   ],
+   *   selectable: true,
+   *   onRowClick: function(row, i) { console.log('clicked', row.name); },
+   *   pageSize: 10,
+   *   currentPage: 1,
+   *   onPageChange: function(page) { console.log('page', page); }
    * });
    */
   bw.makeTable = function (config) {
@@ -13611,12 +13580,20 @@
       onSort = config.onSort,
       sortColumn = config.sortColumn,
       _config$sortDirection = config.sortDirection,
-      sortDirection = _config$sortDirection === void 0 ? 'asc' : _config$sortDirection;
+      sortDirection = _config$sortDirection === void 0 ? 'asc' : _config$sortDirection,
+      _config$selectable = config.selectable,
+      selectable = _config$selectable === void 0 ? false : _config$selectable,
+      onRowClick = config.onRowClick,
+      pageSize = config.pageSize,
+      _config$currentPage = config.currentPage,
+      currentPage = _config$currentPage === void 0 ? 1 : _config$currentPage,
+      onPageChange = config.onPageChange;
 
-    // Build class list: always include bw_table, add striped/hover, append user className
+    // Build class list: always include bw_table, add striped/hover/selectable, append user className
     var cls = 'bw_table';
     if (striped) cls += ' bw_table_striped';
-    if (hover) cls += ' bw_table_hover';
+    if (hover || selectable) cls += ' bw_table_hover';
+    if (selectable) cls += ' bw_table_selectable';
     if (className) cls += ' ' + className;
     cls = cls.trim();
 
@@ -13653,6 +13630,15 @@
           return bStr.localeCompare(aStr);
         }
       });
+    }
+
+    // Pagination
+    var totalRows = sortedData.length;
+    var totalPages = pageSize ? Math.max(1, Math.ceil(totalRows / pageSize)) : 1;
+    var page = Math.max(1, Math.min(currentPage, totalPages));
+    if (pageSize) {
+      var start = (page - 1) * pageSize;
+      sortedData = sortedData.slice(start, start + pageSize);
     }
 
     // Create sort handler
@@ -13700,12 +13686,28 @@
       }
     };
 
-    // Build table body
+    // Build table body with selectable/onRowClick support
     var tbody = {
       t: 'tbody',
-      c: sortedData.map(function (row) {
+      c: sortedData.map(function (row, idx) {
+        var globalIdx = pageSize ? (page - 1) * pageSize + idx : idx;
+        var rowAttrs = {};
+        if (selectable || onRowClick) {
+          rowAttrs.style = 'cursor:pointer;';
+          rowAttrs.onclick = function (e) {
+            if (selectable) {
+              // Toggle selected class on this row
+              var tr = e.currentTarget;
+              tr.classList.toggle('bw_table_row_selected');
+            }
+            if (onRowClick) {
+              onRowClick(row, globalIdx, e);
+            }
+          };
+        }
         return {
           t: 'tr',
+          a: rowAttrs,
           c: cols.map(function (col) {
             return {
               t: 'td',
@@ -13715,12 +13717,64 @@
         };
       })
     };
-    return {
+    var table = {
       t: 'table',
       a: {
         "class": cls
       },
       c: [thead, tbody]
+    };
+
+    // If no pagination, return table directly
+    if (!pageSize) return table;
+
+    // Build pagination controls
+    var pageButtons = [];
+    // Previous button
+    pageButtons.push({
+      t: 'button',
+      a: {
+        "class": 'bw_btn bw_btn_sm',
+        disabled: page <= 1 ? 'disabled' : undefined,
+        onclick: page > 1 && onPageChange ? function () {
+          onPageChange(page - 1);
+        } : undefined
+      },
+      c: 'Prev'
+    });
+    // Page info
+    pageButtons.push({
+      t: 'span',
+      a: {
+        style: 'margin:0 0.5rem;font-size:0.875rem;'
+      },
+      c: 'Page ' + page + ' of ' + totalPages
+    });
+    // Next button
+    pageButtons.push({
+      t: 'button',
+      a: {
+        "class": 'bw_btn bw_btn_sm',
+        disabled: page >= totalPages ? 'disabled' : undefined,
+        onclick: page < totalPages && onPageChange ? function () {
+          onPageChange(page + 1);
+        } : undefined
+      },
+      c: 'Next'
+    });
+    return {
+      t: 'div',
+      a: {
+        "class": 'bw_table_paginated'
+      },
+      c: [table, {
+        t: 'div',
+        a: {
+          "class": 'bw_table_pagination',
+          style: 'display:flex;align-items:center;justify-content:flex-end;padding:0.5rem 0;gap:0.25rem;'
+        },
+        c: pageButtons
+      }]
     };
   };
 
