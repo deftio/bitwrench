@@ -763,6 +763,98 @@
     ]);
 
     // =========================================================================
+    // 8b. bwcli attach — Remote Debugging REPL
+    // =========================================================================
+    var secCliAttach = section('bwcli-attach', 'bwcli attach \u2014 Remote Debugging REPL', [
+      { t: 'p', a: { class: 'demo-description' }, c: [
+        code('bwcli attach'), ' is a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in ',
+        code('<script>'), ' tag, then gives you an interactive REPL where you can evaluate JS, inspect the DOM, take screenshots, and listen to events.'
+      ]},
+
+      { t: 'div', a: { class: 'arch-diagram' }, c:
+        { t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
+          svgArrowDefs('3'),
+          svgBox(10, 32, 220, 95, 'bwcli attach', [
+            'readline REPL', 'JS expressions',
+            '/tree /screenshot /listen'
+          ]),
+          svgBox(270, 32, 170, 95, 'bwserve', [
+            'port: 7902', '/bw/events/:id',
+            '/bw/return/:r/:id'
+          ]),
+          svgBox(480, 32, 205, 95, 'Browser', [
+            'bw/attach.js', 'bwclient.attach()',
+            'builtins: query, tree, listen'
+          ]),
+          svgArrow(230, 72, 270, 72, 'commands', '3'),
+          svgArrow(480, 72, 440, 72, 'POST results', '3', { dash: true }),
+          svgArrow(440, 52, 480, 52, 'SSE', '3', { dash: true })
+        )}
+      },
+
+      { t: 'h3', c: 'Quick Start' },
+      codeBlock([
+        '# Terminal 1: Start the attach server',
+        'bwcli attach',
+        '',
+        '# In your browser: add the drop-in script',
+        '# <script src="http://localhost:7902/bw/attach.js"></script>',
+        '# Or paste in devtools console:',
+        '# var s=document.createElement("script");',
+        '# s.src="http://localhost:7902/bw/attach.js";',
+        '# document.head.appendChild(s);'
+      ]),
+
+      { t: 'h3', c: 'REPL Commands' },
+      protoTable(
+        ['Command', 'Description', 'Example'],
+        [
+          [code('<expression>'), 'Evaluate JS in browser', code('document.title')],
+          [code('/tree [sel] [depth]'), 'DOM tree summary', code('/tree #app 2')],
+          [code('/screenshot [sel] [file]'), 'Capture element to PNG', code('/screenshot body page.png')],
+          [code('/mount <sel> <comp> [json]'), 'Mount BCCL component', code('/mount #app card {"title":"Hi"}')],
+          [code('/render <sel> <taco>'), 'Render TACO at selector', code('/render #app {"t":"h1","c":"Hi"}')],
+          [code('/patch <id> <content>'), 'Update element text', code('/patch counter 42')],
+          [code('/listen <sel> <event>'), 'Watch DOM events', code('/listen button click')],
+          [code('/unlisten <sel> <event>'), 'Stop watching', code('/unlisten button click')],
+          [code('/exec <code>'), 'Execute JS (fire-and-forget)', code('/exec alert("hello")')],
+          [code('/clients'), 'List connected clients', '\u2014'],
+          [code('/help'), 'Command reference', '\u2014'],
+          [code('/quit'), 'Exit', '\u2014']
+        ]
+      ),
+
+      { t: 'h3', c: 'Attach Protocol' },
+      { t: 'p', c: [
+        'The attach script adds these builtins to the bwclient:'
+      ]},
+      protoTable(
+        ['Builtin', 'Purpose', 'Response Route'],
+        [
+          [code('_bw_query'), 'Evaluate JS expression, return result', code('/bw/return/query/:id')],
+          [code('_bw_tree'), 'Walk DOM tree, return structure', code('/bw/return/query/:id')],
+          [code('_bw_listen'), 'Add delegated event listener', code('/bw/return/event/:id')],
+          [code('_bw_unlisten'), 'Remove event listener', '\u2014'],
+          [code('_bw_screenshot'), 'Capture element via html2canvas', code('/bw/return/screenshot/:id')],
+          [code('_bw_mount'), 'Mount BCCL component', code('/bw/return/mount/:id')]
+        ]
+      ),
+
+      callout('warning', 'Security', {
+        t: 'p', c: [
+          'Attach mode has ', code('allowExec: true'), ' always on \u2014 it is a debugging tool. The server binds to localhost. ',
+          { t: 'strong', c: 'Never expose to the public internet.' }
+        ]
+      }),
+
+      { t: 'p', c: [
+        'For the full guide, see the ',
+        { t: 'a', a: { href: '../docs/bw-attach.md' }, c: 'bwcli attach documentation' },
+        '.'
+      ]}
+    ]);
+
+    // =========================================================================
     // 9. Embedded Systems
     // =========================================================================
     var secEmbedded = section('embedded', 'Embedded Systems (C / Python / Rust)', [
@@ -968,6 +1060,7 @@
             secClientApi,
             secExecution,
             secCliServe,
+            secCliAttach,
             secEmbedded,
             secExamples
           ]

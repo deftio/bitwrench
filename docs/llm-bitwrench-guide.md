@@ -474,6 +474,7 @@ app.listen();
 **Client**: The shell auto-connects via SSE and calls `bw.apply()` for each incoming message.
 **Language-agnostic**: any server that writes SSE works (Python, Go, Rust, C, shell).
 **Screenshot**: `await client.screenshot(selector?, { maxWidth?, maxHeight?, format?, quality? })` → `{ data: Buffer, width, height, format }`. Requires `allowScreenshot: true` in server options. Uses html2canvas (vendored, lazy-loaded). Use for LLM visual feedback loops: render TACO → screenshot → vision model evaluates → refine.
+**Attach mode**: `bwcli attach` starts a remote debugging REPL. Add `<script src="http://localhost:7902/bw/attach.js"></script>` to any page, then evaluate JS, inspect the DOM (`/tree`), capture screenshots (`/screenshot`), listen to events (`/listen`), mount components (`/mount`), and render TACO (`/render`) from the terminal. Uses the same bwserve protocol. Always local-only, `allowExec: true`.
 
 ## HTML Generation & Static Sites
 
@@ -517,6 +518,9 @@ bwcli input.md --theme "#336699,#cc6633"      # custom colors
 
 bwcli serve                                   # dev server (port 7902)
 bwcli serve ./site --port 8080 --open         # serve directory
+
+bwcli attach                                  # remote debugging REPL (port 7902)
+bwcli attach --port 3000 --allow-screenshot   # custom port + screenshots
 ```
 
 ## Common Patterns
@@ -663,3 +667,4 @@ The full 22-row table is in `docs/thinking-in-bitwrench.md`. These are the 10 mo
 12. **`bw.css()` handles `@keyframes` and `@media`** — all `@`-prefix keys are nested blocks. No raw CSS strings needed.
 13. **Three levels are explicit** — you always know if you have data (L0), DOM (L1), or a managed component (L2).
 14. **Console is DevTools**: `bw.inspect($0)`, `$0._bw_state`, `$0._bwComponentHandle`.
+15. **`bwcli attach`** — terminal REPL debugger. Evaluate JS, `/tree`, `/screenshot`, `/listen`, `/mount`, `/render`, `/patch` on any connected page.

@@ -230,6 +230,69 @@ Options:
 
 Both strict JSON and r-prefix relaxed JSON are accepted on the input port. See [bwserve](bwserve.md) for the full protocol reference.
 
+## The `bwcli attach` subcommand — Remote Debugging REPL
+
+`bwcli attach` provides a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in `<script>` tag. Once connected, you get an interactive REPL for evaluating JS, inspecting the DOM, taking screenshots, and listening to events.
+
+### Usage
+
+```bash
+# Start on default port (7902)
+bwcli attach
+
+# Custom port
+bwcli attach --port 3000
+
+# Enable screenshot support
+bwcli attach --allow-screenshot
+
+# Verbose mode (shows protocol messages)
+bwcli attach -v
+```
+
+### Connecting a page
+
+Add this to any HTML page, or paste it into the browser's devtools console:
+
+```html
+<script src="http://localhost:7902/bw/attach.js"></script>
+```
+
+The drop-in script automatically loads bitwrench if it's not already on the page, then connects via SSE.
+
+### REPL commands
+
+Once connected, you get a `bw>` prompt:
+
+```
+bw> document.title                    # Evaluate JS expression
+bw> /tree #app 2                      # Show DOM tree
+bw> /screenshot body page.png         # Capture screenshot (requires --allow-screenshot)
+bw> /mount #app card {"title":"Hi"}   # Mount BCCL component
+bw> /render #app {"t":"h1","c":"Hi"}  # Render TACO
+bw> /patch counter 42                 # Update element text
+bw> /listen button click              # Watch DOM events
+bw> /unlisten button click            # Stop watching
+bw> /exec alert('hello')             # Execute JS (fire-and-forget)
+bw> /clients                          # List connected clients
+bw> /help                             # Command reference
+bw> /quit                             # Exit
+```
+
+### Options
+
+```
+bwcli attach [options]
+
+Options:
+  -p, --port <number>        Server port (default: 7902)
+      --allow-screenshot     Enable /screenshot command
+  -v, --verbose              Verbose output
+  -h, --help                 Print help
+```
+
+For the complete guide, see [bwcli attach documentation](bw-attach.md).
+
 ## Page layout
 
 The CLI wraps content in a responsive layout:

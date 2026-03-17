@@ -762,6 +762,74 @@ client.on('export', function(data) {
 - **Prototyping**: Server-side Node.js logic with zero frontend build step
 - **Internal tools**: Quick admin panels without frontend framework overhead
 
+## Attach Mode — Remote Debugging REPL
+
+`bwcli attach` provides a built-in terminal-based debugger for any bitwrench page. It is bitwrench's answer to Playwright/Chrome DevTools — a REPL inspector that speaks the bwserve protocol.
+
+### Quick Start
+
+```bash
+# Start the attach server
+bwcli attach
+
+# In the browser — add the drop-in script:
+# <script src="http://localhost:7902/bw/attach.js"></script>
+# Or paste in devtools console:
+# var s=document.createElement('script');s.src='http://localhost:7902/bw/attach.js';document.head.appendChild(s);
+```
+
+Once connected, you get a REPL:
+
+```
+bw> document.title
+"My Page"
+
+bw> bw.$('.bw-card').length
+3
+
+bw> /tree #app 2
+div#app
+  div.main-panel
+    h1#title
+
+bw> /listen button click
+Listening for click on button
+[event] click on button → BUTTON#save-btn "Save"
+
+bw> /screenshot body page.png
+Saved: page.png (1440x900, 245832 bytes)
+```
+
+### How It Works
+
+1. `bwcli attach` starts a bwserve instance (default port 7902)
+2. The page loads `/bw/attach.js` which injects bitwrench (if not already loaded) and connects via SSE
+3. You type JS expressions or slash commands in the terminal
+4. The server sends protocol messages; the client evaluates and POSTs results back
+5. Event listeners (via `/listen`) stream DOM events back to the terminal in real time
+
+### REPL Commands
+
+| Command | Description |
+|---------|-------------|
+| `<expression>` | Evaluate JS in the browser (e.g., `document.title`) |
+| `/tree [sel] [depth]` | DOM tree summary (default: body, depth 3) |
+| `/screenshot [sel] [file]` | Capture element to PNG (requires `--allow-screenshot`) |
+| `/mount <sel> <comp> [json]` | Mount a BCCL component |
+| `/render <sel> <taco-json>` | Render TACO at selector |
+| `/patch <id> <content>` | Update element text by ID |
+| `/listen <sel> <event>` | Watch for DOM events |
+| `/unlisten <sel> <event>` | Stop watching events |
+| `/exec <code>` | Execute JS (fire-and-forget) |
+| `/clients` | List connected clients |
+| `/help`, `/quit` | Help / exit |
+
+### Security
+
+Attach mode has `allowExec: true` always on — it's a debugging tool. The server binds to `localhost` by default. **Never expose to the public internet.**
+
+For the full attach guide, see [bwcli attach documentation](bw-attach.md).
+
 ## Related
 
 - [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 9 message types
@@ -769,4 +837,5 @@ client.on('export', function(data) {
 - [Screenshot Example](../examples/client-server/screenshot-server.js) — Runnable screenshot demo
 - [Design Document](../dev/bw-client-server.md) — Protocol design decisions and architecture
 - [CLI](cli.md) — The `bwcli` command for file conversion and pipe server
+- [Attach Mode](bw-attach.md) — Full remote debugging REPL documentation
 - [Embedded Tutorial](tutorial-embedded.md) — ESP32 IoT dashboard with C macros and r-prefix JSON

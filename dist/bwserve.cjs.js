@@ -443,7 +443,10 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '      log: "function(){console.log.apply(console,arguments);}",\n'
   + '      _bw_query: "function(opts){if(!bw._bwClient)return;try{var r=new Function(opts.code)();if(r&&typeof r.then===\\"function\\"){r.then(function(v){bw._bwClient.respond(\\"query\\",opts.requestId,v);}).catch(function(e){bw._bwClient.respond(\\"query\\",opts.requestId,null,e.message);});}else{bw._bwClient.respond(\\"query\\",opts.requestId,r);}}catch(e){bw._bwClient.respond(\\"query\\",opts.requestId,null,e.message);}}",\n'
   + '      _bw_mount: "function(opts){if(!bw._bwClient)return;try{var taco;var f=opts.factory;var n=f.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});if(bw.BCCL&&bw.BCCL[n]){taco=bw.make(n,opts.props||{});}else if(bw._allowExec){taco=new Function(\\"props\\",f)(opts.props||{});}else{throw new Error(\\"Unknown component and allowExec disabled\\");}bw.DOM(opts.target,taco);bw._bwClient.respond(\\"mount\\",opts.requestId,{mounted:true});}catch(e){bw._bwClient.respond(\\"mount\\",opts.requestId,null,e.message);}}",\n'
-  + '      _bw_screenshot: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var el=document.querySelector(sel);if(!el){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,\\"Element not found: \\"+sel);return;}function _ls(url){return new Promise(function(res,rej){var s=document.createElement(\\"script\\");s.src=url;s.onload=function(){res(window.html2canvas);};s.onerror=function(){rej(new Error(\\"Failed to load html2canvas\\"));};document.head.appendChild(s);});}var p=window.html2canvas?Promise.resolve(window.html2canvas):_ls(opts.captureUrl||\\"/bw/lib/vendor/html2canvas.min.js\\");p.then(function(h2c){return h2c(el,{scale:opts.scale||1,useCORS:true});}).then(function(canvas){var out=canvas;var mw=opts.maxWidth;var mh=opts.maxHeight;if((mw&&canvas.width>mw)||(mh&&canvas.height>mh)){var sw=mw?mw/canvas.width:1;var sh=mh?mh/canvas.height:1;var sc=Math.min(sw,sh);out=document.createElement(\\"canvas\\");out.width=Math.round(canvas.width*sc);out.height=Math.round(canvas.height*sc);out.getContext(\\"2d\\").drawImage(canvas,0,0,out.width,out.height);}var fmt=opts.format===\\"jpeg\\"?\\"image/jpeg\\":\\"image/png\\";var q=opts.format===\\"jpeg\\"?(opts.quality||0.85):undefined;var dataUrl=out.toDataURL(fmt,q);bw._bwClient.respond(\\"screenshot\\",opts.requestId,{data:dataUrl,width:out.width,height:out.height,format:opts.format||\\"png\\"});}).catch(function(err){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,err.message||String(err));});}"\n'
+  + '      _bw_screenshot: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var el=document.querySelector(sel);if(!el){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,\\"Element not found: \\"+sel);return;}function _ls(url){return new Promise(function(res,rej){var s=document.createElement(\\"script\\");s.src=url;s.onload=function(){res(window.html2canvas);};s.onerror=function(){rej(new Error(\\"Failed to load html2canvas\\"));};document.head.appendChild(s);});}var p=window.html2canvas?Promise.resolve(window.html2canvas):_ls(opts.captureUrl||\\"/bw/lib/vendor/html2canvas.min.js\\");p.then(function(h2c){return h2c(el,{scale:opts.scale||1,useCORS:true});}).then(function(canvas){var out=canvas;var mw=opts.maxWidth;var mh=opts.maxHeight;if((mw&&canvas.width>mw)||(mh&&canvas.height>mh)){var sw=mw?mw/canvas.width:1;var sh=mh?mh/canvas.height:1;var sc=Math.min(sw,sh);out=document.createElement(\\"canvas\\");out.width=Math.round(canvas.width*sc);out.height=Math.round(canvas.height*sc);out.getContext(\\"2d\\").drawImage(canvas,0,0,out.width,out.height);}var fmt=opts.format===\\"jpeg\\"?\\"image/jpeg\\":\\"image/png\\";var q=opts.format===\\"jpeg\\"?(opts.quality||0.85):undefined;var dataUrl=out.toDataURL(fmt,q);bw._bwClient.respond(\\"screenshot\\",opts.requestId,{data:dataUrl,width:out.width,height:out.height,format:opts.format||\\"png\\"});}).catch(function(err){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,err.message||String(err));});}",\n'
+  + '      _bw_tree: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var depth=opts.depth||3;function walk(el,d){if(!el||d>depth)return null;var info={tag:el.tagName?el.tagName.toLowerCase():\\"#text\\"};if(el.id)info.id=el.id;if(el.className&&typeof el.className===\\"string\\")info.cls=el.className.split(\\" \\").slice(0,5).join(\\" \\");if(el.children&&el.children.length>0&&d<depth){info.children=[];for(var i=0;i<Math.min(el.children.length,20);i++){var c=walk(el.children[i],d+1);if(c)info.children.push(c);}}return info;}var root=document.querySelector(sel);bw._bwClient.respond(\\"query\\",opts.requestId,walk(root,0));}",\n'
+  + '      _bw_listen: "function(opts){if(!bw._bwClient)return;if(!bw._bwClient._listeners)bw._bwClient._listeners={};var key=opts.selector+\\":::\\"+opts.event;if(bw._bwClient._listeners[key])return;var fn=function(e){var el=e.target.closest?e.target.closest(opts.selector):null;if(!el)return;bw._bwClient.respond(\\"event\\",null,{event:opts.event,selector:opts.selector,tagName:el.tagName,id:el.id||null,text:(el.textContent||\\"\\").slice(0,100)});};document.addEventListener(opts.event,fn,true);bw._bwClient._listeners[key]={fn:fn,event:opts.event};}",\n'
+  + '      _bw_unlisten: "function(opts){if(!bw._bwClient||!bw._bwClient._listeners)return;var key=opts.selector+\\":::\\"+opts.event;var entry=bw._bwClient._listeners[key];if(!entry)return;document.removeEventListener(entry.event,entry.fn,true);delete bw._bwClient._listeners[key];}"\n'
   + '    };\n'
   + '    Object.keys(builtins).forEach(function(name) {\n'
   + '      bw.apply({ type: "register", name: name, body: builtins[name] });\n'
@@ -586,6 +589,62 @@ function generateShell(opts) {
 
 /** bwshell version (from package.json) */
 generateShell.version = VERSION;
+
+/**
+ * bwserve attach — self-contained drop-in script generator.
+ *
+ * Generates JS that loads bitwrench + bwclient and auto-connects
+ * to a bwserve instance. When loaded in any browser page, it
+ * establishes an SSE connection for remote debugging.
+ *
+ * Usage:
+ *   <script src="http://localhost:7902/bw/attach.js"></script>
+ *
+ * @module bwserve/attach
+ */
+
+
+/**
+ * Generate the self-contained attach script.
+ *
+ * The returned JS string, when evaluated in a browser:
+ * 1. Checks if bw is already loaded; if not, injects bitwrench UMD
+ * 2. Evaluates bwclient source to set up bw._bwClient
+ * 3. Calls bw._bwClient.attach() to connect via SSE
+ *
+ * @param {Object} [opts]
+ * @param {string} [opts.origin=''] - Server origin (empty = same origin)
+ * @returns {string} JavaScript source code
+ */
+function generateAttachScript(opts) {
+  opts = opts || {};
+  var origin = opts.origin || '';
+
+  var clientSource = getBwClientSource();
+
+  return '(function() {\n'
+    + '  "use strict";\n'
+    + '  var origin = ' + JSON.stringify(origin) + ';\n'
+    + '  function _go() {\n'
+    + '    ' + clientSource + '\n'
+    + '    bw._bwClient.attach(origin, {\n'
+    + '      allowExec: true,\n'
+    + '      onStatus: function(s) { console.log("[bw-attach] " + s); }\n'
+    + '    });\n'
+    + '    console.log("[bw-attach] v' + VERSION + ' connecting to " + (origin || location.origin));\n'
+    + '  }\n'
+    + '  if (window.bw) { _go(); return; }\n'
+    + '  var s = document.createElement("script");\n'
+    + '  s.src = (origin || "") + "/bw/lib/bitwrench.umd.js";\n'
+    + '  s.onload = function() {\n'
+    + '    if (typeof bw !== "undefined" && bw.loadStyles) bw.loadStyles();\n'
+    + '    _go();\n'
+    + '  };\n'
+    + '  document.head.appendChild(s);\n'
+    + '})();\n';
+}
+
+generateAttachScript.version = VERSION;
 
 /**
  * bwserve — Server-driven UI library for bitwrench
@@ -778,6 +837,11 @@ class BwServeApp {
     // Parse URL path (strip query string)
     var path$1 = url.split('?')[0];
 
+    // /bw/attach.js — self-contained attach script for remote debugging
+    if (path$1 === '/bw/attach.js' && method === 'GET') {
+      return this._serveAttachScript(req, res);
+    }
+
     // /bw/lib/bitwrench.umd.js — serve bitwrench client library
     if (path$1 === '/bw/lib/bitwrench.umd.js' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.umd.js');
@@ -797,6 +861,17 @@ class BwServeApp {
     if (path$1.startsWith('/bw/events/') && method === 'GET') {
       var clientId = path$1.slice('/bw/events/'.length);
       return this._handleSSE(req, res, clientId);
+    }
+
+    // CORS preflight for /bw/return/ (needed for cross-origin attach)
+    if (method === 'OPTIONS' && path$1.startsWith('/bw/return/')) {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
     }
 
     // /bw/return/<route>/<clientId> — unified return channel
@@ -939,7 +1014,7 @@ class BwServeApp {
   _handleReturn(req, res, route, clientId) {
     var record = this._clients.get(clientId);
     if (!record || !record.client) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: 'Unknown client' }));
       return;
     }
@@ -949,22 +1024,46 @@ class BwServeApp {
     req.on('end', function() {
       try {
         var data = JSON.parse(body);
-        if (route === 'action') {
-          // Action dispatch (no requestId/pending pattern)
-          var action = data.result ? data.result.action : data.action;
-          var payload = data.result ? data.result.data : data.data || data;
+        if (route === 'action' || route === 'event') {
+          // Action/event dispatch (no requestId/pending pattern)
+          var action = route === 'event'
+            ? '_bw_event'
+            : (data.result ? data.result.action : data.action);
+          var payload = route === 'event'
+            ? (data.result || data)
+            : (data.result ? data.result.data : data.data || data);
           record.client._dispatch(action, payload);
         } else {
           // All other routes: resolve pending promise
           record.client._resolvePending(data.requestId, data);
         }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+  }
+
+  /**
+   * Serve the self-contained attach script at /bw/attach.js.
+   * Loads bitwrench + bwclient and auto-connects via SSE.
+   * @private
+   */
+  _serveAttachScript(req, res) {
+    try {
+      var js = generateAttachScript({ origin: '' });
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
+      });
+      res.end(js);
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Error generating attach script: ' + err.message);
+    }
   }
 
   /**

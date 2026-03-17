@@ -18,6 +18,7 @@
 
 import { BwServeClient } from './client.js';
 import { generateShell } from './bwshell.js';
+import { generateAttachScript } from './attach.js';
 import { VERSION } from '../version.js';
 
 // Resolve dist/ paths relative to the package root
@@ -198,6 +199,11 @@ class BwServeApp {
     // Parse URL path (strip query string)
     var path = url.split('?')[0];
 
+    // /bw/attach.js — self-contained attach script for remote debugging
+    if (path === '/bw/attach.js' && method === 'GET') {
+      return this._serveAttachScript(req, res);
+    }
+
     // /bw/lib/bitwrench.umd.js — serve bitwrench client library
     if (path === '/bw/lib/bitwrench.umd.js' && method === 'GET') {
       return this._serveDistFile(res, 'bitwrench.umd.js');
@@ -217,6 +223,17 @@ class BwServeApp {
     if (path.startsWith('/bw/events/') && method === 'GET') {
       var clientId = path.slice('/bw/events/'.length);
       return this._handleSSE(req, res, clientId);
+    }
+
+    // CORS preflight for /bw/return/ (needed for cross-origin attach)
+    if (method === 'OPTIONS' && path.startsWith('/bw/return/')) {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
     }
 
     // /bw/return/<route>/<clientId> — unified return channel
@@ -359,7 +376,7 @@ class BwServeApp {
   _handleReturn(req, res, route, clientId) {
     var record = this._clients.get(clientId);
     if (!record || !record.client) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: 'Unknown client' }));
       return;
     }
@@ -369,22 +386,46 @@ class BwServeApp {
     req.on('end', function() {
       try {
         var data = JSON.parse(body);
-        if (route === 'action') {
-          // Action dispatch (no requestId/pending pattern)
-          var action = data.result ? data.result.action : data.action;
-          var payload = data.result ? data.result.data : data.data || data;
+        if (route === 'action' || route === 'event') {
+          // Action/event dispatch (no requestId/pending pattern)
+          var action = route === 'event'
+            ? '_bw_event'
+            : (data.result ? data.result.action : data.action);
+          var payload = route === 'event'
+            ? (data.result || data)
+            : (data.result ? data.result.data : data.data || data);
           record.client._dispatch(action, payload);
         } else {
           // All other routes: resolve pending promise
           record.client._resolvePending(data.requestId, data);
         }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ error: e.message }));
       }
     });
+  }
+
+  /**
+   * Serve the self-contained attach script at /bw/attach.js.
+   * Loads bitwrench + bwclient and auto-connects via SSE.
+   * @private
+   */
+  _serveAttachScript(req, res) {
+    try {
+      var js = generateAttachScript({ origin: '' });
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
+      });
+      res.end(js);
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Error generating attach script: ' + err.message);
+    }
   }
 
   /**

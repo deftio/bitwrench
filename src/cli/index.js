@@ -11,6 +11,7 @@ import { parseArgs } from 'node:util';
 import { VERSION } from '../version.js';
 import { convertFile } from './convert.js';
 import { runServe } from './serve.js';
+import { runAttach } from './attach.js';
 
 const USAGE = `
 bwcli v${VERSION} — bitwrench command-line tool
@@ -18,6 +19,7 @@ bwcli v${VERSION} — bitwrench command-line tool
 Usage:
   bwcli <file> [options]       Convert a file to styled HTML
   bwcli serve [dir] [options]  Start bwserve development server
+  bwcli attach [options]       Start attach server for remote debugging
   bwcli --version              Print version
   bwcli --help                 Print this help
 
@@ -52,6 +54,8 @@ Examples:
   bwcli doc.md --theme "#336699,#cc6633"     Custom theme colors
   bwcli serve                              Serve current directory on port 7902
   bwcli serve ./site --port 8080           Serve ./site on port 8080
+  bwcli attach                             Start remote debugging REPL on port 7902
+  bwcli attach --port 3000                 Attach on custom port
 `.trim();
 
 /**
@@ -60,6 +64,9 @@ Examples:
  */
 export function run(argv) {
     // Check for subcommand before parseArgs (subcommands have different options)
+    if (argv.length > 0 && argv[0] === 'attach') {
+        return runAttach(argv.slice(1));
+    }
     if (argv.length > 0 && argv[0] === 'serve') {
         return runServe(argv.slice(1));
     }

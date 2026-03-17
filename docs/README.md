@@ -18,6 +18,7 @@ These guides cover how to build UIs with bitwrench.
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
 | [CLI](cli.md) | The `bwcli` command: file conversion, themes, standalone pages |
 | [bwserve](bwserve.md) | Server-driven UI: SSE protocol, pipe server, embedded devices, relaxed JSON |
+| [bwcli attach](bw-attach.md) | Remote debugging REPL: terminal-based inspector for any bitwrench page |
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
 
 ## Tutorials
