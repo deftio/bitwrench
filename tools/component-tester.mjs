@@ -111,6 +111,25 @@ function buildGallery() {
     return { t: 'span', a: { style: 'display:inline-block;width:0.75rem;height:0.75rem;border-radius:2px;border:1px solid rgba(0,0,0,0.15);vertical-align:middle;margin:0 0.25rem;background:' + color + ';' } };
   }
 
+  // Shade legend: explains what each derived shade is for
+  var shadeLegend = {
+    t: 'div', a: { style: 'font-size:0.6875rem;opacity:0.6;margin-bottom:0.75rem;line-height:1.5;' },
+    c: [
+      { t: 'div', c: [
+        { t: 'strong', c: 'base' }, ' = the color itself. ',
+        { t: 'strong', c: 'hover' }, ' = 10% darker for :hover. ',
+        { t: 'strong', c: 'active' }, ' = 15% darker for :active/:pressed.'
+      ]},
+      { t: 'div', c: [
+        { t: 'strong', c: 'light' }, ' = 85% mixed toward white (alert backgrounds, subtle fills). ',
+        { t: 'strong', c: 'border' }, ' = visible edge color for that shade.'
+      ]},
+      { t: 'div', c: [
+        { t: 'strong', c: 'textOn' }, ' = text color to print ON TOP of base (white or black, auto-picked for WCAG contrast).'
+      ]}
+    ]
+  };
+
   function swatchRow(label, shades, role) {
     return { t: 'tr', c: [
       { t: 'td', a: { style: labelTd }, c: label }
@@ -152,7 +171,7 @@ function buildGallery() {
       seedSwatch('secondary', currentThemeConfig.secondary || '#6c757d',
         'Supporting color. Used for secondary buttons, muted text, outlines.'),
       seedSwatch('tertiary', currentThemeConfig.tertiary || currentThemeConfig.primary || '#006666',
-        'Third accent. Available as .bw_tertiary class but not auto-assigned to any component. Use via variant="tertiary".'),
+        'Third accent color. Gets full shade set + .bw_tertiary CSS class, but no component defaults to it yet. Use explicitly via variant="tertiary" on buttons, badges, cards, etc.'),
       { t: 'div', a: { style: 'font-size:0.6875rem;opacity:0.5;margin-top:0.25rem;font-style:italic;' },
         c: 'Optional config: spacing (compact/normal/spacious), radius (none/sm/md/lg/pill), fontSize, elevation, motion' }
     ]
@@ -249,6 +268,7 @@ function buildGallery() {
         // Left: derived shades
         { t: 'div', c: [
           { t: 'div', a: { style: 'font-weight:700;font-size:0.8125rem;margin-bottom:0.5rem;' }, c: 'Derived Shade Sets (each seed + auto-derived colors)' },
+          shadeLegend,
           shadesTable
         ]},
         // Right: surfaces + component mapping
