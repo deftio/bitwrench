@@ -195,7 +195,7 @@ export function startAttach(bwserve, opts) {
       // Print connection message
       process.stdout.write('\r\x1b[K');
       console.log('[connected] client ' + clientId);
-      rl.prompt(true);
+      safePrompt(true);
 
       // Listen for events from _bw_listen
       client.on('_bw_event', function(data) {
@@ -203,7 +203,7 @@ export function startAttach(bwserve, opts) {
         console.log('[event] ' + data.event + ' on ' + data.selector +
           ' \u2192 ' + data.tagName + (data.id ? '#' + data.id : '') +
           (data.text ? ' "' + data.text.slice(0, 50) + '"' : ''));
-        rl.prompt(true);
+        safePrompt(true);
       });
 
       // Handle disconnect
@@ -220,7 +220,7 @@ export function startAttach(bwserve, opts) {
         } else {
           console.log('Waiting for connection...');
         }
-        rl.prompt(true);
+        safePrompt(true);
       });
     }
   };
@@ -238,7 +238,7 @@ export function startAttach(bwserve, opts) {
     console.log('Waiting for connection...');
     console.log('Type /help for commands, /quit to exit.');
     console.log('');
-    rl.prompt();
+    safePrompt();
   });
 
   // Create readline REPL
@@ -247,11 +247,16 @@ export function startAttach(bwserve, opts) {
     output: opts.output || process.stdout,
     prompt: 'bw> '
   });
+  var rlClosed = false;
+
+  function safePrompt(preserveCursor) {
+    if (!rlClosed) rl.prompt(preserveCursor);
+  }
 
   rl.on('line', function(line) {
     line = line.trim();
     if (!line) {
-      rl.prompt();
+      safePrompt();
       return;
     }
 
@@ -264,7 +269,7 @@ export function startAttach(bwserve, opts) {
     // JS expression — requires active client
     if (!activeClient) {
       console.log('No client connected. Add the attach script to a page first.');
-      rl.prompt();
+      safePrompt();
       return;
     }
 
@@ -283,14 +288,15 @@ export function startAttach(bwserve, opts) {
       } else {
         console.log('undefined');
       }
-      rl.prompt();
+      safePrompt();
     }).catch(function(err) {
       console.error('[error] ' + err.message);
-      rl.prompt();
+      safePrompt();
     });
   });
 
   rl.on('close', function() {
+    rlClosed = true;
     console.log('\nExiting.');
     app.close().then(function() {
       process.exit(0);
