@@ -11,14 +11,13 @@
 
   <script>
     // =====================================================================
-    // Metrics Dashboard — Level 2 components + pub/sub + theme tokens
+    // Metrics Dashboard — o.state + o.render + pub/sub + theme tokens
     //
     // Demonstrates:
     //   - bw.makeStyles() with palette tokens used in bw.css() rules
     //   - bw.s() + bw.u for all inline styles
     //   - bw.responsive() for layout breakpoints
     //   - bw.css({ '@keyframes': {...} }) for pulse animation
-    //   - bw.component() with .set() for stat cards
     //   - bw.pub() / bw.sub() for cross-widget communication
     //   - bw.makeStatCard(), bw.makeBarChart(), bw.makeProgress(),
     //     bw.makeCard(), bw.makeBadge()
@@ -47,8 +46,8 @@
       var secondaryLight = P.secondary.light;
       var tertiary = P.tertiary.base;
       var tertiaryLight = P.tertiary.light;
-      var surfaceBg = P.surface.light;
-      var borderColor = P.muted.border;
+      var surfaceBg = P.surface;
+      var borderColor = P.light.border;
 
       // -- Page CSS using theme tokens + @keyframes -------------------------
       bw.injectCSS(bw.css({
@@ -153,12 +152,6 @@
       }
 
       // -- Components -------------------------------------------------------
-      var statCards = bw.component({
-        t: 'div', a: { class: 'dash-stats' },
-        c: '${statsContent}',
-        o: { state: { statsContent: '' } }
-      });
-
       function updateStats() {
         metrics.users = randomDelta(metrics.users, 0.02);
         metrics.revenue = randomDelta(metrics.revenue, 0.03);

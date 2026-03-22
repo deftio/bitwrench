@@ -87,11 +87,11 @@ test.describe('Bitwrench v2 Examples', () => {
     expect(page.errors).toHaveLength(0);
   });
 
-  test('02-tables.html loads without errors', async ({ page }) => {
-    await page.goto('/pages/02-tables.html');
+  test('02-tables-forms.html loads without errors', async ({ page }) => {
+    await page.goto('/pages/02-tables-forms.html');
 
     // Check page loaded
-    await expect(page.locator('h1').first()).toContainText('Tables & Data');
+    await expect(page.locator('h1').first()).toContainText('Tables & Forms');
 
     // Check interactive table is rendered
     await page.waitForSelector('#interactive-table-container table', { timeout: 5000 });
@@ -145,21 +145,22 @@ test.describe('Bitwrench v2 Examples', () => {
     expect(page.errors).toHaveLength(0);
   });
 
-  test('02-forms.html loads without errors', async ({ page }) => {
-    await page.goto('/pages/02-forms.html');
+  test('02-tables-forms.html form section loads without errors', async ({ page }) => {
+    await page.goto('/pages/02-tables-forms.html');
 
     // Check page loaded
-    await expect(page.locator('h1').first()).toContainText('Forms');
+    await expect(page.locator('h1').first()).toContainText('Tables & Forms');
 
-    // Check form inputs are rendered
+    // Check form inputs are rendered (inside form-tabs demo section)
     const formInputs = page.locator('.bw_form_control');
     await expect(formInputs.first()).toBeVisible();
 
-    // Test tabbed forms
+    // Test tabbed forms section — the inner makeTabs has Personal Info / Address / Preferences tabs
     const tabbedForm = page.locator('#tabbed-form-tabs');
     await expect(tabbedForm).toBeVisible();
 
-    // Check tab navigation works
+    // The tabbed form is inside a createDemoTabs wrapper (Result/Code),
+    // so drill into the inner bw_tabs for the Personal Info / Address tabs
     const personalTab = tabbedForm.locator('.bw_nav_link:has-text("Personal Info")');
     const addressTab = tabbedForm.locator('.bw_nav_link:has-text("Address")');
 
@@ -276,7 +277,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('Tables are properly styled and sortable', async ({ page }) => {
-    await page.goto('/pages/02-tables.html');
+    await page.goto('/pages/02-tables-forms.html');
 
     // Wait for table to be rendered
     await page.waitForSelector('#interactive-table-container table');
@@ -297,7 +298,7 @@ test.describe('Bitwrench v2 Examples', () => {
   });
 
   test('Forms handle validation and submission', async ({ page }) => {
-    await page.goto('/pages/02-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
 
     // Check form section is rendered
     const formTabs = page.locator('#form-tabs');
@@ -316,7 +317,7 @@ test.describe('Bitwrench v2 Examples', () => {
 
 test.describe('Performance Tests', () => {
   test('Large table rendering performance', async ({ page }) => {
-    await page.goto('/pages/02-tables.html');
+    await page.goto('/pages/02-tables-forms.html');
 
     // Measure time to render pagination table with 50 items
     const startTime = Date.now();
@@ -348,7 +349,7 @@ test.describe('Accessibility Tests', () => {
     await expect(activeTab).toHaveAttribute('aria-selected', 'true');
 
     // Check forms have labels
-    await page.goto('/pages/02-forms.html');
+    await page.goto('/pages/02-tables-forms.html');
     const formGroups = page.locator('.bw_form_group');
     const firstGroup = formGroups.first();
     const label = firstGroup.locator('label');
@@ -362,5 +363,34 @@ test.describe('Accessibility Tests', () => {
     const firstTab = page.locator('[role="tab"]').first();
     await firstTab.focus();
     await expect(firstTab).toBeFocused();
+  });
+
+  test('09-builds.html loads build tables from builds.json', async ({ page }) => {
+    await page.goto('/pages/09-builds.html');
+
+    // Wait for async fetch of builds.json to complete
+    await page.waitForTimeout(2000);
+
+    // Core library table should have loaded (no "Loading..." text)
+    const coreSection = page.locator('#builds-core');
+    await expect(coreSection).not.toContainText('Loading...');
+    await expect(coreSection).not.toContainText('Failed to load');
+
+    // Should have a table with rows
+    const coreTable = coreSection.locator('table.bw_table');
+    await expect(coreTable).toBeVisible();
+    const coreRows = coreTable.locator('tbody tr');
+    expect(await coreRows.count()).toBeGreaterThanOrEqual(2);
+
+    // All Files section should also have a table
+    const allSection = page.locator('#builds-all');
+    await expect(allSection).not.toContainText('Loading...');
+    const allTable = allSection.locator('table.bw_table');
+    await expect(allTable).toBeVisible();
+    expect(await allTable.locator('tbody tr').count()).toBeGreaterThanOrEqual(5);
+
+    // SRI section should have loaded
+    const sriSection = page.locator('#builds-sri');
+    await expect(sriSection).not.toContainText('Loading...');
   });
 });

@@ -147,20 +147,21 @@ The options key carries state, lifecycle hooks, and component behavior. This is 
     // Skip content escaping
     raw: true,
 
-    // Methods (used with ComponentHandle)
-    methods: {
-      increment: function(comp) { comp.set('count', comp.get('count') + 1); }
+    // Component handle -- methods exposed on el.bw (v2.0.19+)
+    handle: {
+      increment: function(el) { el._bw_state.count++; bw.update(el); }
     },
 
-    // Actions (used with ComponentHandle)
-    actions: {
-      save: function(comp, evt) { /* handle save */ }
+    // Content slots -- auto-generates el.bw.setX()/getX() (v2.0.19+)
+    slots: {
+      title: '.my_title',
+      content: '.my_body'
     }
   }
 }
 ```
 
-See [State Management](state-management.md) for detailed coverage of `o.state`, `o.render`, `o.methods`, and lifecycle hooks.
+See [State Management](state-management.md) for detailed coverage of `o.state`, `o.render`, lifecycle hooks, `o.handle`, and `o.slots`.
 
 ## Rendering TACO objects
 
@@ -329,19 +330,30 @@ You can also wrap existing CSS frameworks (Bootstrap, Tailwind, etc.) in TACO ob
 
 Bitwrench doesn't care where your CSS classes come from — it just renders the TACO to HTML/DOM. The `make*()` functions use bitwrench's built-in CSS classes (`bw_card`, `bw_btn`, etc.), but that's a choice, not a constraint.
 
-To make a custom component reactive, wrap it in `bw.component()`:
+To make a custom component reactive, add `o.state` and `o.render`:
 
 ```javascript
-var badge = bw.component({
+bw.DOM('#app', {
   t: 'span',
-  a: { class: 'status-badge', style: 'background: ${color}; color: #fff; padding: 0.25rem 0.75rem; border-radius: 999px;' },
-  c: '${label}',
-  o: { state: { label: 'OK', color: '#4caf50' } }
+  o: {
+    state: { label: 'OK', color: '#4caf50' },
+    render: function(el) {
+      var s = el._bw_state;
+      bw.DOM(el, {
+        t: 'span',
+        a: { class: 'status-badge',
+             style: 'background:' + s.color + '; color:#fff; padding:0.25rem 0.75rem; border-radius:999px;' },
+        c: s.label
+      });
+    }
+  }
 });
 
-bw.DOM('#app', badge);
-badge.set('label', 'ERROR');
-badge.set('color', '#f44336');
+// Later, update state from outside:
+var el = bw.$('.status-badge')[0].parentElement;
+el._bw_state.label = 'ERROR';
+el._bw_state.color = '#f44336';
+bw.update(el);
 ```
 
 ## TACO beyond the browser

@@ -5,8 +5,7 @@ const EXAMPLES = [
   { path: '/pages/', name: 'Index Page' },
   { path: '/pages/00-quick-start.html', name: 'Quick Start' },
   { path: '/pages/01-components.html', name: 'Components' },
-  { path: '/pages/02-tables.html', name: 'Tables' },
-  { path: '/pages/02-forms.html', name: 'Forms' },
+  { path: '/pages/02-tables-forms.html', name: 'Tables & Forms' },
   { path: '/pages/03-styling.html', name: 'Styling' },
   { path: '/pages/04-dashboard.html', name: 'Dashboard' },
   { path: '/pages/05-state.html', name: 'State' },
@@ -16,7 +15,6 @@ const EXAMPLES = [
   { path: '/pages/08-api-reference.html', name: 'API Reference' },
   { path: '/pages/09-builds.html', name: 'Builds' },
   { path: '/pages/10-themes.html', name: 'Themes' },
-  { path: '/pages/11-code-editor.html', name: 'Code Editor' },
   { path: '/pages/11-debugging.html', name: 'Debugging' },
   { path: '/pages/12-bwserve-protocol.html', name: 'bwserve Protocol' }
 ];

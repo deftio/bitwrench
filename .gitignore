@@ -2,6 +2,8 @@
 .nyc_output
 test-results/
 test/screenshots/
+screenshot-*.png
+test.png
 playwright-report/
 *~
 *.log

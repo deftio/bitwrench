@@ -3,88 +3,108 @@
  * Site-wide design tokens, layout, navigation styles, and dark mode support.
  * Include this in every page AFTER bitwrench.umd.js.
  *
- * Replaces shared-theme.css — all CSS is injected at runtime via bw.injectCSS().
+ * Two-phase injection:
+ *   Phase A (head time): CSS custom properties for site tokens.
+ *   Phase B (after bw.loadStyles()): Site chrome CSS via applySiteStyles().
+ *
+ * Each page must call applySiteStyles() AFTER bw.loadStyles() to ensure
+ * site overrides come after bitwrench defaults in source order.
  */
 
 (function() {
   'use strict';
 
-  bw.injectCSS(`
-/* ---- Design Tokens ---- */
-:root {
-  --bw_teal: #006666;
-  --bw_teal_dark: #004d4d;
-  --bw_teal_light: #e0f2f1;
-  --bw_teal_bg: #f0faf9;
+  // ==== Site Design Token CSS (used by both Phase A and deferred injection) ====
+  var SITE_TOKENS_CSS = [
+'/* ---- Site Design Tokens ---- */',
+':root {',
+'  --bw_teal: #006666;',
+'  --bw_teal_dark: #004d4d;',
+'  --bw_teal_light: #e0f2f1;',
+'  --bw_teal_bg: #f0faf9;',
+'',
+'  --bw_page_bg: #eee;',
+'  --bw_card_bg: #ffffff;',
+'  --bw_card_border: #d8d8d8;',
+'  --bw_card_shadow: 0 1px 3px rgba(0,0,0,0.08);',
+'',
+'  --bw_text: #1a1a1a;',
+'  --bw_text_secondary: #444;',
+'  --bw_text_muted: #666;',
+'',
+'  /* Callout tokens */',
+'  --bw_callout_tip_bg: #fff8e1;',
+'  --bw_callout_tip_border: #f9a825;',
+'  --bw_callout_tip_heading: #e65100;',
+'  --bw_callout_warn_bg: #fce4ec;',
+'  --bw_callout_warn_border: #c62828;',
+'  --bw_callout_warn_heading: #c62828;',
+'',
+'  --bw_header_bg: #006666;',
+'  --bw_header_text: #ffffff;',
+'',
+'  --bw_code_bg: #1e293b;',
+'  --bw_code_text: #e2e8f0;',
+'',
+'  --bw_radius: 8px;',
+'  --bw_content_max: 1200px;',
+'  --bw_content_wide: 1280px;',
+'',
+'  --bw_font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;',
+'  --bw_font_mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;',
+'',
+'  /* Spacing scale */',
+'  --bw_space_xs: 0.25rem;',
+'  --bw_space_sm: 0.5rem;',
+'  --bw_space_md: 1rem;',
+'  --bw_space_lg: 1.5rem;',
+'  --bw_space_xl: 2rem;',
+'  --bw_space_2xl: 3rem;',
+'}',
+'',
+'/* ---- Alternate (Dark) Mode ---- */',
+'.bw_theme_alt {',
+'  --bw_page_bg: #121212;',
+'  --bw_card_bg: #1e1e1e;',
+'  --bw_card_border: #333;',
+'  --bw_card_shadow: 0 1px 3px rgba(0,0,0,0.3);',
+'',
+'  --bw_text: #e0e0e0;',
+'  --bw_text_secondary: #aaa;',
+'  --bw_text_muted: #777;',
+'',
+'  /* Callout tokens (dark) */',
+'  --bw_callout_tip_bg: #2a2200;',
+'  --bw_callout_tip_border: #b77b1b;',
+'  --bw_callout_tip_heading: #fbbf24;',
+'  --bw_callout_warn_bg: #2a0000;',
+'  --bw_callout_warn_border: #ef4444;',
+'  --bw_callout_warn_heading: #fca5a5;',
+'',
+'  --bw_header_bg: #006666;',
+'  --bw_teal: #4db8b8;',
+'  --bw_teal_dark: #80cbc4;',
+'  --bw_teal_light: #1a3a3a;',
+'  --bw_teal_bg: #162828;',
+'',
+'  --bw_code_bg: #0f172a;',
+'  --bw_code_text: #cbd5e1;',
+'}',
+  ].join('\n');
 
-  --bw_page_bg: #eee;
-  --bw_card_bg: #ffffff;
-  --bw_card_border: #d8d8d8;
-  --bw_card_shadow: 0 1px 3px rgba(0,0,0,0.08);
+  // ==== Phase A: Inject tokens at head time (if bw is available) ====
+  if (typeof bw !== 'undefined') {
+    bw.injectCSS(SITE_TOKENS_CSS, { id: 'bw_site_tokens' });
+  }
 
-  --bw_text: #1a1a1a;
-  --bw_text_secondary: #444;
-  --bw_text_muted: #666;
-
-  /* Callout tokens */
-  --bw_callout_tip_bg: #fff8e1;
-  --bw_callout_tip_border: #f9a825;
-  --bw_callout_tip_heading: #e65100;
-  --bw_callout_warn_bg: #fce4ec;
-  --bw_callout_warn_border: #c62828;
-  --bw_callout_warn_heading: #c62828;
-
-  --bw_header_bg: #006666;
-  --bw_header_text: #ffffff;
-
-  --bw_code_bg: #1e293b;
-  --bw_code_text: #e2e8f0;
-
-  --bw_radius: 8px;
-  --bw_content_max: 1200px;
-  --bw_content_wide: 1280px;
-
-  --bw_font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --bw_font_mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
-
-  /* Spacing scale */
-  --bw_space_xs: 0.25rem;
-  --bw_space_sm: 0.5rem;
-  --bw_space_md: 1rem;
-  --bw_space_lg: 1.5rem;
-  --bw_space_xl: 2rem;
-  --bw_space_2xl: 3rem;
-}
-
-/* ---- Alternate (Dark) Mode ---- */
-.bw_theme_alt {
-  --bw_page_bg: #121212;
-  --bw_card_bg: #1e1e1e;
-  --bw_card_border: #333;
-  --bw_card_shadow: 0 1px 3px rgba(0,0,0,0.3);
-
-  --bw_text: #e0e0e0;
-  --bw_text_secondary: #aaa;
-  --bw_text_muted: #777;
-
-  /* Callout tokens (dark) */
-  --bw_callout_tip_bg: #2a2200;
-  --bw_callout_tip_border: #b77b1b;
-  --bw_callout_tip_heading: #fbbf24;
-  --bw_callout_warn_bg: #2a0000;
-  --bw_callout_warn_border: #ef4444;
-  --bw_callout_warn_heading: #fca5a5;
-
-  --bw_header_bg: #006666;
-  --bw_teal: #4db8b8;       /* lighter teal for dark backgrounds */
-  --bw_teal_dark: #80cbc4;
-  --bw_teal_light: #1a3a3a;
-  --bw_teal_bg: #162828;
-
-  --bw_code_bg: #0f172a;
-  --bw_code_text: #cbd5e1;
-}
-
+  // ==== Phase B: Site Chrome CSS ====
+  // Exposed as global function; called by each page AFTER bw.loadStyles().
+  // If Phase A was skipped (bw not loaded at head time), injects tokens here too.
+  window.applySiteStyles = function() {
+    if (!document.getElementById('bw_site_tokens')) {
+      bw.injectCSS(SITE_TOKENS_CSS, { id: 'bw_site_tokens' });
+    }
+    bw.injectCSS(`
 /* ---- Site Navigation ---- */
 #example-nav {
   position: sticky;
@@ -335,19 +355,6 @@
   .bw_site_subnav_inner { padding: 0 0.75rem; }
   .bw_site_nav_logo { height: 26px; }
   .bw_site_nav_icon { height: 22px; }
-}
-
-/* ---- Base Reset ---- */
-*, *::before, *::after { box-sizing: border-box; }
-
-body {
-  font-family: var(--bw_font);
-  background: var(--bw_page_bg);
-  color: var(--bw_text);
-  margin: 0;
-  padding: 0;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
 }
 
 /* ---- Page Header ---- */
@@ -601,7 +608,7 @@ code:not(pre code) {
   color: #80cbc4;
 }
 
-/* ---- Tables — mobile overflow safety ---- */
+/* ---- Tables -- mobile overflow safety ---- */
 .content-container table,
 .demo-content table,
 .demo-section-body table {
@@ -616,10 +623,6 @@ code:not(pre code) {
     -webkit-overflow-scrolling: touch;
   }
 }
-
-/* ---- Links ---- */
-a { color: var(--bw_teal); }
-a:hover { color: var(--bw_teal_dark); }
 
 /* ---- Callout boxes ---- */
 .callout {
@@ -992,17 +995,6 @@ a:hover { color: var(--bw_teal_dark); }
 .bw_site_footer_shared a:hover { color: var(--bw_teal, #006666); }
 .bw_site_footer_tm { font-size: 0.6875rem; opacity: 0.7; }
 
-/* ---- Focus Rings (Accessibility) ---- */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--bw_teal);
-  outline-offset: 2px;
-}
-
 /* ---- Shared Page Patterns ---- */
 .intro-text {
   font-size: 0.9375rem;
@@ -1045,21 +1037,7 @@ textarea:focus-visible,
   overflow: hidden;
 }
 .table-card .bw_table { margin-bottom: 0; }
-
-/* ---- Learning Level Badge ---- */
-.bw_level_badge {
-  display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.15em 0.5em;
-  border-radius: 3px;
-  background: var(--bw_teal);
-  color: #fff;
-  vertical-align: middle;
-  margin-right: 0.5em;
-}
-`, { id: 'bw_shared_theme' });
+`, { id: 'bw_site_chrome' });
+  };
 
 })();

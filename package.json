@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.0.18",
+	"version": "2.0.19",
 	"description": "A library for javascript UI functions.",
 	"main": "./dist/bitwrench.umd.js",
 	"repository": {
@@ -87,7 +87,7 @@
 	"scripts": {
 		"generate-version": "node tools/generate-version.cjs",
 		"prebuild": "npm run generate-version && npm run lint",
-		"build": "rollup --config && npm run build:css && npm run build:metrics",
+		"build": "rollup --config && npm run build:css && npm run build:metrics && npm run build:builds",
 		"build:css": "node src/generate-css.js",
 		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
@@ -95,9 +95,10 @@
 		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_component_handle.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js -r jsdom-global/register",
+		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js -r jsdom-global/register",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
 		"test:attach": "mocha ./test/bitwrench_test_attach.js -r jsdom-global/register",
+		"test:serve": "mocha ./test/bitwrench_test_serve.js -r jsdom-global/register --exit",
 		"test:components": "mocha ./test/bitwrench_test_components.js -r jsdom-global/register",
 		"test:v1": "c8 --reporter=text mocha ./test/bitwrench_test.js -r jsdom-global/",
 		"test:pending": "mocha ./test/bitwrench_test_pending.js -r jsdom-global/",
@@ -112,6 +113,7 @@
 		"generate-sri": "node tools/generate-sri.js",
 		"test:nodemap": "mocha ./test/bitwrench_test_nodemap.js -r jsdom-global/register",
 		"test:cli": "mocha ./test/bitwrench_test_cli.js",
+		"test:debug": "mocha ./test/bitwrench_test_debug.js -r jsdom-global/register",
 		"test:code-edit": "mocha ./test/bitwrench_test_code_edit.js -r jsdom-global/register",
 		"test:html-page": "mocha ./test/bitwrench_test_html_page.js -r jsdom-global/register",
 		"test:e2e": "playwright test",

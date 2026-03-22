@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.19 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 /**
  * Bitwrench v2 Components
  *
@@ -173,7 +173,12 @@ function makeCard(props = {}) {
       },
       o: {
         type: 'card',
-        state: props.state || {}
+        state: props.state || {},
+        slots: {
+          title: '.bw_card_title',
+          content: '.bw_card_body',
+          footer: '.bw_card_footer'
+        }
       }
     };
   }
@@ -184,7 +189,12 @@ function makeCard(props = {}) {
     c: cardContent,
     o: {
       type: 'card',
-      state: props.state || {}
+      state: props.state || {},
+      slots: {
+        title: '.bw_card_title',
+        content: '.bw_card_body',
+        footer: '.bw_card_footer'
+      }
     }
   };
 }
@@ -502,6 +512,24 @@ function makeTabs(props = {}) {
     }
   });
 
+  // Shared tab switching logic
+  function switchTab(el, index) {
+    var allTabs = el.querySelectorAll('.bw_nav_link');
+    var allPanes = el.querySelectorAll('.bw_tab_pane');
+    if (index < 0 || index >= allTabs.length) return;
+    allTabs.forEach(function(t) {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+      t.setAttribute('tabindex', '-1');
+    });
+    allPanes.forEach(function(p) { p.classList.remove('active'); });
+    allTabs[index].classList.add('active');
+    allTabs[index].setAttribute('aria-selected', 'true');
+    allTabs[index].setAttribute('tabindex', '0');
+    allPanes[index].classList.add('active');
+    if (el._bw_state) el._bw_state.activeIndex = index;
+  }
+
   return {
     t: 'div',
     a: { class: 'bw_tabs' },
@@ -520,24 +548,8 @@ function makeTabs(props = {}) {
               role: 'tab',
               tabindex: index === actualActiveIndex ? '0' : '-1',
               'aria-selected': index === actualActiveIndex ? 'true' : 'false',
-              'data-tab-index': index,
               onclick: (e) => {
-                const tabsContainer = e.target.closest('.bw_tabs');
-                const allTabs = tabsContainer.querySelectorAll('.bw_nav_link');
-                const allPanes = tabsContainer.querySelectorAll('.bw_tab_pane');
-
-                allTabs.forEach(t => {
-                  t.classList.remove('active');
-                  t.setAttribute('aria-selected', 'false');
-                  t.setAttribute('tabindex', '-1');
-                });
-                allPanes.forEach(p => p.classList.remove('active'));
-
-                e.target.classList.add('active');
-                e.target.setAttribute('aria-selected', 'true');
-                e.target.setAttribute('tabindex', '0');
-                const targetIndex = parseInt(e.target.getAttribute('data-tab-index'));
-                allPanes[targetIndex].classList.add('active');
+                switchTab(e.target.closest('.bw_tabs'), index);
               }
             },
             c: tab.label
@@ -560,6 +572,10 @@ function makeTabs(props = {}) {
     o: {
       type: 'tabs',
       state: { activeIndex: actualActiveIndex },
+      handle: {
+        setActiveTab: switchTab,
+        getActiveTab: function(el) { return (el._bw_state && el._bw_state.activeIndex) || 0; }
+      },
       mounted: function(el) {
         var tablist = el.querySelector('[role="tablist"]');
         if (!tablist) return;
@@ -645,7 +661,13 @@ function makeAlert(props = {}) {
         },
         c: '×'
       }
-    ].filter(Boolean)
+    ].filter(Boolean),
+    o: {
+      type: 'alert',
+      handle: {
+        dismiss: function(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+      }
+    }
   };
 }
 
@@ -743,6 +765,24 @@ function makeProgress(props = {}) {
         'aria-valuemax': max
       },
       c: label || `${percentage}%`
+    },
+    o: {
+      type: 'progress',
+      handle: {
+        setValue: function(el, n) {
+          var bar = el.querySelector('.bw_progress_bar');
+          if (!bar) return;
+          var maxVal = parseInt(bar.getAttribute('aria-valuemax')) || 100;
+          var pct = Math.round((n / maxVal) * 100);
+          bar.style.width = pct + '%';
+          bar.setAttribute('aria-valuenow', n);
+          bar.textContent = pct + '%';
+        },
+        getValue: function(el) {
+          var bar = el.querySelector('.bw_progress_bar');
+          return bar ? parseInt(bar.getAttribute('aria-valuenow')) || 0 : 0;
+        }
+      }
     }
   };
 }
@@ -1752,6 +1792,26 @@ function makePagination(props = {}) {
         class: `bw_pagination ${size ? 'bw_pagination_' + size : ''} ${className}`.trim()
       },
       c: items
+    },
+    o: {
+      type: 'pagination',
+      state: { currentPage: currentPage, pages: pages },
+      handle: {
+        setPage: function(el, n) {
+          if (n < 1 || n > pages) return;
+          var allItems = el.querySelectorAll('.bw_page_item');
+          for (var i = 0; i < allItems.length; i++) {
+            allItems[i].classList.remove('bw_active');
+          }
+          // +1 offset: first item is prev arrow
+          if (allItems[n]) allItems[n].classList.add('bw_active');
+          if (el._bw_state) el._bw_state.currentPage = n;
+          if (onPageChange) onPageChange(n);
+        },
+        getPage: function(el) {
+          return (el._bw_state && el._bw_state.currentPage) || 1;
+        }
+      }
     }
   };
 }
@@ -1900,7 +1960,6 @@ function makeAccordion(props = {}) {
                 class: `bw_accordion_button ${item.open ? '' : 'bw_collapsed'}`.trim(),
                 type: 'button',
                 'aria-expanded': item.open ? 'true' : 'false',
-                'data-accordion-index': index,
                 onclick: function(e) {
                   var btn = e.target.closest('.bw_accordion_button');
                   var accordionEl = btn.closest('.bw_accordion');
@@ -1975,7 +2034,43 @@ function makeAccordion(props = {}) {
     }),
     o: {
       type: 'accordion',
-      state: { multiOpen: multiOpen }
+      state: { multiOpen: multiOpen },
+      handle: {
+        toggle: function(el, index) {
+          var items = el.querySelectorAll('.bw_accordion_item');
+          if (index < 0 || index >= items.length) return;
+          var btn = items[index].querySelector('.bw_accordion_button');
+          if (btn) btn.click();
+        },
+        openAll: function(el) {
+          var items = el.querySelectorAll('.bw_accordion_item');
+          for (var i = 0; i < items.length; i++) {
+            var collapse = items[i].querySelector('.bw_accordion_collapse');
+            var btn = items[i].querySelector('.bw_accordion_button');
+            if (!collapse.classList.contains('bw_collapse_show')) {
+              collapse.classList.add('bw_collapse_show');
+              collapse.style.maxHeight = 'none';
+              btn.classList.remove('bw_collapsed');
+              btn.setAttribute('aria-expanded', 'true');
+            }
+          }
+        },
+        closeAll: function(el) {
+          var items = el.querySelectorAll('.bw_accordion_item');
+          for (var i = 0; i < items.length; i++) {
+            var collapse = items[i].querySelector('.bw_accordion_collapse');
+            var btn = items[i].querySelector('.bw_accordion_button');
+            if (collapse.classList.contains('bw_collapse_show')) {
+              collapse.style.maxHeight = collapse.scrollHeight + 'px';
+              collapse.offsetHeight;
+              collapse.style.maxHeight = '0px';
+              collapse.classList.remove('bw_collapse_show');
+              btn.classList.add('bw_collapsed');
+              btn.setAttribute('aria-expanded', 'false');
+            }
+          }
+        }
+      }
     }
   };
 }
@@ -2065,6 +2160,14 @@ function makeModal(props = {}) {
     },
     o: {
       type: 'modal',
+      handle: {
+        open: function(el) {
+          el.classList.add('bw_modal_show');
+          el.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+        },
+        close: function(el) { closeModal(el); }
+      },
       mounted: function(el) {
         // Click backdrop to close
         el.addEventListener('click', function(e) {
@@ -2123,9 +2226,8 @@ function makeToast(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_toast ${variantClass(variant)} ${className}`.trim(),
-      role: 'alert',
-      'data-position': position
+      class: `bw_toast ${variantClass(variant)} bw_toast_${position.replace(/-/g, '_')} ${className}`.trim(),
+      role: 'alert'
     },
     c: [
       (title) && {
@@ -2159,6 +2261,12 @@ function makeToast(props = {}) {
     ].filter(Boolean),
     o: {
       type: 'toast',
+      handle: {
+        dismiss: function(el) {
+          el.classList.add('bw_toast_hiding');
+          setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+        }
+      },
       mounted: function(el) {
         // Trigger show animation
         requestAnimationFrame(function() {
@@ -2516,7 +2624,7 @@ function makeCarousel(props = {}) {
     var total = carouselEl.querySelectorAll('.bw_carousel_slide').length;
     if (index < 0) index = total - 1;
     if (index >= total) index = 0;
-    carouselEl.setAttribute('data-carousel-index', index);
+    carouselEl._bw_carouselIndex = index;
     var track = carouselEl.querySelector('.bw_carousel_track');
     track.style.transform = 'translateX(-' + (index * 100) + '%)';
     // Update indicators
@@ -2573,7 +2681,7 @@ function makeCarousel(props = {}) {
         'aria-label': 'Previous slide',
         onclick: function(e) {
           var carousel = e.target.closest('.bw_carousel');
-          var idx = parseInt(carousel.getAttribute('data-carousel-index') || '0');
+          var idx = carousel._bw_carouselIndex || 0;
           goToSlide(carousel, idx - 1);
         }
       },
@@ -2587,7 +2695,7 @@ function makeCarousel(props = {}) {
         'aria-label': 'Next slide',
         onclick: function(e) {
           var carousel = e.target.closest('.bw_carousel');
-          var idx = parseInt(carousel.getAttribute('data-carousel-index') || '0');
+          var idx = carousel._bw_carouselIndex || 0;
           goToSlide(carousel, idx + 1);
         }
       },
@@ -2607,11 +2715,9 @@ function makeCarousel(props = {}) {
             class: 'bw_carousel_indicator' + (i === startIndex ? ' active' : ''),
             type: 'button',
             'aria-label': 'Go to slide ' + (i + 1),
-            'data-slide-index': i,
             onclick: function(e) {
               var carousel = e.target.closest('.bw_carousel');
-              var idx = parseInt(e.target.getAttribute('data-slide-index'));
-              goToSlide(carousel, idx);
+              goToSlide(carousel, i);
             }
           }
         };
@@ -2625,17 +2731,37 @@ function makeCarousel(props = {}) {
       class: ('bw_carousel ' + className).trim(),
       style: 'height: ' + height,
       tabindex: '0',
-      'aria-roledescription': 'carousel',
-      'data-carousel-index': startIndex
+      'aria-roledescription': 'carousel'
     },
     c: children,
     o: {
       type: 'carousel',
       state: { activeIndex: startIndex, autoPlay: autoPlay, interval: interval },
+      handle: {
+        goToSlide: function(el, index) { goToSlide(el, index); },
+        next: function(el) { goToSlide(el, (el._bw_carouselIndex || 0) + 1); },
+        prev: function(el) { goToSlide(el, (el._bw_carouselIndex || 0) - 1); },
+        getActiveIndex: function(el) { return el._bw_carouselIndex || 0; },
+        pause: function(el) {
+          if (el._bw_carouselInterval) {
+            clearInterval(el._bw_carouselInterval);
+            el._bw_carouselInterval = null;
+          }
+        },
+        play: function(el) {
+          if (!el._bw_carouselInterval && el._bw_state) {
+            var ms = el._bw_state.interval || 5000;
+            el._bw_carouselInterval = setInterval(function() {
+              goToSlide(el, (el._bw_carouselIndex || 0) + 1);
+            }, ms);
+          }
+        }
+      },
       mounted: function(el) {
+        el._bw_carouselIndex = startIndex;
         // Keyboard navigation
         el.addEventListener('keydown', function(e) {
-          var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+          var idx = el._bw_carouselIndex || 0;
           if (e.key === 'ArrowLeft') {
             e.preventDefault();
             goToSlide(el, idx - 1);
@@ -2647,7 +2773,7 @@ function makeCarousel(props = {}) {
         // Auto-play
         if (autoPlay) {
           var intervalId = setInterval(function() {
-            var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+            var idx = el._bw_carouselIndex || 0;
             goToSlide(el, idx + 1);
           }, interval);
           el._bw_carouselInterval = intervalId;
@@ -2657,7 +2783,7 @@ function makeCarousel(props = {}) {
           });
           el.addEventListener('mouseleave', function() {
             el._bw_carouselInterval = setInterval(function() {
-              var idx = parseInt(el.getAttribute('data-carousel-index') || '0');
+              var idx = el._bw_carouselIndex || 0;
               goToSlide(el, idx + 1);
             }, interval);
           });
@@ -2773,7 +2899,13 @@ function makeStatCard(props = {}) {
     t: 'div',
     a: { class: classes, style: style },
     c: children,
-    o: { type: 'stat-card' }
+    o: {
+      type: 'stat-card',
+      slots: {
+        value: '.bw_stat_value',
+        label: '.bw_stat_label'
+      }
+    }
   };
 }
 
@@ -3452,7 +3584,7 @@ function makeChipInput(props = {}) {
   function makeChipEl(text) {
     return {
       t: 'span',
-      a: { class: 'bw_chip', 'data-chip-value': text },
+      a: { class: 'bw_chip' },
       c: [
         text,
         {
@@ -3463,9 +3595,8 @@ function makeChipInput(props = {}) {
             'aria-label': 'Remove ' + text,
             onclick: function(e) {
               var chip = e.target.closest('.bw_chip');
-              var val = chip.getAttribute('data-chip-value');
               chip.parentNode.removeChild(chip);
-              if (onRemove) onRemove(val);
+              if (onRemove) onRemove(text);
             }
           },
           c: '\u00D7'
@@ -3493,7 +3624,7 @@ function makeChipInput(props = {}) {
               // Insert chip before the input
               var chipEl = document.createElement('span');
               chipEl.className = 'bw_chip';
-              chipEl.setAttribute('data-chip-value', val);
+              chipEl._bw_chipValue = val;
               chipEl.innerHTML = '';
               chipEl.textContent = val;
               var removeBtn = document.createElement('button');
@@ -3516,7 +3647,7 @@ function makeChipInput(props = {}) {
               var chipEls = wrapper.querySelectorAll('.bw_chip');
               if (chipEls.length) {
                 var last = chipEls[chipEls.length - 1];
-                var removedVal = last.getAttribute('data-chip-value');
+                var removedVal = last._bw_chipValue || last.firstChild.textContent;
                 last.parentNode.removeChild(last);
                 if (onRemove) onRemove(removedVal);
               }
@@ -3525,7 +3656,50 @@ function makeChipInput(props = {}) {
         }
       }
     ],
-    o: { type: 'chip-input' }
+    o: {
+      type: 'chip-input',
+      handle: {
+        addChip: function(el, text) {
+          if (!text) return;
+          var input = el.querySelector('.bw_chip_field');
+          var chipEl = document.createElement('span');
+          chipEl.className = 'bw_chip';
+          chipEl._bw_chipValue = text;
+          chipEl.textContent = text;
+          var removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'bw_chip_remove';
+          removeBtn.setAttribute('aria-label', 'Remove ' + text);
+          removeBtn.textContent = '\u00D7';
+          removeBtn.onclick = function() { chipEl.parentNode.removeChild(chipEl); };
+          chipEl.appendChild(removeBtn);
+          el.insertBefore(chipEl, input);
+        },
+        removeChip: function(el, text) {
+          var chips = el.querySelectorAll('.bw_chip');
+          for (var i = 0; i < chips.length; i++) {
+            if ((chips[i]._bw_chipValue || chips[i].firstChild.textContent) === text) {
+              chips[i].parentNode.removeChild(chips[i]);
+              return;
+            }
+          }
+        },
+        getChips: function(el) {
+          var chips = el.querySelectorAll('.bw_chip');
+          var values = [];
+          for (var i = 0; i < chips.length; i++) {
+            values.push(chips[i]._bw_chipValue || chips[i].firstChild.textContent);
+          }
+          return values;
+        },
+        clear: function(el) {
+          var chips = el.querySelectorAll('.bw_chip');
+          for (var i = chips.length - 1; i >= 0; i--) {
+            chips[i].parentNode.removeChild(chips[i]);
+          }
+        }
+      }
+    }
   };
 }
 
@@ -3719,15 +3893,14 @@ function registerBCCL(bw) {
   // Variant class helper
   bw.variantClass = variantClass;
 
-  // Create functions that return handles
-  if (typeof bw.renderComponent === 'function') {
+  // Create functions that return DOM elements
+  if (typeof bw.createDOM === 'function') {
     Object.entries(components).forEach(function(entry) {
       var name = entry[0], fn = entry[1];
       if (name.indexOf('make') === 0) {
         var createName = 'create' + name.substring(4);
         bw[createName] = function(props) {
-          var taco = fn(props);
-          return bw.renderComponent(taco);
+          return bw.createDOM(fn(props));
         };
       }
     });

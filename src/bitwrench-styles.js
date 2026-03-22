@@ -1703,10 +1703,10 @@ var structuralRules = {
       'position': 'relative', 'display': 'flex', 'flex-direction': 'column', 'pointer-events': 'auto',
       'background-clip': 'padding-box', 'border': '1px solid transparent', 'outline': '0'
     },
-    '.bw_modal_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between' },
+    '.bw_modal_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '1rem 1.25rem', 'border-bottom': '1px solid transparent' },
     '.bw_modal_title': { 'margin': '0', 'font-size': '1.25rem', 'font-weight': '600', 'line-height': '1.3' },
-    '.bw_modal_body': { 'position': 'relative', 'flex': '1 1 auto' },
-    '.bw_modal_footer': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'gap': '0.5rem' }
+    '.bw_modal_body': { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1rem 1.25rem' },
+    '.bw_modal_footer': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'gap': '0.5rem', 'padding': '0.75rem 1.25rem', 'border-top': '1px solid transparent' }
   },
 
   // ---- Toast ----
@@ -1727,8 +1727,8 @@ var structuralRules = {
     },
     '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
     '.bw_toast.bw_toast_hiding': { 'opacity': '0' },
-    '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'font-size': '0.875rem' },
-    '.bw_toast_body': { 'font-size': '0.9375rem' }
+    '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem', 'border-bottom': '1px solid transparent' },
+    '.bw_toast_body': { 'padding': '0.5rem 0.75rem', 'font-size': '0.9375rem' }
   },
 
   // ---- Dropdown ----
@@ -1742,15 +1742,15 @@ var structuralRules = {
     '.bw_dropdown_menu': {
       'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
       'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
-      'background-clip': 'padding-box',
+      'background-clip': 'padding-box', 'border': '1px solid transparent',
       'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none'
     },
     '.bw_dropdown_menu.bw_dropdown_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
     '.bw_dropdown_menu_end': { 'left': 'auto', 'right': '0' },
     '.bw_dropdown_item': {
-      'display': 'block', 'width': '100%', 'clear': 'both',
+      'display': 'block', 'width': '100%', 'padding': '0.4rem 1rem', 'clear': 'both',
       'font-weight': '400', 'text-align': 'inherit', 'text-decoration': 'none', 'white-space': 'nowrap',
-      'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem'
+      'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem', 'cursor': 'pointer'
     },
     '.bw_dropdown_item:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '-2px' },
     '.bw_dropdown_divider': { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' }
@@ -2072,6 +2072,33 @@ function generateUtilityRules() {
   rules['.bw_text_left'] = { 'text-align': 'left' };
   rules['.bw_text_right'] = { 'text-align': 'right' };
   rules['.bw_text_center'] = { 'text-align': 'center' };
+  rules['.bw_text_justify'] = { 'text-align': 'justify' };
+
+  // Font weight
+  rules['.bw_fw_bold'] = { 'font-weight': '700' };
+  rules['.bw_fw_semibold'] = { 'font-weight': '600' };
+  rules['.bw_fw_normal'] = { 'font-weight': '400' };
+  rules['.bw_fw_light'] = { 'font-weight': '300' };
+
+  // Font style
+  rules['.bw_fst_italic'] = { 'font-style': 'italic' };
+  rules['.bw_fst_normal'] = { 'font-style': 'normal' };
+
+  // Text decoration
+  rules['.bw_text_underline'] = { 'text-decoration': 'underline' };
+  rules['.bw_text_line_through'] = { 'text-decoration': 'line-through' };
+  rules['.bw_text_decoration_none'] = { 'text-decoration': 'none' };
+
+  // Text transform
+  rules['.bw_text_uppercase'] = { 'text-transform': 'uppercase' };
+  rules['.bw_text_lowercase'] = { 'text-transform': 'lowercase' };
+  rules['.bw_text_capitalize'] = { 'text-transform': 'capitalize' };
+
+  // Font size
+  rules['.bw_fs_sm'] = { 'font-size': '0.875rem' };
+  rules['.bw_fs_base'] = { 'font-size': '1rem' };
+  rules['.bw_fs_lg'] = { 'font-size': '1.25rem' };
+  rules['.bw_fs_xl'] = { 'font-size': '1.5rem' };
 
   // Flexbox
   var jc = { start: 'flex-start', end: 'flex-end', center: 'center', between: 'space-between', around: 'space-around' };

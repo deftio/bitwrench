@@ -22,7 +22,7 @@
   // This is the most comprehensive bitwrench example. It demonstrates:
   //
   // BCCL Components Used (27):
-  //   bw.component()         — Navbar (cart count), Contact form (status),
+  //   o.state + o.render     — Navbar (cart count), Contact form (status),
   //                            Counter demo, Progress demo
   //   bw.makeStatCard()      — Impact metrics (4 cards)
   //   bw.makeBarChart()      — Monthly bags shipped, Revenue by origin
@@ -38,7 +38,7 @@
   //   bw.makeButton()        — CTAs, filter bar, counter, cart
   //   bw.makeCard()          — (via other components)
   //   bw.makeAlert()         — Wholesale info callout
-  //   bw.makeCodeDemo()      — ComponentHandle code example
+  //   bw.makeCodeDemo()      — Code example
   //   bw.makeForm()          — Contact form
   //   bw.makeFormGroup()     — Form field wrappers
   //   bw.makeInput()         — Name, email inputs
@@ -49,15 +49,15 @@
   //
   // Architecture:
   //   - Cart state managed via bw.pub('cart:updated') — navbar subscribes
-  //   - Coffee filter uses Level 1 (o.mounted + manual re-render)
-  //   - Contact form uses Level 2 bw.component() with ${statusMsg} binding
-  //   - Counter uses Level 2 bw.component() with o.methods
+  //   - Coffee filter uses o.mounted + manual re-render
+  //   - Contact form uses o.state + o.render with status display
+  //   - Counter uses o.state + o.render with closures for methods
   //   - Toast notification system uses bw.createDOM() for append pattern
   //   - Theme: bw.loadStyles({ '#8B4513', '#D2691E', '#2F4F2F' })
   //
   // Key Patterns to Study:
-  //   1. Pub/sub cart: cartAdd() → bw.pub('cart:updated') → navbar.sub()
-  //   2. Component Level 2: ${count} template binding + handle.set()
+  //   1. Pub/sub cart: cartAdd() -> bw.pub('cart:updated') -> bw.sub()
+  //   2. o.state + o.render: el._bw_state access + bw.update(el)
   //   3. Filter pattern: renderCoffeeSection() re-renders on filter change
   //   4. Toast append: bw.createDOM() + DOM insertion for transient UI
   //   5. Theme tokens: All colors derived from 3 seed hex values
@@ -334,31 +334,40 @@
       cartRender();
     }
 
-    // ─── NAVBAR — bw.component() Level 2 with ${cartCount} binding ───────────
-    var navbar = bw.component({
+    // ─── NAVBAR — o.state + o.render with pub/sub for cart count ───────────
+    var navbar = {
       t: 'nav', a: { class: 'eo-nav', id: 'eo-navbar', 'data-testid': 'navbar' },
-      c: [
-        { t: 'a', a: { class: 'eo-brand', href: '#' }, c: [
-          { t: 'div', a: { class: 'eo-brand-icon' }, c: '🔥', o: { raw: true } },
-          { t: 'span', a: { class: 'eo-brand-name' }, c: 'Ember & Oak' }
-        ]},
-        { t: 'ul', a: { class: 'eo-nav-links' }, c: [
-          { t: 'li', c: { t: 'a', a: { href: '#coffees', 'data-testid': 'link-coffees' }, c: 'Coffees' } },
-          { t: 'li', c: { t: 'a', a: { href: '#story' }, c: 'Our Story' } },
-          { t: 'li', c: { t: 'a', a: { href: '#impact' }, c: 'Impact' } },
-          { t: 'li', c: { t: 'a', a: { href: '#contact' }, c: 'Contact' } },
-          { t: 'li', c: { t: 'button', a: { class: 'eo-cart-btn', 'data-testid': 'button-cart', onclick: function() { cartOpen(); } },
-            c: [
-              { t: 'span', c: '🛒 Cart ' },
-              { t: 'span', a: { class: 'eo-cart-badge' }, c: '${cartCount}' }
-            ]
-          }}
-        ]}
-      ],
       o: {
         state: { cartCount: 0 },
-        mounted: function() {
-          navbar.sub('cart:updated', function(d) { navbar.set('cartCount', d.count); });
+        render: function(el) {
+          var s = el._bw_state;
+          bw.DOM(el, {
+            t: 'div', a: { style: 'display:flex;align-items:center;justify-content:space-between;width:100%' },
+            c: [
+              { t: 'a', a: { class: 'eo-brand', href: '#' }, c: [
+                { t: 'div', a: { class: 'eo-brand-icon' }, c: bw.raw('🔥') },
+                { t: 'span', a: { class: 'eo-brand-name' }, c: 'Ember & Oak' }
+              ]},
+              { t: 'ul', a: { class: 'eo-nav-links' }, c: [
+                { t: 'li', c: { t: 'a', a: { href: '#coffees', 'data-testid': 'link-coffees' }, c: 'Coffees' } },
+                { t: 'li', c: { t: 'a', a: { href: '#story' }, c: 'Our Story' } },
+                { t: 'li', c: { t: 'a', a: { href: '#impact' }, c: 'Impact' } },
+                { t: 'li', c: { t: 'a', a: { href: '#contact' }, c: 'Contact' } },
+                { t: 'li', c: { t: 'button', a: { class: 'eo-cart-btn', 'data-testid': 'button-cart', onclick: function() { cartOpen(); } },
+                  c: [
+                    { t: 'span', c: bw.raw('🛒 Cart ') },
+                    { t: 'span', a: { class: 'eo-cart-badge' }, c: String(s.cartCount) }
+                  ]
+                }}
+              ]}
+            ]
+          });
+        },
+        mounted: function(el) {
+          bw.sub('cart:updated', function(d) {
+            el._bw_state.cartCount = d.count;
+            bw.update(el);
+          });
           window.addEventListener('scroll', function() {
             var n = bw.$('#eo-navbar')[0];
             if (n) { if (window.scrollY > 50) n.classList.add('scrolled'); else n.classList.remove('scrolled'); }
@@ -367,7 +376,7 @@
           });
         }
       }
-    });
+    };
 
     // ─── COFFEE SECTION — Level 1: o.state + o.render ───────────────────────
     var csFilter = 'All', csSearch = '';
@@ -578,28 +587,39 @@
       ]}
     };
 
-    // ─── CONTACT — bw.component() with ${statusMsg} binding ──────────────────
-    var contactComp = bw.component({
-      t: 'div', a: { class: 'eo-box', style: 'padding:2rem' },
-      c: [
-        { t: 'div', a: { id: 'eo-form-status', style: 'padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem;font-weight:500;background:#dcf5e7;color:#1a6335;border:1px solid rgba(26,99,53,.2);display:${statusVisible}' }, c: '${statusMsg}' },
-        bw.makeForm({ children: [
-          bw.makeFormGroup({ label: 'Your Name', id: 'cname', input: bw.makeInput({ id: 'cname', placeholder: 'Elena Vasquez', required: true }) }),
-          bw.makeFormGroup({ label: 'Email Address', id: 'cemail', input: bw.makeInput({ type: 'email', id: 'cemail', placeholder: 'you@example.com', required: true }) }),
-          bw.makeFormGroup({ label: 'Subject', id: 'csubject', input: bw.makeSelect({ id: 'csubject', options: [
-            { value: '', text: 'Choose a topic…' }, { value: 'order', text: 'Order Inquiry' }, { value: 'wholesale', text: 'Wholesale' }, { value: 'visit', text: 'Tasting Room' }, { value: 'other', text: 'Other' }
-          ]}) }),
-          bw.makeFormGroup({ label: 'Message', id: 'cmsg', input: bw.makeTextarea({ id: 'cmsg', placeholder: 'Tell us what\'s on your mind…', rows: 5 }) }),
-          bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw-btn-lg' })
-        ], onsubmit: function(e) {
-          e.preventDefault();
-          contactComp.setState({ statusMsg: '✓ Message sent! We\'ll reply within 24 hours.', statusVisible: 'block' });
-          e.target.reset();
-          toast('Message Sent', 'We\'ll get back to you within 24 hours.', 'success');
-        }})
-      ],
-      o: { state: { statusMsg: '', statusVisible: 'none' } }
-    });
+    // ─── CONTACT — o.state + o.render for form status ──────────────────
+    var contactFormId = bw.uuid('contact');
+    var contactComp = {
+      t: 'div', a: { class: 'eo-box', style: 'padding:2rem', id: contactFormId },
+      o: {
+        state: { statusMsg: '', statusVisible: 'none' },
+        render: function(el) {
+          var s = el._bw_state;
+          bw.DOM(el, { t: 'div', c: [
+            { t: 'div', a: { id: 'eo-form-status', style: 'padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem;font-weight:500;background:#dcf5e7;color:#1a6335;border:1px solid rgba(26,99,53,.2);display:' + s.statusVisible }, c: s.statusMsg },
+            bw.makeForm({ children: [
+              bw.makeFormGroup({ label: 'Your Name', id: 'cname', input: bw.makeInput({ id: 'cname', placeholder: 'Elena Vasquez', required: true }) }),
+              bw.makeFormGroup({ label: 'Email Address', id: 'cemail', input: bw.makeInput({ type: 'email', id: 'cemail', placeholder: 'you@example.com', required: true }) }),
+              bw.makeFormGroup({ label: 'Subject', id: 'csubject', input: bw.makeSelect({ id: 'csubject', options: [
+                { value: '', text: 'Choose a topic...' }, { value: 'order', text: 'Order Inquiry' }, { value: 'wholesale', text: 'Wholesale' }, { value: 'visit', text: 'Tasting Room' }, { value: 'other', text: 'Other' }
+              ]}) }),
+              bw.makeFormGroup({ label: 'Message', id: 'cmsg', input: bw.makeTextarea({ id: 'cmsg', placeholder: 'Tell us what\'s on your mind...', rows: 5 }) }),
+              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw-btn-lg' })
+            ], onsubmit: function(e) {
+              e.preventDefault();
+              var cEl = bw.$('#' + contactFormId)[0];
+              if (cEl) {
+                cEl._bw_state.statusMsg = 'Message sent! We\'ll reply within 24 hours.';
+                cEl._bw_state.statusVisible = 'block';
+                bw.update(cEl);
+              }
+              e.target.reset();
+              toast('Message Sent', 'We\'ll get back to you within 24 hours.', 'success');
+            }})
+          ]});
+        }
+      }
+    };
 
     var contactSection = {
       t: 'section', a: { class: 'eo-section', id: 'contact', 'data-testid': 'section-contact' },
@@ -625,8 +645,8 @@
     };
 
     // ─── NEWSLETTER — Level 1 TACO with direct DOM handler ───────────────────
-    // Using reliable direct DOM updates instead of bw.component() template binding
-    // (bw.component() is still used for navbar, contactComp, and counter demos)
+    // Newsletter uses o.mounted + direct DOM handler for the subscribe button
+    // (other sections use o.state + o.render for reactive updates)
     var newsletter = {
       t: 'section', a: { class: 'eo-dark', style: 'text-align:center', 'data-testid': 'section-newsletter' },
       c: { t: 'div', a: { style: 'max-width:600px;margin:0 auto' }, c: [
@@ -656,81 +676,99 @@
     };
 
     // ─── BITWRENCH SHOWCASE ───────────────────────────────────────────────────
-    // Live counter — bw.component() Level 2 with ${count} + methods
-    var counter = bw.component({
-      t: 'div', a: { style: 'display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1rem 0' },
-      c: [
-        { t: 'div', a: { class: 'eo-ctr-lbl' }, c: 'Counter Value' },
-        { t: 'div', a: { class: 'eo-ctr-disp' }, c: '${count}' },
-        { t: 'div', a: { class: 'eo-ctr-btns' }, c: [
-          bw.makeButton({ text: '−5', variant: 'outline-secondary', size: 'sm', onclick: function() { counter.decrement(5); } }),
-          bw.makeButton({ text: '−1', variant: 'secondary', size: 'sm', onclick: function() { counter.decrement(1); } }),
-          bw.makeButton({ text: 'Reset', variant: 'warning', size: 'sm', onclick: function() { counter.reset(); } }),
-          bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counter.increment(1); } }),
-          bw.makeButton({ text: '+5', variant: 'outline-primary', size: 'sm', onclick: function() { counter.increment(5); } })
-        ]},
-        { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'Template binding ${count} — updates automatically via bw.component()', o: { raw: false } }
-      ],
+    // Live counter — o.state + o.render with closure-based methods
+    var counterIdStr = bw.uuid('ctr');
+
+    function counterSet(val) {
+      var el = bw.$('#' + counterIdStr)[0];
+      if (el) { el._bw_state.count = val; bw.update(el); }
+    }
+    function counterGet() {
+      var el = bw.$('#' + counterIdStr)[0];
+      return el ? el._bw_state.count : 0;
+    }
+
+    var counter = {
+      t: 'div', a: { id: counterIdStr },
       o: {
         state: { count: 0 },
-        methods: {
-          increment: function(c, n) { c.set('count', c.get('count') + n); },
-          decrement: function(c, n) { c.set('count', Math.max(0, c.get('count') - n)); },
-          reset:     function(c) { c.set('count', 0); }
+        render: function(el) {
+          var s = el._bw_state;
+          bw.DOM(el, {
+            t: 'div', a: { style: 'display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1rem 0' },
+            c: [
+              { t: 'div', a: { class: 'eo-ctr-lbl' }, c: 'Counter Value' },
+              { t: 'div', a: { class: 'eo-ctr-disp' }, c: String(s.count) },
+              { t: 'div', a: { class: 'eo-ctr-btns' }, c: [
+                bw.makeButton({ text: '\u22125', variant: 'outline-secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 5)); } }),
+                bw.makeButton({ text: '\u22121', variant: 'secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 1)); } }),
+                bw.makeButton({ text: 'Reset', variant: 'warning', size: 'sm', onclick: function() { counterSet(0); } }),
+                bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counterSet(counterGet() + 1); } }),
+                bw.makeButton({ text: '+5', variant: 'outline-primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
+              ]},
+              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.update(el)' }
+            ]
+          });
         }
       }
-    });
+    };
 
-    // Roast progress demo — bw.component() with setState batching
-    var progressComp = bw.component({
-      t: 'div', c: [
-        { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:#2d2017' }, c: 'Roast Stage: ${roastLabel}' },
-        { t: 'div', a: { id: 'prog-wrap' } },
-        { t: 'div', a: { style: 'display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap' }, c: [
-          bw.makeButton({ text: 'Drying Phase', variant: 'outline-primary', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'Drying Phase (0–150°C)', progress: 25 }); } }),
-          bw.makeButton({ text: 'Maillard', variant: 'outline-primary', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'Maillard Reaction (150–190°C)', progress: 50 }); } }),
-          bw.makeButton({ text: 'First Crack ⚡', variant: 'warning', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'First Crack (195°C)', progress: 72 }); } }),
-          bw.makeButton({ text: 'Drop ✓', variant: 'success', size: 'sm', onclick: function() { progressComp.setState({ roastLabel: 'Drop & Cool (205°C)', progress: 100 }); } })
-        ]}
-      ],
+    // Roast progress demo — o.state + o.render
+    var progressId = bw.uuid('prog');
+
+    function progressSet(label, pct) {
+      var el = bw.$('#' + progressId)[0];
+      if (el) {
+        el._bw_state.roastLabel = label;
+        el._bw_state.progress = pct;
+        bw.update(el);
+      }
+    }
+
+    var progressComp = {
+      t: 'div', a: { id: progressId },
       o: {
         state: { roastLabel: 'Not started', progress: 0 },
-        render: function() {
-          var p = progressComp.get('progress');
-          var wrap = bw.$('#prog-wrap')[0];
-          if (wrap) bw.DOM(wrap, bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }));
-        },
-        mounted: function() {
-          var wrap = bw.$('#prog-wrap')[0];
-          if (wrap) bw.DOM(wrap, bw.makeProgress({ value: 0, max: 100, variant: 'primary', striped: true, animated: true, label: '0%' }));
+        render: function(el) {
+          var s = el._bw_state;
+          var p = s.progress;
+          bw.DOM(el, { t: 'div', c: [
+            { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:#2d2017' }, c: 'Roast Stage: ' + s.roastLabel },
+            bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }),
+            { t: 'div', a: { style: 'display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap' }, c: [
+              bw.makeButton({ text: 'Drying Phase', variant: 'outline-primary', size: 'sm', onclick: function() { progressSet('Drying Phase (0-150\u00B0C)', 25); } }),
+              bw.makeButton({ text: 'Maillard', variant: 'outline-primary', size: 'sm', onclick: function() { progressSet('Maillard Reaction (150-190\u00B0C)', 50); } }),
+              bw.makeButton({ text: 'First Crack', variant: 'warning', size: 'sm', onclick: function() { progressSet('First Crack (195\u00B0C)', 72); } }),
+              bw.makeButton({ text: 'Drop', variant: 'success', size: 'sm', onclick: function() { progressSet('Drop & Cool (205\u00B0C)', 100); } })
+            ]}
+          ]});
         }
       }
-    });
+    };
 
     var codeExample = [
-      '// bw.component() = Level 2 reactive component',
-      'var counter = bw.component({',
-      "  t: 'div', c: 'Count: ${count}',",
+      '// o.state + o.render = reactive component pattern',
+      'var counter = {',
+      "  t: 'div',",
       '  o: {',
       '    state: { count: 0 },',
-      '    methods: {',
-      "      inc:   function(c) { c.set('count', c.get('count') + 1); },",
-      "      reset: function(c) { c.set('count', 0); }",
+      '    render: function(el) {',
+      '      var s = el._bw_state;',
+      "      bw.DOM(el, { t: 'div', c: 'Count: ' + s.count });",
       '    }',
       '  }',
-      '});',
+      '};',
       '',
       "bw.DOM('#app', counter);",
       '',
-      '// Batched updates → single re-render:',
-      "counter.setState({ count: 42 });",
+      '// Update state and re-render:',
+      "var el = bw.$('#app')[0];",
+      'el._bw_state.count = 42;',
+      'bw.update(el);',
       '',
-      '// Auto-cleaned pub/sub:',
-      "counter.sub('data:updated', handler);",
-      '',
-      '// Message any component by tag:',
-      "counter.userTag('my_counter');",
-      "bw.message('my_counter', 'reset');"
+      '// Cross-component messaging:',
+      "bw.pub('data:updated', { value: 42 });",
+      "bw.sub('data:updated', function(d) { /* ... */ });"
     ].join('\n');
 
     var showcase = {
@@ -739,13 +777,13 @@
         { t: 'div', a: { class: 'eo-sec-hd' }, c: [
           { t: 'div', a: { class: 'eo-label' }, c: 'Built with Bitwrench v2.0.16' },
           { t: 'h2', a: { class: 'eo-h2' }, c: 'Reactive State. No Build Step.' },
-          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses bw.component() for reactive state. No React. No Vite. One CDN script.' }
+          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses o.state + o.render for reactive state. No React. No Vite. One CDN script.' }
         ]},
         { t: 'div', a: { class: 'eo-demo-grid' }, c: [
-          { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Live Counter — bw.component() + methods' }, counter ] },
-          { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Roast Progress — setState() batching' }, progressComp ] },
+          { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Live Counter -- o.state + o.render' }, counter ] },
+          { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Roast Progress -- o.state + o.render' }, progressComp ] },
           { t: 'div', a: { class: 'eo-box', style: 'grid-column:1/-1' }, c: [
-            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'ComponentHandle Pattern (new in v2.0.16)' },
+            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Reactive Pattern (o.state + o.render)' },
             bw.makeCodeDemo({ title: '', description: '', code: codeExample, language: 'javascript' })
           ]}
         ]},
@@ -753,13 +791,10 @@
           { t: 'div', a: { class: 'eo-box-title' }, c: 'Bitwrench v2.0.16 APIs Used on This Page' },
           bw.makeTableFromArray({ headerRow: true, striped: true, hover: true, data: [
             ['API', 'Level', 'Used For'],
-            ['bw.component()', 'Level 2', 'Navbar cart count, contact status, newsletter button'],
-            ['${template} bindings', 'Level 2', 'Cart count, newsletter btn label, form status visibility'],
-            ['handle.set() / setState()', 'Level 2', 'Auto-batched DOM updates'],
-            ['o.methods', 'Level 2', 'counter.increment(), counter.reset()'],
-            ['handle.sub()', 'Level 2', 'Navbar subscribes to cart:updated, auto-cleans'],
-            ['bw.pub() / bw.sub()', 'Level 1', 'Cart state broadcast to navbar'],
-            ['o.state + o.render (Level 1)', 'Level 1', 'Coffee section filter + search, roast progress'],
+            ['o.state + o.render', 'Core', 'Navbar cart count, contact status, counter, progress'],
+            ['el._bw_state + bw.update()', 'Core', 'State access and re-render triggers'],
+            ['bw.pub() / bw.sub()', 'Core', 'Cart state broadcast, cross-component messaging'],
+            ['o.mounted lifecycle', 'Core', 'Initial renders, scroll listeners'],
             ['o.mounted lifecycle', 'Level 1', 'Initial renders, scroll listeners'],
             ['bw.DOM()', 'Core', 'Mounting all sections + sub-tree updates'],
             ['bw.makeStatCard()', 'BCCL', 'Impact section (new in v2.0.16)'],
@@ -772,20 +807,19 @@
             ['bw.makeTable()', 'BCCL', 'Coffee menu sortable table'],
             ['bw.makeTableFromArray()', 'BCCL', 'This feature table'],
             ['bw.makeAlert()', 'BCCL', 'Wholesale info in contact section'],
-            ['bw.makeCodeDemo()', 'BCCL', 'ComponentHandle code example'],
+            ['bw.makeCodeDemo()', 'BCCL', 'Reactive pattern code example'],
             ['bw.makeProgress()', 'BCCL', 'Roast progress demo'],
             ['bw.makeButton() variants', 'BCCL', 'CTAs, filter buttons, counter controls'],
             ['bw.makeBadge() + makeTooltip()', 'BCCL', 'SCA score pills + hover info'],
-            ['bw.loadStyles()', 'Theming', 'Global ember theme from 2 seed colors'],
-            ['bw.css() + bw.injectCSS()', 'Styling', 'All custom styles — CSS-in-JS'],
-            ['bw.escapeHTML()', 'Utilities', 'Safe toast message rendering'],
-            ['bw.loadStyles()', 'Styling', 'Base stylesheet']
+            ['bw.loadStyles()', 'Theming', 'Global ember theme from 3 seed colors'],
+            ['bw.css() + bw.injectCSS()', 'Styling', 'All custom styles -- CSS-in-JS'],
+            ['bw.escapeHTML()', 'Utilities', 'Safe toast message rendering']
           ]})
         ]}},
         { t: 'div', a: { style: 'display:flex;gap:.65rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem' }, c: [
           bw.makeTooltip({ content: bw.makeBadge({ text: 'Zero Dependencies', variant: 'success', pill: true }), text: 'No npm install for the frontend', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'No Build Step', variant: 'primary', pill: true }), text: 'Works directly in the browser via CDN', placement: 'top' }),
-          bw.makeTooltip({ content: bw.makeBadge({ text: 'bw.component() Reactive', variant: 'info', pill: true }), text: '${expr} bindings auto-update the DOM on state changes', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.update() for reactive DOM updates', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'SSR Ready', variant: 'warning', pill: true }), text: 'bw.html() renders TACO to string in Node.js', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'IE11 Compatible', variant: 'secondary', pill: true }), text: 'Use bitwrench.es5.min.js for legacy browsers', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'MIT License', variant: 'dark', pill: true }), text: 'Free for commercial and personal use', placement: 'top' })

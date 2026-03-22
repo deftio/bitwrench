@@ -283,7 +283,7 @@ app.broadcast({
 | `client.append(target, taco)` | `append` | Add TACO as child of target |
 | `client.remove(target)` | `remove` | Remove element from DOM |
 | `client.batch(ops)` | `batch` | Send multiple operations atomically |
-| `client.message(target, action, data)` | `message` | Dispatch to ComponentHandle |
+| `client.message(target, action, data)` | `message` | Dispatch to el.bw[action] |
 
 #### Execution Operations
 

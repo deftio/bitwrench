@@ -227,14 +227,9 @@ describe("CSS Functions", function() {
 });
 
 describe("Component Functions", function() {
-  describe("#renderComponent()", function() {
-    it("should render component and return handle", function() {
-      const taco = { t: "div", a: { id: "comp1" }, c: "Test" };
-      const handle = bw.renderComponent(taco);
-      assert.ok(handle);
-      assert.ok(handle.element);
-      assert.equal(handle.element.tagName, "DIV");
-      assert.equal(handle.element.id, "comp1");
+  describe("#renderComponent() deprecation", function() {
+    it("should throw Error for removed renderComponent", function() {
+      assert.throws(function() { bw.renderComponent(); }, /removed/i);
     });
   });
 });

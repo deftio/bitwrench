@@ -145,7 +145,7 @@ The `o:` field is where non-HTML concerns live — lifecycle hooks, component st
   o: {                               // → bitwrench-only, never in HTML output
     mounted: function(el) { },       // called after element enters the DOM
     unmount: function(el) { },       // called before element is removed
-    state: { count: 0 }              // component state (used with bw.component)
+    state: { count: 0 }              // component state (used with o.render)
   }
 }
 ```
@@ -284,15 +284,15 @@ This is Sass mixins without Sass. And it's more powerful — the function can do
 ### Theme palettes — complete design systems from two colors
 
 ```js
-var styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
-bw.applyStyles(styles);
+var theme = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+bw.applyStyles(theme);
 
-// styles.palette has every derived color as JS values
+// theme.palette has every derived color as JS values
 bw.injectCSS(bw.css({
   '.my-header': {
-    background: styles.palette.primary.base,
-    color: styles.palette.primary.textOn,
-    borderBottom: '3px solid ' + styles.palette.secondary.base
+    background: theme.palette.primary.base,
+    color: theme.palette.primary.textOn,
+    borderBottom: '3px solid ' + theme.palette.secondary.base
   }
 }));
 ```
@@ -367,6 +367,26 @@ The breakpoints (`sm`, `md`, `lg`, `xl`) match bitwrench's grid system. `bw.resp
 ### Built-in styles
 
 Bitwrench ships with Bootstrap-inspired classes (`bw-card`, `bw-btn`, `bw-table`, etc.) that you can load with `bw.loadStyles()`. Use them, ignore them, or override them.
+
+### Utility shorthand — bw.u() (optional plugin)
+
+If you prefer Tailwind-style terse tokens, the `bitwrench-util-css` plugin (~1KB gzipped, loaded separately) adds `bw.u()`:
+
+```js
+// Returns a style object — composes with bw.s()
+bw.u('flex gap4 p4 alignCenter')
+// => { display: 'flex', gap: '1rem', padding: '1rem', alignItems: 'center' }
+
+// Or as a CSS string for inline styles
+{ t: 'div', a: { style: bw.u.css('flex gap4 p4') }, c: '...' }
+
+// Mix shorthand with explicit properties
+a: { style: bw.s(bw.u('flex gap4'), { borderBottom: '2px solid ' + accent }) }
+```
+
+The scale is `{n} * 0.25rem`, so `p4` = 1rem, `gap8` = 2rem. Tokens cover padding, margin, gap, width, height, flex, alignment, font sizes, and colors (`bg-[#hex]`, `text-[#hex]`). Add custom tokens with `bw.u.extend({ name: styleObj })`.
+
+This is entirely optional — `bw.s()` and `bw.css()` handle everything without it. But for rapid prototyping, shorter token strings mean less typing and (for LLMs) fewer tokens.
 
 ### The key insight
 
@@ -617,9 +637,9 @@ bw.DOM('#app', card);
 
 | Level | What you get | What you write | When to use |
 |-------|-------------|---------------|-------------|
-| **0 — Data** | A plain JS object | `makeCard({...})` or `{t,a,c}` | Static content, SSR, data-driven lists |
-| **1 — DOM** | A rendered DOM tree | `bw.DOM('#x', taco)` | One-shot renders, manual re-renders |
-| **2 — Managed** | A reactive component | `bw.component(taco)` | State that changes, auto-updating UI |
+| **0 -- Data** | A plain JS object | `makeCard({...})` or `{t,a,c}` | Static content, SSR, data-driven lists |
+| **1 -- DOM** | A rendered DOM tree | `bw.DOM('#x', taco)` | One-shot renders, manual re-renders |
+| **2 -- Stateful** | A reactive component | `o.state` + `o.render` + `bw.update()` | State that changes, re-rendering UI |
 
 Most of your UI should be Level 0. Only escalate when you need interactivity. Level 0 TACOs are composable, serializable, and free. Level 2 components have overhead — use them for the parts that actually change.
 
@@ -653,64 +673,49 @@ renderClock();
 
 You own the render loop. Call `bw.DOM()` whenever you want. Simple, explicit, good enough for many use cases.
 
-### Level 2 — managed component with bw.component()
+### Level 2 -- stateful TACO with o.state + o.render
 
 ```js
-var counter = bw.component({
-  t: 'div', c: [
-    { t: 'span', c: 'Count: ${count}' },
-    bw.makeButton({ text: '+1', onclick: function() {
-      counter.set('count', counter.get('count') + 1);
-    }})
-  ],
-  o: {
-    state: { count: 0 }
-  }
-});
-
-bw.DOM('#app', counter);
-
-// Later:
-counter.set('count', 42);   // DOM auto-updates
-counter.get('count');        // 42
-counter.destroy();           // cleanup
-```
-
-`.set()` triggers a targeted DOM update — only the `${count}` text node changes, not the entire component. No virtual DOM diffing.
-
-### Level 2 — o.methods for clean APIs
-
-```js
-var counter = bw.component({
-  t: 'div', c: [
-    { t: 'div', c: '${count}' },
-    bw.makeButton({ text: '+', onclick: function() { counter.increment(); } }),
-    bw.makeButton({ text: 'Reset', onclick: function() { counter.reset(); } })
-  ],
+var counter = {
+  t: 'div',
   o: {
     state: { count: 0 },
-    methods: {
-      increment: function(c) { c.set('count', c.get('count') + 1); },
-      reset: function(c) { c.set('count', 0); }
+    render: function(el) {
+      var s = el._bw_state;
+      bw.DOM(el, {
+        t: 'div', c: [
+          { t: 'span', c: 'Count: ' + s.count },
+          bw.makeButton({ text: '+1', onclick: function() {
+            s.count++;
+            bw.update(el);
+          }}),
+          bw.makeButton({ text: 'Reset', onclick: function() {
+            s.count = 0;
+            bw.update(el);
+          }})
+        ]
+      });
     }
   }
-});
+};
+
+bw.DOM('#app', counter);
 ```
 
-Methods defined in `o.methods` are promoted to the component handle. External code calls `counter.increment()` — the component owns its update logic.
+When state changes, call `bw.update(el)` to re-invoke the render function. The component owns its update logic -- event handlers modify `el._bw_state` directly and trigger re-render.
 
 ### When to use which level
 
 ```
 Is the content static or computed once from data?
-  → Level 0. Use make*() or hand-write TACO. Render with bw.DOM().
+  => Level 0. Use make*() or hand-write TACO. Render with bw.DOM().
 
 Does the content change, but you control when?
-  → Level 1. Call bw.DOM() again when data changes.
+  => Level 1. Call bw.DOM() again when data changes.
 
 Does the content change in response to user interaction or external events,
-and you want automatic DOM updates?
-  → Level 2. Use bw.component() with ${bindings} and .set().
+and you want structured state management?
+  => Level 2. Use o.state + o.render + bw.update().
 ```
 
 ---
@@ -719,7 +724,7 @@ and you want automatic DOM updates?
 
 ### Event handlers — use onclick, not o.mounted
 
-> **Warning: Never attach event handlers in `o.mounted`.** When a Level 2 component re-renders (after `.set()` or `.setState()`), the old DOM element is replaced. Any listeners attached via `addEventListener` in `o.mounted` are silently lost — no error, no warning. The click handler simply stops working after the first state change. This is the most common mistake new bitwrench developers make.
+> **Warning: Never attach event handlers in `o.mounted`.** When a stateful component re-renders (after `bw.update()`), the old DOM children are replaced. Any listeners attached via `addEventListener` in `o.mounted` are silently lost -- no error, no warning. The click handler simply stops working after the first state change. This is the most common mistake new bitwrench developers make.
 
 ```js
 // CORRECT — onclick in attributes. Re-attached automatically on every render.
@@ -750,22 +755,14 @@ function addToCart(item) {
   bw.pub('cart:updated', { count: cart.length });
 }
 
-// Subscriber (navbar badge) — auto-cleans on component destroy
-navbar.sub('cart:updated', function(data) {
-  navbar.set('cartCount', data.count);
-});
+// Subscriber (navbar badge) -- auto-cleans when element is removed
+bw.sub('cart:updated', function(data) {
+  navbarEl._bw_state.cartCount = data.count;
+  bw.update(navbarEl);
+}, navbarEl);
 ```
 
-`bw.pub()` and `bw.sub()` are app-wide — not scoped to the DOM tree. Any component can publish, any component can subscribe. Subscriptions created via `handle.sub()` auto-cleanup when the component is destroyed.
-
-### bw.message() — named component messaging
-
-```js
-counter.userTag('my_counter');
-bw.message('my_counter', 'reset');  // calls counter.reset()
-```
-
-Address a component by name and invoke a method on it. Like Win32's `SendMessage` — decoupled dispatch without needing a reference to the target.
+`bw.pub()` and `bw.sub()` are app-wide -- not scoped to the DOM tree. Any component can publish, any component can subscribe. Pass the element as the third argument to `bw.sub()` to tie the subscription lifetime to that element (auto-cleaned on `bw.cleanup()`).
 
 ---
 
@@ -990,6 +987,7 @@ Unquoted keys, single quotes, trailing commas — all accepted. Especially usefu
 ### Static page composition
 
 ```js
+bw.loadStyles();
 bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
 
 bw.DOM('#app', [
@@ -1031,39 +1029,55 @@ bw.DOM('#filters', { t: 'div', c: ['all', 'widget', 'gadget'].map(function(f) {
 renderList();
 ```
 
-Level 1 — you own the render loop. No `bw.component()` needed.
+Level 1 -- you own the render loop. No stateful TACO needed.
 
 ### Reactive component with state
 
 ```js
-var contactForm = bw.component({
-  t: 'div', c: [
-    { t: 'div', a: { style: 'display:${statusVisible}' }, c: '${statusMsg}' },
-    bw.makeForm({ children: [
-      bw.makeFormGroup({ label: 'Email', input: bw.makeInput({ type: 'email', id: 'email' }) }),
-      bw.makeFormGroup({ label: 'Message', input: bw.makeTextarea({ id: 'msg', rows: 4 }) }),
-      bw.makeButton({ text: 'Send', type: 'submit', variant: 'primary' })
-    ], onsubmit: function(e) {
-      e.preventDefault();
-      contactForm.setState({ statusMsg: 'Sent!', statusVisible: 'block' });
-    }})
-  ],
-  o: { state: { statusMsg: '', statusVisible: 'none' } }
+bw.DOM('#contact', {
+  t: 'div',
+  o: {
+    state: { statusMsg: '', showStatus: false },
+    render: function(el) {
+      var s = el._bw_state;
+      bw.DOM(el, {
+        t: 'div', c: [
+          s.showStatus ? { t: 'div', c: s.statusMsg } : null,
+          bw.makeForm({ children: [
+            bw.makeFormGroup({ label: 'Email', input: bw.makeInput({ type: 'email', id: 'email' }) }),
+            bw.makeFormGroup({ label: 'Message', input: bw.makeTextarea({ id: 'msg', rows: 4 }) }),
+            bw.makeButton({ text: 'Send', type: 'submit', variant: 'primary' })
+          ], onsubmit: function(e) {
+            e.preventDefault();
+            s.statusMsg = 'Sent!';
+            s.showStatus = true;
+            bw.update(el);
+          }})
+        ]
+      });
+    }
+  }
 });
-bw.DOM('#contact', contactForm);
 ```
 
 ### Cross-component coordination
 
 ```js
-var cartBadge = bw.component({
-  t: 'span', c: 'Cart (${count})',
-  o: { state: { count: 0 } }
-});
-
-cartBadge.sub('cart:updated', function(d) {
-  cartBadge.set('count', d.count);
-});
+var cartBadge = {
+  t: 'span',
+  o: {
+    state: { count: 0 },
+    mounted: function(el) {
+      bw.sub('cart:updated', function(d) {
+        el._bw_state.count = d.count;
+        bw.update(el);
+      }, el);
+    },
+    render: function(el) {
+      bw.DOM(el, { t: 'span', c: 'Cart (' + el._bw_state.count + ')' });
+    }
+  }
+};
 
 function addToCart(item) {
   cart.push(item);
@@ -1074,10 +1088,10 @@ function addToCart(item) {
 ### Theme + custom CSS
 
 ```js
-var styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
-bw.applyStyles(styles);
-var accent = styles.palette.secondary.base;
-var accentLight = styles.palette.secondary.light;
+var theme = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+bw.applyStyles(theme);
+var accent = theme.palette.secondary.base;
+var accentLight = theme.palette.secondary.light;
 
 bw.injectCSS(bw.css({
   '.hero': {
@@ -1121,12 +1135,12 @@ The toast container is part of the TACO tree. Individual toasts append into it a
 
 ### Dashboard card — theme tokens + bw.s() + responsive + component
 
-This compact example combines the key patterns: theme palette tokens (no hardcoded hex), `bw.s()` for inline style composition, `bw.responsive()` for breakpoints, and `bw.component()` for live-updating stat cards.
+This compact example combines the key patterns: theme palette tokens (no hardcoded hex), `bw.s()` for inline style composition, `bw.responsive()` for breakpoints, and Level 1 re-rendering for live-updating stat cards.
 
 ```js
-var styles = bw.makeStyles({ primary: '#1e40af', secondary: '#059669' });
-bw.applyStyles(styles);
-var P = styles.palette;
+var theme = bw.makeStyles({ primary: '#1e40af', secondary: '#059669' });
+bw.applyStyles(theme);
+var P = theme.palette;
 
 // Responsive grid — base stacks, md goes 2-col, lg goes 4-col
 bw.injectCSS(bw.css({
@@ -1171,7 +1185,7 @@ setInterval(function() {
 ```
 
 Key things this example proves:
-- **No hardcoded hex in layout** — colors come from `theme.palette`
+- **No hardcoded hex in layout** -- colors come from `theme.palette`
 - **No inline style strings** — `bw.s({ display: 'flex' }, { padding: '1rem' }, ...)` composes style objects
 - **Responsive without media queries in HTML** — `bw.responsive()` generates `@media` CSS
 - **Re-render is just calling `bw.DOM()` again** — Level 1, no framework magic
@@ -1184,7 +1198,7 @@ Key things this example proves:
 |---------|---------|-------------------|
 | Routing | UI library scope — see Section 8 | `hashchange` + `bw.DOM()`, or page.js/navigo |
 | TypeScript types | Ships as UMD/ESM, works everywhere | Community .d.ts welcome, JSDoc in source |
-| Virtual DOM | Targeted patches via UUID refs are sufficient | `bw.patch()`, `bw.component()` bindings |
+| Virtual DOM | Targeted patches via UUID refs are sufficient | `bw.patch()`, `o.render` + `bw.update()` |
 | CSS purging | You generate only what you use via `bw.css()` | N/A |
 | SSR hydration | `bw.html()` for SSR, `bw.DOM()` for client | Full page render via `bw.html()` in Node |
 | Module bundling | No build step required | `<script>` tag, CDN, or ESM `import` |
@@ -1211,18 +1225,22 @@ Key things this example proves:
 | `bw.injectCSS(css)` | Insert CSS string into document |
 | `bw.s(...styles)` | Merge style objects into a style string |
 | `bw.responsive(sel, bp)` | Generate responsive `@media` CSS from breakpoint object |
-| `bw.loadStyles()` | Load built-in component CSS (or pass config to theme) |
-| `bw.makeStyles(cfg)` | Generate themed CSS from seed colors (returns styles object) |
+| `bw.loadStyles()` | Load built-in structural CSS |
+| `bw.makeStyles(cfg)` | Generate styled CSS from seed colors (returns styles object) |
+| `bw.applyStyles(styles)` | Inject generated styles' CSS into the document |
+| `bw.loadStyles(cfg)` | Generate and apply styles in one call |
+| `bw.toggleStyles()` | Switch between primary and alternate palettes |
+| `bw.clearStyles()` | Remove injected styles |
 
 ### State (Level 2)
 
 | Function | What it does |
 |----------|-------------|
-| `bw.component(taco)` | Create managed component |
-| `handle.set(key, val)` | Update state, auto-patch DOM |
-| `handle.get(key)` | Read state |
-| `handle.setState(obj)` | Batch update multiple keys |
-| `handle.destroy()` | Cleanup and remove from DOM |
+| `o.state` | Initial state object (copied to `el._bw_state`) |
+| `o.render(el, state)` | Render function called on mount and `bw.update()` |
+| `bw.update(el)` | Re-invoke `el._bw_render(el, el._bw_state)` |
+| `bw.patch(uuid, content)` | Update a single UUID-addressed element |
+| `bw.cleanup(el)` | Run unmount hooks, clear subscriptions |
 
 ### Communication
 
@@ -1230,8 +1248,8 @@ Key things this example proves:
 |----------|-------------|
 | `bw.pub(topic, data)` | Publish to all subscribers |
 | `bw.sub(topic, fn)` | Subscribe (returns unsub function) |
-| `handle.sub(topic, fn)` | Subscribe with auto-cleanup on destroy |
-| `bw.message(tag, action, data)` | Send to named component |
+| `bw.sub(topic, fn, owner)` | Subscribe with auto-cleanup when owner is removed |
+| `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` by id, UUID, or selector |
 
 ### Color
 
@@ -1270,12 +1288,12 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 | Operation | What it is | React | Vue 3 | Vanilla JS | Svelte 5 | Solid | Bitwrench |
 |-----------|-----------|-------|-------|------------|----------|-------|-----------|
 | **Render element** | Create and display a UI element | `<div className="card">Hi</div>` | `<div class="card">Hi</div>` | `el.innerHTML = '<div>Hi</div>'` | `<div class="card">Hi</div>` | `<div class="card">Hi</div>` | `bw.DOM('#x', {t:'div', a:{class:'card'}, c:'Hi'})` |
-| **Update text** | Change text content after render | `setText('new')` via `useState` | `msg.value = 'new'` | `el.textContent = 'new'` | `msg = 'new'` | `setMsg('new')` | `handle.set('msg', 'new')` or `bw.patch(id, 'new')` |
+| **Update text** | Change text content after render | `setText('new')` via `useState` | `msg.value = 'new'` | `el.textContent = 'new'` | `msg = 'new'` | `setMsg('new')` | `el._bw_state.msg = 'new'; bw.update(el)` or `bw.patch(id, 'new')` |
 | **Conditional render** | Show/hide based on state | `{show && <Comp/>}` | `v-if="show"` | `if (show) el.style.display = ''` | `{#if show}<Comp/>{/if}` | `<Show when={show}><Comp/></Show>` | `show ? taco : null` in `c:` array |
 | **List rendering** | Render array of items | `{items.map(i => <Li key={i.id}/>)}` | `v-for="i in items" :key="i.id"` | `el.innerHTML = items.map(...)` | `{#each items as i (i.id)}` | `<For each={items}>{i => ...}</For>` | `c: items.map(function(i) { return {t:'li', c:i.name} })` |
 | **Event handler** | Attach click/input handler | `onClick={handler}` | `@click="handler"` | `el.addEventListener('click', fn)` | `onclick={handler}` | `onClick={handler}` | `a: { onclick: fn }` |
 | **State declaration** | Declare reactive state | `const [x, setX] = useState(0)` | `const x = ref(0)` | `let x = 0` | `let x = $state(0)` | `const [x, setX] = createSignal(0)` | `o: { state: { x: 0 } }` |
-| **State update** | Change state and trigger re-render | `setX(42)` | `x.value = 42` | `x = 42; render()` | `x = 42` | `setX(42)` | `handle.set('x', 42)` (auto-renders) |
+| **State update** | Change state and trigger re-render | `setX(42)` | `x.value = 42` | `x = 42; render()` | `x = 42` | `setX(42)` | `el._bw_state.x = 42; bw.update(el)` |
 | **Computed / derived** | Derive value from state | `useMemo(() => x * 2, [x])` | `computed(() => x.value * 2)` | `function get() { return x * 2; }` | `let d = $derived(x * 2)` | `const d = () => x() * 2` | `c: '${x}'` with Tier 2: `'${x * 2}'` |
 | **Side effect** | Run code on mount/change | `useEffect(() => {...}, [])` | `onMounted(() => {...})` | `window.addEventListener('load', fn)` | `$effect(() => {...})` | `onMount(() => {...})` | `o: { mounted: function(el) {...} }` |
 | **Cleanup on unmount** | Tear down timers/listeners | `useEffect return cleanup` | `onUnmounted(() => {...})` | manual | `return () => {...}` in `$effect` | `onCleanup(() => {...})` | `o: { unmount: fn }` or `bw.cleanup(el)` |
@@ -1288,7 +1306,7 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 | **Raw HTML** | Render unescaped HTML | `dangerouslySetInnerHTML` | `v-html="str"` | `el.innerHTML = str` | `{@html str}` | `innerHTML={str}` | `bw.raw(str)` in `c:` |
 | **Cross-component events** | Decouple communication | Context + useReducer / Zustand | provide/inject or Pinia | CustomEvent / EventTarget | stores | Context or signals | `bw.pub(topic, data)` / `bw.sub(topic, fn)` |
 | **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
-| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` → `styles.palette` |
+| **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` => `theme.palette` |
 | **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** — open the HTML file |
 | **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (bitwrench UMD gzipped, includes 50+ components + CSS gen) |
 

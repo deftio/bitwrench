@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.18 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.19 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -12,14 +12,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.18',
+    version: '2.0.19',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-17T00:47:43.527Z'
+    buildDate: '2026-03-22T18:55:33.523Z'
   };
 
   /**
@@ -2176,10 +2176,10 @@
         'position': 'relative', 'display': 'flex', 'flex-direction': 'column', 'pointer-events': 'auto',
         'background-clip': 'padding-box', 'border': '1px solid transparent', 'outline': '0'
       },
-      '.bw_modal_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between' },
+      '.bw_modal_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '1rem 1.25rem', 'border-bottom': '1px solid transparent' },
       '.bw_modal_title': { 'margin': '0', 'font-size': '1.25rem', 'font-weight': '600', 'line-height': '1.3' },
-      '.bw_modal_body': { 'position': 'relative', 'flex': '1 1 auto' },
-      '.bw_modal_footer': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'gap': '0.5rem' }
+      '.bw_modal_body': { 'position': 'relative', 'flex': '1 1 auto', 'padding': '1rem 1.25rem' },
+      '.bw_modal_footer': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'flex-end', 'gap': '0.5rem', 'padding': '0.75rem 1.25rem', 'border-top': '1px solid transparent' }
     },
 
     // ---- Toast ----
@@ -2200,8 +2200,8 @@
       },
       '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
       '.bw_toast.bw_toast_hiding': { 'opacity': '0' },
-      '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'font-size': '0.875rem' },
-      '.bw_toast_body': { 'font-size': '0.9375rem' }
+      '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem', 'border-bottom': '1px solid transparent' },
+      '.bw_toast_body': { 'padding': '0.5rem 0.75rem', 'font-size': '0.9375rem' }
     },
 
     // ---- Dropdown ----
@@ -2215,15 +2215,15 @@
       '.bw_dropdown_menu': {
         'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
         'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
-        'background-clip': 'padding-box',
+        'background-clip': 'padding-box', 'border': '1px solid transparent',
         'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none'
       },
       '.bw_dropdown_menu.bw_dropdown_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
       '.bw_dropdown_menu_end': { 'left': 'auto', 'right': '0' },
       '.bw_dropdown_item': {
-        'display': 'block', 'width': '100%', 'clear': 'both',
+        'display': 'block', 'width': '100%', 'padding': '0.4rem 1rem', 'clear': 'both',
         'font-weight': '400', 'text-align': 'inherit', 'text-decoration': 'none', 'white-space': 'nowrap',
-        'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem'
+        'background-color': 'transparent', 'border': '0', 'font-size': '0.9375rem', 'cursor': 'pointer'
       },
       '.bw_dropdown_item:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '-2px' },
       '.bw_dropdown_divider': { 'height': '0', 'margin': '0.5rem 0', 'overflow': 'hidden', 'opacity': '1' }
@@ -2545,6 +2545,33 @@
     rules['.bw_text_left'] = { 'text-align': 'left' };
     rules['.bw_text_right'] = { 'text-align': 'right' };
     rules['.bw_text_center'] = { 'text-align': 'center' };
+    rules['.bw_text_justify'] = { 'text-align': 'justify' };
+
+    // Font weight
+    rules['.bw_fw_bold'] = { 'font-weight': '700' };
+    rules['.bw_fw_semibold'] = { 'font-weight': '600' };
+    rules['.bw_fw_normal'] = { 'font-weight': '400' };
+    rules['.bw_fw_light'] = { 'font-weight': '300' };
+
+    // Font style
+    rules['.bw_fst_italic'] = { 'font-style': 'italic' };
+    rules['.bw_fst_normal'] = { 'font-style': 'normal' };
+
+    // Text decoration
+    rules['.bw_text_underline'] = { 'text-decoration': 'underline' };
+    rules['.bw_text_line_through'] = { 'text-decoration': 'line-through' };
+    rules['.bw_text_decoration_none'] = { 'text-decoration': 'none' };
+
+    // Text transform
+    rules['.bw_text_uppercase'] = { 'text-transform': 'uppercase' };
+    rules['.bw_text_lowercase'] = { 'text-transform': 'lowercase' };
+    rules['.bw_text_capitalize'] = { 'text-transform': 'capitalize' };
+
+    // Font size
+    rules['.bw_fs_sm'] = { 'font-size': '0.875rem' };
+    rules['.bw_fs_base'] = { 'font-size': '1rem' };
+    rules['.bw_fs_lg'] = { 'font-size': '1.25rem' };
+    rules['.bw_fs_xl'] = { 'font-size': '1.5rem' };
 
     // Flexbox
     var jc = { start: 'flex-start', end: 'flex-end', center: 'center', between: 'space-between', around: 'space-around' };
@@ -3494,12 +3521,11 @@
     _subIdCounter: 0,     // monotonic ID for subscriptions
 
     // ── Node reference cache ──────────────────────────────────────────────
-    // Fast O(1) lookup for elements by bw_id, id attribute, or bw_uuid.
+    // Fast O(1) lookup for elements by id attribute or bw_uuid_* class.
     //
     // Populated by bw.createDOM() when elements have:
-    //   - data-bw_id attribute (user-declared addressable elements)
     //   - id attribute (standard HTML id)
-    //   - bw_uuid (internal, for lifecycle-managed elements)
+    //   - bw_uuid_* class (lifecycle-managed or explicitly addressed elements)
     //
     // Cleaned up by bw.cleanup() when elements are destroyed via bitwrench APIs.
     // On cache miss, falls back to querySelector/getElementById — never fails,
@@ -3507,7 +3533,7 @@
     // via parentNode === null check (IE11-safe, unlike el.isConnected).
     //
     // Elements created via bw.createDOM() also get el._bw_refs — a local map of
-    // child bw_id → DOM node ref for fast parent→child access in o.render.
+    // child id/UUID -> DOM node ref for fast parent->child access in o.render.
     // This is the bitwrench equivalent of React's compiled template "holes".
     //
     // Contract: if you remove elements outside of bitwrench APIs (raw el.remove()),
@@ -3587,7 +3613,6 @@
   // _cw         console.warn                               8
   // _cl         console.log                               11
   // _ce         console.error                              4
-  // _chp        ComponentHandle.prototype                 28  (defined after constructor)
   //
   // Note: document.createElement etc. are NOT aliased because they require
   // `this === document` and .bind() would add overhead on every call.
@@ -3760,15 +3785,15 @@
    * 1. Check `bw._nodeMap[id]` — if found and still attached (parentNode !== null), return it
    * 2. If cached ref is detached (parentNode === null), remove stale entry
    * 3. Fall back to `document.getElementById(id)` then `document.querySelector(...)`
-   * 4. If fallback finds the element, cache it for next time
-   * 5. If not found anywhere, return null
+   * 4. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
+   * 5. Cache the result for next time
    *
    * Accepts a DOM element directly (pass-through) or a string identifier.
    * String identifiers are tried as: direct map key, getElementById,
    * querySelector (for CSS selectors starting with . or #), and
-   * data-bw_id attribute selector.
+   * bw_uuid_* class selector.
    *
-   * @param {string|Element} id - Element ID, CSS selector, data-bw_id value, or DOM element
+   * @param {string|Element} id - Element ID, CSS selector, bw_uuid_* class, or DOM element
    * @returns {Element|null} The DOM element, or null if not found
    * @category Internal
    */
@@ -3797,17 +3822,12 @@
       el = document.querySelector(id);
     }
 
-    // 4. Try data-bw_id attribute (for bw.uuid-generated IDs)
-    if (!el) {
-      el = document.querySelector('[data-bw_id="' + id + '"]');
-    }
-
-    // 5. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
+    // 4. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
     if (!el && id.indexOf('bw_uuid_') === 0) {
       el = document.querySelector('.' + id);
     }
 
-    // 6. Cache the result for next time
+    // 5. Cache the result for next time
     if (el) {
       bw._nodeMap[id] = el;
     }
@@ -3819,17 +3839,17 @@
    * Register a DOM element in the node cache under one or more keys.
    *
    * Called internally by `bw.createDOM()`. Registers elements that have
-   * id attributes, data-bw_id attributes, or both.
+   * id attributes, UUID classes, or both.
    *
    * @param {Element} el - DOM element to register
-   * @param {string} [bwId] - data-bw_id value to register under
+   * @param {string} [uuid] - bw_uuid_* class token to register under
    * @category Internal
    */
-  bw._registerNode = function(el, bwId) {
+  bw._registerNode = function(el, uuid) {
     if (!el) return;
-    // Register under data-bw_id
-    if (bwId) {
-      bw._nodeMap[bwId] = el;
+    // Register under UUID class token
+    if (uuid) {
+      bw._nodeMap[uuid] = el;
     }
     // Register under id attribute
     var htmlId = el.getAttribute ? el.getAttribute('id') : null;
@@ -3845,13 +3865,13 @@
    * through bitwrench APIs.
    *
    * @param {Element} el - DOM element to deregister
-   * @param {string} [bwId] - data-bw_id value to remove
+   * @param {string} [uuid] - bw_uuid_* class token to remove
    * @category Internal
    */
-  bw._deregisterNode = function(el, bwId) {
-    // Remove data-bw_id entry
-    if (bwId) {
-      delete bw._nodeMap[bwId];
+  bw._deregisterNode = function(el, uuid) {
+    // Remove UUID class entry
+    if (uuid) {
+      delete bw._nodeMap[uuid];
     }
     // Remove id attribute entry
     var htmlId = el && el.getAttribute ? el.getAttribute('id') : null;
@@ -3863,6 +3883,13 @@
   // ===================================================================================
   // bw.assignUUID() / bw.getUUID() — Explicit UUID addressing for TACO objects
   // ===================================================================================
+
+  /**
+   * Marker class for elements with lifecycle hooks (mounted/unmount/render/state).
+   * Used by cleanup() to find lifecycle-managed elements via querySelectorAll('.bw_lc').
+   * @private
+   */
+  var _BW_LC = 'bw_lc';
 
   /**
    * Regex to match a bw_uuid_* token in a class string.
@@ -4052,15 +4079,6 @@
     // Handle null/undefined
     if (taco == null) return '';
 
-    // Handle ComponentHandle — use its .taco
-    if (taco && taco._bwComponent === true) {
-      var compOptions = Object.assign({}, options);
-      if (!compOptions.state && taco._state) {
-        compOptions.state = taco._state;
-      }
-      return bw.html(taco.taco, compOptions);
-    }
-
     // Handle arrays of TACOs
     if (_isA(taco)) {
       return taco.map(t => bw.html(t, options)).join('');
@@ -4069,24 +4087,6 @@
     // Handle bw.raw() marked content
     if (taco && taco.__bw_raw) {
       return taco.v;
-    }
-
-    // Handle bw.when() markers
-    if (taco && taco._bwWhen && options.state) {
-      var whenExpr = taco.expr.replace(/^\$\{|\}$/g, '');
-      var whenVal = options.compile
-        ? bw._resolveTemplate('${' + whenExpr + '}', options.state, true)
-        : bw._evaluatePath(options.state, whenExpr);
-      var branch = whenVal ? taco.branches[0] : (taco.branches[1] || null);
-      return branch ? bw.html(branch, options) : '';
-    }
-
-    // Handle bw.each() markers
-    if (taco && taco._bwEach && options.state) {
-      var eachExpr = taco.expr.replace(/^\$\{|\}$/g, '');
-      var arr = bw._evaluatePath(options.state, eachExpr);
-      if (!_isA(arr)) return '';
-      return arr.map(function(item, idx) { return bw.html(taco.factory(item, idx), options); }).join('');
     }
 
     // Handle primitives and non-TACO objects
@@ -4152,14 +4152,14 @@
       }
     }
 
-    // Add bw_id as a class if lifecycle hooks present
-    if ((opts.mounted || opts.unmount) && !attrs.class?.includes('bw_id_')) {
-      const id = opts.bw_id || bw.uuid();
+    // Add bw_uuid + bw_lc classes if lifecycle hooks present
+    if ((opts.mounted || opts.unmount) && !_UUID_RE.test(attrs.class || '')) {
+      const uuid = bw.uuid('uuid');
       attrStr = attrStr.replace(/class="([^"]*)"/, (_match, classes) => {
-        return `class="${classes} bw_id_${id}"`.trim();
+        return `class="${classes} ${uuid} ${_BW_LC}"`.trim();
       });
       if (!attrStr.includes('class=')) {
-        attrStr += ` class="bw_id_${id}"`;
+        attrStr += ` class="${uuid} ${_BW_LC}"`;
       }
     }
     
@@ -4387,11 +4387,6 @@
       return frag;
     }
 
-    // Handle ComponentHandle — extract .taco for DOM creation
-    if (taco && taco._bwComponent === true) {
-      return bw.createDOM(taco.taco, options);
-    }
-
     // Handle text nodes
     if (!_is(taco, 'object') || !taco.t) {
       return document.createTextNode(String(taco));
@@ -4432,24 +4427,19 @@
     }
     
     // Add children, building _bw_refs for fast parent→child access.
-    // Children with data-bw_id or id attributes get local refs on the parent,
+    // Children with id attributes or bw_uuid_* classes get local refs on the parent,
     // so o.render functions can access them without any DOM lookup.
     if (content != null) {
       if (_isA(content)) {
         content.forEach(child => {
           if (child != null) {
-            // Handle ComponentHandle in content arrays (Level 2 children)
-            if (child._bwComponent === true) {
-              child.mount(el);
-              return;
-            }
             var childEl = bw.createDOM(child, options);
             el.appendChild(childEl);
             // Build local refs for addressable children
-            var childBwId = (child && child.a) ? (child.a['data-bw_id'] || child.a.id) : null;
-            if (childBwId) {
+            var childRefId = (child && child.a) ? (child.a.id || bw.getUUID(child)) : null;
+            if (childRefId) {
               if (!el._bw_refs) el._bw_refs = {};
-              el._bw_refs[childBwId] = childEl;
+              el._bw_refs[childRefId] = childEl;
             }
             // Bubble up grandchild refs (flatten one level)
             if (childEl._bw_refs) {
@@ -4465,16 +4455,13 @@
       } else if (_is(content, 'object') && content.__bw_raw) {
         // Raw HTML content — inject via innerHTML
         el.innerHTML = content.v;
-      } else if (content._bwComponent === true) {
-        // Single ComponentHandle as content
-        content.mount(el);
       } else if (_is(content, 'object') && content.t) {
         var childEl = bw.createDOM(content, options);
         el.appendChild(childEl);
-        var childBwId = content.a ? (content.a['data-bw_id'] || content.a.id) : null;
-        if (childBwId) {
+        var childRefId = content.a ? (content.a.id || bw.getUUID(content)) : null;
+        if (childRefId) {
           if (!el._bw_refs) el._bw_refs = {};
-          el._bw_refs[childBwId] = childEl;
+          el._bw_refs[childRefId] = childEl;
         }
         if (childEl._bw_refs) {
           if (!el._bw_refs) el._bw_refs = {};
@@ -4504,57 +4491,88 @@
 
     // Handle lifecycle hooks and state
     if (opts.mounted || opts.unmount || opts.render || opts.state) {
-      const id = attrs['data-bw_id'] || bw.uuid();
-      el.setAttribute('data-bw_id', id);
+      // Ensure element has a UUID class for identity
+      var uuid = bw.getUUID(el) || bw.uuid('uuid');
+      el.classList.add(uuid);
+      el.classList.add(_BW_LC);
 
-      // Register in node cache under data-bw_id
-      bw._registerNode(el, id);
+      // Register in node cache under UUID class
+      bw._registerNode(el, uuid);
 
       // Store state
       if (opts.state) {
         el._bw_state = opts.state;
       }
 
-      // o.render — first-class render function (replaces mounted boilerplate)
+      // o.render — store the render function for bw.update()
       if (opts.render) {
         el._bw_render = opts.render;
+      }
 
-        if (opts.mounted) {
-          _cw('bw.createDOM: o.render and o.mounted are mutually exclusive. o.render wins.');
-        }
+      // Determine what to call on mount:
+      // - If o.mounted exists, call it (it can call el._bw_render() for initial render)
+      // - Otherwise if o.render exists, auto-call it as a convenience shorthand
+      var mountFn = opts.mounted || (opts.render ? function(mountEl) {
+        opts.render(mountEl, mountEl._bw_state || {});
+      } : null);
 
-        // Queue initial render (same timing as mounted)
+      if (mountFn) {
         if (document.body.contains(el)) {
-          opts.render(el, el._bw_state || {});
+          mountFn(el, el._bw_state || {});
         } else {
           requestAnimationFrame(() => {
             if (document.body.contains(el)) {
-              opts.render(el, el._bw_state || {});
-            }
-          });
-        }
-      } else if (opts.mounted) {
-        // Queue mounted callback (legacy pattern)
-        if (document.body.contains(el)) {
-          opts.mounted(el, el._bw_state || {});
-        } else {
-          requestAnimationFrame(() => {
-            if (document.body.contains(el)) {
-              opts.mounted(el, el._bw_state || {});
+              mountFn(el, el._bw_state || {});
             }
           });
         }
       }
 
-      // Store unmount callback
+      // Store unmount callback keyed by UUID class
       if (opts.unmount) {
-        bw._unmountCallbacks.set(id, () => {
+        bw._unmountCallbacks.set(uuid, () => {
           opts.unmount(el, el._bw_state || {});
         });
       }
-    } else if (attrs['data-bw_id']) {
-      // Element has explicit data-bw_id but no lifecycle hooks — still register it
-      bw._registerNode(el, attrs['data-bw_id']);
+    }
+
+    // Component handle: attach methods to el.bw namespace
+    if (opts.handle || opts.slots) {
+      if (!el.bw) el.bw = {};
+
+      // Explicit handle methods: fn(el, ...args) -> el.bw.method(...args)
+      if (opts.handle) {
+        for (var hk in opts.handle) {
+          if (_hop.call(opts.handle, hk)) {
+            el.bw[hk] = opts.handle[hk].bind(null, el);
+          }
+        }
+      }
+
+      // Slot declarations: auto-generate setX/getX pairs
+      if (opts.slots) {
+        for (var sk in opts.slots) {
+          if (_hop.call(opts.slots, sk)) {
+            (function(name, selector) {
+              var cap = name.charAt(0).toUpperCase() + name.slice(1);
+              el.bw['set' + cap] = function(value) {
+                var t = el.querySelector(selector);
+                if (!t) return;
+                if (value != null && typeof value === 'object' && value.t) {
+                  t.innerHTML = '';
+                  t.appendChild(bw.createDOM(value));
+                } else {
+                  t.textContent = (value != null) ? String(value) : '';
+                }
+              };
+              el.bw['get' + cap] = function() {
+                var t = el.querySelector(selector);
+                return t ? t.textContent : '';
+              };
+            })(sk, opts.slots[sk]);
+          }
+        }
+      }
     }
 
     return el;
@@ -4601,7 +4619,7 @@
     // the target is the mount point, not the content being replaced)
     const savedState = targetEl._bw_state;
     const savedRender = targetEl._bw_render;
-    const savedBwId = targetEl.getAttribute('data-bw_id');
+    const savedUuid = bw.getUUID(targetEl);
     const savedSubs = targetEl._bw_subs;
 
     // Temporarily remove _bw_subs so cleanup doesn't call them
@@ -4613,10 +4631,9 @@
     // Restore the target's own state/render/subs after cleanup
     if (savedState !== undefined) targetEl._bw_state = savedState;
     if (savedRender) targetEl._bw_render = savedRender;
-    if (savedBwId) {
-      targetEl.setAttribute('data-bw_id', savedBwId);
-      // Re-register mount point in node cache (cleanup deregistered it)
-      bw._registerNode(targetEl, savedBwId);
+    if (savedUuid) {
+      // UUID class stays on element through cleanup; re-register in cache
+      bw._registerNode(targetEl, savedUuid);
     }
     if (savedSubs) targetEl._bw_subs = savedSubs;
 
@@ -4624,25 +4641,11 @@
     targetEl.innerHTML = '';
     
     if (taco != null) {
-      // Handle ComponentHandle (reactive components from bw.component())
-      if (taco._bwComponent === true) {
-        taco.mount(targetEl);
-      }
-      // Handle component handles (objects with element property)
-      else if (taco.element instanceof Element) {
-        targetEl.appendChild(taco.element);
-      }
       // Handle arrays
-      else if (_isA(taco)) {
+      if (_isA(taco)) {
         taco.forEach(t => {
           if (t != null) {
-            if (t._bwComponent === true) {
-              t.mount(targetEl);
-            } else if (t.element instanceof Element) {
-              targetEl.appendChild(t.element);
-            } else {
-              targetEl.appendChild(bw.createDOM(t, options));
-            }
+            targetEl.appendChild(bw.createDOM(t, options));
           }
         });
       }
@@ -4655,205 +4658,36 @@
     return targetEl;
   };
 
-  /**
-   * Compile props into getter/setter functions for reactive updates.
-   *
-   * Used internally by `bw.renderComponent()`. Creates a proxy-like object
-   * where setting a property triggers `handle.onPropChange()`.
-   *
-   * @param {Object} handle - Component handle
-   * @param {Object} props - Initial props
-   * @returns {Object} Compiled props object with getters/setters
-   * @category DOM Generation
-   */
-  bw.compileProps = function(handle, props = {}) {
-    const compiledProps = {};
-    
-    _keys(props).forEach(key => {
-      // Create getter/setter for each prop
-      Object.defineProperty(compiledProps, key, {
-        get() {
-          return handle._props[key];
-        },
-        set(value) {
-          const oldValue = handle._props[key];
-          if (oldValue !== value) {
-            handle._props[key] = value;
-            // Trigger update if prop changed
-            if (handle.onPropChange) {
-              handle.onPropChange(key, value, oldValue);
-            }
-          }
-        },
-        enumerable: true,
-        configurable: true
-      });
-    });
-    
-    return compiledProps;
-  };
+  // Deprecation stubs for removed ComponentHandle APIs
+  bw.compileProps = function() { throw new Error('bw.compileProps() removed in v2.0.19. Use o.handle/o.slots instead.'); };
+  bw.renderComponent = function() { throw new Error('bw.renderComponent() removed in v2.0.19. Use bw.mount() with o.handle/o.slots instead.'); };
 
   /**
-   * Render a TACO component and return an enhanced handle object.
+   * Mount a TACO into a target element and return the created root element.
+   * Like bw.DOM() but returns the root element of the TACO (not the container),
+   * giving direct access to el.bw handle methods.
    *
-   * The handle provides compiled props, state management, child registration,
-   * and a destroy method. Used internally by `bw.createCard()`, `bw.createTable()`, etc.
-   *
-   * @param {Object} taco - TACO object to render
-   * @param {Object} [options] - Render options
-   * @returns {Object} Component handle with element, props, state, update(), destroy()
+   * @param {string|Element} target - CSS selector or DOM element
+   * @param {Object} taco - TACO to render
+   * @param {Object} [options] - Mount options
+   * @returns {Element} The created root element
    * @category DOM Generation
+   * @example
+   * var el = bw.mount('#app', bw.makeCarousel({ items: slides }));
+   * el.bw.goToSlide(2);
+   * el.bw.next();
    */
-  bw.renderComponent = function(taco, options = {}) {
-    const element = bw.createDOM(taco, options);
-    
-    // Enhanced handle with prop compilation
-    const handle = {
-      element,
-      taco,
-      _props: { ...taco.a },  // Store props internally
-      _state: taco.o?.state || {},
-      _children: {},  // Store child component references
-      
-      // Get compiled props with getters/setters
-      get props() {
-        if (!this._compiledProps) {
-          this._compiledProps = bw.compileProps(this, this._props);
-        }
-        return this._compiledProps;
-      },
-      
-      /**
-       * Query all matching elements within this component
-       * @param {string} selector - CSS selector
-       * @returns {NodeList} Matching elements
-       */
-      $(selector) {
-        return this.element.querySelectorAll(selector);
-      },
-      
-      /**
-       * Query the first matching element within this component
-       * @param {string} selector - CSS selector
-       * @returns {Element|null} First matching element or null
-       */
-      $first(selector) {
-        return this.element.querySelector(selector);
-      },
-      
-      /**
-       * Update component with new props and re-render in place
-       * @param {Object} newProps - Properties to merge into current props
-       * @returns {Object} this handle (for chaining)
-       */
-      update(newProps) {
-        // Update internal props
-        Object.assign(this._props, newProps);
-        
-        // Rebuild TACO with new props
-        const newTaco = { ...this.taco, a: { ...this.taco.a, ...newProps } };
-        const newElement = bw.createDOM(newTaco, options);
-        
-        // Replace in DOM
-        this.element.replaceWith(newElement);
-        this.element = newElement;
-        this.taco = newTaco;
-        
-        return this;
-      },
-      
-      /**
-       * Re-render the component from its current TACO, replacing the DOM element
-       * @returns {Object} this handle (for chaining)
-       */
-      render() {
-        const newElement = bw.createDOM(this.taco, options);
-        this.element.replaceWith(newElement);
-        this.element = newElement;
-        return this;
-      },
-      
-      /**
-       * Called when a compiled prop value changes. Override to customize behavior.
-       * Default implementation triggers a full re-render.
-       * @param {string} key - Property name that changed
-       * @param {*} newValue - New property value
-       * @param {*} oldValue - Previous property value
-       */
-      onPropChange(_key, _newValue, _oldValue) {
-        // Auto re-render on prop change by default
-        this.render();
-      },
-      
-      // State management
-      get state() {
-        return this._state;
-      },
-      
-      set state(newState) {
-        this._state = newState;
-        this.render();
-      },
-      
-      /**
-       * Merge state updates and re-render the component
-       * @param {Object} updates - State properties to merge
-       * @returns {Object} this handle (for chaining)
-       */
-      setState(updates) {
-        Object.assign(this._state, updates);
-        this.render();
-        return this;
-      },
-
-      /**
-       * Register a child component under a name for later retrieval
-       * @param {string} name - Child name key
-       * @param {Object} component - Child component handle
-       * @returns {Object} this handle (for chaining)
-       */
-      addChild(name, component) {
-        this._children[name] = component;
-        return this;
-      },
-      
-      /**
-       * Retrieve a registered child component by name
-       * @param {string} name - Child name key
-       * @returns {Object|undefined} Child component handle
-       */
-      getChild(name) {
-        return this._children[name];
-      },
-
-      /**
-       * Destroy this component and all registered children
-       *
-       * Calls destroy() recursively on children, runs bw.cleanup(),
-       * removes the element from DOM, and clears all internal references.
-       */
-      destroy() {
-        // Destroy children first
-        Object.values(this._children).forEach(child => {
-          if (child && child.destroy) child.destroy();
-        });
-        
-        // Clean up this component
-        bw.cleanup(this.element);
-        this.element.remove();
-        
-        // Clear references
-        this._children = {};
-        this._props = {};
-        this._state = {};
-        this._compiledProps = null;
-      }
-    };
-    
-    // Store handle reference on element
-    element._bwHandle = handle;
-    
-    return handle;
+  bw.mount = function(target, taco, options) {
+    var container = _is(target, 'string') ? bw.$(target)[0] : target;
+    if (!container) {
+      _cw('bw.mount: target not found');
+      return null;
+    }
+    bw.cleanup(container);
+    container.innerHTML = '';
+    var el = bw.createDOM(taco, options || {});
+    container.appendChild(el);
+    return el;
   };
 
   /**
@@ -4874,34 +4708,29 @@
   bw.cleanup = function(element) {
     if (!bw._isBrowser || !element) return;
 
-    // Deregister UUID classes from node cache (element + descendants)
-    // Covers elements that have UUID but no data-bw_id
-    var selfUuidMatch = element.className && element.className.match(_UUID_RE);
-    if (selfUuidMatch) delete bw._nodeMap[selfUuidMatch[0]];
+    // Deregister UUID classes from node cache for non-lifecycle UUID elements
     var uuidEls = element.querySelectorAll('[class*="bw_uuid_"]');
     uuidEls.forEach(function(uel) {
       var m = uel.className && uel.className.match(_UUID_RE);
       if (m) delete bw._nodeMap[m[0]];
     });
 
-    // Find all elements with data-bw_id
-    const elements = element.querySelectorAll('[data-bw_id]');
+    // Find all lifecycle-managed elements (have bw_lc marker class)
+    const elements = element.querySelectorAll('.' + _BW_LC);
 
     elements.forEach(el => {
-      const id = el.getAttribute('data-bw_id');
-      const callback = bw._unmountCallbacks.get(id);
+      var uuid = bw.getUUID(el);
 
-      if (callback) {
-        callback();
-        bw._unmountCallbacks.delete(id);
+      if (uuid) {
+        const callback = bw._unmountCallbacks.get(uuid);
+        if (callback) {
+          callback();
+          bw._unmountCallbacks.delete(uuid);
+        }
+
+        // Deregister from node cache
+        bw._deregisterNode(el, uuid);
       }
-
-      // Deregister from node cache
-      bw._deregisterNode(el, id);
-
-      // Deregister UUID class from node cache
-      var uuidMatch = el.className && el.className.match(_UUID_RE);
-      if (uuidMatch) delete bw._nodeMap[uuidMatch[0]];
 
       // Clean up pub/sub subscriptions tied to this element
       if (el._bw_subs) {
@@ -4916,20 +4745,18 @@
     });
 
     // Check element itself
-    const id = element.getAttribute('data-bw_id');
-    if (id) {
-      const callback = bw._unmountCallbacks.get(id);
+    var selfUuid = bw.getUUID(element);
+    if (selfUuid) {
+      delete bw._nodeMap[selfUuid];
+
+      const callback = bw._unmountCallbacks.get(selfUuid);
       if (callback) {
         callback();
-        bw._unmountCallbacks.delete(id);
+        bw._unmountCallbacks.delete(selfUuid);
       }
 
       // Deregister from node cache
-      bw._deregisterNode(element, id);
-
-      // Deregister UUID class from node cache
-      var elemUuidMatch = element.className && element.className.match(_UUID_RE);
-      if (elemUuidMatch) delete bw._nodeMap[elemUuidMatch[0]];
+      bw._deregisterNode(element, selfUuid);
 
       // Clean up pub/sub subscriptions tied to element itself
       if (element._bw_subs) {
@@ -4940,11 +4767,11 @@
       delete element._bw_render;
       delete element._bw_refs;
 
-      // Clean up ComponentHandle back-reference
-      if (element._bwComponentHandle) {
-        element._bwComponentHandle.mounted = false;
-        element._bwComponentHandle.element = null;
-        delete element._bwComponentHandle;
+    } else {
+      // No UUID on element itself, but still check for _bw_subs (from bw.sub())
+      if (element._bw_subs) {
+        element._bw_subs.forEach(function(unsub) { unsub(); });
+        delete element._bw_subs;
       }
     }
   };
@@ -4960,7 +4787,7 @@
    * Calls `el._bw_render(el, state)` and emits `bw:statechange` so other
    * components can react without tight coupling.
    *
-   * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element
+   * @param {string|Element} target - Element ID, bw_uuid_* class, CSS selector, or DOM element
    * @returns {Element|null} The element, or null if not found / no render function
    * @category State Management
    * @see bw.patch
@@ -4985,7 +4812,7 @@
    * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
    * and `bw.update()` for full structural re-renders.
    *
-   * @param {string|Element} id - Element ID, data-bw_id, CSS selector, or DOM element.
+   * @param {string|Element} id - Element ID, bw_uuid_* class, CSS selector, or DOM element.
    *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string|Object} content - New text content, or TACO object to replace children
    * @param {string} [attr] - If provided, sets this attribute instead of content
@@ -5060,7 +4887,7 @@
    * bubble by default so ancestor elements can listen. Use with `bw.on()` for
    * DOM-scoped communication between components.
    *
-   * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element.
+   * @param {string|Element} target - Element ID, bw_uuid_* class, CSS selector, or DOM element.
    *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string} eventName - Event name (will be prefixed with 'bw:')
    * @param {*} [detail] - Data to pass with the event
@@ -5087,7 +4914,7 @@
    * is the first argument so you don't need to destructure `e.detail`.
    * Events bubble, so you can listen on an ancestor element.
    *
-   * @param {string|Element} target - Element ID, data-bw_id, CSS selector, or DOM element.
+   * @param {string|Element} target - Element ID, bw_uuid_* class, CSS selector, or DOM element.
    *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string} eventName - Event name (will be prefixed with 'bw:')
    * @param {Function} handler - Called with (detail, event)
@@ -5185,10 +5012,12 @@
     if (el) {
       if (!el._bw_subs) el._bw_subs = [];
       el._bw_subs.push(unsub);
-      // Ensure element has data-bw_id so bw.cleanup() finds it
-      if (!el.getAttribute('data-bw_id')) {
-        var bwId = 'bw_sub_' + id;
-        el.setAttribute('data-bw_id', bwId);
+      // Ensure element has UUID + bw_lc so bw.cleanup() finds it
+      if (!bw.getUUID(el)) {
+        el.classList.add(bw.uuid('uuid'));
+      }
+      if (!el.classList.contains(_BW_LC)) {
+        el.classList.add(_BW_LC);
       }
     }
 
@@ -5410,1087 +5239,46 @@
     return result;
   };
 
-  /**
-   * Extract top-level state keys that an expression depends on.
-   * @param {string} expr - Expression string
-   * @param {string[]} stateKeys - Declared state keys
-   * @returns {string[]} Matching dependency keys
-   * @private
-   */
-  bw._extractDeps = function(expr, stateKeys) {
-    var deps = [];
-    for (var i = 0; i < stateKeys.length; i++) {
-      var key = stateKeys[i];
-      // Match word boundary: key must be preceded by start/non-word and followed by non-word/end
-      var re = new RegExp('(?:^|[^\\w$.])' + key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:[^\\w$]|$)');
-      if (re.test(expr) || expr === key || expr.indexOf(key + '.') === 0) {
-        deps.push(key);
-      }
-    }
-    return deps;
-  };
-
   // ===================================================================================
-  // Microtask Batching
+  // Deprecation stubs for removed ComponentHandle APIs (v2.0.19)
   // ===================================================================================
 
-  bw._dirtyComponents = [];
-  bw._flushScheduled = false;
+  bw._extractDeps = undefined;
+  bw._dirtyComponents = undefined;
+  bw._flushScheduled = undefined;
+  bw._scheduleFlush = undefined;
+  bw._doFlush = undefined;
+  bw._ComponentHandle = undefined;
 
   /**
-   * Schedule a microtask flush for dirty components.
-   * @private
-   */
-  bw._scheduleFlush = function() {
-    if (bw._flushScheduled) return;
-    bw._flushScheduled = true;
-    if (typeof Promise !== 'undefined') {
-      Promise.resolve().then(bw._doFlush);
-    } else {
-      setTimeout(bw._doFlush, 0);
-    }
-  };
-
-  /**
-   * Flush all dirty components. Deduplicates by _bwId.
-   * @private
-   */
-  bw._doFlush = function() {
-    bw._flushScheduled = false;
-    var queue = bw._dirtyComponents.slice();
-    bw._dirtyComponents = [];
-    // Deduplicate by _bwId
-    var seen = {};
-    for (var i = 0; i < queue.length; i++) {
-      var comp = queue[i];
-      if (!seen[comp._bwId]) {
-        seen[comp._bwId] = true;
-        comp._flush();
-      }
-    }
-  };
-
-  /**
-   * Synchronous flush for testing and imperative code.
-   * Forces immediate re-render of all dirty components.
-   *
+   * No-op flush (ComponentHandle removed in v2.0.19).
+   * Kept as no-op for backward compatibility.
    * @category Component
    */
-  bw.flush = function() {
-    bw._doFlush();
-  };
+  bw.flush = function() {};
 
-  // ===================================================================================
-  // ComponentHandle — unified reactive component (Phase 1)
-  // ===================================================================================
 
-  /**
-   * ComponentHandle constructor.
-   * Wraps a TACO definition with reactive state, lifecycle hooks,
-   * template bindings, and named actions.
-   *
-   * @param {Object} taco - TACO definition {t, a, c, o}
-   * @constructor
-   * @private
-   */
-  function ComponentHandle(taco) {
-    this._bwComponent = true;         // duck-type marker
-    this._bwId = bw.uuid('comp');
-    this.taco = taco;
-    this.element = null;
-    this.mounted = false;
+  bw.when = function() { throw new Error('bw.when() removed in v2.0.19. Use conditional logic in o.render instead.'); };
+  bw.each = function() { throw new Error('bw.each() removed in v2.0.19. Use array mapping in o.render instead.'); };
+  bw.component = function() { throw new Error('bw.component() removed in v2.0.19. Use o.handle/o.slots on TACO options instead.'); };
 
-    var o = taco.o || {};
-    // Copy initial state
-    this._state = {};
-    if (o.state) {
-      for (var k in o.state) {
-        if (_hop.call(o.state, k)) {
-          this._state[k] = o.state[k];
-        }
-      }
-    }
-    // Copy actions
-    this._actions = {};
-    if (o.actions) {
-      for (var k2 in o.actions) {
-        if (_hop.call(o.actions, k2)) {
-          this._actions[k2] = o.actions[k2];
-        }
-      }
-    }
-    // Promote o.methods to handle API (MFC/Qt pattern: component owns its methods)
-    this._methods = {};
-    if (o.methods) {
-      var self = this;
-      for (var k3 in o.methods) {
-        if (_hop.call(o.methods, k3)) {
-          this._methods[k3] = o.methods[k3];
-          (function(methodName, methodFn) {
-            self[methodName] = function() {
-              var args = [self].concat(Array.prototype.slice.call(arguments));
-              return methodFn.apply(null, args);
-            };
-          })(k3, o.methods[k3]);
-        }
-      }
-    }
-    // User tag for addressing via bw.message()
-    this._userTag = null;
-    // Lifecycle hooks
-    this._hooks = {
-      willMount: o.willMount || null,
-      mounted: o.mounted || null,
-      willUpdate: o.willUpdate || null,
-      onUpdate: o.onUpdate || o.updated || null,
-      unmount: o.unmount || null,
-      willDestroy: o.willDestroy || null
-    };
-    // Binding tracking
-    this._bindings = [];
-    this._dirtyKeys = {};
-    this._scheduled = false;
-    this._subs = [];
-    this._eventListeners = [];
-    this._registeredActions = [];
-    this._prevValues = {};
-    this._compile = !!o.compile;
-    this._bw_refs = {};
-    this._refCounter = 0;
-    // Child component ownership (Bug #5)
-    this._children = [];
-    this._parent = null;
-    // Factory metadata for BCCL rebuild (Bug #6)
-    this._factory = taco._bwFactory || null;
-  }
-
-  // Short alias for ComponentHandle.prototype (see alias block at top of file).
-  // 28 method definitions × 25 chars = ~700B raw savings in minified output.
-  var _chp = ComponentHandle.prototype;
-
-  // ── State Methods ──
-
-  /**
-   * Get a state value. Dot-path supported: `get('user.name')`
-   */
-  _chp.get = function(key) {
-    return bw._evaluatePath(this._state, key);
-  };
-
-  /**
-   * Set a state value. Dot-path supported. Schedules re-render.
-   * @param {string} key - State key (dot-path)
-   * @param {*} value - New value
-   * @param {Object} [opts] - Options. `{sync: true}` for immediate flush.
-   */
-  _chp.set = function(key, value, opts) {
-    // Dot-path set
-    var parts = key.split('.');
-    var obj = this._state;
-    for (var i = 0; i < parts.length - 1; i++) {
-      if (!_is(obj[parts[i]], 'object')) {
-        if (bw.debug) _cw('bw.debug: set() — auto-creating intermediate "' + parts[i] + '" in path "' + key + '"');
-        obj[parts[i]] = {};
-      }
-      obj = obj[parts[i]];
-    }
-    obj[parts[parts.length - 1]] = value;
-    // Mark top-level key dirty
-    this._dirtyKeys[parts[0]] = true;
-    if (this.mounted) {
-      if (opts && opts.sync) {
-        this._flush();
-      } else {
-        this._scheduleDirty();
-      }
-    }
-  };
-
-  /**
-   * Get a shallow clone of the full state.
-   */
-  _chp.getState = function() {
-    var clone = {};
-    for (var k in this._state) {
-      if (_hop.call(this._state, k)) {
-        clone[k] = this._state[k];
-      }
-    }
-    return clone;
-  };
-
-  /**
-   * Merge multiple state keys. Schedules re-render.
-   * @param {Object} updates - Key-value pairs to merge
-   * @param {Object} [opts] - Options. `{sync: true}` for immediate flush.
-   */
-  _chp.setState = function(updates, opts) {
-    for (var k in updates) {
-      if (_hop.call(updates, k)) {
-        this._state[k] = updates[k];
-        this._dirtyKeys[k] = true;
-      }
-    }
-    if (this.mounted) {
-      if (opts && opts.sync) {
-        this._flush();
-      } else {
-        this._scheduleDirty();
-      }
-    }
-  };
-
-  /**
-   * Push a value onto an array in state. Clones the array.
-   */
-  _chp.push = function(key, val) {
-    var arr = this.get(key);
-    var newArr = _isA(arr) ? arr.slice() : [];
-    newArr.push(val);
-    this.set(key, newArr);
-  };
-
-  /**
-   * Splice an array in state. Clones the array.
-   */
-  _chp.splice = function(key, start, deleteCount) {
-    var arr = this.get(key);
-    var newArr = _isA(arr) ? arr.slice() : [];
-    var args = [start, deleteCount].concat(Array.prototype.slice.call(arguments, 3));
-    Array.prototype.splice.apply(newArr, args);
-    this.set(key, newArr);
-  };
-
-  // ── Scheduling ──
-
-  _chp._scheduleDirty = function() {
-    if (!this._scheduled) {
-      this._scheduled = true;
-      bw._dirtyComponents.push(this);
-      bw._scheduleFlush();
-    }
-  };
-
-  // ── Binding Compilation ──
-
-  /**
-   * Walk the TACO tree and extract ${expr} bindings.
-   * Creates binding descriptors with refIds for targeted DOM updates.
-   * @private
-   */
-  _chp._compileBindings = function() {
-    this._bindings = [];
-    this._refCounter = 0;
-    var stateKeys = _keys(this._state);
-    var self = this;
-
-    function walkTaco(taco, path) {
-      if (!_is(taco, 'object') || !taco.t) return taco;
-
-      // Check content for bindings
-      if (_is(taco.c, 'string') && taco.c.indexOf('${') >= 0) {
-        var refId = 'bw_ref_' + self._refCounter++;
-        var parsed = bw._parseBindings(taco.c);
-        var deps = [];
-        for (var j = 0; j < parsed.length; j++) {
-          deps = deps.concat(bw._extractDeps(parsed[j].expr, stateKeys));
-        }
-        self._bindings.push({
-          expr: taco.c,
-          type: 'content',
-          refId: refId,
-          deps: deps,
-          template: taco.c
-        });
-        // Inject data-bw_ref on the TACO for createDOM to pick up
-        if (!taco.a) taco.a = {};
-        taco.a['data-bw_ref'] = refId;
-      }
-
-      // Check attributes for bindings
-      if (taco.a) {
-        for (var attrName in taco.a) {
-          if (!_hop.call(taco.a, attrName)) continue;
-          if (attrName === 'data-bw_ref') continue;
-          var attrVal = taco.a[attrName];
-          if (_is(attrVal, 'string') && attrVal.indexOf('${') >= 0) {
-            var refId2 = 'bw_ref_' + self._refCounter++;
-            var parsed2 = bw._parseBindings(attrVal);
-            var deps2 = [];
-            for (var j2 = 0; j2 < parsed2.length; j2++) {
-              deps2 = deps2.concat(bw._extractDeps(parsed2[j2].expr, stateKeys));
-            }
-            self._bindings.push({
-              expr: attrVal,
-              type: 'attribute',
-              attrName: attrName,
-              refId: refId2,
-              deps: deps2,
-              template: attrVal
-            });
-            if (!taco.a) taco.a = {};
-            taco.a['data-bw_ref'] = taco.a['data-bw_ref'] || refId2;
-            // If multiple attribute bindings on same element, store additional marker
-            if (taco.a['data-bw_ref'] !== refId2) {
-              taco.a['data-bw_ref_' + attrName] = refId2;
-            }
-          }
-        }
-      }
-
-      // Recurse into children
-      if (_isA(taco.c)) {
-        for (var i = 0; i < taco.c.length; i++) {
-          // Wrap string children with ${expr} in a span so patches target the span, not the parent
-          if (_is(taco.c[i], 'string') && taco.c[i].indexOf('${') >= 0) {
-            var mixedRefId = 'bw_ref_' + self._refCounter++;
-            var mixedParsed = bw._parseBindings(taco.c[i]);
-            var mixedDeps = [];
-            for (var mi = 0; mi < mixedParsed.length; mi++) {
-              mixedDeps = mixedDeps.concat(bw._extractDeps(mixedParsed[mi].expr, stateKeys));
-            }
-            self._bindings.push({
-              expr: taco.c[i],
-              type: 'content',
-              refId: mixedRefId,
-              deps: mixedDeps,
-              template: taco.c[i]
-            });
-            // Replace string with a span wrapper so textContent targets the span only
-            taco.c[i] = { t: 'span', a: { 'data-bw_ref': mixedRefId, style: 'display:contents' }, c: taco.c[i] };
-          }
-          if (_is(taco.c[i], 'object') && taco.c[i].t) {
-            walkTaco(taco.c[i], path.concat(i));
-          }
-          // Handle bw.when/bw.each markers
-          if (taco.c[i] && taco.c[i]._bwWhen) {
-            var whenRefId = 'bw_ref_' + self._refCounter++;
-            var whenDeps = bw._extractDeps(taco.c[i].expr.replace(/^\$\{|\}$/g, ''), stateKeys);
-            self._bindings.push({
-              expr: taco.c[i].expr,
-              type: 'structural',
-              subtype: 'when',
-              refId: whenRefId,
-              deps: whenDeps,
-              branches: taco.c[i].branches,
-              index: i,
-              parentPath: path
-            });
-            taco.c[i]._refId = whenRefId;
-          }
-          if (taco.c[i] && taco.c[i]._bwEach) {
-            var eachRefId = 'bw_ref_' + self._refCounter++;
-            var eachDeps = bw._extractDeps(taco.c[i].expr.replace(/^\$\{|\}$/g, ''), stateKeys);
-            self._bindings.push({
-              expr: taco.c[i].expr,
-              type: 'structural',
-              subtype: 'each',
-              refId: eachRefId,
-              deps: eachDeps,
-              factory: taco.c[i].factory,
-              index: i,
-              parentPath: path
-            });
-            taco.c[i]._refId = eachRefId;
-          }
-        }
-      } else if (_is(taco.c, 'object') && taco.c.t) {
-        walkTaco(taco.c, path.concat(0));
-      }
-
-      return taco;
-    }
-
-    walkTaco(this.taco, []);
-  };
-
-  // ── DOM Reference Collection ──
-
-  /**
-   * Build ref map from the live DOM after createDOM.
-   * @private
-   */
-  _chp._collectRefs = function() {
-    this._bw_refs = {};
-    if (!this.element) return;
-    var els = this.element.querySelectorAll('[data-bw_ref]');
-    for (var i = 0; i < els.length; i++) {
-      this._bw_refs[els[i].getAttribute('data-bw_ref')] = els[i];
-    }
-    // Also check root element
-    var rootRef = this.element.getAttribute && this.element.getAttribute('data-bw_ref');
-    if (rootRef) {
-      this._bw_refs[rootRef] = this.element;
-    }
-  };
-
-  // ── Lifecycle ──
-
-  /**
-   * Mount the component into a parent DOM element.
-   * Creates DOM, compiles bindings, registers actions, and calls lifecycle hooks.
-   * @param {Element} parentEl - DOM element to mount into
-   */
-  _chp.mount = function(parentEl) {
-    // willMount hook
-    if (this._hooks.willMount) this._hooks.willMount(this);
-
-    // Save original TACO for re-renders (structural changes clone from this)
-    if (!this._originalTaco) {
-      this._originalTaco = this.taco;
-    }
-
-    // Deep-clone TACO so binding annotations don't mutate original.
-    // Custom clone to preserve _bwWhen/_bwEach markers and their factory functions.
-    this.taco = this._deepCloneTaco(this._originalTaco);
-
-    // Compile bindings (annotates TACO with data-bw_ref attributes)
-    this._compileBindings();
-
-    // Prepare TACO: resolve initial binding values, evaluate when/each
-    this._prepareTaco(this.taco);
-
-    // Register named actions in function registry
-    var self = this;
-    for (var actionName in this._actions) {
-      if (_hop.call(this._actions, actionName)) {
-        var registeredName = this._bwId + '_' + actionName;
-        (function(aName) {
-          bw.funcRegister(function(evt) {
-            self._actions[aName](self, evt);
-          }, registeredName);
-        })(actionName);
-        this._registeredActions.push(registeredName);
-      }
-    }
-
-    // Wire action names in onclick etc. to dispatch strings
-    this._wireActions(this.taco);
-
-    // Create DOM (strip o before createDOM to prevent double lifecycle)
-    var tacoForDOM = this._tacoForDOM(this.taco);
-    this.element = bw.createDOM(tacoForDOM);
-    this.element._bwComponentHandle = this;
-    this.element.setAttribute('data-bw_comp_id', this._bwId);
-
-    // Restore o.render from original TACO (stripped by _tacoForDOM)
-    if (this.taco.o && this.taco.o.render) {
-      this.element._bw_render = this.taco.o.render;
-    }
-    if (this._userTag) {
-      this.element.classList.add(this._userTag);
-    }
-
-    // Append to parent
-    parentEl.appendChild(this.element);
-
-    // Collect refs from live DOM
-    this._collectRefs();
-
-    // Resolve initial bindings and apply to DOM
-    this._resolveAndApplyAll();
-
-    this.mounted = true;
-
-    // Scan for child ComponentHandles and link parent/child (Bug #5)
-    var childEls = this.element.querySelectorAll('[data-bw_comp_id]');
-    for (var ci = 0; ci < childEls.length; ci++) {
-      var ch = childEls[ci]._bwComponentHandle;
-      if (ch && ch !== this && !ch._parent) {
-        ch._parent = this;
-        this._children.push(ch);
-      }
-    }
-
-    // mounted hook (backward compat: fn.length === 2 wraps (el, state))
-    if (this._hooks.mounted) {
-      if (this._hooks.mounted.length === 2) {
-        this._hooks.mounted(this.element, this.getState());
-      } else {
-        this._hooks.mounted(this);
-      }
-    }
-
-    // Invoke o.render on initial mount (if present)
-    if (this.element._bw_render) {
-      this.element._bw_render(this.element, this._state);
-    }
-  };
-
-  /**
-   * Prepare TACO for initial render: resolve when/each markers.
-   * @private
-   */
-  _chp._prepareTaco = function(taco) {
-    if (!_is(taco, 'object')) return;
-
-    if (_isA(taco.c)) {
-      for (var i = taco.c.length - 1; i >= 0; i--) {
-        var child = taco.c[i];
-        if (child && child._bwWhen) {
-          var exprStr = child.expr.replace(/^\$\{|\}$/g, '');
-          var val;
-          if (this._compile) {
-            try {
-              val = (new Function('state', 'with(state){return (' + exprStr + ');}'))(this._state);
-            } catch(e) { val = false; }
-          } else {
-            val = bw._evaluatePath(this._state, exprStr);
-          }
-          var branch = val ? child.branches[0] : (child.branches[1] || null);
-          if (branch) {
-            // Wrap in a container so we can track it
-            taco.c[i] = { t: 'span', a: { 'data-bw_when': child._refId, style: 'display:contents' }, c: branch };
-          } else {
-            taco.c[i] = { t: 'span', a: { 'data-bw_when': child._refId, style: 'display:contents' }, c: '' };
-          }
-        }
-        if (child && child._bwEach) {
-          var eachExprStr = child.expr.replace(/^\$\{|\}$/g, '');
-          var arr = bw._evaluatePath(this._state, eachExprStr);
-          var items = [];
-          if (_isA(arr)) {
-            for (var j = 0; j < arr.length; j++) {
-              items.push(child.factory(arr[j], j));
-            }
-          }
-          taco.c[i] = { t: 'span', a: { 'data-bw_each': child._refId, style: 'display:contents' }, c: items };
-        }
-        if (_is(taco.c[i], 'object') && taco.c[i].t) {
-          this._prepareTaco(taco.c[i]);
-        }
-      }
-    } else if (_is(taco.c, 'object') && taco.c.t) {
-      this._prepareTaco(taco.c);
-    }
-  };
-
-  /**
-   * Wire action name strings (in onclick etc.) to dispatch function calls.
-   * @private
-   */
-  _chp._wireActions = function(taco) {
-    if (!_is(taco, 'object') || !taco.t) return;
-    if (taco.a) {
-      for (var key in taco.a) {
-        if (!_hop.call(taco.a, key)) continue;
-        if (key.startsWith('on') && _is(taco.a[key], 'string')) {
-          var actionName = taco.a[key];
-          if (actionName in this._actions) {
-            var registeredName = this._bwId + '_' + actionName;
-            // Replace string with actual function for createDOM event binding
-            (function(rName) {
-              taco.a[key] = function(evt) {
-                bw.funcGetById(rName)(evt);
-              };
-            })(registeredName);
-          }
-        }
-      }
-    }
-    if (_isA(taco.c)) {
-      for (var i = 0; i < taco.c.length; i++) {
-        this._wireActions(taco.c[i]);
-      }
-    } else if (_is(taco.c, 'object') && taco.c.t) {
-      this._wireActions(taco.c);
-    }
-  };
-
-  /**
-   * Deep-clone a TACO tree, preserving _bwWhen/_bwEach markers and their factories.
-   * @private
-   */
-  _chp._deepCloneTaco = function(taco) {
-    if (taco == null) return taco;
-    // Preserve _bwWhen / _bwEach markers (contain functions)
-    if (taco._bwWhen) {
-      return { _bwWhen: true, expr: taco.expr, branches: [
-        this._deepCloneTaco(taco.branches[0]),
-        taco.branches[1] ? this._deepCloneTaco(taco.branches[1]) : null
-      ], _refId: taco._refId };
-    }
-    if (taco._bwEach) {
-      return { _bwEach: true, expr: taco.expr, factory: taco.factory, _refId: taco._refId };
-    }
-    if (!_is(taco, 'object') || !taco.t) return taco;
-    var result = { t: taco.t };
-    if (taco.a) {
-      result.a = {};
-      for (var k in taco.a) {
-        if (_hop.call(taco.a, k)) result.a[k] = taco.a[k];
-      }
-    }
-    if (taco.c != null) {
-      if (_isA(taco.c)) {
-        result.c = taco.c.map(function(child) { return this._deepCloneTaco(child); }.bind(this));
-      } else if (_is(taco.c, 'object')) {
-        result.c = this._deepCloneTaco(taco.c);
-      } else {
-        result.c = taco.c;
-      }
-    }
-    if (taco.o) result.o = taco.o; // Keep o reference (not deep-cloned; hooks are functions)
-    return result;
-  };
-
-  /**
-   * Create a copy of TACO suitable for createDOM (strips o to prevent double lifecycle).
-   * @private
-   */
-  _chp._tacoForDOM = function(taco) {
-    if (!_is(taco, 'object') || !taco.t) return taco;
-    var result = { t: taco.t };
-    if (taco.a) result.a = taco.a;
-    if (taco.c != null) {
-      if (_isA(taco.c)) {
-        result.c = taco.c.map(function(child) { return this._tacoForDOM(child); }.bind(this));
-      } else if (_is(taco.c, 'object') && taco.c.t) {
-        result.c = this._tacoForDOM(taco.c);
-      } else {
-        result.c = taco.c;
-      }
-    }
-    // Intentionally strip o (no mounted/unmount/state/render on sub-elements)
-    if (taco.o && (taco.o.mounted || taco.o.render || taco.o.unmount)) {
-      _cw('bw: _tacoForDOM stripped o.mounted/render/unmount from child <' + taco.t +
-        '>. Use onclick attribute or bw.component() for child interactivity.');
-    }
-    return result;
-  };
-
-  /**
-   * Unmount: remove from DOM, deactivate, preserve state for re-mount.
-   */
-  _chp.unmount = function() {
-    if (!this.mounted) return;
-
-    // unmount hook
-    if (this._hooks.unmount) {
-      this._hooks.unmount(this);
-    }
-
-    // Remove DOM event listeners
-    for (var i = 0; i < this._eventListeners.length; i++) {
-      var l = this._eventListeners[i];
-      if (this.element) {
-        this.element.removeEventListener(l.event, l.handler);
-      }
-    }
-    this._eventListeners = [];
-
-    // Unsubscribe pub/sub
-    for (var j = 0; j < this._subs.length; j++) {
-      this._subs[j]();
-    }
-    this._subs = [];
-
-    // Remove from DOM
-    if (this.element && this.element.parentNode) {
-      this.element.parentNode.removeChild(this.element);
-    }
-
-    this.mounted = false;
-    // State preserved — can re-mount
-  };
-
-  /**
-   * Destroy: unmount + clear state + unregister actions.
-   */
-  _chp.destroy = function() {
-    // willDestroy hook
-    if (this._hooks.willDestroy) {
-      this._hooks.willDestroy(this);
-    }
-
-    // Cascade destroy to children depth-first (Bug #5)
-    for (var ci = this._children.length - 1; ci >= 0; ci--) {
-      this._children[ci].destroy();
-    }
-    this._children = [];
-    if (this._parent) {
-      var idx = this._parent._children.indexOf(this);
-      if (idx >= 0) this._parent._children.splice(idx, 1);
-      this._parent = null;
-    }
-
-    this.unmount();
-
-    // Unregister actions from function registry
-    for (var i = 0; i < this._registeredActions.length; i++) {
-      bw.funcUnregister(this._registeredActions[i]);
-    }
-    this._registeredActions = [];
-
-    // Clear state
-    this._state = {};
-    this._bindings = [];
-    this._bw_refs = {};
-    this._prevValues = {};
-    this._dirtyKeys = {};
-    if (this.element) {
-      delete this.element._bwComponentHandle;
-      this.element = null;
-    }
-  };
-
-  // ── Flush & Binding Resolution ──
-
-  /**
-   * Flush dirty state: resolve changed bindings and apply to DOM.
-   * @private
-   */
-  _chp._flush = function() {
-    this._scheduled = false;
-    var changedKeys = _keys(this._dirtyKeys);
-    this._dirtyKeys = {};
-    if (changedKeys.length === 0 || !this.mounted) return;
-
-    // Factory rebuild: if a BCCL factory exists and changed keys overlap factory props,
-    // rebuild the TACO from the factory with merged state (Bug #6)
-    if (this._factory) {
-      var rebuildNeeded = false;
-      for (var fi = 0; fi < changedKeys.length; fi++) {
-        if (_hop.call(this._factory.props, changedKeys[fi])) {
-          rebuildNeeded = true; break;
-        }
-      }
-      if (rebuildNeeded) {
-        var merged = {};
-        for (var mk in this._factory.props) if (_hop.call(this._factory.props, mk)) merged[mk] = this._factory.props[mk];
-        for (var sk in this._state) if (_hop.call(this._state, sk)) merged[sk] = this._state[sk];
-        this._factory.props = merged;
-        var newTaco = bw.make(this._factory.type, merged);
-        newTaco._bwFactory = this._factory;
-        this.taco = newTaco;
-        this._originalTaco = this._deepCloneTaco(newTaco);
-        this._render();
-        if (this._hooks.onUpdate) this._hooks.onUpdate(this, changedKeys);
-        return;
-      }
-    }
-
-    // willUpdate hook
-    if (this._hooks.willUpdate) {
-      this._hooks.willUpdate(this, changedKeys);
-    }
-
-    // Check if any structural bindings are affected
-    var needsFullRender = false;
-    for (var i = 0; i < this._bindings.length; i++) {
-      var b = this._bindings[i];
-      if (b.type === 'structural') {
-        for (var j = 0; j < b.deps.length; j++) {
-          if (changedKeys.indexOf(b.deps[j]) >= 0) {
-            needsFullRender = true;
-            break;
-          }
-        }
-        if (needsFullRender) break;
-      }
-    }
-
-    if (needsFullRender) {
-      this._render();
-    } else {
-      var patches = this._resolveBindings(changedKeys);
-      this._applyPatches(patches);
-    }
-
-    // onUpdate hook
-    if (this._hooks.onUpdate) {
-      this._hooks.onUpdate(this, changedKeys);
-    }
-  };
-
-  /**
-   * Resolve bindings whose deps intersect with changedKeys.
-   * Returns list of patches to apply.
-   * @private
-   */
-  _chp._resolveBindings = function(changedKeys) {
-    var patches = [];
-    for (var i = 0; i < this._bindings.length; i++) {
-      var b = this._bindings[i];
-      if (b.type === 'structural') continue;
-
-      // Check if any dep matches
-      var affected = false;
-      for (var j = 0; j < b.deps.length; j++) {
-        if (changedKeys.indexOf(b.deps[j]) >= 0) {
-          affected = true;
-          break;
-        }
-      }
-      if (!affected) continue;
-
-      // Evaluate
-      var newVal = bw._resolveTemplate(b.template, this._state, this._compile);
-      var prevKey = b.refId + '_' + (b.attrName || 'content');
-      if (this._prevValues[prevKey] !== newVal) {
-        this._prevValues[prevKey] = newVal;
-        patches.push({
-          refId: b.refId,
-          type: b.type,
-          attrName: b.attrName,
-          value: newVal
-        });
-      }
-    }
-    return patches;
-  };
-
-  /**
-   * Apply patches to DOM.
-   * @private
-   */
-  _chp._applyPatches = function(patches) {
-    for (var i = 0; i < patches.length; i++) {
-      var p = patches[i];
-      var el = this._bw_refs[p.refId];
-      if (!el) {
-        if (bw.debug) _cw('bw.debug: _applyPatches — ref "' + p.refId + '" not found in DOM');
-        continue;
-      }
-      if (p.type === 'content') {
-        el.textContent = p.value;
-      } else if (p.type === 'attribute') {
-        if (p.attrName === 'class') {
-          el.className = p.value;
-        } else {
-          el.setAttribute(p.attrName, p.value);
-        }
-      }
-    }
-  };
-
-  /**
-   * Resolve all bindings and apply (used for initial render).
-   * @private
-   */
-  _chp._resolveAndApplyAll = function() {
-    var patches = [];
-    for (var i = 0; i < this._bindings.length; i++) {
-      var b = this._bindings[i];
-      if (b.type === 'structural') continue;
-
-      var newVal = bw._resolveTemplate(b.template, this._state, this._compile);
-      var prevKey = b.refId + '_' + (b.attrName || 'content');
-      this._prevValues[prevKey] = newVal;
-      patches.push({
-        refId: b.refId,
-        type: b.type,
-        attrName: b.attrName,
-        value: newVal
-      });
-    }
-    this._applyPatches(patches);
-  };
-
-  /**
-   * Full re-render for structural changes (when/each branch switches).
-   * @private
-   */
-  _chp._render = function() {
-    if (!this.element || !this.element.parentNode) return;
-    var parent = this.element.parentNode;
-    var nextSibling = this.element.nextSibling;
-
-    // Remove old DOM
-    parent.removeChild(this.element);
-
-    // Re-prepare TACO with current state (deep clone preserving functions)
-    this.taco = this._deepCloneTaco(this._originalTaco || this.taco);
-
-    // Re-compile bindings and prepare
-    this._compileBindings();
-    this._prepareTaco(this.taco);
-    this._wireActions(this.taco);
-
-    var tacoForDOM = this._tacoForDOM(this.taco);
-    this.element = bw.createDOM(tacoForDOM);
-    this.element._bwComponentHandle = this;
-    this.element.setAttribute('data-bw_comp_id', this._bwId);
-
-    // Re-insert at same position
-    if (nextSibling) {
-      parent.insertBefore(this.element, nextSibling);
-    } else {
-      parent.appendChild(this.element);
-    }
-
-    // Re-collect refs and apply all bindings
-    this._collectRefs();
-    this._resolveAndApplyAll();
-  };
-
-  // ── Event & Pub/Sub Methods ──
-
-  /**
-   * Add a DOM event listener on the component's root element.
-   * @param {string} event - Event name (e.g., 'click')
-   * @param {Function} handler - Event handler
-   */
-  _chp.on = function(event, handler) {
-    if (this.element) {
-      this.element.addEventListener(event, handler);
-    }
-    this._eventListeners.push({ event: event, handler: handler });
-  };
-
-  /**
-   * Remove a DOM event listener.
-   * @param {string} event - Event name
-   * @param {Function} handler - Handler to remove
-   */
-  _chp.off = function(event, handler) {
-    if (this.element) {
-      this.element.removeEventListener(event, handler);
-    }
-    this._eventListeners = this._eventListeners.filter(function(l) {
-      return !(l.event === event && l.handler === handler);
-    });
-  };
-
-  /**
-   * Subscribe to a pub/sub topic. Lifecycle-tied: auto-unsubs on destroy.
-   * @param {string} topic - Topic name
-   * @param {Function} handler - Handler function
-   * @returns {Function} Unsubscribe function
-   */
-  _chp.sub = function(topic, handler) {
-    var unsub = bw.sub(topic, handler);
-    this._subs.push(unsub);
-    return unsub;
-  };
-
-  /**
-   * Call a named action.
-   * @param {string} name - Action name
-   * @param {...*} args - Arguments passed after comp
-   */
-  _chp.action = function(name) {
-    var fn = this._actions[name];
-    if (!fn) {
-      _cw('ComponentHandle.action: unknown action "' + name + '"');
-      return;
-    }
-    var args = [this].concat(Array.prototype.slice.call(arguments, 1));
-    return fn.apply(null, args);
-  };
-
-  /**
-   * querySelector within the component's DOM.
-   * @param {string} sel - CSS selector
-   * @returns {Element|null}
-   */
-  _chp.select = function(sel) {
-    return this.element ? this.element.querySelector(sel) : null;
-  };
-
-  /**
-   * querySelectorAll within the component's DOM.
-   * @param {string} sel - CSS selector
-   * @returns {Element[]}
-   */
-  _chp.selectAll = function(sel) {
-    if (!this.element) return [];
-    return Array.prototype.slice.call(this.element.querySelectorAll(sel));
-  };
-
-  /**
-   * Tag this component with a user-defined ID for addressing via bw.message().
-   * The tag is added as a CSS class on the root element (DOM IS the registry).
-   * @param {string} tag - User-defined identifier (e.g. 'dashboard_prod_east')
-   * @returns {ComponentHandle} this (for chaining)
-   */
-  _chp.userTag = function(tag) {
-    this._userTag = tag;
-    if (this.element) {
-      this.element.classList.add(tag);
-    }
-    return this;
-  };
-
-  // Expose ComponentHandle on bw (for testing and advanced use)
-  bw._ComponentHandle = ComponentHandle;
-
-  // ===================================================================================
-  // Control Flow Helpers
-  // ===================================================================================
-
-  /**
-   * Conditional rendering helper.
-   * Returns a marker object that ComponentHandle detects during binding compilation.
-   * In static contexts (bw.html with state), evaluates immediately.
-   *
-   * @param {string} expr - Expression string like '${loggedIn}'
-   * @param {Object} tacoTrue - TACO to render when truthy
-   * @param {Object} [tacoFalse] - TACO to render when falsy
-   * @returns {Object} Marker object with _bwWhen flag
-   * @category Component
-   */
-  bw.when = function(expr, tacoTrue, tacoFalse) {
-    return { _bwWhen: true, expr: expr, branches: [tacoTrue, tacoFalse || null] };
-  };
-
-  /**
-   * List rendering helper.
-   * Returns a marker object that ComponentHandle detects during binding compilation.
-   *
-   * @param {string} expr - Expression string like '${items}'
-   * @param {Function} fn - Factory function(item, index) returning TACO
-   * @returns {Object} Marker object with _bwEach flag
-   * @category Component
-   */
-  bw.each = function(expr, fn) {
-    return { _bwEach: true, expr: expr, factory: fn };
-  };
-
-  // ===================================================================================
-  // bw.component() — Factory for ComponentHandle
-  // ===================================================================================
-
-  /**
-   * Create a ComponentHandle from a TACO definition.
-   * The returned handle has .get(), .set(), .mount(), .destroy(), etc.
-   *
-   * @param {Object} taco - TACO definition with {t, a, c, o}
-   * @returns {ComponentHandle} Reactive component handle
-   * @category Component
-   * @see bw.DOM
-   * @example
-   * var counter = bw.component({
-   *   t: 'div', c: [{ t: 'h3', c: 'Count: ${count}' }],
-   *   o: { state: { count: 0 } }
-   * });
-   * bw.DOM('#app', counter);
-   * counter.set('count', 42); // DOM auto-updates
-   */
-  bw.component = function(taco) {
-    return new ComponentHandle(taco);
-  };
 
   // ===================================================================================
   // bw.message() — SendMessage() for the web
   // ===================================================================================
 
   /**
-   * Dispatch a message to a component by UUID or user tag.
-   * Finds the component's DOM element, looks up its ComponentHandle,
-   * and calls the named method. This is the bitwrench equivalent of
-   * Win32 SendMessage(hwnd, msg, wParam, lParam).
+   * Dispatch a message to a component by UUID, CSS class, or selector.
+   * Finds the element, looks up el.bw, and calls the named method.
+   * This is the bitwrench equivalent of Win32 SendMessage(hwnd, msg, wParam, lParam).
    *
-   * @param {string} target - Component UUID (bw_uuid_*), comp ID (data-bw_comp_id), or user tag (CSS class)
-   * @param {string} action - Method name to call on the component
+   * @param {string} target - Component UUID (bw_uuid_*), CSS class, or selector
+   * @param {string} action - Method name to call on el.bw
    * @param {*} data - Data to pass to the method
    * @returns {boolean} True if message was dispatched successfully
    * @category Component
    * @example
-   * // Tag a component
-   * myDash.userTag('dashboard_prod');
-   * // Dispatch locally
-   * bw.message('dashboard_prod', 'addAlert', { severity: 'warning', text: 'CPU spike' });
+   * bw.message('my_carousel', 'goToSlide', 2);
    * // Or from SSE handler:
    * es.onmessage = function(e) {
    *   var msg = JSON.parse(e.data);
@@ -6498,23 +5286,13 @@
    * };
    */
   bw.message = function(target, action, data) {
-    // Try bw._el() first (handles UUID class, nodeMap cache, getElementById)
     var el = bw._el(target);
-    // Then try data-bw_comp_id attribute
-    if (!el || !el._bwComponentHandle) {
-      el = bw.$('[data-bw_comp_id="' + target + '"]')[0];
-    }
-    // Then try CSS class (user tag)
-    if (!el || !el._bwComponentHandle) {
-      el = bw.$('.' + target)[0];
-    }
-    if (!el || !el._bwComponentHandle) return false;
-    var comp = el._bwComponentHandle;
-    if (!_is(comp[action], 'function')) {
-      _cw('bw.message: unknown action "' + action + '" on component ' + target);
+    if (!el) el = bw.$('.' + target)[0];
+    if (!el || !el.bw || typeof el.bw[action] !== 'function') {
+      _cw('bw.message: no handle method "' + action + '" on ' + target);
       return false;
     }
-    comp[action](data);
+    el.bw[action](data);
     return true;
   };
 
@@ -6740,132 +5518,29 @@
   // ===================================================================================
 
   /**
-   * Inspect a component's state, bindings, methods, and metadata.
-   * Works with DOM elements, CSS selectors, or ComponentHandle objects.
-   * Returns the ComponentHandle for console chaining.
+   * Inspect a DOM element's bitwrench state, handle methods, and metadata.
+   * Works with DOM elements or CSS selectors.
    *
-   * @param {string|Element|ComponentHandle} target - Selector, element, or handle
-   * @returns {ComponentHandle|null} The component handle, or null if not found
+   * @param {string|Element} target - Selector or DOM element
+   * @returns {Element|null} The element, or null if not found
    * @category Component
    * @example
-   * // In browser console, click element in Elements panel then:
+   * bw.inspect('#my-carousel');
    * bw.inspect($0);
-   * // Or by selector:
-   * var h = bw.inspect('#my-dashboard');
-   * h.set('count', 99);  // chain from returned handle
    */
   bw.inspect = function(target) {
-    var el = target;
-    var comp;
-    if (target && target._bwComponent === true) {
-      el = target.element;
-      comp = target;
-    } else {
-      if (_is(target, 'string')) {
-        el = bw.$(target)[0];
-      }
-      if (!el) {
-        _cw('bw.inspect: element not found');
-        return null;
-      }
-      comp = el._bwComponentHandle;
-    }
-    if (!comp) {
-      _cl('bw.inspect: no ComponentHandle on this element');
-      _cl('  Tag:', el.tagName);
-      _cl('  Classes:', el.className);
-      _cl('  _bw_state:', el._bw_state || '(none)');
-      return null;
-    }
-    var deps = comp._bindings.reduce(function(s, b) {
-      return s.concat(b.deps || []);
-    }, []).filter(function(v, i, a) { return a.indexOf(v) === i; });
-    console.group('Component: ' + comp._bwId);
-    _cl('State:', comp._state);
-    _cl('Bindings:', comp._bindings.length, '(deps:', deps, ')');
-    _cl('Methods:', _keys(comp._methods));
-    _cl('Actions:', _keys(comp._actions));
-    _cl('User tag:', comp._userTag || '(none)');
-    _cl('Mounted:', comp.mounted);
-    _cl('Element:', comp.element);
+    var el = _is(target, 'string') ? bw.$(target)[0] : target;
+    if (!el) { _cw('bw.inspect: element not found'); return null; }
+    console.group('Element: ' + (bw.getUUID(el) || el.id || el.tagName));
+    _cl('State:', el._bw_state || '(none)');
+    _cl('Handle:', el.bw ? _keys(el.bw) : '(none)');
+    _cl('Classes:', el.className);
+    _cl('Refs:', el._bw_refs || '(none)');
     console.groupEnd();
-    return comp;
+    return el;
   };
 
-  // ===================================================================================
-  // bw.compile() — Pre-compile TACO into optimized factory
-  // ===================================================================================
-
-  /**
-   * Pre-compile a TACO definition into a factory function.
-   * The factory produces ComponentHandles with pre-compiled binding evaluators.
-   *
-   * Phase 1: validates API surface. Template cloning optimization deferred.
-   *
-   * @param {Object} taco - TACO definition
-   * @returns {Function} Factory function(initialState?) → ComponentHandle
-   * @category Component
-   */
-  bw.compile = function(taco) {
-    // Pre-extract all binding expressions
-    var precompiled = [];
-    function walkExpressions(node) {
-      if (!_is(node, 'object')) return;
-      if (_is(node.c, 'string') && node.c.indexOf('${') >= 0) {
-        var parsed = bw._parseBindings(node.c);
-        for (var i = 0; i < parsed.length; i++) {
-          try {
-            precompiled.push({
-              expr: parsed[i].expr,
-              fn: new Function('state', 'with(state){return (' + parsed[i].expr + ');}')
-            });
-          } catch(e) {
-            precompiled.push({ expr: parsed[i].expr, fn: function() { return ''; } });
-          }
-        }
-      }
-      if (node.a) {
-        for (var key in node.a) {
-          if (_hop.call(node.a, key)) {
-            var v = node.a[key];
-            if (_is(v, 'string') && v.indexOf('${') >= 0) {
-              var parsed2 = bw._parseBindings(v);
-              for (var j = 0; j < parsed2.length; j++) {
-                try {
-                  precompiled.push({
-                    expr: parsed2[j].expr,
-                    fn: new Function('state', 'with(state){return (' + parsed2[j].expr + ');}')
-                  });
-                } catch(e2) {
-                  precompiled.push({ expr: parsed2[j].expr, fn: function() { return ''; } });
-                }
-              }
-            }
-          }
-        }
-      }
-      if (_isA(node.c)) {
-        for (var k = 0; k < node.c.length; k++) walkExpressions(node.c[k]);
-      } else if (_is(node.c, 'object') && node.c.t) {
-        walkExpressions(node.c);
-      }
-    }
-    walkExpressions(taco);
-
-    return function(initialState) {
-      var handle = new ComponentHandle(taco);
-      handle._compile = true;
-      handle._precompiledBindings = precompiled;
-      if (initialState) {
-        for (var k in initialState) {
-          if (_hop.call(initialState, k)) {
-            handle._state[k] = initialState[k];
-          }
-        }
-      }
-      return handle;
-    };
-  };
+  bw.compile = function() { throw new Error('bw.compile() removed in v2.0.19. Use o.handle/o.slots on TACO options instead.'); };
 
   /**
    * Generate CSS from JavaScript objects.
@@ -8091,8 +6766,8 @@
       };
     }
     
-    // Generate unique ID if not provided
-    const componentId = taco.o?.id || bw.uuid();
+    // Generate unique UUID class if not provided
+    const componentId = taco.o?.id || bw.uuid('uuid');
     
     // Create DOM element
     let domElement;
@@ -8107,9 +6782,10 @@
       };
     }
     
-    // Add component ID to element
-    domElement.setAttribute('data-bw_id', componentId);
-    
+    // Add component ID as class + lifecycle marker
+    domElement.classList.add(componentId);
+    domElement.classList.add(_BW_LC);
+
     // Insert into DOM based on position
     try {
       switch(position) {
@@ -8183,7 +6859,8 @@
         
         // Re-render
         const newElement = bw.createDOM(this._taco);
-        newElement.setAttribute('data-bw_id', componentId);
+        newElement.classList.add(componentId);
+        newElement.classList.add(_BW_LC);
         
         // Replace in DOM
         parent.replaceChild(newElement, this.element);
@@ -8370,13 +7047,12 @@
   // Variant class helper: bw.variantClass('primary') → 'bw_primary'
   bw.variantClass = variantClass;
 
-  // Create functions that return handles (plain renderComponent, no Handle overlay)
+  // Create functions that return DOM elements (createCard, createTable, etc.)
   Object.entries(components).forEach(([name, fn]) => {
     if (name.startsWith('make')) {
-      const createName = 'create' + name.substring(4); // createCard, createTable, etc.
+      const createName = 'create' + name.substring(4);
       bw[createName] = function(props) {
-        const taco = fn(props);
-        return bw.renderComponent(taco);
+        return bw.createDOM(fn(props));
       };
     }
   });

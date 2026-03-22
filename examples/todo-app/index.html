@@ -11,13 +11,13 @@
 
   <script>
     // =====================================================================
-    // Reactive Todo App — Level 2 ComponentHandle pattern
+    // Reactive Todo App — o.state + o.render pattern
     //
     // Demonstrates:
-    //   - bw.component() with template bindings and o.methods
-    //   - .get() / .set() for reactive state
+    //   - o.state + o.render for reactive components
+    //   - el._bw_state for state access, bw.update(el) for re-render
     //   - bw.pub() / bw.sub() for cross-component communication
-    //   - Composing multiple ComponentHandles on one page
+    //   - Composing multiple reactive components on one page
     //   - No direct DOM manipulation anywhere
     //
     // No build step. No framework. Just bitwrench.
@@ -154,9 +154,9 @@
     }
 
     // =====================================================================
-    // Component: Todo Input (bw.component with o.methods)
+    // Component: Todo Input (plain TACO)
     // =====================================================================
-    var todoInput = bw.component({
+    var todoInput = {
       t: 'div', a: { class: 'todo-input-row' },
       c: [
         bw.makeInput({
@@ -178,7 +178,7 @@
           }
         })
       ]
-    });
+    };
 
     // =====================================================================
     // Component: Filter Bar
@@ -267,7 +267,7 @@
     // -- Seed some demo todos ---------------------------------------------
     addTodo('Learn TACO format');
     addTodo('Build a todo app with bitwrench');
-    addTodo('Try bw.component() template bindings');
+    addTodo('Try o.state + o.render reactive pattern');
     toggleTodo(1);  // mark first as done
 
     // -- Mount the page structure -----------------------------------------

@@ -16,6 +16,7 @@
   <script>
     mountExampleNav('#example-nav', '12-bwserve-protocol.html');
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Page-specific styles (only badge colors — everything else is shared-theme)
@@ -59,18 +60,18 @@
         'stroke-width': '1.5'
       },
       '.arch-diagram .box-title': {
-        'fill': 'var(--bw_code_text)',
+        'fill': 'var(--bw_text)',
         'font-family': 'system-ui, sans-serif',
         'font-size': '13px',
         'font-weight': '600'
       },
       '.arch-diagram .box-line': {
-        'fill': 'var(--bw_code_text)',
+        'fill': 'var(--bw_text_secondary)',
         'font-family': 'var(--bw_font_mono)',
         'font-size': '11px'
       },
       '.arch-diagram .box-line-bold': {
-        'fill': 'var(--bw_teal)',
+        'fill': 'var(--bw_teal_dark)',
         'font-family': 'var(--bw_font_mono)',
         'font-size': '11.5px',
         'font-weight': '600'
@@ -226,7 +227,7 @@
       ]},
 
       { t: 'div', a: { class: 'arch-diagram' }, c:
-        { t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 280' }, c: [].concat(
+        bw.raw(bw.html({ t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 280' }, c: [].concat(
           svgArrowDefs('1'),
           svgBox(15, 32, 230, 228, 'Browser', [
             '*bitwrench.js', '',
@@ -246,7 +247,7 @@
           svgArrow(245, 80, 440, 80, 'GET /', '1'),
           svgArrow(440, 140, 245, 140, 'SSE', '1', { dash: true }),
           svgArrow(245, 200, 440, 200, 'POST', '1')
-        )}
+        )}))
       },
 
       callout('concept', 'Why is this useful?', {
@@ -687,7 +688,7 @@
       ]},
 
       { t: 'div', a: { class: 'arch-diagram' }, c:
-        { t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
+        bw.raw(bw.html({ t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
           svgArrowDefs('2'),
           svgBox(10, 32, 220, 95, 'Your App (any language)', [
             'curl / Python / C', 'POST to :9000',
@@ -703,7 +704,7 @@
           ]),
           svgArrow(230, 72, 270, 72, 'POST / stdin', '2'),
           svgArrow(440, 72, 480, 72, 'SSE', '2', { dash: true })
-        )}
+        )}))
       },
 
       { t: 'h3', c: 'Usage' },
@@ -768,11 +769,11 @@
     var secCliAttach = section('bwcli-attach', 'bwcli attach \u2014 Remote Debugging REPL', [
       { t: 'p', a: { class: 'demo-description' }, c: [
         code('bwcli attach'), ' is a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in ',
-        code('<script>'), ' tag, then gives you an interactive REPL where you can evaluate JS, inspect the DOM, take screenshots, and listen to events.'
+        code('<scr' + 'ipt>'), ' tag, then gives you an interactive REPL where you can evaluate JS, inspect the DOM, take screenshots, and listen to events.'
       ]},
 
       { t: 'div', a: { class: 'arch-diagram' }, c:
-        { t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
+        bw.raw(bw.html({ t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
           svgArrowDefs('3'),
           svgBox(10, 32, 220, 95, 'bwcli attach', [
             'readline REPL', 'JS expressions',
@@ -789,7 +790,7 @@
           svgArrow(230, 72, 270, 72, 'commands', '3'),
           svgArrow(480, 72, 440, 72, 'POST results', '3', { dash: true }),
           svgArrow(440, 52, 480, 52, 'SSE', '3', { dash: true })
-        )}
+        )}))
       },
 
       { t: 'h3', c: 'Quick Start' },
@@ -798,9 +799,9 @@
         'bwcli attach',
         '',
         '# In your browser: add the drop-in script',
-        '# <script src="http://localhost:7902/bw/attach.js"></script>',
+        '# <scr' + 'ipt src="http://localhost:7902/bw/attach.js"><\/scr' + 'ipt>',
         '# Or paste in devtools console:',
-        '# var s=document.createElement("script");',
+        '# var s=document.createElement("scr' + 'ipt");',
         '# s.src="http://localhost:7902/bw/attach.js";',
         '# document.head.appendChild(s);'
       ]),
@@ -1040,7 +1041,7 @@
         {
           t: 'div', a: { class: 'page-header' },
           c: {
-            t: 'div', a: { class: 'content-container' },
+            t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
             c: [
               { t: 'h1', c: 'Using Bitwrench on the Server Side' },
               { t: 'p', a: { class: 'subtitle' },
@@ -1049,7 +1050,7 @@
           }
         },
         {
-          t: 'div', a: { class: 'content-container' },
+          t: 'div', a: { class: 'content-container wide' },
           c: [
             secOverview,
             secMessages,

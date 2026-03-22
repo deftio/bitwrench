@@ -166,139 +166,6 @@ describe("colorParse — HSL string input", function() {
   });
 });
 
-
-// =========================================================================
-// bitwrench.js — bw.compile() pre-compilation (lines 2667-2695)
-// =========================================================================
-describe("bw.compile() — pre-compilation", function() {
-  it("should return a factory function", function() {
-    var factory = bw.compile({ t: 'div', c: 'Hello ${name}' });
-    assert.strictEqual(typeof factory, "function");
-  });
-
-  it("should create ComponentHandle from factory", function() {
-    var factory = bw.compile({ t: 'div', c: 'Count: ${count}' });
-    var comp = factory({ count: 42 });
-    assert.strictEqual(comp._bwComponent, true);
-    assert.strictEqual(comp.get('count'), 42);
-  });
-
-  it("should pre-compile attribute bindings", function() {
-    var factory = bw.compile({
-      t: 'div',
-      a: { class: 'item-${type}', 'data-val': '${value}' },
-      c: 'Text: ${label}'
-    });
-    var comp = factory({ type: 'primary', value: '42', label: 'hello' });
-    assert.strictEqual(comp._bwComponent, true);
-  });
-
-  it("should handle nested content", function() {
-    var factory = bw.compile({
-      t: 'div', c: [
-        { t: 'h1', c: '${title}' },
-        { t: 'p', c: '${body}' }
-      ]
-    });
-    var comp = factory({ title: 'Hello', body: 'World' });
-    assert.strictEqual(comp.get('title'), 'Hello');
-  });
-
-  it("should handle single TACO child in content", function() {
-    var factory = bw.compile({
-      t: 'div', c: { t: 'span', c: '${msg}' }
-    });
-    var comp = factory({ msg: 'hi' });
-    assert.strictEqual(comp.get('msg'), 'hi');
-  });
-
-  it("should handle invalid expressions gracefully", function() {
-    var factory = bw.compile({ t: 'div', c: '${!!!invalid+++}' });
-    var comp = factory({});
-    assert.strictEqual(comp._bwComponent, true);
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle.set with nested paths (lines 1738-1742)
-// =========================================================================
-describe("ComponentHandle.set — nested dot paths", function() {
-  it("should create intermediate objects for dot-path keys", function() {
-    var comp = bw.component({
-      t: 'div', c: '${count}',
-      o: { state: { count: 0 } }
-    });
-    comp.set('nested.deep.value', 42);
-    assert.strictEqual(comp._state.nested.deep.value, 42);
-  });
-
-  it("should overwrite non-object intermediates", function() {
-    var comp = bw.component({
-      t: 'div', c: '${x}',
-      o: { state: { x: 'string' } }
-    });
-    comp.set('x.sub', 'val');
-    assert.strictEqual(comp._state.x.sub, 'val');
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle.setState (lines 1773-1786)
-// =========================================================================
-describe("ComponentHandle.setState", function() {
-  it("should merge multiple keys at once", function() {
-    var comp = bw.component({
-      t: 'div', c: '${a} ${b}',
-      o: { state: { a: 1, b: 2 } }
-    });
-    comp.setState({ a: 10, b: 20 });
-    assert.strictEqual(comp.get('a'), 10);
-    assert.strictEqual(comp.get('b'), 20);
-  });
-
-  it("should mark all merged keys dirty", function() {
-    var comp = bw.component({
-      t: 'div', c: '${x}',
-      o: { state: { x: 0, y: 0 } }
-    });
-    comp.setState({ x: 1, y: 2 });
-    assert.strictEqual(comp._dirtyKeys.x, true);
-    assert.strictEqual(comp._dirtyKeys.y, true);
-  });
-
-  it("should support sync flush option", function() {
-    freshDOM();
-    var comp = bw.component({
-      t: 'div', c: 'Val: ${val}',
-      o: { state: { val: 'old' } }
-    });
-    comp.mount(document.getElementById('app'));
-    comp.setState({ val: 'new' }, { sync: true });
-    assert.strictEqual(comp.get('val'), 'new');
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle.getState (lines 1758-1766)
-// =========================================================================
-describe("ComponentHandle.getState", function() {
-  it("should return a shallow clone of state", function() {
-    var comp = bw.component({
-      t: 'div', c: '${x}',
-      o: { state: { x: 1, y: 2 } }
-    });
-    var s = comp.getState();
-    assert.deepStrictEqual(s, { x: 1, y: 2 });
-    // Verify it's a clone, not a reference
-    s.x = 999;
-    assert.strictEqual(comp.get('x'), 1);
-  });
-});
-
-
 // =========================================================================
 // bitwrench.js — _resolveTemplate error paths (lines 1550, 1556)
 // =========================================================================
@@ -319,44 +186,6 @@ describe("_resolveTemplate — error handling", function() {
     assert.strictEqual(result, '');
   });
 });
-
-
-// =========================================================================
-// bitwrench.js — _scheduleFlush with setTimeout fallback (lines 1605-1607)
-// =========================================================================
-describe("_scheduleFlush idempotency", function() {
-  it("should not double-schedule", function() {
-    bw._flushScheduled = false;
-    bw._dirtyComponents = [];
-    bw._scheduleFlush();
-    assert.strictEqual(bw._flushScheduled, true);
-    // Call again — should be a no-op
-    bw._scheduleFlush();
-    assert.strictEqual(bw._flushScheduled, true);
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — bw.inspect() with bindings (line 2625)
-// =========================================================================
-describe("bw.inspect — with bindings and deps", function() {
-  it("should aggregate deps from bindings", function() {
-    freshDOM();
-    var comp = bw.component({
-      t: 'div',
-      c: '${a} and ${b}',
-      o: { state: { a: 1, b: 2 } }
-    });
-    comp.mount(document.getElementById('app'));
-    bw.flush();
-    var result = bw.inspect(comp);
-    assert.ok(result, 'should return the handle');
-    assert.strictEqual(result._bwComponent, true);
-  });
-});
-
-
 // =========================================================================
 // bitwrench-bccl.js — makeFormGroup with validation & help (lines 950-959)
 // =========================================================================
@@ -491,17 +320,6 @@ describe("bw.DOM — edge cases", function() {
     assert.strictEqual(app.children.length, 2);
   });
 
-  it("should handle mounting a ComponentHandle", function() {
-    var comp = bw.component({
-      t: 'div', c: 'Hello ${name}',
-      o: { state: { name: 'test' } }
-    });
-    bw.DOM('#app', comp);
-    bw.flush();
-    var app = document.getElementById('app');
-    assert.ok(app.innerHTML.indexOf('Hello test') >= 0);
-  });
-
   it("should handle null selector gracefully", function() {
     // Should not throw
     var result = bw.DOM('#nonexistent-element-xyz', { t: 'div', c: 'test' });
@@ -509,23 +327,6 @@ describe("bw.DOM — edge cases", function() {
     assert.ok(true, 'should not throw');
   });
 });
-
-
-// =========================================================================
-// bitwrench.js — bw.createDOM with ComponentHandle (line top of fn)
-// =========================================================================
-describe("bw.createDOM — ComponentHandle input", function() {
-  it("should extract taco from ComponentHandle", function() {
-    var comp = bw.component({
-      t: 'span', c: 'hello',
-      o: { state: {} }
-    });
-    var el = bw.createDOM(comp);
-    assert.strictEqual(el.tagName, 'SPAN');
-  });
-});
-
-
 // =========================================================================
 // bitwrench.js — cleanup with pub/sub unsubs
 // =========================================================================
@@ -534,160 +335,28 @@ describe("bw.cleanup — pub/sub unsubscription", function() {
 
   it("should call stored unsub functions on cleanup", function() {
     var unsubed = false;
-    // cleanup only processes elements with data-bw_id
-    var el = bw.createDOM({ t: 'div', a: { 'data-bw_id': 'test-cleanup-id' }, c: 'test' });
+    // cleanup only processes elements with bw_lc class
+    var el = bw.createDOM({ t: 'div', c: 'test', o: { state: {} } });
     document.getElementById('app').appendChild(el);
     el._bw_subs = [function() { unsubed = true; }];
     bw.cleanup(el);
     assert.strictEqual(unsubed, true);
   });
 
-  it("should clean up child elements with bw_id", function() {
+  it("should clean up child elements with bw_lc class", function() {
     var childCleaned = false;
     var parent = bw.createDOM({
-      t: 'div', a: { 'data-bw_id': 'parent-id' }, c: [
-        { t: 'span', a: { 'data-bw_id': 'child-id' }, c: 'child' }
-      ]
+      t: 'div', c: [
+        { t: 'span', a: { id: 'child-id' }, c: 'child', o: { state: {} } }
+      ], o: { state: {} }
     });
     document.getElementById('app').appendChild(parent);
-    var child = parent.querySelector('[data-bw_id="child-id"]');
+    var child = parent.querySelector('#child-id');
     child._bw_subs = [function() { childCleaned = true; }];
     bw.cleanup(parent);
     assert.strictEqual(childCleaned, true);
   });
 });
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle.push and .filter
-// =========================================================================
-describe("ComponentHandle — push and filter", function() {
-  it("should push value onto array in state", function() {
-    var comp = bw.component({
-      t: 'div', c: '${items.length}',
-      o: { state: { items: ['a', 'b'] } }
-    });
-    comp.push('items', 'c');
-    var items = comp.get('items');
-    assert.deepStrictEqual(items, ['a', 'b', 'c']);
-  });
-
-  it("should filter array in state via set", function() {
-    var comp = bw.component({
-      t: 'div', c: '${items.length}',
-      o: { state: { items: [1, 2, 3, 4, 5] } }
-    });
-    comp.set('items', comp.get('items').filter(function(v) { return v > 3; }));
-    var items = comp.get('items');
-    assert.deepStrictEqual(items, [4, 5]);
-  });
-
-  it("push should create array if key is not an array", function() {
-    var comp = bw.component({
-      t: 'div', c: '${x}',
-      o: { state: { x: null } }
-    });
-    comp.push('x', 'val');
-    assert.deepStrictEqual(comp.get('x'), ['val']);
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle.destroy() (lines 1031-1045)
-// =========================================================================
-describe("ComponentHandle.destroy", function() {
-  beforeEach(function() { freshDOM(); });
-
-  it("should unmount and clear element reference", function() {
-    var app = document.getElementById('app');
-    var comp = bw.component({
-      t: 'div', c: 'destroy me',
-      o: { state: {} }
-    });
-    // Mount directly using createDOM + manual mount tracking
-    var el = bw.createDOM(comp.taco);
-    app.appendChild(el);
-    comp.element = el;
-    comp.mounted = true;
-    el._bwComponentHandle = comp;
-
-    assert.ok(comp.mounted, 'should be mounted before destroy');
-    comp.destroy();
-    assert.strictEqual(comp.mounted, false, 'should be unmounted after destroy');
-    assert.strictEqual(comp.element, null, 'element should be null after destroy');
-  });
-
-  it("should call willDestroy hook", function() {
-    var destroyed = false;
-    var comp = bw.component({
-      t: 'div', c: 'test',
-      o: {
-        state: {},
-        willDestroy: function() { destroyed = true; }
-      }
-    });
-    var app = document.getElementById('app');
-    var el = bw.createDOM(comp.taco);
-    app.appendChild(el);
-    comp.element = el;
-    comp.mounted = true;
-    el._bwComponentHandle = comp;
-
-    comp.destroy();
-    assert.strictEqual(destroyed, true);
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — bw.when() and bw.each()
-// =========================================================================
-describe("bw.when and bw.each", function() {
-  it("bw.when should return a marker object", function() {
-    var result = bw.when('active', { t: 'span', c: 'yes' }, { t: 'span', c: 'no' });
-    assert.strictEqual(result._bwWhen, true);
-    assert.strictEqual(result.expr, 'active');
-    assert.ok(Array.isArray(result.branches));
-    assert.strictEqual(result.branches.length, 2);
-  });
-
-  it("bw.each should return a marker object", function() {
-    var factory = function(item) { return { t: 'li', c: item.name }; };
-    var result = bw.each('items', factory);
-    assert.strictEqual(result._bwEach, true);
-    assert.strictEqual(result.expr, 'items');
-    assert.strictEqual(result.factory, factory);
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — _extractDeps
-// =========================================================================
-describe("_extractDeps", function() {
-  it("should find simple key references", function() {
-    var deps = bw._extractDeps('count', ['count', 'name']);
-    assert.deepStrictEqual(deps, ['count']);
-  });
-
-  it("should find dot-path references", function() {
-    var deps = bw._extractDeps('user.name', ['user', 'count']);
-    assert.deepStrictEqual(deps, ['user']);
-  });
-
-  it("should find keys in expressions", function() {
-    var deps = bw._extractDeps('count > 10 ? "many" : "few"', ['count', 'name']);
-    assert.deepStrictEqual(deps, ['count']);
-  });
-
-  it("should return empty for no matches", function() {
-    var deps = bw._extractDeps('42 + 1', ['count']);
-    assert.deepStrictEqual(deps, []);
-  });
-});
-
-
 // =========================================================================
 // bitwrench.js — _parseBindings
 // =========================================================================
@@ -833,84 +502,6 @@ describe("bw.$ — selector utility", function() {
     }
   });
 });
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle lifecycle hooks
-// =========================================================================
-describe("ComponentHandle — lifecycle hooks", function() {
-  beforeEach(function() { freshDOM(); });
-
-  it("should call willMount before mounting", function() {
-    var order = [];
-    var comp = bw.component({
-      t: 'div', c: 'test',
-      o: {
-        state: {},
-        willMount: function() { order.push('willMount'); },
-        mounted: function() { order.push('mounted'); }
-      }
-    });
-    comp.mount(document.getElementById('app'));
-    bw.flush();
-    assert.ok(order.indexOf('willMount') >= 0, 'willMount should be called');
-  });
-
-  it("should call unmount on cleanup", function() {
-    var unmounted = false;
-    var comp = bw.component({
-      t: 'div', c: 'test',
-      o: {
-        state: {},
-        unmount: function() { unmounted = true; }
-      }
-    });
-    comp.mount(document.getElementById('app'));
-    bw.flush();
-    comp.destroy();
-    assert.strictEqual(unmounted, true);
-  });
-});
-
-
-// =========================================================================
-// bitwrench.js — ComponentHandle.select / selectAll
-// =========================================================================
-describe("ComponentHandle — select and selectAll", function() {
-  beforeEach(function() { freshDOM(); });
-
-  it("should find child elements with select()", function() {
-    var comp = bw.component({
-      t: 'div', c: [
-        { t: 'span', a: { class: 'label' }, c: 'hello' },
-        { t: 'span', a: { class: 'value' }, c: '42' }
-      ],
-      o: { state: {} }
-    });
-    comp.mount(document.getElementById('app'));
-    bw.flush();
-    var label = comp.select('.label');
-    assert.ok(label, 'should find .label element');
-    assert.strictEqual(label.textContent, 'hello');
-  });
-
-  it("should find all matching with selectAll()", function() {
-    var comp = bw.component({
-      t: 'div', c: [
-        { t: 'span', a: { class: 'item' }, c: 'a' },
-        { t: 'span', a: { class: 'item' }, c: 'b' }
-      ],
-      o: { state: {} }
-    });
-    comp.mount(document.getElementById('app'));
-    bw.flush();
-    var items = comp.selectAll('.item');
-    assert.ok(Array.isArray(items));
-    assert.strictEqual(items.length, 2);
-  });
-});
-
-
 // =========================================================================
 // bitwrench.js — bw.isNodeJS() and environment detection
 // =========================================================================

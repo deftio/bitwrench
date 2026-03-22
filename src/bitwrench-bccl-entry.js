@@ -46,15 +46,14 @@ export function registerBCCL(bw) {
   // Variant class helper
   bw.variantClass = components.variantClass;
 
-  // Create functions that return handles
-  if (typeof bw.renderComponent === 'function') {
+  // Create functions that return DOM elements
+  if (typeof bw.createDOM === 'function') {
     Object.entries(components).forEach(function(entry) {
       var name = entry[0], fn = entry[1];
       if (name.indexOf('make') === 0) {
         var createName = 'create' + name.substring(4);
         bw[createName] = function(props) {
-          var taco = fn(props);
-          return bw.renderComponent(taco);
+          return bw.createDOM(fn(props));
         };
       }
     });

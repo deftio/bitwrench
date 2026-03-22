@@ -70,6 +70,14 @@ Examples:
   bw> /screenshot body page.png
   bw> /listen .bw-btn click
   bw> /mount #app card {"title":"Hello","content":"World"}
+
+  Workflow — build a dashboard from your terminal:
+  bw> /render #app {"t":"div","c":[{"t":"h2","c":"Dashboard"},{"t":"div","a":{"id":"stats"},"c":[{"t":"span","a":{"id":"users"},"c":"Users: 0"},{"t":"span","a":{"id":"orders"},"c":"Orders: 0"}]}]}
+  bw> /patch users "Users: 342"
+  bw> /patch orders "Orders: 28"
+  bw> /mount #app card {"title":"Status","content":"All systems go"}
+  bw> /tree #app 2
+  bw> /listen .bw-btn click
 `.trim();
 
 /**
@@ -91,8 +99,9 @@ export function wrapExpression(code) {
 /**
  * Run the attach subcommand.
  * @param {string[]} argv - arguments after "attach"
+ * @param {object} [ioOpts] - optional input/output streams for testing
  */
-export function runAttach(argv) {
+export function runAttach(argv, ioOpts) {
   var values;
 
   try {
@@ -129,19 +138,25 @@ export function runAttach(argv) {
   }
 
   // Dynamic import of bwserve
-  import('../bwserve/index.js').then(function(bwserve) {
-    startAttach(bwserve, { port, allowScreenshot, verbose });
+  var io = ioOpts || {};
+  var importPath = io._importPath || '../bwserve/index.js';
+  var importPromise = import(importPath).then(function(bwserve) {
+    return startAttach(bwserve, { port: port, allowScreenshot: allowScreenshot, verbose: verbose, input: io.input, output: io.output });
   }).catch(function(err) {
     console.error('Failed to load bwserve: ' + err.message);
     process.exit(1);
   });
+
+  return importPromise;
 }
 
 /**
  * Start the attach server and REPL.
- * @private
+ * @param {object} bwserve - The bwserve module (or mock)
+ * @param {object} opts - { port, allowScreenshot, verbose, input }
+ * @returns {{ rl: object, app: object }} readline interface and app for testing
  */
-function startAttach(bwserve, opts) {
+export function startAttach(bwserve, opts) {
   var app = bwserve.create({
     port: opts.port,
     title: 'bwcli attach',
@@ -228,8 +243,8 @@ function startAttach(bwserve, opts) {
 
   // Create readline REPL
   var rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
+    input: opts.input || process.stdin,
+    output: opts.output || process.stdout,
     prompt: 'bw> '
   });
 
@@ -281,13 +296,19 @@ function startAttach(bwserve, opts) {
       process.exit(0);
     });
   });
+
+  return { rl: rl, app: app };
 }
 
 /**
  * Handle slash commands in the REPL.
- * @private
+ * @param {string} line - The full command line (e.g., "/tree #app 2")
+ * @param {object|null} activeClient - The active BwServeClient, or null
+ * @param {Map} clients - Map of clientId -> client
+ * @param {object} opts - { allowScreenshot, verbose }
+ * @param {object} rl - readline interface with prompt() method
  */
-function handleSlashCommand(line, activeClient, clients, opts, rl) {
+export function handleSlashCommand(line, activeClient, clients, opts, rl) {
   var parts = line.split(/\s+/);
   var cmd = parts[0].toLowerCase();
 
@@ -505,9 +526,10 @@ function handleSlashCommand(line, activeClient, clients, opts, rl) {
 
 /**
  * Pretty-print a DOM tree from _bw_tree.
- * @private
+ * @param {object} node - Tree node with tag, id, cls, children
+ * @param {number} indent - Current indentation level
  */
-function printTree(node, indent) {
+export function printTree(node, indent) {
   if (!node) return;
   var prefix = '  '.repeat(indent);
   var label = node.tag || '?';
@@ -523,9 +545,8 @@ function printTree(node, indent) {
 
 /**
  * Print the REPL help reference.
- * @private
  */
-function printHelp() {
+export function printHelp() {
   console.log([
     '',
     'bwcli attach — REPL Commands',
@@ -550,6 +571,11 @@ function printHelp() {
     '  /unlisten <sel> <event>    Remove a listener',
     '  /exec <code>               Execute JS without capturing return value',
     '  /clients                   List connected clients',
+    '',
+    '  Workflow — build and push a component:',
+    '    /render #app {"t":"div","c":[{"t":"h2","c":"Hello"},{"t":"span","a":{"id":"msg"},"c":"..."}]}',
+    '    /patch msg "Component pushed!"',
+    '    /mount #app card {"title":"Status","content":"OK"}',
     ''
   ].join('\n'));
 }

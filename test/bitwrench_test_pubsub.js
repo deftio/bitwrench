@@ -180,23 +180,28 @@ describe("Lifecycle integration", function() {
     assert.equal(typeof el._bw_subs[0], 'function');
   });
 
-  it("should set data-bw_id on element if not present", function() {
+  it("should add bw_uuid and bw_lc classes on element if not present", function() {
     var el = document.createElement('div');
     bw.sub('life2', function() {}, el);
-    assert.ok(el.getAttribute('data-bw_id'));
-    assert.ok(el.getAttribute('data-bw_id').indexOf('bw_sub_') === 0);
+    var uuid = bw.getUUID(el);
+    assert.ok(uuid, 'should have bw_uuid_* class');
+    assert.ok(uuid.indexOf('bw_uuid_') === 0);
+    assert.ok(el.classList.contains('bw_lc'), 'should have bw_lc marker');
   });
 
-  it("should not overwrite existing data-bw_id", function() {
+  it("should not overwrite existing UUID class", function() {
     var el = document.createElement('div');
-    el.setAttribute('data-bw_id', 'my-existing-id');
+    var existingUuid = bw.uuid('uuid');
+    el.classList.add(existingUuid);
     bw.sub('life3', function() {}, el);
-    assert.equal(el.getAttribute('data-bw_id'), 'my-existing-id');
+    assert.equal(bw.getUUID(el), existingUuid);
+    assert.ok(el.classList.contains('bw_lc'), 'should have bw_lc marker');
   });
 
   it("should remove subscriptions on bw.cleanup()", function() {
     var el = document.createElement('div');
-    el.setAttribute('data-bw_id', 'cleanup-test');
+    el.classList.add(bw.uuid('uuid'));
+    el.classList.add('bw_lc');
     document.body.appendChild(el);
 
     var called = false;
@@ -213,7 +218,8 @@ describe("Lifecycle integration", function() {
     // bw.DOM needs browser-like environment for querySelector
     var container = document.createElement('div');
     container.id = 'pubsub-dom-test';
-    container.setAttribute('data-bw_id', 'mount-test');
+    container.classList.add(bw.uuid('uuid'));
+    container.classList.add('bw_lc');
     document.body.appendChild(container);
 
     var calls = 0;
@@ -231,7 +237,8 @@ describe("Lifecycle integration", function() {
 
   it("should handle multiple subs tied to same element", function() {
     var el = document.createElement('div');
-    el.setAttribute('data-bw_id', 'multi-sub');
+    el.classList.add(bw.uuid('uuid'));
+    el.classList.add('bw_lc');
     document.body.appendChild(el);
 
     var aCalled = false, bCalled = false;

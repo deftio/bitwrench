@@ -282,13 +282,9 @@ describe('bw.cleanup() UUID deregistration', function() {
     var parentEl = bw.createDOM(parent);
     document.body.appendChild(parentEl);
     assert.ok(bw._nodeMap[childUuid], 'child UUID should be cached');
-    // cleanup parent — child needs data-bw_id to be found by querySelectorAll,
-    // but UUID cleanup scans className regardless
+    // cleanup parent — UUID cleanup scans [class*="bw_uuid_"]
     bw.cleanup(parentEl);
-    // Note: cleanup only finds elements with data-bw_id via querySelectorAll,
-    // but the element itself is checked. For children without data-bw_id,
-    // the UUID stays until the element is GC'd. This is acceptable —
-    // _el() handles stale refs via parentNode check.
+    // cleanup deregisters UUID classes from all descendants.
     parentEl.remove();
   });
 });

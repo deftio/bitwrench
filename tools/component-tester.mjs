@@ -702,12 +702,13 @@ app.page('/', function(client) {
 
     // --- Tabs toggle ---
     document.addEventListener('click', function(e) {
-      var link = e.target.closest('.bw_nav_link[data-tab-index]');
+      var link = e.target.closest('.bw_nav_link');
       if (!link) return;
       e.preventDefault();
       var tabs = link.closest('.bw_tabs');
       if (!tabs) return;
-      var idx = parseInt(link.getAttribute('data-tab-index'), 10);
+      var allLinks = tabs.querySelectorAll('.bw_nav_link');
+      var idx = Array.prototype.indexOf.call(allLinks, link);
       tabs.querySelectorAll('.bw_nav_link').forEach(function(l) {
         l.classList.remove('active');
         l.setAttribute('aria-selected','false');

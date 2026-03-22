@@ -18,11 +18,54 @@
     mountExampleNav('#example-nav', '06-tic-tac-toe-tutorial.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Inject page CSS via bw.css() + bw.injectCSS()
     // =========================================================================
     bw.injectCSS(bw.css({
+      // Override stepper component defaults (bw_step) for tutorial layout
+      '.bw_step': {
+        'display': 'block',
+        'text-align': 'left',
+        'flex': 'none',
+        'align-items': 'stretch',
+        'margin-bottom': '2rem',
+        'background': 'var(--bw_card_bg, white)',
+        'border': '1px solid var(--bw_card_border, #e0e0e0)',
+        'border-radius': 'var(--bw_radius, 8px)',
+        'overflow': 'hidden'
+      },
+      '.bw_step_header': {
+        'display': 'flex',
+        'align-items': 'center',
+        'gap': '0.75rem',
+        'padding': '1rem 1.25rem',
+        'background': 'var(--bw_surface_alt, #f8f9fa)',
+        'border-bottom': '1px solid var(--bw_card_border, #e0e0e0)'
+      },
+      '.bw_step_header h2': {
+        'margin': '0',
+        'font-size': '1.25rem',
+        'color': 'var(--bw_text_primary, #1a1a1a)'
+      },
+      '.bw_step_num': {
+        'width': '2rem',
+        'height': '2rem',
+        'border-radius': '50%',
+        'background': 'var(--bw_teal, #006666)',
+        'color': 'white',
+        'display': 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'font-weight': '700',
+        'font-size': '0.9rem',
+        'flex-shrink': '0'
+      },
+      '.bw_step_body': {
+        'padding': '1.25rem',
+        'text-align': 'left'
+      },
       '.bw_step_body > p': {
         'margin': '0 0 1rem',
         'color': 'var(--bw_text_secondary, #555)',
@@ -1488,8 +1531,7 @@
       '  <meta charset="UTF-8">',
       '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
       '  <title>Tic Tac Toe - Bitwrench</title>',
-      '  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"><\/script>',
-      '  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">',
+      '  <script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>',
       '  <style>',
       '    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 2rem; background: #f5f5f5; }',
       '    h1 { text-align: center; color: #006666; }',
@@ -1530,6 +1572,8 @@
       '  <div id="app"></div>',
       '',
       '  <script>',
+      '    bw.loadStyles();',
+      '',
       '    function calcWinner(sq) {',
       '      var lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];',
       '      for (var i = 0; i < lines.length; i++) {',
@@ -1701,11 +1745,8 @@
         // Replace CDN URLs with local paths for preview
         var base = window.location.origin;
         code = code.replace(
-          'https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js',
+          'https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js',
           base + '/dist/bitwrench.umd.js'
-        ).replace(
-          'https://unpkg.com/bitwrench@2/dist/bitwrench.css',
-          base + '/dist/bitwrench.css'
         );
         iframe.srcdoc = code;
       }

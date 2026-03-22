@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Utility CSS</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../dist/bitwrench-util-css.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
+  <script src="shared-tryit.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    mountExampleNav('#example-nav', '16-utility-css.html');
+
+    bw.loadStyles();
+    applySiteStyles();
+
+    // ── Responsive helper ──
+    bw.injectCSS(bw.css({
+      '@media (max-width: 768px)': {
+        '.demo-grid': { 'grid-template-columns': '1fr !important' }
+      }
+    }));
+
+    // =========================================================================
+    // Helper: code block
+    // =========================================================================
+    function codeBlock(code) {
+      return { t: 'pre', a: { style: 'background:#f4f4f5; padding:1rem; border-radius:0.5rem; overflow-x:auto; font-size:0.85rem; margin:0.75rem 0' },
+        c: { t: 'code', c: code }
+      };
+    }
+
+    function resultBox(label, content, style) {
+      return {
+        t: 'div', a: { style: 'border:1px solid #ddd; border-radius:0.5rem; padding:1rem; margin:0.5rem 0' },
+        c: [
+          { t: 'div', a: { style: 'font-size:0.75rem; color:#888; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em' }, c: label },
+          { t: 'div', a: { style: style || '' }, c: content }
+        ]
+      };
+    }
+
+    // =========================================================================
+    // Section 1: What is bw.u()?
+    // =========================================================================
+    var section1 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:2rem 1rem' },
+      c: [
+        { t: 'h1', c: 'Utility CSS Plugin' },
+        { t: 'p', a: { class: 'lead' }, c: bw.raw(
+          '<code>bitwrench-util-css</code> is an optional plugin that adds Tailwind-style shorthand to bitwrench. ' +
+          'It parses terse tokens like <code>flex gap4 p4</code> into style objects, CSS strings, or class names.'
+        )},
+        { t: 'p', c: bw.raw(
+          '<strong>It is NOT bundled into bitwrench core.</strong> Load it as a separate script tag after bitwrench:'
+        )},
+        codeBlock(
+          '<script src="bitwrench.umd.min.js"><\/script>\n' +
+          '<script src="bitwrench-util-css.umd.min.js"><\/script>\n' +
+          '<!-- Now bw.u() is available -->'
+        ),
+        { t: 'p', c: bw.raw('The plugin is ~1KB gzipped. It adds <code>bw.u()</code> and <code>bw.utilCSS()</code> to the <code>bw</code> namespace.') }
+      ]
+    };
+
+    // =========================================================================
+    // Section 2: Three Output Modes
+    // =========================================================================
+    var uResult = bw.u('flex gap4 p4 alignCenter');
+    var uCssResult = bw.u.css('flex gap4 p4 alignCenter');
+    var uClsResult = bw.u.cls('flex gap4 p4 alignCenter');
+
+    var section2 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:1rem' },
+      c: [
+        { t: 'h2', c: 'Three Output Modes' },
+        { t: 'p', c: 'The same token string produces three different outputs depending on which method you call:' },
+        codeBlock(
+          "bw.u('flex gap4 p4 alignCenter')\n" +
+          "// => " + JSON.stringify(uResult) + "\n\n" +
+          "bw.u.css('flex gap4 p4 alignCenter')\n" +
+          '// => "' + uCssResult + '"\n\n' +
+          "bw.u.cls('flex gap4 p4 alignCenter')\n" +
+          '// => "' + uClsResult + '"'
+        ),
+        { t: 'table', a: { class: 'bw-table', style: 'margin:1rem 0' }, c: [
+          { t: 'thead', c: { t: 'tr', c: [
+            { t: 'th', c: 'Method' }, { t: 'th', c: 'Returns' }, { t: 'th', c: 'Use with' }
+          ]}},
+          { t: 'tbody', c: [
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.u('...')" } },
+              { t: 'td', c: 'Style object' },
+              { t: 'td', c: bw.raw('<code>bw.s()</code>, <code>Object.assign</code>') }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.u.css('...')" } },
+              { t: 'td', c: 'CSS string' },
+              { t: 'td', c: bw.raw('<code>a: { style: ... }</code> directly') }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.u.cls('...')" } },
+              { t: 'td', c: 'Class names' },
+              { t: 'td', c: bw.raw('<code>a: { class: ... }</code> with generated stylesheet') }
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 3: Live Demos
+    // =========================================================================
+    var section3 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:1rem' },
+      c: [
+        { t: 'h2', c: 'Live Demos' },
+
+        // Demo 1: Flex layout
+        { t: 'h3', c: 'Flex layout with gap and padding' },
+        codeBlock("{ t: 'div', a: { style: bw.u.css('flex gap4 p4') },\n  c: ['One', 'Two', 'Three'].map(function(s) {\n    return { t: 'div', a: { style: bw.u.css('p2 rounded2 bg-[#e3f2fd]') }, c: s };\n  })\n}"),
+        { t: 'div', a: { style: bw.u.css('flex gap4 p4') },
+          c: ['One', 'Two', 'Three'].map(function(s) {
+            return { t: 'div', a: { style: bw.u.css('p2 rounded2 bg-[#e3f2fd]') }, c: s };
+          })
+        },
+
+        // Demo 2: Centering
+        { t: 'h3', a: { style: 'margin-top:2rem' }, c: 'Centering content' },
+        codeBlock("{ t: 'div', a: { style: bw.u.css('flex justifyCenter alignCenter p8 bg-[#f0fdf4]') },\n  c: { t: 'span', a: { style: bw.u.css('bold text2xl') }, c: 'Centered!' }\n}"),
+        { t: 'div', a: { style: bw.u.css('flex justifyCenter alignCenter p8 bg-[#f0fdf4]') + ';border-radius:0.5rem' },
+          c: { t: 'span', a: { style: bw.u.css('bold text2xl') }, c: 'Centered!' }
+        },
+
+        // Demo 3: Card-like layout
+        { t: 'h3', a: { style: 'margin-top:2rem' }, c: 'Card-like layout' },
+        codeBlock("{ t: 'div', a: { style: bw.u.css('flexCol gap2 p4') + ';border:1px solid #ddd;border-radius:0.5rem' },\n  c: [\n    { t: 'h4', a: { style: bw.u.css('bold textLg') }, c: 'Card Title' },\n    { t: 'p', a: { style: bw.u.css('text-[#666]') }, c: 'Some description text.' },\n    { t: 'div', a: { style: bw.u.css('flex gap2 justifyEnd') },\n      c: [\n        bw.makeButton({ text: 'Cancel', variant: 'outline-secondary', size: 'sm' }),\n        bw.makeButton({ text: 'Save', variant: 'primary', size: 'sm' })\n      ]\n    }\n  ]\n}"),
+        { t: 'div', a: { style: bw.u.css('flexCol gap2 p4') + ';border:1px solid #ddd;border-radius:0.5rem' },
+          c: [
+            { t: 'h4', a: { style: bw.u.css('bold textLg') }, c: 'Card Title' },
+            { t: 'p', a: { style: bw.u.css('text-[#666]') }, c: 'Some description text here.' },
+            { t: 'div', a: { style: bw.u.css('flex gap2 justifyEnd') },
+              c: [
+                bw.makeButton({ text: 'Cancel', variant: 'outline-secondary', size: 'sm' }),
+                bw.makeButton({ text: 'Save', variant: 'primary', size: 'sm' })
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Section 4: Composing with bw.s()
+    // =========================================================================
+    var section4 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:1rem' },
+      c: [
+        { t: 'h2', c: 'Composing with bw.s()' },
+        { t: 'p', c: bw.raw('<code>bw.u()</code> returns a style object, so it composes naturally with <code>bw.s()</code>:') },
+        codeBlock(
+          "// Mix utility shorthand with custom properties\n" +
+          "a: { style: bw.s(\n" +
+          "  bw.u('flex gap4 p4 alignCenter'),\n" +
+          "  { borderBottom: '2px solid #336699' },\n" +
+          "  isActive ? bw.u('bold') : null\n" +
+          ")}"
+        ),
+        { t: 'div', a: { style: bw.s(
+            bw.u('flex gap4 p4 alignCenter'),
+            { borderBottom: '2px solid #336699', borderRadius: '0.5rem' }
+          )},
+          c: [
+            { t: 'span', c: 'Left' },
+            { t: 'span', a: { style: bw.s(bw.u('bold'), { color: '#336699' }) }, c: 'Styled' },
+            { t: 'span', c: 'Right' }
+          ]
+        },
+        { t: 'h3', a: { style: 'margin-top:1.5rem' }, c: 'Side-by-side: three approaches' },
+        { t: 'p', c: 'The same layout written three ways:' },
+        codeBlock(
+          "// 1. Raw CSS string\n" +
+          "a: { style: 'display:flex; gap:1rem; padding:1rem; align-items:center' }\n\n" +
+          "// 2. bw.s() with style objects\n" +
+          "a: { style: bw.s({ display:'flex' }, { gap:'1rem' }, { padding:'1rem' }, { alignItems:'center' }) }\n\n" +
+          "// 3. bw.u() shorthand\n" +
+          "a: { style: bw.u.css('flex gap4 p4 alignCenter') }"
+        ),
+        { t: 'p', c: bw.raw('All three produce the same result. Use whichever reads best for your context. <code>bw.u()</code> is tersest; <code>bw.s()</code> is most explicit; raw strings need no imports.') }
+      ]
+    };
+
+    // =========================================================================
+    // Section 5: Token Reference
+    // =========================================================================
+    var tokenData = [
+      ['p{n}', 'padding', 'p4 => padding: 1rem'],
+      ['pt pb pl pr px py', 'padding sides', 'px4 => paddingLeft + paddingRight: 1rem'],
+      ['m{n}', 'margin', 'm2 => margin: 0.5rem'],
+      ['mt mb ml mr mx my', 'margin sides', 'my4 => marginTop + marginBottom: 1rem'],
+      ['gap{n}', 'gap', 'gap4 => gap: 1rem'],
+      ['w{n} / h{n}', 'width / height', 'w8 => width: 2rem'],
+      ['rounded{n}', 'border-radius', 'rounded2 => border-radius: 0.5rem'],
+      ['flex', 'display: flex', ''],
+      ['flexCol / flexRow / flexWrap', 'flex + direction/wrap', ''],
+      ['block / inline / hidden', 'display modes', ''],
+      ['justifyCenter / justifyBetween / justifyEnd', 'justify-content', ''],
+      ['alignCenter / alignStart / alignEnd', 'align-items', ''],
+      ['wFull / hFull', 'width/height: 100%', ''],
+      ['bold / semibold / italic', 'font weight/style', ''],
+      ['textCenter / textRight', 'text-align', ''],
+      ['textSm / textBase / textLg / textXl / text2xl / text3xl', 'font sizes', '0.875rem to 1.875rem'],
+      ['bg-[#hex] / bg-name', 'background color', 'bg-[#e3f2fd] or bg-red'],
+      ['text-[#hex] / text-name', 'text color', 'text-[#333] or text-blue'],
+      ['transition', 'all 0.2s ease', '']
+    ];
+
+    var section5 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:1rem' },
+      c: [
+        { t: 'h2', c: 'Token Reference' },
+        { t: 'p', c: bw.raw('Scale: <code>{n}</code> maps to <code>n * 0.25rem</code>. So <code>p4</code> = 1rem, <code>gap8</code> = 2rem, <code>m1</code> = 0.25rem.') },
+        { t: 'table', a: { class: 'bw-table bw-table-striped', style: 'margin:1rem 0; font-size:0.9rem' }, c: [
+          { t: 'thead', c: { t: 'tr', c: [
+            { t: 'th', c: 'Token' }, { t: 'th', c: 'Property' }, { t: 'th', c: 'Example' }
+          ]}},
+          { t: 'tbody', c: tokenData.map(function(row) {
+            return { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: row[0] } },
+              { t: 'td', c: row[1] },
+              { t: 'td', c: row[2] ? { t: 'code', c: row[2] } : '' }
+            ]};
+          })}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 6: Custom Rules with bw.u.extend()
+    // =========================================================================
+    bw.u.extend({
+      shadow: { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
+      shadowLg: { boxShadow: '0 4px 16px rgba(0,0,0,0.15)' },
+      truncate: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+    });
+
+    var section6 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:1rem' },
+      c: [
+        { t: 'h2', c: 'Custom Rules' },
+        { t: 'p', c: bw.raw('Add your own tokens with <code>bw.u.extend()</code>:') },
+        codeBlock(
+          "bw.u.extend({\n" +
+          "  shadow:   { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },\n" +
+          "  shadowLg: { boxShadow: '0 4px 16px rgba(0,0,0,0.15)' },\n" +
+          "  truncate: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }\n" +
+          "});\n\n" +
+          "// Now use them:\n" +
+          "bw.u.css('p4 rounded2 shadow')  // includes your custom shadow"
+        ),
+        { t: 'div', a: { style: bw.u.css('flex gap4') },
+          c: [
+            { t: 'div', a: { style: bw.u.css('p4 rounded2 shadow') + ';flex:1' },
+              c: [{ t: 'strong', c: 'shadow' }, { t: 'p', c: 'Custom shadow token' }]
+            },
+            { t: 'div', a: { style: bw.u.css('p4 rounded2 shadowLg') + ';flex:1' },
+              c: [{ t: 'strong', c: 'shadowLg' }, { t: 'p', c: 'Larger custom shadow' }]
+            }
+          ]
+        },
+        { t: 'p', a: { style: 'margin-top:1rem' }, c: bw.raw(
+          'Values can be objects (static) or functions (dynamic). Functions receive the token string and return a style object.'
+        )}
+      ]
+    };
+
+    // =========================================================================
+    // Section 7: When to Use What
+    // =========================================================================
+    var section7 = {
+      t: 'div', a: { class: 'bw-container', style: 'max-width:900px; margin:0 auto; padding:1rem 1rem 3rem' },
+      c: [
+        { t: 'h2', c: 'When to Use What' },
+        { t: 'table', a: { class: 'bw-table', style: 'margin:1rem 0' }, c: [
+          { t: 'thead', c: { t: 'tr', c: [
+            { t: 'th', c: 'Approach' }, { t: 'th', c: 'Best for' }, { t: 'th', c: 'Trade-off' }
+          ]}},
+          { t: 'tbody', c: [
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.u.css('flex p4')" } },
+              { t: 'td', c: 'Quick prototyping, terse inline styles' },
+              { t: 'td', c: 'Requires plugin; vocabulary to learn' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.s({display:'flex'}, {padding:'1rem'})" } },
+              { t: 'td', c: 'Explicit, self-documenting layouts' },
+              { t: 'td', c: 'More verbose; no plugin needed' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.css({'.card': {...}})" } },
+              { t: 'td', c: ':hover, :focus, @media, @keyframes' },
+              { t: 'td', c: 'Generates stylesheet; most powerful' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "bw.loadStyles({...})" } },
+              { t: 'td', c: 'Full design system from seed colors' },
+              { t: 'td', c: 'Theme-level; not for one-off styles' }
+            ]}
+          ]}
+        ]},
+        { t: 'p', c: bw.raw(
+          '<strong>Recommendation:</strong> Use <code>bw.u()</code> for rapid layout prototyping. ' +
+          'Use <code>bw.s()</code> or <code>bw.css()</code> for production code where explicitness matters. ' +
+          'Use <code>bw.loadStyles()</code> for the design system. They all compose together.'
+        )},
+
+        { t: 'hr', a: { style: 'margin:2rem 0' } },
+        { t: 'p', a: { style: 'color:#888; font-size:0.85rem' }, c: bw.raw(
+          'The utility CSS plugin is <strong>~1KB gzipped</strong> and has zero dependencies beyond bitwrench core. ' +
+          'Source: <code>src/bitwrench-util-css.js</code>'
+        )}
+      ]
+    };
+
+    // =========================================================================
+    // Mount everything
+    // =========================================================================
+    bw.DOM('#app', { t: 'div', c: [
+      section1, section2, section3, section4, section5, section6, section7
+    ]});
+  </script>
+</body>
+</html>

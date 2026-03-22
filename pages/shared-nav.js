@@ -29,6 +29,7 @@
     { text: 'Components', href: '01-components.html' },
     { text: 'Styling', href: '03-styling.html' },
     { text: 'Themes', href: '10-themes.html' },
+    { text: 'Utility CSS', href: '16-utility-css.html' },
     { text: 'Tables & Forms', href: '02-tables-forms.html' },
     { text: 'State', href: '05-state.html' },
     { text: 'HTML Gen', href: '15-html-generation.html' }
@@ -54,6 +55,7 @@
   // bwserve sub-nav (unchanged)
   var bwserveSecondaryItems = [
     { text: 'Protocol', href: '12-bwserve-protocol.html' },
+    { text: 'CLI', href: '17-bwcli.html' },
     { text: 'Sandbox', href: '14-bwserve-sandbox.html' }
   ];
 

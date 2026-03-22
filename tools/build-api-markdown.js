@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const version = bw.version;
-const outputPath = join(__dirname, '..', 'dist', 'bitwrench_api_v' + version + '.md');
+const outputPath = join(__dirname, '..', 'docs', 'bitwrench_api.md');
 
 // ─── JSDoc Parser ────────────────────────────────────────────────────────────
 

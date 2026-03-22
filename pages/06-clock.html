@@ -20,6 +20,7 @@
     mountExampleNav('#example-nav', '06-clock.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Helper: wrap a demo in a section with anchor, title, description, tabs
@@ -518,20 +519,23 @@
                 { t: 'div', a: { class: 'clock-date' }, c: dateStr }
               ]
             });
-
-            // Publish the current time for alarm checking
-            bw.pub('clock:tick', {
-              hours: hours24,
-              minutes: now.getMinutes(),
-              seconds: now.getSeconds()
-            });
           },
           mounted: function(el) {
             // Render immediately on mount
             el._bw_render(el);
             // Set up 1-second interval and store the timer ID
             el._bw_state.timerId = setInterval(function() {
-              bw.update(el);
+              // Always publish the tick (alarm component subscribes to it)
+              var now = new Date();
+              bw.pub('clock:tick', {
+                hours: now.getHours(),
+                minutes: now.getMinutes(),
+                seconds: now.getSeconds()
+              });
+              // Only re-render when visible (skip DOM work when tab pane is hidden)
+              if (el.offsetParent !== null) {
+                bw.update(el);
+              }
             }, 1000);
           },
           unmount: function(el) {
@@ -1282,18 +1286,21 @@
       '              c: formatDate(now) }',
       '          ]',
       '        });',
-      '',
-      '        // Publish time for other components',
-      '        bw.pub("clock:tick", {',
-      '          hours: now.getHours(),',
-      '          minutes: now.getMinutes(),',
-      '          seconds: now.getSeconds()',
-      '        });',
       '      },',
       '      mounted: function(el) {',
       '        el._bw_render(el); // render immediately',
       '        el._bw_state.timerId = setInterval(function() {',
-      '          bw.update(el);   // re-render every second',
+      '          // Publish tick for alarm (always, even when hidden)',
+      '          var now = new Date();',
+      '          bw.pub("clock:tick", {',
+      '            hours: now.getHours(),',
+      '            minutes: now.getMinutes(),',
+      '            seconds: now.getSeconds()',
+      '          });',
+      '          // Only re-render when visible',
+      '          if (el.offsetParent !== null) {',
+      '            bw.update(el);',
+      '          }',
       '        }, 1000);',
       '      },',
       '      unmount: function(el) {',

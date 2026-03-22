@@ -20,6 +20,7 @@
     mountExampleNav('#example-nav', '01-components.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Helper: wrap a demo in a section with anchor, title, description, tabs
@@ -392,6 +393,119 @@
             // =================================================================
             // 5b. Text Alignment & Vertical Centering
             // =================================================================
+            demoSection('section-typography', 'Typography',
+              'Text utility classes for alignment, weight, style, decoration, transform, and size. These classes can be combined on any element.',
+              createTabbedDemo(
+                {
+                  t: 'div', c: [
+                    // --- Font Weight ---
+                    subheading('Font Weight'),
+                    {
+                      t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'p', a: { class: 'bw_fw_bold' }, c: 'Bold text (bw_fw_bold)' },
+                        { t: 'p', a: { class: 'bw_fw_semibold' }, c: 'Semibold text (bw_fw_semibold)' },
+                        { t: 'p', a: { class: 'bw_fw_normal' }, c: 'Normal weight text (bw_fw_normal)' },
+                        { t: 'p', a: { class: 'bw_fw_light' }, c: 'Light weight text (bw_fw_light)' }
+                      ]
+                    },
+
+                    // --- Font Style ---
+                    subheading('Font Style'),
+                    {
+                      t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'p', a: { class: 'bw_fst_italic' }, c: 'Italic text (bw_fst_italic)' },
+                        { t: 'p', a: { class: 'bw_fst_normal' }, c: 'Normal style text (bw_fst_normal)' }
+                      ]
+                    },
+
+                    // --- Text Decoration ---
+                    subheading('Text Decoration'),
+                    {
+                      t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'p', a: { class: 'bw_text_underline' }, c: 'Underlined text (bw_text_underline)' },
+                        { t: 'p', a: { class: 'bw_text_line_through' }, c: 'Strikethrough text (bw_text_line_through)' },
+                        { t: 'p', a: { class: 'bw_text_decoration_none' }, c: 'No decoration (bw_text_decoration_none)' }
+                      ]
+                    },
+
+                    // --- Text Transform ---
+                    subheading('Text Transform'),
+                    {
+                      t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'p', a: { class: 'bw_text_uppercase' }, c: 'uppercase text (bw_text_uppercase)' },
+                        { t: 'p', a: { class: 'bw_text_lowercase' }, c: 'LOWERCASE TEXT (bw_text_lowercase)' },
+                        { t: 'p', a: { class: 'bw_text_capitalize' }, c: 'capitalized text (bw_text_capitalize)' }
+                      ]
+                    },
+
+                    // --- Font Size ---
+                    subheading('Font Size'),
+                    {
+                      t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'p', a: { class: 'bw_fs_xl' }, c: 'Extra large (bw_fs_xl)' },
+                        { t: 'p', a: { class: 'bw_fs_lg' }, c: 'Large (bw_fs_lg)' },
+                        { t: 'p', a: { class: 'bw_fs_base' }, c: 'Base size (bw_fs_base)' },
+                        { t: 'p', a: { class: 'bw_fs_sm' }, c: 'Small (bw_fs_sm)' }
+                      ]
+                    },
+
+                    // --- Text Alignment ---
+                    subheading('Text Alignment'),
+                    {
+                      t: 'div', a: { class: 'bw_grid_2col', style: 'gap: 0.75rem; margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'div', a: { class: 'bw_text_left bw_card', style: 'padding: 0.75rem;' }, c: 'Left (bw_text_left)' },
+                        { t: 'div', a: { class: 'bw_text_center bw_card', style: 'padding: 0.75rem;' }, c: 'Center (bw_text_center)' },
+                        { t: 'div', a: { class: 'bw_text_right bw_card', style: 'padding: 0.75rem;' }, c: 'Right (bw_text_right)' },
+                        { t: 'div', a: { class: 'bw_text_justify bw_card', style: 'padding: 0.75rem;' }, c: 'Justified text fills the full width of the container, stretching spaces between words to create even left and right edges (bw_text_justify).' }
+                      ]
+                    },
+
+                    // --- Heading Scale ---
+                    subheading('Heading Scale'),
+                    {
+                      t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
+                      c: [
+                        { t: 'h1', a: { style: 'margin-bottom: 0.25rem;' }, c: 'Heading 1 (h1)' },
+                        { t: 'h2', a: { style: 'margin-bottom: 0.25rem;' }, c: 'Heading 2 (h2)' },
+                        { t: 'h3', a: { style: 'margin-bottom: 0.25rem;' }, c: 'Heading 3 (h3)' },
+                        { t: 'h4', a: { style: 'margin-bottom: 0.25rem;' }, c: 'Heading 4 (h4)' },
+                        { t: 'h5', a: { style: 'margin-bottom: 0.25rem;' }, c: 'Heading 5 (h5)' },
+                        { t: 'h6', a: { style: 'margin-bottom: 0.25rem;' }, c: 'Heading 6 (h6)' }
+                      ]
+                    },
+
+                    // --- Display & Lead ---
+                    subheading('Display & Lead Text'),
+                    {
+                      t: 'div',
+                      c: [
+                        { t: 'div', a: { class: 'bw_display_4', style: 'margin-bottom: 0.5rem;' }, c: 'Display heading (bw_display_4)' },
+                        { t: 'p', a: { class: 'bw_lead' }, c: 'Lead paragraph text is larger and lighter for introductory content (bw_lead).' }
+                      ]
+                    },
+
+                    // --- Combinations ---
+                    subheading('Combinations'),
+                    {
+                      t: 'div',
+                      c: [
+                        { t: 'p', a: { class: 'bw_fw_bold bw_fst_italic bw_fs_lg' }, c: 'Bold + Italic + Large' },
+                        { t: 'p', a: { class: 'bw_text_uppercase bw_fw_semibold bw_fs_sm' }, c: 'Uppercase + Semibold + Small' },
+                        { t: 'p', a: { class: 'bw_text_center bw_text_underline bw_fw_light bw_fs_xl' }, c: 'Centered + Underline + Light + XL' }
+                      ]
+                    }
+                  ]
+                },
+                "// Font weight\n{ t: 'p', a: { class: 'bw_fw_bold' }, c: 'Bold text' }\n{ t: 'p', a: { class: 'bw_fw_semibold' }, c: 'Semibold text' }\n{ t: 'p', a: { class: 'bw_fw_light' }, c: 'Light text' }\n\n// Font style\n{ t: 'p', a: { class: 'bw_fst_italic' }, c: 'Italic text' }\n\n// Text decoration\n{ t: 'p', a: { class: 'bw_text_underline' }, c: 'Underlined' }\n{ t: 'p', a: { class: 'bw_text_line_through' }, c: 'Strikethrough' }\n\n// Text transform\n{ t: 'p', a: { class: 'bw_text_uppercase' }, c: 'uppercase' }\n{ t: 'p', a: { class: 'bw_text_lowercase' }, c: 'lowercase' }\n{ t: 'p', a: { class: 'bw_text_capitalize' }, c: 'capitalize' }\n\n// Font size\n{ t: 'p', a: { class: 'bw_fs_xl' }, c: 'Extra large' }\n{ t: 'p', a: { class: 'bw_fs_lg' }, c: 'Large' }\n{ t: 'p', a: { class: 'bw_fs_sm' }, c: 'Small' }\n\n// Text alignment\n{ t: 'div', a: { class: 'bw_text_left' }, c: 'Left' }\n{ t: 'div', a: { class: 'bw_text_center' }, c: 'Center' }\n{ t: 'div', a: { class: 'bw_text_right' }, c: 'Right' }\n{ t: 'div', a: { class: 'bw_text_justify' }, c: 'Justified' }\n\n// Headings and display\n{ t: 'h1', c: 'Heading 1' }\n{ t: 'div', a: { class: 'bw_display_4' }, c: 'Display' }\n{ t: 'p', a: { class: 'bw_lead' }, c: 'Lead text' }\n\n// Combine classes\n{ t: 'p', a: { class: 'bw_fw_bold bw_fst_italic bw_fs_lg' },\n  c: 'Bold + Italic + Large' }"
+              )
+            ),
+
             demoSection('section-alignment', 'Text Alignment & Vertical Centering',
               'Horizontal text alignment using bw_text_left, bw_text_center, and bw_text_right utility classes. Vertical centering uses flexbox inline styles for top, middle, and bottom alignment within a container.',
               createTabbedDemo(

@@ -1,4 +1,29 @@
-# QA Completed — feature/bccl-parity-and-polish (v2.0.12/v2.0.13)
+# QA Completed
+
+## P1: bwcli docs, debugging console equivalents, slash command help (v2.0.19)
+
+* [x] create --> `pages/17-bwcli.html` -- dedicated bwcli tutorial/reference page under Server nav section. Sections: overview, serve mode, attach mode, slash commands reference table, worked example (build dashboard), worked example (debug existing page), see also links
+* [x] update --> `pages/shared-nav.js` -- added `{ text: 'CLI', href: '17-bwcli.html' }` to bwserveSecondaryItems (Protocol / CLI / Sandbox)
+* [x] update --> `pages/11-debugging.html` -- added Section 8 "Console Equivalents of bwcli Commands" (comparison table mapping /tree, /patch, /render, /mount, /listen, /screenshot to browser console equivalents) and Section 9 "Future: Injectable Debug Script" (bitwrench-debug.js concept, deferred implementation, link to bwcli)
+* [x] update --> `src/cli/attach.js` ATTACH_USAGE -- added "Workflow -- build a dashboard from your terminal" worked example showing /render, /patch, /mount, /tree, /listen sequence
+* [x] update --> `src/cli/attach.js` printHelp() -- added "Workflow -- build and push a component" compact example showing /render, /patch, /mount
+
+---
+
+## P3.7 Phase 1: shared-theme.js migration (v2.0.19)
+
+* [x] migrate --> Split shared-theme.js into two-phase injection: Phase A (site tokens at head time) + Phase B (applySiteStyles() after bw.loadStyles())
+* [x] remove --> Duplicate CSS rules already provided by bw.loadStyles(): box-sizing reset, body styles, link colors, focus rings
+* [x] remove --> Dead CSS: .bw_level_badge (unused in any page)
+* [x] fix --> Source order: site chrome CSS now injected AFTER bitwrench defaults (was before, causing specificity issues)
+* [x] fix --> self-load-test.html: deferred token injection when bw not loaded at head time (page was previously unstyled)
+* [x] update --> All 25 pages/*.html files: added applySiteStyles() call after bw.loadStyles()
+* [x] verify --> 1402 unit tests passing, 161/171 Playwright tests passing (10 failures pre-existing)
+* [x] verify --> Screenshot comparison: 50 pages x light/dark, all within normal rendering variance
+
+---
+
+# QA Completed -- feature/bccl-parity-and-polish (v2.0.12/v2.0.13)
 
 * [x] enhance --> 01-components.html Grid System: added 6:3:3 (half+quarter+quarter) and 6:3:2:1 (half+quarter+sixth+twelfth) grid examples with distinct color palettes
 * [x] enhance --> 01-components.html: added "Text Alignment & Vertical Centering" section with horizontal (bw-text-left/center/right) and vertical (flexbox top/middle/bottom) demos + code tab
@@ -403,3 +428,119 @@ Design doc: `dev/bw-screenshot-design.md`
 * [x] implement --> Client-side capture function (registered as string)
 * [x] implement --> `allowScreenshot` opt-in flag
 * [x] test --> Protocol round-trip unit tests (14 tests)
+
+---
+
+# QA Completed — v2.0.19 session audit (March 2026)
+
+## P2: ComponentHandle cleanup
+
+* [x] cleanup --> `_deepCloneTaco`, `_tacoForDOM` refactor (avoid TACO mutation) -- both functions implemented in `bitwrench.js` (lines 2566, 2603), actively used by ComponentHandle for safe TACO cloning during flush/remount
+* [x] superseded --> list reorder helper -- moot; no codebase usage, `insertBefore` is trivial, and `o.methods` direction means factories own their DOM logic
+
+## P3: Design system polish
+
+* [x] define --> border-radius scale enforcement -- `RADIUS_PRESETS` defined in `bitwrench-styles.js`; accordion, pagination, stat card, and code demo all use `layout.radius` presets via `rd.card`/`rd.btn`. Structural CSS exceptions (form controls, shapes) are acceptable.
+
+## P3.6: UUID Addressing -- Docs
+
+* [x] doc --> Update LLM guide with UUID addressing API -- `bw.assignUUID(taco, forceNew?)` and `bw.getUUID(tacoOrElement)` documented in `docs/llm-bitwrench-guide.md` API table
+
+## P2: Factory rebuild -- SUPERSEDED
+
+* [x] superseded --> `make*() { reactive: true }` flag and `bw.reactive()` sugar -- moot; `o.methods`/`o.mounted`/`o.state`/`o.render` on TACO makes reactivity intrinsic, no wrapping needed
+
+## P4: TACO Shorthand -- COMPLETED (stopping at bw.h())
+
+* [x] completed --> `bw.h(tag, attrs, content, opts)` provides concise TACO construction (27 tests)
+* [x] cancelled --> Array shorthand `[t, a, c, o]` -- not pursuing. `bw.h()` covers the concise-authoring use case cleanly. Array shorthand has an inherent ambiguity problem (arrays in `c` are already children lists, so `[t, a, c, o]` vs `[child, child]` requires heuristic parsing). The "double-bracket problem" (`['p', [['a', {href:'...'}, 'link']]]`) makes it unnatural to write. Cost/complexity exceeds benefit when `bw.h()` exists. Design exploration preserved in `dev/array_to_taco.md`.
+
+## Misc fixes (v2.0.19 session)
+
+* [x] fix --> All examples/ and pages/ using wrong API names (`loadDefaultStyles`, `generateTheme`, `applyTheme`) corrected to actual source names (`loadStyles`, `makeStyles`, `applyStyles`)
+* [x] fix --> SVG rendering in `pages/12-bwserve-protocol.html` -- wrapped 3 SVG TACOs with `bw.raw(bw.html(...))` pattern for proper namespace handling
+* [x] fix --> `tools/build-api-markdown.js` output changed from versioned `dist/bitwrench_api_v{VERSION}.md` to stable `docs/bitwrench_api.md`
+* [x] fix --> `examples/embedded/` restructured: renamed demo to `esp32-dashboard.html`, created landing `index.html` page
+* [x] cleanup --> Deleted `src/exp_html_hydrate/` and `test/exp_html_hydrate_test.js` (experiment code absorbed into main source/plan)
+
+---
+
+# QA Completed -- v2.0.19 lifecycle migration (March 2026)
+
+## ComponentHandle removal and o.handle/o.slots replacement
+
+* [x] remove --> ComponentHandle class (~1200 lines) from `src/bitwrench.js` -- includes `_parseBindings`, `_extractDeps`, `_dirtyComponents`, `_scheduleFlush`, `_flushDirty`, `_deepCloneTaco`, `_tacoForDOM`, ComponentHandle constructor + all `_chp.*` methods, `_ComponentHandle`, `bw.when()`, `bw.each()`, `bw.component()`, `bw.compile()`
+* [x] remove --> `_bwComponent`, `_bwWhen`, `_bwEach` handling from `bw.html()`, `bw.createDOM()`, `bw.DOM()`, `bw.cleanup()`
+* [x] rewrite --> `bw.message()` to dispatch via `el.bw[action]` instead of `_bwComponentHandle`
+* [x] rewrite --> `bw.inspect()` to show `el.bw` methods and `el._bw_state`
+* [x] implement --> `o.handle` in `bw.createDOM()` -- explicit methods on `el.bw` namespace, auto-bound with el as first arg
+* [x] implement --> `o.slots` in `bw.createDOM()` -- auto-generated `setX()`/`getX()` pairs for named child selectors
+* [x] implement --> `bw.mount(target, taco, options)` -- like `bw.DOM()` but returns root element for `el.bw` access
+* [x] delete --> `test/bitwrench_test_component_handle.js` (1766 lines)
+* [x] create --> `test/bitwrench_test_handle.js` -- 42 tests for o.handle, o.slots, bw.mount(), bw.message()
+* [x] create --> `test/bitwrench_test_lifecycle.js` -- 63 tests for lifecycle (mounted/unmount/render/state)
+
+## BCCL factory handles (o.handle/o.slots on components)
+
+* [x] implement --> makeCard: o.slots for title/content/footer
+* [x] implement --> makeCarousel: o.handle for goToSlide/next/prev/getActiveIndex/pause/play
+* [x] implement --> makeTabs: o.handle for setActiveTab/getActiveTab
+* [x] implement --> makeAccordion: o.handle for toggle/openAll/closeAll
+* [x] implement --> makeModal: o.handle for open/close
+* [x] implement --> makeToast: o.handle for dismiss
+* [x] implement --> makeProgress: o.handle for setValue/getValue
+* [x] implement --> makeAlert: o.handle for dismiss
+* [x] implement --> makeChipInput: o.handle for addChip/removeChip/getChips/clear
+* [x] implement --> makePagination: o.handle for setPage/getPage
+* [x] implement --> makeStatCard: o.slots for value/label
+
+## Identity unification (Phase B)
+
+* [x] remove --> ALL `data-*` attributes from `bitwrench.js` and `bitwrench-bccl.js`
+* [x] implement --> Closure pattern for tab/slide index (replacing `data-bw-tab-index`)
+* [x] implement --> CSS class pattern for toast position, binding refs, comp ID
+* [x] implement --> DOM property pattern for carousel index, chip value
+* [x] implement --> `bw_lc` marker class for lifecycle-managed elements
+* [x] implement --> `_BW_LC = 'bw_lc'` constant; `cleanup()` uses `.bw_lc` selector
+
+## Docs and examples migration
+
+* [x] update --> `docs/llm-bitwrench-guide.md` -- complete rewrite for o.handle/o.slots, removed all ComponentHandle references
+* [x] update --> `docs/state-management.md` -- removed ComponentHandle sections, added o.handle/o.slots/bw.mount() patterns
+* [x] update --> `docs/taco-format.md` -- added o.handle and o.slots to format spec
+* [x] update --> `docs/theming.md` -- corrected API names to makeStyles/applyStyles/loadStyles/toggleStyles/clearStyles
+* [x] update --> `docs/thinking-in-bitwrench.md` -- removed ComponentHandle examples, updated to o.handle pattern
+* [x] update --> `README.md` -- updated API table, removed ComponentHandle references
+* [x] update --> `pages/05-state.html` -- removed ComponentHandle sections, rewritten for lifecycle/handle pattern
+* [x] update --> `pages/00-quick-start.html` -- removed ComponentHandle getting-started section
+* [x] update --> `pages/07-framework-comparison.html` -- removed ComponentHandle template syntax, fixed bundle sizes
+* [x] update --> `pages/11-debugging.html` -- removed ComponentHandle debugging sections
+* [x] update --> `pages/12-bwserve-protocol.html` -- SVG namespace fix (bw.raw wrapping)
+* [x] update --> `examples/ember-and-oak/index.html` -- migrated from bw.component() to o.handle pattern
+* [x] update --> `examples/dashboard/`, `examples/wizard/`, `examples/live-feed/`, `examples/todo-app/` -- corrected API names
+
+## CSS and component polish
+
+* [x] fix --> Dropdown items: added padding (0.4rem 1rem), cursor pointer
+* [x] fix --> Dropdown menu: added border (1px solid transparent)
+* [x] fix --> Modal header/body/footer: added padding and border separators
+* [x] fix --> Toast header/body: added padding (0.5rem 0.75rem) and border
+* [x] add --> Typography utility classes (20 classes): font weight (bold/semibold/normal/light), font style (italic/normal), text decoration (underline/line-through/none), text transform (uppercase/lowercase/capitalize), font size (sm/base/lg/xl), text-align justify
+* [x] add --> Typography demo section in `pages/01-components.html`
+* [x] fix --> `pages/07-framework-comparison.html` bundle size claims: bitwrench ~20KB -> ~39KB, React ~40KB -> ~44KB, Svelte runtime ~2KB -> ~5KB
+* [x] fix --> `pages/07-framework-comparison.html` removed nonexistent `bw.makeInput()` reference
+* [x] fix --> `src/bitwrench-code-edit.js` removed CSS custom property references (--bw_code_bg, --bw_code_text, --bw_font_mono) -- library component now fully self-contained with hardcoded defaults
+
+## Test infrastructure
+
+* [x] add --> `tests/examples.spec.js` 09-builds.html Playwright test (builds.json loading)
+* [x] add --> `pages/16-utility-css.html` utility CSS reference page
+* [x] fix --> `tests/examples.spec.js` selectors updated for dogfooding migration
+* [x] fix --> `test/mounted-pattern.spec.js` selectors updated for new identity system
+
+## QA Results (v2.0.19 final)
+
+* [x] Unit tests: 1402 passing (96.3% statement coverage)
+* [x] Build: clean, all dist formats generated
+* [x] Bundle: ~38KB gzipped (was ~43KB before ComponentHandle removal -- 5KB savings)
+* [x] Net code change: ~8700 lines removed, ~11100 lines changed (127 files)

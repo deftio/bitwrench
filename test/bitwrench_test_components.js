@@ -305,9 +305,9 @@ describe('makeToast', function() {
     assert.strictEqual(typeof result.o.mounted, 'function');
   });
 
-  it('should store data-position attribute', function() {
+  it('should store position as CSS class', function() {
     const result = makeToast({ position: 'bottom-left' });
-    assert.strictEqual(result.a['data-position'], 'bottom-left');
+    assert.ok(result.a.class.indexOf('bw_toast_bottom_left') >= 0);
   });
 
   it('should be available on bw object', function() {
@@ -1190,7 +1190,7 @@ describe('makeChipInput', function() {
     const ci = bw.makeChipInput({ chips: ['JS', 'CSS', 'HTML'] });
     const chips = ci.c.filter(function(c) { return c.t === 'span' && c.a.class === 'bw_chip'; });
     assert.strictEqual(chips.length, 3);
-    assert.strictEqual(chips[0].a['data-chip-value'], 'JS');
+    assert.strictEqual(chips[0].c[0], 'JS');
   });
 
   it('should have text input field', function() {
@@ -2054,23 +2054,23 @@ describe('makeCarousel DOM interaction', function() {
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
     // Initial state
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '0');
+    assert.strictEqual(el._bw_carouselIndex, 0);
 
     // ArrowRight
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+    assert.strictEqual(el._bw_carouselIndex, 1);
 
     // ArrowLeft
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '0');
+    assert.strictEqual(el._bw_carouselIndex, 0);
 
     // ArrowLeft wraps to last
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '2');
+    assert.strictEqual(el._bw_carouselIndex, 2);
 
     // ArrowRight wraps to first
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '0');
+    assert.strictEqual(el._bw_carouselIndex, 0);
 
     document.body.removeChild(el);
   });
@@ -2090,12 +2090,12 @@ describe('makeCarousel DOM interaction', function() {
     // Click next button
     var nextBtn = el.querySelector('.bw_carousel_control_next');
     if (nextBtn) nextBtn.click();
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+    assert.strictEqual(el._bw_carouselIndex, 1);
 
     // Click prev button
     var prevBtn = el.querySelector('.bw_carousel_control_prev');
     if (prevBtn) prevBtn.click();
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '0');
+    assert.strictEqual(el._bw_carouselIndex, 0);
 
     document.body.removeChild(el);
   });
@@ -2118,7 +2118,7 @@ describe('makeCarousel DOM interaction', function() {
 
     // Click indicator 2 (index 1)
     indicators[2].click();
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '2');
+    assert.strictEqual(el._bw_carouselIndex, 2);
     assert.ok(indicators[2].classList.contains('active'));
 
     document.body.removeChild(el);
@@ -2486,7 +2486,7 @@ describe('makeCarousel keyboard navigation', function() {
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+    assert.strictEqual(el._bw_carouselIndex, 1);
 
     document.body.removeChild(el);
   });
@@ -2505,11 +2505,11 @@ describe('makeCarousel keyboard navigation', function() {
 
     // Move to slide 2 first
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+    assert.strictEqual(el._bw_carouselIndex, 1);
 
     // Move back to slide 1
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '0');
+    assert.strictEqual(el._bw_carouselIndex, 0);
 
     document.body.removeChild(el);
   });
@@ -2526,7 +2526,7 @@ describe('makeCarousel keyboard navigation', function() {
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
-    assert.strictEqual(el.getAttribute('data-carousel-index'), '1');
+    assert.strictEqual(el._bw_carouselIndex, 1);
 
     document.body.removeChild(el);
   });

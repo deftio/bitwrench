@@ -1390,30 +1390,28 @@ describe("create* convenience functions", function() {
     freshDOM();
   });
 
-  it("bw.createCard should create a rendered card handle", function() {
-    var handle = bw.createCard({ title: 'Test', content: 'Body' });
-    assert.ok(handle, 'should return a handle');
-    assert.ok(handle.element, 'should have an element');
-    assert.ok(handle.element.outerHTML.includes('bw_card'), 'should be a card');
+  it("bw.createCard should create a rendered card element", function() {
+    var el = bw.createCard({ title: 'Test', content: 'Body' });
+    assert.ok(el, 'should return an element');
+    assert.ok(el.outerHTML.includes('bw_card'), 'should be a card');
   });
 
-  it("bw.createButton should create a rendered button handle", function() {
-    var handle = bw.createButton({ text: 'Click' });
-    assert.ok(handle, 'should return a handle');
-    assert.ok(handle.element, 'should have an element');
-    assert.equal(handle.element.tagName, 'BUTTON');
+  it("bw.createButton should create a rendered button element", function() {
+    var el = bw.createButton({ text: 'Click' });
+    assert.ok(el, 'should return an element');
+    assert.equal(el.tagName, 'BUTTON');
   });
 
-  it("bw.createAlert should create a rendered alert handle", function() {
-    var handle = bw.createAlert({ text: 'Danger!', variant: 'danger' });
-    assert.ok(handle, 'should return a handle');
-    assert.ok(handle.element.outerHTML.includes('bw_alert'), 'should be an alert');
+  it("bw.createAlert should create a rendered alert element", function() {
+    var el = bw.createAlert({ content: 'Danger!', variant: 'danger' });
+    assert.ok(el, 'should return an element');
+    assert.ok(el.outerHTML.includes('bw_alert'), 'should be an alert');
   });
 
-  it("bw.createBadge should create a rendered badge handle", function() {
-    var handle = bw.createBadge({ text: '7' });
-    assert.ok(handle, 'should return a handle');
-    assert.ok(handle.element.outerHTML.includes('bw_badge'), 'should be a badge');
+  it("bw.createBadge should create a rendered badge element", function() {
+    var el = bw.createBadge({ text: '7' });
+    assert.ok(el, 'should return an element');
+    assert.ok(el.outerHTML.includes('bw_badge'), 'should be a badge');
   });
 });
 
@@ -1924,60 +1922,9 @@ describe("bw.render error path", function() {
 // =========================================================================
 // renderComponent handle methods (addChild, getChild, setState, onPropChange)
 // =========================================================================
-describe("renderComponent handle methods", function() {
-  beforeEach(function() { freshDOM(); });
-
-  it("addChild and getChild should register/retrieve child components", function() {
-    const parent = bw.renderComponent({ t: 'div', c: 'parent' });
-    const child = bw.renderComponent({ t: 'span', c: 'child' });
-    parent.addChild('label', child);
-    assert.strictEqual(parent.getChild('label'), child);
-    assert.strictEqual(parent.getChild('missing'), undefined);
-  });
-
-  it("setState should merge state and re-render", function() {
-    const taco = { t: 'div', c: 'hello', o: { state: { count: 0 } } };
-    const handle = bw.renderComponent(taco);
-    document.body.appendChild(handle.element);
-    handle.setState({ count: 5 });
-    assert.strictEqual(handle.state.count, 5);
-    document.body.removeChild(handle.element);
-  });
-
-  it("state setter should replace state and re-render", function() {
-    const taco = { t: 'div', c: 'hello', o: { state: { a: 1 } } };
-    const handle = bw.renderComponent(taco);
-    document.body.appendChild(handle.element);
-    handle.state = { b: 2 };
-    assert.deepStrictEqual(handle.state, { b: 2 });
-    document.body.removeChild(handle.element);
-  });
-
-  it("onPropChange should trigger re-render", function() {
-    const taco = { t: 'div', a: { class: 'test' }, c: 'hello' };
-    const handle = bw.renderComponent(taco);
-    document.body.appendChild(handle.element);
-    handle.onPropChange('class', 'updated', 'test');
-    document.body.removeChild(handle.element);
-  });
-
-  it("update should merge new props and replace element", function() {
-    const taco = { t: 'div', a: { 'data-x': '1' }, c: 'hello' };
-    const handle = bw.renderComponent(taco);
-    document.body.appendChild(handle.element);
-    handle.update({ 'data-x': '2' });
-    assert.strictEqual(handle.element.getAttribute('data-x'), '2');
-    document.body.removeChild(handle.element);
-  });
-
-  it("render should re-create element from TACO", function() {
-    const taco = { t: 'div', c: 'render test' };
-    const handle = bw.renderComponent(taco);
-    document.body.appendChild(handle.element);
-    const oldEl = handle.element;
-    handle.render();
-    assert.notStrictEqual(handle.element, oldEl, 'element should be replaced');
-    document.body.removeChild(handle.element);
+describe("renderComponent deprecation", function() {
+  it("bw.renderComponent() throws Error", function() {
+    assert.throws(function() { bw.renderComponent(); }, /removed/i);
   });
 });
 

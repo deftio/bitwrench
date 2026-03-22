@@ -159,28 +159,28 @@ Control transition timing:
 `bw.makeStyles()` returns an object with the full generated palette:
 
 ```javascript
-var styles = bw.makeStyles({
+var theme = bw.makeStyles({
   primary: '#0077b6',
   secondary: '#90e0ef'
 });
-bw.applyStyles(styles);
+bw.applyStyles(theme);
 
-// styles.palette contains 9 color families, each with 8 shades:
-styles.palette.primary.base;      // '#0077b6' — the seed color
-styles.palette.primary.hover;     // darker variant for hover states
-styles.palette.primary.active;    // darker still for active/pressed states
-styles.palette.primary.light;     // very light tint for backgrounds
-styles.palette.primary.darkText;  // dark variant for text
-styles.palette.primary.border;    // medium-light for borders
-styles.palette.primary.focus;     // semi-transparent for focus rings
-styles.palette.primary.textOn;    // '#fff' or '#000' — readable text on base
+// theme.palette contains 9 color families, each with 8 shades:
+theme.palette.primary.base;      // '#0077b6' — the seed color
+theme.palette.primary.hover;     // darker variant for hover states
+theme.palette.primary.active;    // darker still for active/pressed states
+theme.palette.primary.light;     // very light tint for backgrounds
+theme.palette.primary.darkText;  // dark variant for text
+theme.palette.primary.border;    // medium-light for borders
+theme.palette.primary.focus;     // semi-transparent for focus rings
+theme.palette.primary.textOn;    // '#fff' or '#000' — readable text on base
 
 // Same 8 shades available for:
 // secondary, tertiary, success, danger, warning, info, light, dark
 
 // Surface colors (raw hex strings):
-styles.palette.background;  // '#ffffff'
-styles.palette.surface;     // '#f8f9fa'
+theme.palette.background;  // '#ffffff'
+theme.palette.surface;     // '#f8f9fa'
 ```
 
 ### How shade derivation works
@@ -212,14 +212,14 @@ Every theme has two palettes: primary and alternate. The alternate is derived au
 - If your primary palette is dark, the alternate will be light
 
 ```javascript
-var styles = bw.makeStyles({
+var theme = bw.makeStyles({
   primary: '#0077b6',
   secondary: '#90e0ef'
 });
-bw.applyStyles(styles);
+bw.applyStyles(theme);
 
-styles.isLightPrimary;        // false — ocean primary is a dark blue
-styles.alternate.palette;     // light-inverted version of ocean
+theme.isLightPrimary;        // false — ocean primary is a dark blue
+theme.alternate.palette;     // light-inverted version of ocean
 ```
 
 ### Switching between palettes
@@ -229,7 +229,7 @@ styles.alternate.palette;     // light-inverted version of ocean
 bw.toggleStyles();
 ```
 
-The toggle works by adding or removing the CSS class `.bw-theme-alt` on the `<html>` element. Both primary and alternate stylesheets are injected at theme generation time, so switching is instant — no re-generation needed.
+The toggle works by adding or removing the CSS class `.bw-theme-alt` on the `<html>` element. Both primary and alternate stylesheets are injected at theme generation time, so switching is instant -- no re-generation needed.
 
 ### Clearing a theme
 
@@ -237,25 +237,25 @@ The toggle works by adding or removing the CSS class `.bw-theme-alt` on the `<ht
 bw.clearStyles();
 ```
 
-This removes the injected `<style>` elements and clears the internal theme cache. Call this before generating new styles with different colors to prevent CSS accumulation.
+This removes the injected `<style>` elements and clears the internal theme cache. Call this before generating a new theme with different colors to prevent CSS accumulation.
 
 ## Using themes without injection
 
 Set `inject: false` to get the CSS without adding it to the document:
 
 ```javascript
-var styles = bw.makeStyles({
+var theme = bw.makeStyles({
   primary: '#0077b6',
   secondary: '#90e0ef',
   inject: false
 });
 
 // Use the CSS string however you want
-console.log(styles.css);           // primary CSS
-console.log(styles.alternate.css); // alternate CSS
+console.log(theme.css);           // primary CSS
+console.log(theme.alternate.css); // alternate CSS
 
 // Write to a file in Node.js
-fs.writeFileSync('theme.css', styles.css + '\n' + styles.alternate.css);
+fs.writeFileSync('theme.css', theme.css + '\n' + theme.alternate.css);
 ```
 
 This is useful for:

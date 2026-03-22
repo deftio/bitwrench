@@ -18,6 +18,7 @@
     mountExampleNav('#example-nav', '07-framework-comparison.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Page-specific CSS via bw.css() + bw.injectCSS()
@@ -538,29 +539,28 @@
         {
           label: 'Bitwrench',
           code: [
-            'var counter = bw.component({',
+            'bw.DOM("#counter", {',
             '  t: "div",',
-            '  c: [',
-            '    { t: "h4", c: "Count: ${count}" },',
-            '    { t: "div", a: { style: "display:flex;gap:0.35rem" }, c: [',
-            '      { t: "button", c: "+", a: {',
-            '        onclick: function() {',
-            '          counter.set("count", counter.get("count") + 1);',
-            '        }',
-            '      }},',
-            '      { t: "button", c: "Reset", a: {',
-            '        onclick: function() { counter.reset(); }',
-            '      }}',
-            '    ]}',
-            '  ],',
             '  o: {',
             '    state: { count: 0 },',
-            '    methods: {',
-            '      reset: function(c) { c.set("count", 0); }',
+            '    render: function(el) {',
+            '      var s = el._bw_state;',
+            '      bw.DOM(el, {',
+            '        t: "div", c: [',
+            '          { t: "h4", c: "Count: " + s.count },',
+            '          { t: "div", a: { style: "display:flex;gap:0.35rem" }, c: [',
+            '            { t: "button", c: "+", a: {',
+            '              onclick: function() { s.count++; bw.update(el); }',
+            '            }},',
+            '            { t: "button", c: "Reset", a: {',
+            '              onclick: function() { s.count = 0; bw.update(el); }',
+            '            }}',
+            '          ]}',
+            '        ]',
+            '      });',
             '    }',
             '  }',
-            '});',
-            'bw.DOM("#counter", counter);'
+            '});'
           ].join('\n')
         }
       ];
@@ -735,31 +735,37 @@
         {
           label: 'Bitwrench',
           code: [
-            '// bw.component() + pub/sub for cross-component updates',
+            '// o.state + o.render + pub/sub for cross-component updates',
             'function makeCounter(label) {',
-            '  return bw.component({',
-            '    t: "div", c: [',
-            '      { t: "div", c: label + ": ${count}" },',
-            '      { t: "button", c: "+", a: {',
-            '        onclick: function() {',
-            '          ctr.set("count", ctr.get("count") + 1);',
-            '          bw.pub("counter-changed");',
-            '        }',
-            '      }}',
-            '    ],',
-            '    o: { state: { count: 0 } }',
-            '  });',
-            '  var ctr = arguments.callee._last; // ref set by component()',
+            '  return {',
+            '    t: "div",',
+            '    o: {',
+            '      state: { count: 0, label: label },',
+            '      render: function(el) {',
+            '        var s = el._bw_state;',
+            '        bw.DOM(el, {',
+            '          t: "div", c: [',
+            '            { t: "div", c: s.label + ": " + s.count },',
+            '            { t: "button", c: "+", a: {',
+            '              onclick: function() {',
+            '                s.count++; bw.update(el);',
+            '                bw.pub("counter-changed");',
+            '              }',
+            '            }}',
+            '          ]',
+            '        });',
+            '      }',
+            '    }',
+            '  };',
             '}',
-            '',
-            'var a = makeCounter("A");',
-            'var b = makeCounter("B");',
-            'var c = makeCounter("C");',
             '',
             '// Summary listens via pub/sub',
             'bw.sub("counter-changed", function() {',
-            '  var sum = a.get("count") + b.get("count") + c.get("count");',
-            '  bw.patch(sumId, "Total: " + sum);',
+            '  var els = bw.$(".bw_lc");',
+            '  var sum = els.reduce(function(a, e) {',
+            '    return a + (e._bw_state ? e._bw_state.count || 0 : 0);',
+            '  }, 0);',
+            '  bw.patch("total", "Total: " + sum);',
             '});'
           ].join('\n')
         }
@@ -2418,7 +2424,7 @@
         },
         {
           title: bw.raw('State &amp; Reactivity'),
-          desc: bw.raw('<code>bw.component()</code> wraps a TACO in a reactive handle with <code>.get()/.set()</code> and template bindings (<code>${count}</code>). Here\'s the same counter in React and bitwrench:'),
+          desc: bw.raw('Add <code>o.state</code> and <code>o.render</code> to any TACO for reactive state. State lives at <code>el._bw_state</code>, re-render via <code>bw.update(el)</code>. Here\'s the same counter in React and bitwrench:'),
           code: null  // will use codeComparison tabs
         },
         {
@@ -2481,20 +2487,25 @@
         {
           label: 'Bitwrench',
           code: [
-            'var counter = bw.component({',
+            'bw.DOM("#counter", {',
             '  t: "div",',
-            '  c: [',
-            '    { t: "h4", c: "Count: ${count}" },',
-            '    { t: "button", c: "Increment", a: {',
-            '      onclick: function() {',
-            '        counter.set("count",',
-            '          counter.get("count") + 1);',
-            '      }',
-            '    }}',
-            '  ],',
-            '  o: { state: { count: 0 } }',
-            '});',
-            'bw.DOM("#counter", counter);'
+            '  o: {',
+            '    state: { count: 0 },',
+            '    render: function(el) {',
+            '      var s = el._bw_state;',
+            '      bw.DOM(el, {',
+            '        t: "div", c: [',
+            '          { t: "h4", c: "Count: " + s.count },',
+            '          { t: "button", c: "Increment", a: {',
+            '            onclick: function() {',
+            '              s.count++; bw.update(el);',
+            '            }',
+            '          }}',
+            '        ]',
+            '      });',
+            '    }',
+            '  }',
+            '});'
           ].join('\n')
         }
       ]);
@@ -2532,10 +2543,10 @@
         { feature: 'HTML in JS?',      htmljs: 'Strings',          react: 'JSX (compiled)',     vue: 'Templates',      svelte: 'Templates',       bootstrap: 'HTML + classes',    solidjs: 'JSX (compiled)',       bitwrench: 'Objects (native)' },
         { feature: 'Attribute names',   htmljs: 'class, for',       react: 'className, htmlFor', vue: 'class, for',     svelte: 'class, for',     bootstrap: 'class, for',        solidjs: 'class, for',           bitwrench: 'class, for' },
         { feature: 'Event handlers',    htmljs: 'addEventListener', react: 'onClick (synthetic)', vue: '@click',        svelte: 'on:click',       bootstrap: 'addEventListener',  solidjs: 'onClick (native)',     bitwrench: 'onclick (function ref)' },
-        { feature: 'State management', htmljs: 'Manual variables', react: 'useState / Redux',   vue: 'ref / Pinia',    svelte: 'let / stores',   bootstrap: 'Manual variables',  solidjs: 'createSignal / stores', bitwrench: 'bw.component() .get/.set' },
+        { feature: 'State management', htmljs: 'Manual variables', react: 'useState / Redux',   vue: 'ref / Pinia',    svelte: 'let / stores',   bootstrap: 'Manual variables',  solidjs: 'createSignal / stores', bitwrench: 'o.state + o.render / bw.update()' },
         { feature: 'CSS generation',   htmljs: 'Manual / SASS',    react: 'CSS-in-JS / styled', vue: 'Scoped <style>', svelte: 'Scoped <style>', bootstrap: 'Utility classes',   solidjs: 'CSS-in-JS / styled',  bitwrench: 'bw.css() from JS objects' },
         { feature: 'Data to UI',        htmljs: 'Manual DOM ops',   react: '.map() in JSX',     vue: 'v-for directive', svelte: '{#each} block',  bootstrap: 'Manual DOM ops',    solidjs: '<For> component',     bitwrench: '.map() in objects' },
-        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~40 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bootstrap: '~25 KB CSS',       solidjs: '~7 KB',               bitwrench: '~20 KB' },
+        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~44 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bootstrap: '~25 KB CSS',       solidjs: '~7 KB',               bitwrench: '~39 KB' },
         { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bootstrap: 'No',                solidjs: 'No',                  bitwrench: bw.raw('Yes &mdash; any language') }
       ];
 
@@ -2575,13 +2586,13 @@
     (function() {
       var rows = [
         { op: 'Render element',         react: '<div className="card">Hi</div>',               vue: '<div class="card">Hi</div>',              vanilla: "el.innerHTML = '<div>Hi</div>'",          svelte: '<div class="card">Hi</div>',           solid: '<div class="card">Hi</div>',            bw: "bw.DOM('#x', {t:'div', a:{class:'card'}, c:'Hi'})" },
-        { op: 'Update text',            react: "setText('new') via useState",                   vue: "msg.value = 'new'",                        vanilla: "el.textContent = 'new'",                  svelte: "msg = 'new'",                          solid: "setMsg('new')",                          bw: "handle.set('msg', 'new')" },
+        { op: 'Update text',            react: "setText('new') via useState",                   vue: "msg.value = 'new'",                        vanilla: "el.textContent = 'new'",                  svelte: "msg = 'new'",                          solid: "setMsg('new')",                          bw: "el._bw_state.msg = 'new'; bw.update(el)" },
         { op: 'Conditional render',      react: '{show && <Comp/>}',                             vue: 'v-if="show"',                              vanilla: "if (show) el.style.display = ''",         svelte: '{#if show}<Comp/>{/if}',               solid: '<Show when={show}>...</Show>',           bw: "show ? taco : null in c: array" },
         { op: 'List rendering',          react: '{items.map(i => <Li key/>)}',                   vue: 'v-for="i in items" :key',                  vanilla: 'el.innerHTML = items.map(...)',            svelte: '{#each items as i (i.id)}',            solid: '<For each={items}>...</For>',            bw: "c: items.map(function(i) { return {t:'li', c:i.name} })" },
         { op: 'Event handler',           react: 'onClick={handler}',                             vue: '@click="handler"',                         vanilla: "el.addEventListener('click', fn)",        svelte: 'onclick={handler}',                    solid: 'onClick={handler}',                      bw: 'a: { onclick: fn }' },
         { op: 'State declaration',       react: 'const [x, setX] = useState(0)',                 vue: 'const x = ref(0)',                         vanilla: 'let x = 0',                               svelte: 'let x = $state(0)',                    solid: 'const [x, setX] = createSignal(0)',      bw: 'o: { state: { x: 0 } }' },
-        { op: 'State update',            react: 'setX(42)',                                      vue: 'x.value = 42',                             vanilla: 'x = 42; render()',                        svelte: 'x = 42',                               solid: 'setX(42)',                               bw: "handle.set('x', 42)" },
-        { op: 'Computed / derived',      react: 'useMemo(() => x * 2, [x])',                    vue: 'computed(() => x.value * 2)',              vanilla: 'function get() { return x * 2; }',        svelte: 'let d = $derived(x * 2)',               solid: 'const d = () => x() * 2',                bw: "c: '${x}' with '${x * 2}'" },
+        { op: 'State update',            react: 'setX(42)',                                      vue: 'x.value = 42',                             vanilla: 'x = 42; render()',                        svelte: 'x = 42',                               solid: 'setX(42)',                               bw: "el._bw_state.x = 42; bw.update(el)" },
+        { op: 'Computed / derived',      react: 'useMemo(() => x * 2, [x])',                    vue: 'computed(() => x.value * 2)',              vanilla: 'function get() { return x * 2; }',        svelte: 'let d = $derived(x * 2)',               solid: 'const d = () => x() * 2',                bw: "Compute in o.render: c: s.x * 2" },
         { op: 'Side effect',             react: 'useEffect(() => {...}, [])',                    vue: 'onMounted(() => {...})',                    vanilla: "window.addEventListener('load', fn)",     svelte: '$effect(() => {...})',                  solid: 'onMount(() => {...})',                    bw: 'o: { mounted: function(el) {...} }' },
         { op: 'Cleanup on unmount',      react: 'useEffect return cleanup',                     vue: 'onUnmounted(() => {...})',                  vanilla: 'manual',                                  svelte: 'return () => {...} in $effect',         solid: 'onCleanup(() => {...})',                  bw: 'o: { unmount: fn } or bw.cleanup(el)' },
         { op: 'Style inline',            react: "style={{color: 'red'}}",                       vue: ':style="{color: \'red\'}"',                vanilla: "el.style.color = 'red'",                  svelte: 'style="color:red"',                    solid: "style={{color: 'red'}}",                 bw: "a: { style: bw.s({ color: 'red' }) }" },
@@ -2592,10 +2603,10 @@
         { op: 'Animation',               react: '@keyframes in CSS file',                       vue: '@keyframes in <style>',                    vanilla: '@keyframes in CSS',                        svelte: 'animate:fn or CSS',                    solid: 'CSS or WAAPI',                           bw: "bw.css({ '@keyframes fade': { '0%': {opacity:'0'} } })" },
         { op: 'Raw HTML',                react: 'dangerouslySetInnerHTML',                      vue: 'v-html="str"',                             vanilla: 'el.innerHTML = str',                       svelte: '{@html str}',                          solid: 'innerHTML={str}',                        bw: 'bw.raw(str) in c:' },
         { op: 'Cross-component events',  react: 'Context + Zustand',                            vue: 'provide/inject or Pinia',                  vanilla: 'CustomEvent / EventTarget',                svelte: 'stores',                               solid: 'Context or signals',                     bw: 'bw.pub(topic, data) / bw.sub(topic, fn)' },
-        { op: 'Form input binding',      react: 'value={x} onChange={...}',                     vue: 'v-model="x"',                              vanilla: 'input.value',                              svelte: 'bind:value={x}',                       solid: 'value={x()} onInput={...}',              bw: "bw.$('#id')[0].value or bw.makeInput({oninput:fn})" },
+        { op: 'Form input binding',      react: 'value={x} onChange={...}',                     vue: 'v-model="x"',                              vanilla: 'input.value',                              svelte: 'bind:value={x}',                       solid: 'value={x()} onInput={...}',              bw: "a: { value: x, oninput: fn } or bw.$('#id')[0].value" },
         { op: 'Theme / design tokens',   react: 'ThemeProvider / CSS vars',                     vue: 'CSS vars / provide',                       vanilla: 'CSS custom properties',                    svelte: 'CSS vars',                             solid: 'CSS vars / createContext',               bw: "bw.loadStyles({ primary: '#hex' })" },
         { op: 'Build step required',     react: 'Yes (Babel/Vite/webpack)',                     vue: 'Yes (Vite or Vue CLI)',                    vanilla: 'No',                                       svelte: 'Yes (Svelte compiler)',                solid: 'Yes (Vite/Babel)',                       bw: 'No' },
-        { op: 'Bundle size',             react: '~45 KB (React + ReactDOM)',                    vue: '~33 KB (Vue 3)',                           vanilla: '0 KB',                                     svelte: '~2 KB (runtime)',                      solid: '~7 KB',                                  bw: '~39 KB (includes 50+ components + CSS gen)' }
+        { op: 'Bundle size',             react: '~44 KB (React + ReactDOM)',                    vue: '~33 KB (Vue 3)',                           vanilla: '0 KB',                                     svelte: '~5 KB (runtime)',                      solid: '~7 KB',                                  bw: '~39 KB (includes 50+ components + CSS gen)' }
       ];
 
       var headers = ['Operation', 'React', 'Vue 3', 'Vanilla JS', 'Svelte 5', 'SolidJS', 'Bitwrench'];

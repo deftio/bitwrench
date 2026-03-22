@@ -39,8 +39,9 @@ object with an API. The rendering substrate (GDI, AWT, Win32) is an
 implementation detail the user doesn't touch.**
 
 Bitwrench via TACO brings this philosophy to the web. The rendering substrate is
-JS + DOM + CSS. The component API is get/set/on/sub. The TACO object is
-the component definition — like a window class in MFC or a bean in Swing.
+JS + DOM + CSS. The component API is `el.bw.*` methods (handle) and
+`el.bw.setX()`/`el.bw.getX()` (slots). The TACO object is the component
+definition — like a window class in MFC or a bean in Swing.
 
 Because bitwrench uses {taco} object some other advantages are aviaible:
 * css handling - the need for tailwind or less/sass is not required because just as
@@ -93,58 +94,67 @@ drifted.
 
 ## Principle 2: Components own their rendering
 
-A BCCL `make*()` factory returns a self-contained component object.
-Internal state changes trigger internal re-renders. The user never
+A BCCL `make*()` factory returns a self-contained component TACO with
+`o.handle` methods. The user calls named methods on `el.bw` and the
+component handles its own DOM updates internally. The user never
 manually updates the DOM for a component's internal state.
 
 ```
-WRONG:  el._bw_state.count++; bw.update(el);    // user is the message pump, its allowed but not preferred
-RIGHT:  counter.set('count', 42);                // component repaints itself
+WRONG:  el.querySelector('.bw_card_title').textContent = 'New';  // raw DOM manipulation
+RIGHT:  el.bw.setTitle('New');                                    // component handles it
 ```
 
 This is the MFC/Swing model: you call `mywindow.SetWindowText("hello")` and the
 control repaints. You don't call `InvalidateRect()` yourself. You don't
 reach into the device context. The control owns its rendering.
 
-The user interacts through the component API: `get()`, `set()`, `on()`,
-`sub()`. Reaching into `el._bw_state` is like calling `SendMessage(hwnd,
+The user interacts through the component's `el.bw` namespace: named
+methods from `o.handle` and auto-generated setters/getters from `o.slots`.
+Reaching into the DOM directly is like calling `SendMessage(hwnd,
 WM_SETTEXT)` directly — possible, but it means the abstraction failed.
 
 **The low-level layer stays**: `o.render`, `bw.update()`, `bw.patch()`,
 `bw.DOM()` are the "Win32 API" of bitwrench. They exist for custom
-components and escape hatches. But BCCL components should never require
-the user to call them. If a user needs `bw.update()` to make a standard
-component work, that's a bug in the component, not a missing step by
-the user.
+components and escape hatches. BCCL handle methods use these internally.
+For custom stateful components, `o.state` + `o.render` + `bw.update()`
+is the standard pattern.
 
-### How component reactivity should work
+### How component interaction works
 
 ```javascript
-// The factory returns a component handle, not raw DOM:
-var card = bw.makeCard({
-  title: 'Users Online',
-  content: '${count}',                          // reactive binding
-  variant: '${count > 100 ? "success" : "warning"}'  // derived
+// The factory returns a TACO with o.handle/o.slots:
+var carousel = bw.makeCarousel({
+  items: slides,
+  autoPlay: true,
+  interval: 3000
 });
 
-// Mount it:
-bw.DOM('#target', card);
+// Mount it — bw.mount() returns the root element:
+var el = bw.mount('#target', carousel);
 
-// Interact through the API:
-card.set('count', 42);       // card re-renders internally, no bw.update()
-card.get('count');            // → 42
-card.on('click', handler);   // event interface
-card.destroy();              // cleanup
+// Interact through el.bw methods (from o.handle):
+el.bw.goToSlide(2);         // carousel updates internally
+el.bw.next();                // advance one slide
+el.bw.pause();               // stop auto-play
+el.bw.getActiveIndex();      // => 2
+
+// Slots (from o.slots) — auto-generated setters/getters:
+var card = bw.mount('#info', bw.makeCard({ title: 'Stats', content: '0' }));
+card.bw.setTitle('Updated');           // updates the title element
+card.bw.setContent({ t: 'b', c: '42' }); // accepts TACO objects
+card.bw.getTitle();                    // => 'Updated'
 
 // Cross-component via pub/sub:
-card.sub('data:update', function(d) { card.set('count', d.n); });
-bw.pub('data:update', { n: 99 });   // card auto-updates
+bw.sub('data:update', function(d) {
+  card.bw.setContent(String(d.n));
+}, card);                              // auto-cleanup on card removal
+bw.pub('data:update', { n: 99 });     // card updates
 ```
 
-The `make*()` factory compiles template strings into internal render
-functions that know which state keys they depend on. State mutations
-trigger only the affected DOM nodes. The user never thinks about DOM —
-they think about component state and component APIs.
+The `make*()` factory builds a TACO with `o.handle` methods that
+encapsulate the component's internal update logic. Handle methods
+call `bw.update()`, manipulate DOM via slots, or use closures over
+internal state. The user thinks about component methods, not DOM.
 
 ---
 
@@ -195,11 +205,11 @@ Not the goal: Bootstrap 3 (grab-bag of unrelated CSS classes), jQuery UI
 
 ### The theme generator for included bitwrench components (BCCL)
 
-`bw.generateTheme()` is another bitwrench differentiator — regenerate an entire
-design system from seed colors, spacing, compactness (etc). No other framework can do this as
-seamlessly. But it only works if the base components consume tokens
-consistently. A theme that changes colors but leaves spacing, shadows,
-and motion untouched is only half a design system.
+`bw.makeStyles()` / `bw.loadStyles()` is another bitwrench differentiator --
+regenerate an entire design system from seed colors, spacing, compactness (etc).
+No other framework can do this as seamlessly. But it only works if the base
+components consume tokens consistently. A theme that changes colors but leaves
+spacing, shadows, and motion untouched is only half a design system.
 
 ---
 
@@ -213,7 +223,7 @@ All bitwrench examples and BCCL components use TACO patterns:
 | `<style>` blocks | `bw.css({...})` + `bw.injectCSS()` |
 | `document.createElement()` | `bw.createDOM(taco)` |
 | `document.querySelector()` | `bw.$()` |
-| `element.addEventListener()` | `component.on()` or `bw.on()` |
+| `element.addEventListener()` | `a: { onclick: fn }` or `bw.on()` |
 | `element.style.color = 'red'` | TACO `a: { style: ... }` or CSS tokens |
 
 If you find yourself writing `document.getElementById()` or raw HTML
@@ -233,8 +243,8 @@ optimization). This is a feature — you can develop without any toolchain,
 then compile for production.
 
 **Reactivity comes from the component model (Principle 2), not from a
-compile step.** A component's `.set()` triggers re-render because the
-component was built that way, not because a compiler wired it up.
+compile step.** A component's `el.bw.method()` triggers re-render because
+the component was built that way, not because a compiler wired it up.
 
 The compile step adds performance optimizations:
 - Static template extraction (cloneNode instead of createElement)
@@ -263,11 +273,11 @@ Users work with components, not with the substrate.
 | Win32 `CreateWindowEx()` | `document.createElement()` |
 | GDI `BitBlt()`, `TextOut()` | DOM `innerHTML`, `textContent` |
 | MFC `CButton`, `CEdit` | BCCL `makeButton()`, `makeInput()` |
-| `SetWindowText()` | `component.set('text', 'hello')` |
+| `SetWindowText()` | `el.bw.setTitle('hello')` (slots) |
 | `WM_PAINT` / `OnDraw()` | `o.render` |
 | `SendMessage()` | `bw.patch()`, `bw.update()` |
 | Resource file (.rc) | TACO object literal |
-| Look-and-feel / themes | `bw.generateTheme()` |
+| Look-and-feel / themes | `bw.makeStyles()` / `bw.loadStyles()` |
 
 The user should never need to think about `addEventListener`, `classList`,
 `style.setProperty`, or `insertBefore`. These are the assembly instructions
@@ -282,7 +292,7 @@ Before writing code, ask:
 | Question | If yes | If no |
 |----------|--------|-------|
 | Am I using `document.*` directly? | Drift. Use bw.$() or TACO. | Good. |
-| Does the user need to call `bw.update()`? | Drift. Component should self-update. | Good. |
+| Does the user need `bw.update()` for a BCCL component? | Drift. `el.bw.*` methods should handle it. | Good. |
 | Am I hardcoding px/rem/hex values? | Drift. Use design tokens. | Good. |
 | Would this code break in Node (no DOM)? | Drift. TACO should be universal. | Good. |
 | Am I writing `<style>` or raw HTML in body? | Drift. Use bw.css() and TACO. | Good. |

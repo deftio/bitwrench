@@ -64,12 +64,9 @@ Every bitwrench component now uses your brand colors automatically.
 var nav = bw.makeNavbar({
   brand: 'Acme',
   items: [
-    { label: 'Features', href: '#features' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'Contact', href: '#contact' }
-  ],
-  actions: [
-    bw.makeButton({ label: 'Sign Up', variant: 'primary', size: 'sm' })
+    { text: 'Features', href: '#features' },
+    { text: 'Pricing', href: '#pricing' },
+    { text: 'Contact', href: '#contact' }
   ]
 });
 ```
@@ -131,12 +128,12 @@ var contact = {
   c: [
     { t: 'h2', c: 'Contact Us' },
     bw.makeForm({
-      fields: [
-        { name: 'name',    label: 'Name',    type: 'text',     placeholder: 'Jane Smith' },
-        { name: 'email',   label: 'Email',   type: 'email',    placeholder: 'jane@example.com' },
-        { name: 'message', label: 'Message', type: 'textarea', placeholder: 'How can we help?' }
-      ],
-      submitLabel: 'Send Message'
+      children: [
+        bw.makeFormGroup({ label: 'Name',    input: bw.makeInput({ type: 'text',  placeholder: 'Jane Smith' }) }),
+        bw.makeFormGroup({ label: 'Email',   input: bw.makeInput({ type: 'email', placeholder: 'jane@example.com' }) }),
+        bw.makeFormGroup({ label: 'Message', input: bw.makeTextarea({ placeholder: 'How can we help?' }) }),
+        bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary' })
+      ]
     })
   ]
 };
@@ -203,5 +200,5 @@ This produces a self-contained HTML file with the ocean theme baked in — works
 
 - [Component Library](component-library.md) — all 50+ `make*()` functions
 - [Theming](theming.md) — customize colors, spacing, and radius
-- [State Management](state-management.md) — add interactivity with `bw.component()`
+- [State Management](state-management.md) -- add interactivity with `o.state` + `o.render`
 - [bwserve](bwserve.md) — server-driven dynamic pages

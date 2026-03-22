@@ -1,14 +1,14 @@
 /**
- * Tests for bw._nodeMap — UUID/ID → DOM node reference cache
+ * Tests for bw._nodeMap -- UUID/ID -> DOM node reference cache
  *
  * Tests cover:
- * - Registration on createDOM (data-bw_id, id attribute)
+ * - Registration on createDOM (bw_uuid_* class, id attribute)
  * - bw._el() lookup: cache hit, cache miss with fallback, stale cleanup
  * - bw._registerNode / bw._deregisterNode
  * - bw.cleanup() removes entries
  * - bw.DOM() re-render preserves mount point, clears old children
  * - bw.patch / bw.update / bw.emit / bw.on use bw._el()
- * - _bw_refs: local parent→child refs for fast access in o.render
+ * - _bw_refs: local parent->child refs for fast access in o.render
  * - Bulk add/remove stress test
  * - Stale ref detection via parentNode check
  */
@@ -37,7 +37,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     document.body.innerHTML = '';
   });
 
-  // ─── Initialization ───────────────────────────────────────────────────
+  // --- Initialization ---
 
   describe('Initialization', function() {
     it('should exist as a plain object', function() {
@@ -50,7 +50,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── bw._el() lookup ─────────────────────────────────────────────────
+  // --- bw._el() lookup ---
 
   describe('bw._el() lookup', function() {
     it('should pass through DOM elements', function() {
@@ -70,13 +70,13 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._el('test-id'), el);
     });
 
-    it('should find element by data-bw_id from cache', function() {
-      var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'my-widget' }, c: 'test',
-        o: { state: {} }
-      });
+    it('should find element by UUID class from cache', function() {
+      var taco = { t: 'div', c: 'test', o: { state: {} } };
+      var el = bw.createDOM(taco);
       document.body.appendChild(el);
-      assert.strictEqual(bw._el('my-widget'), el);
+      var uuid = bw.getUUID(el);
+      assert.ok(uuid, 'should have bw_uuid_* class');
+      assert.strictEqual(bw._el(uuid), el);
     });
 
     it('should fall back to getElementById on cache miss', function() {
@@ -104,14 +104,15 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._el('.dot-test'), el);
     });
 
-    it('should fall back to data-bw_id attribute selector', function() {
+    it('should find element by bw_uuid_* class fallback', function() {
       var el = document.createElement('div');
-      el.setAttribute('data-bw_id', 'fallback-bwid');
+      var uuid = bw.uuid('uuid');
+      el.classList.add(uuid);
       document.body.appendChild(el);
-      // Not in cache, should fall back
-      assert.strictEqual(bw._el('fallback-bwid'), el);
+      // Not in cache, should fall back to class selector
+      assert.strictEqual(bw._el(uuid), el);
       // Should now be cached
-      assert.strictEqual(bw._nodeMap['fallback-bwid'], el);
+      assert.strictEqual(bw._nodeMap[uuid], el);
     });
 
     it('should return null when element not found anywhere', function() {
@@ -146,10 +147,10 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── bw._registerNode / bw._deregisterNode ───────────────────────────
+  // --- bw._registerNode / bw._deregisterNode ---
 
   describe('bw._registerNode / bw._deregisterNode', function() {
-    it('should register under bwId', function() {
+    it('should register under uuid', function() {
       var el = document.createElement('div');
       bw._registerNode(el, 'reg-test');
       assert.strictEqual(bw._nodeMap['reg-test'], el);
@@ -162,15 +163,15 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._nodeMap['html-id-reg'], el);
     });
 
-    it('should register under both bwId and id', function() {
+    it('should register under both uuid and id', function() {
       var el = document.createElement('div');
       el.id = 'both-id';
-      bw._registerNode(el, 'both-bwid');
+      bw._registerNode(el, 'both-uuid');
       assert.strictEqual(bw._nodeMap['both-id'], el);
-      assert.strictEqual(bw._nodeMap['both-bwid'], el);
+      assert.strictEqual(bw._nodeMap['both-uuid'], el);
     });
 
-    it('should deregister bwId entry', function() {
+    it('should deregister uuid entry', function() {
       var el = document.createElement('div');
       bw._registerNode(el, 'dereg-test');
       assert.strictEqual(bw._nodeMap['dereg-test'], el);
@@ -192,14 +193,14 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._nodeMap['null-test'], undefined);
     });
 
-    it('should handle null bwId gracefully', function() {
+    it('should handle null uuid gracefully', function() {
       var el = document.createElement('div');
       bw._deregisterNode(el, null);
       // Should not throw
     });
   });
 
-  // ─── createDOM registration ───────────────────────────────────────────
+  // --- createDOM registration ---
 
   describe('createDOM registration', function() {
     it('should register element with lifecycle hooks under auto-generated uuid', function() {
@@ -208,18 +209,18 @@ describe('Node Map Cache (bw._nodeMap)', function() {
         o: { state: { count: 0 } }
       });
       document.body.appendChild(el);
-      var bwId = el.getAttribute('data-bw_id');
-      assert.ok(bwId, 'should have data-bw_id');
-      assert.strictEqual(bw._nodeMap[bwId], el);
+      var uuid = bw.getUUID(el);
+      assert.ok(uuid, 'should have bw_uuid_* class');
+      assert.strictEqual(bw._nodeMap[uuid], el);
+      assert.ok(el.classList.contains('bw_lc'), 'should have bw_lc marker class');
     });
 
-    it('should register element with explicit data-bw_id', function() {
-      var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'explicit-id' }, c: 'test',
-        o: { state: {} }
-      });
+    it('should register element with explicit UUID via assignUUID', function() {
+      var taco = { t: 'div', c: 'test', o: { state: {} } };
+      var uuid = bw.assignUUID(taco);
+      var el = bw.createDOM(taco);
       document.body.appendChild(el);
-      assert.strictEqual(bw._nodeMap['explicit-id'], el);
+      assert.strictEqual(bw._nodeMap[uuid], el);
     });
 
     it('should register element with id attribute', function() {
@@ -228,41 +229,35 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(bw._nodeMap['html-id-create'], el);
     });
 
-    it('should register element with both id and data-bw_id', function() {
-      var el = bw.createDOM({
+    it('should register element with both id and UUID', function() {
+      var taco = {
         t: 'div',
-        a: { id: 'dual-id', 'data-bw_id': 'dual-bwid' },
+        a: { id: 'dual-id' },
         c: 'test',
         o: { state: {} }
-      });
+      };
+      var el = bw.createDOM(taco);
       document.body.appendChild(el);
+      var uuid = bw.getUUID(el);
       assert.strictEqual(bw._nodeMap['dual-id'], el);
-      assert.strictEqual(bw._nodeMap['dual-bwid'], el);
+      assert.ok(bw._nodeMap[uuid], 'UUID should be cached');
     });
 
-    it('should register data-bw_id even without lifecycle hooks', function() {
-      var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'no-lifecycle' }, c: 'test'
-      });
-      document.body.appendChild(el);
-      assert.strictEqual(bw._nodeMap['no-lifecycle'], el);
-    });
-
-    it('should not register plain elements without id or data-bw_id', function() {
+    it('should not register plain elements without id or lifecycle', function() {
       var mapSizeBefore = Object.keys(bw._nodeMap).length;
       bw.createDOM({ t: 'span', c: 'anonymous' });
       assert.equal(Object.keys(bw._nodeMap).length, mapSizeBefore);
     });
   });
 
-  // ─── _bw_refs: local parent→child refs ────────────────────────────────
+  // --- _bw_refs: local parent->child refs ---
 
-  describe('_bw_refs (local parent→child refs)', function() {
-    it('should build refs for children with data-bw_id', function() {
+  describe('_bw_refs (local parent->child refs)', function() {
+    it('should build refs for children with id attribute', function() {
       var el = bw.createDOM({
         t: 'div', c: [
-          { t: 'h2', a: { 'data-bw_id': 'title' }, c: 'Hello' },
-          { t: 'span', a: { 'data-bw_id': 'count' }, c: '0' }
+          { t: 'h2', a: { id: 'title' }, c: 'Hello' },
+          { t: 'span', a: { id: 'count' }, c: '0' }
         ]
       });
       assert.ok(el._bw_refs, 'parent should have _bw_refs');
@@ -271,16 +266,17 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(el._bw_refs['count'].textContent, '0');
     });
 
-    it('should build refs for children with id attribute', function() {
+    it('should build refs for children with UUID', function() {
+      var child1 = { t: 'p', c: 'First' };
+      var child2 = { t: 'p', c: 'Second' };
+      var uuid1 = bw.assignUUID(child1);
+      var uuid2 = bw.assignUUID(child2);
       var el = bw.createDOM({
-        t: 'div', c: [
-          { t: 'p', a: { id: 'para-1' }, c: 'First' },
-          { t: 'p', a: { id: 'para-2' }, c: 'Second' }
-        ]
+        t: 'div', c: [child1, child2]
       });
       assert.ok(el._bw_refs);
-      assert.strictEqual(el._bw_refs['para-1'].textContent, 'First');
-      assert.strictEqual(el._bw_refs['para-2'].textContent, 'Second');
+      assert.strictEqual(el._bw_refs[uuid1].textContent, 'First');
+      assert.strictEqual(el._bw_refs[uuid2].textContent, 'Second');
     });
 
     it('should not create _bw_refs when no children have ids', function() {
@@ -297,8 +293,8 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       var el = bw.createDOM({
         t: 'div', c: [
           {
-            t: 'div', a: { 'data-bw_id': 'wrapper' }, c: [
-              { t: 'span', a: { 'data-bw_id': 'deep-child' }, c: 'deep' }
+            t: 'div', a: { id: 'wrapper' }, c: [
+              { t: 'span', a: { id: 'deep-child' }, c: 'deep' }
             ]
           }
         ]
@@ -313,9 +309,8 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       var rendered = false;
       var el = bw.createDOM({
         t: 'div',
-        a: { 'data-bw_id': 'card' },
         c: [
-          { t: 'span', a: { 'data-bw_id': 'val' }, c: '0' }
+          { t: 'span', a: { id: 'val' }, c: '0' }
         ],
         o: {
           state: { count: 0 },
@@ -338,57 +333,61 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('should handle single child TACO (not array) with id', function() {
       var el = bw.createDOM({
         t: 'div',
-        c: { t: 'span', a: { 'data-bw_id': 'only-child' }, c: 'alone' }
+        c: { t: 'span', a: { id: 'only-child' }, c: 'alone' }
       });
       assert.ok(el._bw_refs);
       assert.strictEqual(el._bw_refs['only-child'].textContent, 'alone');
     });
   });
 
-  // ─── cleanup() deregistration ─────────────────────────────────────────
+  // --- cleanup() deregistration ---
 
   describe('cleanup() deregistration', function() {
-    it('should remove data-bw_id entries from nodeMap', function() {
+    it('should remove UUID entries from nodeMap', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'cleanup-test' }, c: 'bye',
+        t: 'div', c: 'bye',
         o: { state: {} }
       });
       document.body.appendChild(el);
-      assert.strictEqual(bw._nodeMap['cleanup-test'], el);
+      var uuid = bw.getUUID(el);
+      assert.ok(uuid);
+      assert.strictEqual(bw._nodeMap[uuid], el);
       bw.cleanup(el);
-      assert.strictEqual(bw._nodeMap['cleanup-test'], undefined);
+      assert.strictEqual(bw._nodeMap[uuid], undefined);
     });
 
     it('should remove id attribute entries from nodeMap', function() {
       var el = bw.createDOM({
-        t: 'div', a: { id: 'cleanup-id', 'data-bw_id': 'cleanup-bwid' },
+        t: 'div', a: { id: 'cleanup-id' },
         c: 'bye', o: { state: {} }
       });
       document.body.appendChild(el);
+      var uuid = bw.getUUID(el);
       assert.strictEqual(bw._nodeMap['cleanup-id'], el);
-      assert.strictEqual(bw._nodeMap['cleanup-bwid'], el);
+      assert.ok(bw._nodeMap[uuid]);
       bw.cleanup(el);
       assert.strictEqual(bw._nodeMap['cleanup-id'], undefined);
-      assert.strictEqual(bw._nodeMap['cleanup-bwid'], undefined);
+      assert.strictEqual(bw._nodeMap[uuid], undefined);
     });
 
     it('should remove child entries from nodeMap', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'parent-clean' }, c: [
-          { t: 'span', a: { 'data-bw_id': 'child-clean' }, c: 'x', o: { state: {} } }
+        t: 'div', c: [
+          { t: 'span', a: { id: 'child-clean' }, c: 'x', o: { state: {} } }
         ], o: { state: {} }
       });
       document.body.appendChild(el);
-      assert.strictEqual(bw._nodeMap['child-clean'] !== undefined, true);
+      assert.ok(bw._nodeMap['child-clean']);
+      var childUuid = bw.getUUID(el.querySelector('#child-clean'));
       bw.cleanup(el);
       assert.strictEqual(bw._nodeMap['child-clean'], undefined);
-      assert.strictEqual(bw._nodeMap['parent-clean'], undefined);
+      assert.strictEqual(bw._nodeMap[childUuid], undefined);
     });
 
     it('should clear _bw_refs on cleanup', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'refs-clean' }, c: [
-          { t: 'span', a: { 'data-bw_id': 'rc1' }, c: 'x' }
+        t: 'div', c: [
+          { t: 'span', a: { id: 'rc1' }, c: 'x' }
         ], o: { state: {} }
       });
       document.body.appendChild(el);
@@ -398,21 +397,23 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── bw.DOM() re-render ───────────────────────────────────────────────
+  // --- bw.DOM() re-render ---
 
   describe('bw.DOM() re-render', function() {
     it('should preserve mount point in cache across re-renders', function() {
       var mount = document.createElement('div');
       mount.id = 'mount';
-      mount.setAttribute('data-bw_id', 'mount-bwid');
+      var uuid = bw.uuid('uuid');
+      mount.classList.add(uuid);
+      mount.classList.add('bw_lc');
       document.body.appendChild(mount);
-      bw._registerNode(mount, 'mount-bwid');
+      bw._registerNode(mount, uuid);
 
       bw.DOM('#mount', { t: 'p', c: 'v1' });
-      assert.strictEqual(bw._nodeMap['mount-bwid'], mount);
+      assert.strictEqual(bw._nodeMap[uuid], mount);
 
       bw.DOM('#mount', { t: 'p', c: 'v2' });
-      assert.strictEqual(bw._nodeMap['mount-bwid'], mount);
+      assert.strictEqual(bw._nodeMap[uuid], mount);
     });
 
     it('should clear old child cache entries on re-render', function() {
@@ -422,14 +423,14 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
       bw.DOM('#rerender-mount', {
         t: 'div', c: [
-          { t: 'span', a: { 'data-bw_id': 'old-child' }, c: 'old', o: { state: {} } }
+          { t: 'span', a: { id: 'old-child' }, c: 'old', o: { state: {} } }
         ]
       });
       assert.ok(bw._nodeMap['old-child']);
 
       bw.DOM('#rerender-mount', {
         t: 'div', c: [
-          { t: 'span', a: { 'data-bw_id': 'new-child' }, c: 'new', o: { state: {} } }
+          { t: 'span', a: { id: 'new-child' }, c: 'new', o: { state: {} } }
         ]
       });
       assert.strictEqual(bw._nodeMap['old-child'], undefined);
@@ -448,7 +449,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── patch/update/emit/on use bw._el() ────────────────────────────────
+  // --- patch/update/emit/on use bw._el() ---
 
   describe('patch/update/emit/on use bw._el()', function() {
     it('bw.patch should resolve via cache', function() {
@@ -458,27 +459,28 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       assert.strictEqual(el.textContent, '99');
     });
 
-    it('bw.patch should resolve data-bw_id', function() {
-      var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'patch-bwid' }, c: 'old',
-        o: { state: {} }
-      });
+    it('bw.patch should resolve UUID class', function() {
+      var taco = { t: 'div', c: 'old', o: { state: {} } };
+      var el = bw.createDOM(taco);
       document.body.appendChild(el);
-      bw.patch('patch-bwid', 'new');
+      var uuid = bw.getUUID(el);
+      bw.patch(uuid, 'new');
       assert.strictEqual(el.textContent, 'new');
     });
 
-    it('bw.update should resolve via cache', function() {
+    it('bw.update should resolve via UUID cache', function() {
       var renderCount = 0;
-      var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'update-cache' }, c: '',
+      var taco = {
+        t: 'div', c: '',
         o: {
           state: { v: 1 },
           render: function() { renderCount++; }
         }
-      });
+      };
+      var el = bw.createDOM(taco);
       document.body.appendChild(el);
-      bw.update('update-cache');
+      var uuid = bw.getUUID(el);
+      bw.update(uuid);
       assert.ok(renderCount > 0, 'render should have been called');
     });
 
@@ -513,7 +515,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── Bulk add/remove stress test ──────────────────────────────────────
+  // --- Bulk add/remove stress test ---
 
   describe('Bulk operations', function() {
     it('should handle 100 element registration and cleanup', function() {
@@ -522,10 +524,13 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       document.body.appendChild(mount);
 
       var children = [];
+      var bulkIds = [];
       for (var i = 0; i < 100; i++) {
+        var id = 'bulk-' + i;
+        bulkIds.push(id);
         children.push({
           t: 'div',
-          a: { 'data-bw_id': 'bulk-' + i },
+          a: { id: id },
           c: 'item ' + i,
           o: { state: { idx: i } }
         });
@@ -533,7 +538,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
       bw.DOM('#bulk-mount', { t: 'div', c: children });
 
-      // All should be cached
+      // All should be cached by id
       for (var j = 0; j < 100; j++) {
         assert.ok(bw._nodeMap['bulk-' + j], 'bulk-' + j + ' should be cached');
       }
@@ -543,7 +548,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       for (var k = 0; k < 10; k++) {
         fewerChildren.push({
           t: 'div',
-          a: { 'data-bw_id': 'new-bulk-' + k },
+          a: { id: 'new-bulk-' + k },
           c: 'new ' + k,
           o: { state: { idx: k } }
         });
@@ -571,7 +576,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
       for (var round = 0; round < 20; round++) {
         bw.DOM('#rapid-mount', {
-          t: 'div', a: { 'data-bw_id': 'rapid-' + round }, c: 'r' + round,
+          t: 'div', a: { id: 'rapid-' + round }, c: 'r' + round,
           o: { state: {} }
         });
       }
@@ -604,19 +609,19 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── Mixed TACO hierarchies ───────────────────────────────────────────
+  // --- Mixed TACO hierarchies ---
 
   describe('Complex TACO hierarchies', function() {
     it('should register all addressable elements in a deep tree', function() {
       var el = bw.createDOM({
         t: 'div', a: { id: 'root' }, c: [
           { t: 'header', a: { id: 'hdr' }, c: [
-            { t: 'h1', a: { 'data-bw_id': 'title' }, c: 'App', o: { state: {} } }
+            { t: 'h1', a: { id: 'title' }, c: 'App', o: { state: {} } }
           ]},
           { t: 'main', a: { id: 'main' }, c: [
             { t: 'section', c: [
-              { t: 'div', a: { 'data-bw_id': 'card-1' }, c: 'Card 1', o: { state: {} } },
-              { t: 'div', a: { 'data-bw_id': 'card-2' }, c: 'Card 2', o: { state: {} } }
+              { t: 'div', a: { id: 'card-1' }, c: 'Card 1', o: { state: {} } },
+              { t: 'div', a: { id: 'card-2' }, c: 'Card 2', o: { state: {} } }
             ]}
           ]},
           { t: 'footer', a: { id: 'ftr' }, c: 'Footer' }
@@ -624,7 +629,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       });
       document.body.appendChild(el);
 
-      // All id and data-bw_id elements should be cached
+      // All id elements should be cached
       assert.ok(bw._nodeMap['root']);
       assert.ok(bw._nodeMap['hdr']);
       assert.ok(bw._nodeMap['title']);
@@ -637,9 +642,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     it('should build _bw_refs across nested structure', function() {
       var el = bw.createDOM({
         t: 'div', c: [
-          { t: 'div', a: { 'data-bw_id': 'panel' }, c: [
-            { t: 'span', a: { 'data-bw_id': 'label' }, c: 'Name:' },
-            { t: 'span', a: { 'data-bw_id': 'value' }, c: 'Alice' }
+          { t: 'div', a: { id: 'panel' }, c: [
+            { t: 'span', a: { id: 'label' }, c: 'Name:' },
+            { t: 'span', a: { id: 'value' }, c: 'Alice' }
           ]}
         ]
       });
@@ -656,9 +661,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should clean up entire hierarchy on cleanup', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'hierarchy-root' }, c: [
-          { t: 'div', a: { 'data-bw_id': 'h-child-1' }, c: [
-            { t: 'span', a: { 'data-bw_id': 'h-grandchild' }, c: 'x', o: { state: {} } }
+        t: 'div', a: { id: 'hierarchy-root' }, c: [
+          { t: 'div', a: { id: 'h-child-1' }, c: [
+            { t: 'span', a: { id: 'h-grandchild' }, c: 'x', o: { state: {} } }
           ], o: { state: {} } }
         ], o: { state: {} }
       });
@@ -676,10 +681,10 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── Edge cases ───────────────────────────────────────────────────────
+  // --- Edge cases ---
 
   describe('Edge cases', function() {
-    it('should handle element with id but no data-bw_id and no lifecycle', function() {
+    it('should handle element with id but no UUID and no lifecycle', function() {
       var el = bw.createDOM({ t: 'input', a: { id: 'my-input', type: 'text' } });
       document.body.appendChild(el);
       assert.strictEqual(bw._nodeMap['my-input'], el);
@@ -699,18 +704,18 @@ describe('Node Map Cache (bw._nodeMap)', function() {
 
     it('should handle bw.DOM with mount point found via _el cache', function() {
       var mount = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'cached-mount' }, c: 'initial',
+        t: 'div', a: { id: 'cached-mount' }, c: 'initial',
         o: { state: {} }
       });
       document.body.appendChild(mount);
 
-      // bw.DOM should find it via _el cache (data-bw_id lookup)
+      // bw.DOM should find it via _el cache (id lookup)
       var result = bw.DOM('cached-mount', { t: 'span', c: 'replaced' });
       assert.ok(result);
       assert.strictEqual(result.querySelector('span').textContent, 'replaced');
     });
 
-    it('should survive cleanup on element with no data-bw_id', function() {
+    it('should survive cleanup on element with no UUID', function() {
       var el = document.createElement('div');
       el.innerHTML = '<span>hello</span>';
       document.body.appendChild(el);
@@ -728,38 +733,40 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // ─── Integration with existing features ───────────────────────────────
+  // --- Integration with existing features ---
 
   describe('Integration with pub/sub and unmount', function() {
     it('should deregister on cleanup even when unmount callbacks exist', function() {
       var unmounted = false;
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'unmount-dereg' }, c: 'x',
+        t: 'div', c: 'x',
         o: {
           state: {},
           unmount: function() { unmounted = true; }
         }
       });
       document.body.appendChild(el);
-      assert.ok(bw._nodeMap['unmount-dereg']);
+      var uuid = bw.getUUID(el);
+      assert.ok(bw._nodeMap[uuid]);
 
       bw.cleanup(el);
       assert.ok(unmounted, 'unmount should have been called');
-      assert.strictEqual(bw._nodeMap['unmount-dereg'], undefined);
+      assert.strictEqual(bw._nodeMap[uuid], undefined);
     });
 
     it('should deregister on cleanup with pub/sub subscriptions', function() {
       var el = bw.createDOM({
-        t: 'div', a: { 'data-bw_id': 'pubsub-dereg' }, c: 'x',
+        t: 'div', c: 'x',
         o: { state: {} }
       });
       document.body.appendChild(el);
+      var uuid = bw.getUUID(el);
       // Attach a subscription
       bw.sub('test-topic', function() {}, el);
       assert.ok(el._bw_subs);
 
       bw.cleanup(el);
-      assert.strictEqual(bw._nodeMap['pubsub-dereg'], undefined);
+      assert.strictEqual(bw._nodeMap[uuid], undefined);
     });
   });
 });

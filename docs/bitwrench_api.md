@@ -4,17 +4,17 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.18 |
-| Generated | 2026-03-17 |
-| Total APIs | 105 |
+| Version | 2.0.19 |
+| Generated | 2026-03-22 |
+| Total APIs | 100 |
 | Categories | 12 |
-| bitwrench.js | 4957 lines |
-| bitwrench-bccl.js | 3619 lines |
+| bitwrench.js | 3606 lines |
+| bitwrench-bccl.js | 3793 lines |
 
 ## Table of Contents
 
 - [Core](#core) (5)
-- [DOM Generation](#dom-generation) (11)
+- [DOM Generation](#dom-generation) (10)
 - [Identifiers](#identifiers) (4)
 - [State Management](#state-management) (3)
 - [Events (DOM)](#events-dom-) (2)
@@ -24,7 +24,7 @@
 - [Browser Utilities](#browser-utilities) (4)
 - [Utilities](#utilities) (1)
 - [Function Registry](#function-registry) (5)
-- [Component](#component) (7)
+- [Component](#component) (3)
 
 ---
 
@@ -212,33 +212,24 @@ bw.DOM('#app', { t: 'div', a: { class: 'card' }, c: [ { t: 'h2', c: 'Hello' }, {
 
 ---
 
-### `bw.compileProps(handle, props = {})`
+### `bw.mount(target, taco, options)`
 
-Compile props into getter/setter functions for reactive updates. Used internally by `bw.renderComponent()`. Creates a proxy-like object where setting a property triggers `handle.onPropChange()`.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `handle` | `Object` | - Component handle |
-| `props` | `Object` | - Initial props |
-
-**Returns:** `Object` — props object with getters/setters
-
----
-
-### `bw.renderComponent(taco, options = {})`
-
-Render a TACO component and return an enhanced handle object. The handle provides compiled props, state management, child registration, and a destroy method. Used internally by `bw.createCard()`, `bw.createTable()`, etc.
+Mount a TACO into a target element and return the created root element. Like bw.DOM() but returns the root element of the TACO (not the container), giving direct access to el.bw handle methods.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `taco` | `Object` | - TACO object to render |
-| `options` | `Object` | - Render options |
+| `target` | `string|Element` | - CSS selector or DOM element |
+| `taco` | `Object` | - TACO to render |
+| `options` | `Object` | - Mount options |
 
-**Returns:** `Object` — handle with element, props, state, update(), destroy()
+**Returns:** `Element` — created root element
+
+**Example:**
+```javascript
+var el = bw.mount('#app', bw.makeCarousel({ items: slides })); el.bw.goToSlide(2); el.bw.next();
+```
 
 ---
 
@@ -391,7 +382,7 @@ Trigger re-render of a component by calling its stored `o.render` function. This
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string|Element` | - Element ID, data-bw_id, CSS selector, or DOM element |
+| `target` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element |
 
 **Returns:** `Element|null` — element, or null if not found / no render function
 
@@ -410,7 +401,7 @@ Targeted DOM update by element ID — change one element's content or attribute 
 
 | Name | Type | Description |
 |------|------|-------------|
-| `id` | `string|Element` | - Element ID, data-bw_id, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
+| `id` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
 | `content` | `string|Object` | - New text content, or TACO object to replace children |
 | `attr` | `string` | - If provided, sets this attribute instead of content |
 
@@ -452,7 +443,7 @@ Emit a custom DOM event on an element. Events are prefixed with `bw:` to avoid c
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string|Element` | - Element ID, data-bw_id, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
+| `target` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
 | `eventName` | `string` | - Event name (will be prefixed with 'bw:') |
 | `detail` | `*` | - Data to pass with the event |
 
@@ -471,7 +462,7 @@ Listen for a custom bitwrench event on a DOM element. Handler receives `(detail,
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string|Element` | - Element ID, data-bw_id, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
+| `target` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
 | `eventName` | `string` | - Event name (will be prefixed with 'bw:') |
 | `handler` | `Function` | - Called with (detail, event) |
 
@@ -2196,110 +2187,46 @@ Get a shallow copy of the function registry for inspection.
 
 ### `bw.flush()`
 
-Synchronous flush for testing and imperative code. Forces immediate re-render of all dirty components.
-
----
-
-### `bw.when(expr, tacoTrue, tacoFalse)`
-
-Conditional rendering helper. Returns a marker object that ComponentHandle detects during binding compilation. In static contexts (bw.html with state), evaluates immediately.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `expr` | `string` | - Expression string like '${loggedIn}' |
-| `tacoTrue` | `Object` | - TACO to render when truthy |
-| `tacoFalse` | `Object` | - TACO to render when falsy |
-
-**Returns:** `Object` — object with _bwWhen flag
-
----
-
-### `bw.each(expr, fn)`
-
-List rendering helper. Returns a marker object that ComponentHandle detects during binding compilation.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `expr` | `string` | - Expression string like '${items}' |
-| `fn` | `Function` | - Factory function(item, index) returning TACO |
-
-**Returns:** `Object` — object with _bwEach flag
-
----
-
-### `bw.component(taco)`
-
-Create a ComponentHandle from a TACO definition. The returned handle has .get(), .set(), .mount(), .destroy(), etc.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `taco` | `Object` | - TACO definition with {t, a, c, o} |
-
-**Returns:** `ComponentHandle` — component handle
-
-**Example:**
-```javascript
-var counter = bw.component({ t: 'div', c: [{ t: 'h3', c: 'Count: ${count}' }], o: { state: { count: 0 } } }); bw.DOM('#app', counter); counter.set('count', 42); // DOM auto-updates
-```
+No-op flush (ComponentHandle removed in v2.0.19). Kept as no-op for backward compatibility.
 
 ---
 
 ### `bw.message(target, action, data)`
 
-Dispatch a message to a component by UUID or user tag. Finds the component's DOM element, looks up its ComponentHandle, and calls the named method. This is the bitwrench equivalent of Win32 SendMessage(hwnd, msg, wParam, lParam).
+Dispatch a message to a component by UUID, CSS class, or selector. Finds the element, looks up el.bw, and calls the named method. This is the bitwrench equivalent of Win32 SendMessage(hwnd, msg, wParam, lParam).
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string` | - Component UUID (bw_uuid_*), comp ID (data-bw_comp_id), or user tag (CSS class) |
-| `action` | `string` | - Method name to call on the component |
+| `target` | `string` | - Component UUID (bw_uuid_*), CSS class, or selector |
+| `action` | `string` | - Method name to call on el.bw |
 | `data` | `*` | - Data to pass to the method |
 
 **Returns:** `boolean` — if message was dispatched successfully
 
 **Example:**
 ```javascript
-// Tag a component myDash.userTag('dashboard_prod'); // Dispatch locally bw.message('dashboard_prod', 'addAlert', { severity: 'warning', text: 'CPU spike' }); // Or from SSE handler: es.onmessage = function(e) { var msg = JSON.parse(e.data); bw.message(msg.target, msg.action, msg.data); };
+bw.message('my_carousel', 'goToSlide', 2); // Or from SSE handler: es.onmessage = function(e) { var msg = JSON.parse(e.data); bw.message(msg.target, msg.action, msg.data); };
 ```
 
 ---
 
 ### `bw.inspect(target)`
 
-Inspect a component's state, bindings, methods, and metadata. Works with DOM elements, CSS selectors, or ComponentHandle objects. Returns the ComponentHandle for console chaining.
+Inspect a DOM element's bitwrench state, handle methods, and metadata. Works with DOM elements or CSS selectors.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string|Element|ComponentHandle` | - Selector, element, or handle |
+| `target` | `string|Element` | - Selector or DOM element |
 
-**Returns:** `ComponentHandle|null` — component handle, or null if not found
+**Returns:** `Element|null` — element, or null if not found
 
 **Example:**
 ```javascript
-// In browser console, click element in Elements panel then: bw.inspect($0); // Or by selector: var h = bw.inspect('#my-dashboard'); h.set('count', 99);  // chain from returned handle
+bw.inspect('#my-carousel'); bw.inspect($0);
 ```
-
----
-
-### `bw.compile(taco)`
-
-Pre-compile a TACO definition into a factory function. The factory produces ComponentHandles with pre-compiled binding evaluators. Phase 1: validates API surface. Template cloning optimization deferred.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `taco` | `Object` | - TACO definition |
-
-**Returns:** `Function` — function(initialState?) → ComponentHandle
 
 ---

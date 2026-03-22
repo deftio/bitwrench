@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - bwcli Command-Line Tools</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
+  <script src="shared-nav.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    mountExampleNav('#example-nav', '17-bwcli.html');
+    bw.loadStyles();
+    applySiteStyles();
+
+    // =========================================================================
+    // Page-specific styles
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.console-block': {
+        background: '#1e1e1e',
+        color: '#d4d4d4',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '0.8125rem',
+        'line-height': '1.6',
+        padding: '1rem 1.25rem',
+        'border-radius': 'var(--bw_radius)',
+        'overflow-x': 'auto',
+        margin: '0.75rem 0',
+        'white-space': 'pre'
+      },
+      '.console-prompt': { color: '#569cd6' },
+      '.console-output': { color: '#9cdcfe' },
+      '.console-comment': { color: '#6a9955' },
+      '.console-string': { color: '#ce9178' },
+      '.cmd-table': {
+        width: '100%',
+        'border-collapse': 'collapse',
+        'font-size': '0.8125rem',
+        'margin-top': '0.75rem'
+      },
+      '.cmd-table th': {
+        'text-align': 'left',
+        padding: '0.5rem 0.75rem',
+        'border-bottom': '2px solid var(--bw_teal)',
+        'font-weight': '600'
+      },
+      '.cmd-table td': {
+        padding: '0.5rem 0.75rem',
+        'border-bottom': '1px solid var(--bw_card_border)',
+        'vertical-align': 'top'
+      },
+      '.cmd-table tr:last-child td': { 'border-bottom': 'none' },
+      '.cmd-table code': {
+        padding: '0.1rem 0.3rem',
+        'border-radius': '3px',
+        'font-size': '0.75rem',
+        background: 'var(--bw_teal_light, #e0f2f1)',
+        color: 'var(--bw_teal_dark, #004d40)'
+      },
+      '.arch-diagram': {
+        margin: '1.25rem 0',
+        background: 'var(--bw_code_bg)',
+        'border-radius': '8px',
+        padding: '0.75rem',
+        'overflow-x': 'auto'
+      },
+      '.arch-diagram svg': {
+        width: '100%',
+        height: 'auto',
+        display: 'block'
+      },
+      '.arch-diagram .box-rect': {
+        fill: 'var(--bw_card_bg)',
+        stroke: 'var(--bw_card_border)',
+        'stroke-width': '1.5'
+      },
+      '.arch-diagram .box-title': {
+        fill: 'var(--bw_text)',
+        'font-family': 'system-ui, sans-serif',
+        'font-size': '13px',
+        'font-weight': '600'
+      },
+      '.arch-diagram .box-line': {
+        fill: 'var(--bw_text_secondary)',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '11px'
+      },
+      '.arch-diagram .arrow-line': {
+        stroke: 'var(--bw_teal)',
+        'stroke-width': '2',
+        fill: 'none'
+      },
+      '.arch-diagram .arrow-dash': {
+        stroke: 'var(--bw_teal)',
+        'stroke-width': '2',
+        'stroke-dasharray': '6 3',
+        fill: 'none'
+      },
+      '.arch-diagram .arrow-head': {
+        fill: 'var(--bw_teal)'
+      },
+      '.arch-diagram .arrow-label': {
+        fill: 'var(--bw_code_text)',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '10.5px',
+        'font-weight': '600'
+      }
+    }));
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+    function callout(type, title, content) {
+      return {
+        t: 'div', a: { class: 'callout callout-' + type },
+        c: [
+          { t: 'h4', c: title },
+          content
+        ]
+      };
+    }
+
+    function consoleBlock(lines) {
+      return {
+        t: 'div', a: { class: 'console-block' },
+        c: bw.raw(lines.join('\n'))
+      };
+    }
+
+    // =========================================================================
+    // Section 0: What is bwcli and why does it exist?
+    // =========================================================================
+    var sectionIntro = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'What is bwcli?' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('Bitwrench is a browser-side library -- you include it in a page and build UIs with TACO objects. That works great on its own. <strong>bwcli is an optional command-line tool</strong> that opens up two new capabilities:') },
+
+          { t: 'h3', c: 'Drive a browser UI from any language' },
+          { t: 'p', c: bw.raw('Think Streamlit or Gradio, but without being locked into Python. With <code>bwcli serve</code>, any program that can print JSON -- Python, Bash, C, Rust, even a shell one-liner -- can push live updates to a browser. Your backend writes JSON to stdout. bwcli turns it into a live web page. No frontend code needed.') },
+
+          consoleBlock([
+            '<span class="console-comment"># A Python script drives a live dashboard in the browser:</span>',
+            '<span class="console-prompt">$</span> python3 sensor_monitor.py | bwcli serve --port 8080',
+            '',
+            '<span class="console-comment"># Or a shell one-liner:</span>',
+            '<span class="console-prompt">$</span> while true; do echo \'{"type":"patch","target":"#cpu","content":"\'$(top -l1 | grep CPU)\'"}\'; sleep 2; done | bwcli serve'
+          ]),
+
+          { t: 'p', c: bw.raw('This is bitwrench\'s answer to the "I have data in my backend and I want a UI" problem. Unlike Streamlit, you are not limited to Python or to a predefined widget set -- you have the full bitwrench component library and raw HTML/CSS at your disposal. Unlike Electron, there is no app to bundle -- it is a plain browser tab.') },
+
+          { t: 'h3', c: 'Debug and prototype from your terminal' },
+          { t: 'p', c: bw.raw('With <code>bwcli attach</code>, you connect to any running bitwrench page and get a REPL. From there you can inspect the DOM tree, push components, patch values, listen to events, and take screenshots -- all without touching the browser DevTools. Think of it as a terminal-first inspector.') },
+
+          consoleBlock([
+            '<span class="console-comment"># Attach to a running page and explore:</span>',
+            '<span class="console-prompt">$</span> bwcli attach',
+            '<span class="console-output">[connected] client att_1</span>',
+            '<span class="console-prompt">bw&gt;</span> /tree #app 2',
+            '<span class="console-prompt">bw&gt;</span> /mount #app card {"title":"Status","content":"OK"}',
+            '<span class="console-prompt">bw&gt;</span> /screenshot body snapshot.png'
+          ]),
+
+          callout('concept', 'bwcli is optional', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('You do <em>not</em> need bwcli to use bitwrench. If you are building a static page, a client-side app, or even a bwserve app from Node.js, the browser library is all you need. bwcli is for two specific scenarios:') },
+              { t: 'ul', c: [
+                { t: 'li', c: { t: 'strong', c: 'Your backend is not Node.js' } },
+                { t: 'li', c: bw.raw('You want to <strong>inspect/debug from a terminal</strong> instead of (or alongside) browser DevTools') }
+              ]},
+              { t: 'p', c: 'If neither applies to you, skip this page.' }
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 1: Two Modes
+    // =========================================================================
+    var sectionModes = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Two Modes' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+
+          { t: 'table', a: { class: 'cmd-table' }, c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Mode' },
+              { t: 'th', c: 'What it does' },
+              { t: 'th', c: 'When to use it' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: 'bwcli serve' } },
+                { t: 'td', c: 'Pipe server -- reads JSON messages from stdin or an input port and pushes them to connected browsers via SSE.' },
+                { t: 'td', c: 'Driving a UI from Python, Bash, C++, or any language that can write JSON to stdout or a TCP socket.' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: 'bwcli attach' } },
+                { t: 'td', c: 'Remote debugging REPL -- connects to a running bitwrench page and gives you an interactive shell for inspecting and modifying the live DOM.' },
+                { t: 'td', c: 'Debugging, prototyping components from your terminal, taking screenshots, listening to events.' }
+              ]}
+            ]}
+          ]},
+
+          callout('tip', 'Install', {
+            t: 'div', c: [
+              consoleBlock([
+                '<span class="console-prompt">$</span> npm install -g bitwrench',
+                '<span class="console-comment"># or run directly:</span>',
+                '<span class="console-prompt">$</span> npx bwcli --help'
+              ])
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 2: bwcli serve -- Pipe Server
+    // =========================================================================
+
+    // SVG diagram for serve architecture
+    var serveDiagramSvg = {
+      t: 'svg', a: { viewBox: '0 0 700 200', xmlns: 'http://www.w3.org/2000/svg' },
+      c: [
+        // Your App box
+        { t: 'rect', a: { class: 'box-rect', x: '10', y: '60', width: '160', height: '80', rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: '90', y: '90', 'text-anchor': 'middle' }, c: 'Your App' },
+        { t: 'text', a: { class: 'box-line', x: '90', y: '110', 'text-anchor': 'middle' }, c: 'Python / Bash / C++' },
+        { t: 'text', a: { class: 'box-line', x: '90', y: '125', 'text-anchor': 'middle' }, c: 'writes JSON' },
+
+        // Arrow: App -> bwcli
+        { t: 'line', a: { class: 'arrow-line', x1: '170', y1: '100', x2: '250', y2: '100' } },
+        { t: 'polygon', a: { class: 'arrow-head', points: '250,95 260,100 250,105' } },
+        { t: 'text', a: { class: 'arrow-label', x: '210', y: '92' }, c: 'stdin / TCP' },
+
+        // bwcli serve box
+        { t: 'rect', a: { class: 'box-rect', x: '260', y: '60', width: '160', height: '80', rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: '340', y: '90', 'text-anchor': 'middle' }, c: 'bwcli serve' },
+        { t: 'text', a: { class: 'box-line', x: '340', y: '110', 'text-anchor': 'middle' }, c: 'HTTP + SSE server' },
+        { t: 'text', a: { class: 'box-line', x: '340', y: '125', 'text-anchor': 'middle' }, c: ':8080 (default)' },
+
+        // Arrow: bwcli -> Browser
+        { t: 'line', a: { class: 'arrow-line', x1: '420', y1: '100', x2: '500', y2: '100' } },
+        { t: 'polygon', a: { class: 'arrow-head', points: '500,95 510,100 500,105' } },
+        { t: 'text', a: { class: 'arrow-label', x: '460', y: '92' }, c: 'SSE' },
+
+        // Browser box
+        { t: 'rect', a: { class: 'box-rect', x: '510', y: '60', width: '170', height: '80', rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: '595', y: '90', 'text-anchor': 'middle' }, c: 'Browser' },
+        { t: 'text', a: { class: 'box-line', x: '595', y: '110', 'text-anchor': 'middle' }, c: 'bitwrench client' },
+        { t: 'text', a: { class: 'box-line', x: '595', y: '125', 'text-anchor': 'middle' }, c: 'renders TACO/patch' }
+      ]
+    };
+
+    var sectionServe = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'bwcli serve -- Pipe Server' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('<code>bwcli serve</code> is a pipe server: it reads bwserve protocol messages from stdin (or an input port) and pushes them to connected browsers via SSE. This lets you drive a browser UI from <em>any language</em> that can print JSON.') },
+
+          { t: 'h3', c: 'Architecture' },
+          { t: 'div', a: { class: 'arch-diagram' },
+            c: bw.raw(bw.html(serveDiagramSvg)) },
+
+          { t: 'h3', c: 'Quick start' },
+          consoleBlock([
+            '<span class="console-comment"># Start the pipe server</span>',
+            '<span class="console-prompt">$</span> bwcli serve --port 8080',
+            '',
+            '<span class="console-comment"># Open http://localhost:8080 in your browser, then send messages:</span>',
+            '<span class="console-prompt">$</span> echo \'{"type":"replace","target":"body","html":"&lt;h1&gt;Hello from the terminal&lt;/h1&gt;"}\' | curl -X POST -d @- http://localhost:9000',
+            '',
+            '<span class="console-comment"># Or pipe from a Python script:</span>',
+            '<span class="console-prompt">$</span> python3 my_dashboard.py | bwcli serve --port 8080'
+          ]),
+
+          { t: 'h3', c: 'CLI flags' },
+          { t: 'table', a: { class: 'cmd-table' }, c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Flag' },
+              { t: 'th', c: 'Description' },
+              { t: 'th', c: 'Default' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '-p, --port <n>' } },
+                { t: 'td', c: 'HTTP port for the browser to connect to' },
+                { t: 'td', c: '8080' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '--input-port <n>' } },
+                { t: 'td', c: 'TCP port to receive messages (alternative to stdin)' },
+                { t: 'td', c: '9000' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '-t, --title <s>' } },
+                { t: 'td', c: 'Page title' },
+                { t: 'td', c: '"bwserve"' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '-v, --verbose' } },
+                { t: 'td', c: 'Show protocol details' },
+                { t: 'td', c: 'off' }
+              ]}
+            ]}
+          ]},
+
+          { t: 'h3', c: 'Sending messages' },
+          { t: 'p', c: bw.raw('Any process that can write JSON to stdout or a TCP socket can drive the UI. Each message is a bwserve protocol message (see <a href="12-bwserve-protocol.html">Protocol Reference</a>).') },
+
+          consoleBlock([
+            '<span class="console-comment"># Replace content</span>',
+            '<span class="console-prompt">$</span> echo \'{"type":"replace","target":"#app","html":"&lt;h1&gt;Dashboard&lt;/h1&gt;"}\'',
+            '',
+            '<span class="console-comment"># Patch an element by id</span>',
+            '<span class="console-prompt">$</span> echo \'{"type":"patch","target":"#counter","content":"42"}\'',
+            '',
+            '<span class="console-comment"># Python example</span>',
+            'import json, sys',
+            'msg = {"type": "replace", "target": "#app", "html": "&lt;h2&gt;Sensor: 23.5C&lt;/h2&gt;"}',
+            'print(json.dumps(msg), flush=True)'
+          ])
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 3: bwcli attach -- Remote Debugging REPL
+    // =========================================================================
+
+    // SVG diagram for attach architecture
+    var attachDiagramSvg = {
+      t: 'svg', a: { viewBox: '0 0 700 200', xmlns: 'http://www.w3.org/2000/svg' },
+      c: [
+        // Terminal box
+        { t: 'rect', a: { class: 'box-rect', x: '10', y: '60', width: '160', height: '80', rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: '90', y: '90', 'text-anchor': 'middle' }, c: 'Terminal' },
+        { t: 'text', a: { class: 'box-line', x: '90', y: '110', 'text-anchor': 'middle' }, c: 'bwcli attach' },
+        { t: 'text', a: { class: 'box-line', x: '90', y: '125', 'text-anchor': 'middle' }, c: 'REPL prompt' },
+
+        // Arrow: Terminal -> bwserve (bidirectional)
+        { t: 'line', a: { class: 'arrow-line', x1: '170', y1: '95', x2: '250', y2: '95' } },
+        { t: 'polygon', a: { class: 'arrow-head', points: '250,90 260,95 250,100' } },
+        { t: 'line', a: { class: 'arrow-dash', x1: '250', y1: '105', x2: '170', y2: '105' } },
+        { t: 'polygon', a: { class: 'arrow-head', points: '170,100 160,105 170,110' } },
+        { t: 'text', a: { class: 'arrow-label', x: '195', y: '88' }, c: 'commands' },
+        { t: 'text', a: { class: 'arrow-label', x: '200', y: '122' }, c: 'results' },
+
+        // bwserve box
+        { t: 'rect', a: { class: 'box-rect', x: '260', y: '60', width: '160', height: '80', rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: '340', y: '90', 'text-anchor': 'middle' }, c: 'bwserve' },
+        { t: 'text', a: { class: 'box-line', x: '340', y: '110', 'text-anchor': 'middle' }, c: 'HTTP + SSE' },
+        { t: 'text', a: { class: 'box-line', x: '340', y: '125', 'text-anchor': 'middle' }, c: ':7902 (default)' },
+
+        // Arrow: bwserve -> Browser (bidirectional)
+        { t: 'line', a: { class: 'arrow-line', x1: '420', y1: '95', x2: '500', y2: '95' } },
+        { t: 'polygon', a: { class: 'arrow-head', points: '500,90 510,95 500,100' } },
+        { t: 'line', a: { class: 'arrow-dash', x1: '500', y1: '105', x2: '420', y2: '105' } },
+        { t: 'polygon', a: { class: 'arrow-head', points: '420,100 410,105 420,110' } },
+        { t: 'text', a: { class: 'arrow-label', x: '445', y: '88' }, c: 'SSE push' },
+        { t: 'text', a: { class: 'arrow-label', x: '445', y: '122' }, c: 'POST back' },
+
+        // Browser box
+        { t: 'rect', a: { class: 'box-rect', x: '510', y: '60', width: '170', height: '80', rx: '6' } },
+        { t: 'text', a: { class: 'box-title', x: '595', y: '90', 'text-anchor': 'middle' }, c: 'Browser Page' },
+        { t: 'text', a: { class: 'box-line', x: '595', y: '110', 'text-anchor': 'middle' }, c: 'attach.js script' },
+        { t: 'text', a: { class: 'box-line', x: '595', y: '125', 'text-anchor': 'middle' }, c: 'eval + report back' }
+      ]
+    };
+
+    var sectionAttach = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'bwcli attach -- Remote Debugging REPL' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('<code>bwcli attach</code> starts a bwserve instance and waits for a browser page to connect via a drop-in script. Once connected, you get an interactive REPL for evaluating JS, inspecting the DOM tree, taking screenshots, and listening to events -- all from your terminal.') },
+
+          { t: 'h3', c: 'Architecture' },
+          { t: 'div', a: { class: 'arch-diagram' },
+            c: bw.raw(bw.html(attachDiagramSvg)) },
+
+          { t: 'h3', c: 'Quick start' },
+          consoleBlock([
+            '<span class="console-comment"># 1. Start the REPL</span>',
+            '<span class="console-prompt">$</span> bwcli attach',
+            '<span class="console-output">bwcli attach v2.0.19</span>',
+            '<span class="console-output">  Server: http://localhost:7902</span>',
+            '<span class="console-output">  Drop-in: &lt;script src="http://localhost:7902/bw/attach.js"&gt;&lt;/script&gt;</span>',
+            '<span class="console-output">Waiting for connection...</span>',
+            '',
+            '<span class="console-comment"># 2. Add the script to any HTML page</span>',
+            '&lt;script src="http://localhost:7902/bw/attach.js"&gt;&lt;/script&gt;',
+            '',
+            '<span class="console-comment"># 3. Or paste in the browser console:</span>',
+            'var s=document.createElement(\'script\');',
+            's.src=\'http://localhost:7902/bw/attach.js\';',
+            'document.head.appendChild(s);'
+          ]),
+
+          { t: 'h3', c: 'Connection methods' },
+          { t: 'table', a: { class: 'cmd-table' }, c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Method' },
+              { t: 'th', c: 'How' },
+              { t: 'th', c: 'Best for' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: 'Script tag' },
+                { t: 'td', c: bw.raw('Add <code>&lt;script src="http://localhost:7902/bw/attach.js"&gt;&lt;/script&gt;</code> to your HTML') },
+                { t: 'td', c: 'Development -- always connected' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: 'Console paste' },
+                { t: 'td', c: bw.raw('Paste <code>var s=document.createElement(\'script\');s.src=\'http://localhost:7902/bw/attach.js\';document.head.appendChild(s);</code> in devtools') },
+                { t: 'td', c: 'Debugging an existing page without editing source' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: 'bwserve pages' },
+                { t: 'td', c: 'Pages served by bwcli serve already have the client script loaded' },
+                { t: 'td', c: 'When using the pipe server' }
+              ]}
+            ]}
+          ]},
+
+          { t: 'h3', c: 'CLI flags' },
+          { t: 'table', a: { class: 'cmd-table' }, c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Flag' },
+              { t: 'th', c: 'Description' },
+              { t: 'th', c: 'Default' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '-p, --port <n>' } },
+                { t: 'td', c: 'Server port' },
+                { t: 'td', c: '7902' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '--allow-screenshot' } },
+                { t: 'td', c: bw.raw('Enable <code>/screenshot</code> command (loads html2canvas in browser)') },
+                { t: 'td', c: 'off' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '-v, --verbose' } },
+                { t: 'td', c: 'Show protocol details' },
+                { t: 'td', c: 'off' }
+              ]}
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 4: Slash Commands Reference
+    // =========================================================================
+    var sectionCommands = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Slash Commands Reference' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('These commands are available in the <code>bwcli attach</code> REPL. Type any command at the <code>bw&gt;</code> prompt.') },
+
+          { t: 'table', a: { class: 'cmd-table' }, c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Command' },
+              { t: 'th', c: 'Description' },
+              { t: 'th', c: 'Example' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/tree [sel] [depth]' } },
+                { t: 'td', c: 'Print a text-based DOM tree from the given selector. Default: body, depth 3.' },
+                { t: 'td', c: { t: 'code', c: '/tree #app 2' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/screenshot [sel] [file]' } },
+                { t: 'td', c: bw.raw('Capture a screenshot to a PNG file. Requires <code>--allow-screenshot</code>.') },
+                { t: 'td', c: { t: 'code', c: '/screenshot body page.png' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/render <sel> <taco>' } },
+                { t: 'td', c: 'Render a TACO JSON object at the given selector. Replaces existing content.' },
+                { t: 'td', c: { t: 'code', c: '/render #app {"t":"h1","c":"Hi"}' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/mount <sel> <comp> [json]' } },
+                { t: 'td', c: 'Mount a BCCL component (card, button, table, etc.) at the selector with optional JSON props.' },
+                { t: 'td', c: { t: 'code', c: '/mount #app card {"title":"Hello"}' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/patch <id> <content>' } },
+                { t: 'td', c: 'Update the text content of an element by its id.' },
+                { t: 'td', c: { t: 'code', c: '/patch counter 42' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/listen <sel> <event>' } },
+                { t: 'td', c: 'Start listening for DOM events. Events print inline as they fire.' },
+                { t: 'td', c: { t: 'code', c: '/listen .bw-btn click' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/unlisten <sel> <event>' } },
+                { t: 'td', c: 'Stop listening for a previously added listener.' },
+                { t: 'td', c: { t: 'code', c: '/unlisten .bw-btn click' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/exec <code>' } },
+                { t: 'td', c: 'Execute JS in the browser without capturing the return value.' },
+                { t: 'td', c: { t: 'code', c: '/exec alert("test")' } }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'code', c: '/clients' } },
+                { t: 'td', c: 'List all connected clients and which one is active.' },
+                { t: 'td', c: { t: 'code', c: '/clients' } }
+              ]}
+            ]}
+          ]},
+
+          callout('tip', 'Plain JS expressions work too', {
+            t: 'p', c: bw.raw('Type any JS expression at the prompt and it runs in the connected browser. For example: <code>document.title</code>, <code>bw.$(\'.bw-card\').length</code>, <code>bw.version</code>.')
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 5: Worked Example -- Build and Push a Dashboard
+    // =========================================================================
+    var sectionDashboard = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Worked Example: Build and Push a Dashboard' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: 'This walkthrough shows how to build a live dashboard from scratch using only the bwcli attach REPL -- no editor, no page reload.' },
+
+          { t: 'h3', c: 'Step 1: Start attach and connect a page' },
+          consoleBlock([
+            '<span class="console-prompt">$</span> bwcli attach --allow-screenshot',
+            '<span class="console-output">bwcli attach v2.0.19</span>',
+            '<span class="console-output">  Server: http://localhost:7902</span>',
+            '<span class="console-output">Waiting for connection...</span>',
+            '',
+            '<span class="console-comment"># Open any bitwrench page and add the attach script,</span>',
+            '<span class="console-comment"># or create a minimal HTML file:</span>',
+            '&lt;!DOCTYPE html&gt;',
+            '&lt;html&gt;&lt;body&gt;',
+            '  &lt;script src="http://localhost:7902/bw/attach.js"&gt;&lt;/script&gt;',
+            '  &lt;div id="app"&gt;&lt;/div&gt;',
+            '&lt;/body&gt;&lt;/html&gt;',
+            '',
+            '<span class="console-output">[connected] client att_1</span>'
+          ]),
+
+          { t: 'h3', c: 'Step 2: Render a layout with addressable elements' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /render #app {"t":"div","c":[{"t":"h2","c":"Dashboard"},{"t":"div","a":{"id":"stats"},"c":[{"t":"span","a":{"id":"users"},"c":"Users: 0"},{"t":"span","a":{"id":"orders"},"c":" | Orders: 0"}]}]}',
+            '<span class="console-output">Rendered at #app</span>'
+          ]),
+
+          { t: 'h3', c: 'Step 3: Patch individual values' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /patch users "Users: 342"',
+            '<span class="console-output">Patched users</span>',
+            '',
+            '<span class="console-prompt">bw&gt;</span> /patch orders " | Orders: 28"',
+            '<span class="console-output">Patched orders</span>'
+          ]),
+
+          { t: 'h3', c: 'Step 4: Mount a BCCL component' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /mount #app card {"title":"System Status","content":"All systems operational"}',
+            '<span class="console-output">Mounted card at #app</span>'
+          ]),
+
+          { t: 'h3', c: 'Step 5: Inspect and listen' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /tree #app 2',
+            '<span class="console-output">div#app</span>',
+            '<span class="console-output">  div</span>',
+            '<span class="console-output">    h2</span>',
+            '<span class="console-output">    div#stats</span>',
+            '<span class="console-output">  div.bw-card</span>',
+            '',
+            '<span class="console-prompt">bw&gt;</span> /listen .bw-btn click',
+            '<span class="console-output">Listening for click on .bw-btn</span>',
+            '<span class="console-comment"># Now any button click in the page prints here</span>'
+          ]),
+
+          { t: 'h3', c: 'Step 6: Take a screenshot' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /screenshot body dashboard.png',
+            '<span class="console-output">Capturing body ...</span>',
+            '<span class="console-output">Saved: dashboard.png (1024x768, 45231 bytes)</span>'
+          ]),
+
+          callout('concept', 'The pattern', {
+            t: 'p', c: bw.raw('<code>/render</code> lays out the structure with ids. <code>/patch</code> updates individual values. <code>/mount</code> adds BCCL components. <code>/tree</code> verifies the structure. <code>/listen</code> monitors events. <code>/screenshot</code> captures the result. This is the full bwcli workflow.')
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 6: Worked Example -- Debug an Existing Page
+    // =========================================================================
+    var sectionDebug = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Worked Example: Debug an Existing Page' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'p', a: { class: 'intro-text' },
+            c: 'You can attach to any running bitwrench page (or any web page) to inspect and debug from your terminal.' },
+
+          { t: 'h3', c: 'Connect to a running page' },
+          consoleBlock([
+            '<span class="console-comment"># Start attach</span>',
+            '<span class="console-prompt">$</span> bwcli attach --allow-screenshot',
+            '',
+            '<span class="console-comment"># In the browser console of the page you want to debug:</span>',
+            'var s=document.createElement(\'script\');',
+            's.src=\'http://localhost:7902/bw/attach.js\';',
+            'document.head.appendChild(s);',
+            '',
+            '<span class="console-output">[connected] client att_1</span>'
+          ]),
+
+          { t: 'h3', c: 'Explore the DOM' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /tree #app 2',
+            '<span class="console-output">div#app</span>',
+            '<span class="console-output">  div.page-header</span>',
+            '<span class="console-output">  div.content-container</span>',
+            '<span class="console-output">    div.demo-section</span>',
+            '<span class="console-output">    div.demo-section</span>',
+            '',
+            '<span class="console-prompt">bw&gt;</span> document.title',
+            '<span class="console-output">"Bitwrench - Dashboard"</span>'
+          ]),
+
+          { t: 'h3', c: 'Evaluate expressions' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw-card\').length',
+            '<span class="console-output">4</span>',
+            '',
+            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_lc\').length',
+            '<span class="console-output">2</span>',
+            '',
+            '<span class="console-comment"># Find all stateful elements</span>',
+            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_lc\').map(function(el) { return { id: el.id, state: el._bw_state }; })',
+            '<span class="console-output">[{"id":"counter","state":{"count":5}},{"id":"timer","state":{"running":true}}]</span>'
+          ]),
+
+          { t: 'h3', c: 'Listen to events and take a screenshot' },
+          consoleBlock([
+            '<span class="console-prompt">bw&gt;</span> /listen button click',
+            '<span class="console-output">Listening for click on button</span>',
+            '',
+            '<span class="console-comment"># Click a button in the browser...</span>',
+            '<span class="console-output">[event] click on button -> BUTTON#submit "Submit"</span>',
+            '',
+            '<span class="console-prompt">bw&gt;</span> /screenshot body debug-capture.png',
+            '<span class="console-output">Saved: debug-capture.png (1280x960, 52103 bytes)</span>'
+          ])
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 7: See Also
+    // =========================================================================
+    var sectionSeeAlso = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'See Also' },
+        { t: 'div', a: { class: 'demo-section-body' }, c: [
+          { t: 'ul', c: [
+            { t: 'li', c: bw.raw('<a href="12-bwserve-protocol.html">bwserve Protocol Reference</a> -- the 9 message types that bwcli serve sends over SSE') },
+            { t: 'li', c: bw.raw('<a href="11-debugging.html">Debugging & Inspection</a> -- browser console debugging, console equivalents of bwcli commands') },
+            { t: 'li', c: bw.raw('<a href="14-bwserve-sandbox.html">bwserve Sandbox</a> -- interactive playground for the bwserve protocol') },
+            { t: 'li', c: bw.raw('<a href="11-debugging.html#section-9">Debug Toolkit (bwd)</a> -- inject bwcli-like commands into any browser console without running a server') }
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Assemble and mount
+    // =========================================================================
+    var pageHeader = {
+      t: 'div', a: { class: 'page-header' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+        c: [
+          { t: 'h1', c: 'bwcli -- Command-Line Tools' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'Serve UIs from any language, debug live pages from your terminal' }
+        ]
+      }
+    };
+
+    var contentWrapper = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [sectionIntro, sectionModes, sectionServe, sectionAttach, sectionCommands, sectionDashboard, sectionDebug, sectionSeeAlso]
+    };
+
+    bw.DOM('#app', [pageHeader, contentWrapper]);
+  </script>
+</body>
+</html>

@@ -19,6 +19,7 @@ const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.
 const bwserveBanner = `/*! bwserve v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const bcclBanner = `/*! bitwrench-bccl v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const utilCssBanner = `/*! bitwrench-util-css v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+const debugBanner = `/*! bitwrench-debug v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 
 // Inline plugin: redirect component imports to empty stub (for lean build)
 function stubComponents() {
@@ -479,6 +480,32 @@ const babelConfig = {
           file: 'dist/bwserve.esm.js',
           format: 'esm',
           banner: bwserveBanner,
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        resolve(),
+        commonjs(),
+      ],
+    },
+
+    // Debug toolkit — standalone IIFE (UMD only, no ESM/CJS needed)
+    {
+      input: 'src/bitwrench-debug.js',
+      output: [
+        {
+          file: 'dist/bitwrench-debug.js',
+          format: 'umd',
+          name: 'bwd',
+          banner: debugBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-debug.min.js',
+          format: 'umd',
+          name: 'bwd',
+          banner: debugBanner,
+          plugins: [terser()],
           sourcemap: true,
         },
       ],

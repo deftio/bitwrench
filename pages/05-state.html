@@ -19,6 +19,7 @@
     mountExampleNav('#example-nav', '05-state.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Page-specific CSS via bw.css() + bw.injectCSS()
@@ -182,11 +183,11 @@
           ]},
           { t: 'tr', c: [
             { t: 'td', c: [{ t: 'code', c: 'useState' }, ' / ', { t: 'code', c: 'createSignal' }, ' / ', { t: 'code', c: '$state' }] },
-            { t: 'td', c: bw.raw('<code>bw.component()</code> with <code>o.state</code> + <code>.get()/.set()</code>') }
+            { t: 'td', c: bw.raw('<code>o.state</code> + <code>o.render</code> + <code>bw.DOM()</code>') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: bw.raw('<code>render()</code> / reactive template') },
-            { t: 'td', c: bw.raw('Template bindings (<code>${count}</code>) auto-render on <code>.set()</code>') }
+            { t: 'td', c: bw.raw('<code>o.render</code> function &mdash; explicit re-render via <code>bw.update()</code>') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Virtual DOM diff / fine-grained reactivity' },
@@ -216,29 +217,28 @@
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Frameworks like React, Solid, and Svelte each have their own approach to state management &mdash; virtual DOMs, reactive signals, compiler-generated update code. They work well for the problems they were designed to solve.') },
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('Bitwrench takes a different approach. Wrap any TACO in <code>bw.component()</code> to get a reactive handle with <code>.get()</code> and <code>.set()</code>. Template bindings like <code>${count}</code> re-render automatically when you call <code>.set()</code>. There is no virtual DOM, no dependency tracking, no compiler step.') },
+            c: bw.raw('Bitwrench takes a different approach. Add <code>o.state</code> and <code>o.render</code> to any TACO to make it stateful. State lives on the element as <code>el._bw_state</code>, and <code>bw.update(el)</code> re-renders. There is no virtual DOM, no dependency tracking, no compiler step.') },
 
           callout('concept', 'Coming from another framework?', frameworkComparisonTable),
 
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('The sections below walk through each pattern from simplest to most complex. For most applications, <code>bw.component()</code> with template bindings is the recommended approach. Lower-level tools (<code>o.render</code>, <code>bw.patch()</code>) are available when you need them.') },
+            c: bw.raw('The sections below walk through each pattern from simplest to most complex. For most applications, <code>o.state</code> + <code>o.render</code> is the recommended approach. <code>bw.patch()</code> is available for targeted updates when you need them.') },
 
           callout('tip', 'The toolkit at a glance', {
             t: 'p',
             c: bw.raw(
               '<strong>Recommended:</strong><br>' +
-              '<code>bw.component(taco)</code> &mdash; wrap a TACO in a reactive ComponentHandle with <code>.get()/.set()</code><br>' +
-              '<code>${expr}</code> template bindings &mdash; auto-render on <code>.set()</code><br>' +
-              '<code>o.state</code> &mdash; initial state object<br>' +
-              '<code>o.methods</code> &mdash; named methods callable on the handle (e.g. <code>counter.reset()</code>)<br>' +
-              '<br><strong>Low-level:</strong><br>' +
-              '<code>o.render(el)</code> &mdash; render function, called on mount and on <code>bw.update()</code><br>' +
-              '<code>bw.update(el)</code> &mdash; re-run the render function and emit <code>bw:statechange</code><br>' +
-              '<code>bw.patch(id, content)</code> &mdash; targeted update of a single element (no full re-render)<br>' +
+              '<code>o.state</code> -- initial state object, stored as <code>el._bw_state</code><br>' +
+              '<code>o.render(el)</code> -- render function, called on mount and on <code>bw.update(el)</code><br>' +
+              '<code>bw.DOM(selector, taco)</code> -- mount a stateful TACO into the DOM<br>' +
+              '<code>el._bw_state</code> -- read and write state directly on the element<br>' +
+              '<br><strong>Targeted updates:</strong><br>' +
+              '<code>bw.update(el)</code> -- re-run the render function and emit <code>bw:statechange</code><br>' +
+              '<code>bw.patch(id, content)</code> -- targeted update of a single element (no full re-render)<br>' +
               '<br><strong>Communication:</strong><br>' +
-              '<code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> &mdash; decoupled cross-component messaging<br>' +
-              '<code>o.mounted(el)</code> &mdash; lifecycle hook, runs after the element is in the DOM<br>' +
-              '<code>o.unmount(el)</code> &mdash; cleanup hook, runs when the element is removed'
+              '<code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> -- decoupled cross-component messaging<br>' +
+              '<code>o.mounted(el)</code> -- lifecycle hook, runs after the element is in the DOM<br>' +
+              '<code>o.unmount(el)</code> -- cleanup hook, runs when the element is removed'
             )
           }),
 
@@ -251,7 +251,7 @@
 
           callout('concept', 'Debugging', {
             t: 'p',
-            c: bw.raw('Use <code>bw.inspect(handle)</code> to print a component\'s state, bindings, and DOM in the console. You can also select any bitwrench component in the Elements panel and type <code>$0._bw_state</code> to see its state object directly. No browser extension required.')
+            c: bw.raw('Select any bitwrench component in the Elements panel and type <code>$0._bw_state</code> to see its state object directly. No browser extension required.')
           })
         ]}
       ]
@@ -273,62 +273,72 @@
     };
 
     // =========================================================================
-    // Section 1b: ComponentHandle — The Recommended Pattern
+    // Section 1b: Stateful TACO — The Recommended Pattern
     // =========================================================================
     var componentHandleCode =
-      '// bw.component() wraps a TACO in a reactive handle\n' +
-      'var counter = bw.component({\n' +
-      '  t: \'div\', c: [\n' +
-      '    { t: \'h3\', c: \'Count: ${count}\' },\n' +
-      '    bw.makeButton({ text: \'+1\',\n' +
-      '      variant: \'primary\', size: \'sm\',\n' +
-      '      onclick: function() {\n' +
-      '        counter.set(\'count\',\n' +
-      '          counter.get(\'count\') + 1);\n' +
-      '      }\n' +
-      '    })\n' +
-      '  ],\n' +
+      '// Stateful TACO with o.state + o.render\n' +
+      'var counterTaco = {\n' +
+      '  t: \'div\',\n' +
       '  o: {\n' +
       '    state: { count: 0 },\n' +
-      '    methods: {\n' +
-      '      reset: function(comp) {\n' +
-      '        comp.set(\'count\', 0);\n' +
-      '      }\n' +
+      '    render: function(el) {\n' +
+      '      var s = el._bw_state;\n' +
+      '      bw.DOM(el, {\n' +
+      '        t: \'div\', c: [\n' +
+      '          { t: \'h3\',\n' +
+      '            c: \'Count: \' + s.count },\n' +
+      '          bw.makeButton({ text: \'+1\',\n' +
+      '            variant: \'primary\', size: \'sm\',\n' +
+      '            onclick: function() {\n' +
+      '              s.count++;\n' +
+      '              bw.update(el);\n' +
+      '            }\n' +
+      '          }),\n' +
+      '          bw.makeButton({ text: \'Reset\',\n' +
+      '            variant: \'secondary\', size: \'sm\',\n' +
+      '            onclick: function() {\n' +
+      '              s.count = 0;\n' +
+      '              bw.update(el);\n' +
+      '            }\n' +
+      '          })\n' +
+      '        ]\n' +
+      '      });\n' +
       '    }\n' +
       '  }\n' +
-      '});\n' +
+      '};\n' +
       '\n' +
       '// Mount to DOM\n' +
-      'bw.DOM(target, counter);\n' +
+      'bw.DOM(target, counterTaco);\n' +
       '\n' +
-      '// Use the handle API\n' +
-      'counter.set(\'count\', 42);\n' +
-      'counter.reset();';
+      '// After mount, state lives on the element:\n' +
+      '// var el = bw.$(\'.bw_lc\')[0];\n' +
+      '// el._bw_state.count = 42;\n' +
+      '// bw.update(el);';
 
     var sectionCH = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', c: 'ComponentHandle \u2014 The Recommended Pattern' },
+        { t: 'h2', c: 'Stateful TACO -- The Recommended Pattern' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('For most components, <code>bw.component()</code> is the recommended approach. It wraps a TACO in a <strong>ComponentHandle</strong> that provides <code>.get()</code>, <code>.set()</code>, and automatic re-rendering via template bindings.') },
+            c: bw.raw('For most components, adding <code>o.state</code> and <code>o.render</code> to a TACO is the recommended approach. State lives directly on the DOM element as <code>el._bw_state</code>, and <code>o.render(el)</code> controls how the component draws itself. Call <code>bw.update(el)</code> to re-render after changing state.') },
 
           callout('concept', 'How it works', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('<code>bw.component(taco)</code> returns a handle with:') },
+              { t: 'p', c: bw.raw('A TACO with <code>o.state</code> + <code>o.render</code>:') },
               { t: 'ul', c: [
-                { t: 'li', c: bw.raw('<code>.get(key)</code> / <code>.set(key, value)</code> &mdash; read and write state') },
-                { t: 'li', c: bw.raw('<code>.getState()</code> / <code>.setState(obj)</code> &mdash; bulk state access') },
-                { t: 'li', c: bw.raw('Template bindings (<code>${count}</code>) in content strings auto-render on <code>.set()</code>') },
-                { t: 'li', c: bw.raw('<code>o.methods</code> are promoted to the handle: <code>counter.reset()</code>') },
-                { t: 'li', c: bw.raw('<code>.mount(sel)</code> / <code>.unmount()</code> / <code>.destroy()</code> &mdash; lifecycle control') }
+                { t: 'li', c: bw.raw('<code>o.state</code> -- initial state, stored as <code>el._bw_state</code>') },
+                { t: 'li', c: bw.raw('<code>o.render(el)</code> -- called on mount and on every <code>bw.update(el)</code>') },
+                { t: 'li', c: bw.raw('<code>el._bw_state</code> -- read/write state directly on the element') },
+                { t: 'li', c: bw.raw('<code>bw.update(el)</code> -- re-renders and emits <code>bw:statechange</code>') },
+                { t: 'li', c: bw.raw('<code>bw.cleanup(el)</code> -- runs <code>o.unmount</code> and cleans up') }
               ]}
             ]
           }),
 
           callout('concept', 'Coming from React / Vue / Solid?', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('Think of <code>bw.component()</code> as a unified hook: <code>useState</code> + <code>useRef</code> + render in one call. The handle is your component instance.') },
+              { t: 'p', c: bw.raw('Think of <code>o.state + o.render</code> as a unified hook: <code>useState</code> + render in one object. State lives on the element, not in a closure.') },
               { t: 'table', a: { class: 'event-table', style: 'margin-top: 0.5rem;' }, c: [
                 { t: 'thead', c: { t: 'tr', c: [
                   { t: 'th', c: 'Framework' },
@@ -337,19 +347,19 @@
                 { t: 'tbody', c: [
                   { t: 'tr', c: [
                     { t: 'td', c: bw.raw('React: <code>useState(0)</code>') },
-                    { t: 'td', c: bw.raw('<code>o: { state: { count: 0 } }</code> + <code>.get()/.set()</code>') }
+                    { t: 'td', c: bw.raw('<code>o: { state: { count: 0 } }</code> + <code>el._bw_state.count</code>') }
                   ]},
                   { t: 'tr', c: [
                     { t: 'td', c: bw.raw('Vue: <code>ref(0)</code>') },
-                    { t: 'td', c: bw.raw('<code>.set(\'count\', n)</code> triggers re-render') }
+                    { t: 'td', c: bw.raw('<code>el._bw_state.count = n</code> + <code>bw.update(el)</code>') }
                   ]},
                   { t: 'tr', c: [
                     { t: 'td', c: bw.raw('Solid: <code>createSignal(0)</code>') },
-                    { t: 'td', c: bw.raw('<code>${count}</code> template bindings') }
+                    { t: 'td', c: bw.raw('<code>o.render(el)</code> reads <code>el._bw_state</code> directly') }
                   ]},
                   { t: 'tr', c: [
-                    { t: 'td', c: bw.raw('All: component methods') },
-                    { t: 'td', c: bw.raw('<code>o.methods</code> &rarr; callable on handle') }
+                    { t: 'td', c: bw.raw('All: re-render') },
+                    { t: 'td', c: bw.raw('<code>bw.update(el)</code> -- triggers <code>o.render</code> + event') }
                   ]}
                 ]}
               ]}
@@ -388,9 +398,9 @@
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Stateful components' },
-            { t: 'td', c: bw.raw('<code>bw.component()</code>') },
+            { t: 'td', c: bw.raw('<code>o.state</code> + <code>o.render</code>') },
             { t: 'td', c: bw.raw('<strong>Level 2</strong>') },
-            { t: 'td', c: bw.raw('Counters, forms, dashboards, anything with <code>.get()/.set()</code>') }
+            { t: 'td', c: bw.raw('Counters, forms, dashboards -- state on element, render via <code>bw.update(el)</code>') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Custom render logic' },
@@ -420,77 +430,68 @@
         { t: 'h2', c: 'Which Pattern to Use?' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('Bitwrench has three materialization levels. Most applications only need Level 0 (static) and Level 2 (<code>bw.component()</code>). The low-level tools exist for custom components and escape hatches.') },
+            c: bw.raw('Bitwrench has three materialization levels. Most applications only need Level 0 (static) and Level 2 (<code>o.state</code> + <code>o.render</code>). The low-level tools exist for custom components and escape hatches.') },
           decisionTable,
           callout('tip', 'Rule of thumb', {
             t: 'p',
-            c: bw.raw('Start with <code>bw.component()</code>. If you need finer control, drop to <code>o.render</code> + <code>bw.update()</code>. If you just need to update a single value fast, use <code>bw.patch()</code>. You can mix all three in the same page.')
+            c: bw.raw('Start with <code>o.state</code> + <code>o.render</code>. If you just need to update a single value fast, use <code>bw.patch()</code>. You can mix both in the same page.')
           })
         ]}
       ]
     };
 
     // =========================================================================
-    // Section 1d: Wrapping make*() in ComponentHandle
+    // Section 1d: Composing make*() into Stateful TACOs
     // =========================================================================
     var wrapMakeCode =
-      '// Any make*() TACO can be wrapped in bw.component()\n' +
-      '// to get a reactive handle with .get()/.set()\n' +
+      '// Any make*() TACO can be composed into a\n' +
+      '// stateful TACO with o.state + o.render\n' +
       '\n' +
-      'var statusCard = bw.component({\n' +
-      '  t: \'div\', c: [\n' +
-      '    bw.makeCard({\n' +
-      '      title: \'${title}\',\n' +
-      '      content: [\n' +
-      '        { t: \'p\', c: \'Status: ${status}\' },\n' +
-      '        { t: \'p\', c: \'Uptime: ${uptime}\' }\n' +
-      '      ]\n' +
-      '    })\n' +
-      '  ],\n' +
+      'var statusCard = {\n' +
+      '  t: \'div\',\n' +
       '  o: {\n' +
       '    state: {\n' +
       '      title: \'Server Status\',\n' +
       '      status: \'Online\',\n' +
       '      uptime: \'99.7%\'\n' +
       '    },\n' +
-      '    methods: {\n' +
-      '      setOnline: function(comp) {\n' +
-      '        comp.setState({\n' +
-      '          status: \'Online\',\n' +
-      '          uptime: \'99.7%\'\n' +
-      '        });\n' +
-      '      },\n' +
-      '      setOffline: function(comp) {\n' +
-      '        comp.setState({\n' +
-      '          status: \'Offline\',\n' +
-      '          uptime: \'0%\'\n' +
-      '        });\n' +
-      '      }\n' +
+      '    render: function(el) {\n' +
+      '      var s = el._bw_state;\n' +
+      '      bw.DOM(el, bw.makeCard({\n' +
+      '        title: s.title,\n' +
+      '        content: [\n' +
+      '          { t: \'p\', c: \'Status: \' + s.status },\n' +
+      '          { t: \'p\', c: \'Uptime: \' + s.uptime },\n' +
+      '          bw.makeButton({ text: \'Toggle\',\n' +
+      '            onclick: function() {\n' +
+      '              s.status = s.status === \'Online\'\n' +
+      '                ? \'Offline\' : \'Online\';\n' +
+      '              s.uptime = s.status === \'Online\'\n' +
+      '                ? \'99.7%\' : \'0%\';\n' +
+      '              bw.update(el);\n' +
+      '            }\n' +
+      '          })\n' +
+      '        ]\n' +
+      '      }));\n' +
       '    }\n' +
       '  }\n' +
-      '});\n' +
+      '};\n' +
       '\n' +
-      'bw.DOM(target, statusCard);\n' +
-      '\n' +
-      '// Update via handle API:\n' +
-      'statusCard.set(\'status\', \'Maintenance\');\n' +
-      '\n' +
-      '// Or use promoted methods:\n' +
-      'statusCard.setOffline();';
+      'bw.DOM(target, statusCard);';
 
     var sectionWrap = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', c: bw.raw('Wrapping make*() in ComponentHandle') },
+        { t: 'h2', c: bw.raw('Composing make*() into Stateful TACOs') },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('BCCL <code>make*()</code> functions return Level 0 TACOs &mdash; pure data with no reactivity. This is by design: it keeps them serializable, composable, and SSR-friendly. To add reactivity, wrap the TACO in <code>bw.component()</code> and use template bindings for the props you want to be reactive.') },
+            c: bw.raw('BCCL <code>make*()</code> functions return Level 0 TACOs -- pure data with no reactivity. This is by design: it keeps them serializable, composable, and SSR-friendly. To add reactivity, compose the <code>make*()</code> output inside a TACO with <code>o.state</code> and <code>o.render</code>.') },
 
           callout('concept', 'The pattern', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('<strong>Level 0</strong>: <code>bw.makeCard({ title: \'Hello\' })</code> &mdash; static TACO, no reactivity') },
-              { t: 'p', c: bw.raw('<strong>Level 2</strong>: wrap in <code>bw.component()</code> with <code>${expr}</code> template bindings + <code>o.methods</code> &mdash; reactive handle with <code>.get()/.set()</code>') },
-              { t: 'p', c: bw.raw('The key insight: <code>make*()</code> intentionally returns Level 0. This is a feature, not a limitation. You choose when to "activate" reactivity by wrapping in <code>bw.component()</code>.') }
+              { t: 'p', c: bw.raw('<strong>Level 0</strong>: <code>bw.makeCard({ title: \'Hello\' })</code> -- static TACO, no reactivity') },
+              { t: 'p', c: bw.raw('<strong>Level 2</strong>: add <code>o.state</code> + <code>o.render</code> -- state on element, render function re-draws on <code>bw.update(el)</code>') },
+              { t: 'p', c: bw.raw('The key insight: <code>make*()</code> intentionally returns Level 0. This is a feature, not a limitation. You choose when to "activate" reactivity by adding <code>o.state</code>/<code>o.render</code> to the containing TACO.') }
             ]
           }),
 
@@ -582,7 +583,7 @@
         { t: 'h2', c: 'Low-Level State: o.render + bw.update()' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('For fine-grained control, you can manage state directly on DOM elements. This is the low-level foundation that <code>bw.component()</code> builds on. State lives <strong>on the DOM element itself</strong>. When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.') },
+            c: bw.raw('For fine-grained control, you can manage state directly on DOM elements. This is the foundation of the lifecycle engine. State lives <strong>on the DOM element itself</strong>. When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.') },
 
           { t: 'div', a: { class: 'state-diagram' }, c: [
             { t: 'div', a: { class: 'state-step' }, c: [
@@ -724,9 +725,9 @@
       c: [
         { t: 'h2', c: 'Encapsulated Components (Low-Level)' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
-          callout('tip', 'Prefer bw.component()', {
+          callout('tip', 'Prefer o.state + o.render', {
             t: 'p',
-            c: bw.raw('The <code>bw.component()</code> pattern shown above provides <code>.get()/.set()</code> out of the box. This section shows the manual approach for cases where you need full control over rendering logic.')
+            c: bw.raw('The <code>o.state</code> + <code>o.render</code> pattern shown above handles most cases. This section shows the manual closure approach for cases where you need full control over rendering logic.')
           }),
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Three counters from the same factory. Each has its own state on its own DOM element. Click any counter &mdash; the others don\'t change. The factory returns a getter/setter API alongside the TACO, enabling cross-component coordination (next section).') },
@@ -1165,35 +1166,38 @@
     // Section 8b: bw.message() — Cross-Component Messaging
     // =========================================================================
     var messageCode =
-      '// Component A: a display with a userTag\n' +
-      'var display = bw.component({\n' +
+      '// Component A: a display that subscribes to events\n' +
+      'var displayTaco = {\n' +
       '  t: \'div\', a: { class: \'bw_card\' },\n' +
-      '  c: [\n' +
-      '    { t: \'h4\', c: \'Display\' },\n' +
-      '    { t: \'p\', c: \'Message: ${msg}\' },\n' +
-      '    { t: \'p\', c: \'Count: ${count}\' }\n' +
-      '  ],\n' +
       '  o: {\n' +
       '    state: { msg: \'(none)\', count: 0 },\n' +
-      '    methods: {\n' +
-      '      setText: function(comp, data) {\n' +
-      '        comp.set(\'msg\', data);\n' +
-      '      },\n' +
-      '      increment: function(comp) {\n' +
-      '        comp.set(\'count\',\n' +
-      '          comp.get(\'count\') + 1);\n' +
-      '      }\n' +
+      '    render: function(el) {\n' +
+      '      var s = el._bw_state;\n' +
+      '      bw.DOM(el, [\n' +
+      '        { t: \'h4\', c: \'Display\' },\n' +
+      '        { t: \'p\', c: \'Message: \' + s.msg },\n' +
+      '        { t: \'p\', c: \'Count: \' + s.count }\n' +
+      '      ]);\n' +
+      '    },\n' +
+      '    mounted: function(el) {\n' +
+      '      // Subscribe to cross-component messages\n' +
+      '      bw.sub(\'setText\', function(data) {\n' +
+      '        el._bw_state.msg = data;\n' +
+      '        bw.update(el);\n' +
+      '      });\n' +
+      '      bw.sub(\'increment\', function() {\n' +
+      '        el._bw_state.count++;\n' +
+      '        bw.update(el);\n' +
+      '      });\n' +
+      '      el._bw_render(el);\n' +
       '    }\n' +
       '  }\n' +
-      '});\n' +
-      'display.userTag(\'my-display\');\n' +
-      'bw.DOM(target, display);\n' +
+      '};\n' +
+      'bw.DOM(target, displayTaco);\n' +
       '\n' +
-      '// From anywhere \u2014 send a message:\n' +
-      'bw.message(\'my-display\',\n' +
-      '  \'setText\', \'Hello!\');\n' +
-      'bw.message(\'my-display\',\n' +
-      '  \'increment\');';
+      '// From anywhere -- publish a message:\n' +
+      'bw.pub(\'setText\', \'Hello!\');\n' +
+      'bw.pub(\'increment\');';
 
     var sectionMessage = {
       t: 'div', a: { class: 'demo-section' },
@@ -1201,13 +1205,13 @@
         { t: 'h2', c: bw.raw('bw.message() &mdash; Cross-Component Messaging') },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('<code>bw.message(target, action, data)</code> sends a named message to a component by its user tag. The target component must have the action defined in <code>o.methods</code>. This is the Win32 <code>SendMessage()</code> pattern &mdash; direct, typed communication without pub/sub overhead.') },
+            c: bw.raw('<code>bw.pub(topic, data)</code> / <code>bw.sub(topic, fn)</code> provide cross-component messaging without tight coupling. Components subscribe to topics in their <code>o.mounted</code> hook and publish from anywhere.') },
 
-          callout('concept', 'When to use bw.message() vs pub/sub', {
+          callout('concept', 'Cross-component communication patterns', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('<strong>bw.message()</strong>: You know the target. One sender, one receiver. Think: "tell that specific component to do this."') },
               { t: 'p', c: bw.raw('<strong>bw.pub()/sub()</strong>: Any number of receivers. Think: "announce this event, whoever cares can react."') },
-              { t: 'p', c: bw.raw('<strong>bwserve</strong>: The server uses the same message types (<code>replace</code>, <code>patch</code>, <code>call</code>) over SSE. <code>bw.message()</code> is the local equivalent.') }
+              { t: 'p', c: bw.raw('<strong>bw.on(el, event, fn)</strong>: Listen for DOM events like <code>bw:statechange</code> emitted by <code>bw.update()</code>.') },
+              { t: 'p', c: bw.raw('<strong>bwserve</strong>: The server uses the same message types (<code>replace</code>, <code>patch</code>, <code>call</code>) over SSE.') }
             ]
           }),
 
@@ -1300,7 +1304,7 @@
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
           { t: 'h1', c: 'State & Interactivity' },
-          { t: 'p', a: { class: 'subtitle' }, c: "How bitwrench manages state, from bw.component() with reactive handles to low-level patterns and pub/sub." }
+          { t: 'p', a: { class: 'subtitle' }, c: "How bitwrench manages state, from o.state + o.render to low-level patterns and pub/sub." }
         ]
       }
     };
@@ -1312,22 +1316,22 @@
 
     bw.DOM('#app', [pageHeader, contentWrapper]);
 
-    // ── ComponentHandle (try-it editor) ──
+    // ── Stateful TACO (try-it editor) ──
     bw.DOM('#tryit-component-handle', makeTryIt({
       code: componentHandleCode,
-      height: '420px'
+      height: '520px'
     }));
 
     // ── bw.message() (try-it editor) ──
     bw.DOM('#tryit-message', makeTryIt({
       code: messageCode,
-      height: '440px'
+      height: '520px'
     }));
 
-    // ── Wrapping make*() (try-it editor) ──
+    // ── Composing make*() (try-it editor) ──
     bw.DOM('#tryit-wrap-make', makeTryIt({
       code: wrapMakeCode,
-      height: '440px'
+      height: '540px'
     }));
 
     // ── The Simplest State Pattern (try-it editor) ──

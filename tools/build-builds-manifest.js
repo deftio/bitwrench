@@ -66,12 +66,16 @@ const files = allFiles.map(file => {
   // Source map?
   const sourceMap = mapFiles.has(file + '.map');
 
-  // Identify component: core library vs addons vs lean vs bccl vs bwserve
+  // Identify component: core library vs addons vs lean vs bccl vs bwserve vs debug
   let component = 'core';
   if (file.startsWith('bitwrench-code-edit')) component = 'code-edit';
+  else if (file.startsWith('bitwrench-debug')) component = 'debug';
   else if (file.startsWith('bitwrench-lean')) component = 'lean';
   else if (file.startsWith('bitwrench-bccl')) component = 'bccl';
   else if (file.startsWith('bwserve')) component = 'bwserve';
+
+  // bitwrench-debug.js has no format suffix -- it's a UMD IIFE
+  if (format === 'Unknown' && component === 'debug') format = 'UMD';
 
   const entry = { file, format, ver, component, minified, raw, gzipped, sourceMap };
   if (sriHashes[file]) {

@@ -19,6 +19,7 @@
     mountExampleNav('#example-nav', '09-builds.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     bw.injectCSS(bw.css({
       '.builds-header': { 'margin-bottom': '0.5rem' },
@@ -184,7 +185,9 @@
       'bitwrench-bccl.cjs.js':     'BCCL components addon (CJS)',
       'bitwrench-bccl.cjs.min.js': 'BCCL components addon (CJS, minified)',
       'bwserve.cjs.js':            'bwserve server lib runtime (CJS)',
-      'bwserve.esm.js':            'bwserve server lib runtime (ESM)'
+      'bwserve.esm.js':            'bwserve server lib runtime (ESM)',
+      'bitwrench-debug.js':        'Debug toolkit for browser console (UMD)',
+      'bitwrench-debug.min.js':    'Debug toolkit for browser console (UMD, minified)'
     };
 
     // Grouped-format table (Format | Raw | Minified | Min+Gzip)
@@ -460,11 +463,12 @@
       var manifest = JSON.parse(raw);
 
       // Categorize files
-      var coreJS = [], leanJS = [], addonJS = [], bcclJS = [], bwserveJS = [], css = [];
+      var coreJS = [], leanJS = [], addonJS = [], bcclJS = [], bwserveJS = [], debugJS = [], css = [];
       manifest.files.forEach(function(f) {
         if (f.ver === '1.x') return;
         if (f.format === 'CSS') { css.push(f); }
         else if (f.component === 'code-edit') { addonJS.push(f); }
+        else if (f.component === 'debug') { debugJS.push(f); }
         else if (f.component === 'lean') { leanJS.push(f); }
         else if (f.component === 'bccl') { bcclJS.push(f); }
         else if (f.component === 'bwserve') { bwserveJS.push(f); }
@@ -560,6 +564,28 @@
         addonContent = addonContent.concat(ce.content);
         addonTables.push(ce);
       }
+      if (debugJS.length > 0) {
+        var dbg = renderAddonCard('builds-addon-debug',
+          'bitwrench-debug \u2014 Debug Toolkit',
+          [
+            'Standalone console toolkit. Paste a one-liner to inject ',
+            { t: 'code', c: 'bwd.tree()' }, ', ',
+            { t: 'code', c: 'bwd.listen()' }, ', ',
+            { t: 'code', c: 'bwd.state()' }, ', and ',
+            { t: 'code', c: 'bwd.screenshot()' },
+            ' into any page. Auto-loads bitwrench from CDN if not present. See ',
+            { t: 'a', a: { href: '11-debugging.html#section-9' }, c: 'Debug Toolkit docs' },
+            '.'
+          ],
+          debugJS,
+          "// Paste in browser console:\nvar s=document.createElement('script');\ns.src='https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench-debug.min.js';\ndocument.head.appendChild(s);"
+        );
+        if (addonContent.length > 0) {
+          addonContent.push({ t: 'hr', a: { style: 'margin:1.5rem 0;border:0;border-top:1px solid #e0e0e0' } });
+        }
+        addonContent = addonContent.concat(dbg.content);
+        addonTables.push(dbg);
+      }
       if (addonContent.length > 0) {
         bw.DOM('#builds-addons', { t: 'div', c: addonContent });
         addonTables.forEach(function(tbl) {
@@ -601,7 +627,7 @@
       }
 
       // All files
-      var allFiles = coreJS.concat(leanJS).concat(addonJS).concat(bcclJS).concat(bwserveJS).concat(css);
+      var allFiles = coreJS.concat(leanJS).concat(addonJS).concat(bcclJS).concat(debugJS).concat(bwserveJS).concat(css);
       if (allFiles.length > 0) {
         var allHeaders = [
           { label: 'File', sz: false },

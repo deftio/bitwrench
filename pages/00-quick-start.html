@@ -19,6 +19,7 @@
     mountExampleNav('#example-nav', '00-quick-start.html');
 
     bw.loadStyles();
+    applySiteStyles();
 
     // =========================================================================
     // Helper: callout box
@@ -36,7 +37,7 @@
     // =========================================================================
     // Section 1: Your First Bitwrench Page
     // =========================================================================
-    var helloCode = '<!DOCTYPE html>\n<html>\n<head>\n  <script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.js"><\/script>\n  <link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n    bw.DOM(\'#app\', { t: \'h1\', c: \'Hello bitwrench!\' });\n  <\/script>\n</body>\n</html>';
+    var helloCode = '<!DOCTYPE html>\n<html>\n<head>\n  <script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n    bw.loadStyles();\n    bw.DOM(\'#app\', { t: \'h1\', c: \'Hello bitwrench!\' });\n  <\/script>\n</body>\n</html>';
 
     var livePageId = 'live-page-' + (bw._idCounter++);
 
@@ -183,8 +184,8 @@
           { t: 'p', a: { class: 'demo-description' }, c: [
             'Bitwrench includes built-in CSS classes (',
             { t: 'code', c: 'bw_btn' }, ', ', { t: 'code', c: 'bw_card' },
-            ', etc.) that give you Bootstrap-like styling. You get them by including ',
-            { t: 'code', c: '<link href="bitwrench.css">' }, ' in your page.'
+            ', etc.) that give you Bootstrap-like styling. Call ',
+            { t: 'code', c: 'bw.loadStyles()' }, ' once to load the structural CSS.'
           ]},
           makeTryIt({
             code: [
@@ -272,7 +273,7 @@
           callout('concept', 'This works, but there\'s a better way', {
             t: 'p', c: [
               'The closure pattern is great for simple cases. For anything with state you want to read or update from outside, use ',
-              { t: 'code', c: 'bw.component()' },
+              { t: 'code', c: 'o.state + o.render' },
               ' \u2014 shown in the next section.'
             ]
           })
@@ -281,53 +282,55 @@
     };
 
     // =========================================================================
-    // Section 4b: The Recommended Pattern — bw.component()
+    // Section 4b: The Recommended Pattern — o.state + o.render
     // =========================================================================
     var section4b = {
       t: 'div', a: { class: 'demo-section', id: 'section-component' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-component' }, c: 'The Recommended Pattern: bw.component()' } },
+        { t: 'h2', c: { t: 'a', a: { href: '#section-component' }, c: 'The Recommended Pattern: o.state + o.render' } },
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' }, c: [
             'The closure pattern above works, but for most components, ',
-            { t: 'code', c: 'bw.component()' },
-            ' is the better approach. It wraps a TACO in a reactive handle with ',
-            { t: 'code', c: '.get()' }, ' / ', { t: 'code', c: '.set()' },
-            ' and auto-renders template bindings like ',
-            { t: 'code', c: '${count}' }, '.'
+            { t: 'code', c: 'o.state + o.render' },
+            ' is the better approach. State lives on the DOM element at ',
+            { t: 'code', c: 'el._bw_state' },
+            ', and ', { t: 'code', c: 'o.render(el)' },
+            ' is called on mount and whenever you call ',
+            { t: 'code', c: 'bw.update(el)' }, '.'
           ]},
           makeTryIt({
             code: [
-              '// bw.component() = reactive state + auto-render',
-              'var counter = bw.component({',
-              '  t: \'div\', c: [',
-              '    { t: \'h3\', c: \'Count: ${count}\' },',
-              '    bw.makeButton({',
-              '      text: \'+\', variant: \'primary\',',
-              '      onclick: function() {',
-              '        counter.set(\'count\',',
-              '          counter.get(\'count\') + 1);',
-              '      }',
-              '    }),',
-              '    \' \',',
-              '    bw.makeButton({',
-              '      text: \'Reset\', variant: \'secondary\',',
-              '      onclick: function() {',
-              '        counter.reset();',
-              '      }',
-              '    })',
-              '  ],',
+              '// o.state + o.render = reactive state',
+              'bw.DOM(target, {',
+              '  t: \'div\',',
               '  o: {',
               '    state: { count: 0 },',
-              '    methods: {',
-              '      reset: function(comp) {',
-              '        comp.set(\'count\', 0);',
-              '      }',
+              '    render: function(el) {',
+              '      var s = el._bw_state;',
+              '      bw.DOM(el, {',
+              '        t: \'div\', c: [',
+              '          { t: \'h3\', c: \'Count: \' + s.count },',
+              '          bw.makeButton({',
+              '            text: \'+\', variant: \'primary\',',
+              '            onclick: function() {',
+              '              s.count++;',
+              '              bw.update(el);',
+              '            }',
+              '          }),',
+              '          \' \',',
+              '          bw.makeButton({',
+              '            text: \'Reset\',',
+              '            variant: \'secondary\',',
+              '            onclick: function() {',
+              '              s.count = 0;',
+              '              bw.update(el);',
+              '            }',
+              '          })',
+              '        ]',
+              '      });',
               '    }',
               '  }',
-              '});',
-              '',
-              'bw.DOM(target, counter);'
+              '});'
             ].join('\n'),
             height: '420px'
           }),
@@ -337,7 +340,7 @@
                 { t: 'strong', c: 'Closure + render()' }, ' \u2014 simple widgets, one-off interactivity.'
               ]},
               { t: 'p', c: [
-                { t: 'strong', c: 'bw.component()' }, ' \u2014 anything with state you want to read/write from outside. Template bindings, methods, pub/sub integration.'
+                { t: 'strong', c: 'o.state + o.render' }, ' \u2014 anything with state you want to read/write from outside. State at el._bw_state, re-render via bw.update(el), pub/sub integration.'
               ]},
               { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
                 'See the ',
@@ -457,8 +460,8 @@
               { t: 'code', c: "'ocean'" }, ', ',
               { t: 'code', c: "'sunset'" }, ', ',
               { t: 'code', c: "'forest'" }, ', ',
-              { t: 'code', c: "'slate'" }, ', or ',
-              { t: 'code', c: "'monochrome'" }, '. ',
+              { t: 'code', c: "'slate'" }, ', ',
+              { t: 'code', c: "'midnight'" }, ', and more. ',
               'See the ',
               { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' },
               ' page for the full generator.'
@@ -476,10 +479,8 @@
         desc: 'Where bw-* classes come from, CSS generation from JavaScript objects, utility system.' },
       { href: '01-components.html', title: 'Components',
         desc: 'Cards, buttons, alerts, badges, grids \u2014 all built-in components with live demos.' },
-      { href: '02-tables.html', title: 'Tables & Data',
-        desc: 'Sortable tables from data in one function call, pagination, search.' },
-      { href: '02-forms.html', title: 'Forms',
-        desc: 'Inputs, selects, checkboxes, tabbed forms, validation patterns.' },
+      { href: '02-tables-forms.html', title: 'Tables & Forms',
+        desc: 'Sortable tables, pagination, inputs, selects, checkboxes, validation patterns.' },
       { href: '05-state.html', title: 'State Management',
         desc: 'Component factories, state on elements, pub/sub for cross-component communication.' },
       { href: '06-tic-tac-toe-tutorial.html', title: 'Tic Tac Toe Tutorial',
