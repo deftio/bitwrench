@@ -93,7 +93,6 @@
 		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
-		"build_1_x": "./tools/update-bw-package.js package.json package.json && ./tools/export-bw-default-css.js bitwrench.css && uglifyjs bitwrench.js -o  bitwrench.min.js && uglifyjs bitwrench_ESM.js -o bitwrench_ESM.min.js && ./tools/umd2ModuleHack.js && npm pack",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js -r jsdom-global/register",
@@ -143,9 +142,7 @@
 		"include": [
 			"src/**"
 		],
-		"exclude": [
-			"src_1x/**"
-		],
+		"exclude": [],
 		"check-coverage": false,
 		"branches": 80,
 		"lines": 80,

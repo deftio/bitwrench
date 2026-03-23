@@ -237,14 +237,19 @@ features -- developers (human and LLM) can't find features that already exist.
 Specific failures: didn't know makeTable is sortable, didn't know makeTextarea
 exists, reinvented makeFormGroup, didn't find o.handle/o.slots (now fixed).
 
-* [ ] doc --> **Component Cheat Sheet** (HIGHEST PRIORITY): single scannable table of ALL make*() with key props AND capabilities (sortable, handles, auto-dismiss, etc.). Embed in LLM guide AND as standalone `docs/component-cheatsheet.md`. This one artifact would have prevented 3 of 4 documented mistakes.
-* [ ] doc --> **API reference shows capabilities, not just names**: makeTable entry must say "sortable, pagination"; makeModal must say "ESC dismiss, open/close handles"; makeToast must say "auto-dismiss timer". Current API ref lists names only.
-* [ ] doc --> **Component library doc TOC**: Add anchor-linked table of contents at top of component-library.md so truncated views (LLM tooling, GitHub preview) still expose the full list of sections.
-* [ ] doc --> **bw.uuid() return format**: Document exact format (`bw_<prefix>_<hex>` or `bw_<hex>` without prefix). Matters for bw.patch() targeting.
-* [ ] doc --> **bw.raw() XSS warning**: Add prominent security note about XSS when using bw.raw() with user-supplied content. Consider `bw.sanitize()` utility.
-* [ ] doc --> **bw.sub(topic, handler, el) auto-unsubscribe**: Already implemented but undocumented in main docs. Developer built manual cleanup because they didn't know about the el parameter.
+* [x] doc --> **Component Cheat Sheet** (v2.0.21): `docs/component-cheatsheet.md` -- 47-row table with key props, capabilities, handles/slots. Embedded compact version (top 20) in LLM guide Step 6.
+* [x] doc --> **API reference shows capabilities, not just names** (v2.0.21): makeTable, makeModal, makeToast, makeAccordion, makeTabs, makeCarousel entries now list handle methods and capabilities inline.
+* [x] doc --> **Component library doc TOC** (v2.0.21): Quick Reference category table at top of component-library.md with anchor links. Capability badges on 6 key component headings.
+* [x] doc --> **bw.uuid() return format** (v2.0.21): Documented in bitwrench_api.md -- `bw_<prefix>_<hex>` format, safe for CSS class and bw.patch() target.
+* [x] doc --> **bw.raw() XSS warning** (v2.0.21): Added WARNING block to bitwrench_api.md entry.
+* [x] doc --> **bw.sub(topic, handler, el) auto-unsubscribe** (v2.0.21): Documented el parameter with usage example in bitwrench_api.md.
 * [ ] doc --> **makeCard title accepts TACO**: Verify and document whether makeCard title prop supports TACO objects (not just strings). Cards with badges/buttons in headers are common.
-* [ ] doc --> **Store pattern for shared state**: Document canonical pattern for multi-view shared state with scoped re-rendering (pub/sub + element-scoped subscriptions).
+* [x] doc --> **Store pattern for shared state** (v2.0.21): Added "Shared State Across Views" section to docs/state-management.md with scoped pub/sub pattern, anti-pattern warning, cross-refs to routing and handles.
+
+Additional discoverability work done in v2.0.21:
+* [x] doc --> **docs/README.md decision tree**: "What to read" table mapping questions to guides.
+* [x] doc --> **thinking-in-bitwrench.md TOC**: Table of contents linking all 12 sections + appendix.
+* [x] doc --> **Cross-references**: component-cheatsheet linked from LLM guide, component-library, thinking-in-bitwrench, README.
 
 ### Interactive Component Gallery
 
@@ -261,14 +266,10 @@ exists, reinvented makeFormGroup, didn't find o.handle/o.slots (now fixed).
   - Static site (bwcli convert, markdown -> HTML)
 * [ ] doc --> Each pattern: directory structure, entry point, state flow, example
 
-### State / Store Canonical Pattern
+### State / Store Canonical Pattern -- PARTIALLY DONE (v2.0.21)
 
-* [ ] doc --> Create `docs/patterns-state.md` (or section in state-management.md):
-  - "The bitwrench way" for shared state: plain object + pub/sub topic
-  - Canonical store pattern (not an API, just a documented convention)
-  - Derived state = just a function
-  - When to use o.state vs pub/sub vs store pattern
-  - Example: user store shared across nav + profile + settings
+* [x] doc --> Added "Shared State Across Views" section to state-management.md: plain object + topic-scoped pub/sub, scoped subscriptions with auto-cleanup, anti-pattern warning, cross-refs.
+* [ ] doc --> Expand with: derived state = just a function, when to use o.state vs pub/sub vs store pattern, multi-store example (user store shared across nav + profile + settings)
 
 ### Async / Data Fetching Recipes
 

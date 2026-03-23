@@ -25,7 +25,6 @@ npm install
 | `dist/` | Built distribution files (all formats) | Yes |
 | `releases/v1/` | Frozen v1.2.16 archive | No |
 | `releases/v2/` | Release snapshot (created by `build:release`) | No |
-| `src_1x/` | Legacy v1 source (archived) | No |
 | `test/` | Mocha unit tests | No |
 | `tests/` | Playwright e2e tests | No |
 | `tools/` | Build scripts | No |
