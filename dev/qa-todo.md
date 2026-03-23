@@ -37,6 +37,7 @@ See `dev/qa-completed.md` for details.
 
 ### Remaining (Phase 2+)
 
+* [ ] fix --> Consolidate page init boilerplate (loadStyles + applySiteStyles + mountExampleNav) into a single shared function in shared-nav.js or shared-theme.js so new pages cannot forget a step
 * [ ] implement --> Code block color tokens in theme palette (for code editor theming)
 * [ ] implement --> Font family in layout config (mono font stack)
 * [ ] move --> Grid utilities from shared-theme.js to structural CSS (reusable by all users)
