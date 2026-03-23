@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.19 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.20 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 /**

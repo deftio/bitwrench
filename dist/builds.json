@@ -1,6 +1,6 @@
 {
-  "version": "2.0.19",
-  "buildDate": "2026-03-22",
+  "version": "2.0.20",
+  "buildDate": "2026-03-23",
   "files": [
     {
       "file": "bitwrench-bccl.cjs.js",
@@ -31,7 +31,7 @@
       "component": "lean",
       "minified": false,
       "raw": 252782,
-      "gzipped": 62264,
+      "gzipped": 62263,
       "sourceMap": true,
       "integrity": "sha384-Kg93DwvfM8hR1S9WtTHoH+EFe+QVZXYJfh51wb94CDjDlz2ICUJKXpr5vCg3hGel"
     },
@@ -42,7 +42,7 @@
       "component": "core",
       "minified": false,
       "raw": 8098,
-      "gzipped": 2624,
+      "gzipped": 2623,
       "sourceMap": true,
       "integrity": "sha384-1yv6Ss9ZZmqE9ZNPxsvwMa7cXDIRbRDtb0AZMJVQFvLGg7MhQw+2JFGT6J9vEG1y"
     },
@@ -53,7 +53,7 @@
       "component": "core",
       "minified": false,
       "raw": 370381,
-      "gzipped": 86913,
+      "gzipped": 86911,
       "sourceMap": true,
       "integrity": "sha384-PiVAkba6SrlpTgeLJpgOw+V4iF5UMszH56kVngSA5gii28+82t3cuyW5XQRaycHf"
     },
@@ -64,7 +64,7 @@
       "component": "bwserve",
       "minified": false,
       "raw": 40678,
-      "gzipped": 11634,
+      "gzipped": 11633,
       "sourceMap": true,
       "integrity": "sha384-9HtLsWSWrJLoYL3LWEoMn4fx6mS3dQcoO+Zsd4nURriDJzFFpWBcpRrMYlYGRrFp"
     },
@@ -97,7 +97,7 @@
       "component": "lean",
       "minified": true,
       "raw": 109710,
-      "gzipped": 29227,
+      "gzipped": 29225,
       "sourceMap": true,
       "integrity": "sha384-7ZxV5q0ctUGPNf5BrKagV1Z68Ton0RX9uveQqtUVi1LcwS3aogdYGptcUkh2Aj9r"
     },
@@ -108,7 +108,7 @@
       "component": "core",
       "minified": true,
       "raw": 4113,
-      "gzipped": 1659,
+      "gzipped": 1658,
       "sourceMap": true,
       "integrity": "sha384-HxVa2HmqGQRu+S6JXtdhMw+vl+Q3s9dyn2nFej7UIF0kZGiX52fnqpwcRIi3TGbS"
     },
@@ -119,7 +119,7 @@
       "component": "core",
       "minified": true,
       "raw": 146579,
-      "gzipped": 39089,
+      "gzipped": 39088,
       "sourceMap": true,
       "integrity": "sha384-VO0c3YbkPcWu+WNqswic0wxc1KQ6+7BRfEowfVqxCQxqpVEowevPZUzBgFWZwrrL"
     },
@@ -152,7 +152,7 @@
       "component": "code-edit",
       "minified": false,
       "raw": 28274,
-      "gzipped": 6438,
+      "gzipped": 6437,
       "sourceMap": true,
       "integrity": "sha384-ujeo++ERLhCkk99i1x6GI9Jr1oq+/ZLlCQzt8y6s9w8J/Q9l7/s8rv1Vz3GeFGba"
     },
@@ -163,7 +163,7 @@
       "component": "lean",
       "minified": false,
       "raw": 291639,
-      "gzipped": 65638,
+      "gzipped": 65637,
       "sourceMap": true,
       "integrity": "sha384-Gin1VqdtYyyYjKo5FPT4cgtckU+58IaEsidMRUXLEsA9M3YMf0fzSy+g8WSXh9PO"
     },
@@ -185,7 +185,7 @@
       "component": "core",
       "minified": false,
       "raw": 439737,
-      "gzipped": 93513,
+      "gzipped": 93511,
       "sourceMap": true,
       "integrity": "sha384-W2As3FMDb4ZOYDmB2BEUEN4RdwroK/4U4+cz2pa1p6/A9veR2U/5j7CYopzqXt1M"
     },
@@ -207,7 +207,7 @@
       "component": "lean",
       "minified": true,
       "raw": 115369,
-      "gzipped": 30596,
+      "gzipped": 30594,
       "sourceMap": true,
       "integrity": "sha384-UWrbdhA7gtrdC+pWKwip1maiSpE/LHKteaiFbJUYaD2ykJxaSv61VPzgE6LDwNCJ"
     },
@@ -229,7 +229,7 @@
       "component": "core",
       "minified": true,
       "raw": 158536,
-      "gzipped": 41008,
+      "gzipped": 41006,
       "sourceMap": true,
       "integrity": "sha384-mNEUUvz7AVxzZ2sU/WtvMGkDfEKqgfhCP4DybyYMPBgrgEZc54+t9vs/67vzuCmu"
     },
@@ -262,7 +262,7 @@
       "component": "lean",
       "minified": false,
       "raw": 251919,
-      "gzipped": 62059,
+      "gzipped": 62058,
       "sourceMap": true,
       "integrity": "sha384-5vW+YpC4mNT9yt6TQqejl6VwNuK9SKcDTnWtPUe+j6MOROQWDajcJt6LsHM8Autz"
     },
@@ -273,7 +273,7 @@
       "component": "core",
       "minified": false,
       "raw": 7998,
-      "gzipped": 2577,
+      "gzipped": 2576,
       "sourceMap": true,
       "integrity": "sha384-JH6kfqLkfdP3V5u9agouomOUxImhCR2NGn+yPv4Qoma9n3xTzHCAGvo0Zn/zGhS4"
     },
@@ -284,7 +284,7 @@
       "component": "core",
       "minified": false,
       "raw": 370165,
-      "gzipped": 86981,
+      "gzipped": 86980,
       "sourceMap": true,
       "integrity": "sha384-Rrty92szmiFnNw58C2BmWWkrcBGmHyQ4uiQvxpMm6mPgi3ilfAwlOUzjaFVU3YUB"
     },
@@ -317,7 +317,7 @@
       "component": "code-edit",
       "minified": true,
       "raw": 11879,
-      "gzipped": 4309,
+      "gzipped": 4308,
       "sourceMap": true,
       "integrity": "sha384-jiAOgUaRDsVj9pfdaRN/RIXrX916PtBXF5BqUJE4Ry3uVfhFOcOiRGPyA86riyJR"
     },
@@ -328,7 +328,7 @@
       "component": "lean",
       "minified": true,
       "raw": 109131,
-      "gzipped": 29119,
+      "gzipped": 29117,
       "sourceMap": true,
       "integrity": "sha384-Saptfscrnk972hQwdcKn2dR91XxlbVU07fAa7nd3heO7GUorrYWZPAuPs//oAU4U"
     },
@@ -339,7 +339,7 @@
       "component": "core",
       "minified": true,
       "raw": 4037,
-      "gzipped": 1621,
+      "gzipped": 1620,
       "sourceMap": true,
       "integrity": "sha384-gDSnSPpcskWjQkWL7BZPfgw2Rwz1U9wqc7qjhTFt45S8UNi31mDpCIX5GxFJyJWJ"
     },
@@ -350,7 +350,7 @@
       "component": "core",
       "minified": true,
       "raw": 146881,
-      "gzipped": 39325,
+      "gzipped": 39323,
       "sourceMap": true,
       "integrity": "sha384-Ao2D8CxHN70fNzVPFKhgl/fSBD+hoYQxulZRAq/IXhEEJzjpJnv2HV9QF/sHaUsd"
     },
@@ -361,7 +361,7 @@
       "component": "bccl",
       "minified": false,
       "raw": 128103,
-      "gzipped": 26137,
+      "gzipped": 26136,
       "sourceMap": true,
       "integrity": "sha384-yX7TO/3TkBjjDoiRDcl/ImWorC70Ehxu+MdN1T5AH9K0zOEWUuF+6IbH99gESZu5"
     },
@@ -372,7 +372,7 @@
       "component": "code-edit",
       "minified": false,
       "raw": 25133,
-      "gzipped": 6256,
+      "gzipped": 6255,
       "sourceMap": true,
       "integrity": "sha384-xdQu8xl0kRbbBLzYXnHnv/QKx3bzWy4PvK0f2RG19wMDMS8tf1t2gzmLIDqShPh7"
     },
@@ -383,7 +383,7 @@
       "component": "debug",
       "minified": false,
       "raw": 9624,
-      "gzipped": 2950,
+      "gzipped": 2949,
       "sourceMap": true,
       "integrity": "sha384-neWYtWf9EtBqAQ9/cPEMqD571dGQUGkw9Lt5eaowjIZaAbt11iwjUVJvhW9LsO9Q"
     },
@@ -394,7 +394,7 @@
       "component": "lean",
       "minified": false,
       "raw": 266327,
-      "gzipped": 63151,
+      "gzipped": 63150,
       "sourceMap": true,
       "integrity": "sha384-ZYBAIjnRhx0DkTN4wwTGv/amPB+5AtaOlpLuoss3+bog6HqU2huJdLOjNTBYXTCJ"
     },
@@ -416,7 +416,7 @@
       "component": "core",
       "minified": false,
       "raw": 391240,
-      "gzipped": 88216,
+      "gzipped": 88215,
       "sourceMap": true,
       "integrity": "sha384-0ozr4VOgCnrIcz/Oqll30CmzbBONL26x6EREo8w6gnIhgvrAXyvdIBm64zczZLmN"
     },
@@ -449,7 +449,7 @@
       "component": "debug",
       "minified": true,
       "raw": 4272,
-      "gzipped": 1741,
+      "gzipped": 1740,
       "sourceMap": true,
       "integrity": "sha384-XqGyvUcX0ZvxhXNQXrFpgYLRqAQimS2r2qX+YQzoT84TFhiIs7Qp8mxGVoBwjpyg"
     },
@@ -460,7 +460,7 @@
       "component": "lean",
       "minified": true,
       "raw": 110264,
-      "gzipped": 29314,
+      "gzipped": 29312,
       "sourceMap": true,
       "integrity": "sha384-Vz3fKgDKXX+dtuo1nh+u/InW8lVO52kB6Jhdlv78sYIv0/djitGOn4AmO5n0q03J"
     },
@@ -471,7 +471,7 @@
       "component": "core",
       "minified": true,
       "raw": 4351,
-      "gzipped": 1738,
+      "gzipped": 1737,
       "sourceMap": true,
       "integrity": "sha384-MO5Qrn6aji1Vy6zXeWI/82y47v6hic514JTDUURjmEglnbvZWorOxyUPnnxeaGzw"
     },
@@ -482,7 +482,7 @@
       "component": "core",
       "minified": true,
       "raw": 147167,
-      "gzipped": 39167,
+      "gzipped": 39165,
       "sourceMap": true,
       "integrity": "sha384-tHfp09enPr7Knehnhp3KnI84Li3knJJP/JkFPXLJbdpbWEfdR+qV7X645Bq3xl/A"
     }
