@@ -603,10 +603,7 @@ const html = `<!DOCTYPE html>
   <div id="app"></div>
 
   <script>
-    mountExampleNav('#example-nav', '08-api-reference.html');
-
-    bw.loadStyles();
-    applySiteStyles();
+    initBitwrenchPage('08-api-reference.html');
 
     bw.injectCSS(bw.css(${pageCssObj}));
 

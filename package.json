@@ -43,6 +43,7 @@
 		"dist/*.js",
 		"dist/*.css",
 		"dist/*.json",
+		"dist/*.d.ts",
 		"bin/",
 		"src/",
 		"README.md",

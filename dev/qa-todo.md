@@ -1,7 +1,67 @@
-# QA Todo -- v2.0.19+
+# QA Todo -- v2.0.21+
 
 
 ## P1 -- COMPLETED (see qa-completed.md)
+
+---
+
+## P2: MCP Server -- Expose bitwrench as AI agent tools
+
+Design doc: `dev/bitwrench-mcp-server-design.md`
+
+`bwmcp` -- separate binary, same npm package. MCP server that lets AI agents
+build and control live browser UI through bitwrench. Agent connects via MCP
+(stdio), calls tools to compose TACO components, result renders live in a
+browser via bwserve. Agent screenshots, inspects, iterates. Lives in `src/mcp/`,
+built as separate artifact (NOT in core bundle). Port 7910 (default).
+
+### Phase 1: Live MCP server (MVP -- first releasable milestone)
+
+Scaffolding (all must work, but not individually shippable):
+* [ ] scaffold --> Create `bin/bwmcp.js`, `src/mcp/` with server.js, tools.js, knowledge.js, live.js, transport.js
+* [ ] implement --> stdio transport (newline-delimited JSON-RPC over stdin/stdout)
+* [ ] implement --> JSON-RPC dispatch (initialize, tools/list, tools/call)
+* [ ] implement --> Knowledge tools: bitwrench_start_here (~200 tokens funnel), bitwrench_guide (reads llm-bitwrench-guide.md, section filter), bitwrench_components (reads component-library.md, component filter), bitwrench_server_guide (reads tutorial-bwserve.md), bitwrench_themes (reads theming.md)
+* [ ] implement --> Tool schemas + handlers for top-10 BCCL components (make_card, make_button, make_table, make_tabs, make_accordion, make_alert, make_nav, make_hero, make_stat_card, make_form_group)
+* [ ] implement --> Core utility tools: render_taco (TACO -> HTML), build_page (standalone .html), make_styles (theme CSS)
+
+Live rendering (the actual product):
+* [ ] implement --> bwserve auto-start on bwmcp launch (port 7910 default)
+* [ ] implement --> render_live tool (push TACO to browser via bwserve SSE)
+* [ ] implement --> screenshot tool (capture browser via bwserve client.screenshot())
+* [ ] implement --> query_dom tool (read DOM state via bwserve client.query())
+* [ ] implement --> --port, --theme, --open CLI flags
+
+Build and packaging:
+* [ ] implement --> Rollup entry for bitwrench-mcp (separate from core build)
+* [ ] implement --> package.json bin entry for bwmcp + exports for 'bitwrench/mcp'
+
+Testing:
+* [ ] test --> JSON-RPC protocol tests (~20 tests)
+* [ ] test --> Tool execution tests (~30 tests)
+* [ ] test --> Knowledge tool tests: section filtering, component filtering, fallback (~15 tests)
+* [ ] test --> E2E test client: spawns bwmcp, runs full agent workflow over stdio
+* [ ] test --> Playwright tests for live rendering + screenshot capture
+* [ ] test --> Manual "vibe test" with Claude Code as MCP host
+* [ ] doc --> README section on bwmcp setup + MCP host configuration
+
+### Phase 2: Full BCCL coverage + composite tools
+
+* [ ] implement --> Tool definitions for all remaining BCCL make*() functions (~35 more)
+* [ ] implement --> Composite tools: build_dashboard, build_landing_page
+* [ ] implement --> Data tools: make_table_array, derive_palette, text_on_color, color_interp
+* [ ] implement --> Utility tools: lorem_ipsum, escape_html
+* [ ] implement --> patch_live tool (surgical DOM updates), clear_live tool (reset browser)
+* [ ] test --> Tests for all new tools (~50 tests)
+
+### Phase 3: Streamable HTTP + polish
+
+* [ ] implement --> HTTP transport for remote bwmcp (`bwmcp --http --port 8900`)
+* [ ] implement --> Authentication (bearer token via --token flag)
+* [ ] implement --> MCP resources (theme presets, component catalog)
+* [ ] implement --> MCP prompts (pre-built UI pattern templates)
+* [ ] implement --> Multi-client session management
+* [ ] test --> HTTP transport tests
 
 ---
 
@@ -37,7 +97,7 @@ See `dev/qa-completed.md` for details.
 
 ### Remaining (Phase 2+)
 
-* [ ] fix --> Consolidate page init boilerplate (loadStyles + applySiteStyles + mountExampleNav) into a single shared function in shared-nav.js or shared-theme.js so new pages cannot forget a step
+* [x] fix --> Consolidate page init boilerplate -- `initBitwrenchPage()` in shared-nav.js (v2.0.21)
 * [ ] implement --> Code block color tokens in theme palette (for code editor theming)
 * [ ] implement --> Font family in layout config (mono font stack)
 * [ ] move --> Grid utilities from shared-theme.js to structural CSS (reusable by all users)
@@ -128,32 +188,68 @@ serializable, patchable via bwserve, themeable via palette.
 
 ---
 
-## P1: Client-Side Router
+## P1: Client-Side Router -- DONE (v2.0.21)
 
-Design doc: `dev/bitwrench-router-design.md` (DRAFT -- awaiting sign-off)
+Implemented in `src/bitwrench-router.js`. 50 tests. Docs at `docs/routing.md`.
+API: `bw.router(config)`, `bw.navigate(path)`, `bw.link(path, content)`.
+Hash + History modes, :param + wildcard matching, before/after guards, pub/sub.
 
-~100-120 lines in core. Hash + History API modes. Pure function: URL -> TACO.
-Integrates with pub/sub (`bw:route` events). Complements bwserve `app.page()`.
-Zero deps. Makes bitwrench a complete app framework.
-
-* [ ] decide --> Sign off on router design doc (API shape, naming, scope)
-* [ ] implement --> Route matching (static, :param, wildcard, query string parsing)
-* [ ] implement --> Hash mode (hashchange listener, bw.navigate, back/forward)
-* [ ] implement --> History mode (pushState, popstate, base path)
-* [ ] implement --> before/after guards, pub/sub integration
-* [ ] implement --> bw.link() convenience helper (optional -- pending decision)
-* [ ] test --> ~46 tests (matching, hash, history, guards, pub/sub, edge cases)
-* [ ] doc --> Router section in docs/state-management.md or new docs/routing.md
-* [ ] example --> Update pages/15-multi-page-site.html to use bw.router()
+* [x] implement --> Route matching, hash mode, history mode, guards, bw.link()
+* [x] test --> 50 tests (matching, hash, history, guards, pub/sub, edge cases)
+* [x] doc --> docs/routing.md + updated LLM guide, framework table, tutorials
+* [x] example --> Update pages/15-multi-page-site.html to use bw.router() (v2.0.21, Section 7)
+* [ ] example --> `examples/dashboard-spa/` using router + shared state
 
 ---
 
 ## P4.5: Documentation and Examples (from external feedback)
 
-Source: `.feedback/bitwrench-feedback-v2.0.19-billy.md`
+Sources: `.feedback/bitwrench-feedback-v2.0.19-billy.md`, worklog-app developer feedback (v2.0.21)
 
 Key insight: bitwrench doesn't need more primitives -- it needs clearer, shared
 ways to use the ones it already has. These are all docs/examples, not code.
+
+**Lesson from worklog feedback (Mar 2026):** A developer read the docs, built a
+todo app, studied the LLM guide -- and still didn't know o.handle/o.slots exists.
+Their #1 complaint (full-subtree replacement kills input focus) is solved by
+handles, but they never found it. Documentation structure, not missing features,
+is the main barrier to adoption for form-heavy apps.
+
+### Handle/Slots Documentation Prominence -- DONE (v2.0.21)
+
+* [x] doc --> Added o.handle/o.slots callout + rule 11 in LLM guide
+* [x] doc --> Added "Level 1.5: Component Handles" section to docs/state-management.md
+* [x] doc --> Added handle/slots subsection to docs/thinking-in-bitwrench.md section 6
+* [x] doc --> Added Step 7b (handle-based form validation) to tutorial-website.md
+* [x] doc --> Added "Component Handles" section to docs/component-library.md
+* [ ] make --> `examples/worklog/` -- form-heavy app (editable table, date pickers, textarea, shared state) demonstrating handle pattern for input preservation. Directly addresses "bitwrench can't do forms" misconception.
+
+### TypeScript Declarations -- DONE (v2.0.21)
+
+* [x] implement --> Created `dist/bitwrench.d.ts` (~530 lines): Taco, TacoOptions, StyleConfig, Palette, ShadeSet, Styles, RouterConfig, RouterInstance, Bw interface (~100 methods), all 47 BCCL named exports
+* [x] implement --> Added `"dist/*.d.ts"` to package.json files array
+* [x] test --> Validated with tsc --noEmit --strict -- all checks pass
+
+### Documentation Discoverability (from dogfooding report, Mar 2026)
+
+Second round of feedback confirmed: the #1 adoption barrier is not missing
+features -- developers (human and LLM) can't find features that already exist.
+Specific failures: didn't know makeTable is sortable, didn't know makeTextarea
+exists, reinvented makeFormGroup, didn't find o.handle/o.slots (now fixed).
+
+* [ ] doc --> **Component Cheat Sheet** (HIGHEST PRIORITY): single scannable table of ALL make*() with key props AND capabilities (sortable, handles, auto-dismiss, etc.). Embed in LLM guide AND as standalone `docs/component-cheatsheet.md`. This one artifact would have prevented 3 of 4 documented mistakes.
+* [ ] doc --> **API reference shows capabilities, not just names**: makeTable entry must say "sortable, pagination"; makeModal must say "ESC dismiss, open/close handles"; makeToast must say "auto-dismiss timer". Current API ref lists names only.
+* [ ] doc --> **Component library doc TOC**: Add anchor-linked table of contents at top of component-library.md so truncated views (LLM tooling, GitHub preview) still expose the full list of sections.
+* [ ] doc --> **bw.uuid() return format**: Document exact format (`bw_<prefix>_<hex>` or `bw_<hex>` without prefix). Matters for bw.patch() targeting.
+* [ ] doc --> **bw.raw() XSS warning**: Add prominent security note about XSS when using bw.raw() with user-supplied content. Consider `bw.sanitize()` utility.
+* [ ] doc --> **bw.sub(topic, handler, el) auto-unsubscribe**: Already implemented but undocumented in main docs. Developer built manual cleanup because they didn't know about the el parameter.
+* [ ] doc --> **makeCard title accepts TACO**: Verify and document whether makeCard title prop supports TACO objects (not just strings). Cards with badges/buttons in headers are common.
+* [ ] doc --> **Store pattern for shared state**: Document canonical pattern for multi-view shared state with scoped re-rendering (pub/sub + element-scoped subscriptions).
+
+### Interactive Component Gallery
+
+* [ ] make --> `pages/component-playground.html` -- live gallery where each make*() renders with editable props (like Storybook). Use bw.makeTryIt() for code editing + live preview.
+* [ ] improve --> `pages/08-api-reference.html` -- add inline rendered examples for top 20 functions
 
 ### App Structure Patterns Guide
 
@@ -206,7 +302,7 @@ ways to use the ones it already has. These are all docs/examples, not code.
 ## Deferred / Future
 
 ### Core
-* [ ] implement --> `bw.make(type, props)` factory dispatcher -- thin delegation to `bw.makeCard`, `bw.makeButton`, etc. Enables data-driven component creation. Audit which make*() functions earn their keep.
+* [x] implement --> `bw.make(type, props)` factory dispatcher -- DONE (v2.0.19, uses BCCL registry)
 * [ ] implement --> `bw.morph(target, newTaco)` -- update DOM in-place, preserving state of unchanged subtrees
 * [ ] implement --> Component structural/cosmetic CSS split -- separate structural styles (layout, display) from cosmetic (colors, shadows) in `bitwrench-styles.js`. Base CSS structural-only; `makeStyles()` handles cosmetic layer.
 
@@ -222,6 +318,12 @@ ways to use the ones it already has. These are all docs/examples, not code.
 * [ ] implement --> `bwcli serve` file watching and live reload
 * [ ] implement --> `bwcli build` -- static site generation from directory of .md/.html files
 * [ ] implement --> `bwcli init` -- scaffold a new bitwrench project
+
+### BCCL Data-Entry Components (from worklog feedback)
+* [ ] implement --> `bw.makeEditableTable({columns, data, onCellChange})` -- inline-edit cells with handle-based focus preservation
+* [ ] implement --> `bw.makeDatePicker(config)` -- date input with calendar dropdown
+* [ ] implement --> `bw.makeTimeRange(config)` -- start/end time selector
+* [ ] consider --> Sortable + filterable table combo (extend makeDataTable or new component)
 
 ### Docs / DX
 * [ ] improve --> API reference: fix JSDoc (@example, @category), use `comment-parser` devDep, improve CSS/layout (cards, search)

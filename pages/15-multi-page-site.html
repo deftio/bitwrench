@@ -15,9 +15,7 @@
   <div id="app"></div>
 
   <script>
-    mountExampleNav('#example-nav', '15-multi-page-site.html');
-    bw.loadStyles();
-    applySiteStyles();
+    initBitwrenchPage('15-multi-page-site.html');
 
     // =========================================================================
     // Helper: read-only code block
@@ -896,6 +894,11 @@
                 { t: 'td', c: { t: 'strong', c: 'Site Kit Factory' } },
                 { t: 'td', c: 'Factory returning themed component dictionary' },
                 { t: 'td', c: 'White-label apps, multi-tenant, design systems' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'strong', c: 'Router' } },
+                { t: 'td', c: 'bw.router() maps URLs to dictionary-based buildPage()' },
+                { t: 'td', c: 'SPAs, bookmarkable views, back/forward navigation' }
               ]}
             ]}
           ]
@@ -911,6 +914,66 @@
             { t: 'li', c: { t: 'a', a: { href: '10-themes.html' }, c: 'Theme Generation' } },
             { t: 'li', c: { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' } }
           ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Section 7: URL-Driven Pages with bw.router()
+    // =========================================================================
+    var routerInstance = null;
+
+    var section7 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'router' }, c: '7. URL-Driven Pages with bw.router()' },
+        {
+          t: 'p',
+          c: 'Sections 1\u20132 showed how to switch pages with a dictionary and a button click. ' +
+             'bw.router() adds URL mapping on top of the same pattern \u2014 each route calls the ' +
+             'dictionary-based buildPage() function. Back/forward buttons work, URLs are bookmarkable, ' +
+             'and the dictionary stays the single source of truth.'
+        },
+        codeBlock(
+          '// Same pageContents dictionary from Section 2\n' +
+          'bw.router({\n' +
+          '  target: \'#router-view\',\n' +
+          '  routes: {\n' +
+          '    \'/\':        function() { return buildPage(\'home\'); },\n' +
+          '    \'/about\':   function() { return buildPage(\'about\'); },\n' +
+          '    \'/blog\':    function() { return buildPage(\'blog\'); },\n' +
+          '    \'/contact\': function() { return buildPage(\'contact\'); },\n' +
+          '    \'*\':        function() { return buildPage(\'home\'); }\n' +
+          '  }\n' +
+          '});',
+          'js'
+        ),
+        { t: 'h3', c: 'Live Demo' },
+        {
+          t: 'p',
+          c: 'Click the navigation links below. The router uses hash mode, so the URL changes but stays within this page.'
+        },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            { t: 'div', a: { id: 'router-nav', style: 'display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap' } },
+            { t: 'div', a: { id: 'router-view', style: 'border:2px dashed var(--bw_card_border);border-radius:var(--bw_radius);min-height:200px' } }
+          ]
+        },
+        { t: 'h3', c: 'Key concepts' },
+        {
+          t: 'ul',
+          c: [
+            { t: 'li', c: bw.raw('<code>bw.router(config)</code> \u2014 creates and starts the router. Returns <code>{ navigate, current, destroy }</code>.') },
+            { t: 'li', c: bw.raw('<code>bw.navigate(path)</code> \u2014 programmatic navigation without a link click.') },
+            { t: 'li', c: bw.raw('<code>bw.link(path, text, attrs)</code> \u2014 returns a TACO <code>&lt;a&gt;</code> with onclick wired to the router.') },
+            { t: 'li', c: bw.raw('<code>before(to, from)</code> guard \u2014 return <code>false</code> to block, or a path string to redirect.') },
+            { t: 'li', c: bw.raw('Every route change publishes <code>bw:route</code> via pub/sub.') }
+          ]
+        },
+        {
+          t: 'p',
+          c: bw.raw('See <a href="thinking-in-bitwrench.html#routing">Thinking in Bitwrench \u00A7 Routing</a> for the full API.')
         }
       ]
     };
@@ -935,7 +998,7 @@
         pageHeader,
         {
           t: 'div', a: { class: 'content-container wide' },
-          c: [section1, section2, section3, section4, section5, section6]
+          c: [section1, section2, section3, section4, section5, section6, section7]
         }
       ]
     };
@@ -947,6 +1010,52 @@
     renderSitePreview();
     renderMixControls();
     renderMixPreview();
+
+    // =========================================================================
+    // Section 7: Initialize the router demo
+    // =========================================================================
+    var routerPages = ['home', 'about', 'blog', 'contact'];
+    var routerBasePath = '#/demo';
+
+    // Build router nav links
+    bw.DOM('#router-nav', {
+      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
+      c: routerPages.map(function(pg) {
+        var label = pg.charAt(0).toUpperCase() + pg.slice(1);
+        return bw.link(routerBasePath + (pg === 'home' ? '' : '/' + pg), label, {
+          class: 'bw_btn bw_btn_sm bw_btn_outline_secondary'
+        });
+      })
+    });
+
+    // Start the router (hash mode, scoped to #router-view)
+    routerInstance = bw.router({
+      target: '#router-view',
+      routes: {
+        '/demo':         function() { return buildPage('home'); },
+        '/demo/about':   function() { return buildPage('about'); },
+        '/demo/blog':    function() { return buildPage('blog'); },
+        '/demo/contact': function() { return buildPage('contact'); },
+        '*':             function() { return buildPage('home'); }
+      },
+      after: function(to) {
+        // Highlight active nav link
+        var links = bw.$('#router-nav a');
+        links.forEach(function(a) {
+          var href = a.getAttribute('href') || '';
+          if (href === '#' + to || (to === '/demo' && href === '#/demo')) {
+            a.className = 'bw_btn bw_btn_sm bw_btn_primary';
+          } else {
+            a.className = 'bw_btn bw_btn_sm bw_btn_outline_secondary';
+          }
+        });
+      }
+    });
+
+    // Navigate to initial route so the demo view is populated
+    if (!window.location.hash || window.location.hash.indexOf('/demo') === -1) {
+      bw.navigate('/demo');
+    }
   </script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 # Component Library
 
-Bitwrench ships over 50 `make*()` factory functions. Each takes a props object and returns a TACO — a plain JavaScript object that describes UI. No DOM elements are created until you pass the result to `bw.DOM()` or `bw.html()`.
+Bitwrench ships over 50 `make*()` factory functions. Each takes a props object and returns a TACO -- a plain JavaScript object that describes UI. No DOM elements are created until you pass the result to `bw.DOM()` or `bw.html()`.
+
+> For a quick scannable reference, see [Component Cheat Sheet](component-cheatsheet.md).
 
 ```javascript
 // Every factory works the same way
@@ -18,6 +20,23 @@ var html = bw.html(card);    // or get HTML string
 > **Coming from React?** Each `make*()` function is like a React component that returns JSX — except it returns a plain object instead of a virtual DOM node, and there is no build step.
 
 > **Coming from Bootstrap?** The factory functions replace Bootstrap's HTML class conventions. Instead of memorizing `<div class="card"><div class="card-body">...`, you write `bw.makeCard({ title, content })` and the correct markup is generated for you.
+
+## Quick Reference
+
+| Category | Components |
+|----------|-----------|
+| [Layout](#layout) | makeContainer, makeRow, makeCol, makeStack |
+| [Content](#content) | makeCard\*, makeAlert, makeBadge, makeProgress\*, makeStatCard\*, makeMediaObject, makeTimeline, makeStepper, makeListGroup, makeAvatar, makeSkeleton, makeSpinner |
+| [Navigation](#navigation) | makeNav, makeNavbar, makeTabs\*, makeBreadcrumb, makePagination |
+| [Buttons](#buttons) | makeButton, makeButtonGroup |
+| [Forms](#forms) | makeForm, makeFormGroup, makeInput, makeTextarea, makeSelect, makeCheckbox, makeRadio, makeSwitch, makeRange, makeSearchInput, makeChipInput\*, makeFileUpload |
+| [Interactive](#interactive) | makeAccordion\*, makeModal\*, makeToast\*, makeDropdown, makeCarousel\* |
+| [Overlays](#overlays) | makeTooltip, makePopover |
+| [Loading & Placeholder](#loading--placeholder) | makeSpinner, makeSkeleton, makeAvatar |
+| [Page-Level](#page-level-components) | makeHero, makeSection, makeFeatureGrid, makeCTA, makeCodeDemo |
+| [Tables & Data](#tables--data) | makeTable, makeTableFromArray, makeDataTable, makeBarChart |
+
+\*Has imperative handles (`el.bw` methods) -- see [Component Handles](#component-handles)
 
 ---
 
@@ -259,7 +278,7 @@ bw.makeNavbar({
 })
 ```
 
-### makeTabs
+### makeTabs (handles: setActiveTab/getActiveTab, keyboard nav, WAI-ARIA)
 
 Tabbed content panels with click switching.
 
@@ -555,7 +574,7 @@ bw.makeFileUpload({
 
 ## Interactive
 
-### makeAccordion
+### makeAccordion (handles: toggle/openAll/closeAll, ARIA)
 
 Collapsible content sections.
 
@@ -571,7 +590,7 @@ bw.makeAccordion({
 })
 ```
 
-### makeModal
+### makeModal (handles: open/close, ESC dismiss)
 
 Dialog overlay.
 
@@ -590,7 +609,7 @@ bw.makeModal({
 })
 ```
 
-### makeToast
+### makeToast (handle: dismiss, auto-dismiss 5s)
 
 Toast notification.
 
@@ -626,7 +645,7 @@ bw.makeDropdown({
 })
 ```
 
-### makeCarousel
+### makeCarousel (handles: 6 methods, auto-play, keyboard)
 
 Image carousel with controls and indicators.
 
@@ -815,7 +834,7 @@ bw.makeCodeDemo({
 
 ## Tables & Data
 
-### makeTable
+### makeTable (sortable, pagination, row selection, column renderers)
 
 Sortable data table from an array of objects. Supports row selection, custom cell rendering, and pagination.
 
@@ -980,6 +999,58 @@ bw.DOM('#app', {
 ```
 
 List available types with `Object.keys(bw.BCCL)`.
+
+---
+
+## Component Handles
+
+All BCCL factories include `o.handle` and/or `o.slots`, giving every rendered component an imperative API via `el.bw`. Use `bw.mount()` instead of `bw.DOM()` to get the element back:
+
+```javascript
+var el = bw.mount('#app', bw.makeCarousel({ items: slides }));
+el.bw.goToSlide(2);
+el.bw.pause();
+```
+
+Slot-based factories auto-generate `el.bw.setName()` / `el.bw.getName()` pairs:
+
+```javascript
+var el = bw.mount('#app', bw.makeCard({ title: 'Hello', content: 'World' }));
+el.bw.setTitle('Updated');
+el.bw.setContent({ t: 'b', c: '42' });  // accepts TACO objects
+```
+
+### Handle method reference
+
+| Factory | Handle methods | Slot methods |
+|---------|---------------|-------------|
+| makeCarousel | goToSlide, next, prev, getActiveIndex, pause, play | -- |
+| makeTabs | setActiveTab, getActiveTab | -- |
+| makeAccordion | toggle, openAll, closeAll | -- |
+| makeModal | open, close | -- |
+| makeProgress | setValue, getValue | -- |
+| makeChipInput | addChip, removeChip, getChips, clear | -- |
+| makeCard | -- | setTitle/getTitle, setContent/getContent, setFooter/getFooter |
+| makeStatCard | -- | setValue/getValue, setLabel/getLabel |
+
+Build your own with `o.handle` and `o.slots`:
+
+```javascript
+{
+  t: 'div', c: [
+    { t: 'h3', a: { class: 'title' }, c: 'Default' },
+    { t: 'div', a: { class: 'body' }, c: 'Content' }
+  ],
+  o: {
+    slots: { title: '.title', body: '.body' },
+    handle: {
+      reset: function(el) { el.bw.setTitle('Default'); el.bw.setBody('Content'); }
+    }
+  }
+}
+```
+
+See [State Management -- Level 1.5](state-management.md#level-15-component-handles) for the full guide.
 
 ---
 

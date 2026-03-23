@@ -9,7 +9,7 @@ A product landing page with:
 - Hero section with call-to-action
 - Feature grid
 - Pricing cards
-- Contact form
+- Contact form with handle-based validation
 - Footer
 
 Total code: ~120 lines of JavaScript. No build step.
@@ -138,6 +138,56 @@ var contact = {
   ]
 };
 ```
+
+## Step 7b: Add form validation with handles
+
+The contact form above works, but there's no feedback when the user submits. Use `o.slots` for a status message and `o.handle` for show/clear methods -- no full re-render needed, so the form inputs keep their values and focus:
+
+```javascript
+var contactForm = {
+  t: 'section', a: { id: 'contact', style: 'padding: 3rem 1rem; max-width: 600px; margin: 0 auto' },
+  c: [
+    { t: 'h2', c: 'Contact Us' },
+    { t: 'div', a: { class: 'status', style: 'display:none' }, c: '' },
+    bw.makeForm({
+      children: [
+        bw.makeFormGroup({ label: 'Name',    input: bw.makeInput({ type: 'text',  placeholder: 'Jane Smith' }) }),
+        bw.makeFormGroup({ label: 'Email',   input: bw.makeInput({ type: 'email', placeholder: 'jane@example.com' }) }),
+        bw.makeFormGroup({ label: 'Message', input: bw.makeTextarea({ placeholder: 'How can we help?' }) }),
+        bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary' })
+      ],
+      onsubmit: function(e) {
+        e.preventDefault();
+        // Access el.bw via the mounted element
+        var el = e.target.closest('[class*="bw_uuid"]') || e.target.parentElement;
+        if (el && el.bw) {
+          el.bw.showStatus('Message sent! We will reply within 24 hours.');
+        }
+      }
+    })
+  ],
+  o: {
+    slots: { status: '.status' },
+    handle: {
+      showStatus: function(el, msg) {
+        var s = el.querySelector('.status');
+        s.style.display = 'block';
+        s.textContent = msg;
+        s.style.cssText = 'padding:0.75rem;border-radius:8px;background:#d4edda;color:#155724;margin-bottom:1rem';
+      },
+      clearStatus: function(el) {
+        var s = el.querySelector('.status');
+        s.style.display = 'none';
+        s.textContent = '';
+      }
+    }
+  }
+};
+var formEl = bw.mount('#contact-wrapper', contactForm);
+// Can also call from outside: formEl.bw.showStatus('Saved!');
+```
+
+The key insight: `o.handle` methods update just the status div. The form inputs -- and any text the user has typed -- are untouched. This is why handles exist: targeted updates without re-render side effects.
 
 ## Step 8: Compose and render
 

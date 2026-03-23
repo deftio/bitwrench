@@ -6,6 +6,7 @@ Bitwrench has a three-level component model. Each level adds capability on top o
 |-------|-------------|---------------|
 | Level 0 -- TACO data | A plain JavaScript object describing UI | Static content, server rendering, serialization |
 | Level 1 -- DOM rendering | A live DOM element with optional lifecycle hooks | Render-once UI, manual state management |
+| Level 1.5 -- Component handles | `o.handle` and `o.slots` for imperative control of rendered elements | Update parts of a component without re-rendering |
 | Level 2 -- Stateful TACO | A TACO with `o.state` + `o.render` and `bw.update()` for re-rendering | Interactive components with changing state |
 
 This guide covers all three levels, from simplest to most capable.
@@ -195,6 +196,92 @@ Use Level 1 when:
 - You are building the transport layer for server-driven UI (bwserve)
 
 > **Coming from jQuery?** Level 1 with `o.render` + `bw.update()` is conceptually similar to jQuery's manual DOM updates, but structured. Instead of scattered `$('.count').text(val)` calls, you have a single render function that produces the complete UI from state. When state changes, you call `bw.update()` and the render function runs again.
+
+---
+
+## Level 1.5: Component Handles
+
+When you need imperative control of a rendered element -- updating a title, advancing a carousel, or reading a form value -- without re-rendering the entire component, use `o.handle` and `o.slots`.
+
+Component handles attach methods directly to the DOM element via `el.bw`. This gives you a clean API to call from outside the component, and it avoids the "re-render kills input focus" problem that plagues full re-render approaches.
+
+### o.handle -- attach methods
+
+Define named methods in `o.handle`. Each method receives the element as its first argument (auto-bound by bitwrench):
+
+```javascript
+var carousel = {
+  t: 'div', c: '...',
+  o: {
+    handle: {
+      next: function(el) { /* advance slide */ },
+      prev: function(el) { /* go back */ },
+      goToSlide: function(el, index) { /* jump to slide */ }
+    }
+  }
+};
+var el = bw.mount('#app', carousel);
+el.bw.next();         // methods are on el.bw
+el.bw.goToSlide(3);
+```
+
+### o.slots -- auto-generate setters/getters
+
+Declare named content areas with CSS selectors. Bitwrench auto-generates `el.bw.setName()` and `el.bw.getName()` pairs:
+
+```javascript
+var card = bw.makeCard({ title: 'Stats', content: '0' });
+// makeCard declares o.slots: { title: '.bw_card_title', content: '.bw_card_body', footer: '.bw_card_footer' }
+var el = bw.mount('#app', card);
+el.bw.setTitle('Updated Title');
+el.bw.setContent({ t: 'strong', c: '42' });  // accepts TACO objects
+var text = el.bw.getTitle();                   // returns text content
+```
+
+Slot setters accept strings or TACO objects. They update just the targeted element -- no full re-render, so input focus, scroll position, and animation state are preserved.
+
+### bw.mount() -- get the element back
+
+`bw.mount()` works like `bw.DOM()` but returns the created root element instead of the container. This is how you get access to `el.bw`:
+
+```javascript
+var el = bw.mount('#app', bw.makeCarousel({ items: slides }));
+el.bw.goToSlide(2);  // direct access to handle methods
+```
+
+### bw.message() -- dispatch by selector
+
+When you don't have a direct reference to the element, use `bw.message()` to dispatch by CSS selector, id, or UUID:
+
+```javascript
+bw.message('#my-card', 'setTitle', 'New Title');
+bw.message('.bw_uuid_abc123', 'next');
+```
+
+### BCCL factories with handles
+
+All BCCL factories include `o.handle` and/or `o.slots`. Examples:
+
+| Factory | Handle methods |
+|---------|---------------|
+| makeCarousel | goToSlide, next, prev, getActiveIndex, pause, play |
+| makeTabs | setActiveTab, getActiveTab |
+| makeAccordion | toggle, openAll, closeAll |
+| makeModal | open, close |
+| makeProgress | setValue, getValue |
+| makeChipInput | addChip, removeChip, getChips, clear |
+| makeCard | setTitle/getTitle, setContent/getContent, setFooter/getFooter (slots) |
+| makeStatCard | setValue/getValue, setLabel/getLabel (slots) |
+
+### When to use handles vs Level 2
+
+| Situation | Use |
+|-----------|-----|
+| Update a label, badge, or slot text | **Handles** -- `el.bw.setTitle('new')` |
+| Advance a carousel or toggle an accordion | **Handles** -- `el.bw.next()`, `el.bw.toggle(0)` |
+| Component has complex state that triggers full UI rebuild | **Level 2** -- `o.state` + `o.render` + `bw.update()` |
+| Need to preserve input focus during updates | **Handles** -- slot setters don't re-render siblings |
+| External code needs to control an embedded widget | **Handles** -- `bw.mount()` + `el.bw.method()` |
 
 ---
 
@@ -553,12 +640,120 @@ Bitwrench has two event systems that serve different purposes:
 
 ---
 
+## Shared State Across Views
+
+When building multi-view apps (SPAs, dashboards with panels, tabbed interfaces), you need shared state that persists across view switches. The canonical bitwrench pattern: a plain object store with topic-scoped pub/sub.
+
+### The pattern
+
+```javascript
+// 1. Store is a plain object
+var store = {
+  todos: [],
+  projects: [],
+  user: { name: 'Alice' }
+};
+
+// 2. Update function publishes scoped topics
+function updateStore(key, value) {
+  store[key] = value;
+  bw.pub('store:' + key, value);  // topic per data slice
+}
+```
+
+### Scoped subscriptions
+
+Each view subscribes only to the data it needs. Pass `el` as the third argument so the subscription auto-cleans when the view unmounts:
+
+```javascript
+// Todo view -- only re-renders when todos change
+function renderTodoView(target) {
+  var el = bw.mount(target, {
+    t: 'div',
+    o: {
+      state: { items: store.todos },
+      mounted: function(el) {
+        bw.sub('store:todos', function(todos) {
+          el._bw_state.items = todos;
+          bw.update(el);
+        }, el);  // auto-unsubscribes when view is removed
+      },
+      render: function(el) {
+        var s = el._bw_state;
+        bw.DOM(el, { t: 'ul', c: s.items.map(function(item) {
+          return { t: 'li', c: item.text };
+        })});
+      }
+    }
+  });
+}
+
+// Project view -- only re-renders when projects change
+function renderProjectView(target) {
+  var el = bw.mount(target, {
+    t: 'div',
+    o: {
+      state: { projects: store.projects },
+      mounted: function(el) {
+        bw.sub('store:projects', function(projects) {
+          el._bw_state.projects = projects;
+          bw.update(el);
+        }, el);
+      },
+      render: function(el) {
+        // ... render projects
+      }
+    }
+  });
+}
+```
+
+### Anti-pattern: single topic
+
+Do NOT use a single `'store:changed'` topic that re-renders everything:
+
+```javascript
+// WRONG -- every view re-renders on every store change
+bw.sub('store:changed', function() {
+  renderTodoView('#todos');
+  renderProjectView('#projects');
+  renderUserHeader('#header');
+}, el);
+
+// RIGHT -- each view subscribes to its own data slice
+bw.sub('store:todos', renderTodos, todosEl);
+bw.sub('store:projects', renderProjects, projectsEl);
+```
+
+### When to use
+
+- Multi-view SPAs where views share data
+- Dashboard panels that react to shared metrics
+- Any app with >1 view reading from the same data source
+
+For surgical updates within a view (changing a title, updating a counter), use [Level 1.5 handles](state-management.md#level-15-component-handles) instead of a full re-render.
+
+For URL-driven view switching, combine with [bw.router()](routing.md):
+
+```javascript
+bw.router({
+  target: '#app',
+  routes: {
+    '/todos':    function() { return makeTodoView(); },
+    '/projects': function() { return makeProjectView(); }
+  }
+});
+```
+
+---
+
 ## Choosing a Pattern
 
 | Situation | Recommended approach |
 |-----------|---------------------|
 | Static content, server rendering | Level 0 -- TACO data, `bw.html()` |
 | Interactive widget, full control | Level 1 -- manual `bw.DOM()` re-renders |
+| Update a slot, label, or control a widget | Level 1.5 -- `o.handle` / `o.slots` via `bw.mount()` + `el.bw` |
 | Stateful component with changing data | Level 2 -- `o.state` + `o.render` + `bw.update()` |
 | Server pushes UI updates | Level 1 -- `bw.patch()` / `bw.DOM()` |
 | Components need to talk to each other | `bw.pub()`/`bw.sub()` |
@@ -567,68 +762,6 @@ Bitwrench has two event systems that serve different purposes:
 
 ---
 
-## Removed: bw.component() and ComponentHandle (v2.0.19)
+## Removed: bw.component() (v2.0.19)
 
-`bw.component()`, `bw.compile()`, `bw.when()`, `bw.each()`, and the entire ComponentHandle class were removed in v2.0.19. Calling these functions now throws an Error. They have been replaced by:
-
-- **`o.handle`** -- attach named methods directly to the DOM element via `el.bw`
-- **`o.slots`** -- auto-generate `el.bw.setX()` / `el.bw.getX()` pairs for content areas
-- **`bw.mount(target, taco)`** -- like `bw.DOM()` but returns the root element for direct `el.bw` access
-- **`bw.message(target, action, data)`** -- dispatches to `el.bw[action](data)` (still works, rewritten)
-
-### o.handle
-
-Attach explicit methods to the DOM element. Each method receives the element as its first argument (auto-bound):
-
-```javascript
-var carousel = {
-  t: 'div', c: '...',
-  o: {
-    handle: {
-      next: function(el) { /* advance slide */ },
-      prev: function(el) { /* go back */ },
-      goToSlide: function(el, index) { /* jump to slide */ }
-    }
-  }
-};
-var el = bw.mount('#app', carousel);
-el.bw.next();         // methods are on el.bw
-el.bw.goToSlide(3);
-```
-
-### o.slots
-
-Declare named content areas with CSS selectors. Auto-generates setter/getter pairs:
-
-```javascript
-var card = bw.makeCard({ title: 'Stats', content: '0' });
-// makeCard has o.slots: { title: '.bw_card_title', content: '.bw_card_body', footer: '.bw_card_footer' }
-var el = bw.mount('#app', card);
-el.bw.setTitle('Updated Title');
-el.bw.setContent({ t: 'strong', c: '42' });  // accepts TACO objects
-var text = el.bw.getTitle();                   // returns text content
-```
-
-### bw.mount()
-
-Like `bw.DOM()` but returns the created root element instead of the container:
-
-```javascript
-var el = bw.mount('#app', bw.makeCarousel({ items: slides }));
-el.bw.goToSlide(2);  // direct access to handle methods
-```
-
-### BCCL factories with handles
-
-All BCCL factories now include `o.handle` and/or `o.slots`. Examples:
-
-| Factory | Handle methods |
-|---------|---------------|
-| makeCarousel | goToSlide, next, prev, getActiveIndex, pause, play |
-| makeTabs | setActiveTab, getActiveTab |
-| makeAccordion | toggle, openAll, closeAll |
-| makeModal | open, close |
-| makeProgress | setValue, getValue |
-| makeChipInput | addChip, removeChip, getChips, clear |
-| makeCard | setTitle/getTitle, setContent/getContent, setFooter/getFooter (slots) |
-| makeStatCard | setValue/getValue, setLabel/getLabel (slots) |
+`bw.component()`, `bw.compile()`, `bw.when()`, and `bw.each()` were removed in v2.0.19. Calling these functions now throws an Error. Their functionality is replaced by `o.handle`, `o.slots`, and `bw.mount()` -- see [Level 1.5: Component Handles](#level-15-component-handles) above.

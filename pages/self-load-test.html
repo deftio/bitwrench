@@ -16,9 +16,7 @@
   <div id="app"></div>
 
   <script>
-    mountExampleNav('#example-nav', 'self-load-test.html');
-    bw.loadStyles();
-    applySiteStyles();
+    initBitwrenchPage('self-load-test.html');
 
     var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
     var GZIP_WARN_KB = 40;

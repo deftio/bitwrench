@@ -193,6 +193,8 @@ bw.sub('cart:updated', function(d) {
 
 ### Component handles (o.handle / o.slots)
 
+**This is the recommended way to update rendered components without re-rendering.** Use `bw.mount()` + `el.bw.method()` instead of re-rendering the entire component when you only need to change a slot, advance a carousel, or toggle an accordion.
+
 BCCL components expose methods via `el.bw`:
 
 ```javascript
@@ -327,28 +329,69 @@ bw.u.css('p4 shadow')  // includes your custom token
 
 ## Step 6: BCCL Components
 
-All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
+**Bitwrench ships 47+ ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
 
-### Layout
-`makeContainer`, `makeRow`, `makeCol` (size: 1-12 or {sm:6, md:4}), `makeStack`, `makeGrid`
+### Most-Used Components
 
-### Content
-`makeCard` ({title, content, footer, variant, shadow}), `makeAlert` ({content, variant, dismissible}), `makeBadge`, `makeProgress` ({value, max, variant, striped}), `makeStatCard` ({value, label, variant}), `makeTimeline`, `makeHero`, `makeSection`, `makeFeatureGrid`, `makeCTA`
+| Component | Key Props | Capabilities |
+|-----------|-----------|-------------|
+| makeTable | data, columns, sortable, pageSize, onRowClick | **Click-to-sort (default!)**, pagination, row selection, column renderers |
+| makeCard | title, content, footer, image, variant | Image positions, shadow variants, **slots: setTitle/setContent/setFooter** |
+| makeModal | title, content, footer, onClose | ESC dismiss, backdrop close, **handles: open(), close()** |
+| makeToast | title, content, variant, delay, position | Auto-dismiss 5s, 6 positions, **handle: dismiss()** |
+| makeTabs | tabs [{label,content}], activeIndex | Arrow/Home/End keys, WAI-ARIA, **handles: setActiveTab(i), getActiveTab()** |
+| makeAccordion | items [{title,content}], multiOpen | Animations, ARIA, **handles: toggle(i), openAll(), closeAll()** |
+| makeCarousel | items, autoPlay, interval | Auto-play, keyboard, **handles: goToSlide(i), next(), prev(), pause(), play()** |
+| makeFormGroup | label, input, help, validation, required | Required indicator, validation feedback -- **don't reinvent this** |
+| makeTextarea | placeholder, value, rows | bw_form_control styling -- **use this, not raw `{t:'textarea'}`** |
+| makeInput | type, placeholder, value, oninput | All HTML5 types with bw_form_control styling |
+| makeSelect | options [{value,text}], value | Dropdown select with bw_form_control styling |
+| makeProgress | value, max, variant, striped, animated | Striped + animated, **handles: setValue(n), getValue()** |
+| makeStatCard | value, label, change, variant | Dashboard KPI with change arrows, **slots: setValue/setLabel** |
+| makeSearchInput | placeholder, onSearch, onInput | Enter to search, clear button |
+| makeChipInput | chips, placeholder, onAdd, onRemove | Enter to add, X to remove, **handles: addChip(), removeChip(), getChips(), clear()** |
+| makeNav | items [{text,href,active}], pills | Tab/pill/vertical navigation |
+| makeNavbar | brand, items, dark | Navigation bar with brand |
+| makeButton | text, variant, size, onclick | 8 variants + outline-* variants |
+| makeDropdown | trigger, items, align | Click menu with outside-click-to-close |
+| makeAlert | content, variant, dismissible | Dismissible notification banner |
 
-### Navigation
-`makeNav`, `makeNavbar` ({brand, items, dark}), `makeTabs` ({tabs:[{label, content}]}), `makeBreadcrumb`, `makePagination`
+For the full 47-component table with all props and handles, see [Component Cheat Sheet](component-cheatsheet.md).
 
-### Forms
-`makeForm`, `makeFormGroup` ({label, help, error}), `makeInput`, `makeTextarea`, `makeSelect`, `makeCheckbox`, `makeRadio`, `makeSwitch`, `makeRange`, `makeSearchInput`, `makeChipInput`, `makeFileUpload`
+### Components with Imperative Handles
 
-### Buttons
-`makeButton` ({text, variant, size, onclick}), `makeButtonGroup`
+Six components expose `el.bw` methods for direct control. Use `bw.mount()` to get the element:
 
-### Interactive
-`makeAccordion`, `makeModal`, `makeToast`, `makeDropdown`, `makeCarousel`, `makeTooltip`
+```javascript
+var el = bw.mount('#app', bw.makeCarousel({ items: slides }));
+el.bw.goToSlide(2);   // handle method
+el.bw.pause();
 
-### Tables
-`makeTable` ({data, columns, sortable, pageSize}), `makeTableFromArray`, `makeDataTable`, `makeBarChart`
+var card = bw.mount('#info', bw.makeCard({ title: 'Stats', content: '0' }));
+card.bw.setTitle('Revenue');   // slot setter
+card.bw.setContent({ t: 'b', c: '$42k' });
+```
+
+| Factory | Handle Methods | Slot Methods |
+|---------|---------------|-------------|
+| makeCarousel | goToSlide, next, prev, getActiveIndex, pause, play | -- |
+| makeTabs | setActiveTab, getActiveTab | -- |
+| makeAccordion | toggle, openAll, closeAll | -- |
+| makeModal | open, close | -- |
+| makeProgress | setValue, getValue | -- |
+| makeChipInput | addChip, removeChip, getChips, clear | -- |
+| makeCard | -- | setTitle/getTitle, setContent/getContent, setFooter/getFooter |
+| makeStatCard | -- | setValue/getValue, setLabel/getLabel |
+
+### Other Components
+
+**Layout**: makeContainer, makeRow, makeCol ({xs,sm,md,lg,xl}), makeStack
+**Content**: makeBadge, makeHero, makeSection, makeFeatureGrid, makeCTA, makeCodeDemo, makeMediaObject, makeTimeline, makeStepper, makeListGroup, makeAvatar, makeSkeleton, makeSpinner
+**Forms**: makeForm, makeCheckbox, makeRadio, makeSwitch, makeRange, makeFileUpload
+**Buttons**: makeButtonGroup (vertical/horizontal)
+**Tables**: makeTableFromArray (2D arrays), makeDataTable (with title + scroll wrapper), makeBarChart (CSS-only)
+**Overlays**: makeTooltip, makePopover
+**Navigation**: makeBreadcrumb, makePagination
 
 ### Variants
 `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`
@@ -614,7 +657,8 @@ bwcli serve                                   # dev server (port 7902)
 8. **No raw DOM** -- use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
 9. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`.
 10. **Routing is built in** -- `bw.router()` for SPAs. Hash mode by default, history mode optional.
-11. **Debug**: `bw.inspect(el)`, `el._bw_state`, `bwcli attach` for remote REPL.
+11. **Use `bw.mount()` + `el.bw`** for targeted updates. `o.handle` for methods, `o.slots` for content areas. Avoids re-render side effects (lost focus, scroll reset).
+12. **Debug**: `bw.inspect(el)`, `el._bw_state`, `bwcli attach` for remote REPL.
 
 ---
 

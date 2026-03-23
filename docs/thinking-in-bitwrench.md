@@ -1,3 +1,26 @@
+# Thinking in Bitwrench
+
+## Table of Contents
+
+0. [The Problem and the Idea](#0-the-problem-and-the-idea)
+1. [TACO: the Shape of a UI Element](#1-taco-the-shape-of-a-ui-element)
+2. [Styling -- CSS Is Just Strings](#2-styling--css-is-just-strings)
+3. [It's Just JavaScript -- the Core Insight](#3-its-just-javascript--the-core-insight)
+4. [The BCCL: Ready-Made Components](#4-the-bccl-ready-made-components)
+5. [Three Levels of Commitment](#5-three-levels-of-commitment)
+6. [Events and Communication](#6-events-and-communication)
+7. [Server-Driven UI (bwserve)](#7-server-driven-ui-bwserve)
+8. [Routing](#8-routing)
+9. [Utilities and Color Functions](#9-utilities-and-color-functions)
+10. [Putting It All Together -- Patterns](#10-putting-it-all-together--patterns)
+11. [What Bitwrench Doesn't Do](#11-what-bitwrench-doesnt-do)
+12. [Quick Reference](#12-quick-reference)
+- [Framework Translation Table](#appendix-framework-translation-table)
+
+**Related docs:** [Component Cheat Sheet](component-cheatsheet.md) | [State Management](state-management.md) | [Component Library](component-library.md) | [LLM Guide](llm-bitwrench-guide.md)
+
+---
+
 ## 0. The Problem and the Idea
 
 Building web UIs with raw HTML, CSS, and JavaScript works — but it's painful. HTML is verbose. Styling the same element across a page means copying CSS rules or managing class hierarchies. Adding interactivity means wiring up event listeners, tracking state in variables, and manually updating the DOM when things change. The more complex the UI, the more copy-paste, the more boilerplate, the more places things can go wrong.
@@ -764,6 +787,54 @@ bw.sub('cart:updated', function(data) {
 
 `bw.pub()` and `bw.sub()` are app-wide -- not scoped to the DOM tree. Any component can publish, any component can subscribe. Pass the element as the third argument to `bw.sub()` to tie the subscription lifetime to that element (auto-cleaned on `bw.cleanup()`).
 
+### Component handles -- o.handle and o.slots
+
+When you need to update part of a rendered component without re-rendering the whole thing -- change a title, advance a carousel, read a form value -- use component handles.
+
+**When to use handles vs pub/sub:** Pub/sub is for decoupled cross-component messaging ("something happened, anyone who cares can react"). Handles are for direct imperative control of a specific element ("carousel, go to slide 3"). If you have a reference to the element, use handles. If you don't know who should respond, use pub/sub.
+
+**o.handle** attaches named methods to `el.bw`:
+
+```js
+var widget = {
+  t: 'div', c: [
+    { t: 'span', a: { class: 'count' }, c: '0' },
+    { t: 'button', a: { onclick: function() { /* ... */ } }, c: '+' }
+  ],
+  o: {
+    handle: {
+      increment: function(el) {
+        var span = el.querySelector('.count');
+        span.textContent = String(Number(span.textContent) + 1);
+      },
+      reset: function(el) {
+        el.querySelector('.count').textContent = '0';
+      }
+    }
+  }
+};
+
+var el = bw.mount('#app', widget);
+el.bw.increment();   // updates the count without re-rendering the whole component
+el.bw.reset();
+```
+
+**o.slots** auto-generates setters and getters for named content areas:
+
+```js
+var card = bw.makeCard({ title: 'Stats', content: '0' });
+var el = bw.mount('#app', card);
+el.bw.setTitle('Revenue');               // update just the title
+el.bw.setContent({ t: 'b', c: '$42k' }); // accepts TACO objects
+el.bw.getTitle();                         // returns 'Revenue'
+```
+
+Slot setters update only the targeted child element. Input focus, scroll position, and animation state in sibling elements are preserved -- this is the key advantage over a full `bw.update()` re-render.
+
+**bw.mount()** is the entry point: it works like `bw.DOM()` but returns the root element so you can access `el.bw`. Use `bw.message(selector, action, data)` when you don't have a direct reference.
+
+All BCCL factories (`makeCard`, `makeCarousel`, `makeTabs`, `makeAccordion`, `makeModal`, `makeProgress`, `makeChipInput`, `makeStatCard`) include handles and/or slots. See [Component Library](component-library.md) for the full method table.
+
 ---
 
 ## 7. Server-Driven UI (bwserve)
@@ -1297,6 +1368,15 @@ Key things this example proves:
 | `bw.patch(uuid, content)` | Update a single UUID-addressed element |
 | `bw.cleanup(el)` | Run unmount hooks, clear subscriptions |
 
+### Component Handles
+
+| Function | What it does |
+|----------|-------------|
+| `o.handle` | Object of methods attached to `el.bw` on createDOM |
+| `o.slots` | `{name: '.selector'}` -- auto-generates `el.bw.setName()` / `el.bw.getName()` |
+| `bw.mount(sel, taco)` | Like DOM() but returns the root element for `el.bw` access |
+| `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` by id, UUID, or selector |
+
 ### Communication
 
 | Function | What it does |
@@ -1304,7 +1384,6 @@ Key things this example proves:
 | `bw.pub(topic, data)` | Publish to all subscribers |
 | `bw.sub(topic, fn)` | Subscribe (returns unsub function) |
 | `bw.sub(topic, fn, owner)` | Subscribe with auto-cleanup when owner is removed |
-| `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` by id, UUID, or selector |
 
 ### Routing
 

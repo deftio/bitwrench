@@ -434,6 +434,13 @@
     }
   }
 
+  function initBitwrenchPage(currentPage, baseHref) {
+    mountExampleNav('#example-nav', currentPage, baseHref);
+    bw.loadStyles();
+    applySiteStyles();
+  }
+
   window.createExampleNav = createExampleNav;
   window.mountExampleNav = mountExampleNav;
+  window.initBitwrenchPage = initBitwrenchPage;
 })();
