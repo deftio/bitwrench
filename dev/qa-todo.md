@@ -198,7 +198,7 @@ Hash + History modes, :param + wildcard matching, before/after guards, pub/sub.
 * [x] test --> 50 tests (matching, hash, history, guards, pub/sub, edge cases)
 * [x] doc --> docs/routing.md + updated LLM guide, framework table, tutorials
 * [x] example --> Update pages/15-multi-page-site.html to use bw.router() (v2.0.21, Section 7)
-* [ ] example --> `examples/dashboard-spa/` using router + shared state
+* [x] example --> `examples/dashboard-spa/` using router + shared state (v2.0.21)
 
 ---
 
@@ -243,7 +243,7 @@ exists, reinvented makeFormGroup, didn't find o.handle/o.slots (now fixed).
 * [x] doc --> **bw.uuid() return format** (v2.0.21): Documented in bitwrench_api.md -- `bw_<prefix>_<hex>` format, safe for CSS class and bw.patch() target.
 * [x] doc --> **bw.raw() XSS warning** (v2.0.21): Added WARNING block to bitwrench_api.md entry.
 * [x] doc --> **bw.sub(topic, handler, el) auto-unsubscribe** (v2.0.21): Documented el parameter with usage example in bitwrench_api.md.
-* [ ] doc --> **makeCard title accepts TACO**: Verify and document whether makeCard title prop supports TACO objects (not just strings). Cards with badges/buttons in headers are common.
+* [x] doc --> **makeCard title accepts TACO** (v2.0.21): Verified -- title, subtitle, content, header, footer all pass through as `c:` content, so TACO objects and arrays work natively. Documented in component-cheatsheet.md.
 * [x] doc --> **Store pattern for shared state** (v2.0.21): Added "Shared State Across Views" section to docs/state-management.md with scoped pub/sub pattern, anti-pattern warning, cross-refs to routing and handles.
 
 Additional discoverability work done in v2.0.21:
@@ -258,13 +258,8 @@ Additional discoverability work done in v2.0.21:
 
 ### App Structure Patterns Guide
 
-* [ ] doc --> Create `docs/app-patterns.md` -- canonical project layouts for:
-  - Dashboard (single page, state + pub/sub, embedded UI)
-  - Multi-page SPA (client router, shared nav/footer)
-  - bwserve app (server-driven, SSE, server-side state)
-  - Embedded/IoT UI (static shell + JSON updates)
-  - Static site (bwcli convert, markdown -> HTML)
-* [ ] doc --> Each pattern: directory structure, entry point, state flow, example
+* [x] doc --> Created `docs/app-patterns.md` (v2.0.21) -- 5 canonical project layouts: dashboard, multi-page SPA, bwserve, embedded/IoT, static site. Each with directory structure, entry point, state flow, code example.
+* [x] doc --> Each pattern: directory structure, entry point, state flow, example (v2.0.21)
 
 ### State / Store Canonical Pattern -- PARTIALLY DONE (v2.0.21)
 

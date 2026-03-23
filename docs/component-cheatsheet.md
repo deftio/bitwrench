@@ -22,7 +22,7 @@
 | makePopover | trigger, title, content, placement | Click-outside-to-close, 4 placements | -- |
 | makeTooltip | content, text, placement | Show on hover/focus, role=tooltip, 4 placements | -- |
 | **Content** | | | |
-| makeCard | title, content, footer, image, variant, shadow | Image positions (top/bottom/left/right), shadow variants, hoverable | slots: setTitle/getTitle, setContent/getContent, setFooter/getFooter |
+| makeCard | title, content, footer, image, variant, shadow | All props accept TACO (not just strings), image positions, shadow variants, hoverable | slots: setTitle/getTitle, setContent/getContent, setFooter/getFooter |
 | makeStatCard | value, label, change, variant, prefix, suffix | Dashboard KPI with change indicator (green/red arrows) | slots: setValue/getValue, setLabel/getLabel |
 | makeAlert | title, content, variant, dismissible | Dismissible close button, 8 color variants | -- |
 | makeBadge | text, variant, pill, size | Pill shape option, sm/lg sizes | -- |

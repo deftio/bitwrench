@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Dashboard SPA - Bitwrench Router Example</title>
+  <!--
+    Team Dashboard SPA -- demonstrates:
+      - bw.router() with hash-mode routing and parameterized routes
+      - Shared application store with pub/sub reactivity
+      - bw.makeStatCard(), bw.makeTable(), bw.makeNav(), bw.makeButton()
+      - bw.loadStyles() for runtime theming with preset switching
+      - bw.link() / bw.navigate() for SPA navigation
+      - bw.sub('bw:route', ...) to sync nav active state on route change
+      - All UI built from TACO objects -- zero direct DOM manipulation
+  -->
+  <script src="../../dist/bitwrench.umd.min.js"></script>
+</head>
+<body>
+  <div id="nav-root"></div>
+  <div id="app"></div>
+  <div id="footer-root"></div>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ── Theme ────────────────────────────────────────────────────────────
+    bw.loadStyles({ primary: '#4f46e5', secondary: '#0ea5e9', tertiary: '#8b5cf6' });
+
+    // ── Custom CSS ───────────────────────────────────────────────────────
+    bw.injectCSS(bw.css({
+      '.app-shell': { maxWidth: '960px', margin: '0 auto', padding: '1rem' },
+      '.stats-row': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' },
+      '.view-title': { fontSize: '1.5rem', fontWeight: '700', margin: '0 0 1rem' },
+      '.member-detail': { maxWidth: '480px' },
+      '.member-detail dt': { fontWeight: '600', marginTop: '0.75rem' },
+      '.member-detail dd': { margin: '0.25rem 0 0' },
+      '.settings-grid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' },
+      '.footer': { textAlign: 'center', padding: '2rem 1rem 1rem', opacity: '0.6', fontSize: '0.85rem' },
+      '.back-link': { display: 'inline-block', marginBottom: '1rem' },
+      '.pref-row': { display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem' }
+    }), { id: 'app_css' });
+
+    // ── Shared Store ─────────────────────────────────────────────────────
+    var store = {
+      team: [
+        { id: 1, name: 'Alice Chen',  role: 'Engineer', status: 'Active', email: 'alice@example.com',  tasks: 12 },
+        { id: 2, name: 'Bob Park',    role: 'Designer', status: 'Active', email: 'bob@example.com',    tasks: 8 },
+        { id: 3, name: 'Carol Diaz',  role: 'PM',       status: 'Away',   email: 'carol@example.com',  tasks: 15 },
+        { id: 4, name: 'Dan Kim',     role: 'Engineer', status: 'Active', email: 'dan@example.com',    tasks: 10 }
+      ],
+      stats: { completed: 142, openIssues: 7, uptime: 99.8 },
+      activity: [
+        { when: '2 min ago',  who: 'Alice Chen',  action: 'Closed issue #214' },
+        { when: '18 min ago', who: 'Dan Kim',     action: 'Pushed 3 commits to feature/auth' },
+        { when: '1 hr ago',   who: 'Bob Park',    action: 'Updated design mockups' },
+        { when: '3 hr ago',   who: 'Carol Diaz',  action: 'Created sprint #12 plan' },
+        { when: '5 hr ago',   who: 'Alice Chen',  action: 'Reviewed PR #87' }
+      ],
+      preferences: { notifications: true },
+      currentTheme: 'indigo'
+    };
+
+    function updateStore(key, value) {
+      store[key] = value;
+      bw.pub('store:' + key, value);
+    }
+
+    // ── Navigation ───────────────────────────────────────────────────────
+    var navItems = [
+      { text: 'Overview',  path: '/' },
+      { text: 'Team',      path: '/team' },
+      { text: 'Settings',  path: '/settings' }
+    ];
+
+    function renderNav(activePath) {
+      var items = navItems.map(function(item) {
+        return {
+          text: item.text,
+          href: '#' + item.path,
+          active: item.path === activePath,
+          onclick: function(e) { e.preventDefault(); bw.navigate(item.path); }
+        };
+      });
+      bw.DOM('#nav-root', bw.makeNavbar({
+        brand: 'Team Dashboard',
+        brandHref: '#/',
+        items: items,
+        dark: true
+      }));
+    }
+
+    // Sync nav on every route change
+    bw.sub('bw:route', function(data) {
+      renderNav(data.path);
+    });
+
+    // ── Views ────────────────────────────────────────────────────────────
+
+    // 1. Overview
+    function overviewView() {
+      var totalTasks = store.team.reduce(function(sum, m) { return sum + m.tasks; }, 0);
+
+      var statCards = [
+        bw.makeStatCard({ value: store.team.length, label: 'Team Members', variant: 'primary' }),
+        bw.makeStatCard({ value: store.stats.completed, label: 'Tasks Completed', change: 12, variant: 'success' }),
+        bw.makeStatCard({ value: store.stats.openIssues, label: 'Open Issues', change: -3, variant: 'warning' }),
+        bw.makeStatCard({ value: store.stats.uptime, label: 'Uptime %', suffix: '%', variant: 'info' })
+      ];
+
+      var activityTable = bw.makeTable({
+        data: store.activity,
+        columns: [
+          { key: 'when', label: 'When' },
+          { key: 'who', label: 'Who' },
+          { key: 'action', label: 'Action' }
+        ],
+        striped: true,
+        hover: true,
+        sortable: false
+      });
+
+      return {
+        t: 'div', a: { class: 'app-shell' }, c: [
+          { t: 'h2', a: { class: 'view-title' }, c: 'Overview' },
+          { t: 'div', a: { class: 'stats-row' }, c: statCards },
+          { t: 'h3', c: 'Recent Activity' },
+          activityTable
+        ]
+      };
+    }
+
+    // 2. Team list
+    function teamView() {
+      var table = bw.makeTable({
+        data: store.team,
+        columns: [
+          { key: 'name',   label: 'Name' },
+          { key: 'role',   label: 'Role' },
+          { key: 'status', label: 'Status' },
+          { key: 'tasks',  label: 'Tasks' }
+        ],
+        striped: true,
+        hover: true,
+        selectable: true,
+        onRowClick: function(row) {
+          bw.navigate('/team/' + row.id);
+        }
+      });
+
+      return {
+        t: 'div', a: { class: 'app-shell' }, c: [
+          { t: 'h2', a: { class: 'view-title' }, c: 'Team Members' },
+          table
+        ]
+      };
+    }
+
+    // 3. Team member detail
+    function memberView(params) {
+      var id = parseInt(params.id, 10);
+      var member = null;
+      for (var i = 0; i < store.team.length; i++) {
+        if (store.team[i].id === id) { member = store.team[i]; break; }
+      }
+
+      if (!member) {
+        return {
+          t: 'div', a: { class: 'app-shell' }, c: [
+            bw.link('/team', 'Back to Team', { class: 'back-link' }),
+            bw.makeAlert({ text: 'Member not found.', variant: 'danger' })
+          ]
+        };
+      }
+
+      return {
+        t: 'div', a: { class: 'app-shell' }, c: [
+          bw.link('/team', 'Back to Team', { class: 'back-link' }),
+          { t: 'h2', a: { class: 'view-title' }, c: member.name },
+          {
+            t: 'dl', a: { class: 'member-detail' }, c: [
+              { t: 'dt', c: 'Role' },
+              { t: 'dd', c: member.role },
+              { t: 'dt', c: 'Status' },
+              { t: 'dd', c: bw.makeBadge({ text: member.status, variant: member.status === 'Active' ? 'success' : 'warning' }) },
+              { t: 'dt', c: 'Email' },
+              { t: 'dd', c: member.email },
+              { t: 'dt', c: 'Assigned Tasks' },
+              { t: 'dd', c: String(member.tasks) }
+            ]
+          }
+        ]
+      };
+    }
+
+    // 4. Settings
+    var themePresets = [
+      { name: 'Indigo',  key: 'indigo',  config: { primary: '#4f46e5', secondary: '#a5b4fc', tertiary: '#818cf8' } },
+      { name: 'Ocean',   key: 'ocean',   config: { primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8' } },
+      { name: 'Forest',  key: 'forest',  config: { primary: '#2d6a4f', secondary: '#95d5b2', tertiary: '#52b788' } },
+      { name: 'Sunset',  key: 'sunset',  config: { primary: '#e76f51', secondary: '#264653', tertiary: '#e9c46a' } }
+    ];
+
+    function settingsView() {
+      var themeButtons = themePresets.map(function(preset) {
+        var isActive = store.currentTheme === preset.key;
+        return bw.makeButton({
+          text: preset.name + (isActive ? ' *' : ''),
+          variant: isActive ? 'primary' : 'outline_primary',
+          onclick: function() {
+            bw.loadStyles(preset.config);
+            updateStore('currentTheme', preset.key);
+            // Re-render settings to update active indicator
+            bw.DOM('#app', settingsView());
+          }
+        });
+      });
+
+      var notifOn = store.preferences.notifications;
+
+      return {
+        t: 'div', a: { class: 'app-shell' }, c: [
+          { t: 'h2', a: { class: 'view-title' }, c: 'Settings' },
+          { t: 'h3', c: 'Theme' },
+          { t: 'div', a: { class: 'settings-grid' }, c: themeButtons },
+          { t: 'h3', c: 'Preferences' },
+          {
+            t: 'div', a: { class: 'pref-row' }, c: [
+              bw.makeButton({
+                text: 'Notifications: ' + (notifOn ? 'ON' : 'OFF'),
+                variant: notifOn ? 'success' : 'secondary',
+                onclick: function() {
+                  var prefs = { notifications: !store.preferences.notifications };
+                  updateStore('preferences', prefs);
+                  bw.DOM('#app', settingsView());
+                }
+              })
+            ]
+          }
+        ]
+      };
+    }
+
+    // ── 404 fallback ─────────────────────────────────────────────────────
+    function notFoundView() {
+      return {
+        t: 'div', a: { class: 'app-shell' }, c: [
+          bw.makeAlert({ text: 'Page not found.', variant: 'danger' }),
+          bw.link('/', 'Go to Overview')
+        ]
+      };
+    }
+
+    // ── Footer ───────────────────────────────────────────────────────────
+    bw.DOM('#footer-root', {
+      t: 'div', a: { class: 'footer' }, c: 'Team Dashboard -- Built with bitwrench.js'
+    });
+
+    // ── Router ───────────────────────────────────────────────────────────
+    bw.router({
+      target: '#app',
+      mode: 'hash',
+      routes: {
+        '/':           function()       { return overviewView(); },
+        '/team':       function()       { return teamView(); },
+        '/team/:id':   function(params) { return memberView(params); },
+        '/settings':   function()       { return settingsView(); },
+        '*':           function()       { return notFoundView(); }
+      }
+    });
+
+  })();
+  </script>
+</body>
+</html>
