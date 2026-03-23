@@ -302,8 +302,6 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Is this a framework?** -- No. Bitwrench is a library (~38KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.
 
-**Does it scale to large apps?** -- Bitwrench targets single-page tools, dashboards, prototypes, embedded UIs, and content sites -- apps where a single HTML file or a handful of files is the right form factor. For a 500-route SPA with team-scale state management, React or Vue is a better fit.
-
 **How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine -- use whichever fits the job.
 
 **How does CSS work?** -- Bitwrench doesn't own your CSS. Use any external stylesheet, Tailwind, or CSS file you want -- bitwrench doesn't interfere. On top of that, `bw.css()` generates CSS from JS objects (with `@media`, `@keyframes`, pseudo-classes), `bw.s()` composes inline style objects, and `bw.loadStyles()` derives a complete design system from 2 seed colors. You can use all three together or none at all.

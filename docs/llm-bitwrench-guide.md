@@ -452,7 +452,50 @@ app.listen();
 
 ---
 
-## Step 9: HTML Generation and CLI
+## Step 9: Client-Side Routing
+
+Map URLs to views with `bw.router()`. Hash mode (default) works everywhere; history mode uses `pushState`.
+
+```javascript
+bw.router({
+  target: '#app',
+  routes: {
+    '/':          function() { return { t: 'h1', c: 'Home' }; },
+    '/about':     function() { return { t: 'h1', c: 'About' }; },
+    '/users/:id': function(params) { return { t: 'div', c: 'User ' + params.id }; },
+    '/docs/*':    function(params) { return { t: 'div', c: 'Doc: ' + params._rest }; },
+    '*':          function() { return { t: 'h1', c: '404' }; }
+  },
+  before: function(to, from) {
+    if (to === '/admin' && !loggedIn) return '/login';  // redirect
+  },
+  after: function(to) { console.log('navigated to', to); }
+});
+
+// Programmatic navigation
+bw.navigate('/users/42');
+bw.navigate('/about', { replace: true });
+
+// Navigation links (returns TACO <a> with onclick wired)
+bw.link('/about', 'About Us', { class: 'nav-item' })
+
+// Query strings: /search?q=hello => params._query.q === 'hello'
+
+// React to route changes via pub/sub
+bw.sub('bw:route', function(d) { navEl.bw.setActive(d.path); }, navEl);
+
+// Cleanup
+var r = bw.router({ ... });
+r.destroy();  // remove listeners, stop routing
+```
+
+**Route priority**: exact > parameterized (`:id`) > catch-all (`/prefix/*`) > global wildcard (`*`).
+
+**Modes**: `mode: 'hash'` (default, `#/path`) or `mode: 'history'` (pushState, needs server SPA fallback). History mode supports `base: '/app'` for prefix stripping.
+
+---
+
+## Step 10: HTML Generation and CLI
 
 ### bw.html() -- TACO to HTML string
 
@@ -536,6 +579,13 @@ bwcli serve                                   # dev server (port 7902)
 | `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` |
 | `bw.emit(el, event, detail)` | DOM-scoped CustomEvent |
 
+### Routing
+| Function | Description |
+|----------|-------------|
+| `bw.router(config)` | Create and start client-side router. Returns `{ navigate, current, destroy }` |
+| `bw.navigate(path, opts)` | Programmatic navigation (delegates to active router) |
+| `bw.link(path, content, attrs)` | Returns TACO `<a>` with navigation wired |
+
 ### Utilities
 | Function | Description |
 |----------|-------------|
@@ -563,7 +613,8 @@ bwcli serve                                   # dev server (port 7902)
 7. **Three levels are explicit** -- you always know if you have data (L0), DOM (L1), or stateful (L2).
 8. **No raw DOM** -- use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
 9. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`.
-10. **Debug**: `bw.inspect(el)`, `el._bw_state`, `bwcli attach` for remote REPL.
+10. **Routing is built in** -- `bw.router()` for SPAs. Hash mode by default, history mode optional.
+11. **Debug**: `bw.inspect(el)`, `el._bw_state`, `bwcli attach` for remote REPL.
 
 ---
 

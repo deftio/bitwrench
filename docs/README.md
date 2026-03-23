@@ -15,6 +15,7 @@ These guides cover how to build UIs with bitwrench.
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
 | [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
 | [Component Library](component-library.md) | All 50+ `make*()` functions with signatures and examples |
+| [Routing](routing.md) | Client-side router: hash/history mode, route params, guards, pub/sub |
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
 | [CLI](cli.md) | The `bwcli` command: file conversion, themes, standalone pages |
 | [bwserve](bwserve.md) | Server-driven UI: SSE protocol, pipe server, embedded devices, relaxed JSON |
@@ -49,10 +50,11 @@ The [live documentation site](https://deftio.github.io/bitwrench/pages/) has int
 
 Bitwrench describes UI as plain JavaScript objects. There is no JSX, no templates, no virtual DOM, and no compile step required. A button is a JavaScript object. A page layout is a JavaScript object. You compose them with arrays and functions — standard language features.
 
-The library provides three things:
+The library provides four things:
 
 1. **A rendering engine** that turns objects into HTML or DOM
 2. **A component library** of 50+ ready-made UI elements
 3. **A reactivity system** that updates the DOM when state changes
+4. **A client-side router** that maps URLs to views with guards and pub/sub
 
-Everything else — styling, theming, event handling, server communication — builds on these three pieces.
+Everything else -- styling, theming, event handling, server communication -- builds on these pieces.

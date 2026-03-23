@@ -3567,6 +3567,12 @@ bw.getAllComponents = function() {
 };
 
 // =========================================================================
+// Import and register router
+// =========================================================================
+import { initRouter } from './bitwrench-router.js';
+initRouter(bw);
+
+// =========================================================================
 // Import and register all components
 // =========================================================================
 import * as components from './bitwrench-bccl.js';

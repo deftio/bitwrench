@@ -866,59 +866,115 @@ client.patch('.' + itemId, 'Updated content');
 
 ## 8. Routing
 
-Bitwrench is a UI library, not a framework — it doesn't include a router. But routing is a common need, and it's straightforward to handle.
+Bitwrench includes a built-in client-side router. It maps URLs to view functions, supports hash mode and History API mode, and integrates with pub/sub.
 
-### Often you don't need it
-
-Many bitwrench apps are single-page dashboards or internal tools where tab-switching is sufficient:
+### Basic SPA routing
 
 ```js
-var currentTab = 'overview';
-
-function renderApp() {
-  bw.DOM('#app', { t: 'div', c: [
-    bw.makeTabs({
-      tabs: ['overview', 'analytics', 'settings'],
-      active: currentTab,
-      onchange: function(tab) { currentTab = tab; renderApp(); }
-    }),
-    currentTab === 'overview'  ? makeOverview() :
-    currentTab === 'analytics' ? makeAnalytics() :
-    makeSettings()
-  ]});
-}
-renderApp();
+bw.router({
+  target: '#app',
+  routes: {
+    '/':          function() { return { t: 'h1', c: 'Home' }; },
+    '/about':     function() { return { t: 'h1', c: 'About' }; },
+    '/users/:id': function(params) {
+      return bw.makeCard({ title: 'User ' + params.id });
+    },
+    '*':          function() { return { t: 'h1', c: '404 Not Found' }; }
+  }
+});
 ```
 
-### Client-side routing with hashchange
+The router reads the current URL, matches a route, calls the handler, and mounts the returned TACO into `#app`. It listens for URL changes and re-renders automatically.
 
-For bookmarkable URLs:
+### Programmatic navigation
 
 ```js
-var routes = {
-  '':         makeHomePage,
-  'about':    makeAboutPage,
-  'products': makeProductsPage
-};
+bw.navigate('/users/123');
+bw.navigate('/about', { replace: true });  // replace history entry
+```
 
-function navigate() {
-  var hash = location.hash.slice(1) || '';
-  var page = routes[hash] || make404Page;
-  bw.DOM('#app', page());
+### Navigation links
+
+```js
+// bw.link() returns a TACO <a> with onclick wired to bw.navigate()
+bw.link('/about', 'About Us', { class: 'nav-item' })
+```
+
+### Route parameters and query strings
+
+```js
+// /users/42?tab=posts
+'/users/:id': function(params) {
+  params.id;            // '42'
+  params._query.tab;    // 'posts'
 }
 
-window.addEventListener('hashchange', navigate);
-navigate();
+// /docs/api/colors (catch-all)
+'/docs/*': function(params) {
+  params._rest;         // 'api/colors'
+}
+```
+
+### Guards and hooks
+
+```js
+bw.router({
+  target: '#app',
+  routes: { ... },
+  before: function(to, from) {
+    if (to === '/admin' && !loggedIn) return '/login';  // redirect
+    if (to === '/locked') return false;                  // block
+  },
+  after: function(to, from) {
+    window.scrollTo(0, 0);
+  }
+});
+```
+
+### Pub/sub integration
+
+Every route change publishes `bw:route`:
+
+```js
+bw.sub('bw:route', function(data) {
+  // data.path, data.params, data.query, data.from
+  navEl.bw.setActive(data.path);
+}, navEl);
+```
+
+### Hash vs history mode
+
+Hash mode (default): URLs like `#/users/123`. Works everywhere, no server config needed.
+
+History mode: URLs like `/users/123`. Requires SPA fallback on the server.
+
+```js
+bw.router({ mode: 'history', base: '/app', target: '#app', routes: { ... } });
+```
+
+### When you don't need routing
+
+Many bitwrench apps are single-page dashboards where tab-switching is enough:
+
+```js
+bw.DOM('#app', bw.makeTabs({
+  tabs: [
+    { label: 'Overview', content: makeOverview() },
+    { label: 'Analytics', content: makeAnalytics() }
+  ]
+}));
 ```
 
 ### Server-side routing with bwserve
 
-With bwserve, the server owns routing:
+The client router complements bwserve's `app.page()`:
 
 ```js
 app.page('/', function(client) { client.render('#app', makeHomePage()); });
 app.page('/dashboard', function(client) { client.render('#app', makeDashboard()); });
 ```
+
+See [Routing Guide](routing.md) for the full API reference, patterns, and examples.
 
 ---
 
@@ -1196,7 +1252,6 @@ Key things this example proves:
 
 | Feature | Why not | What to use instead |
 |---------|---------|-------------------|
-| Routing | UI library scope — see Section 8 | `hashchange` + `bw.DOM()`, or page.js/navigo |
 | TypeScript types | Ships as UMD/ESM, works everywhere | Community .d.ts welcome, JSDoc in source |
 | Virtual DOM | Targeted patches via UUID refs are sufficient | `bw.patch()`, `o.render` + `bw.update()` |
 | CSS purging | You generate only what you use via `bw.css()` | N/A |
@@ -1250,6 +1305,14 @@ Key things this example proves:
 | `bw.sub(topic, fn)` | Subscribe (returns unsub function) |
 | `bw.sub(topic, fn, owner)` | Subscribe with auto-cleanup when owner is removed |
 | `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` by id, UUID, or selector |
+
+### Routing
+
+| Function | What it does |
+|----------|-------------|
+| `bw.router(config)` | Create and start a client-side router |
+| `bw.navigate(path, opts)` | Programmatic navigation (delegates to active router) |
+| `bw.link(path, content, attrs)` | Returns TACO `<a>` with navigation wired |
 
 ### Color
 

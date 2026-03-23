@@ -562,6 +562,7 @@ Bitwrench has two event systems that serve different purposes:
 | Stateful component with changing data | Level 2 -- `o.state` + `o.render` + `bw.update()` |
 | Server pushes UI updates | Level 1 -- `bw.patch()` / `bw.DOM()` |
 | Components need to talk to each other | `bw.pub()`/`bw.sub()` |
+| URL-driven views (SPA) | `bw.router()` -- see [Routing](routing.md) |
 | Debugging component state | `el._bw_state` in the console, or `bw.inspect(selector)` |
 
 ---

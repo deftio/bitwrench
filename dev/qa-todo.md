@@ -127,6 +127,81 @@ serializable, patchable via bwserve, themeable via palette.
 
 ---
 
+## P1: Client-Side Router
+
+Design doc: `dev/bitwrench-router-design.md` (DRAFT -- awaiting sign-off)
+
+~100-120 lines in core. Hash + History API modes. Pure function: URL -> TACO.
+Integrates with pub/sub (`bw:route` events). Complements bwserve `app.page()`.
+Zero deps. Makes bitwrench a complete app framework.
+
+* [ ] decide --> Sign off on router design doc (API shape, naming, scope)
+* [ ] implement --> Route matching (static, :param, wildcard, query string parsing)
+* [ ] implement --> Hash mode (hashchange listener, bw.navigate, back/forward)
+* [ ] implement --> History mode (pushState, popstate, base path)
+* [ ] implement --> before/after guards, pub/sub integration
+* [ ] implement --> bw.link() convenience helper (optional -- pending decision)
+* [ ] test --> ~46 tests (matching, hash, history, guards, pub/sub, edge cases)
+* [ ] doc --> Router section in docs/state-management.md or new docs/routing.md
+* [ ] example --> Update pages/15-multi-page-site.html to use bw.router()
+
+---
+
+## P4.5: Documentation and Examples (from external feedback)
+
+Source: `.feedback/bitwrench-feedback-v2.0.19-billy.md`
+
+Key insight: bitwrench doesn't need more primitives -- it needs clearer, shared
+ways to use the ones it already has. These are all docs/examples, not code.
+
+### App Structure Patterns Guide
+
+* [ ] doc --> Create `docs/app-patterns.md` -- canonical project layouts for:
+  - Dashboard (single page, state + pub/sub, embedded UI)
+  - Multi-page SPA (client router, shared nav/footer)
+  - bwserve app (server-driven, SSE, server-side state)
+  - Embedded/IoT UI (static shell + JSON updates)
+  - Static site (bwcli convert, markdown -> HTML)
+* [ ] doc --> Each pattern: directory structure, entry point, state flow, example
+
+### State / Store Canonical Pattern
+
+* [ ] doc --> Create `docs/patterns-state.md` (or section in state-management.md):
+  - "The bitwrench way" for shared state: plain object + pub/sub topic
+  - Canonical store pattern (not an API, just a documented convention)
+  - Derived state = just a function
+  - When to use o.state vs pub/sub vs store pattern
+  - Example: user store shared across nav + profile + settings
+
+### Async / Data Fetching Recipes
+
+* [ ] doc --> Create `docs/patterns-async.md`:
+  - fetch + loading state + error handling pattern
+  - AbortController + pub/sub for cancellation
+  - Retry pattern with bw.repeatUntil()
+  - Polling pattern (bw.setIntervalX + render)
+  - bwserve: server pushes data, no client fetch needed
+
+### Theming Discoverability
+
+* [ ] doc --> Improve `docs/theming.md` positioning -- make loadStyles/makeStyles
+  front and center, show preset themes, show CSS var consumption
+* [ ] doc --> Add "Theming Quick Start" to top of docs/theming.md:
+  1-line theme, preset themes, custom palette, toggle dark mode
+* [ ] improve --> `pages/10-themes.html` -- restructure: lead with presets,
+  compact color explanation, bridge CSS/Tailwind -> JS-driven CSS
+
+### Working Examples
+
+* [ ] make --> `examples/dashboard-spa/` -- full SPA with router, shared state,
+  multiple views, pub/sub between components. Demonstrates app-patterns.md.
+* [ ] make --> `examples/embedded-iot/` -- minimal ESP32-style UI: static shell,
+  JSON polling updates, compact bundle. Demonstrates embedded pattern.
+* [ ] improve --> `examples/landing-page/` -- add deep-link sections, show
+  bw.link() or hash navigation for scroll-to-section
+
+---
+
 ## Deferred / Future
 
 ### Core

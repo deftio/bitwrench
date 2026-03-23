@@ -25,7 +25,8 @@ How common UI operations map across frameworks. Each cell shows the idiomatic on
 | **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
 | **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` => `styles.palette` |
 | **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** |
-| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (includes 50+ components + CSS gen) |
+| **Client-side routing** | Map URLs to views | React Router / TanStack Router | Vue Router | Manual `hashchange` | SvelteKit routes | @solidjs/router | `bw.router({ routes: { '/': fn } })` |
+| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (includes 50+ components + CSS gen + router) |
 
 ---
 
