@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>bitwrench.js - Lightweight JavaScript UI Library</title>
-  <meta name="description" content="Build HTML from plain JavaScript objects. No JSX, no virtual DOM, no build step. Under 30KB gzipped.">
+  <title>bitwrench.js - JavaScript UI Engine</title>
+  <meta name="description" content="UI engine, component library, router, and server push -- all from plain JavaScript objects. Under 45KB, zero dependencies, no build step.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
@@ -18,811 +18,664 @@
   <script>
     initBitwrenchPage('index.html');
 
-    // ---- Page CSS via bw.injectCSS ----
+    // =========================================================================
+    // Page CSS
+    // =========================================================================
     bw.injectCSS(bw.css({
-      '.bw_hero_landing': {
+      '.ha_hero': {
         background: 'linear-gradient(135deg, #006666 0%, #003d3d 100%)',
         color: '#fff',
-        padding: '1.25rem 0 2rem',
+        padding: '1.5rem 0 1.25rem',
         position: 'relative',
         overflow: 'hidden'
       },
-      '.bw_hero_landing::before': {
+      '.ha_hero::before': {
         content: "''",
         position: 'absolute',
-        top: '-50%',
-        right: '-20%',
-        width: '600px',
-        height: '600px',
+        top: '-40%', right: '-15%',
+        width: '500px', height: '500px',
         'border-radius': '50%',
         background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)',
         'pointer-events': 'none'
       },
-      '.bw_hero_logo': {
-        display: 'block',
-        height: '100px',
-        'margin-bottom': '0.5rem',
-        filter: 'brightness(0) invert(1)',
-        opacity: '0.95'
-      },
-      '.bw_hero_tagline': {
-        'font-size': '2.25rem',
-        'font-weight': '600',
-        margin: '0 0 0.5rem',
-        'letter-spacing': '-0.3px',
-        'line-height': '1.25',
-        'max-width': 'min(650px, 90vw)',
-        opacity: '0.95'
-      },
-      '.bw_hero_sub': {
-        'font-size': '1.0625rem',
-        opacity: '0.7',
-        'max-width': 'min(560px, 90vw)',
-        margin: '0 0 1.25rem',
-        'line-height': '1.55'
-      },
-      '.bw_hero_actions': {
+      '.ha_hero_top': {
         display: 'flex',
-        gap: '1rem',
-        'flex-wrap': 'wrap',
         'align-items': 'center',
-        'justify-content': 'flex-start'
+        gap: '0.75rem',
+        'margin-bottom': '0.5rem'
       },
-      '.bw_hero_actions a': {
-        'text-decoration': 'none',
-        'font-size': '1rem',
-        padding: '0.7rem 1.75rem',
-        'font-weight': '600',
-        'border-radius': '6px',
-        transition: 'all 0.15s'
+      '.ha_hero_logo': {
+        height: '56px',
+        filter: 'brightness(0) invert(1)', opacity: '0.95'
       },
-      '.bw_hero_primary': {
-        background: '#fff',
-        color: '#006666'
+      '.ha_hero_ver': {
+        'font-size': '0.75rem',
+        opacity: '0.5',
+        'font-family': 'var(--bw_font_mono)'
       },
-      '.bw_hero_primary:hover': {
-        background: '#e0f2f1',
-        color: '#004d4d'
+      '.ha_hero_tagline': {
+        'font-size': '1.75rem', 'font-weight': '700',
+        margin: '0 0 0.35rem', 'letter-spacing': '-0.3px',
+        'line-height': '1.2', 'max-width': 'min(600px, 90vw)'
       },
-      '.bw_hero_secondary': {
-        background: 'transparent',
-        color: '#fff',
+      '.ha_hero_intro': {
+        'font-size': '0.9375rem', opacity: '0.8',
+        'max-width': 'min(600px, 90vw)',
+        margin: '0 0 0.75rem', 'line-height': '1.55'
+      },
+      '.ha_hero_pills': {
+        display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap',
+        'margin-bottom': '1rem'
+      },
+      '.ha_pill': {
+        'font-size': '0.75rem', 'font-weight': '500',
+        opacity: '0.7',
+        'white-space': 'nowrap'
+      },
+      '.ha_pill_sep': {
+        opacity: '0.35',
+        'font-size': '0.625rem'
+      },
+      '.ha_hero_actions': {
+        display: 'flex', gap: '0.75rem', 'flex-wrap': 'wrap', 'align-items': 'center'
+      },
+      '.ha_hero_actions a': {
+        'text-decoration': 'none', 'font-size': '0.9375rem',
+        padding: '0.55rem 1.5rem', 'font-weight': '600',
+        'border-radius': '6px', transition: 'all 0.15s'
+      },
+      '.ha_btn_primary': { background: '#fff', color: '#006666' },
+      '.ha_btn_primary:hover': { background: '#e0f2f1', color: '#004d4d' },
+      '.ha_btn_secondary': {
+        background: 'transparent', color: '#fff',
         border: '1.5px solid rgba(255,255,255,0.4)'
       },
-      '.bw_hero_secondary:hover': {
+      '.ha_btn_secondary:hover': {
         'border-color': 'rgba(255,255,255,0.7)',
         background: 'rgba(255,255,255,0.08)'
       },
-      '.bw_hero_version': {
-        'font-size': '0.8125rem',
-        opacity: '0.5',
-        'margin-left': '0.5rem'
-      },
-      '.bw_install_strip': {
-        background: '#222',
-        padding: '0.65rem 0',
+      // --- Install strip ---
+      '.ha_install': {
+        background: '#222', padding: '0.6rem 0',
         'border-top': '1px solid rgba(255,255,255,0.08)',
         'border-bottom': '1px solid rgba(255,255,255,0.08)'
       },
-      '.bw_install_inner': {
-        display: 'flex',
-        'align-items': 'center',
-        gap: '1rem',
-        'flex-wrap': 'wrap'
+      '.ha_install_inner': {
+        display: 'flex', 'align-items': 'center', gap: '1rem', 'flex-wrap': 'wrap'
       },
-      '.bw_install_label': {
-        'font-size': '0.8125rem',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.08em',
-        color: 'rgba(255,255,255,0.7)',
-        'font-weight': '700',
-        'white-space': 'nowrap'
+      '.ha_install_label': {
+        'font-size': '0.8125rem', 'text-transform': 'uppercase',
+        'letter-spacing': '0.08em', color: 'rgba(255,255,255,0.7)',
+        'font-weight': '700', 'white-space': 'nowrap'
       },
-      '.bw_install_cmd': {
-        color: '#fff',
-        'font-size': '1rem',
+      '.ha_install_cmd': {
+        color: '#fff', 'font-size': '0.9375rem',
         'font-family': 'var(--bw_font_mono)',
         background: 'rgba(255,255,255,0.08)',
-        padding: '0.2rem 0.6rem',
-        'border-radius': '4px',
-        border: '1px solid rgba(255,255,255,0.15)',
-        'overflow-wrap': 'break-word',
-        'word-break': 'break-all'
+        padding: '0.2rem 0.6rem', 'border-radius': '4px',
+        border: '1px solid rgba(255,255,255,0.15)'
       },
-      '.bw_install_or': {
-        color: 'rgba(255,255,255,0.45)',
-        'font-size': '0.875rem'
+      '.ha_install_right': {
+        'margin-left': 'auto', display: 'flex', gap: '0.5rem', 'align-items': 'center'
       },
-      '.bw_install_cdn': {
-        color: 'rgba(255,255,255,0.85)',
-        'font-size': '0.9375rem',
-        'font-family': 'var(--bw_font_mono)',
-        background: 'rgba(255,255,255,0.08)',
-        padding: '0.2rem 0.6rem',
-        'border-radius': '4px',
-        border: '1px solid rgba(255,255,255,0.15)',
-        'overflow-wrap': 'break-word',
-        'word-break': 'break-all'
+      '.ha_install_right a': {
+        color: '#fff', 'text-decoration': 'none', 'font-size': '0.875rem',
+        'font-weight': '600', background: 'rgba(255,255,255,0.15)',
+        padding: '0.3rem 0.7rem', 'border-radius': '4px'
       },
-      '.bw_stat_strip': {
+      '.ha_install_right a:hover': { background: 'rgba(255,255,255,0.25)' },
+      // --- Built-In Components ---
+      '.ha_live_strip': {
         display: 'grid',
-        'grid-template-columns': 'repeat(4, 1fr)',
-        gap: '0.75rem',
-        margin: '0',
-        padding: '0'
+        'grid-template-columns': 'repeat(5, 1fr)',
+        gap: '1rem'
       },
-      '.bw_stat_item': {
-        'text-align': 'center',
-        padding: '0.75rem 0.5rem',
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)'
-      },
-      '.bw_stat_value': {
-        'font-size': '1.35rem',
-        'font-weight': '700',
-        color: 'var(--bw_teal)',
-        'line-height': '1.2',
-        'white-space': 'nowrap'
-      },
-      '.bw_stat_label': {
-        'font-size': '0.8125rem',
-        'font-weight': '600',
-        'margin-top': '0.35rem',
-        color: 'var(--bw_text)'
-      },
-      '.bw_stat_sub': {
-        'font-size': '0.6875rem',
-        color: 'var(--bw_text_muted)',
-        'margin-top': '0.1rem'
-      },
-      '@media (max-width: 600px)': {
-        '.bw_stat_strip': { 'grid-template-columns': 'repeat(2, 1fr)', gap: '0.5rem' },
-        '.bw_stat_item': { padding: '0.5rem' },
-        '.bw_stat_value': { 'font-size': '1.1rem' }
-      },
-      '.bw_how_grid': {
-        display: 'grid',
-        'grid-template-columns': '1fr 1fr',
-        gap: '1.5rem',
-        'align-items': 'start'
-      },
-      '.bw_how_arrow': {
-        'text-align': 'center',
-        color: 'var(--bw_teal)',
-        'font-size': '1.5rem',
-        padding: '1rem 0',
-        display: 'none'
-      },
-      '@media (max-width: 768px)': {
-        '.bw_how_grid': { 'grid-template-columns': '1fr' },
-        '.bw_how_arrow': { display: 'block' },
-        '.bw_hero_landing': { padding: '3rem 0 2.5rem' },
-        '.bw_hero_logo': { height: '64px' },
-        '.bw_hero_tagline': { 'font-size': '1.75rem' },
-        '.bw_hero_sub': { 'font-size': '1rem' },
-        '.bw_install_inner': { 'flex-direction': 'column', 'align-items': 'flex-start', gap: '0.5rem' },
-        '.bw_install_or': { display: 'none' }
-      },
-      '@media (max-width: 480px)': {
-        '.bw_hero_landing::before': { display: 'none' },
-        '.bw_hero_logo': { height: '52px' },
-        '.bw_hero_tagline': { 'font-size': '1.5rem' },
-        '.bw_hero_sub': { 'font-size': '0.9375rem' },
-        '.bw_hero_actions a': { padding: '0.6rem 1.25rem', 'font-size': '0.9375rem' }
-      },
-      '.bw_feature_highlight': {
-        display: 'grid',
-        'grid-template-columns': 'repeat(3, 1fr)',
-        gap: '1.25rem'
-      },
-      '.bw_fh_card': {
+      '.ha_live_card': {
         background: 'var(--bw_card_bg)',
         border: '1px solid var(--bw_card_border)',
         'border-radius': 'var(--bw_radius)',
-        padding: '1.25rem 1.5rem',
-        transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
-        display: 'flex',
-        'flex-direction': 'column'
+        padding: '0.875rem 1rem',
+        display: 'flex', 'flex-direction': 'column',
+        'min-width': '0'
       },
-      '.bw_fh_card:hover': {
-        transform: 'translateY(-2px)',
-        'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
-      },
-      '.bw_fh_icon': {
-        'font-size': '1.5rem',
-        'margin-bottom': '0.5rem',
-        display: 'block'
-      },
-      '.bw_fh_card h4': {
-        margin: '0 0 0.4rem',
-        'font-size': '1rem',
-        'font-weight': '600',
+      '.ha_live_card h4': {
+        margin: '0 0 0.15rem', 'font-size': '0.875rem', 'font-weight': '600',
         color: 'var(--bw_text)'
       },
-      '.bw_fh_card p': {
-        margin: '0',
-        'font-size': '0.875rem',
-        color: 'var(--bw_text_secondary)',
-        'line-height': '1.55'
+      '.ha_live_api': {
+        'font-family': 'var(--bw_font_mono)', 'font-size': '0.625rem',
+        color: 'var(--bw_teal)', 'margin-bottom': '0.6rem',
+        opacity: '0.8'
       },
-      '@media (max-width: 900px)': {
-        '.bw_feature_highlight': { 'grid-template-columns': 'repeat(2, 1fr)' }
+      '.ha_live_body': { flex: '1', 'min-width': '0', 'overflow-x': 'auto' },
+      '.ha_live_body .bw_table': { 'font-size': '0.8125rem', 'width': '100%' },
+      '.ha_live_body .bw_table th, .ha_live_body .bw_table td': { padding: '0.3rem 0.5rem' },
+      // --- Swatch ---
+      '.ha_swatch_btn': {
+        display: 'inline-flex', 'align-items': 'center', gap: '0.25rem',
+        padding: '0.2rem 0.5rem', border: '1.5px solid var(--bw_card_border)',
+        'border-radius': '4px', background: 'var(--bw_card_bg)',
+        cursor: 'pointer', 'font-size': '0.6875rem', 'font-weight': '500',
+        transition: 'border-color 0.12s'
       },
-      '@media (max-width: 600px) ': {
-        '.bw_feature_highlight': { 'grid-template-columns': '1fr' }
+      '.ha_swatch_btn:hover': { 'border-color': 'var(--bw_teal)' },
+      '.ha_swatch_dot': {
+        display: 'inline-block', width: '8px', height: '8px', 'border-radius': '50%'
       },
-      '.bw_live_demo_grid': {
-        display: 'grid',
-        'grid-template-columns': '1fr 1fr',
-        gap: '1.5rem'
+      // --- How It Works ---
+      '.ha_how_grid': {
+        display: 'grid', 'grid-template-columns': '1fr 1fr',
+        gap: '1.5rem', 'align-items': 'start'
       },
-      '.bw_live_demo_panel': {
-        background: 'var(--bw_card_bg, #fff)',
-        border: '1px solid var(--bw_card_border, #e0e0e0)',
-        'border-radius': '8px',
-        padding: '1.25rem'
+      // --- Features ---
+      '.ha_feat_grid': {
+        display: 'grid', 'grid-template-columns': 'repeat(3, 1fr)', gap: '1rem'
       },
-      '@media (max-width: 768px) ': {
-        '.bw_live_demo_grid': { 'grid-template-columns': '1fr' }
-      },
-      '.bw_page_grid': {
-        display: 'grid',
-        'grid-template-columns': 'repeat(auto-fill, minmax(260px, 1fr))',
-        gap: '1rem'
-      },
-      '.bw_page_link': {
-        'text-decoration': 'none',
-        color: 'inherit',
-        display: 'block'
-      },
-      '.bw_page_link .bw_card': {
-        height: '100%',
+      '.ha_feat_card': {
+        background: 'var(--bw_teal_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        padding: '1rem 1.25rem',
         transition: 'transform 0.15s, box-shadow 0.15s'
       },
-      '.bw_page_link:hover .bw_card': {
-        transform: 'translateY(-2px)',
-        'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
+      '.ha_feat_card:hover': {
+        transform: 'translateY(-2px)', 'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
       },
-      '.bw_page_category': {
-        'font-size': '0.6875rem',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.08em',
-        'font-weight': '600',
-        color: 'var(--bw_teal)',
-        'margin-bottom': '0.75rem'
+      '.ha_feat_card h4': { margin: '0 0 0.3rem', 'font-size': '0.9375rem', 'font-weight': '600' },
+      '.ha_feat_card h4 a': { color: 'var(--bw_text)', 'text-decoration': 'none' },
+      '.ha_feat_card h4 a:hover': { color: 'var(--bw_teal)' },
+      '.ha_feat_card p': {
+        margin: '0', 'font-size': '0.8125rem',
+        color: 'var(--bw_text_secondary)', 'line-height': '1.5'
       },
-      '.bw_page_category + .bw_page_grid': {
-        'margin-bottom': '0'
+      // --- Page index ---
+      '.ha_page_cat': {
+        'font-size': '0.6875rem', 'text-transform': 'uppercase',
+        'letter-spacing': '0.08em', 'font-weight': '600',
+        color: 'var(--bw_teal)', 'margin-bottom': '0.75rem'
+      },
+      '.ha_page_grid': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(240px, 1fr))',
+        gap: '0.75rem', 'margin-bottom': '1.5rem'
+      },
+      '.ha_page_link': { 'text-decoration': 'none', color: 'inherit', display: 'block' },
+      '.ha_page_link .bw_card': {
+        height: '100%', transition: 'transform 0.15s, box-shadow 0.15s'
+      },
+      '.ha_page_link:hover .bw_card': {
+        transform: 'translateY(-2px)', 'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
+      },
+      // --- Responsive ---
+      '@media (max-width: 1100px)': {
+        '.ha_live_strip': { 'grid-template-columns': 'repeat(3, 1fr)' }
+      },
+      '@media (max-width: 900px)': {
+        '.ha_feat_grid': { 'grid-template-columns': 'repeat(2, 1fr)' },
+        '.ha_how_grid': { 'grid-template-columns': '1fr' }
+      },
+      '@media (max-width: 720px)': {
+        '.ha_live_strip': { 'grid-template-columns': 'repeat(2, 1fr)' }
+      },
+      '@media (max-width: 600px)': {
+        '.ha_feat_grid': { 'grid-template-columns': '1fr' },
+        '.ha_live_strip': { 'grid-template-columns': '1fr' },
+        '.ha_hero': { padding: '1.25rem 0 1rem' },
+        '.ha_hero_logo': { height: '44px' },
+        '.ha_hero_tagline': { 'font-size': '1.375rem' },
+        '.ha_hero_intro': { 'font-size': '0.875rem' },
+        '.ha_install_inner': { 'flex-direction': 'column', 'align-items': 'flex-start', gap: '0.5rem' },
+        '.ha_install_right': { 'margin-left': '0' }
       }
-    }), { id: 'index-page-styles' });
+    }), { id: 'home-a-styles' });
 
-    // ---- Build page structure as TACO ----
+    // =========================================================================
+    // 1. Hero -- compact, with a mini intro about what bitwrench IS
+    // =========================================================================
+    var ver = bw.version || '2.0';
+
     var hero = {
-      t: 'div', a: { class: 'bw_hero_landing' },
-      c: [{
-        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
+      t: 'div', a: { class: 'ha_hero' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
         c: [
-          { t: 'img', a: { src: '../images/bitwrench-thick-logo.svg', alt: 'bitwrench', class: 'bw_hero_logo' } },
-          { t: 'h1', a: { class: 'bw_hero_tagline' }, c: 'Build UI from plain JavaScript objects' },
-          {
-            t: 'p', a: { class: 'bw_hero_sub' },
-            c: 'UI as plain JavaScript objects. Render client-side or push from the server. No JSX, no virtual DOM, no build step. Zero dependencies.'
+          { t: 'div', a: { class: 'ha_hero_top' }, c: [
+            { t: 'img', a: { src: '../images/bitwrench-thick-logo.svg', alt: 'bitwrench', class: 'ha_hero_logo' } },
+            { t: 'span', a: { class: 'ha_hero_ver' }, c: 'v' + ver }
+          ]},
+          { t: 'h1', a: { class: 'ha_hero_tagline' }, c: 'A compact JavaScript UI engine' },
+          { t: 'p', a: { class: 'ha_hero_intro' },
+            c: 'Rendering engine, component library, router, reactive state, theme generator, and server-push streaming -- all from plain JavaScript objects. No JSX, no virtual DOM, no build step, zero dependencies. Runs everywhere from Arduino/ESP32 to enterprise.'
           },
-          {
-            t: 'div', a: { class: 'bw_hero_actions' },
-            c: [
-              { t: 'a', a: { href: '00-quick-start.html', class: 'bw_hero_primary' }, c: 'Get Started' },
-              { t: 'a', a: { href: 'https://github.com/deftio/bitwrench', class: 'bw_hero_secondary' }, c: 'GitHub' }
-            ]
-          }
+          { t: 'div', a: { class: 'ha_hero_pills' }, c: (function() {
+            var items = ['Rendering Engine', 'Component Library', 'Router', 'Reactive State',
+              'Theme Generator', 'Server Push', 'Debugging', 'Embedded / IoT'];
+            var out = [];
+            items.forEach(function(item, i) {
+              if (i > 0) out.push({ t: 'span', a: { class: 'ha_pill_sep' }, c: '\u00B7' });
+              out.push({ t: 'span', a: { class: 'ha_pill' }, c: item });
+            });
+            return out;
+          })()},
+          { t: 'div', a: { class: 'ha_hero_actions' }, c: [
+            { t: 'a', a: { href: '00-quick-start.html', class: 'ha_btn_primary' }, c: 'Get Started' },
+            { t: 'a', a: { href: 'https://github.com/deftio/bitwrench', class: 'ha_btn_secondary' }, c: 'GitHub' }
+          ]}
         ]
-      }]
+      }
     };
 
+    // =========================================================================
+    // Install strip
+    // =========================================================================
     var installStrip = {
-      t: 'div', a: { class: 'bw_install_strip' },
-      c: [{
-        t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
-        c: [{
-          t: 'div', a: { class: 'bw_install_inner' },
-          c: [
-            { t: 'span', a: { class: 'bw_install_label' }, c: 'Install' },
-            { t: 'code', a: { class: 'bw_install_cmd' }, c: 'npm install bitwrench' },
-            {
-              t: 'span', a: { style: 'margin-left: auto; display: flex; gap: 0.5rem; align-items: center;' },
-              c: [
-                {
-                  t: 'a',
-                  a: { href: '../docs/llm-bitwrench-guide.md', download: 'llm-bitwrench-guide.md', style: 'color: #fff; text-decoration: none; font-size: 0.9375rem; font-weight: 600; background: rgba(255,255,255,0.15); padding: 0.35rem 0.75rem; border-radius: 4px;' },
-                  c: 'LLM Guide'
-                },
-                {
-                  t: 'a',
-                  a: { href: '09-builds.html', style: 'color: #fff; text-decoration: none; font-size: 0.9375rem; font-weight: 600; background: rgba(255,255,255,0.15); padding: 0.35rem 0.75rem; border-radius: 4px;' },
-                  c: bw.raw('Downloads &amp; CDN &rarr;')
-                }
-              ]
-            }
+      t: 'div', a: { class: 'ha_install' },
+      c: {
+        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+        c: {
+          t: 'div', a: { class: 'ha_install_inner' }, c: [
+            { t: 'span', a: { class: 'ha_install_label' }, c: 'Install' },
+            { t: 'code', a: { class: 'ha_install_cmd' }, c: 'npm install bitwrench' },
+            { t: 'span', a: { class: 'ha_install_right' }, c: [
+              { t: 'a', a: { href: '../docs/llm-bitwrench-guide.md', download: 'llm-bitwrench-guide.md' }, c: 'LLM Guide' },
+              { t: 'a', a: { href: '09-builds.html' }, c: bw.raw('Downloads &rarr;') }
+            ]}
           ]
-        }]
-      }]
+        }
+      }
     };
 
-    var statsSection = {
-      t: 'div', a: { class: 'demo-section' },
-      c: [{
-        t: 'div', a: { class: 'demo-content' },
-        c: [{ t: 'div', a: { class: 'bw_stat_strip', id: 'stat-strip' } }]
-      }]
+    // =========================================================================
+    // 2. "Built-In Components" -- 5 working mini-demos
+    // =========================================================================
+
+    // -- 2a: Sortable Table (click headers to sort) --
+    var tableData = [
+      { name: 'Alice', score: 94 },
+      { name: 'Bob', score: 87 },
+      { name: 'Carol', score: 91 },
+      { name: 'Dave', score: 78 },
+      { name: 'Eve', score: 96 }
+    ];
+    var tableSortCol = null;
+    var tableSortDir = 'asc';
+
+    function renderTable() {
+      bw.DOM('#demo-table', bw.makeTable({
+        data: tableData,
+        columns: [
+          { key: 'name', label: 'Name' },
+          { key: 'score', label: 'Score' }
+        ],
+        sortable: true,
+        striped: true,
+        sortColumn: tableSortCol,
+        sortDirection: tableSortDir,
+        onSort: function(col, dir) {
+          tableSortCol = col;
+          tableSortDir = dir;
+          renderTable();
+        }
+      }));
+    }
+
+    var tableCard = {
+      t: 'div', a: { class: 'ha_live_card' }, c: [
+        { t: 'h4', c: 'Sortable Table' },
+        { t: 'div', a: { class: 'ha_live_api' }, c: 'bw.makeTable({ sortable: true })' },
+        { t: 'div', a: { class: 'ha_live_body', id: 'demo-table' } }
+      ]
     };
+
+    // -- 2b: Theme Switcher --
+    var themePresets = [
+      { name: 'Teal', p: '#006666', s: '#cc6633', tr: '#2e8b57', dark: false },
+      { name: 'Ocean', p: '#336699', s: '#cc6633', tr: '#2e8b57', dark: false },
+      { name: 'Sunset', p: '#cc4400', s: '#6633cc', tr: '#d4a017', dark: false },
+      { name: 'Dark', p: '#006666', s: '#80cbc4', tr: '#b39ddb', dark: true }
+    ];
+    var currentThemeDark = false;
+
+    function applyThemePreset(th) {
+      bw.loadStyles({ primary: th.p, secondary: th.s, tertiary: th.tr });
+      // If switching between light/dark, toggle to the right palette
+      if (th.dark && !currentThemeDark) {
+        bw.toggleStyles();
+        currentThemeDark = true;
+      } else if (!th.dark && currentThemeDark) {
+        bw.toggleStyles();
+        currentThemeDark = false;
+      }
+      applySiteStyles();
+    }
+
+    var themeCard = {
+      t: 'div', a: { class: 'ha_live_card' }, c: [
+        { t: 'h4', c: 'Live Theming' },
+        { t: 'div', a: { class: 'ha_live_api' }, c: 'bw.loadStyles({ primary, secondary })' },
+        { t: 'div', a: { class: 'ha_live_body' }, c: [
+          { t: 'p', a: { style: 'font-size:0.75rem;color:var(--bw_text_secondary);margin:0 0 0.5rem' },
+            c: 'Re-themes the entire page:' },
+          { t: 'div', a: { style: 'display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.6rem' },
+            c: themePresets.map(function(th) {
+              return {
+                t: 'button', a: { class: 'ha_swatch_btn', onclick: function() {
+                  applyThemePreset(th);
+                }},
+                c: [
+                  { t: 'span', a: { class: 'ha_swatch_dot', style: 'background:' + th.p } },
+                  { t: 'span', a: { class: 'ha_swatch_dot', style: 'background:' + th.s } },
+                  th.name
+                ]
+              };
+            })
+          },
+          { t: 'div', a: { style: 'display:flex;gap:0.4rem;flex-wrap:wrap' }, c: [
+            bw.makeButton({ text: 'Primary', variant: 'primary', size: 'sm' }),
+            bw.makeButton({ text: 'Secondary', variant: 'secondary', size: 'sm' }),
+            bw.makeButton({ text: 'Success', variant: 'success', size: 'sm' })
+          ]}
+        ]}
+      ]
+    };
+
+    // -- 2c: Modal & Toast (using handles properly) --
+    var modalTaco = bw.makeModal({
+      title: 'Example Modal',
+      content: [
+        { t: 'p', c: 'This modal was created with bw.makeModal() and opened via el.bw.open().' },
+        { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary)' },
+          c: 'Click the backdrop, press ESC, or click the X to close.' }
+      ]
+    });
+    var modalEl = null; // set after bw.mount() in post-mount section
+
+    var modalToastCard = {
+      t: 'div', a: { class: 'ha_live_card' }, c: [
+        { t: 'h4', c: 'Modal & Toast' },
+        { t: 'div', a: { class: 'ha_live_api' }, c: 'bw.makeModal() / bw.makeToast()' },
+        { t: 'div', a: { class: 'ha_live_body' }, c: [
+          { t: 'div', a: { style: 'display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.5rem' }, c: [
+            bw.makeButton({
+              text: 'Open Modal', variant: 'primary', size: 'sm',
+              onclick: function() {
+                if (modalEl && modalEl.bw) modalEl.bw.open();
+              }
+            }),
+            bw.makeButton({
+              text: 'Fire Toast', variant: 'success', size: 'sm',
+              onclick: function() {
+                var container = bw.$('#ha-toast-box');
+                if (container.length) {
+                  container[0].appendChild(bw.createDOM(
+                    bw.makeToast({ title: 'Success', content: 'Operation completed.', variant: 'success', delay: 3000 })
+                  ));
+                }
+              }
+            })
+          ]},
+          { t: 'div', a: { id: 'ha-toast-box' } },
+          { t: 'div', a: { id: 'ha-modal' } }
+        ]}
+      ]
+    };
+
+    // -- 2d: Form Controls --
+    var formCard = {
+      t: 'div', a: { class: 'ha_live_card' }, c: [
+        { t: 'h4', c: 'Form Controls' },
+        { t: 'div', a: { class: 'ha_live_api' }, c: 'makeInput / makeSelect / makeSwitch' },
+        { t: 'div', a: { class: 'ha_live_body' }, c: [
+          { t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.4rem' }, c: [
+            bw.makeInput({ placeholder: 'Text input...', type: 'text' }),
+            bw.makeSelect({ options: [
+              { value: '', text: 'Select an option...' },
+              { value: 'js', text: 'JavaScript' },
+              { value: 'py', text: 'Python' },
+              { value: 'go', text: 'Go' }
+            ]}),
+            { t: 'div', a: { style: 'display:flex;gap:1rem' }, c: [
+              bw.makeSwitch({ label: 'Dark mode', name: 'ha-sw1' }),
+              bw.makeSwitch({ label: 'Notify', name: 'ha-sw2', checked: true })
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // -- 2e: Live Chart --
+    function randomChartData() {
+      return ['Mon','Tue','Wed','Thu','Fri'].map(function(d) {
+        return { label: d, value: 20 + Math.floor(Math.random() * 80) };
+      });
+    }
+
+    function renderChart() {
+      bw.DOM('#demo-chart', bw.makeBarChart({
+        data: randomChartData(), color: '#006666', height: '90px', showValues: true
+      }));
+    }
+
+    var chartCard = {
+      t: 'div', a: { class: 'ha_live_card' }, c: [
+        { t: 'h4', c: 'Live Chart' },
+        { t: 'div', a: { class: 'ha_live_api' }, c: 'bw.makeBarChart({ data })' },
+        { t: 'div', a: { class: 'ha_live_body' }, c: [
+          { t: 'div', a: { id: 'demo-chart' } },
+          { t: 'div', a: { style: 'margin-top:0.4rem' }, c:
+            bw.makeButton({ text: 'Randomize', variant: 'primary', size: 'sm', onclick: renderChart })
+          }
+        ]}
+      ]
+    };
+
+    var seeItLiveSection = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', c: 'Built-In Components' },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' },
+            c: 'bitwrench ships a ready-to-use library of tables, forms, modals, charts, and controls. Everything below is live -- try sorting a column, switching a theme, or opening a modal.' },
+          { t: 'div', a: { class: 'ha_live_strip' }, c: [
+            tableCard, themeCard, modalToastCard, formCard, chartCard
+          ]}
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // 3. "How It Works" -- simplest possible intro: object in, UI out
+    // =========================================================================
+    var howCode = [
+      'bw.DOM(\'#app\', {',
+      '  t: \'div\', c: [',
+      '    { t: \'h3\', c: \'Hello bitwrench\' },',
+      '    { t: \'p\', c: \'UI as a plain JS object.\' },',
+      '    bw.makeButton({',
+      '      text: \'Click me\',',
+      '      variant: \'primary\',',
+      '      onclick: function() {',
+      '        alert(\'It works!\');',
+      '      }',
+      '    })',
+      '  ]',
+      '});'
+    ].join('\n');
 
     var howItWorksSection = {
       t: 'div', a: { class: 'demo-section' },
       c: [
         { t: 'h2', c: 'How It Works' },
-        {
-          t: 'div', a: { class: 'demo-content' },
-          c: [
-            {
-              t: 'div', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1.25rem; line-height: 1.65;' },
-              c: [
-                { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Bitwrench represents UI as plain JavaScript objects &mdash; composition, layout, styles, and theming are all regular JS calls. A built-in library of 47 components covers common elements; custom components are objects in the same format.') },
-                { t: 'p', a: { style: 'margin: 0 0 0.75rem;' }, c: bw.raw('Rendering works client-side in the browser or server-side in Node.js, with partial updates and streaming via the bwserve protocol. CSS collapses to JS strings, so theming can be applied dynamically at the object, component, or page level &mdash; no CSS compilation step.') },
-                { t: 'p', a: { style: 'margin: 0 0 1rem;' }, c: bw.raw('The object format is called <strong>TACO</strong>: <strong>T</strong>ag, <strong>A</strong>ttributes, <strong>C</strong>ontent, <strong>O</strong>ptions. Objects nest, loop, and compose with standard JS. They serialize to compact JSON and render with <code>bw.html()</code> (strings) or <code>bw.DOM()</code> (live DOM).') }
-              ]
-            },
-            {
-              t: 'div', a: { class: 'bw_how_grid' },
-              c: [
-                {
-                  t: 'div', c: [
-                    { t: 'div', a: { class: 'bw_code_label' }, c: 'JavaScript' },
-                    { t: 'div', a: { id: 'how-code' } }
-                  ]
-                },
-                {
-                  t: 'div', c: [
-                    { t: 'div', a: { class: 'bw_code_label', style: 'color: var(--bw_teal);' }, c: 'Result' },
-                    { t: 'div', a: { id: 'how-result', class: 'bw_demo_result' } }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' },
+            c: 'Describe your UI as a plain JavaScript object. Call bw.DOM() and it appears on screen. Objects nest, compose with arrays, and include event handlers -- standard JavaScript, no special syntax.'
+          },
+          { t: 'div', a: { class: 'ha_how_grid' }, c: [
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw_code_label' }, c: 'JavaScript' },
+              { t: 'div', a: { id: 'how-code-panel' } }
+            ]},
+            { t: 'div', c: [
+              { t: 'div', a: { class: 'bw_code_label', style: 'color:var(--bw_teal)' }, c: 'Result' },
+              { t: 'div', a: { class: 'bw_demo_result', id: 'how-result-panel' } }
+            ]}
+          ]},
+          { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:1rem 0 0;line-height:1.55' },
+            c: [
+              'This object format is called TACO (Tag, Attributes, Content, Options). Add state and it becomes reactive. Add handles for imperative control. The built-in components are TACO objects too -- they compose, nest, and render the same way. ',
+              { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' },
+              ' walks through the full progression.'
+            ]
+          }
+        ]}
       ]
     };
 
-    var featuresSection = {
+    // =========================================================================
+    // 4. "More Than a Widget Library" -- what bitwrench IS
+    // =========================================================================
+    var capabilities = [
+      { title: 'Rendering Engine', href: '15-html-generation.html',
+        desc: 'Turn objects into HTML strings for emails and static pages, or mount them as live DOM in the browser. Same code works client-side and server-side.' },
+      { title: 'Component Library', href: '01-components.html',
+        desc: 'Cards, tables, modals, forms, charts, navigation, and more. Use them as-is, customize with options, or build your own in the same format.' },
+      { title: 'Client-Side Router', href: '15-multi-page-site.html',
+        desc: 'Build single-page apps with URL routing, page transitions, and shared state -- no extra libraries needed.' },
+      { title: 'Server-Driven UI', href: '12-bwserve-protocol.html',
+        desc: 'Push live UI updates from a Node.js server to the browser. Build dashboards and admin tools without writing any client-side code.' },
+      { title: 'Debugging Tools', href: '11-debugging.html',
+        desc: 'Inspect components, trace events, and debug state from a terminal. See what your app is doing without digging through the DOM.' },
+      { title: 'Runs Everywhere', href: '09-builds.html',
+        desc: 'Under 45KB, zero dependencies. Works on Arduino/ESP32, Raspberry Pi, kiosks, air-gapped networks, and enterprise servers alike.' }
+    ];
+
+    var capabilitiesSection = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', c: 'What You Get' },
-        {
-          t: 'div', a: { class: 'demo-content' },
-          c: [{ t: 'div', a: { class: 'bw_feature_highlight', id: 'features' } }]
-        }
+        { t: 'h2', c: 'More Than Widgets' },
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', a: { class: 'demo-description' },
+            c: 'The components above are just one layer. bitwrench also handles routing, state management, theming, server-to-browser streaming, and debugging -- all in one file, no extra dependencies.' },
+          { t: 'div', a: { class: 'ha_feat_grid' },
+            c: capabilities.map(function(f) {
+              return {
+                t: 'div', a: { class: 'ha_feat_card' }, c: [
+                  { t: 'h4', c: { t: 'a', a: { href: f.href }, c: f.title } },
+                  { t: 'p', c: f.desc }
+                ]
+              };
+            })
+          }
+        ]}
       ]
     };
 
-    var liveDemosSection = {
-      t: 'div', a: { class: 'demo-section' },
-      c: [
-        { t: 'h2', c: 'Live Examples' },
-        {
-          t: 'div', a: { class: 'demo-content' },
-          c: [{ t: 'div', a: { class: 'bw_live_demo_grid', id: 'live-demos' } }]
-        }
-      ]
-    };
-
-    var learningPathSection = {
-      t: 'div', a: { class: 'demo-section' },
-      c: [
-        { t: 'h2', c: 'Learning Path' },
-        {
-          t: 'div', a: { class: 'demo-content' },
-          c: [
-            { t: 'p', a: { class: 'demo-description' }, c: 'New to bitwrench? Follow this order to build understanding from basics to advanced patterns.' },
-            { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(auto-fit, minmax(min(280px, 100%), 1fr));gap:1rem' },
-              c: [
-                { t: 'div', a: { class: 'bw_feature_card' }, c: [
-                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '1. Getting Started' },
-                  { t: 'p', c: [
-                    { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' }, ' \u2192 ',
-                    { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in BW' }, ' \u2192 ',
-                    { t: 'a', a: { href: '01-components.html' }, c: 'Components' }
-                  ]}
-                ]},
-                { t: 'div', a: { class: 'bw_feature_card' }, c: [
-                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '2. Building Apps' },
-                  { t: 'p', c: [
-                    { t: 'a', a: { href: '03-styling.html' }, c: 'Styling' }, ' \u2192 ',
-                    { t: 'a', a: { href: '02-tables-forms.html' }, c: 'Tables & Forms' }, ' \u2192 ',
-                    { t: 'a', a: { href: '05-state.html' }, c: 'State' }
-                  ]}
-                ]},
-                { t: 'div', a: { class: 'bw_feature_card' }, c: [
-                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '3. Advanced' },
-                  { t: 'p', c: [
-                    { t: 'a', a: { href: '15-html-generation.html' }, c: 'HTML Gen' }, ' \u2192 ',
-                    { t: 'a', a: { href: '10-themes.html' }, c: 'Themes' }
-                  ]}
-                ]},
-                { t: 'div', a: { class: 'bw_feature_card' }, c: [
-                  { t: 'h3', a: { style: 'color:var(--bw_teal);margin:0 0 0.5rem' }, c: '4. Tutorials & Examples' },
-                  { t: 'p', c: [
-                    { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard' }, ' \u2192 ',
-                    { t: 'a', a: { href: '06-clock.html' }, c: 'Clock' }, ' \u2192 ',
-                    { t: 'a', a: { href: '06-tic-tac-toe-tutorial.html' }, c: 'Tic-Tac-Toe' }, ' \u2192 ',
-                    { t: 'a', a: { href: '07-framework-comparison.html' }, c: 'Comparison' }
-                  ]}
-                ]}
-              ]
-            }
-          ]
-        }
-      ]
-    };
+    // =========================================================================
+    // 5. Page Index
+    // =========================================================================
+    var pageIndexData = [
+      { category: 'Learn', pages: [
+        { title: 'Quick Start', href: '00-quick-start.html', desc: 'Build your first page in 5 minutes' },
+        { title: 'Thinking in BW', href: 'thinking-in-bitwrench.html', desc: 'The design philosophy behind bitwrench' },
+        { title: 'Components', href: '01-components.html', desc: 'Every built-in component with live demos' },
+        { title: 'Styling', href: '03-styling.html', desc: 'Generate CSS from JavaScript' },
+        { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, inputs, and validation' },
+        { title: 'State', href: '05-state.html', desc: 'Make components interactive and reactive' },
+        { title: 'HTML Generation', href: '15-html-generation.html', desc: 'Render to strings for emails and static sites' },
+        { title: 'Themes', href: '10-themes.html', desc: 'Generate a full theme from 2-3 colors' }
+      ]},
+      { category: 'Examples', pages: [
+        { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and layout' },
+        { title: 'Clock', href: '06-clock.html', desc: 'Real-time clock with live theme switching' },
+        { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' },
+        { title: 'Comparison', href: '07-framework-comparison.html', desc: 'How bitwrench compares to React, Vue, Svelte' },
+        { title: 'Pages & Routing', href: '15-multi-page-site.html', desc: 'Build multi-page apps with URL routing' }
+      ]},
+      { category: 'Server', pages: [
+        { title: 'Server-Driven UI', href: '12-bwserve-protocol.html', desc: 'Push UI updates from Node.js to the browser' },
+        { title: 'CLI Tool', href: '17-bwcli.html', desc: 'Convert Markdown to styled HTML pages' },
+        { title: 'Sandbox', href: '14-bwserve-sandbox.html', desc: 'Try server-driven UI in your browser' }
+      ]},
+      { category: 'Reference', pages: [
+        { title: 'API Reference', href: '08-api-reference.html', desc: 'Every function with signatures and examples' },
+        { title: 'Debugging', href: '11-debugging.html', desc: 'Inspect components and trace events' },
+        { title: 'Code Editor', href: '13-code-editor.html', desc: 'Embeddable syntax-highlighted editor' }
+      ]},
+      { category: 'Downloads', pages: [
+        { title: 'Builds & CDN', href: '09-builds.html', desc: 'All download formats and CDN links' }
+      ]}
+    ];
 
     var pageIndexSection = {
       t: 'div', a: { class: 'demo-section' },
       c: [
         { t: 'h2', c: 'All Pages' },
-        {
-          t: 'div', a: { class: 'demo-content' },
-          c: [{ t: 'div', a: { id: 'page-index' } }]
+        { t: 'div', a: { class: 'demo-content' }, c:
+          pageIndexData.map(function(section) {
+            return { t: 'div', c: [
+              { t: 'div', a: { class: 'ha_page_cat' }, c: section.category },
+              { t: 'div', a: { class: 'ha_page_grid' }, c:
+                section.pages.map(function(p) {
+                  return {
+                    t: 'a', a: { href: p.href, class: 'ha_page_link' },
+                    c: bw.makeCard({
+                      title: p.title,
+                      content: { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0' }, c: p.desc }
+                    })
+                  };
+                })
+              }
+            ]};
+          })
         }
       ]
     };
 
+    // =========================================================================
+    // Assemble and mount
+    // =========================================================================
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [statsSection, howItWorksSection, featuresSection, liveDemosSection, learningPathSection, pageIndexSection]
+      c: [seeItLiveSection, howItWorksSection, capabilitiesSection, pageIndexSection]
     };
 
-    // Mount the full page
     bw.DOM('#app', [hero, installStrip, contentWrapper]);
 
-    // ---- Stat strip ----
-    (function() {
-      var stats = [
-        { value: 'No Build Step', label: 'Just Works', sub: '<script src> and go' },
-        { value: 'Client + Server', label: 'Same Objects', sub: 'browser, Node.js, SSE' },
-        { value: 'Zero Deps', label: 'Self-Contained', sub: 'nothing to install' },
-        { value: 'Runs Anywhere', label: 'Any Target', sub: 'ESP32 to enterprise' }
-      ];
-      bw.DOM('#stat-strip', stats.map(function(s) {
-        return {
-          t: 'div', a: { class: 'bw_stat_item' },
-          c: [
-            { t: 'div', a: { class: 'bw_stat_value' }, c: s.value },
-            { t: 'div', a: { class: 'bw_stat_label' }, c: s.label },
-            { t: 'div', a: { class: 'bw_stat_sub' }, c: s.sub }
-          ]
-        };
-      }));
-    })();
+    // ---- Post-mount rendering ----
 
-    // ---- How It Works ----
-    (function() {
-      var code = 'const card = {\n'
-        + '  t: \'div\', a: { class: \'bw_card\' },\n'
-        + '  c: [{\n'
-        + '    t: \'div\', a: { class: \'bw_card_body\' },\n'
-        + '    c: [\n'
-        + '      { t: \'h5\', a: { class: \'bw_card_title\' },\n'
-        + '        c: \'Hello bitwrench\' },\n'
-        + '      { t: \'p\', c: \'UI as native JS objects.\' },\n'
-        + '      bw.makeButton({ text: \'Click me\',\n'
-        + '        variant: \'primary\',\n'
-        + '        onclick: function() { alert(\'Hello!\') } })\n'
-        + '    ]\n'
-        + '  }]\n'
-        + '};\n\n'
-        + 'bw.DOM(\'#app\', card);';
+    // Mount modal via bw.mount so el.bw.open() works
+    modalEl = bw.mount('#ha-modal', modalTaco);
 
-      // Code panel
+    // Sortable table
+    renderTable();
+
+    // Chart
+    renderChart();
+
+    // How It Works: code panel + live result (matches the code on the left)
+    (function() {
       if (typeof bw.codeEditor === 'function') {
-        bw.DOM('#how-code', bw.codeEditor({
-          code: code, lang: 'js', readOnly: true, height: 'auto'
+        bw.DOM('#how-code-panel', bw.codeEditor({
+          code: howCode, lang: 'js', readOnly: true, height: 'auto'
         }));
       } else {
-        bw.DOM('#how-code', {
+        bw.DOM('#how-code-panel', {
           t: 'div', a: { class: 'bw_code_block' },
-          c: { t: 'pre', c: { t: 'code', a: { style: 'color: var(--bw_code_text);' }, c: code } }
+          c: { t: 'pre', c: { t: 'code', c: howCode } }
         });
       }
 
-      // Result panel
-      bw.DOM('#how-result', bw.makeCard({
-        title: 'Hello bitwrench',
-        content: [
-          { t: 'p', c: 'UI as native JS objects.' },
-          bw.makeButton({ text: 'Click me', variant: 'primary',
-            onclick: function() { alert('Hello from bitwrench!'); } })
-        ]
-      }));
-    })();
-
-    // ---- Features ----
-    (function() {
-      var features = [
-        {
-          icon: '\u{1F3D7}', title: '47 Built-in Components',
-          desc: 'Buttons, cards, tables, forms, modals, and more \u2014 ready to use or extend. Bring your own components just as easily: they\u2019re plain JS objects, not framework magic.'
-        },
-        {
-          icon: '\u{1F3A8}', title: 'Palette-Driven Theming',
-          desc: 'Hand it 2\u20133 seed colors and get a complete theme: buttons, alerts, hover states, focus rings, and a dark mode alternate \u2014 all generated, all consistent.'
-        },
-        {
-          icon: '\u{1F504}', title: 'Server + Client',
-          desc: 'Render static HTML for emails, docs, or SSR. Mount live UI in the browser. Push real-time updates from Node.js via the bwserve protocol \u2014 Streamlit-style, no React required.'
-        },
-        {
-          icon: '\u{1F4E1}', title: 'Reactive State',
-          desc: 'Patch individual values, re-render whole sections, or wire up decoupled pub/sub between components. State stays in sync without a framework telling you how.'
-        },
-        {
-          icon: '\u{2328}', title: 'CLI Tool',
-          desc: 'Turn a Markdown file into a styled, self-contained HTML page with one command. Add a theme, inject bitwrench, serve with live reload.'
-        },
-        {
-          icon: '\u{26A1}', title: 'Tiny Footprint',
-          desc: 'Under 45 KB gzipped, zero dependencies. Tree-shakeable ESM for modern bundlers. Built for constrained targets: embedded dashboards, kiosks, and Node.js CLI tools.'
-        }
-      ];
-
-      bw.DOM('#features', features.map(function(f) {
-        return {
-          t: 'div', a: { class: 'bw_fh_card' },
-          c: [
-            { t: 'span', a: { class: 'bw_fh_icon' }, c: f.icon },
-            { t: 'h4', c: f.title },
-            { t: 'p', c: f.desc }
-          ]
-        };
-      }));
-    })();
-
-    // ---- Live Demos ----
-    (function() {
-      var hStyle = 'margin: 0 0 0.75rem; font-size: 1rem; font-weight: 600;';
-
-      // --- Left: Interactive Sample ---
-      var themes = [
-        { name: 'Ocean',  p: '#336699', s: '#cc6633', t: '#2e8b57' },
-        { name: 'Sunset', p: '#cc4400', s: '#6633cc', t: '#d4a017' },
-        { name: 'Forest', p: '#2d6a4f', s: '#b07d2b', t: '#5b8c5a' },
-        { name: 'Dark',   p: '#e0e0e0', s: '#80cbc4', t: '#b39ddb' },
-        { name: 'Slate',  p: '#4a5568', s: '#718096', t: '#48bb78' }
-      ];
-      var activeTheme = themes[0];
-
-      var tasks = [
-        { text: 'Design review', done: true },
-        { text: 'API integration', done: true },
-        { text: 'Write tests', done: false },
-        { text: 'Deploy to staging', done: false }
-      ];
-
-      function renderThemedCard() {
-        bw.loadStyles({
-          primary: activeTheme.p,
-          secondary: activeTheme.s,
-          tertiary: activeTheme.t
-        });
-        var done = tasks.filter(function(t) { return t.done; }).length;
-        var pct = Math.round((done / tasks.length) * 100);
-        bw.DOM('#theme-card', {
-          t: 'div', a: { class: 'homedemo' },
-          c: bw.makeCard({
-            title: 'Sprint Tasks',
-            content: [
-              bw.makeProgress({ value: pct, label: done + '/' + tasks.length + ' complete', variant: 'primary', striped: true }),
-              { t: 'div', a: { style: 'margin:0.75rem 0;display:flex;flex-direction:column;gap:0.35rem' },
-                c: tasks.map(function(task, i) {
-                  return {
-                    t: 'label', a: { style: 'display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;padding:0.25rem 0;' + (task.done ? 'text-decoration:line-through;opacity:0.6' : '') },
-                    c: [
-                      { t: 'input', a: { type: 'checkbox', checked: task.done || undefined, onchange: function() { tasks[i].done = !tasks[i].done; renderThemedCard(); } } },
-                      task.text
-                    ]
-                  };
-                })
-              },
-              { t: 'div', a: { style: 'display:flex;gap:0.5rem' }, c: [
-                bw.makeButton({ text: 'Add Task', variant: 'primary', size: 'sm', onclick: function() {
-                  tasks.push({ text: 'New task ' + (tasks.length + 1), done: false });
-                  renderThemedCard();
-                }}),
-                bw.makeButton({ text: 'Reset', variant: 'outline-secondary', size: 'sm', onclick: function() {
-                  tasks = [
-                    { text: 'Design review', done: true },
-                    { text: 'API integration', done: true },
-                    { text: 'Write tests', done: false },
-                    { text: 'Deploy to staging', done: false }
-                  ];
-                  renderThemedCard();
-                }})
-              ]}
-            ]
+      // Exact same output as the code on the left
+      bw.DOM('#how-result-panel', {
+        t: 'div', c: [
+          { t: 'h3', c: 'Hello bitwrench' },
+          { t: 'p', c: 'UI as a plain JS object.' },
+          bw.makeButton({
+            text: 'Click me', variant: 'primary',
+            onclick: function() { alert('It works!'); }
           })
-        });
-      }
-
-      var themeSwitcher = {
-        t: 'div', a: { class: 'bw_live_demo_panel' }, c: [
-          { t: 'h4', a: { style: hStyle }, c: 'Interactive Sample' },
-          { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0 0 0.75rem' }, c: 'Check tasks, add items, switch palettes \u2014 all live.' },
-          { t: 'div', a: { id: 'theme-card' } },
-          { t: 'div', a: { style: 'display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap' },
-            c: themes.map(function(th) {
-              return {
-                t: 'button',
-                a: {
-                  style: 'display:inline-flex;align-items:center;gap:0.375rem;padding:0.3rem 0.75rem;border:1.5px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:0.8125rem;font-weight:500;transition:border-color 0.12s',
-                  onclick: function() { activeTheme = th; renderThemedCard(); }
-                },
-                c: [
-                  { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + th.p } },
-                  { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + th.s } },
-                  { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + th.t } },
-                  th.name
-                ]
-              };
-            })
-          }
         ]
-      };
-
-      // --- Right: Mini Dashboard ---
-      var stats = { users: 1247, requests: 8432, uptime: 99.7 };
-
-      function renderDashboard() {
-        var items = [
-          { label: 'Users', value: stats.users.toLocaleString(), color: '#006666' },
-          { label: 'Requests/s', value: stats.requests.toLocaleString(), color: '#336699' },
-          { label: 'Uptime %', value: stats.uptime.toFixed(1), color: '#2d6a4f' }
-        ];
-        var traffic = [64, 42, 58, 71, 63, 89, 34].map(function(v) {
-          return v + Math.floor(Math.random() * 15 - 7);
-        });
-        var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-        bw.DOM('#mini-dash', [
-          { t: 'div', a: { style: 'display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem' },
-            c: items.map(function(d) {
-              return {
-                t: 'div', a: { style: 'text-align:center;padding:0.6rem;background:var(--bw_card_bg,#fff);border:1px solid var(--bw_card_border,#e0e0e0);border-radius:6px' },
-                c: [
-                  { t: 'div', a: { style: 'font-size:1.35rem;font-weight:700;color:' + d.color + ';line-height:1' }, c: d.value },
-                  { t: 'div', a: { style: 'font-size:0.6875rem;font-weight:600;color:var(--bw_text_secondary);margin-top:0.25rem' }, c: d.label }
-                ]
-              };
-            })
-          },
-          bw.makeBarChart({
-            data: days.map(function(d, i) { return { label: d, value: Math.max(10, traffic[i]) }; }),
-            color: '#006666',
-            height: '100px',
-            showValues: true
-          }),
-          { t: 'div', a: { style: 'display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:center' },
-            c: [
-              {
-                t: 'button',
-                a: {
-                  class: 'bw_btn bw_btn_primary bw_btn_sm',
-                  onclick: function() {
-                    stats.users += Math.floor(Math.random() * 50);
-                    stats.requests += Math.floor(Math.random() * 200);
-                    stats.uptime = Math.min(100, +(stats.uptime + (Math.random() * 0.3 - 0.1)).toFixed(1));
-                    renderDashboard();
-                  }
-                },
-                c: 'Simulate Traffic'
-              },
-              {
-                t: 'button',
-                a: {
-                  class: 'bw_btn bw_btn_outline_secondary bw_btn_sm',
-                  onclick: function() {
-                    stats = { users: 1247, requests: 8432, uptime: 99.7 };
-                    renderDashboard();
-                  }
-                },
-                c: 'Reset'
-              }
-            ]
-          }
-        ]);
-      }
-
-      var dashboard = {
-        t: 'div', a: { class: 'bw_live_demo_panel' }, c: [
-          { t: 'h4', a: { style: hStyle }, c: 'Mini Dashboard' },
-          { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0 0 0.75rem' }, c: 'Interactive stats and chart \u2014 click Simulate to update.' },
-          { t: 'div', a: { id: 'mini-dash' } }
-        ]
-      };
-
-      bw.DOM('#live-demos', [themeSwitcher, dashboard]);
-      renderThemedCard();
-      renderDashboard();
-    })();
-
-    // ---- Page Index ----
-    (function() {
-      var sections = [
-        {
-          category: 'Learn',
-          pages: [
-            { title: 'Quick Start', href: '00-quick-start.html', desc: 'First steps with TACO and bw.DOM()' },
-            { title: 'Thinking in BW', href: 'thinking-in-bitwrench.html', desc: 'Design philosophy and mental model' },
-            { title: 'Components', href: '01-components.html', desc: 'All 47 UI components with live demos' },
-            { title: 'Styling', href: '03-styling.html', desc: 'CSS generation, inline styles, theming strategies' },
-            { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, search, form inputs, validation' },
-            { title: 'State & Interactivity', href: '05-state.html', desc: 'bw.patch(), bw.update(), pub/sub' },
-            { title: 'HTML Generation', href: '15-html-generation.html', desc: 'bw.html() rendering pipeline and options' },
-            { title: 'Themes', href: '10-themes.html', desc: 'Theme generator, presets, palette toggle' }
-          ]
-        },
-        {
-          category: 'Examples',
-          pages: [
-            { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and grid layout' },
-            { title: 'Digital Clock', href: '06-clock.html', desc: 'Real-time clock with theme switching' },
-            { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' },
-            { title: 'Framework Comparison', href: '07-framework-comparison.html', desc: 'Map React/Vue/Svelte patterns to bitwrench' },
-            { title: 'Multi-Page Site', href: '15-multi-page-site.html', desc: 'Multi-page app with shared state' }
-          ]
-        },
-        {
-          category: 'Server',
-          pages: [
-            { title: 'bwserve Protocol', href: '12-bwserve-protocol.html', desc: 'Server-driven UI protocol and sandbox' },
-            { title: 'bwserve Sandbox', href: '14-bwserve-sandbox.html', desc: 'Interactive bwserve playground' }
-          ]
-        },
-        {
-          category: 'Downloads',
-          pages: [
-            { title: 'Builds & Downloads', href: '09-builds.html', desc: 'All dist formats, bundle sizes, SRI hashes' }
-          ]
-        },
-        {
-          category: 'Docs',
-          pages: [
-            { title: 'API Reference', href: '08-api-reference.html', desc: 'Full function listing with signatures' },
-            { title: 'Debugging', href: '11-debugging.html', desc: 'Component inspector and lifecycle tools' },
-            { title: 'Code Editor', href: '13-code-editor.html', desc: 'Lightweight syntax highlighting addon' }
-          ]
-        }
-      ];
-
-      var content = sections.map(function(section) {
-        return {
-          t: 'div', a: { style: 'margin-bottom: 1.5rem;' },
-          c: [
-            { t: 'div', a: { class: 'bw_page_category' }, c: section.category },
-            {
-              t: 'div', a: { class: 'bw_page_grid' },
-              c: section.pages.map(function(p) {
-                return {
-                  t: 'a', a: { href: p.href, class: 'bw_page_link' },
-                  c: bw.makeCard({
-                    title: p.title,
-                    content: { t: 'p', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary); margin: 0;' }, c: p.desc }
-                  })
-                };
-              })
-            }
-          ]
-        };
       });
-
-      bw.DOM('#page-index', content);
     })();
   </script>
 </body>
