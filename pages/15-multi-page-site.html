@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bitwrench - Multi-Page Site Composition</title>
+  <title>Bitwrench - Pages & Routing</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="shared-theme.js"></script>
@@ -111,70 +111,12 @@
         'border-top': '1px solid var(--bw_card_border)',
         'text-align': 'center'
       },
-      '.preview-sidebar': {
-        background: 'var(--bw_bg_muted, #f8f9fa)',
-        padding: '1rem',
-        'border-right': '1px solid var(--bw_card_border)',
-        'min-width': '140px'
-      },
-      '.preview-sidebar ul': {
-        'list-style': 'none',
-        padding: '0',
-        margin: '0'
-      },
-      '.preview-sidebar li': {
-        padding: '0.35rem 0',
-        'font-size': '0.85rem',
-        color: 'var(--bw_text_secondary)'
-      },
-      '.callout': {
-        padding: '1rem 1.25rem',
-        'border-radius': 'var(--bw_radius)',
-        'margin-bottom': '1rem',
-        border: '1px solid var(--bw_card_border)',
-        background: 'var(--bw_teal_bg, rgba(51,102,153,0.05))'
-      },
-      '.callout h4': {
-        margin: '0 0 0.5rem 0',
-        'font-weight': '600'
-      },
-      '.toggle-group': {
-        display: 'inline-flex',
-        'border-radius': 'var(--bw_radius)',
-        overflow: 'hidden',
-        border: '1px solid var(--bw_card_border)',
-        'margin-right': '1rem',
-        'margin-bottom': '0.5rem'
-      },
-      '.toggle-group button': {
-        padding: '0.4rem 0.75rem',
-        border: 'none',
-        background: 'var(--bw_card_bg)',
-        cursor: 'pointer',
-        'font-size': '0.85rem',
-        'border-right': '1px solid var(--bw_card_border)',
-        transition: 'background 0.15s, color 0.15s'
-      },
-      '.toggle-group button:last-child': {
-        'border-right': 'none'
-      },
-      '.toggle-group button.active': {
-        background: 'var(--bw_teal)',
-        color: '#fff'
-      },
-      '.kit-label': {
-        'font-weight': '600',
-        'margin-bottom': '0.5rem',
-        'font-size': '0.9rem'
-      },
-      '.meta-annotation': {
-        background: 'var(--bw_teal_bg, rgba(51,102,153,0.06))',
-        'border-left': '3px solid var(--bw_teal)',
-        padding: '0.75rem 1rem',
-        'margin-bottom': '0.75rem',
-        'font-size': '0.9rem',
-        'border-radius': '0 var(--bw_radius) var(--bw_radius) 0'
-      },
+      '.preview-sidebar': { background: 'var(--bw_bg_muted, #f8f9fa)', padding: '1rem', 'border-right': '1px solid var(--bw_card_border)', 'min-width': '140px' },
+      '.preview-sidebar ul': { 'list-style': 'none', padding: '0', margin: '0' },
+      '.preview-sidebar li': { padding: '0.35rem 0', 'font-size': '0.85rem', color: 'var(--bw_text_secondary)' },
+      '.callout': { padding: '1rem 1.25rem', 'border-radius': 'var(--bw_radius)', 'margin-bottom': '1rem', border: '1px solid var(--bw_card_border)', background: 'var(--bw_teal_bg, rgba(51,102,153,0.05))' },
+      '.callout h4': { margin: '0 0 0.5rem 0', 'font-weight': '600' },
+      '.kit-label': { 'font-weight': '600', 'margin-bottom': '0.5rem', 'font-size': '0.9rem' },
       '.patterns-table': {
         width: '100%',
         'border-collapse': 'collapse',
@@ -189,17 +131,30 @@
         'font-weight': '600',
         'font-size': '0.8125rem'
       },
-      '.patterns-table td': {
-        padding: '0.5rem 0.75rem',
-        'border-bottom': '1px solid var(--bw_card_border)'
+      '.patterns-table td': { padding: '0.5rem 0.75rem', 'border-bottom': '1px solid var(--bw_card_border)' },
+      '.patterns-table tr:nth-child(even) td': { background: 'rgba(0,0,0,0.02)' },
+      '.flow-diagram': {
+        background: 'var(--bw_card_bg)',
+        border: '1px solid var(--bw_card_border)',
+        'border-radius': 'var(--bw_radius)',
+        padding: '1.25rem',
+        margin: '1rem 0',
+        'font-family': 'var(--bw_font_mono)',
+        'font-size': '0.8rem',
+        'line-height': '1.5',
+        'overflow-x': 'auto',
+        'white-space': 'pre'
       },
-      '.patterns-table tr:nth-child(even) td': {
-        background: 'rgba(0,0,0,0.02)'
-      }
+      '.router-demo': { border: '2px dashed var(--bw_card_border)', 'border-radius': 'var(--bw_radius)', 'min-height': '180px', 'margin-bottom': 'var(--bw_space_md)' },
+      '.router-demo-nav': { display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap', 'margin-bottom': '0.75rem' },
+      '.guard-status': { display: 'inline-flex', 'align-items': 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', 'border-radius': 'var(--bw_radius)', 'font-size': '0.85rem', 'font-weight': '600', 'margin-bottom': '0.75rem' },
+      '.guard-logged-in': { background: 'rgba(40,167,69,0.1)', color: '#28a745', border: '1px solid rgba(40,167,69,0.3)' },
+      '.guard-logged-out': { background: 'rgba(220,53,69,0.1)', color: '#dc3545', border: '1px solid rgba(220,53,69,0.3)' },
+      '.part-divider': { 'margin-top': '3rem', 'margin-bottom': '1.5rem', 'padding-bottom': '0.5rem', 'border-bottom': '3px solid var(--bw_teal)', color: 'var(--bw_teal_dark)', 'font-size': '1.1rem', 'font-weight': '700', 'text-transform': 'uppercase', 'letter-spacing': '0.05em' }
     }), { id: 'multi-page-styles' });
 
     // =========================================================================
-    // Section 1: The Dictionary Pattern
+    // Part 1, Section 1: The Dictionary Pattern
     // =========================================================================
     var dictPreviewItem = 'header';
 
@@ -259,59 +214,6 @@
       });
     }
 
-    var section1 = {
-      t: 'div', a: { class: 'demo-section' },
-      c: [
-        { t: 'h2', a: { id: 'dictionary-pattern' }, c: '1. The Dictionary Pattern' },
-        {
-          t: 'p',
-          c: 'The core idea: store reusable UI pieces in a plain JS object. Each entry is a function that returns a TACO. Because they\'re functions, they accept options \u2014 the same header can render with different titles, the same nav with different active states.'
-        },
-        codeBlock(
-          'var site = {\n' +
-          '  header: function(opts) {\n' +
-          '    return { t: \'div\', a: { class: \'site-header\' },\n' +
-          '             c: opts.title || \'My Site\' };\n' +
-          '  },\n' +
-          '  nav: function(opts) {\n' +
-          '    return { t: \'nav\', c: opts.items.map(function(item) {\n' +
-          '      return { t: \'a\', a: { href: item.href,\n' +
-          '        class: opts.active === item.text ? \'active\' : \'\' },\n' +
-          '        c: item.text };\n' +
-          '    })};\n' +
-          '  },\n' +
-          '  footer: function(opts) {\n' +
-          '    return { t: \'footer\', c: opts.text || \'\u00A9 2026\' };\n' +
-          '  }\n' +
-          '};'
-        ),
-        { t: 'h3', c: 'Try it \u2014 click each dictionary entry:' },
-        {
-          t: 'div', a: { class: 'site-preview-toolbar' },
-          c: ['header', 'nav', 'footer', 'sidebar'].map(function(key) {
-            return bw.makeButton({
-              text: key.charAt(0).toUpperCase() + key.slice(1),
-              variant: dictPreviewItem === key ? 'primary' : 'outline-secondary',
-              size: 'sm',
-              onclick: function() {
-                dictPreviewItem = key;
-                renderSection1Buttons();
-                renderDictPreview();
-              }
-            });
-          })
-        },
-        { t: 'div', a: { id: 'dict-preview' } },
-        {
-          t: 'div', a: { class: 'callout' },
-          c: [
-            { t: 'h4', c: 'Key insight' },
-            { t: 'p', a: { style: 'margin:0' }, c: 'Each entry is just a function that returns a TACO object. There\'s no special registry, no class hierarchy, no framework API. A plain object of functions is all you need.' }
-          ]
-        }
-      ]
-    };
-
     function renderSection1Buttons() {
       var toolbar = bw.$('.site-preview-toolbar');
       if (toolbar.length) {
@@ -333,8 +235,61 @@
       }
     }
 
+    var section1 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'dictionary-pattern' }, c: '1. The Dictionary Pattern' },
+        {
+          t: 'p',
+          c: 'Store reusable UI pieces in a plain JS object. Each entry is a function that returns a TACO. Because they\'re functions, they accept options -- the same header renders with different titles, the same nav with different active states.'
+        },
+        codeBlock(
+          'var site = {\n' +
+          '  header: function(opts) {\n' +
+          '    return { t: \'div\', a: { class: \'site-header\' },\n' +
+          '             c: opts.title || \'My Site\' };\n' +
+          '  },\n' +
+          '  nav: function(opts) {\n' +
+          '    return { t: \'nav\', c: opts.items.map(function(item) {\n' +
+          '      return { t: \'a\', a: { href: item.href,\n' +
+          '        class: opts.active === item.text ? \'active\' : \'\' },\n' +
+          '        c: item.text };\n' +
+          '    })};\n' +
+          '  },\n' +
+          '  footer: function(opts) {\n' +
+          '    return { t: \'footer\', c: opts.text || \'\u00A9 2026\' };\n' +
+          '  }\n' +
+          '};'
+        ),
+        { t: 'h3', c: 'Try it -- click each dictionary entry:' },
+        {
+          t: 'div', a: { class: 'site-preview-toolbar' },
+          c: ['header', 'nav', 'footer', 'sidebar'].map(function(key) {
+            return bw.makeButton({
+              text: key.charAt(0).toUpperCase() + key.slice(1),
+              variant: dictPreviewItem === key ? 'primary' : 'outline-secondary',
+              size: 'sm',
+              onclick: function() {
+                dictPreviewItem = key;
+                renderSection1Buttons();
+                renderDictPreview();
+              }
+            });
+          })
+        },
+        { t: 'div', a: { id: 'dict-preview' } },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'Key insight' },
+            { t: 'p', a: { style: 'margin:0' }, c: 'Each entry is just a function that returns a TACO object. No special registry, no class hierarchy, no framework API. A plain object of functions is all you need.' }
+          ]
+        }
+      ]
+    };
+
     // =========================================================================
-    // Section 2: Composing Pages
+    // Part 1, Section 2: Composing Pages
     // =========================================================================
     var currentPage = 'home';
 
@@ -349,7 +304,7 @@
       home: {
         title: 'Welcome Home',
         body: [
-          { t: 'p', c: 'This is the home page. Every page shares the same header, navigation, and footer \u2014 pulled from the site dictionary.' },
+          { t: 'p', c: 'This is the home page. Every page shares the same header, navigation, and footer -- pulled from the site dictionary.' },
           bw.makeCard({ title: 'Featured', content: 'A highlight card on the home page.', variant: 'primary' })
         ]
       },
@@ -429,25 +384,20 @@
           c: 'Each "page" is a function that pulls shared pieces from the dictionary and adds its own content. The page function decides the order and layout.'
         },
         codeBlock(
-          'function homePage(site) {\n' +
+          'function buildPage(site, pageName) {\n' +
+          '  var pg = pageContents[pageName];\n' +
           '  return { t: \'div\', c: [\n' +
-          '    site.nav({ active: \'Home\' }),\n' +
-          '    site.header({ title: \'Welcome\' }),\n' +
-          '    { t: \'div\', c: /* page-specific content */ },\n' +
+          '    site.nav({ active: pageName }),\n' +
+          '    site.header({ title: pg.title }),\n' +
+          '    { t: \'div\', c: pg.body },\n' +
           '    site.footer()\n' +
           '  ]};\n' +
           '}\n' +
           '\n' +
-          'function aboutPage(site) {\n' +
-          '  return { t: \'div\', c: [\n' +
-          '    site.nav({ active: \'About\' }),\n' +
-          '    site.header({ title: \'About Us\' }),\n' +
-          '    { t: \'div\', c: \'Different content, same shell.\' },\n' +
-          '    site.footer()\n' +
-          '  ]};\n' +
-          '}'
+          '// Switch pages = call buildPage() with a different name\n' +
+          'bw.DOM(\'#app\', buildPage(site, \'about\'));'
         ),
-        { t: 'h3', c: 'Try it \u2014 switch between pages:' },
+        { t: 'h3', c: 'Try it -- switch between pages:' },
         {
           t: 'div', a: { id: 'site-toolbar', class: 'site-preview-toolbar' },
           c: ['home', 'about', 'blog', 'contact'].map(function(pg) {
@@ -468,160 +418,14 @@
           t: 'div', a: { class: 'callout' },
           c: [
             { t: 'h4', c: 'The aha moment' },
-            { t: 'p', a: { style: 'margin:0' }, c: 'Every page shares the same nav, header, and footer from the dictionary. Changing the footer function once changes it everywhere. This is the multi-page site pattern \u2014 composition by reference, not copy-paste.' }
+            { t: 'p', a: { style: 'margin:0' }, c: 'Every page shares the same nav, header, and footer from the dictionary. Changing the footer function once changes it everywhere. This is multi-page composition by reference, not copy-paste.' }
           ]
         }
       ]
     };
 
     // =========================================================================
-    // Section 3: Mix and Match
-    // =========================================================================
-    var navMode = 'full';
-    var footerMode = 'full';
-
-    function makeFullNav(opts) {
-      opts = opts || {};
-      return {
-        t: 'div', a: { class: 'preview-nav' },
-        c: ['Home', 'About', 'Blog', 'Contact', 'Docs', 'Support'].map(function(item) {
-          return { t: 'span', a: { class: opts.active === item ? 'active' : '' }, c: item };
-        })
-      };
-    }
-
-    function makeMinimalNav(opts) {
-      opts = opts || {};
-      return {
-        t: 'div', a: { class: 'preview-nav', style: 'justify-content:space-between' },
-        c: [
-          { t: 'span', a: { style: 'font-weight:600' }, c: '\u2630 Menu' },
-          { t: 'span', c: opts.active || 'Home' }
-        ]
-      };
-    }
-
-    function makeFullFooter() {
-      return {
-        t: 'div', a: { class: 'preview-footer', style: 'text-align:left' },
-        c: {
-          t: 'div', a: { style: 'display:flex;gap:2rem;flex-wrap:wrap' },
-          c: [
-            { t: 'div', c: [
-              { t: 'strong', c: 'Company' },
-              { t: 'div', a: { style: 'font-size:0.8rem;margin-top:0.25rem' }, c: 'About \u00B7 Careers \u00B7 Press' }
-            ]},
-            { t: 'div', c: [
-              { t: 'strong', c: 'Support' },
-              { t: 'div', a: { style: 'font-size:0.8rem;margin-top:0.25rem' }, c: 'Docs \u00B7 FAQ \u00B7 Contact' }
-            ]},
-            { t: 'div', c: [
-              { t: 'strong', c: 'Legal' },
-              { t: 'div', a: { style: 'font-size:0.8rem;margin-top:0.25rem' }, c: 'Privacy \u00B7 Terms' }
-            ]}
-          ]
-        }
-      };
-    }
-
-    function makeSimpleFooter() {
-      return {
-        t: 'div', a: { class: 'preview-footer' },
-        c: '\u00A9 2026 My Site'
-      };
-    }
-
-    function renderMixPreview() {
-      var nav = navMode === 'full' ? makeFullNav({ active: 'Home' }) : makeMinimalNav({ active: 'Home' });
-      var footer = footerMode === 'full' ? makeFullFooter() : makeSimpleFooter();
-      bw.DOM('#mix-preview', {
-        t: 'div', a: { class: 'site-preview' },
-        c: [
-          nav,
-          makeDictHeader({ title: 'Same Content, Different Chrome' }),
-          { t: 'div', a: { class: 'preview-body' },
-            c: { t: 'p', c: 'The page content stays the same. Only the nav and footer change based on which variant you select.' }
-          },
-          footer
-        ]
-      });
-    }
-
-    function makeToggleGroup(label, options, current, onChange) {
-      return {
-        t: 'div', a: { style: 'display:inline-block;margin-right:1.5rem;margin-bottom:0.5rem' },
-        c: [
-          { t: 'span', a: { style: 'font-size:0.85rem;font-weight:600;margin-right:0.5rem' }, c: label + ':' },
-          {
-            t: 'span', a: { class: 'toggle-group' },
-            c: options.map(function(opt) {
-              return {
-                t: 'button',
-                a: {
-                  class: current === opt.value ? 'active' : '',
-                  onclick: function() { onChange(opt.value); }
-                },
-                c: opt.label
-              };
-            })
-          }
-        ]
-      };
-    }
-
-    function renderMixControls() {
-      bw.DOM('#mix-controls', {
-        t: 'div',
-        c: [
-          makeToggleGroup('Nav', [
-            { label: 'Full', value: 'full' },
-            { label: 'Minimal', value: 'minimal' }
-          ], navMode, function(v) {
-            navMode = v;
-            renderMixControls();
-            renderMixPreview();
-          }),
-          makeToggleGroup('Footer', [
-            { label: 'Full', value: 'full' },
-            { label: 'Simple', value: 'simple' }
-          ], footerMode, function(v) {
-            footerMode = v;
-            renderMixControls();
-            renderMixPreview();
-          })
-        ]
-      });
-    }
-
-    var section3 = {
-      t: 'div', a: { class: 'demo-section' },
-      c: [
-        { t: 'h2', a: { id: 'mix-and-match' }, c: '3. Mix and Match' },
-        {
-          t: 'p',
-          c: 'Because dictionary entries are just functions, you can define variants and swap them freely. A "full" nav and a "minimal" nav are both just functions that return a TACO \u2014 the page doesn\'t care which one it gets.'
-        },
-        codeBlock(
-          'var variants = {\n' +
-          '  fullNav:    function(opts) { /* 6 links */ },\n' +
-          '  minimalNav: function(opts) { /* hamburger + title */ },\n' +
-          '  fullFooter: function()     { /* 3-column links */ },\n' +
-          '  simpleFooter: function()   { /* one-line copyright */ }\n' +
-          '};\n' +
-          '\n' +
-          '// Swap at will:\n' +
-          'site.nav = variants.minimalNav;\n' +
-          'site.footer = variants.simpleFooter;\n' +
-          '// Re-render \u2014 same content, different chrome.'
-        ),
-        { t: 'h3', c: 'Try it \u2014 toggle nav and footer variants:' },
-        { t: 'div', a: { id: 'mix-controls' } },
-        { t: 'div', a: { id: 'mix-preview' } }
-      ]
-    };
-
-    // =========================================================================
-    // Section 4: Site Kit Factory
+    // Part 1, Section 3: Site Kit Factory
     // =========================================================================
     function createSiteKit(config) {
       var theme = bw.makeStyles({
@@ -657,7 +461,7 @@
         footer: function() {
           return {
             t: 'div',
-            a: { style: 'background:' + palette.surface.base + ';border-top:1px solid ' + palette.surface.border + ';padding:0.5rem 1rem;font-size:0.8rem;color:' + palette.surface.darkText + ';text-align:center' },
+            a: { style: 'background:' + palette.surface + ';padding:0.5rem 1rem;font-size:0.8rem;text-align:center' },
             c: '\u00A9 2026 ' + config.siteName
           };
         },
@@ -707,13 +511,17 @@
       };
     }
 
-    var section4 = {
+    var section3 = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', a: { id: 'site-kit-factory' }, c: '4. Site Kit Factory' },
+        { t: 'h2', a: { id: 'site-kit-factory' }, c: '3. Site Kit Factory' },
         {
           t: 'p',
-          c: 'Formalize the dictionary into a factory function. A "site kit" is a pre-configured set of components \u2014 header, nav, footer, card \u2014 all sharing the same theme colors.'
+          c: [
+            'Formalize the dictionary into a factory function. A "site kit" is a pre-configured set of components -- header, nav, footer, card -- all sharing theme colors derived from ',
+            { t: 'code', c: 'bw.makeStyles()' },
+            '.'
+          ]
         },
         codeBlock(
           'function createSiteKit(config) {\n' +
@@ -730,18 +538,16 @@
           '             \';color:\' + palette.primary.textOn },\n' +
           '        c: opts.title || config.siteName };\n' +
           '    },\n' +
-          '    nav:    function(opts) { /* ... */ },\n' +
-          '    footer: function()     { /* ... */ },\n' +
-          '    card:   function(opts) { /* ... */ }\n' +
+          '    nav:    function(opts) { /* themed nav */ },\n' +
+          '    footer: function()     { /* themed footer */ },\n' +
+          '    card:   function(opts) { /* themed card */ }\n' +
           '  };\n' +
           '}\n' +
           '\n' +
           'var corporate = createSiteKit({\n' +
-          '  name: \'corporate\', siteName: \'Acme Corp\',\n' +
           '  primary: \'#1a5276\', secondary: \'#d4ac0d\'\n' +
           '});\n' +
           'var creative = createSiteKit({\n' +
-          '  name: \'creative\', siteName: \'Studio Nine\',\n' +
           '  primary: \'#c0392b\', secondary: \'#e67e22\'\n' +
           '});'
         ),
@@ -765,10 +571,143 @@
             { t: 'h4', c: 'Why this matters' },
             {
               t: 'p', a: { style: 'margin:0' },
+              c: 'Change the two seed colors, and every component in the kit updates. This is bitwrench\'s design-system-from-code approach -- no Figma tokens to export, no CSS variables to hand-tune.'
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Part 2, Section 4: What Is Client-Side Routing?
+    // =========================================================================
+    var section4 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'what-is-routing' }, c: '4. What Is Client-Side Routing?' },
+        {
+          t: 'p',
+          c: 'Traditional websites reload the entire page on every link click. An SPA (Single-Page Application) loads one HTML page, then JavaScript swaps content in the DOM when the user navigates. The URL still changes (bookmarks and back/forward work), but the page never fully reloads.'
+        },
+        { t: 'h3', c: 'Two browser mechanisms' },
+        {
+          t: 'p',
+          c: [
+            { t: 'strong', c: 'Hash fragment' },
+            ' (',
+            { t: 'code', c: 'example.com/#/users/123' },
+            ') -- Changing the ',
+            { t: 'code', c: '#' },
+            ' does not trigger a page reload. The browser fires ',
+            { t: 'code', c: 'hashchange' },
+            ' which JavaScript can listen to.'
+          ]
+        },
+        {
+          t: 'p',
+          c: [
+            { t: 'strong', c: 'History API' },
+            ' (',
+            { t: 'code', c: 'example.com/users/123' },
+            ') -- ',
+            { t: 'code', c: 'history.pushState()' },
+            ' changes the URL without a reload. Requires server configuration (SPA fallback).'
+          ]
+        },
+        {
+          t: 'p',
+          c: [
+            'Bitwrench supports both. ',
+            { t: 'strong', c: 'Hash mode is the default' },
+            ' -- works everywhere with zero server configuration, even from ',
+            { t: 'code', c: 'file://' },
+            ' URLs.'
+          ]
+        },
+        { t: 'h3', c: 'The key insight' },
+        {
+          t: 'p',
+          c: [
+            '"Switching pages" in bitwrench is just calling ',
+            { t: 'code', c: 'bw.DOM(target, taco)' },
+            ' with different TACO content. Sections 1-2 above already do this with button clicks. A router simply maps URL changes to those same ',
+            { t: 'code', c: 'bw.DOM()' },
+            ' calls.'
+          ]
+        },
+        { t: 'h3', c: 'Navigation flow' },
+        {
+          t: 'div', a: { class: 'flow-diagram' },
+          c: 'bw.navigate(path) or link click\n' +
+             '  |-> 1. URL changes (hash or pushState)\n' +
+             '  |-> 2. before() guard -- redirect or block?\n' +
+             '  |-> 3. Match URL against route patterns\n' +
+             '  |-> 4. Call handler(params) -> returns TACO\n' +
+             '  |-> 5. bw.DOM(target, taco) renders view\n' +
+             '  |-> 6. bw.pub(\'bw:route\', data) notifies subscribers\n' +
+             '  |-> 7. after() hook (analytics, scroll, etc.)'
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Part 2, Section 5: Your First Router (live demo)
+    // =========================================================================
+    var routerInstance = null;
+
+    // We scope all router demos under #/demo to avoid interfering with
+    // the main page URL. Each demo section gets a sub-prefix.
+
+    var section5 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'first-router' }, c: '5. Your First Router' },
+        {
+          t: 'p',
+          c: [
+            'Here is the minimal setup. Call ',
+            { t: 'code', c: 'bw.router()' },
+            ' with a target element and a routes object. Each route pattern maps to a function that returns TACO.'
+          ]
+        },
+        codeBlock(
+          'bw.router({\n' +
+          '  target: \'#app\',\n' +
+          '  routes: {\n' +
+          '    \'/\':        function() { return { t: \'h2\', c: \'Home\' }; },\n' +
+          '    \'/about\':   function() { return { t: \'h2\', c: \'About Us\' }; },\n' +
+          '    \'/contact\': function() { return { t: \'h2\', c: \'Contact\' }; },\n' +
+          '    \'*\':        function() { return { t: \'h2\', c: \'404 Not Found\' }; }\n' +
+          '  }\n' +
+          '});\n' +
+          '\n' +
+          '// Navigation links:\n' +
+          'bw.link(\'/\', \'Home\')       // returns TACO <a> wired to router\n' +
+          'bw.link(\'/about\', \'About\') // click triggers bw.navigate()\n' +
+          'bw.navigate(\'/contact\');    // programmatic navigation'
+        ),
+        { t: 'h3', c: 'Try it -- click the links, then use your browser\'s back/forward:' },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            { t: 'div', a: { id: 'router5-nav', class: 'router-demo-nav' } },
+            { t: 'div', a: { id: 'router5-view', class: 'router-demo' } }
+          ]
+        },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'What just happened' },
+            {
+              t: 'p', a: { style: 'margin:0' },
               c: [
-                'The factory uses ',
-                { t: 'code', c: 'bw.makeStyles()' },
-                ' to derive a full color palette from two seed colors. Every component in the kit shares those colors. Change the seeds, the entire site updates. This is bitwrench\'s design-system-from-code approach.'
+                'Clicking a ',
+                { t: 'code', c: 'bw.link()' },
+                ' sets the URL hash (e.g., ',
+                { t: 'code', c: '#/demo/about' },
+                '). The router matches the pattern, calls the handler, and mounts the TACO. Browser back/forward triggers the same flow via ',
+                { t: 'code', c: 'hashchange' },
+                ' events.'
               ]
             }
           ]
@@ -777,95 +716,415 @@
     };
 
     // =========================================================================
-    // Section 5: The Meta — This Site Is the Pattern
+    // Part 2, Section 6: Route Parameters (live demo)
     // =========================================================================
-    var navSourceExcerpt =
-      '// Primary nav items (main dark bar)\n' +
-      'var primaryItems = [\n' +
-      '  { text: \'Home\',       href: \'index.html\' },\n' +
-      '  { text: \'Quick Start\', href: \'00-quick-start.html\' },\n' +
-      '  { text: \'Components\', href: \'01-components.html\' },\n' +
-      '  { text: \'Styling\',    href: \'03-styling.html\' },\n' +
-      '  // ...\n' +
-      '];\n' +
-      '\n' +
-      '// Secondary nav items (sub-nav bar)\n' +
-      'var secondaryItems = [\n' +
-      '  { text: \'Tables & Forms\', href: \'02-tables-forms.html\' },\n' +
-      '  { text: \'Dashboard\',      href: \'04-dashboard.html\' },\n' +
-      '  { text: \'Multi-Page\',     href: \'15-multi-page-site.html\' },\n' +
-      '  // ...\n' +
-      '];';
+    var users = [
+      { id: '1', name: 'Alice', role: 'Engineer', color: '#3498db' },
+      { id: '2', name: 'Bob', role: 'Designer', color: '#e67e22' },
+      { id: '3', name: 'Carol', role: 'Manager', color: '#2ecc71' }
+    ];
 
-    var mountExcerpt =
-      '// Factory: returns TACO for primary + secondary nav\n' +
-      'function createExampleNav(currentPage, baseHref) {\n' +
-      '  var primaryLinks = primaryItems.map(function(item) {\n' +
-      '    return { t: \'li\', c: { t: \'a\', a: { href: rh }, c: item.text } };\n' +
-      '  });\n' +
-      '  return { primaryNav: ..., belowNav: [...] };\n' +
-      '}\n' +
-      '\n' +
-      '// Mount: composition step on every page\n' +
-      'function mountExampleNav(selector, currentPage, baseHref) {\n' +
-      '  var parts = createExampleNav(currentPage, baseHref);\n' +
-      '  bw.DOM(selector, parts.primaryNav);\n' +
-      '  // Insert sub-nav + mobile menu\n' +
-      '}';
+    function userListView() {
+      return {
+        t: 'div', a: { style: 'padding:1rem' },
+        c: [
+          { t: 'h3', a: { style: 'margin-top:0' }, c: 'Users' },
+          { t: 'p', c: 'Click a user to see their detail page with route params.' },
+          {
+            t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.5rem' },
+            c: users.map(function(u) {
+              return bw.link('/demo/users/' + u.id, {
+                t: 'div', a: { style: 'display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border:1px solid var(--bw_card_border);border-radius:var(--bw_radius);cursor:pointer;border-left:3px solid ' + u.color },
+                c: [
+                  { t: 'strong', c: u.name },
+                  { t: 'span', a: { style: 'color:var(--bw_text_secondary);font-size:0.85rem' }, c: u.role }
+                ]
+              }, { style: 'text-decoration:none;color:inherit' });
+            })
+          }
+        ]
+      };
+    }
 
-    var section5 = {
+    function userDetailView(params) {
+      var user = null;
+      for (var i = 0; i < users.length; i++) {
+        if (users[i].id === params.id) { user = users[i]; break; }
+      }
+      if (!user) {
+        return { t: 'div', a: { style: 'padding:1rem' }, c: [
+          { t: 'h3', a: { style: 'margin-top:0' }, c: 'User not found' },
+          bw.link('/demo/users', 'Back to list', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+        ]};
+      }
+      var qTab = (params._query && params._query.tab) || 'profile';
+      return {
+        t: 'div', a: { style: 'padding:1rem' },
+        c: [
+          { t: 'h3', a: { style: 'margin-top:0;border-left:3px solid ' + user.color + ';padding-left:0.5rem' }, c: user.name + ' (' + user.role + ')' },
+          {
+            t: 'div', a: { style: 'background:var(--bw_teal_bg);padding:0.75rem;border-radius:var(--bw_radius);font-family:var(--bw_font_mono);font-size:0.8rem;margin-bottom:1rem' },
+            c: [
+              { t: 'div', c: ['params.id = "', { t: 'strong', c: params.id }, '"'] },
+              { t: 'div', c: ['params._query.tab = "', { t: 'strong', c: qTab }, '"'] }
+            ]
+          },
+          {
+            t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
+            c: [
+              bw.link('/demo/users', 'Back to list', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
+              bw.link('/demo/users/' + user.id + '?tab=settings', '?tab=settings', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+            ]
+          }
+        ]
+      };
+    }
+
+    var section6 = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', a: { id: 'the-meta' }, c: '5. The Meta \u2014 This Site Is the Pattern' },
+        { t: 'h2', a: { id: 'route-parameters' }, c: '6. Route Parameters' },
         {
           t: 'p',
           c: [
-            'The bitwrench docs site you\'re reading right now uses this exact pattern. Look at ',
-            { t: 'code', c: 'shared-nav.js' },
-            ' \u2014 it\'s a dictionary of nav items + a factory function + a mount step.'
+            'Route patterns can include ',
+            { t: 'code', c: ':param' },
+            ' segments that capture dynamic values. The captured values are passed to your handler as ',
+            { t: 'code', c: 'params.paramName' },
+            '. Query strings are parsed separately into ',
+            { t: 'code', c: 'params._query' },
+            '.'
           ]
         },
+        codeBlock(
+          'bw.router({\n' +
+          '  target: \'#view\',\n' +
+          '  routes: {\n' +
+          '    \'/users\':     function()       { return userList(); },\n' +
+          '    \'/users/:id\': function(params) {\n' +
+          '      // params.id = \'123\'\n' +
+          '      // params._query.tab = \'settings\' (from ?tab=settings)\n' +
+          '      return userDetail(params);\n' +
+          '    }\n' +
+          '  }\n' +
+          '});'
+        ),
+        { t: 'h3', c: 'Try it -- click a user, then check the extracted params:' },
         {
-          t: 'div', a: { class: 'meta-annotation' },
+          t: 'div', a: { class: 'demo-content' },
           c: [
-            { t: 'strong', c: 'The dictionary: ' },
-            { t: 'code', c: 'primaryItems' },
-            ' and ',
-            { t: 'code', c: 'secondaryItems' },
-            ' are arrays of {text, href} objects \u2014 the same pattern as section 1.'
-          ]
-        },
-        codeBlock(navSourceExcerpt),
-        {
-          t: 'div', a: { class: 'meta-annotation' },
-          c: [
-            { t: 'strong', c: 'The factory: ' },
-            { t: 'code', c: 'createExampleNav()' },
-            ' maps the dictionary into TACO link elements. ',
-            { t: 'strong', c: 'The mount: ' },
-            { t: 'code', c: 'mountExampleNav()' },
-            ' renders primary nav + sub-nav + mobile menu.'
-          ]
-        },
-        codeBlock(mountExcerpt),
-        {
-          t: 'p',
-          c: [
-            'Every page in the docs site calls ',
-            { t: 'code', c: 'mountExampleNav(\'#example-nav\', \'page-name.html\')' },
-            ' \u2014 one line to get the full navigation. The pattern scales from this 15-page docs site to any size.'
+            { t: 'div', a: { id: 'router6-nav', class: 'router-demo-nav' } },
+            { t: 'div', a: { id: 'router6-view', class: 'router-demo' } }
           ]
         }
       ]
     };
 
     // =========================================================================
-    // Section 6: Patterns Summary
+    // Part 2, Section 7: Wildcards & 404
     // =========================================================================
-    var section6 = {
+    var section7 = {
       t: 'div', a: { class: 'demo-section' },
       c: [
-        { t: 'h2', a: { id: 'patterns-summary' }, c: '6. Patterns Summary' },
+        { t: 'h2', a: { id: 'wildcards-404' }, c: '7. Wildcards & 404' },
+        {
+          t: 'p',
+          c: 'The router supports two wildcard patterns for flexible matching:'
+        },
+        {
+          t: 'p',
+          c: [
+            { t: 'strong', c: 'Catch-all ' },
+            { t: 'code', c: '/docs/*' },
+            ' -- Matches any number of trailing segments. The captured portion goes into ',
+            { t: 'code', c: 'params._rest' },
+            '. Useful for nested content like documentation paths.'
+          ]
+        },
+        codeBlock(
+          '// URL: /docs/api/colors\n' +
+          '\'/docs/*\': function(params) {\n' +
+          '  // params._rest = \'api/colors\'\n' +
+          '  return renderDoc(params._rest);\n' +
+          '}'
+        ),
+        {
+          t: 'p',
+          c: [
+            { t: 'strong', c: 'Global wildcard ' },
+            { t: 'code', c: '*' },
+            ' -- Matches anything not matched by other routes. This is your 404 handler.'
+          ]
+        },
+        codeBlock(
+          '\'*\': function() {\n' +
+          '  return { t: \'div\', c: [\n' +
+          '    { t: \'h2\', c: \'404 -- Page Not Found\' },\n' +
+          '    bw.link(\'/\', \'Go Home\')\n' +
+          '  ]};\n' +
+          '}'
+        ),
+        { t: 'h3', c: 'Priority order' },
+        {
+          t: 'p',
+          c: 'Routes are matched in priority order. Register specific routes before general ones:'
+        },
+        {
+          t: 'table', a: { class: 'patterns-table' },
+          c: [
+            { t: 'thead', c: { t: 'tr', c: [
+              { t: 'th', c: 'Priority' },
+              { t: 'th', c: 'Pattern' },
+              { t: 'th', c: 'Example' }
+            ]}},
+            { t: 'tbody', c: [
+              { t: 'tr', c: [
+                { t: 'td', c: '1 (highest)' },
+                { t: 'td', c: { t: 'code', c: '/users/new' } },
+                { t: 'td', c: 'Exact match' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: '2' },
+                { t: 'td', c: { t: 'code', c: '/users/:id' } },
+                { t: 'td', c: 'Parameterized' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: '3' },
+                { t: 'td', c: { t: 'code', c: '/docs/*' } },
+                { t: 'td', c: 'Catch-all' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: '4 (lowest)' },
+                { t: 'td', c: { t: 'code', c: '*' } },
+                { t: 'td', c: 'Global wildcard (404)' }
+              ]}
+            ]}
+          ]
+        },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'Tip' },
+            {
+              t: 'p', a: { style: 'margin:0' },
+              c: 'The section 5 and 6 demos above already use * for their 404 fallbacks. Try navigating to a bogus path and see what happens.'
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Part 2, Section 8: Navigation Guards (live demo)
+    // =========================================================================
+    var guardLoggedIn = false;
+
+    function renderGuardStatus() {
+      bw.DOM('#guard-status', {
+        t: 'div', a: { class: 'guard-status ' + (guardLoggedIn ? 'guard-logged-in' : 'guard-logged-out') },
+        c: guardLoggedIn ? 'Logged in' : 'Not logged in'
+      });
+    }
+
+    function guardHomePage() {
+      return { t: 'div', a: { style: 'padding:1rem' }, c: [
+        { t: 'h3', a: { style: 'margin-top:0' }, c: 'Home' },
+        { t: 'p', c: 'This page is public. Anyone can see it.' }
+      ]};
+    }
+
+    function guardDashboard() {
+      return { t: 'div', a: { style: 'padding:1rem' }, c: [
+        { t: 'h3', a: { style: 'margin-top:0;color:#28a745' }, c: 'Dashboard (protected)' },
+        { t: 'p', c: 'You are logged in. The before() guard allowed this navigation.' },
+        { t: 'p', a: { style: 'font-size:0.85rem;color:var(--bw_text_secondary)' }, c: 'Uncheck "Logged in" above and try again.' }
+      ]};
+    }
+
+    function guardLoginMessage() {
+      return { t: 'div', a: { style: 'padding:1rem' }, c: [
+        { t: 'h3', a: { style: 'margin-top:0;color:#dc3545' }, c: 'Access denied' },
+        { t: 'p', c: 'The before() guard redirected you here. Check "Logged in" and try Dashboard again.' }
+      ]};
+    }
+
+    function guardSettingsPage() {
+      return { t: 'div', a: { style: 'padding:1rem' }, c: [
+        { t: 'h3', a: { style: 'margin-top:0' }, c: 'Settings' },
+        { t: 'p', c: 'This page is public.' }
+      ]};
+    }
+
+    var section8 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'navigation-guards' }, c: '8. Navigation Guards' },
+        {
+          t: 'p',
+          c: [
+            'The ',
+            { t: 'code', c: 'before(toPath, fromPath)' },
+            ' hook runs before every navigation. Return a string to redirect, ',
+            { t: 'code', c: 'false' },
+            ' to block, or anything else to allow.'
+          ]
+        },
+        codeBlock(
+          'bw.router({\n' +
+          '  target: \'#app\',\n' +
+          '  routes: { \'/\': home, \'/dashboard\': dashboard, \'/login\': login },\n' +
+          '  before: function(to, from) {\n' +
+          '    if (to === \'/dashboard\' && !isLoggedIn) return \'/login\'; // redirect\n' +
+          '    if (to === \'/locked\') return false;  // block\n' +
+          '    // return undefined/null/true to allow\n' +
+          '  }\n' +
+          '});'
+        ),
+        { t: 'h3', c: 'Try it -- toggle the checkbox, then click Dashboard:' },
+        {
+          t: 'div', a: { style: 'display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;flex-wrap:wrap' },
+          c: [
+            {
+              t: 'label', a: { style: 'display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:600;font-size:0.9rem' },
+              c: [
+                {
+                  t: 'input',
+                  a: {
+                    type: 'checkbox',
+                    onchange: function(e) {
+                      guardLoggedIn = e.target.checked;
+                      renderGuardStatus();
+                    }
+                  }
+                },
+                'Logged in'
+              ]
+            },
+            { t: 'div', a: { id: 'guard-status' } }
+          ]
+        },
+        {
+          t: 'div', a: { class: 'demo-content' },
+          c: [
+            { t: 'div', a: { id: 'router8-nav', class: 'router-demo-nav' } },
+            { t: 'div', a: { id: 'router8-view', class: 'router-demo' } }
+          ]
+        },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'Guard return values' },
+            {
+              t: 'table', a: { class: 'patterns-table', style: 'margin:0' },
+              c: [
+                { t: 'thead', c: { t: 'tr', c: [
+                  { t: 'th', c: 'Return' },
+                  { t: 'th', c: 'Effect' }
+                ]}},
+                { t: 'tbody', c: [
+                  { t: 'tr', c: [
+                    { t: 'td', c: { t: 'code', c: '"/login"' } },
+                    { t: 'td', c: 'Redirect to that path' }
+                  ]},
+                  { t: 'tr', c: [
+                    { t: 'td', c: { t: 'code', c: 'false' } },
+                    { t: 'td', c: 'Block navigation (URL and view unchanged)' }
+                  ]},
+                  { t: 'tr', c: [
+                    { t: 'td', c: { t: 'code', c: 'undefined / null / true' } },
+                    { t: 'td', c: 'Allow navigation' }
+                  ]}
+                ]}
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Part 2, Section 9: Reacting to Route Changes
+    // =========================================================================
+    var section9 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'route-events' }, c: '9. Reacting to Route Changes' },
+        {
+          t: 'p',
+          c: [
+            'Every route change publishes a ',
+            { t: 'code', c: 'bw:route' },
+            ' event through bitwrench\'s pub/sub system. Any component can subscribe without being coupled to the router.'
+          ]
+        },
+        codeBlock(
+          'bw.sub(\'bw:route\', function(data) {\n' +
+          '  // data.path   -- current path (e.g., \'/users/123\')\n' +
+          '  // data.params -- matched params (e.g., { id: \'123\' })\n' +
+          '  // data.query  -- parsed query string object\n' +
+          '  // data.from   -- previous path\n' +
+          '}, optionalElement);  // auto-unsubscribes when element is removed'
+        ),
+        { t: 'h3', c: 'Common patterns' },
+        {
+          t: 'p',
+          c: [
+            { t: 'strong', c: 'Highlight active nav item' },
+            ' -- The demos in sections 5 and 8 use the ',
+            { t: 'code', c: 'after()' },
+            ' hook to update button styles after each navigation. Alternatively, use pub/sub so the nav component is self-contained:'
+          ]
+        },
+        codeBlock(
+          '// Self-contained nav that reacts to route changes\n' +
+          'function makeNav(links) {\n' +
+          '  return { t: \'nav\', o: {\n' +
+          '    state: { active: \'/\' },\n' +
+          '    mounted: function(el) {\n' +
+          '      bw.sub(\'bw:route\', function(d) {\n' +
+          '        el._bw_state.active = d.path;\n' +
+          '        bw.update(el);\n' +
+          '      }, el);  // auto-unsubscribes when el is removed\n' +
+          '    },\n' +
+          '    render: function(el) {\n' +
+          '      var s = el._bw_state;\n' +
+          '      bw.DOM(el, { t: \'div\', c: links.map(function(link) {\n' +
+          '        return bw.link(link.path, link.label, {\n' +
+          '          style: link.path === s.active ? \'font-weight:bold\' : \'\'\n' +
+          '        });\n' +
+          '      })});\n' +
+          '    }\n' +
+          '  }};\n' +
+          '}'
+        ),
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'Auto-unsubscribe' },
+            {
+              t: 'p', a: { style: 'margin:0' },
+              c: [
+                'Pass a DOM element as the third argument to ',
+                { t: 'code', c: 'bw.sub()' },
+                '. When that element is removed from the DOM (e.g., when the router replaces the view), the subscription is automatically cleaned up. No manual unsubscribe needed.'
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    // =========================================================================
+    // Section 10: Putting It All Together
+    // =========================================================================
+    var section10 = {
+      t: 'div', a: { class: 'demo-section' },
+      c: [
+        { t: 'h2', a: { id: 'putting-it-together' }, c: '10. Putting It All Together' },
+        {
+          t: 'p',
+          c: 'This page covered five progressive patterns. Each builds on the previous:'
+        },
         {
           t: 'table', a: { class: 'patterns-table' },
           c: [
@@ -881,14 +1140,9 @@
                 { t: 'td', c: 'Reusable site chrome (header, nav, footer)' }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Page Composition' } },
-                { t: 'td', c: 'Functions that combine dictionary + unique content' },
-                { t: 'td', c: 'Multi-page sites, different views sharing layout' }
-              ]},
-              { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Mix & Match' } },
-                { t: 'td', c: 'Variant functions for the same slot' },
-                { t: 'td', c: 'A/B testing, responsive layout, user prefs' }
+                { t: 'td', c: { t: 'strong', c: 'Composition' } },
+                { t: 'td', c: 'Functions combining dictionary + unique content' },
+                { t: 'td', c: 'Multi-page sites with shared layout' }
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'strong', c: 'Site Kit Factory' } },
@@ -897,83 +1151,44 @@
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'strong', c: 'Router' } },
-                { t: 'td', c: 'bw.router() maps URLs to dictionary-based buildPage()' },
-                { t: 'td', c: 'SPAs, bookmarkable views, back/forward navigation' }
+                { t: 'td', c: [{ t: 'code', c: 'bw.router()' }, ' maps URLs to handlers'] },
+                { t: 'td', c: 'SPAs, bookmarkable views, back/forward' }
+              ]},
+              { t: 'tr', c: [
+                { t: 'td', c: { t: 'strong', c: 'Guards + Pub/Sub' } },
+                { t: 'td', c: 'before()/after() hooks + bw:route events' },
+                { t: 'td', c: 'Auth, analytics, decoupled nav updates' }
               ]}
             ]}
           ]
         },
-        { t: 'h3', c: 'Related Pages' },
+        {
+          t: 'div', a: { class: 'callout' },
+          c: [
+            { t: 'h4', c: 'The pattern scales' },
+            {
+              t: 'p', a: { style: 'margin:0' },
+              c: [
+                'The bitwrench docs site you\'re reading right now uses this exact pattern. Look at ',
+                { t: 'code', c: 'shared-nav.js' },
+                ' -- it\'s a dictionary of nav items + a factory function + a mount step. Every page calls ',
+                { t: 'code', c: 'initBitwrenchPage()' },
+                ' to get the full navigation. The pattern works from a 3-page prototype to a 20-page docs site and beyond.'
+              ]
+            }
+          ]
+        },
+        { t: 'h3', c: 'Related pages' },
         {
           t: 'ul',
           c: [
-            { t: 'li', c: { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard' } },
-            { t: 'li', c: { t: 'a', a: { href: '01-components.html' }, c: 'Components' } },
-            { t: 'li', c: { t: 'a', a: { href: '03-styling.html' }, c: 'Styling & CSS' } },
-            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management' } },
-            { t: 'li', c: { t: 'a', a: { href: '10-themes.html' }, c: 'Theme Generation' } },
-            { t: 'li', c: { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' } }
+            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management -- o.state, bw.patch, bw.update' } },
+            { t: 'li', c: { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard -- full example app' } },
+            { t: 'li', c: { t: 'a', a: { href: '01-components.html' }, c: 'Components -- BCCL component gallery' } },
+            { t: 'li', c: { t: 'a', a: { href: '03-styling.html' }, c: 'Styling & CSS -- bw.css(), bw.injectCSS()' } },
+            { t: 'li', c: { t: 'a', a: { href: '10-themes.html' }, c: 'Themes -- bw.makeStyles(), bw.loadStyles()' } },
+            { t: 'li', c: { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench -- design philosophy' } }
           ]
-        }
-      ]
-    };
-
-    // =========================================================================
-    // Section 7: URL-Driven Pages with bw.router()
-    // =========================================================================
-    var routerInstance = null;
-
-    var section7 = {
-      t: 'div', a: { class: 'demo-section' },
-      c: [
-        { t: 'h2', a: { id: 'router' }, c: '7. URL-Driven Pages with bw.router()' },
-        {
-          t: 'p',
-          c: 'Sections 1\u20132 showed how to switch pages with a dictionary and a button click. ' +
-             'bw.router() adds URL mapping on top of the same pattern \u2014 each route calls the ' +
-             'dictionary-based buildPage() function. Back/forward buttons work, URLs are bookmarkable, ' +
-             'and the dictionary stays the single source of truth.'
-        },
-        codeBlock(
-          '// Same pageContents dictionary from Section 2\n' +
-          'bw.router({\n' +
-          '  target: \'#router-view\',\n' +
-          '  routes: {\n' +
-          '    \'/\':        function() { return buildPage(\'home\'); },\n' +
-          '    \'/about\':   function() { return buildPage(\'about\'); },\n' +
-          '    \'/blog\':    function() { return buildPage(\'blog\'); },\n' +
-          '    \'/contact\': function() { return buildPage(\'contact\'); },\n' +
-          '    \'*\':        function() { return buildPage(\'home\'); }\n' +
-          '  }\n' +
-          '});',
-          'js'
-        ),
-        { t: 'h3', c: 'Live Demo' },
-        {
-          t: 'p',
-          c: 'Click the navigation links below. The router uses hash mode, so the URL changes but stays within this page.'
-        },
-        {
-          t: 'div', a: { class: 'demo-content' },
-          c: [
-            { t: 'div', a: { id: 'router-nav', style: 'display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap' } },
-            { t: 'div', a: { id: 'router-view', style: 'border:2px dashed var(--bw_card_border);border-radius:var(--bw_radius);min-height:200px' } }
-          ]
-        },
-        { t: 'h3', c: 'Key concepts' },
-        {
-          t: 'ul',
-          c: [
-            { t: 'li', c: bw.raw('<code>bw.router(config)</code> \u2014 creates and starts the router. Returns <code>{ navigate, current, destroy }</code>.') },
-            { t: 'li', c: bw.raw('<code>bw.navigate(path)</code> \u2014 programmatic navigation without a link click.') },
-            { t: 'li', c: bw.raw('<code>bw.link(path, text, attrs)</code> \u2014 returns a TACO <code>&lt;a&gt;</code> with onclick wired to the router.') },
-            { t: 'li', c: bw.raw('<code>before(to, from)</code> guard \u2014 return <code>false</code> to block, or a path string to redirect.') },
-            { t: 'li', c: bw.raw('Every route change publishes <code>bw:route</code> via pub/sub.') }
-          ]
-        },
-        {
-          t: 'p',
-          c: bw.raw('See <a href="thinking-in-bitwrench.html#routing">Thinking in Bitwrench \u00A7 Routing</a> for the full API.')
         }
       ]
     };
@@ -986,10 +1201,20 @@
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
         c: [
-          { t: 'h1', c: 'Multi-Page Site Composition' },
-          { t: 'p', a: { class: 'subtitle' }, c: 'Build websites from reusable TACO dictionaries \u2014 no framework required' }
+          { t: 'h1', c: 'Pages & Routing' },
+          { t: 'p', a: { class: 'subtitle' }, c: 'From reusable TACO dictionaries to URL-driven SPAs' }
         ]
       }
+    };
+
+    var part1Divider = {
+      t: 'div', a: { class: 'part-divider' },
+      c: 'Part 1: Building Reusable Pages'
+    };
+
+    var part2Divider = {
+      t: 'div', a: { class: 'part-divider' },
+      c: 'Part 2: Client-Side Routing'
     };
 
     var page = {
@@ -998,29 +1223,53 @@
         pageHeader,
         {
           t: 'div', a: { class: 'content-container wide' },
-          c: [section1, section2, section3, section4, section5, section6, section7]
+          c: [
+            part1Divider,
+            section1,
+            section2,
+            section3,
+            part2Divider,
+            section4,
+            section5,
+            section6,
+            section7,
+            section8,
+            section9,
+            section10
+          ]
         }
       ]
     };
 
     bw.DOM('#app', page);
 
-    // Initial renders for interactive sections
+    // Initial renders for interactive sections (Part 1)
     renderDictPreview();
     renderSitePreview();
-    renderMixControls();
-    renderMixPreview();
 
     // =========================================================================
-    // Section 7: Initialize the router demo
+    // Section 5: Initialize "Your First Router" demo
     // =========================================================================
-    var routerPages = ['home', 'about', 'blog', 'contact'];
-    var routerBasePath = '#/demo';
+    // All router demos share a single router instance. We use the /demo
+    // prefix to scope them and avoid interfering with other page hash states.
 
-    // Build router nav links
-    bw.DOM('#router-nav', {
+    var routerBasePath = '/demo';
+    var routerPages5 = ['home', 'about', 'contact'];
+
+    function makeRouterPageContent(name, icon, description) {
+      return {
+        t: 'div', a: { style: 'padding:1rem' },
+        c: [
+          { t: 'h3', a: { style: 'margin-top:0' }, c: icon + ' ' + name },
+          { t: 'p', c: description }
+        ]
+      };
+    }
+
+    // Build section 5 nav links
+    bw.DOM('#router5-nav', {
       t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
-      c: routerPages.map(function(pg) {
+      c: routerPages5.map(function(pg) {
         var label = pg.charAt(0).toUpperCase() + pg.slice(1);
         return bw.link(routerBasePath + (pg === 'home' ? '' : '/' + pg), label, {
           class: 'bw_btn bw_btn_sm bw_btn_outline_secondary'
@@ -1028,22 +1277,104 @@
       })
     });
 
-    // Start the router (hash mode, scoped to #router-view)
+    // Build section 6 nav links
+    bw.DOM('#router6-nav', {
+      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
+      c: [
+        bw.link('/demo/users', 'User List', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+      ]
+    });
+
+    // Build section 8 nav links
+    bw.DOM('#router8-nav', {
+      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
+      c: [
+        bw.link('/demo/guard', 'Home', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
+        bw.link('/demo/guard/dashboard', 'Dashboard', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
+        bw.link('/demo/guard/settings', 'Settings', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+      ]
+    });
+
+    // Initial guard status
+    renderGuardStatus();
+
+    // =========================================================================
+    // Single shared router for all demos
+    // =========================================================================
     routerInstance = bw.router({
-      target: '#router-view',
+      target: null, // we route to multiple targets, so we handle rendering ourselves
       routes: {
-        '/demo':         function() { return buildPage('home'); },
-        '/demo/about':   function() { return buildPage('about'); },
-        '/demo/blog':    function() { return buildPage('blog'); },
-        '/demo/contact': function() { return buildPage('contact'); },
-        '*':             function() { return buildPage('home'); }
+        // Section 5: basic routing
+        '/demo':         function() {
+          bw.DOM('#router5-view', makeRouterPageContent('Home', '', 'Welcome to the home page. Try clicking About or Contact.'));
+          return null;
+        },
+        '/demo/about':   function() {
+          bw.DOM('#router5-view', makeRouterPageContent('About', '', 'This is the about page. Use your browser\'s back button to return to Home.'));
+          return null;
+        },
+        '/demo/contact': function() {
+          bw.DOM('#router5-view', makeRouterPageContent('Contact', '', 'The contact page. Notice the URL in your address bar changed.'));
+          return null;
+        },
+
+        // Section 6: route parameters
+        '/demo/users':     function() {
+          bw.DOM('#router6-view', userListView());
+          return null;
+        },
+        '/demo/users/:id': function(params) {
+          bw.DOM('#router6-view', userDetailView(params));
+          return null;
+        },
+
+        // Section 8: guards
+        '/demo/guard':           function() {
+          bw.DOM('#router8-view', guardHomePage());
+          return null;
+        },
+        '/demo/guard/dashboard': function() {
+          bw.DOM('#router8-view', guardDashboard());
+          return null;
+        },
+        '/demo/guard/login':     function() {
+          bw.DOM('#router8-view', guardLoginMessage());
+          return null;
+        },
+        '/demo/guard/settings':  function() {
+          bw.DOM('#router8-view', guardSettingsPage());
+          return null;
+        },
+
+        // 404 fallback
+        '*': function() {
+          bw.DOM('#router5-view', makeRouterPageContent('404', '', 'Page not found. This is the * wildcard catch-all route.'));
+          return null;
+        }
+      },
+      before: function(to, from) {
+        // Guard for section 8: protect /demo/guard/dashboard
+        if (to === '/demo/guard/dashboard' && !guardLoggedIn) {
+          return '/demo/guard/login';
+        }
       },
       after: function(to) {
-        // Highlight active nav link
-        var links = bw.$('#router-nav a');
-        links.forEach(function(a) {
-          var href = a.getAttribute('href') || '';
-          if (href === '#' + to || (to === '/demo' && href === '#/demo')) {
+        // Highlight active nav links for section 5
+        var links5 = bw.$('#router5-nav a');
+        links5.forEach(function(a) {
+          var href = (a.getAttribute('href') || '').replace(/^#/, '');
+          if (href === to || (to === '/demo' && href === '/demo')) {
+            a.className = 'bw_btn bw_btn_sm bw_btn_primary';
+          } else {
+            a.className = 'bw_btn bw_btn_sm bw_btn_outline_secondary';
+          }
+        });
+
+        // Highlight active nav links for section 8
+        var links8 = bw.$('#router8-nav a');
+        links8.forEach(function(a) {
+          var href = (a.getAttribute('href') || '').replace(/^#/, '');
+          if (href === to) {
             a.className = 'bw_btn bw_btn_sm bw_btn_primary';
           } else {
             a.className = 'bw_btn bw_btn_sm bw_btn_outline_secondary';
@@ -1052,7 +1383,7 @@
       }
     });
 
-    // Navigate to initial route so the demo view is populated
+    // Navigate to initial route so demo views are populated
     if (!window.location.hash || window.location.hash.indexOf('/demo') === -1) {
       bw.navigate('/demo');
     }

@@ -41,7 +41,7 @@
     { text: 'Digital Clock', href: '06-clock.html' },
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
     { text: 'Comparison', href: '07-framework-comparison.html' },
-    { text: 'Multi-Page', href: '15-multi-page-site.html' },
+    { text: 'Pages & Routing', href: '15-multi-page-site.html' },
     { text: 'App Gallery', href: '../examples/' }
   ];
 
