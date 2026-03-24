@@ -97,7 +97,7 @@
       "component": "lean",
       "minified": true,
       "raw": 114953,
-      "gzipped": 30767,
+      "gzipped": 30768,
       "sourceMap": true,
       "integrity": "sha384-ZcmZecUP+OlFNg2x2/UQGomzeSCE4uV+ffHNFbgxqHyr5DX4OK8cBBmDFMQ4rJuw"
     },
@@ -350,7 +350,7 @@
       "component": "core",
       "minified": true,
       "raw": 152116,
-      "gzipped": 40862,
+      "gzipped": 40863,
       "sourceMap": true,
       "integrity": "sha384-xMLf81Ml+NUaRsEa9dxQR7Vb4LnFZ8/LbJ88y9RgsBb1ZdOGmYgKztEXyhP2seBW"
     },
