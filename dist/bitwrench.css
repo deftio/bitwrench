@@ -443,7 +443,7 @@ a {
   background-color: #ecf4f4;
   border: 1px solid #c2cbd4;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
   transition: box-shadow 200ms ease-out, transform 200ms ease-out;
 }
 
@@ -487,12 +487,12 @@ a {
 }
 
 .bw_card_hoverable {
-  transition: all 0.3s ease-out;
+  transition: box-shadow 300ms ease-out, transform 300ms ease-out;
 }
 
 .bw_card_hoverable:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.08);
 }
 
 .bw_card_img_top {
@@ -529,6 +529,7 @@ a {
   appearance: none;
   border: 1px solid transparent;
   font-family: inherit;
+  transition: border-color 0.15s ease-out, box-shadow 0.15s ease-out;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   color: #212529;
@@ -669,6 +670,7 @@ textarea.bw_form_control {
   font-weight: 500;
   color: #6c757d;
   border-radius: 6px;
+  transition: color 100ms ease-out, background-color 100ms ease-out;
 }
 
 .bw_table {
@@ -804,6 +806,7 @@ textarea.bw_form_control {
   overflow: hidden;
   font-size: .875rem;
   background-color: #e2eeee;
+  border-radius: .375rem;
   box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
 }
 
@@ -817,6 +820,7 @@ textarea.bw_form_control {
   font-weight: 600;
   color: #fff;
   background-color: #006666;
+  border-radius: inherit;
   box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
 }
 
@@ -864,6 +868,11 @@ textarea.bw_form_control {
   font-family: inherit;
   color: #6c757d;
   transition: color 100ms ease-out, border-color 100ms ease-out, background-color 100ms ease-out;
+}
+
+.bw_nav_link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
 }
 
 .bw_nav_tabs .bw_nav_link {
@@ -1227,12 +1236,18 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   border: 0;
   border-radius: 0.25rem;
   cursor: pointer;
+  transition: opacity 0.15s ease-out;
   color: #212529;
   opacity: 0.5;
 }
 
 .bw_close:hover {
   opacity: 0.75;
+}
+
+.bw_close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .bw_vstack {
@@ -1449,6 +1464,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-size: 1.25rem;
+  transition: transform 0.2s ease-out;
 }
 
 .bw_accordion_button:not(.bw_collapsed)::after {
@@ -1525,12 +1541,18 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   padding: 0;
   background-color: #212529;
   color: #fff;
+  transition: background-color 0.15s ease-out;
 }
 
 .bw_carousel_control img {
   width: 20px;
   height: 20px;
   pointer-events: none;
+}
+
+.bw_carousel_control:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .bw_carousel_control_prev {
@@ -1579,6 +1601,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
 }
 
 .bw_modal.bw_modal_show {
@@ -1593,6 +1616,8 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   max-width: 500px;
   margin: 1.75rem auto;
   pointer-events: none;
+  transform: translateY(-16px);
+  transition: transform 0.2s ease-out;
 }
 
 .bw_modal.bw_modal_show .bw_modal_dialog {
@@ -1621,7 +1646,8 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   outline: 0;
   background-color: #ecf4f4;
   border-color: #c2cbd4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.08);
 }
 
 .bw_modal_header {
@@ -1706,9 +1732,12 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   max-width: calc(100vw - 2rem);
   background-clip: padding-box;
   opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
   background-color: #ecf4f4;
   border-color: #c2cbd4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+  border-radius: 8px;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.08);
 }
 
 .bw_toast.bw_toast_show {
@@ -1718,6 +1747,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
 
 .bw_toast.bw_toast_hiding {
   opacity: 0;
+  transform: translateY(-8px);
 }
 
 .bw_toast_header {
@@ -1765,15 +1795,19 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out;
   background-color: #ecf4f4;
   border-color: #c2cbd4;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
 }
 
 .bw_dropdown_menu.bw_dropdown_show {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+  transform: translateY(0);
 }
 
 .bw_dropdown_menu_end {
@@ -1826,6 +1860,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   background-repeat: no-repeat;
   background-size: contain;
   cursor: pointer;
+  transition: background-color 0.15s ease-out, background-position 0.15s ease-out, border-color 0.15s ease-out;
   background-color: #6c757d;
   border-color: #6c757d;
 }
@@ -1912,17 +1947,17 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
 .bw_stat_card {
   padding: 1.25rem;
   border-left: 4px solid transparent;
-  border-radius: 8px;
   background-color: #ecf4f4;
-  transition: box-shadow 100ms ease-out, transform 100ms ease-out;
   color: #212529;
   border: 1px solid #c2cbd4;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+  transition: box-shadow 100ms ease-out, transform 100ms ease-out;
 }
 
 .bw_stat_card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
 }
 
 .bw_stat_icon {
@@ -1965,7 +2000,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   color: #fff;
   padding: 0.5rem 0.75rem;
   border-radius: .375rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
   transition: opacity 100ms ease-out, transform 100ms ease-out;
 }
 
@@ -2039,7 +2074,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   color: #212529;
   border: 1px solid #c2cbd4;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.08);
   transition: opacity 100ms ease-out, transform 100ms ease-out;
 }
 
@@ -2134,6 +2169,11 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   padding: 0;
   border-radius: 50%;
   transition: color 100ms ease-out, background-color 100ms ease-out;
+}
+
+.bw_search_clear:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .bw_range_wrapper {
@@ -2389,6 +2429,7 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   border-color: #c2cbd4;
   background-color: #ecf4f4;
   color: #212529;
+  border-radius: 6px;
 }
 
 .bw_chip {
@@ -2416,6 +2457,11 @@ a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible {
   cursor: pointer;
   padding: 0;
   border-radius: 50%;
+}
+
+.bw_chip_remove:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
 }
 
 .bw_chip_field {
@@ -3357,7 +3403,7 @@ a:hover {
 }
 
 .bw_card:hover {
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
 }
 
 .bw_card_subtitle {
@@ -3578,6 +3624,11 @@ a.bw_list_group_item:hover {
 
 .bw_form_switch .bw_switch_input:focus {
   box-shadow: 0 0 0 0.25rem rgba(0,102,102,0.25);
+}
+
+.bw_form_switch .bw_switch_input:focus-visible {
+  box-shadow: 0 0 0 0.25rem rgba(0,102,102,0.25);
+  outline: none;
 }
 
 .bw_stat_change_up {

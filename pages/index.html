@@ -475,7 +475,11 @@
         { t: 'h2', c: 'Built-In Components' },
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' },
-            c: 'bitwrench ships a ready-to-use library of tables, forms, modals, charts, and controls. Everything below is live -- try sorting a column, switching a theme, or opening a modal.' },
+            c: [
+              'bitwrench ships a ready-to-use library of tables, forms, modals, charts, and controls. Everything below is live -- try sorting a column, switching a theme, or opening a modal. Use them as-is to get started faster, or as templates to build your own. See the full ',
+              { t: 'a', a: { href: 'component-gallery.html' }, c: 'component gallery' },
+              ' for more.'
+            ] },
           { t: 'div', a: { class: 'ha_live_strip' }, c: [
             tableCard, themeCard, modalToastCard, formCard, chartCard
           ]}
@@ -508,7 +512,7 @@
         { t: 'h2', c: 'How It Works' },
         { t: 'div', a: { class: 'demo-content' }, c: [
           { t: 'p', a: { class: 'demo-description' },
-            c: 'Describe your UI as a plain JavaScript object. Call bw.DOM() and it appears on screen. Objects nest, compose with arrays, and include event handlers -- standard JavaScript, no special syntax.'
+            c: 'In bitwrench, UI is written as plain JavaScript objects called TACOs -- Tag, Attributes, Content, Options. A button, a table row, or an entire page layout all use the same structure: {t: \'div\', a: {class: \'card\'}, c: \'Hello\'}. TACOs nest and compose like HTML does, so you can build a single widget or a full application from the same building blocks. bitwrench turns TACOs into real HTML -- either as DOM in the browser or as strings on a server -- and provides reactive state, lifecycle hooks, and pub/sub for keeping everything in sync.'
           },
           { t: 'div', a: { class: 'ha_how_grid' }, c: [
             { t: 'div', c: [
@@ -636,7 +640,7 @@
     // =========================================================================
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [seeItLiveSection, howItWorksSection, capabilitiesSection, pageIndexSection]
+      c: [howItWorksSection, seeItLiveSection, capabilitiesSection, pageIndexSection]
     };
 
     bw.DOM('#app', [hero, installStrip, contentWrapper]);

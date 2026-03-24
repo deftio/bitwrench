@@ -197,7 +197,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-23T07:39:00.396Z'
+    buildDate: '2026-03-24T05:00:30.853Z'
   };
 
   /**
@@ -777,10 +777,10 @@
       xl: '0 4px 12px rgba(0,0,0,0.12)'
     },
     md: {
-      sm: '0 1px 3px rgba(0,0,0,0.08)',
-      md: '0 2px 6px rgba(0,0,0,0.12)',
-      lg: '0 4px 12px rgba(0,0,0,0.16)',
-      xl: '0 8px 24px rgba(0,0,0,0.20)'
+      sm: '0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)',
+      md: '0 4px 6px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06)',
+      lg: '0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.08)',
+      xl: '0 20px 25px rgba(0,0,0,0.15), 0 8px 10px rgba(0,0,0,0.10)'
     },
     lg: {
       sm: '0 2px 4px rgba(0,0,0,0.10)',
@@ -969,6 +969,9 @@
     rules[_sx(scope, '.bw_card:hover')] = {
       'box-shadow': elev.md
     };
+    rules[_sx(scope, '.bw_card_hoverable')] = {
+      'transition': 'box-shadow ' + motion.slow + ' ' + motion.easing + ', transform ' + motion.slow + ' ' + motion.easing
+    };
     rules[_sx(scope, '.bw_card_hoverable:hover')] = {
       'box-shadow': elev.lg
     };
@@ -1071,7 +1074,8 @@
     };
     rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
       'color': palette.secondary.base,
-      'border-radius': layout.radius.btn
+      'border-radius': layout.radius.btn,
+      'transition': 'color ' + layout.motion.fast + ' ' + layout.motion.easing + ', background-color ' + layout.motion.fast + ' ' + layout.motion.easing
     };
     rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
       'color': palette.dark.base,
@@ -1228,15 +1232,20 @@
     };
     return rules;
   }
-  function generateProgress(scope, palette) {
+  function generateProgress(scope, palette, layout) {
     var rules = {};
+    var rd = layout ? layout.radius : {
+      badge: '.375rem'
+    };
     rules[_sx(scope, '.bw_progress')] = {
       'background-color': palette.surfaceAlt,
+      'border-radius': rd.badge,
       'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
     };
     rules[_sx(scope, '.bw_progress_bar')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base,
+      'border-radius': 'inherit',
       'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
     };
     // Variant progress bar colors handled by palette class
@@ -1359,7 +1368,8 @@
     };
     rules[_sx(scope, '.bw_carousel_control')] = {
       'background-color': palette.dark.base,
-      'color': palette.dark.textOn
+      'color': palette.dark.textOn,
+      'transition': 'background-color 0.15s ease-out'
     };
     rules[_sx(scope, '.bw_carousel_control:hover')] = {
       'background-color': palette.dark.hover
@@ -1372,9 +1382,13 @@
   }
   function generateModalThemed(scope, palette, layout) {
     var rules = {};
+    var rd = layout ? layout.radius : {
+      card: '8px'
+    };
     rules[_sx(scope, '.bw_modal_content')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
+      'border-radius': rd.card,
       'box-shadow': layout.elevation.lg
     };
     rules[_sx(scope, '.bw_modal_header')] = {
@@ -1390,9 +1404,13 @@
   }
   function generateToastThemed(scope, palette, layout) {
     var rules = {};
+    var rd = layout ? layout.radius : {
+      card: '8px'
+    };
     rules[_sx(scope, '.bw_toast')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
+      'border-radius': rd.card,
       'box-shadow': layout.elevation.lg
     };
     rules[_sx(scope, '.bw_toast_header')] = {
@@ -1403,9 +1421,13 @@
   }
   function generateDropdownThemed(scope, palette, layout) {
     var rules = {};
+    var rd = layout ? layout.radius : {
+      card: '8px'
+    };
     rules[_sx(scope, '.bw_dropdown_menu')] = {
       'background-color': palette.surface || '#fff',
       'border-color': palette.light.border,
+      'border-radius': rd.card,
       'box-shadow': layout.elevation.md
     };
     rules[_sx(scope, '.bw_dropdown_item')] = {
@@ -1436,6 +1458,10 @@
     };
     rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus')] = {
       'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    };
+    rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus-visible')] = {
+      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus,
+      'outline': 'none'
     };
     return rules;
   }
@@ -1515,12 +1541,16 @@
     };
     return rules;
   }
-  function generateChipInputThemed(scope, palette) {
+  function generateChipInputThemed(scope, palette, layout) {
     var rules = {};
+    var rd = layout ? layout.radius : {
+      input: '6px'
+    };
     rules[_sx(scope, '.bw_chip_input')] = {
       'border-color': palette.light.border,
       'background-color': palette.surface || '#fff',
-      'color': palette.dark.base
+      'color': palette.dark.base,
+      'border-radius': rd.input
     };
     rules[_sx(scope, '.bw_chip_input:focus-within')] = {
       'border-color': palette.primary.base,
@@ -1824,7 +1854,7 @@
    * @returns {Object} CSS rules object
    */
   function generateThemedCSS(scopeName, palette, layout) {
-    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette, layout), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette, layout), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette, layout), generateProgress(scopeName, palette), generateBreadcrumbThemed(scopeName, palette, layout), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette, layout), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette, layout), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette), generateFileUploadThemed(scopeName, palette, layout), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette, layout), generateTooltipThemed(scopeName, palette, layout), generatePopoverThemed(scopeName, palette, layout), generateCodeDemoThemed(scopeName, palette, layout), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
+    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette, layout), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette, layout), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette, layout), generateProgress(scopeName, palette, layout), generateBreadcrumbThemed(scopeName, palette, layout), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette, layout), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette, layout), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette, layout), generateFileUploadThemed(scopeName, palette, layout), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette, layout), generateTooltipThemed(scopeName, palette, layout), generatePopoverThemed(scopeName, palette, layout), generateCodeDemoThemed(scopeName, palette, layout), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
   }
 
   // =========================================================================
@@ -2130,9 +2160,7 @@
       '.bw_card_footer': {
         'font-size': '0.875rem'
       },
-      '.bw_card_hoverable': {
-        'transition': 'all 0.3s ease-out'
-      },
+      '.bw_card_hoverable': {},
       '.bw_card_hoverable:hover': {
         'transform': 'translateY(-4px)'
       },
@@ -2167,7 +2195,8 @@
         'background-clip': 'padding-box',
         'appearance': 'none',
         'border': '1px solid transparent',
-        'font-family': 'inherit'
+        'font-family': 'inherit',
+        'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out'
       },
       '.bw_form_control:focus': {
         'outline': '2px solid currentColor',
@@ -2444,6 +2473,10 @@
         'border': 'none',
         'background': 'transparent',
         'font-family': 'inherit'
+      },
+      '.bw_nav_link:focus-visible': {
+        'outline': '2px solid currentColor',
+        'outline-offset': '-2px'
       },
       '.bw_nav_tabs .bw_nav_link': {
         'border': 'none',
@@ -2752,10 +2785,15 @@
         'background': 'transparent',
         'border': '0',
         'border-radius': '0.25rem',
-        'cursor': 'pointer'
+        'cursor': 'pointer',
+        'transition': 'opacity 0.15s ease-out'
       },
       '.bw_close:hover': {
         'opacity': '0.75'
+      },
+      '.bw_close:focus-visible': {
+        'outline': '2px solid currentColor',
+        'outline-offset': '2px'
       }
     },
     // ---- Stacks ----
@@ -2938,7 +2976,8 @@
         'content': '""',
         'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
         'background-repeat': 'no-repeat',
-        'background-size': '1.25rem'
+        'background-size': '1.25rem',
+        'transition': 'transform 0.2s ease-out'
       },
       '.bw_accordion_button:not(.bw_collapsed)::after': {
         'transform': 'rotate(-180deg)'
@@ -3007,6 +3046,10 @@
         'height': '20px',
         'pointer-events': 'none'
       },
+      '.bw_carousel_control:focus-visible': {
+        'outline': '2px solid currentColor',
+        'outline-offset': '2px'
+      },
       '.bw_carousel_control_prev': {
         'left': '10px'
       },
@@ -3050,7 +3093,8 @@
         'overflow-y': 'auto',
         'opacity': '0',
         'visibility': 'hidden',
-        'pointer-events': 'none'
+        'pointer-events': 'none',
+        'transition': 'opacity 0.2s ease-out, visibility 0.2s ease-out'
       },
       '.bw_modal.bw_modal_show': {
         'opacity': '1',
@@ -3062,7 +3106,9 @@
         'width': 'calc(100% - 1rem)',
         'max-width': '500px',
         'margin': '1.75rem auto',
-        'pointer-events': 'none'
+        'pointer-events': 'none',
+        'transform': 'translateY(-16px)',
+        'transition': 'transform 0.2s ease-out'
       },
       '.bw_modal.bw_modal_show .bw_modal_dialog': {
         'transform': 'translateY(0)'
@@ -3155,14 +3201,17 @@
         'width': '350px',
         'max-width': 'calc(100vw - 2rem)',
         'background-clip': 'padding-box',
-        'opacity': '0'
+        'opacity': '0',
+        'transform': 'translateY(-8px)',
+        'transition': 'opacity 0.2s ease-out, transform 0.2s ease-out'
       },
       '.bw_toast.bw_toast_show': {
         'opacity': '1',
         'transform': 'translateY(0)'
       },
       '.bw_toast.bw_toast_hiding': {
-        'opacity': '0'
+        'opacity': '0',
+        'transform': 'translateY(-8px)'
       },
       '.bw_toast_header': {
         'display': 'flex',
@@ -3206,12 +3255,15 @@
         'border': '1px solid transparent',
         'opacity': '0',
         'visibility': 'hidden',
-        'pointer-events': 'none'
+        'pointer-events': 'none',
+        'transform': 'translateY(-4px)',
+        'transition': 'opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out'
       },
       '.bw_dropdown_menu.bw_dropdown_show': {
         'opacity': '1',
         'visibility': 'visible',
-        'pointer-events': 'auto'
+        'pointer-events': 'auto',
+        'transform': 'translateY(0)'
       },
       '.bw_dropdown_menu_end': {
         'left': 'auto',
@@ -3257,7 +3309,8 @@
         'background-position': 'left center',
         'background-repeat': 'no-repeat',
         'background-size': 'contain',
-        'cursor': 'pointer'
+        'cursor': 'pointer',
+        'transition': 'background-color 0.15s ease-out, background-position 0.15s ease-out, border-color 0.15s ease-out'
       },
       '.bw_form_switch .bw_switch_input:checked': {
         'background-position': 'right center'
@@ -3333,9 +3386,7 @@
       '.bw_stat_card': {
         'padding': '1.25rem',
         'border-left': '4px solid transparent',
-        'border-radius': '0.375rem',
-        'background-color': 'inherit',
-        'transition': 'transform 0.15s ease'
+        'background-color': 'inherit'
       },
       '.bw_stat_card:hover': {
         'transform': 'translateY(-1px)'
@@ -3508,6 +3559,10 @@
         'cursor': 'pointer',
         'padding': '0',
         'border-radius': '50%'
+      },
+      '.bw_search_clear:focus-visible': {
+        'outline': '2px solid currentColor',
+        'outline-offset': '2px'
       }
     },
     // ---- Range ----
@@ -3749,6 +3804,10 @@
         'cursor': 'pointer',
         'padding': '0',
         'border-radius': '50%'
+      },
+      '.bw_chip_remove:focus-visible': {
+        'outline': '2px solid currentColor',
+        'outline-offset': '1px'
       },
       '.bw_chip_field': {
         'flex': '1',
