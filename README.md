@@ -26,8 +26,6 @@ bw.html(page);                 // -> HTML string (Node.js, emails, SSR)
 
 Each object has four keys: **t** (tag), **a** (attributes), **c** (content), **o** (options for state/lifecycle). Nest them, loop them, compose them -- it's just JavaScript.
 
-![Hero example output](./images/hero-example.png)
-
 ### Why bitwrench?
 
 **One file, everywhere.** At ~38KB gzipped with zero dependencies, bitwrench runs on anything with a browser -- phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.
