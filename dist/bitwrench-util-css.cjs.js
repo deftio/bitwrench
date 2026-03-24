@@ -1,4 +1,4 @@
-/*! bitwrench-util-css v2.0.21 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-util-css v2.0.22 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });

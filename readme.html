@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.0.21">
+  <meta name="generator" content="bitwrench v2.0.22">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -83,7 +83,7 @@ var page = {
 };
 
 bw.DOM(&#39;#app&#39;, page);          // -&gt; live DOM
-bw.html(page);                 // -&gt; HTML string (Node.js, emails, SSR)</code></pre><p>Each object has four keys: <strong class="quikdown-strong">t</strong> (tag), <strong class="quikdown-strong">a</strong> (attributes), <strong class="quikdown-strong">c</strong> (content), <strong class="quikdown-strong">o</strong> (options for state/lifecycle). Nest them, loop them, compose them -- it&#39;s just JavaScript.</p><p><img class="quikdown-img" src="./images/hero-example.png" alt="Hero example output"></p><h3 class="quikdown-h3">Why bitwrench?</h3>
+bw.html(page);                 // -&gt; HTML string (Node.js, emails, SSR)</code></pre><p>Each object has four keys: <strong class="quikdown-strong">t</strong> (tag), <strong class="quikdown-strong">a</strong> (attributes), <strong class="quikdown-strong">c</strong> (content), <strong class="quikdown-strong">o</strong> (options for state/lifecycle). Nest them, loop them, compose them -- it&#39;s just JavaScript.</p><h3 class="quikdown-h3">Why bitwrench?</h3>
 <strong class="quikdown-strong">One file, everywhere.</strong> At ~38KB gzipped with zero dependencies, bitwrench runs on anything with a browser -- phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.</p><p>Structure, styling, state, and server rendering are all handled as JavaScript objects:</p><ul class="quikdown-ul">
 <li class="quikdown-li"><strong class="quikdown-strong">No build toolchain</strong> -- works with a <code class="quikdown-code">&lt;script&gt;</code> tag</li>
 <li class="quikdown-li"><strong class="quikdown-strong">50+ ready-made components</strong> -- buttons, tables, modals, forms, charts, toasts -- one <code class="quikdown-code">make*()</code> call each, returns a composable TACO</li>
