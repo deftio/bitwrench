@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Version | 2.0.21 |
-| Generated | 2026-03-23 |
+| Generated | 2026-03-24 |
 | Total APIs | 100 |
 | Categories | 12 |
 | bitwrench.js | 3612 lines |
@@ -106,8 +106,6 @@ const table = bw.makeDataTable({ title: "Users", data: [{ name: "Alice", role: "
 ### `bw.raw(str)`
 
 Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM(). By default, bitwrench escapes all text content to prevent XSS. Use bw.raw() when you need to embed pre-sanitized HTML, entities, or inline markup.
-
-**WARNING:** `bw.raw()` bypasses content escaping. Never use with unsanitized user input -- XSS risk. Only use for trusted HTML (e.g., markdown renderer output, server-generated content).
 
 **Parameters:**
 
@@ -300,8 +298,6 @@ Get all registered component handles as a Map.
 ### `bw.uuid(prefix)`
 
 Generate a unique identifier string for DOM elements or application use. Uses `crypto.randomUUID()` when available (modern browsers), otherwise falls back to a timestamp + counter + random combination. Optional prefix creates namespaced IDs like `bw_card_<hex>` for easier debugging.
-
-Returns `bw_<prefix>_<hex>` with prefix, or `bw_<hex>` without. Safe for use as a CSS class name and as a `bw.patch()` / `bw.update()` target.
 
 **Parameters:**
 
@@ -503,9 +499,7 @@ bw.pub('score:updated', { player: 'X', score: 10 });
 
 ### `bw.sub(topic, handler, el)`
 
-Subscribe to a topic. Returns an unsub() function. Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
-
-**The `el` parameter (third argument):** When provided, the subscription auto-unsubscribes when `el` is removed from the DOM via `bw.cleanup()`. This prevents subscription leaks in SPA view switching -- you don't need to manually track and unsubscribe. Always pass `el` when subscribing inside a component that may be unmounted.
+Subscribe to a topic. Returns an unsub() function. Optional third argument ties the subscription to a DOM element's lifecycle — when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
 
 **Parameters:**
 
@@ -520,12 +514,6 @@ Subscribe to a topic. Returns an unsub() function. Optional third argument ties 
 **Example:**
 ```javascript
 var unsub = bw.sub('score:updated', function(detail) { console.log(detail.player, 'scored', detail.score); }); // Later: unsub() to stop listening
-
-// With lifecycle tie — auto-cleans when element is removed
-bw.sub('cart:updated', function(d) {
-  el._bw_state.count = d.count;
-  bw.update(el);
-}, el);  // subscription dies when el is cleaned up
 ```
 
 ---
@@ -746,11 +734,7 @@ bw.clearStyles();                    // remove global styles bw.clearStyles('#my
 
 ### `bw.makeTable(config)`
 
-Create a sortable TACO table from an array of row objects.
-
-**Built-in capabilities:** sorting (on by default when `sortable: true`), pagination (`pageSize` + `onPageChange`), row selection (`selectable` + `onRowClick`), custom column renderers (per-column `render` function).
-
-Returns a bare `<table>` TACO -- no wrapper, title, or responsive scroll. Use this when you need full control over table placement, or when embedding the table inside your own layout. For a ready-to-use table with title, responsive wrapper, and defaults (striped + hover), use `bw.makeDataTable()`. Auto-detects columns from data keys if not specified. Supports click-to-sort headers with ascending/descending indicators.
+Create a sortable TACO table from an array of row objects. Returns a bare `<table>` TACO — no wrapper, title, or responsive scroll. Use this when you need full control over table placement, or when embedding the table inside your own layout. For a ready-to-use table with title, responsive wrapper, and defaults (striped + hover), use `bw.makeDataTable()`. Auto-detects columns from data keys if not specified. Supports click-to-sort headers with ascending/descending indicators.
 
 **Parameters:**
 
@@ -1026,7 +1010,7 @@ const navbar = makeNavbar({ brand: "MyApp", dark: true, items: [ { text: "Home",
 
 ### `bw.makeTabs(props = {})`
 
-Create a tabbed interface with accessible tab navigation. **Handle methods:** `el.bw.setActiveTab(index)`, `el.bw.getActiveTab()`. Supports Arrow/Home/End keyboard navigation, full WAI-ARIA. Each tab is rendered as a button with ARIA attributes for accessibility. Clicking a tab shows its content pane and hides others. The active tab can be set via activeIndex or by setting active:true on a tab item.
+Create a tabbed interface with accessible tab navigation Each tab is rendered as a button with ARIA attributes for accessibility. Clicking a tab shows its content pane and hides others. The active tab can be set via activeIndex or by setting active:true on a tab item.
 
 **Parameters:**
 
@@ -1579,7 +1563,7 @@ const group = makeButtonGroup({ children: [ makeButton({ text: "Left", variant: 
 
 ### `bw.makeAccordion(props = {})`
 
-Create an accordion component with collapsible items. **Handle methods:** `el.bw.toggle(index)`, `el.bw.openAll()`, `el.bw.closeAll()`. ARIA-compliant.
+Create an accordion component with collapsible items
 
 **Parameters:**
 
@@ -1604,7 +1588,7 @@ const accordion = makeAccordion({ items: [ { title: "Section 1", content: "Conte
 
 ### `bw.makeModal(props = {})`
 
-Create a modal dialog overlay. **Handle methods:** `el.bw.open()`, `el.bw.close()`. ESC key and backdrop click auto-close.
+Create a modal dialog overlay
 
 **Parameters:**
 
@@ -1630,7 +1614,7 @@ const modal = makeModal({ title: "Confirm", content: "Are you sure?", footer: ma
 
 ### `bw.makeToast(props = {})`
 
-Create a toast notification popup. **Handle method:** `el.bw.dismiss()`. Auto-dismisses after `delay` ms (default 5000) when `autoDismiss` is true.
+Create a toast notification popup
 
 **Parameters:**
 
@@ -1759,7 +1743,7 @@ const avatar = makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" }); c
 
 ### `bw.makeCarousel(props = {})`
 
-Create a carousel/slideshow component with slide transitions. **Handle methods:** `el.bw.goToSlide(i)`, `el.bw.next()`, `el.bw.prev()`, `el.bw.play()`, `el.bw.pause()`, `el.bw.getActiveIndex()`. Supports image slides, TACO content slides, captions, prev/next controls, dot indicators, and optional auto-play. Uses CSS translateX transitions.
+Create a carousel/slideshow component with slide transitions Supports image slides, TACO content slides, captions, prev/next controls, dot indicators, and optional auto-play. Uses CSS translateX transitions.
 
 **Parameters:**
 
