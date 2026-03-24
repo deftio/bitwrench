@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.20 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench v2.0.21 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 'use strict';
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
@@ -8,14 +8,14 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  */
 
 const VERSION_INFO = {
-  version: '2.0.20',
+  version: '2.0.21',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-03-23T05:17:49.666Z'
+  buildDate: '2026-03-24T05:24:58.005Z'
 };
 
 /**
@@ -581,10 +581,10 @@ var ELEVATION_PRESETS = {
     xl:  '0 4px 12px rgba(0,0,0,0.12)'
   },
   md: {
-    sm:  '0 1px 3px rgba(0,0,0,0.08)',
-    md:  '0 2px 6px rgba(0,0,0,0.12)',
-    lg:  '0 4px 12px rgba(0,0,0,0.16)',
-    xl:  '0 8px 24px rgba(0,0,0,0.20)'
+    sm:  '0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06)',
+    md:  '0 4px 6px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06)',
+    lg:  '0 10px 15px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.08)',
+    xl:  '0 20px 25px rgba(0,0,0,0.15), 0 8px 10px rgba(0,0,0,0.10)'
   },
   lg: {
     sm:  '0 2px 4px rgba(0,0,0,0.10)',
@@ -778,6 +778,9 @@ function generateCards(scope, palette, layout) {
   rules[_sx(scope, '.bw_card:hover')] = {
     'box-shadow': elev.md
   };
+  rules[_sx(scope, '.bw_card_hoverable')] = {
+    'transition': 'box-shadow ' + motion.slow + ' ' + motion.easing + ', transform ' + motion.slow + ' ' + motion.easing
+  };
   rules[_sx(scope, '.bw_card_hoverable:hover')] = {
     'box-shadow': elev.lg
   };
@@ -878,7 +881,8 @@ function generateNavigation(scope, palette, layout) {
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
     'color': palette.secondary.base,
-    'border-radius': layout.radius.btn
+    'border-radius': layout.radius.btn,
+    'transition': 'color ' + layout.motion.fast + ' ' + layout.motion.easing + ', background-color ' + layout.motion.fast + ' ' + layout.motion.easing
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
     'color': palette.dark.base,
@@ -1041,15 +1045,18 @@ function generatePagination(scope, palette, layout) {
   return rules;
 }
 
-function generateProgress(scope, palette) {
+function generateProgress(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { badge: '.375rem' };
   rules[_sx(scope, '.bw_progress')] = {
     'background-color': palette.surfaceAlt,
+    'border-radius': rd.badge,
     'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
   };
   rules[_sx(scope, '.bw_progress_bar')] = {
     'color': palette.primary.textOn,
     'background-color': palette.primary.base,
+    'border-radius': 'inherit',
     'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
   };
   // Variant progress bar colors handled by palette class
@@ -1173,7 +1180,8 @@ function generateCarouselThemed(scope, palette) {
   };
   rules[_sx(scope, '.bw_carousel_control')] = {
     'background-color': palette.dark.base,
-    'color': palette.dark.textOn
+    'color': palette.dark.textOn,
+    'transition': 'background-color 0.15s ease-out'
   };
   rules[_sx(scope, '.bw_carousel_control:hover')] = {
     'background-color': palette.dark.hover
@@ -1187,9 +1195,11 @@ function generateCarouselThemed(scope, palette) {
 
 function generateModalThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '8px' };
   rules[_sx(scope, '.bw_modal_content')] = {
     'background-color': palette.surface || '#fff',
     'border-color': palette.light.border,
+    'border-radius': rd.card,
     'box-shadow': layout.elevation.lg
   };
   rules[_sx(scope, '.bw_modal_header')] = {
@@ -1206,9 +1216,11 @@ function generateModalThemed(scope, palette, layout) {
 
 function generateToastThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '8px' };
   rules[_sx(scope, '.bw_toast')] = {
     'background-color': palette.surface || '#fff',
     'border-color': palette.light.border,
+    'border-radius': rd.card,
     'box-shadow': layout.elevation.lg
   };
   rules[_sx(scope, '.bw_toast_header')] = {
@@ -1220,9 +1232,11 @@ function generateToastThemed(scope, palette, layout) {
 
 function generateDropdownThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { card: '8px' };
   rules[_sx(scope, '.bw_dropdown_menu')] = {
     'background-color': palette.surface || '#fff',
     'border-color': palette.light.border,
+    'border-radius': rd.card,
     'box-shadow': layout.elevation.md
   };
   rules[_sx(scope, '.bw_dropdown_item')] = {
@@ -1254,6 +1268,10 @@ function generateSwitchThemed(scope, palette) {
   };
   rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus')] = {
     'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+  };
+  rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus-visible')] = {
+    'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus,
+    'outline': 'none'
   };
   return rules;
 }
@@ -1318,12 +1336,14 @@ function generateStepperThemed(scope, palette) {
   return rules;
 }
 
-function generateChipInputThemed(scope, palette) {
+function generateChipInputThemed(scope, palette, layout) {
   var rules = {};
+  var rd = layout ? layout.radius : { input: '6px' };
   rules[_sx(scope, '.bw_chip_input')] = {
     'border-color': palette.light.border,
     'background-color': palette.surface || '#fff',
-    'color': palette.dark.base
+    'color': palette.dark.base,
+    'border-radius': rd.input
   };
   rules[_sx(scope, '.bw_chip_input:focus-within')] = {
     'border-color': palette.primary.base,
@@ -1608,7 +1628,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateTabs(scopeName, palette, layout),
     generateListGroups(scopeName, palette, layout),
     generatePagination(scopeName, palette, layout),
-    generateProgress(scopeName, palette),
+    generateProgress(scopeName, palette, layout),
     generateBreadcrumbThemed(scopeName, palette, layout),
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
@@ -1622,7 +1642,7 @@ function generateThemedCSS(scopeName, palette, layout) {
     generateStatCardThemed(scopeName, palette, layout),
     generateTimelineThemed(scopeName, palette),
     generateStepperThemed(scopeName, palette),
-    generateChipInputThemed(scopeName, palette),
+    generateChipInputThemed(scopeName, palette, layout),
     generateFileUploadThemed(scopeName, palette, layout),
     generateRangeThemed(scopeName, palette),
     generateSearchThemed(scopeName, palette, layout),
@@ -1770,7 +1790,7 @@ var structuralRules = {
     '.bw_card_text': { 'margin-bottom': '0', 'font-size': '0.9375rem', 'line-height': '1.6' },
     '.bw_card_header': { 'margin-bottom': '0', 'font-weight': '600', 'font-size': '0.875rem' },
     '.bw_card_footer': { 'font-size': '0.875rem' },
-    '.bw_card_hoverable': { 'transition': 'all 0.3s ease-out' },
+    '.bw_card_hoverable': {},
     '.bw_card_hoverable:hover': { 'transform': 'translateY(-4px)' },
     '.bw_card_img_top': { 'width': '100%' },
     '.bw_card_img_bottom': { 'width': '100%' },
@@ -1785,7 +1805,8 @@ var structuralRules = {
       'display': 'block', 'width': '100%',
       'font-size': '0.9375rem', 'font-weight': '400', 'line-height': '1.5',
       'background-clip': 'padding-box', 'appearance': 'none',
-      'border': '1px solid transparent', 'font-family': 'inherit'
+      'border': '1px solid transparent', 'font-family': 'inherit',
+      'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out'
     },
     '.bw_form_control:focus': { 'outline': '2px solid currentColor', 'outline-offset': '-1px' },
     '.bw_form_control::placeholder': { 'opacity': '1' },
@@ -1912,6 +1933,7 @@ var structuralRules = {
       'text-decoration': 'none', 'cursor': 'pointer',
       'border': 'none', 'background': 'transparent', 'font-family': 'inherit'
     },
+    '.bw_nav_link:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '-2px' },
     '.bw_nav_tabs .bw_nav_link': { 'border': 'none', 'border-bottom': '2px solid transparent', 'border-radius': '0', 'background-color': 'transparent' },
     '.bw_nav_vertical': { 'flex-direction': 'column' },
     '.bw_tab_content': { 'padding': '1.25rem 0' },
@@ -2029,9 +2051,11 @@ var structuralRules = {
       'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
       'width': '1.5rem', 'height': '1.5rem', 'padding': '0',
       'font-size': '1.25rem', 'font-weight': '700', 'line-height': '1',
-      'background': 'transparent', 'border': '0', 'border-radius': '0.25rem', 'cursor': 'pointer'
+      'background': 'transparent', 'border': '0', 'border-radius': '0.25rem', 'cursor': 'pointer',
+      'transition': 'opacity 0.15s ease-out'
     },
-    '.bw_close:hover': { 'opacity': '0.75' }
+    '.bw_close:hover': { 'opacity': '0.75' },
+    '.bw_close:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '2px' }
   },
 
   // ---- Stacks ----
@@ -2113,7 +2137,8 @@ var structuralRules = {
       'flex-shrink': '0', 'width': '1.25rem', 'height': '1.25rem', 'margin-left': 'auto',
       'content': '""',
       'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
-      'background-repeat': 'no-repeat', 'background-size': '1.25rem'
+      'background-repeat': 'no-repeat', 'background-size': '1.25rem',
+      'transition': 'transform 0.2s ease-out'
     },
     '.bw_accordion_button:not(.bw_collapsed)::after': { 'transform': 'rotate(-180deg)' },
     '.bw_accordion_body': { 'padding': '1rem 1.25rem' },
@@ -2138,6 +2163,7 @@ var structuralRules = {
       'z-index': '2', 'padding': '0'
     },
     '.bw_carousel_control img': { 'width': '20px', 'height': '20px', 'pointer-events': 'none' },
+    '.bw_carousel_control:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '2px' },
     '.bw_carousel_control_prev': { 'left': '10px' },
     '.bw_carousel_control_next': { 'right': '10px' },
     '.bw_carousel_indicators': {
@@ -2157,12 +2183,14 @@ var structuralRules = {
       'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
       'position': 'fixed', 'top': '0', 'left': '0', 'width': '100%', 'height': '100%',
       'z-index': '1050', 'overflow-x': 'hidden', 'overflow-y': 'auto',
-      'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none'
+      'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none',
+      'transition': 'opacity 0.2s ease-out, visibility 0.2s ease-out'
     },
     '.bw_modal.bw_modal_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
     '.bw_modal_dialog': {
       'position': 'relative', 'width': 'calc(100% - 1rem)', 'max-width': '500px', 'margin': '1.75rem auto',
-      'pointer-events': 'none'
+      'pointer-events': 'none', 'transform': 'translateY(-16px)',
+      'transition': 'transform 0.2s ease-out'
     },
     '.bw_modal.bw_modal_show .bw_modal_dialog': { 'transform': 'translateY(0)' },
     '.bw_modal_sm': { 'max-width': '300px' },
@@ -2192,10 +2220,11 @@ var structuralRules = {
     '.bw_toast_container.bw_toast_bottom_center': { 'bottom': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
     '.bw_toast': {
       'pointer-events': 'auto', 'width': '350px', 'max-width': 'calc(100vw - 2rem)', 'background-clip': 'padding-box',
-      'opacity': '0'
+      'opacity': '0', 'transform': 'translateY(-8px)',
+      'transition': 'opacity 0.2s ease-out, transform 0.2s ease-out'
     },
     '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
-    '.bw_toast.bw_toast_hiding': { 'opacity': '0' },
+    '.bw_toast.bw_toast_hiding': { 'opacity': '0', 'transform': 'translateY(-8px)' },
     '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem', 'border-bottom': '1px solid transparent' },
     '.bw_toast_body': { 'padding': '0.5rem 0.75rem', 'font-size': '0.9375rem' }
   },
@@ -2212,9 +2241,11 @@ var structuralRules = {
       'position': 'absolute', 'top': '100%', 'left': '0', 'z-index': '1000', 'display': 'block',
       'min-width': '10rem', 'padding': '0.5rem 0', 'margin': '0.125rem 0 0',
       'background-clip': 'padding-box', 'border': '1px solid transparent',
-      'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none'
+      'opacity': '0', 'visibility': 'hidden', 'pointer-events': 'none',
+      'transform': 'translateY(-4px)',
+      'transition': 'opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out'
     },
-    '.bw_dropdown_menu.bw_dropdown_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto' },
+    '.bw_dropdown_menu.bw_dropdown_show': { 'opacity': '1', 'visibility': 'visible', 'pointer-events': 'auto', 'transform': 'translateY(0)' },
     '.bw_dropdown_menu_end': { 'left': 'auto', 'right': '0' },
     '.bw_dropdown_item': {
       'display': 'block', 'width': '100%', 'padding': '0.4rem 1rem', 'clear': 'both',
@@ -2233,7 +2264,8 @@ var structuralRules = {
       'appearance': 'none',
       'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1)'/%3e%3c/svg%3e\")",
       'background-position': 'left center', 'background-repeat': 'no-repeat',
-      'background-size': 'contain', 'cursor': 'pointer'
+      'background-size': 'contain', 'cursor': 'pointer',
+      'transition': 'background-color 0.15s ease-out, background-position 0.15s ease-out, border-color 0.15s ease-out'
     },
     '.bw_form_switch .bw_switch_input:checked': { 'background-position': 'right center' },
     '.bw_form_switch .bw_switch_input:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed' }
@@ -2267,9 +2299,7 @@ var structuralRules = {
     '.bw_stat_card': {
       'padding': '1.25rem',
       'border-left': '4px solid transparent',
-      'border-radius': '0.375rem',
-      'background-color': 'inherit',
-      'transition': 'transform 0.15s ease'
+      'background-color': 'inherit'
     },
     '.bw_stat_card:hover': { 'transform': 'translateY(-1px)' },
     '.bw_stat_icon': { 'font-size': '1.5rem', 'margin-bottom': '0.5rem' },
@@ -2329,7 +2359,8 @@ var structuralRules = {
       'width': '1.5rem', 'height': '1.5rem',
       'border': 'none', 'background': 'none',
       'font-size': '1.25rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%'
-    }
+    },
+    '.bw_search_clear:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '2px' }
   },
 
   // ---- Range ----
@@ -2421,6 +2452,7 @@ var structuralRules = {
       'width': '1rem', 'height': '1rem', 'border': 'none', 'background': 'none',
       'font-size': '0.875rem', 'cursor': 'pointer', 'padding': '0', 'border-radius': '50%'
     },
+    '.bw_chip_remove:focus-visible': { 'outline': '2px solid currentColor', 'outline-offset': '1px' },
     '.bw_chip_field': { 'flex': '1', 'min-width': '80px', 'border': 'none', 'outline': 'none', 'font-size': '0.875rem', 'padding': '0.125rem 0', 'background': 'transparent' }
   },
 
@@ -3458,6 +3490,287 @@ function repeatUntil(testFn, successFn, failFn, delay = 250, maxReps = 10, lastF
   }, delay);
 
   return intervalID;
+}
+
+/**
+ * Bitwrench Router -- client-side URL routing for SPAs
+ *
+ * Single export: initRouter(bw) attaches bw.router(), bw.navigate(), bw.link()
+ *
+ * @license BSD-2-Clause
+ */
+
+// -- internal helpers --
+
+function normalizePath(p) {
+  // strip query string (handled separately)
+  var qi = p.indexOf('?');
+  if (qi >= 0) p = p.substring(0, qi);
+  // collapse double slashes, strip trailing slash
+  p = p.replace(/\/\/+/g, '/');
+  if (p.length > 1 && p.charAt(p.length - 1) === '/') p = p.substring(0, p.length - 1);
+  return p || '/';
+}
+
+function parseQuery(fullPath) {
+  var qi = fullPath.indexOf('?');
+  if (qi < 0) return {};
+  var qs = fullPath.substring(qi + 1);
+  var result = {};
+  var pairs = qs.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var kv = pairs[i].split('=');
+    if (kv[0]) result[decodeURIComponent(kv[0])] = kv.length > 1 ? decodeURIComponent(kv[1]) : '';
+  }
+  return result;
+}
+
+function matchRoute(routes, rawPath) {
+  var query = parseQuery(rawPath);
+  var path = normalizePath(rawPath);
+  var segs = path === '/' ? [''] : path.split('/');
+
+  var globalWild = null;
+
+  for (var i = 0; i < routes.length; i++) {
+    var r = routes[i];
+    var pattern = r.pattern;
+
+    // global wildcard -- save for last
+    if (pattern === '*') { globalWild = r; continue; }
+
+    // catch-all: ends with /*
+    if (pattern.length > 1 && pattern.substring(pattern.length - 2) === '/*') {
+      var prefix = pattern.substring(0, pattern.length - 2);
+      var prefixSegs = prefix === '' ? [''] : prefix.split('/');
+      if (segs.length < prefixSegs.length) continue;
+      var params = {};
+      var ok = true;
+      for (var j = 0; j < prefixSegs.length; j++) {
+        if (prefixSegs[j].charAt(0) === ':') {
+          params[prefixSegs[j].substring(1)] = segs[j];
+        } else if (prefixSegs[j] !== segs[j]) {
+          ok = false; break;
+        }
+      }
+      if (ok) {
+        params._rest = segs.slice(prefixSegs.length).join('/');
+        params._query = query;
+        return { handler: r.handler, params: params };
+      }
+      continue;
+    }
+
+    // exact / parameterized match
+    var rSegs = pattern === '/' ? [''] : pattern.split('/');
+    if (rSegs.length !== segs.length) continue;
+    var params2 = {};
+    var match = true;
+    for (var k = 0; k < rSegs.length; k++) {
+      if (rSegs[k].charAt(0) === ':') {
+        params2[rSegs[k].substring(1)] = segs[k];
+      } else if (rSegs[k] !== segs[k]) {
+        match = false; break;
+      }
+    }
+    if (match) {
+      params2._query = query;
+      return { handler: r.handler, params: params2 };
+    }
+  }
+
+  // global wildcard fallback
+  if (globalWild) {
+    return { handler: globalWild.handler, params: { _query: query } };
+  }
+  return null;
+}
+
+
+// -- public API factory --
+
+function initRouter(bw) {
+  var _activeRouter = null;
+
+  bw.router = function(config) {
+    if (!config || !config.routes) throw new Error('bw.router: config.routes is required');
+    if (!bw._isBrowser) throw new Error('bw.router: requires a browser environment');
+
+    var mode = config.mode || 'hash';
+    var base = config.base || '/';
+    if (base.length > 1 && base.charAt(base.length - 1) === '/') base = base.substring(0, base.length - 1);
+    var target = config.target || null;
+
+    // compile routes (preserve registration order)
+    var routes = [];
+    var keys = Object.keys(config.routes);
+    for (var i = 0; i < keys.length; i++) {
+      routes.push({ pattern: keys[i], handler: config.routes[keys[i]] });
+    }
+
+    var currentPath = '/';
+    var destroyed = false;
+
+    function getPath() {
+      if (mode === 'hash') {
+        var h = window.location.hash.replace(/^#/, '');
+        return h || '/';
+      }
+      var p = window.location.pathname;
+      if (base !== '/' && p.indexOf(base) === 0) {
+        p = p.substring(base.length) || '/';
+      }
+      var s = window.location.search || '';
+      return p + s;
+    }
+
+    function handleRoute(toRaw, opts) {
+      if (destroyed) return;
+      var fromPath = currentPath;
+      var toPath = normalizePath(toRaw);
+
+      // before guard
+      if (config.before) {
+        var result = config.before(toPath, fromPath);
+        if (result === false) return;
+        if (typeof result === 'string') {
+          toPath = normalizePath(result);
+          toRaw = result;
+        }
+      }
+
+      currentPath = toPath;
+
+      // match route
+      var m = matchRoute(routes, toRaw);
+      if (m) {
+        var rendered = m.handler(m.params);
+        if (rendered != null && target) {
+          bw.DOM(target, rendered);
+        }
+      }
+
+      // pub/sub
+      var query = parseQuery(toRaw);
+      bw.pub('bw:route', {
+        path: toPath,
+        params: m ? m.params : {},
+        query: query,
+        from: fromPath
+      });
+
+      // after hook
+      if (config.after) config.after(toPath, fromPath);
+    }
+
+    function navigate(path, opts) {
+      if (destroyed) return;
+      opts = opts || {};
+      if (mode === 'hash') {
+        if (opts.replace) {
+          var loc = window.location;
+          loc.replace(loc.pathname + loc.search + '#' + path);
+        } else {
+          window.location.hash = path;
+        }
+        // hashchange listener will fire handleRoute; but if same hash, trigger manually
+        var currentHash = window.location.hash.replace(/^#/, '') || '/';
+        if (normalizePath(currentHash) === normalizePath(path)) {
+          handleRoute(path);
+        }
+      } else {
+        var url = (base === '/' ? '' : base) + path;
+        if (opts.replace) {
+          window.history.replaceState(null, '', url);
+        } else {
+          window.history.pushState(null, '', url);
+        }
+        handleRoute(path);
+      }
+    }
+
+    function onHashChange() {
+      if (destroyed) return;
+      handleRoute(getPath());
+    }
+
+    function onPopState() {
+      if (destroyed) return;
+      handleRoute(getPath());
+    }
+
+    // listen
+    if (mode === 'hash') {
+      window.addEventListener('hashchange', onHashChange);
+    } else {
+      window.addEventListener('popstate', onPopState);
+    }
+
+    // initial render
+    handleRoute(getPath());
+
+    var routerObj = {
+      navigate: navigate,
+      current: function() {
+        var raw = getPath();
+        var m = matchRoute(routes, raw);
+        return {
+          path: currentPath,
+          params: m ? m.params : {},
+          query: parseQuery(raw)
+        };
+      },
+      destroy: function() {
+        destroyed = true;
+        if (mode === 'hash') {
+          window.removeEventListener('hashchange', onHashChange);
+        } else {
+          window.removeEventListener('popstate', onPopState);
+        }
+        if (_activeRouter === routerObj) _activeRouter = null;
+      }
+    };
+
+    _activeRouter = routerObj;
+    return routerObj;
+  };
+
+  bw.navigate = function(path, opts) {
+    if (_activeRouter) {
+      _activeRouter.navigate(path, opts);
+    } else {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('bw.navigate: no active router');
+      }
+    }
+  };
+
+  bw.link = function(path, content, attrs) {
+    var a = {};
+    if (attrs) {
+      var keys = Object.keys(attrs);
+      for (var i = 0; i < keys.length; i++) a[keys[i]] = attrs[keys[i]];
+    }
+    if (_activeRouter) {
+      a.href = '#' + path;
+    } else {
+      a.href = path;
+    }
+    a.onclick = function(e) {
+      e.preventDefault();
+      bw.navigate(path);
+    };
+    return { t: 'a', a: a, c: content };
+  };
+
+  // expose for testing: internal helpers
+  bw._router = {
+    matchRoute: matchRoute,
+    normalizePath: normalizePath,
+    parseQuery: parseQuery,
+    getActiveRouter: function() { return _activeRouter; },
+    resetActiveRouter: function() { _activeRouter = null; }
+  };
 }
 
 /**
@@ -10856,6 +11169,7 @@ bw.getComponent = function(id) {
 bw.getAllComponents = function() {
   return new Map(bw._componentRegistry);
 };
+initRouter(bw);
 
 // Register all make functions
 Object.entries(components).forEach(([name, fn]) => {
