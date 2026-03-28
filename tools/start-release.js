@@ -8,9 +8,8 @@
  *   npm run start-release -- minor "new subsystem"
  *   npm run start-release -- major "breaking change"
  *
- * Creates:  feature/feature-name  branch
+ * Creates:  feature/feature-name  branch (LOCAL only)
  * Commits:  "start vX.Y.Z: feature name"
- * Pushes:   with -u to set upstream
  *
  * After development, merge to main and run: npm run release
  */
@@ -146,7 +145,6 @@ run(`git checkout -b ${branchName}`);
 
 run('git add package.json package-lock.json src/version.js');
 run(`git commit -m "start v${version}: ${featureName}"`);
-run(`git push -u origin ${branchName}`);
 
 // ── Summary ──────────────────────────────────────────────────────────────
 
@@ -157,7 +155,6 @@ console.log(`
   Version:  ${version}
 
   When done:
-    git checkout main
-    git merge ${branchName}
     npm run release
+    git checkout main && git merge --squash ${branchName} && git commit -m "v<ver>: <desc>" && git push origin main
 `);
