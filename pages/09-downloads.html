@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Downloads</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-theme.js"></script>
+  <script src="shared-nav.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    initBitwrenchPage('09-downloads.html');
+
+    // =========================================================================
+    // Page-specific styles (minimal -- leverages shared-theme.js)
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.sz': { 'text-align': 'right', 'font-variant-numeric': 'tabular-nums' },
+      '.table-card': { 'overflow-x': 'auto' },
+      '.table-card .bw_table': { 'margin-bottom': '0' },
+      '.table-card .bw_table > thead > tr > *': { background: 'var(--bw_teal_dark)', color: '#fff', 'border-bottom-color': 'var(--bw_teal)' },
+      '.table-card .bw_table > tbody > tr:nth-of-type(odd) > *': { 'background-color': 'rgba(0, 0, 0, 0.025)' },
+      '.sri-hash': { 'font-family': 'var(--bw_font_mono)', 'font-size': '0.7rem', 'word-break': 'break-all', color: 'var(--bw_text_secondary)', 'max-width': '320px' },
+      '.copy-btn-sm': { display: 'inline-block', padding: '0.2rem 0.5rem', 'font-size': '0.75rem', cursor: 'pointer', background: 'var(--bw_teal)', color: '#fff', border: 'none', 'border-radius': '3px', transition: 'background 0.15s' },
+      '.copy-btn-sm:hover': { background: 'var(--bw_teal_dark)' },
+      '.copy-btn-sm.copied': { background: '#28a745' },
+      // Install grid (two-column cards)
+      '.install-grid': { display: 'grid', 'grid-template-columns': 'repeat(auto-fit, minmax(min(340px, 100%), 1fr))', gap: '1.25rem' },
+      '.install-card': { background: 'var(--bw_teal_bg)', border: '1px solid var(--bw_card_border)', 'border-radius': 'var(--bw_radius)', padding: '1.25rem' },
+      '.install-card h3': { margin: '0 0 0.75rem', 'font-size': '1rem', 'font-weight': '600' },
+      // Code snippets
+      '.install-snippet': { 'margin-bottom': '1.25rem' },
+      '.install-snippet h4': { margin: '0 0 0.5rem', 'font-size': '0.95rem' },
+      '.install-snippet .snippet-wrap': { position: 'relative' },
+      '.install-snippet .snippet-copy': { position: 'absolute', top: '0.375rem', right: '0.5rem', 'z-index': '2', display: 'inline-block', padding: '0.2rem 0.5rem', 'font-size': '0.75rem', cursor: 'pointer', background: 'var(--bw_teal)', color: '#fff', border: 'none', 'border-radius': '3px', transition: 'background 0.15s' },
+      '.install-snippet .snippet-copy:hover': { background: 'var(--bw_teal_dark)' },
+      '.install-snippet .snippet-copy.copied': { background: '#28a745' },
+      // Package badges
+      '.pkg-badge': { display: 'inline-block', padding: '0.15rem 0.5rem', 'font-size': '0.7rem', 'font-weight': '600', 'border-radius': '3px', 'text-transform': 'uppercase', 'letter-spacing': '0.03em' },
+      '.pkg-core': { background: 'var(--bw_teal)', color: '#fff' },
+      '.pkg-lean': { background: '#6366f1', color: '#fff' },
+      '.pkg-addon': { background: '#d97706', color: '#fff' },
+      '.pkg-server': { background: '#059669', color: '#fff' },
+      '.pkg-css': { background: '#7c3aed', color: '#fff' },
+      // Addon cards
+      '.addon-grid': { display: 'grid', 'grid-template-columns': 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '1rem' },
+      '.addon-card': { background: 'var(--bw_teal_bg)', border: '1px solid var(--bw_card_border)', 'border-radius': 'var(--bw_radius)', padding: '1rem 1.25rem' },
+      '.addon-card h4': { margin: '0 0 0.5rem', 'font-size': '0.95rem', display: 'flex', 'align-items': 'center', gap: '0.5rem', 'flex-wrap': 'wrap' },
+      '.addon-card p': { margin: '0 0 0.5rem', 'font-size': '0.85rem', color: 'var(--bw_text_secondary)', 'line-height': '1.5' },
+      '.addon-card .addon-links': { 'font-size': '0.85rem' },
+      '.addon-card .addon-links a': { 'margin-right': '1rem' },
+      // Embedded steps
+      '.embedded-steps': { 'counter-reset': 'step' },
+      '.embedded-step': { 'counter-increment': 'step', 'margin-bottom': '1rem', 'padding-left': '2.5rem', position: 'relative' },
+      '.embedded-step::before': { content: 'counter(step)', position: 'absolute', left: '0', top: '0', width: '1.75rem', height: '1.75rem', 'border-radius': '50%', background: 'var(--bw_teal)', color: '#fff', 'font-weight': '700', 'font-size': '0.8rem', display: 'flex', 'align-items': 'center', 'justify-content': 'center' },
+      '.embedded-step h4': { margin: '0 0 0.25rem', 'font-size': '0.95rem' },
+      '.embedded-step p': { margin: '0', 'font-size': '0.875rem', color: 'var(--bw_text_secondary)' },
+      // Section h3 spacing (after tables, etc.)
+      '.demo-content h3': { 'margin-top': '2rem' },
+      '.demo-content h3:first-child': { 'margin-top': '0' },
+      // TOC pills
+      '.dl-toc': { display: 'flex', 'flex-wrap': 'wrap', gap: '0.5rem', margin: '1rem 0 0' },
+      '.dl-toc a': { display: 'inline-block', padding: '0.3rem 0.75rem', 'font-size': '0.8rem', 'font-weight': '500', background: 'var(--bw_teal_light)', color: 'var(--bw_teal_dark)', 'border-radius': '4px', 'text-decoration': 'none', transition: 'background 0.12s' },
+      '.dl-toc a:hover': { background: 'var(--bw_teal)', color: '#fff' }
+    }), { id: 'dl-page-styles' });
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+    function fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      var kb = bytes / 1024;
+      if (kb < 1024) return kb.toFixed(1) + ' KB';
+      return (kb / 1024).toFixed(2) + ' MB';
+    }
+
+    function copyBtn(text) {
+      return {
+        t: 'button', a: { class: 'copy-btn-sm' }, c: 'Copy',
+        o: { mounted: function(el) {
+          el.addEventListener('click', function() {
+            navigator.clipboard.writeText(text).then(function() {
+              el.textContent = 'Copied!';
+              el.classList.add('copied');
+              setTimeout(function() { el.textContent = 'Copy'; el.classList.remove('copied'); }, 1500);
+            });
+          });
+        }}
+      };
+    }
+
+    function codeSnippet(title, code, lang) {
+      var codeDisplay = bw.codeEditor
+        ? bw.codeEditor({ code: code, lang: lang || 'bash', readOnly: true, height: 'auto' })
+        : { t: 'pre', a: { style: 'background:var(--bw_code_bg);color:var(--bw_code_text);padding:0.75rem 1rem;border-radius:4px;font-size:0.8125rem;line-height:1.5;overflow-x:auto;margin:0;font-family:var(--bw_font_mono)' }, c: { t: 'code', c: code } };
+
+      return {
+        t: 'div', a: { class: 'install-snippet' },
+        c: [
+          title ? { t: 'h4', c: title } : null,
+          {
+            t: 'div', a: { class: 'snippet-wrap' },
+            c: [
+              {
+                t: 'button', a: { class: 'snippet-copy' }, c: 'Copy',
+                o: { mounted: function(el) {
+                  el.addEventListener('click', function() {
+                    navigator.clipboard.writeText(code).then(function() {
+                      el.textContent = 'Copied!';
+                      el.classList.add('copied');
+                      setTimeout(function() { el.textContent = 'Copy'; el.classList.remove('copied'); }, 1500);
+                    });
+                  });
+                }}
+              },
+              codeDisplay
+            ]
+          }
+        ].filter(Boolean)
+      };
+    }
+
+    function sortableTable(targetId, headers, data) {
+      var state = { col: null, dir: 'asc' };
+
+      function render() {
+        var sorted = data.slice();
+        if (state.col !== null) {
+          sorted.sort(function(a, b) {
+            var av = a.sortValues[state.col];
+            var bv = b.sortValues[state.col];
+            if (typeof av === 'number' && typeof bv === 'number') {
+              return state.dir === 'asc' ? av - bv : bv - av;
+            }
+            var as = String(av || ''), bs = String(bv || '');
+            return state.dir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as);
+          });
+        }
+
+        bw.DOM(targetId, {
+          t: 'div', a: { class: 'table-card' },
+          c: {
+            t: 'table', a: { class: 'bw_table' },
+            c: [
+              { t: 'thead', c: { t: 'tr', c: headers.map(function(h, i) {
+                var arrow = state.col === i ? (state.dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+                return {
+                  t: 'th',
+                  a: Object.assign({ style: 'cursor:pointer;user-select:none' }, h.sz ? { class: 'sz' } : {}),
+                  c: h.label + arrow,
+                  o: { mounted: function(el) {
+                    el.addEventListener('click', function() {
+                      if (state.col === i) { state.dir = state.dir === 'asc' ? 'desc' : 'asc'; }
+                      else { state.col = i; state.dir = 'asc'; }
+                      render();
+                    });
+                  }}
+                };
+              })}},
+              { t: 'tbody', c: sorted.map(function(row) {
+                return { t: 'tr', c: row.cells.map(function(cell, i) {
+                  return { t: 'td', a: headers[i].sz ? { class: 'sz' } : {}, c: cell };
+                })};
+              })}
+            ]
+          }
+        });
+      }
+
+      render();
+    }
+
+    function pkgBadge(name, cls) {
+      return { t: 'span', a: { class: 'pkg-badge ' + cls }, c: name };
+    }
+
+    // =========================================================================
+    // CDN snippet
+    // =========================================================================
+    var cdnTag = '<script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>';
+
+    var page = {
+      t: 'div', c: [
+        // ==== Page header ====
+        {
+          t: 'div', a: { class: 'page-header' },
+          c: {
+            t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
+            c: [
+              { t: 'h1', c: 'Downloads' },
+              { t: 'p', a: { class: 'subtitle', id: 'hero-subtitle' }, c: 'Get bitwrench via npm, CDN, or direct download. Zero runtime dependencies.' }
+            ]
+          }
+        },
+
+        // ==== Content ====
+        {
+          t: 'div', a: { class: 'content-container wide' },
+          c: [
+
+            // ================================================================
+            // Preamble: What ships & how to navigate
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-overview' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-overview' }, c: 'What You Get' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: [
+                    'bitwrench is a ', { t: 'strong', c: 'single-file JavaScript library' },
+                    ' with zero runtime dependencies. The full library includes the UI engine, router, ready-made components (tables, modals, forms, tabs, cards, etc.), color utilities, and pub/sub state management. Most users only need one file.'
+                  ]},
+                  { t: 'p', c: [
+                    { t: 'strong', c: 'New here?' }, ' Grab the CDN snippet below and start building. ',
+                    'Need to self-host? Use the ', { t: 'a', a: { href: '#section-downloads' }, c: 'direct downloads' }, '. ',
+                    'Working on an ESP32 or Raspberry Pi? Jump to ', { t: 'a', a: { href: '#section-embedded' }, c: 'Embedded / IoT' }, '.'
+                  ]},
+                  {
+                    t: 'div', a: { class: 'dl-toc' },
+                    c: [
+                      { t: 'span', a: { style: 'font-size:0.8rem;color:var(--bw_text_secondary);padding:0.3rem 0' }, c: 'Jump to:' },
+                      { t: 'a', a: { href: '#section-quick' }, c: 'Quick Start' },
+                      { t: 'a', a: { href: '#section-npm' }, c: 'npm / ESM' },
+                      { t: 'a', a: { href: '#section-cdn' }, c: 'CDN + SRI' },
+                      { t: 'a', a: { href: '#section-downloads' }, c: 'Downloads' },
+                      { t: 'a', a: { href: '#section-addons' }, c: 'Add-ons' },
+                      { t: 'a', a: { href: '#section-ai' }, c: 'AI / MCP' },
+                      { t: 'a', a: { href: '#section-all' }, c: 'All Builds' },
+                      { t: 'a', a: { href: '#section-embedded' }, c: 'Embedded / IoT' }
+                    ]
+                  }
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: Quickest Way to Start
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-quick' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-quick' }, c: 'Quickest Way to Start' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', a: { id: 'hero-intro' }, c: 'Drop this CDN tag into any HTML file:' },
+                  codeSnippet(null, cdnTag, 'html'),
+                  { t: 'p', c: [
+                    'Or install via npm:',
+                  ]},
+                  codeSnippet(null, 'npm install bitwrench', 'bash'),
+                  { t: 'p', a: { style: 'font-size:0.875rem' }, c: [
+                    { t: 'a', a: { href: '#section-downloads' }, c: 'Download files directly' },
+                    ' \u00B7 ',
+                    { t: 'a', a: { href: '../docs/llm-bitwrench-guide.md', download: 'llm-bitwrench-guide.md' }, c: 'LLM guide (.md)' },
+                    ' \u00B7 ',
+                    { t: 'a', a: { href: '#section-ai' }, c: 'AI / MCP integration' }
+                  ]}
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: npm / ESM
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-npm' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-npm' }, c: 'npm / ESM' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  {
+                    t: 'div', a: { class: 'install-grid' },
+                    c: [
+                      {
+                        t: 'div', a: { class: 'install-card' },
+                        c: [
+                          { t: 'h3', c: 'Install' },
+                          codeSnippet(null, 'npm install bitwrench', 'bash'),
+                          codeSnippet('ES Module', "import bw from 'bitwrench';", 'js'),
+                          codeSnippet('CommonJS', "const bw = require('bitwrench');", 'js')
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'install-card' },
+                        c: [
+                          { t: 'h3', c: 'Script Tag (self-hosted)' },
+                          codeSnippet(null, '<script src="dist/bitwrench.umd.min.js"><\/script>', 'html'),
+                          { t: 'p', a: { style: 'font-size:0.85rem;color:var(--bw_text_secondary);margin:0.5rem 0 0.5rem' }, c: [
+                            'The UMD build adds ', { t: 'code', c: 'bw' }, ' to the global scope.'
+                          ]},
+                          codeSnippet('Legacy browsers (IE11+)', '<script src="dist/bitwrench.es5.min.js"><\/script>', 'html')
+                        ]
+                      }
+                    ]
+                  }
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: CDN + SRI
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-cdn' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-cdn' }, c: 'CDN + SRI' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: 'Load directly from a CDN -- no install, no build step. CDNs gzip automatically (~40KB transfer).' },
+                  {
+                    t: 'div', a: { class: 'install-grid' },
+                    c: [
+                      {
+                        t: 'div', a: { class: 'install-card' },
+                        c: [
+                          { t: 'h3', c: 'unpkg' },
+                          codeSnippet('UMD (browser)', '<script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>', 'html'),
+                          codeSnippet('ESM', "import bw from 'https://unpkg.com/bitwrench@2/dist/bitwrench.esm.min.js';", 'js')
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'install-card' },
+                        c: [
+                          { t: 'h3', c: 'jsdelivr' },
+                          codeSnippet('UMD (browser)', '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>', 'html'),
+                          codeSnippet('ESM', "import bw from 'https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.esm.min.js';", 'js')
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1rem' },
+                    c: [
+                      { t: 'h4', c: 'Version pinning' },
+                      { t: 'p', c: [
+                        { t: 'code', c: '@2' }, ' -- latest 2.x (recommended)', { t: 'br' },
+                        { t: 'code', c: '@2.0.23' }, ' -- exact version', { t: 'br' },
+                        { t: 'code', c: '@latest' }, ' -- latest (may include breaking changes)'
+                      ]}
+                    ]
+                  },
+                  { t: 'div', a: { id: 'cdn-sri-snippets' }, c: '' }
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: Direct Downloads
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-downloads' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-downloads' }, c: 'Direct Downloads' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: 'Download individual files for self-hosting. Right-click any link to save.' },
+                  { t: 'div', a: { id: 'downloads-table' }, c: 'Loading...' },
+                  { t: 'div', a: { id: 'format-explainer' } }
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: Add-ons & Specialized Builds
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-addons' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-addons' }, c: 'Add-ons & Specialized Builds' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: 'The core library includes the UI engine, router, all components (cards, tables, tabs, etc.), color utilities, and state management. These are optional packages for specific use cases.' },
+
+                  // ---- Lean builds ----
+                  { t: 'h3', c: 'Lean Builds' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:var(--bw_text_secondary)' }, c: 'Core engine, state management, color utils, and router -- without the UI components. ~30KB gzipped. Use when you only need HTML generation.' },
+                  { t: 'div', a: { id: 'lean-table' }, c: 'Loading...' },
+
+                  // ---- BCCL standalone ----
+                  { t: 'h3', c: 'BCCL Standalone' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:var(--bw_text_secondary)' }, c: 'Just the component factories (makeButton, makeTable, makeModal, etc.) without the core engine. For apps that load bitwrench-lean separately.' },
+                  { t: 'div', a: { id: 'bccl-table' }, c: 'Loading...' },
+
+                  // ---- Client/Server tools ----
+                  { t: 'h3', c: 'Client/Server Tools' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:var(--bw_text_secondary)' }, c: 'Server-driven UI, CLI tools, debugging, and development utilities.' },
+                  // Debug toolkit -- highlighted, full-width
+                  {
+                    t: 'div', a: { class: 'addon-card', style: 'border-color:var(--bw_teal);border-width:2px' },
+                    c: [
+                      { t: 'h4', c: [pkgBadge('addon', 'pkg-addon'), ' bitwrench-debug -- Browser Inspector'] },
+                      { t: 'p', c: [
+                        'Paste one line in any browser console to get React DevTools-level inspection with zero install. ',
+                        { t: 'code', c: 'bwd.tree()' }, ' visualizes the DOM, ',
+                        { t: 'code', c: 'bwd.state()' }, ' dumps all component state, ',
+                        { t: 'code', c: 'bwd.listen()' }, ' traces events, ',
+                        { t: 'code', c: 'bwd.screenshot()' }, ' captures to PNG.'
+                      ]},
+                      { t: 'div', a: { class: 'addon-links' }, c: [
+                        { t: 'a', a: { href: '11-debugging.html' }, c: 'Docs & Reference' },
+                        { t: 'a', a: { href: '../dist/bitwrench-debug.min.js' }, c: 'Download' },
+                        { t: 'span', a: { style: 'color:var(--bw_text_muted);font-size:0.8rem' }, c: '(~2KB gz)' }
+                      ]}
+                    ]
+                  },
+                  {
+                    t: 'div', a: { class: 'addon-grid' },
+                    c: [
+                      {
+                        t: 'div', a: { class: 'addon-card' },
+                        c: [
+                          { t: 'h4', c: [pkgBadge('server', 'pkg-server'), ' bwserve'] },
+                          { t: 'p', c: 'Server-driven UI (Streamlit-style). Push UI from Node.js, Python, C, or Rust to the browser via SSE. Great for dashboards and IoT.' },
+                          { t: 'div', a: { class: 'addon-links' }, c: [
+                            { t: 'a', a: { href: '12-bwserve-protocol.html' }, c: 'Protocol' },
+                            { t: 'a', a: { href: '14-bwserve-sandbox.html' }, c: 'Sandbox' }
+                          ]}
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'addon-card' },
+                        c: [
+                          { t: 'h4', c: [pkgBadge('addon', 'pkg-addon'), ' bitwrench-code-edit'] },
+                          { t: 'p', c: 'Syntax-highlighted code editor with line numbers, read-only mode, copy support, and live preview. Powers the Try It editors across this site.' },
+                          { t: 'div', a: { class: 'addon-links' }, c: [
+                            { t: 'a', a: { href: '13-code-editor.html' }, c: 'Docs' },
+                            { t: 'a', a: { href: '../dist/bitwrench-code-edit.umd.min.js' }, c: 'Download' },
+                            { t: 'span', a: { style: 'color:var(--bw_text_muted);font-size:0.8rem' }, c: '(~4KB gz)' }
+                          ]}
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'addon-card' },
+                        c: [
+                          { t: 'h4', c: [pkgBadge('addon', 'pkg-addon'), ' bitwrench-util-css'] },
+                          { t: 'p', c: 'CSS utility class parser (Tailwind-style shorthand). Converts utility classes like m-4, p-2, flex to inline styles at mount time.' },
+                          { t: 'div', a: { class: 'addon-links' }, c: [
+                            { t: 'a', a: { href: '16-utility-css.html' }, c: 'Docs' },
+                            { t: 'a', a: { href: '../dist/bitwrench-util-css.umd.min.js' }, c: 'Download' },
+                            { t: 'span', a: { style: 'color:var(--bw_text_muted);font-size:0.8rem' }, c: '(~2KB gz)' }
+                          ]}
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'addon-card' },
+                        c: [
+                          { t: 'h4', c: [pkgBadge('addon', 'pkg-addon'), ' bwcli'] },
+                          { t: 'p', c: [
+                            'Command-line tool. Convert Markdown to HTML, run a dev server, apply theme presets. Installed via ',
+                            { t: 'code', c: 'npm install bitwrench' }, '.'
+                          ]},
+                          { t: 'div', a: { class: 'addon-links' }, c: [
+                            { t: 'a', a: { href: '17-bwcli.html' }, c: 'Docs' }
+                          ]}
+                        ]
+                      }
+                    ]
+                  }
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: AI / MCP
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-ai' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-ai' }, c: 'AI / MCP Integration' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: 'Bitwrench includes an MCP (Model Context Protocol) server so AI assistants like Claude, Cursor, and other MCP-compatible tools can generate bitwrench UI directly.' },
+                  { t: 'div', a: { class: 'install-grid' }, c: [
+                    {
+                      t: 'div', a: { class: 'install-card' },
+                      c: [
+                        { t: 'h3', c: 'MCP Server' },
+                        { t: 'p', a: { style: 'font-size:0.875rem;margin:0 0 0.75rem' }, c: 'Run the built-in MCP server over stdio. Provides tools for component generation, API knowledge, and live rendering.' },
+                        codeSnippet(null, 'npx bwmcp', 'bash'),
+                        { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0' }, c: [
+                          'Or import programmatically: ',
+                          { t: 'code', c: 'import { handleMessage } from \'bitwrench/mcp\'' }
+                        ]}
+                      ]
+                    },
+                    {
+                      t: 'div', a: { class: 'install-card' },
+                      c: [
+                        { t: 'h3', c: 'LLM Starter Guide' },
+                        { t: 'p', a: { style: 'font-size:0.875rem;margin:0 0 0.75rem' }, c: 'A standalone Markdown file that teaches any LLM how to write bitwrench code -- TACO format, components, state management, and theming. Drop it into your project context or system prompt.' },
+                        { t: 'div', a: { style: 'display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap' }, c: [
+                          { t: 'a', a: { href: '../docs/llm-bitwrench-guide.md', download: 'llm-bitwrench-guide.md', class: 'copy-btn-sm', style: 'text-decoration:none;padding:0.35rem 0.75rem' }, c: 'Download llm-bitwrench-guide.md' },
+                          { t: 'a', a: { href: '../docs/llm-bitwrench-guide.md', style: 'font-size:0.8125rem' }, c: 'View in browser' }
+                        ]}
+                      ]
+                    }
+                  ]}
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: All Builds (reference table)
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-all' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-all' }, c: 'All Builds' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: 'Every dist file in one table. Click column headers to sort.' },
+                  { t: 'p', a: { style: 'font-size:0.85rem;color:var(--bw_text_secondary);margin-top:-0.5rem' }, c: [
+                    { t: 'strong', c: 'Size' }, ' = raw file on disk. ',
+                    { t: 'strong', c: 'Gzipped' }, ' = what actually transfers over the network (CDNs and most servers gzip automatically).'
+                  ]},
+                  {
+                    t: 'div', a: { style: 'display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin-bottom:0.75rem' },
+                    c: [
+                      { t: 'span', a: { style: 'font-size:0.8rem;color:var(--bw_text_secondary)' }, c: 'Packages:' },
+                      pkgBadge('core', 'pkg-core'),
+                      pkgBadge('lean', 'pkg-lean'),
+                      pkgBadge('addon', 'pkg-addon'),
+                      pkgBadge('server', 'pkg-server'),
+                      pkgBadge('css', 'pkg-css')
+                    ]
+                  },
+                  { t: 'div', a: { id: 'builds-all' }, c: 'Loading...' }
+                ]}
+              ]
+            },
+
+            // ================================================================
+            // Section: Embedded / IoT
+            // ================================================================
+            {
+              t: 'div', a: { class: 'demo-section', id: 'section-embedded' },
+              c: [
+                { t: 'h2', c: { t: 'a', a: { href: '#section-embedded' }, c: 'Embedded / IoT' } },
+                { t: 'div', a: { class: 'demo-content' }, c: [
+                  { t: 'p', c: 'Bitwrench runs on any device that can serve HTTP. The full library is ~40KB gzipped -- fits easily on ESP32 SPIFFS (3% of 1.5MB), Pico W flash (~2% of 2MB), or any microcontroller with a few hundred KB of storage.' },
+
+                  // How .gz serving works
+                  {
+                    t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1rem' },
+                    c: [
+                      { t: 'h4', c: 'How .gz serving works' },
+                      { t: 'p', c: [
+                        'Your HTML references the normal filename: ',
+                        { t: 'code', c: '<script src="/bitwrench.umd.min.js"><\/script>' },
+                        '. Your server stores the .gz file (40KB on flash) and sends it with a ',
+                        { t: 'code', c: 'Content-Encoding: gzip' },
+                        ' header. The browser decompresses transparently -- the 150KB uncompressed size is only in browser memory.'
+                      ]},
+                      { t: 'p', a: { style: 'margin-top:0.5rem;font-size:0.85rem' }, c: [
+                        { t: 'strong', c: 'Troubleshooting: ' },
+                        'Getting a SyntaxError in console? Your server is sending .gz bytes without the Content-Encoding header.'
+                      ]}
+                    ]
+                  },
+
+                  // Embedded downloads table
+                  { t: 'h3', c: 'Embedded Downloads' },
+                  { t: 'div', a: { id: 'builds-embedded' }, c: 'Loading...' },
+
+                  // Platform compatibility
+                  { t: 'h3', c: 'Platform Compatibility' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:var(--bw_text_secondary)' }, c:
+                    'All platforms use the same bwserve wire protocol (JSON over SSE + POST). The browser does not care which language the server is written in.'
+                  },
+                  {
+                    t: 'div', a: { class: 'table-card' },
+                    c: { t: 'table', a: { class: 'bw_table' }, c: [
+                      { t: 'thead', c: { t: 'tr', c: [
+                        { t: 'th', c: 'Platform' },
+                        { t: 'th', c: 'Language' },
+                        { t: 'th', c: 'Server Library' },
+                        { t: 'th', c: '.gz Serving' }
+                      ]}},
+                      { t: 'tbody', c: [
+                        ['ESP32 (Arduino)', 'C/C++', 'ESPAsyncWebServer + bwserve.h', 'Automatic'],
+                        ['ESP32 (MicroPython)', 'Python', 'bwserve.py', 'Built-in'],
+                        ['ESP32 (CircuitPython)', 'Python', 'bwserve.py + socketpool', 'Built-in'],
+                        ['Raspberry Pi Pico W', 'MicroPython', 'bwserve.py', 'Built-in'],
+                        ['Adafruit boards', 'CircuitPython', 'bwserve.py (auto-detects runtime)', 'Built-in'],
+                        ['Arduino + Ethernet', 'C/C++', 'EthernetServer + bwserve.h', 'Manual header'],
+                        ['Raspberry Pi (Linux)', 'Python / Node.js', 'bwserve.py or bwserve npm', 'nginx / built-in'],
+                        ['Desktop (no hardware)', 'C (POSIX)', 'cmake-demo (POSIX sockets)', 'N/A']
+                      ].map(function(row) {
+                        return { t: 'tr', c: [
+                          { t: 'td', c: { t: 'strong', c: row[0] } },
+                          { t: 'td', c: row[1] },
+                          { t: 'td', c: row[2] },
+                          { t: 'td', c: row[3] }
+                        ]};
+                      })}
+                    ]}
+                  },
+
+                  // Quick start: ESP32
+                  { t: 'h3', c: 'Quick Start: ESP32 (Arduino)' },
+                  {
+                    t: 'div', a: { class: 'embedded-steps' },
+                    c: [
+                      {
+                        t: 'div', a: { class: 'embedded-step' },
+                        c: [
+                          { t: 'h4', c: 'Copy the .gz file to your data/ folder' },
+                          codeSnippet(null, 'cp node_modules/bitwrench/dist/bitwrench.umd.min.js.gz data/', 'bash')
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'embedded-step' },
+                        c: [
+                          { t: 'h4', c: 'Reference the uncompressed name in HTML' },
+                          codeSnippet(null, '<script src="/bitwrench.umd.min.js"><\/script>', 'html'),
+                          { t: 'p', c: 'The server maps .js requests to .gz files automatically.' }
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'embedded-step' },
+                        c: [
+                          { t: 'h4', c: 'Serve static files from SPIFFS' },
+                          codeSnippet(null, '// Arduino sketch (ESPAsyncWebServer)\nserver.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");', 'js')
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'embedded-step' },
+                        c: [
+                          { t: 'h4', c: 'Upload to flash' },
+                          { t: 'p', c: [
+                            { t: 'strong', c: 'Arduino IDE: ' }, 'Tools > ESP32 Sketch Data Upload', { t: 'br' },
+                            { t: 'strong', c: 'PlatformIO: ' }, { t: 'code', c: 'pio run -t uploadfs' }
+                          ]}
+                        ]
+                      }
+                    ]
+                  },
+
+                  // Quick start: MicroPython / CircuitPython
+                  { t: 'h3', c: 'Quick Start: MicroPython / CircuitPython' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:var(--bw_text_secondary)' }, c: [
+                    { t: 'code', c: 'bwserve.py' }, ' auto-detects your runtime (CPython, MicroPython, or CircuitPython) and uses the right transport.'
+                  ]},
+                  {
+                    t: 'div', a: { class: 'embedded-steps' },
+                    c: [
+                      {
+                        t: 'div', a: { class: 'embedded-step' },
+                        c: [
+                          { t: 'h4', c: 'Copy files to your board' },
+                          codeSnippet('MicroPython (mpremote)', 'mpremote cp embedded_python/bwserve.py :\nmpremote cp dist/bitwrench.umd.min.js.gz :static/', 'bash'),
+                          codeSnippet('CircuitPython (drag & drop)', '# Copy to CIRCUITPY drive:\n#   bwserve.py      -> /lib/bwserve.py\n#   *.umd.min.js.gz -> /static/bitwrench.umd.min.js.gz\n#   index.html      -> /static/index.html', 'bash')
+                        ]
+                      },
+                      {
+                        t: 'div', a: { class: 'embedded-step' },
+                        c: [
+                          { t: 'h4', c: 'Write your app' },
+                          codeSnippet(null, 'from bwserve import App\n\napp = App(port=80)\n\n@app.page("/")\ndef home(client):\n    client.render("#app", {"t": "h1", "c": "Hello from " + app.runtime})\n\napp.listen()  # Blocks, serves HTTP + SSE', 'python')
+                        ]
+                      }
+                    ]
+                  },
+
+                  // Quick start: RPi
+                  { t: 'h3', c: 'Quick Start: Raspberry Pi (Linux)' },
+                  codeSnippet('Python (CPython 3.6+)', 'python3 bwserve.py  # Serves on port 7902', 'bash'),
+                  codeSnippet('Node.js', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from RPi!' });\n});\napp.listen();", 'js'),
+
+                  // Example dashboards link
+                  { t: 'p', a: { style: 'margin-top:1.5rem' }, c: [
+                    'See ', { t: 'a', a: { href: '../examples/embedded/' }, c: 'embedded example dashboards' },
+                    ' (ESP32, Pico W, RPi, GPIO, Home Automation, C demo) -- all run in the browser with simulated data, no hardware required.'
+                  ]}
+                ]}
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    bw.DOM('#app', page);
+
+    // =========================================================================
+    // Load manifest and populate dynamic sections
+    // =========================================================================
+    bw.loadClientFile('../dist/builds.json', function(raw, err) {
+      if (err) {
+        bw.DOM('#builds-all', { t: 'p', a: { style: 'color:#b91c1c' }, c: 'Failed to load build manifest. Run: npm run build:builds' });
+        return;
+      }
+      var manifest = JSON.parse(raw);
+
+      // ---- Hero metadata ----
+      var umdEntry = manifest.files.filter(function(f) { return /^bitwrench\./.test(f.file) && f.format === 'UMD' && f.minified; })[0];
+      var gzKB = umdEntry ? fmtSize(umdEntry.gzipped) : '~40 KB';
+      bw.DOM('#hero-subtitle', {
+        t: 'span',
+        c: 'v' + manifest.version + ' \u00B7 ' + gzKB + ' gzipped \u00B7 zero dependencies \u00B7 ' + manifest.files.length + ' dist files'
+      });
+      bw.DOM('#hero-intro', {
+        t: 'span',
+        c: ['Drop this CDN tag into any HTML file (' + gzKB + ' gzipped, zero dependencies):']
+      });
+
+      // ---- Format explainer accordion ----
+      bw.DOM('#format-explainer', bw.makeAccordion({
+        items: [{
+          title: 'Not sure which format to use?',
+          content: {
+            t: 'div', a: { style: 'font-size:0.875rem;line-height:1.6' },
+            c: [
+              { t: 'p', c: [{ t: 'strong', c: 'UMD' }, ' -- Universal. Works in browsers (', { t: 'code', c: '<script>' }, '), Node.js (require), and AMD loaders. Adds ', { t: 'code', c: 'bw' }, ' to global scope. Use this if unsure.'] },
+              { t: 'p', c: [{ t: 'strong', c: 'ESM' }, ' -- ES Modules. Use with ', { t: 'code', c: 'import' }, ' in modern browsers or bundlers (Vite, Rollup, webpack). Supports tree-shaking.'] },
+              { t: 'p', c: [{ t: 'strong', c: 'CJS' }, ' -- CommonJS. Use with ', { t: 'code', c: 'require()' }, ' in Node.js scripts and older bundlers.'] },
+              { t: 'p', c: [{ t: 'strong', c: 'ES5' }, ' -- Transpiled to ES5 syntax. For legacy browsers (IE10+) and older webviews (Android 4.x, older Electron).'] },
+              { t: 'p', c: [{ t: 'strong', c: '.gz' }, ' -- Pre-gzipped. Same JS, smaller on disk. Server must send ', { t: 'code', c: 'Content-Encoding: gzip' }, ' header. See the Embedded section below.'] },
+              { t: 'p', c: [{ t: 'strong', c: 'CSS' }, ' -- Static stylesheet. Most apps use ', { t: 'code', c: 'bw.loadStyles()' }, ' instead (generates CSS at runtime). Use the file for SSR or static HTML pages without JS.'] }
+            ]
+          }
+        }]
+      }));
+
+      // ---- Direct Downloads table (data-driven from builds.json) ----
+      (function() {
+        // Core files: filename starts with 'bitwrench.' (no dash = not lean/bccl/addon)
+        var coreFiles = manifest.files.filter(function(f) {
+          return f.ver !== '1.x' && /^bitwrench\./.test(f.file);
+        });
+
+        function findCore(format, minified) {
+          return coreFiles.filter(function(f) {
+            return f.format === format && f.minified === minified;
+          })[0];
+        }
+
+        // Usage notes by format
+        var usageNotes = {
+          'UMD':      { min: 'Browser <script> tag', dev: 'Unminified, for debugging' },
+          'ESM':      { min: "import bw from '...'", dev: 'Unminified ESM, for debugging' },
+          'CJS':      { min: "const bw = require('...')", dev: 'Unminified CJS' },
+          'ES5 (UMD)': { min: 'IE10+, older webviews', dev: 'Unminified ES5' },
+          'CSS':      { min: 'For static HTML / SSR', dev: 'Unminified CSS' }
+        };
+
+        // Display order: format, minified, gz flag
+        var specs = [
+          { format: 'UMD', min: true },
+          { format: 'UMD', min: false },
+          { format: 'UMD', min: true, gz: true },
+          { format: 'ESM', min: true },
+          { format: 'ESM', min: false },
+          { format: 'CJS', min: true },
+          { format: 'ES5 (UMD)', min: true },
+          { format: 'CSS', min: true }
+        ];
+
+        var headers = [
+          { label: 'Format', sz: false },
+          { label: 'File', sz: false },
+          { label: 'Size', sz: true },
+          { label: 'Usage', sz: false }
+        ];
+
+        var data = [];
+        specs.forEach(function(spec) {
+          var found = findCore(spec.format, spec.min);
+          if (!found) return;
+          var dlFile = spec.gz ? found.file + '.gz' : found.file;
+          var fileSize = spec.gz ? found.gzipped : found.raw;
+          var fmt = spec.format === 'ES5 (UMD)' ? 'ES5' : spec.format;
+          var label = spec.gz ? fmt + ' .gz' : spec.min ? fmt : fmt + ' (dev)';
+          var notes = usageNotes[spec.format] || {};
+          var usage = spec.gz ? 'Pre-gzipped for embedded' : (spec.min ? notes.min : notes.dev) || '';
+
+          data.push({
+            cells: [
+              { t: 'strong', c: label },
+              { t: 'a', a: { href: '../dist/' + dlFile, style: 'font-size:0.85rem' }, c: dlFile },
+              fmtSize(fileSize),
+              { t: 'span', a: { style: 'font-size:0.8rem;color:var(--bw_text_secondary)' }, c: usage }
+            ],
+            sortValues: [label, dlFile, fileSize, usage]
+          });
+        });
+        sortableTable('#downloads-table', headers, data);
+      })();
+
+      // ---- Lean builds table ----
+      (function() {
+        var leanFiles = manifest.files.filter(function(f) {
+          return f.component === 'lean' && f.minified && f.ver !== '1.x';
+        });
+        if (leanFiles.length === 0) return;
+        var headers = [
+          { label: 'File', sz: false },
+          { label: 'Format', sz: false },
+          { label: 'Size', sz: true },
+          { label: 'Gzipped', sz: true }
+        ];
+        var data = leanFiles.map(function(f) {
+          return {
+            cells: [
+              { t: 'a', a: { href: '../dist/' + f.file, style: 'font-size:0.85rem' }, c: f.file },
+              f.format,
+              fmtSize(f.raw),
+              fmtSize(f.gzipped)
+            ],
+            sortValues: [f.file, f.format, f.raw, f.gzipped]
+          };
+        });
+        sortableTable('#lean-table', headers, data);
+      })();
+
+      // ---- BCCL standalone table ----
+      (function() {
+        var bcclFiles = manifest.files.filter(function(f) {
+          return f.component === 'bccl' && f.minified && f.ver !== '1.x';
+        });
+        if (bcclFiles.length === 0) return;
+        var headers = [
+          { label: 'File', sz: false },
+          { label: 'Format', sz: false },
+          { label: 'Size', sz: true },
+          { label: 'Gzipped', sz: true }
+        ];
+        var data = bcclFiles.map(function(f) {
+          return {
+            cells: [
+              { t: 'a', a: { href: '../dist/' + f.file, style: 'font-size:0.85rem' }, c: f.file },
+              f.format,
+              fmtSize(f.raw),
+              fmtSize(f.gzipped)
+            ],
+            sortValues: [f.file, f.format, f.raw, f.gzipped]
+          };
+        });
+        sortableTable('#bccl-table', headers, data);
+      })();
+
+      // ---- Embedded .gz table (data-driven) ----
+      (function() {
+        // Find UMD min files for core and lean, plus ES5 min for core
+        var embSpecs = [
+          { label: 'Full library (recommended)', match: function(f) { return /^bitwrench\./.test(f.file) && f.format === 'UMD' && f.minified; } },
+          { label: 'Lean (no components)', match: function(f) { return f.file.indexOf('-lean') >= 0 && f.format === 'UMD' && f.minified; } },
+          { label: 'ES5 (legacy webview)', match: function(f) { return /^bitwrench\./.test(f.file) && f.format === 'ES5 (UMD)' && f.minified; } }
+        ];
+        var embHeaders = [
+          { label: 'Build', sz: false },
+          { label: 'Download (.gz)', sz: false },
+          { label: 'On-disk', sz: true },
+          { label: 'Uncompressed', sz: true }
+        ];
+        var current = manifest.files.filter(function(f) { return f.ver !== '1.x'; });
+        var embData = [];
+        embSpecs.forEach(function(spec) {
+          var found = current.filter(spec.match)[0];
+          if (!found) return;
+          embData.push({
+            cells: [
+              spec.label,
+              { t: 'a', a: { href: '../dist/' + found.file + '.gz' }, c: { t: 'code', a: { style: 'font-size:0.8rem' }, c: found.file + '.gz' } },
+              fmtSize(found.gzipped),
+              fmtSize(found.raw)
+            ],
+            sortValues: [spec.label, found.file, found.gzipped, found.raw]
+          });
+        });
+        sortableTable('#builds-embedded', embHeaders, embData);
+      })();
+
+      // ---- All Builds table ----
+      (function() {
+        var allFiles = [];
+        manifest.files.forEach(function(f) {
+          if (f.ver === '1.x') return;
+          if (!f.minified) return;
+
+          var pkg, pkgClass;
+          var fname = f.file;
+          if (f.component === 'code-edit' || fname.indexOf('code-edit') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
+          else if (f.component === 'util-css' || fname.indexOf('util-css') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
+          else if (f.component === 'debug' || fname.indexOf('debug') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
+          else if (f.component === 'lean' || fname.indexOf('-lean') >= 0) { pkg = 'lean'; pkgClass = 'pkg-lean'; }
+          else if (f.component === 'bccl' || fname.indexOf('-bccl') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
+          else if (f.component === 'bwserve' || fname.indexOf('bwserve') >= 0) { pkg = 'server'; pkgClass = 'pkg-server'; }
+          else if (f.format === 'CSS') { pkg = 'css'; pkgClass = 'pkg-css'; }
+          else { pkg = 'core'; pkgClass = 'pkg-core'; }
+
+          allFiles.push({ file: f.file, pkg: pkg, pkgClass: pkgClass, format: f.format, raw: f.raw, gzipped: f.gzipped });
+        });
+
+        // Add non-minified server files (bwserve has no min variants)
+        manifest.files.forEach(function(f) {
+          if (f.ver === '1.x') return;
+          if (f.component === 'bwserve' && !f.minified) {
+            var alreadyAdded = allFiles.some(function(a) { return a.file === f.file; });
+            if (!alreadyAdded) {
+              allFiles.push({ file: f.file, pkg: 'server', pkgClass: 'pkg-server', format: f.format, raw: f.raw, gzipped: f.gzipped });
+            }
+          }
+        });
+
+        // Add CSS (non-minified variant too)
+        manifest.files.forEach(function(f) {
+          if (f.format === 'CSS' && !f.minified) {
+            var alreadyAdded = allFiles.some(function(a) { return a.file === f.file; });
+            if (!alreadyAdded) {
+              allFiles.push({ file: f.file, pkg: 'css', pkgClass: 'pkg-css', format: 'CSS', raw: f.raw, gzipped: f.gzipped });
+            }
+          }
+        });
+
+        var buildHeaders = [
+          { label: 'Package', sz: false },
+          { label: 'File', sz: false },
+          { label: 'Format', sz: false },
+          { label: 'Size', sz: true },
+          { label: 'Gzipped', sz: true }
+        ];
+        var buildData = allFiles.map(function(f) {
+          return {
+            cells: [
+              pkgBadge(f.pkg, f.pkgClass),
+              { t: 'a', a: { href: '../dist/' + f.file, style: 'font-size:0.85rem' }, c: f.file },
+              f.format,
+              fmtSize(f.raw),
+              fmtSize(f.gzipped)
+            ],
+            sortValues: [f.pkg, f.file, f.format, f.raw, f.gzipped]
+          };
+        });
+        sortableTable('#builds-all', buildHeaders, buildData);
+      })();
+
+      // ---- CDN snippets with SRI (data-driven) ----
+      (function() {
+        var umdFile = manifest.files.filter(function(f) { return /^bitwrench\./.test(f.file) && f.format === 'UMD' && f.minified; })[0];
+        if (umdFile && umdFile.integrity) {
+          var fname = umdFile.file;
+          var unpkgTag = '<script src="https://unpkg.com/bitwrench@2/dist/' + fname + '"\n        integrity="' + umdFile.integrity + '"\n        crossorigin="anonymous"><\/script>';
+          var jsdelivrTag = '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/' + fname + '"\n        integrity="' + umdFile.integrity + '"\n        crossorigin="anonymous"><\/script>';
+
+          bw.DOM('#cdn-sri-snippets', {
+            t: 'div', c: [
+              { t: 'h3', c: 'With SRI (recommended for production)' },
+              codeSnippet('unpkg + SRI', unpkgTag, 'html'),
+              codeSnippet('jsdelivr + SRI', jsdelivrTag, 'html')
+            ]
+          });
+        }
+      })();
+    });
+  </script>
+</body>
+</html>

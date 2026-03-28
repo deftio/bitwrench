@@ -623,7 +623,7 @@ bw.DOM('#app', page);
 
 | Category | Components |
 |----------|-----------|
-| Layout | makeNavbar, makeSidebar, makeGrid, makeRow, makeCol, makeContainer |
+| Layout | makeNavbar, makeContainer, makeRow, makeCol, makeStack, makeSection |
 | Content | makeCard, makeAlert, makeBadge, makeStatCard, makeTimeline, makeHero |
 | Forms | makeInput, makeSelect, makeTextarea, makeForm, makeFormGroup, makeSearchInput |
 | Data | makeTable, makeTableFromArray, makeBarChart, makeProgress, makePagination |
@@ -1450,7 +1450,7 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 | **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
 | **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` => `theme.palette` |
 | **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** — open the HTML file |
-| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **39KB** (bitwrench UMD gzipped, includes 50+ components + CSS gen) |
+| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **~40KB** (bitwrench UMD gzipped, includes 50+ components + CSS gen) |
 
 ---
 

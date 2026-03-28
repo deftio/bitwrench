@@ -69,10 +69,9 @@
     };
 
     // -- Features ----------------------------------------------------------
-    var features = bw.makeSection({
+    var features = { t: 'div', a: { id: 'features' }, c: bw.makeSection({
       title: 'Everything Your Team Needs',
       subtitle: 'From commit to deploy, Pulse tracks the metrics that matter.',
-      id: 'features',
       content: bw.makeFeatureGrid({
         columns: 3,
         features: [
@@ -84,13 +83,12 @@
           { icon: '\uD83D\uDE80', title: 'Zero Config', description: 'Point Pulse at your repo. It auto-discovers pipelines, environments, and deploys. No YAML required.' }
         ]
       })
-    });
+    }) };
 
     // -- How It Works (Timeline) -------------------------------------------
-    var howItWorks = bw.makeSection({
+    var howItWorks = { t: 'div', a: { id: 'how' }, c: bw.makeSection({
       title: 'Up and Running in 5 Minutes',
       subtitle: 'No agents to install. No infrastructure to manage.',
-      id: 'how',
       content: bw.makeTimeline({
         items: [
           { title: 'Connect Your Repo', content: 'Authorize GitHub, GitLab, or Bitbucket. Pulse reads commit and deploy metadata \u2014 never your source code.' },
@@ -99,7 +97,7 @@
           { title: 'Ship With Confidence', content: 'Your team gets a live dashboard with DORA metrics, deploy diffs, and AI-generated incident summaries.' }
         ]
       })
-    });
+    }) };
 
     // -- Testimonials ------------------------------------------------------
     var testimonials = bw.makeSection({
@@ -121,10 +119,9 @@
     });
 
     // -- Pricing -----------------------------------------------------------
-    var pricing = bw.makeSection({
+    var pricing = { t: 'div', a: { id: 'pricing' }, c: bw.makeSection({
       title: 'Simple Pricing',
       subtitle: 'Start free. Upgrade when your team grows.',
-      id: 'pricing',
       content: bw.makeRow({ children: [
         bw.makeCol({ size: { md: 4 }, content: bw.makeCard({
           title: 'Starter',
@@ -161,12 +158,11 @@
           ]
         })})
       ]})
-    });
+    }) };
 
     // -- FAQ ---------------------------------------------------------------
-    var faq = bw.makeSection({
+    var faq = { t: 'div', a: { id: 'faq' }, c: bw.makeSection({
       title: 'Frequently Asked Questions',
-      id: 'faq',
       content: bw.makeAccordion({
         items: [
           { title: 'Does Pulse read my source code?', content: 'No. Pulse reads commit metadata (author, timestamp, message) and deploy events. It never clones or accesses your source code.' },
@@ -176,7 +172,7 @@
           { title: 'What happens when I hit my service limit?', content: 'We notify you at 80% and 100%. You can upgrade instantly. We never stop collecting data for existing services.' }
         ]
       })
-    });
+    }) };
 
     // -- CTA ---------------------------------------------------------------
     var cta = bw.makeCTA({

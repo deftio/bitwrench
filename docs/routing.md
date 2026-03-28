@@ -558,5 +558,5 @@ After `destroy()`, `bw.navigate()` calls are no-ops and no more `bw:route` event
 
 - [App Patterns](app-patterns.md) -- Multi-Page SPA pattern with router + shared state
 - [State Management](state-management.md) -- Three-level component model, store pattern
-- [Component Cheat Sheet](component-cheatsheet.md) -- All 47+ components at a glance
+- [Component Cheat Sheet](component-cheatsheet.md) -- All 50+ components at a glance
 - [examples/dashboard-spa/](../examples/dashboard-spa/) -- Working SPA with 4 routed views

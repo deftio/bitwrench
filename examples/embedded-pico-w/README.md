@@ -16,7 +16,7 @@ Microcontroller dashboard for the Raspberry Pi Pico W (RP2040 + CYW43 WiFi).
 
 This example runs entirely in the browser with simulated data. Sensor values drift realistically. On real hardware:
 
-1. Flash bitwrench.umd.min.js (~42KB) to the Pico W filesystem
+1. Flash bitwrench.umd.min.js.gz (~40KB) to the Pico W filesystem
 2. Serve this HTML page from the Pico W's web server (microdot, phew, or raw usocket)
 3. Replace mock functions with `fetch()` calls to device endpoints
 4. Use SSE or polling for live sensor updates

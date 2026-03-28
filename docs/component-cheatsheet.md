@@ -1,7 +1,7 @@
 # Component Cheat Sheet
 
 > **Before you write custom TACO for a common UI pattern, check this list.**
-> Bitwrench ships 47+ ready-made `make*()` factories. Each returns a Level 0 TACO object.
+> Bitwrench ships 50+ ready-made `make*()` factories. Each returns a Level 0 TACO object.
 
 ## Full Component Table
 

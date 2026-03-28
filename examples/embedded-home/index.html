@@ -141,19 +141,19 @@
         content: [
           bw.makeStatCard({ value: thermostat.setpoint + '\u00B0C', label: 'Setpoint', icon: '\uD83C\uDF21\uFE0F' }),
           { t: 'div', a: { class: 'bw_mt_2 bw_mb_2' }, c: bw.makeButtonGroup({
-            buttons: [
-              { text: '\u2212', variant: 'primary', size: 'sm', onclick: function() { adjustSetpoint(-0.5); } },
-              { text: '+', variant: 'primary', size: 'sm', onclick: function() { adjustSetpoint(0.5); } }
+            children: [
+              bw.makeButton({ text: '\u2212', variant: 'primary', size: 'sm', onclick: function() { adjustSetpoint(-0.5); } }),
+              bw.makeButton({ text: '+', variant: 'primary', size: 'sm', onclick: function() { adjustSetpoint(0.5); } })
             ]
           })},
           { t: 'div', c: [
             { t: 'small', c: 'Mode: ' },
             bw.makeButtonGroup({
-              buttons: [
-                { text: 'Heat', variant: thermostat.mode === 'heat' ? 'danger' : 'outline_secondary', size: 'sm', onclick: function() { setMode('heat'); } },
-                { text: 'Cool', variant: thermostat.mode === 'cool' ? 'primary' : 'outline_secondary', size: 'sm', onclick: function() { setMode('cool'); } },
-                { text: 'Auto', variant: thermostat.mode === 'auto' ? 'success' : 'outline_secondary', size: 'sm', onclick: function() { setMode('auto'); } },
-                { text: 'Off', variant: thermostat.mode === 'off' ? 'secondary' : 'outline_secondary', size: 'sm', onclick: function() { setMode('off'); } }
+              children: [
+                bw.makeButton({ text: 'Heat', variant: thermostat.mode === 'heat' ? 'danger' : 'outline_secondary', size: 'sm', onclick: function() { setMode('heat'); } }),
+                bw.makeButton({ text: 'Cool', variant: thermostat.mode === 'cool' ? 'primary' : 'outline_secondary', size: 'sm', onclick: function() { setMode('cool'); } }),
+                bw.makeButton({ text: 'Auto', variant: thermostat.mode === 'auto' ? 'success' : 'outline_secondary', size: 'sm', onclick: function() { setMode('auto'); } }),
+                bw.makeButton({ text: 'Off', variant: thermostat.mode === 'off' ? 'secondary' : 'outline_secondary', size: 'sm', onclick: function() { setMode('off'); } })
               ]
             })
           ]}
@@ -189,10 +189,10 @@
           bw.makeRow({ children: roomCards }),
 
           // Thermostat
-          bw.makeSection({ title: 'Climate Control', children: [thermostatCard] }),
+          bw.makeSection({ title: 'Climate Control', content: [thermostatCard] }),
 
           // Summary
-          bw.makeSection({ title: 'Room Summary', children: [summaryTable] })
+          bw.makeSection({ title: 'Room Summary', content: [summaryTable] })
         ]
       }));
     }

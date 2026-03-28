@@ -12,6 +12,7 @@ These guides cover how to build UIs with bitwrench.
 | How do I add interactivity? | [State Management](state-management.md) |
 | How do I theme my app? | [Theming](theming.md) |
 | I'm an LLM generating bitwrench code | [LLM Guide](llm-bitwrench-guide.md) |
+| How do I use bwmcp with an AI agent? | [bwmcp MCP Server](bitwrench-mcp.md) |
 | Full API with signatures? | [API Reference](bitwrench_api.md) |
 
 ## Start Here
@@ -26,7 +27,7 @@ These guides cover how to build UIs with bitwrench.
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
 | [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
-| [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all 47+ components with capabilities and handles |
+| [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all 50+ components with capabilities and handles |
 | [Component Library](component-library.md) | All 50+ `make*()` functions with full signatures and examples |
 | [Routing](routing.md) | Client-side router: hash/history mode, route params, guards, pub/sub |
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
@@ -35,6 +36,7 @@ These guides cover how to build UIs with bitwrench.
 | [bwcli attach](bw-attach.md) | Remote debugging REPL: terminal-based inspector for any bitwrench page |
 | [App Patterns](app-patterns.md) | Canonical project layouts: dashboard, SPA, bwserve, embedded, static site |
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
+| [bwmcp MCP Server](bitwrench-mcp.md) | MCP server for AI agents: tool catalog, live rendering, screenshots |
 
 ## Tutorials
 

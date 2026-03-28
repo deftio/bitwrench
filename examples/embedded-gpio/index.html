@@ -76,9 +76,9 @@
               bw.makeBadge({ text: p.direction.toUpperCase(), variant: p.direction === 'out' ? 'primary' : 'warning', pill: true })
             ]},
             bw.makeButtonGroup({
-              buttons: [
-                { text: p.value ? 'Turn Off' : 'Turn On', variant: p.value ? 'danger' : 'success', size: 'sm', onclick: function() { togglePin(i); }, disabled: p.direction === 'in' },
-                { text: p.direction === 'out' ? 'Set Input' : 'Set Output', variant: 'outline_primary', size: 'sm', onclick: function() { toggleDirection(i); } }
+              children: [
+                bw.makeButton({ text: p.value ? 'Turn Off' : 'Turn On', variant: p.value ? 'danger' : 'success', size: 'sm', onclick: function() { togglePin(i); }, disabled: p.direction === 'in' }),
+                bw.makeButton({ text: p.direction === 'out' ? 'Set Input' : 'Set Output', variant: 'outline_primary', size: 'sm', onclick: function() { toggleDirection(i); } })
               ]
             })
           ]
@@ -121,13 +121,13 @@
           // Pin state table
           bw.makeSection({
             title: 'Pin State Table',
-            children: [pinTable]
+            content: [pinTable]
           }),
 
           // Activity log
           bw.makeSection({
             title: 'Activity Log',
-            children: [logList]
+            content: [logList]
           })
         ]
       }));

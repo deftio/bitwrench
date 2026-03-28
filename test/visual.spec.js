@@ -13,7 +13,7 @@ const EXAMPLES = [
   { path: '/pages/06-clock.html', name: 'Clock' },
   { path: '/pages/07-framework-comparison.html', name: 'Framework Comparison' },
   { path: '/pages/08-api-reference.html', name: 'API Reference' },
-  { path: '/pages/09-builds.html', name: 'Builds' },
+  { path: '/pages/09-downloads.html', name: 'Downloads' },
   { path: '/pages/10-themes.html', name: 'Themes' },
   { path: '/pages/11-debugging.html', name: 'Debugging' },
   { path: '/pages/12-bwserve-protocol.html', name: 'bwserve Protocol' }

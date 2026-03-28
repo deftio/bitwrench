@@ -365,32 +365,24 @@ test.describe('Accessibility Tests', () => {
     await expect(firstTab).toBeFocused();
   });
 
-  test('09-builds.html loads build tables from builds.json', async ({ page }) => {
-    await page.goto('/pages/09-builds.html');
+  test('09-downloads.html loads build tables from builds.json', async ({ page }) => {
+    await page.goto('/pages/09-downloads.html');
 
     // Wait for async fetch of builds.json to complete
     await page.waitForTimeout(2000);
 
-    // Core library table should have loaded (no "Loading..." text)
-    const coreSection = page.locator('#builds-core');
-    await expect(coreSection).not.toContainText('Loading...');
-    await expect(coreSection).not.toContainText('Failed to load');
+    // Downloads section should have loaded a table with rows
+    const dlSection = page.locator('#section-downloads');
+    await expect(dlSection).toBeVisible();
+    const dlTable = dlSection.locator('table.bw_table');
+    await expect(dlTable).toBeVisible();
+    expect(await dlTable.locator('tbody tr').count()).toBeGreaterThanOrEqual(2);
 
-    // Should have a table with rows
-    const coreTable = coreSection.locator('table.bw_table');
-    await expect(coreTable).toBeVisible();
-    const coreRows = coreTable.locator('tbody tr');
-    expect(await coreRows.count()).toBeGreaterThanOrEqual(2);
-
-    // All Files section should also have a table
-    const allSection = page.locator('#builds-all');
-    await expect(allSection).not.toContainText('Loading...');
+    // All Builds section should also have a table
+    const allSection = page.locator('#section-all');
+    await expect(allSection).toBeVisible();
     const allTable = allSection.locator('table.bw_table');
     await expect(allTable).toBeVisible();
     expect(await allTable.locator('tbody tr').count()).toBeGreaterThanOrEqual(5);
-
-    // SRI section should have loaded
-    const sriSection = page.locator('#builds-sri');
-    await expect(sriSection).not.toContainText('Loading...');
   });
 });

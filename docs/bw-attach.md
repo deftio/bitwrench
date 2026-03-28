@@ -396,4 +396,4 @@ When multiple browsers connect, the most recently connected client becomes the a
 - [bwserve Documentation](bwserve.md) — Full bwserve protocol reference
 - [CLI Documentation](cli.md) — File conversion and `bwcli serve`
 - [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference
-- [Design Document](../dev/bw-attach-design.md) — Architecture and implementation details
+- [CLI Design Document](../dev/bw-cli-design.md) -- Architecture and implementation details

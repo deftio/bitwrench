@@ -80,8 +80,8 @@ var hero = bw.makeHero({
   title: 'Ship faster with Acme',
   subtitle: 'The developer toolkit that gets out of your way.',
   actions: [
-    bw.makeButton({ label: 'Get Started', variant: 'primary', size: 'lg' }),
-    bw.makeButton({ label: 'Learn More', variant: 'outline', size: 'lg' })
+    bw.makeButton({ text: 'Get Started', variant: 'primary', size: 'lg' }),
+    bw.makeButton({ text: 'Learn More', variant: 'secondary', size: 'lg' })
   ]
 });
 ```
@@ -91,10 +91,10 @@ var hero = bw.makeHero({
 ```javascript
 var features = bw.makeFeatureGrid({
   columns: 3,
-  items: [
-    { icon: 'bolt',   title: 'Fast',      description: 'No build step, no virtual DOM. Just objects and functions.' },
-    { icon: 'shield', title: 'Reliable',   description: '100% test coverage. Works in IE11 through modern browsers.' },
-    { icon: 'code',   title: 'Simple',     description: 'One 40KB file. Zero dependencies. Learn in an afternoon.' }
+  features: [
+    { icon: 'bolt',   title: 'Fast',      desc: 'No build step, no virtual DOM. Just objects and functions.' },
+    { icon: 'shield', title: 'Reliable',   desc: '100% test coverage. Works in IE11 through modern browsers.' },
+    { icon: 'code',   title: 'Simple',     desc: 'One file, ~40KB gzipped. Zero dependencies. Learn in an afternoon.' }
   ]
 });
 ```
@@ -109,9 +109,9 @@ var pricing = {
     {
       t: 'div', a: { style: 'display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem' },
       c: [
-        bw.makeCard({ title: 'Free', content: '$0/mo — For personal projects', footer: bw.makeButton({ label: 'Start Free', variant: 'outline' }) }),
-        bw.makeCard({ title: 'Pro',  content: '$29/mo — For teams', footer: bw.makeButton({ label: 'Subscribe', variant: 'primary' }) }),
-        bw.makeCard({ title: 'Enterprise', content: 'Custom — Contact us', footer: bw.makeButton({ label: 'Contact Sales', variant: 'secondary' }) })
+        bw.makeCard({ title: 'Free', content: '$0/mo -- For personal projects', footer: bw.makeButton({ text: 'Start Free', variant: 'secondary' }) }),
+        bw.makeCard({ title: 'Pro',  content: '$29/mo -- For teams', footer: bw.makeButton({ text: 'Subscribe', variant: 'primary' }) }),
+        bw.makeCard({ title: 'Enterprise', content: 'Custom -- Contact us', footer: bw.makeButton({ text: 'Contact Sales', variant: 'secondary' }) })
       ]
     }
   ]

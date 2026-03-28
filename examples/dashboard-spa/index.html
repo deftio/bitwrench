@@ -169,7 +169,7 @@
         return {
           t: 'div', a: { class: 'app-shell' }, c: [
             bw.link('/team', 'Back to Team', { class: 'back-link' }),
-            bw.makeAlert({ text: 'Member not found.', variant: 'danger' })
+            bw.makeAlert({ content: 'Member not found.', variant: 'danger' })
           ]
         };
       }
@@ -246,7 +246,7 @@
     function notFoundView() {
       return {
         t: 'div', a: { class: 'app-shell' }, c: [
-          bw.makeAlert({ text: 'Page not found.', variant: 'danger' }),
+          bw.makeAlert({ content: 'Page not found.', variant: 'danger' }),
           bw.link('/', 'Go to Overview')
         ]
       };

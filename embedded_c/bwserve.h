@@ -171,7 +171,7 @@ extern "C" {
  * A minimal HTML page that loads bitwrench and connects to the SSE stream.
  * The ESP32 serves this as the homepage. Two options:
  *
- * 1. SELF-CONTAINED: bitwrench.js is inlined (bigger, ~95KB, no extra files)
+ * 1. SELF-CONTAINED: bitwrench.js is inlined (bigger, ~150KB, no extra files)
  * 2. SEPARATE FILES: tiny bootstrap, bitwrench served from /bitwrench.umd.min.js
  * ======================================================================== */
 

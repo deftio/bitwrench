@@ -68,7 +68,7 @@ Testing:
 ## P2.5: Bundle Size Management
 
 Current sizes (v2.0.19):
-- **bitwrench.umd.min.js** (full): **~38KB gzipped** -- under 45KB budget
+- **bitwrench.umd.min.js** (full): **~40KB gzipped** -- under 45KB budget
 - Savings from ComponentHandle removal: ~5KB
 - **~7KB headroom** -- comfortable margin
 

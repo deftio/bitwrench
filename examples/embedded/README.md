@@ -42,16 +42,16 @@ Install via Library Manager:
 1. **Prepare SPIFFS data folder** (`data/`):
    ```
    data/
-     index.html              ← this example's index.html
-     bitwrench.umd.min.js    ← from dist/
-     bitwrench.css           ← from dist/
+     index.html                  ← this example's index.html
+     bitwrench.umd.min.js.gz    ← gzip -k dist/bitwrench.umd.min.js
    ```
 
    Edit `index.html` to use local paths:
    ```html
    <script src="/bitwrench.umd.min.js"></script>
-   <link rel="stylesheet" href="/bitwrench.css">
    ```
+   ESPAsyncWebServer automatically serves `.gz` files for requests
+   matching the uncompressed name.
 
 2. **Edit `sketch.ino`**: Set `WIFI_SSID` and `WIFI_PASSWORD`.
 
@@ -82,14 +82,33 @@ ESP32                           Browser
 
 ## Memory Budget
 
-| Item | Size |
-|------|------|
-| HTML page | ~5 KB |
-| bitwrench.umd.min.js | ~95 KB |
-| bitwrench.css | ~12 KB |
-| **Total SPIFFS** | **~112 KB** |
+ESPAsyncWebServer serves `.gz` files transparently -- store
+`bitwrench.umd.min.js.gz` on SPIFFS and the browser decompresses
+automatically. This is the recommended setup:
+
+| Item | On-disk (SPIFFS) |
+|------|-----------------|
+| index.html | ~5 KB |
+| bitwrench.umd.min.js.gz | ~40 KB |
+| **Total SPIFFS** | **~45 KB** |
 | ESP32 SPIFFS partition | 1.5 MB |
 | Free heap (runtime) | ~240 KB |
+
+To create the gzipped file:
+```bash
+gzip -k dist/bitwrench.umd.min.js
+# produces bitwrench.umd.min.js.gz (~40KB)
+```
+
+If you prefer serving uncompressed (simpler setup, uses more flash):
+
+| Item | On-disk (SPIFFS) |
+|------|-----------------|
+| index.html | ~5 KB |
+| bitwrench.umd.min.js | ~150 KB |
+| **Total SPIFFS** | **~155 KB** |
+
+Either way, it fits easily in the 1.5MB SPIFFS partition.
 
 ## cmake Demo (No Hardware Required)
 

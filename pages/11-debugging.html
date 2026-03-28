@@ -166,6 +166,16 @@
             ]
           }),
 
+          callout('concept', 'Built-in debug toolkit (bwd)', {
+            t: 'div', c: [
+              { t: 'p', c: bw.raw('Paste this one-liner in any browser console to get a full debug toolkit -- DOM tree visualization, state inspector, event listener, and screenshot capture:') },
+              consoleBlock([
+                'var s=document.createElement(\'script\');s.src=\'https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench-debug.min.js\';document.head.appendChild(s);'
+              ]),
+              { t: 'p', c: bw.raw('This gives you <code>bwd.tree()</code>, <code>bwd.state()</code>, <code>bwd.listen()</code>, and <code>bwd.screenshot()</code> -- comparable to React DevTools, with zero install. <a href="#section-bwd">Full reference below</a>.') }
+            ]
+          }),
+
           callout('tip', 'Compare with React DevTools', {
             t: 'table', a: { class: 'api-table' },
             c: [
@@ -784,7 +794,7 @@
     // =========================================================================
 
     var section9 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'demo-section', id: 'section-bwd' },
       c: [
         { t: 'h2', c: 'Debug Toolkit: bwd' },
         { t: 'div', a: { class: 'demo-section-body' }, c: [
@@ -878,14 +888,14 @@
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
           { t: 'h1', c: 'Debugging & Inspection' },
-          { t: 'p', a: { class: 'subtitle' }, c: 'Console debugging, o.state + o.render, bw.update(), bw.patch(), and building custom components.' }
+          { t: 'p', a: { class: 'subtitle' }, c: 'Paste one line to inspect any bitwrench page. No extensions, no build tools -- the browser IS your DevTools.' }
         ]
       }
     };
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [section0, section1, section2, section3, section4, section5, section6, section7, section8, section9]
+      c: [section0, section9, section1, section2, section3, section4, section5, section6, section7, section8]
     };
 
     bw.DOM('#app', [pageHeader, contentWrapper]);

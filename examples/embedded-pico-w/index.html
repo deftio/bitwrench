@@ -20,7 +20,7 @@
     //   GET  /events         — SSE stream of sensor updates
     //
     // MicroPython on the Pico W serves files from flash (~2MB).
-    // bitwrench.umd.min.js (~42KB) fits easily.
+    // bitwrench.umd.min.js.gz (~40KB) fits easily.
     //
     // SIMULATION: All state is local. Replace mock functions with
     // fetch()/EventSource to connect to real hardware.
@@ -134,11 +134,11 @@
               bw.makeProgress({ value: duty, label: duty + '%', variant: 'info' }),
               { t: 'div', a: { class: 'bw_mt_1' }, c: [
                 bw.makeButtonGroup({
-                  buttons: [
-                    { text: '0%', size: 'sm', variant: duty === 0 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 0); } },
-                    { text: '25%', size: 'sm', variant: duty === 25 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 25); } },
-                    { text: '50%', size: 'sm', variant: duty === 50 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 50); } },
-                    { text: '100%', size: 'sm', variant: duty === 100 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 100); } }
+                  children: [
+                    bw.makeButton({ text: '0%', size: 'sm', variant: duty === 0 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 0); } }),
+                    bw.makeButton({ text: '25%', size: 'sm', variant: duty === 25 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 25); } }),
+                    bw.makeButton({ text: '50%', size: 'sm', variant: duty === 50 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 50); } }),
+                    bw.makeButton({ text: '100%', size: 'sm', variant: duty === 100 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 100); } })
                   ]
                 })
               ]}
@@ -177,15 +177,15 @@
             children: [
               bw.makeCol({ size: { xs: 12, md: 4 }, content: ledSection }),
               bw.makeCol({ size: { xs: 12, md: 8 }, content:
-                bw.makeSection({ title: 'ADC Channels (12-bit, 0\u20133.3V)', children: [bw.makeRow({ children: adcCards })] })
+                bw.makeSection({ title: 'ADC Channels (12-bit, 0\u20133.3V)', content: [bw.makeRow({ children: adcCards })] })
               })
             ]
           }),
-          bw.makeSection({ title: 'PWM Outputs', children: [bw.makeRow({ children: pwmControls })] }),
-          bw.makeSection({ title: 'Digital Inputs (GP4\u2013GP7)', children: [diTable] }),
+          bw.makeSection({ title: 'PWM Outputs', content: [bw.makeRow({ children: pwmControls })] }),
+          bw.makeSection({ title: 'Digital Inputs (GP4\u2013GP7)', content: [diTable] }),
           bw.makeSection({
             title: 'Event Log',
-            children: [bw.makeListGroup({
+            content: [bw.makeListGroup({
               items: logEntries.length ? logEntries : ['Waiting for events...']
             })]
           })

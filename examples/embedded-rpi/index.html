@@ -232,21 +232,21 @@
           }),
           bw.makeSection({
             title: 'GPIO Controls',
-            children: [bw.makeRow({ children: gpioCards })]
+            content: [bw.makeRow({ children: gpioCards })]
           }),
           bw.makeRow({
             children: [
               bw.makeCol({ size: { xs: 12, md: 6 }, content:
-                bw.makeSection({ title: 'Processes', children: [procTable] })
+                bw.makeSection({ title: 'Processes', content: [procTable] })
               }),
               bw.makeCol({ size: { xs: 12, md: 6 }, content:
-                bw.makeSection({ title: 'System Info', children: [infoTable] })
+                bw.makeSection({ title: 'System Info', content: [infoTable] })
               })
             ]
           }),
           bw.makeSection({
             title: 'Event Log',
-            children: [bw.makeListGroup({
+            content: [bw.makeListGroup({
               items: logEntries.length ? logEntries : ['Waiting for events...']
             })]
           })

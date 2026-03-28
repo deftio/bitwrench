@@ -48,8 +48,8 @@ my_project/
   bitwrench.h      ← from embedded_c/
   bwserve.h        ← from embedded_c/
   data/
-    index.html     ← the dashboard page
-    bitwrench.umd.min.js  ← from dist/
+    index.html                 ← the dashboard page
+    bitwrench.umd.min.js.gz   ← gzip -k dist/bitwrench.umd.min.js
 ```
 
 ### With PlatformIO
@@ -61,8 +61,11 @@ lib/
     bwserve.h
 data/
   index.html
-  bitwrench.umd.min.js
+  bitwrench.umd.min.js.gz
 ```
+
+Store the gzipped file on flash (~40KB instead of ~150KB). ESPAsyncWebServer
+serves `.gz` files transparently -- the browser decompresses automatically.
 
 ## Step 2: Write the Arduino sketch
 
@@ -229,7 +232,7 @@ Create `data/index.html`:
 </html>
 ```
 
-This page is ~2KB. With bitwrench.umd.min.js (~95KB), the total SPIFFS usage is ~97KB out of 1.5MB available.
+This page is ~2KB. With bitwrench.umd.min.js.gz (~40KB), the total SPIFFS usage is ~42KB out of 1.5MB available. ESPAsyncWebServer serves `.gz` files transparently -- the browser decompresses automatically.
 
 ## Step 4: Upload and test
 
@@ -258,11 +261,14 @@ Same protocol, same macros, simulated sensors. Copy the pattern to your real ske
 | Item | Size |
 |------|------|
 | Dashboard HTML | ~2 KB |
-| bitwrench.umd.min.js | ~95 KB |
-| **Total SPIFFS** | **~97 KB** |
+| bitwrench.umd.min.js.gz | ~40 KB |
+| **Total SPIFFS** | **~42 KB** |
 | ESP32 SPIFFS partition | 1.5 MB |
 | Free heap (runtime) | ~240 KB |
 | SSE frame per update | ~200 bytes |
+
+Store gzipped: `gzip -k dist/bitwrench.umd.min.js`. ESPAsyncWebServer
+serves `.gz` files transparently for the matching uncompressed filename.
 
 ## The r-prefix relaxed JSON
 

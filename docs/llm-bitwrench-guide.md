@@ -329,7 +329,7 @@ bw.u.css('p4 shadow')  // includes your custom token
 
 ## Step 6: BCCL Components
 
-**Bitwrench ships 47+ ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
+**Bitwrench ships 50+ ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
 
 ### Most-Used Components
 
@@ -669,4 +669,4 @@ Replaced by `o.handle` + `o.slots` + `bw.mount()`. See Step 4.
 
 ---
 
-*Bitwrench: 39KB gzipped, zero dependencies, no build step. [github.com/deftio/bitwrench](https://github.com/deftio/bitwrench)*
+*Bitwrench: 40KB gzipped, zero dependencies, no build step. [github.com/deftio/bitwrench](https://github.com/deftio/bitwrench)*

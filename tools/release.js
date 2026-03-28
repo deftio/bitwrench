@@ -202,7 +202,6 @@ if (staged.length === 0) {
 } else {
   console.log(`  Staging: ${staged.split('\n').length} files`);
   run(`git commit -m "v${version} release"`);
-  run('git push');
 }
 
 // ── 9. Summary ──────────────────────────────────────────────────────────
@@ -214,7 +213,7 @@ if (branch === 'main') {
   Version:  ${version}
   Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
 
-  Pushed to main. CI will:
+  Committed on main. Push when ready — CI will:
     • Run tests on Node 20/22/24
     • Create git tag v${version}
     • Create GitHub Release with dist assets
@@ -228,8 +227,8 @@ if (branch === 'main') {
   Branch:   ${branch}
   Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
 
-  Pushed to ${branch}. Next steps:
-    git checkout main && git merge ${branch} && git push origin main
+  Committed on ${branch}. Next steps:
+    git checkout main && git merge --squash ${branch} && git commit -m "v${version}: <description>" && git push origin main
 
   After push to main, CI will handle tagging + npm publish.
   Watch CI: https://github.com/deftio/bitwrench/actions

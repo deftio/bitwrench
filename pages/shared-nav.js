@@ -18,7 +18,7 @@
     { text: 'Learn', href: '00-quick-start.html' },
     { text: 'Examples', href: '04-dashboard.html' },
     { text: 'Server', href: '12-bwserve-protocol.html' },
-    { text: 'Downloads', href: '09-builds.html' },
+    { text: 'Downloads', href: '09-downloads.html' },
     { text: 'Docs', href: '08-api-reference.html' }
   ];
 
@@ -42,7 +42,7 @@
     { text: 'Tic Tac Toe', href: '06-tic-tac-toe-tutorial.html' },
     { text: 'Comparison', href: '07-framework-comparison.html' },
     { text: 'Pages & Routing', href: '15-multi-page-site.html' },
-    { text: 'App Gallery', href: '../examples/' }
+    { text: 'More Examples', href: '../examples/' }
   ];
 
   // Docs sub-nav

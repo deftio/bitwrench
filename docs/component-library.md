@@ -911,7 +911,6 @@ renderTable();
 ```
 
 When `pageSize` is set, the table is wrapped in a container with Prev/Next controls and a page indicator. The `onRowClick` index is the global index into the full dataset, not the page-local index.
-```
 
 ### makeTableFromArray
 

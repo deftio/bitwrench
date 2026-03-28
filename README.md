@@ -28,7 +28,7 @@ Each object has four keys: **t** (tag), **a** (attributes), **c** (content), **o
 
 ### Why bitwrench?
 
-**One file, everywhere.** At ~38KB gzipped with zero dependencies, bitwrench runs on anything with a browser -- phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.
+**One file, everywhere.** At ~40KB gzipped with zero dependencies, bitwrench runs on anything with a browser -- phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.
 
 Structure, styling, state, and server rendering are all handled as JavaScript objects:
 
@@ -37,8 +37,9 @@ Structure, styling, state, and server rendering are all handled as JavaScript ob
 - **CSS from JavaScript** -- `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.loadStyles()` derives a complete design system from 2 seed colors
 - **Reactive state** -- `o.state` + `o.render` + `bw.update()` for stateful components; `bw.pub()`/`bw.sub()` for cross-component messaging
 - **Dual rendering** -- same object renders to live DOM (`bw.DOM()`) or HTML string (`bw.html()`) for SSR, emails, or static sites
-- **Server-driven UI** -- push UI updates from any backend (Python, C, Rust, Go) over SSE; `client.screenshot()` captures the page back as PNG/JPEG
+- **Server-driven UI** -- push UI updates from any backend (Python, C, Rust, Go) over SSE via the biwrench bwserve protocol; `client.screenshot()` captures the page back as PNG/JPEG
 - **CLI** -- `bwcli` converts Markdown, HTML, and JSON to styled standalone pages
+- **Debug tools** -- live client and server debugging with remote incremental inspect, screenshots, and state updates
 - **Utilities** -- color interpolation, random data, lorem ipsum, cookies, URL params, file I/O
 
 
@@ -298,7 +299,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 ## FAQ
 
-**Is this a framework?** -- No. Bitwrench is a library (~38KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.
+**Is this a framework?** -- No. Bitwrench is a library (~40KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.
 
 **How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine -- use whichever fits the job.
 

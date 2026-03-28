@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.0.22",
+	"version": "2.0.23",
 	"description": "A library for javascript UI functions.",
 	"main": "./dist/bitwrench.umd.js",
 	"repository": {
@@ -13,7 +13,8 @@
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
 	"bin": {
-		"bwcli": "./bin/bwcli.js"
+		"bwcli": "./bin/bwcli.js",
+		"bwmcp": "./bin/bwmcp.js"
 	},
 	"type": "module",
 	"module": "./dist/bitwrench.esm.js",
@@ -36,16 +37,21 @@
 		"./bwserve": {
 			"import": "./dist/bwserve.esm.js",
 			"require": "./dist/bwserve.cjs.js"
+		},
+		"./mcp": {
+			"import": "./src/mcp/server.js"
 		}
 	},
 	"types": "./dist/bitwrench.d.ts",
 	"files": [
 		"dist/*.js",
+		"dist/*.js.gz",
 		"dist/*.css",
 		"dist/*.json",
 		"dist/*.d.ts",
 		"bin/",
 		"src/",
+		"docs/",
 		"README.md",
 		"LICENSE.txt"
 	],
@@ -95,7 +101,7 @@
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js -r jsdom-global/register",
+		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js -r jsdom-global/register",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
 		"test:attach": "mocha ./test/bitwrench_test_attach.js -r jsdom-global/register",
 		"test:serve": "mocha ./test/bitwrench_test_serve.js -r jsdom-global/register --exit",
@@ -117,6 +123,8 @@
 		"test:router": "mocha ./test/bitwrench_test_router.js -r jsdom-global/register",
 		"test:code-edit": "mocha ./test/bitwrench_test_code_edit.js -r jsdom-global/register",
 		"test:html-page": "mocha ./test/bitwrench_test_html_page.js -r jsdom-global/register",
+		"test:mcp": "mocha ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js -r jsdom-global/register --exit",
+		"test:mcp:e2e": "mocha ./test/bitwrench_test_mcp_e2e.js --exit --timeout 15000",
 		"test:e2e": "playwright test",
 		"test:e2e:headed": "playwright test --headed",
 		"test:e2e:debug": "playwright test --debug",

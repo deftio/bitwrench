@@ -211,11 +211,10 @@
     };
 
     // -- Feature grid ------------------------------------------------------
-    var features = bw.makeSection({
+    var features = { t: 'div', a: { id: 'features' }, c: bw.makeSection({
       title: 'Everything Your Data Team Needs',
       subtitle: 'From raw events to board-ready reports in minutes.',
-      id: 'features',
-      children: [
+      content: [
         bw.makeFeatureGrid({
           columns: 3,
           features: [
@@ -228,7 +227,7 @@
           ]
         })
       ]
-    });
+    }) };
 
     // -- Pricing table -----------------------------------------------------
     var pricing = {
@@ -313,10 +312,9 @@
     };
 
     // -- FAQ ---------------------------------------------------------------
-    var faq = bw.makeSection({
+    var faq = { t: 'div', a: { id: 'faq' }, c: bw.makeSection({
       title: 'Frequently Asked Questions',
-      id: 'faq',
-      children: [
+      content: [
         { t: 'div', a: { class: 'sf-faq' }, c:
           bw.makeAccordion({ multiOpen: false, items: [
             { title: 'How long does setup take?', content: 'Most teams are running dashboards within 30 minutes. Connect your data source, and SunForge auto-discovers your schema and suggests visualizations.' },
@@ -328,14 +326,13 @@
           ]})
         }
       ]
-    });
+    }) };
 
     // -- Contact form ------------------------------------------------------
-    var contact = bw.makeSection({
+    var contact = { t: 'div', a: { id: 'contact' }, c: bw.makeSection({
       title: 'Get in Touch',
       subtitle: 'Questions? Demo request? We respond within 4 hours.',
-      id: 'contact',
-      children: [{
+      content: [{
         t: 'div', a: { class: 'sf-contact' },
         c: bw.makeForm({
           onsubmit: function(e) {
@@ -364,7 +361,7 @@
           ]
         })
       }]
-    });
+    }) };
 
     // -- CTA section -------------------------------------------------------
     var cta = {

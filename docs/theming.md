@@ -229,7 +229,7 @@ theme.alternate.palette;     // light-inverted version of ocean
 bw.toggleStyles();
 ```
 
-The toggle works by adding or removing the CSS class `.bw-theme-alt` on the `<html>` element. Both primary and alternate stylesheets are injected at theme generation time, so switching is instant -- no re-generation needed.
+The toggle works by adding or removing the CSS class `.bw_theme_alt` on the `<html>` element. Both primary and alternate stylesheets are injected at theme generation time, so switching is instant -- no re-generation needed.
 
 ### Clearing a theme
 

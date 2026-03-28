@@ -136,7 +136,7 @@ funnel, not a general doc):
 BITWRENCH QUICK ORIENTATION
 ============================
 
-Bitwrench is a zero-dependency JS UI library (~39KB gzipped). You
+Bitwrench is a zero-dependency JS UI library (~40KB gzipped). You
 generate UI by composing TACO objects -- plain JSON:
 
   {t: 'div', a: {class: 'bw_card'}, c: 'Hello'}

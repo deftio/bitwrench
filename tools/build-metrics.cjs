@@ -170,18 +170,25 @@ async function main() {
     totalGzipBytes += minGzipBytes;
   }
 
-  // Measure dist bundles
+  // Measure dist bundles and emit .gz files for minified builds
   var bundles = [];
+  var gzCount = 0;
   for (var j = 0; j < BUNDLE_FILES.length; j++) {
     var bundleFile = BUNDLE_FILES[j];
     var bundlePath = path.join(ROOT, 'dist', bundleFile);
     try {
       var bundleBuf = fs.readFileSync(bundlePath);
+      var gzBuf = zlib.gzipSync(bundleBuf, { level: 9 });
       bundles.push({
         file: bundleFile,
         bytes: bundleBuf.length,
-        gzipBytes: gzipSize(bundleBuf)
+        gzipBytes: gzBuf.length
       });
+      // Write .gz file for minified JS bundles (useful for embedded/SPIFFS)
+      if (bundleFile.indexOf('.min.js') !== -1) {
+        fs.writeFileSync(bundlePath + '.gz', gzBuf);
+        gzCount++;
+      }
     } catch (e) {
       // skip missing bundles
     }
@@ -332,7 +339,8 @@ async function main() {
     }
   }
 
-  console.log('\nAppended to ' + JSONL_PATH);
+  console.log('\nWrote ' + gzCount + ' .gz files to dist/ (for embedded/SPIFFS)');
+  console.log('Appended to ' + JSONL_PATH);
 }
 
 function pad(str, len) {

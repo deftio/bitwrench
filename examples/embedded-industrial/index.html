@@ -163,13 +163,13 @@
           { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: '\uD83C\uDFED Industrial HMI Panel' },
 
           // Alarms
-          bw.makeSection({ title: 'Alarms', children: alarmSection }),
+          bw.makeSection({ title: 'Alarms', content: alarmSection }),
 
           // Process variables
-          bw.makeSection({ title: 'Process Variables', children: [bw.makeRow({ children: gauges })] }),
+          bw.makeSection({ title: 'Process Variables', content: [bw.makeRow({ children: gauges })] }),
 
           // Controls
-          bw.makeSection({ title: 'Equipment Controls', children: [controlPanel] })
+          bw.makeSection({ title: 'Equipment Controls', content: [controlPanel] })
         ]
       }));
     }

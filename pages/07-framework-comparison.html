@@ -2543,7 +2543,7 @@
         { feature: 'State management', htmljs: 'Manual variables', react: 'useState / Redux',   vue: 'ref / Pinia',    svelte: 'let / stores',   bootstrap: 'Manual variables',  solidjs: 'createSignal / stores', bitwrench: 'o.state + o.render / bw.update()' },
         { feature: 'CSS generation',   htmljs: 'Manual / SASS',    react: 'CSS-in-JS / styled', vue: 'Scoped <style>', svelte: 'Scoped <style>', bootstrap: 'Utility classes',   solidjs: 'CSS-in-JS / styled',  bitwrench: 'bw.css() from JS objects' },
         { feature: 'Data to UI',        htmljs: 'Manual DOM ops',   react: '.map() in JSX',     vue: 'v-for directive', svelte: '{#each} block',  bootstrap: 'Manual DOM ops',    solidjs: '<For> component',     bitwrench: '.map() in objects' },
-        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~44 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bootstrap: '~25 KB CSS',       solidjs: '~7 KB',               bitwrench: '~39 KB' },
+        { feature: 'Bundle size',       htmljs: '0 KB',             react: '~44 KB',            vue: '~33 KB',         svelte: '~5 KB (compiled)', bootstrap: '~25 KB CSS',       solidjs: '~7 KB',               bitwrench: '~40 KB' },
         { feature: 'Server-side JSON',  htmljs: 'No',               react: 'No',                vue: 'No',             svelte: 'No',             bootstrap: 'No',                solidjs: 'No',                  bitwrench: bw.raw('Yes &mdash; any language') }
       ];
 
@@ -2603,7 +2603,7 @@
         { op: 'Form input binding',      react: 'value={x} onChange={...}',                     vue: 'v-model="x"',                              vanilla: 'input.value',                              svelte: 'bind:value={x}',                       solid: 'value={x()} onInput={...}',              bw: "a: { value: x, oninput: fn } or bw.$('#id')[0].value" },
         { op: 'Theme / design tokens',   react: 'ThemeProvider / CSS vars',                     vue: 'CSS vars / provide',                       vanilla: 'CSS custom properties',                    svelte: 'CSS vars',                             solid: 'CSS vars / createContext',               bw: "bw.loadStyles({ primary: '#hex' })" },
         { op: 'Build step required',     react: 'Yes (Babel/Vite/webpack)',                     vue: 'Yes (Vite or Vue CLI)',                    vanilla: 'No',                                       svelte: 'Yes (Svelte compiler)',                solid: 'Yes (Vite/Babel)',                       bw: 'No' },
-        { op: 'Bundle size',             react: '~44 KB (React + ReactDOM)',                    vue: '~33 KB (Vue 3)',                           vanilla: '0 KB',                                     svelte: '~5 KB (runtime)',                      solid: '~7 KB',                                  bw: '~39 KB (includes 50+ components + CSS gen)' }
+        { op: 'Bundle size',             react: '~44 KB (React + ReactDOM)',                    vue: '~33 KB (Vue 3)',                           vanilla: '0 KB',                                     svelte: '~5 KB (runtime)',                      solid: '~7 KB',                                  bw: '~40 KB (includes 50+ components + CSS gen)' }
       ];
 
       var headers = ['Operation', 'React', 'Vue 3', 'Vanilla JS', 'Svelte 5', 'SolidJS', 'Bitwrench'];
