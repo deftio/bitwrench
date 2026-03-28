@@ -1,4 +1,4 @@
-/*! bitwrench v2.0.23 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench v2.0.24 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -12,14 +12,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.23',
+    version: '2.0.24',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-28T09:05:35.035Z'
+    buildDate: '2026-03-28T09:10:48.863Z'
   };
 
   /**
