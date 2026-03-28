@@ -63,7 +63,7 @@
 		"@babel/preset-env": "^7.25.3",
 		"@babel/preset-react": "^7.24.7",
 		"@playwright/test": "^1.54.1",
-		"@rollup/plugin-babel": "^6.0.4",
+		"@rollup/plugin-babel": "^7.0.0",
 		"@rollup/plugin-commonjs": "^26.0.1",
 		"@rollup/plugin-node-resolve": "^15.2.3",
 		"@rollup/plugin-terser": "^1.0.0",
