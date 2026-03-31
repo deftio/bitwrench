@@ -71,7 +71,7 @@
 		"@rollup/plugin-node-resolve": "^15.2.3",
 		"@rollup/plugin-terser": "^1.0.0",
 		"c8": "^8.0.1",
-		"chai": "^3.0.0",
+		"chai": "^6.2.2",
 		"comment-parser": "^1.4.5",
 		"eslint": "^8.28.0",
 		"jsdom": "^25.0.0",
