@@ -6,8 +6,8 @@
   <title>Bitwrench - bwserve Sandbox</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
@@ -15,7 +15,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('14-bwserve-sandbox.html');
+    var styles = initBitwrenchPage('14-bwserve-sandbox.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Preset examples
@@ -451,7 +452,7 @@
         t: 'span', c: [
           { t: 'span', a: { style: 'color:#1a7a6e;font-weight:600' }, c: 'S\u2192C: ' },
           logStats.serverMsgs + ' msgs, ' + fmt(logStats.serverBytes) + ', avg ' + avg(logStats.serverBytes, logStats.serverMsgs) + '/msg',
-          { t: 'span', a: { style: 'margin:0 12px;color:var(--bw_text_muted)' }, c: '|' },
+          { t: 'span', a: { style: 'margin:0 12px;color:#666' }, c: '|' },
           { t: 'span', a: { style: 'color:#c45a2a;font-weight:600' }, c: 'C\u2192S: ' },
           logStats.clientMsgs + ' msgs, ' + fmt(logStats.clientBytes) + ', avg ' + avg(logStats.clientBytes, logStats.clientMsgs) + '/msg'
         ]
@@ -465,7 +466,7 @@
       if (logEl) {
         logEl.innerHTML = '';
         logEl.appendChild(bw.createDOM({
-          t: 'div', a: { class: 'log-placeholder', style: 'color:var(--bw_text_muted);font-size:0.8rem' },
+          t: 'div', a: { class: 'log-placeholder', style: 'color:#666;font-size:0.8rem' },
           c: '// Protocol messages will appear here after you click Run...'
         }));
       }
@@ -766,7 +767,7 @@
 
     // Page header — same pattern as all other pages
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
+      t: 'div', a: { class: 'bw_site_pages_header' },
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
         c: [
@@ -781,13 +782,13 @@
       t: 'div', a: { class: 'content-container wide' }, c: [
         // Preset bar
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
             {
-              t: 'div', a: { class: 'demo-section-body' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'div', a: { style: 'display:flex;gap:6px;flex-wrap:wrap;align-items:center' },
                   c: [
-                    { t: 'span', a: { style: 'font-weight:600;margin-right:4px;color:var(--bw_text_secondary)' }, c: 'Presets:' }
+                    { t: 'span', a: { style: 'font-weight:600;margin-right:4px;color:#444' }, c: 'Presets:' }
                   ].concat(presetButtons)
                 }
               ]
@@ -797,17 +798,17 @@
 
         // Main layout: editor + client viewport
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
             {
-              t: 'div', a: { class: 'demo-section-body', style: 'padding:0' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body', style: 'padding:0' }, c: [
                 {
                   t: 'div', a: { id: 'sandbox-main', style: 'display:flex;gap:0;height:60vh;min-height:400px' }, c: [
                     // Left: code editor
                     {
-                      t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--bw_card_border)' }, c: [
+                      t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid #d8d8d8' }, c: [
                         {
-                          t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bw_teal_light);border-bottom:1px solid var(--bw_card_border)' }, c: [
-                            { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:var(--bw_teal_dark)' }, c: 'Server Code' },
+                          t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#e0f2f1;border-bottom:1px solid #d8d8d8' }, c: [
+                            { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:#004d4d' }, c: 'Server Code' },
                             { t: 'div', a: { style: 'display:flex;gap:4px' }, c: [
                               {
                                 t: 'button',
@@ -859,9 +860,9 @@
                     {
                       t: 'div', a: { style: 'flex:1;display:flex;flex-direction:column;min-width:0' }, c: [
                         {
-                          t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bw_teal_light);border-bottom:1px solid var(--bw_card_border)' }, c: [
-                            { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:var(--bw_teal_dark)' }, c: 'Client View' },
-                            { t: 'span', a: { id: 'sandbox-status', style: 'font-size:0.8rem;color:var(--bw_text_muted)' }, c: 'Ready' }
+                          t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#e0f2f1;border-bottom:1px solid #d8d8d8' }, c: [
+                            { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:#004d4d' }, c: 'Client View' },
+                            { t: 'span', a: { id: 'sandbox-status', style: 'font-size:0.8rem;color:#666' }, c: 'Ready' }
                           ]
                         },
                         {
@@ -883,14 +884,14 @@
 
         // Protocol log
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Protocol Messages' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Protocol Messages' },
             {
-              t: 'div', a: { class: 'demo-section-body' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 // Stats bar + controls
                 {
                   t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.8rem' }, c: [
-                    { t: 'span', a: { id: 'log-stats', style: 'color:var(--bw_text_muted)' }, c: 'No messages yet' },
+                    { t: 'span', a: { id: 'log-stats', style: 'color:#666' }, c: 'No messages yet' },
                     { t: 'div', a: { style: 'display:flex;gap:4px' }, c: [
                       { t: 'button', a: {
                         class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
@@ -905,7 +906,7 @@
                 },
                 // Legend
                 {
-                  t: 'div', a: { style: 'display:flex;gap:16px;margin-bottom:8px;font-size:0.7rem;color:var(--bw_text_muted)' }, c: [
+                  t: 'div', a: { style: 'display:flex;gap:16px;margin-bottom:8px;font-size:0.7rem;color:#666' }, c: [
                     { t: 'span', c: [
                       { t: 'span', a: { style: 'display:inline-block;width:10px;height:10px;background:#2a9d8f;border-radius:2px;margin-right:4px;vertical-align:middle' } },
                       'S\u2192C Server to Client'
@@ -920,10 +921,10 @@
                 {
                   t: 'div', a: {
                     id: 'protocol-log',
-                    style: 'max-height:300px;overflow-y:auto;background:#fafafa;border:1px solid #e0e0e0;padding:8px;border-radius:var(--bw_radius)'
+                    style: 'max-height:300px;overflow-y:auto;background:#fafafa;border:1px solid #e0e0e0;padding:8px;border-radius:8px'
                   },
                   c: {
-                    t: 'div', a: { class: 'log-placeholder', style: 'color:var(--bw_text_muted);font-size:0.8rem;padding:4px' },
+                    t: 'div', a: { class: 'log-placeholder', style: 'color:#666;font-size:0.8rem;padding:4px' },
                     c: '// Protocol messages will appear here after you click Run...'
                   }
                 }
@@ -934,13 +935,13 @@
 
         // How it works
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'How It Works' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How It Works' },
             {
-              t: 'div', a: { class: 'demo-section-body' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
-                  t: 'div', a: { class: 'callout callout-concept' }, c: [
-                    { t: 'h4', c: 'Client-side simulation' },
+                  t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+                    { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Client-side simulation' },
                     { t: 'p', c: [
                       'No real server is running. Your code executes in the browser with a mock ',
                       { t: 'code', c: 'client' },
@@ -1006,7 +1007,7 @@
           'flex': '0 0 auto !important',
           'min-height': '300px',
           'border-right': 'none !important',
-          'border-bottom': '1px solid var(--bw_card_border) !important'
+          'border-bottom': '1px solid #d8d8d8 !important'
         }
       }
     }), { id: 'sandbox-responsive' });

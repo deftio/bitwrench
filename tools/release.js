@@ -125,6 +125,9 @@ step('4. Tests');
 run('npm test');
 run('npm run test:cli');
 
+// Update coverage badge in README from json-summary produced by npm test
+run('node tools/update-coverage-badge.js');
+
 // ── 5. Version consistency check ────────────────────────────────────────
 
 step('5. Version consistency');
@@ -183,7 +186,8 @@ const filesToStage = [
   'dist/',
   'releases/v2/',
   'readme.html',
-  'pages/08-api-reference.html'
+  'pages/08-api-reference.html',
+  'README.md'
 ];
 
 // Stage only files that exist and have changes

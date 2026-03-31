@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.0.24 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.0.25 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 /**
  * Bitwrench v2 Components
  *

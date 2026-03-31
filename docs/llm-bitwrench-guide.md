@@ -329,7 +329,7 @@ bw.u.css('p4 shadow')  // includes your custom token
 
 ## Step 6: BCCL Components
 
-**Bitwrench ships 50+ ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
+**Bitwrench ships ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
 
 ### Most-Used Components
 
@@ -659,6 +659,33 @@ bwcli serve                                   # dev server (port 7902)
 10. **Routing is built in** -- `bw.router()` for SPAs. Hash mode by default, history mode optional.
 11. **Use `bw.mount()` + `el.bw`** for targeted updates. `o.handle` for methods, `o.slots` for content areas. Avoids re-render side effects (lost focus, scroll reset).
 12. **Debug**: `bw.inspect(el)`, `el._bw_state`, `bwcli attach` for remote REPL.
+
+---
+
+## TypeScript
+
+Full type declarations ship with the package (`dist/bitwrench.d.ts`). No `@types`
+package needed.
+
+```typescript
+import bw from 'bitwrench';
+import type { Taco, TacoOptions, StyleConfig, Palette } from 'bitwrench';
+
+// TACO objects are fully typed
+var card: Taco = bw.makeCard({ title: 'Hello', content: 'World' });
+
+// Style configs get autocomplete
+var styles = bw.makeStyles({ primary: '#336699' } as StyleConfig);
+
+// Named BCCL imports for tree-shaking
+import { makeCard, makeTable, makeButton } from 'bitwrench/bccl';
+```
+
+Core types: `Taco`, `TacoContent`, `TacoAttributes`, `TacoOptions`, `StyleConfig`,
+`Palette`, `ColorShades`, `Styles`, `RouterConfig`. All component configs are
+typed (e.g. `CardConfig`, `ButtonConfig`, `TableConfig`).
+
+See [TypeScript Usage Guide](bitwrench_typescript_usage.md) for full details.
 
 ---
 

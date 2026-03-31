@@ -2478,7 +2478,8 @@ bw.applyStyles = function(styles, scope) {
  *
  * @param {Object} [config] - Style configuration (same as `makeStyles`)
  * @param {string} [scope] - Scope selector (same as `applyStyles`)
- * @returns {Element|null} The `<style>` element, or null in Node.js
+ * @returns {Object} The styles object (same as `makeStyles` return value:
+ *   `{css, alternateCss, palette, alternatePalette, rules, alternateRules, isLightPrimary}`)
  * @category CSS & Styling
  * @see bw.makeStyles
  * @see bw.applyStyles
@@ -2496,8 +2497,26 @@ bw.loadStyles = function(config, scope) {
       bw.injectCSS(structuralCSS, { id: 'bw_structural', append: false });
     }
   }
-  return bw.applyStyles(bw.makeStyles(config), scope);
+  var styles = bw.makeStyles(config);
+  bw.applyStyles(styles, scope);
+  return styles;
 };
+
+/**
+ * Prefix every selector in a rules object with a scope selector.
+ * Useful for wrapping site-level CSS under `.bw_theme_alt` for dark mode.
+ *
+ * @param {Object} rules - CSS rules object (selector -> declarations)
+ * @param {string} prefix - Scope prefix (e.g. '.bw_theme_alt')
+ * @returns {Object} New rules object with scoped selectors
+ * @category CSS & Styling
+ * @see bw.applyStyles
+ * @see bw.css
+ * @example
+ * var altRules = bw.scopeRulesUnder(myRules, '.bw_theme_alt');
+ * bw.injectCSS(bw.css(altRules));
+ */
+bw.scopeRulesUnder = scopeRulesUnder;
 
 /**
  * Inject the CSS reset (box-sizing, html/body font, reduced-motion).

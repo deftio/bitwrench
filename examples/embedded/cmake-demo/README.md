@@ -32,7 +32,7 @@ main.c
   |-- HTTP server (POSIX sockets, port 8080)
   |     GET /          → bootstrap HTML
   |     GET /events    → SSE stream (bwserve protocol)
-  |     POST /api/cmd  → command handler
+  |     POST /api/command  → command handler
   |
   |-- Sensor thread (simulated, updates every 2s)
   |     Generates random temperature, humidity, etc.
@@ -51,6 +51,13 @@ Copy the protocol logic (the `broadcast_sensor_update()` function pattern) to yo
 - `strstr()` command parsing → `ArduinoJson`
 
 The `bitwrench.h` and `bwserve.h` macros work identically on both platforms.
+
+## Demo Scope Notes
+
+- This demo focuses on wire-protocol flow, not hardened command security.
+- Command parsing in `main.c` is intentionally simple for readability.
+- Authentication/authorization is intentionally out of scope and should be
+  added in production deployments.
 
 ## Requirements
 

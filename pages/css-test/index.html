@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - CSS Test Page</title>
+  <link rel="icon" type="image/x-icon" href="../../images/favicon.ico">
+  <script src="../../dist/bitwrench.umd.min.js"></script>
+  <script src="../shared-nav.js"></script>
+  <script src="../site.js"></script>
+  <script src="../../dist/bitwrench-code-edit.umd.min.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    var styles = initBitwrenchPage('', '../');
+    var p = styles.palette;
+
+    // Theme switcher presets
+    var presets = bw.THEME_PRESETS || {};
+    var presetKeys = Object.keys(presets);
+
+    // =========================================================================
+    // Theme switcher controls
+    // =========================================================================
+    var themeSelect = {
+      t: 'div', a: { style: 'display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;' },
+      c: [
+        { t: 'label', a: { style: 'font-weight: 600;' }, c: 'Theme Preset: ' },
+        {
+          t: 'select',
+          a: {
+            id: 'theme-select',
+            class: 'bw_form_control',
+            style: 'min-width: 200px;',
+            onchange: function(e) {
+              var key = e.target.value;
+              var config = key === 'default' ? {} : presets[key];
+              var newStyles = bw.loadStyles(config);
+              applySiteChromeCSS(newStyles);
+            }
+          },
+          c: [{ t: 'option', a: { value: 'default' }, c: 'Default (Teal)' }].concat(
+            presetKeys.map(function(k) {
+              return { t: 'option', a: { value: k }, c: k.charAt(0).toUpperCase() + k.slice(1) };
+            })
+          )
+        },
+        bw.makeButton({
+          text: 'Toggle Dark Mode', variant: 'secondary', size: 'sm',
+          onclick: function() { bw.toggleStyles(); }
+        })
+      ]
+    };
+
+    // =========================================================================
+    // Component gallery sections
+    // =========================================================================
+
+    // Buttons
+    var buttonSection = site.makeDemoSection('buttons', 'Buttons',
+      'All button variants and sizes.',
+      {
+        t: 'div', c: [
+          { t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;' }, c: [
+            bw.makeButton({ text: 'Primary', variant: 'primary' }),
+            bw.makeButton({ text: 'Secondary', variant: 'secondary' }),
+            bw.makeButton({ text: 'Success', variant: 'success' }),
+            bw.makeButton({ text: 'Danger', variant: 'danger' }),
+            bw.makeButton({ text: 'Warning', variant: 'warning' }),
+            bw.makeButton({ text: 'Info', variant: 'info' })
+          ]},
+          { t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap;' }, c: [
+            bw.makeButton({ text: 'Outline Primary', variant: 'outline-primary' }),
+            bw.makeButton({ text: 'Outline Secondary', variant: 'outline-secondary' }),
+            bw.makeButton({ text: 'Outline Danger', variant: 'outline-danger' })
+          ]}
+        ]
+      }
+    );
+
+    // Cards
+    var cardSection = site.makeDemoSection('cards', 'Cards',
+      'Card variants with header, content, and footer.',
+      {
+        t: 'div', a: { class: 'bw_grid_3col' }, c: [
+          bw.makeCard({ title: 'Primary Card', content: 'Card content goes here.', variant: 'primary' }),
+          bw.makeCard({ title: 'Success Card', content: 'Success variant card.', variant: 'success' }),
+          bw.makeCard({ title: 'Info Card', content: 'Info variant card.', variant: 'info' })
+        ]
+      }
+    );
+
+    // Alerts
+    var alertSection = site.makeDemoSection('alerts', 'Alerts',
+      'Alert variants for notifications.',
+      {
+        t: 'div', c: [
+          bw.makeAlert({ content: 'Primary alert message.', variant: 'primary' }),
+          bw.makeAlert({ content: 'Success alert message.', variant: 'success' }),
+          bw.makeAlert({ content: 'Warning alert message.', variant: 'warning' }),
+          bw.makeAlert({ content: 'Danger alert message.', variant: 'danger' }),
+          bw.makeAlert({ content: 'Info alert message.', variant: 'info' })
+        ]
+      }
+    );
+
+    // Callouts
+    var calloutSection = site.makeDemoSection('callouts', 'Callouts',
+      'Concept, tip, and warning callouts used across docs.',
+      {
+        t: 'div', c: [
+          site.makeCallout('concept', 'Concept', 'This is a concept callout with a title.'),
+          site.makeCallout('tip', 'Tip', 'This is a tip callout with a title.'),
+          site.makeCallout('warning', 'Warning', 'This is a warning callout with a title.'),
+          site.makeCallout('concept', 'This is a 2-arg concept callout (no title, content only).')
+        ]
+      }
+    );
+
+    // Badges
+    var badgeSection = site.makeDemoSection('badges', 'Badges',
+      'Badge variants.',
+      {
+        t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap;' }, c: [
+          bw.makeBadge({ text: 'Primary', variant: 'primary' }),
+          bw.makeBadge({ text: 'Secondary', variant: 'secondary' }),
+          bw.makeBadge({ text: 'Success', variant: 'success' }),
+          bw.makeBadge({ text: 'Danger', variant: 'danger' }),
+          bw.makeBadge({ text: 'Warning', variant: 'warning' }),
+          bw.makeBadge({ text: 'Info', variant: 'info' })
+        ]
+      }
+    );
+
+    // Tables
+    var tableSection = site.makeDemoSection('tables', 'Tables',
+      'Data tables with sorting.',
+      bw.makeDataTable({
+        title: 'Sample Data',
+        data: [
+          { name: 'Alice', role: 'Engineer', status: 'Active' },
+          { name: 'Bob', role: 'Designer', status: 'Away' },
+          { name: 'Carol', role: 'PM', status: 'Active' }
+        ],
+        sortable: true, striped: true, hover: true
+      })
+    );
+
+    // Forms
+    var formSection = site.makeDemoSection('forms', 'Forms',
+      'Form inputs and controls.',
+      {
+        t: 'div', a: { style: 'max-width: 400px;' }, c: [
+          bw.makeFormGroup({ label: 'Text Input', type: 'text', placeholder: 'Enter text...' }),
+          bw.makeFormGroup({ label: 'Email', type: 'email', placeholder: 'email@example.com' }),
+          bw.makeFormGroup({ label: 'Select', type: 'select', options: ['Option 1', 'Option 2', 'Option 3'] }),
+          bw.makeFormGroup({ label: 'Checkbox', type: 'checkbox' })
+        ]
+      }
+    );
+
+    // Tabs
+    var tabSection = site.makeDemoSection('tabs', 'Tabs',
+      'Tab navigation.',
+      bw.makeTabs({
+        tabs: [
+          { label: 'Tab 1', active: true, content: { t: 'p', c: 'Content for tab 1.' } },
+          { label: 'Tab 2', content: { t: 'p', c: 'Content for tab 2.' } },
+          { label: 'Tab 3', content: { t: 'p', c: 'Content for tab 3.' } }
+        ]
+      })
+    );
+
+    // Accordion
+    var accordionSection = site.makeDemoSection('accordion', 'Accordion',
+      'Collapsible content panels.',
+      bw.makeAccordion({
+        items: [
+          { title: 'Section One', content: 'Content for section one.' },
+          { title: 'Section Two', content: 'Content for section two.' },
+          { title: 'Section Three', content: 'Content for section three.' }
+        ]
+      })
+    );
+
+    // Progress
+    var progressSection = site.makeDemoSection('progress', 'Progress Bars',
+      'Progress bar variants.',
+      {
+        t: 'div', a: { style: 'display: flex; flex-direction: column; gap: 0.75rem;' }, c: [
+          bw.makeProgress({ value: 75, variant: 'primary', label: '75%' }),
+          bw.makeProgress({ value: 50, variant: 'success', label: '50%' }),
+          bw.makeProgress({ value: 30, variant: 'warning', label: '30%' }),
+          bw.makeProgress({ value: 15, variant: 'danger', label: '15%' })
+        ]
+      }
+    );
+
+    // Code block
+    var codeSection = site.makeDemoSection('code', 'Code Blocks',
+      'Code display with syntax highlighting.',
+      {
+        t: 'div', c: [
+          site.makeCodeBlock("// Hello bitwrench!\nbw.DOM('#app', {\n  t: 'h1',\n  c: 'Hello World'\n});"),
+          { t: 'p', a: { style: 'margin-top: 1rem;' }, c: [
+            'Inline code: ',
+            { t: 'code', c: 'bw.loadStyles()' },
+            ' renders themes.'
+          ]}
+        ]
+      }
+    );
+
+    // Tabbed demo
+    var tabbedSection = site.makeDemoSection('tabbed-demo', 'Tabbed Demo',
+      'Result + Code tabbed view.',
+      site.createTabbedDemo(
+        bw.makeCard({ title: 'Demo Card', content: 'This card is shown in the Result tab.' }),
+        "bw.makeCard({\n  title: 'Demo Card',\n  content: 'This card is shown in the Result tab.'\n})"
+      )
+    );
+
+    // Hero
+    var heroSection = site.makeDemoSection('hero', 'Hero Sections',
+      'Hero variants.',
+      {
+        t: 'div', a: { style: 'display: flex; flex-direction: column; gap: 1rem;' }, c: [
+          bw.makeHero({ title: 'Primary Hero', subtitle: 'Default hero style.', variant: 'primary', size: 'sm', centered: true }),
+          bw.makeHero({ title: 'Dark Hero', subtitle: 'Dark variant.', variant: 'dark', size: 'sm', centered: true }),
+          bw.makeHero({ title: 'Light Hero', subtitle: 'Light variant.', variant: 'light', size: 'sm', centered: true })
+        ]
+      }
+    );
+
+    // Step / Tutorial
+    var stepSection = site.makeDemoSection('steps', 'Step Pattern',
+      'Tutorial step cards.',
+      {
+        t: 'div', c: [
+          {
+            t: 'div', a: { class: 'bw_step' },
+            c: [
+              { t: 'div', a: { class: 'bw_step_header' }, c: [
+                { t: 'div', a: { class: 'bw_step_num' }, c: '1' },
+                { t: 'h2', c: 'Install bitwrench' }
+              ]},
+              { t: 'div', a: { class: 'bw_step_body' }, c: 'npm install bitwrench' }
+            ]
+          },
+          {
+            t: 'div', a: { class: 'bw_step' },
+            c: [
+              { t: 'div', a: { class: 'bw_step_header' }, c: [
+                { t: 'div', a: { class: 'bw_step_num' }, c: '2' },
+                { t: 'h2', c: 'Load styles' }
+              ]},
+              { t: 'div', a: { class: 'bw_step_body' }, c: 'bw.loadStyles();' }
+            ]
+          }
+        ]
+      }
+    );
+
+    // Feature grid
+    var featureSection = site.makeDemoSection('features', 'Feature Grid / Cards',
+      'Feature cards and grid layout.',
+      {
+        t: 'div', c: [
+          { t: 'div', a: { class: 'bw_feature_grid' }, c: [
+            { t: 'div', a: { class: 'bw_site_pages_feature' }, c: [
+              { t: 'h3', c: 'Fast' },
+              { t: 'p', c: 'Direct DOM operations, no virtual DOM overhead.' }
+            ]},
+            { t: 'div', a: { class: 'bw_site_pages_feature' }, c: [
+              { t: 'h3', c: 'Lightweight' },
+              { t: 'p', c: 'Under 45KB gzipped with zero dependencies.' }
+            ]},
+            { t: 'div', a: { class: 'bw_site_pages_feature' }, c: [
+              { t: 'h3', c: 'Secure' },
+              { t: 'p', c: 'Content escaped by default. XSS-safe.' }
+            ]}
+          ]}
+        ]
+      }
+    );
+
+    // Stat cards
+    var statSection = site.makeDemoSection('stats', 'Stat Cards',
+      'Stat card variants.',
+      {
+        t: 'div', a: { class: 'bw_grid_3col' }, c: [
+          bw.makeStatCard({ label: 'Total Users', value: '12,345', variant: 'primary' }),
+          bw.makeStatCard({ label: 'Revenue', value: '$54,321', variant: 'success' }),
+          bw.makeStatCard({ label: 'Errors', value: '42', variant: 'danger' })
+        ]
+      }
+    );
+
+    // Utility classes
+    var utilSection = site.makeDemoSection('utilities', 'Text/BG Utility Classes',
+      'Utility classes that now derive from palette.',
+      {
+        t: 'div', c: [
+          { t: 'p', a: { class: 'bw_text_muted' }, c: '.bw_text_muted -- muted text' },
+          { t: 'p', a: { class: 'bw_text_dark' }, c: '.bw_text_dark -- dark text' },
+          { t: 'p', a: { class: 'bw_text_light', style: 'background: #333; padding: 0.5rem; border-radius: 4px;' }, c: '.bw_text_light -- light text (on dark bg)' },
+          { t: 'div', a: { class: 'bw_bg_dark', style: 'padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem;' }, c: '.bw_bg_dark' },
+          { t: 'div', a: { class: 'bw_bg_light', style: 'padding: 0.75rem; border-radius: 4px;' }, c: '.bw_bg_light' }
+        ]
+      }
+    );
+
+    // =========================================================================
+    // Assemble page
+    // =========================================================================
+    var page = {
+      t: 'div', c: [
+        site.makePageHeader('CSS Architecture Test', 'Visual audit of palette-driven site chrome -- no CSS custom properties'),
+        {
+          t: 'div', a: { class: 'content-container wide' },
+          c: [
+            themeSelect,
+            buttonSection, cardSection, alertSection, calloutSection,
+            badgeSection, tableSection, formSection, tabSection,
+            accordionSection, progressSection, codeSection, tabbedSection,
+            heroSection, stepSection, featureSection, statSection, utilSection
+          ]
+        }
+      ]
+    };
+
+    bw.DOM('#app', page);
+  </script>
+</body>
+</html>

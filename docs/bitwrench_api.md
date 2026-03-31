@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.23 |
-| Generated | 2026-03-28 |
+| Version | 2.0.25 |
+| Generated | 2026-03-31 |
 | Total APIs | 100 |
 | Categories | 12 |
-| bitwrench.js | 3612 lines |
+| bitwrench.js | 3631 lines |
 | bitwrench-bccl.js | 3793 lines |
 
 ## Table of Contents
@@ -672,7 +672,7 @@ Generate and apply styles in one call. Convenience wrapper. Equivalent to: `bw.a
 | `config` | `Object` | - Style configuration (same as `makeStyles`) |
 | `scope` | `string` | - Scope selector (same as `applyStyles`) |
 
-**Returns:** `Element|null` — `<style>` element, or null in Node.js
+**Returns:** `Object` — styles object (same as `makeStyles` return value: `{css, alternateCss, palette, alternatePalette, rules, alternateRules, isLightPrimary}`)
 
 **Example:**
 ```javascript

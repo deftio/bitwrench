@@ -8,22 +8,23 @@
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('index.html');
+    var styles = initBitwrenchPage('index.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Page CSS
     // =========================================================================
     bw.injectCSS(bw.css({
       '.ha_hero': {
-        background: 'linear-gradient(135deg, #006666 0%, #003d3d 100%)',
+        background: 'linear-gradient(135deg, ' + p.primary.base + ' 0%, ' + p.primary.active + ' 100%)',
         color: '#fff',
         padding: '1.5rem 0 1.25rem',
         position: 'relative',
@@ -51,7 +52,7 @@
       '.ha_hero_ver': {
         'font-size': '0.75rem',
         opacity: '0.5',
-        'font-family': 'var(--bw_font_mono)'
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace'
       },
       '.ha_hero_tagline': {
         'font-size': '1.75rem', 'font-weight': '700',
@@ -84,8 +85,8 @@
         padding: '0.55rem 1.5rem', 'font-weight': '600',
         'border-radius': '6px', transition: 'all 0.15s'
       },
-      '.ha_btn_primary': { background: '#fff', color: '#006666' },
-      '.ha_btn_primary:hover': { background: '#e0f2f1', color: '#004d4d' },
+      '.ha_btn_primary': { background: '#fff', color: p.primary.base },
+      '.ha_btn_primary:hover': { background: p.primary.light, color: p.primary.darkText },
       '.ha_btn_secondary': {
         background: 'transparent', color: '#fff',
         border: '1.5px solid rgba(255,255,255,0.4)'
@@ -110,7 +111,7 @@
       },
       '.ha_install_cmd': {
         color: '#fff', 'font-size': '0.9375rem',
-        'font-family': 'var(--bw_font_mono)',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         background: 'rgba(255,255,255,0.08)',
         padding: '0.2rem 0.6rem', 'border-radius': '4px',
         border: '1px solid rgba(255,255,255,0.15)'
@@ -131,20 +132,20 @@
         gap: '1rem'
       },
       '.ha_live_card': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         padding: '0.875rem 1rem',
         display: 'flex', 'flex-direction': 'column',
         'min-width': '0'
       },
       '.ha_live_card h4': {
         margin: '0 0 0.15rem', 'font-size': '0.875rem', 'font-weight': '600',
-        color: 'var(--bw_text)'
+        color: p.dark.base
       },
       '.ha_live_api': {
-        'font-family': 'var(--bw_font_mono)', 'font-size': '0.625rem',
-        color: 'var(--bw_teal)', 'margin-bottom': '0.6rem',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace', 'font-size': '0.625rem',
+        color: p.primary.base, 'margin-bottom': '0.6rem',
         opacity: '0.8'
       },
       '.ha_live_body': { flex: '1', 'min-width': '0', 'overflow-x': 'auto' },
@@ -153,12 +154,12 @@
       // --- Swatch ---
       '.ha_swatch_btn': {
         display: 'inline-flex', 'align-items': 'center', gap: '0.25rem',
-        padding: '0.2rem 0.5rem', border: '1.5px solid var(--bw_card_border)',
-        'border-radius': '4px', background: 'var(--bw_card_bg)',
+        padding: '0.2rem 0.5rem', border: '1.5px solid ' + p.light.border,
+        'border-radius': '4px', background: p.surface,
         cursor: 'pointer', 'font-size': '0.6875rem', 'font-weight': '500',
         transition: 'border-color 0.12s'
       },
-      '.ha_swatch_btn:hover': { 'border-color': 'var(--bw_teal)' },
+      '.ha_swatch_btn:hover': { 'border-color': p.primary.base },
       '.ha_swatch_dot': {
         display: 'inline-block', width: '8px', height: '8px', 'border-radius': '50%'
       },
@@ -172,9 +173,9 @@
         display: 'grid', 'grid-template-columns': 'repeat(3, 1fr)', gap: '1rem'
       },
       '.ha_feat_card': {
-        background: 'var(--bw_teal_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surfaceAlt,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         padding: '1rem 1.25rem',
         transition: 'transform 0.15s, box-shadow 0.15s'
       },
@@ -182,17 +183,17 @@
         transform: 'translateY(-2px)', 'box-shadow': '0 4px 12px rgba(0,0,0,0.08)'
       },
       '.ha_feat_card h4': { margin: '0 0 0.3rem', 'font-size': '0.9375rem', 'font-weight': '600' },
-      '.ha_feat_card h4 a': { color: 'var(--bw_text)', 'text-decoration': 'none' },
-      '.ha_feat_card h4 a:hover': { color: 'var(--bw_teal)' },
+      '.ha_feat_card h4 a': { color: p.dark.base, 'text-decoration': 'none' },
+      '.ha_feat_card h4 a:hover': { color: p.primary.base },
       '.ha_feat_card p': {
         margin: '0', 'font-size': '0.8125rem',
-        color: 'var(--bw_text_secondary)', 'line-height': '1.5'
+        color: p.dark.hover, 'line-height': '1.5'
       },
       // --- Page index ---
       '.ha_page_cat': {
         'font-size': '0.6875rem', 'text-transform': 'uppercase',
         'letter-spacing': '0.08em', 'font-weight': '600',
-        color: 'var(--bw_teal)', 'margin-bottom': '0.75rem'
+        color: p.primary.base, 'margin-bottom': '0.75rem'
       },
       '.ha_page_grid': {
         display: 'grid',
@@ -337,7 +338,7 @@
     var currentThemeDark = false;
 
     function applyThemePreset(th) {
-      bw.loadStyles({ primary: th.p, secondary: th.s, tertiary: th.tr });
+      var newStyles = bw.loadStyles({ primary: th.p, secondary: th.s, tertiary: th.tr });
       // If switching between light/dark, toggle to the right palette
       if (th.dark && !currentThemeDark) {
         bw.toggleStyles();
@@ -346,7 +347,7 @@
         bw.toggleStyles();
         currentThemeDark = false;
       }
-      applySiteStyles();
+      applySiteChromeCSS(newStyles);
     }
 
     var themeCard = {
@@ -354,7 +355,7 @@
         { t: 'h4', c: 'Live Theming' },
         { t: 'div', a: { class: 'ha_live_api' }, c: 'bw.loadStyles({ primary, secondary })' },
         { t: 'div', a: { class: 'ha_live_body' }, c: [
-          { t: 'p', a: { style: 'font-size:0.75rem;color:var(--bw_text_secondary);margin:0 0 0.5rem' },
+          { t: 'p', a: { style: 'font-size:0.75rem;color:#555;margin:0 0 0.5rem' },
             c: 'Re-themes the entire page:' },
           { t: 'div', a: { style: 'display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.6rem' },
             c: themePresets.map(function(th) {
@@ -384,7 +385,7 @@
       title: 'Example Modal',
       content: [
         { t: 'p', c: 'This modal was created with bw.makeModal() and opened via el.bw.open().' },
-        { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary)' },
+        { t: 'p', a: { style: 'font-size:0.8125rem;color:#555' },
           c: 'Click the backdrop, press ESC, or click the X to close.' }
       ]
     });
@@ -470,11 +471,11 @@
     };
 
     var seeItLiveSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Built-In Components' },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Built-In Components' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: [
               'bitwrench ships a ready-to-use library of tables, forms, modals, charts, and controls. Everything below is live -- try sorting a column, switching a theme, or opening a modal. Use them as-is to get started faster, or as templates to build your own. See the full ',
               { t: 'a', a: { href: 'component-gallery.html' }, c: 'component gallery' },
@@ -507,11 +508,11 @@
     ].join('\n');
 
     var howItWorksSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'How It Works' },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How It Works' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: 'In bitwrench, UI is written as plain JavaScript objects called TACOs -- Tag, Attributes, Content, Options. A button, a table row, or an entire page layout all use the same structure: {t: \'div\', a: {class: \'card\'}, c: \'Hello\'}. TACOs nest and compose like HTML does, so you can build a single widget or a full application from the same building blocks. bitwrench turns TACOs into real HTML -- either as DOM in the browser or as strings on a server -- and provides reactive state, lifecycle hooks, and pub/sub for keeping everything in sync.'
           },
           { t: 'div', a: { class: 'ha_how_grid' }, c: [
@@ -520,11 +521,11 @@
               { t: 'div', a: { id: 'how-code-panel' } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_code_label', style: 'color:var(--bw_teal)' }, c: 'Result' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'how-result-panel' } }
+              { t: 'div', a: { class: 'bw_code_label', style: 'color:' + p.primary.base }, c: 'Result' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'how-result-panel' } }
             ]}
           ]},
-          { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:1rem 0 0;line-height:1.55' },
+          { t: 'p', a: { style: 'font-size:0.8125rem;color:#555;margin:1rem 0 0;line-height:1.55' },
             c: [
               'This object format is called TACO (Tag, Attributes, Content, Options). Add state and it becomes reactive. Add handles for imperative control. The built-in components are TACO objects too -- they compose, nest, and render the same way. ',
               { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' },
@@ -554,11 +555,11 @@
     ];
 
     var capabilitiesSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'More Than Widgets' },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'More Than Widgets' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: 'The components above are just one layer. bitwrench also handles routing, state management, theming, server-to-browser streaming, and debugging -- all in one file, no extra dependencies.' },
           { t: 'div', a: { class: 'ha_feat_grid' },
             c: capabilities.map(function(f) {
@@ -611,10 +612,10 @@
     ];
 
     var pageIndexSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'All Pages' },
-        { t: 'div', a: { class: 'demo-content' }, c:
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'All Pages' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c:
           pageIndexData.map(function(section) {
             return { t: 'div', c: [
               { t: 'div', a: { class: 'ha_page_cat' }, c: section.category },
@@ -624,7 +625,7 @@
                     t: 'a', a: { href: p.href, class: 'ha_page_link' },
                     c: bw.makeCard({
                       title: p.title,
-                      content: { t: 'p', a: { style: 'font-size:0.8125rem;color:var(--bw_text_secondary);margin:0' }, c: p.desc }
+                      content: { t: 'p', a: { style: 'font-size:0.8125rem;color:#555;margin:0' }, c: p.desc }
                     })
                   };
                 })
@@ -664,7 +665,7 @@
         }));
       } else {
         bw.DOM('#how-code-panel', {
-          t: 'div', a: { class: 'bw_code_block' },
+          t: 'div', a: { class: 'bw_site_pages_code' },
           c: { t: 'pre', c: { t: 'code', c: howCode } }
         });
       }

@@ -16,6 +16,7 @@ node_modules/
 # Ignore any temporary files
 *.log
 *.tmp
+__pycache__/
 
 # Ignore any IDE-specific files
 .vscode/

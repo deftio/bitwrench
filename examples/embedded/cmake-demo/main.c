@@ -343,23 +343,35 @@ static void handle_request(int client_fd) {
 
     /* POST /api/command — handle commands */
     if (strcmp(method, "POST") == 0 && strcmp(path, "/api/command") == 0) {
+        int recognized = 0;
         if (body) {
-            /* Simple command parsing (no ArduinoJson — just strstr) */
+            /* Simple command parsing for demo readability.
+             * Production code should use a proper JSON parser and auth checks.
+             */
             if (strstr(body, "led_on")) {
                 g_sensors.led_on = 1;
                 printf("[cmd] LED on\n");
+                recognized = 1;
             } else if (strstr(body, "led_off")) {
                 g_sensors.led_on = 0;
                 printf("[cmd] LED off\n");
+                recognized = 1;
             } else if (strstr(body, "reset_uptime")) {
                 g_sensors.uptime_s = 0;
                 printf("[cmd] Uptime reset\n");
+                recognized = 1;
             }
-            /* Broadcast updated state immediately */
-            broadcast_sensor_update();
+            if (recognized) {
+                /* Broadcast updated state immediately */
+                broadcast_sensor_update();
+            }
         }
-        char resp[256];
-        BW_HTTP_OK_JSON(resp, "{\"ok\":true}");
+        char resp[512];
+        if (recognized) {
+            BW_HTTP_OK_JSON(resp, "{\"ok\":true}");
+        } else {
+            BW_HTTP_OK_JSON(resp, "{\"ok\":false,\"error\":\"unknown cmd\"}");
+        }
         write(client_fd, resp, strlen(resp));
         close(client_fd);
         return;

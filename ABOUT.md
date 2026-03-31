@@ -69,7 +69,7 @@ The DOM, CSS, and JavaScript already cover all the bases. What was always missin
 
 Bitwrench v2 is the full expression of an idea refined across two decades: from WebVM demos in 2005, to Bootstrap wrappers in 2011, to production dashboards, to a complete UI system today.
 
-`bw.component()` provides reactive state management. `bw.css()` generates CSS from JS objects. `bw.makeStyles()` creates complete design systems from two hex colors. `bwserve` streams TACO objects over SSE for server-driven UIs. The whole thing ships as a single 40KB gzipped file with no dependencies.
+TACO options (`o.state`, `o.render`, `o.handle`, `o.slots`) provide reactive state management. `bw.css()` generates CSS from JS objects. `bw.makeStyles()` creates complete design systems from two hex colors. `bwserve` streams TACO objects over SSE for server-driven UIs. The whole thing ships as a single 40KB gzipped file with no dependencies.
 
 It's not trying to replace React for teams of fifty building complex SPAs. It's an alternative for the vast majority of web UIs that don't need that complexity: dashboards, internal tools, embedded device interfaces, prototypes, data apps, server-driven UIs, and anything where a build step is a liability rather than an asset.
 

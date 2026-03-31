@@ -40,12 +40,12 @@ test.describe('Bitwrench v2 Examples', () => {
     expect(editorCount).toBeGreaterThanOrEqual(4);
 
     // Check feature grid next steps section
-    const featureCards = page.locator('.bw_feature_card');
+    const featureCards = page.locator('.bw_site_pages_feature');
     const featureCount = await featureCards.count();
     expect(featureCount).toBeGreaterThanOrEqual(6);
 
     // Check callout boxes exist
-    const callouts = page.locator('.callout');
+    const callouts = page.locator('.bw_site_pages_callout');
     const calloutCount = await callouts.count();
     expect(calloutCount).toBeGreaterThanOrEqual(3);
 

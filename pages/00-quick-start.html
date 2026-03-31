@@ -6,8 +6,8 @@
   <title>Bitwrench - Quick Start</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
@@ -16,20 +16,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('00-quick-start.html');
-
-    // =========================================================================
-    // Helper: callout box
-    // =========================================================================
-    function callout(type, title, content) {
-      return {
-        t: 'div', a: { class: 'callout callout-' + type, style: 'margin-top: 1rem;' },
-        c: [
-          { t: 'h4', c: title },
-          content
-        ]
-      };
-    }
+    var styles = initBitwrenchPage('00-quick-start.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Section 1: Your First Bitwrench Page
@@ -39,11 +27,11 @@
     var livePageId = 'live-page-' + (bw._idCounter++);
 
     var section1 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-first-page' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-first-page' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-first-page' }, c: 'Your First Bitwrench Page' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-first-page' }, c: 'Your First Bitwrench Page' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: 'This is the complete code for a bitwrench page. Edit the code and click Run to see the result:' },
           {
             t: 'div', a: { class: 'tryit-container', id: livePageId },
@@ -96,14 +84,14 @@
                     { t: 'iframe', a: {
                       class: 'live-page-iframe',
                       sandbox: 'allow-scripts',
-                      style: 'width: 100%; min-height: 280px; border: 2px dashed var(--bw_card_border, #d8d8d8); border-radius: var(--bw_radius, 8px); background: #fff;'
+                      style: 'width: 100%; min-height: 280px; border: 2px dashed ' + p.light.border + '; border-radius: 8px; background: #fff;'
                     }}
                   ]
                 }
               ]
             }]
           },
-          callout('concept', 'What just happened?', {
+          site.makeCallout('concept', 'What just happened?', {
             t: 'p', c: [
               { t: 'code', c: 'bw.DOM(\'#app\', taco)' },
               ' mounts a TACO object into any CSS selector. The TACO ',
@@ -123,11 +111,11 @@
     // Section 2: Building Blocks
     // =========================================================================
     var section2 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-building-blocks' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-building-blocks' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-building-blocks' }, c: 'Building Blocks' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-building-blocks' }, c: 'Building Blocks' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: 'Every HTML element is a JavaScript object with a tag, attributes, and content. Build up progressively:' },
           makeTryIt({
             code: [
@@ -153,7 +141,7 @@
             ].join('\n'),
             height: '320px'
           }),
-          callout('concept', 'This is called TACO', {
+          site.makeCallout('concept', 'This is called TACO', {
             t: 'p', c: [
               { t: 'strong', c: 'T' }, 'ag, ',
               { t: 'strong', c: 'A' }, 'ttributes, ',
@@ -174,11 +162,11 @@
     var btnTaco = bw.makeButton({ text: 'Click Me', variant: 'primary' });
 
     var section3 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-styles' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-styles' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-styles' }, c: 'Where Do Styles Come From?' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-styles' }, c: 'Where Do Styles Come From?' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
             'Bitwrench includes built-in CSS classes (',
             { t: 'code', c: 'bw_btn' }, ', ', { t: 'code', c: 'bw_card' },
             ', etc.) that give you Bootstrap-like styling. Call ',
@@ -208,7 +196,7 @@
             helperCode: 'bw.makeButton({\n  text: \'Click Me\',\n  variant: \'primary\'\n})',
             taco: btnTaco
           }),
-          callout('concept', 'Helpers return JavaScript objects, not HTML', {
+          site.makeCallout('concept', 'Helpers return JavaScript objects, not HTML', {
             t: 'p', c: [
               { t: 'code', c: 'bw.makeButton()' }, ' returns a TACO object. ',
               { t: 'code', c: 'bw.DOM()' }, ' renders it. ',
@@ -225,11 +213,11 @@
     // Section 4: Making It Interactive
     // =========================================================================
     var section4 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-interactive' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-interactive' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-interactive' }, c: 'Making It Interactive' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-interactive' }, c: 'Making It Interactive' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: 'When state changes, call render again. Bitwrench replaces the old content with the new. That\'s the entire update model.' },
           makeTryIt({
             code: [
@@ -260,14 +248,14 @@
             ].join('\n'),
             height: '360px'
           }),
-          callout('tip', 'This is the simplest pattern', {
+          site.makeCallout('tip', 'This is the simplest pattern', {
             t: 'p', c: [
               'A closure variable and a render function is all you need for simple components. ',
               'You decide when to re-render by calling the function \u2014 every update is an ',
               'explicit call you can see and step through.'
             ]
           }),
-          callout('concept', 'This works, but there\'s a better way', {
+          site.makeCallout('concept', 'This works, but there\'s a better way', {
             t: 'p', c: [
               'The closure pattern is great for simple cases. For anything with state you want to read or update from outside, use ',
               { t: 'code', c: 'o.state + o.render' },
@@ -282,11 +270,11 @@
     // Section 4b: The Recommended Pattern — o.state + o.render
     // =========================================================================
     var section4b = {
-      t: 'div', a: { class: 'demo-section', id: 'section-component' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-component' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-component' }, c: 'The Recommended Pattern: o.state + o.render' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-component' }, c: 'The Recommended Pattern: o.state + o.render' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
             'The closure pattern above works, but for most components, ',
             { t: 'code', c: 'o.state + o.render' },
             ' is the better approach. State lives on the DOM element at ',
@@ -331,7 +319,7 @@
             ].join('\n'),
             height: '420px'
           }),
-          callout('tip', 'When to use which pattern', {
+          site.makeCallout('tip', 'When to use which pattern', {
             t: 'div', c: [
               { t: 'p', c: [
                 { t: 'strong', c: 'Closure + render()' }, ' \u2014 simple widgets, one-off interactivity.'
@@ -354,11 +342,11 @@
     // Section 5: Data-Driven UI
     // =========================================================================
     var section5 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-data-driven' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-data-driven' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-data-driven' }, c: 'Data-Driven UI' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-data-driven' }, c: 'Data-Driven UI' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
             'In bitwrench, your data is the UI. As a result, template constructs such as ',
             { t: 'code', c: 'v-for' }, ' and ', { t: 'code', c: '{#each}' },
             ' are achieved with JavaScript\'s built-in ', { t: 'code', c: '.map()' }, ' function.'
@@ -391,11 +379,11 @@
     // Section 5b: Theming
     // =========================================================================
     var section5b = {
-      t: 'div', a: { class: 'demo-section', id: 'section-theming' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-theming' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-theming' }, c: 'Theming in One Call' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
-          { t: 'p', a: { class: 'demo-description' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-theming' }, c: 'Theming in One Call' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
             { t: 'code', c: 'bw.loadStyles()' },
             ' creates a complete design system from 2\u20133 seed colors. Every ',
             { t: 'code', c: 'bw_*' },
@@ -451,7 +439,7 @@
             ].join('\n'),
             height: '500px'
           }),
-          callout('concept', 'Built-in presets', {
+          site.makeCallout('concept', 'Built-in presets', {
             t: 'p', c: [
               'Try replacing the hex colors with a preset name: ',
               { t: 'code', c: "'ocean'" }, ', ',
@@ -489,14 +477,14 @@
     ];
 
     var section6 = {
-      t: 'div', a: { class: 'demo-section', id: 'section-next-steps' },
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-next-steps' },
       c: [
-        { t: 'h2', c: { t: 'a', a: { href: '#section-next-steps' }, c: 'Next Steps' } },
-        { t: 'div', a: { class: 'demo-content' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-next-steps' }, c: 'Next Steps' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'div', a: { class: 'bw_feature_grid' },
             c: nextSteps.map(function(item) {
               return {
-                t: 'div', a: { class: 'bw_feature_card' },
+                t: 'div', a: { class: 'bw_site_pages_feature' },
                 c: [
                   { t: 'h4', c: { t: 'a', a: { href: item.href, style: 'text-decoration: none;' }, c: item.title } },
                   { t: 'p', c: item.desc }
@@ -515,7 +503,7 @@
       t: 'div', c: [
         // Hero header
         {
-          t: 'div', a: { class: 'page-header' },
+          t: 'div', a: { class: 'bw_site_pages_header' },
           c: {
             t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
             c: [
@@ -528,8 +516,8 @@
         {
           t: 'div', a: { class: 'content-container wide' },
           c: [
-            { t: 'div', a: { class: 'callout callout-concept' }, c: [
-                { t: 'h4', c: 'Levels 0 \u2192 1 \u2192 2' },
+            { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Levels 0 \u2192 1 \u2192 2' },
                 { t: 'p', c: ['This page walks through all three learning levels: data as TACO objects (Level 0), mounting to the DOM (Level 1), and managing state (Level 2). ', { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' }] }
             ]},
             section1, section2, section3, section4, section4b, section5, section5b, section6

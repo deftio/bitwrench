@@ -4,7 +4,7 @@
 
 import assert from "assert";
 import bw from "../src/bitwrench.js";
-import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder } from "../src/bitwrench-styles.js";
+import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder, THEME_PRESETS } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -1255,9 +1255,14 @@ describe('bw.loadStyles', function() {
   });
 
   it('should work with no arguments', function() {
-    var el = bw.loadStyles();
-    assert.ok(el, 'should return a <style> element');
-    assert.strictEqual(el.id, 'bw_style_global');
+    var styles = bw.loadStyles();
+    assert.ok(styles, 'should return a styles object');
+    assert.ok(styles.palette, 'should have palette');
+    assert.ok(styles.alternatePalette, 'should have alternatePalette');
+    assert.ok(styles.css, 'should have css string');
+    // Style element should also be injected
+    var el = document.getElementById('bw_style_global');
+    assert.ok(el, 'style element should be injected');
   });
 
   it('should inject structural CSS alongside themed CSS', function() {
@@ -1269,14 +1274,16 @@ describe('bw.loadStyles', function() {
   });
 
   it('should accept config with custom colors', function() {
-    var el = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' });
-    assert.ok(el, 'should return a <style> element');
-    assert.ok(el.textContent.length > 100, 'should have CSS content');
+    var styles = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' });
+    assert.ok(styles, 'should return a styles object');
+    assert.ok(styles.palette.primary.base, 'palette should have primary color');
   });
 
   it('should accept scope parameter', function() {
-    var el = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' }, '#preview');
-    assert.strictEqual(el.id, 'bw_style_preview');
+    var styles = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' }, '#preview');
+    assert.ok(styles.palette, 'should return styles object');
+    var el = document.getElementById('bw_style_preview');
+    assert.ok(el, 'scoped style element should be injected');
     assert.ok(el.textContent.includes('#preview'), 'CSS should be scoped');
   });
 
@@ -1285,6 +1292,34 @@ describe('bw.loadStyles', function() {
     bw.loadStyles({ primary: '#ff0000', secondary: '#00ff00' });
     var structEls = document.querySelectorAll('#bw_structural');
     assert.strictEqual(structEls.length, 1, 'should have exactly one structural <style>');
+  });
+});
+
+describe('bw.scopeRulesUnder', function() {
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.scopeRulesUnder, 'function');
+  });
+
+  it('should prefix selectors with scope', function() {
+    var rules = { '.foo': { color: 'red' }, '.bar': { color: 'blue' } };
+    var scoped = bw.scopeRulesUnder(rules, '.bw_theme_alt');
+    assert.ok('.bw_theme_alt .foo' in scoped, 'should have scoped .foo');
+    assert.ok('.bw_theme_alt .bar' in scoped, 'should have scoped .bar');
+    assert.strictEqual(scoped['.bw_theme_alt .foo'].color, 'red');
+  });
+
+  it('should handle @media blocks', function() {
+    var rules = { '@media (max-width: 768px)': { '.foo': { color: 'red' } } };
+    var scoped = bw.scopeRulesUnder(rules, '.scope');
+    assert.ok('@media (max-width: 768px)' in scoped, 'should preserve @media');
+    var inner = scoped['@media (max-width: 768px)'];
+    assert.ok('.scope .foo' in inner, 'should scope inner selectors');
+  });
+
+  it('should handle comma-separated selectors', function() {
+    var rules = { '.foo, .bar': { color: 'red' } };
+    var scoped = bw.scopeRulesUnder(rules, '.alt');
+    assert.ok('.alt .foo, .alt .bar' in scoped, 'should scope both parts');
   });
 });
 
@@ -1454,5 +1489,43 @@ describe('scopeRulesUnder (bitwrench-styles.js)', function() {
     assert.ok(scoped['@media (min-width: 768px)'], 'should preserve @media key');
     var inner = scoped['@media (min-width: 768px)'];
     assert.ok(inner['#app .bw_card'], 'should scope inner selector');
+  });
+});
+
+describe('Tertiary Color in Themed CSS', function() {
+
+  it('tertiary appears in CSS when different from primary', function() {
+    var styles = bw.makeStyles({ primary: '#006666', secondary: '#6c757d', tertiary: '#e9c46a' });
+    var css = styles.css;
+    // tertiary hex (#e9c46a) or its derived shades should appear in hover/breadcrumb/stepper
+    // deriveShades produces base from the input, so the exact hex should be in the CSS
+    var tertiaryBase = '#e9c46a';
+    assert.ok(css.includes(tertiaryBase) || css.toLowerCase().includes(tertiaryBase.toLowerCase()),
+      'CSS should contain tertiary base color');
+    // primary should NOT appear in breadcrumb links (they now use tertiary)
+    // but primary still appears elsewhere (buttons, active states), so just confirm tertiary is present
+  });
+
+  it('tertiary === primary produces identical CSS', function() {
+    var withExplicit = bw.makeStyles({ primary: '#006666', secondary: '#6c757d', tertiary: '#006666' });
+    var withoutTertiary = bw.makeStyles({ primary: '#006666', secondary: '#6c757d' });
+    assert.strictEqual(withExplicit.css, withoutTertiary.css,
+      'CSS should be identical when tertiary equals primary');
+    assert.strictEqual(withExplicit.alternateCss, withoutTertiary.alternateCss,
+      'alternate CSS should also be identical');
+  });
+
+  it('all 12 THEME_PRESETS produce CSS containing their tertiary color', function() {
+    var presetNames = Object.keys(THEME_PRESETS);
+    assert.ok(presetNames.length >= 12, 'should have at least 12 presets');
+    presetNames.forEach(function(name) {
+      var config = THEME_PRESETS[name];
+      var styles = bw.makeStyles(config);
+      // derive the tertiary shades to find what hex values should appear
+      var tertiaryShades = bw.deriveShades(config.tertiary || config.primary);
+      // At minimum, the base shade should appear in the CSS
+      var found = styles.css.toLowerCase().includes(tertiaryShades.base.toLowerCase());
+      assert.ok(found, 'preset "' + name + '" CSS should contain tertiary base color ' + tertiaryShades.base);
+    });
   });
 });

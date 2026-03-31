@@ -51,11 +51,12 @@ test.describe('Component Library - All Components Render', () => {
   test('buttons render all variants and sizes', async ({ page }) => {
     const demo = page.locator('#section-buttons');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_btn_primary').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_secondary').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_success').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_danger').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_outline_primary').first()).toBeVisible();
+    // variantClass() returns 'bw_<variant>' as a separate class alongside 'bw_btn'
+    await expect(demo.locator('.bw_btn.bw_primary').first()).toBeVisible();
+    await expect(demo.locator('.bw_btn.bw_secondary').first()).toBeVisible();
+    await expect(demo.locator('.bw_btn.bw_success').first()).toBeVisible();
+    await expect(demo.locator('.bw_btn.bw_danger').first()).toBeVisible();
+    await expect(demo.locator('.bw_btn.bw_btn_outline').first()).toBeVisible();
     await expect(demo.locator('.bw_btn_sm').first()).toBeVisible();
     await expect(demo.locator('.bw_btn_lg').first()).toBeVisible();
   });
@@ -105,10 +106,11 @@ test.describe('Component Library - All Components Render', () => {
   test('alerts render all variants', async ({ page }) => {
     const demo = page.locator('#section-alerts');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_alert_primary').first()).toBeVisible();
-    await expect(demo.locator('.bw_alert_success').first()).toBeVisible();
-    await expect(demo.locator('.bw_alert_warning').first()).toBeVisible();
-    await expect(demo.locator('.bw_alert_danger').first()).toBeVisible();
+    // variantClass() returns 'bw_<variant>' as a separate class alongside 'bw_alert'
+    await expect(demo.locator('.bw_alert.bw_primary').first()).toBeVisible();
+    await expect(demo.locator('.bw_alert.bw_success').first()).toBeVisible();
+    await expect(demo.locator('.bw_alert.bw_warning').first()).toBeVisible();
+    await expect(demo.locator('.bw_alert.bw_danger').first()).toBeVisible();
     await expect(demo.locator('.bw_close').first()).toBeVisible();
   });
 
@@ -307,7 +309,7 @@ test.describe('Component Visual Quality', () => {
   });
 
   test('buttons have proper padding and are not cramped', async ({ page }) => {
-    const btn = page.locator('#section-buttons .bw_btn_primary').first();
+    const btn = page.locator('#section-buttons .bw_btn.bw_primary').first();
     const box = await btn.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(30);
     expect(box.width).toBeGreaterThanOrEqual(50);
@@ -398,13 +400,16 @@ test.describe('Component Theming', () => {
     await page.goto('/pages/01-components.html');
     await page.waitForLoadState('networkidle');
 
+    // Pages use bw.loadStyles() which injects CSS via <style> tags, not <link> tags
     const hasStyles = await page.evaluate(() => {
-      const links = document.querySelectorAll('link[rel="stylesheet"]');
-      return Array.from(links).some(l => l.href.includes('bitwrench.css'));
+      var styles = document.querySelectorAll('style');
+      return Array.from(styles).some(function(s) {
+        return s.textContent.indexOf('bw_btn') !== -1 || s.id === 'bw_style_global';
+      });
     });
     expect(hasStyles).toBe(true);
 
-    const btnBg = await page.locator('#section-buttons .bw_btn_primary').first().evaluate(el => {
+    const btnBg = await page.locator('#section-buttons .bw_btn.bw_primary').first().evaluate(el => {
       return window.getComputedStyle(el).backgroundColor;
     });
     expect(btnBg).not.toBe('rgba(0, 0, 0, 0)');

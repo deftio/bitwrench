@@ -3,250 +3,559 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Raspberry Pi Pico W Dashboard</title>
+  <title>Bitwrench - Pico W / Pico 2W Tutorial</title>
+  <link rel="icon" type="image/x-icon" href="../../images/favicon.ico">
   <script src="../../dist/bitwrench.umd.min.js"></script>
+  <script src="../../pages/shared-nav.js"></script>
+  <script src="../../pages/site.js"></script>
+  <script src="../../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
+  <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    // =====================================================================
-    // Raspberry Pi Pico W — Embedded Device Dashboard
-    //
-    // The Pico W (RP2040 + CYW43 WiFi) serves this HTML page and exposes:
-    //   GET  /api/sensors    — onboard temp, ADC channels, digital inputs
-    //   POST /api/led        — { state: 0|1 } onboard LED
-    //   POST /api/pwm/:ch    — { duty: 0-65535 } PWM output
-    //   GET  /events         — SSE stream of sensor updates
-    //
-    // MicroPython on the Pico W serves files from flash (~2MB).
-    // bitwrench.umd.min.js.gz (~40KB) fits easily.
-    //
-    // SIMULATION: All state is local. Replace mock functions with
-    // fetch()/EventSource to connect to real hardware.
-    // =====================================================================
+    initBitwrenchPage('', '../../pages/');
 
-    bw.loadStyles({
-      primary: '#e11d48',
-      secondary: '#0ea5e9',
-      spacing: 'compact',
-      radius: 'sm'
-    });
+    // -- Helpers ------------------------------------------------------------
 
-    bw.injectCSS(bw.css({
-      'body': { background: '#0f172a', color: '#e2e8f0', margin: '0' }
-    }));
+    function codeBlock(code, lang) {
+      if (typeof bw.codeEditor === 'function') {
+        return bw.codeEditor({ code: code, lang: lang || 'python', readOnly: true, height: 'auto' });
+      }
+      return { t: 'pre', a: { class: 'bw_code_block' }, c: { t: 'code', c: code } };
+    }
 
-    // -- Mock device state ------------------------------------------------
-    var state = {
-      onboardTemp: 26.3,    // RP2040 internal temp sensor
-      led: 0,               // onboard LED (GP25 on Pico, CYW43 on Pico W)
-      adc: [1.65, 0.82, 2.41],  // ADC0-2 (GP26-28), 0-3.3V range
-      pwm: [0, 0, 0, 0],    // PWM channels (GP0-3), duty 0-100%
-      digitalIn: [1, 0, 1, 0],  // GP4-7 digital inputs
-      uptime: 0,
-      freeMemory: 192512,   // bytes (~188KB free of 264KB)
-      wifiRssi: -62         // dBm
+    function step(num, title, content) {
+      var heading = num
+        ? [{ t: 'span', a: { class: 'bw_badge bw_badge_primary', style: 'margin-right:0.5rem' }, c: 'Step ' + num }, title]
+        : title;
+      return {
+        t: 'div', a: { class: 'demo-section' }, c: [
+          { t: 'div', a: { class: 'demo-section-header' }, c: [
+            { t: 'h2', c: heading }
+          ]},
+          { t: 'div', a: { class: 'demo-content' }, c: Array.isArray(content) ? content : [content] }
+        ]
+      };
+    }
+
+    function callout(type, title, content) {
+      var cls = 'callout callout-' + type;
+      return {
+        t: 'div', a: { class: cls }, c: [
+          title ? { t: 'strong', c: title } : null,
+          title ? { t: 'br' } : null,
+          typeof content === 'string' ? { t: 'span', c: content } : content
+        ].filter(Boolean)
+      };
+    }
+
+    // -- Page content -------------------------------------------------------
+
+    var hero = {
+      t: 'div', a: { class: 'page-header' }, c: [
+        { t: 'h1', c: 'Pico W / Pico 2W Dashboard' },
+        { t: 'p', a: { class: 'page-subtitle' }, c:
+          'Build a bitwrench web dashboard served from a Raspberry Pi Pico W or Pico 2W. ' +
+          'Three server options: MicroPython, CircuitPython, or Arduino C++. All stream sensor data to the browser over SSE.'
+        }
+      ]
     };
 
-    var logEntries = [];
+    var overview = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'What You Will Build' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', c: 'A live dashboard served from the Pico that shows:' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'Onboard temperature sensor reading' },
+            { t: 'li', c: '3 ADC channels (GP26-GP28) with voltage display' },
+            { t: 'li', c: '4 PWM outputs (GP0-GP3) with duty cycle controls' },
+            { t: 'li', c: '8 digital output toggles (GP8-GP15)' },
+            { t: 'li', c: '4 digital input pins (GP4-GP7)' },
+            { t: 'li', c: 'Onboard LED toggle, WiFi RSSI, memory, uptime' }
+          ]},
+          callout('tip', 'Freenove Breakout Board (FNK0081)',
+            'If you have the Freenove Breakout Board, just plug the Pico in. ' +
+            'Every GPIO has a buffer-isolated LED on the board. ' +
+            'Toggling GPIO outputs or changing PWM duty cycles from the dashboard ' +
+            'will light up the corresponding LEDs -- no wiring needed.'
+          ),
+          callout('concept', 'Pico W vs Pico 2W',
+            'Both boards share the same pinout and WiFi chip (CYW43439). ' +
+            'The Pico W uses the RP2040 (264KB SRAM, Cortex-M0+) and the ' +
+            'Pico 2W uses the RP2350 (520KB SRAM, Cortex-M33). ' +
+            'The server.py auto-detects which board it is running on.'
+          )
+        ]}
+      ]
+    };
 
-    function addLog(msg) {
-      var ts = new Date().toLocaleTimeString();
-      logEntries.unshift(ts + ' \u2014 ' + msg);
-      if (logEntries.length > 20) logEntries.pop();
-    }
-
-    addLog('Pico W connected via WiFi (RSSI: ' + state.wifiRssi + ' dBm)');
-    addLog('Running in simulation mode');
-
-    // -- Mock actions -----------------------------------------------------
-    function toggleLed() {
-      state.led = state.led ? 0 : 1;
-      addLog('Onboard LED ' + (state.led ? 'ON' : 'OFF'));
-      render();
-    }
-
-    function setPwm(ch, val) {
-      state.pwm[ch] = Math.max(0, Math.min(100, val));
-      addLog('PWM' + ch + ' set to ' + state.pwm[ch] + '%');
-      render();
-    }
-
-    // -- Render -----------------------------------------------------------
-    function render() {
-      var uptimeStr = Math.floor(state.uptime / 3600) + 'h ' +
-        Math.floor((state.uptime % 3600) / 60) + 'm ' +
-        (state.uptime % 60) + 's';
-      var memPct = Math.round((1 - state.freeMemory / 264000) * 100);
-
-      // System info cards
-      var sysCards = bw.makeRow({
-        children: [
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: state.onboardTemp.toFixed(1) + '\u00B0C', label: 'RP2040 Temp', variant: state.onboardTemp > 50 ? 'danger' : 'primary' })
+    var prerequisites = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Prerequisites' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: 'Hardware' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'Raspberry Pi Pico W or Pico 2W' },
+            { t: 'li', c: 'USB cable (micro-USB for Pico W, USB-C for Pico 2W)' },
+            { t: 'li', c: 'WiFi network (2.4 GHz)' },
+            { t: 'li', c: [{ t: 'em', c: 'Optional:' }, ' Freenove Breakout Board for Raspberry Pi Pico (FNK0081)'] }
+          ]},
+          { t: 'h3', c: 'Software (pick one)' },
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'strong', c: 'MicroPython:' }, ' Python 3 + ', { t: 'code', c: 'pip install mpremote' }] },
+            { t: 'li', c: [{ t: 'strong', c: 'CircuitPython:' }, ' Python 3 (copy files to CIRCUITPY drive)'] },
+            { t: 'li', c: [{ t: 'strong', c: 'Arduino C++:' }, ' Arduino IDE + arduino-pico board support'] }
+          ]},
+          { t: 'h3', c: 'Server implementations' },
+          { t: 'p', c: 'Three server options -- all serve the same dashboard.html and expose the same API:' },
+          bw.makeTable({
+            data: [
+              { File: 'server.py', Language: 'MicroPython', Framework: 'microdot + SSE' },
+              { File: 'server_circuitpython.py', Language: 'CircuitPython', Framework: 'adafruit_httpserver' },
+              { File: 'server.ino', Language: 'Arduino C++', Framework: 'WebServer + LittleFS' }
+            ],
+            columns: [
+              { key: 'File', label: 'File' },
+              { key: 'Language', label: 'Language' },
+              { key: 'Framework', label: 'Framework' }
+            ],
+            striped: true
           }),
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: state.wifiRssi + ' dBm', label: 'WiFi RSSI', variant: state.wifiRssi > -50 ? 'success' : state.wifiRssi > -70 ? 'warning' : 'danger' })
-          }),
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: Math.round(state.freeMemory / 1024) + ' KB', label: 'Free Memory', variant: memPct > 80 ? 'danger' : 'info' })
-          }),
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: uptimeStr, label: 'Uptime' })
+          { t: 'h3', c: 'Shared files' },
+          bw.makeTable({
+            data: [
+              { File: 'dashboard.html', Purpose: 'The HTML dashboard that runs on the Pico' },
+              { File: 'settings.toml', Purpose: 'WiFi credentials template (CircuitPython)' },
+              { File: 'bitwrench.umd.min.js', Purpose: 'bitwrench library (from dist/, ~40 KB gzipped)' }
+            ],
+            columns: [
+              { key: 'File', label: 'File' },
+              { key: 'Purpose', label: 'Purpose' }
+            ],
+            striped: true
           })
-        ]
-      });
+        ]}
+      ]
+    };
 
-      // LED control
-      var ledSection = bw.makeCard({
-        title: 'Onboard LED (CYW43)',
-        className: 'bw_mb_3',
-        content: [
-          bw.makeBadge({ text: state.led ? 'ON' : 'OFF', variant: state.led ? 'success' : 'secondary', pill: true }),
-          ' ',
-          bw.makeButton({ text: state.led ? 'Turn Off' : 'Turn On', variant: state.led ? 'danger' : 'success', size: 'sm', onclick: toggleLed })
-        ]
-      });
+    // -- Option A: MicroPython -----------------------------------------------
+    var optionA = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Option A: MicroPython (recommended)' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: '1. Install MicroPython firmware' },
+          { t: 'p', c: [
+            'Download the .uf2 firmware from ',
+            { t: 'a', a: { href: 'https://micropython.org/download/', target: '_blank' }, c: 'micropython.org/download' },
+            ' (search for "Pico W" or "Pico 2W"). Flash it:'
+          ]},
+          { t: 'ol', c: [
+            { t: 'li', c: [{ t: 'strong', c: 'Hold BOOTSEL' }, ' while plugging USB into your computer'] },
+            { t: 'li', c: 'A drive called RPI-RP2 appears' },
+            { t: 'li', c: 'Drag the .uf2 file onto the RPI-RP2 drive' },
+            { t: 'li', c: 'The board reboots with MicroPython installed' }
+          ]},
 
-      // ADC readings
-      var adcCards = state.adc.map(function(v, i) {
-        var pct = Math.round((v / 3.3) * 100);
-        return bw.makeCol({ size: { xs: 12, md: 4 }, content:
-          bw.makeCard({
-            title: 'ADC' + i + ' (GP' + (26 + i) + ')',
-            className: 'bw_mb_2',
-            content: [
-              { t: 'div', a: { class: 'bw_mb_1' }, c: v.toFixed(3) + ' V' },
-              bw.makeProgress({ value: pct, label: pct + '%', variant: pct > 80 ? 'danger' : pct > 50 ? 'warning' : 'primary' })
-            ]
+          { t: 'h3', c: '2. Install microdot' },
+          codeBlock(
+            'pip install mpremote\n' +
+            '\n' +
+            'mpremote mip install github:miguelgrinberg/microdot/src/microdot.py\n' +
+            'mpremote mip install github:miguelgrinberg/microdot/src/microdot/sse.py',
+            'bash'
+          ),
+
+          { t: 'h3', c: '3. Configure WiFi' },
+          { t: 'p', c: 'Edit server.py -- set your network credentials:' },
+          codeBlock(
+            'WIFI_SSID = "YOUR_SSID"\n' +
+            'WIFI_PASSWORD = "YOUR_PASSWORD"',
+            'python'
+          ),
+
+          { t: 'h3', c: '4. Upload files' },
+          codeBlock(
+            'mpremote mkdir :www\n' +
+            'mpremote mkdir :www/dist\n' +
+            'mpremote cp dashboard.html :www/index.html\n' +
+            '\n' +
+            '# Gzip saves flash (~40KB vs ~130KB)\n' +
+            'gzip -k ../../dist/bitwrench.umd.min.js\n' +
+            'mpremote cp ../../dist/bitwrench.umd.min.js.gz :www/dist/bitwrench.umd.min.js.gz\n' +
+            '\n' +
+            '# Upload server as main.py (auto-runs on boot)\n' +
+            'mpremote cp server.py :main.py',
+            'bash'
+          ),
+          callout('concept', 'Why .gz works here',
+            'server.py has a static-file handler that checks for a .gz version of any .js file. ' +
+            'If it finds one, it serves it with Content-Encoding: gzip -- the browser decompresses automatically. ' +
+            'The dashboard requests /dist/bitwrench.umd.min.js but the server sends the smaller .gz file.'
+          ),
+          callout('tip', null,
+            'MicroPython runs main.py on boot. The web server starts automatically every time the Pico powers on.'
+          )
+        ]}
+      ]
+    };
+
+    // -- Option B: CircuitPython ---------------------------------------------
+    var optionB = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Option B: CircuitPython' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: '1. Install CircuitPython firmware' },
+          { t: 'p', c: [
+            'Download the .uf2 from ',
+            { t: 'a', a: { href: 'https://circuitpython.org/downloads', target: '_blank' }, c: 'circuitpython.org/downloads' },
+            ' (search for "Pico W" or "Pico 2W"). Flash it the same way as MicroPython (hold BOOTSEL, drag .uf2).'
+          ]},
+
+          { t: 'h3', c: '2. Install adafruit_httpserver' },
+          { t: 'p', c: [
+            'Download the ',
+            { t: 'a', a: { href: 'https://circuitpython.org/libraries', target: '_blank' }, c: 'Adafruit CircuitPython Bundle' },
+            '. Copy the ', { t: 'code', c: 'adafruit_httpserver/' }, ' directory to ', { t: 'code', c: '/lib/' }, ' on the CIRCUITPY drive.'
+          ]},
+
+          { t: 'h3', c: '3. Configure WiFi' },
+          { t: 'p', c: ['Create ', { t: 'code', c: 'settings.toml' }, ' on the CIRCUITPY drive:'] },
+          codeBlock(
+            'CIRCUITPY_WIFI_SSID = "YOUR_SSID"\n' +
+            'CIRCUITPY_WIFI_PASSWORD = "YOUR_PASSWORD"',
+            'toml'
+          ),
+
+          { t: 'h3', c: '4. Upload files' },
+          { t: 'p', c: 'Copy to the CIRCUITPY drive:' },
+          codeBlock(
+            '# Copy server as code.py (auto-runs on boot)\n' +
+            'cp server_circuitpython.py /Volumes/CIRCUITPY/code.py\n' +
+            '\n' +
+            '# Create www directory and copy dashboard + gzipped bitwrench\n' +
+            'mkdir -p /Volumes/CIRCUITPY/www/dist\n' +
+            'cp dashboard.html /Volumes/CIRCUITPY/www/index.html\n' +
+            'gzip -k ../../dist/bitwrench.umd.min.js\n' +
+            'cp ../../dist/bitwrench.umd.min.js.gz /Volumes/CIRCUITPY/www/dist/',
+            'bash'
+          ),
+          callout('concept', 'Why .gz works here',
+            'server_circuitpython.py has a dedicated route that serves bitwrench.umd.min.js.gz with ' +
+            'Content-Encoding: gzip -- the browser decompresses automatically. ' +
+            'The dashboard requests /dist/bitwrench.umd.min.js but the server sends the smaller .gz file (~40KB vs ~130KB).'
+          )
+        ]}
+      ]
+    };
+
+    // -- Option C: Arduino C++ -----------------------------------------------
+    var optionC = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Option C: Arduino C++' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: '1. Install Arduino IDE + board support' },
+          { t: 'ol', c: [
+            { t: 'li', c: [
+              'Install ', { t: 'a', a: { href: 'https://www.arduino.cc/en/software', target: '_blank' }, c: 'Arduino IDE' }
+            ]},
+            { t: 'li', c: [
+              'Add board manager URL in Preferences: ',
+              { t: 'br' },
+              { t: 'code', a: { style: 'font-size:0.8em' }, c: 'https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json' }
+            ]},
+            { t: 'li', c: 'Board Manager > Install "Raspberry Pi Pico/RP2040/RP2350"' },
+            { t: 'li', c: 'Library Manager > Install "ArduinoJson"' },
+            { t: 'li', c: 'Select: Tools > Board > "Raspberry Pi Pico W" or "Raspberry Pi Pico 2W"' }
+          ]},
+
+          { t: 'h3', c: '2. Prepare LittleFS data' },
+          { t: 'p', c: 'Create a data/ directory next to server.ino:' },
+          codeBlock(
+            'data/\n' +
+            '  index.html                  <- copy of dashboard.html\n' +
+            '  dist/\n' +
+            '    bitwrench.umd.min.js.gz  <- gzip -k bitwrench.umd.min.js',
+            'text'
+          ),
+          { t: 'p', c: 'Upload with: Tools > "Pico LittleFS Data Upload"' },
+
+          { t: 'h3', c: '3. Configure WiFi' },
+          { t: 'p', c: 'Edit server.ino:' },
+          codeBlock(
+            'const char* WIFI_SSID = "YOUR_SSID";\n' +
+            'const char* WIFI_PASSWORD = "YOUR_PASSWORD";',
+            'cpp'
+          ),
+
+          { t: 'h3', c: '4. Upload sketch' },
+          { t: 'p', c: 'Sketch > Upload. Open Serial Monitor (115200 baud) to see the IP address.' }
+        ]}
+      ]
+    };
+
+    // -- Common steps (all options) ------------------------------------------
+
+    var step5 = step('', 'Connect and Test', [
+      { t: 'p', c: 'Reset the Pico (unplug and replug USB, or press the reset button). ' +
+        'Then check the serial output to find the IP address:' },
+      codeBlock(
+        '$ mpremote connect auto\n' +
+        '\n' +
+        '============================================================\n' +
+        '  Raspberry Pi Pico 2W -- bitwrench Dashboard Server\n' +
+        '============================================================\n' +
+        '\n' +
+        'Board          : Pico 2W (RP2350)\n' +
+        'SRAM           : 520 KB\n' +
+        'RP2350 clock   : 150 MHz\n' +
+        'Free memory    : 412680 bytes\n' +
+        'Onboard temp   : 25.3 C\n' +
+        '\n' +
+        'Connecting to WiFi: MyNetwork\n' +
+        'Connected!\n' +
+        '  IP address : 192.168.1.42\n' +
+        '  Subnet mask: 255.255.255.0\n' +
+        '  Gateway    : 192.168.1.1\n' +
+        '  RSSI       : -52 dBm\n' +
+        '\n' +
+        'Starting web server on port 80...\n' +
+        'Dashboard URL  : http://192.168.1.42:80/',
+        'text'
+      ),
+      { t: 'p', c: [
+        { t: 'strong', c: 'Open your browser' },
+        ' and go to the IP address shown (e.g., ',
+        { t: 'code', c: 'http://192.168.1.42/' },
+        '). You should see the live dashboard.'
+      ]}
+    ]);
+
+    var step6 = step('', 'What You See', [
+      { t: 'p', c: 'The dashboard shows live data from the Pico, updated every 2 seconds via Server-Sent Events:' },
+      { t: 'ul', c: [
+        { t: 'li', c: [{ t: 'strong', c: 'System cards:' }, ' onboard temperature, WiFi signal strength, free memory, uptime'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Onboard LED:' }, ' toggle the CYW43 WiFi chip LED on/off'] },
+        { t: 'li', c: [{ t: 'strong', c: 'ADC channels:' }, ' 3 analog inputs (GP26-GP28) showing voltage 0-3.3V'] },
+        { t: 'li', c: [{ t: 'strong', c: 'PWM outputs:' }, ' 4 channels (GP0-GP3) with 0%/25%/50%/100% duty cycle buttons'] },
+        { t: 'li', c: [{ t: 'strong', c: 'GPIO outputs:' }, ' 8 digital outputs (GP8-GP15) with toggle buttons'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Digital inputs:' }, ' 4 input pins (GP4-GP7) showing HIGH/LOW state'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Event log:' }, ' timestamped log of actions and events'] }
+      ]},
+      callout('tip', 'Freenove Breakout Board',
+        'With the Freenove board plugged in, you will see the onboard LEDs respond ' +
+        'immediately. GPIO output toggles turn LEDs on/off. PWM duty cycle changes ' +
+        'make LEDs brighter or dimmer. The 74HC04 buffer isolates the LEDs so they ' +
+        'don\'t affect the GPIO state.'
+      )
+    ]);
+
+    var step7 = step('', 'How It Works', [
+      { t: 'p', c: 'The architecture is simple: the Pico is both the web server and the sensor platform.' },
+      codeBlock(
+        'Pico W/2W                       Browser\n' +
+        '  |                                |\n' +
+        '  |  GET /                         |\n' +
+        '  |  <-- dashboard.html            |\n' +
+        '  |  GET /dist/bitwrench...js      |\n' +
+        '  |  <-- JS (from flash)           |\n' +
+        '  |                                |\n' +
+        '  |  GET /events (SSE)             |\n' +
+        '  |  <-- {"onboardTemp":25.3,...}  |  (every 2s)\n' +
+        '  |  <-- {"onboardTemp":25.4,...}  |\n' +
+        '  |                                |\n' +
+        '  |  POST /api/led                 |\n' +
+        '  |  --> 200 {"ok":true,"led":1}   |\n' +
+        '  |                                |\n' +
+        '  |  POST /api/gpio/8              |\n' +
+        '  |  --> 200 {"ok":true,"pin":8}   |',
+        'text'
+      ),
+      { t: 'h3', c: 'Server (server.py)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Auto-detects Pico W vs Pico 2W at startup' },
+        { t: 'li', c: 'Connects to WiFi and starts microdot HTTP server on port 80' },
+        { t: 'li', c: 'Serves dashboard.html and bitwrench.js from flash' },
+        { t: 'li', c: 'Reads sensors (ADC, temperature, GPIO) and pushes updates via SSE' },
+        { t: 'li', c: 'Handles POST requests for LED, PWM, and GPIO control' }
+      ]},
+      { t: 'h3', c: 'Dashboard (dashboard.html)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Loads bitwrench.umd.min.js and calls bw.loadStyles() for theming' },
+        { t: 'li', c: 'Connects to /events via EventSource for live sensor data' },
+        { t: 'li', c: 'Renders the entire UI as TACO objects using bitwrench BCCL components' },
+        { t: 'li', c: 'Sends fetch() POST requests when buttons are clicked' },
+        { t: 'li', c: 'Re-renders the UI on every SSE update (every 2 seconds)' }
+      ]}
+    ]);
+
+    var pinTable = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Pin Assignments' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Pins: 'GP0-GP3', Function: 'PWM outputs', Notes: '4 channels, 1 kHz, 16-bit duty cycle' },
+              { Pins: 'GP4-GP7', Function: 'Digital inputs', Notes: 'Internal pull-down resistors' },
+              { Pins: 'GP8-GP15', Function: 'Digital outputs', Notes: 'Togglable from dashboard' },
+              { Pins: 'GP26 (ADC0)', Function: 'Analog input', Notes: '12-bit, 0-3.3V range' },
+              { Pins: 'GP27 (ADC1)', Function: 'Analog input', Notes: '12-bit, 0-3.3V range' },
+              { Pins: 'GP28 (ADC2)', Function: 'Analog input', Notes: '12-bit, 0-3.3V range' },
+              { Pins: 'ADC4', Function: 'Temperature sensor', Notes: 'Internal -- no external pin' },
+              { Pins: 'CYW43 LED', Function: 'Onboard LED', Notes: 'Controlled via WiFi chip driver' }
+            ],
+            columns: [
+              { key: 'Pins', label: 'Pin(s)' },
+              { key: 'Function', label: 'Function' },
+              { key: 'Notes', label: 'Notes' }
+            ],
+            striped: true
           })
-        });
-      });
+        ]}
+      ]
+    };
 
-      // PWM controls
-      var pwmControls = state.pwm.map(function(duty, ch) {
-        return bw.makeCol({ size: { xs: 6, md: 3 }, content:
-          bw.makeCard({
-            title: 'PWM' + ch + ' (GP' + ch + ')',
-            className: 'bw_mb_2',
-            content: [
-              bw.makeProgress({ value: duty, label: duty + '%', variant: 'info' }),
-              { t: 'div', a: { class: 'bw_mt_1' }, c: [
-                bw.makeButtonGroup({
-                  children: [
-                    bw.makeButton({ text: '0%', size: 'sm', variant: duty === 0 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 0); } }),
-                    bw.makeButton({ text: '25%', size: 'sm', variant: duty === 25 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 25); } }),
-                    bw.makeButton({ text: '50%', size: 'sm', variant: duty === 50 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 50); } }),
-                    bw.makeButton({ text: '100%', size: 'sm', variant: duty === 100 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 100); } })
-                  ]
-                })
-              ]}
-            ]
+    var apiTable = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'API Endpoints' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Method: 'GET', Path: '/', Description: 'Serve dashboard HTML' },
+              { Method: 'GET', Path: '/dist/<path>', Description: 'Serve static assets (bitwrench JS)' },
+              { Method: 'GET', Path: '/api/sensors', Description: 'JSON snapshot of all sensor readings' },
+              { Method: 'GET', Path: '/events', Description: 'SSE stream (pushes every 2 seconds)' },
+              { Method: 'POST', Path: '/api/led', Description: 'Toggle onboard LED: { "state": 0|1 }' },
+              { Method: 'POST', Path: '/api/pwm/<ch>', Description: 'Set PWM duty: { "duty": 0-100 }' },
+              { Method: 'POST', Path: '/api/gpio/<pin>', Description: 'Toggle GPIO: { "state": 0|1 }' }
+            ],
+            columns: [
+              { key: 'Method', label: 'Method' },
+              { key: 'Path', label: 'Path' },
+              { key: 'Description', label: 'Description' }
+            ],
+            striped: true
           })
-        });
-      });
+        ]}
+      ]
+    };
 
-      // Digital inputs table
-      var diTable = bw.makeTable({
-        data: state.digitalIn.map(function(v, i) {
-          return { Pin: 'GP' + (4 + i), State: v ? 'HIGH' : 'LOW', Logic: v ? '1' : '0' };
-        }),
-        columns: [
-          { key: 'Pin', label: 'Pin' },
-          { key: 'State', label: 'State', render: function(val) {
-            return bw.makeBadge({ text: val, variant: val === 'HIGH' ? 'success' : 'secondary', pill: true });
-          }},
-          { key: 'Logic', label: 'Logic Level' }
-        ],
-        striped: true,
-        hover: true
-      });
+    var troubleshooting = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Troubleshooting' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'dl', c: [
+            { t: 'dt', c: 'Board not recognized by computer' },
+            { t: 'dd', c: 'Make sure you held BOOTSEL while plugging in USB. Try a different USB cable (some are charge-only).' },
+            { t: 'dt', c: 'WiFi connection fails' },
+            { t: 'dd', c: 'Check that WIFI_SSID and WIFI_PASSWORD are correct. The Pico only supports 2.4 GHz WiFi.' },
+            { t: 'dt', c: 'Dashboard loads but shows "Connecting..."' },
+            { t: 'dd', c: 'The SSE endpoint may be busy. The Pico has limited RAM -- keep concurrent browser connections to 1-3.' },
+            { t: 'dt', c: 'mpremote: "no device found"' },
+            { t: 'dd', c: 'Make sure no other program (Thonny, PuTTY) has the serial port open. Only one program can access the Pico at a time.' },
+            { t: 'dt', c: 'ImportError: no module named microdot' },
+            { t: 'dd', c: 'Run the microdot install commands from Step 2 again. Check that /lib/microdot.py exists on the Pico: mpremote ls :lib/' },
+            { t: 'dt', c: 'Freenove LEDs flicker on unconnected pins' },
+            { t: 'dd', c: 'This is normal. Unconnected GPIO pins are in a floating (high-impedance) state. The 74HC04 buffer faithfully shows this. Set a pin as output with a definite HIGH or LOW to stop the flicker.' }
+          ]}
+        ]}
+      ]
+    };
 
-      bw.DOM('#app', bw.makeContainer({
-        className: 'bw_py_3',
-        children: [
-          bw.makeAlert({
-            content: 'Running in simulation mode \u2014 on real Pico W hardware, replace mock functions with MicroPython endpoints (urequests, uasyncio, microdot).',
-            variant: 'warning',
-            dismissible: true
+    var boardComparison = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Pico W vs Pico 2W' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Feature: 'Chip', PicoW: 'RP2040', Pico2W: 'RP2350' },
+              { Feature: 'CPU', PicoW: 'Dual Cortex-M0+ @ 133 MHz', Pico2W: 'Dual Cortex-M33 @ 150 MHz' },
+              { Feature: 'SRAM', PicoW: '264 KB', Pico2W: '520 KB' },
+              { Feature: 'Flash', PicoW: '2 MB', Pico2W: '4 MB' },
+              { Feature: 'WiFi', PicoW: 'CYW43439 (2.4 GHz)', Pico2W: 'CYW43439 (2.4 GHz)' },
+              { Feature: 'ADC', PicoW: '3 channels, 12-bit', Pico2W: '3 channels, 12-bit' },
+              { Feature: 'GPIO pinout', PicoW: '26 GP pins', Pico2W: '26 GP pins (same layout)' },
+              { Feature: 'USB', PicoW: 'Micro-USB', Pico2W: 'USB-C' },
+              { Feature: 'Price', PicoW: '~$6', Pico2W: '~$7' }
+            ],
+            columns: [
+              { key: 'Feature', label: '' },
+              { key: 'PicoW', label: 'Pico W' },
+              { key: 'Pico2W', label: 'Pico 2W' }
+            ],
+            striped: true
           }),
-          { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: 'Raspberry Pi Pico W Dashboard' },
-          sysCards,
-          bw.makeRow({
-            children: [
-              bw.makeCol({ size: { xs: 12, md: 4 }, content: ledSection }),
-              bw.makeCol({ size: { xs: 12, md: 8 }, content:
-                bw.makeSection({ title: 'ADC Channels (12-bit, 0\u20133.3V)', content: [bw.makeRow({ children: adcCards })] })
-              })
-            ]
-          }),
-          bw.makeSection({ title: 'PWM Outputs', content: [bw.makeRow({ children: pwmControls })] }),
-          bw.makeSection({ title: 'Digital Inputs (GP4\u2013GP7)', content: [diTable] }),
-          bw.makeSection({
-            title: 'Event Log',
-            content: [bw.makeListGroup({
-              items: logEntries.length ? logEntries : ['Waiting for events...']
-            })]
-          })
-        ]
-      }));
-    }
+          { t: 'p', c: 'Both boards use the same MicroPython API and the same server.py code. The server auto-detects the board type at startup.' }
+        ]}
+      ]
+    };
 
-    render();
+    var sourceFiles = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Source Files' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'a', a: { href: 'dashboard.html', download: '' }, c: 'dashboard.html' }, ' -- the HTML dashboard (runs on the Pico)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'server.py', download: '' }, c: 'server.py' }, ' -- MicroPython web server (microdot + SSE)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'server_circuitpython.py', download: '' }, c: 'server_circuitpython.py' }, ' -- CircuitPython web server (adafruit_httpserver)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'server.ino', download: '' }, c: 'server.ino' }, ' -- Arduino C++ web server (WebServer + LittleFS)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'settings.toml', download: '' }, c: 'settings.toml' }, ' -- WiFi credentials template (CircuitPython)'] }
+          ]},
+          callout('tip', 'Standalone HTML (no .gz needed)',
+            { t: 'span', c: [
+              'Use ', { t: 'code', c: 'npx bwcli dashboard.html -o standalone.html --standalone' },
+              ' to create a single HTML file with bitwrench inlined. Upload one file to the Pico instead of two. ',
+              'See the ', { t: 'a', a: { href: '../../pages/09-builds.html#section-embedded' }, c: 'Embedded Downloads' }, ' page for details.'
+            ]}
+          )
+        ]}
+      ]
+    };
 
-    // Simulate sensor drift
-    setInterval(function() {
-      state.uptime++;
-      state.onboardTemp += (Math.random() - 0.5) * 0.3;
-      state.onboardTemp = Math.max(20, Math.min(55, state.onboardTemp));
-      state.adc = state.adc.map(function(v) {
-        return Math.max(0, Math.min(3.3, v + (Math.random() - 0.5) * 0.05));
-      });
-      state.digitalIn = state.digitalIn.map(function(v) {
-        return Math.random() > 0.95 ? (v ? 0 : 1) : v;
-      });
-      state.wifiRssi = Math.max(-90, Math.min(-30, state.wifiRssi + (Math.random() - 0.5) * 2));
-      state.freeMemory = Math.max(100000, Math.min(220000, state.freeMemory + Math.round((Math.random() - 0.5) * 2000)));
-      render();
-    }, 2000);
+    // -- Assemble and mount -------------------------------------------------
 
-    // =====================================================================
-    // MicroPython server example (Pico W with microdot):
-    //
-    //   from microdot import Microdot
-    //   from machine import Pin, ADC, PWM
-    //   import network, ujson
-    //
-    //   app = Microdot()
-    //   led = Pin('LED', Pin.OUT)
-    //   adc0 = ADC(26)
-    //
-    //   @app.get('/api/sensors')
-    //   def sensors(req):
-    //       return ujson.dumps({
-    //           'onboardTemp': machine.cpu_temp(),  # RP2040 internal sensor
-    //           'adc': [adc0.read_u16() * 3.3 / 65535],
-    //           'led': led.value()
-    //       })
-    //
-    //   @app.post('/api/led')
-    //   def set_led(req):
-    //       led.value(req.json['state'])
-    //       return {'ok': True}
-    //
-    //   @app.post('/api/pwm/<ch>')
-    //   def set_pwm(req, ch):
-    //       pwm = PWM(Pin(int(ch)))
-    //       pwm.freq(1000)
-    //       pwm.duty_u16(int(req.json['duty'] * 655.35))
-    //       return {'ok': True}
-    //
-    //   wlan = network.WLAN(network.STA_IF)
-    //   wlan.active(True)
-    //   wlan.connect('SSID', 'PASSWORD')
-    //   app.run(port=80)
-    // =====================================================================
+    bw.DOM('#app', {
+      t: 'div', c: [
+        hero,
+        { t: 'div', a: { class: 'content-container wide' }, c: [
+          overview,
+          prerequisites,
+          optionA,
+          optionB,
+          optionC,
+          step5,
+          step6,
+          step7,
+          pinTable,
+          apiTable,
+          boardComparison,
+          troubleshooting,
+          sourceFiles
+        ]}
+      ]
+    });
   </script>
 </body>
 </html>

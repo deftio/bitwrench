@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raspberry Pi System Monitor</title>
+  <!--
+    This dashboard runs ON a Raspberry Pi (or any Linux SBC).
+    It is served by either:
+      A) server.js  (bwserve on port 7902)
+      B) server.py  (Flask on port 8080)
+
+    All data comes from real fetch() and EventSource() calls.
+    No mock/simulation data.
+
+    API endpoints (same for both servers):
+      GET  /api/system     - system metrics (CPU, memory, disk, network)
+      GET  /api/processes  - top processes
+      GET  /api/gpio       - GPIO pin states
+      POST /api/gpio/:pin  - set output pin { value: 0|1 }
+      GET  /events         - SSE stream, event name "system"
+  -->
+  <script src="../../dist/bitwrench.umd.min.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Raspberry Pi System Monitor -- Live Dashboard
+    //
+    // Communicates with server.js (bwserve) or server.py (Flask) via
+    // REST API + SSE. All UI rendered with bitwrench BCCL components.
+    // =====================================================================
+
+    bw.loadStyles({
+      primary: '#c51a4a',
+      secondary: '#2563eb',
+      spacing: 'compact',
+      radius: 'sm'
+    });
+
+    bw.injectCSS(bw.css({
+      'body': { background: '#0f172a', color: '#e2e8f0', margin: '0' }
+    }));
+
+    // -- State -------------------------------------------------------------
+    var sys = null;         // /api/system response
+    var processes = [];     // /api/processes response
+    var gpioState = [];     // /api/gpio response
+    var logEntries = [];
+    var isConnected = false;
+    var sortCol = null;
+    var sortDir = 'asc';
+
+    // -- Helpers -----------------------------------------------------------
+
+    function addLog(msg) {
+      var ts = new Date().toLocaleTimeString();
+      logEntries.unshift(ts + ' -- ' + msg);
+      if (logEntries.length > 25) logEntries.pop();
+    }
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function formatUptime(seconds) {
+      var d = Math.floor(seconds / 86400);
+      var h = Math.floor((seconds % 86400) / 3600);
+      var m = Math.floor((seconds % 3600) / 60);
+      return d + 'd ' + h + 'h ' + m + 'm';
+    }
+
+    function tempVariant(temp) {
+      if (temp > 70) return 'danger';
+      if (temp > 55) return 'warning';
+      return 'success';
+    }
+
+    function cpuVariant(pct) {
+      if (pct > 80) return 'danger';
+      if (pct > 50) return 'warning';
+      return 'primary';
+    }
+
+    function memVariant(pct) {
+      if (pct > 85) return 'danger';
+      if (pct > 60) return 'warning';
+      return 'info';
+    }
+
+    function diskVariant(pct) {
+      if (pct > 90) return 'danger';
+      if (pct > 70) return 'warning';
+      return 'info';
+    }
+
+    // -- GPIO toggle -------------------------------------------------------
+
+    function toggleGpio(pin, currentValue) {
+      var newValue = currentValue ? 0 : 1;
+      fetch('/api/gpio/' + pin, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: newValue })
+      })
+      .then(function(resp) { return resp.json(); })
+      .then(function(result) {
+        if (result.ok !== undefined || result.pin !== undefined) {
+          // Update local state to reflect the change
+          gpioState.forEach(function(g) {
+            if (g.pin === pin) g.value = newValue;
+          });
+          addLog('GPIO ' + pin + ' set to ' + (newValue ? 'HIGH' : 'LOW'));
+          render();
+        }
+      })
+      .catch(function(err) {
+        addLog('GPIO toggle failed: ' + err.message);
+        render();
+      });
+    }
+
+    // -- Process sort handler ----------------------------------------------
+
+    function handleSort(column) {
+      if (sortCol === column) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = column;
+        sortDir = 'asc';
+      }
+      render();
+    }
+
+    // -- Render ------------------------------------------------------------
+
+    function render() {
+      if (!sys) {
+        bw.DOM('#app', bw.makeContainer({
+          className: 'bw_py_3',
+          children: [
+            { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: 'Raspberry Pi System Monitor' },
+            bw.makeAlert({ content: 'Connecting to server...', variant: 'info' })
+          ]
+        }));
+        return;
+      }
+
+      var cpuAvg = sys.cpuUsage.length > 0
+        ? Math.round(sys.cpuUsage.reduce(function(a, b) { return a + b; }, 0) / sys.cpuUsage.length)
+        : 0;
+      var memPct = sys.memTotal > 0 ? Math.round(sys.memUsed / sys.memTotal * 100) : 0;
+      var diskPct = sys.diskTotal > 0 ? Math.round(sys.diskUsed / sys.diskTotal * 100) : 0;
+      var swapPct = sys.swapTotal > 0 ? Math.round(sys.swapUsed / sys.swapTotal * 100) : 0;
+
+      // -- Overview stat cards ---------------------------------------------
+      var overviewCards = bw.makeRow({
+        children: [
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({
+              value: sys.cpuTemp.toFixed(1) + '\u00B0C',
+              label: 'CPU Temp',
+              variant: tempVariant(sys.cpuTemp)
+            })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({
+              value: cpuAvg + '%',
+              label: 'CPU Usage',
+              variant: cpuVariant(cpuAvg)
+            })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({
+              value: memPct + '%',
+              label: 'Memory (' + Math.round(sys.memUsed) + '/' + sys.memTotal + ' MB)',
+              variant: memVariant(memPct)
+            })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({
+              value: diskPct + '%',
+              label: 'Disk (' + sys.diskUsed.toFixed(1) + '/' + sys.diskTotal + ' GB)',
+              variant: diskVariant(diskPct)
+            })
+          })
+        ]
+      });
+
+      // -- CPU per-core bars -----------------------------------------------
+      var cpuBars = bw.makeCard({
+        title: 'CPU Cores',
+        className: 'bw_mb_3',
+        content: sys.cpuUsage.map(function(usage, i) {
+          return { t: 'div', a: { class: 'bw_mb_1' }, c: [
+            { t: 'div', a: { style: 'display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:2px' }, c: [
+              { t: 'span', c: 'Core ' + i },
+              { t: 'span', c: Math.round(usage) + '%' }
+            ]},
+            bw.makeProgress({
+              value: Math.round(usage),
+              variant: cpuVariant(usage)
+            })
+          ]};
+        })
+      });
+
+      // -- Memory card (RAM + swap) ----------------------------------------
+      var memCard = bw.makeCard({
+        title: 'Memory',
+        className: 'bw_mb_3',
+        content: [
+          { t: 'div', a: { class: 'bw_mb_2' }, c: [
+            { t: 'div', a: { style: 'font-size:0.8rem;margin-bottom:2px' },
+              c: 'RAM: ' + Math.round(sys.memUsed) + ' / ' + sys.memTotal + ' MB' },
+            bw.makeProgress({
+              value: memPct,
+              variant: memPct > 85 ? 'danger' : 'primary'
+            })
+          ]},
+          { t: 'div', c: [
+            { t: 'div', a: { style: 'font-size:0.8rem;margin-bottom:2px' },
+              c: 'Swap: ' + sys.swapUsed + ' / ' + sys.swapTotal + ' MB' },
+            bw.makeProgress({
+              value: swapPct,
+              variant: 'info'
+            })
+          ]}
+        ]
+      });
+
+      // -- GPIO controls ---------------------------------------------------
+      var gpioCards = gpioState.map(function(g) {
+        var isOut = g.mode === 'OUT';
+        return bw.makeCol({ size: { xs: 6, md: 4 }, content:
+          bw.makeCard({
+            title: 'GPIO ' + g.pin + ' -- ' + g.label,
+            className: 'bw_mb_2',
+            content: [
+              { t: 'div', a: { class: 'bw_mb_1' }, c: [
+                bw.makeBadge({ text: g.mode, variant: isOut ? 'primary' : 'warning', pill: true }),
+                ' ',
+                bw.makeBadge({ text: g.value ? 'HIGH' : 'LOW', variant: g.value ? 'success' : 'secondary', pill: true })
+              ]},
+              isOut ? bw.makeButton({
+                text: g.value ? 'Turn Off' : 'Turn On',
+                variant: g.value ? 'danger' : 'success',
+                size: 'sm',
+                onclick: function() { toggleGpio(g.pin, g.value); }
+              }) : { t: 'span', a: { style: 'font-size:0.8rem;opacity:0.6' }, c: 'Read-only input' }
+            ]
+          })
+        });
+      });
+
+      // -- Process table (sortable) ----------------------------------------
+      var procData = processes.map(function(p) {
+        return {
+          PID: p.pid,
+          Process: p.name,
+          'CPU %': p.cpu,
+          Memory: p.mem
+        };
+      });
+
+      var procTable = bw.makeTable({
+        data: procData,
+        columns: [
+          { key: 'PID', label: 'PID' },
+          { key: 'Process', label: 'Process' },
+          { key: 'CPU %', label: 'CPU %' },
+          { key: 'Memory', label: 'Memory (MB)' }
+        ],
+        striped: true,
+        hover: true,
+        sortable: true,
+        sortColumn: sortCol,
+        sortDirection: sortDir,
+        onSort: function(column, direction) {
+          sortCol = column;
+          sortDir = direction;
+          render();
+        }
+      });
+
+      // -- System info table -----------------------------------------------
+      var infoTable = bw.makeTable({
+        data: [
+          { Property: 'Model', Value: sys.model || '--' },
+          { Property: 'OS', Value: sys.os || '--' },
+          { Property: 'Kernel', Value: sys.kernel || '--' },
+          { Property: 'Hostname', Value: sys.hostname || '--' },
+          { Property: 'IP Address', Value: sys.ip || '--' },
+          { Property: 'Uptime', Value: formatUptime(sys.uptime) },
+          { Property: 'Load Average', Value: sys.loadAvg
+            ? sys.loadAvg.map(function(v) { return v.toFixed(2); }).join(', ')
+            : '--' },
+          { Property: 'Network RX', Value: formatBytes(sys.netRx) + '/s' },
+          { Property: 'Network TX', Value: formatBytes(sys.netTx) + '/s' }
+        ],
+        striped: true,
+        sortable: false
+      });
+
+      // -- Connection status badge -----------------------------------------
+      var statusBadge = bw.makeBadge({
+        text: isConnected ? 'Live' : 'Disconnected',
+        variant: isConnected ? 'success' : 'danger',
+        pill: true
+      });
+
+      // -- Assemble full layout --------------------------------------------
+      bw.DOM('#app', bw.makeContainer({
+        className: 'bw_py_3',
+        children: [
+          // Header
+          { t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem' }, c: [
+            { t: 'h1', a: { class: 'bw_h4', style: 'margin:0' }, c: 'Raspberry Pi System Monitor' },
+            statusBadge
+          ]},
+
+          // Overview stat cards
+          overviewCards,
+
+          // CPU + Memory side-by-side
+          bw.makeRow({
+            children: [
+              bw.makeCol({ size: { xs: 12, md: 6 }, content: cpuBars }),
+              bw.makeCol({ size: { xs: 12, md: 6 }, content: memCard })
+            ]
+          }),
+
+          // GPIO controls
+          bw.makeSection({
+            title: 'GPIO Controls',
+            spacing: 'sm',
+            content: [bw.makeRow({ children: gpioCards })]
+          }),
+
+          // Processes + System Info side-by-side
+          bw.makeRow({
+            children: [
+              bw.makeCol({ size: { xs: 12, md: 6 }, content:
+                bw.makeSection({ title: 'Processes', spacing: 'sm', content: [procTable] })
+              }),
+              bw.makeCol({ size: { xs: 12, md: 6 }, content:
+                bw.makeSection({ title: 'System Info', spacing: 'sm', content: [infoTable] })
+              })
+            ]
+          }),
+
+          // Event log
+          bw.makeSection({
+            title: 'Event Log',
+            spacing: 'sm',
+            content: [bw.makeListGroup({
+              items: logEntries.length ? logEntries : ['Waiting for events...']
+            })]
+          })
+        ]
+      }));
+    }
+
+    // -- Initial data fetch ------------------------------------------------
+
+    function fetchInitialData() {
+      var systemDone = false;
+      var processDone = false;
+      var gpioDone = false;
+
+      fetch('/api/system')
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          sys = data;
+          addLog('Connected to ' + (data.hostname || 'server') + ' (' + (data.ip || '?') + ')');
+          systemDone = true;
+          if (systemDone && processDone && gpioDone) render();
+        })
+        .catch(function(err) {
+          addLog('Failed to fetch system data: ' + err.message);
+          render();
+        });
+
+      fetch('/api/processes')
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          processes = data;
+          processDone = true;
+          if (systemDone && processDone && gpioDone) render();
+        })
+        .catch(function(err) {
+          addLog('Failed to fetch processes: ' + err.message);
+        });
+
+      fetch('/api/gpio')
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+          gpioState = data;
+          gpioDone = true;
+          if (systemDone && processDone && gpioDone) render();
+        })
+        .catch(function(err) {
+          addLog('Failed to fetch GPIO: ' + err.message);
+        });
+    }
+
+    // -- SSE live updates --------------------------------------------------
+
+    function connectSSE() {
+      var es = new EventSource('/events');
+
+      // Listen for named "system" events
+      es.addEventListener('system', function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          sys = data;
+          // If the SSE payload includes processes and gpio, update those too
+          if (data.processes) processes = data.processes;
+          if (data.gpio) gpioState = data.gpio;
+          isConnected = true;
+          render();
+        } catch (err) {
+          addLog('SSE parse error: ' + err.message);
+        }
+      });
+
+      // Also listen for unnamed messages (fallback for servers that use
+      // plain "data:" without "event: system")
+      es.onmessage = function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          sys = data;
+          if (data.processes) processes = data.processes;
+          if (data.gpio) gpioState = data.gpio;
+          isConnected = true;
+          render();
+        } catch (err) {
+          addLog('SSE parse error: ' + err.message);
+        }
+      };
+
+      es.onopen = function() {
+        isConnected = true;
+        addLog('SSE connection established');
+        render();
+      };
+
+      es.onerror = function() {
+        isConnected = false;
+        addLog('SSE connection lost -- reconnecting...');
+        render();
+      };
+    }
+
+    // -- Bootstrap ---------------------------------------------------------
+
+    render(); // Show loading state
+    fetchInitialData();
+    connectSSE();
+  </script>
+</body>
+</html>

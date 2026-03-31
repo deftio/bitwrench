@@ -232,7 +232,7 @@ function generateTypographyThemed(scope, palette, layout) {
     'transition': 'color ' + mot.fast + ' ' + mot.easing
   };
   rules[_sx(scope, 'a:hover')] = {
-    'color': palette.primary.hover,
+    'color': palette.tertiary.hover,
     'text-decoration': 'underline'
   };
   return rules;
@@ -412,7 +412,7 @@ function generateNavigation(scope, palette, layout) {
     'transition': 'color ' + layout.motion.fast + ' ' + layout.motion.easing + ', background-color ' + layout.motion.fast + ' ' + layout.motion.easing
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
-    'color': palette.dark.base,
+    'color': palette.tertiary.base,
     'background-color': palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
@@ -493,7 +493,7 @@ function generateTabs(scope, palette, layout) {
     'transition': 'color ' + mo.fast + ' ' + mo.easing + ', border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
-    'color': palette.dark.base,
+    'color': palette.tertiary.base,
     'background-color': palette.surfaceAlt,
     'border-bottom-color': palette.light.border
   };
@@ -519,7 +519,7 @@ function generateListGroups(scope, palette, layout) {
   };
   rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
     'background-color': palette.surfaceAlt,
-    'color': palette.dark.hover
+    'color': palette.tertiary.base
   };
   rules[_sx(scope, '.bw_list_group_item.active')] = {
     'color': palette.primary.textOn,
@@ -620,11 +620,11 @@ function generateBreadcrumbThemed(scope, palette, layout) {
     'color': palette.secondary.base
   };
   rules[_sx(scope, '.bw_breadcrumb_item a')] = {
-    'color': palette.primary.base,
+    'color': palette.tertiary.base,
     'transition': 'color ' + mo.fast + ' ' + mo.easing
   };
   rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
-    'color': palette.primary.hover,
+    'color': palette.tertiary.hover,
     'text-decoration': 'underline'
   };
   rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
@@ -859,11 +859,11 @@ function generateStepperThemed(scope, palette) {
     'font-weight': '600'
   };
   rules[_sx(scope, '.bw_step_completed .bw_step_indicator')] = {
-    'background-color': palette.primary.base,
-    'color': palette.primary.textOn
+    'background-color': palette.tertiary.base,
+    'color': palette.tertiary.textOn
   };
-  rules[_sx(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.primary.base };
-  rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.primary.base };
+  rules[_sx(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.tertiary.base };
+  rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.tertiary.base };
   return rules;
 }
 
@@ -1125,14 +1125,14 @@ function generatePaletteClasses(scope, palette) {
     };
   });
 
-  // Text muted — always a neutral gray, never a brand color
-  rules[_sx(scope, '.bw_text_muted')] = { 'color': '#6c757d' };
+  // Text muted — uses palette secondary for theme-aware muted text
+  rules[_sx(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
 
-  // Common bg/text utilities that aren't per-variant
-  rules[_sx(scope, '.bw_bg_dark')] = { 'background-color': '#212529', 'color': '#f8f9fa' };
-  rules[_sx(scope, '.bw_bg_light')] = { 'background-color': '#f8f9fa', 'color': '#212529' };
-  rules[_sx(scope, '.bw_text_light')] = { 'color': '#f8f9fa' };
-  rules[_sx(scope, '.bw_text_dark')] = { 'color': '#212529' };
+  // Common bg/text utilities — derive from palette for theme awareness
+  rules[_sx(scope, '.bw_bg_dark')] = { 'background-color': palette.dark.base, 'color': palette.dark.textOn };
+  rules[_sx(scope, '.bw_bg_light')] = { 'background-color': palette.light.base, 'color': palette.light.textOn };
+  rules[_sx(scope, '.bw_text_light')] = { 'color': palette.light.base };
+  rules[_sx(scope, '.bw_text_dark')] = { 'color': palette.dark.base };
 
   return rules;
 }

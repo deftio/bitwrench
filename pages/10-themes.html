@@ -6,8 +6,8 @@
   <title>Bitwrench - Themes</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
@@ -15,7 +15,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('10-themes.html');
+    var styles = initBitwrenchPage('10-themes.html');
+    var p = styles.palette;
 
     // ---------------------------------------------------------------
     // Page CSS (injected via bw.css)
@@ -32,14 +33,14 @@
         'font-weight': '600',
         'font-size': '0.8125rem',
         'margin-bottom': '0.375rem',
-        'color': 'var(--bw_text_secondary)',
+        'color': p.dark.hover,
         'text-transform': 'uppercase',
         'letter-spacing': '0.03em'
       },
       '.theme-control-group input[type="color"]': {
         'width': '100%',
         'height': '42px',
-        'border': '1px solid var(--bw_card_border)',
+        'border': '1px solid ' + p.light.border,
         'border-radius': '6px',
         'cursor': 'pointer',
         'padding': '2px'
@@ -47,15 +48,15 @@
       '.theme-control-group select': {
         'width': '100%',
         'padding': '0.5rem 0.75rem',
-        'border': '1px solid var(--bw_card_border)',
+        'border': '1px solid ' + p.light.border,
         'border-radius': '6px',
-        'background': 'var(--bw_card_bg)',
-        'color': 'var(--bw_text)',
+        'background': p.surface,
+        'color': p.dark.base,
         'font-size': '0.875rem'
       },
       '.preview-area': {
-        'border': '2px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        'border': '2px solid ' + p.light.border,
+        'border-radius': '8px',
         'padding': '1.5rem',
         'margin-top': '1rem',
         'transition': 'background-color 0.3s ease, color 0.3s ease'
@@ -70,10 +71,10 @@
         'font-size': '0.875rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.05em',
-        'color': 'var(--bw_text_secondary)',
+        'color': p.dark.hover,
         'margin': '0 0 0.75rem 0',
         'padding-bottom': '0.375rem',
-        'border-bottom': '1px solid var(--bw_card_border)'
+        'border-bottom': '1px solid ' + p.light.border
       },
       '.preset-grid': {
         'display': 'grid',
@@ -81,8 +82,8 @@
         'gap': '1rem'
       },
       '.preset-card': {
-        'border': '2px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        'border': '2px solid ' + p.light.border,
+        'border-radius': '8px',
         'overflow': 'hidden',
         'cursor': 'pointer',
         'transition': 'transform 0.2s, box-shadow 0.2s'
@@ -113,7 +114,7 @@
       '.preset-card-body p': {
         'margin': '0',
         'font-size': '0.8125rem',
-        'color': 'var(--bw_text_secondary)'
+        'color': p.dark.hover
       },
       '.multi-theme-row': {
         'display': 'grid',
@@ -121,8 +122,8 @@
         'gap': '1.5rem'
       },
       '.multi-theme-panel': {
-        'border': '2px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        'border': '2px solid ' + p.light.border,
+        'border-radius': '8px',
         'padding': '1.25rem'
       },
       '.multi-theme-panel h4': {
@@ -130,11 +131,11 @@
         'font-size': '0.9375rem'
       },
       '.code-export-block': {
-        'background': 'var(--bw_code_bg)',
-        'color': 'var(--bw_code_text)',
-        'border-radius': 'var(--bw_radius)',
+        'background': '#1e293b',
+        'color': '#e2e8f0',
+        'border-radius': '8px',
         'padding': '1rem 1.25rem',
-        'font-family': 'var(--bw_font_mono)',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'font-size': '0.8125rem',
         'overflow-x': 'auto',
         'white-space': 'pre',
@@ -143,12 +144,12 @@
       '.css-output-area': {
         'width': '100%',
         'min-height': '200px',
-        'background': 'var(--bw_code_bg)',
-        'color': 'var(--bw_code_text)',
-        'border': '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        'background': '#1e293b',
+        'color': '#e2e8f0',
+        'border': '1px solid ' + p.light.border,
+        'border-radius': '8px',
         'padding': '1rem',
-        'font-family': 'var(--bw_font_mono)',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'font-size': '0.75rem',
         'line-height': '1.5',
         'resize': 'vertical'
@@ -166,7 +167,7 @@
         'margin': '1.25rem 0'
       },
       '.color-role-card': {
-        'border': '1px solid var(--bw_card_border)',
+        'border': '1px solid ' + p.light.border,
         'border-radius': '8px',
         'overflow': 'hidden'
       },
@@ -192,7 +193,7 @@
       '.color-role-body p': {
         'margin': '0',
         'font-size': '0.8125rem',
-        'color': 'var(--bw_text_secondary)',
+        'color': p.dark.hover,
         'line-height': '1.5'
       },
       '.shade-strip': {
@@ -212,9 +213,9 @@
         'align-items': 'center',
         'margin': '1.5rem 0',
         'padding': '1.25rem',
-        'border': '1px solid var(--bw_card_border)',
+        'border': '1px solid ' + p.light.border,
         'border-radius': '8px',
-        'background': 'var(--bw_card_bg)'
+        'background': p.surface
       },
       '.color-flow-step': {
         'text-align': 'center',
@@ -231,12 +232,12 @@
       '.color-flow-step p': {
         'margin': '0',
         'font-size': '0.75rem',
-        'color': 'var(--bw_text_secondary)'
+        'color': p.dark.hover
       },
       '.color-flow-arrow': {
         'text-align': 'center',
         'font-size': '1.5rem',
-        'color': 'var(--bw_text_secondary)'
+        'color': p.dark.hover
       },
       '.shade-table': {
         'width': '100%',
@@ -247,16 +248,16 @@
       '.shade-table th': {
         'text-align': 'left',
         'padding': '0.5rem 0.75rem',
-        'border-bottom': '2px solid var(--bw_card_border)',
+        'border-bottom': '2px solid ' + p.light.border,
         'font-weight': '600',
         'font-size': '0.75rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.03em',
-        'color': 'var(--bw_text_secondary)'
+        'color': p.dark.hover
       },
       '.shade-table td': {
         'padding': '0.375rem 0.75rem',
-        'border-bottom': '1px solid var(--bw_card_border)',
+        'border-bottom': '1px solid ' + p.light.border,
         'vertical-align': 'middle'
       },
       '.shade-table code': {
@@ -292,7 +293,7 @@
     // Page structure (TACO)
     // ---------------------------------------------------------------
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' }, c: {
+      t: 'div', a: { class: 'bw_site_pages_header' }, c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' }, c: [
           { t: 'h1', c: 'Themes' },
           { t: 'p', a: { class: 'subtitle' }, c: [
@@ -304,15 +305,15 @@
       }
     };
 
-    var descStyle = 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem;';
+    var descStyle = 'font-size: 0.9375rem; color: #555; margin: 0 0 1rem;';
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' }, c: [
 
         // Teaching callout
         {
-          t: 'div', a: { class: 'callout callout-concept' }, c: [
-            { t: 'h4', c: 'Level 0 \u2014 Theme Generation' },
+          t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+            { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 0 \u2014 Theme Generation' },
             { t: 'p', c: ['Themes are data: hand bw.makeStyles() seed colors and get a complete CSS palette with dark mode. Theme generation is pure computation \u2014 no DOM required. ',
               { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
           ]
@@ -320,10 +321,10 @@
 
         // Section: How Theme Colors Work
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'How Theme Colors Work' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How Theme Colors Work' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
                     'A bitwrench theme starts with <strong>three seed colors</strong>. Everything else is derived automatically. ' +
@@ -387,9 +388,9 @@
 
                 // Harmonization callout
                 {
-                  t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1.25rem;' },
+                  t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_tip', style: 'margin-top: 1.25rem;' },
                   c: [
-                    { t: 'h4', c: 'Harmonization' },
+                    { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Harmonization' },
                     { t: 'p', c: bw.raw(
                       'Semantic colors (success, danger, warning, info) are automatically <em>harmonized</em> toward the primary hue. ' +
                       'This shifts their hue 20% toward primary, so a green "success" in an ocean-blue theme becomes slightly blue-green. ' +
@@ -405,10 +406,10 @@
 
         // Section 1: Theme Generator
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Theme Generator' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Theme Generator' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: [
                     'Pick three seed colors, choose spacing and border-radius presets, then click ',
@@ -424,10 +425,10 @@
 
         // Section 2: Pre-built Gallery
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Pre-built Theme Gallery' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Pre-built Theme Gallery' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: [
                     'Click any preset to apply it to the preview area above. Each theme is generated from just three seed colors using ',
@@ -444,10 +445,10 @@
 
         // Section 3: Applying Themes
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Applying Themes' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Applying Themes' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
                     'Themes in bitwrench are <strong>CSS-scoped</strong>. Every call to <code>bw.makeStyles(config)</code> ' +
@@ -491,10 +492,10 @@
 
         // Section 4: Background & Surface Colors
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Background & Surface Colors' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Background & Surface Colors' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
                     'Every theme palette includes <strong>background</strong> and <strong>surface</strong> tokens. ' +
@@ -504,7 +505,7 @@
                 // Explainer graphic: layered color model
                 { t: 'div', a: { id: 'bg-surface-explainer' } },
                 {
-                  t: 'ul', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 1rem; padding-left: 1.25rem; line-height: 1.8;' },
+                  t: 'ul', a: { style: 'font-size: 0.9375rem; color: #555; margin: 0 0 1rem; padding-left: 1.25rem; line-height: 1.8;' },
                   c: [
                     { t: 'li', c: bw.raw('<code>palette.background</code> &mdash; the page body background. Light themes default to <code>#ffffff</code>; dark themes derive from the dark base color.') },
                     { t: 'li', c: bw.raw('<code>palette.surface</code> &mdash; elevated surfaces like cards, inputs, modals, dropdowns. Light themes default to <code>#f8f9fa</code>; dark themes derive a slightly lighter shade.') },
@@ -514,9 +515,9 @@
                 },
                 { t: 'div', a: { id: 'bg-surface-demo' } },
                 {
-                  t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1.25rem;' },
+                  t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_tip', style: 'margin-top: 1.25rem;' },
                   c: [
-                    { t: 'h4', c: 'Design rationale' },
+                    { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Design rationale' },
                     { t: 'p', c: bw.raw(
                       'Industry standard (MUI, shadcn, Tailwind): <code>background</code> is a surface token, not derived from the primary seed color. ' +
                       'A blue primary should give you a blue <em>button</em>, not a blue page. ' +
@@ -531,10 +532,10 @@
 
         // Section 5: Multi-theme Demo (mixed themes)
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Mixed Themes on One Page' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Mixed Themes on One Page' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
                     'Multiple themes can coexist on the same page. Generate each with a unique name &mdash; ' +
@@ -551,10 +552,10 @@
 
         // Section 6: Code Export
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: 'Code Export' },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Code Export' },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c:
                     'The JavaScript call and generated CSS for your current theme. Copy the CSS to use in production without any runtime cost.'
@@ -567,10 +568,10 @@
 
         // Section 7: Theme Toggle (Primary / Alternate)
         {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: bw.raw('Theme Toggle &mdash; Primary / Alternate') },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Theme Toggle &mdash; Primary / Alternate') },
             {
-              t: 'div', a: { class: 'demo-content' }, c: [
+              t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: [
                     { t: 'code', c: 'bw.makeStyles()' },
@@ -1011,7 +1012,7 @@
             t: 'button', c: 'Light',
             a: {
               style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:4px 0 0 4px;cursor:pointer;font-size:0.875rem;font-weight:600;' +
-                (!isDark ? 'background:#006666;color:#fff;border-color:#006666;' : 'background:#fff;color:#333;')
+                (!isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;')
             },
             o: { mounted: function(el) { el.addEventListener('click', function() {
               state.galleryDark = false;
@@ -1026,7 +1027,7 @@
             t: 'button', c: 'Dark',
             a: {
               style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:0 4px 4px 0;cursor:pointer;font-size:0.875rem;font-weight:600;' +
-                (isDark ? 'background:#006666;color:#fff;border-color:#006666;' : 'background:#fff;color:#333;')
+                (isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;')
             },
             o: { mounted: function(el) { el.addEventListener('click', function() {
               state.galleryDark = true;
@@ -1189,7 +1190,7 @@
       // Layered diagram: background → surface (card) → component colors
       bw.DOM('#bg-surface-explainer', {
         t: 'div', a: {
-          style: 'position: relative; border: 2px solid var(--bw_card_border); border-radius: 12px; ' +
+          style: 'position: relative; border: 2px solid #d8d8d8; border-radius: 12px; ' +
                  'background: ' + bgColor + '; padding: 2rem; margin: 1rem 0 1.5rem; min-height: 200px;'
         }, c: [
           // Background label
@@ -1292,14 +1293,14 @@
           {
             t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.25rem;' }, c: [
               {
-                t: 'div', a: { style: 'padding: 1rem; border: 1px solid var(--bw_card_border); border-radius: 8px;' }, c: [
+                t: 'div', a: { style: 'padding: 1rem; border: 1px solid #d8d8d8; border-radius: 8px;' }, c: [
                   { t: 'h4', a: { style: 'margin: 0 0 0.75rem 0; font-size: 0.9375rem;' }, c: 'Primary Palette' },
                   swatch(bgColor, 'background'),
                   swatch(surColor, 'surface')
                 ]
               },
               {
-                t: 'div', a: { style: 'padding: 1rem; border: 1px solid var(--bw_card_border); border-radius: 8px;' }, c: [
+                t: 'div', a: { style: 'padding: 1rem; border: 1px solid #d8d8d8; border-radius: 8px;' }, c: [
                   { t: 'h4', a: { style: 'margin: 0 0 0.75rem 0; font-size: 0.9375rem;' }, c: 'Alternate Palette' },
                   swatch(altBg, 'background'),
                   swatch(altSur, 'surface')
@@ -1309,7 +1310,7 @@
           },
           { t: 'h4', a: { style: 'margin: 0.5rem 0 0.75rem 0; font-size: 0.9375rem;' }, c: 'Overriding defaults' },
           {
-            t: 'p', a: { style: 'font-size: 0.9375rem; color: var(--bw_text_secondary); margin: 0 0 0.75rem;' },
+            t: 'p', a: { style: 'font-size: 0.9375rem; color: #555; margin: 0 0 0.75rem;' },
             c: bw.raw('Pass <code>background</code> and/or <code>surface</code> in the config to replace the auto-derived values:')
           },
           useCE
@@ -1420,8 +1421,8 @@
             ]
           },
           {
-            t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 1.25rem;' }, c: [
-              { t: 'h4', c: 'How scoped themes work' },
+            t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept', style: 'margin-top: 1.25rem;' }, c: [
+              { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'How scoped themes work' },
               {
                 t: 'p', c: [
                   'Each call to ',
@@ -1473,10 +1474,10 @@
           // Code theme picker
           {
             t: 'div', a: { style: 'display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-bottom: 1rem;' }, c: [
-              { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Code theme:' },
+              { t: 'span', a: { style: 'font-size: 0.8125rem; color: #555;' }, c: 'Code theme:' },
               {
                 t: 'select', a: {
-                  style: 'padding: 0.25rem 0.5rem; border: 1px solid var(--bw_card_border); border-radius: 4px; font-size: 0.8125rem; background: var(--bw_card_bg); color: var(--bw_text);',
+                  style: 'padding: 0.25rem 0.5rem; border: 1px solid #d8d8d8; border-radius: 4px; font-size: 0.8125rem; background: #ffffff; color: #1a1a1a;',
                   onchange: function(e) {
                     state.codeTheme = e.target.value;
                     renderCodeExport();
@@ -1513,8 +1514,8 @@
 
           // Explanation
           {
-            t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1.25rem;' }, c: [
-              { t: 'h4', c: 'Static export' },
+            t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_tip', style: 'margin-top: 1.25rem;' }, c: [
+              { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Static export' },
               {
                 t: 'p', c: [
                   'Copy the CSS above into a ',
@@ -1566,15 +1567,15 @@
                     bw.DOM('#theme-toggle-demo', buildToggleDemo());
                   }
                 }),
-                { t: 'span', a: { style: 'font-size: 0.875rem; color: var(--bw_text_secondary);' },
+                { t: 'span', a: { style: 'font-size: 0.875rem; color: #555;' },
                   c: isAlt ? bw.raw('Alternate palette active &mdash; luminance-inverted from your seeds') : bw.raw('Primary palette active &mdash; your original seed colors')
                 }
               ]
             },
             {
-              t: 'div', a: { class: 'callout callout-concept', style: 'margin-top: 0.5rem;' },
+              t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept', style: 'margin-top: 0.5rem;' },
               c: [
-                { t: 'h4', c: 'How it works' },
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'How it works' },
                 { t: 'p', c: bw.raw('Every theme has two sides: <strong>primary</strong> (your seed colors) and <strong>alternate</strong> (luminance-inverted). If your primary is light, the alternate is dark, and vice versa. Both go through the same derivation pipeline.') },
                 (function() {
                   var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Toggle between primary and alternate\nbw.toggleStyles();           // flip between them';
@@ -1776,7 +1777,7 @@
               { t: 'code', c: r.label }
             ]},
             { t: 'td', c: r.desc },
-            { t: 'td', a: { style: 'color: var(--bw_text_secondary);' }, c: r.used },
+            { t: 'td', a: { style: 'color: #555;' }, c: r.used },
             { t: 'td', c: { t: 'code', a: { style: 'font-size: 0.6875rem;' }, c: color } }
           ]
         };

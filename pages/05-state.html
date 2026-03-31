@@ -6,8 +6,8 @@
   <title>Bitwrench - State & Interactivity</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
@@ -16,7 +16,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('05-state.html');
+    var styles = initBitwrenchPage('05-state.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Page-specific CSS via bw.css() + bw.injectCSS()
@@ -31,47 +32,47 @@
         'text-align': 'center'
       },
       '.state-step': {
-        background: 'var(--bw_card_bg)',
-        border: '2px solid var(--bw_teal)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surface,
+        border: '2px solid ' + p.primary.base,
+        'border-radius': '8px',
         padding: '0.75rem'
       },
-      '.state-step strong': { display: 'block', 'font-size': '0.8125rem', color: 'var(--bw_teal_dark)', 'margin-bottom': '0.25rem' },
+      '.state-step strong': { display: 'block', 'font-size': '0.8125rem', color: p.primary.darkText, 'margin-bottom': '0.25rem' },
       '.state-step code': { 'font-size': '0.75rem' },
-      '.state-arrow': { 'font-size': '1.5rem', color: 'var(--bw_teal)' },
+      '.state-arrow': { 'font-size': '1.5rem', color: p.primary.base },
       '.global-panel': {
-        background: 'var(--bw_teal_bg)',
-        border: '2px solid var(--bw_teal)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surfaceAlt,
+        border: '2px solid ' + p.primary.base,
+        'border-radius': '8px',
         padding: '1.25rem',
         margin: '1.25rem 0'
       },
-      '.global-panel h4': { margin: '0 0 0.75rem', color: 'var(--bw_teal_dark)', 'font-size': '0.95rem' },
+      '.global-panel h4': { margin: '0 0 0.75rem', color: p.primary.darkText, 'font-size': '0.95rem' },
       '.global-btns': { display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap', 'align-items': 'center' },
       '.sum-display': {
         display: 'inline-flex',
         'align-items': 'center',
         gap: '0.5rem',
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         padding: '0.5rem 1rem',
         'font-weight': '600',
         'font-size': '0.875rem',
-        color: 'var(--bw_teal_dark)',
-        'font-family': 'var(--bw_font_mono)',
+        color: p.primary.darkText,
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'margin-top': '0.75rem'
       },
-      '.sum-breakdown': { color: 'var(--bw_text_secondary)', 'font-weight': '400' },
-      '.sum-total': { 'font-weight': '700', 'font-size': '1rem', color: 'var(--bw_teal_dark)' },
+      '.sum-breakdown': { color: p.dark.hover, 'font-weight': '400' },
+      '.sum-total': { 'font-weight': '700', 'font-size': '1rem', color: p.primary.darkText },
       '.list-panel': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         padding: '1.25rem',
         margin: '1.25rem 0'
       },
-      '.list-panel h4': { margin: '0 0 0.75rem', 'font-size': '0.95rem', color: 'var(--bw_teal_dark)' },
+      '.list-panel h4': { margin: '0 0 0.75rem', 'font-size': '0.95rem', color: p.primary.darkText },
       '.list-controls': {
         display: 'flex',
         gap: '0.5rem',
@@ -85,15 +86,15 @@
         'align-items': 'center',
         gap: '0.75rem',
         padding: '0.5rem 0.75rem',
-        background: 'var(--bw_teal_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)'
+        background: p.surfaceAlt,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px'
       },
       '.list-item-name': { 'font-weight': '600', 'min-width': '100px', 'font-size': '0.875rem' },
       '.list-item-val': {
         'font-size': '1.25rem',
         'font-weight': '700',
-        color: 'var(--bw_teal_dark)',
+        color: p.primary.darkText,
         'min-width': '40px',
         'text-align': 'center',
         'font-variant-numeric': 'tabular-nums'
@@ -102,10 +103,10 @@
       '.list-stats': {
         'margin-top': '0.75rem',
         'padding-top': '0.75rem',
-        'border-top': '1px solid var(--bw_card_border)',
+        'border-top': '1px solid ' + p.light.border,
         'font-size': '0.8125rem',
-        'font-family': 'var(--bw_font_mono)',
-        color: 'var(--bw_text_secondary)'
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
+        color: p.dark.hover
       },
       '.notif-panels': {
         display: 'grid',
@@ -114,21 +115,21 @@
         'margin-top': '1rem'
       },
       '.notif-panel': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         padding: '1rem',
         'text-align': 'left'
       },
       '.notif-panel h4': { margin: '0 0 0.5rem', 'font-size': '0.9rem' },
       '.notif-log': {
-        background: 'var(--bw_code_bg)',
-        color: 'var(--bw_code_text)',
-        'border-radius': 'var(--bw_radius)',
+        background: '#1e293b',
+        color: '#e2e8f0',
+        'border-radius': '8px',
         padding: '0.75rem',
         'max-height': '120px',
         'overflow-y': 'auto',
-        'font-family': 'var(--bw_font_mono)',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'font-size': '0.75rem',
         'line-height': '1.6'
       },
@@ -141,27 +142,14 @@
       '.event-table th': {
         'text-align': 'left',
         padding: '0.35rem 0.5rem',
-        'border-bottom': '2px solid var(--bw_teal)'
+        'border-bottom': '2px solid ' + p.primary.base
       },
       '.event-table td': {
         padding: '0.3rem 0.5rem',
-        'border-bottom': '1px solid var(--bw_card_border)'
+        'border-bottom': '1px solid ' + p.light.border
       },
       '.event-table tr:last-child td': { 'border-bottom': 'none' }
     }));
-
-    // =========================================================================
-    // Helper: callout box
-    // =========================================================================
-    function callout(type, title, content) {
-      return {
-        t: 'div', a: { class: 'callout callout-' + type },
-        c: [
-          { t: 'h4', c: title },
-          content
-        ]
-      };
-    }
 
     // =========================================================================
     // Section 0: Bitwrench's Approach to State
@@ -207,21 +195,21 @@
     };
 
     var section0 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: "Bitwrench's Approach to State" },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: "Bitwrench's Approach to State" },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Frameworks like React, Solid, and Svelte each have their own approach to state management &mdash; virtual DOMs, reactive signals, compiler-generated update code. They work well for the problems they were designed to solve.') },
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Bitwrench takes a different approach. Add <code>o.state</code> and <code>o.render</code> to any TACO to make it stateful. State lives on the element as <code>el._bw_state</code>, and <code>bw.update(el)</code> re-renders. There is no virtual DOM, no dependency tracking, no compiler step.') },
 
-          callout('concept', 'Coming from another framework?', frameworkComparisonTable),
+          site.makeCallout('concept', 'Coming from another framework?', frameworkComparisonTable),
 
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('The sections below walk through each pattern from simplest to most complex. For most applications, <code>o.state</code> + <code>o.render</code> is the recommended approach. <code>bw.patch()</code> is available for targeted updates when you need them.') },
 
-          callout('tip', 'The toolkit at a glance', {
+          site.makeCallout('tip', 'The toolkit at a glance', {
             t: 'p',
             c: bw.raw(
               '<strong>Recommended:</strong><br>' +
@@ -239,14 +227,14 @@
             )
           }),
 
-          callout('concept', 'Memory and cleanup', {
+          site.makeCallout('concept', 'Memory and cleanup', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('When <code>bw.DOM()</code> replaces an element\'s children, the old DOM nodes and any event listeners attached to them are removed by the browser\'s garbage collector. There is no manual listener cleanup step &mdash; replacing the DOM <em>is</em> the cleanup.') },
               { t: 'p', c: bw.raw('For resources that live outside the DOM (timers, WebSocket connections, pub/sub subscriptions), use the <code>o.unmount(el)</code> lifecycle hook. Bitwrench calls it automatically via <code>bw.cleanup()</code> before replacing content. Pub/sub subscriptions can also be tied to an element\'s lifecycle by passing the element to <code>bw.sub()</code> &mdash; when the element is cleaned up, its subscriptions are removed automatically.') }
             ]
           }),
 
-          callout('concept', 'Debugging', {
+          site.makeCallout('concept', 'Debugging', {
             t: 'p',
             c: bw.raw('Select any bitwrench component in the Elements panel and type <code>$0._bw_state</code> to see its state object directly. No browser extension required.')
           })
@@ -258,10 +246,10 @@
     // Section 1: The Simplest State Pattern
     // =========================================================================
     var section1 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'The Simplest State Pattern' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'The Simplest State Pattern' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: 'The most basic approach: a closure variable and a render function. When state changes, call render again. This works well for simple, standalone components.' },
           { t: 'div', a: { id: 'tryit-simple-state' } }
@@ -313,14 +301,14 @@
       '// bw.update(el);';
 
     var sectionCH = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Stateful TACO -- The Recommended Pattern' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Stateful TACO -- The Recommended Pattern' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('For most components, adding <code>o.state</code> and <code>o.render</code> to a TACO is the recommended approach. State lives directly on the DOM element as <code>el._bw_state</code>, and <code>o.render(el)</code> controls how the component draws itself. Call <code>bw.update(el)</code> to re-render after changing state.') },
 
-          callout('concept', 'How it works', {
+          site.makeCallout('concept', 'How it works', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('A TACO with <code>o.state</code> + <code>o.render</code>:') },
               { t: 'ul', c: [
@@ -333,7 +321,7 @@
             ]
           }),
 
-          callout('concept', 'Coming from React / Vue / Solid?', {
+          site.makeCallout('concept', 'Coming from React / Vue / Solid?', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('Think of <code>o.state + o.render</code> as a unified hook: <code>useState</code> + render in one object. State lives on the element, not in a closure.') },
               { t: 'table', a: { class: 'event-table', style: 'margin-top: 0.5rem;' }, c: [
@@ -422,14 +410,14 @@
     };
 
     var sectionDecision = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Which Pattern to Use?' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Which Pattern to Use?' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Bitwrench has three materialization levels. Most applications only need Level 0 (static) and Level 2 (<code>o.state</code> + <code>o.render</code>). The low-level tools exist for custom components and escape hatches.') },
           decisionTable,
-          callout('tip', 'Rule of thumb', {
+          site.makeCallout('tip', 'Rule of thumb', {
             t: 'p',
             c: bw.raw('Start with <code>o.state</code> + <code>o.render</code>. If you just need to update a single value fast, use <code>bw.patch()</code>. You can mix both in the same page.')
           })
@@ -477,14 +465,14 @@
       'bw.DOM(target, statusCard);';
 
     var sectionWrap = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Composing make*() into Stateful TACOs') },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Composing make*() into Stateful TACOs') },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('BCCL <code>make*()</code> functions return Level 0 TACOs -- pure data with no reactivity. This is by design: it keeps them serializable, composable, and SSR-friendly. To add reactivity, compose the <code>make*()</code> output inside a TACO with <code>o.state</code> and <code>o.render</code>.') },
 
-          callout('concept', 'The pattern', {
+          site.makeCallout('concept', 'The pattern', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('<strong>Level 0</strong>: <code>bw.makeCard({ title: \'Hello\' })</code> -- static TACO, no reactivity') },
               { t: 'p', c: bw.raw('<strong>Level 2</strong>: add <code>o.state</code> + <code>o.render</code> -- state on element, render function re-draws on <code>bw.update(el)</code>') },
@@ -575,10 +563,10 @@
       '//   - bw.update(el) = re-render + notify listeners';
 
     var section2 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Low-Level State: o.render + bw.update()' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Low-Level State: o.render + bw.update()' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('For fine-grained control, you can manage state directly on DOM elements. This is the foundation of the lifecycle engine. State lives <strong>on the DOM element itself</strong>. When an element is removed from the page, its state goes with it. When you create three instances of a component, each one carries its own independent state.') },
 
@@ -599,12 +587,12 @@
             ]}
           ]},
 
-          callout('concept', 'The pattern', {
+          site.makeCallout('concept', 'The pattern', {
             t: 'p',
             c: bw.raw('A component factory returns a JavaScript object with <code>o.state</code> and <code>o.render</code>. When bitwrench creates the DOM element, it stores state as <code>el._bw_state</code> and the render function as <code>el._bw_render</code>, then calls <code>render(el)</code> automatically once the element is in the DOM. To re-render, call <code>bw.update(el)</code> &mdash; it re-runs <code>el._bw_render(el)</code> and emits a <code>bw:statechange</code> event so other components can react.')
           }),
 
-          callout('concept', 'Why state lives on the element', {
+          site.makeCallout('concept', 'Why state lives on the element', {
             t: 'p',
             c: bw.raw('Storing state on <code>el._bw_state</code> ties the state to the element\'s lifecycle. Delete the element &rarr; state is gone. Create three instances of a component &rarr; each has its own state on its own element. It\'s a simple model: the DOM element <em>is</em> the component.')
           }),
@@ -718,11 +706,11 @@
       '});';
 
     var section3 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Encapsulated Components (Low-Level)' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
-          callout('tip', 'Prefer o.state + o.render', {
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Encapsulated Components (Low-Level)' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          site.makeCallout('tip', 'Prefer o.state + o.render', {
             t: 'p',
             c: bw.raw('The <code>o.state</code> + <code>o.render</code> pattern shown above handles most cases. This section shows the manual closure approach for cases where you need full control over rendering logic.')
           }),
@@ -734,8 +722,8 @@
               { t: 'pre', c: { t: 'code', c: counterSourceCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result (try it)' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'counter-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'counter-demo' } }
             ]}
           ]}
         ]}
@@ -802,10 +790,10 @@
       '}';
 
     var section4 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Cross-Component Coordination' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Cross-Component Coordination' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('The global panel reads and modifies all three counters via the getter/setter API. It auto-updates whenever any counter changes, because <code>bw.update()</code> emits a <code>bw:statechange</code> event that bubbles up. The global panel listens with <code>bw.on()</code> &mdash; no tight coupling.') },
           { t: 'div', a: { class: 'bw_grid_2col' }, c: [
@@ -814,8 +802,8 @@
               { t: 'pre', c: { t: 'code', c: crossCompCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'global-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'global-demo' } }
             ]}
           ]}
         ]}
@@ -849,10 +837,10 @@
       '}';
 
     var section5 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Targeted Updates: bw.patch()' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Targeted Updates: bw.patch()' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('<code>bw.patch(id, content)</code> updates a single element by its UUID without rebuilding the entire component tree. Use it for value-only changes (counters, labels). Use <code>bw.update()</code> for structural changes (add/remove items).') },
           { t: 'div', a: { class: 'bw_grid_2col' }, c: [
@@ -861,8 +849,8 @@
               { t: 'pre', c: { t: 'code', c: patchSourceCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'list-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'list-demo' } }
             ]}
           ]}
         ]}
@@ -926,21 +914,21 @@
       'unsub();';
 
     var section6 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Event Systems: emit/on &amp; pub/sub') },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Event Systems: emit/on &amp; pub/sub') },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Bitwrench provides two event systems. <strong>emit/on</strong> wraps DOM CustomEvents (scoped to an element subtree, bubbles up). <strong>pub/sub</strong> is application-scoped (topic-based, decoupled from the DOM tree). Both coexist.') },
-          callout('concept', 'Comparison', eventComparisonTable),
+          site.makeCallout('concept', 'Comparison', eventComparisonTable),
           { t: 'div', a: { class: 'bw_grid_2col' }, c: [
             { t: 'div', c: [
               { t: 'div', a: { class: 'bw_code_label' }, c: 'Source' },
               { t: 'pre', c: { t: 'code', c: pubsubSourceCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'pubsub-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'pubsub-demo' } }
             ]}
           ]}
         ]}
@@ -1056,10 +1044,10 @@
       '}));';
 
     var section7 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Stateful Component: Todo List' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Stateful Component: Todo List' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('A more complex component with array state, conditional rendering, and multiple interactions. The same pattern scales: state on the element, <code>o.render</code> reads it, <code>bw.update(el)</code> re-renders.') },
           { t: 'div', a: { class: 'bw_grid_2col' }, c: [
@@ -1068,8 +1056,8 @@
               { t: 'pre', c: { t: 'code', c: todoSourceCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result (try it)' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'todo-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'todo-demo' } }
             ]}
           ]}
         ]}
@@ -1139,10 +1127,10 @@
       'bw.DOM(\'#themes\', makeThemeSwitcher());';
 
     var section8 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Dynamic CSS Generation' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Dynamic CSS Generation' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('<code>bw.css()</code> converts JavaScript objects to CSS strings. <code>bw.injectCSS()</code> inserts them into the document. Together they let you generate entire stylesheets at runtime from data.') },
           { t: 'div', a: { class: 'bw_grid_2col' }, c: [
@@ -1151,8 +1139,8 @@
               { t: 'pre', c: { t: 'code', c: cssSourceCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result (try it)' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'css-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'css-demo' } }
             ]}
           ]}
         ]}
@@ -1197,14 +1185,14 @@
       'bw.pub(\'increment\');';
 
     var sectionMessage = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('bw.message() &mdash; Cross-Component Messaging') },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('bw.message() &mdash; Cross-Component Messaging') },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('<code>bw.pub(topic, data)</code> / <code>bw.sub(topic, fn)</code> provide cross-component messaging without tight coupling. Components subscribe to topics in their <code>o.mounted</code> hook and publish from anywhere.') },
 
-          callout('concept', 'Cross-component communication patterns', {
+          site.makeCallout('concept', 'Cross-component communication patterns', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('<strong>bw.pub()/sub()</strong>: Any number of receivers. Think: "announce this event, whoever cares can react."') },
               { t: 'p', c: bw.raw('<strong>bw.on(el, event, fn)</strong>: Listen for DOM events like <code>bw:statechange</code> emitted by <code>bw.update()</code>.') },
@@ -1268,13 +1256,13 @@
       'bw.DOM(\'#perf\', makePerfTest());';
 
     var section9 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Performance' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Performance' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Bitwrench renders directly to the DOM. This test creates and mounts 1,000 elements in a single <code>bw.DOM()</code> call.') },
-          callout('concept', 'Two update strategies', {
+          site.makeCallout('concept', 'Two update strategies', {
             t: 'p',
             c: bw.raw('<code>bw.DOM()</code> replaces all children &mdash; straightforward for full re-renders. But updating one value in a list of 1,000 items doesn\'t require rebuilding the other 999. That\'s what <code>bw.patch(id, value)</code> is for: it finds a single element by UUID and updates its content directly. Use <code>bw.DOM()</code> for structural changes (add/remove items) and <code>bw.patch()</code> for value changes (counters, labels, status text). The <a href="#list-demo">dynamic list</a> above demonstrates both in combination.')
           }),
@@ -1284,8 +1272,8 @@
               { t: 'pre', c: { t: 'code', c: perfSourceCode } }
             ]},
             { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_demo_result_label' }, c: 'Live result (try it)' },
-              { t: 'div', a: { class: 'bw_demo_result', id: 'performance-demo' } }
+              { t: 'div', a: { class: 'bw_site_pages_result_label' }, c: 'Live result (try it)' },
+              { t: 'div', a: { class: 'bw_site_pages_result', id: 'performance-demo' } }
             ]}
           ]}
         ]}
@@ -1296,7 +1284,7 @@
     // Assemble and mount the full page
     // =========================================================================
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
+      t: 'div', a: { class: 'bw_site_pages_header' },
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
@@ -1364,8 +1352,8 @@
       var name = opts.label;
 
       // Inline styles so this component is fully portable (no external CSS needed)
-      var cardStyle = 'background: var(--bw_card_bg, #fff); border: 1px solid var(--bw_card_border, #dee2e6); border-radius: 8px; padding: 1rem 1.25rem; text-align: center; min-width: 160px; flex: 1 1 160px;';
-      var valueStyle = 'font-size: 2rem; font-weight: 700; color: var(--bw_teal_dark, #00796b); margin: 0.5rem 0;';
+      var cardStyle = 'background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 1rem 1.25rem; text-align: center; min-width: 160px; flex: 1 1 160px;';
+      var valueStyle = 'font-size: 2rem; font-weight: 700; color: #00796b; margin: 0.5rem 0;';
       var btnsStyle = 'display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap;';
 
       var taco = {
@@ -1541,7 +1529,7 @@
               renderList();
             } }),
           listItems.length === 0 ? { t: 'span', a: {
-            style: 'font-size: 0.8125rem; color: var(--bw_text_secondary); margin-left: 0.5rem;'
+            style: 'font-size: 0.8125rem; color: #444; margin-left: 0.5rem;'
           }, c: 'Click "Add Counter" to start' } : null
         ]}
       ];
@@ -1556,7 +1544,7 @@
       } else {
         panelContent.push({
           t: 'div', a: {
-            style: 'text-align: center; padding: 2rem; color: var(--bw_text_secondary); font-style: italic;'
+            style: 'text-align: center; padding: 2rem; color: #444; font-style: italic;'
           }, c: 'No items yet. Add some counters to test bw.patch().'
         });
       }
@@ -1594,7 +1582,7 @@
       if (subBDestroyed) {
         panelBContent = [
           { t: 'h4', c: 'Subscriber B (destroyed)' },
-          { t: 'div', a: { style: 'color: var(--bw_text_secondary); font-style: italic; padding: 0.5rem 0;' },
+          { t: 'div', a: { style: 'color: #444; font-style: italic; padding: 0.5rem 0;' },
             c: 'Cleaned up via unsub() \u2014 no longer receiving messages.' }
         ];
       } else {
@@ -1617,7 +1605,7 @@
         { t: 'div', a: { style: 'display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;' }, c: [
           { t: 'input', a: {
             type: 'text', id: 'notif-input', placeholder: 'Type a message...',
-            style: 'flex: 1; min-width: 200px; padding: 0.4rem 0.75rem; border: 1px solid var(--bw_card_border); border-radius: var(--bw_radius); font-size: 0.875rem;',
+            style: 'flex: 1; min-width: 200px; padding: 0.4rem 0.75rem; border: 1px solid #d8d8d8; border-radius: 8px; font-size: 0.875rem;',
             onkeydown: function(e) {
               if (e.key === 'Enter') sendNotification();
             }
@@ -1714,7 +1702,7 @@
                   onclick: function() { addTodo(el); } })
               ]},
               { t: 'div', c: s.todos.map(function(item) { return todoItem(item, el); }) },
-              { t: 'div', a: { style: 'margin-top:0.5rem; font-size:0.8125rem; color:var(--bw_text_secondary);' },
+              { t: 'div', a: { style: 'margin-top:0.5rem; font-size:0.8125rem; color:#444;' },
                 c: remaining + ' of ' + s.todos.length + ' remaining' }
             ]});
           }
@@ -1827,7 +1815,7 @@
     // ============================================================
     (function() {
       if (typeof bw.codeEditor !== 'function') return;
-      var pres = bw.$('.demo-section-body .bw_grid_2col pre');
+      var pres = bw.$('.bw_site_pages_demo_body .bw_grid_2col pre');
       pres.forEach(function(pre) {
         var code = pre.querySelector('code');
         if (!code) return;

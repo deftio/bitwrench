@@ -6,15 +6,16 @@
   <title>Bitwrench - Component Gallery</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('component-gallery.html');
+    var styles = initBitwrenchPage('component-gallery.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Theme switcher — all 12 presets + dark toggle
@@ -23,7 +24,8 @@
 
     function applyPreset(name) {
       var config = bw.THEME_PRESETS[name];
-      bw.loadStyles(config);
+      var newStyles = bw.loadStyles(config);
+      applySiteChromeCSS(newStyles);
       // Update swatch active state
       bw.$('.theme-swatch').forEach(function(el) {
         el.style.outline = el.dataset.theme === name ? '2px solid currentColor' : 'none';
@@ -612,7 +614,7 @@
     // =========================================================================
     bw.DOM('#app', {
       t: 'div', c: [
-        { t: 'div', a: { class: 'page-header' },
+        { t: 'div', a: { class: 'bw_site_pages_header' },
           c: { t: 'div', a: { class: 'content-container' }, c: [
             { t: 'h1', c: 'Component Gallery' },
             { t: 'p', a: { class: 'subtitle' }, c: 'Every BCCL component with bw.loadStyles() and zero custom CSS.' }

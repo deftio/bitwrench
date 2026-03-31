@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - NFC Tag Scanner Tutorial</title>
+  <link rel="icon" type="image/x-icon" href="../../images/favicon.ico">
+  <script src="../../dist/bitwrench.umd.min.js"></script>
+  <script src="../../pages/shared-nav.js"></script>
+  <script src="../../pages/site.js"></script>
+  <script src="../../dist/bitwrench-code-edit.umd.min.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    initBitwrenchPage('', '../../pages/');
+
+    // -- Helpers ------------------------------------------------------------
+
+    function codeBlock(code, lang) {
+      if (typeof bw.codeEditor === 'function') {
+        return bw.codeEditor({ code: code, lang: lang || 'python', readOnly: true, height: 'auto' });
+      }
+      return { t: 'pre', a: { class: 'bw_code_block' }, c: { t: 'code', c: code } };
+    }
+
+    function step(num, title, content) {
+      var heading = num
+        ? [{ t: 'span', a: { class: 'bw_badge bw_badge_primary', style: 'margin-right:0.5rem' }, c: 'Step ' + num }, title]
+        : title;
+      return {
+        t: 'div', a: { class: 'demo-section' }, c: [
+          { t: 'div', a: { class: 'demo-section-header' }, c: [
+            { t: 'h2', c: heading }
+          ]},
+          { t: 'div', a: { class: 'demo-content' }, c: Array.isArray(content) ? content : [content] }
+        ]
+      };
+    }
+
+    function callout(type, title, content) {
+      var cls = 'callout callout-' + type;
+      return {
+        t: 'div', a: { class: cls }, c: [
+          title ? { t: 'strong', c: title } : null,
+          title ? { t: 'br' } : null,
+          typeof content === 'string' ? { t: 'span', c: content } : content
+        ].filter(Boolean)
+      };
+    }
+
+    // -- Page content -------------------------------------------------------
+
+    var hero = {
+      t: 'div', a: { class: 'page-header' }, c: [
+        { t: 'h1', c: 'NFC Tag Scanner' },
+        { t: 'p', a: { class: 'page-subtitle' }, c:
+          'A CircuitPython web app on an Adafruit QT Py ESP32 with an ST25DV16K NFC/RFID EEPROM breakout. ' +
+          'Displays scanned NFC tag data on a 5-tab web dashboard using bitwrench.js -- fully offline on your LAN.'
+        }
+      ]
+    };
+
+    // -- What You Need -------------------------------------------------------
+
+    var whatYouNeed = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'What You Need' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: 'Hardware' },
+          bw.makeTable({
+            data: [
+              { Part: 'Microcontroller', Product: 'Adafruit QT Py ESP32-S3', Price: '~$10' },
+              { Part: 'NFC Tag', Product: 'Adafruit ST25DV16K Breakout', Price: '~$8' },
+              { Part: 'Cable', Product: 'STEMMA QT cable (any length)', Price: '~$1' },
+              { Part: 'USB Cable', Product: 'USB-C data cable (not charge-only)', Price: '--' }
+            ],
+            columns: [
+              { key: 'Part', label: 'Part' },
+              { key: 'Product', label: 'Product' },
+              { key: 'Price', label: 'Price' }
+            ],
+            striped: true
+          }),
+          callout('tip', 'Other QT Py variants also work',
+            'ESP32-S2, ESP32-C3, or any WiFi-capable QT Py with a STEMMA QT connector. ' +
+            'The original ESP32 Pico is not recommended (limited CircuitPython support).'
+          ),
+          { t: 'h3', c: 'Software (on your computer)' },
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'strong', c: 'Python 3.x' }, ' -- for ', { t: 'code', c: 'circup' }, ' (library installer)'] },
+            { t: 'li', c: 'A web browser' },
+            { t: 'li', c: [
+              'A serial terminal: ',
+              { t: 'code', c: 'screen' },
+              ', PuTTY, or the ',
+              { t: 'a', a: { href: 'https://codewith.mu', target: '_blank' }, c: 'Mu editor' },
+              "'s built-in serial console"
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // -- Step 1: Install CircuitPython ----------------------------------------
+
+    var step1 = step(1, 'Install CircuitPython on the QT Py', [
+      { t: 'ol', c: [
+        { t: 'li', c: [
+          'Go to ',
+          { t: 'a', a: { href: 'https://circuitpython.org/downloads', target: '_blank' }, c: 'circuitpython.org/downloads' }
+        ]},
+        { t: 'li', c: 'Search for your board (e.g. "QT Py ESP32-S3")' },
+        { t: 'li', c: ['Download the latest ', { t: 'code', c: '.bin' }, ' or ', { t: 'code', c: '.uf2' }, ' file (CircuitPython 8.x or 9.x)'] },
+        { t: 'li', c: 'Follow the board-specific install instructions on that page' },
+        { t: 'li', c: ['After flashing, a USB drive called ', { t: 'strong', c: 'CIRCUITPY' }, ' should appear on your computer'] }
+      ]},
+      callout('warning', null,
+        'If the CIRCUITPY drive does not appear, try a different USB cable. Many cables are charge-only and do not carry data.'
+      )
+    ]);
+
+    // -- Step 2: Install HTTP server library ----------------------------------
+
+    var step2 = step(2, 'Install the HTTP server library', [
+      codeBlock(
+        'pip install circup\n' +
+        'circup install adafruit_httpserver',
+        'bash'
+      ),
+      { t: 'p', c: [
+        { t: 'code', c: 'circup' },
+        ' installs libraries directly to the connected CIRCUITPY drive. If it cannot find the board, make sure the CIRCUITPY drive is mounted.'
+      ]}
+    ]);
+
+    // -- Step 3: Prepare bitwrench.js -----------------------------------------
+
+    var step3 = step(3, 'Prepare bitwrench.js', [
+      { t: 'p', c: 'Download and compress bitwrench on your computer (not on the ESP32):' },
+      { t: 'h4', c: 'macOS / Linux' },
+      codeBlock(
+        'curl -o bitwrench.umd.min.js \\\n' +
+        '  https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwrench.umd.min.js\n' +
+        'gzip -9 bitwrench.umd.min.js',
+        'bash'
+      ),
+      { t: 'h4', c: 'Windows (PowerShell)' },
+      codeBlock(
+        'Invoke-WebRequest -Uri "https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwrench.umd.min.js" `\n' +
+        '  -OutFile bitwrench.umd.min.js\n' +
+        '# Use WSL or 7zip to create the .gz file:\n' +
+        '# In WSL: gzip -9 bitwrench.umd.min.js',
+        'powershell'
+      ),
+      { t: 'p', c: [
+        'This produces ',
+        { t: 'code', c: 'bitwrench.umd.min.js.gz' },
+        ' (~40KB).'
+      ]}
+    ]);
+
+    // -- Step 4: Copy project files -------------------------------------------
+
+    var step4 = step(4, 'Copy project files to the board', [
+      { t: 'p', c: 'Copy everything to your CIRCUITPY drive so it looks like this:' },
+      codeBlock(
+        'CIRCUITPY/\n' +
+        '  settings.toml                    <-- WiFi credentials\n' +
+        '  code.py                          <-- main app\n' +
+        '  lib/\n' +
+        '    st25dv16.py                    <-- custom NFC driver\n' +
+        '    adafruit_httpserver/           <-- already here from Step 2\n' +
+        '  static/\n' +
+        '    index.html                     <-- web dashboard\n' +
+        '    bitwrench.umd.min.js.gz        <-- from Step 3',
+        'text'
+      ),
+      { t: 'p', c: [
+        'You can drag-and-drop files in your file manager. Create the ',
+        { t: 'code', c: 'static/' },
+        ' directory on the CIRCUITPY drive if it does not exist.'
+      ]}
+    ]);
+
+    // -- Step 5: Set WiFi credentials -----------------------------------------
+
+    var step5 = step(5, 'Set your WiFi credentials', [
+      { t: 'p', c: [
+        'Open ',
+        { t: 'code', c: 'settings.toml' },
+        ' on the CIRCUITPY drive and replace the placeholder values:'
+      ]},
+      codeBlock(
+        'CIRCUITPY_WIFI_SSID = "YourActualNetworkName"\n' +
+        'CIRCUITPY_WIFI_PASSWORD = "YourActualPassword"',
+        'toml'
+      ),
+      callout('warning', null,
+        'Use your 2.4GHz WiFi network name. The ESP32 does not support 5GHz networks.'
+      )
+    ]);
+
+    // -- Step 6: Connect hardware ---------------------------------------------
+
+    var step6 = step(6, 'Connect the hardware', [
+      { t: 'p', c:
+        'Plug the STEMMA QT cable between the QT Py and the ST25DV16K breakout. ' +
+        'Either STEMMA QT port on the ST25DV16K board works. No soldering required.'
+      },
+      codeBlock(
+        '  QT Py ESP32          STEMMA QT cable         ST25DV16K\n' +
+        '  +----------+        +--------------+        +----------+\n' +
+        '  | STEMMA QT|--------|              |--------|STEMMA QT |\n' +
+        '  +----------+        +--------------+        +----------+\n' +
+        '       |                                           |\n' +
+        '    USB-C to                                  NFC antenna\n' +
+        '    computer                                  (tap phone here)',
+        'text'
+      ),
+      callout('tip', null,
+        'The STEMMA QT connector carries I2C (SDA + SCL) plus 3.3V and GND. ' +
+        'The USB cable powers both boards through the QT Py.'
+      )
+    ]);
+
+    // -- Step 7: Boot and connect ---------------------------------------------
+
+    var step7 = step(7, 'Boot and connect', [
+      { t: 'ol', c: [
+        { t: 'li', c: 'Connect the QT Py to your computer via USB (powers both boards)' },
+        { t: 'li', c: [
+          'Open a serial terminal at 115200 baud:',
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'strong', c: 'macOS: ' }, { t: 'code', c: 'screen /dev/tty.usbmodem* 115200' }] },
+            { t: 'li', c: [{ t: 'strong', c: 'Linux: ' }, { t: 'code', c: 'screen /dev/ttyACM0 115200' }] },
+            { t: 'li', c: [{ t: 'strong', c: 'Windows: ' }, 'PuTTY or the Mu editor serial console'] },
+            { t: 'li', c: [{ t: 'strong', c: 'Any OS: ' }, 'The ', { t: 'a', a: { href: 'https://codewith.mu', target: '_blank' }, c: 'Mu editor' }, ' has a built-in serial console'] }
+          ]}
+        ]},
+        { t: 'li', c: ['Press the reset button (or wait for ', { t: 'code', c: 'code.py' }, ' to auto-run)'] },
+        { t: 'li', c: 'You should see output like:' }
+      ]},
+      codeBlock(
+        'Connecting to WiFi: YourNetwork\n' +
+        'Connected! IP: 192.168.1.42\n' +
+        'Open http://192.168.1.42 in your browser\n' +
+        'ST25DV16 UID: 02:A3:B4:C5:D6:E7:F8:01\n' +
+        'Memory: 2048 bytes\n' +
+        'Server started on http://192.168.1.42',
+        'text'
+      ),
+      { t: 'p', c: [
+        { t: 'strong', c: 'Open that IP address' },
+        ' in any browser on the same WiFi network.'
+      ]}
+    ]);
+
+    // -- Step 8: Use it -------------------------------------------------------
+
+    var step8 = step(8, 'Use it', [
+      { t: 'p', c: 'The dashboard shows 5 tabs:' },
+      { t: 'ul', c: [
+        { t: 'li', c: [{ t: 'strong', c: 'NDEF Records' }, ' -- parsed NFC data from the tag'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Tag Info' }, ' -- UID, memory size, tag identity'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Live Status' }, ' -- uptime, RF flags, CPU temperature (updates every 3s)'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Scan History' }, ' -- timestamped log of detected scans'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Raw Memory' }, ' -- hex dump of EEPROM contents'] }
+      ]},
+      { t: 'h4', c: 'Scanning' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Tap an NFC-capable phone on the ST25DV16K antenna' },
+        { t: 'li', c: 'The board auto-detects RF activity and reads the tag memory' },
+        { t: 'li', c: 'Live values (uptime, RF status, CPU temp) update every 3 seconds automatically' },
+        { t: 'li', c: 'Click "Scan Now" to force a manual read' }
+      ]}
+    ]);
+
+    // -- How It Works ---------------------------------------------------------
+
+    var howItWorks = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'How It Works' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'ol', c: [
+            { t: 'li', c: 'ESP32 connects to WiFi, starts an HTTP server' },
+            { t: 'li', c: ['Browser loads ', { t: 'code', c: 'index.html' }, ' and ', { t: 'code', c: 'bitwrench.js' }, ' (both served from the ESP32)'] },
+            { t: 'li', c: ['On page load, browser fetches ', { t: 'code', c: '/api/status' }, ' for full state, renders UI with ', { t: 'code', c: 'bw.DOM()' }] },
+            { t: 'li', c: ['Every 3 seconds, browser polls ', { t: 'code', c: '/api/patches' }, ' for lightweight bwserve-compatible patch ops'] },
+            { t: 'li', c: [{ t: 'code', c: 'bw.apply()' }, ' applies patches to specific DOM elements by ID (no full rebuild)'] },
+            { t: 'li', c: ['When NDEF content changes (detected via ', { t: 'code', c: 'ndef_version' }, '), browser does a full re-fetch'] },
+            { t: 'li', c: 'ESP32 polls the ST25DV16 every 500ms for RF activity via the IT_STS_Dyn register' },
+            { t: 'li', c: 'On RF activity (phone tap), a full NDEF scan runs automatically' }
+          ]},
+
+          { t: 'h3', c: 'Update Strategy' },
+          bw.makeTable({
+            data: [
+              { Scenario: 'Page load, tab switch, new NDEF records', Endpoint: '/api/status', Rendering: 'Full bw.DOM() rebuild', Frequency: 'On change only' },
+              { Scenario: 'Live data (uptime, RF flags, CPU temp)', Endpoint: '/api/patches', Rendering: 'bw.apply() patches', Frequency: 'Every 3s' }
+            ],
+            columns: [
+              { key: 'Scenario', label: 'Scenario' },
+              { key: 'Endpoint', label: 'Endpoint' },
+              { key: 'Rendering', label: 'Rendering' },
+              { key: 'Frequency', label: 'Frequency' }
+            ],
+            striped: true
+          }),
+
+          { t: 'h3', c: 'API Endpoints' },
+          bw.makeTable({
+            data: [
+              { Endpoint: 'GET /', Description: 'Main web UI' },
+              { Endpoint: 'GET /bitwrench.js', Description: 'Pre-gzipped bitwrench.js (~40KB)' },
+              { Endpoint: 'GET /api/patches', Description: 'Lightweight patch ops for live data' },
+              { Endpoint: 'GET /api/status', Description: 'Full device state, NDEF records, history' },
+              { Endpoint: 'GET /api/scan', Description: 'Trigger a manual NFC scan' },
+              { Endpoint: 'GET /api/ndef', Description: 'Current NDEF records only' },
+              { Endpoint: 'GET /api/raw?start=0&length=64', Description: 'Raw EEPROM hex dump' },
+              { Endpoint: 'GET /api/tag', Description: 'Tag identity (UID, memory size)' }
+            ],
+            columns: [
+              { key: 'Endpoint', label: 'Endpoint' },
+              { key: 'Description', label: 'Description' }
+            ],
+            striped: true
+          }),
+
+          codeBlock(
+            'ESP32 + ST25DV16               Browser\n' +
+            '  |                                |\n' +
+            '  |  GET /                         |\n' +
+            '  |  <-- index.html                |\n' +
+            '  |  GET /bitwrench.js             |\n' +
+            '  |  <-- JS (gzipped, from flash)  |\n' +
+            '  |                                |\n' +
+            '  |  GET /api/status               |\n' +
+            '  |  <-- full JSON state           |  (on load / NDEF change)\n' +
+            '  |                                |\n' +
+            '  |  GET /api/patches              |\n' +
+            '  |  <-- patch ops                 |  (every 3s)\n' +
+            '  |                                |\n' +
+            '  |  GET /api/scan                 |\n' +
+            '  |  <-- scan result               |  (manual "Scan Now")',
+            'text'
+          )
+        ]}
+      ]
+    };
+
+    // -- Project Files --------------------------------------------------------
+
+    var projectFiles = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Project Files' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { File: 'settings.toml', Description: 'WiFi credentials (edit this)' },
+              { File: 'code.py', Description: 'Main app: WiFi, HTTP server, NFC polling, JSON APIs' },
+              { File: 'lib/st25dv16.py', Description: 'Custom ST25DV16 I2C driver with NDEF parser (no official CircuitPython library exists)' },
+              { File: 'static/index.html', Description: 'Web UI built entirely with bitwrench.js' },
+              { File: 'static/bitwrench.umd.min.js.gz', Description: 'Pre-gzipped bitwrench library (you create this in Step 3)' }
+            ],
+            columns: [
+              { key: 'File', label: 'File' },
+              { key: 'Description', label: 'What it does' }
+            ],
+            striped: true
+          }),
+          { t: 'h3', c: 'Dependencies' },
+          { t: 'p', c: 'Only two:' },
+          { t: 'ul', c: [
+            { t: 'li', c: [
+              { t: 'strong', c: 'adafruit_httpserver' },
+              ' -- HTTP server for CircuitPython (installed via circup)'
+            ]},
+            { t: 'li', c: [
+              { t: 'strong', c: 'bitwrench.js v2.0.17' },
+              ' -- Client-side UI library (served locally, pre-gzipped)'
+            ]}
+          ]},
+          { t: 'p', c: [
+            'Everything else is built-in CircuitPython (',
+            { t: 'code', c: 'wifi' },
+            ', ',
+            { t: 'code', c: 'socketpool' },
+            ', ',
+            { t: 'code', c: 'busio' },
+            ', ',
+            { t: 'code', c: 'json' },
+            ', ',
+            { t: 'code', c: 'microcontroller' },
+            ') or custom code in this repo (',
+            { t: 'code', c: 'st25dv16.py' },
+            ').'
+          ]}
+        ]}
+      ]
+    };
+
+    // -- Troubleshooting ------------------------------------------------------
+
+    var troubleshooting = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Troubleshooting' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'dl', c: [
+            { t: 'dt', c: 'CIRCUITPY drive does not appear' },
+            { t: 'dd', c: 'Try a different USB cable (many are charge-only). Hold the BOOT button while plugging in to enter bootloader mode.' },
+
+            { t: 'dt', c: 'circup cannot find the board' },
+            { t: 'dd', c: [
+              'Make sure CIRCUITPY is mounted. Run ',
+              { t: 'code', c: 'circup --path /Volumes/CIRCUITPY install adafruit_httpserver' },
+              ' (macOS) or specify the path explicitly.'
+            ]},
+
+            { t: 'dt', c: 'Serial says "WiFi SSID not set"' },
+            { t: 'dd', c: 'Check settings.toml -- values must be in double quotes. Make sure the file is saved.' },
+
+            { t: 'dt', c: 'Serial says "No network with that ssid"' },
+            { t: 'dd', c: 'Check the spelling. Must be a 2.4GHz network (not 5GHz).' },
+
+            { t: 'dt', c: 'Serial says "ST25DV16 not found"' },
+            { t: 'dd', c: 'Check the STEMMA QT cable. Try unplugging and replugging both ends. The cable must be seated fully.' },
+
+            { t: 'dt', c: 'Browser cannot reach the IP' },
+            { t: 'dd', c: [
+              'Make sure your phone/laptop is on the same WiFi network as the ESP32. Try ',
+              { t: 'code', c: 'ping <ip>' },
+              ' from a terminal.'
+            ]},
+
+            { t: 'dt', c: 'Page loads but shows "Connecting..." forever' },
+            { t: 'dd', c: 'Check the serial console for errors. The ESP32 HTTP server handles one request at a time -- give it a moment.' },
+
+            { t: 'dt', c: 'bitwrench.js fails to load (blank page)' },
+            { t: 'dd', c: [
+              'Verify ',
+              { t: 'code', c: 'bitwrench.umd.min.js.gz' },
+              ' exists in ',
+              { t: 'code', c: 'CIRCUITPY/static/' },
+              '. Check the browser dev console for 404 errors.'
+            ]}
+          ]}
+        ]}
+      ]
+    };
+
+    // -- Source Files ----------------------------------------------------------
+
+    var sourceFiles = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Source Files' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'a', a: { href: 'code.py', download: '' }, c: 'code.py' }, ' -- main CircuitPython app (WiFi, HTTP server, NFC polling)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'lib/st25dv16.py', download: '' }, c: 'lib/st25dv16.py' }, ' -- custom ST25DV16 I2C driver with NDEF parser'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'static/index.html', download: '' }, c: 'static/index.html' }, ' -- web dashboard built with bitwrench.js'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'settings.toml', download: '' }, c: 'settings.toml' }, ' -- WiFi credentials template'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'README.md' }, c: 'README.md' }, ' -- full project documentation'] }
+          ]}
+        ]}
+      ]
+    };
+
+    // -- Assemble and mount ---------------------------------------------------
+
+    bw.DOM('#app', {
+      t: 'div', c: [
+        hero,
+        { t: 'div', a: { class: 'content-container wide' }, c: [
+          whatYouNeed,
+          step1,
+          step2,
+          step3,
+          step4,
+          step5,
+          step6,
+          step7,
+          step8,
+          howItWorks,
+          projectFiles,
+          troubleshooting,
+          sourceFiles
+        ]}
+      ]
+    });
+  </script>
+</body>
+</html>

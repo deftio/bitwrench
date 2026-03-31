@@ -6,8 +6,8 @@
   <title>Embedded Examples - Bitwrench</title>
   <link rel="icon" type="image/x-icon" href="../../images/favicon.ico">
   <script src="../../dist/bitwrench.umd.min.js"></script>
-  <script src="../../pages/shared-theme.js"></script>
   <script src="../../pages/shared-nav.js"></script>
+  <script src="../../pages/site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
@@ -38,7 +38,11 @@
       '.tag-html': { background: '#dbeafe', color: '#1e40af' },
       '.tag-c': { background: '#fef3c7', color: '#92400e' },
       '.tag-ino': { background: '#d1fae5', color: '#065f46' },
+      '.tag-py': { background: '#e0e7ff', color: '#3730a3' },
+      '.tag-js': { background: '#fef9c3', color: '#854d0e' },
+      '.tag-level': { background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' },
       '.emb-link': { display: 'inline-block', marginTop: '0.5rem', fontWeight: '600', color: '#059669' },
+      '.emb-link + .emb-link': { marginLeft: '1.5rem' },
       '.emb-section h2': { fontSize: '1.25rem', marginTop: '2rem', marginBottom: '0.75rem', color: '#1e293b' },
       '.emb-proto': {
         background: '#1e293b', color: '#e2e8f0', padding: '1rem', borderRadius: '8px',
@@ -59,53 +63,73 @@
       ]
     };
 
-    var cards = [
-      {
+    function card(title, desc, tags, links) {
+      return {
         t: 'div', a: { class: 'emb-card' }, c: [
-          { t: 'h3', c: 'ESP32 Sensor Dashboard' },
-          { t: 'p', c: [
-            'A real-time IoT dashboard with 7 sensor cards, event log, and device controls. ',
-            'Includes mock data so you can try it without hardware. ',
-            'In production, the ESP32 serves this page from SPIFFS and pushes sensor readings via SSE.'
-          ]},
-          { t: 'div', c: [
-            { t: 'span', a: { class: 'tag tag-html' }, c: 'HTML' },
-            { t: 'span', a: { class: 'tag tag-ino' }, c: 'Arduino' },
-            'Mock data included -- runs in browser'
-          ]},
-          { t: 'a', a: { class: 'emb-link', href: 'esp32-dashboard.html' }, c: 'Open Dashboard Demo \u2192' }
+          { t: 'h3', c: title },
+          { t: 'p', c: desc },
+          { t: 'div', c: tags.map(function(tag) {
+            return { t: 'span', a: { class: 'tag tag-' + tag[1] }, c: tag[0] };
+          })},
+          { t: 'div', c: links.map(function(link) {
+            return { t: 'a', a: { class: 'emb-link', href: link[1] }, c: link[0] + ' \u2192' };
+          })}
         ]
-      },
-      {
-        t: 'div', a: { class: 'emb-card' }, c: [
-          { t: 'h3', c: 'Arduino Sketch (sketch.ino)' },
-          { t: 'p', c: [
-            'Complete ESP32 Arduino sketch with WiFi, DHT22 sensor reading, SSE streaming, ',
-            'SPIFFS file serving, and command API. Upload to an ESP32 DevKit with a DHT22 on GPIO 4.'
-          ]},
-          { t: 'div', c: [
-            { t: 'span', a: { class: 'tag tag-ino' }, c: 'Arduino' },
-            'Requires ESP32 hardware + DHT22'
-          ]},
-          { t: 'a', a: { class: 'emb-link', href: 'sketch.ino' }, c: 'View sketch.ino \u2192' }
-        ]
-      },
-      {
-        t: 'div', a: { class: 'emb-card' }, c: [
-          { t: 'h3', c: 'CMake Demo (No Hardware)' },
-          { t: 'p', c: [
-            'A complete bwserve server in C that compiles on Linux/macOS with regular gcc. ',
-            'Uses bitwrench.h and bwserve.h macros -- same protocol as the ESP32, but with POSIX sockets. ',
-            'Build with cmake, open http://localhost:8080.'
-          ]},
-          { t: 'div', c: [
-            { t: 'span', a: { class: 'tag tag-c' }, c: 'C' },
-            'Compiles on Linux/macOS -- no hardware needed'
-          ]},
-          { t: 'a', a: { class: 'emb-link', href: 'cmake-demo/' }, c: 'View cmake-demo/ \u2192' }
-        ]
-      }
-    ];
+      };
+    }
+
+    // -- ESP32 section -------------------------------------------------------
+    var esp32Section = {
+      t: 'div', a: { class: 'emb-section' }, c: [
+        { t: 'h2', c: 'ESP32 / Microcontroller' },
+        card(
+          'ESP32 Sensor Dashboard',
+          'Step-by-step tutorial for building an IoT sensor dashboard on an ESP32 with DHT22, ' +
+          'LDR, and LED control. Arduino C++ with ESPAsyncWebServer. ' +
+          'SSE pushes sensor data every 2 seconds.',
+          [['HTML', 'html'], ['Arduino', 'ino'], ['Beginner', 'level']],
+          [['Open Tutorial', 'esp32-tutorial.html'], ['View sketch.ino', 'sketch.ino'], ['Open Dashboard Demo', 'esp32-dashboard.html']]
+        ),
+        card(
+          'Pico W / Pico 2W Dashboard',
+          'Step-by-step tutorial for Raspberry Pi Pico W (RP2040) and Pico 2W (RP2350). ' +
+          'Three server options: MicroPython, CircuitPython, Arduino C++. ' +
+          'Onboard temperature, 3 ADC channels, 4 PWM outputs, 8 digital outputs, digital inputs, WiFi RSSI. ' +
+          'Optional: Freenove Breakout Board (FNK0081) for visible GPIO LEDs.',
+          [['HTML', 'html'], ['MicroPython', 'py'], ['C++', 'ino'], ['Intermediate', 'level']],
+          [['Open Tutorial', '../embedded-pico-w/'], ['View server.py', '../embedded-pico-w/server.py'], ['View server.ino', '../embedded-pico-w/server.ino']]
+        ),
+        card(
+          'NFC Tag Scanner (ESP32 + ST25DV16)',
+          'Step-by-step tutorial for an NFC tag scanner using Adafruit QT Py ESP32 with ST25DV16K. ' +
+          '5-tab dashboard: NDEF records, tag info, live status, scan history, raw memory hex dump. ' +
+          'CircuitPython with adafruit_httpserver.',
+          [['HTML', 'html'], ['CircuitPython', 'py'], ['Advanced', 'level']],
+          [['Open Tutorial', '../esp32-adafruitST25DV16/'], ['View code.py', '../esp32-adafruitST25DV16/code.py']]
+        ),
+        card(
+          'CMake Demo (No Hardware)',
+          'A bwserve server in C that compiles on Linux/macOS with regular gcc. ' +
+          'Uses bitwrench.h and bwserve.h macros -- same protocol as the ESP32, but with POSIX sockets.',
+          [['C', 'c'], ['Beginner', 'level']],
+          [['View cmake-demo/', 'cmake-demo/']]
+        )
+      ]
+    };
+
+    // -- Raspberry Pi section ------------------------------------------------
+    var rpiSection = {
+      t: 'div', a: { class: 'emb-section' }, c: [
+        { t: 'h2', c: 'Raspberry Pi' },
+        card(
+          'RPi System Monitor',
+          'Full Linux system dashboard: CPU temp/usage per core, memory, disk, network I/O, ' +
+          'top processes, and GPIO controls. Includes both a Node.js bwserve server and a Python Flask server.',
+          [['HTML', 'html'], ['Node.js', 'js'], ['Python', 'py'], ['Intermediate', 'level']],
+          [['Open Demo', '../embedded-rpi/'], ['View server.js', '../embedded-rpi/server.js'], ['View server.py', '../embedded-rpi/server.py']]
+        )
+      ]
+    };
 
     var protocol = {
       t: 'div', a: { class: 'emb-section' }, c: [
@@ -137,12 +161,15 @@
       t: 'div', a: { class: 'emb-section' }, c: [
         { t: 'h2', c: 'Cross-Language Support' },
         bw.makeTable({
-          headers: ['Platform', 'Language', 'Library'],
+          headers: ['Platform', 'Language', 'Example'],
           rows: [
-            ['ESP32/STM32 (Arduino)', 'C/C++', 'embedded_c/bitwrench.h + bwserve.h'],
-            ['ESP32 (esp-idf)', 'Rust', 'embedded_rust/'],
-            ['MicroPython, Raspberry Pi', 'Python', 'embedded_python/bwserve.py'],
-            ['Linux/macOS/Node.js', 'JavaScript', "bitwrench/bwserve"],
+            ['ESP32 (Arduino)', 'C/C++', 'embedded/sketch.ino + cmake-demo/'],
+            ['ESP32 (CircuitPython)', 'Python', 'esp32-adafruitST25DV16/code.py'],
+            ['Raspberry Pi Pico W', 'MicroPython', 'embedded-pico-w/server.py'],
+            ['Raspberry Pi Pico W', 'CircuitPython', 'embedded-pico-w/server_circuitpython.py'],
+            ['Raspberry Pi Pico W', 'Arduino C++', 'embedded-pico-w/server.ino'],
+            ['Raspberry Pi (Linux)', 'Python', 'embedded-rpi/server.py'],
+            ['Raspberry Pi (Linux)', 'Node.js', 'embedded-rpi/server.js (bwserve)'],
             ['Any language', 'CLI pipe', 'bwcli serve --stdin']
           ]
         })
@@ -151,7 +178,7 @@
 
     bw.DOM('#app', {
       t: 'div', a: { class: 'emb-wrap' },
-      c: [hero].concat(cards, [protocol, crossLang])
+      c: [hero, esp32Section, rpiSection, protocol, crossLang]
     });
   </script>
 </body>

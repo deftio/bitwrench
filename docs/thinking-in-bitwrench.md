@@ -588,7 +588,7 @@ No `v-for`, no `{#each}`, no special key rules. Just JavaScript.
 
 ### What BCCL is and why it exists
 
-BCCL (Bitwrench Common Component Library) is a set of 50+ factory functions that return TACO objects for common UI patterns — cards, buttons, navbars, tables, forms, modals, alerts, and more. Think of it as Bootstrap or shadcn/ui, but instead of HTML templates you get plain JavaScript objects.
+BCCL (Bitwrench Common Component Library) is a set of factory functions that return TACO objects for common UI patterns — cards, buttons, navbars, tables, forms, modals, alerts, and more. Think of it as Bootstrap or shadcn/ui, but instead of HTML templates you get plain JavaScript objects.
 
 The point: you can build a complete, styled page without writing a single line of CSS or HTML. Load the default styles, call the factories, render. Great for quick UIs, prototyping, embedded device interfaces, and internal tools.
 
@@ -1323,7 +1323,7 @@ Key things this example proves:
 
 | Feature | Why not | What to use instead |
 |---------|---------|-------------------|
-| TypeScript types | Ships as UMD/ESM, works everywhere | Community .d.ts welcome, JSDoc in source |
+| TypeScript types | Ships `dist/bitwrench.d.ts` with full type declarations | See [TypeScript Usage Guide](bitwrench_typescript_usage.md) |
 | Virtual DOM | Targeted patches via UUID refs are sufficient | `bw.patch()`, `o.render` + `bw.update()` |
 | CSS purging | You generate only what you use via `bw.css()` | N/A |
 | SSR hydration | `bw.html()` for SSR, `bw.DOM()` for client | Full page render via `bw.html()` in Node |
@@ -1450,7 +1450,7 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 | **Form input binding** | Read form values | `value={x} onChange={...}` | `v-model="x"` | `input.value` | `bind:value={x}` | `value={x()} onInput={...}` | `bw.$('#id')[0].value` or `bw.makeInput({oninput:fn})` |
 | **Theme / design tokens** | Apply consistent theming | ThemeProvider / CSS vars | CSS vars / provide | CSS custom properties | CSS vars | CSS vars / createContext | `bw.loadStyles({ primary: '#hex' })` or `bw.makeStyles(cfg)` => `theme.palette` |
 | **Build step required** | Required toolchain | Yes (Babel/Vite/webpack) | Yes (Vite or Vue CLI) | No | Yes (Svelte compiler) | Yes (Vite/Babel) | **No** — open the HTML file |
-| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **~40KB** (bitwrench UMD gzipped, includes 50+ components + CSS gen) |
+| **Bundle size** | Shipped JS size | ~45KB (React + ReactDOM) | ~33KB (Vue 3) | 0KB | ~2KB (runtime) | ~7KB | **~40KB** (bitwrench UMD gzipped, includes components + CSS gen) |
 
 ---
 

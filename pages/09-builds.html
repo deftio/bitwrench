@@ -6,8 +6,8 @@
   <title>Bitwrench - Builds &amp; Downloads</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <!-- Page styles injected via bw.css() below -->
 </head>
@@ -16,33 +16,23 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('09-builds.html');
+    var styles = initBitwrenchPage('09-builds.html');
+    var p = styles.palette;
 
     bw.injectCSS(bw.css({
       '.builds-header': { 'margin-bottom': '0.5rem' },
-      '.builds-header .build-meta': { 'font-size': '0.85rem', color: 'var(--bw_text_muted)', margin: '0.25rem 0 0' ,'padding-bottom' :"0.5rem"},
+      '.builds-header .build-meta': { 'font-size': '0.85rem', color: p.secondary.base, margin: '0.25rem 0 0' ,'padding-bottom' :"0.5rem"},
       '.builds-section': { 'margin-top': '2rem' },
-      '.builds-section h2': { 'border-bottom': '2px solid var(--bw_teal)', 'padding-bottom': '0.5rem', 'margin-bottom': '1rem' },
+      '.builds-section h2': { 'border-bottom': '2px solid ' + p.primary.base, 'padding-bottom': '0.5rem', 'margin-bottom': '1rem' },
       '.builds-section h3': { margin: '1.5rem 0 0.75rem' },
       '.sz': { 'text-align': 'right', 'font-variant-numeric': 'tabular-nums' },
-      '.table-card': { background: 'var(--bw_card_bg)', border: '1px solid var(--bw_card_border)', 'border-radius': 'var(--bw_radius)', 'box-shadow': 'var(--bw_card_shadow)', overflow: 'hidden' },
-      '.table-card .bw_table': { 'margin-bottom': '0' },
-      '.table-card .bw_table > thead > tr > *': { background: 'var(--bw_teal_dark)', color: '#fff', 'border-bottom-color': 'var(--bw_teal)' },
-      '.table-card .bw_table > tbody > tr:nth-of-type(odd) > *': { 'background-color': 'rgba(0, 0, 0, 0.025)' },
-      '.sri-hash': { 'font-family': 'var(--bw_font_mono)', 'font-size': '0.7rem', 'word-break': 'break-all', color: 'var(--bw_text_secondary)', 'max-width': '320px' },
-      '.builds-copy-btn': { display: 'inline-block', padding: '0.2rem 0.5rem', 'font-size': '0.75rem', cursor: 'pointer', background: 'var(--bw_teal)', color: '#fff', border: 'none', 'border-radius': '3px', transition: 'background 0.15s' },
-      '.builds-copy-btn:hover': { background: 'var(--bw_teal_dark)' },
+      '.sri-hash': { 'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace', 'font-size': '0.7rem', 'word-break': 'break-all', color: p.dark.hover, 'max-width': '320px' },
+      '.builds-copy-btn': { display: 'inline-block', padding: '0.2rem 0.5rem', 'font-size': '0.75rem', cursor: 'pointer', background: p.primary.base, color: '#fff', border: 'none', 'border-radius': '3px', transition: 'background 0.15s' },
+      '.builds-copy-btn:hover': { background: p.primary.darkText },
       '.builds-copy-btn.copied': { background: '#28a745' },
-      '.sri-tag-block': { background: 'var(--bw_code_bg)', color: 'var(--bw_code_text)', padding: '0.5rem 0.75rem', 'border-radius': '4px', 'font-size': '0.75rem', 'line-height': '1.4', 'overflow-x': 'auto', 'margin-top': '0.25rem', 'font-family': 'var(--bw_font_mono)', 'white-space': 'pre-wrap', 'word-break': 'break-all' },
-      '.builds-toc': { display: 'flex', 'flex-wrap': 'wrap', gap: '0.5rem', margin: '1rem 0 0' },
-      '.builds-toc a': { display: 'inline-block', padding: '0.35rem 0.85rem', 'font-size': '0.8125rem', 'font-weight': '500', background: 'var(--bw_teal_light)', color: 'var(--bw_teal_dark)', 'border-radius': '4px', 'text-decoration': 'none', transition: 'background 0.12s' },
-      '.builds-toc a:hover': { background: 'var(--bw_teal)', color: '#fff' },
+      '.sri-tag-block': { background: '#1e293b', color: '#e2e8f0', padding: '0.5rem 0.75rem', 'border-radius': '4px', 'font-size': '0.75rem', 'line-height': '1.4', 'overflow-x': 'auto', 'margin-top': '0.25rem', 'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace', 'white-space': 'pre-wrap', 'word-break': 'break-all' },
       '.install-snippet': { 'margin-bottom': '1.5rem' },
       '.install-snippet h4': { margin: '0 0 0.5rem', 'font-size': '0.95rem' },
-      '.install-snippet .snippet-wrap': { position: 'relative' },
-      '.install-snippet .snippet-copy': { position: 'absolute', top: '0.375rem', right: '0.5rem', 'z-index': '2', display: 'inline-block', padding: '0.2rem 0.5rem', 'font-size': '0.75rem', cursor: 'pointer', background: 'var(--bw_teal)', color: '#fff', border: 'none', 'border-radius': '3px', transition: 'background 0.15s' },
-      '.install-snippet .snippet-copy:hover': { background: 'var(--bw_teal_dark)' },
-      '.install-snippet .snippet-copy.copied': { background: '#28a745' }
     }), { id: 'builds-page-styles' });
 
     function fmtSize(bytes) {
@@ -63,10 +53,10 @@
         c: [
           title ? { t: 'h4', c: title } : null,
           {
-            t: 'div', a: { class: 'snippet-wrap' },
+            t: 'div', a: { class: 'bw_site_pages_snippet_wrap' },
             c: [
               {
-                t: 'button', a: { class: 'snippet-copy' }, c: 'Copy',
+                t: 'button', a: { class: 'bw_site_pages_snippet_copy' }, c: 'Copy',
                 o: { mounted: function(el) {
                   el.addEventListener('click', function() {
                     navigator.clipboard.writeText(code).then(function() {
@@ -103,7 +93,7 @@
         }
 
         bw.DOM(targetId, {
-          t: 'div', a: { class: 'table-card' },
+          t: 'div', a: { class: 'bw_site_pages_tablecard' },
           c: {
             t: 'table', a: { class: 'bw_table' },
             c: [
@@ -233,7 +223,7 @@
       t: 'div', c: [
         // Hero
         {
-          t: 'div', a: { class: 'page-header' },
+          t: 'div', a: { class: 'bw_site_pages_header' },
           c: {
             t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
             c: [
@@ -248,15 +238,15 @@
           c: [
             // Quick Start: Which build?
             {
-              t: 'div', a: { class: 'demo-section builds-header' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-header' },
               c: [
-                { t: 'h2', a: { style: 'margin-top:0' }, c: 'Which build do I need?' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title', style: 'margin-top:0' }, c: 'Which build do I need?' },
                 { t: 'p', a: { class: 'build-meta', id: 'build-meta' }, c: '' },
                 {
                   t: 'div', a: { id: 'pick-table', style: 'overflow-x:auto' }, c: ''
                 },
                 {
-                  t: 'div', a: { class: 'builds-toc' },
+                  t: 'div', a: { class: 'bw_site_pages_toc' },
                   c: [
                     { t: 'a', a: { href: '#section-core' }, c: 'Core Library' },
                     { t: 'a', a: { href: '#section-lean' }, c: 'Lean Build' },
@@ -276,9 +266,9 @@
             },
             // Core Library
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-core' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-core' },
               c: [
-                { t: 'h2', c: 'Core Library' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Core Library' },
                 { t: 'p', c: [
                   'The main bitwrench library in all supported module formats. Includes core (HTML/DOM/CSS/state/pub-sub), 50+ BCCL components, client-side router (',
                   { t: 'code', c: 'bw.router()' }, ', ', { t: 'code', c: 'bw.navigate()' }, ', ', { t: 'code', c: 'bw.link()' },
@@ -289,9 +279,9 @@
             },
             // Lean Build
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-lean' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-lean' },
               c: [
-                { t: 'h2', c: 'Lean Build' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Lean Build' },
                 { t: 'p', c: [
                   'Core library without built-in BCCL components (',
                   { t: 'code', c: 'makeButton' }, ', ',
@@ -306,9 +296,9 @@
             },
             // Addon Bundles
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-addons' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-addons' },
               c: [
-                { t: 'h2', c: 'Addon Bundles' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Addon Bundles' },
                 { t: 'p', c: [
                   'Optional addons that extend the core library. ',
                   { t: 'strong', c: 'BCCL' }, ' (bitwrench-bccl) provides 40+ component factories (makeButton, makeCard, makeHero, etc.) as a standalone bundle for use with the lean build. ',
@@ -319,9 +309,9 @@
             },
             // bwserve (server runtime)
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-bwserve' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-bwserve' },
               c: [
-                { t: 'h2', c: 'Server Runtime (bwserve)' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Server Runtime (bwserve)' },
                 { t: 'p', c: [
                   'Server-driven UI library for building Streamlit-style apps. Uses SSE to push TACO objects from a Node.js server to the browser. ',
                   'Available as CJS and ESM (server-side only \u2014 no browser/UMD build).'
@@ -331,9 +321,9 @@
             },
             // Embedded / IoT
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-embedded' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-embedded' },
               c: [
-                { t: 'h2', c: 'Embedded / IoT' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Embedded / IoT' },
                 { t: 'p', c: [
                   'For ESP32, Raspberry Pi Pico W, and other microcontrollers serving web UIs from flash. ',
                   'Pre-gzipped builds are generated by ', { t: 'code', c: 'npm run build' },
@@ -364,44 +354,44 @@
             },
             // CLI (bwcli)
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-cli' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-cli' },
               c: [
-                { t: 'h2', c: 'CLI (bwcli)' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'CLI (bwcli)' },
                 { t: 'p', c: 'Command-line tool for converting Markdown/HTML files, running a dev server with live reload, and serving bwserve apps. Included in the npm package \u2014 no separate install needed.' },
                 { t: 'div', a: { id: 'builds-cli', style: 'overflow-x:auto' }, c: '' }
               ]
             },
             // CSS
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-css' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-css' },
               c: [
-                { t: 'h2', c: 'CSS' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'CSS' },
                 { t: 'p', c: 'Default Bootstrap-inspired styles. CSS is served unminified; the Gzipped column shows the compressed transfer size.' },
                 { t: 'div', a: { id: 'builds-css', style: 'overflow-x:auto' }, c: 'Loading...' }
               ]
             },
             // All Files
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-all' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-all' },
               c: [
-                { t: 'h2', c: 'All Distribution Files' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'All Distribution Files' },
                 { t: 'div', a: { id: 'builds-all', style: 'overflow-x:auto' }, c: 'Loading...' }
               ]
             },
             // SRI
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-sri' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-sri' },
               c: [
-                { t: 'h2', c: 'Subresource Integrity (SRI)' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Subresource Integrity (SRI)' },
                 { t: 'p', c: 'SRI hashes allow browsers to verify that fetched resources have not been tampered with. Include them when loading bitwrench from a CDN.' },
                 { t: 'div', a: { id: 'builds-sri', style: 'overflow-x:auto' }, c: 'Loading...' }
               ]
             },
             // Installation
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-install' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-install' },
               c: [
-                { t: 'h2', c: 'Installation' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Installation' },
                 codeSnippet('npm', 'npm install bitwrench', 'bash'),
                 codeSnippet('Browser (script tag)', '<script src="dist/bitwrench.umd.min.js"><\/script>\n<link rel="stylesheet" href="dist/bitwrench.css">', 'html'),
                 codeSnippet('ES Module import', "import bw from 'bitwrench';", 'js'),
@@ -415,17 +405,17 @@
             },
             // CDN
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-cdn' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-cdn' },
               c: [
-                { t: 'h2', c: 'CDN' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'CDN' },
                 { t: 'p', c: 'Load bitwrench directly from a CDN \u2014 no install, no build step.' },
                 codeSnippet('unpkg', '<script src="https://unpkg.com/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>\n<link rel="stylesheet" href="https://unpkg.com/bitwrench@2/dist/bitwrench.css">', 'html'),
                 codeSnippet('jsdelivr', '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.css">', 'html'),
                 codeSnippet('ES Module via CDN', "import bw from 'https://unpkg.com/bitwrench@2/dist/bitwrench.esm.min.js';", 'js'),
                 {
-                  t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1rem;' },
+                  t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_tip', style: 'margin-top: 1rem;' },
                   c: [
-                    { t: 'h4', c: 'Version pinning' },
+                    { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Version pinning' },
                     { t: 'p', c: [
                       { t: 'code', c: '@2' }, ' \u2014 latest 2.x release (recommended)', { t: 'br' },
                       { t: 'code', c: '@2.0.3' }, ' \u2014 exact version', { t: 'br' },
@@ -437,9 +427,9 @@
             },
             // LLM Guide
             {
-              t: 'div', a: { class: 'demo-section builds-section', id: 'section-llm' },
+              t: 'div', a: { class: 'bw_site_pages_demo builds-section', id: 'section-llm' },
               c: [
-                { t: 'h2', c: 'LLM Guide' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'LLM Guide' },
                 { t: 'p', c: 'A single-file reference for AI-assisted bitwrench development. Feed this to ChatGPT, Claude, or any LLM to enable code generation with bitwrench.' },
                 { t: 'p', c: [
                   'The guide covers TACO format, core API, component library (BCCL), theming, pub/sub, CSS generation, bwserve, CLI usage, and common patterns.'
@@ -473,7 +463,7 @@
       ];
 
       bw.DOM('#pick-table', {
-        t: 'div', a: { class: 'table-card' },
+        t: 'div', a: { class: 'bw_site_pages_tablecard' },
         c: { t: 'table', a: { class: 'bw_table' }, c: [
           { t: 'thead', c: { t: 'tr', c: [
             { t: 'th', c: 'I want to...' },
@@ -504,7 +494,7 @@
         codeSnippet('Serve a directory', 'npx bwcli serve ./site --port 8080 --open', 'bash'),
         codeSnippet('Custom theme colors', 'npx bwcli doc.md --theme "#336699,#cc6633" -o doc.html', 'bash'),
         {
-          t: 'div', a: { class: 'table-card', style: 'margin-top: 1rem' },
+          t: 'div', a: { class: 'bw_site_pages_tablecard', style: 'margin-top: 1rem' },
           c: {
             t: 'table', a: { class: 'bw_table' },
             c: [
@@ -779,9 +769,9 @@
               f.file,
               { t: 'span', a: { class: 'sri-hash' }, c: f.integrity },
               {
-                t: 'div', a: { class: 'snippet-wrap' }, c: [
+                t: 'div', a: { class: 'bw_site_pages_snippet_wrap' }, c: [
                   {
-                    t: 'button', a: { class: 'snippet-copy' },
+                    t: 'button', a: { class: 'bw_site_pages_snippet_copy' },
                     c: 'Copy',
                     o: {
                       mounted: function(el) {

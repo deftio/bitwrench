@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.24 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.25 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -12,14 +12,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.24',
+    version: '2.0.25',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-28T09:10:48.863Z'
+    buildDate: '2026-03-31T02:52:27.844Z'
   };
 
   /**
@@ -709,7 +709,7 @@
       'transition': 'color ' + mot.fast + ' ' + mot.easing
     };
     rules[_sx(scope, 'a:hover')] = {
-      'color': palette.primary.hover,
+      'color': palette.tertiary.hover,
       'text-decoration': 'underline'
     };
     return rules;
@@ -889,7 +889,7 @@
       'transition': 'color ' + layout.motion.fast + ' ' + layout.motion.easing + ', background-color ' + layout.motion.fast + ' ' + layout.motion.easing
     };
     rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
-      'color': palette.dark.base,
+      'color': palette.tertiary.base,
       'background-color': palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
@@ -970,7 +970,7 @@
       'transition': 'color ' + mo.fast + ' ' + mo.easing + ', border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
-      'color': palette.dark.base,
+      'color': palette.tertiary.base,
       'background-color': palette.surfaceAlt,
       'border-bottom-color': palette.light.border
     };
@@ -996,7 +996,7 @@
     };
     rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
       'background-color': palette.surfaceAlt,
-      'color': palette.dark.hover
+      'color': palette.tertiary.base
     };
     rules[_sx(scope, '.bw_list_group_item.active')] = {
       'color': palette.primary.textOn,
@@ -1093,11 +1093,11 @@
       'color': palette.secondary.base
     };
     rules[_sx(scope, '.bw_breadcrumb_item a')] = {
-      'color': palette.primary.base,
+      'color': palette.tertiary.base,
       'transition': 'color ' + mo.fast + ' ' + mo.easing
     };
     rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
-      'color': palette.primary.hover,
+      'color': palette.tertiary.hover,
       'text-decoration': 'underline'
     };
     rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
@@ -1332,11 +1332,11 @@
       'font-weight': '600'
     };
     rules[_sx(scope, '.bw_step_completed .bw_step_indicator')] = {
-      'background-color': palette.primary.base,
-      'color': palette.primary.textOn
+      'background-color': palette.tertiary.base,
+      'color': palette.tertiary.textOn
     };
-    rules[_sx(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.primary.base };
-    rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.primary.base };
+    rules[_sx(scope, '.bw_step_completed .bw_step_label')] = { 'color': palette.tertiary.base };
+    rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = { 'background-color': palette.tertiary.base };
     return rules;
   }
 
@@ -1598,14 +1598,14 @@
       };
     });
 
-    // Text muted — always a neutral gray, never a brand color
-    rules[_sx(scope, '.bw_text_muted')] = { 'color': '#6c757d' };
+    // Text muted — uses palette secondary for theme-aware muted text
+    rules[_sx(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
 
-    // Common bg/text utilities that aren't per-variant
-    rules[_sx(scope, '.bw_bg_dark')] = { 'background-color': '#212529', 'color': '#f8f9fa' };
-    rules[_sx(scope, '.bw_bg_light')] = { 'background-color': '#f8f9fa', 'color': '#212529' };
-    rules[_sx(scope, '.bw_text_light')] = { 'color': '#f8f9fa' };
-    rules[_sx(scope, '.bw_text_dark')] = { 'color': '#212529' };
+    // Common bg/text utilities — derive from palette for theme awareness
+    rules[_sx(scope, '.bw_bg_dark')] = { 'background-color': palette.dark.base, 'color': palette.dark.textOn };
+    rules[_sx(scope, '.bw_bg_light')] = { 'background-color': palette.light.base, 'color': palette.light.textOn };
+    rules[_sx(scope, '.bw_text_light')] = { 'color': palette.light.base };
+    rules[_sx(scope, '.bw_text_dark')] = { 'color': palette.dark.base };
 
     return rules;
   }
@@ -6256,7 +6256,8 @@
    *
    * @param {Object} [config] - Style configuration (same as `makeStyles`)
    * @param {string} [scope] - Scope selector (same as `applyStyles`)
-   * @returns {Element|null} The `<style>` element, or null in Node.js
+   * @returns {Object} The styles object (same as `makeStyles` return value:
+   *   `{css, alternateCss, palette, alternatePalette, rules, alternateRules, isLightPrimary}`)
    * @category CSS & Styling
    * @see bw.makeStyles
    * @see bw.applyStyles
@@ -6274,8 +6275,26 @@
         bw.injectCSS(structuralCSS, { id: 'bw_structural', append: false });
       }
     }
-    return bw.applyStyles(bw.makeStyles(config), scope);
+    var styles = bw.makeStyles(config);
+    bw.applyStyles(styles, scope);
+    return styles;
   };
+
+  /**
+   * Prefix every selector in a rules object with a scope selector.
+   * Useful for wrapping site-level CSS under `.bw_theme_alt` for dark mode.
+   *
+   * @param {Object} rules - CSS rules object (selector -> declarations)
+   * @param {string} prefix - Scope prefix (e.g. '.bw_theme_alt')
+   * @returns {Object} New rules object with scoped selectors
+   * @category CSS & Styling
+   * @see bw.applyStyles
+   * @see bw.css
+   * @example
+   * var altRules = bw.scopeRulesUnder(myRules, '.bw_theme_alt');
+   * bw.injectCSS(bw.css(altRules));
+   */
+  bw.scopeRulesUnder = scopeRulesUnder;
 
   /**
    * Inject the CSS reset (box-sizing, html/body font, reduced-motion).

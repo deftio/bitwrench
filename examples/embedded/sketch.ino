@@ -84,12 +84,23 @@ void handleCommand(AsyncWebServerRequest* request, uint8_t* data, size_t len) {
   const char* cmd = doc["cmd"];
   const char* val = doc["val"];
 
+  if (!cmd || cmd[0] == '\0') {
+    request->send(400, "application/json", "{\"ok\":false,\"error\":\"missing cmd\"}");
+    return;
+  }
+
   if (strcmp(cmd, "led") == 0) {
-    digitalWrite(LED_PIN, strcmp(val, "on") == 0 ? HIGH : LOW);
+    // Default to OFF if val is missing/invalid. This avoids undefined behavior
+    // while keeping the demo command surface simple.
+    bool ledOn = (val && strcmp(val, "on") == 0);
+    digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
   } else if (strcmp(cmd, "restart") == 0) {
     request->send(200, "application/json", "{\"ok\":true}");
     delay(500);
     ESP.restart();
+    return;
+  } else {
+    request->send(400, "application/json", "{\"ok\":false,\"error\":\"unknown cmd\"}");
     return;
   }
 

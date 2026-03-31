@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - ESP32 Sensor Dashboard Tutorial</title>
+  <link rel="icon" type="image/x-icon" href="../../images/favicon.ico">
+  <script src="../../dist/bitwrench.umd.min.js"></script>
+  <script src="../../pages/shared-nav.js"></script>
+  <script src="../../pages/site.js"></script>
+  <script src="../../dist/bitwrench-code-edit.umd.min.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    initBitwrenchPage('', '../../pages/');
+
+    // -- Helpers ------------------------------------------------------------
+
+    function codeBlock(code, lang) {
+      if (typeof bw.codeEditor === 'function') {
+        return bw.codeEditor({ code: code, lang: lang || 'cpp', readOnly: true, height: 'auto' });
+      }
+      return { t: 'pre', a: { class: 'bw_code_block' }, c: { t: 'code', c: code } };
+    }
+
+    function step(num, title, content) {
+      var heading = num
+        ? [{ t: 'span', a: { class: 'bw_badge bw_badge_primary', style: 'margin-right:0.5rem' }, c: 'Step ' + num }, title]
+        : title;
+      return {
+        t: 'div', a: { class: 'demo-section' }, c: [
+          { t: 'div', a: { class: 'demo-section-header' }, c: [
+            { t: 'h2', c: heading }
+          ]},
+          { t: 'div', a: { class: 'demo-content' }, c: Array.isArray(content) ? content : [content] }
+        ]
+      };
+    }
+
+    function callout(type, title, content) {
+      var cls = 'callout callout-' + type;
+      return {
+        t: 'div', a: { class: cls }, c: [
+          title ? { t: 'strong', c: title } : null,
+          title ? { t: 'br' } : null,
+          typeof content === 'string' ? { t: 'span', c: content } : content
+        ].filter(Boolean)
+      };
+    }
+
+    // -- Page content -------------------------------------------------------
+
+    var hero = {
+      t: 'div', a: { class: 'page-header' }, c: [
+        { t: 'h1', c: 'ESP32 Sensor Dashboard' },
+        { t: 'p', a: { class: 'page-subtitle' }, c:
+          'Build an IoT dashboard served from an ESP32 microcontroller. ' +
+          'Shows temperature, humidity, pressure, light sensor, and device controls. ' +
+          'Arduino C++ with ESPAsyncWebServer.'
+        }
+      ]
+    };
+
+    var overview = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'What You Will Build' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', c: 'A live sensor dashboard served directly from an ESP32, updated in real time via Server-Sent Events:' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'Temperature (DHT22) and humidity readings' },
+            { t: 'li', c: 'Atmospheric pressure (placeholder for BMP280)' },
+            { t: 'li', c: 'Light sensor (LDR on GPIO 34)' },
+            { t: 'li', c: 'Built-in LED control (on/off and device restart)' },
+            { t: 'li', c: 'WiFi signal strength (RSSI), free heap memory, uptime' },
+            { t: 'li', c: 'Real-time SSE updates every 2 seconds' },
+            { t: 'li', c: 'Event log with timestamped entries' }
+          ]},
+          callout('concept', 'How it works',
+            'The ESP32 runs an async web server that serves the dashboard HTML and bitwrench.js ' +
+            'from its flash filesystem (SPIFFS). It never generates HTML -- it only sends JSON ' +
+            'sensor data. bitwrench renders the entire UI in the browser.'
+          )
+        ]}
+      ]
+    };
+
+    var prerequisites = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Prerequisites' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: 'Hardware' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'ESP32 DevKit (any variant with WiFi)' },
+            { t: 'li', c: 'DHT22 temperature/humidity sensor (connected to GPIO 4)' },
+            { t: 'li', c: 'LDR (light dependent resistor) on GPIO 34 with 10K resistor divider' },
+            { t: 'li', c: 'USB cable (micro-USB or USB-C depending on your board)' },
+            { t: 'li', c: 'WiFi network (2.4 GHz)' }
+          ]},
+          { t: 'h3', c: 'Software' },
+          { t: 'ul', c: [
+            { t: 'li', c: [
+              { t: 'a', a: { href: 'https://www.arduino.cc/en/software', target: '_blank' }, c: 'Arduino IDE' },
+              ' (1.8+ or 2.x)'
+            ]}
+          ]},
+          { t: 'h3', c: 'Server implementation' },
+          bw.makeTable({
+            data: [
+              { File: 'sketch.ino', Language: 'Arduino C++', Framework: 'ESPAsyncWebServer + AsyncTCP' }
+            ],
+            columns: [
+              { key: 'File', label: 'File' },
+              { key: 'Language', label: 'Language' },
+              { key: 'Framework', label: 'Framework' }
+            ],
+            striped: true
+          }),
+          { t: 'h3', c: 'Dependencies (Arduino Library Manager)' },
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'strong', c: 'ESPAsyncWebServer' }, ' -- async HTTP server with SSE support'] },
+            { t: 'li', c: [{ t: 'strong', c: 'AsyncTCP' }, ' -- async TCP library for ESP32'] },
+            { t: 'li', c: [{ t: 'strong', c: 'DHT sensor library' }, ' -- Adafruit DHT22/DHT11 driver'] },
+            { t: 'li', c: [{ t: 'strong', c: 'ArduinoJson' }, ' -- JSON serialization/deserialization'] }
+          ]}
+        ]}
+      ]
+    };
+
+    // -- Steps --------------------------------------------------------------
+
+    var step1 = step('1', 'Install Arduino IDE + ESP32 Board Support', [
+      { t: 'ol', c: [
+        { t: 'li', c: [
+          'Install ',
+          { t: 'a', a: { href: 'https://www.arduino.cc/en/software', target: '_blank' }, c: 'Arduino IDE' },
+          ' from arduino.cc'
+        ]},
+        { t: 'li', c: [
+          'Add ESP32 board manager URL in Preferences > Additional Board Manager URLs:',
+          { t: 'br' },
+          { t: 'code', a: { style: 'font-size:0.85em' }, c: 'https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json' }
+        ]},
+        { t: 'li', c: 'Board Manager > search "esp32" > Install "esp32 by Espressif Systems"' },
+        { t: 'li', c: 'Select: Tools > Board > "ESP32 Dev Module"' }
+      ]},
+      callout('tip', null,
+        'If you have a specific ESP32 variant (WROOM, WROVER, S3, C3), ' +
+        'select the matching board in the Board Manager. ' +
+        '"ESP32 Dev Module" works for most generic DevKit boards.'
+      )
+    ]);
+
+    var step2 = step('2', 'Install Libraries', [
+      { t: 'p', c: 'Open Sketch > Include Library > Manage Libraries and install:' },
+      { t: 'ol', c: [
+        { t: 'li', c: [{ t: 'strong', c: 'ESPAsyncWebServer' }, ' by me-no-dev'] },
+        { t: 'li', c: [{ t: 'strong', c: 'AsyncTCP' }, ' by me-no-dev'] },
+        { t: 'li', c: [{ t: 'strong', c: 'DHT sensor library' }, ' by Adafruit'] },
+        { t: 'li', c: [{ t: 'strong', c: 'ArduinoJson' }, ' by Benoit Blanchon'] }
+      ]},
+      callout('tip', null,
+        'If ESPAsyncWebServer or AsyncTCP are not found in the Library Manager, ' +
+        'download the .zip files from GitHub and install via Sketch > Include Library > Add .ZIP Library.'
+      )
+    ]);
+
+    var step3 = step('3', 'Prepare SPIFFS Data', [
+      { t: 'p', c: [
+        'The ESP32 serves static files from its SPIFFS flash filesystem. ' +
+        'Create a ', { t: 'code', c: 'data/' }, ' directory next to your sketch:'
+      ]},
+      codeBlock(
+        'data/\n' +
+        '  index.html                  <- copy of esp32-dashboard.html\n' +
+        '  bitwrench.umd.min.js.gz    <- gzip -k dist/bitwrench.umd.min.js',
+        'text'
+      ),
+      { t: 'p', c: 'Prepare the files:' },
+      codeBlock(
+        '# Copy dashboard as the index page\n' +
+        'cp esp32-dashboard.html data/index.html\n' +
+        '\n' +
+        '# Gzip bitwrench to save flash space (~40KB vs ~130KB)\n' +
+        'gzip -k ../../dist/bitwrench.umd.min.js\n' +
+        'cp ../../dist/bitwrench.umd.min.js.gz data/',
+        'bash'
+      ),
+      { t: 'p', c: [
+        'Edit ', { t: 'code', c: 'data/index.html' },
+        ' to load bitwrench from the local path:'
+      ]},
+      codeBlock(
+        '<script src="/bitwrench.umd.min.js"><' + '/script>',
+        'html'
+      ),
+      callout('concept', 'Why gzip?',
+        'ESPAsyncWebServer automatically serves a .gz file when the browser ' +
+        'requests the uncompressed filename. This cuts flash usage significantly. ' +
+        'The total SPIFFS payload is about 45 KB out of 1.5 MB available.'
+      )
+    ]);
+
+    var step4 = step('4', 'Configure WiFi', [
+      { t: 'p', c: [
+        'Open ', { t: 'code', c: 'sketch.ino' }, ' and set your WiFi credentials:'
+      ]},
+      codeBlock(
+        'const char* WIFI_SSID     = "YOUR_SSID";\n' +
+        'const char* WIFI_PASSWORD = "YOUR_PASSWORD";',
+        'cpp'
+      ),
+      callout('tip', null,
+        'The ESP32 only supports 2.4 GHz WiFi. ' +
+        'If your router broadcasts 2.4 GHz and 5 GHz on the same SSID, ' +
+        'the ESP32 will connect to the 2.4 GHz band automatically.'
+      )
+    ]);
+
+    var step5 = step('5', 'Upload and Test', [
+      { t: 'ol', c: [
+        { t: 'li', c: [
+          { t: 'strong', c: 'Upload SPIFFS data:' },
+          ' Tools > ESP32 Sketch Data Upload'
+        ]},
+        { t: 'li', c: [
+          { t: 'strong', c: 'Upload sketch:' },
+          ' Sketch > Upload (or Ctrl+U)'
+        ]},
+        { t: 'li', c: [
+          { t: 'strong', c: 'Open Serial Monitor:' },
+          ' Tools > Serial Monitor, set baud rate to 115200'
+        ]},
+        { t: 'li', c: [
+          { t: 'strong', c: 'Find the IP address' },
+          ' in the serial output and open it in your browser'
+        ]}
+      ]},
+      { t: 'p', c: 'You should see output like this in the Serial Monitor:' },
+      codeBlock(
+        'Connecting to WiFi...\n' +
+        'IP: 192.168.1.42\n' +
+        'Server started',
+        'text'
+      ),
+      { t: 'p', c: [
+        { t: 'strong', c: 'Open your browser' },
+        ' and navigate to the IP address shown (e.g., ',
+        { t: 'code', c: 'http://192.168.1.42/' },
+        ').'
+      ]}
+    ]);
+
+    // -- What You See -------------------------------------------------------
+
+    var whatYouSee = step('', 'What You See', [
+      { t: 'p', c: 'The dashboard shows live data from the ESP32, updated every 2 seconds via Server-Sent Events:' },
+      { t: 'ul', c: [
+        { t: 'li', c: [{ t: 'strong', c: '7 sensor cards:' }, ' temperature, humidity, pressure, light level, uptime, free heap, WiFi RSSI'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Device controls:' }, ' LED On, LED Off, and Restart buttons'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Event log:' }, ' timestamped log of commands and sensor events'] }
+      ]},
+      { t: 'p', c: [
+        'The dashboard runs entirely in the browser. The ESP32 only sends JSON -- ' +
+        'bitwrench renders the UI. View the dashboard source: ',
+        { t: 'a', a: { href: 'esp32-dashboard.html', target: '_blank' }, c: 'esp32-dashboard.html' }
+      ]}
+    ]);
+
+    // -- How It Works -------------------------------------------------------
+
+    var howItWorks = step('', 'How It Works', [
+      { t: 'p', c: 'The ESP32 is both the web server and the sensor platform. The architecture is straightforward:' },
+      codeBlock(
+        'ESP32                             Browser\n' +
+        '  |                                  |\n' +
+        '  |  GET /                           |\n' +
+        '  |  <-- index.html (from SPIFFS)    |\n' +
+        '  |  GET /bitwrench.umd.min.js      |\n' +
+        '  |  <-- JS (gzipped, from SPIFFS)   |\n' +
+        '  |                                  |\n' +
+        '  |  GET /events (SSE)               |\n' +
+        '  |  <-- {"temperature":23.5,...}    |  (every 2s)\n' +
+        '  |  <-- {"temperature":23.6,...}    |\n' +
+        '  |  <-- ...                         |\n' +
+        '  |                                  |\n' +
+        '  |  POST /api/command               |\n' +
+        '  |  --> {"cmd":"led","val":"on"}     |\n' +
+        '  |  <-- {"ok":true}                 |',
+        'text'
+      ),
+      { t: 'h3', c: 'Server (sketch.ino)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Boots, connects to WiFi, starts ESPAsyncWebServer on port 80' },
+        { t: 'li', c: 'Serves index.html and bitwrench.js from SPIFFS (auto-decompresses .gz)' },
+        { t: 'li', c: 'Reads DHT22 (temperature, humidity) and LDR (light level) sensors' },
+        { t: 'li', c: 'Pushes sensor JSON via SSE every 2 seconds' },
+        { t: 'li', c: 'Handles POST /api/command for LED control and device restart' }
+      ]},
+      { t: 'h3', c: 'Dashboard (esp32-dashboard.html)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Loads bitwrench.umd.min.js and calls bw.loadStyles() for theming' },
+        { t: 'li', c: 'Connects to /events via EventSource for live sensor data' },
+        { t: 'li', c: 'Renders the entire UI as TACO objects -- no direct DOM manipulation' },
+        { t: 'li', c: 'Sends fetch() POST requests when control buttons are clicked' },
+        { t: 'li', c: 'Re-renders sensor cards on every SSE update' }
+      ]}
+    ]);
+
+    // -- Wiring Diagram -----------------------------------------------------
+
+    var wiringDiagram = step('', 'Wiring Diagram', [
+      { t: 'p', c: 'Connect the DHT22 temperature/humidity sensor and LDR light sensor to the ESP32:' },
+      codeBlock(
+        'ESP32 DevKit          DHT22\n' +
+        '  GPIO 4  ----------  DATA\n' +
+        '  3.3V    ----------  VCC\n' +
+        '  GND     ----------  GND\n' +
+        '\n' +
+        'ESP32 DevKit          LDR + Voltage Divider\n' +
+        '  GPIO 34 ---+------- LDR -------- 3.3V\n' +
+        '             |\n' +
+        '             +------- 10K R ------- GND',
+        'text'
+      ),
+      callout('tip', 'DHT22 pull-up resistor',
+        'The DHT22 data pin needs a 10K pull-up resistor to 3.3V. ' +
+        'Some DHT22 breakout boards include this resistor on the PCB. ' +
+        'If you get NaN readings, add a 10K resistor between DATA and VCC.'
+      ),
+      callout('concept', 'LDR voltage divider',
+        'The LDR and 10K resistor form a voltage divider. ' +
+        'In bright light, the LDR resistance drops, and GPIO 34 reads a higher voltage. ' +
+        'In darkness, the LDR resistance increases, and the voltage drops. ' +
+        'The ESP32 ADC reads 0-4095 (12-bit) corresponding to 0-3.3V.'
+      )
+    ]);
+
+    // -- API Endpoints Table ------------------------------------------------
+
+    var apiEndpoints = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'API Endpoints' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Method: 'GET', Path: '/', Description: 'Serve dashboard HTML from SPIFFS' },
+              { Method: 'GET', Path: '/api/sensors', Description: 'JSON snapshot of all sensor readings' },
+              { Method: 'GET', Path: '/events', Description: 'SSE stream -- pushes sensor JSON every 2 seconds' },
+              { Method: 'POST', Path: '/api/command', Description: 'Device command: { "cmd": "led"|"restart", "val": "on"|"off" }' }
+            ],
+            columns: [
+              { key: 'Method', label: 'Method' },
+              { key: 'Path', label: 'Path' },
+              { key: 'Description', label: 'Description' }
+            ],
+            striped: true
+          }),
+          { t: 'h3', c: 'Sensor JSON format' },
+          { t: 'p', c: 'The /api/sensors and /events endpoints return the same JSON structure:' },
+          codeBlock(
+            '{\n' +
+            '  "temperature": 23.5,      // DHT22 degrees Celsius\n' +
+            '  "humidity": 45.2,         // DHT22 relative humidity %\n' +
+            '  "pressure": 1013.25,      // placeholder (add BMP280 for real data)\n' +
+            '  "light": 2048,            // LDR ADC value 0-4095\n' +
+            '  "uptime": 3600,           // seconds since boot\n' +
+            '  "heap": 245760,           // free heap bytes\n' +
+            '  "wifi_rssi": -52          // WiFi signal strength in dBm\n' +
+            '}',
+            'json'
+          ),
+          { t: 'h3', c: 'Command JSON format' },
+          { t: 'p', c: 'POST /api/command accepts:' },
+          codeBlock(
+            '// Turn LED on\n' +
+            '{ "cmd": "led", "val": "on" }\n' +
+            '\n' +
+            '// Turn LED off\n' +
+            '{ "cmd": "led", "val": "off" }\n' +
+            '\n' +
+            '// Restart the ESP32\n' +
+            '{ "cmd": "restart" }',
+            'json'
+          )
+        ]}
+      ]
+    };
+
+    // -- Troubleshooting ----------------------------------------------------
+
+    var troubleshooting = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Troubleshooting' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'dl', c: [
+            { t: 'dt', c: 'SPIFFS upload fails' },
+            { t: 'dd', c: [
+              'Install the "ESP32 Sketch Data Upload" tool. For Arduino IDE 2.x, see the ',
+              { t: 'a', a: { href: 'https://github.com/me-no-dev/arduino-esp32fs-plugin', target: '_blank' }, c: 'arduino-esp32fs-plugin' },
+              ' instructions. For PlatformIO, use: ',
+              { t: 'code', c: 'pio run -t uploadfs' }
+            ]},
+
+            { t: 'dt', c: 'DHT22 reads NaN' },
+            { t: 'dd', c: 'Check wiring: DATA to GPIO 4, VCC to 3.3V, GND to GND. Add a 10K pull-up resistor between the DATA pin and 3.3V. Make sure you are using a DHT22 (not a DHT11) or change DHT_TYPE in the sketch.' },
+
+            { t: 'dt', c: 'WiFi won\'t connect' },
+            { t: 'dd', c: 'Verify WIFI_SSID and WIFI_PASSWORD are correct. ESP32 only supports 2.4 GHz WiFi -- it cannot connect to 5 GHz networks.' },
+
+            { t: 'dt', c: 'Serial shows "SPIFFS mount failed"' },
+            { t: 'dd', c: 'The SPIFFS partition may not be formatted. Use Tools > ESP32 Sketch Data Upload to format and upload the data/ directory. If using PlatformIO, check your partition table includes a SPIFFS partition.' },
+
+            { t: 'dt', c: 'Dashboard is blank' },
+            { t: 'dd', c: 'Open the browser developer console (F12) and check for errors. Verify that SPIFFS contains both index.html and bitwrench.umd.min.js.gz. Check that index.html references the correct script path.' },
+
+            { t: 'dt', c: 'SSE connection drops or "Connecting..." stays' },
+            { t: 'dd', c: 'The ESP32 has limited memory. Keep concurrent browser connections to 1-2. If the heap is very low (shown in Serial Monitor), reduce the SENSOR_INTERVAL or simplify the JSON payload.' }
+          ]}
+        ]}
+      ]
+    };
+
+    // -- Source Files -------------------------------------------------------
+
+    var sourceFiles = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Source Files' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'ul', c: [
+            { t: 'li', c: [
+              { t: 'a', a: { href: 'esp32-dashboard.html', download: '' }, c: 'esp32-dashboard.html' },
+              ' -- the HTML dashboard (runs on the ESP32)'
+            ]},
+            { t: 'li', c: [
+              { t: 'a', a: { href: 'sketch.ino', download: '' }, c: 'sketch.ino' },
+              ' -- Arduino C++ server (ESPAsyncWebServer + SSE)'
+            ]},
+            { t: 'li', c: [
+              { t: 'a', a: { href: 'data/README.md' }, c: 'data/README.md' },
+              ' -- SPIFFS data folder setup instructions'
+            ]}
+          ]},
+          callout('tip', 'Standalone HTML (no .gz needed)',
+            { t: 'span', c: [
+              'Use ', { t: 'code', c: 'npx bwcli esp32-dashboard.html -o data/index.html --standalone' },
+              ' to create a single HTML file with bitwrench inlined. No need to upload a separate .gz file to SPIFFS. ',
+              'See the ', { t: 'a', a: { href: '../../pages/09-builds.html#section-embedded' }, c: 'Embedded Downloads' }, ' page for details.'
+            ]}
+          )
+        ]}
+      ]
+    };
+
+    // -- Assemble and mount -------------------------------------------------
+
+    bw.DOM('#app', {
+      t: 'div', c: [
+        hero,
+        { t: 'div', a: { class: 'content-container wide' }, c: [
+          overview,
+          prerequisites,
+          step1,
+          step2,
+          step3,
+          step4,
+          step5,
+          whatYouSee,
+          howItWorks,
+          wiringDiagram,
+          apiEndpoints,
+          troubleshooting,
+          sourceFiles
+        ]}
+      ]
+    });
+  </script>
+</body>
+</html>

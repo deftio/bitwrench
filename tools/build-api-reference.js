@@ -595,8 +595,8 @@ const html = `<!DOCTYPE html>
   <title>Bitwrench - API Reference</title>
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"><\/script>
-  <script src="shared-theme.js"><\/script>
   <script src="shared-nav.js"><\/script>
+  <script src="site.js"><\/script>
 </head>
 <body>
   <div id="example-nav"></div>

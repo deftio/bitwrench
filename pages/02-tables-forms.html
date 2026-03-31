@@ -6,8 +6,8 @@
   <title>Bitwrench - Tables & Forms</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
@@ -15,7 +15,7 @@
   <!-- Shared Navigation -->
   <div id="example-nav"></div>
   
-  <div class="page-header">
+  <div class="bw_site_pages_header">
     <div class="content-container wide" style="padding-top: 0; padding-bottom: 0;">
       <h1>Tables & Forms</h1>
       <p class="subtitle">Interactive data tables, sortable columns, forms with validation, and pagination.</p>
@@ -25,9 +25,9 @@
   <div class="content-container wide">
     <div id="teaching-callout"></div>
     <!-- Introduction -->
-    <div class="demo-section">
-      <h2>Data In, Table Out</h2>
-      <div class="demo-content">
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Data In, Table Out</h2>
+      <div class="bw_site_pages_demo_body">
         <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 1.5rem;">
           Bitwrench treats tables as <em>data</em>. Hand <code>bw.makeTable()</code> a JavaScript array
           and it returns a complete, sortable, styled table &mdash; no <code>&lt;table&gt;&lt;tr&gt;&lt;td&gt;</code>
@@ -41,10 +41,10 @@
     </div>
 
     <!-- Showcase Table (hero — rendered first, no code) -->
-    <div class="demo-section">
-      <h2>Showcase</h2>
-      <div class="demo-content">
-        <div id="showcase-table" class="table-card"></div>
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Showcase</h2>
+      <div class="bw_site_pages_demo_body">
+        <div id="showcase-table" class="bw_site_pages_tablecard"></div>
         <p class="table-info" style="border-top: none; margin-top: 0.5rem; font-style: italic;">
           This table was generated from a JavaScript array with one function call.
           Click any column header to sort.
@@ -55,9 +55,9 @@
     <div id="style-origin-callout"></div>
 
     <!-- Step-by-step build-up -->
-    <div class="demo-section">
-      <h2>Building Up &mdash; From Data to Table</h2>
-      <div class="demo-content">
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Building Up &mdash; From Data to Table</h2>
+      <div class="bw_site_pages_demo_body">
         <p>Let's rebuild that showcase table from scratch, adding one feature at a time.</p>
         <div id="step1-demo"></div>
         <div id="step2-demo" style="margin-top: 1.5rem;"></div>
@@ -68,66 +68,67 @@
     </div>
 
     <!-- Pipeline Demo (moved down) -->
-    <div class="demo-section">
-      <h2>How bw.makeTable() Works</h2>
-      <div class="demo-content">
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">How bw.makeTable() Works</h2>
+      <div class="bw_site_pages_demo_body">
         <p>One function call produces a sortable, styled table. The helper returns a TACO object &mdash; you can inspect it, modify it, or compose it with other components.</p>
         <div id="pipeline-table"></div>
       </div>
     </div>
 
     <!-- Interactive Table Demo -->
-    <div class="demo-section">
-      <h2>Interactive Sortable Table</h2>
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Interactive Sortable Table</h2>
       <div id="table-tabs"></div>
     </div>
 
     <!-- Form Components Demo -->
-    <div class="demo-section">
-      <h2>Form Components</h2>
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Form Components</h2>
       <div id="form-tabs"></div>
     </div>
 
     <!-- Tabbed Forms Demo -->
-    <div class="demo-section">
-      <h2>Tabbed Form Interface</h2>
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Tabbed Form Interface</h2>
       <div id="tabbed-form-tabs"></div>
     </div>
 
     <!-- Table with Pagination Demo -->
-    <div class="demo-section">
-      <h2>Table with Pagination</h2>
+    <div class="bw_site_pages_demo">
+      <h2 class="bw_site_pages_demo_title">Table with Pagination</h2>
       <div id="pagination-tabs"></div>
     </div>
   </div>
 
   <script>
-    initBitwrenchPage('02-tables-forms.html');
+    var styles = initBitwrenchPage('02-tables-forms.html');
+    var p = styles.palette;
 
-    // Page-specific CSS (shared-theme.js handles .table-card)
+    // Page-specific CSS (site.js handles .table-card)
     bw.injectCSS(bw.css({
       '.controls': {
         marginBottom: '0', display: 'flex', gap: '0.5rem', flexWrap: 'wrap',
         alignItems: 'center', padding: '0.875rem 1.25rem',
-        background: 'var(--bw_card_bg)',
-        borderRadius: 'var(--bw_radius) var(--bw_radius) 0 0',
-        border: '1px solid var(--bw_card_border)', borderBottom: 'none'
+        background: p.surface,
+        borderRadius: '8px 8px 0 0',
+        border: '1px solid ' + p.light.border, borderBottom: 'none'
       },
       '.bw_code_demo .bw_table': {
-        border: '1px solid var(--bw_card_border)',
-        borderRadius: 'var(--bw_radius)', overflow: 'hidden'
+        border: '1px solid ' + p.light.border,
+        borderRadius: '8px', overflow: 'hidden'
       },
       '.table-info': {
-        padding: '0.625rem 1.25rem', background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)', borderTop: 'none',
-        borderRadius: '0 0 var(--bw_radius) var(--bw_radius)',
-        fontSize: '0.8125rem', color: 'var(--bw_text_secondary)'
+        padding: '0.625rem 1.25rem', background: p.surface,
+        border: '1px solid ' + p.light.border, borderTop: 'none',
+        borderRadius: '0 0 8px 8px',
+        fontSize: '0.8125rem', color: p.dark.hover
       }
     }), { id: 'bw_tables_forms_css' });
 
     bw.DOM('#teaching-callout', {
-      t: 'div', a: { class: 'callout callout-concept' }, c: [
-        { t: 'h4', c: 'Levels 0 + 1 \u2014 Data to UI' },
+      t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+        { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Levels 0 + 1 \u2014 Data to UI' },
         { t: 'p', c: ['Tables and forms show bitwrench\u2019s sweet spot: data-driven components that respond to user interaction via callbacks in the TACO object. ',
           { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
       ]
@@ -599,7 +600,7 @@ bw.DOM(target, bw.makeTable({
 
       const tableDemo = {
         t: 'div',
-        a: { class: 'table-card' },
+        a: { class: 'bw_site_pages_tablecard' },
         c: [
           {
             t: 'div',

@@ -139,7 +139,7 @@
       if (useCE) {
         return bw.codeEditor({ code: code, lang: lang || 'js', readOnly: true, height: 'auto' });
       }
-      return { t: 'div', a: { class: 'bw_code_block' }, c: { t: 'pre', c: { t: 'code', c: code } } };
+      return { t: 'div', a: { class: 'bw_site_pages_code' }, c: { t: 'pre', c: { t: 'code', c: code } } };
     }
 
     return {
@@ -174,7 +174,7 @@
               a: { class: 'pipeline-col' },
               c: [
                 { t: 'div', a: { class: 'pipeline-col-label' }, c: 'Renders As' },
-                { t: 'div', a: { class: 'bw_demo_result' }, c: opts.taco }
+                { t: 'div', a: { class: 'bw_site_pages_result' }, c: opts.taco }
               ]
             }
           ]
@@ -191,11 +191,12 @@
     var id = 'style-origin-' + (bw._idCounter++);
     return {
       t: 'div',
-      a: { class: 'callout callout-concept', id: id },
+      a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept', id: id },
       c: [
         {
           t: 'h4',
           a: {
+            class: 'bw_site_pages_callout_title',
             style: 'cursor: pointer; user-select: none;',
             onclick: function() {
               var content = document.getElementById(id).querySelector('.style-origin-content');

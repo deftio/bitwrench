@@ -7,32 +7,33 @@
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('07-framework-comparison.html');
+    var styles = initBitwrenchPage('07-framework-comparison.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Page-specific CSS via bw.css() + bw.injectCSS()
     // =========================================================================
     bw.injectCSS(bw.css({
       '.preview-box': {
-        'background': 'var(--bw_card_bg)',
-        'border': '2px solid var(--bw_teal)',
-        'border-radius': 'var(--bw_radius)',
-        'padding': 'var(--bw_space_lg)',
+        'background': p.surface,
+        'border': '2px solid ' + p.primary.base,
+        'border-radius': '8px',
+        'padding': '1.5rem',
         'margin-bottom': '1.25rem'
       },
       '.preview-label': {
         'font-size': '0.6875rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.06em',
-        'color': 'var(--bw_teal)',
+        'color': p.primary.base,
         'font-weight': '700',
         'margin-bottom': '0.75rem'
       },
@@ -45,23 +46,23 @@
       '.cmp-table th, .cmp-table td': {
         'padding': '0.65rem 1rem',
         'text-align': 'left',
-        'border-bottom': '1px solid var(--bw_card_border)'
+        'border-bottom': '1px solid ' + p.light.border
       },
       '.cmp-table th': {
-        'background': 'var(--bw_teal_bg)',
+        'background': p.surfaceAlt,
         'font-weight': '600',
-        'color': 'var(--bw_text_secondary)',
+        'color': p.dark.hover,
         'font-size': '0.75rem',
         'text-transform': 'uppercase',
         'letter-spacing': '0.04em'
       },
       '.cmp-table tr:hover': {
-        'background': 'var(--bw_teal_bg)'
+        'background': p.surfaceAlt
       },
       '.theme-card': {
         'padding': '1.25rem',
-        'border-radius': 'var(--bw_radius)',
-        'border': '1px solid var(--bw_card_border)',
+        'border-radius': '8px',
+        'border': '1px solid ' + p.light.border,
         'transition': 'all 0.3s'
       },
       '.theme-card h4': {
@@ -77,16 +78,16 @@
         'gap': '0.5rem',
         'margin-bottom': '1rem'
       },
-      '.demo-section-body .bw_nav_tabs': {
+      '.bw_site_pages_demo_body .bw_nav_tabs': {
         'flex-wrap': 'nowrap',
         'overflow-x': 'auto',
         '-webkit-overflow-scrolling': 'touch',
         'scrollbar-width': 'none'
       },
-      '.demo-section-body .bw_nav_tabs::-webkit-scrollbar': {
+      '.bw_site_pages_demo_body .bw_nav_tabs::-webkit-scrollbar': {
         'display': 'none'
       },
-      '.demo-section-body .bw_nav_tabs .bw_nav_link': {
+      '.bw_site_pages_demo_body .bw_nav_tabs .bw_nav_link': {
         'white-space': 'nowrap'
       },
       '#honest-summary .callout': {
@@ -118,7 +119,7 @@
     // =========================================================================
 
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
+      t: 'div', a: { class: 'bw_site_pages_header' },
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
@@ -130,10 +131,10 @@
 
     // -- Intro section --
     var introSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'About This Page' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'About This Page' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('If you already know React, Vue, Svelte, Bootstrap, SolidJS, or vanilla JavaScript, this page shows how the same tasks are expressed in bitwrench. Use it as a translation guide to map familiar patterns to bitwrench\'s TACO-based approach.') }
         }
@@ -142,10 +143,10 @@
 
     // -- Comparison 1: Table from data --
     var tableSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Comparison 1: Table from Data' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Comparison 1: Table from Data' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: [
@@ -162,10 +163,10 @@
 
     // -- Comparison 2: Dynamic theming --
     var themeSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Comparison 2: Dynamic Theming' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Comparison 2: Dynamic Theming' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: [
@@ -188,10 +189,10 @@
 
     // -- Comparison 3: Data-driven list --
     var listSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Comparison 3: Rendering a List from Data' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Comparison 3: Rendering a List from Data' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: 'Given this data: three users with names and roles. Render a styled list where each item shows the name and a badge for the role. All code below produces this output:' },
@@ -204,10 +205,10 @@
 
     // -- Comparison 4: Counter --
     var counterSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Comparison 4: Counter with Controls' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Comparison 4: Counter with Controls' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: bw.raw('A counter with increment, decrement, and reset buttons. The simplest interactive component &mdash; a good baseline for comparing each framework\'s approach to state and event handling.') },
@@ -220,10 +221,10 @@
 
     // -- Comparison 5: Cross-Component Coordination --
     var crossSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Comparison 5: Cross-Component Coordination' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Comparison 5: Cross-Component Coordination' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: bw.raw('Three independent counters share a global summary panel that auto-updates when any counter changes. This shows how each framework handles cross-component communication &mdash; the core challenge of any real application.') },
@@ -236,10 +237,10 @@
 
     // -- Comparison 6: Todo --
     var todoSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Comparison 6: State Management (Todo List)' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Comparison 6: State Management (Todo List)' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: 'A realistic component: a todo list where you can add items and mark them done. Bitwrench uses manual re-rendering rather than automatic reactivity, trading convenience for transparency and control.' },
@@ -252,10 +253,10 @@
 
     // -- Bonus: Dynamic styling --
     var styleSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Bonus: Dynamic Styling' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Bonus: Dynamic Styling' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: 'A box that toggles between two color states when a button is clicked. Each framework changes background and text color on the same element. Try the preview:' },
@@ -268,10 +269,10 @@
 
     // -- Summary table --
     var summarySection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Feature Comparison' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Feature Comparison' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: { t: 'div', a: { id: 'summary-table' } }
         }
       ]
@@ -279,10 +280,10 @@
 
     // -- Operation-by-operation translation table --
     var translationSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Operation-by-Operation Translation' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Operation-by-Operation Translation' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: 'How common UI operations map across frameworks. Each cell shows the idiomatic one-liner.' },
@@ -294,10 +295,10 @@
 
     // -- Common concerns --
     var concernsSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Common Concerns, Demonstrated' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Common Concerns, Demonstrated' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: 'Developers coming from other frameworks often ask how bitwrench handles these topics. Rather than make claims, here are code examples showing the bitwrench approach.' },
@@ -309,10 +310,10 @@
 
     // -- Example use cases --
     var useCasesSection = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Example Use Cases' },
-        { t: 'div', a: { class: 'demo-section-body' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Example Use Cases' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'p', a: { class: 'intro-text' },
               c: 'Bitwrench is used in a range of contexts. Here are some examples.' },
@@ -584,10 +585,10 @@
               t: 'div', a: { style: 'display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;' },
               c: counters.map(function(ctr) {
                 return {
-                  t: 'div', a: { style: 'border: 1px solid var(--bw_card_border); border-radius: var(--bw_radius); padding: 0.75rem 1rem; text-align: center; min-width: 100px; flex: 1;' },
+                  t: 'div', a: { style: 'border: 1px solid #d8d8d8; border-radius: 8px; padding: 0.75rem 1rem; text-align: center; min-width: 100px; flex: 1;' },
                   c: [
                     { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: ctr.label },
-                    { t: 'div', a: { style: 'font-size: 1.5rem; font-weight: 700; color: var(--bw_teal_dark); margin-bottom: 0.5rem;' }, c: String(ctr.count) },
+                    { t: 'div', a: { style: 'font-size: 1.5rem; font-weight: 700; color: #004d4d; margin-bottom: 0.5rem;' }, c: String(ctr.count) },
                     { t: 'div', a: { style: 'display: flex; gap: 0.25rem; justify-content: center;' }, c: [
                       bw.makeButton({ text: '+', variant: 'primary', onclick: function() { ctr.count++; renderCross(); } }),
                       bw.makeButton({ text: '\u2013', variant: 'secondary', onclick: function() { ctr.count--; renderCross(); } })
@@ -597,7 +598,7 @@
               })
             },
             {
-              t: 'div', a: { style: 'background: var(--bw_teal_bg); border: 1px solid var(--bw_card_border); border-radius: var(--bw_radius); padding: 0.75rem 1rem; text-align: center;' },
+              t: 'div', a: { style: 'background: #f0faf9; border: 1px solid #d8d8d8; border-radius: 8px; padding: 0.75rem 1rem; text-align: center;' },
               c: [
                 { t: 'div', a: { style: 'font-weight: 600; margin-bottom: 0.25rem;' }, c: 'Global Total' },
                 { t: 'div', a: { style: 'font-size: 1.25rem; font-weight: 700;' },
@@ -1028,7 +1029,7 @@
             {
               t: 'div',
               a: {
-                style: 'padding: 1rem; border-radius: 8px; border: 1px solid var(--bw_card_border); ' +
+                style: 'padding: 1rem; border-radius: 8px; border: 1px solid #d8d8d8; ' +
                   'transition: all 0.3s; margin-bottom: 0.75rem; ' +
                   'background:' + bg + '; color:' + fg
               },
@@ -1317,7 +1318,7 @@
             { t: 'div', c: todos.map(todoItem) },
             {
               t: 'div',
-              a: { style: 'margin-top: 0.5rem; font-size: 0.8125rem; color: var(--bw_text_secondary);' },
+              a: { style: 'margin-top: 0.5rem; font-size: 0.8125rem; color: #444;' },
               c: todos.filter(function(t) { return !t.done; }).length + ' remaining'
             }
           ]
@@ -1781,7 +1782,7 @@
               a: { style: 'margin-top: 0.75rem;' },
               c: {
                 t: 'pre',
-                a: { style: 'font-size: 0.8125rem; margin: 0; padding: 0.75rem; background: #f4f4f4; border-radius: 4px; border: 1px solid var(--bw_card_border);' },
+                a: { style: 'font-size: 0.8125rem; margin: 0; padding: 0.75rem; background: #f4f4f4; border-radius: 4px; border: 1px solid #d8d8d8;' },
                 c: 'bw.css({\n  ".themed": {\n    background: "' + theme.bg + '",\n    color: "' + theme.fg + '",\n    borderColor: "' + theme.accent + '"\n  }\n})'
               }
             }
@@ -2509,7 +2510,7 @@
 
       var cards = demos.map(function(demo) {
         var content = [
-          { t: 'h4', c: demo.title },
+          { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: demo.title },
           { t: 'p', a: { style: 'margin-bottom: 0.75rem;' }, c: demo.desc }
         ];
 
@@ -2521,7 +2522,7 @@
 
         return {
           t: 'div',
-          a: { class: 'callout callout-concept' },
+          a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' },
           c: content
         };
       });
@@ -2637,7 +2638,7 @@
               { t: 'tbody', c: rows.map(dataRow) }
             ]
           },
-          { t: 'p', a: { style: 'margin-top: 1rem; font-size: 0.85rem; color: var(--bw_text_secondary);' },
+          { t: 'p', a: { style: 'margin-top: 1rem; font-size: 0.85rem; color: #444;' },
             c: [
               'See the full ',
               { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/blob/master/docs/framework-translation-table.md' }, c: 'Framework Translation Table' },
@@ -2662,7 +2663,7 @@
       var useCaseCard = function(uc) {
         return {
           t: 'div',
-          a: { class: 'bw_feature_card' },
+          a: { class: 'bw_site_pages_feature_card' },
           c: [
             { t: 'h4', c: uc.title },
             { t: 'p', c: uc.desc }

@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)](https://www.npmjs.com/package/bitwrench)
 [![CI](https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg)](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-96.3%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
+[![Coverage](https://img.shields.io/badge/coverage-97.3%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](https://deftio.github.io/bitwrench/pages/)
 
@@ -33,13 +33,14 @@ Each object has four keys: **t** (tag), **a** (attributes), **c** (content), **o
 Structure, styling, state, and server rendering are all handled as JavaScript objects:
 
 - **No build toolchain** -- works with a `<script>` tag
-- **50+ ready-made components** -- buttons, tables, modals, forms, charts, toasts -- one `make*()` call each, returns a composable TACO
+- **Ready-made components** -- buttons, tables, modals, forms, charts, toasts -- one `make*()` call each, returns a composable TACO
 - **CSS from JavaScript** -- `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.loadStyles()` derives a complete design system from 2 seed colors
 - **Reactive state** -- `o.state` + `o.render` + `bw.update()` for stateful components; `bw.pub()`/`bw.sub()` for cross-component messaging
 - **Dual rendering** -- same object renders to live DOM (`bw.DOM()`) or HTML string (`bw.html()`) for SSR, emails, or static sites
 - **Server-driven UI** -- push UI updates from any backend (Python, C, Rust, Go) over SSE via the biwrench bwserve protocol; `client.screenshot()` captures the page back as PNG/JPEG
 - **CLI** -- `bwcli` converts Markdown, HTML, and JSON to styled standalone pages
 - **Debug tools** -- live client and server debugging with remote incremental inspect, screenshots, and state updates
+- **TypeScript** -- full type declarations ship with the package (`dist/bitwrench.d.ts`); see the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md)
 - **Utilities** -- color interpolation, random data, lorem ipsum, cookies, URL params, file I/O
 
 
@@ -58,6 +59,7 @@ Bitwrench uses JavaScript equivalents for most forms of front-end development. H
 | Streamlit / Gradio | Server-driven UI | bwserve SSE -- from any language (Python, Go, C, Rust) |
 | Redux / Zustand / Pinia | State management | `o.state` + `bw.update()` + `bw.pub()/sub()` |
 | Vite / webpack / Babel | Build tooling | Not needed -- open the HTML file |
+| DefinitelyTyped / @types | Type declarations | Ships `dist/bitwrench.d.ts` -- nothing extra to install |
 
 See the [Framework Translation Table](docs/framework-translation-table.md) for side-by-side code comparisons across 22 operations.
 
@@ -264,7 +266,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 - [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
 - [State Management](docs/state-management.md) -- three-level component model, stateful TACO, reactive state
-- [Component Library](docs/component-library.md) -- all 50+ `make*()` functions with signatures and examples
+- [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens
 - [CLI](docs/cli.md) -- the `bwcli` command for file conversion and pipe server
 - [bwserve](docs/bwserve.md) -- server-driven UI protocol (SSE, actions, embedded devices)
@@ -278,7 +280,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 **Interactive demos** (live site):
 
 - [Quick Start](https://deftio.github.io/bitwrench/pages/00-quick-start.html) -- first steps with `bw.DOM()`
-- [Components](https://deftio.github.io/bitwrench/pages/01-components.html) -- all 50+ UI components with live demos
+- [Components](https://deftio.github.io/bitwrench/pages/01-components.html) -- all UI components with live demos
 - [Styling & Theming](https://deftio.github.io/bitwrench/pages/03-styling.html) -- CSS generation, `bw.s()`, and theming strategies
 - [State & Interactivity](https://deftio.github.io/bitwrench/pages/05-state.html) -- state patterns and stateful TACO
 - [Tic Tac Toe Tutorial](https://deftio.github.io/bitwrench/pages/06-tic-tac-toe-tutorial.html) -- step-by-step game with state management
@@ -311,7 +313,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Can I use bitwrench on embedded devices?** -- Yes -- this is a primary use case. An ESP32 or Raspberry Pi serves one HTML page with bitwrench loaded, then pushes sensor data as JSON patches over SSE. The device never generates HTML. See the [ESP32 tutorial](docs/tutorial-embedded.md).
 
-**Can I use it with TypeScript?** -- Yes. Type declarations are included. TACO objects are plain JSON-compatible objects that TypeScript infers naturally.
+**Can I use it with TypeScript?** -- Yes. Type declarations ship with the package (`dist/bitwrench.d.ts`). TACO objects are plain JSON-compatible objects that TypeScript infers naturally. See the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md) for import patterns, typed configs, and examples.
 
 **What about accessibility?** -- BCCL components emit semantic HTML with ARIA attributes where applicable. You can add any `aria-*` attribute via `a: { 'aria-label': '...' }`.
 
@@ -320,7 +322,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 ```bash
 npm install          # install dev dependencies
 npm run build        # build all dist formats (UMD, ESM, CJS, ES5)
-npm test             # run unit tests (1400+ tests, 96% coverage)
+npm test             # run unit tests
 npm run test:cli     # run CLI tests
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint

@@ -6,48 +6,49 @@
   <title>Bitwrench - Source Size Analysis</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app" class="content-container wide"></div>
   <script>
-  initBitwrenchPage('src-sizes.html');
+  var styles = initBitwrenchPage('src-sizes.html');
+  var p = styles.palette;
 
   // Page-specific CSS
   bw.injectCSS(bw.css({
     '.section': { marginBottom: '2rem' },
-    '.section h2': { fontSize: '1.1rem', borderBottom: '2px solid var(--bw_teal)', paddingBottom: '0.4rem', marginBottom: '0.75rem' },
+    '.section h2': { fontSize: '1.1rem', borderBottom: '2px solid ' + p.primary.base, paddingBottom: '0.4rem', marginBottom: '0.75rem' },
     '.sz': { textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
-    '.pct': { textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: 'var(--bw_text_secondary)', fontSize: '0.85em' },
+    '.pct': { textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: p.dark.hover, fontSize: '0.85em' },
     '.table-wrap': {
-      background: 'var(--bw_card_bg)', border: '1px solid var(--bw_card_border)',
-      borderRadius: 'var(--bw_radius)', overflow: 'hidden', boxShadow: 'var(--bw_card_shadow)'
+      background: p.surface, border: '1px solid ' + p.light.border,
+      borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
     },
     '.table-wrap .bw_table': { marginBottom: '0' },
-    '.table-wrap .bw_table > thead > tr > *': { background: '#004d4d', color: '#fff', fontSize: '0.8rem' },
+    '.table-wrap .bw_table > thead > tr > *': { background: p.primary.darkText, color: '#fff', fontSize: '0.8rem' },
     '.table-wrap .bw_table > tbody > tr > *': { fontSize: '0.8rem' },
     '.table-wrap .bw_table > tbody > tr:nth-of-type(odd) > *': { backgroundColor: 'rgba(0,0,0,0.025)' },
-    '.table-wrap .bw_table > tfoot > tr > *': { fontWeight: '700', background: 'var(--bw_page_bg)', fontSize: '0.8rem' },
-    '.bar': { display: 'inline-block', height: '14px', background: 'var(--bw_teal)', borderRadius: '2px', verticalAlign: 'middle', minWidth: '2px' },
+    '.table-wrap .bw_table > tfoot > tr > *': { fontWeight: '700', background: p.background, fontSize: '0.8rem' },
+    '.bar': { display: 'inline-block', height: '14px', background: p.primary.base, borderRadius: '2px', verticalAlign: 'middle', minWidth: '2px' },
     '.bar-doc': { background: '#90c0c0' },
     '.bar-wrap': { display: 'flex', gap: '1px', alignItems: 'center' },
-    '.legend': { display: 'flex', gap: '1rem', margin: '0.5rem 0', fontSize: '0.75rem', color: 'var(--bw_text_secondary)' },
+    '.legend': { display: 'flex', gap: '1rem', margin: '0.5rem 0', fontSize: '0.75rem', color: p.dark.hover },
     '.legend-item': { display: 'flex', alignItems: 'center', gap: '0.3rem' },
     '.legend-swatch': { width: '12px', height: '12px', borderRadius: '2px' },
-    'canvas': { border: '1px solid var(--bw_card_border)', borderRadius: '4px', background: 'var(--bw_card_bg)', display: 'block', maxWidth: '100%' },
+    'canvas': { border: '1px solid ' + p.light.border, borderRadius: '4px', background: p.surface, display: 'block', maxWidth: '100%' },
     '.chart-title': { fontSize: '0.85rem', fontWeight: '600', margin: '1rem 0 0.4rem' },
     '.summary-cards': { display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' },
     '.summary-card': {
-      background: 'var(--bw_card_bg)', border: '1px solid var(--bw_card_border)',
-      borderRadius: 'var(--bw_radius)', padding: '0.75rem 1rem', minWidth: '140px'
+      background: p.surface, border: '1px solid ' + p.light.border,
+      borderRadius: '8px', padding: '0.75rem 1rem', minWidth: '140px'
     },
-    '.summary-card .label': { fontSize: '0.7rem', color: 'var(--bw_text_muted)', textTransform: 'uppercase', letterSpacing: '0.05em' },
-    '.summary-card .value': { fontSize: '1.4rem', fontWeight: '700', color: 'var(--bw_teal)' },
-    '.summary-card .detail': { fontSize: '0.75rem', color: 'var(--bw_text_secondary)' },
+    '.summary-card .label': { fontSize: '0.7rem', color: p.secondary.base, textTransform: 'uppercase', letterSpacing: '0.05em' },
+    '.summary-card .value': { fontSize: '1.4rem', fontWeight: '700', color: p.primary.base },
+    '.summary-card .detail': { fontSize: '0.75rem', color: p.dark.hover },
     '.build-selector': { marginBottom: '1rem' },
-    '.build-selector select': { padding: '0.3rem 0.5rem', fontSize: '0.85rem', border: '1px solid var(--bw_card_border)', borderRadius: '4px' }
+    '.build-selector select': { padding: '0.3rem 0.5rem', fontSize: '0.85rem', border: '1px solid ' + p.light.border, borderRadius: '4px' }
   }), { id: 'bw_src_sizes_css' });
   (function() {
     var JSONL_PATH = '../dbg/build-metrics.jsonl';
@@ -195,7 +196,7 @@
       }
 
       // Data line
-      ctx.strokeStyle = color || '#006666';
+      ctx.strokeStyle = color || p.primary.base;
       ctx.lineWidth = 2;
       ctx.beginPath();
       values.forEach(function(v, i) {
@@ -206,7 +207,7 @@
       ctx.stroke();
 
       // Data points
-      ctx.fillStyle = color || '#006666';
+      ctx.fillStyle = color || p.primary.base;
       values.forEach(function(v, i) {
         var x = pad.left + (i / Math.max(1, values.length - 1)) * plotW;
         var y = pad.top + plotH - ((v - min) / range) * plotH;
@@ -284,7 +285,7 @@
           { t: 'h2', c: 'Source File Breakdown' },
           { t: 'div', a: { class: 'legend' }, c: [
             { t: 'span', a: { class: 'legend-item' }, c: [
-              { t: 'span', a: { class: 'legend-swatch', style: 'background:#006666' } },
+              { t: 'span', a: { class: 'legend-swatch', style: 'background:' + p.primary.base } },
               'Code'
             ]},
             { t: 'span', a: { class: 'legend-item' }, c: [
@@ -327,7 +328,7 @@
           if (c1) drawSparkline(c1, records, function(r) {
             var b = r.bundles.find(function(x) { return x.file === 'bitwrench.umd.min.js'; });
             return b ? b.gzipBytes / 1024 : 0;
-          }, 'UMD Gzip (KB)', '#006666');
+          }, 'UMD Gzip (KB)', p.primary.base);
           if (c2) drawSparkline(c2, records, function(r) {
             var b = r.bundles.find(function(x) { return x.file === 'bitwrench-lean.umd.min.js'; });
             return b ? b.gzipBytes / 1024 : 0;

@@ -3,340 +3,521 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Raspberry Pi System Monitor</title>
+  <title>Bitwrench - Raspberry Pi System Monitor Tutorial</title>
+  <link rel="icon" type="image/x-icon" href="../../images/favicon.ico">
   <script src="../../dist/bitwrench.umd.min.js"></script>
+  <script src="../../pages/shared-nav.js"></script>
+  <script src="../../pages/site.js"></script>
+  <script src="../../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
+  <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    // =====================================================================
-    // Raspberry Pi System Monitor — Linux SBC Dashboard
-    //
-    // Unlike the Pico W (microcontroller), a regular Raspberry Pi runs
-    // full Linux. It can run Node.js and bwserve directly, or serve this
-    // static page from nginx/Python and push updates via SSE.
-    //
-    // Two deployment options:
-    //   A) bwserve: node server.js — server owns all state and UI
-    //   B) Static + API: serve this HTML, expose REST endpoints:
-    //      GET  /api/system     — CPU temp, load, memory, disk
-    //      GET  /api/processes  — top processes
-    //      GET  /api/gpio       — GPIO pin states (via pigpio/gpiod)
-    //      POST /api/gpio/:pin  — set pin { value: 0|1 }
-    //      GET  /events         — SSE stream of system metrics
-    //
-    // SIMULATION: All data is mock. Replace with fetch()/EventSource.
-    // =====================================================================
+    initBitwrenchPage('', '../../pages/');
 
-    bw.loadStyles({
-      primary: '#c51a4a',
-      secondary: '#2563eb',
-      spacing: 'compact',
-      radius: 'sm'
-    });
+    // -- Helpers ------------------------------------------------------------
 
-    bw.injectCSS(bw.css({
-      'body': { background: '#0f172a', color: '#e2e8f0', margin: '0' }
-    }));
+    function codeBlock(code, lang) {
+      if (typeof bw.codeEditor === 'function') {
+        return bw.codeEditor({ code: code, lang: lang || 'bash', readOnly: true, height: 'auto' });
+      }
+      return { t: 'pre', a: { class: 'bw_code_block' }, c: { t: 'code', c: code } };
+    }
 
-    // -- Mock system state ------------------------------------------------
-    var sys = {
-      model: 'Raspberry Pi 5 (8GB)',
-      os: 'Raspbian Bookworm',
-      kernel: '6.6.51-v8+',
-      hostname: 'raspberrypi',
-      ip: '192.168.1.42',
-      cpuTemp: 48.3,
-      cpuUsage: [12, 8, 15, 22],   // per-core %
-      loadAvg: [0.42, 0.38, 0.35],
-      memTotal: 8192,    // MB
-      memUsed: 2847,     // MB
-      swapTotal: 2048,
-      swapUsed: 128,
-      diskTotal: 64,     // GB
-      diskUsed: 18.4,    // GB
-      uptime: 172834,    // seconds
-      netRx: 0,          // bytes/sec
-      netTx: 0
+    function step(num, title, content) {
+      var heading = num
+        ? [{ t: 'span', a: { class: 'bw_badge bw_badge_primary', style: 'margin-right:0.5rem' }, c: 'Step ' + num }, title]
+        : title;
+      return {
+        t: 'div', a: { class: 'demo-section' }, c: [
+          { t: 'div', a: { class: 'demo-section-header' }, c: [
+            { t: 'h2', c: heading }
+          ]},
+          { t: 'div', a: { class: 'demo-content' }, c: Array.isArray(content) ? content : [content] }
+        ]
+      };
+    }
+
+    function callout(type, title, content) {
+      var cls = 'callout callout-' + type;
+      return {
+        t: 'div', a: { class: cls }, c: [
+          title ? { t: 'strong', c: title } : null,
+          title ? { t: 'br' } : null,
+          typeof content === 'string' ? { t: 'span', c: content } : content
+        ].filter(Boolean)
+      };
+    }
+
+    // -- Page content -------------------------------------------------------
+
+    var hero = {
+      t: 'div', a: { class: 'page-header' }, c: [
+        { t: 'h1', c: 'Raspberry Pi System Monitor' },
+        { t: 'p', a: { class: 'page-subtitle' }, c:
+          'Build a full Linux SBC dashboard for Raspberry Pi 3/4/5. ' +
+          'Two server options: Node.js (bwserve) or Python (Flask). ' +
+          'Monitor CPU, memory, disk, network, processes, and control GPIO pins -- all from a bitwrench UI.'
+        }
+      ]
     };
 
-    var processes = [
-      { pid: 1, name: 'systemd', cpu: 0.1, mem: 12.4 },
-      { pid: 842, name: 'node server.js', cpu: 2.3, mem: 84.2 },
-      { pid: 1204, name: 'python3 app.py', cpu: 5.1, mem: 142.8 },
-      { pid: 1567, name: 'chromium-browser', cpu: 8.4, mem: 312.6 },
-      { pid: 2001, name: 'mosquitto', cpu: 0.3, mem: 8.1 },
-      { pid: 2150, name: 'pigpiod', cpu: 0.2, mem: 4.8 }
-    ];
-
-    var gpioState = [
-      { pin: 17, label: 'Status LED', mode: 'OUT', value: 1 },
-      { pin: 27, label: 'Relay 1', mode: 'OUT', value: 0 },
-      { pin: 22, label: 'Relay 2', mode: 'OUT', value: 0 },
-      { pin: 23, label: 'Button', mode: 'IN', value: 0 },
-      { pin: 24, label: 'Motion Sensor', mode: 'IN', value: 0 },
-      { pin: 25, label: 'Door Sensor', mode: 'IN', value: 1 }
-    ];
-
-    var logEntries = [];
-
-    function addLog(msg) {
-      var ts = new Date().toLocaleTimeString();
-      logEntries.unshift(ts + ' \u2014 ' + msg);
-      if (logEntries.length > 25) logEntries.pop();
-    }
-
-    addLog('Connected to ' + sys.hostname + ' (' + sys.ip + ')');
-    addLog('Running in simulation mode');
-
-    function toggleGpio(idx) {
-      if (gpioState[idx].mode !== 'OUT') return;
-      gpioState[idx].value = gpioState[idx].value ? 0 : 1;
-      addLog('GPIO ' + gpioState[idx].pin + ' (' + gpioState[idx].label + ') set to ' + (gpioState[idx].value ? 'HIGH' : 'LOW'));
-      render();
-    }
-
-    // -- Render -----------------------------------------------------------
-    function render() {
-      var uptimeDays = Math.floor(sys.uptime / 86400);
-      var uptimeHrs = Math.floor((sys.uptime % 86400) / 3600);
-      var uptimeMin = Math.floor((sys.uptime % 3600) / 60);
-      var uptimeStr = uptimeDays + 'd ' + uptimeHrs + 'h ' + uptimeMin + 'm';
-
-      var cpuAvg = Math.round(sys.cpuUsage.reduce(function(a, b) { return a + b; }, 0) / sys.cpuUsage.length);
-      var memPct = Math.round(sys.memUsed / sys.memTotal * 100);
-      var diskPct = Math.round(sys.diskUsed / sys.diskTotal * 100);
-
-      // System overview cards
-      var overviewCards = bw.makeRow({
-        children: [
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: sys.cpuTemp.toFixed(1) + '\u00B0C', label: 'CPU Temp', variant: sys.cpuTemp > 70 ? 'danger' : sys.cpuTemp > 55 ? 'warning' : 'success' })
-          }),
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: cpuAvg + '%', label: 'CPU Usage', variant: cpuAvg > 80 ? 'danger' : cpuAvg > 50 ? 'warning' : 'primary' })
-          }),
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: memPct + '%', label: 'Memory (' + Math.round(sys.memUsed) + '/' + sys.memTotal + ' MB)', variant: memPct > 85 ? 'danger' : memPct > 60 ? 'warning' : 'info' })
-          }),
-          bw.makeCol({ size: { xs: 6, md: 3 }, content:
-            bw.makeStatCard({ value: diskPct + '%', label: 'Disk (' + sys.diskUsed.toFixed(1) + '/' + sys.diskTotal + ' GB)', variant: diskPct > 90 ? 'danger' : diskPct > 70 ? 'warning' : 'info' })
-          })
-        ]
-      });
-
-      // CPU per-core bars
-      var cpuBars = bw.makeCard({
-        title: 'CPU Cores',
-        className: 'bw_mb_3',
-        content: sys.cpuUsage.map(function(usage, i) {
-          return { t: 'div', a: { class: 'bw_mb_1' }, c: [
-            { t: 'div', a: { style: 'display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:2px' }, c: [
-              { t: 'span', c: 'Core ' + i },
-              { t: 'span', c: usage + '%' }
-            ]},
-            bw.makeProgress({ value: usage, variant: usage > 80 ? 'danger' : usage > 50 ? 'warning' : 'primary' })
-          ]};
-        })
-      });
-
-      // Memory details
-      var memCard = bw.makeCard({
-        title: 'Memory',
-        className: 'bw_mb_3',
-        content: [
-          { t: 'div', a: { class: 'bw_mb_2' }, c: [
-            { t: 'div', a: { style: 'font-size:0.8rem;margin-bottom:2px' }, c: 'RAM: ' + Math.round(sys.memUsed) + ' / ' + sys.memTotal + ' MB' },
-            bw.makeProgress({ value: memPct, variant: memPct > 85 ? 'danger' : 'primary' })
+    var overview = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'What You Will Build' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'p', c: 'A live system monitor dashboard served from your Raspberry Pi that shows:' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'CPU temperature and per-core usage bars' },
+            { t: 'li', c: 'Memory (RAM + swap) with progress bars' },
+            { t: 'li', c: 'Disk usage and network RX/TX throughput' },
+            { t: 'li', c: 'Top processes table with sorting (PID, name, CPU%, memory)' },
+            { t: 'li', c: 'GPIO pins: 3 outputs with toggle buttons, 3 inputs read-only' },
+            { t: 'li', c: 'System info table (model, OS, kernel, hostname, IP, uptime, load average)' },
+            { t: 'li', c: 'Event log with timestamped entries' }
           ]},
-          { t: 'div', c: [
-            { t: 'div', a: { style: 'font-size:0.8rem;margin-bottom:2px' }, c: 'Swap: ' + sys.swapUsed + ' / ' + sys.swapTotal + ' MB' },
-            bw.makeProgress({ value: Math.round(sys.swapUsed / sys.swapTotal * 100), variant: 'info' })
+          callout('concept', 'Full Linux vs Microcontroller',
+            'Unlike the Pico W (a microcontroller with 264KB RAM running MicroPython), ' +
+            'a Raspberry Pi runs full Linux with gigabytes of RAM. It can run Node.js and ' +
+            'bwserve natively, or serve a static dashboard from Flask with a REST API backend. ' +
+            'The server reads system metrics from /proc and /sys (Node.js) or psutil (Python).'
+          )
+        ]}
+      ]
+    };
+
+    var prerequisites = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Prerequisites' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: 'Hardware' },
+          { t: 'ul', c: [
+            { t: 'li', c: 'Raspberry Pi 3, 4, or 5' },
+            { t: 'li', c: 'Ethernet cable or WiFi connection' },
+            { t: 'li', c: 'SD card with Raspberry Pi OS (Bookworm or later)' },
+            { t: 'li', c: [{ t: 'em', c: 'Optional:' }, ' LEDs, relays, or sensors connected to GPIO pins'] }
+          ]},
+          { t: 'h3', c: 'Software (pick one)' },
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'strong', c: 'Node.js (Option A):' }, ' Node.js 18+ (', { t: 'code', c: 'sudo apt install nodejs npm' }, ')'] },
+            { t: 'li', c: [{ t: 'strong', c: 'Python (Option B):' }, ' Python 3 + Flask + psutil (', { t: 'code', c: 'pip install flask psutil gpiod' }, ')'] }
+          ]},
+          { t: 'h3', c: 'Server implementations' },
+          { t: 'p', c: 'Two server options -- both serve the same dashboard and expose the same API:' },
+          bw.makeTable({
+            data: [
+              { File: 'server.js', Language: 'Node.js', Framework: 'bwserve (SSE)' },
+              { File: 'server.py', Language: 'Python', Framework: 'Flask + psutil' }
+            ],
+            columns: [
+              { key: 'File', label: 'File' },
+              { key: 'Language', label: 'Language' },
+              { key: 'Framework', label: 'Framework' }
+            ],
+            striped: true
+          }),
+          { t: 'h3', c: 'Shared files' },
+          bw.makeTable({
+            data: [
+              { File: 'dashboard.html', Purpose: 'The HTML dashboard served from the Pi' },
+              { File: 'bitwrench.umd.min.js', Purpose: 'bitwrench library (from dist/, ~40 KB gzipped)' }
+            ],
+            columns: [
+              { key: 'File', label: 'File' },
+              { key: 'Purpose', label: 'Purpose' }
+            ],
+            striped: true
+          })
+        ]}
+      ]
+    };
+
+    // -- Option A: Node.js (bwserve) -----------------------------------------
+    var optionA = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Option A: Node.js (bwserve) -- recommended' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: '1. Install Node.js' },
+          codeBlock(
+            'sudo apt update && sudo apt install nodejs npm',
+            'bash'
+          ),
+          { t: 'p', c: 'Verify the installation:' },
+          codeBlock(
+            'node --version   # should be v18 or higher\n' +
+            'npm --version',
+            'bash'
+          ),
+
+          { t: 'h3', c: '2. Install bitwrench' },
+          codeBlock(
+            'npm install bitwrench',
+            'bash'
+          ),
+
+          { t: 'h3', c: '3. Copy files' },
+          codeBlock(
+            'mkdir -p ~/rpi-monitor/dist\n' +
+            'cp dashboard.html ~/rpi-monitor/index.html\n' +
+            'cp bitwrench.umd.min.js ~/rpi-monitor/dist/\n' +
+            'cp server.js ~/rpi-monitor/',
+            'bash'
+          ),
+          callout('tip', 'File layout',
+            'The server expects index.html in the project root and ' +
+            'bitwrench.umd.min.js in the dist/ subdirectory. ' +
+            'The dashboard loads bitwrench from /dist/bitwrench.umd.min.js.'
+          ),
+
+          { t: 'h3', c: '4. Run the server' },
+          codeBlock(
+            'cd ~/rpi-monitor\n' +
+            'node server.js',
+            'bash'
+          ),
+          { t: 'p', c: [
+            'The server starts on port ',
+            { t: 'strong', c: '7902' },
+            '. Open your browser to ',
+            { t: 'code', c: 'http://raspberrypi.local:7902' },
+            ' or use the Pi\'s IP address.'
+          ]},
+          callout('concept', 'How bwserve works',
+            'The Node.js server reads system metrics directly from /proc and /sys -- ' +
+            'no psutil dependency needed. It uses child_process to read /proc/stat, ' +
+            '/proc/meminfo, /proc/net/dev, and /sys/class/thermal/thermal_zone0/temp. ' +
+            'GPIO is controlled via the gpiod userspace interface.'
+          )
+        ]}
+      ]
+    };
+
+    // -- Option B: Python (Flask) --------------------------------------------
+    var optionB = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Option B: Python (Flask)' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'h3', c: '1. Install dependencies' },
+          codeBlock(
+            'pip install flask psutil gpiod',
+            'bash'
+          ),
+          { t: 'p', c: [
+            { t: 'code', c: 'psutil' },
+            ' provides cross-platform system metrics. ',
+            { t: 'code', c: 'gpiod' },
+            ' is the userspace GPIO library (replaces the deprecated RPi.GPIO).'
+          ]},
+
+          { t: 'h3', c: '2. Copy files' },
+          codeBlock(
+            'mkdir -p ~/rpi-monitor/dist\n' +
+            'cp dashboard.html ~/rpi-monitor/index.html\n' +
+            'cp bitwrench.umd.min.js ~/rpi-monitor/dist/\n' +
+            'cp server.py ~/rpi-monitor/',
+            'bash'
+          ),
+
+          { t: 'h3', c: '3. Run the server' },
+          codeBlock(
+            'cd ~/rpi-monitor\n' +
+            'python3 server.py',
+            'bash'
+          ),
+          { t: 'p', c: [
+            'The Flask server starts on port ',
+            { t: 'strong', c: '8080' },
+            '. Open your browser to ',
+            { t: 'code', c: 'http://raspberrypi.local:8080' },
+            ' or use the Pi\'s IP address.'
+          ]},
+          callout('tip', null,
+            'Flask uses psutil for system metrics (CPU, memory, disk, network) ' +
+            'and gpiod for GPIO control. The SSE endpoint streams updates every 2 seconds.'
+          )
+        ]}
+      ]
+    };
+
+    // -- Common steps (all options) ------------------------------------------
+
+    var connectTest = step('', 'Connect and Test', [
+      { t: 'p', c: 'After starting the server, check the terminal output to confirm it is running:' },
+      codeBlock(
+        '$ node server.js\n' +
+        '\n' +
+        '============================================================\n' +
+        '  Raspberry Pi System Monitor -- bitwrench Dashboard\n' +
+        '============================================================\n' +
+        '\n' +
+        'Model          : Raspberry Pi 5 (8GB)\n' +
+        'OS             : Raspbian Bookworm\n' +
+        'Kernel         : 6.6.51-v8+\n' +
+        'Hostname       : raspberrypi\n' +
+        'IP Address     : 192.168.1.42\n' +
+        'CPU Temp       : 48.3 C\n' +
+        'Memory         : 2847 / 8192 MB\n' +
+        '\n' +
+        'Starting web server on port 7902...\n' +
+        'Dashboard URL  : http://192.168.1.42:7902/',
+        'text'
+      ),
+      { t: 'p', c: [
+        { t: 'strong', c: 'Open your browser' },
+        ' and go to ',
+        { t: 'code', c: 'http://raspberrypi.local:7902' },
+        ' (Node.js) or ',
+        { t: 'code', c: 'http://raspberrypi.local:8080' },
+        ' (Python). If mDNS does not work on your network, use the IP address shown in the terminal output (e.g., ',
+        { t: 'code', c: 'http://192.168.1.42:7902' },
+        ').'
+      ]}
+    ]);
+
+    var whatYouSee = step('', 'What You See', [
+      { t: 'p', c: 'The dashboard shows live data from the Raspberry Pi, updated every 2 seconds via Server-Sent Events:' },
+      { t: 'ul', c: [
+        { t: 'li', c: [{ t: 'strong', c: 'Overview cards:' }, ' CPU temperature, CPU usage (average), memory percentage, disk percentage'] },
+        { t: 'li', c: [{ t: 'strong', c: 'CPU cores:' }, ' per-core usage with progress bars (4 cores on Pi 4/5)'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Memory:' }, ' RAM and swap usage with progress bars'] },
+        { t: 'li', c: [{ t: 'strong', c: 'GPIO controls:' }, ' 3 output pins with toggle buttons, 3 input pins showing HIGH/LOW state'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Processes:' }, ' top processes sorted by CPU usage, with PID, name, CPU%, and memory'] },
+        { t: 'li', c: [{ t: 'strong', c: 'System info:' }, ' model, OS, kernel, hostname, IP, uptime, load average, network throughput'] },
+        { t: 'li', c: [{ t: 'strong', c: 'Event log:' }, ' timestamped log of GPIO changes and system events'] }
+      ]},
+      callout('tip', 'GPIO without hardware',
+        'If you do not have LEDs or relays connected, the GPIO section still works. ' +
+        'Output pins can be toggled from the dashboard and the state is tracked in the server. ' +
+        'Input pins will show LOW unless you connect a pull-up or signal source.'
+      )
+    ]);
+
+    var howItWorks = step('', 'How It Works', [
+      { t: 'p', c: 'The Raspberry Pi runs a web server that reads system metrics and serves the dashboard to any browser on the network.' },
+      codeBlock(
+        'Raspberry Pi                    Browser\n' +
+        '  |                                |\n' +
+        '  |  GET /                         |\n' +
+        '  |  <-- dashboard.html            |\n' +
+        '  |  GET /dist/bitwrench...js      |\n' +
+        '  |  <-- JS (from disk)            |\n' +
+        '  |                                |\n' +
+        '  |  GET /events (SSE)             |\n' +
+        '  |  <-- {"cpuTemp":48.3,...}      |  (every 2s)\n' +
+        '  |  <-- {"cpuTemp":48.5,...}      |\n' +
+        '  |                                |\n' +
+        '  |  POST /api/gpio/17             |\n' +
+        '  |  --> 200 {"ok":true,"pin":17}  |',
+        'text'
+      ),
+      { t: 'h3', c: 'Node.js server (server.js)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Reads CPU temperature from /sys/class/thermal/thermal_zone0/temp' },
+        { t: 'li', c: 'Reads per-core CPU usage from /proc/stat' },
+        { t: 'li', c: 'Reads memory from /proc/meminfo, disk from statfs, network from /proc/net/dev' },
+        { t: 'li', c: 'Reads top processes from /proc/[pid]/stat' },
+        { t: 'li', c: 'Controls GPIO via the gpiod userspace interface (no root required with gpio group)' },
+        { t: 'li', c: 'Pushes all metrics to the browser via SSE every 2 seconds' }
+      ]},
+      { t: 'h3', c: 'Flask server (server.py)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Uses psutil for CPU, memory, disk, and network metrics' },
+        { t: 'li', c: 'Uses gpiod for GPIO control (replacement for RPi.GPIO)' },
+        { t: 'li', c: 'Serves dashboard.html and bitwrench.js as static files' },
+        { t: 'li', c: 'SSE endpoint streams JSON updates to the browser' }
+      ]},
+      { t: 'h3', c: 'Dashboard (dashboard.html)' },
+      { t: 'ul', c: [
+        { t: 'li', c: 'Loads bitwrench.umd.min.js and calls bw.loadStyles() for theming' },
+        { t: 'li', c: 'Connects to /events via EventSource for live system data' },
+        { t: 'li', c: 'Renders the entire UI as TACO objects using bitwrench BCCL components' },
+        { t: 'li', c: 'Sends fetch() POST requests when GPIO toggle buttons are clicked' },
+        { t: 'li', c: 'Re-renders the UI on every SSE update (every 2 seconds)' }
+      ]}
+    ]);
+
+    var apiTable = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'API Endpoints' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Method: 'GET', Path: '/', Description: 'Serve dashboard HTML' },
+              { Method: 'GET', Path: '/api/system', Description: 'CPU temp, load, memory, disk, network metrics' },
+              { Method: 'GET', Path: '/api/processes', Description: 'Top processes by CPU usage' },
+              { Method: 'GET', Path: '/api/gpio', Description: 'GPIO pin states' },
+              { Method: 'POST', Path: '/api/gpio/:pin', Description: 'Set output pin: { value: 0|1 }' },
+              { Method: 'GET', Path: '/events', Description: 'SSE stream (pushes every 2 seconds)' }
+            ],
+            columns: [
+              { key: 'Method', label: 'Method' },
+              { key: 'Path', label: 'Path' },
+              { key: 'Description', label: 'Description' }
+            ],
+            striped: true
+          })
+        ]}
+      ]
+    };
+
+    var gpioTable = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'GPIO Pin Assignments' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Pin: 'GPIO 17', Label: 'Status LED', Mode: 'Output', Notes: 'Toggle from dashboard' },
+              { Pin: 'GPIO 22', Label: 'Relay 2', Mode: 'Output', Notes: 'Toggle from dashboard' },
+              { Pin: 'GPIO 27', Label: 'Relay 1', Mode: 'Output', Notes: 'Toggle from dashboard' },
+              { Pin: 'GPIO 23', Label: 'Button', Mode: 'Input', Notes: 'Read-only' },
+              { Pin: 'GPIO 24', Label: 'Motion Sensor', Mode: 'Input', Notes: 'Read-only' },
+              { Pin: 'GPIO 25', Label: 'Door Sensor', Mode: 'Input', Notes: 'Read-only' }
+            ],
+            columns: [
+              { key: 'Pin', label: 'Pin' },
+              { key: 'Label', label: 'Label' },
+              { key: 'Mode', label: 'Mode' },
+              { key: 'Notes', label: 'Notes' }
+            ],
+            striped: true
+          }),
+          { t: 'p', c: [
+            'The pin assignments are configured in the server source (server.js or server.py). ' +
+            'Change them to match your wiring. Output pins can be toggled from the dashboard. ' +
+            'Input pins are polled every 2 seconds and their state is included in the SSE stream.'
           ]}
-        ]
-      });
+        ]}
+      ]
+    };
 
-      // System info table
-      var infoTable = bw.makeTable({
-        data: [
-          { Property: 'Model', Value: sys.model },
-          { Property: 'OS', Value: sys.os },
-          { Property: 'Kernel', Value: sys.kernel },
-          { Property: 'Hostname', Value: sys.hostname },
-          { Property: 'IP Address', Value: sys.ip },
-          { Property: 'Uptime', Value: uptimeStr },
-          { Property: 'Load Average', Value: sys.loadAvg.map(function(v) { return v.toFixed(2); }).join(', ') },
-          { Property: 'Network RX', Value: formatBytes(sys.netRx) + '/s' },
-          { Property: 'Network TX', Value: formatBytes(sys.netTx) + '/s' }
-        ],
-        striped: true,
-        sortable: false
-      });
-
-      // Process table
-      var procTable = bw.makeTable({
-        data: processes.map(function(p) {
-          return { PID: p.pid, Process: p.name, CPU: p.cpu + '%', Memory: p.mem.toFixed(1) + ' MB' };
-        }),
-        columns: [
-          { key: 'PID', label: 'PID' },
-          { key: 'Process', label: 'Process' },
-          { key: 'CPU', label: 'CPU %' },
-          { key: 'Memory', label: 'Memory' }
-        ],
-        striped: true,
-        hover: true,
-        sortable: true
-      });
-
-      // GPIO controls
-      var gpioCards = gpioState.map(function(g, i) {
-        var isOut = g.mode === 'OUT';
-        return bw.makeCol({ size: { xs: 6, md: 4 }, content:
-          bw.makeCard({
-            title: 'GPIO ' + g.pin + ' \u2014 ' + g.label,
-            className: 'bw_mb_2',
-            content: [
-              { t: 'div', a: { class: 'bw_mb_1' }, c: [
-                bw.makeBadge({ text: g.mode, variant: isOut ? 'primary' : 'warning', pill: true }),
-                ' ',
-                bw.makeBadge({ text: g.value ? 'HIGH' : 'LOW', variant: g.value ? 'success' : 'secondary', pill: true })
-              ]},
-              isOut ? bw.makeButton({
-                text: g.value ? 'Turn Off' : 'Turn On',
-                variant: g.value ? 'danger' : 'success',
-                size: 'sm',
-                onclick: function() { toggleGpio(i); }
-              }) : { t: 'span', a: { style: 'font-size:0.8rem;opacity:0.6' }, c: 'Read-only input' }
-            ]
-          })
-        });
-      });
-
-      bw.DOM('#app', bw.makeContainer({
-        className: 'bw_py_3',
-        children: [
-          bw.makeAlert({
-            content: 'Running in simulation mode \u2014 on a real Raspberry Pi, run this as a bwserve app (node server.js) or serve statically with a Python/Node.js API backend.',
-            variant: 'warning',
-            dismissible: true
+    var boardComparison = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Raspberry Pi vs Pico W' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          bw.makeTable({
+            data: [
+              { Feature: 'Type', RaspberryPi: 'Single-board computer (Linux)', PicoW: 'Microcontroller' },
+              { Feature: 'CPU', RaspberryPi: 'ARM Cortex-A (1.5-2.4 GHz)', PicoW: 'ARM Cortex-M0+ (133 MHz)' },
+              { Feature: 'RAM', RaspberryPi: '1-8 GB', PicoW: '264 KB' },
+              { Feature: 'Storage', RaspberryPi: 'SD card (32-512 GB)', PicoW: '2 MB flash' },
+              { Feature: 'OS', RaspberryPi: 'Raspbian / Ubuntu', PicoW: 'MicroPython / C' },
+              { Feature: 'Node.js', RaspberryPi: 'Yes (bwserve)', PicoW: 'No' },
+              { Feature: 'GPIO', RaspberryPi: '40-pin header, libgpiod', PicoW: '26 GP pins' },
+              { Feature: 'Network', RaspberryPi: 'Ethernet + WiFi 5/6', PicoW: 'WiFi 4 (CYW43)' },
+              { Feature: 'Price', RaspberryPi: '$35-80', PicoW: '~$6' }
+            ],
+            columns: [
+              { key: 'Feature', label: '' },
+              { key: 'RaspberryPi', label: 'Raspberry Pi' },
+              { key: 'PicoW', label: 'Pico W' }
+            ],
+            striped: true
           }),
-          { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: 'Raspberry Pi System Monitor' },
-          overviewCards,
-          bw.makeRow({
-            children: [
-              bw.makeCol({ size: { xs: 12, md: 6 }, content: cpuBars }),
-              bw.makeCol({ size: { xs: 12, md: 6 }, content: memCard })
-            ]
-          }),
-          bw.makeSection({
-            title: 'GPIO Controls',
-            content: [bw.makeRow({ children: gpioCards })]
-          }),
-          bw.makeRow({
-            children: [
-              bw.makeCol({ size: { xs: 12, md: 6 }, content:
-                bw.makeSection({ title: 'Processes', content: [procTable] })
-              }),
-              bw.makeCol({ size: { xs: 12, md: 6 }, content:
-                bw.makeSection({ title: 'System Info', content: [infoTable] })
-              })
-            ]
-          }),
-          bw.makeSection({
-            title: 'Event Log',
-            content: [bw.makeListGroup({
-              items: logEntries.length ? logEntries : ['Waiting for events...']
-            })]
-          })
-        ]
-      }));
-    }
+          { t: 'p', c: 'The Pi runs bwserve natively with full Node.js. The Pico W serves static HTML from flash with a MicroPython or CircuitPython web server.' }
+        ]}
+      ]
+    };
 
-    function formatBytes(bytes) {
-      if (bytes < 1024) return bytes + ' B';
-      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-      return (bytes / 1048576).toFixed(1) + ' MB';
-    }
+    var troubleshooting = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Troubleshooting' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'dl', c: [
+            { t: 'dt', c: 'GPIO permission denied' },
+            { t: 'dd', c: [
+              'Run with ',
+              { t: 'code', c: 'sudo' },
+              ' or add your user to the gpio group: ',
+              { t: 'code', c: 'sudo usermod -aG gpio $USER' },
+              '. Log out and back in for the group change to take effect.'
+            ]},
+            { t: 'dt', c: 'psutil not found (Python)' },
+            { t: 'dd', c: [
+              'Install it with: ',
+              { t: 'code', c: 'pip install psutil' },
+              '. On some systems you may need ',
+              { t: 'code', c: 'pip3 install psutil' },
+              '.'
+            ]},
+            { t: 'dt', c: 'Port already in use' },
+            { t: 'dd', c: [
+              'Another process is using the port. Change the port number in server.js or server.py, or find and stop the conflicting process: ',
+              { t: 'code', c: 'lsof -i :7902' },
+              '.'
+            ]},
+            { t: 'dt', c: 'No CPU temperature reading' },
+            { t: 'dd', c: [
+              'Check that ',
+              { t: 'code', c: '/sys/class/thermal/thermal_zone0/temp' },
+              ' exists. On some Pi models or custom kernels, the thermal zone path may differ.'
+            ]},
+            { t: 'dt', c: 'Dashboard shows "Connecting..."' },
+            { t: 'dd', c: 'Make sure the server is running and that your firewall allows traffic on the port. Check with: curl http://localhost:7902/events' },
+            { t: 'dt', c: 'Cannot reach raspberrypi.local' },
+            { t: 'dd', c: [
+              'mDNS (Avahi) may not be installed or your network may not support it. Use the IP address instead. Find it with: ',
+              { t: 'code', c: 'hostname -I' },
+              '.'
+            ]}
+          ]}
+        ]}
+      ]
+    };
 
-    render();
+    var sourceFiles = {
+      t: 'div', a: { class: 'demo-section' }, c: [
+        { t: 'div', a: { class: 'demo-section-header' }, c: [
+          { t: 'h2', c: 'Source Files' }
+        ]},
+        { t: 'div', a: { class: 'demo-content' }, c: [
+          { t: 'ul', c: [
+            { t: 'li', c: [{ t: 'a', a: { href: 'dashboard.html', download: '' }, c: 'dashboard.html' }, ' -- the HTML dashboard (runs in the browser, fetches from the Pi server)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'server.js', download: '' }, c: 'server.js' }, ' -- Node.js web server (bwserve + SSE, reads /proc and /sys)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'server.py', download: '' }, c: 'server.py' }, ' -- Python web server (Flask + psutil + gpiod)'] }
+          ]}
+        ]}
+      ]
+    };
 
-    // Simulate system metrics drift
-    setInterval(function() {
-      sys.uptime++;
-      sys.cpuTemp += (Math.random() - 0.5) * 0.5;
-      sys.cpuTemp = Math.max(35, Math.min(75, sys.cpuTemp));
-      sys.cpuUsage = sys.cpuUsage.map(function(u) {
-        return Math.max(0, Math.min(100, u + Math.round((Math.random() - 0.5) * 10)));
-      });
-      sys.memUsed += (Math.random() - 0.5) * 50;
-      sys.memUsed = Math.max(1000, Math.min(sys.memTotal * 0.95, sys.memUsed));
-      sys.loadAvg = sys.loadAvg.map(function(l) {
-        return Math.max(0, +(l + (Math.random() - 0.5) * 0.1).toFixed(2));
-      });
-      sys.netRx = Math.max(0, Math.round(Math.random() * 500000));
-      sys.netTx = Math.max(0, Math.round(Math.random() * 200000));
+    // -- Assemble and mount -------------------------------------------------
 
-      // Simulate process CPU fluctuation
-      processes.forEach(function(p) {
-        p.cpu = Math.max(0, +(p.cpu + (Math.random() - 0.5) * 1).toFixed(1));
-        p.mem = Math.max(1, +(p.mem + (Math.random() - 0.5) * 5).toFixed(1));
-      });
-
-      // Simulate input pin changes
-      gpioState.forEach(function(g) {
-        if (g.mode === 'IN' && Math.random() > 0.92) {
-          g.value = g.value ? 0 : 1;
-          addLog('GPIO ' + g.pin + ' (' + g.label + ') changed to ' + (g.value ? 'HIGH' : 'LOW'));
-        }
-      });
-
-      render();
-    }, 2000);
-
-    // =====================================================================
-    // Deployment options for real Raspberry Pi:
-    //
-    // Option A: bwserve (recommended — server owns UI)
-    //
-    //   import bwserve from 'bitwrench/bwserve';
-    //   import { execSync } from 'child_process';
-    //   import fs from 'fs';
-    //
-    //   var app = bwserve.create({ port: 7902, title: 'RPi Monitor', theme: 'slate' });
-    //
-    //   app.page('/', function(client) {
-    //     setInterval(function() {
-    //       var temp = parseFloat(fs.readFileSync('/sys/class/thermal/thermal_zone0/temp')) / 1000;
-    //       var mem = execSync('free -m').toString();
-    //       client.batch(
-    //         { type: 'patch', target: 'cpu-temp', content: temp.toFixed(1) + 'C' },
-    //         { type: 'patch', target: 'mem-used', content: parseMemUsed(mem) + ' MB' }
-    //       );
-    //     }, 2000);
-    //   });
-    //
-    //   app.listen();
-    //
-    // Option B: Python + Flask (static page + REST API)
-    //
-    //   from flask import Flask, jsonify
-    //   import psutil, gpiod
-    //
-    //   app = Flask(__name__, static_folder='.')
-    //
-    //   @app.get('/api/system')
-    //   def system():
-    //       return jsonify({
-    //           'cpuTemp': psutil.sensors_temperatures()['cpu_thermal'][0].current,
-    //           'cpuUsage': psutil.cpu_percent(percpu=True),
-    //           'memUsed': psutil.virtual_memory().used // (1024*1024),
-    //           'diskUsed': psutil.disk_usage('/').used // (1024*1024*1024)
-    //       })
-    //
-    //   app.run(host='0.0.0.0', port=8080)
-    // =====================================================================
+    bw.DOM('#app', {
+      t: 'div', c: [
+        hero,
+        { t: 'div', a: { class: 'content-container wide' }, c: [
+          overview,
+          prerequisites,
+          optionA,
+          optionB,
+          connectTest,
+          whatYouSee,
+          howItWorks,
+          apiTable,
+          gpioTable,
+          boardComparison,
+          troubleshooting,
+          sourceFiles
+        ]}
+      ]
+    });
   </script>
 </body>
 </html>

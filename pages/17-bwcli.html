@@ -6,36 +6,21 @@
   <title>Bitwrench - bwcli Command-Line Tools</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('17-bwcli.html');
+    var styles = initBitwrenchPage('17-bwcli.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Page-specific styles
     // =========================================================================
     bw.injectCSS(bw.css({
-      '.console-block': {
-        background: '#1e1e1e',
-        color: '#d4d4d4',
-        'font-family': 'var(--bw_font_mono)',
-        'font-size': '0.8125rem',
-        'line-height': '1.6',
-        padding: '1rem 1.25rem',
-        'border-radius': 'var(--bw_radius)',
-        'overflow-x': 'auto',
-        margin: '0.75rem 0',
-        'white-space': 'pre'
-      },
-      '.console-prompt': { color: '#569cd6' },
-      '.console-output': { color: '#9cdcfe' },
-      '.console-comment': { color: '#6a9955' },
-      '.console-string': { color: '#ce9178' },
       '.cmd-table': {
         width: '100%',
         'border-collapse': 'collapse',
@@ -45,12 +30,12 @@
       '.cmd-table th': {
         'text-align': 'left',
         padding: '0.5rem 0.75rem',
-        'border-bottom': '2px solid var(--bw_teal)',
+        'border-bottom': '2px solid ' + p.primary.base,
         'font-weight': '600'
       },
       '.cmd-table td': {
         padding: '0.5rem 0.75rem',
-        'border-bottom': '1px solid var(--bw_card_border)',
+        'border-bottom': '1px solid ' + p.light.border,
         'vertical-align': 'top'
       },
       '.cmd-table tr:last-child td': { 'border-bottom': 'none' },
@@ -58,12 +43,12 @@
         padding: '0.1rem 0.3rem',
         'border-radius': '3px',
         'font-size': '0.75rem',
-        background: 'var(--bw_teal_light, #e0f2f1)',
-        color: 'var(--bw_teal_dark, #004d40)'
+        background: p.primary.light,
+        color: p.primary.darkText
       },
       '.arch-diagram': {
         margin: '1.25rem 0',
-        background: 'var(--bw_code_bg)',
+        background: '#1e293b',
         'border-radius': '8px',
         padding: '0.75rem',
         'overflow-x': 'auto'
@@ -74,38 +59,38 @@
         display: 'block'
       },
       '.arch-diagram .box-rect': {
-        fill: 'var(--bw_card_bg)',
-        stroke: 'var(--bw_card_border)',
+        fill: p.surface,
+        stroke: p.light.border,
         'stroke-width': '1.5'
       },
       '.arch-diagram .box-title': {
-        fill: 'var(--bw_text)',
+        fill: p.dark.base,
         'font-family': 'system-ui, sans-serif',
         'font-size': '13px',
         'font-weight': '600'
       },
       '.arch-diagram .box-line': {
-        fill: 'var(--bw_text_secondary)',
-        'font-family': 'var(--bw_font_mono)',
+        fill: p.dark.hover,
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'font-size': '11px'
       },
       '.arch-diagram .arrow-line': {
-        stroke: 'var(--bw_teal)',
+        stroke: p.primary.base,
         'stroke-width': '2',
         fill: 'none'
       },
       '.arch-diagram .arrow-dash': {
-        stroke: 'var(--bw_teal)',
+        stroke: p.primary.base,
         'stroke-width': '2',
         'stroke-dasharray': '6 3',
         fill: 'none'
       },
       '.arch-diagram .arrow-head': {
-        fill: 'var(--bw_teal)'
+        fill: p.primary.base
       },
       '.arch-diagram .arrow-label': {
-        fill: 'var(--bw_code_text)',
-        'font-family': 'var(--bw_font_mono)',
+        fill: '#e2e8f0',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'font-size': '10.5px',
         'font-weight': '600'
       }
@@ -114,19 +99,9 @@
     // =========================================================================
     // Helpers
     // =========================================================================
-    function callout(type, title, content) {
-      return {
-        t: 'div', a: { class: 'callout callout-' + type },
-        c: [
-          { t: 'h4', c: title },
-          content
-        ]
-      };
-    }
-
     function consoleBlock(lines) {
       return {
-        t: 'div', a: { class: 'console-block' },
+        t: 'div', a: { class: 'bw_site_pages_console' },
         c: bw.raw(lines.join('\n'))
       };
     }
@@ -135,10 +110,10 @@
     // Section 0: What is bwcli and why does it exist?
     // =========================================================================
     var sectionIntro = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'What is bwcli?' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'What is bwcli?' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('Bitwrench is a browser-side library -- you include it in a page and build UIs with TACO objects. That works great on its own. <strong>bwcli is an optional command-line tool</strong> that opens up two new capabilities:') },
 
@@ -167,7 +142,7 @@
             '<span class="console-prompt">bw&gt;</span> /screenshot body snapshot.png'
           ]),
 
-          callout('concept', 'bwcli is optional', {
+          site.makeCallout('concept', 'bwcli is optional', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('You do <em>not</em> need bwcli to use bitwrench. If you are building a static page, a client-side app, or even a bwserve app from Node.js, the browser library is all you need. bwcli is for two specific scenarios:') },
               { t: 'ul', c: [
@@ -185,10 +160,10 @@
     // Section 1: Two Modes
     // =========================================================================
     var sectionModes = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Two Modes' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Two Modes' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
 
           { t: 'table', a: { class: 'cmd-table' }, c: [
             { t: 'thead', c: { t: 'tr', c: [
@@ -210,7 +185,7 @@
             ]}
           ]},
 
-          callout('tip', 'Install', {
+          site.makeCallout('tip', 'Install', {
             t: 'div', c: [
               consoleBlock([
                 '<span class="console-prompt">$</span> npm install -g bitwrench',
@@ -262,10 +237,10 @@
     };
 
     var sectionServe = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'bwcli serve -- Pipe Server' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'bwcli serve -- Pipe Server' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('<code>bwcli serve</code> is a pipe server: it reads bwserve protocol messages from stdin (or an input port) and pushes them to connected browsers via SSE. This lets you drive a browser UI from <em>any language</em> that can print JSON.') },
 
@@ -380,10 +355,10 @@
     };
 
     var sectionAttach = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'bwcli attach -- Remote Debugging REPL' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'bwcli attach -- Remote Debugging REPL' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('<code>bwcli attach</code> starts a bwserve instance and waits for a browser page to connect via a drop-in script. Once connected, you get an interactive REPL for evaluating JS, inspecting the DOM tree, taking screenshots, and listening to events -- all from your terminal.') },
 
@@ -468,10 +443,10 @@
     // Section 4: Slash Commands Reference
     // =========================================================================
     var sectionCommands = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Slash Commands Reference' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Slash Commands Reference' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: bw.raw('These commands are available in the <code>bwcli attach</code> REPL. Type any command at the <code>bw&gt;</code> prompt.') },
 
@@ -530,7 +505,7 @@
             ]}
           ]},
 
-          callout('tip', 'Plain JS expressions work too', {
+          site.makeCallout('tip', 'Plain JS expressions work too', {
             t: 'p', c: bw.raw('Type any JS expression at the prompt and it runs in the connected browser. For example: <code>document.title</code>, <code>bw.$(\'.bw-card\').length</code>, <code>bw.version</code>.')
           })
         ]}
@@ -541,10 +516,10 @@
     // Section 5: Worked Example -- Build and Push a Dashboard
     // =========================================================================
     var sectionDashboard = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Worked Example: Build and Push a Dashboard' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Worked Example: Build and Push a Dashboard' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: 'This walkthrough shows how to build a live dashboard from scratch using only the bwcli attach REPL -- no editor, no page reload.' },
 
@@ -608,7 +583,7 @@
             '<span class="console-output">Saved: dashboard.png (1024x768, 45231 bytes)</span>'
           ]),
 
-          callout('concept', 'The pattern', {
+          site.makeCallout('concept', 'The pattern', {
             t: 'p', c: bw.raw('<code>/render</code> lays out the structure with ids. <code>/patch</code> updates individual values. <code>/mount</code> adds BCCL components. <code>/tree</code> verifies the structure. <code>/listen</code> monitors events. <code>/screenshot</code> captures the result. This is the full bwcli workflow.')
           })
         ]}
@@ -619,10 +594,10 @@
     // Section 6: Worked Example -- Debug an Existing Page
     // =========================================================================
     var sectionDebug = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Worked Example: Debug an Existing Page' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Worked Example: Debug an Existing Page' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
             c: 'You can attach to any running bitwrench page (or any web page) to inspect and debug from your terminal.' },
 
@@ -684,10 +659,10 @@
     // Section 7: See Also
     // =========================================================================
     var sectionSeeAlso = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'See Also' },
-        { t: 'div', a: { class: 'demo-section-body' }, c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'See Also' },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'ul', c: [
             { t: 'li', c: bw.raw('<a href="12-bwserve-protocol.html">bwserve Protocol Reference</a> -- the 9 message types that bwcli serve sends over SSE') },
             { t: 'li', c: bw.raw('<a href="11-debugging.html">Debugging & Inspection</a> -- browser console debugging, console equivalents of bwcli commands') },
@@ -702,7 +677,7 @@
     // Assemble and mount
     // =========================================================================
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
+      t: 'div', a: { class: 'bw_site_pages_header' },
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [

@@ -460,6 +460,7 @@ function startInputServer(app, listenPort, verbose) {
     });
 
     inputServer.listen(listenPort);
+    return inputServer;
 }
 
 /**

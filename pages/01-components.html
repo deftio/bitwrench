@@ -6,8 +6,8 @@
   <title>Bitwrench - Built-in Components</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
@@ -16,7 +16,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('01-components.html');
+    var styles = initBitwrenchPage('01-components.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Helper: wrap a demo in a section with anchor, title, description, tabs
@@ -57,19 +58,6 @@
           }
         ]
       });
-    }
-
-    function demoSection(id, title, description, content) {
-      return {
-        t: 'div', a: { class: 'demo-section', id: id },
-        c: [
-          { t: 'h2', c: { t: 'a', a: { href: '#' + id }, c: title } },
-          { t: 'div', a: { class: 'demo-content' }, c: [
-            { t: 'p', a: { class: 'demo-description' }, c: description },
-            content
-          ]}
-        ]
-      };
     }
 
     // =========================================================================
@@ -118,7 +106,7 @@
       t: 'div', c: [
         // Page header
         {
-          t: 'div', a: { class: 'page-header' },
+          t: 'div', a: { class: 'bw_site_pages_header' },
           c: {
             t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
             c: [
@@ -136,8 +124,8 @@
             // =================================================================
             // Teaching callout
             // =================================================================
-            { t: 'div', a: { class: 'callout callout-concept' }, c: [
-                { t: 'h4', c: 'Level 0 \u2014 Components' },
+            { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 0 \u2014 Components' },
                 { t: 'p', c: ['BCCL factories like makeButton() and makeCard() return plain TACO objects. No magic \u2014 every component is a JS object you can inspect, compose, and extend. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
             ]},
 
@@ -145,10 +133,10 @@
             // Introduction
             // =================================================================
             {
-              t: 'div', a: { class: 'demo-section' },
+              t: 'div', a: { class: 'bw_site_pages_demo' },
               c: [
-                { t: 'h2', c: 'Bitwrench Core Components Library (BCCL)' },
-                { t: 'div', a: { class: 'demo-content' }, c: [
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Bitwrench Core Components Library (BCCL)' },
+                { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                   {
                     t: 'p', a: { style: 'font-size: 1.05rem; line-height: 1.7; margin-bottom: 1rem;' },
                     c: [
@@ -185,9 +173,9 @@
             // Pipeline demos
             // =================================================================
             {
-              t: 'div', a: { class: 'demo-section' },
+              t: 'div', a: { class: 'bw_site_pages_demo' },
               c: [
-                { t: 'h2', c: 'How bw.make*() Works' },
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How bw.make*() Works' },
                 {
                   t: 'p',
                   c: [
@@ -215,7 +203,7 @@
             // =================================================================
             // 1. Cards
             // =================================================================
-            demoSection('section-cards', 'Cards',
+            site.makeDemoSection('section-cards', 'Cards',
               'Flexible content containers with header, body, footer, and image support. Cards support variants, shadows, and hover effects.',
               createTabbedDemo(
                 {
@@ -236,7 +224,7 @@
             // =================================================================
             // 2. Buttons
             // =================================================================
-            demoSection('section-buttons', 'Buttons',
+            site.makeDemoSection('section-buttons', 'Buttons',
               'Interactive elements with variants, sizes, and states. Includes outline variants and disabled state.',
               createTabbedDemo(
                 {
@@ -276,7 +264,7 @@
             // =================================================================
             // 3. Button Groups
             // =================================================================
-            demoSection('section-button-groups', 'Button Groups',
+            site.makeDemoSection('section-button-groups', 'Button Groups',
               'Group related buttons together in a horizontal or vertical arrangement with shared border-radius.',
               createTabbedDemo(
                 {
@@ -311,7 +299,7 @@
             // =================================================================
             // 4. Grid System
             // =================================================================
-            demoSection('section-grid', 'Grid System',
+            site.makeDemoSection('section-grid', 'Grid System',
               '12-column responsive layout system using makeContainer, makeRow, and makeCol. Columns support responsive breakpoints.',
               createTabbedDemo(
                 {
@@ -359,7 +347,7 @@
             // =================================================================
             // 5. Stacks
             // =================================================================
-            demoSection('section-stacks', 'Stacks',
+            site.makeDemoSection('section-stacks', 'Stacks',
               'Vertical and horizontal flex stacks with configurable gap. A quick way to lay out groups of elements without writing CSS.',
               createTabbedDemo(
                 {
@@ -389,7 +377,7 @@
             // =================================================================
             // 5b. Text Alignment & Vertical Centering
             // =================================================================
-            demoSection('section-typography', 'Typography',
+            site.makeDemoSection('section-typography', 'Typography',
               'Text utility classes for alignment, weight, style, decoration, transform, and size. These classes can be combined on any element.',
               createTabbedDemo(
                 {
@@ -502,7 +490,7 @@
               )
             ),
 
-            demoSection('section-alignment', 'Text Alignment & Vertical Centering',
+            site.makeDemoSection('section-alignment', 'Text Alignment & Vertical Centering',
               'Horizontal text alignment using bw_text_left, bw_text_center, and bw_text_right utility classes. Vertical centering uses flexbox inline styles for top, middle, and bottom alignment within a container.',
               createTabbedDemo(
                 {
@@ -572,7 +560,7 @@
             // =================================================================
             // 6. Navigation
             // =================================================================
-            demoSection('section-navigation', 'Navigation',
+            site.makeDemoSection('section-navigation', 'Navigation',
               'Navigation components including horizontal/vertical navs, navbars, breadcrumbs, and tabbed interfaces.',
               createTabbedDemo(
                 {
@@ -611,7 +599,7 @@
             // =================================================================
             // 7. Tabs
             // =================================================================
-            demoSection('section-tabs', 'Tabs',
+            site.makeDemoSection('section-tabs', 'Tabs',
               'Tabbed interfaces for organizing content into switchable panels. Click tabs to toggle content visibility.',
               createTabbedDemo(
                 bw.makeTabs({
@@ -628,7 +616,7 @@
             // =================================================================
             // 8. Alerts
             // =================================================================
-            demoSection('section-alerts', 'Alerts',
+            site.makeDemoSection('section-alerts', 'Alerts',
               'Contextual feedback messages. Available in all variant colors with optional dismiss button.',
               createTabbedDemo(
                 {
@@ -647,7 +635,7 @@
             // =================================================================
             // 9. Badges
             // =================================================================
-            demoSection('section-badges', 'Badges',
+            site.makeDemoSection('section-badges', 'Badges',
               'Small count and labeling components for notifications, status indicators, or highlighting items.',
               createTabbedDemo(
                 {
@@ -686,7 +674,7 @@
             // =================================================================
             // 10. Progress Bars
             // =================================================================
-            demoSection('section-progress', 'Progress Bars',
+            site.makeDemoSection('section-progress', 'Progress Bars',
               'Show task completion with colored, striped, or animated progress bars.',
               createTabbedDemo(
                 {
@@ -709,7 +697,7 @@
             // =================================================================
             // 11. List Groups
             // =================================================================
-            demoSection('section-lists', 'List Groups',
+            site.makeDemoSection('section-lists', 'List Groups',
               'Flexible list components for displaying series of content. Supports interactive items, active/disabled states, and flush variant.',
               createTabbedDemo(
                 {
@@ -738,7 +726,7 @@
             // =================================================================
             // 12. Spinners
             // =================================================================
-            demoSection('section-spinners', 'Spinners',
+            site.makeDemoSection('section-spinners', 'Spinners',
               'Loading indicators in border or grow styles with size and color variants.',
               createTabbedDemo(
                 {
@@ -770,7 +758,7 @@
             // =================================================================
             // 13. Form Controls
             // =================================================================
-            demoSection('section-forms', 'Form Controls',
+            site.makeDemoSection('section-forms', 'Form Controls',
               'Complete form components: text inputs, textareas, selects, checkboxes, radio buttons, and toggle switches.',
               createTabbedDemo(
                 {
@@ -815,7 +803,7 @@
             // =================================================================
             // 14. Pagination
             // =================================================================
-            demoSection('section-pagination', 'Pagination',
+            site.makeDemoSection('section-pagination', 'Pagination',
               'Page navigation with previous/next arrows and page numbers. Supports size variants.',
               createTabbedDemo(
                 {
@@ -841,7 +829,7 @@
             // =================================================================
             // 15. Accordion
             // =================================================================
-            demoSection('section-accordion', 'Accordion',
+            site.makeDemoSection('section-accordion', 'Accordion',
               'Collapsible content panels with smooth transitions. Supports single-open (default) or multi-open mode.',
               createTabbedDemo(
                 {
@@ -876,7 +864,7 @@
             // =================================================================
             // 16. Carousel
             // =================================================================
-            demoSection('section-carousel', 'Carousel',
+            site.makeDemoSection('section-carousel', 'Carousel',
               'Image and content slideshows with CSS transitions, prev/next controls, dot indicators, and optional auto-play.',
               {
                 t: 'div', c: [
@@ -951,7 +939,7 @@
             // =================================================================
             // 17. Dropdown
             // =================================================================
-            demoSection('section-dropdown', 'Dropdown',
+            site.makeDemoSection('section-dropdown', 'Dropdown',
               'Click-triggered menus with items, dividers, and click-outside-to-close. Supports start and end alignment.',
               createTabbedDemo(
                 {
@@ -978,7 +966,7 @@
             // =================================================================
             // 17. Modal
             // =================================================================
-            demoSection('section-modal', 'Modal',
+            site.makeDemoSection('section-modal', 'Modal',
               'Dialog overlays with backdrop, header/body/footer sections. Close via X button, backdrop click, or Escape key.',
               createTabbedDemo(
                 {
@@ -1000,7 +988,7 @@
             // =================================================================
             // 18. Toast
             // =================================================================
-            demoSection('section-toast', 'Toast',
+            site.makeDemoSection('section-toast', 'Toast',
               'Notification popups with auto-dismiss. Supports all color variants and configurable positions.',
               createTabbedDemo(
                 {
@@ -1033,7 +1021,7 @@
             // =================================================================
             // 19. Skeleton
             // =================================================================
-            demoSection('section-skeleton', 'Skeleton',
+            site.makeDemoSection('section-skeleton', 'Skeleton',
               'Loading placeholders in text, circle, and rectangle shapes. Use to indicate loading state before content arrives.',
               createTabbedDemo(
                 {
@@ -1059,7 +1047,7 @@
             // =================================================================
             // 20. Avatar
             // =================================================================
-            demoSection('section-avatar', 'Avatar',
+            site.makeDemoSection('section-avatar', 'Avatar',
               'User avatars with image support and initials fallback. Available in four sizes and all color variants.',
               createTabbedDemo(
                 {
@@ -1093,7 +1081,7 @@
             // =================================================================
             // 21. Tables
             // =================================================================
-            demoSection('section-tables', 'Tables',
+            site.makeDemoSection('section-tables', 'Tables',
               'Data tables with optional sorting and column configuration. makeDataTable wraps makeTable with a title and responsive container.',
               createTabbedDemo(
                 bw.makeDataTable({
@@ -1113,7 +1101,7 @@
             // =================================================================
             // 22. Bar Chart
             // =================================================================
-            demoSection('section-bar-chart', 'Bar Chart',
+            site.makeDemoSection('section-bar-chart', 'Bar Chart',
               'Pure-CSS bar charts from data arrays. Supports custom colors, value formatting, and configurable labels.',
               createTabbedDemo(
                 bw.makeBarChart({
@@ -1137,7 +1125,7 @@
             // =================================================================
             // 23. Hero
             // =================================================================
-            demoSection('section-hero', 'Hero',
+            site.makeDemoSection('section-hero', 'Hero',
               'Full-width hero sections for landing pages, app headers, and feature callouts. Supports gradient backgrounds, background images with overlays, custom content, and call-to-action buttons.',
               {
                 t: 'div', c: [
@@ -1226,7 +1214,7 @@
             // =================================================================
             // 23. Feature Grid
             // =================================================================
-            demoSection('section-feature-grid', 'Feature Grid',
+            site.makeDemoSection('section-feature-grid', 'Feature Grid',
               'Showcase features in an equal-width column grid with icons, titles, and descriptions.',
               createTabbedDemo(
                 bw.makeFeatureGrid({
@@ -1244,7 +1232,7 @@
             // =================================================================
             // 24. CTA
             // =================================================================
-            demoSection('section-cta', 'Call to Action',
+            site.makeDemoSection('section-cta', 'Call to Action',
               'Call-to-action sections with headline, description, and action buttons.',
               createTabbedDemo(
                 bw.makeCTA({
@@ -1263,7 +1251,7 @@
             // =================================================================
             // 25. Section
             // =================================================================
-            demoSection('section-section', 'Section',
+            site.makeDemoSection('section-section', 'Section',
               'Page sections with centered header and configurable spacing. Use to organize page content.',
               createTabbedDemo(
                 bw.makeSection({

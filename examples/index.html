@@ -7,195 +7,133 @@
   <meta name="description" content="Full application examples built with bitwrench: landing pages, dashboards, embedded IoT, server-driven apps, and more.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="../pages/shared-theme.js"></script>
   <script src="../pages/shared-nav.js"></script>
+  <script src="../pages/site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('', '../pages/');
+    var styles = initBitwrenchPage('', '../pages/');
+    var p = styles.palette;
+    var ap = styles.alternatePalette;
 
-    // ---- Page CSS ----
-    bw.injectCSS(bw.css({
-      '.gal_hero': {
-        background: 'linear-gradient(135deg, var(--bw_header_bg) 0%, #004d4d 100%)',
-        color: '#fff',
-        padding: '2.5rem 0 2rem'
-      },
+    // ---- Page CSS (palette-driven, no var(--bw_*) custom properties) ----
+    // Structural rules: layout only, no colors
+    var galStructural = {
       '.gal_hero h1': { margin: '0 0 0.4rem', fontSize: '1.85rem', fontWeight: '700' },
       '.gal_hero p': { opacity: '0.8', fontSize: '1.05rem', margin: '0', lineHeight: '1.55' },
-      '.gal_category': {
-        fontSize: '0.75rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        fontWeight: '700',
-        color: 'var(--bw_teal)',
-        marginBottom: '0.75rem',
-        marginTop: '2rem'
-      },
-      '.gal_item': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        borderRadius: 'var(--bw_radius)',
-        marginBottom: '0.75rem',
-        overflow: 'hidden',
-        transition: 'box-shadow 0.15s'
-      },
-      '.gal_item:hover': {
-        boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-      },
-      '.bw_theme_alt .gal_item:hover': {
-        boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
-      },
       '.gal_header': {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        padding: '1rem 1.25rem',
-        cursor: 'pointer',
-        userSelect: 'none'
+        display: 'flex', alignItems: 'center', gap: '0.75rem',
+        padding: '1rem 1.25rem', cursor: 'pointer', userSelect: 'none'
       },
-      '.gal_header:hover': { background: 'rgba(0,102,102,0.03)' },
-      '.bw_theme_alt .gal_header:hover': { background: 'rgba(255,255,255,0.03)' },
       '.gal_icon': { fontSize: '1.5rem', flexShrink: '0', width: '2rem', textAlign: 'center' },
       '.gal_info': { flex: '1', minWidth: '0' },
-      '.gal_title': { fontWeight: '600', fontSize: '1rem', color: 'var(--bw_text)' },
-      '.gal_oneliner': { fontSize: '0.85rem', color: 'var(--bw_text_secondary)', marginTop: '0.15rem' },
       '.gal_meta': { display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: '0' },
       '.gal_badge': {
-        fontSize: '0.65rem',
-        padding: '0.15rem 0.5rem',
-        borderRadius: '50px',
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: '0.04em'
+        fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '50px',
+        fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em'
       },
-      '.gal_badge_beginner': { background: '#dcfce7', color: '#166534' },
-      '.gal_badge_intermediate': { background: '#fef3c7', color: '#92400e' },
-      '.gal_badge_advanced': { background: '#fce7f3', color: '#9d174d' },
-      '.bw_theme_alt .gal_badge_beginner': { background: '#052e16', color: '#4ade80' },
-      '.bw_theme_alt .gal_badge_intermediate': { background: '#422006', color: '#fbbf24' },
-      '.bw_theme_alt .gal_badge_advanced': { background: '#500724', color: '#f472b6' },
       '.gal_swatch': {
-        width: '14px',
-        height: '14px',
-        borderRadius: '50%',
-        border: '2px solid rgba(0,0,0,0.1)',
-        flexShrink: '0'
-      },
-      '.gal_arrow': {
-        fontSize: '0.75rem',
-        color: 'var(--bw_text_muted)',
-        transition: 'transform 0.2s',
-        flexShrink: '0'
+        width: '14px', height: '14px', borderRadius: '50%',
+        border: '2px solid rgba(0,0,0,0.1)', flexShrink: '0'
       },
       '.gal_arrow.open': { transform: 'rotate(90deg)' },
-      '.gal_detail': {
-        display: 'none',
-        padding: '0 1.25rem 1.25rem',
-        borderTop: '1px solid var(--bw_card_border)'
-      },
+      '.gal_detail': { display: 'none', padding: '0 1.25rem 1.25rem' },
       '.gal_detail.open': { display: 'block' },
-      '.gal_detail h4': {
-        fontSize: '0.8rem',
-        fontWeight: '600',
-        color: 'var(--bw_text)',
-        margin: '1rem 0 0.35rem',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em'
-      },
-      '.gal_detail p': {
-        fontSize: '0.88rem',
-        color: 'var(--bw_text_secondary)',
-        lineHeight: '1.6',
-        margin: '0 0 0.75rem'
-      },
-      '.gal_detail ul': {
-        margin: '0 0 0.75rem',
-        paddingLeft: '1.25rem'
-      },
-      '.gal_detail li': {
-        fontSize: '0.85rem',
-        color: 'var(--bw_text_secondary)',
-        lineHeight: '1.5',
-        marginBottom: '0.25rem'
-      },
-      '.gal_detail li code': {
-        background: 'rgba(0,102,102,0.08)',
-        padding: '0.1em 0.3em',
-        borderRadius: '3px',
-        fontSize: '0.82em',
-        fontFamily: '"SF Mono", Monaco, Consolas, monospace'
-      },
-      '.gal_actions': {
-        display: 'flex',
-        gap: '0.5rem',
-        marginTop: '1rem'
-      },
-      '.gal_prereq': {
-        fontSize: '0.78rem',
-        color: 'var(--bw_text_muted)',
-        fontStyle: 'italic',
-        marginTop: '0.5rem'
-      },
-      '.gal_orient': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        borderRadius: 'var(--bw_radius)',
-        padding: '1.25rem 1.5rem',
-        marginBottom: '1.5rem',
-        lineHeight: '1.6'
-      },
-      '.gal_orient p': {
-        margin: '0 0 0.75rem',
-        fontSize: '0.9rem',
-        color: 'var(--bw_text_secondary)'
-      },
+      '.gal_detail ul': { margin: '0 0 0.75rem', paddingLeft: '1.25rem' },
+      '.gal_actions': { display: 'flex', gap: '0.5rem', marginTop: '1rem' },
       '.gal_orient p:last-child': { margin: '0' },
       '.gal_orient_modes': {
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: '0.5rem',
-        margin: '0.75rem 0'
-      },
-      '.gal_orient_mode': {
-        display: 'flex',
-        alignItems: 'baseline',
-        gap: '0.5rem',
-        fontSize: '0.88rem',
-        color: 'var(--bw_text_secondary)'
-      },
-      '.gal_orient_mode strong': { color: 'var(--bw_text)', whiteSpace: 'nowrap' },
-      '.gal_orient_clone': {
-        display: 'inline-block',
-        background: 'rgba(0,102,102,0.06)',
-        padding: '0.3rem 0.6rem',
-        borderRadius: '4px',
-        fontFamily: '"SF Mono", Monaco, Consolas, monospace',
-        fontSize: '0.82rem',
-        color: 'var(--bw_text)',
-        marginTop: '0.25rem',
-        userSelect: 'all'
-      },
-      '.bw_theme_alt .gal_orient_clone': { background: 'rgba(255,255,255,0.08)' },
-      '.gal_embedded_intro': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        borderRadius: 'var(--bw_radius)',
-        padding: '1rem 1.25rem',
-        marginBottom: '1rem',
-        fontSize: '0.88rem',
-        color: 'var(--bw_text_secondary)',
-        lineHeight: '1.6'
+        display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', margin: '0.75rem 0'
       },
       '@media (max-width: 640px)': {
         '.gal_hero': { padding: '1.5rem 0 1.25rem' },
         '.gal_hero h1': { fontSize: '1.35rem' },
         '.gal_meta': { display: 'none' }
       }
-    }), { id: 'gal-styles' });
+    };
+
+    // Themed rules: all palette-dependent properties
+    function galThemedRules(pal) {
+      return {
+        '.gal_hero': {
+          background: 'linear-gradient(135deg, ' + pal.primary.base + ' 0%, ' + pal.primary.active + ' 100%)',
+          color: pal.primary.textOn, padding: '2.5rem 0 2rem'
+        },
+        '.gal_category': {
+          fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em',
+          fontWeight: '700', color: pal.primary.base, marginBottom: '0.75rem', marginTop: '2rem'
+        },
+        '.gal_item': {
+          background: pal.surface, border: '1px solid ' + pal.light.border,
+          borderRadius: '8px', marginBottom: '0.75rem', overflow: 'hidden',
+          transition: 'box-shadow 0.15s'
+        },
+        '.gal_item:hover': { boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
+        '.gal_header:hover': { background: pal.primary.light },
+        '.gal_title': { fontWeight: '600', fontSize: '1rem', color: pal.dark.base },
+        '.gal_oneliner': { fontSize: '0.85rem', color: pal.dark.hover, marginTop: '0.15rem' },
+        '.gal_badge_beginner': { background: '#dcfce7', color: '#166534' },
+        '.gal_badge_intermediate': { background: '#fef3c7', color: '#92400e' },
+        '.gal_badge_advanced': { background: '#fce7f3', color: '#9d174d' },
+        '.gal_arrow': {
+          fontSize: '0.75rem', color: pal.secondary.hover,
+          transition: 'transform 0.2s', flexShrink: '0'
+        },
+        '.gal_detail': { borderTop: '1px solid ' + pal.light.border },
+        '.gal_detail h4': {
+          fontSize: '0.8rem', fontWeight: '600', color: pal.dark.base,
+          margin: '1rem 0 0.35rem', textTransform: 'uppercase', letterSpacing: '0.05em'
+        },
+        '.gal_detail p': {
+          fontSize: '0.88rem', color: pal.dark.hover, lineHeight: '1.6', margin: '0 0 0.75rem'
+        },
+        '.gal_detail li': {
+          fontSize: '0.85rem', color: pal.dark.hover, lineHeight: '1.5', marginBottom: '0.25rem'
+        },
+        '.gal_detail li code': {
+          background: pal.primary.light, padding: '0.1em 0.3em', borderRadius: '3px',
+          fontSize: '0.82em', fontFamily: '"SF Mono", Monaco, Consolas, monospace'
+        },
+        '.gal_prereq': {
+          fontSize: '0.78rem', color: pal.secondary.hover, fontStyle: 'italic', marginTop: '0.5rem'
+        },
+        '.gal_orient': {
+          background: pal.surface, border: '1px solid ' + pal.light.border,
+          borderRadius: '8px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem', lineHeight: '1.6'
+        },
+        '.gal_orient p': { margin: '0 0 0.75rem', fontSize: '0.9rem', color: pal.dark.hover },
+        '.gal_orient_mode': {
+          display: 'flex', alignItems: 'baseline', gap: '0.5rem',
+          fontSize: '0.88rem', color: pal.dark.hover
+        },
+        '.gal_orient_mode strong': { color: pal.dark.base, whiteSpace: 'nowrap' },
+        '.gal_orient_clone': {
+          display: 'inline-block', background: pal.primary.light,
+          padding: '0.3rem 0.6rem', borderRadius: '4px',
+          fontFamily: '"SF Mono", Monaco, Consolas, monospace',
+          fontSize: '0.82rem', color: pal.dark.base, marginTop: '0.25rem', userSelect: 'all'
+        },
+        '.gal_embedded_intro': {
+          background: pal.surface, border: '1px solid ' + pal.light.border,
+          borderRadius: '8px', padding: '1rem 1.25rem', marginBottom: '1rem',
+          fontSize: '0.88rem', color: pal.dark.hover, lineHeight: '1.6'
+        },
+        '.gal_source_callout': {
+          marginTop: '2rem', padding: '1.25rem', background: pal.surface,
+          border: '1px solid ' + pal.light.border, borderRadius: '8px'
+        },
+        '.gal_source_callout p': {
+          margin: '0', color: pal.dark.hover, fontSize: '0.9rem', lineHeight: '1.6'
+        }
+      };
+    }
+
+    var primaryCSS = bw.css(galStructural) + '\n' + bw.css(galThemedRules(p));
+    var altCSS = bw.css(bw.scopeRulesUnder(galThemedRules(ap), '.bw_theme_alt'));
+    bw.injectCSS(primaryCSS + '\n' + altCSS, { id: 'gal-styles' });
 
     // ---- Example Data ----
     var examples = [
@@ -318,119 +256,55 @@
       },
       {
         category: 'Embedded / IoT',
-        intro: 'These examples simulate embedded device dashboards. Each runs in your browser with mock data. On real hardware (ESP32, Raspberry Pi, etc.), the device serves this HTML page and pushes updates via SSE or WebSocket. bitwrench handles all rendering \u2014 the device never generates HTML.',
+        intro: 'Tutorials and dashboards for real embedded hardware. Each includes server code, a device dashboard, and step-by-step setup instructions. bitwrench handles all rendering -- the device sends JSON, the browser renders the UI.',
         items: [
           {
             title: 'ESP32 Sensor Dashboard',
-            href: 'embedded/',
+            href: 'embedded/esp32-tutorial.html',
             icon: '\uD83D\uDCE1',
-            oneliner: 'Temperature, humidity, pressure on a dark compact screen.',
-            audience: 'Intermediate',
+            oneliner: 'DHT22, LDR, LED control. Arduino C++ tutorial.',
+            audience: 'Beginner',
             themeColor: '#059669',
-            desc: 'A sensor dashboard designed for small screens and microcontrollers. Shows live-updating temperature, humidity, and pressure readings with gauges, control buttons, and an event log. Uses simulated data in the browser.',
+            desc: 'Step-by-step tutorial for building an IoT sensor dashboard on an ESP32 DevKit. DHT22 temperature/humidity, LDR light sensor, built-in LED control. Arduino C++ with ESPAsyncWebServer, SPIFFS filesystem, SSE data push.',
             teaches: [
-              'Compact theme for small/embedded screens',
-              'Device control buttons',
-              'Dark theme with custom CSS',
-              'Mock data pattern (swap in real device endpoints)'
+              'ESP32 Arduino setup and SPIFFS filesystem',
+              'SSE (Server-Sent Events) for real-time sensor data',
+              'Device control via POST /api/command',
+              'Compact dark theme for embedded screens'
             ],
-            prereq: null
+            prereq: 'Hardware: ESP32 DevKit + DHT22 sensor + LDR'
           },
           {
-            title: 'GPIO Controller',
-            href: 'embedded-gpio/',
-            icon: '\uD83E\uDD6B',
-            oneliner: 'Toggle 8 hardware pins with a state table and activity log.',
-            audience: 'Intermediate',
-            themeColor: '#10b981',
-            desc: 'Simulates a Raspberry Pi GPIO interface. Toggle individual pins HIGH/LOW, switch pin direction (input/output), and watch a live state table and activity log update as you interact.',
-            teaches: [
-              'Buttons and button groups for hardware controls',
-              'Tables for live state overview',
-              'Status badges (HIGH/LOW, IN/OUT)',
-              'Event-driven re-rendering'
-            ],
-            prereq: null
-          },
-          {
-            title: 'Industrial HMI',
-            href: 'embedded-industrial/',
-            icon: '\uD83C\uDFED',
-            oneliner: 'Process gauges, alarm indicators, and an emergency stop.',
-            audience: 'Intermediate',
-            themeColor: '#dc2626',
-            desc: 'A factory floor control panel showing 4 process variables (pressure, flow, temperature, pH) with color-coded alarm thresholds, pump and mixer controls, and an emergency stop button. Values drift realistically via simulation.',
-            teaches: [
-              'Stat cards as process variable displays',
-              'Progress bars as gauge indicators',
-              'Alerts for alarm states (normal/warning/critical)',
-              'Simulated sensor data with random walk'
-            ],
-            prereq: null
-          },
-          {
-            title: 'Network Monitor',
-            href: 'embedded-network/',
-            icon: '\uD83D\uDD0C',
-            oneliner: '4 network ports with traffic, errors, and enable/disable.',
-            audience: 'Intermediate',
-            themeColor: '#0891b2',
-            desc: 'A network switch dashboard showing 4 interfaces with UP/DOWN status, link speed, TX/RX traffic counters, load bars, and error tracking. Toggle ports on and off and watch traffic patterns change.',
-            teaches: [
-              'Stat cards for overview metrics',
-              'Progress bars for TX/RX load',
-              'Status badges (UP/DOWN)',
-              'Simulated burst traffic patterns'
-            ],
-            prereq: null
-          },
-          {
-            title: 'Home Automation',
-            href: 'embedded-home/',
-            icon: '\uD83C\uDFE0',
-            oneliner: 'Room sensors, light dimmers, thermostat, door locks.',
-            audience: 'Intermediate',
-            themeColor: '#8b5cf6',
-            desc: 'A smart home control panel with 4 rooms. Each room shows temperature and humidity, has light on/off toggles with brightness sliders, and door lock controls. A thermostat section lets you switch between heat, cool, and auto modes. A summary table shows the state of every room at a glance.',
-            teaches: [
-              'Cards for room panels with mixed controls',
-              'Range sliders for brightness',
-              'Button groups for mode selection',
-              'Badges for sensor readings and lock status'
-            ],
-            prereq: null
-          },
-          {
-            title: 'Pico W Dashboard',
+            title: 'Pico W / Pico 2W Tutorial',
             href: 'embedded-pico-w/',
             icon: '\uD83E\uDE84',
-            oneliner: 'RP2040 microcontroller: ADC, PWM, digital I/O, onboard LED.',
+            oneliner: 'Step-by-step: MicroPython, CircuitPython, or Arduino C++.',
             audience: 'Intermediate',
             themeColor: '#e11d48',
-            desc: 'A Raspberry Pi Pico W dashboard showing the RP2040 onboard temperature sensor, 3 ADC channels (12-bit, 0\u20133.3V) with voltage display, 4 PWM outputs with duty cycle controls, 4 digital inputs, onboard LED toggle, WiFi RSSI, and free memory. Includes a commented MicroPython microdot server example.',
+            desc: 'Step-by-step tutorial for Raspberry Pi Pico W (RP2040) and Pico 2W (RP2350). Three server options: MicroPython (microdot), CircuitPython (adafruit_httpserver), Arduino C++ (WebServer + LittleFS). Onboard temperature, 3 ADC channels, 4 PWM outputs, 8 digital outputs, digital inputs, WiFi RSSI. Optional Freenove Breakout Board (FNK0081) for visible GPIO LEDs.',
             teaches: [
-              'Stat cards for sensor readings',
-              'Progress bars for ADC voltages and PWM duty cycles',
-              'Button groups for preset PWM values',
-              'MicroPython deployment pattern for microcontrollers'
+              'Hardware setup and firmware installation',
+              'Three server language options with the same REST + SSE API',
+              'Real-time dashboard with <code>EventSource</code> and <code>fetch()</code>',
+              'Board detection (auto-detects Pico W vs Pico 2W)'
             ],
-            prereq: null
+            prereq: 'Hardware: Raspberry Pi Pico W or Pico 2W + USB cable + WiFi'
           },
           {
             title: 'RPi System Monitor',
             href: 'embedded-rpi/',
             icon: '\uD83E\uDD67',
-            oneliner: 'Full Linux SBC: CPU cores, memory, disk, GPIO, processes.',
+            oneliner: 'Full Linux SBC: CPU, memory, disk, GPIO. Node.js or Python.',
             audience: 'Intermediate',
             themeColor: '#c51a4a',
-            desc: 'A Raspberry Pi (full Linux) system monitor with per-core CPU usage bars, CPU temperature, RAM and swap progress bars, disk usage, network throughput, a sortable process table, and 6 GPIO pins (3 output toggles, 3 input read-only). Includes commented deployment code for both bwserve (Node.js) and Flask (Python).',
+            desc: 'Step-by-step tutorial for a Raspberry Pi 3/4/5 system monitor. Per-core CPU usage, temperature, RAM/swap, disk, network throughput, sortable process table, 6 GPIO pins (3 output toggles, 3 input). Two server options: Node.js (bwserve) or Python (Flask + psutil).',
             teaches: [
-              'Per-core CPU progress bars',
-              'Sortable process table',
-              'GPIO toggle buttons with state badges',
-              'Two server deployment options (bwserve vs REST API)'
+              'Two server deployment options (bwserve vs Flask)',
+              'System metrics from /proc and /sys',
+              'GPIO control via libgpiod',
+              'Real-time SSE updates to the browser'
             ],
-            prereq: null
+            prereq: 'Hardware: Raspberry Pi 3, 4, or 5 with Raspberry Pi OS'
           }
         ]
       },
@@ -617,7 +491,7 @@
             { t: 'span', c: '\uD83D\uDCBB' },
             { t: 'span', c: [
               { t: 'strong', c: 'Embedded / IoT examples' },
-              ' \u2014 simulate device dashboards in the browser. On real hardware, the device serves this page and pushes updates via SSE.'
+              ' \u2014 tutorials and dashboards for real hardware (ESP32, Pico W, Raspberry Pi). Step-by-step setup with server code included.'
             ]}
           ]},
           { t: 'div', a: { class: 'gal_orient_mode' }, c: [
@@ -669,11 +543,11 @@
       return { t: 'div', c: sectionContent };
     });
 
-    // Source code callout
+    // Source code callout (styled via gal_source_callout class, no inline var())
     var sourceCallout = {
-      t: 'div', a: { style: 'margin-top:2rem;padding:1.25rem;background:var(--bw_card_bg);border:1px solid var(--bw_card_border);border-radius:var(--bw_radius)' },
+      t: 'div', a: { class: 'gal_source_callout' },
       c: [
-        { t: 'p', a: { style: 'margin:0;color:var(--bw_text_secondary);font-size:0.9rem;line-height:1.6' },
+        { t: 'p',
           c: [
             'Every browser example is a single HTML file \u2014 open any and hit View Source. Full source on ',
             { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/master/examples' }, c: 'GitHub' },

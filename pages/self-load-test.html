@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bitwrench - Self Load Test</title>
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-  <script src="shared-theme.js"></script>
+  <script src="site.js"></script>
   <script>window.__bw_load_start = performance.now();</script>
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script>window.__bw_load_end = performance.now();</script>
@@ -16,7 +16,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('self-load-test.html');
+    var styles = initBitwrenchPage('self-load-test.html');
+    var p = styles.palette;
 
     var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
     var GZIP_WARN_KB = 40;
@@ -51,12 +52,12 @@
       }
 
       function makeSizeTable(fileList, title) {
-        if (fileList.length === 0) return { t: 'p', a: { style: 'color:var(--bw_text_muted)' }, c: 'No files found in this group.' };
+        if (fileList.length === 0) return { t: 'p', a: { style: 'color:' + p.secondary.base }, c: 'No files found in this group.' };
         return {
-          t: 'div', a: { class: 'demo-section' }, c: [
-            { t: 'h2', c: title },
+          t: 'div', a: { class: 'bw_site_pages_demo' }, c: [
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: title },
             {
-              t: 'div', a: { class: 'demo-content', style: 'overflow-x:auto' },
+              t: 'div', a: { class: 'bw_site_pages_demo_body', style: 'overflow-x:auto' },
               c: {
                 t: 'table', a: { class: 'bw-table', style: 'width:100%' },
                 c: [
@@ -85,7 +86,7 @@
         t: 'div', c: [
           // Header
           {
-            t: 'div', a: { class: 'page-header' },
+            t: 'div', a: { class: 'bw_site_pages_header' },
             c: {
               t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
               c: [
@@ -100,46 +101,46 @@
             c: [
               // Load timing
               {
-                t: 'div', a: { class: 'demo-section' },
+                t: 'div', a: { class: 'bw_site_pages_demo' },
                 c: [
-                  { t: 'h2', c: 'Load Performance' },
+                  { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Load Performance' },
                   {
-                    t: 'div', a: { class: 'demo-content' },
+                    t: 'div', a: { class: 'bw_site_pages_demo_body' },
                     c: [
                       {
                         t: 'div', a: { style: 'display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;' },
                         c: [
                           {
-                            t: 'div', a: { class: 'bw_feature_card' },
+                            t: 'div', a: { class: 'bw_site_pages_feature' },
                             c: [
                               { t: 'h3', c: 'UMD Load + Parse' },
-                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:var(--bw_teal); margin:0.25rem 0' }, c: loadTimeMs + ' ms' }
+                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:' + p.primary.base + '; margin:0.25rem 0' }, c: loadTimeMs + ' ms' }
                             ]
                           },
                           {
-                            t: 'div', a: { class: 'bw_feature_card' },
+                            t: 'div', a: { class: 'bw_site_pages_feature' },
                             c: [
                               { t: 'h3', c: 'UMD Min Gzipped' },
                               {
                                 t: 'p',
-                                a: { style: 'font-size:1.75rem; font-weight:700; margin:0.25rem 0; color:' + (gzipOver ? '#dc3545' : 'var(--bw_teal)') },
+                                a: { style: 'font-size:1.75rem; font-weight:700; margin:0.25rem 0; color:' + (gzipOver ? '#dc3545' : p.primary.base) },
                                 c: umdGzKB + ' KB'
                               },
                               gzipOver ? { t: 'p', a: { style: 'color:#dc3545; font-size:0.875rem; font-weight:600; margin:0' }, c: 'WARNING: Over ' + GZIP_WARN_KB + ' KB gzip target!' } : null
                             ].filter(Boolean)
                           },
                           {
-                            t: 'div', a: { class: 'bw_feature_card' },
+                            t: 'div', a: { class: 'bw_site_pages_feature' },
                             c: [
                               { t: 'h3', c: 'Version' },
-                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:var(--bw_teal); margin:0.25rem 0' }, c: 'v' + bw.version }
+                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:' + p.primary.base + '; margin:0.25rem 0' }, c: 'v' + bw.version }
                             ]
                           },
                           {
-                            t: 'div', a: { class: 'bw_feature_card' },
+                            t: 'div', a: { class: 'bw_site_pages_feature' },
                             c: [
                               { t: 'h3', c: 'Total APIs' },
-                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:var(--bw_teal); margin:0.25rem 0' }, c: Object.keys(bw).length + ' exports' }
+                              { t: 'p', a: { style: 'font-size:1.75rem; font-weight:700; color:' + p.primary.base + '; margin:0.25rem 0' }, c: Object.keys(bw).length + ' exports' }
                             ]
                           }
                         ]
@@ -150,11 +151,11 @@
               },
               // Source files
               {
-                t: 'div', a: { class: 'demo-section' },
+                t: 'div', a: { class: 'bw_site_pages_demo' },
                 c: [
-                  { t: 'h2', c: 'Source Files' },
+                  { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Source Files' },
                   {
-                    t: 'div', a: { class: 'demo-content' },
+                    t: 'div', a: { class: 'bw_site_pages_demo_body' },
                     c: {
                       t: 'table', a: { class: 'bw-table', style: 'width:100%' },
                       c: [
@@ -180,11 +181,11 @@
               makeSizeTable(cssFiles, 'CSS'),
               // Health checks
               {
-                t: 'div', a: { class: 'demo-section' },
+                t: 'div', a: { class: 'bw_site_pages_demo' },
                 c: [
-                  { t: 'h2', c: 'Health Checks' },
+                  { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Health Checks' },
                   {
-                    t: 'div', a: { class: 'demo-content' },
+                    t: 'div', a: { class: 'bw_site_pages_demo_body' },
                     c: [
                       { t: 'p', c: [
                         gzipOver ? '\u274C' : '\u2705',

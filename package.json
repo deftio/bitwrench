@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.0.24",
+	"version": "2.0.25",
 	"description": "A library for javascript UI functions.",
 	"main": "./dist/bitwrench.umd.js",
 	"repository": {
@@ -20,16 +20,19 @@
 	"module": "./dist/bitwrench.esm.js",
 	"exports": {
 		".": {
+			"types": "./dist/bitwrench.d.ts",
 			"import": "./dist/bitwrench.esm.js",
 			"require": "./dist/bitwrench.cjs.js",
 			"default": "./dist/bitwrench.umd.js"
 		},
 		"./lean": {
+			"types": "./dist/bitwrench.d.ts",
 			"import": "./dist/bitwrench-lean.esm.js",
 			"require": "./dist/bitwrench-lean.cjs.js",
 			"default": "./dist/bitwrench-lean.umd.js"
 		},
 		"./bccl": {
+			"types": "./dist/bitwrench.d.ts",
 			"import": "./dist/bitwrench-bccl.esm.js",
 			"require": "./dist/bitwrench-bccl.cjs.js",
 			"default": "./dist/bitwrench-bccl.umd.js"
@@ -94,14 +97,15 @@
 	"scripts": {
 		"generate-version": "node tools/generate-version.cjs",
 		"prebuild": "npm run generate-version && npm run lint",
-		"build": "rollup --config && npm run build:css && npm run build:metrics && npm run build:builds",
+		"build": "rollup --config && npm run build:css && npm run build:types && npm run build:metrics && npm run build:builds",
+		"build:types": "cp src/bitwrench.d.ts dist/bitwrench.d.ts",
 		"build:css": "node src/generate-css.js",
 		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js -r jsdom-global/register",
+		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js -r jsdom-global/register --exit",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
 		"test:attach": "mocha ./test/bitwrench_test_attach.js -r jsdom-global/register",
 		"test:serve": "mocha ./test/bitwrench_test_serve.js -r jsdom-global/register --exit",

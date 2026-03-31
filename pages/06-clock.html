@@ -6,8 +6,8 @@
   <title>Bitwrench - Digital Clock</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
@@ -16,7 +16,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('06-clock.html');
+    var styles = initBitwrenchPage('06-clock.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Helper: wrap a demo in a section with anchor, title, description, tabs
@@ -57,19 +58,6 @@
           }
         ]
       });
-    }
-
-    function demoSection(id, title, description, content) {
-      return {
-        t: 'div', a: { class: 'demo-section', id: id },
-        c: [
-          { t: 'h2', c: { t: 'a', a: { href: '#' + id }, c: title } },
-          { t: 'div', a: { class: 'demo-content' }, c: [
-            { t: 'p', a: { class: 'demo-description' }, c: description },
-            content
-          ]}
-        ]
-      };
     }
 
     // =========================================================================
@@ -149,7 +137,7 @@
         'justify-content': 'space-between',
         'align-items': 'center',
         'padding': '0.5rem 0.75rem',
-        'border-bottom': '1px solid var(--bw_card_border)',
+        'border-bottom': '1px solid ' + p.light.border,
         'font-size': '0.875rem',
         'font-family': '"SF Mono", "Fira Code", "Consolas", monospace'
       },
@@ -157,12 +145,12 @@
         'border-bottom': 'none'
       },
       '.lap-number': {
-        'color': 'var(--bw_text_secondary)',
+        'color': p.dark.hover,
         'font-weight': '600',
         'min-width': '60px'
       },
       '.lap-time': {
-        'color': 'var(--bw_text)',
+        'color': p.dark.base,
         'font-weight': '500'
       },
       '.lap-delta': {
@@ -173,8 +161,8 @@
       '.lap-list-container': {
         'max-height': '200px',
         'overflow-y': 'auto',
-        'background': 'var(--bw_card_bg)',
-        'border': '1px solid var(--bw_card_border)',
+        'background': p.surface,
+        'border': '1px solid ' + p.light.border,
         'border-radius': '8px'
       },
       '.alarm-time-input': {
@@ -190,17 +178,17 @@
         'font-weight': '600',
         'text-align': 'center',
         'padding': '0.5rem 0.75rem',
-        'border': '2px solid var(--bw_card_border)',
+        'border': '2px solid ' + p.light.border,
         'border-radius': '8px',
-        'background': 'var(--bw_card_bg)',
-        'color': 'var(--bw_text)',
+        'background': p.surface,
+        'color': p.dark.base,
         'min-width': '80px',
         'cursor': 'pointer'
       },
       '.alarm-colon': {
         'font-size': '2rem',
         'font-weight': '700',
-        'color': 'var(--bw_text_secondary)'
+        'color': p.dark.hover
       },
       '.alarm-status': {
         'text-align': 'center',
@@ -215,9 +203,9 @@
         'color': '#e65100'
       },
       '.alarm-inactive': {
-        'background': 'var(--bw_card_bg)',
-        'border': '1px solid var(--bw_card_border)',
-        'color': 'var(--bw_text_secondary)'
+        'background': p.surface,
+        'border': '1px solid ' + p.light.border,
+        'color': p.dark.hover
       },
       '.alarm-ringing': {
         'animation': 'alarm-pulse 0.5s ease-in-out infinite alternate'
@@ -691,7 +679,7 @@
                 s.laps.length > 0
                   ? {
                       t: 'div', c: [
-                        { t: 'div', a: { style: 'font-size: 0.8125rem; font-weight: 600; color: var(--bw_text_secondary); margin-bottom: 0.5rem;' },
+                        { t: 'div', a: { style: 'font-size: 0.8125rem; font-weight: 600; color: #444; margin-bottom: 0.5rem;' },
                           c: 'Laps (' + s.laps.length + ')' },
                         {
                           t: 'div', a: { id: lapsContainerId, class: 'lap-list-container' },
@@ -701,7 +689,7 @@
                     }
                   : {
                       t: 'div',
-                      a: { style: 'text-align: center; color: var(--bw_text_secondary); font-size: 0.875rem; padding: 1rem; font-style: italic;' },
+                      a: { style: 'text-align: center; color: #444; font-size: 0.875rem; padding: 1rem; font-style: italic;' },
                       c: 'Press Lap while running to record split times'
                     }
               ]
@@ -1473,7 +1461,7 @@
       t: 'div', c: [
         // Page header
         {
-          t: 'div', a: { class: 'page-header' },
+          t: 'div', a: { class: 'bw_site_pages_header' },
           c: {
             t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
             c: [
@@ -1492,8 +1480,8 @@
             // Teaching callout
             // =================================================================
             {
-              t: 'div', a: { class: 'callout callout-concept' }, c: [
-                { t: 'h4', c: 'Level 1 \u2014 Real-time Updates' },
+              t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 1 \u2014 Real-time Updates' },
                 { t: 'p', c: ['setInterval + bw.DOM() is all you need for live-updating UI. No framework overhead \u2014 just re-render the TACO. ',
                   { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
               ]
@@ -1503,10 +1491,10 @@
             // Introduction
             // =================================================================
             {
-              t: 'div', a: { class: 'demo-section' },
+              t: 'div', a: { class: 'bw_site_pages_demo' },
               c: [
-                { t: 'h2', c: 'Reactivity in Action' },
-                { t: 'div', a: { class: 'demo-content' }, c: [
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Reactivity in Action' },
+                { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                   {
                     t: 'p', a: { style: 'font-size: 1.05rem; line-height: 1.7; margin-bottom: 1rem;' },
                     c: [
@@ -1534,21 +1522,21 @@
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
                           { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' },
-                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Full re-render (clock face)' }
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: #444;' }, c: 'Full re-render (clock face)' }
                         ]
                       },
                       {
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
                           { t: 'span', a: { class: 'reactivity-badge badge-patch' }, c: 'bw.patch()' },
-                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Targeted update (stopwatch ms)' }
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: #444;' }, c: 'Targeted update (stopwatch ms)' }
                         ]
                       },
                       {
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
                           { t: 'span', a: { class: 'reactivity-badge badge-pubsub' }, c: 'pub/sub' },
-                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: var(--bw_text_secondary);' }, c: 'Decoupled events (alarm trigger)' }
+                          { t: 'span', a: { style: 'font-size: 0.8125rem; color: #444;' }, c: 'Decoupled events (alarm trigger)' }
                         ]
                       }
                     ]
@@ -1560,7 +1548,7 @@
             // =================================================================
             // Section 1: Digital Clock
             // =================================================================
-            demoSection('section-clock', [
+            site.makeDemoSection('section-clock', [
                 'Digital Clock',
                 { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' }
               ],
@@ -1583,7 +1571,7 @@
             // =================================================================
             // Section 2: Stopwatch
             // =================================================================
-            demoSection('section-stopwatch', [
+            site.makeDemoSection('section-stopwatch', [
                 'Stopwatch',
                 { t: 'span', a: { class: 'reactivity-badge badge-patch' }, c: 'bw.patch()' },
                 { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' }
@@ -1609,7 +1597,7 @@
             // =================================================================
             // Section 3: Alarm
             // =================================================================
-            demoSection('section-alarm', [
+            site.makeDemoSection('section-alarm', [
                 'Alarm',
                 { t: 'span', a: { class: 'reactivity-badge badge-pubsub' }, c: 'pub/sub' }
               ],
@@ -1637,10 +1625,10 @@
             // Section 4: How It Fits Together
             // =================================================================
             {
-              t: 'div', a: { class: 'demo-section', id: 'section-architecture' },
+              t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-architecture' },
               c: [
-                { t: 'h2', c: 'How It Fits Together' },
-                { t: 'div', a: { class: 'demo-content' }, c: [
+                { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How It Fits Together' },
+                { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                   {
                     t: 'p', a: { style: 'line-height: 1.7; margin-bottom: 1rem;' },
                     c: [
@@ -1652,58 +1640,58 @@
                     t: 'div', a: { style: 'display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0.75rem; align-items: center; text-align: center; margin: 1.5rem 0;' },
                     c: [
                       {
-                        t: 'div', a: { style: 'background: var(--bw_card_bg); border: 2px solid #00acc1; border-radius: 8px; padding: 1rem;' },
+                        t: 'div', a: { style: 'background: #ffffff; border: 2px solid #00acc1; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #00acc1; margin-bottom: 0.25rem;' }, c: 'Clock' },
                           { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'bw.update(el)' },
-                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary); margin-top: 0.25rem;' }, c: 'every 1s' }
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: #444; margin-top: 0.25rem;' }, c: 'every 1s' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary);' },
+                        t: 'div', a: { style: 'font-size: 0.75rem; color: #444;' },
                         c: [
                           { t: 'div', a: { style: 'font-size: 1.5rem;' }, c: '\u2192' },
                           { t: 'code', c: 'pub("clock:tick")' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'background: var(--bw_card_bg); border: 2px solid #ff9800; border-radius: 8px; padding: 1rem;' },
+                        t: 'div', a: { style: 'background: #ffffff; border: 2px solid #ff9800; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #ff9800; margin-bottom: 0.25rem;' }, c: 'Alarm' },
                           { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'sub("clock:tick")' },
-                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary); margin-top: 0.25rem;' }, c: 'checks match' }
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: #444; margin-top: 0.25rem;' }, c: 'checks match' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary);' },
+                        t: 'div', a: { style: 'font-size: 0.75rem; color: #444;' },
                         c: [
                           { t: 'div', a: { style: 'font-size: 1.5rem;' }, c: '\u2192' },
                           { t: 'code', c: 'pub("alarm:trigger")' }
                         ]
                       },
                       {
-                        t: 'div', a: { style: 'background: var(--bw_card_bg); border: 2px solid #e91e63; border-radius: 8px; padding: 1rem;' },
+                        t: 'div', a: { style: 'background: #ffffff; border: 2px solid #e91e63; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #e91e63; margin-bottom: 0.25rem;' }, c: 'Toast Listener' },
                           { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'sub("alarm:trigger")' },
-                          { t: 'div', a: { style: 'font-size: 0.75rem; color: var(--bw_text_secondary); margin-top: 0.25rem;' }, c: 'shows notification' }
+                          { t: 'div', a: { style: 'font-size: 0.75rem; color: #444; margin-top: 0.25rem;' }, c: 'shows notification' }
                         ]
                       }
                     ]
                   },
                   {
-                    t: 'div', a: { class: 'callout callout-concept' },
+                    t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' },
                     c: [
-                      { t: 'h4', c: 'Choosing an update strategy' },
+                      { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Choosing an update strategy' },
                       {
                         t: 'table', a: { style: 'width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin-top: 0.5rem;' },
                         c: [
                           {
                             t: 'thead', c: {
                               t: 'tr', c: [
-                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);' }, c: 'Strategy' },
-                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);' }, c: 'Use when' },
-                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid var(--bw_teal);' }, c: 'Example on this page' }
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid #006666;' }, c: 'Strategy' },
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid #006666;' }, c: 'Use when' },
+                                { t: 'th', a: { style: 'text-align: left; padding: 0.35rem 0.5rem; border-bottom: 2px solid #006666;' }, c: 'Example on this page' }
                               ]
                             }
                           },
@@ -1711,16 +1699,16 @@
                             t: 'tbody', c: [
                               {
                                 t: 'tr', c: [
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: { t: 'code', c: 'bw.update(el)' } },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Structure changes, infrequent updates' },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Clock (1/s), lap list changes' }
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: { t: 'code', c: 'bw.update(el)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: 'Structure changes, infrequent updates' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: 'Clock (1/s), lap list changes' }
                                 ]
                               },
                               {
                                 t: 'tr', c: [
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: { t: 'code', c: 'bw.patch(id, val)' } },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Value-only changes, high frequency' },
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--bw_card_border);' }, c: 'Stopwatch display (30fps)' }
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: { t: 'code', c: 'bw.patch(id, val)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: 'Value-only changes, high frequency' },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: 'Stopwatch display (30fps)' }
                                 ]
                               },
                               {
@@ -1737,9 +1725,9 @@
                     ]
                   },
                   {
-                    t: 'div', a: { class: 'callout callout-tip', style: 'margin-top: 1rem;' },
+                    t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_tip', style: 'margin-top: 1rem;' },
                     c: [
-                      { t: 'h4', c: 'Try it' },
+                      { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Try it' },
                       {
                         t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
                         c: [
@@ -1766,7 +1754,7 @@
             // =================================================================
             // Section 5: Combined Widget — composition pattern
             // =================================================================
-            demoSection('section-combined', [
+            site.makeDemoSection('section-combined', [
                 'Combined Widget',
                 { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'composition' }
               ],

@@ -6,8 +6,8 @@
   <title>Bitwrench - Styling</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-tryit.js"></script>
 </head>
@@ -16,7 +16,8 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('03-styling.html');
+    var styles = initBitwrenchPage('03-styling.html');
+    var p = styles.palette;
 
     // ── Inject the media query CSS that was previously in <style> ──
     bw.injectCSS(bw.css({
@@ -26,43 +27,34 @@
     }));
 
     // =========================================================================
-    // Helper: callout box
-    // =========================================================================
-    function callout(type, content, style) {
-      var attrs = { class: 'callout callout-' + type };
-      if (style) attrs.style = style;
-      return { t: 'div', a: attrs, c: content };
-    }
-
-    // =========================================================================
     // Section 1: Three Ways to Style Bitwrench Elements
     // =========================================================================
     var section1 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Three Ways to Style Bitwrench Elements' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Three Ways to Style Bitwrench Elements' },
         { t: 'p', a: { style: 'padding: 0 0.25rem;' },
           c: bw.raw('Bitwrench generates DOM elements with <code>class</code> and <code>style</code> attributes. Whatever CSS you use &mdash; your own stylesheet, Bootstrap, Tailwind, <code>bitwrench.css</code>, or no CSS file at all &mdash; it just works. You can mix all three approaches on the same element:') },
         { t: 'div', a: { class: 'demo-grid', style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin: 1.5rem 0;' },
           c: [
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: '1. Inline Styles' },
               { t: 'p', c: bw.raw('No CSS file needed. Use <code>bw.s()</code> to compose style objects directly on elements. JavaScript IS your style system.') },
               { t: 'pre', c: { t: 'code', c: "a: { style: bw.s({ display: 'flex' }, { padding: '1rem' }) }" } }
             ]),
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: '2. Generated Classes' },
               { t: 'p', c: bw.raw('Use <code>bw.css()</code> to create CSS rules from JS objects when you need <code>:hover</code>, <code>:focus</code>, or media queries.') },
               { t: 'pre', c: { t: 'code', c: 'bw.injectCSS(bw.css({\n  \'.card:hover\': { ... }\n}))' } }
             ]),
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: '3. Any CSS File' },
               { t: 'p', c: bw.raw('Bring your own classes. <code>bitwrench.css</code> is a convenience starter kit &mdash; or use Bootstrap, Tailwind, your own stylesheet, or nothing.') },
               { t: 'pre', c: { t: 'code', c: 'a: { class: \'my-class\' }' } }
             ])
           ]
         },
-        callout('tip', [
+        site.makeCallout('tip', [
           { t: 'strong', c: 'History note:' },
           bw.raw(' In bitwrench 1.x, the library auto-generated its CSS at runtime if it detected no stylesheet was loaded. In 2.x, this is more &agrave; la carte &mdash; you choose what to load and when. The DNA has always been "CSS from JS."')
         ])
@@ -73,16 +65,16 @@
     // Section 2: Inline Styles — No CSS File Needed
     // =========================================================================
     var section2 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Inline Styles &mdash; No CSS File Needed') },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Inline Styles &mdash; No CSS File Needed') },
         { t: 'p', a: { style: 'padding: 0 0.25rem;' },
           c: bw.raw('<code>bw.s()</code> merges style objects (like <code>Object.assign</code>). Pass any number of plain objects and they get merged left-to-right. This replaces CSS variables, preprocessors, and utility class frameworks &mdash; because <strong>JavaScript variables ARE your variables</strong>.') },
         { t: 'div', a: { id: 'tryit-style-objects' } },
-        callout('concept', [
+        { t: 'div', a: { style: 'margin-top: 1.5rem;' }, c: site.makeCallout('concept', [
           { t: 'h4', c: 'Why CSS variables aren\'t needed' },
           { t: 'p', c: bw.raw('CSS variables (<code>:root { --accent: teal }</code>) exist to share values between rules. But in bitwrench, JS variables already do that &mdash; <code>var accent = \'#006666\'</code> and you use it in inline styles, generated classes, or both. The <code>? :</code> ternary operator replaces <code>@media</code> and conditional class toggling. No <code>:root</code> declarations needed.') }
-        ], 'margin-top: 1.5rem;')
+        ]) }
       ]
     };
 
@@ -90,15 +82,15 @@
     // Section 3: Computed Classes — Classes Are Just Strings
     // =========================================================================
     var section3 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Computed Classes &mdash; Classes Are Just Strings') },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Computed Classes &mdash; Classes Are Just Strings') },
         { t: 'p', c: bw.raw('Class names in bitwrench are just strings in the <code>a: { class: ... }</code> attribute. You can compute them with JavaScript &mdash; concatenation, ternary operators, <code>.map()</code> &mdash; no special directive syntax needed. The classes can come from bitwrench.css, your own stylesheet, Bootstrap, Tailwind, or anything.') },
         { t: 'div', a: { id: 'tryit-computed-classes' } },
-        callout('concept', [
+        { t: 'div', a: { style: 'margin-top: 1rem;' }, c: site.makeCallout('concept', [
           { t: 'h4', c: 'Bring any CSS framework' },
           { t: 'p', c: bw.raw('Since bitwrench just sets the <code>class</code> attribute, you can use <strong>any</strong> CSS classes: <code>\'btn btn-primary\'</code> (Bootstrap), <code>\'flex gap-4 p-4\'</code> (Tailwind), or your own. You could even use bitwrench\'s <code>bw.css()</code> to generate Tailwind-equivalent styles at runtime &mdash; turning class name strings into real CSS without Tailwind\'s build pipeline.') }
-        ], 'margin-top: 1rem;')
+        ]) }
       ]
     };
 
@@ -106,15 +98,15 @@
     // Section 4: Generated Classes — :hover, :focus, Media Queries
     // =========================================================================
     var section4 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Generated Classes &mdash; When You Need :hover or Media Queries') },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Generated Classes &mdash; When You Need :hover or Media Queries') },
         { t: 'p', c: bw.raw('Inline styles can\'t express <code>:hover</code>, <code>:focus</code>, or <code>@media</code>. For those, generate CSS at runtime with <code>bw.css()</code> + <code>bw.injectCSS()</code>:') },
         { t: 'div', a: { id: 'tryit-css-classes' } },
-        callout('tip', [
+        { t: 'div', a: { style: 'margin-top: 1rem;' }, c: site.makeCallout('tip', [
           { t: 'strong', c: 'Key insight:' },
           bw.raw(' <code>bw.css()</code> turns <code>{ \'.my-btn\': { background: \'teal\' } }</code> into the CSS string <code>.my-btn { background: teal; }</code>. You write styles as data, bitwrench handles the syntax.')
-        ], 'margin-top: 1rem;')
+        ]) }
       ]
     };
 
@@ -122,9 +114,9 @@
     // Section 5: Responsive Styles
     // =========================================================================
     var section5 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Responsive Styles' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Responsive Styles' },
         { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first <code>@media (min-width)</code> CSS from a single object. These breakpoints match the grid system (<code>.bw_col_sm_*</code>, etc.) and <code>theme.breakpoints</code>.') },
         bw.makeTable({
           headers: ['Key', 'Min-Width', 'Target'],
@@ -146,9 +138,9 @@
     // Section 6: Mixing All Three on One Element
     // =========================================================================
     var section6 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Mixing All Three on One Element' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Mixing All Three on One Element' },
         { t: 'p', c: 'The real power: use a global class for base layout, a generated class for hover behavior, and an inline style for the dynamic part. All on the same element.' },
         { t: 'div', a: { id: 'tryit-mixing' } }
       ]
@@ -158,18 +150,18 @@
     // Section 7: Global Styles — The Convenience Option
     // =========================================================================
     var section7 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Global Styles &mdash; The Convenience Option') },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Global Styles &mdash; The Convenience Option') },
         { t: 'p', c: bw.raw('Bitwrench ships with <code>bitwrench.css</code> &mdash; ~22 component styles (buttons, cards, tables, forms, alerts, badges, tabs). It\'s a convenience starter kit, not a requirement. You get them two ways:') },
         { t: 'div', a: { class: 'demo-grid', style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0;' },
           c: [
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: 'Static CSS file' },
               { t: 'pre', c: { t: 'code', c: bw.raw('&lt;link href="bitwrench.css" rel="stylesheet"&gt;') } },
               { t: 'p', c: 'Include it like any stylesheet. These example pages use this approach.' }
             ]),
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: 'Runtime generation' },
               { t: 'pre', c: { t: 'code', c: 'bw.loadStyles();' } },
               { t: 'p', c: 'Generate the same styles from JS at runtime. Useful for embedded widgets or single-file deployments.' }
@@ -177,56 +169,56 @@
           ]
         },
         { t: 'p', c: bw.raw('Both produce the same <code>bw_btn</code>, <code>bw_card</code>, <code>bw_table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.') },
-        callout('tip', [
+        { t: 'div', a: { style: 'margin-top: 1rem;' }, c: site.makeCallout('tip', [
           { t: 'strong', c: 'Custom palettes:' },
           bw.raw(' Need different colors? <code>bw.makeStyles()</code> derives a complete palette from just 2-3 seed colors &mdash; buttons, alerts, badges, hover states, and contrast text. Call <code>bw.applyStyles()</code> to inject them. See the <a href="10-themes.html">Themes page</a> for an interactive generator, presets, multi-theme demos, and code export.')
-        ], 'margin-top: 1rem;')
+        ]) }
       ]
     };
 
     // =========================================================================
     // Separator
     // =========================================================================
-    var separator1 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid var(--bw_card_border);' } };
+    var separator1 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid ' + p.light.border + ';' } };
 
     // =========================================================================
     // Section 8: Theming — Generate Complete Palettes
     // =========================================================================
     var section8 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: bw.raw('Theming &mdash; Generate Complete Palettes') },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Theming &mdash; Generate Complete Palettes') },
         { t: 'p', c: bw.raw('<code>bw.makeStyles(config)</code> replaces manual color wrangling. Give it 2-3 seed colors and it derives hover states, active states, light backgrounds, border colors, focus rings, and contrast text for every component. Call <code>bw.applyStyles(result)</code> to inject.') },
         { t: 'div', a: { id: 'tryit-theme' } },
         { t: 'div', a: { id: 'theme-preview-area', style: 'margin-top: 1rem;' } },
-        callout('concept', [
+        { t: 'div', a: { style: 'margin-top: 1rem;' }, c: site.makeCallout('concept', [
           { t: 'h4', c: 'Full theme studio' },
           { t: 'p', c: bw.raw('The <a href="10-themes.html">Themes page</a> has a full interactive generator with preset gallery, multi-theme switching, dark mode, and copy-to-clipboard CSS export. This section shows just the basics.') }
-        ], 'margin-top: 1rem;')
+        ]) }
       ]
     };
 
     // =========================================================================
     // Separator
     // =========================================================================
-    var separator2 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid var(--bw_card_border);' } };
+    var separator2 = { t: 'hr', a: { style: 'margin: 2rem 0; border: none; border-top: 1px solid ' + p.light.border + ';' } };
 
     // =========================================================================
     // Section 9: Structural vs Cosmetic CSS Architecture
     // =========================================================================
     var section9 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Under the Hood: Structural vs Cosmetic CSS' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Under the Hood: Structural vs Cosmetic CSS' },
         { t: 'p', c: 'Bitwrench\'s built-in styles are split into two layers. Understanding the split helps you theme effectively.' },
         { t: 'div', a: { class: 'demo-grid', style: 'display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0;' },
           c: [
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: 'Structural (layout)' },
               { t: 'p', c: bw.raw('Display, flex, sizing, spacing, cursor, font metrics. These <strong>never change</strong> with themes. A button is always <code>display: inline-block</code> and <code>cursor: pointer</code> regardless of color.') },
               { t: 'pre', c: { t: 'code', c: '// Loaded once, never changes\nbw.loadStyles();\n// injects structural CSS (id="bw_structural")' } }
             ]),
-            callout('concept', [
+            site.makeCallout('concept', [
               { t: 'h4', c: 'Cosmetic (theme)' },
               { t: 'p', c: bw.raw('Colors, backgrounds, shadows, border-colors, border-radius. These are <strong>derived from your palette</strong> by <code>bw.makeStyles()</code>. Swap palettes without touching layout.') },
               { t: 'pre', c: { t: 'code', c: '// Theme generates only cosmetic CSS\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n// injects a <style id="bw_style_global"> tag' } }
@@ -241,9 +233,9 @@
     // Section 10: Class Naming Convention
     // =========================================================================
     var section10 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', c: 'Class Naming Convention' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Class Naming Convention' },
         { t: 'p', c: bw.raw('All bitwrench CSS classes use the <code>bw-</code> prefix. Both <strong>hyphens</strong> and <strong>underscores</strong> work interchangeably:') },
         bw.makeTable({
           headers: ['Form', 'Example', 'Notes'],
@@ -255,10 +247,10 @@
           style: 'margin-bottom: 1rem;'
         }),
         { t: 'p', c: bw.raw('TACO attribute keys like <code>bw_id</code> and <code>bw_meta</code> use underscores because they\'re plain JS identifiers. CSS classes support both forms — the generated stylesheet includes both selectors automatically.') },
-        callout('tip', [
+        { t: 'div', a: { style: 'margin-top: 0.5rem;' }, c: site.makeCallout('tip', [
           { t: 'strong', c: 'bw.normalizeClass():' },
           bw.raw(' Converts underscore classes to canonical hyphen form at runtime. Useful when comparing or concatenating class strings.')
-        ], 'margin-top: 0.5rem;')
+        ]) }
       ]
     };
 
@@ -269,7 +261,7 @@
       t: 'div', c: [
         // Hero header
         {
-          t: 'div', a: { class: 'page-header' },
+          t: 'div', a: { class: 'bw_site_pages_header' },
           c: {
             t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
             c: [
@@ -282,8 +274,8 @@
         {
           t: 'div', a: { class: 'content-container wide' },
           c: [
-            { t: 'div', a: { class: 'callout callout-concept' }, c: [
-                { t: 'h4', c: 'CSS Is Just Strings' },
+            { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'CSS Is Just Strings' },
                 { t: 'p', c: ['Bitwrench doesn\'t own your CSS. Use inline styles, bw.css() generation, any CSS file, or all three. CSS values are JS variables \u2014 compose them with Object.assign, generate them with functions. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
             ]},
             section1, section2, section3, section4, section5, section6, section7, separator1, section8, separator2, section9, section10

@@ -203,11 +203,12 @@ describe("DOM Selector (bw.$)", function() {
 describe("Default Styles (bw.loadStyles)", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should inject styles and return style element", function() {
+  it("should inject styles and return styles object", function() {
     const result = bw.loadStyles();
     assert.ok(result);
-    assert.ok(result.id === 'bw_style_global', 'should have global style id');
-    assert.ok(result.textContent.length > 100, 'css should have content');
+    assert.ok(result.palette, 'should have palette');
+    assert.ok(result.alternatePalette, 'should have alternatePalette');
+    assert.ok(result.css, 'should have css string');
     // Check structural styles were injected
     const structEl = document.getElementById('bw_structural');
     assert.ok(structEl !== null, 'structural style element should exist');

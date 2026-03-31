@@ -7,26 +7,27 @@
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
 </head>
 <body>
   <div id="example-nav"></div>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('04-dashboard.html');
+    var styles = initBitwrenchPage('04-dashboard.html');
+    var p = styles.palette;
 
     // ── Dashboard CSS (injected via bw.css / bw.injectCSS) ──────────
     bw.injectCSS(bw.css({
       '.dashboard': {
         'display': 'flex',
         'min-height': '600px',
-        'border': '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
-        'box-shadow': 'var(--bw_card_shadow)',
+        'border': '1px solid ' + p.light.border,
+        'border-radius': '8px',
+        'box-shadow': '0 1px 3px rgba(0,0,0,0.08)',
         'overflow': 'hidden',
-        'background': 'var(--bw_card_bg)'
+        'background': p.surface
       },
       '.sidebar': {
         'width': '200px',
@@ -53,14 +54,14 @@
       '.stats-grid': {
         'display': 'grid',
         'grid-template-columns': 'repeat(auto-fit, minmax(200px, 1fr))',
-        'gap': 'var(--bw_space_md)',
-        'margin-bottom': 'var(--bw_space_md)'
+        'gap': '1rem',
+        'margin-bottom': '1rem'
       },
       '.stat-card': {
-        'background': 'var(--bw_card_bg, #fff)',
+        'background': p.surface,
         'padding': '1rem',
-        'border-radius': 'var(--bw_radius, 8px)',
-        'border': '1px solid var(--bw_card_border, #e5e5e5)',
+        'border-radius': '8px',
+        'border': '1px solid ' + p.light.border,
         'box-shadow': '0 1px 3px rgba(0,0,0,.06)',
         'cursor': 'pointer',
         'transition': 'transform 0.2s, box-shadow 0.2s, border-left-color 0.3s',
@@ -76,15 +77,15 @@
         'transition': 'color 0.3s'
       },
       '.stat-label': {
-        'color': 'var(--bw_text_secondary, #555)',
+        'color': p.dark.hover,
         'margin-top': '0.25rem',
         'font-size': '0.875rem'
       },
       '.chart-container': {
-        'background': 'var(--bw_card_bg, #fff)',
+        'background': p.surface,
         'padding': '1rem',
-        'border-radius': 'var(--bw_radius, 8px)',
-        'border': '1px solid var(--bw_card_border, #e5e5e5)',
+        'border-radius': '8px',
+        'border': '1px solid ' + p.light.border,
         'box-shadow': '0 1px 3px rgba(0,0,0,.06)',
         'margin-bottom': '1rem'
       },
@@ -110,16 +111,16 @@
         'font-weight': '600'
       },
       '.bw_bar_chart_container': {
-        'background': 'var(--bw_card_bg, #fff)',
-        'border-color': 'var(--bw_card_border, #e5e5e5)',
+        'background': p.surface,
+        'border-color': p.light.border,
         'box-shadow': '0 1px 3px rgba(0,0,0,.06)',
         'margin-bottom': '1rem'
       },
       '.bw_bar_value': {
-        'color': 'var(--bw_text_secondary, #555)'
+        'color': p.dark.hover
       },
       '.bw_bar_label': {
-        'color': 'var(--bw_text_secondary, #555)'
+        'color': p.dark.hover
       },
       '.theme-picker': {
         'display': 'flex',
@@ -146,7 +147,7 @@
       '.page-tab-bar': {
         'display': 'flex',
         'gap': '0',
-        'border-bottom': '2px solid var(--bw_card_border, #e0e0e0)',
+        'border-bottom': '2px solid ' + p.light.border,
         'margin-bottom': '1.25rem'
       },
       '.page-tab-btn': {
@@ -158,15 +159,15 @@
         'border-bottom': '2px solid transparent',
         'margin-bottom': '-2px',
         'cursor': 'pointer',
-        'color': 'var(--bw_text_secondary, #666)',
+        'color': p.dark.hover,
         'transition': 'all 0.15s'
       },
       '.page-tab-btn:hover': {
-        'color': 'var(--bw_teal_dark, #004d4d)'
+        'color': p.primary.darkText
       },
       '.page-tab-btn.active': {
-        'color': 'var(--bw_teal_dark, #004d4d)',
-        'border-bottom-color': 'var(--bw_teal, #006666)',
+        'color': p.primary.darkText,
+        'border-bottom-color': p.primary.base,
         'font-weight': '600'
       },
       '@media (max-width: 768px)': {
@@ -232,10 +233,11 @@
 
     // ── Apply Theme ──────────────────────────────────────────────
     function applyTheme() {
-      bw.loadStyles({
+      var newStyles = bw.loadStyles({
         primary: currentTheme.primary,
         secondary: currentTheme.secondary
       });
+      applySiteChromeCSS(newStyles);
     }
     applyTheme(); // Apply initial theme
 
@@ -244,7 +246,7 @@
       return {
         t: 'div', a: { class: 'theme-picker' },
         c: [
-          { t: 'span', a: { style: 'font-size:0.875rem;color:var(--bw_text_secondary);font-weight:500;' }, c: 'Theme:' }
+          { t: 'span', a: { style: 'font-size:0.875rem;color:#555;font-weight:500;' }, c: 'Theme:' }
         ].concat(themePresets.map(function(preset) {
           var isActive = preset.name === currentTheme.name;
           return {
@@ -631,7 +633,7 @@
 
     // ── Page Header (TACO) ────────────────────────────────────────
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
+      t: 'div', a: { class: 'bw_site_pages_header' },
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top: 0; padding-bottom: 0;' },
         c: [
@@ -656,8 +658,8 @@
       var dashboardContainer = {
         t: 'div', a: { id: 'dashboard-app', class: 'content-container wide' },
         c: [
-          { t: 'div', a: { class: 'callout callout-concept' }, c: [
-              { t: 'h4', c: 'Level 1 \u2014 Building Apps' },
+          { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+              { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 1 \u2014 Building Apps' },
               { t: 'p', c: ['This dashboard uses bw.DOM() to re-render sections when data changes. No virtual DOM \u2014 just call your render function again. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
           ]},
           renderThemePicker(),

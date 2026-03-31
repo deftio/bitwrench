@@ -150,7 +150,7 @@ These return documentation text. They teach the LLM how to use bitwrench.
 |------|-------------|--------------|
 | `bitwrench_start_here` | 30-line orientation: TACO, workflow, key rules | Always first |
 | `bitwrench_guide` | Full developer guide (629 lines). Optional `section` filter. | Before building UI |
-| `bitwrench_components` | Props reference for all 50+ make*() components. Optional `component` filter. | When configuring components |
+| `bitwrench_components` | Props reference for all make*() components. Optional `component` filter. | When configuring components |
 | `bitwrench_server_guide` | bwserve tutorial for server-driven UI | Only for live/streaming UI |
 | `bitwrench_themes` | Theme presets, palettes, color utilities | When choosing/customizing themes |
 

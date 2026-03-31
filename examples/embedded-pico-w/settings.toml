@@ -1,0 +1,5 @@
+# CircuitPython WiFi credentials
+# Copy this file to the CIRCUITPY drive root and edit with your network info.
+
+CIRCUITPY_WIFI_SSID = "YOUR_SSID"
+CIRCUITPY_WIFI_PASSWORD = "YOUR_PASSWORD"

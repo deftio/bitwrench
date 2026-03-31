@@ -6,8 +6,8 @@
   <title>Bitwrench - Pages & Routing</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
@@ -15,28 +15,20 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('15-multi-page-site.html');
-
-    // =========================================================================
-    // Helper: read-only code block
-    // =========================================================================
-    function codeBlock(code, lang) {
-      return bw.codeEditor
-        ? bw.codeEditor({ code: code, lang: lang || 'js', readOnly: true, height: 'auto' })
-        : { t: 'pre', c: { t: 'code', c: code } };
-    }
+    var styles = initBitwrenchPage('15-multi-page-site.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Page-specific CSS
     // =========================================================================
     bw.injectCSS(bw.css({
       '.site-preview': {
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         'max-height': '420px',
         'overflow-y': 'auto',
-        background: 'var(--bw_card_bg)',
-        'margin-bottom': 'var(--bw_space_md)'
+        background: p.surface,
+        'margin-bottom': '1rem'
       },
       '.site-preview-toolbar': {
         display: 'flex',
@@ -47,44 +39,44 @@
       '.dual-preview': {
         display: 'grid',
         'grid-template-columns': '1fr 1fr',
-        gap: 'var(--bw_space_md)',
-        'margin-bottom': 'var(--bw_space_md)'
+        gap: '1rem',
+        'margin-bottom': '1rem'
       },
       '@media (max-width: 768px)': {
         '.dual-preview': {
           'grid-template-columns': '1fr'
         }
       },
-      '.demo-section': {
+      '.bw_site_pages_demo': {
         'margin-bottom': '2.5rem'
       },
-      '.demo-section h2': {
+      '.bw_site_pages_demo_title': {
         'font-size': '1.4rem',
         'font-weight': '600',
         'margin-bottom': '0.75rem',
-        color: 'var(--bw_teal_dark)',
+        color: p.primary.darkText,
         'padding-bottom': '0.5rem',
-        'border-bottom': '2px solid var(--bw_teal)'
+        'border-bottom': '2px solid ' + p.primary.base
       },
-      '.demo-section h3': {
+      '.bw_site_pages_demo > h3': {
         'font-size': '1.1rem',
         'font-weight': '600',
         'margin-top': '1.25rem',
         'margin-bottom': '0.5rem'
       },
-      '.demo-section p': {
+      '.bw_site_pages_demo > p': {
         'margin-bottom': '0.75rem',
         'line-height': '1.6'
       },
       '.preview-header': {
-        background: 'var(--bw_teal_dark, #1a3a5c)',
+        background: p.primary.darkText,
         color: '#fff',
         padding: '0.75rem 1rem',
         'font-weight': '600',
         'font-size': '0.95rem'
       },
       '.preview-nav': {
-        background: 'var(--bw_teal, #336699)',
+        background: p.primary.base,
         padding: '0.5rem 1rem',
         display: 'flex',
         gap: '1rem'
@@ -104,17 +96,17 @@
         padding: '1.25rem'
       },
       '.preview-footer': {
-        background: 'var(--bw_bg_muted, #f5f5f5)',
+        background: '#f5f5f5',
         padding: '0.75rem 1rem',
         'font-size': '0.8rem',
-        color: 'var(--bw_text_secondary)',
-        'border-top': '1px solid var(--bw_card_border)',
+        color: p.dark.hover,
+        'border-top': '1px solid ' + p.light.border,
         'text-align': 'center'
       },
-      '.preview-sidebar': { background: 'var(--bw_bg_muted, #f8f9fa)', padding: '1rem', 'border-right': '1px solid var(--bw_card_border)', 'min-width': '140px' },
+      '.preview-sidebar': { background: '#f8f9fa', padding: '1rem', 'border-right': '1px solid ' + p.light.border, 'min-width': '140px' },
       '.preview-sidebar ul': { 'list-style': 'none', padding: '0', margin: '0' },
-      '.preview-sidebar li': { padding: '0.35rem 0', 'font-size': '0.85rem', color: 'var(--bw_text_secondary)' },
-      '.callout': { padding: '1rem 1.25rem', 'border-radius': 'var(--bw_radius)', 'margin-bottom': '1rem', border: '1px solid var(--bw_card_border)', background: 'var(--bw_teal_bg, rgba(51,102,153,0.05))' },
+      '.preview-sidebar li': { padding: '0.35rem 0', 'font-size': '0.85rem', color: p.dark.hover },
+      '.callout': { padding: '1rem 1.25rem', 'border-radius': '8px', 'margin-bottom': '1rem', border: '1px solid ' + p.light.border, background: p.surfaceAlt },
       '.callout h4': { margin: '0 0 0.5rem 0', 'font-weight': '600' },
       '.kit-label': { 'font-weight': '600', 'margin-bottom': '0.5rem', 'font-size': '0.9rem' },
       '.patterns-table': {
@@ -124,33 +116,33 @@
         'font-size': '0.9rem'
       },
       '.patterns-table th': {
-        background: 'var(--bw_teal_dark)',
+        background: p.primary.darkText,
         color: '#fff',
         padding: '0.6rem 0.75rem',
         'text-align': 'left',
         'font-weight': '600',
         'font-size': '0.8125rem'
       },
-      '.patterns-table td': { padding: '0.5rem 0.75rem', 'border-bottom': '1px solid var(--bw_card_border)' },
+      '.patterns-table td': { padding: '0.5rem 0.75rem', 'border-bottom': '1px solid ' + p.light.border },
       '.patterns-table tr:nth-child(even) td': { background: 'rgba(0,0,0,0.02)' },
       '.flow-diagram': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
         padding: '1.25rem',
         margin: '1rem 0',
-        'font-family': 'var(--bw_font_mono)',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         'font-size': '0.8rem',
         'line-height': '1.5',
         'overflow-x': 'auto',
         'white-space': 'pre'
       },
-      '.router-demo': { border: '2px dashed var(--bw_card_border)', 'border-radius': 'var(--bw_radius)', 'min-height': '180px', 'margin-bottom': 'var(--bw_space_md)' },
+      '.router-demo': { border: '2px dashed ' + p.light.border, 'border-radius': '8px', 'min-height': '180px', 'margin-bottom': '1rem' },
       '.router-demo-nav': { display: 'flex', gap: '0.5rem', 'flex-wrap': 'wrap', 'margin-bottom': '0.75rem' },
-      '.guard-status': { display: 'inline-flex', 'align-items': 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', 'border-radius': 'var(--bw_radius)', 'font-size': '0.85rem', 'font-weight': '600', 'margin-bottom': '0.75rem' },
+      '.guard-status': { display: 'inline-flex', 'align-items': 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', 'border-radius': '8px', 'font-size': '0.85rem', 'font-weight': '600', 'margin-bottom': '0.75rem' },
       '.guard-logged-in': { background: 'rgba(40,167,69,0.1)', color: '#28a745', border: '1px solid rgba(40,167,69,0.3)' },
       '.guard-logged-out': { background: 'rgba(220,53,69,0.1)', color: '#dc3545', border: '1px solid rgba(220,53,69,0.3)' },
-      '.part-divider': { 'margin-top': '3rem', 'margin-bottom': '1.5rem', 'padding-bottom': '0.5rem', 'border-bottom': '3px solid var(--bw_teal)', color: 'var(--bw_teal_dark)', 'font-size': '1.1rem', 'font-weight': '700', 'text-transform': 'uppercase', 'letter-spacing': '0.05em' }
+      '.part-divider': { 'margin-top': '3rem', 'margin-bottom': '1.5rem', 'padding-bottom': '0.5rem', 'border-bottom': '3px solid ' + p.primary.base, color: p.primary.darkText, 'font-size': '1.1rem', 'font-weight': '700', 'text-transform': 'uppercase', 'letter-spacing': '0.05em' }
     }), { id: 'multi-page-styles' });
 
     // =========================================================================
@@ -236,14 +228,14 @@
     }
 
     var section1 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'dictionary-pattern' }, c: '1. The Dictionary Pattern' },
+        { t: 'h2', a: { id: 'dictionary-pattern', class: 'bw_site_pages_demo_title' }, c: '1. The Dictionary Pattern' },
         {
           t: 'p',
           c: 'Store reusable UI pieces in a plain JS object. Each entry is a function that returns a TACO. Because they\'re functions, they accept options -- the same header renders with different titles, the same nav with different active states.'
         },
-        codeBlock(
+        site.makeCodeBlock(
           'var site = {\n' +
           '  header: function(opts) {\n' +
           '    return { t: \'div\', a: { class: \'site-header\' },\n' +
@@ -293,7 +285,7 @@
     // =========================================================================
     var currentPage = 'home';
 
-    var site = {
+    var siteKit = {
       header: makeDictHeader,
       nav:    makeDictNav,
       footer: makeDictFooter,
@@ -342,10 +334,10 @@
       return {
         t: 'div', a: { class: 'site-preview' },
         c: [
-          site.nav({ items: ['Home', 'About', 'Blog', 'Contact'], active: pageName.charAt(0).toUpperCase() + pageName.slice(1) }),
-          site.header({ title: pg.title }),
+          siteKit.nav({ items: ['Home', 'About', 'Blog', 'Contact'], active: pageName.charAt(0).toUpperCase() + pageName.slice(1) }),
+          siteKit.header({ title: pg.title }),
           { t: 'div', a: { class: 'preview-body' }, c: pg.body },
-          site.footer()
+          siteKit.footer()
         ]
       };
     }
@@ -376,14 +368,14 @@
     }
 
     var section2 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'composing-pages' }, c: '2. Composing Pages' },
+        { t: 'h2', a: { id: 'composing-pages', class: 'bw_site_pages_demo_title' }, c: '2. Composing Pages' },
         {
           t: 'p',
           c: 'Each "page" is a function that pulls shared pieces from the dictionary and adds its own content. The page function decides the order and layout.'
         },
-        codeBlock(
+        site.makeCodeBlock(
           'function buildPage(site, pageName) {\n' +
           '  var pg = pageContents[pageName];\n' +
           '  return { t: \'div\', c: [\n' +
@@ -468,7 +460,7 @@
         card: function(opts) {
           return {
             t: 'div',
-            a: { style: 'border:1px solid ' + palette.primary.border + ';border-radius:var(--bw_radius);padding:1rem;margin:0.5rem 0;border-left:3px solid ' + palette.secondary.base },
+            a: { style: 'border:1px solid ' + palette.primary.border + ';border-radius:8px;padding:1rem;margin:0.5rem 0;border-left:3px solid ' + palette.secondary.base },
             c: [
               { t: 'strong', c: (opts && opts.title) || '' },
               { t: 'p', a: { style: 'margin:0.5rem 0 0;font-size:0.9rem' }, c: (opts && opts.content) || '' }
@@ -512,9 +504,9 @@
     }
 
     var section3 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'site-kit-factory' }, c: '3. Site Kit Factory' },
+        { t: 'h2', a: { id: 'site-kit-factory', class: 'bw_site_pages_demo_title' }, c: '3. Site Kit Factory' },
         {
           t: 'p',
           c: [
@@ -523,7 +515,7 @@
             '.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           'function createSiteKit(config) {\n' +
           '  var theme = bw.makeStyles({\n' +
           '    primary: config.primary,\n' +
@@ -582,9 +574,9 @@
     // Part 2, Section 4: What Is Client-Side Routing?
     // =========================================================================
     var section4 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'what-is-routing' }, c: '4. What Is Client-Side Routing?' },
+        { t: 'h2', a: { id: 'what-is-routing', class: 'bw_site_pages_demo_title' }, c: '4. What Is Client-Side Routing?' },
         {
           t: 'p',
           c: 'Traditional websites reload the entire page on every link click. An SPA (Single-Page Application) loads one HTML page, then JavaScript swaps content in the DOM when the user navigates. The URL still changes (bookmarks and back/forward work), but the page never fully reloads.'
@@ -659,9 +651,9 @@
     // the main page URL. Each demo section gets a sub-prefix.
 
     var section5 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'first-router' }, c: '5. Your First Router' },
+        { t: 'h2', a: { id: 'first-router', class: 'bw_site_pages_demo_title' }, c: '5. Your First Router' },
         {
           t: 'p',
           c: [
@@ -670,7 +662,7 @@
             ' with a target element and a routes object. Each route pattern maps to a function that returns TACO.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           'bw.router({\n' +
           '  target: \'#app\',\n' +
           '  routes: {\n' +
@@ -688,7 +680,7 @@
         ),
         { t: 'h3', c: 'Try it -- click the links, then use your browser\'s back/forward:' },
         {
-          t: 'div', a: { class: 'demo-content' },
+          t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'div', a: { id: 'router5-nav', class: 'router-demo-nav' } },
             { t: 'div', a: { id: 'router5-view', class: 'router-demo' } }
@@ -734,10 +726,10 @@
             t: 'div', a: { style: 'display:flex;flex-direction:column;gap:0.5rem' },
             c: users.map(function(u) {
               return bw.link('/demo/users/' + u.id, {
-                t: 'div', a: { style: 'display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border:1px solid var(--bw_card_border);border-radius:var(--bw_radius);cursor:pointer;border-left:3px solid ' + u.color },
+                t: 'div', a: { style: 'display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border:1px solid #d8d8d8;border-radius:8px;cursor:pointer;border-left:3px solid ' + u.color },
                 c: [
                   { t: 'strong', c: u.name },
-                  { t: 'span', a: { style: 'color:var(--bw_text_secondary);font-size:0.85rem' }, c: u.role }
+                  { t: 'span', a: { style: 'color:#444;font-size:0.85rem' }, c: u.role }
                 ]
               }, { style: 'text-decoration:none;color:inherit' });
             })
@@ -763,7 +755,7 @@
         c: [
           { t: 'h3', a: { style: 'margin-top:0;border-left:3px solid ' + user.color + ';padding-left:0.5rem' }, c: user.name + ' (' + user.role + ')' },
           {
-            t: 'div', a: { style: 'background:var(--bw_teal_bg);padding:0.75rem;border-radius:var(--bw_radius);font-family:var(--bw_font_mono);font-size:0.8rem;margin-bottom:1rem' },
+            t: 'div', a: { style: 'background:#f0faf9;padding:0.75rem;border-radius:8px;font-family:"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;font-size:0.8rem;margin-bottom:1rem' },
             c: [
               { t: 'div', c: ['params.id = "', { t: 'strong', c: params.id }, '"'] },
               { t: 'div', c: ['params._query.tab = "', { t: 'strong', c: qTab }, '"'] }
@@ -781,9 +773,9 @@
     }
 
     var section6 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'route-parameters' }, c: '6. Route Parameters' },
+        { t: 'h2', a: { id: 'route-parameters', class: 'bw_site_pages_demo_title' }, c: '6. Route Parameters' },
         {
           t: 'p',
           c: [
@@ -796,7 +788,7 @@
             '.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           'bw.router({\n' +
           '  target: \'#view\',\n' +
           '  routes: {\n' +
@@ -811,7 +803,7 @@
         ),
         { t: 'h3', c: 'Try it -- click a user, then check the extracted params:' },
         {
-          t: 'div', a: { class: 'demo-content' },
+          t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'div', a: { id: 'router6-nav', class: 'router-demo-nav' } },
             { t: 'div', a: { id: 'router6-view', class: 'router-demo' } }
@@ -824,9 +816,9 @@
     // Part 2, Section 7: Wildcards & 404
     // =========================================================================
     var section7 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'wildcards-404' }, c: '7. Wildcards & 404' },
+        { t: 'h2', a: { id: 'wildcards-404', class: 'bw_site_pages_demo_title' }, c: '7. Wildcards & 404' },
         {
           t: 'p',
           c: 'The router supports two wildcard patterns for flexible matching:'
@@ -841,7 +833,7 @@
             '. Useful for nested content like documentation paths.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           '// URL: /docs/api/colors\n' +
           '\'/docs/*\': function(params) {\n' +
           '  // params._rest = \'api/colors\'\n' +
@@ -856,7 +848,7 @@
             ' -- Matches anything not matched by other routes. This is your 404 handler.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           '\'*\': function() {\n' +
           '  return { t: \'div\', c: [\n' +
           '    { t: \'h2\', c: \'404 -- Page Not Found\' },\n' +
@@ -937,7 +929,7 @@
       return { t: 'div', a: { style: 'padding:1rem' }, c: [
         { t: 'h3', a: { style: 'margin-top:0;color:#28a745' }, c: 'Dashboard (protected)' },
         { t: 'p', c: 'You are logged in. The before() guard allowed this navigation.' },
-        { t: 'p', a: { style: 'font-size:0.85rem;color:var(--bw_text_secondary)' }, c: 'Uncheck "Logged in" above and try again.' }
+        { t: 'p', a: { style: 'font-size:0.85rem;color:#444' }, c: 'Uncheck "Logged in" above and try again.' }
       ]};
     }
 
@@ -956,9 +948,9 @@
     }
 
     var section8 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'navigation-guards' }, c: '8. Navigation Guards' },
+        { t: 'h2', a: { id: 'navigation-guards', class: 'bw_site_pages_demo_title' }, c: '8. Navigation Guards' },
         {
           t: 'p',
           c: [
@@ -969,7 +961,7 @@
             ' to block, or anything else to allow.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           'bw.router({\n' +
           '  target: \'#app\',\n' +
           '  routes: { \'/\': home, \'/dashboard\': dashboard, \'/login\': login },\n' +
@@ -1004,7 +996,7 @@
           ]
         },
         {
-          t: 'div', a: { class: 'demo-content' },
+          t: 'div', a: { class: 'bw_site_pages_demo_body' },
           c: [
             { t: 'div', a: { id: 'router8-nav', class: 'router-demo-nav' } },
             { t: 'div', a: { id: 'router8-view', class: 'router-demo' } }
@@ -1046,9 +1038,9 @@
     // Part 2, Section 9: Reacting to Route Changes
     // =========================================================================
     var section9 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'route-events' }, c: '9. Reacting to Route Changes' },
+        { t: 'h2', a: { id: 'route-events', class: 'bw_site_pages_demo_title' }, c: '9. Reacting to Route Changes' },
         {
           t: 'p',
           c: [
@@ -1057,7 +1049,7 @@
             ' event through bitwrench\'s pub/sub system. Any component can subscribe without being coupled to the router.'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           'bw.sub(\'bw:route\', function(data) {\n' +
           '  // data.path   -- current path (e.g., \'/users/123\')\n' +
           '  // data.params -- matched params (e.g., { id: \'123\' })\n' +
@@ -1075,7 +1067,7 @@
             ' hook to update button styles after each navigation. Alternatively, use pub/sub so the nav component is self-contained:'
           ]
         },
-        codeBlock(
+        site.makeCodeBlock(
           '// Self-contained nav that reacts to route changes\n' +
           'function makeNav(links) {\n' +
           '  return { t: \'nav\', o: {\n' +
@@ -1118,9 +1110,9 @@
     // Section 10: Putting It All Together
     // =========================================================================
     var section10 = {
-      t: 'div', a: { class: 'demo-section' },
+      t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { id: 'putting-it-together' }, c: '10. Putting It All Together' },
+        { t: 'h2', a: { id: 'putting-it-together', class: 'bw_site_pages_demo_title' }, c: '10. Putting It All Together' },
         {
           t: 'p',
           c: 'This page covered five progressive patterns. Each builds on the previous:'
@@ -1196,16 +1188,7 @@
     // =========================================================================
     // Assemble and mount the page
     // =========================================================================
-    var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
-      c: {
-        t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
-        c: [
-          { t: 'h1', c: 'Pages & Routing' },
-          { t: 'p', a: { class: 'subtitle' }, c: 'From reusable TACO dictionaries to URL-driven SPAs' }
-        ]
-      }
-    };
+    var pageHeader = site.makePageHeader('Pages & Routing', 'From reusable TACO dictionaries to URL-driven SPAs');
 
     var part1Divider = {
       t: 'div', a: { class: 'part-divider' },
@@ -1248,144 +1231,100 @@
     renderSitePreview();
 
     // =========================================================================
-    // Section 5: Initialize "Your First Router" demo
+    // Section 5-8: Initialize router demos (requires bw.router API)
     // =========================================================================
-    // All router demos share a single router instance. We use the /demo
-    // prefix to scope them and avoid interfering with other page hash states.
+    if (typeof bw.router === 'function') {
+      var routerBasePath = '/demo';
+      var routerPages5 = ['home', 'about', 'contact'];
 
-    var routerBasePath = '/demo';
-    var routerPages5 = ['home', 'about', 'contact'];
+      function makeRouterPageContent(name, icon, description) {
+        return {
+          t: 'div', a: { style: 'padding:1rem' },
+          c: [
+            { t: 'h3', a: { style: 'margin-top:0' }, c: icon + ' ' + name },
+            { t: 'p', c: description }
+          ]
+        };
+      }
 
-    function makeRouterPageContent(name, icon, description) {
-      return {
-        t: 'div', a: { style: 'padding:1rem' },
+      // Build section 5 nav links
+      bw.DOM('#router5-nav', {
+        t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
+        c: routerPages5.map(function(pg) {
+          var label = pg.charAt(0).toUpperCase() + pg.slice(1);
+          return bw.link(routerBasePath + (pg === 'home' ? '' : '/' + pg), label, {
+            class: 'bw_btn bw_btn_sm bw_btn_outline_secondary'
+          });
+        })
+      });
+
+      // Build section 6 nav links
+      bw.DOM('#router6-nav', {
+        t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
         c: [
-          { t: 'h3', a: { style: 'margin-top:0' }, c: icon + ' ' + name },
-          { t: 'p', c: description }
+          bw.link('/demo/users', 'User List', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+        ]
+      });
+
+      // Build section 8 nav links
+      bw.DOM('#router8-nav', {
+        t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
+        c: [
+          bw.link('/demo/guard', 'Home', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
+          bw.link('/demo/guard/dashboard', 'Dashboard', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
+          bw.link('/demo/guard/settings', 'Settings', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+        ]
+      });
+
+      renderGuardStatus();
+
+      routerInstance = bw.router({
+        target: null,
+        routes: {
+          '/demo':         function() { bw.DOM('#router5-view', makeRouterPageContent('Home', '', 'Welcome to the home page. Try clicking About or Contact.')); return null; },
+          '/demo/about':   function() { bw.DOM('#router5-view', makeRouterPageContent('About', '', 'This is the about page. Use your browser\'s back button to return to Home.')); return null; },
+          '/demo/contact': function() { bw.DOM('#router5-view', makeRouterPageContent('Contact', '', 'The contact page. Notice the URL in your address bar changed.')); return null; },
+          '/demo/users':     function() { bw.DOM('#router6-view', userListView()); return null; },
+          '/demo/users/:id': function(params) { bw.DOM('#router6-view', userDetailView(params)); return null; },
+          '/demo/guard':           function() { bw.DOM('#router8-view', guardHomePage()); return null; },
+          '/demo/guard/dashboard': function() { bw.DOM('#router8-view', guardDashboard()); return null; },
+          '/demo/guard/login':     function() { bw.DOM('#router8-view', guardLoginMessage()); return null; },
+          '/demo/guard/settings':  function() { bw.DOM('#router8-view', guardSettingsPage()); return null; },
+          '*': function() { bw.DOM('#router5-view', makeRouterPageContent('404', '', 'Page not found. This is the * wildcard catch-all route.')); return null; }
+        },
+        before: function(to) {
+          if (to === '/demo/guard/dashboard' && !guardLoggedIn) return '/demo/guard/login';
+        },
+        after: function(to) {
+          bw.$('#router5-nav a').forEach(function(a) {
+            var href = (a.getAttribute('href') || '').replace(/^#/, '');
+            a.className = (href === to || (to === '/demo' && href === '/demo'))
+              ? 'bw_btn bw_btn_sm bw_btn_primary' : 'bw_btn bw_btn_sm bw_btn_outline_secondary';
+          });
+          bw.$('#router8-nav a').forEach(function(a) {
+            var href = (a.getAttribute('href') || '').replace(/^#/, '');
+            a.className = href === to
+              ? 'bw_btn bw_btn_sm bw_btn_primary' : 'bw_btn bw_btn_sm bw_btn_outline_secondary';
+          });
+        }
+      });
+
+      if (!window.location.hash || window.location.hash.indexOf('/demo') === -1) {
+        bw.navigate('/demo');
+      }
+    } else {
+      // Router API not yet available -- show notice in demo containers
+      var routerNotice = {
+        t: 'div', a: { style: 'padding:1.5rem;text-align:center;color:' + p.dark.hover + ';font-size:0.9rem' },
+        c: [
+          { t: 'p', a: { style: 'margin:0 0 0.5rem' }, c: 'The router API (bw.router, bw.link, bw.navigate) is planned for a future release.' },
+          { t: 'p', a: { style: 'margin:0;font-size:0.8rem' }, c: 'The code examples above show the intended API design. Part 1 demos are fully interactive.' }
         ]
       };
-    }
-
-    // Build section 5 nav links
-    bw.DOM('#router5-nav', {
-      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
-      c: routerPages5.map(function(pg) {
-        var label = pg.charAt(0).toUpperCase() + pg.slice(1);
-        return bw.link(routerBasePath + (pg === 'home' ? '' : '/' + pg), label, {
-          class: 'bw_btn bw_btn_sm bw_btn_outline_secondary'
-        });
-      })
-    });
-
-    // Build section 6 nav links
-    bw.DOM('#router6-nav', {
-      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
-      c: [
-        bw.link('/demo/users', 'User List', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
-      ]
-    });
-
-    // Build section 8 nav links
-    bw.DOM('#router8-nav', {
-      t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
-      c: [
-        bw.link('/demo/guard', 'Home', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
-        bw.link('/demo/guard/dashboard', 'Dashboard', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
-        bw.link('/demo/guard/settings', 'Settings', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
-      ]
-    });
-
-    // Initial guard status
-    renderGuardStatus();
-
-    // =========================================================================
-    // Single shared router for all demos
-    // =========================================================================
-    routerInstance = bw.router({
-      target: null, // we route to multiple targets, so we handle rendering ourselves
-      routes: {
-        // Section 5: basic routing
-        '/demo':         function() {
-          bw.DOM('#router5-view', makeRouterPageContent('Home', '', 'Welcome to the home page. Try clicking About or Contact.'));
-          return null;
-        },
-        '/demo/about':   function() {
-          bw.DOM('#router5-view', makeRouterPageContent('About', '', 'This is the about page. Use your browser\'s back button to return to Home.'));
-          return null;
-        },
-        '/demo/contact': function() {
-          bw.DOM('#router5-view', makeRouterPageContent('Contact', '', 'The contact page. Notice the URL in your address bar changed.'));
-          return null;
-        },
-
-        // Section 6: route parameters
-        '/demo/users':     function() {
-          bw.DOM('#router6-view', userListView());
-          return null;
-        },
-        '/demo/users/:id': function(params) {
-          bw.DOM('#router6-view', userDetailView(params));
-          return null;
-        },
-
-        // Section 8: guards
-        '/demo/guard':           function() {
-          bw.DOM('#router8-view', guardHomePage());
-          return null;
-        },
-        '/demo/guard/dashboard': function() {
-          bw.DOM('#router8-view', guardDashboard());
-          return null;
-        },
-        '/demo/guard/login':     function() {
-          bw.DOM('#router8-view', guardLoginMessage());
-          return null;
-        },
-        '/demo/guard/settings':  function() {
-          bw.DOM('#router8-view', guardSettingsPage());
-          return null;
-        },
-
-        // 404 fallback
-        '*': function() {
-          bw.DOM('#router5-view', makeRouterPageContent('404', '', 'Page not found. This is the * wildcard catch-all route.'));
-          return null;
-        }
-      },
-      before: function(to, from) {
-        // Guard for section 8: protect /demo/guard/dashboard
-        if (to === '/demo/guard/dashboard' && !guardLoggedIn) {
-          return '/demo/guard/login';
-        }
-      },
-      after: function(to) {
-        // Highlight active nav links for section 5
-        var links5 = bw.$('#router5-nav a');
-        links5.forEach(function(a) {
-          var href = (a.getAttribute('href') || '').replace(/^#/, '');
-          if (href === to || (to === '/demo' && href === '/demo')) {
-            a.className = 'bw_btn bw_btn_sm bw_btn_primary';
-          } else {
-            a.className = 'bw_btn bw_btn_sm bw_btn_outline_secondary';
-          }
-        });
-
-        // Highlight active nav links for section 8
-        var links8 = bw.$('#router8-nav a');
-        links8.forEach(function(a) {
-          var href = (a.getAttribute('href') || '').replace(/^#/, '');
-          if (href === to) {
-            a.className = 'bw_btn bw_btn_sm bw_btn_primary';
-          } else {
-            a.className = 'bw_btn bw_btn_sm bw_btn_outline_secondary';
-          }
-        });
-      }
-    });
-
-    // Navigate to initial route so demo views are populated
-    if (!window.location.hash || window.location.hash.indexOf('/demo') === -1) {
-      bw.navigate('/demo');
+      ['#router5-view', '#router6-view', '#router8-view'].forEach(function(sel) {
+        var els = bw.$(sel);
+        if (els.length) bw.DOM(els[0], routerNotice);
+      });
     }
   </script>
 </body>

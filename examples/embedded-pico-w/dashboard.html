@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pico W Dashboard</title>
+  <script src="dist/bitwrench.umd.min.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Raspberry Pi Pico W / Pico 2W -- bitwrench Dashboard
+    //
+    // This file is served from the Pico's flash filesystem.
+    // It connects to the server.py endpoints for live sensor data
+    // and device control.
+    //
+    // Endpoints (served by server.py on the same device):
+    //   GET  /api/sensors    -- sensor snapshot (JSON)
+    //   GET  /events         -- SSE stream of sensor updates
+    //   POST /api/led        -- toggle onboard LED
+    //   POST /api/pwm/<ch>   -- set PWM duty cycle (0-100)
+    //   POST /api/gpio/<pin> -- toggle digital output (GP8-GP15)
+    // =====================================================================
+
+    bw.loadStyles({
+      primary: '#e11d48',
+      secondary: '#0ea5e9',
+      spacing: 'compact',
+      radius: 'sm'
+    });
+
+    bw.injectCSS(bw.css({
+      'body': { background: '#0f172a', color: '#e2e8f0', margin: '0' }
+    }));
+
+    // -- Device state (populated by SSE) ------------------------------------
+    var state = {
+      board: 'Pico W',
+      chip: 'RP2040',
+      totalSram: 264,
+      onboardTemp: 0,
+      led: 0,
+      adc: [0, 0, 0],
+      pwm: [0, 0, 0, 0],
+      digitalIn: [0, 0, 0, 0],
+      gpioOut: [0, 0, 0, 0, 0, 0, 0, 0],
+      uptime: 0,
+      freeMemory: 0,
+      wifiRssi: 0
+    };
+
+    var logEntries = [];
+    var connected = false;
+
+    function addLog(msg) {
+      var ts = new Date().toLocaleTimeString();
+      logEntries.unshift(ts + ' -- ' + msg);
+      if (logEntries.length > 20) logEntries.pop();
+    }
+
+    // -- Device API calls ---------------------------------------------------
+
+    function postApi(path, body) {
+      return fetch(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }).then(function(r) { return r.json(); });
+    }
+
+    function toggleLed() {
+      postApi('/api/led', {}).then(function(data) {
+        state.led = data.led;
+        addLog('Onboard LED ' + (state.led ? 'ON' : 'OFF'));
+        render();
+      });
+    }
+
+    function setPwm(ch, val) {
+      postApi('/api/pwm/' + ch, { duty: val }).then(function(data) {
+        state.pwm[data.channel] = data.duty;
+        addLog('PWM' + data.channel + ' (GP' + data.channel + ') set to ' + data.duty + '%');
+        render();
+      });
+    }
+
+    function toggleGpio(pin) {
+      postApi('/api/gpio/' + pin, {}).then(function(data) {
+        state.gpioOut[data.pin - 8] = data.state;
+        addLog('GP' + data.pin + ' ' + (data.state ? 'HIGH' : 'LOW'));
+        render();
+      });
+    }
+
+    // -- SSE connection -----------------------------------------------------
+
+    function connectSSE() {
+      var es = new EventSource('/events');
+
+      es.addEventListener('sensors', function(e) {
+        var payload = JSON.parse(e.data);
+        // Update state from server payload
+        for (var key in payload) {
+          if (payload.hasOwnProperty(key)) {
+            state[key] = payload[key];
+          }
+        }
+        if (!connected) {
+          connected = true;
+          addLog(state.board + ' (' + state.chip + ') connected');
+        }
+        render();
+      });
+
+      es.onerror = function() {
+        if (connected) {
+          connected = false;
+          addLog('Connection lost -- reconnecting...');
+          render();
+        }
+      };
+    }
+
+    // -- Render -------------------------------------------------------------
+
+    function render() {
+      var uptimeStr = Math.floor(state.uptime / 3600) + 'h ' +
+        Math.floor((state.uptime % 3600) / 60) + 'm ' +
+        (state.uptime % 60) + 's';
+      var totalBytes = state.totalSram * 1024;
+      var memPct = totalBytes > 0 ? Math.round((1 - state.freeMemory / totalBytes) * 100) : 0;
+
+      // System info cards
+      var sysCards = bw.makeRow({
+        children: [
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: state.onboardTemp.toFixed(1) + '\u00B0C', label: state.chip + ' Temp', variant: state.onboardTemp > 50 ? 'danger' : 'primary' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: state.wifiRssi + ' dBm', label: 'WiFi RSSI', variant: state.wifiRssi > -50 ? 'success' : state.wifiRssi > -70 ? 'warning' : 'danger' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: Math.round(state.freeMemory / 1024) + ' KB', label: 'Free Memory', variant: memPct > 80 ? 'danger' : 'info' })
+          }),
+          bw.makeCol({ size: { xs: 6, md: 3 }, content:
+            bw.makeStatCard({ value: uptimeStr, label: 'Uptime' })
+          })
+        ]
+      });
+
+      // LED control
+      var ledSection = bw.makeCard({
+        title: 'Onboard LED (CYW43)',
+        className: 'bw_mb_3',
+        content: [
+          bw.makeBadge({ text: state.led ? 'ON' : 'OFF', variant: state.led ? 'success' : 'secondary', pill: true }),
+          ' ',
+          bw.makeButton({ text: state.led ? 'Turn Off' : 'Turn On', variant: state.led ? 'danger' : 'success', size: 'sm', onclick: toggleLed })
+        ]
+      });
+
+      // ADC readings
+      var adcCards = state.adc.map(function(v, i) {
+        var pct = Math.round((v / 3.3) * 100);
+        return bw.makeCol({ size: { xs: 12, md: 4 }, content:
+          bw.makeCard({
+            title: 'ADC' + i + ' (GP' + (26 + i) + ')',
+            className: 'bw_mb_2',
+            content: [
+              { t: 'div', a: { class: 'bw_mb_1' }, c: v.toFixed(3) + ' V' },
+              bw.makeProgress({ value: pct, label: pct + '%', variant: pct > 80 ? 'danger' : pct > 50 ? 'warning' : 'primary' })
+            ]
+          })
+        });
+      });
+
+      // PWM controls
+      var pwmControls = state.pwm.map(function(duty, ch) {
+        return bw.makeCol({ size: { xs: 6, md: 3 }, content:
+          bw.makeCard({
+            title: 'PWM' + ch + ' (GP' + ch + ')',
+            className: 'bw_mb_2',
+            content: [
+              bw.makeProgress({ value: duty, label: duty + '%', variant: 'info' }),
+              { t: 'div', a: { class: 'bw_mt_1' }, c: [
+                bw.makeButtonGroup({
+                  children: [
+                    bw.makeButton({ text: '0%', size: 'sm', variant: duty === 0 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 0); } }),
+                    bw.makeButton({ text: '25%', size: 'sm', variant: duty === 25 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 25); } }),
+                    bw.makeButton({ text: '50%', size: 'sm', variant: duty === 50 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 50); } }),
+                    bw.makeButton({ text: '100%', size: 'sm', variant: duty === 100 ? 'primary' : 'outline_secondary', onclick: function() { setPwm(ch, 100); } })
+                  ]
+                })
+              ]}
+            ]
+          })
+        });
+      });
+
+      // GPIO output toggles (GP8-GP15)
+      var gpioButtons = state.gpioOut.map(function(v, i) {
+        var pin = 8 + i;
+        return bw.makeCol({ size: { xs: 6, sm: 3 }, content:
+          bw.makeCard({
+            title: 'GP' + pin,
+            className: 'bw_mb_2',
+            content: [
+              bw.makeBadge({ text: v ? 'HIGH' : 'LOW', variant: v ? 'success' : 'secondary', pill: true }),
+              ' ',
+              bw.makeButton({
+                text: v ? 'Set LOW' : 'Set HIGH',
+                variant: v ? 'outline_danger' : 'outline_success',
+                size: 'sm',
+                onclick: (function(p) { return function() { toggleGpio(p); }; })(pin)
+              })
+            ]
+          })
+        });
+      });
+
+      // Digital inputs table
+      var diTable = bw.makeTable({
+        data: state.digitalIn.map(function(v, i) {
+          return { Pin: 'GP' + (4 + i), State: v ? 'HIGH' : 'LOW', Logic: v ? '1' : '0' };
+        }),
+        columns: [
+          { key: 'Pin', label: 'Pin' },
+          { key: 'State', label: 'State', render: function(val) {
+            return bw.makeBadge({ text: val, variant: val === 'HIGH' ? 'success' : 'secondary', pill: true });
+          }},
+          { key: 'Logic', label: 'Logic Level' }
+        ],
+        striped: true,
+        hover: true
+      });
+
+      bw.DOM('#app', bw.makeContainer({
+        className: 'bw_py_3',
+        children: [
+          connected ? null : bw.makeAlert({
+            content: 'Connecting to ' + state.board + '...',
+            variant: 'warning'
+          }),
+          { t: 'h1', a: { class: 'bw_h4 bw_mb_3' }, c: 'Raspberry Pi ' + state.board + ' Dashboard' },
+          sysCards,
+          bw.makeRow({
+            children: [
+              bw.makeCol({ size: { xs: 12, md: 4 }, content: ledSection }),
+              bw.makeCol({ size: { xs: 12, md: 8 }, content:
+                bw.makeSection({ title: 'ADC Channels (12-bit, 0-3.3V)', content: [bw.makeRow({ children: adcCards })] })
+              })
+            ]
+          }),
+          bw.makeSection({ title: 'PWM Outputs (GP0-GP3)', content: [bw.makeRow({ children: pwmControls })] }),
+          bw.makeSection({ title: 'GPIO Outputs GP8-GP15', content: [bw.makeRow({ children: gpioButtons })] }),
+          bw.makeSection({ title: 'Digital Inputs (GP4-GP7)', content: [diTable] }),
+          bw.makeSection({
+            title: 'Event Log',
+            content: [bw.makeListGroup({
+              items: logEntries.length ? logEntries : ['Waiting for events...']
+            })]
+          })
+        ].filter(Boolean)
+      }));
+    }
+
+    // -- Start --------------------------------------------------------------
+    addLog('Connecting to device...');
+    render();
+    connectSSE();
+  </script>
+</body>
+</html>

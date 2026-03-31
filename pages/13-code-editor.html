@@ -6,8 +6,8 @@
   <title>Bitwrench - Code Editor</title>
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
@@ -15,13 +15,14 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('13-code-editor.html');
+    var styles = initBitwrenchPage('13-code-editor.html');
+    var p = styles.palette;
 
     // =========================================================================
     // Build the page structure as TACO
     // =========================================================================
     var pageHeader = {
-      t: 'div', a: { class: 'page-header' },
+      t: 'div', a: { class: 'bw_site_pages_header' },
       c: {
         t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
         c: [
@@ -36,11 +37,11 @@
       c: [
         // Overview
         {
-          t: 'div', a: { class: 'demo-section' },
+          t: 'div', a: { class: 'bw_site_pages_demo' },
           c: [
-            { t: 'h2', c: 'Overview' },
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Overview' },
             {
-              t: 'div', a: { class: 'demo-content' },
+              t: 'div', a: { class: 'bw_site_pages_demo_body' },
               c: [
                 {
                   t: 'p',
@@ -54,9 +55,9 @@
                   ]
                 },
                 {
-                  t: 'div', a: { class: 'callout callout-concept' },
+                  t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' },
                   c: [
-                    { t: 'h4', c: 'Scope' },
+                    { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Scope' },
                     {
                       t: 'p',
                       c: [
@@ -74,11 +75,11 @@
 
         // Installation
         {
-          t: 'div', a: { class: 'demo-section' },
+          t: 'div', a: { class: 'bw_site_pages_demo' },
           c: [
-            { t: 'h2', c: 'Installation' },
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Installation' },
             {
-              t: 'div', a: { class: 'demo-content' },
+              t: 'div', a: { class: 'bw_site_pages_demo_body' },
               c: [
                 { t: 'h3', c: 'Browser (script tag)' },
                 {
@@ -105,11 +106,11 @@
 
         // bw.highlight()
         {
-          t: 'div', a: { class: 'demo-section' },
+          t: 'div', a: { class: 'bw_site_pages_demo' },
           c: [
-            { t: 'h2', c: 'bw.highlight(code, lang)' },
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'bw.highlight(code, lang)' },
             {
-              t: 'div', a: { class: 'demo-content' },
+              t: 'div', a: { class: 'bw_site_pages_demo_body' },
               c: [
                 {
                   t: 'p',
@@ -138,11 +139,11 @@
 
         // bw.codeEditor()
         {
-          t: 'div', a: { class: 'demo-section' },
+          t: 'div', a: { class: 'bw_site_pages_demo' },
           c: [
-            { t: 'h2', c: 'bw.codeEditor(opts)' },
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'bw.codeEditor(opts)' },
             {
-              t: 'div', a: { class: 'demo-content' },
+              t: 'div', a: { class: 'bw_site_pages_demo_body' },
               c: [
                 {
                   t: 'p',
@@ -192,11 +193,11 @@
 
         // API Reference
         {
-          t: 'div', a: { class: 'demo-section' },
+          t: 'div', a: { class: 'bw_site_pages_demo' },
           c: [
-            { t: 'h2', c: 'API Reference' },
+            { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'API Reference' },
             {
-              t: 'div', a: { class: 'demo-content' },
+              t: 'div', a: { class: 'bw_site_pages_demo_body' },
               c: [
                 { t: 'div', a: { id: 'api-table' } }
               ]

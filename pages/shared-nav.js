@@ -424,8 +424,8 @@
 
       // Append shared site footer via bw.DOM on body
       var footerTaco = {
-        t: 'footer', a: { class: 'bw_site_footer_shared' },
-        c: { t: 'p', c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
+        t: 'footer', a: { class: 'bw_site_pages_footer' },
+        c: { t: 'p', a: { class: 'bw_site_pages_footer_text' }, c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
       };
       var body = bw.$('body');
       if (body.length) {
@@ -434,13 +434,6 @@
     }
   }
 
-  function initBitwrenchPage(currentPage, baseHref) {
-    mountExampleNav('#example-nav', currentPage, baseHref);
-    bw.loadStyles();
-    applySiteStyles();
-  }
-
   window.createExampleNav = createExampleNav;
   window.mountExampleNav = mountExampleNav;
-  window.initBitwrenchPage = initBitwrenchPage;
 })();

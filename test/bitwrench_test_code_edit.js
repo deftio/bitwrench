@@ -445,6 +445,170 @@ describe('install', function() {
 // 7. Integration tests
 // =========================================================================
 
+// =========================================================================
+// 6b. install wrapper behavior (lines 662-664)
+// =========================================================================
+
+describe('install wrapper - ensureCSS and codeEditor call', function() {
+  it('should call ensureCSS and return TACO when bw.codeEditor is invoked', function() {
+    freshDOM();
+    var injected = false;
+    var fakeBw = {
+      injectCSS: function() { injected = true; }
+    };
+    install(fakeBw);
+    assert.strictEqual(typeof fakeBw.codeEditor, 'function');
+    // Call the wrapper to exercise ensureCSS(bw) and codeEditor(opts)
+    var result = fakeBw.codeEditor({ code: 'var x = 1;', lang: 'js' });
+    assert.ok(result, 'should return a TACO');
+    assert.strictEqual(result.t, 'div');
+    assert.ok(result.a.class.includes('bw_ce'));
+  });
+
+  it('install(null) should not throw', function() {
+    install(null);
+  });
+
+  it('install(undefined) should not throw', function() {
+    install(undefined);
+  });
+});
+
+// =========================================================================
+// 6c. Tab key handler (lines 648-651)
+// =========================================================================
+
+describe('codeEditor Tab key handler', function() {
+  beforeEach(function() {
+    freshDOM();
+  });
+
+  it('should attach keydown handler that intercepts Tab', function() {
+    var taco = codeEditor({ code: 'var x = 1;', lang: 'js' });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    // Fire mounted to set up event listeners
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var codeEl = el.querySelector('.bw_ce_code');
+    assert.ok(codeEl, 'should find code element');
+
+    // Simulate Tab keydown
+    var prevented = false;
+    var event = new window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    // Override preventDefault to track it
+    var origPD = event.preventDefault;
+    event.preventDefault = function() { prevented = true; if (origPD) origPD.call(event); };
+    codeEl.dispatchEvent(event);
+    assert.ok(prevented, 'Tab should call preventDefault');
+  });
+
+  it('should not intercept non-Tab keys', function() {
+    var taco = codeEditor({ code: 'hello', lang: 'js' });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var codeEl = el.querySelector('.bw_ce_code');
+    var prevented = false;
+    var event = new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    event.preventDefault = function() { prevented = true; };
+    codeEl.dispatchEvent(event);
+    assert.ok(!prevented, 'Enter should not call preventDefault');
+  });
+});
+
+// =========================================================================
+// 6d. Rehighlight via input event (lines 630-643)
+// =========================================================================
+
+describe('codeEditor rehighlight via input', function() {
+  beforeEach(function() {
+    freshDOM();
+    // Ensure bw is on window for the mounted hook to find it
+    global.window.bw = bw;
+  });
+
+  it('should rehighlight code on input event after debounce', function(done) {
+    var changed = false;
+    var taco = codeEditor({
+      code: 'var x = 1;',
+      lang: 'js',
+      onChange: function(newCode) { changed = true; }
+    });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var codeEl = el.querySelector('.bw_ce_code');
+    assert.ok(codeEl, 'should find code element');
+
+    // Modify the text content to trigger rehighlight
+    codeEl.textContent = 'var y = 2;';
+    // Dispatch input event
+    var event = new window.Event('input', { bubbles: true });
+    codeEl.dispatchEvent(event);
+
+    // Wait for debounce (50ms + margin)
+    setTimeout(function() {
+      assert.ok(changed, 'onChange should have been called');
+      done();
+    }, 100);
+  });
+
+  it('should not call onChange if code is unchanged', function(done) {
+    var changeCount = 0;
+    var taco = codeEditor({
+      code: 'var x = 1;',
+      lang: 'js',
+      onChange: function() { changeCount++; }
+    });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var codeEl = el.querySelector('.bw_ce_code');
+    // Don't change the text, just dispatch input
+    var event = new window.Event('input', { bubbles: true });
+    codeEl.dispatchEvent(event);
+
+    setTimeout(function() {
+      assert.strictEqual(changeCount, 0, 'should not call onChange when code is the same');
+      done();
+    }, 100);
+  });
+});
+
+// =========================================================================
+// 6e. Scroll sync (lines 618-625)
+// =========================================================================
+
+describe('codeEditor scroll sync with lineNumbers', function() {
+  beforeEach(function() {
+    freshDOM();
+    global.window.bw = bw;
+  });
+
+  it('should set up scroll handlers when lineNumbers enabled', function() {
+    var taco = codeEditor({ code: 'line1\nline2\nline3', lang: 'js', lineNumbers: true });
+    var el = bw.createDOM(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    var gutterEl = el.querySelector('.bw_ce_gutter');
+    assert.ok(gutterEl, 'should have gutter element');
+
+    // Dispatch scroll event on parent to trigger sync
+    var scrollEvt = new window.Event('scroll', { bubbles: true });
+    el.dispatchEvent(scrollEvt);
+    // Just verify no error thrown -- jsdom doesn't fully support scrollTop
+  });
+});
+
+// =========================================================================
+// 7. Integration tests
+// =========================================================================
+
 describe('Integration: codeEditor with jsdom', function() {
   beforeEach(function() {
     freshDOM();

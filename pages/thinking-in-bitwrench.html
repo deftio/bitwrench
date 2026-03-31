@@ -7,8 +7,8 @@
   <meta name="description" content="A guide to building web UIs with plain JavaScript objects — the bitwrench design philosophy.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
-  <script src="shared-theme.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
 </head>
 <body>
@@ -16,17 +16,18 @@
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('thinking-in-bitwrench.html');
+    var styles = initBitwrenchPage('thinking-in-bitwrench.html');
+    var p = styles.palette;
 
     // Page-specific styles for markdown content.
     // The .doc-card container is a card (demo-section pattern).
     // h2 headings use the same callout-concept accent as other pages.
     bw.injectCSS(bw.css({
       '.doc-card': {
-        background: 'var(--bw_card_bg)',
-        border: '1px solid var(--bw_card_border)',
-        'border-radius': 'var(--bw_radius)',
-        'box-shadow': 'var(--bw_card_shadow)',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
+        'box-shadow': '0 1px 3px rgba(0,0,0,0.08)',
         padding: '1.5rem',
         'margin-bottom': '1.5rem',
         overflow: 'hidden'
@@ -34,13 +35,13 @@
       '.doc-card h2': {
         'font-size': '1.15rem',
         'font-weight': '600',
-        color: 'var(--bw_text)',
+        color: p.dark.base,
         margin: '2rem -1.5rem 1rem',
         padding: '1rem 1.5rem',
-        background: 'var(--bw_teal_bg)',
-        'border-bottom': '1px solid var(--bw_card_border)',
-        'border-top': '1px solid var(--bw_card_border)',
-        'border-left': '4px solid var(--bw_teal)'
+        background: p.surfaceAlt,
+        'border-bottom': '1px solid ' + p.light.border,
+        'border-top': '1px solid ' + p.light.border,
+        'border-left': '4px solid ' + p.primary.base
       },
       '.doc-card h2:first-child': {
         'margin-top': '-1.5rem',
@@ -66,11 +67,11 @@
       },
       '.doc-card blockquote': {
         'padding': '1rem 1.25rem',
-        'border-radius': 'var(--bw_radius)',
+        'border-radius': '8px',
         margin: '1rem 0',
         'font-size': '0.9rem',
-        background: 'var(--bw_teal_light)',
-        'border-left': '4px solid var(--bw_teal)',
+        background: p.primary.light,
+        'border-left': '4px solid ' + p.primary.base,
         'font-style': 'normal'
       },
       '.doc-card blockquote p': {
@@ -95,24 +96,24 @@
         'max-width': '100%'
       },
       '.doc-card th': {
-        background: 'var(--bw_teal_bg)',
-        color: 'var(--bw_text)',
+        background: p.surfaceAlt,
+        color: p.dark.base,
         padding: '0.6rem 0.75rem',
         'text-align': 'left',
         'font-weight': '600',
         'font-size': '0.8125rem',
-        'border-bottom': '2px solid var(--bw_card_border)'
+        'border-bottom': '2px solid ' + p.light.border
       },
       '.doc-card td': {
         padding: '0.5rem 0.75rem',
-        'border-bottom': '1px solid var(--bw_card_border)'
+        'border-bottom': '1px solid ' + p.light.border
       },
       '.doc-card tr:nth-child(even) td': {
         background: 'rgba(0,0,0,0.02)'
       },
       '.doc-card hr': {
         border: 'none',
-        'border-top': '1px solid var(--bw_card_border)',
+        'border-top': '1px solid ' + p.light.border,
         margin: '2rem 0'
       }
     }), { id: 'thinking-page-styles' });
@@ -122,7 +123,7 @@
       t: 'div',
       c: [
         {
-          t: 'div', a: { class: 'page-header' },
+          t: 'div', a: { class: 'bw_site_pages_header' },
           c: {
             t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' },
             c: [
@@ -133,7 +134,7 @@
         },
         { t: 'div', a: { class: 'content-container wide' },
           c: { t: 'div', a: { class: 'doc-card', id: 'doc-content' },
-            c: { t: 'p', a: { style: 'color:var(--bw_text_secondary)' }, c: 'Loading...' }
+            c: { t: 'p', a: { style: 'color:#444' }, c: 'Loading...' }
           }
         }
       ]

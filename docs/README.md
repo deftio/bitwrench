@@ -13,6 +13,7 @@ These guides cover how to build UIs with bitwrench.
 | How do I theme my app? | [Theming](theming.md) |
 | I'm an LLM generating bitwrench code | [LLM Guide](llm-bitwrench-guide.md) |
 | How do I use bwmcp with an AI agent? | [bwmcp MCP Server](bitwrench-mcp.md) |
+| How do I use TypeScript? | [TypeScript Usage Guide](bitwrench_typescript_usage.md) |
 | Full API with signatures? | [API Reference](bitwrench_api.md) |
 
 ## Start Here
@@ -27,8 +28,8 @@ These guides cover how to build UIs with bitwrench.
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
 | [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
-| [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all 50+ components with capabilities and handles |
-| [Component Library](component-library.md) | All 50+ `make*()` functions with full signatures and examples |
+| [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all components with capabilities and handles |
+| [Component Library](component-library.md) | All `make*()` functions with full signatures and examples |
 | [Routing](routing.md) | Client-side router: hash/history mode, route params, guards, pub/sub |
 | [Theming](theming.md) | Palette-driven theme generation, presets, design tokens |
 | [CLI](cli.md) | The `bwcli` command: file conversion, themes, standalone pages |
@@ -36,6 +37,7 @@ These guides cover how to build UIs with bitwrench.
 | [bwcli attach](bw-attach.md) | Remote debugging REPL: terminal-based inspector for any bitwrench page |
 | [App Patterns](app-patterns.md) | Canonical project layouts: dashboard, SPA, bwserve, embedded, static site |
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
+| [TypeScript Usage Guide](bitwrench_typescript_usage.md) | Import patterns, typed configs, TACO types, tree-shaking |
 | [bwmcp MCP Server](bitwrench-mcp.md) | MCP server for AI agents: tool catalog, live rendering, screenshots |
 
 ## Tutorials
@@ -69,7 +71,7 @@ Bitwrench describes UI as plain JavaScript objects. There is no JSX, no template
 The library provides four things:
 
 1. **A rendering engine** that turns objects into HTML or DOM
-2. **A component library** of 50+ ready-made UI elements
+2. **A component library** of ready-made UI elements
 3. **A reactivity system** that updates the DOM when state changes
 4. **A client-side router** that maps URLs to views with guards and pub/sub
 

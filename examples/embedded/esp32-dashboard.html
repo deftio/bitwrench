@@ -15,19 +15,20 @@
 
   <script>
     // =====================================================================
-    // ESP32 IoT Dashboard — Embedded Device UI
+    // ESP32 IoT Dashboard -- Real-Time Embedded Device UI
     //
-    // This HTML page is served by an ESP32 microcontroller. The device:
-    //   1. Serves this static HTML page on GET /
-    //   2. Provides sensor data via GET /api/sensors (JSON)
-    //   3. Pushes real-time updates via SSE on GET /events
-    //   4. Accepts commands via POST /api/command
+    // Served by an ESP32 microcontroller. Endpoints (from sketch.ino):
+    //   GET  /             -- this HTML page (from SPIFFS)
+    //   GET  /events       -- SSE sensor data stream (every 2s)
+    //   POST /api/command  -- JSON {cmd, val} for LED/restart
+    //   GET  /api/sensors  -- one-shot JSON sensor reading
     //
-    // bitwrench renders all UI from JSON data — the ESP32 never generates HTML.
+    // bitwrench renders all UI from JSON data -- the ESP32 never generates HTML.
     // Total HTML payload: ~5KB (the device only serves this file + bitwrench assets).
     //
-    // For development without hardware, this page includes a mock data source
-    // that simulates the ESP32 endpoints.
+    // Without a real ESP32 connected, the dashboard shows "Connecting..." and
+    // the event log records SSE connection failures. This is correct behavior --
+    // no fake data is generated.
     // =====================================================================
 
     bw.loadStyles({
@@ -83,35 +84,10 @@
     }));
 
     // =====================================================================
-    // Mock ESP32 data source (replace with real fetch() in production)
-    // =====================================================================
-    var mockSensors = {
-      temperature: 23.5,
-      humidity: 45.2,
-      pressure: 1013.25,
-      light: 680,
-      uptime: 0,
-      heap: 245760,
-      wifi_rssi: -42
-    };
-
-    function updateMockSensors() {
-      mockSensors.temperature += (Math.random() - 0.48) * 0.5;
-      mockSensors.humidity += (Math.random() - 0.5) * 2;
-      mockSensors.humidity = Math.max(20, Math.min(95, mockSensors.humidity));
-      mockSensors.pressure += (Math.random() - 0.5) * 0.5;
-      mockSensors.light = Math.max(0, Math.min(1023, mockSensors.light + Math.floor((Math.random() - 0.5) * 50)));
-      mockSensors.uptime += 2;
-      mockSensors.heap = 245760 - Math.floor(Math.random() * 8192);
-      mockSensors.wifi_rssi = -40 - Math.floor(Math.random() * 20);
-      return JSON.parse(JSON.stringify(mockSensors));
-    }
-
-    // =====================================================================
     // UI Rendering
     // =====================================================================
     var logEntries = [];
-    var isConnected = true;
+    var isConnected = false;
 
     function addLog(msg) {
       var ts = new Date().toLocaleTimeString();
@@ -149,6 +125,16 @@
       var m = Math.floor((seconds % 3600) / 60);
       var s = seconds % 60;
       return h + 'h ' + m + 'm ' + s + 's';
+    }
+
+    function renderStatus() {
+      bw.DOM('#conn-status', {
+        t: 'div', a: { id: 'conn-status' },
+        c: [
+          { t: 'span', a: { class: 'status-dot ' + (isConnected ? 'online' : 'offline') } },
+          { t: 'span', c: isConnected ? 'Connected' : 'Disconnected' }
+        ]
+      });
     }
 
     function renderSensors(data) {
@@ -196,10 +182,7 @@
         // Header
         { t: 'div', a: { class: 'iot-header' }, c: [
           { t: 'h1', c: '\uD83D\uDD27 ESP32 Sensor Dashboard' },
-          { t: 'div', a: { id: 'conn-status' }, c: [
-            { t: 'span', a: { class: 'status-dot online' } },
-            { t: 'span', c: 'Connected' }
-          ]}
+          { t: 'div', a: { id: 'conn-status' } }
         ]},
 
         // Sensor cards
@@ -225,51 +208,66 @@
     });
 
     // =====================================================================
-    // Data loop (mock SSE — in production, use EventSource('/events'))
+    // Device communication (real ESP32 endpoints only)
     // =====================================================================
     function sendCommand(cmd, val) {
-      // In production: fetch('/api/command', { method: 'POST', body: JSON.stringify({cmd, val}) })
       addLog('CMD: ' + cmd + '=' + val);
       renderLog();
+      fetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: cmd, val: val })
+      })
+      .then(function(resp) { return resp.json(); })
+      .then(function(result) {
+        if (result.ok) {
+          addLog('Command OK: ' + cmd);
+        } else {
+          addLog('Command rejected: ' + (result.error || 'unknown'));
+        }
+        renderLog();
+      })
+      .catch(function(err) {
+        addLog('Command failed: ' + err.message);
+        renderLog();
+      });
     }
 
-    addLog('Dashboard initialized');
-    var data = updateMockSensors();
-    renderSensors(data);
+    function connectSSE() {
+      var es = new EventSource('/events');
+
+      es.onmessage = function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          if (!isConnected) {
+            isConnected = true;
+            addLog('ESP32 connected');
+            renderStatus();
+          }
+          renderSensors(data);
+          addLog('Sensor update: T=' + data.temperature.toFixed(1) + '\u00B0C H=' + data.humidity.toFixed(0) + '%');
+          renderLog();
+        } catch (err) {
+          addLog('SSE parse error: ' + err.message);
+          renderLog();
+        }
+      };
+
+      es.onerror = function() {
+        if (isConnected) {
+          isConnected = false;
+          addLog('SSE connection lost -- reconnecting...');
+          renderStatus();
+          renderLog();
+        }
+      };
+    }
+
+    // -- Bootstrap --------------------------------------------------------
+    addLog('Connecting to ESP32...');
+    renderStatus();
     renderLog();
-
-    // Simulate SSE updates every 2 seconds
-    setInterval(function() {
-      if (!isConnected) return;
-      var data = updateMockSensors();
-      renderSensors(data);
-      addLog('Sensor update: T=' + data.temperature.toFixed(1) + '\u00B0C H=' + data.humidity.toFixed(0) + '%');
-      renderLog();
-    }, 2000);
-
-    // =====================================================================
-    // Production notes (commented out):
-    //
-    //   // Real SSE connection to ESP32:
-    //   // var es = new EventSource('/events');
-    //   // es.onmessage = function(e) {
-    //   //   var data = JSON.parse(e.data);
-    //   //   renderSensors(data);
-    //   //   addLog('Update: T=' + data.temperature.toFixed(1));
-    //   //   renderLog();
-    //   // };
-    //
-    //   // Real command POST:
-    //   // function sendCommand(cmd, val) {
-    //   //   fetch('/api/command', {
-    //   //     method: 'POST',
-    //   //     headers: { 'Content-Type': 'application/json' },
-    //   //     body: JSON.stringify({ cmd: cmd, val: val })
-    //   //   });
-    //   //   addLog('CMD: ' + cmd + '=' + val);
-    //   //   renderLog();
-    //   // }
-    // =====================================================================
+    connectSSE();
   </script>
 </body>
 </html>

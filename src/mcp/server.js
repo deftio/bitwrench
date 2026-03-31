@@ -204,13 +204,13 @@ export function run(argv) {
   var server = createMcpServer(opts);
   server.listen();
 
-  // Clean shutdown
-  process.on('SIGINT', function() {
+  // Clean shutdown (once -- don't accumulate listeners across calls)
+  function onSignal() {
     server.close();
     process.exit(0);
-  });
-  process.on('SIGTERM', function() {
-    server.close();
-    process.exit(0);
-  });
+  }
+  process.once('SIGINT', onSignal);
+  process.once('SIGTERM', onSignal);
+
+  return server;
 }

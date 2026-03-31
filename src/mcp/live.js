@@ -76,9 +76,11 @@ export function getApp() {
  */
 export function stopLive() {
   if (_app) {
-    _app.close();
+    var p = _app.close();
     _app = null;
+    return p;
   }
+  return Promise.resolve();
 }
 
 /**
