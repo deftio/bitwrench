@@ -3,11 +3,11 @@
  *
  * Tests cover:
  * - Registration on createDOM (bw_uuid_* class, id attribute)
- * - bw._el() lookup: cache hit, cache miss with fallback, stale cleanup
+ * - bw.el() lookup: cache hit, cache miss with fallback, stale cleanup
  * - bw._registerNode / bw._deregisterNode
  * - bw.cleanup() removes entries
  * - bw.DOM() re-render preserves mount point, clears old children
- * - bw.patch / bw.update / bw.emit / bw.on use bw._el()
+ * - bw.patch / bw.update / bw.emit / bw.on use bw.el()
  * - _bw_refs: local parent->child refs for fast access in o.render
  * - Bulk add/remove stress test
  * - Stale ref detection via parentNode check
@@ -50,24 +50,24 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // --- bw._el() lookup ---
+  // --- bw.el() lookup ---
 
-  describe('bw._el() lookup', function() {
+  describe('bw.el() lookup', function() {
     it('should pass through DOM elements', function() {
       var div = document.createElement('div');
-      assert.strictEqual(bw._el(div), div);
+      assert.strictEqual(bw.el(div), div);
     });
 
     it('should return null for null/undefined', function() {
-      assert.strictEqual(bw._el(null), null);
-      assert.strictEqual(bw._el(undefined), null);
-      assert.strictEqual(bw._el(''), null);
+      assert.strictEqual(bw.el(null), null);
+      assert.strictEqual(bw.el(undefined), null);
+      assert.strictEqual(bw.el(''), null);
     });
 
     it('should find element by id attribute from cache', function() {
       var el = bw.createDOM({ t: 'div', a: { id: 'test-id' }, c: 'hello' });
       document.body.appendChild(el);
-      assert.strictEqual(bw._el('test-id'), el);
+      assert.strictEqual(bw.el('test-id'), el);
     });
 
     it('should find element by UUID class from cache', function() {
@@ -76,7 +76,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       document.body.appendChild(el);
       var uuid = bw.getUUID(el);
       assert.ok(uuid, 'should have bw_uuid_* class');
-      assert.strictEqual(bw._el(uuid), el);
+      assert.strictEqual(bw.el(uuid), el);
     });
 
     it('should fall back to getElementById on cache miss', function() {
@@ -85,7 +85,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       el.id = 'manual-el';
       document.body.appendChild(el);
       // Not in cache, but getElementById should find it
-      assert.strictEqual(bw._el('manual-el'), el);
+      assert.strictEqual(bw.el('manual-el'), el);
       // And now it should be cached
       assert.strictEqual(bw._nodeMap['manual-el'], el);
     });
@@ -94,14 +94,14 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       var el = document.createElement('div');
       el.id = 'hash-test';
       document.body.appendChild(el);
-      assert.strictEqual(bw._el('#hash-test'), el);
+      assert.strictEqual(bw.el('#hash-test'), el);
     });
 
     it('should fall back to querySelector for . selectors', function() {
       var el = document.createElement('div');
       el.className = 'dot-test';
       document.body.appendChild(el);
-      assert.strictEqual(bw._el('.dot-test'), el);
+      assert.strictEqual(bw.el('.dot-test'), el);
     });
 
     it('should find element by bw_uuid_* class fallback', function() {
@@ -110,31 +110,31 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       el.classList.add(uuid);
       document.body.appendChild(el);
       // Not in cache, should fall back to class selector
-      assert.strictEqual(bw._el(uuid), el);
+      assert.strictEqual(bw.el(uuid), el);
       // Should now be cached
       assert.strictEqual(bw._nodeMap[uuid], el);
     });
 
     it('should return null when element not found anywhere', function() {
-      assert.strictEqual(bw._el('nonexistent'), null);
+      assert.strictEqual(bw.el('nonexistent'), null);
     });
 
     it('should detect and remove stale cache entries', function() {
       var el = bw.createDOM({ t: 'div', a: { id: 'stale-test' }, c: 'x' });
       document.body.appendChild(el);
       // Verify it's cached
-      assert.strictEqual(bw._el('stale-test'), el);
+      assert.strictEqual(bw.el('stale-test'), el);
       // Remove element outside bitwrench (behind our backs)
       el.remove();
       // Now lookup should detect stale (parentNode === null) and remove
-      assert.strictEqual(bw._el('stale-test'), null);
+      assert.strictEqual(bw.el('stale-test'), null);
       assert.strictEqual(bw._nodeMap['stale-test'], undefined);
     });
 
     it('should update cache when stale entry is replaced by new element', function() {
       var el1 = bw.createDOM({ t: 'div', a: { id: 'replace-test' }, c: 'v1' });
       document.body.appendChild(el1);
-      assert.strictEqual(bw._el('replace-test'), el1);
+      assert.strictEqual(bw.el('replace-test'), el1);
       // Remove old, add new with same id
       el1.remove();
       var el2 = document.createElement('div');
@@ -142,7 +142,7 @@ describe('Node Map Cache (bw._nodeMap)', function() {
       el2.textContent = 'v2';
       document.body.appendChild(el2);
       // Should find new element via fallback and update cache
-      assert.strictEqual(bw._el('replace-test'), el2);
+      assert.strictEqual(bw.el('replace-test'), el2);
       assert.strictEqual(bw._nodeMap['replace-test'], el2);
     });
   });
@@ -449,9 +449,9 @@ describe('Node Map Cache (bw._nodeMap)', function() {
     });
   });
 
-  // --- patch/update/emit/on use bw._el() ---
+  // --- patch/update/emit/on use bw.el() ---
 
-  describe('patch/update/emit/on use bw._el()', function() {
+  describe('patch/update/emit/on use bw.el()', function() {
     it('bw.patch should resolve via cache', function() {
       var el = bw.createDOM({ t: 'div', a: { id: 'patch-cache' }, c: '0' });
       document.body.appendChild(el);

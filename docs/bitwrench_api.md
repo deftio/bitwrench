@@ -4,27 +4,29 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.25 |
-| Generated | 2026-03-31 |
-| Total APIs | 100 |
-| Categories | 12 |
-| bitwrench.js | 3631 lines |
+| Version | 2.0.26 |
+| Generated | 2026-04-01 |
+| Total APIs | 105 |
+| Categories | 14 |
+| bitwrench.js | 4074 lines |
 | bitwrench-bccl.js | 3793 lines |
 
 ## Table of Contents
 
 - [Core](#core) (5)
 - [DOM Generation](#dom-generation) (10)
+- [DOM Selection](#dom-selection) (1)
 - [Identifiers](#identifiers) (4)
 - [State Management](#state-management) (3)
 - [Events (DOM)](#events-dom-) (2)
-- [Pub/Sub](#pub-sub) (3)
+- [Pub/Sub](#pub-sub) (4)
 - [CSS & Styling](#css-styling) (10)
 - [Component Builders](#component-builders) (50)
 - [Browser Utilities](#browser-utilities) (4)
 - [Utilities](#utilities) (1)
 - [Function Registry](#function-registry) (5)
-- [Component](#component) (3)
+- [Component](#component) (5)
+- [Data Utilities](#data-utilities) (1)
 
 ---
 
@@ -293,6 +295,28 @@ Get all registered component handles as a Map.
 
 ---
 
+## DOM Selection
+
+### `bw.el(target, apply)`
+
+Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optionally apply content or a function to the resolved element. Resolution order for string targets: 1. Check `bw._nodeMap[id]` cache (O(1), stale entries auto-pruned) 2. `document.getElementById(id)` 3. `document.querySelector(id)` for selectors starting with # or . 4. Class-based lookup for `bw_uuid_*` tokens With one argument, returns the element (or null). With two arguments, applies the second argument to the element and returns the element: - string/number: sets `el.textContent` - function: calls `apply(el)`, returns el - TACO object: clears children, mounts TACO via `bw.createDOM()` - array: clears children, appends each item (string -> text node, TACO -> element)
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `string|Element` | - Element ref, ID, CSS selector, or bw_uuid_* class |
+| `apply` | `string|number|Function|Object|Array` | - Content or function to apply |
+
+**Returns:** `Element|null` — DOM element, or null if not found
+
+**Example:**
+```javascript
+bw.el('#title')                         // lookup bw.el('#title', 'Hello')                // set text content bw.el('#app', { t: 'h1', c: 'Hi' })    // mount TACO bw.el('.card', function(el) {           // apply function el.style.opacity = '0.5'; })
+```
+
+---
+
 ## Identifiers
 
 ### `bw.uuid(prefix)`
@@ -479,41 +503,55 @@ bw.on(document.body, 'statechange', function(detail) { console.log('State change
 
 ### `bw.pub(topic, detail)`
 
-Publish to a topic, calling all subscribers in registration order. Application-scoped pub/sub decoupled from the DOM tree. Each subscriber is wrapped in try/catch so one bad handler can't break others. Use `bw.pub()`/`bw.sub()` for app-wide communication; use `bw.emit()`/`bw.on()` for DOM-scoped events.
+Publish to a topic, calling all exact-match and wildcard subscribers in registration order. Application-scoped pub/sub decoupled from the DOM tree. Each subscriber is wrapped in try/catch so one bad handler can't break others. Use `bw.pub()`/`bw.sub()` for app-wide communication; use `bw.emit()`/`bw.on()` for DOM-scoped events.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | - Topic name (plain string, no prefix) |
-| `detail` | `*` | - Data to pass to subscribers |
+| `topic` | `string` | Topic name (plain string, no prefix) |
+| `detail` | `*` | Data to pass to subscribers |
 
-**Returns:** `number` — of successfully called subscribers
+**Returns:** `number` -- count of successfully called subscribers (including wildcard matches)
 
 **Example:**
 ```javascript
 bw.pub('score:updated', { player: 'X', score: 10 });
+// Wildcard subscribers matching 'score:*' will also fire
 ```
 
 ---
 
 ### `bw.sub(topic, handler, el)`
 
-Subscribe to a topic. Returns an unsub() function. Optional third argument ties the subscription to a DOM element's lifecycle — when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
+Subscribe to a topic. Returns an unsub() function.
+
+Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. Bare `'*'` matches all topics. The handler receives `(detail, topic)` so it can distinguish which topic fired.
+
+Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | - Topic name |
-| `handler` | `Function` | - Called with (detail) on each publish |
-| `el` | `Element` | - Optional DOM element to tie lifecycle to |
+| `topic` | `string` | Topic name, or wildcard pattern ending in `*` |
+| `handler` | `Function` | Called with `(detail, topic)` on each publish |
+| `el` | `Element` | Optional DOM element to tie lifecycle to |
 
-**Returns:** `Function` — to unsubscribe
+**Returns:** `Function` -- call to unsubscribe
 
 **Example:**
 ```javascript
-var unsub = bw.sub('score:updated', function(detail) { console.log(detail.player, 'scored', detail.score); }); // Later: unsub() to stop listening
+// Exact match
+var unsub = bw.sub('score:updated', function(detail) {
+  console.log(detail.player, 'scored', detail.score);
+});
+// Later: unsub() to stop listening
+
+// Wildcard: listen to all 'score:' topics
+bw.sub('score:*', function(detail, topic) {
+  console.log('Got', topic, detail);
+});
 ```
 
 ---
@@ -526,10 +564,38 @@ Unsubscribe a handler by reference from a topic. Removes ALL instances of the gi
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | - Topic name |
-| `handler` | `Function` | - The handler to remove (by reference equality) |
+| `topic` | `string` | Topic name (or wildcard pattern) |
+| `handler` | `Function` | The handler to remove (by reference equality) |
 
-**Returns:** `number` — of removed subscriptions
+**Returns:** `number` -- count of removed subscriptions
+
+---
+
+### `bw.once(topic, handler, el)`
+
+Subscribe to a topic for a single event only. The subscription is automatically removed after the first publish. Equivalent to manually calling unsub() inside a bw.sub() handler, but avoids the common bug of forgetting to unsubscribe. Supports wildcard patterns (same as `bw.sub()`).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `topic` | `string` | Topic name, or wildcard pattern ending in `*` |
+| `handler` | `Function` | Called once with `(detail, topic)` on the next publish |
+| `el` | `Element` | Optional DOM element to tie lifecycle to |
+
+**Returns:** `Function` -- call to cancel the subscription before it fires
+
+**Example:**
+```javascript
+bw.once('data:loaded', function(detail) {
+  console.log('Received:', detail);
+  // No need to unsubscribe -- already done automatically
+});
+
+// Cancel before it fires:
+var cancel = bw.once('timeout', handler);
+cancel(); // handler will never be called
+```
 
 ---
 
@@ -694,21 +760,21 @@ bw.loadReset();  // inject once, safe to call multiple times
 
 ---
 
-### `bw.toggleStyles(scope)`
+### `bw.toggleThemeMode(scope)`
 
-Toggle between primary and alternate palettes. Adds/removes the `bw_theme_alt` class on the scoping element. Without a scope, toggles on `<html>` (global). With a scope, toggles on the first matching element.
+Toggle between primary and alternate theme palettes. Adds/removes the `bw_theme_alt` class on the scoping element(s). Without a scope, toggles on `<html>` (global). With a scope, toggles on ALL matching elements.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `scope` | `string` | - Scope selector (e.g. '#my-dashboard'). Omit for global. |
+| `scope` | `string|Element` | - Selector or element. Omit for global. |
 
-**Returns:** `string` — mode after toggle: 'primary' or 'alternate'
+**Returns:** `string` — mode after toggle: 'primary' or 'alternate' (based on first element)
 
 **Example:**
 ```javascript
-bw.toggleStyles();                   // global toggle on <html> bw.toggleStyles('#my-dashboard');    // scoped toggle
+bw.toggleThemeMode();                   // global toggle on <html> bw.toggleThemeMode('#my-dashboard');    // scoped toggle bw.toggleThemeMode('.panel');           // toggle on ALL .panel elements
 ```
 
 ---
@@ -2212,21 +2278,86 @@ bw.message('my_carousel', 'goToSlide', 2); // Or from SSE handler: es.onmessage 
 
 ---
 
-### `bw.inspect(target)`
+### `bw.formData(target)`
 
-Inspect a DOM element's bitwrench state, handle methods, and metadata. Works with DOM elements or CSS selectors.
+Collect form data from all input, select, and textarea elements within a container. Each element's `name` attribute (or `id` if no name) becomes a key in the returned object. This provides a lightweight alternative to the browser FormData API that returns a plain object suitable for JSON serialization or bw.pub(). Handles all standard HTML form controls: - text/number/email/etc inputs: string value - checkboxes: boolean (true/false) - radio buttons: string value of the checked radio (unchecked groups omitted) - multi-select: array of selected option values - textarea: string value Elements without both `name` and `id` attributes are silently skipped.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string|Element` | - Selector or DOM element |
+| `target` | `string|Element` | - CSS selector, UUID string, or DOM element |
 
-**Returns:** `Element|null` — element, or null if not found
+**Returns:** `Object` — object mapping field names to values
 
 **Example:**
 ```javascript
-bw.inspect('#my-carousel'); bw.inspect($0);
+// Given a form with name="email" input and name="agree" checkbox: var data = bw.formData('#signup-form'); // => { email: 'user@example.com', agree: true } // Collect and publish in one step: bw.pub('form:submit', bw.formData('#my-form')); // Works with any container, not just <form>: bw.pub('settings:changed', bw.formData('.settings-panel'));
+```
+
+---
+
+### `bw.inspect(target, depth)`
+
+Inspect a DOM element and its subtree, returning a plain-object representation with bitwrench metadata at each node. Useful for debugging, devtools, MCP/AG-UI tool discovery, and automated testing. Each node in the returned tree includes: - `tag` -- lowercase tag name (or '#text' for text nodes) - `id` -- element id (if set) - `uuid` -- bitwrench UUID class (if lifecycle-managed) - `type` -- component type from o.type (if set, e.g. 'card', 'tabs') - `classes` -- first 5 CSS classes (string, space-separated) - `handles` -- array of el.bw method names (if any) - `state` -- copy of _bw_state (if any) - `hasRender` -- true if _bw_render is set - `hasSubs` -- true if element has pub/sub subscriptions - `refs` -- copy of _bw_refs keys (if any) - `children` -- array of child node trees (up to depth limit, max 50 per level)
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `string|Element` | - CSS selector, UUID, or DOM element |
+| `depth` | `number` | - Maximum recursion depth (0 = target only, no children) |
+
+**Returns:** `Object|null` — object tree, or null if element not found
+
+**Example:**
+```javascript
+// Get full tree from #app, 3 levels deep (default): var info = bw.inspect('#app'); // Shallow inspection (just the element, no children): var info = bw.inspect('#my-carousel', 0); console.log(info.handles); // ['next', 'prev', 'goToSlide'] console.log(info.type);    // 'carousel' // Deep inspection for debugging: console.log(JSON.stringify(bw.inspect('#app', 5), null, 2));
+```
+
+---
+
+### `bw.catalog(type)`
+
+Query the BCCL component registry. Returns metadata about registered component types -- their names and factory function names. Useful for tooling, introspection, documentation generators, and auto-complete systems (including MCP/AG-UI tool discovery). With no arguments, returns an array of all registered component types. With a type name, returns metadata for that single type (or null if the type is not registered).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `type` | `string` | - Optional component type name to look up |
+
+**Returns:** `Array<Object>|Object|null` — of {type, factory} objects, a single {type, factory} object, or null if the type is not found
+
+**Example:**
+```javascript
+// List all available component types: bw.catalog(); // => [{ type: 'card', factory: 'makeCard' }, //     { type: 'button', factory: 'makeButton' }, ...] // Look up a specific type: bw.catalog('accordion'); // => { type: 'accordion', factory: 'makeAccordion' } // Check if a type exists: if (bw.catalog('chart')) { ... } // Get just the type names: bw.catalog().map(function(c) { return c.type; }); // => ['card', 'button', 'container', 'row', ...]
+```
+
+---
+
+## Data Utilities
+
+### `bw.jsonPatch(obj, ops)`
+
+Apply RFC 6902 JSON Patch operations to a plain object. Supported operations: add, remove, replace, move, copy, test. Paths use JSON Pointer (RFC 6901) notation: `/foo/bar/0`. Mutates the target object in place and returns it.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `obj` | `Object` | - Target object to patch |
+| `ops` | `Array<Object>` | - Array of patch operations |
+| `ops[].op` | `string` | - Operation: 'add', 'remove', 'replace', 'move', 'copy', 'test' |
+| `ops[].path` | `string` | - JSON Pointer path (e.g. '/a/b/0') |
+| `ops[].value` | `*` | - Value for add/replace/test |
+| `ops[].from` | `string` | - Source path for move/copy |
+
+**Returns:** `Object` — patched object (same reference)
+
+**Example:**
+```javascript
+var obj = { a: 1, b: { c: 2 } }; bw.jsonPatch(obj, [ { op: 'replace', path: '/a', value: 10 }, { op: 'add', path: '/b/d', value: 3 }, { op: 'remove', path: '/b/c' } ]); // obj => { a: 10, b: { d: 3 } }
 ```
 
 ---

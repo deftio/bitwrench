@@ -1494,3 +1494,250 @@ describe("serve startServer() useStdin=false path", function() {
         }, 50);
     });
 });
+
+// ===================================================================================
+// startServer() useStdin=false path with real startInputServer (lines 392-394)
+// ===================================================================================
+
+describe("serve startServer() useStdin=false with real input server", function() {
+    var origError, errors;
+    var origStdin, fakeStdin;
+
+    beforeEach(function() {
+        origError = console.error;
+        errors = [];
+        console.error = function() {
+            errors.push(Array.prototype.slice.call(arguments).join(' '));
+        };
+        origStdin = process.stdin;
+        fakeStdin = new PassThrough();
+        fakeStdin.setEncoding = function() {};
+        Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+    });
+
+    afterEach(function() {
+        console.error = origError;
+        Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+    });
+
+    it("should call startInputServer when useStdin is false (lines 392-394)", function(done) {
+        this.timeout(5000);
+        var inputServerCreated = false;
+        var pageHandlers = [];
+        var mockApp = {
+            _clients: new Map(),
+            page: function(path, handler) { pageHandlers.push({ path: path, handler: handler }); },
+            listen: function(cb) { if (cb) setImmediate(cb); },
+            close: function() { return Promise.resolve(); },
+            broadcast: function() { return 0; },
+            _pageHandlers: pageHandlers
+        };
+        var mockBwserve = {
+            create: function() { return mockApp; },
+            _app: mockApp
+        };
+
+        startServer(mockBwserve, {
+            dir: '.',
+            webPort: 8080,
+            listenPort: 0, // port 0 to avoid conflicts
+            useStdin: false, // THIS is the key -- exercises lines 392-394
+            theme: null,
+            title: 'test-no-stdin',
+            verbose: false,
+            open: false,
+            allowExec: false
+        });
+
+        setTimeout(function() {
+            assert.ok(errors.some(function(l) { return l.indexOf('Input port') >= 0; }),
+              'should log Input port message when useStdin=false');
+            done();
+        }, 100);
+    });
+});
+
+// ===================================================================================
+// startServer() --open flag (lines 400-405)
+// ===================================================================================
+
+describe("serve startServer() open flag", function() {
+    var origError, errors;
+    var origStdin, fakeStdin;
+
+    beforeEach(function() {
+        origError = console.error;
+        errors = [];
+        console.error = function() {
+            errors.push(Array.prototype.slice.call(arguments).join(' '));
+        };
+        origStdin = process.stdin;
+        fakeStdin = new PassThrough();
+        fakeStdin.setEncoding = function() {};
+        Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+    });
+
+    afterEach(function() {
+        console.error = origError;
+        Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+    });
+
+    it("should attempt to open browser when open=true (lines 400-405)", function(done) {
+        this.timeout(5000);
+        var pageHandlers = [];
+        var mockApp = {
+            _clients: new Map(),
+            page: function(path, handler) { pageHandlers.push({ path: path, handler: handler }); },
+            listen: function(cb) { if (cb) setImmediate(cb); },
+            close: function() { return Promise.resolve(); },
+            broadcast: function() { return 0; },
+            _pageHandlers: pageHandlers
+        };
+        var mockBwserve = {
+            create: function() { return mockApp; },
+            _app: mockApp
+        };
+
+        startServer(mockBwserve, {
+            dir: '.',
+            webPort: 8080,
+            listenPort: 9000,
+            useStdin: true,
+            theme: null,
+            title: 'test-open',
+            verbose: false,
+            open: true, // THIS exercises lines 400-405
+            allowExec: false
+        });
+
+        // The open flag triggers a dynamic import('node:child_process') which runs async
+        // We just need to verify it doesn't crash and the startup messages are logged
+        setTimeout(function() {
+            assert.ok(errors.some(function(l) { return l.indexOf('Ready') >= 0; }),
+              'should print Ready message even with open=true');
+            done();
+        }, 200);
+    });
+});
+
+// ===================================================================================
+// runServe() successful import path (lines 338-348)
+// ===================================================================================
+
+describe("serve runServe() successful import and startServer call", function() {
+    var origError, origLog, errors, logged;
+    var origStdin, fakeStdin;
+    var origExit;
+
+    beforeEach(function() {
+        origError = console.error;
+        origLog = console.log;
+        errors = [];
+        logged = [];
+        console.error = function() {
+            errors.push(Array.prototype.slice.call(arguments).join(' '));
+        };
+        console.log = function() {
+            logged.push(Array.prototype.slice.call(arguments).join(' '));
+        };
+        origStdin = process.stdin;
+        fakeStdin = new PassThrough();
+        fakeStdin.setEncoding = function() {};
+        Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+        origExit = process.exit;
+        process.exit = function() {};
+    });
+
+    afterEach(function() {
+        console.error = origError;
+        console.log = origLog;
+        Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+        process.exit = origExit;
+    });
+
+    it("should call startServer after successful bwserve import (lines 338-348)", function(done) {
+        this.timeout(10000);
+        // Use actual bwserve import path (relative to cli/serve.js)
+        var promise = runServe(['--stdin', '--port', '0'], {
+            _importPath: '../../src/bwserve/index.js'
+        });
+        assert.ok(promise instanceof Promise, 'runServe should return a promise');
+        promise.then(function() {
+            // The import().then() callback calls startServer which uses setImmediate for listen
+            // Wait for the async listen callback to fire
+            setTimeout(function() {
+                assert.ok(errors.some(function(l) { return l.indexOf('bwcli serve') >= 0; }),
+                  'should print startup banner');
+                done();
+            }, 500);
+        }).catch(done);
+    });
+});
+
+// ===================================================================================
+// Malformed inputs for serve functions
+// ===================================================================================
+
+describe("serve malformed inputs", function() {
+    var origError, errors;
+    beforeEach(function() {
+        origError = console.error;
+        errors = [];
+        console.error = function() {
+            errors.push(Array.prototype.slice.call(arguments).join(' '));
+        };
+    });
+    afterEach(function() {
+        console.error = origError;
+    });
+
+    it("parseMessage should throw on non-string input", function() {
+        assert.throws(function() {
+            parseMessage(null);
+        });
+    });
+
+    it("parseMessage should throw on number input", function() {
+        assert.throws(function() {
+            parseMessage(42);
+        });
+    });
+
+    it("parseRelaxedJSON should throw on empty string", function() {
+        assert.throws(function() {
+            parseRelaxedJSON('');
+        });
+    });
+
+    it("parseRelaxedJSON should throw on non-JSON non-relaxed string", function() {
+        assert.throws(function() {
+            parseRelaxedJSON('not json at all {{{}}}');
+        });
+    });
+
+    it("handleCommand with empty command object should return error result", function() {
+        var mockApp = { _clients: new Map(), broadcast: function() { return 0; } };
+        return handleCommand({}, mockApp, false).then(function(result) {
+            assert.ok(result.error, 'should have error field');
+            assert.ok(result.error.indexOf('Unknown') >= 0);
+        });
+    });
+
+    it("handleCommand with unknown command should return error result", function() {
+        var mockApp = { _clients: new Map(), broadcast: function() { return 0; } };
+        return handleCommand({ command: 'nonexistent' }, mockApp, false).then(function(result) {
+            assert.ok(result.error);
+            assert.ok(result.error.indexOf('Unknown') >= 0 || result.error.indexOf('unknown') >= 0);
+        });
+    });
+
+    it("handleCommand with clients command should return client list", function() {
+        var mockApp = { _clients: new Map(), broadcast: function() { return 0; } };
+        mockApp._clients.set('c1', { client: {} });
+        mockApp._clients.set('c2', { client: {} });
+        return handleCommand({ command: 'clients' }, mockApp, false).then(function(result) {
+            assert.ok(result.ok);
+            assert.strictEqual(result.clients.length, 2);
+        });
+    });
+});

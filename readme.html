@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.0.25">
+  <meta name="generator" content="bitwrench v2.0.27">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -208,7 +208,12 @@ bw.DOM(&#39;#app&#39;, counter);</code></pre><blockquote class="quikdown-blockqu
   console.log(&#39;New item:&#39;, detail.name);
 });
 
-bw.pub(&#39;item-added&#39;, { name: &#39;Widget&#39; });</code></pre><h2 class="quikdown-h2">CSS from JavaScript</h2>
+bw.pub(&#39;item-added&#39;, { name: &#39;Widget&#39; });
+
+// Wildcard: listen to a group of related topics
+bw.sub(&#39;item:*&#39;, function(detail, topic) {
+  console.log(topic, detail);  // e.g. &#39;item:added&#39;, &#39;item:removed&#39;
+});</code></pre><h2 class="quikdown-h2">CSS from JavaScript</h2>
 <p><code class="quikdown-code">bw.css()</code> generates CSS from objects. <code class="quikdown-code">bw.s()</code> composes inline styles from reusable utility objects:</p><pre class="quikdown-pre"><code class="language-javascript">// Generate and inject a stylesheet
 bw.injectCSS(bw.css({
   &#39;.my-card&#39;: { padding: &#39;1rem&#39;, borderRadius: &#39;8px&#39; }
@@ -298,15 +303,19 @@ bw.toggleStyles();  // switch between primary and alternate palettes</code></pre
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td"><code class="quikdown-code">bw.pub(topic, detail)</code></td>
-<td class="quikdown-td">Publish a message to subscribers</td>
+<td class="quikdown-td">Publish to subscribers (exact + wildcard matches)</td>
 </tr>
 <tr class="quikdown-tr">
-<td class="quikdown-td"><code class="quikdown-code">bw.sub(topic, handler)</code></td>
-<td class="quikdown-td">Subscribe to a topic; returns an unsub function</td>
+<td class="quikdown-td"><code class="quikdown-code">bw.sub(topic, handler, el?)</code></td>
+<td class="quikdown-td">Subscribe to topic (supports wildcard <code class="quikdown-code">&#39;ns:*&#39;</code>); returns unsub function</td>
 </tr>
 <tr class="quikdown-tr">
-<td class="quikdown-td"><code class="quikdown-code">bw.inspect(target)</code></td>
-<td class="quikdown-td">Debug a component&#39;s state, handles, and metadata in the console</td>
+<td class="quikdown-td"><code class="quikdown-code">bw.once(topic, handler, el?)</code></td>
+<td class="quikdown-td">One-shot subscribe; auto-unsub after first fire</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.inspect(target, depth)</code></td>
+<td class="quikdown-td">Introspect a DOM subtree with bitwrench metadata (state, handles, type)</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td"><code class="quikdown-code">bw.apply(msg)</code></td>

@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.25 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.0.27 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -12,14 +12,14 @@
    */
 
   const VERSION_INFO = {
-    version: '2.0.25',
+    version: '2.0.27',
     name: 'bitwrench',
     description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-03-31T02:52:27.844Z'
+    buildDate: '2026-04-12T05:09:57.619Z'
   };
 
   /**
@@ -3955,7 +3955,6 @@
   // Console aliases use thin wrappers (not direct references) so that test
   // code can monkey-patch console.warn/log/error and the patches take effect.
   var _cw   = function() { console.warn.apply(console, arguments); };
-  var _cl   = function() { console.log.apply(console, arguments); };
   var _ce   = function() { console.error.apply(console, arguments); };
 
   /**
@@ -4092,61 +4091,105 @@
   };
 
   /**
-   * Look up a DOM element by ID string, using the node cache for O(1) access.
+   * Look up a single DOM element by ID, CSS selector, UUID, or element ref.
+   * Optionally apply content or a function to the resolved element.
    *
-   * Resolution order:
-   * 1. Check `bw._nodeMap[id]` — if found and still attached (parentNode !== null), return it
-   * 2. If cached ref is detached (parentNode === null), remove stale entry
-   * 3. Fall back to `document.getElementById(id)` then `document.querySelector(...)`
-   * 4. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
-   * 5. Cache the result for next time
+   * Resolution order for string targets:
+   * 1. Check `bw._nodeMap[id]` cache (O(1), stale entries auto-pruned)
+   * 2. `document.getElementById(id)`
+   * 3. `document.querySelector(id)` for selectors starting with # or .
+   * 4. Class-based lookup for `bw_uuid_*` tokens
    *
-   * Accepts a DOM element directly (pass-through) or a string identifier.
-   * String identifiers are tried as: direct map key, getElementById,
-   * querySelector (for CSS selectors starting with . or #), and
-   * bw_uuid_* class selector.
+   * With one argument, returns the element (or null). With two arguments,
+   * applies the second argument to the element and returns the element:
+   * - string/number: sets `el.textContent`
+   * - function: calls `apply(el)`, returns el
+   * - TACO object: clears children, mounts TACO via `bw.createDOM()`
+   * - array: clears children, appends each item (string -> text node, TACO -> element)
    *
-   * @param {string|Element} id - Element ID, CSS selector, bw_uuid_* class, or DOM element
+   * @param {string|Element} target - Element ref, ID, CSS selector, or bw_uuid_* class
+   * @param {string|number|Function|Object|Array} [apply] - Content or function to apply
    * @returns {Element|null} The DOM element, or null if not found
-   * @category Internal
+   * @category DOM Selection
+   * @see bw.$
+   * @see bw.patch
+   * @example
+   * bw.el('#title')                         // lookup
+   * bw.el('#title', 'Hello')                // set text content
+   * bw.el('#app', { t: 'h1', c: 'Hi' })    // mount TACO
+   * bw.el('.card', function(el) {           // apply function
+   *   el.style.opacity = '0.5';
+   * })
    */
-  bw._el = function(id) {
-    // Pass-through for DOM elements
-    if (!_is(id, 'string')) return id || null;
-    if (!id) return null;
-    if (!bw._isBrowser) return null;
-
-    // 1. Check cache
-    var cached = bw._nodeMap[id];
-    if (cached) {
-      // Verify not detached (parentNode check is IE11-safe)
-      if (cached.parentNode !== null) {
-        return cached;
+  bw.el = function(target, apply) {
+    // Resolve target to element
+    var el;
+    if (!_is(target, 'string')) {
+      el = target || null;
+    } else if (!target || !bw._isBrowser) {
+      el = null;
+    } else {
+      // 1. Check cache
+      var cached = bw._nodeMap[target];
+      if (cached) {
+        if (cached.parentNode !== null) {
+          el = cached;
+        } else {
+          delete bw._nodeMap[target];
+        }
       }
-      // Stale — remove and fall through
-      delete bw._nodeMap[id];
+      if (!el) {
+        // 2. getElementById
+        el = document.getElementById(target);
+        // 3. querySelector for CSS selectors
+        if (!el && (target.charAt(0) === '#' || target.charAt(0) === '.')) {
+          el = document.querySelector(target);
+        }
+        // 4. bw_uuid_* class lookup
+        if (!el && target.indexOf('bw_uuid_') === 0) {
+          el = document.querySelector('.' + target);
+        }
+        // 5. Cache result
+        if (el) bw._nodeMap[target] = el;
+      }
     }
 
-    // 2. DOM fallback: try getElementById first (fastest native lookup)
-    var el = document.getElementById(id);
-
-    // 3. Try querySelector for CSS selectors (starts with # or .)
-    if (!el && (id.charAt(0) === '#' || id.charAt(0) === '.')) {
-      el = document.querySelector(id);
-    }
-
-    // 4. Try class-based lookup for bw_uuid_* tokens (UUID addressing)
-    if (!el && id.indexOf('bw_uuid_') === 0) {
-      el = document.querySelector('.' + id);
-    }
-
-    // 5. Cache the result for next time
-    if (el) {
-      bw._nodeMap[id] = el;
-    }
+    // Apply (if provided and element found)
+    if (el && apply !== undefined) _applyTo(el, apply);
 
     return el;
   };
+
+  /**
+   * Internal: apply content or function to a DOM element.
+   * Shared by bw.el() and bw.$().
+   * @private
+   */
+  function _applyTo(el, apply) {
+    if (_is(apply, 'function')) {
+      apply(el);
+    } else if (_isA(apply)) {
+      el.innerHTML = '';
+      apply.forEach(function(item) {
+        if (item != null) {
+          if (_is(item, 'object') && item.t) {
+            el.appendChild(bw.createDOM(item));
+          } else {
+            el.appendChild(document.createTextNode(String(item)));
+          }
+        }
+      });
+    } else if (_is(apply, 'object') && apply !== null && apply.t) {
+      el.innerHTML = '';
+      el.appendChild(bw.createDOM(apply));
+    } else {
+      el.textContent = String(apply);
+    }
+  }
+
+  // Internal alias — kept for one release cycle (v2.0.26).
+  // Will be removed in v2.0.27. Use bw.el() instead.
+  bw._el = bw.el;
 
   /**
    * Register a DOM element in the node cache under one or more keys.
@@ -4211,6 +4254,12 @@
   var _UUID_RE = /\bbw_uuid_[a-z0-9_]+\b/;
 
   /**
+   * SVG namespace URI for createElementNS.
+   * @private
+   */
+  var _SVG_NS = 'http://www.w3.org/2000/svg';
+
+  /**
    * Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`.
    *
    * Idempotent by default — calling twice returns the same UUID. Pass `forceNew=true`
@@ -4264,9 +4313,10 @@
     if (!tacoOrElement) return null;
 
     var classStr;
-    // DOM element: check className
+    // DOM element: check className (SVG elements use getAttribute for string value)
     if (tacoOrElement.className !== undefined && tacoOrElement.tagName) {
-      classStr = tacoOrElement.className;
+      classStr = typeof tacoOrElement.className === 'string'
+        ? tacoOrElement.className : (tacoOrElement.getAttribute('class') || '');
     }
     // TACO object: check a.class
     else if (tacoOrElement.a && _is(tacoOrElement.a.class, 'string')) {
@@ -4706,9 +4756,11 @@
     }
 
     const { t: tag, a: attrs = {}, c: content, o: opts = {} } = taco;
-    
-    // Create element
-    const el = document.createElement(tag);
+
+    // SVG namespace: detect SVG context and thread through children.
+    // {t:'svg'} starts SVG context; foreignObject children revert to HTML.
+    var svgCtx = options._svgCtx || (tag === 'svg');
+    var el = svgCtx ? document.createElementNS(_SVG_NS, tag) : document.createElement(tag);
     
     // Set attributes
     for (const [key, value] of Object.entries(attrs)) {
@@ -4719,9 +4771,11 @@
         Object.assign(el.style, value);
       } else if (key === 'class') {
         // Handle class as array or string
+        // SVG elements use SVGAnimatedString for className, so use setAttribute
         const classStr = _isA(value) ? value.filter(Boolean).join(' ') : String(value);
         if (classStr) {
-          el.className = classStr;
+          if (svgCtx) el.setAttribute('class', classStr);
+          else el.className = classStr;
         }
       } else if (key.startsWith('on') && _is(value, 'function')) {
         // Event handlers
@@ -4742,11 +4796,17 @@
     // Add children, building _bw_refs for fast parent→child access.
     // Children with id attributes or bw_uuid_* classes get local refs on the parent,
     // so o.render functions can access them without any DOM lookup.
+    // SVG: foreignObject children revert to HTML namespace; otherwise inherit.
+    var childOpts = options;
+    var childSvgCtx = svgCtx && tag !== 'foreignObject';
+    if (childSvgCtx !== (options._svgCtx || false)) {
+      childOpts = Object.assign({}, options, {_svgCtx: childSvgCtx || undefined});
+    }
     if (content != null) {
       if (_isA(content)) {
         content.forEach(child => {
           if (child != null) {
-            var childEl = bw.createDOM(child, options);
+            var childEl = bw.createDOM(child, childOpts);
             el.appendChild(childEl);
             // Build local refs for addressable children
             var childRefId = (child && child.a) ? (child.a.id || bw.getUUID(child)) : null;
@@ -4769,7 +4829,7 @@
         // Raw HTML content — inject via innerHTML
         el.innerHTML = content.v;
       } else if (_is(content, 'object') && content.t) {
-        var childEl = bw.createDOM(content, options);
+        var childEl = bw.createDOM(content, childOpts);
         el.appendChild(childEl);
         var childRefId = content.a ? (content.a.id || bw.getUUID(content)) : null;
         if (childRefId) {
@@ -4795,11 +4855,19 @@
     }
 
     // Register UUID class in node cache (bw_uuid_* tokens in class string)
-    if (el.className) {
-      var uuidMatch = el.className.match(_UUID_RE);
+    // SVG elements have SVGAnimatedString for className; use getAttribute instead
+    var clsStr = svgCtx ? (el.getAttribute('class') || '') : el.className;
+    if (clsStr) {
+      var uuidMatch = clsStr.match(_UUID_RE);
       if (uuidMatch) {
         bw._nodeMap[uuidMatch[0]] = el;
       }
+    }
+
+    // Store component type metadata (e.g., 'card', 'tabs') for introspection.
+    // BCCL factories set o.type; custom components can too.
+    if (opts.type) {
+      el._bw_type = opts.type;
     }
 
     // Handle lifecycle hooks and state
@@ -4831,11 +4899,13 @@
 
       if (mountFn) {
         if (document.body.contains(el)) {
-          mountFn(el, el._bw_state || {});
+          try { mountFn(el, el._bw_state || {}); }
+          catch (e) { _cw('o.mounted error: ' + e.message); }
         } else {
           requestAnimationFrame(() => {
             if (document.body.contains(el)) {
-              mountFn(el, el._bw_state || {});
+              try { mountFn(el, el._bw_state || {}); }
+              catch (e) { _cw('o.mounted error: ' + e.message); }
             }
           });
         }
@@ -4844,7 +4914,8 @@
       // Store unmount callback keyed by UUID class
       if (opts.unmount) {
         bw._unmountCallbacks.set(uuid, () => {
-          opts.unmount(el, el._bw_state || {});
+          try { opts.unmount(el, el._bw_state || {}); }
+          catch (e) { _cw('o.unmount error: ' + e.message); }
         });
       }
     }
@@ -4863,24 +4934,25 @@
       }
 
       // Slot declarations: auto-generate setX/getX pairs
+      // The target element is cached at creation time to avoid repeated
+      // querySelector calls on every get/set invocation.
       if (opts.slots) {
         for (var sk in opts.slots) {
           if (_hop.call(opts.slots, sk)) {
             (function(name, selector) {
+              var target = el.querySelector(selector);
               var cap = name.charAt(0).toUpperCase() + name.slice(1);
               el.bw['set' + cap] = function(value) {
-                var t = el.querySelector(selector);
-                if (!t) return;
+                if (!target) return;
                 if (value != null && typeof value === 'object' && value.t) {
-                  t.innerHTML = '';
-                  t.appendChild(bw.createDOM(value));
+                  target.innerHTML = '';
+                  target.appendChild(bw.createDOM(value));
                 } else {
-                  t.textContent = (value != null) ? String(value) : '';
+                  target.textContent = (value != null) ? String(value) : '';
                 }
               };
               el.bw['get' + cap] = function() {
-                var t = el.querySelector(selector);
-                return t ? t.textContent : '';
+                return target ? target.textContent : '';
               };
             })(sk, opts.slots[sk]);
           }
@@ -4921,7 +4993,7 @@
     }
     
     // Get target element (use cache-backed lookup)
-    const targetEl = bw._el(target);
+    const targetEl = bw.el(target);
       
     if (!targetEl) {
       _ce('bw.DOM: Target element not found:', target);
@@ -5024,7 +5096,8 @@
     // Deregister UUID classes from node cache for non-lifecycle UUID elements
     var uuidEls = element.querySelectorAll('[class*="bw_uuid_"]');
     uuidEls.forEach(function(uel) {
-      var m = uel.className && uel.className.match(_UUID_RE);
+      var uc = typeof uel.className === 'string' ? uel.className : (uel.getAttribute('class') || '');
+      var m = uc && uc.match(_UUID_RE);
       if (m) delete bw._nodeMap[m[0]];
     });
 
@@ -5110,9 +5183,10 @@
    * bw.update(el);  // re-renders, emits bw:statechange
    */
   bw.update = function(target) {
-    var el = bw._el(target);
+    var el = bw.el(target);
     if (el && el._bw_render) {
-      el._bw_render(el, el._bw_state || {});
+      try { el._bw_render(el, el._bw_state || {}); }
+      catch (e) { _cw('o.render error: ' + e.message); }
       bw.emit(el, 'statechange', el._bw_state);
     }
     return el || null;
@@ -5139,7 +5213,7 @@
    * bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
    */
   bw.patch = function(id, content, attr) {
-    var el = bw._el(id);
+    var el = bw.el(id);
     if (!el) return null;
 
     if (attr) {
@@ -5211,7 +5285,7 @@
    * // Dispatches CustomEvent 'bw:statechange' on the element
    */
   bw.emit = function(target, eventName, detail) {
-    var el = bw._el(target);
+    var el = bw.el(target);
     if (el) {
       el.dispatchEvent(new CustomEvent('bw:' + eventName, {
         bubbles: true,
@@ -5240,7 +5314,7 @@
    * });
    */
   bw.on = function(target, eventName, handler) {
-    var el = bw._el(target);
+    var el = bw.el(target);
     if (el) {
       el.addEventListener('bw:' + eventName, function(e) {
         handler(e.detail, e);
@@ -5267,23 +5341,38 @@
    *
    * @param {string} topic - Topic name (plain string, no prefix)
    * @param {*} [detail] - Data to pass to subscribers
-   * @returns {number} Count of successfully called subscribers
+   * @returns {number} Count of successfully called subscribers (including wildcard matches)
    * @category Pub/Sub
    * @see bw.sub
    * @example
    * bw.pub('score:updated', { player: 'X', score: 10 });
+   * // Wildcard subscribers matching 'score:*' will also fire
    */
   bw.pub = function(topic, detail) {
-    var subs = bw._topics[topic];
-    if (!subs || subs.length === 0) return 0;
-    var snapshot = subs.slice(); // safe against unsub during iteration
     var called = 0;
-    for (var i = 0; i < snapshot.length; i++) {
-      try {
-        snapshot[i].handler(detail);
-        called++;
-      } catch (err) {
-        _cw('bw.pub: subscriber error on topic "' + topic + '":', err);
+    // Exact-match subscribers
+    var subs = bw._topics[topic];
+    if (subs && subs.length > 0) {
+      var snapshot = subs.slice();
+      for (var i = 0; i < snapshot.length; i++) {
+        try { snapshot[i].handler(detail, topic); called++; }
+        catch (err) { _cw('bw.pub: subscriber error on topic "' + topic + '":', err); }
+      }
+    }
+    // Wildcard subscribers -- patterns ending with '*'
+    var keys = Object.keys(bw._topics);
+    for (var k = 0; k < keys.length; k++) {
+      var pat = keys[k];
+      if (pat.charAt(pat.length - 1) !== '*') continue;
+      var prefix = pat.slice(0, -1); // strip trailing '*'
+      if (topic.length >= prefix.length && topic.substring(0, prefix.length) === prefix && topic !== pat) {
+        var wsubs = bw._topics[pat];
+        if (!wsubs) continue;
+        var wsnap = wsubs.slice();
+        for (var w = 0; w < wsnap.length; w++) {
+          try { wsnap[w].handler(detail, topic); called++; }
+          catch (err) { _cw('bw.pub: wildcard subscriber error on "' + pat + '" for topic "' + topic + '":', err); }
+        }
       }
     }
     return called;
@@ -5292,12 +5381,17 @@
   /**
    * Subscribe to a topic. Returns an unsub() function.
    *
-   * Optional third argument ties the subscription to a DOM element's lifecycle —
+   * Supports wildcard patterns: a topic ending in `*` matches any published
+   * topic that starts with the prefix before the `*`. For example,
+   * `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. The handler
+   * receives `(detail, topic)` so it can distinguish which topic fired.
+   *
+   * Optional third argument ties the subscription to a DOM element's lifecycle --
    * when `bw.cleanup()` is called on that element, the subscription is automatically
    * removed, preventing memory leaks.
    *
-   * @param {string} topic - Topic name
-   * @param {Function} handler - Called with (detail) on each publish
+   * @param {string} topic - Topic name, or wildcard pattern ending in '*'
+   * @param {Function} handler - Called with (detail, topic) on each publish
    * @param {Element} [el] - Optional DOM element to tie lifecycle to
    * @returns {Function} Call to unsubscribe
    * @category Pub/Sub
@@ -5308,6 +5402,11 @@
    *   console.log(detail.player, 'scored', detail.score);
    * });
    * // Later: unsub() to stop listening
+   *
+   * // Wildcard: listen to all 'agui:' topics
+   * bw.sub('agui:*', function(detail, topic) {
+   *   console.log('Got', topic, detail);
+   * });
    */
   bw.sub = function(topic, handler, el) {
     var id = ++bw._subIdCounter;
@@ -5357,6 +5456,37 @@
     var removed = before - bw._topics[topic].length;
     if (bw._topics[topic].length === 0) delete bw._topics[topic];
     return removed;
+  };
+
+  /**
+   * Subscribe to a topic for a single event only. The subscription is
+   * automatically removed after the first publish. Equivalent to manually
+   * calling unsub() inside a bw.sub() handler, but avoids the common bug
+   * of forgetting to unsubscribe.
+   *
+   * @param {string} topic - Topic name
+   * @param {Function} handler - Called once with (detail) on the next publish
+   * @param {Element} [el] - Optional DOM element to tie lifecycle to
+   * @returns {Function} Call to cancel the subscription before it fires
+   * @category Pub/Sub
+   * @see bw.sub
+   * @see bw.pub
+   * @example
+   * bw.once('data:loaded', function(detail) {
+   *   console.log('Received:', detail);
+   *   // No need to unsubscribe -- already done automatically
+   * });
+   *
+   * // Cancel before it fires:
+   * var cancel = bw.once('timeout', handler);
+   * cancel(); // handler will never be called
+   */
+  bw.once = function(topic, handler, el) {
+    var unsub = bw.sub(topic, function(detail) {
+      unsub();
+      handler(detail);
+    }, el);
+    return unsub;
   };
 
   // ===================================================================================
@@ -5599,7 +5729,7 @@
    * };
    */
   bw.message = function(target, action, data) {
-    var el = bw._el(target);
+    var el = bw.el(target);
     if (!el) el = bw.$('.' + target)[0];
     if (!el || !el.bw || typeof el.bw[action] !== 'function') {
       _cw('bw.message: no handle method "' + action + '" on ' + target);
@@ -5607,6 +5737,207 @@
     }
     el.bw[action](data);
     return true;
+  };
+
+  /**
+   * Collect form data from all input, select, and textarea elements within a
+   * container. Each element's `name` attribute (or `id` if no name) becomes a
+   * key in the returned object. This provides a lightweight alternative to the
+   * browser FormData API that returns a plain object suitable for JSON
+   * serialization or bw.pub().
+   *
+   * Handles all standard HTML form controls:
+   * - text/number/email/etc inputs: string value
+   * - checkboxes: boolean (true/false)
+   * - radio buttons: string value of the checked radio (unchecked groups omitted)
+   * - multi-select: array of selected option values
+   * - textarea: string value
+   *
+   * Elements without both `name` and `id` attributes are silently skipped.
+   *
+   * @param {string|Element} target - CSS selector, UUID string, or DOM element
+   * @returns {Object} Plain object mapping field names to values
+   * @category Component
+   * @see bw.makeForm
+   * @see bw.makeInput
+   * @example
+   * // Given a form with name="email" input and name="agree" checkbox:
+   * var data = bw.formData('#signup-form');
+   * // => { email: 'user@example.com', agree: true }
+   *
+   * // Collect and publish in one step:
+   * bw.pub('form:submit', bw.formData('#my-form'));
+   *
+   * // Works with any container, not just <form>:
+   * bw.pub('settings:changed', bw.formData('.settings-panel'));
+   */
+  bw.formData = function(target) {
+    var el = bw.el(target);
+    if (!el) return {};
+    var result = {};
+    var inputs = el.querySelectorAll('input, select, textarea');
+    for (var i = 0; i < inputs.length; i++) {
+      var inp = inputs[i];
+      var key = inp.name || inp.id;
+      if (!key) continue;
+      if (inp.type === 'checkbox') {
+        result[key] = inp.checked;
+      } else if (inp.type === 'radio') {
+        if (inp.checked) result[key] = inp.value;
+      } else if (inp.tagName === 'SELECT' && inp.multiple) {
+        result[key] = [];
+        for (var j = 0; j < inp.options.length; j++) {
+          if (inp.options[j].selected) result[key].push(inp.options[j].value);
+        }
+      } else {
+        result[key] = inp.value;
+      }
+    }
+    return result;
+  };
+
+  // ===================================================================================
+  // bw.jsonPatch() — RFC 6902 JSON Patch on plain objects
+  // ===================================================================================
+
+  /**
+   * Apply RFC 6902 JSON Patch operations to a plain object.
+   *
+   * Supported operations: add, remove, replace, move, copy, test.
+   * Paths use JSON Pointer (RFC 6901) notation: `/foo/bar/0`.
+   * Mutates the target object in place and returns it.
+   *
+   * @param {Object} obj - Target object to patch
+   * @param {Array<Object>} ops - Array of patch operations
+   * @param {string} ops[].op - Operation: 'add', 'remove', 'replace', 'move', 'copy', 'test'
+   * @param {string} ops[].path - JSON Pointer path (e.g. '/a/b/0')
+   * @param {*} [ops[].value] - Value for add/replace/test
+   * @param {string} [ops[].from] - Source path for move/copy
+   * @returns {Object} The patched object (same reference)
+   * @throws {Error} On invalid op, missing path, test failure, or path not found for remove
+   * @category Data Utilities
+   * @see bw.patch
+   * @example
+   * var obj = { a: 1, b: { c: 2 } };
+   * bw.jsonPatch(obj, [
+   *   { op: 'replace', path: '/a', value: 10 },
+   *   { op: 'add', path: '/b/d', value: 3 },
+   *   { op: 'remove', path: '/b/c' }
+   * ]);
+   * // obj => { a: 10, b: { d: 3 } }
+   */
+  bw.jsonPatch = function(obj, ops) {
+    if (!_isA(ops)) return obj;
+
+    // Parse JSON Pointer path to array of keys
+    function parsePath(path) {
+      if (path === '') return [];
+      if (path.charAt(0) !== '/') throw new Error('Invalid JSON Pointer: ' + path);
+      return path.slice(1).split('/').map(function(s) {
+        return s.replace(/~1/g, '/').replace(/~0/g, '~');
+      });
+    }
+
+    // Walk to parent of final key; return { parent, key }
+    function resolve(root, keys) {
+      var parent = root;
+      for (var i = 0; i < keys.length - 1; i++) {
+        var k = _isA(parent) ? parseInt(keys[i], 10) : keys[i];
+        if (parent[k] === undefined) throw new Error('Path not found: /' + keys.slice(0, i + 1).join('/'));
+        parent = parent[k];
+      }
+      return { parent: parent, key: _isA(parent) ? parseInt(keys[keys.length - 1], 10) : keys[keys.length - 1] };
+    }
+
+    // Get value at path
+    function getVal(root, keys) {
+      var cur = root;
+      for (var i = 0; i < keys.length; i++) {
+        var k = _isA(cur) ? parseInt(keys[i], 10) : keys[i];
+        if (cur[k] === undefined) throw new Error('Path not found: /' + keys.slice(0, i + 1).join('/'));
+        cur = cur[k];
+      }
+      return cur;
+    }
+
+    for (var i = 0; i < ops.length; i++) {
+      var op = ops[i];
+      if (!op.op || !_is(op.path, 'string')) throw new Error('Invalid patch operation at index ' + i);
+      var keys = parsePath(op.path);
+
+      var r, val, fromKeys, fr, tr, cr;
+      switch (op.op) {
+        case 'add': {
+          if (keys.length === 0) throw new Error('Cannot add to root');
+          r = resolve(obj, keys);
+          if (_isA(r.parent) && r.key <= r.parent.length) {
+            r.parent.splice(r.key, 0, op.value);
+          } else {
+            r.parent[r.key] = op.value;
+          }
+          break;
+        }
+        case 'remove': {
+          if (keys.length === 0) throw new Error('Cannot remove root');
+          r = resolve(obj, keys);
+          if (_isA(r.parent)) {
+            if (r.key >= r.parent.length) throw new Error('Index out of bounds: ' + r.key);
+            r.parent.splice(r.key, 1);
+          } else {
+            if (!(r.key in r.parent)) throw new Error('Path not found: ' + op.path);
+            delete r.parent[r.key];
+          }
+          break;
+        }
+        case 'replace': {
+          if (keys.length === 0) throw new Error('Cannot replace root');
+          r = resolve(obj, keys);
+          if (_isA(r.parent)) {
+            if (r.key >= r.parent.length) throw new Error('Index out of bounds: ' + r.key);
+          } else {
+            if (!(r.key in r.parent)) throw new Error('Path not found: ' + op.path);
+          }
+          r.parent[r.key] = op.value;
+          break;
+        }
+        case 'move': {
+          if (!_is(op.from, 'string')) throw new Error('move requires "from"');
+          fromKeys = parsePath(op.from);
+          val = getVal(obj, fromKeys);
+          fr = resolve(obj, fromKeys);
+          if (_isA(fr.parent)) { fr.parent.splice(fr.key, 1); }
+          else { delete fr.parent[fr.key]; }
+          tr = resolve(obj, keys);
+          if (_isA(tr.parent) && tr.key <= tr.parent.length) {
+            tr.parent.splice(tr.key, 0, val);
+          } else {
+            tr.parent[tr.key] = val;
+          }
+          break;
+        }
+        case 'copy': {
+          if (!_is(op.from, 'string')) throw new Error('copy requires "from"');
+          val = getVal(obj, parsePath(op.from));
+          cr = resolve(obj, keys);
+          if (_isA(cr.parent) && cr.key <= cr.parent.length) {
+            cr.parent.splice(cr.key, 0, val);
+          } else {
+            cr.parent[cr.key] = val;
+          }
+          break;
+        }
+        case 'test': {
+          var actual = getVal(obj, keys);
+          if (JSON.stringify(actual) !== JSON.stringify(op.value)) {
+            throw new Error('Test failed: ' + op.path + ' expected ' + JSON.stringify(op.value) + ' got ' + JSON.stringify(actual));
+          }
+          break;
+        }
+        default:
+          throw new Error('Unknown op: ' + op.op);
+      }
+    }
+    return obj;
   };
 
   // ===================================================================================
@@ -5750,7 +6081,7 @@
     var target = msg.target;
 
     if (type === 'replace') {
-      var el = bw._el(target);
+      var el = bw.el(target);
       if (!el) return false;
       bw.DOM(el, msg.node);
       return true;
@@ -5760,14 +6091,14 @@
       return patched !== null;
 
     } else if (type === 'append') {
-      var parent = bw._el(target);
+      var parent = bw.el(target);
       if (!parent) return false;
       var child = bw.createDOM(msg.node);
       parent.appendChild(child);
       return true;
 
     } else if (type === 'remove') {
-      var toRemove = bw._el(target);
+      var toRemove = bw.el(target);
       if (!toRemove) return false;
       if (_is(bw.cleanup, 'function')) bw.cleanup(toRemove);
       toRemove.remove();
@@ -5827,30 +6158,98 @@
 
 
   // ===================================================================================
-  // bw.inspect() — Debug utility
+  // bw.inspect() — DOM introspection with bitwrench metadata
   // ===================================================================================
 
   /**
-   * Inspect a DOM element's bitwrench state, handle methods, and metadata.
-   * Works with DOM elements or CSS selectors.
+   * Inspect a DOM element and its subtree, returning a plain-object
+   * representation with bitwrench metadata at each node. Useful for debugging,
+   * devtools, MCP/AG-UI tool discovery, and automated testing.
    *
-   * @param {string|Element} target - Selector or DOM element
-   * @returns {Element|null} The element, or null if not found
+   * Each node in the returned tree includes:
+   * - `tag` -- lowercase tag name (or '#text' for text nodes)
+   * - `id` -- element id (if set)
+   * - `uuid` -- bitwrench UUID class (if lifecycle-managed)
+   * - `type` -- component type from o.type (if set, e.g. 'card', 'tabs')
+   * - `classes` -- first 5 CSS classes (string, space-separated)
+   * - `handles` -- array of el.bw method names (if any)
+   * - `state` -- copy of _bw_state (if any)
+   * - `hasRender` -- true if _bw_render is set
+   * - `hasSubs` -- true if element has pub/sub subscriptions
+   * - `refs` -- copy of _bw_refs keys (if any)
+   * - `children` -- array of child node trees (up to depth limit, max 50 per level)
+   *
+   * @param {string|Element} target - CSS selector, UUID, or DOM element
+   * @param {number} [depth=3] - Maximum recursion depth (0 = target only, no children)
+   * @returns {Object|null} Plain object tree, or null if element not found
    * @category Component
    * @example
-   * bw.inspect('#my-carousel');
-   * bw.inspect($0);
+   * // Get full tree from #app, 3 levels deep (default):
+   * var info = bw.inspect('#app');
+   *
+   * // Shallow inspection (just the element, no children):
+   * var info = bw.inspect('#my-carousel', 0);
+   * console.log(info.handles); // ['next', 'prev', 'goToSlide']
+   * console.log(info.type);    // 'carousel'
+   *
+   * // Deep inspection for debugging:
+   * console.log(JSON.stringify(bw.inspect('#app', 5), null, 2));
    */
-  bw.inspect = function(target) {
-    var el = _is(target, 'string') ? bw.$(target)[0] : target;
-    if (!el) { _cw('bw.inspect: element not found'); return null; }
-    console.group('Element: ' + (bw.getUUID(el) || el.id || el.tagName));
-    _cl('State:', el._bw_state || '(none)');
-    _cl('Handle:', el.bw ? _keys(el.bw) : '(none)');
-    _cl('Classes:', el.className);
-    _cl('Refs:', el._bw_refs || '(none)');
-    console.groupEnd();
-    return el;
+  bw.inspect = function(target, depth) {
+    var el = bw.el(target);
+    if (!el && _is(target, 'string')) el = bw.$(target)[0];
+    if (!el) return null;
+    if (depth === undefined || depth === null) depth = 3;
+
+    function walk(node, d) {
+      if (!node) return null;
+      // Skip non-element nodes (text, comment, etc.)
+      if (node.nodeType !== 1) return null;
+
+      var info = { tag: node.tagName ? node.tagName.toLowerCase() : '#text' };
+
+      // Identity
+      if (node.id) info.id = node.id;
+      var uuid = bw.getUUID(node);
+      if (uuid) info.uuid = uuid;
+      if (node._bw_type) info.type = node._bw_type;
+
+      // CSS classes (first 5 for readability)
+      if (node.className && typeof node.className === 'string') {
+        info.classes = node.className.split(' ').slice(0, 5).join(' ');
+      }
+
+      // Bitwrench handle methods
+      if (node.bw) {
+        var handles = _keys(node.bw);
+        if (handles.length > 0) info.handles = handles;
+      }
+
+      // State
+      if (node._bw_state) info.state = node._bw_state;
+      if (node._bw_render) info.hasRender = true;
+      if (node._bw_subs && node._bw_subs.length > 0) info.hasSubs = true;
+
+      // Refs
+      if (node._bw_refs) info.refs = _keys(node._bw_refs);
+
+      // Children (recurse up to depth limit, max 50 children per level)
+      if (d < depth && node.children && node.children.length > 0) {
+        info.children = [];
+        var max = Math.min(node.children.length, 50);
+        for (var i = 0; i < max; i++) {
+          var child = walk(node.children[i], d + 1);
+          if (child) info.children.push(child);
+        }
+        if (node.children.length > 50) {
+          info.children.push({ tag: '...', count: node.children.length - 50 });
+        }
+      }
+
+      return info;
+    }
+
+    return walk(el, 0);
   };
 
   bw.compile = function() { throw new Error('bw.compile() removed in v2.0.19. Use o.handle/o.slots on TACO options instead.'); };
@@ -6072,37 +6471,49 @@
    * so you can use `.map()`, `.filter()`, etc. directly. Accepts CSS selectors,
    * single elements, NodeLists, or arrays.
    *
+   * With an optional second argument, applies content or a function to
+   * every matched element (same apply rules as `bw.el()`):
+   * - string/number: sets `el.textContent`
+   * - function: calls `apply(el)` for each element
+   * - TACO object: clears children, mounts TACO via `bw.createDOM()`
+   * - array: clears children, appends each item
+   *
    * @param {string|Element|Array} selector - CSS selector, element, or array
+   * @param {string|number|Function|Object|Array} [apply] - Content or function to apply
    * @returns {Array} Array of DOM elements
    * @category DOM Selection
+   * @see bw.el
    * @example
-   * bw.$('.card')       // => [div.card, div.card, ...]
-   * bw.$(myElement)     // => [myElement]
-   * bw.$('.card').map(el => el.textContent)
+   * bw.$('.card')                           // => [div.card, div.card, ...]
+   * bw.$('.status', 'Online')               // set text on all .status elements
+   * bw.$('.card', function(el) {            // apply function to each
+   *   el.style.opacity = '0.5';
+   * })
    */
   if (bw._isBrowser) {
-    bw.$ = function(selector) {
-      if (!selector) return [];
-      
-      // Already an array
-      if (_isA(selector)) return selector;
-      
-      // Single element
-      if (selector.nodeType) return [selector];
-      
-      // NodeList or HTMLCollection
-      if (selector.length !== undefined && !_is(selector, 'string')) {
-        return Array.from(selector);
+    bw.$ = function(selector, apply) {
+      var els;
+      if (!selector) {
+        els = [];
+      } else if (_isA(selector)) {
+        els = selector;
+      } else if (selector.nodeType) {
+        els = [selector];
+      } else if (selector.length !== undefined && !_is(selector, 'string')) {
+        els = Array.from(selector);
+      } else if (_is(selector, 'string')) {
+        els = Array.from(document.querySelectorAll(selector));
+      } else {
+        els = [];
       }
-      
-      // CSS selector string
-      if (_is(selector, 'string')) {
-        return Array.from(document.querySelectorAll(selector));
+
+      if (apply !== undefined) {
+        for (var i = 0; i < els.length; i++) _applyTo(els[i], apply);
       }
-      
-      return [];
+
+      return els;
     };
-    
+
     // Convenience single element selector
     bw.$.one = function(selector) {
       return bw.$(selector)[0] || null;
@@ -6315,41 +6726,47 @@
   };
 
   /**
-   * Toggle between primary and alternate palettes.
+   * Toggle between primary and alternate theme palettes.
    *
-   * Adds/removes the `bw_theme_alt` class on the scoping element.
+   * Adds/removes the `bw_theme_alt` class on the scoping element(s).
    * Without a scope, toggles on `<html>` (global).
-   * With a scope, toggles on the first matching element.
+   * With a scope, toggles on ALL matching elements.
    *
-   * @param {string} [scope] - Scope selector (e.g. '#my-dashboard'). Omit for global.
-   * @returns {string} Active mode after toggle: 'primary' or 'alternate'
+   * @param {string|Element} [scope] - Selector or element. Omit for global.
+   * @returns {string} Active mode after toggle: 'primary' or 'alternate' (based on first element)
    * @category CSS & Styling
    * @see bw.applyStyles
    * @see bw.clearStyles
    * @example
-   * bw.toggleStyles();                   // global toggle on <html>
-   * bw.toggleStyles('#my-dashboard');    // scoped toggle
+   * bw.toggleThemeMode();                   // global toggle on <html>
+   * bw.toggleThemeMode('#my-dashboard');    // scoped toggle
+   * bw.toggleThemeMode('.panel');           // toggle on ALL .panel elements
    */
-  bw.toggleStyles = function(scope) {
+  bw.toggleThemeMode = function(scope) {
     if (!bw._isBrowser) return 'primary';
-    var target;
+    var els;
     if (scope) {
-      var els = bw.$(scope);
-      target = els[0];
+      els = bw.$(scope);
     } else {
-      target = document.documentElement;
+      els = [document.documentElement];
     }
-    if (!target) return 'primary';
+    if (!els.length) return 'primary';
 
-    var hasAlt = target.classList.contains('bw_theme_alt');
-    if (hasAlt) {
-      target.classList.remove('bw_theme_alt');
-      return 'primary';
-    } else {
-      target.classList.add('bw_theme_alt');
-      return 'alternate';
+    var mode;
+    for (var i = 0; i < els.length; i++) {
+      var hasAlt = els[i].classList.contains('bw_theme_alt');
+      if (hasAlt) {
+        els[i].classList.remove('bw_theme_alt');
+      } else {
+        els[i].classList.add('bw_theme_alt');
+      }
+      if (i === 0) mode = hasAlt ? 'primary' : 'alternate';
     }
+    return mode;
   };
+
+  // Alias — kept for one release cycle. Use bw.toggleThemeMode() instead.
+  bw.toggleStyles = bw.toggleThemeMode;
 
   /**
    * Remove injected styles for a given scope.
@@ -7389,6 +7806,57 @@
       };
     }
   });
+
+  /**
+   * Query the BCCL component registry. Returns metadata about registered
+   * component types -- their names and factory function names. Useful for
+   * tooling, introspection, documentation generators, and auto-complete
+   * systems (including MCP/AG-UI tool discovery).
+   *
+   * With no arguments, returns an array of all registered component types.
+   * With a type name, returns metadata for that single type (or null if
+   * the type is not registered).
+   *
+   * @param {string} [type] - Optional component type name to look up
+   * @returns {Array<Object>|Object|null} Array of {type, factory} objects,
+   *   a single {type, factory} object, or null if the type is not found
+   * @category Component
+   * @see bw.make
+   * @see bw.BCCL
+   * @example
+   * // List all available component types:
+   * bw.catalog();
+   * // => [{ type: 'card', factory: 'makeCard' },
+   * //     { type: 'button', factory: 'makeButton' }, ...]
+   *
+   * // Look up a specific type:
+   * bw.catalog('accordion');
+   * // => { type: 'accordion', factory: 'makeAccordion' }
+   *
+   * // Check if a type exists:
+   * if (bw.catalog('chart')) { ... }
+   *
+   * // Get just the type names:
+   * bw.catalog().map(function(c) { return c.type; });
+   * // => ['card', 'button', 'container', 'row', ...]
+   */
+  bw.catalog = function(type) {
+    if (type) {
+      var def = bw.BCCL[type];
+      if (!def) return null;
+      return {
+        type: type,
+        factory: def.make.name || ('make' + type.charAt(0).toUpperCase() + type.slice(1))
+      };
+    }
+    return Object.keys(bw.BCCL).map(function(k) {
+      var def = bw.BCCL[k];
+      return {
+        type: k,
+        factory: def.make.name || ('make' + k.charAt(0).toUpperCase() + k.slice(1))
+      };
+    });
+  };
 
   // Also attach to global in browsers
   if (bw._isBrowser && typeof window !== 'undefined') {

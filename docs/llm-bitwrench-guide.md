@@ -406,7 +406,7 @@ card.bw.setContent({ t: 'b', c: '$42k' });
 var el = bw.$('#app')[0];
 el._bw_state;         // current state
 el._bw_render;        // render function
-bw.inspect(el);       // formatted debug output (el.bw methods, state, classes)
+bw.inspect(el, 0);       // introspect element (state, handles, type, classes)
 ```
 
 ### bwcli attach -- remote debugging REPL
@@ -612,13 +612,14 @@ bwcli serve                                   # dev server (port 7902)
 | `bw.mount(sel, taco)` | Mount + return root element |
 | `bw.cleanup(el)` | Run unmount hooks, clear subscriptions |
 | `bw.patch(id, content)` | Update element by id or UUID |
-| `bw.inspect(el)` | Debug: log el.bw methods, state, classes |
+| `bw.inspect(el, depth)` | Introspect DOM subtree with bitwrench metadata |
 
 ### Communication
 | Function | Description |
 |----------|-------------|
-| `bw.pub(topic, data)` | App-wide publish |
-| `bw.sub(topic, fn, el?)` | Subscribe (optional lifecycle tie to element) |
+| `bw.pub(topic, data)` | App-wide publish (fires exact + wildcard matches) |
+| `bw.sub(topic, fn, el?)` | Subscribe (supports wildcard `'ns:*'`; optional lifecycle tie) |
+| `bw.once(topic, fn, el?)` | One-shot subscribe (auto-unsub after first fire) |
 | `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` |
 | `bw.emit(el, event, detail)` | DOM-scoped CustomEvent |
 
@@ -658,7 +659,7 @@ bwcli serve                                   # dev server (port 7902)
 9. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`.
 10. **Routing is built in** -- `bw.router()` for SPAs. Hash mode by default, history mode optional.
 11. **Use `bw.mount()` + `el.bw`** for targeted updates. `o.handle` for methods, `o.slots` for content areas. Avoids re-render side effects (lost focus, scroll reset).
-12. **Debug**: `bw.inspect(el)`, `el._bw_state`, `bwcli attach` for remote REPL.
+12. **Debug**: `bw.inspect(el, 0)`, `el._bw_state`, `bwcli attach` for remote REPL.
 
 ---
 

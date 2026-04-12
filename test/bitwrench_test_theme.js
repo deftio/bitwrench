@@ -1384,6 +1384,71 @@ describe('bw.toggleStyles', function() {
   });
 });
 
+describe('bw.toggleThemeMode', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should be a function', function() {
+    assert.strictEqual(typeof bw.toggleThemeMode, 'function');
+  });
+
+  it('should toggle bw_theme_alt on <html> (global)', function() {
+    var mode1 = bw.toggleThemeMode();
+    assert.strictEqual(mode1, 'alternate');
+    assert.ok(document.documentElement.classList.contains('bw_theme_alt'));
+
+    var mode2 = bw.toggleThemeMode();
+    assert.strictEqual(mode2, 'primary');
+    assert.ok(!document.documentElement.classList.contains('bw_theme_alt'));
+  });
+
+  it('should toggle on scoped element', function() {
+    var app = document.getElementById('app');
+    var mode = bw.toggleThemeMode('#app');
+    assert.strictEqual(mode, 'alternate');
+    assert.ok(app.classList.contains('bw_theme_alt'));
+  });
+
+  it('should toggle on ALL matching elements', function() {
+    var p1 = document.createElement('div');
+    p1.className = 'panel';
+    var p2 = document.createElement('div');
+    p2.className = 'panel';
+    var p3 = document.createElement('div');
+    p3.className = 'panel';
+    document.body.appendChild(p1);
+    document.body.appendChild(p2);
+    document.body.appendChild(p3);
+
+    var mode = bw.toggleThemeMode('.panel');
+    assert.strictEqual(mode, 'alternate');
+    assert.ok(p1.classList.contains('bw_theme_alt'), 'p1 should have alt');
+    assert.ok(p2.classList.contains('bw_theme_alt'), 'p2 should have alt');
+    assert.ok(p3.classList.contains('bw_theme_alt'), 'p3 should have alt');
+
+    var mode2 = bw.toggleThemeMode('.panel');
+    assert.strictEqual(mode2, 'primary');
+    assert.ok(!p1.classList.contains('bw_theme_alt'), 'p1 should not have alt');
+    assert.ok(!p2.classList.contains('bw_theme_alt'), 'p2 should not have alt');
+    assert.ok(!p3.classList.contains('bw_theme_alt'), 'p3 should not have alt');
+  });
+
+  it('should accept DOM element directly', function() {
+    var el = document.createElement('div');
+    document.body.appendChild(el);
+    var mode = bw.toggleThemeMode(el);
+    assert.strictEqual(mode, 'alternate');
+    assert.ok(el.classList.contains('bw_theme_alt'));
+  });
+
+  it('should return primary for nonexistent scope', function() {
+    assert.strictEqual(bw.toggleThemeMode('#ghost'), 'primary');
+  });
+
+  it('bw.toggleStyles should be an alias', function() {
+    assert.strictEqual(bw.toggleStyles, bw.toggleThemeMode);
+  });
+});
+
 describe('bw.clearStyles', function() {
   beforeEach(function() { freshDOM(); });
 

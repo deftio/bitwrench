@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)](https://www.npmjs.com/package/bitwrench)
 [![CI](https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg)](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-97.3%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
+[![Coverage](https://img.shields.io/badge/coverage-97.6%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](https://deftio.github.io/bitwrench/pages/)
 
@@ -155,6 +155,11 @@ bw.sub('item-added', function(detail) {
 });
 
 bw.pub('item-added', { name: 'Widget' });
+
+// Wildcard: listen to a group of related topics
+bw.sub('item:*', function(detail, topic) {
+  console.log(topic, detail);  // e.g. 'item:added', 'item:removed'
+});
 ```
 
 
@@ -211,9 +216,10 @@ bw.toggleStyles();  // switch between primary and alternate palettes
 | `bw.patch(id, content)` | Update a specific element by id or UUID |
 | `bw.update(el)` | Re-render via the element's `o.render` function |
 | `bw.message(target, action, data)` | Dispatch a method call to a component's `el.bw` handle |
-| `bw.pub(topic, detail)` | Publish a message to subscribers |
-| `bw.sub(topic, handler)` | Subscribe to a topic; returns an unsub function |
-| `bw.inspect(target)` | Debug a component's state, handles, and metadata in the console |
+| `bw.pub(topic, detail)` | Publish to subscribers (exact + wildcard matches) |
+| `bw.sub(topic, handler, el?)` | Subscribe to topic (supports wildcard `'ns:*'`); returns unsub function |
+| `bw.once(topic, handler, el?)` | One-shot subscribe; auto-unsub after first fire |
+| `bw.inspect(target, depth)` | Introspect a DOM subtree with bitwrench metadata (state, handles, type) |
 | `bw.apply(msg)` | Apply a bwserve protocol message to the DOM |
 
 See the full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html) for all functions.

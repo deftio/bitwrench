@@ -1,6 +1,73 @@
 # QA Todo -- v2.0.21+
 
 
+## P0: Purge ALL data-* Attributes from Codebase and Docs
+
+Design doc: **`dev/data-attrib-removal.md`** -- full refactor spec with rationale,
+before/after code, file-by-file audit, replacement patterns, and testing checklist.
+Read that doc first. This section is the task checklist.
+
+**Summary:** 179 occurrences of `data-bw-action`/`data-bw-id` across 39 files.
+Core bitwrench is already clean (v2.0.19). The root cause is 7 lines in
+`bwclient.js` -- fix that, then cascade through examples/pages/docs/tools.
+
+### Phase 1: bwserve wire protocol (BREAKING -- source code)
+
+* [ ] refactor --> `src/bwserve/bwclient.js`: ID-based event forwarding (see design doc "Core Change" section)
+* [ ] refactor --> `src/mcp/knowledge.js`: update documentation string (~line 127)
+* [ ] test --> Update `test/bitwrench_test_bwserve.js` for new event model
+* [ ] test --> `npm run test` -- all pass
+
+### Phase 2: Examples
+
+* [ ] refactor --> `examples/client-server/server.js` (4), `screenshot-server.js` (2), `README.md` (2)
+* [ ] refactor --> `examples/llm-chat/server.js` (1)
+* [ ] refactor --> `examples/embedded-rpi/server.js` (2)
+* [ ] refactor --> `examples/live-feed/index.html` -- `data-type`/`data-id` => DOM properties (~4)
+* [ ] refactor --> `examples/ember-and-oak/index.html` -- `data-testid` => IDs or classes (~30)
+
+### Phase 3: Pages
+
+* [ ] refactor --> `pages/12-bwserve-protocol.html` (~9)
+* [ ] refactor --> `pages/14-bwserve-sandbox.html` -- `data-bw-action` + `data-preset` (~11)
+* [ ] refactor --> `pages/state-debug.html` -- `data-tab`/`data-card-name`/`data-testid`/`data-tip` (~12)
+* [ ] refactor --> `pages/component-gallery.html` -- `data-theme` (1)
+* [ ] refactor --> `pages/08-api-reference.html` -- `data-api-name` (2)
+
+### Phase 4: Tools
+
+* [ ] refactor --> `tools/component-tester.mjs` -- `data-bw-action` (4)
+* [ ] refactor --> `tools/screenshot.cjs` -- `data-theme` (2)
+* [ ] refactor --> `tools/build-api-reference.js` -- `data-api-name`/`data-category` (4)
+* [ ] refactor --> `tools/analyze-bccl.js` -- remove `data-bs-toggle` allowlist entry (1)
+
+### Phase 5: Docs
+
+* [ ] doc --> `docs/bwserve.md` (~12), `docs/tutorial-bwserve.md` (~4)
+* [ ] doc --> `docs/app-patterns.md` (2), `docs/taco-format.md` (1)
+* [ ] doc --> `docs/thinking-in-bitwrench.md` (~3), `docs/llm-bitwrench-guide.md` (2)
+* [ ] doc --> `docs/bitwrench_typescript_usage.md` (1)
+* [ ] doc --> `docs/bitwrench-for-wasm.md` -- verify clean
+* [ ] doc --> `dev/bw-client-server.md` (17), `dev/2.0.26-release-planning.md` (2)
+* [ ] doc --> `dev/bw2x-state-and-addressing.md` (3), `dev/bitwrench-mcp-server-design.md` (2)
+* [ ] doc --> `embedded_c/bitwrench.h` (2), `embedded_c/README.md` (2)
+
+### Phase 6: Compliance + tests
+
+* [ ] audit --> zero `data-bw` hits in src/ pages/ examples/ docs/ tools/ test/ embedded_c/
+* [ ] audit --> zero `getAttribute.*data-` / `dataset\.` hits outside vendor/
+* [ ] test --> `npm run test`, `npm run lint`, `npx playwright test` -- all pass
+* [ ] test --> Manual smoke: bwserve examples, pages (08, 12, 14, state-debug, gallery)
+
+### Exemptions (NO ACTION)
+
+- `src/vendor/quikdown.js`, `src/vendor/html2canvas.min.js` -- third-party
+- `dev/archive/*` -- dead historical docs, do not rewrite
+- `dist/`, `releases/` -- auto-rebuilt from source
+- English prose ("data-driven", "data-oriented") -- not attributes
+
+---
+
 ## P1 -- COMPLETED (see qa-completed.md)
 
 ---
@@ -81,6 +148,41 @@ Source breakdown: core ~3400 LOC, styles ~2190 LOC, BCCL ~3600 LOC, color ~460 L
 
 ---
 
+## P2.7: Lifecycle and Composition (v2.0.26)
+
+Design doc: `dev/2.0.26-release-planning.md`
+Source: `dev/bitwrench-component-lifecycle.md`, `dev/bitwrench_agui_a2ui_feedback.md`
+
+### Must-have (paradigm correctness)
+
+* [x] fix --> Slot target caching bug: cache querySelector result at creation time, not re-query every setter call
+* [x] implement --> o.type wiring: `if (opts.type) el._bw_type = opts.type` in createDOM
+* [x] implement --> Error boundaries: try/catch around o.mounted/o.render/o.unmount callbacks (match bw.pub pattern)
+* [x] implement --> bw.inspect(target, depth) in bitwrench.js core: recursive walk returning plain object with bitwrench metadata
+* [x] implement --> Enhanced _bw_tree in bwclient.js: thin wrapper around bw.inspect()
+* [ ] implement --> client.inspect() convenience method on BwServeClient
+
+### Should-have (unlocks)
+
+* [x] implement --> SVG namespace support in createDOM (createElementNS for SVG/MathML context)
+* [ ] implement --> Scoped theme toggle: bw.toggleStyles(scopeEl) for container-scoped palette switching
+
+### Small wins (from AG-UI/A2UI feedback)
+
+* [x] implement --> bw.once(topic, handler) -- one-shot subscription
+* [ ] implement --> Wildcard subscriptions: bw.sub('topic:*', handler) -- trailing * glob, ~10 lines
+* [x] implement --> bw.catalog() -- expose BCCL component registry (types + factory names)
+* [x] implement --> bw.formData(el) -- extract form data as plain object
+* [ ] implement --> bw.jsonPatch(obj, patches) -- RFC 6902 JSON Patch, ~40 lines
+
+### Documentation
+
+* [ ] doc --> Composition patterns tutorial (extract from lifecycle doc to standalone or 05-state.html)
+* [ ] doc --> Component testing recipe (jsdom + bw.mount + handle methods + cleanup)
+* [ ] doc --> "o.render is the heavy path" guidance in API reference
+
+---
+
 ## P3: Design system polish (ongoing)
 
 * [ ] tune --> alternate derivation curves with all 12 preset themes
@@ -90,20 +192,15 @@ Source breakdown: core ~3400 LOC, styles ~2190 LOC, BCCL ~3600 LOC, color ~460 L
 
 ---
 
-## P3.7: shared-theme.js migration -- Phase 1 DONE
+## P3.7: shared-theme.js migration -- COMPLETED (v2.0.25)
 
-Phase 1 complete: two-phase injection, duplicate CSS removed, source order fixed.
-See `dev/qa-completed.md` for details.
+Full migration complete. shared-theme.js/css replaced with palette-driven site.js.
+All pages migrated to BCCL flat-class pattern. See `dev/qa-completed.md` for details.
 
-### Remaining (Phase 2+)
+### Remaining polish
 
-* [x] fix --> Consolidate page init boilerplate -- `initBitwrenchPage()` in shared-nav.js (v2.0.21)
 * [ ] implement --> Code block color tokens in theme palette (for code editor theming)
 * [ ] implement --> Font family in layout config (mono font stack)
-* [ ] move --> Grid utilities from shared-theme.js to structural CSS (reusable by all users)
-* [ ] move --> Callout styles from shared-theme.js to structural CSS or themed layer
-* [ ] migrate --> Replace hardcoded `:root` CSS vars with palette-derived tokens from bw.makeStyles()
-* [ ] migrate --> Convert hand-written component CSS to use design tokens
 
 ---
 
@@ -190,15 +287,7 @@ serializable, patchable via bwserve, themeable via palette.
 
 ## P1: Client-Side Router -- DONE (v2.0.21)
 
-Implemented in `src/bitwrench-router.js`. 50 tests. Docs at `docs/routing.md`.
-API: `bw.router(config)`, `bw.navigate(path)`, `bw.link(path, content)`.
-Hash + History modes, :param + wildcard matching, before/after guards, pub/sub.
-
-* [x] implement --> Route matching, hash mode, history mode, guards, bw.link()
-* [x] test --> 50 tests (matching, hash, history, guards, pub/sub, edge cases)
-* [x] doc --> docs/routing.md + updated LLM guide, framework table, tutorials
-* [x] example --> Update pages/15-multi-page-site.html to use bw.router() (v2.0.21, Section 7)
-* [x] example --> `examples/dashboard-spa/` using router + shared state (v2.0.21)
+See `dev/qa-completed.md` for details.
 
 ---
 

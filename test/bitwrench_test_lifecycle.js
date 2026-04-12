@@ -10,7 +10,7 @@
  *   - bw._handles registry
  *   - Handle object: { el, uuid, mounted, _state, _hooks, get, set, getState }
  *   - bw.message(target, action, data)
- *   - bw.inspect(target)
+ *   - bw.inspect(target, depth)
  *   - Deprecation stubs
  */
 
@@ -660,95 +660,21 @@ describe('Lifecycle Engine', function () {
   });
 
   // =======================================================================
-  // inspect
+  // inspect -- DOM introspection
   // =======================================================================
 
   describe('bw.inspect', function () {
-
-    it('returns handle for component element', function () {
-      var h = bw.mount('#app', { t: 'div', o: { state: { x: 1 } } });
-      // Suppress console output during inspect
-      var origGroup = console.group;
-      var origGroupEnd = console.groupEnd;
-      var origLog = console.log;
-      console.group = function () {};
-      console.groupEnd = function () {};
-      console.log = function () {};
-
-      var result = bw.inspect(h.el);
-
-      console.group = origGroup;
-      console.groupEnd = origGroupEnd;
-      console.log = origLog;
-
-      assert.strictEqual(result, h);
-    });
-
-    it('returns null for non-component element', function () {
-      bw.mount('#app', { t: 'p', c: 'plain text' });
-      var p = document.querySelector('#app p');
-
-      var origLog = console.log;
-      console.log = function () {};
-      var result = bw.inspect(p);
-      console.log = origLog;
-
-      assert.strictEqual(result, null);
-    });
-
-    it('works with CSS selector', function () {
-      bw.mount('#app', {
-        t: 'div', a: { class: 'inspect_target' },
-        o: { state: { n: 7 } }
-      });
-
-      var origGroup = console.group;
-      var origGroupEnd = console.groupEnd;
-      var origLog = console.log;
-      console.group = function () {};
-      console.groupEnd = function () {};
-      console.log = function () {};
-
-      var result = bw.inspect('.inspect_target');
-
-      console.group = origGroup;
-      console.groupEnd = origGroupEnd;
-      console.log = origLog;
-
-      assert.ok(result);
-      assert.strictEqual(result.get('n'), 7);
-    });
-
-    it('works with handle object', function () {
-      var h = bw.mount('#app', { t: 'div', o: { state: { v: 42 } } });
-
-      var origGroup = console.group;
-      var origGroupEnd = console.groupEnd;
-      var origLog = console.log;
-      console.group = function () {};
-      console.groupEnd = function () {};
-      console.log = function () {};
-
-      var result = bw.inspect(h);
-
-      console.group = origGroup;
-      console.groupEnd = origGroupEnd;
-      console.log = origLog;
-
-      assert.strictEqual(result, h);
+    it('returns info for component element', function () {
+      var el = bw.mount('#app', { t: 'div', o: { state: { x: 1 } } });
+      var info = bw.inspect(el, 0);
+      assert.ok(info);
+      assert.equal(info.tag, 'div');
+      assert.deepEqual(info.state, { x: 1 });
     });
 
     it('returns null for not found', function () {
-      var origWarn = console.warn;
-      console.warn = function () {};
-
-      var result = bw.inspect('.nonexistent_selector_xyz');
-
-      console.warn = origWarn;
-
-      assert.strictEqual(result, null);
+      assert.strictEqual(bw.inspect('.nonexistent_selector_xyz'), null);
     });
-
   });
 
   // =======================================================================

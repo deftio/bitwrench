@@ -315,8 +315,8 @@ export interface Bitwrench {
   html(taco: Taco | TacoContent, options?: { raw?: boolean; state?: Record<string, any> }): string;
   /** Generate complete HTML page string */
   htmlPage(opts: { title?: string; css?: string; content?: TacoContent; favicon?: string; [key: string]: any }): string;
-  /** Create DOM element from TACO (browser only) */
-  createDOM(taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | DocumentFragment;
+  /** Create DOM element from TACO (browser only). SVG TACOs ({t:'svg',...}) use createElementNS. */
+  createDOM(taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | SVGElement | DocumentFragment;
   /** Mount TACO into target, replacing contents */
   DOM(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): void;
   /** Mount TACO and return root element (for el.bw access) */
@@ -331,24 +331,28 @@ export interface Bitwrench {
   update(target: string | HTMLElement): void;
   /** Quick-patch element content or attribute */
   patch(id: string | HTMLElement, content?: TacoContent, attr?: string): HTMLElement | null;
+  /** RFC 6902 JSON Patch on plain objects. Mutates and returns obj. @see bw.patch */
+  jsonPatch(obj: object, ops: Array<{ op: string; path: string; value?: any; from?: string }>): object;
   /** Batch patch multiple elements */
   patchAll(patches: Record<string, TacoContent> | Array<{ id: string; content?: TacoContent; attr?: string }>): Record<string, HTMLElement>;
   /** Clean up lifecycle hooks, subscriptions, cache */
   cleanup(element: HTMLElement): void;
 
   // -- DOM Selection --------------------------------------------------------
-  /** CSS selector to array of elements */
-  $(selector: string | HTMLElement | HTMLElement[]): HTMLElement[];
+  /** Resolve target to first matching element. Optional apply: string (textContent), function, TACO (mount), or array. @see bw.$ */
+  el(target: string | HTMLElement | null, apply?: string | number | boolean | Function | object | any[]): HTMLElement | null;
+  /** CSS selector to array of elements. Optional apply applied to each. @see bw.el */
+  $(selector: string | HTMLElement | HTMLElement[], apply?: string | number | boolean | Function | object | any[]): HTMLElement[];
   /** Dispatch DOM event */
   emit(target: string | HTMLElement, eventName: string, detail?: any): void;
   /** Add event listener */
   on(target: string | HTMLElement, eventName: string, handler: (e: Event) => void): void;
 
   // -- Pub/Sub --------------------------------------------------------------
-  /** Publish to topic */
+  /** Publish to topic. Fires exact-match and wildcard subscribers. */
   pub(topic: string, detail?: any): number;
-  /** Subscribe to topic; returns unsub() */
-  sub(topic: string, handler: (detail: any) => void, el?: HTMLElement): () => void;
+  /** Subscribe to topic (or wildcard pattern ending in '*'); returns unsub(). Handler receives (detail, topic). */
+  sub(topic: string, handler: (detail: any, topic?: string) => void, el?: HTMLElement): () => void;
   /** Unsubscribe handler from topic */
   unsub(topic: string, handler: Function): number;
 
@@ -365,8 +369,8 @@ export interface Bitwrench {
   message(target: string | HTMLElement, action: string, data?: any): any;
   /** Execute wire-protocol message object */
   apply(msg: Record<string, any>): any;
-  /** Inspect element properties */
-  inspect(target: string | HTMLElement): Record<string, any>;
+  /** Inspect DOM element and subtree, returning plain-object tree with bitwrench metadata */
+  inspect(target: string | HTMLElement, depth?: number): Record<string, any> | null;
 
   // -- Function Registry ----------------------------------------------------
   funcRegister(fn: Function, name?: string): string;
@@ -395,8 +399,10 @@ export interface Bitwrench {
   loadStyles(config?: StyleConfig, scope?: string): StylesResult | void;
   /** Load CSS reset */
   loadReset(): void;
-  /** Switch primary/alternate palette */
-  toggleStyles(scope?: string): void;
+  /** Toggle between primary/alternate theme palettes on all matching elements. @see bw.applyStyles */
+  toggleThemeMode(scope?: string | HTMLElement): string;
+  /** @deprecated Use bw.toggleThemeMode() instead. Alias kept for one release cycle. */
+  toggleStyles(scope?: string | HTMLElement): string;
   /** Remove injected styles */
   clearStyles(scope?: string): void;
   /** Generate type scale from base + ratio */
@@ -586,6 +592,7 @@ export interface Bitwrench {
 
   // -- Internal (access at own risk) ----------------------------------------
   _nodeMap: Record<string, HTMLElement>;
+  /** @deprecated Use bw.el() instead. Alias kept for one release cycle. */
   _el(id: string): HTMLElement | null;
   _registerNode(el: HTMLElement, uuid: string): void;
   _deregisterNode(el: HTMLElement, uuid: string): void;

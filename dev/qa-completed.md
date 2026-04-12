@@ -544,3 +544,55 @@ Design doc: `dev/bw-screenshot-design.md`
 * [x] Build: clean, all dist formats generated
 * [x] Bundle: ~38KB gzipped (was ~43KB before ComponentHandle removal -- 5KB savings)
 * [x] Net code change: ~8700 lines removed, ~11100 lines changed (127 files)
+
+---
+
+# QA Completed -- v2.0.25 (feature/embedded-plus)
+
+## P3.7: shared-theme.js -> site.js migration (COMPLETED)
+
+* [x] replace --> shared-theme.js/shared-theme.css with palette-driven site.js (bw.css + bw.scopeRulesUnder)
+* [x] implement --> Site CSS split: structural (layout-only) + per-component themed rule functions; no shared selectors between structural and themed
+* [x] implement --> Dark mode auto-generated via bw.scopeRulesUnder() -- no manual .bw_theme_alt overrides
+* [x] migrate --> All 25+ doc pages from old class names to BCCL flat-class pattern (bw_site_pages_* prefix)
+* [x] migrate --> 08-api-reference.html page CSS from hardcoded hex to palette-driven
+* [x] delete --> pages/shared-theme.js, pages/shared-theme.css
+
+## Core API changes (v2.0.25)
+
+* [x] fix --> bw.loadStyles() now returns the full styles object (palette, rules, etc.) instead of just the style element
+* [x] expose --> bw.scopeRulesUnder() as public API for scoping CSS rules under a prefix selector
+* [x] tune --> Theme colors: interactive elements (links, tabs, breadcrumbs, steppers) use tertiary palette for better visual hierarchy
+* [x] fix --> bw_text_muted uses palette.secondary.base instead of hardcoded #6c757d
+
+## Embedded examples (v2.0.25)
+
+* [x] create --> Tutorial-depth ESP32 example with real networking code
+* [x] create --> Pico W examples (MicroPython + CircuitPython) with hardware dashboards
+* [x] create --> Raspberry Pi example with Node.js + Python servers
+* [x] create --> Adafruit ST25DV16 NFC example with I2C register-level detail
+* [x] rewrite --> Examples gallery with category cards
+
+## Docs and testing (v2.0.25)
+
+* [x] create --> TypeScript definitions (bitwrench.d.ts) for full public API
+* [x] create --> Component lifecycle design doc (dev/bitwrench-component-lifecycle.md)
+* [x] create --> AG-UI/A2UI feedback doc (dev/bitwrench_agui_a2ui_feedback.md)
+* [x] create --> Future features landscape comparison (dev/future-features.md)
+* [x] add --> New test suites for bwserve, MCP, code editor
+* [x] add --> Coverage badge auto-update script
+* [x] achieve --> Test coverage to 97%
+
+## P3.7 Phase 2 items completed (v2.0.25)
+
+* [x] fix --> Consolidate page init boilerplate -- initBitwrenchPage() in site.js
+* [x] migrate --> Replace hardcoded :root CSS vars with palette-derived tokens from bw.makeStyles()
+* [x] migrate --> Convert hand-written component CSS to use design tokens
+* [x] move --> Grid utilities from shared-theme to structural CSS
+* [x] move --> Callout styles from shared-theme to themed layer in site.js
+
+## QA Results (v2.0.25 final)
+
+* [x] Unit tests: 1643 passing (97% statement coverage)
+* [x] Playwright: 171/171 passing
+* [x] Bundle: ~38KB gzipped (under 45KB budget)

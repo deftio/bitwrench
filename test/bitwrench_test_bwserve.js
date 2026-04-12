@@ -257,7 +257,7 @@ describe("bw.apply()", function() {
     });
 
     it("should call a registered focus function", function() {
-      bw._clientFunctions.focus = function(sel) { var el = bw._el(sel); if (el && typeof el.focus === 'function') el.focus(); };
+      bw._clientFunctions.focus = function(sel) { var el = bw.el(sel); if (el && typeof el.focus === 'function') el.focus(); };
       bw.DOM('#app', { t: 'input', a: { id: 'inp' } });
       var focused = false;
       document.getElementById('inp').focus = function() { focused = true; };
@@ -267,7 +267,7 @@ describe("bw.apply()", function() {
     });
 
     it("should call a registered scrollTo function", function() {
-      bw._clientFunctions.scrollTo = function(sel) { var el = bw._el(sel); if (el) el.scrollTop = el.scrollHeight; };
+      bw._clientFunctions.scrollTo = function(sel) { var el = bw.el(sel); if (el) el.scrollTop = el.scrollHeight; };
       bw.DOM('#app', { t: 'div', a: { id: 'scrollable' } });
       var result = bw.apply({ type: 'call', name: 'scrollTo', args: ['#scrollable'] });
       assert.strictEqual(result, true);
@@ -1268,6 +1268,102 @@ describe("BwServeApp HTTP integration", function() {
     fs.rmdirSync(tmpDir);
   });
 
+  it("should serve index.html for trailing-slash directory request", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'subdir'));
+    fs.writeFileSync(path.join(tmpDir, 'index.html'), '<h1>Root Index</h1>');
+    fs.writeFileSync(path.join(tmpDir, 'subdir', 'index.html'), '<h1>Sub Index</h1>');
+    var app = createApp({ static: tmpDir });
+    app.page('/bwpage', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    // Root trailing slash should serve root index.html
+    var rootRes = await fetch('http://localhost:' + port + '/', { redirect: 'manual' });
+    assert.strictEqual(rootRes.status, 200);
+    var rootBody = await rootRes.text();
+    assert.strictEqual(rootBody, '<h1>Root Index</h1>');
+    // Subdirectory trailing slash should serve subdir/index.html
+    var subRes = await fetch('http://localhost:' + port + '/subdir/', { redirect: 'manual' });
+    assert.strictEqual(subRes.status, 200);
+    var subBody = await subRes.text();
+    assert.strictEqual(subBody, '<h1>Sub Index</h1>');
+    // Cleanup
+    fs.unlinkSync(path.join(tmpDir, 'index.html'));
+    fs.unlinkSync(path.join(tmpDir, 'subdir', 'index.html'));
+    fs.rmdirSync(path.join(tmpDir, 'subdir'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should 301 redirect bare directory path to trailing slash", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'docs'));
+    fs.writeFileSync(path.join(tmpDir, 'docs', 'index.html'), '<h1>Docs</h1>');
+    var app = createApp({ static: tmpDir });
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    // Bare directory should redirect to trailing slash
+    var res = await fetch('http://localhost:' + port + '/docs', { redirect: 'manual' });
+    assert.strictEqual(res.status, 301);
+    assert.strictEqual(res.headers.get('location'), '/docs/');
+    // Following redirect should serve index.html
+    var followRes = await fetch('http://localhost:' + port + '/docs/');
+    assert.strictEqual(followRes.status, 200);
+    var body = await followRes.text();
+    assert.strictEqual(body, '<h1>Docs</h1>');
+    // Cleanup
+    fs.unlinkSync(path.join(tmpDir, 'docs', 'index.html'));
+    fs.rmdirSync(path.join(tmpDir, 'docs'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should return 404 for directory without index.html", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'emptydir'));
+    var app = createApp({ static: tmpDir });
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/emptydir/', { redirect: 'manual' });
+    assert.strictEqual(res.status, 404);
+    // Cleanup
+    fs.rmdirSync(path.join(tmpDir, 'emptydir'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should preserve query string in bare directory redirect", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'app'));
+    fs.writeFileSync(path.join(tmpDir, 'app', 'index.html'), '<h1>App</h1>');
+    var app = createApp({ static: tmpDir });
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/app?debug=1', { redirect: 'manual' });
+    assert.strictEqual(res.status, 301);
+    assert.strictEqual(res.headers.get('location'), '/app/?debug=1');
+    // Cleanup
+    fs.unlinkSync(path.join(tmpDir, 'app', 'index.html'));
+    fs.rmdirSync(path.join(tmpDir, 'app'));
+    fs.rmdirSync(tmpDir);
+  });
+
   it("should handle page handler that throws", async function() {
     this.timeout(5000);
     var app = createApp();
@@ -1779,20 +1875,28 @@ describe("BwServeApp._serveVendorFile()", function() {
     }
   });
 
-  it("should return 404 for allowed but missing vendor file", function() {
-    // Patch the vendor dir temporarily to a non-existent path
-    // Actually, html2canvas.min.js exists in src/vendor/ so let's test with
-    // a path-traversal attempt that's still on the allowlist but doesn't resolve
-    var app = new BwServeApp({});
-    var status, body;
-    var mockRes = {
-      writeHead: function(s) { status = s; },
-      end: function(b) { body = b; }
-    };
-    // Only 'html2canvas.min.js' is allowed, anything else is blocked at the allowlist
-    app._serveVendorFile(mockRes, 'nonexistent.js');
-    assert.strictEqual(status, 404);
-    assert.strictEqual(body, 'Not found');
+  it("should return 404 for allowed filename when file is missing on disk (lines 445-448)", async function() {
+    // Temporarily rename the vendor file to test the missing-file branch
+    var fs = await import('fs');
+    var path = await import('path');
+    var vendorDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'src', 'vendor');
+    var filePath = path.join(vendorDir, 'html2canvas.min.js');
+    var backupPath = filePath + '.bak';
+    if (!fs.existsSync(filePath)) return; // skip if already missing
+    fs.renameSync(filePath, backupPath);
+    try {
+      var app = new BwServeApp({});
+      var status, body;
+      var mockRes = {
+        writeHead: function(s) { status = s; },
+        end: function(b) { body = b; }
+      };
+      app._serveVendorFile(mockRes, 'html2canvas.min.js');
+      assert.strictEqual(status, 404);
+      assert.ok(body.includes('Vendor file not found'));
+    } finally {
+      fs.renameSync(backupPath, filePath);
+    }
   });
 });
 
@@ -1931,5 +2035,455 @@ describe("BwServeApp._serveAttachScript()", function() {
     assert.strictEqual(status, 200);
     assert.ok(headers['Content-Type'].indexOf('javascript') >= 0);
     assert.ok(body.length > 0, 'should return non-empty JS');
+  });
+
+  it("should include CORS header on attach script response", function() {
+    var app = new BwServeApp({});
+    var status, body, headers;
+    var mockRes = {
+      writeHead: function(s, h) { status = s; headers = h; },
+      end: function(b) { body = b; }
+    };
+    app._serveAttachScript({}, mockRes);
+    assert.strictEqual(status, 200);
+    assert.strictEqual(headers['Access-Control-Allow-Origin'], '*');
+    assert.strictEqual(headers['Cache-Control'], 'no-cache');
+    assert.ok(body.length > 100, 'attach script should be non-trivial');
+  });
+});
+
+// ===================================================================================
+// BwServeClient coverage: _pend default timeout, _resolvePending data without .result,
+// query/mount without options, screenshot result without .data
+// ===================================================================================
+
+describe("BwServeClient branch coverage", function() {
+  it("_pend should use default timeout when called without arg", function() {
+    var client = new BwServeClient('bc-1', null);
+    var p = client._pend(); // no timeout arg -- defaults to 10000
+    assert.ok(p.requestId);
+    assert.ok(p.promise instanceof Promise);
+    // Resolve immediately to prevent dangling timeout
+    client._resolvePending(p.requestId, { result: 'done' });
+    return p.promise;
+  });
+
+  it("_pend should use default timeout when called with 0", function() {
+    var client = new BwServeClient('bc-2', null);
+    var p = client._pend(0); // falsy -> defaults to 10000
+    assert.ok(p.requestId);
+    client._resolvePending(p.requestId, { result: 'ok' });
+    return p.promise;
+  });
+
+  it("_resolvePending should resolve with full data when data.result is undefined", function() {
+    var client = new BwServeClient('bc-3', null);
+    var p = client._pend(5000);
+    // Resolve with data that has no .result key -- line 220 branch
+    client._resolvePending(p.requestId, { mounted: true, id: 'x' });
+    return p.promise.then(function(val) {
+      assert.deepStrictEqual(val, { mounted: true, id: 'x' });
+    });
+  });
+
+  it("_resolvePending should resolve with data.result when it exists (even falsy)", function() {
+    var client = new BwServeClient('bc-4', null);
+    var p = client._pend(5000);
+    // result is 0 (falsy but defined) -- should use data.result, not data
+    client._resolvePending(p.requestId, { result: 0 });
+    return p.promise.then(function(val) {
+      assert.strictEqual(val, 0);
+    });
+  });
+
+  it("_resolvePending should resolve with data.result when it is null", function() {
+    var client = new BwServeClient('bc-5', null);
+    var p = client._pend(5000);
+    client._resolvePending(p.requestId, { result: null });
+    return p.promise.then(function(val) {
+      assert.strictEqual(val, null);
+    });
+  });
+
+  it("_resolvePending should resolve with data.result when it is false", function() {
+    var client = new BwServeClient('bc-6', null);
+    var p = client._pend(5000);
+    client._resolvePending(p.requestId, { result: false });
+    return p.promise.then(function(val) {
+      assert.strictEqual(val, false);
+    });
+  });
+
+  it("_resolvePending should resolve with data.result '' (empty string)", function() {
+    var client = new BwServeClient('bc-7', null);
+    var p = client._pend(5000);
+    client._resolvePending(p.requestId, { result: '' });
+    return p.promise.then(function(val) {
+      assert.strictEqual(val, '');
+    });
+  });
+
+  it("query() without options arg should use default timeout", function() {
+    var client = new BwServeClient('bc-8', null);
+    client._allowScreenshot = false;
+    var p = client.query('return 1'); // no options -- lines 236-237
+    var msg = client._sent[0];
+    assert.ok(msg);
+    assert.strictEqual(msg.name, '_bw_query');
+    assert.ok(msg.args[0].requestId);
+    // Resolve to clean up
+    client._resolvePending(msg.args[0].requestId, { result: 1 });
+    return p.then(function(val) {
+      assert.strictEqual(val, 1);
+    });
+  });
+
+  it("mount() without options or props arg should use defaults", function() {
+    var client = new BwServeClient('bc-9', null);
+    var p = client.mount('#app', 'accordion'); // no props, no options -- lines 255-260
+    var msg = client._sent[0];
+    assert.ok(msg);
+    assert.strictEqual(msg.name, '_bw_mount');
+    assert.deepStrictEqual(msg.args[0].props, {});
+    assert.strictEqual(msg.args[0].target, '#app');
+    assert.strictEqual(msg.args[0].factory, 'accordion');
+    // Resolve to clean up
+    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
+    return p.then(function(val) {
+      assert.deepStrictEqual(val, { mounted: true });
+    });
+  });
+
+  it("mount() with props but no options should use default timeout", function() {
+    var client = new BwServeClient('bc-10', null);
+    var p = client.mount('#app', 'card', { title: 'Test' }); // no options arg
+    var msg = client._sent[0];
+    assert.deepStrictEqual(msg.args[0].props, { title: 'Test' });
+    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
+    return p;
+  });
+
+  it("screenshot() should return result as-is when result has no .data", function() {
+    var client = new BwServeClient('bc-11', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { timeout: 5000 });
+    var msg = client._sent[0];
+    // Resolve with result that has no .data -- line 335 branch
+    client._resolvePending(msg.args[0].requestId, { result: null });
+    return p.then(function(val) {
+      assert.strictEqual(val, null);
+    });
+  });
+
+  it("screenshot() should return result as-is when result is empty object", function() {
+    var client = new BwServeClient('bc-12', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { timeout: 5000 });
+    var msg = client._sent[0];
+    // Resolve with result that has no .data key -- line 335 branch (!result.data)
+    client._resolvePending(msg.args[0].requestId, { result: { width: 100, height: 50 } });
+    return p.then(function(val) {
+      assert.deepStrictEqual(val, { width: 100, height: 50 });
+    });
+  });
+
+  it("screenshot() without options should use defaults", function() {
+    var client = new BwServeClient('bc-13', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot(); // no selector, no options
+    var msg = client._sent[0];
+    assert.strictEqual(msg.args[0].selector, 'body');
+    assert.strictEqual(msg.args[0].format, 'png');
+    assert.strictEqual(msg.args[0].quality, 0.85);
+    assert.strictEqual(msg.args[0].scale, 1);
+    assert.strictEqual(msg.args[0].maxWidth, null);
+    assert.strictEqual(msg.args[0].maxHeight, null);
+    client._resolvePending(msg.args[0].requestId, { result: { data: 'data:image/png;base64,AAAA', width: 10, height: 10, format: 'png' } });
+    return p;
+  });
+});
+
+// ===================================================================================
+// BwServeApp HTTP: vendor file route, .json MIME, attach script error
+// ===================================================================================
+
+describe("BwServeApp HTTP vendor and attach routes", function() {
+  var apps = [];
+  function createApp(opts) {
+    var a = bwserve.create(Object.assign({ port: 0 }, opts || {}));
+    apps.push(a);
+    return a;
+  }
+  afterEach(async function() {
+    this.timeout(5000);
+    for (var a of apps) {
+      if (a._server) await a.close();
+    }
+    apps = [];
+  });
+
+  it("should serve vendor file via /bw/lib/vendor/ HTTP route", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    // Request disallowed vendor file -- should 404
+    var res = await fetch('http://localhost:' + port + '/bw/lib/vendor/evil.js');
+    assert.strictEqual(res.status, 404);
+    var body = await res.text();
+    assert.ok(body.includes('Not found'));
+  });
+
+  it("should serve allowed vendor file via HTTP if it exists", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var path = await import('path');
+    var vendorDir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'src', 'vendor');
+    var vendorFile = path.join(vendorDir, 'html2canvas.min.js');
+    if (!fs.existsSync(vendorFile)) {
+      // Skip if vendor file doesn't exist in test environment
+      return;
+    }
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/bw/lib/vendor/html2canvas.min.js');
+    assert.strictEqual(res.status, 200);
+    var ct = res.headers.get('content-type');
+    assert.ok(ct.includes('javascript'));
+  });
+
+  it("should serve .json static files with correct MIME type", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var path = await import('path');
+    var tmpDir = path.resolve('/tmp/bwserve-json-test-' + Date.now());
+    fs.mkdirSync(tmpDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'test.json'), '{"ok":true}');
+    try {
+      var app = bwserve.create({ port: 0, static: tmpDir });
+      apps.push(app);
+      app.page('/', function() {});
+      await app.listen();
+      var port = app._server.address().port;
+      var res = await fetch('http://localhost:' + port + '/test.json');
+      assert.strictEqual(res.status, 200);
+      var ct = res.headers.get('content-type');
+      assert.ok(ct.includes('json'), 'should serve with JSON content-type, got: ' + ct);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should serve attach script via /bw/attach.js HTTP route", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/bw/attach.js');
+    assert.strictEqual(res.status, 200);
+    var ct = res.headers.get('content-type');
+    assert.ok(ct.includes('javascript'));
+    var body = await res.text();
+    assert.ok(body.length > 0);
+    assert.ok(body.includes('EventSource') || body.includes('bw'), 'attach script should contain SSE or bw references');
+  });
+
+  it("should return 400 for /bw/return/ without slash in rest path (lines 244-247)", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    // POST to /bw/return/noslash -- no second slash after route, so line 243 slash === -1
+    var res = await fetch('http://localhost:' + port + '/bw/return/noslash', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    assert.strictEqual(res.status, 400);
+    var body = await res.json();
+    assert.ok(body.error.includes('Invalid return path'));
+  });
+});
+
+// ===================================================================================
+// Malformed input tests for bwserve client/app
+// ===================================================================================
+
+describe("BwServeClient malformed inputs", function() {
+  it("render with null target should not throw", function() {
+    var client = new BwServeClient('mal-1', null);
+    client.render(null, { t: 'div', c: 'test' });
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("render with undefined node should not throw", function() {
+    var client = new BwServeClient('mal-2', null);
+    client.render('#app', undefined);
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("patch with empty string target should not throw", function() {
+    var client = new BwServeClient('mal-3', null);
+    client.patch('', 'content');
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("batch with empty array should not throw", function() {
+    var client = new BwServeClient('mal-4', null);
+    client.batch([]);
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("call with empty name should not throw", function() {
+    var client = new BwServeClient('mal-5', null);
+    client.call('', { x: 1 });
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("register with empty name and body should not throw", function() {
+    var client = new BwServeClient('mal-6', null);
+    client.register('', '');
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("exec with empty code should not throw", function() {
+    var client = new BwServeClient('mal-7', null);
+    client.exec('');
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("message with null action should not throw", function() {
+    var client = new BwServeClient('mal-8', null);
+    client.message(null);
+    assert.ok(client._sent.length > 0);
+  });
+
+  it("on with non-string event should not throw", function() {
+    var client = new BwServeClient('mal-9', null);
+    client.on(123, function() {});
+    assert.ok(true, 'did not throw');
+  });
+
+  it("_resolvePending with null data should not throw", function() {
+    var client = new BwServeClient('mal-10', null);
+    var p = client._pend(5000);
+    // data with no error and no result -- falls through to resolve with data itself
+    var result = client._resolvePending(p.requestId, {});
+    assert.strictEqual(result, true);
+    return p.promise.then(function(val) {
+      assert.deepStrictEqual(val, {});
+    });
+  });
+
+  it("query with non-string code should not throw", function() {
+    var client = new BwServeClient('mal-11', null);
+    var p = client.query(123);
+    var msg = client._sent[0];
+    client._resolvePending(msg.args[0].requestId, { result: 'ok' });
+    return p;
+  });
+
+  it("mount with null selector should not throw", function() {
+    var client = new BwServeClient('mal-12', null);
+    var p = client.mount(null, null);
+    var msg = client._sent[0];
+    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
+    return p;
+  });
+
+  it("screenshot with non-string selector should not throw", function() {
+    var client = new BwServeClient('mal-13', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot(123, { timeout: 500 });
+    var msg = client._sent[0];
+    assert.strictEqual(msg.args[0].selector, 123);
+    client._resolvePending(msg.args[0].requestId, { result: null });
+    return p;
+  });
+});
+
+// ===================================================================================
+// bw.apply() malformed inputs
+// ===================================================================================
+
+describe("bw.apply() malformed inputs", function() {
+  beforeEach(function() {
+    resetApp();
+  });
+
+  it("should return false for non-object input", function() {
+    assert.strictEqual(bw.apply('string'), false);
+    assert.strictEqual(bw.apply(42), false);
+    assert.strictEqual(bw.apply(true), false);
+    assert.strictEqual(bw.apply([]), false);
+  });
+
+  it("should handle replace with missing target gracefully", function() {
+    var result = bw.apply({ type: 'replace', node: { t: 'div', c: 'test' } });
+    // Should not crash even with missing target
+    assert.ok(result === false || result === undefined || result === true);
+  });
+
+  it("should handle replace with missing node gracefully", function() {
+    var result = bw.apply({ type: 'replace', target: '#app' });
+    assert.ok(result === false || result === undefined || result === true);
+  });
+
+  it("should handle patch with null content gracefully", function() {
+    var result = bw.apply({ type: 'patch', target: '#app', content: null });
+    assert.ok(result === false || result === undefined || result === true);
+  });
+
+  it("should handle batch with non-array ops gracefully", function() {
+    var result = bw.apply({ type: 'batch', ops: 'not-an-array' });
+    assert.ok(result === false || result === undefined || result === true);
+  });
+
+  it("should handle unknown type gracefully", function() {
+    var result = bw.apply({ type: 'nonexistent-type' });
+    assert.strictEqual(result, false);
+  });
+
+  it("should handle register with missing name", function() {
+    var origWarn = console.warn;
+    console.warn = function() {};
+    try {
+      var result = bw.apply({ type: 'register', body: 'return 1;' });
+      assert.ok(result === false || result === undefined || result === true);
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should handle register with missing body", function() {
+    var origWarn = console.warn;
+    console.warn = function() {};
+    try {
+      var result = bw.apply({ type: 'register', name: 'test' });
+      assert.ok(result === false || result === undefined || result === true);
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should handle call with missing name", function() {
+    var origWarn = console.warn;
+    console.warn = function() {};
+    try {
+      var result = bw.apply({ type: 'call', args: [1, 2, 3] });
+      assert.ok(result === false || result === undefined || result === true);
+    } finally {
+      console.warn = origWarn;
+    }
+  });
+
+  it("should handle exec with empty code", function() {
+    var result = bw.apply({ type: 'exec', code: '' });
+    assert.ok(result === false || result === undefined || result === true);
   });
 });

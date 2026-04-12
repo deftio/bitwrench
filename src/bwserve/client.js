@@ -263,6 +263,32 @@ export class BwServeClient {
         return pend.promise;
     }
 
+    // ── Inspect ──
+
+    /**
+     * Inspect the DOM tree of the connected client.
+     *
+     * Calls the `_bw_tree` builtin on the client which delegates to
+     * `bw.inspect()` when available, returning a plain-object tree with
+     * bitwrench metadata (tag, uuid, type, handles, state, children).
+     *
+     * @param {string} [selector='body'] - CSS selector of root element
+     * @param {Object} [options]
+     * @param {number} [options.depth=3] - Max recursion depth
+     * @param {number} [options.timeout=10000] - Timeout in ms
+     * @returns {Promise<Object|null>} Tree object, or null if element not found
+     */
+    inspect(selector, options) {
+        var opts = options || {};
+        var pend = this._pend(opts.timeout || 10000);
+        this.call('_bw_tree', {
+            selector: selector || 'body',
+            depth: opts.depth || 3,
+            requestId: pend.requestId
+        });
+        return pend.promise;
+    }
+
     // ── Screenshot ──
 
     /**

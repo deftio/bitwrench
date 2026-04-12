@@ -5,7 +5,7 @@
  * - bw.assignUUID(): basic assign, idempotent, forceNew, creates a.class
  * - bw.getUUID(): from TACO, from DOM element, null when none
  * - createDOM() UUID registration in _nodeMap
- * - bw._el() class-based fallback for bw_uuid_* tokens
+ * - bw.el() class-based fallback for bw_uuid_* tokens
  * - bw.patch() via UUID
  * - bw.apply() via UUID
  * - bw.message() via UUID
@@ -162,7 +162,7 @@ describe('createDOM() UUID registration', function() {
   });
 });
 
-describe('bw._el() UUID fallback', function() {
+describe('bw.el() UUID fallback', function() {
   beforeEach(function() {
     setupDOM();
   });
@@ -172,7 +172,7 @@ describe('bw._el() UUID fallback', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.createDOM(taco);
     document.body.appendChild(el);
-    assert.strictEqual(bw._el(uuid), el);
+    assert.strictEqual(bw.el(uuid), el);
     el.remove();
   });
 
@@ -183,7 +183,7 @@ describe('bw._el() UUID fallback', function() {
     document.body.appendChild(el);
     // Remove from cache to force class-based fallback
     delete bw._nodeMap[uuid];
-    var found = bw._el(uuid);
+    var found = bw.el(uuid);
     assert.strictEqual(found, el, 'should find via querySelector class fallback');
     el.remove();
   });
@@ -308,7 +308,7 @@ describe('Embedded dashboard pattern', function() {
 
     // 3. Verify initial state
     cards.forEach(function(c) {
-      var el = bw._el(c.uuid);
+      var el = bw.el(c.uuid);
       assert.ok(el, c.label + ' element should be findable');
       assert.strictEqual(el.textContent, '--');
     });
@@ -318,7 +318,7 @@ describe('Embedded dashboard pattern', function() {
     bw.patch(cards[1].uuid, '3h 22m');
 
     // 5. Verify patched state
-    assert.strictEqual(bw._el(cards[0].uuid).textContent, '42');
-    assert.strictEqual(bw._el(cards[1].uuid).textContent, '3h 22m');
+    assert.strictEqual(bw.el(cards[0].uuid).textContent, '42');
+    assert.strictEqual(bw.el(cards[1].uuid).textContent, '3h 22m');
   });
 });

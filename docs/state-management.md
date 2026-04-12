@@ -567,6 +567,20 @@ var results = {
 
 Pub/sub is app-scoped -- publishers and subscribers do not need to know about each other. Pass the element as the third argument to `bw.sub()` to tie the subscription's lifetime to the element (auto-cleaned on `bw.cleanup()`).
 
+Wildcard subscriptions let you listen to a group of related topics at once:
+
+```javascript
+// Listen to ALL search-related topics
+bw.sub('search:*', function(detail, topic) {
+  console.log('Search event:', topic, detail);
+}, el);
+
+// These all fire the wildcard handler above:
+bw.pub('search:changed', { query: 'foo' });
+bw.pub('search:cleared');
+bw.pub('search:submitted', { query: 'foo' });
+```
+
 ### Updating child widgets within a parent component
 
 When a parent component contains child sub-components (like a progress bar inside a dashboard card), use pub/sub to update the child:
@@ -622,8 +636,9 @@ These primitives are the building blocks of the stateful TACO model. They are al
 | `bw.uuid(prefix)` | Generate a UUID class for addressing |
 | `bw.emit(el, event, detail)` | Dispatch a CustomEvent on a DOM element |
 | `bw.on(el, event, handler)` | Listen for a CustomEvent on a DOM element |
-| `bw.pub(topic, detail)` | Publish to app-wide topic |
-| `bw.sub(topic, handler, el?)` | Subscribe to app-wide topic |
+| `bw.pub(topic, detail)` | Publish to app-wide topic (fires exact + wildcard matches) |
+| `bw.sub(topic, handler, el?)` | Subscribe to topic (supports wildcard `'ns:*'` patterns) |
+| `bw.once(topic, handler, el?)` | One-shot subscribe (auto-unsub after first fire) |
 | `bw.unsub(topic, handler)` | Unsubscribe from topic |
 | `bw.cleanup(el)` | Run unmount hooks and clear subscriptions |
 
@@ -725,6 +740,15 @@ bw.sub('store:todos', renderTodos, todosEl);
 bw.sub('store:projects', renderProjects, projectsEl);
 ```
 
+If you need a global listener (e.g. for logging or debug), use a wildcard:
+
+```javascript
+// OK for debug/logging -- not for rendering
+bw.sub('store:*', function(data, topic) {
+  console.log('[store]', topic, data);
+});
+```
+
 ### When to use
 
 - Multi-view SPAs where views share data
@@ -758,7 +782,7 @@ bw.router({
 | Server pushes UI updates | Level 1 -- `bw.patch()` / `bw.DOM()` |
 | Components need to talk to each other | `bw.pub()`/`bw.sub()` |
 | URL-driven views (SPA) | `bw.router()` -- see [Routing](routing.md) |
-| Debugging component state | `el._bw_state` in the console, or `bw.inspect(selector)` |
+| Debugging component state | `el._bw_state` in the console, or `bw.inspect(selector, 0)` |
 
 ---
 

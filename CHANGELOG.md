@@ -3,6 +3,39 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.0.26 (unreleased)
+
+### New APIs
+- **`bw.el(target, apply?)`** -- Public element resolver. Accepts DOM element, id string, CSS selector (`#id`, `.class`), or UUID class. Returns first matching element or null. Optional `apply` arg: string (textContent), function (called with el), TACO (mount), or array (append items). Replaces internal `bw._el()`.
+- **`bw.$(selector, apply?)`** -- Now accepts optional `apply` second arg, same semantics as `bw.el()` but applied to every matched element. Enables v1.x-style `bw.DOM(sel, apply)` ergonomics.
+- **`bw.toggleThemeMode(scope?)`** -- Renamed from `bw.toggleStyles()`. Toggles primary/alternate palette on ALL matching elements (was first-only). `bw.toggleStyles` kept as alias for one release cycle.
+- **`bw.inspect(target, depth)`** -- Rewritten. Now returns a plain-object tree with bitwrench metadata (tag, uuid, type, handles, state, hasRender, hasSubs, refs, children). Recursive with configurable depth (default 3). The old `bw.inspect()` only logged to console with no useful return value.
+- **Wildcard subscriptions** -- `bw.sub('ns:*', handler)` matches any topic starting with the prefix before `*`. Handler receives `(detail, topic)` so it can distinguish which topic fired. Works with `bw.once()`, element lifecycle, and `bw.unsub()`. Bare `'*'` matches all topics.
+- **`bw.once(topic, handler, el)`** -- Subscribe for a single event; auto-unsubscribes after first fire. Returns cancel function.
+- **`bw.formData(target)`** -- Collect all form inputs from a container into a plain object (text, checkbox, radio, multi-select, textarea).
+- **`bw.catalog([type])`** -- Introspect the BCCL component registry. No args returns all types; with type arg returns single entry or null.
+- **`bw.jsonPatch(obj, ops)`** -- RFC 6902 JSON Patch on plain objects. Supports add, remove, replace, move, copy, test operations with JSON Pointer paths. Mutates and returns the target object. Distinct from `bw.patch()` which is DOM content patching.
+
+### Component Engine
+- **SVG namespace support** -- `bw.createDOM()` now detects SVG context and uses `createElementNS()` for proper SVG rendering. `{t:'svg'}` starts SVG context; child elements inherit it. `foreignObject` children revert to HTML namespace. Lifecycle hooks, handles, state, UUID addressing all work on SVG elements.
+- **Slot caching fix** -- `o.slots` setters/getters now cache the target element at creation time instead of calling `querySelector` on every invocation.
+- **`o.type` wiring** -- `o.type` in TACO options now sets `el._bw_type` on the DOM element for component type introspection.
+- **Error boundaries** -- `o.mounted`, `o.unmount`, and `o.render` (via `bw.update()`) wrapped in try/catch; errors logged via `console.warn` instead of crashing the component.
+
+### Breaking Changes
+- **`bw.inspect()` signature changed** -- now takes `(target, depth)` and returns a plain object (or null). No longer logs to console. Code that called `bw.inspect(el)` and ignored the return value will still work; code that expected the returned DOM element must update to use `bw.inspect(el, 0)` for the info object.
+
+### bwserve
+- **`client.inspect(selector?, opts?)`** -- Server-side convenience method for DOM tree inspection. Calls `_bw_tree` builtin on the client. Returns a promise resolving to a plain-object tree (same shape as `bw.inspect()`).
+
+### CLI
+- **`/inspect` command** -- Renamed from `/tree` in bwcli attach REPL. `/tree` kept as alias.
+
+### Internal
+- `bw._el` renamed to `bw.el()` (public API). `bw._el` kept as alias for one release cycle.
+- `_applyTo()` internal helper shared between `bw.el()` and `bw.$()` for content application.
+- `_bw_tree` builtin in bwclient.js now delegates to `bw.inspect()` when available (falls back to hand-rolled walker for older bitwrench versions).
+
 ## v2.0.25 (unreleased)
 
 ### Site CSS Architecture

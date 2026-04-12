@@ -441,6 +441,43 @@ describe("BwServeClient _bw_tree call", function() {
 });
 
 // ===================================================================================
+// BwServeClient client.inspect() convenience method
+// ===================================================================================
+
+describe("BwServeClient client.inspect()", function() {
+  it("should be a function", function() {
+    var client = new BwServeClient('ins-1', null);
+    assert.strictEqual(typeof client.inspect, 'function');
+  });
+
+  it("should call _bw_tree with defaults", function() {
+    var client = new BwServeClient('ins-2', null);
+    client.inspect();
+    assert.strictEqual(client._sent.length, 1);
+    var msg = client._sent[0];
+    assert.strictEqual(msg.type, 'call');
+    assert.strictEqual(msg.name, '_bw_tree');
+    assert.strictEqual(msg.args[0].selector, 'body');
+    assert.strictEqual(msg.args[0].depth, 3);
+    assert.ok(msg.args[0].requestId);
+  });
+
+  it("should pass selector and depth options", function() {
+    var client = new BwServeClient('ins-3', null);
+    client.inspect('#sidebar', { depth: 5 });
+    var msg = client._sent[0];
+    assert.strictEqual(msg.args[0].selector, '#sidebar');
+    assert.strictEqual(msg.args[0].depth, 5);
+  });
+
+  it("should return a promise", function() {
+    var client = new BwServeClient('ins-4', null);
+    var result = client.inspect();
+    assert.ok(result && typeof result.then === 'function');
+  });
+});
+
+// ===================================================================================
 // BwServeClient _bw_listen/_bw_unlisten calls
 // ===================================================================================
 
@@ -587,7 +624,8 @@ describe("printHelp()", function() {
     var text = logged.join('\n');
     assert.ok(text.includes('/help'), 'should mention /help');
     assert.ok(text.includes('/quit'), 'should mention /quit');
-    assert.ok(text.includes('/tree'), 'should mention /tree');
+    assert.ok(text.includes('/inspect'), 'should mention /inspect');
+    assert.ok(text.includes('/tree'), 'should mention /tree alias');
     assert.ok(text.includes('/screenshot'), 'should mention /screenshot');
     assert.ok(text.includes('/mount'), 'should mention /mount');
     assert.ok(text.includes('/render'), 'should mention /render');
@@ -983,6 +1021,26 @@ describe("handleSlashCommand()", function() {
     assert.strictEqual(callArgs.args.selector, 'body');
     assert.strictEqual(callArgs.args.depth, 3);
   });
+
+  // /inspect is the canonical name; /tree is alias
+  it("/inspect routes to same handler as /tree", function() {
+    var callArgs = null;
+    var mockClient = {
+      _pend: function() {
+        return { requestId: 'r1', promise: Promise.resolve(null) };
+      },
+      call: function(name, args) { callArgs = { name: name, args: args }; }
+    };
+    handleSlashCommand('/inspect #main 4', mockClient, new Map(), {}, mockRl);
+    assert.strictEqual(callArgs.name, '_bw_tree');
+    assert.strictEqual(callArgs.args.selector, '#main');
+    assert.strictEqual(callArgs.args.depth, 4);
+  });
+
+  it("/inspect with no client shows message", function() {
+    handleSlashCommand('/inspect', null, new Map(), {}, mockRl);
+    assert.ok(logged.some(function(l) { return l.includes('No client'); }));
+  });
 });
 
 // ===================================================================================
@@ -1221,7 +1279,7 @@ describe("startAttach()", function() {
     var inst = makeInstance();
     inst.fakeInput.write('/help\n');
     setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('/tree'); }));
+      assert.ok(logged.some(function(l) { return l.includes('/inspect'); }));
       done();
     }, 50);
   });
@@ -1469,5 +1527,130 @@ describe("startAttach()", function() {
       assert.ok(logged.some(function(l) { return l.includes('[object Object]'); }));
       done();
     }, 100);
+  });
+});
+
+// ===================================================================================
+// runAttach() branch coverage: --allow-screenshot flag (line 131)
+// ===================================================================================
+
+describe("runAttach() --allow-screenshot flag", function() {
+  var origExit, origLog, origError;
+  var exitCode, logged, errors;
+
+  beforeEach(function() {
+    origExit = process.exit;
+    origLog = console.log;
+    origError = console.error;
+    exitCode = null;
+    logged = [];
+    errors = [];
+    process.exit = function(code) { exitCode = code; throw new Error('EXIT_' + code); };
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    console.error = function() {
+      errors.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+  });
+
+  afterEach(function() {
+    process.exit = origExit;
+    console.log = origLog;
+    console.error = origError;
+  });
+
+  it("should parse --allow-screenshot flag (line 131)", function(done) {
+    this.timeout(10000);
+    var fakeInput = new PassThrough();
+    var fakeOutput = new PassThrough();
+    var promise = runAttach(['--port', '9875', '--allow-screenshot'], {
+      input: fakeInput,
+      output: fakeOutput
+    });
+    if (promise && promise.then) {
+      promise.then(function(result) {
+        assert.ok(result, 'should return { rl, app }');
+        assert.ok(result.app, 'should have app');
+        // The allowScreenshot flag should have been passed to startAttach
+        // Verify by checking that the app was created (successful startup)
+        result.rl.removeAllListeners('close');
+        result.rl.close();
+        if (result.app.close) {
+          result.app.close().then(function() { done(); });
+        } else {
+          done();
+        }
+      }).catch(function(err) { done(err); });
+    } else {
+      done();
+    }
+  });
+});
+
+// ===================================================================================
+// Malformed inputs for attach functions
+// ===================================================================================
+
+describe("attach malformed inputs", function() {
+  it("wrapExpression with empty string", function() {
+    var result = wrapExpression('');
+    assert.strictEqual(typeof result, 'string');
+  });
+
+  it("wrapExpression with null-ish input should throw", function() {
+    assert.throws(function() { wrapExpression(null); });
+  });
+
+  it("wrapExpression with numeric input should throw", function() {
+    assert.throws(function() { wrapExpression(42); });
+  });
+
+  it("printTree with null node", function() {
+    var origLog = console.log;
+    var logged = [];
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    printTree(null);
+    console.log = origLog;
+    // Should not crash
+    assert.ok(true);
+  });
+
+  it("printTree with empty object and indent 0", function() {
+    var origLog = console.log;
+    var logged = [];
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    printTree({}, 0);
+    console.log = origLog;
+    assert.ok(logged.length > 0);
+    assert.ok(logged[0].includes('?'), 'should print ? for missing tag');
+  });
+
+  it("printHelp should return usage text", function() {
+    var origLog = console.log;
+    var logged = [];
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    printHelp();
+    console.log = origLog;
+    assert.ok(logged.length > 0);
+    assert.ok(logged.some(function(l) { return l.includes('/help') || l.includes('help'); }));
+  });
+
+  it("handleSlashCommand with /help should print help", function() {
+    var origLog = console.log;
+    var logged = [];
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    var mockRl = { prompt: function() {} };
+    handleSlashCommand('/help', null, new Map(), { verbose: false }, mockRl);
+    console.log = origLog;
+    assert.ok(logged.length > 0, 'should have printed help text');
   });
 });

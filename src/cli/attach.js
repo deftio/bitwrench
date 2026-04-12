@@ -47,7 +47,7 @@ REPL Commands:
   <expression>               Evaluate JS in the connected browser (e.g., document.title)
   /help                      Show command reference
   /quit, /q                  Exit
-  /tree [selector] [depth]   Show DOM tree summary (default: body, depth 3)
+  /inspect [selector] [depth] Show DOM tree summary (default: body, depth 3)
   /screenshot [sel] [file]   Capture screenshot (requires --allow-screenshot)
   /mount <sel> <comp> [json] Mount a BCCL component on the client
   /render <sel> <taco-json>  Render a TACO object at selector
@@ -66,7 +66,7 @@ Examples:
   # In the REPL:
   bw> document.title
   bw> bw.$('.bw-card').length
-  bw> /tree #app 2
+  bw> /inspect #app 2
   bw> /screenshot body page.png
   bw> /listen .bw-btn click
   bw> /mount #app card {"title":"Hello","content":"World"}
@@ -76,7 +76,7 @@ Examples:
   bw> /patch users "Users: 342"
   bw> /patch orders "Orders: 28"
   bw> /mount #app card {"title":"Status","content":"All systems go"}
-  bw> /tree #app 2
+  bw> /inspect #app 2
   bw> /listen .bw-btn click
 `.trim();
 
@@ -342,7 +342,8 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
       rl.prompt();
       break;
 
-    case '/tree':
+    case '/inspect':
+    case '/tree':  // alias kept for muscle memory
       if (!activeClient) {
         console.log('No client connected.');
         rl.prompt();
@@ -563,7 +564,8 @@ export function printHelp() {
     '  /help, /h                  Show this help',
     '  /quit, /q                  Exit',
     '',
-    '  /tree [sel] [depth]        Show DOM tree (default: body, depth 3)',
+    '  /inspect [sel] [depth]     Show DOM tree (default: body, depth 3)',
+    '  /tree [sel] [depth]        Alias for /inspect',
     '  /screenshot [sel] [file]   Capture screenshot to PNG file',
     '                             Requires --allow-screenshot flag',
     '  /mount <sel> <comp> [json] Mount a BCCL component',

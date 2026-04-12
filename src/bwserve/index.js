@@ -284,6 +284,24 @@ class BwServeApp {
         res.end(content);
         return;
       }
+      // Directory index resolution: /foo/ => /foo/index.html
+      if (path.endsWith('/')) {
+        var indexPath = join(this.staticDir, path, 'index.html');
+        if (existsSync(indexPath) && statSync(indexPath).isFile()) {
+          var indexContent = readFileSync(indexPath);
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(indexContent);
+          return;
+        }
+      }
+      // Bare directory without trailing slash: /foo => 301 to /foo/
+      if (!path.endsWith('/') && existsSync(filePath) && statSync(filePath).isDirectory()) {
+        var qs = url.split('?')[1];
+        var location = path + '/' + (qs ? '?' + qs : '');
+        res.writeHead(301, { 'Location': location });
+        res.end();
+        return;
+      }
     }
 
     // 404

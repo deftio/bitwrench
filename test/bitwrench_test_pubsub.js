@@ -255,3 +255,152 @@ describe("Lifecycle integration", function() {
     document.body.removeChild(el);
   });
 });
+
+// ===================================================================================
+// Malformed input tests for pub/sub
+// ===================================================================================
+
+describe("pub/sub malformed inputs", function() {
+  beforeEach(function() {
+    bw._topics = {};
+    bw._subIdCounter = 0;
+  });
+
+  it("bw.pub with undefined topic should return 0 and not crash", function() {
+    assert.equal(bw.pub(undefined), 0);
+  });
+
+  it("bw.pub with null topic should return 0 and not crash", function() {
+    assert.equal(bw.pub(null), 0);
+  });
+
+  it("bw.pub with numeric topic should return 0 and not crash", function() {
+    assert.equal(bw.pub(42), 0);
+  });
+
+  it("bw.pub with empty string topic should return 0 when no subscribers", function() {
+    assert.equal(bw.pub(''), 0);
+  });
+
+  it("bw.pub with empty string topic should fire empty-string subscribers", function() {
+    var called = false;
+    bw.sub('', function() { called = true; });
+    bw.pub('');
+    assert.equal(called, true);
+  });
+
+  it("bw.pub with object detail should pass it through", function() {
+    var received = null;
+    bw.sub('obj', function(d) { received = d; });
+    bw.pub('obj', { nested: { deep: true } });
+    assert.deepEqual(received, { nested: { deep: true } });
+  });
+
+  it("bw.pub with undefined detail should pass undefined", function() {
+    var received = 'sentinel';
+    bw.sub('undef', function(d) { received = d; });
+    bw.pub('undef');
+    assert.equal(received, undefined);
+  });
+
+  it("bw.sub with undefined topic should not crash", function() {
+    var unsub = bw.sub(undefined, function() {});
+    assert.equal(typeof unsub, 'function');
+    unsub();
+  });
+
+  it("bw.sub with null handler should store it (no validation)", function() {
+    // bw.sub doesn't validate handler type -- it stores whatever is passed
+    // publishing will throw, but sub itself shouldn't crash
+    bw.sub('bad-handler', null);
+    assert.ok(bw._topics['bad-handler'].length === 1);
+  });
+
+  it("bw.pub should survive when handler is null (error in subscriber)", function() {
+    bw.sub('null-handler', null);
+    var origWarn = console.warn;
+    var warned = false;
+    console.warn = function() { warned = true; };
+    // Should not throw -- error is caught and warned
+    var count = bw.pub('null-handler');
+    console.warn = origWarn;
+    assert.equal(count, 0); // handler errored, so not counted
+    assert.equal(warned, true);
+  });
+
+  it("bw.unsub with undefined topic should return 0", function() {
+    assert.equal(bw.unsub(undefined, function() {}), 0);
+  });
+
+  it("bw.unsub with null handler should return 0 (no match)", function() {
+    bw.sub('test', function() {});
+    assert.equal(bw.unsub('test', null), 0);
+  });
+
+  it("bw.once with undefined topic should not crash", function() {
+    var cancel = bw.once(undefined, function() {});
+    assert.equal(typeof cancel, 'function');
+    cancel();
+  });
+
+  it("bw.pub should handle topic with special characters", function() {
+    var called = false;
+    bw.sub('foo:bar/baz?qux=1&x=2', function() { called = true; });
+    bw.pub('foo:bar/baz?qux=1&x=2');
+    assert.equal(called, true);
+  });
+
+  it("bw.pub should handle very long topic names", function() {
+    var longTopic = 'a'.repeat(10000);
+    var called = false;
+    bw.sub(longTopic, function() { called = true; });
+    bw.pub(longTopic);
+    assert.equal(called, true);
+  });
+
+  it("bw.sub should handle many subscribers on same topic", function() {
+    var count = 0;
+    for (var i = 0; i < 1000; i++) {
+      bw.sub('mass', function() { count++; });
+    }
+    bw.pub('mass');
+    assert.equal(count, 1000);
+  });
+
+  it("bw.pub with wildcard '*' alone should match all topics", function() {
+    var topics = [];
+    bw.sub('*', function(d, t) { topics.push(t); });
+    bw.pub('any-topic');
+    bw.pub('another:topic');
+    assert.deepEqual(topics, ['any-topic', 'another:topic']);
+  });
+
+  it("wildcard subscriber error should not prevent other wildcard subs", function() {
+    var count = 0;
+    bw.sub('ns:*', function() { throw new Error('fail'); });
+    bw.sub('ns:*', function() { count++; });
+    var origWarn = console.warn;
+    console.warn = function() {};
+    var total = bw.pub('ns:event');
+    console.warn = origWarn;
+    assert.equal(count, 1);
+    assert.equal(total, 1); // only the non-erroring one counted
+  });
+
+  it("double unsub should be safe (idempotent)", function() {
+    var unsub = bw.sub('double', function() {});
+    unsub();
+    unsub(); // second call should not crash
+    assert.equal(bw._topics['double'], undefined);
+  });
+
+  it("unsub during pub iteration should not skip remaining subscribers", function() {
+    var results = [];
+    var unsub2;
+    bw.sub('iter', function() { results.push('a'); unsub2(); });
+    unsub2 = bw.sub('iter', function() { results.push('b'); });
+    bw.sub('iter', function() { results.push('c'); });
+    bw.pub('iter');
+    assert.deepEqual(results, ['a', 'b', 'c']); // snapshot ensures all run
+  });
+});

@@ -221,7 +221,8 @@
               '<code>bw.update(el)</code> -- re-run the render function and emit <code>bw:statechange</code><br>' +
               '<code>bw.patch(id, content)</code> -- targeted update of a single element (no full re-render)<br>' +
               '<br><strong>Communication:</strong><br>' +
-              '<code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> -- decoupled cross-component messaging<br>' +
+              '<code>bw.pub(topic, detail)</code> / <code>bw.sub(topic, handler)</code> -- decoupled cross-component messaging (supports wildcard patterns like <code>\'ns:*\'</code>)<br>' +
+              '<code>bw.once(topic, handler)</code> -- one-shot subscribe (auto-unsub after first fire)<br>' +
               '<code>o.mounted(el)</code> -- lifecycle hook, runs after the element is in the DOM<br>' +
               '<code>o.unmount(el)</code> -- cleanup hook, runs when the element is removed'
             )
@@ -1190,11 +1191,11 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('bw.message() &mdash; Cross-Component Messaging') },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('<code>bw.pub(topic, data)</code> / <code>bw.sub(topic, fn)</code> provide cross-component messaging without tight coupling. Components subscribe to topics in their <code>o.mounted</code> hook and publish from anywhere.') },
+            c: bw.raw('<code>bw.pub(topic, data)</code> / <code>bw.sub(topic, fn)</code> provide cross-component messaging without tight coupling. Components subscribe to topics in their <code>o.mounted</code> hook and publish from anywhere. Wildcard patterns like <code>bw.sub(\'ns:*\', fn)</code> match any topic starting with the prefix.') },
 
           site.makeCallout('concept', 'Cross-component communication patterns', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('<strong>bw.pub()/sub()</strong>: Any number of receivers. Think: "announce this event, whoever cares can react."') },
+              { t: 'p', c: bw.raw('<strong>bw.pub()/sub()</strong>: Any number of receivers. Think: "announce this event, whoever cares can react." Supports wildcard patterns (<code>\'ns:*\'</code>) for listening to groups of related topics.') },
               { t: 'p', c: bw.raw('<strong>bw.on(el, event, fn)</strong>: Listen for DOM events like <code>bw:statechange</code> emitted by <code>bw.update()</code>.') },
               { t: 'p', c: bw.raw('<strong>bwserve</strong>: The server uses the same message types (<code>replace</code>, <code>patch</code>, <code>call</code>) over SSE.') }
             ]

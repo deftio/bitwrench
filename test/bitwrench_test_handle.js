@@ -6,7 +6,7 @@
  *   - o.slots: auto-generated setX/getX pairs on el.bw
  *   - bw.mount(): mount TACO and return root element
  *   - bw.message(): dispatch to el.bw[action]
- *   - bw.inspect(): show el.bw methods
+ *   - bw.inspect(): DOM introspection with bitwrench metadata
  *   - Deprecation stubs for removed APIs
  *   - BCCL factory handles
  */
@@ -283,15 +283,17 @@ describe("bw.message()", function() {
 describe("bw.inspect()", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should return the element", function() {
+  it("should return info object for mounted element", function() {
     bw.mount('#app', {
       t: 'div',
       a: { id: 'target' },
       o: { handle: { foo: function(el) {} } }
     });
-    var el = bw.inspect('#target');
-    assert.ok(el);
-    assert.strictEqual(el.id, 'target');
+    var info = bw.inspect('#target', 0);
+    assert.ok(info);
+    assert.equal(info.tag, 'div');
+    assert.equal(info.id, 'target');
+    assert.ok(info.handles.indexOf('foo') >= 0);
   });
 
   it("should return null for missing element", function() {

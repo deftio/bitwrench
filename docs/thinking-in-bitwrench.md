@@ -1381,9 +1381,10 @@ Key things this example proves:
 
 | Function | What it does |
 |----------|-------------|
-| `bw.pub(topic, data)` | Publish to all subscribers |
-| `bw.sub(topic, fn)` | Subscribe (returns unsub function) |
+| `bw.pub(topic, data)` | Publish to all subscribers (exact + wildcard) |
+| `bw.sub(topic, fn)` | Subscribe (returns unsub function; supports wildcard `'ns:*'`) |
 | `bw.sub(topic, fn, owner)` | Subscribe with auto-cleanup when owner is removed |
+| `bw.once(topic, fn, el?)` | One-shot subscribe (auto-unsub after first fire) |
 
 ### Routing
 
