@@ -808,7 +808,7 @@ bw.htmlPage = function(opts) {
   var fnCounterBefore = bw._fnIDCounter;
 
   // Render body content
-  var bodyHTML = '';
+  var bodyHTML;
   if (_is(body, 'string')) {
     bodyHTML = body;
   } else {
