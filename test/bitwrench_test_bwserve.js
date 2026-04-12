@@ -1325,7 +1325,7 @@ describe("BwServeApp HTTP integration", function() {
     fs.rmdirSync(tmpDir);
   });
 
-  it("should return 404 for directory without index.html", async function() {
+  it("should return directory listing for directory without index.html", async function() {
     this.timeout(5000);
     var fs = await import('fs');
     var os = await import('os');
@@ -1333,11 +1333,14 @@ describe("BwServeApp HTTP integration", function() {
     var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
     fs.mkdirSync(path.join(tmpDir, 'emptydir'));
     var app = createApp({ static: tmpDir });
-    app.page('/', function() {});
+    app.page('/bwpage', function() {});
     await app.listen();
     var port = app._server.address().port;
     var res = await fetch('http://localhost:' + port + '/emptydir/', { redirect: 'manual' });
-    assert.strictEqual(res.status, 404);
+    assert.strictEqual(res.status, 200);
+    var body = await res.text();
+    assert.ok(body.includes('Index of /emptydir/'));
+    assert.ok(body.includes('..'));
     // Cleanup
     fs.rmdirSync(path.join(tmpDir, 'emptydir'));
     fs.rmdirSync(tmpDir);
@@ -1425,6 +1428,95 @@ describe("BwServeApp HTTP integration", function() {
     } finally {
       fs.renameSync(backupPath, cssPath);
     }
+  });
+
+  it("should show files and subdirectories in directory listing", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.writeFileSync(path.join(tmpDir, 'readme.txt'), 'hello');
+    fs.mkdirSync(path.join(tmpDir, 'subdir'));
+    var app = createApp({ static: tmpDir });
+    app.page('/bwpage', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/', { redirect: 'manual' });
+    assert.strictEqual(res.status, 200);
+    var body = await res.text();
+    assert.ok(body.includes('Index of /'));
+    assert.ok(body.includes('readme.txt'));
+    assert.ok(body.includes('subdir/'));
+    // Root listing should NOT have parent link
+    assert.ok(!body.includes('>..'));
+    // Cleanup
+    fs.unlinkSync(path.join(tmpDir, 'readme.txt'));
+    fs.rmdirSync(path.join(tmpDir, 'subdir'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should return 404 for directory listing when dirList is false", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'nolist'));
+    var app = createApp({ static: tmpDir, dirList: false });
+    app.page('/bwpage', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/nolist/', { redirect: 'manual' });
+    assert.strictEqual(res.status, 404);
+    // Cleanup
+    fs.rmdirSync(path.join(tmpDir, 'nolist'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should show parent link in subdirectory listing", async function() {
+    this.timeout(5000);
+    var fs = await import('fs');
+    var os = await import('os');
+    var path = await import('path');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'docs'));
+    fs.writeFileSync(path.join(tmpDir, 'docs', 'guide.txt'), 'content');
+    var app = createApp({ static: tmpDir });
+    app.page('/bwpage', function() {});
+    await app.listen();
+    var port = app._server.address().port;
+    var res = await fetch('http://localhost:' + port + '/docs/', { redirect: 'manual' });
+    assert.strictEqual(res.status, 200);
+    var body = await res.text();
+    assert.ok(body.includes('Index of /docs/'));
+    assert.ok(body.includes('href="../"'));
+    assert.ok(body.includes('guide.txt'));
+    // Cleanup
+    fs.unlinkSync(path.join(tmpDir, 'docs', 'guide.txt'));
+    fs.rmdirSync(path.join(tmpDir, 'docs'));
+    fs.rmdirSync(tmpDir);
+  });
+
+  it("should accept host option in constructor", async function() {
+    this.timeout(5000);
+    var app = createApp({ host: '127.0.0.1' });
+    app.page('/', function() {});
+    await app.listen();
+    assert.strictEqual(app.host, '127.0.0.1');
+    var port = app._server.address().port;
+    var res = await fetch('http://127.0.0.1:' + port + '/');
+    assert.strictEqual(res.status, 200);
+  });
+
+  it("should default host to 0.0.0.0", function() {
+    var app = bwserve.create({ port: 0 });
+    assert.strictEqual(app.host, '0.0.0.0');
+  });
+
+  it("should default dirList to true", function() {
+    var app = bwserve.create({ port: 0 });
+    assert.strictEqual(app.dirList, true);
   });
 });
 

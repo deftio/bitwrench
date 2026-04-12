@@ -30,10 +30,12 @@ Arguments:
 Options:
   -p, --port <number>        Browser-facing web port (default: 8080)
   -l, --listen <number>      Input port for protocol messages (default: 9000)
+  -b, --bind <address>       Host/address to bind to (default: 0.0.0.0)
       --stdin                Read protocol messages from stdin (newline-delimited JSON)
   -t, --theme <name>         Theme preset or hex colors ("#pri,#sec")
       --title <string>       Page title (default: "bwcli serve")
       --allow-exec           Enable exec messages (runs JS in browser, use for dev only)
+      --no-dir-list          Disable directory listings
       --open                 Open browser on start
   -v, --verbose              Verbose output
   -h, --help                 Print this help
@@ -292,10 +294,12 @@ export function runServe(argv, ioOpts) {
             options: {
                 port:    { type: 'string', short: 'p' },
                 listen:  { type: 'string', short: 'l' },
+                bind:    { type: 'string', short: 'b' },
                 stdin:   { type: 'boolean' },
                 theme:   { type: 'string', short: 't' },
                 title:   { type: 'string' },
                 'allow-exec': { type: 'boolean' },
+                'no-dir-list': { type: 'boolean' },
                 open:    { type: 'boolean' },
                 verbose: { type: 'boolean', short: 'v' },
                 help:    { type: 'boolean', short: 'h' }
@@ -317,9 +321,11 @@ export function runServe(argv, ioOpts) {
     var dir = positionals[0] || '.';
     var webPort = values.port ? parseInt(values.port, 10) : 8080;
     var listenPort = values.listen ? parseInt(values.listen, 10) : 9000;
+    var bindAddr = values.bind || '0.0.0.0';
     var useStdin = !!values.stdin;
     var theme = values.theme || null;
     var title = values.title || 'bwcli serve';
+    var dirList = !values['no-dir-list'];
     var verbose = !!values.verbose;
 
     if (isNaN(webPort) || webPort < 1 || webPort > 65535) {
@@ -339,9 +345,11 @@ export function runServe(argv, ioOpts) {
             dir: dir,
             webPort: webPort,
             listenPort: listenPort,
+            bind: bindAddr,
             useStdin: useStdin,
             theme: theme,
             title: title,
+            dirList: dirList,
             verbose: verbose,
             open: !!values.open,
             allowExec: !!values['allow-exec']
@@ -360,9 +368,11 @@ export function runServe(argv, ioOpts) {
 function startServer(bwserve, opts) {
     var app = bwserve.create({
         port: opts.webPort,
+        host: opts.bind,
         title: opts.title,
         static: opts.dir,
         theme: opts.theme,
+        dirList: opts.dirList,
         allowExec: opts.allowExec
     });
 
@@ -381,9 +391,11 @@ function startServer(bwserve, opts) {
     // Start web server
     app.listen(function() {
         console.error('bwcli serve v' + VERSION);
-        console.error('  Web server:  http://localhost:' + opts.webPort);
+        console.error('  Web server:  http://' + (opts.bind === '0.0.0.0' ? 'localhost' : opts.bind) + ':' + opts.webPort);
+        console.error('  Bind:        ' + opts.bind);
         console.error('  Static dir:  ' + opts.dir);
         if (opts.theme) console.error('  Theme:       ' + opts.theme);
+        if (opts.dirList === false) console.error('  Dir listing: disabled');
 
         if (opts.useStdin) {
             console.error('  Input:       stdin (newline-delimited JSON)');

@@ -25,7 +25,7 @@ import { VERSION } from '../version.js';
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join, extname } from 'path';
 import { createServer } from 'http';
-import { readFileSync, existsSync, statSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
 
 var __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -54,7 +54,21 @@ var MIME_TYPES = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf':  'font/ttf',
-  '.map':  'application/json'
+  '.map':  'application/json',
+  '.txt':  'text/plain; charset=utf-8',
+  '.xml':  'application/xml; charset=utf-8',
+  '.pdf':  'application/pdf',
+  '.zip':  'application/zip',
+  '.gz':   'application/gzip',
+  '.mp3':  'audio/mpeg',
+  '.mp4':  'video/mp4',
+  '.webm': 'video/webm',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.wasm': 'application/wasm',
+  '.csv':  'text/csv; charset=utf-8',
+  '.md':   'text/markdown; charset=utf-8',
+  '.mjs':  'application/javascript; charset=utf-8'
 };
 
 /**
@@ -67,6 +81,8 @@ var MIME_TYPES = {
  * @param {boolean} [opts.injectBitwrench=true] - Auto-inject bitwrench client JS
  * @param {string|Object} [opts.theme] - Theme preset name or config object
  * @param {boolean} [opts.allowScreenshot=false] - Enable client.screenshot() capability
+ * @param {boolean} [opts.dirList=true] - Enable directory listings when no index.html
+ * @param {string} [opts.host='0.0.0.0'] - Host/address to bind to
  * @returns {BwServeApp} Application instance
  */
 export function create(opts) {
@@ -87,6 +103,8 @@ class BwServeApp {
     this.theme = opts.theme || null;
     this.allowExec = opts.allowExec || false;
     this.allowScreenshot = opts.allowScreenshot || false;
+    this.dirList = opts.dirList !== false;
+    this.host = opts.host || '0.0.0.0';
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
@@ -120,7 +138,7 @@ class BwServeApp {
         self._handleRequest(req, rawRes);
       });
 
-      self._server.listen(self.port, function() {
+      self._server.listen(self.port, self.host, function() {
         if (callback) callback();
         res();
       });
@@ -291,6 +309,14 @@ class BwServeApp {
           var indexContent = readFileSync(indexPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(indexContent);
+          return;
+        }
+        // Directory listing when no index.html
+        var dirPath = join(this.staticDir, path);
+        if (this.dirList && existsSync(dirPath) && statSync(dirPath).isDirectory()) {
+          var listing = this._generateDirListing(path, dirPath);
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(listing);
           return;
         }
       }
@@ -471,6 +497,69 @@ class BwServeApp {
     });
     res.end(content);
   }
+
+  /**
+   * Generate an HTML directory listing page.
+   * @private
+   * @param {string} urlPath - URL path (with trailing slash)
+   * @param {string} dirPath - Filesystem path to the directory
+   * @returns {string} HTML page
+   */
+  _generateDirListing(urlPath, dirPath) {
+    var entries = readdirSync(dirPath);
+    var dirs = [];
+    var files = [];
+
+    for (var i = 0; i < entries.length; i++) {
+      var name = entries[i];
+      var fullPath = join(dirPath, name);
+      try {
+        var st = statSync(fullPath);
+        if (st.isDirectory()) {
+          dirs.push({ name: name + '/', size: '-' });
+        } else {
+          files.push({ name: name, size: _formatSize(st.size) });
+        }
+      } catch (e) {
+        // Skip entries we cannot stat
+      }
+    }
+
+    // Sort alphabetically
+    dirs.sort(function(a, b) { return a.name.localeCompare(b.name); });
+    files.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+    var all = dirs.concat(files);
+
+    var rows = '';
+    // Parent directory link (unless at root)
+    if (urlPath !== '/') {
+      rows += '<tr><td><a href="../">..</a></td><td>-</td></tr>\n';
+    }
+    for (var j = 0; j < all.length; j++) {
+      var entry = all[j];
+      var escaped = entry.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      rows += '<tr><td><a href="' + encodeURIComponent(entry.name.replace(/\/$/, '')) + (entry.size === '-' ? '/' : '') + '">' + escaped + '</a></td><td>' + entry.size + '</td></tr>\n';
+    }
+
+    var escapedPath = urlPath.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return '<!DOCTYPE html>\n<html><head><meta charset="utf-8"><title>Index of ' + escapedPath + '</title>' +
+      '<style>body{font-family:monospace;margin:2em}table{border-collapse:collapse}td,th{text-align:left;padding:4px 16px}a{text-decoration:none}a:hover{text-decoration:underline}</style>' +
+      '</head><body><h1>Index of ' + escapedPath + '</h1><table><tr><th>Name</th><th>Size</th></tr>\n' +
+      rows + '</table></body></html>';
+  }
+}
+
+/**
+ * Format a byte size as a human-readable string.
+ * @param {number} bytes
+ * @returns {string}
+ */
+function _formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
 }
 
 export var version = VERSION;

@@ -3,14 +3,14 @@
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-export const VERSION = '2.0.28';
+export const VERSION = '2.0.29';
 export const VERSION_INFO = {
-  version: '2.0.28',
+  version: '2.0.29',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-04-12T05:42:59.525Z'
+  buildDate: '2026-04-12T06:28:59.530Z'
 };

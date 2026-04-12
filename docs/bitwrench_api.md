@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.26 |
-| Generated | 2026-04-01 |
+| Version | 2.0.29 |
+| Generated | 2026-04-12 |
 | Total APIs | 105 |
 | Categories | 14 |
-| bitwrench.js | 4074 lines |
+| bitwrench.js | 4100 lines |
 | bitwrench-bccl.js | 3793 lines |
 
 ## Table of Contents
@@ -503,55 +503,41 @@ bw.on(document.body, 'statechange', function(detail) { console.log('State change
 
 ### `bw.pub(topic, detail)`
 
-Publish to a topic, calling all exact-match and wildcard subscribers in registration order. Application-scoped pub/sub decoupled from the DOM tree. Each subscriber is wrapped in try/catch so one bad handler can't break others. Use `bw.pub()`/`bw.sub()` for app-wide communication; use `bw.emit()`/`bw.on()` for DOM-scoped events.
+Publish to a topic, calling all subscribers in registration order. Application-scoped pub/sub decoupled from the DOM tree. Each subscriber is wrapped in try/catch so one bad handler can't break others. Use `bw.pub()`/`bw.sub()` for app-wide communication; use `bw.emit()`/`bw.on()` for DOM-scoped events.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | Topic name (plain string, no prefix) |
-| `detail` | `*` | Data to pass to subscribers |
+| `topic` | `string` | - Topic name (plain string, no prefix) |
+| `detail` | `*` | - Data to pass to subscribers |
 
-**Returns:** `number` -- count of successfully called subscribers (including wildcard matches)
+**Returns:** `number` — of successfully called subscribers (including wildcard matches)
 
 **Example:**
 ```javascript
-bw.pub('score:updated', { player: 'X', score: 10 });
-// Wildcard subscribers matching 'score:*' will also fire
+bw.pub('score:updated', { player: 'X', score: 10 }); // Wildcard subscribers matching 'score:*' will also fire
 ```
 
 ---
 
 ### `bw.sub(topic, handler, el)`
 
-Subscribe to a topic. Returns an unsub() function.
-
-Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. Bare `'*'` matches all topics. The handler receives `(detail, topic)` so it can distinguish which topic fired.
-
-Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
+Subscribe to a topic. Returns an unsub() function. Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before the `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. The handler receives `(detail, topic)` so it can distinguish which topic fired. Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | Topic name, or wildcard pattern ending in `*` |
-| `handler` | `Function` | Called with `(detail, topic)` on each publish |
-| `el` | `Element` | Optional DOM element to tie lifecycle to |
+| `topic` | `string` | - Topic name, or wildcard pattern ending in '*' |
+| `handler` | `Function` | - Called with (detail, topic) on each publish |
+| `el` | `Element` | - Optional DOM element to tie lifecycle to |
 
-**Returns:** `Function` -- call to unsubscribe
+**Returns:** `Function` — to unsubscribe
 
 **Example:**
 ```javascript
-// Exact match
-var unsub = bw.sub('score:updated', function(detail) {
-  console.log(detail.player, 'scored', detail.score);
-});
-// Later: unsub() to stop listening
-
-// Wildcard: listen to all 'score:' topics
-bw.sub('score:*', function(detail, topic) {
-  console.log('Got', topic, detail);
-});
+var unsub = bw.sub('score:updated', function(detail) { console.log(detail.player, 'scored', detail.score); }); // Later: unsub() to stop listening // Wildcard: listen to all 'agui:' topics bw.sub('agui:*', function(detail, topic) { console.log('Got', topic, detail); });
 ```
 
 ---
@@ -564,37 +550,30 @@ Unsubscribe a handler by reference from a topic. Removes ALL instances of the gi
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | Topic name (or wildcard pattern) |
-| `handler` | `Function` | The handler to remove (by reference equality) |
+| `topic` | `string` | - Topic name |
+| `handler` | `Function` | - The handler to remove (by reference equality) |
 
-**Returns:** `number` -- count of removed subscriptions
+**Returns:** `number` — of removed subscriptions
 
 ---
 
 ### `bw.once(topic, handler, el)`
 
-Subscribe to a topic for a single event only. The subscription is automatically removed after the first publish. Equivalent to manually calling unsub() inside a bw.sub() handler, but avoids the common bug of forgetting to unsubscribe. Supports wildcard patterns (same as `bw.sub()`).
+Subscribe to a topic for a single event only. The subscription is automatically removed after the first publish. Equivalent to manually calling unsub() inside a bw.sub() handler, but avoids the common bug of forgetting to unsubscribe.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `topic` | `string` | Topic name, or wildcard pattern ending in `*` |
-| `handler` | `Function` | Called once with `(detail, topic)` on the next publish |
-| `el` | `Element` | Optional DOM element to tie lifecycle to |
+| `topic` | `string` | - Topic name |
+| `handler` | `Function` | - Called once with (detail) on the next publish |
+| `el` | `Element` | - Optional DOM element to tie lifecycle to |
 
-**Returns:** `Function` -- call to cancel the subscription before it fires
+**Returns:** `Function` — to cancel the subscription before it fires
 
 **Example:**
 ```javascript
-bw.once('data:loaded', function(detail) {
-  console.log('Received:', detail);
-  // No need to unsubscribe -- already done automatically
-});
-
-// Cancel before it fires:
-var cancel = bw.once('timeout', handler);
-cancel(); // handler will never be called
+bw.once('data:loaded', function(detail) { console.log('Received:', detail); // No need to unsubscribe -- already done automatically }); // Cancel before it fires: var cancel = bw.once('timeout', handler); cancel(); // handler will never be called
 ```
 
 ---
