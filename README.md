@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)](https://www.npmjs.com/package/bitwrench)
 [![CI](https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg)](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-97.6%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
+[![Coverage](https://img.shields.io/badge/coverage-97.5%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
 
 [![bitwrench](./images/bitwrench-logo-med.png)](https://deftio.github.io/bitwrench/pages/)
 

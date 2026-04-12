@@ -1,4 +1,4 @@
-/*! bwserve v2.0.29 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.0.30 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join, extname } from 'path';
 import { createServer } from 'http';
@@ -9,7 +9,7 @@ import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.0.29';
+const VERSION = '2.0.30';
 
 /**
  * BwServeClient — per-client connection for bwserve.

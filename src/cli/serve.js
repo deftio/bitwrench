@@ -400,13 +400,14 @@ function startServer(bwserve, opts) {
         if (opts.useStdin) {
             console.error('  Input:       stdin (newline-delimited JSON)');
             startStdinReader(app, opts.verbose);
+            console.error('');
+            console.error('Ready. Send protocol messages to push UI to browsers.');
         } else {
-            console.error('  Input port:  http://localhost:' + opts.listenPort);
-            startInputServer(app, opts.listenPort, opts.verbose);
+            startInputServer(app, opts.listenPort, opts.verbose).then(function() {
+                console.error('');
+                console.error('Ready. Send protocol messages to push UI to browsers.');
+            });
         }
-
-        console.error('');
-        console.error('Ready. Send protocol messages to push UI to browsers.');
 
         if (opts.open) {
             import('node:child_process').then(function(cp) {
@@ -426,7 +427,40 @@ function startServer(bwserve, opts) {
  * Messages with a `type` field (no `command`) are broadcast to all clients.
  */
 function startInputServer(app, listenPort, verbose) {
-    var inputServer = createServer(function(req, res) {
+    var inputServer = _createInputServer(app, verbose);
+
+    return new Promise(function(resolve) {
+        inputServer.on('error', function(err) {
+            if (err.code === 'EADDRINUSE') {
+                console.error('  Warning: Input port ' + listenPort + ' in use, picking a free port...');
+                var retry = _createInputServer(app, verbose);
+                retry.on('error', function(err2) {
+                    console.error('  Warning: Could not bind input server (' + err2.message + '). Continuing without input port.');
+                    resolve(null);
+                });
+                retry.listen(0, function() {
+                    var actualPort = retry.address().port;
+                    console.error('  Input port:  http://localhost:' + actualPort + ' (fallback)');
+                    resolve(retry);
+                });
+            } else {
+                console.error('  Warning: Input server error (' + err.message + '). Continuing without input port.');
+                resolve(null);
+            }
+        });
+        inputServer.listen(listenPort, function() {
+            console.error('  Input port:  http://localhost:' + listenPort);
+            resolve(inputServer);
+        });
+    });
+}
+
+/**
+ * Create the input HTTP server (without binding).
+ * @private
+ */
+function _createInputServer(app, verbose) {
+    return createServer(function(req, res) {
         if (req.method !== 'POST') {
             res.writeHead(405, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Use POST' }));
@@ -470,9 +504,6 @@ function startInputServer(app, listenPort, verbose) {
             res.end(JSON.stringify({ ok: true, clients: count }));
         });
     });
-
-    inputServer.listen(listenPort);
-    return inputServer;
 }
 
 /**
