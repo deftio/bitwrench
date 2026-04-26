@@ -274,24 +274,9 @@ class BwServeApp {
       return this._serveVendorFile(res, vendorFile);
     }
 
-    // Registered page routes — serve shell HTML
-    if (method === 'GET' && this._pages.has(path)) {
-      var clientId2 = 'c' + (++this._clientCounter);
-      var shell = generateShell({
-        clientId: clientId2,
-        title: this.title,
-        theme: this.theme,
-        injectBitwrench: this.injectBitwrench,
-        allowExec: this.allowExec
-      });
-      // Store the page path for this client so SSE knows which handler to call
-      this._clients.set(clientId2, { pagePath: path, client: null });
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(shell);
-      return;
-    }
-
-    // Static file serving
+    // Static file serving — takes priority over registered page handlers
+    // so that bwserve works as a drop-in static server (like python -m
+    // http.server or npx serve) with opt-in bwserve superpowers.
     if (method === 'GET' && this.staticDir) {
       var filePath = join(this.staticDir, path);
       if (existsSync(filePath) && statSync(filePath).isFile()) {
@@ -328,6 +313,24 @@ class BwServeApp {
         res.end();
         return;
       }
+    }
+
+    // Registered page routes — serve bwserve shell HTML (fallback when no
+    // static file matched, e.g. pipe/SSE driven pages)
+    if (method === 'GET' && this._pages.has(path)) {
+      var clientId2 = 'c' + (++this._clientCounter);
+      var shell = generateShell({
+        clientId: clientId2,
+        title: this.title,
+        theme: this.theme,
+        injectBitwrench: this.injectBitwrench,
+        allowExec: this.allowExec
+      });
+      // Store the page path for this client so SSE knows which handler to call
+      this._clients.set(clientId2, { pagePath: path, client: null });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(shell);
+      return;
     }
 
     // 404

@@ -1,4 +1,4 @@
-/*! bwserve v2.0.31 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.0.32 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 import { fileURLToPath } from 'url';
 import { dirname, resolve, join, extname } from 'path';
 import { createServer } from 'http';
@@ -9,7 +9,7 @@ import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.0.31';
+const VERSION = '2.0.32';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -933,24 +933,9 @@ class BwServeApp {
       return this._serveVendorFile(res, vendorFile);
     }
 
-    // Registered page routes — serve shell HTML
-    if (method === 'GET' && this._pages.has(path)) {
-      var clientId2 = 'c' + (++this._clientCounter);
-      var shell = generateShell({
-        clientId: clientId2,
-        title: this.title,
-        theme: this.theme,
-        injectBitwrench: this.injectBitwrench,
-        allowExec: this.allowExec
-      });
-      // Store the page path for this client so SSE knows which handler to call
-      this._clients.set(clientId2, { pagePath: path, client: null });
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(shell);
-      return;
-    }
-
-    // Static file serving
+    // Static file serving — takes priority over registered page handlers
+    // so that bwserve works as a drop-in static server (like python -m
+    // http.server or npx serve) with opt-in bwserve superpowers.
     if (method === 'GET' && this.staticDir) {
       var filePath = join(this.staticDir, path);
       if (existsSync(filePath) && statSync(filePath).isFile()) {
@@ -987,6 +972,24 @@ class BwServeApp {
         res.end();
         return;
       }
+    }
+
+    // Registered page routes — serve bwserve shell HTML (fallback when no
+    // static file matched, e.g. pipe/SSE driven pages)
+    if (method === 'GET' && this._pages.has(path)) {
+      var clientId2 = 'c' + (++this._clientCounter);
+      var shell = generateShell({
+        clientId: clientId2,
+        title: this.title,
+        theme: this.theme,
+        injectBitwrench: this.injectBitwrench,
+        allowExec: this.allowExec
+      });
+      // Store the page path for this client so SSE knows which handler to call
+      this._clients.set(clientId2, { pagePath: path, client: null });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(shell);
+      return;
     }
 
     // 404
