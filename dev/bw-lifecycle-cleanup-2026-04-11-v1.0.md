@@ -1,6 +1,6 @@
-# Bitwrench Lifecycle Design (v2.0.26)
+# Bitwrench Lifecycle Design (v2.0.26) -- v1.0 (SUPERSEDED)
 
-**Status**: Active design -- DO NOT IMPLEMENT until reviewed
+**Status**: SUPERSEDED by `bw-lifecycle-cleanup-2026-04-11-v1.1.md`
 **Prior art**: `dev/bw-lifecycle-design.md` (handle-object prototype),
 `dev/bitwrench-component-lifecycle.md` (current v2.0.25 docs)
 
