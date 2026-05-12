@@ -12,16 +12,26 @@ colliding with undocumented capabilities.
 
 ## Executive summary
 
-Bitwrench is a better framework than it appears to be. The capabilities are
-ahead of the documentation. A developer using bitwrench today will underuse
-it significantly — reaching for CSS classes instead of JS composition,
-hand-coding things that are built in, missing APIs that exist — not because
-the framework is lacking, but because nothing guides them toward the right
-patterns.
+Bitwrench is a capable framework with strong core documentation. The
+"Thinking in Bitwrench" guide covers the mental model, JS-first styling
+(`bw.s()`, `bw.css()`, function-valued attributes, `bw.loadStyles()`),
+component levels, and composition patterns well.
 
-The single biggest issue is discoverability/documentation. The genuine API
-gaps are minor (4 items). The documentation gap is the one that determines
-whether bitwrench gets adopted or dismissed.
+The gap is **bwserve-specific**. "Thinking in Bitwrench" is written for
+client-side bitwrench (the primary mode). Section 7 (bwserve) covers 8 of
+~13 `BwServeClient` methods and doesn't show the patterns needed for
+server-driven apps — `client.mount()`, `client.message()`,
+`inspect/screenshot`, `sendAction()`. A developer building a bwserve app
+gets the conceptual foundation but hits a wall when they need the
+server-side API.
+
+Important context: bitwrench runs in three modes — pure client-side (no
+server needed), shim/loader (bare page that fetches TACOs statically or
+dynamically), and bwserve (server pushes TACOs over SSE). This report
+covers the bwserve mode. The client-side docs are not the problem.
+
+The genuine API gaps are minor (4 items). The bwserve documentation gap is
+what caused most of the friction in this project.
 
 ---
 
@@ -48,100 +58,89 @@ These are strong and correct:
 
 ---
 
-## The discoverability problem (THE issue)
+## The bwserve documentation gap
 
-### What happened
+### What's already well-documented (credit where due)
 
-A competent developer built a full production app on bitwrench and:
+The "Thinking in Bitwrench" guide covers the core mental model effectively:
 
-1. **Never found `client.mount()`** — Used `client.register()` with
-   string bodies to mount components. `client.mount()` exists
-   (client.js:254), does exactly what was needed, and returns a promise.
-   Discovered only by reading source code.
+- **Section 2 (Styling)** — JS-first styling, `bw.s()`, `bw.css()`,
+  `bw.responsive()`, `bw.loadStyles()`, function-as-style-value, `bw.u()`
+  utility shorthand. All the patterns needed.
+- **Section 3** — Function-valued attributes with both timing modes (IIFE
+  vs plain function), clearly explained with examples.
+- **Section 5** — Level 0/1/2 component model, when to use which.
+- **Section 6** — Handles, slots, pub/sub.
+- **Framework translation table** — Strong teaching tool for developers
+  coming from React/Vue/Svelte.
 
-2. **Wrote custom Enter key handlers** — Built `brInitChatInput` and
-   `brInitBoilerroomInput` as registered functions with keydown listeners.
-   bwclient.js already handles Enter on inputs by finding the nearest
-   `data-bw-action` button. The custom handlers were completely redundant.
+A developer who reads the full guide before starting would have the right
+mental model. The styling patterns, composition approaches, and component
+levels are all there.
 
-3. **Wrote 3,019 lines of CSS** — Created 13 separate button classes, 6 card
-   variants, 3 copies of markdown body styling. The TACO model already
-   supports JS-first styling via composable style strings in `a.style`, plus
-   function-valued attributes for runtime/hydration-time styling. None of
-   this was discovered during development.
+### What happened anyway
 
-4. **Never used function-valued TACO attributes** — Functions in `a.style`
-   (plain function for hydration-time, IIFE for creation-time) enable
-   dynamic per-element styling composed from shared JS dictionaries. Never
-   reached for because it wasn't documented as a styling pattern.
+Despite the docs existing, a developer building a bwserve app:
 
-5. **Never found `bw.s()` style helpers** — Exist, solve style composition
-   on the fly. Not documented prominently.
+1. **Wrote 3,019 lines of CSS** instead of using the JS-first styling
+   patterns documented in Section 2. The styling section is thorough but
+   written for client-side bitwrench. A bwserve developer building TACO on
+   the server side might skip to Section 7 and never read Section 2,
+   assuming styling is a separate concern.
 
-6. **Never used `bw.loadStyles()`** — Full theming engine, generates CSS
-   from seed colors. App hand-wrote 35 CSS variables instead.
+2. **Never found `client.mount()`** — Section 7 shows `render`, `patch`,
+   `append`, `remove`, `on`, `register`, `call`, `batch` — 8 methods. It
+   does NOT show `mount`, `message`, `inspect`, or `screenshot`. These 5
+   missing methods are arguably the most important for real bwserve apps.
 
-7. **Couldn't find `sendAction()`** — Tried `bw.action()` (doesn't exist),
-   eventually found `bw._bwClient.sendAction()` by reading bwclient.js
-   source. The underscore prefix actively discouraged using it.
+3. **Wrote custom Enter key handlers** — bwclient.js built-in behavior.
+   Not documented in "Thinking in Bitwrench" or (apparently) in the bwserve
+   tutorial. Discovered by reading source.
 
-### Why this matters
+4. **Couldn't find `sendAction()`** — The programmatic client→server path.
+   Not in Section 7 or the bwserve tutorial.
 
-Every developer who picks up bitwrench will make these same mistakes. The
-path of least resistance follows web-development habits (CSS classes, manual
-event handlers, separate stylesheets), and nothing in the documentation
-redirects toward bitwrench's actual idioms.
+5. **Didn't know `allowScreenshot: true` was needed** — Assumed screenshots
+   were broken. The flag and its requirement aren't surfaced in the guide.
 
-This makes bitwrench look limited when it's actually capable. People will
-evaluate it, hit friction, and conclude it can't do things it already does
-well.
+### The pattern
+
+Items 1 is a developer-habit problem — the docs exist, the developer didn't
+read them (or read the wrong section). Items 2-5 are genuine bwserve doc
+gaps — the information isn't in the guide at all.
 
 ### What would fix it
 
-**One document: "How to build a bwserve app"** — an opinionated guide that
-leads with the right patterns from page one:
+**Expand Section 7 of "Thinking in Bitwrench"** or create a companion
+**"Thinking in bwserve"** that covers the full server-driven API:
 
-1. **JS-first styling as the primary approach.** Show the style dictionary
-   pattern before mentioning CSS classes. Show function-valued attributes.
-   Show `bw.s()`. Show `bw.loadStyles()`. Explicitly call out the
-   anti-pattern of CSS-class-per-element.
-
-   ```js
-   // The right way: composable JS style tokens
-   const S = {
-     btn: 'padding:6px 14px;border:1px solid #ccc;font-size:12px;cursor:pointer',
-     pill: 'border-radius:20px',
-     accent: 'background:#4361ee;color:#fff;border-color:#4361ee',
-   };
-   { t: 'button', a: { style: `${S.btn};${S.pill};${S.accent}` }, c: 'Go' }
-
-   // Function-valued for dynamic styling at hydration time
-   { t: 'div', a: { style: ()=> isActive ? `${S.card};${S.active}` : S.card }, c: '...' }
-
-   // IIFE for dynamic styling at creation time
-   { t: 'div', a: { style: (()=> `${S.card};border-color:${color}`)() }, c: '...' }
-   ```
-
-2. **`client.mount()` front and center.** The bwserve tutorial should show
-   `client.mount()` for interactive components before showing
-   `client.register()`. Most developers will encounter mount-a-component
-   before register-a-utility.
-
-3. **Complete `BwServeClient` API reference.** Document ALL methods:
+1. **Complete `BwServeClient` method reference.** All ~13 methods:
    `render`, `patch`, `append`, `remove`, `exec`, `call`, `register`,
-   `message`, `mount`, `inspect`, `screenshot`, `query`, `listen`. Currently
-   docs show 8 of ~13 methods.
+   `message`, `mount`, `inspect`, `screenshot`, `query`, `listen`.
+   Currently 8 of 13 are documented.
 
-4. **Built-in behaviors page.** List everything bwclient.js already does:
-   - Enter key handling on inputs (algorithm documented)
-   - `inputValue` resolution (algorithm documented)
+2. **`client.mount()` front and center.** Show it for interactive components
+   before showing `client.register()`. Most bwserve developers will need
+   mount-a-component before register-a-utility.
+
+3. **Built-in bwclient.js behaviors.** List everything the thin client
+   already does automatically:
+   - Enter key handling on inputs (algorithm: find nearest `data-bw-action`)
+   - `inputValue` resolution (algorithm: `el.closest("div").querySelector("input")`)
    - Action delegation via `data-bw-action`
    - What `data-bw-id` provides
+   - `allowScreenshot` flag requirement
 
-5. **Client-to-server communication.** Document `bw._bwClient.sendAction()`
+4. **Client-to-server communication.** Document `bw._bwClient.sendAction()`
    prominently (or expose it as `bw.sendAction()`). This is the primary
    programmatic client→server path and it's currently hidden behind an
    underscore-prefixed internal object.
+
+5. **Cross-reference to styling.** A bwserve developer building TACO on the
+   server will naturally construct `a: { class: '...' }` and write a CSS
+   file. A note in Section 7 pointing back to Section 2 ("your TACO styles
+   are JS strings — compose them from dictionaries, not CSS classes") would
+   intercept this habit at the right moment.
 
 ---
 
@@ -253,12 +252,21 @@ Boilerroom was built with AI assistance (Claude) using bwserve's
 
 ## Conclusion
 
-Bitwrench has the right architecture. TACO is sound. The server-driven model
-with SSE works. The component model is clean. JS-first styling with
-function-valued attributes is the right approach.
+Bitwrench has the right architecture and better core documentation than
+initially credited. The "Thinking in Bitwrench" guide effectively teaches
+the mental model, JS-first styling, component composition, and client-side
+patterns. The framework runs in multiple modes (pure client, shim/loader,
+bwserve) and the client-side docs are solid.
 
-The gap is between what bitwrench can do and what developers discover it can
-do. Close that gap — with an opinionated guide, complete API reference, and
-prominent examples of the JS-first patterns — and bitwrench becomes a
-serious contender in the front-end space. The framework is ready; the
-on-ramp isn't.
+The gap is specifically in **bwserve documentation**. Section 7 of "Thinking
+in Bitwrench" covers the concept but not the full API. A developer building
+a server-driven app needs `client.mount()`, `client.message()`,
+`inspect/screenshot`, `sendAction()`, and bwclient.js built-in behaviors —
+none of which are in the current guide. Expanding Section 7 (or creating a
+companion "Thinking in bwserve" guide) with the complete API and
+cross-references to the styling section would close the gap.
+
+The genuine API issues (sendAction naming, multi-field forms, modal
+primitive, register string bodies) are minor and well-defined. The framework
+itself is sound and — given proper bwserve documentation — ready to be a
+serious contender.
