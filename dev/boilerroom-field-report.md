@@ -225,19 +225,29 @@ Boilerroom was built with AI assistance (Claude) using bwserve's
 - **Parameterized selectors** (`?selector=%23br-tab-body`) — Essential for
   deep nesting. Body-level inspection cuts off too early.
 
-### What didn't work
+### What appeared broken but wasn't (another discoverability issue)
 
-- **`client.screenshot()`** requires html2canvas served from
-  `/bw/lib/vendor/`. Not bundled in the npm package. Screenshots fail.
-- **Inspect shows structure but not appearance.** Can verify `.br-header`
-  exists, but can't see if spacing/colors/layout are correct. CSS changes
-  are untestable without visual feedback.
+- **`client.screenshot()` works — but requires `allowScreenshot: true` in
+  server options.** html2canvas IS vendored in bitwrench
+  (`src/vendor/html2canvas.min.js`, 193KB) and IS served via an allowlisted
+  route. The flag defaults to `false` as a security gate. Without it,
+  screenshots silently fail. This was initially reported as "html2canvas not
+  bundled" — it was actually the missing server flag.
 
-### What would help
+  This is another instance of the discoverability problem: a working feature
+  that appears broken because the required configuration isn't surfaced.
 
-1. Screenshot without html2canvas dependency (native browser API or bundled)
-2. Computed style queries — `client.inspect(selector, { computedStyles: ['display', 'background'] })`
-3. Layout queries — bounding rect of elements for verifying flex layout
+  **Suggestion:** When `allowScreenshot` is false and a screenshot is
+  attempted, the rejection message should say:
+  `"Screenshot not enabled. Set allowScreenshot: true in bwserve.create() options."`
+  (It may already say this — if so, it wasn't visible enough in the error
+  chain to diagnose.)
+
+### What would still help
+
+1. Computed style queries — `client.inspect(selector, { computedStyles: ['display', 'background'] })` for programmatic CSS debugging without a full screenshot
+2. Layout queries — bounding rect of elements for verifying flex layout
+3. Document the `inspect()` + `screenshot()` combo as a first-class LLM development loop in the bwserve guide — this is a differentiating capability that no other framework offers as cleanly
 
 ---
 
