@@ -1,6 +1,11 @@
 # Bitwrench Lifecycle Design (v2.0.26)
 
-**Status**: Active design -- DO NOT IMPLEMENT until reviewed
+> **SUPERSEDED (2026-06-09).** This is the unmarked first draft (same
+> generation as v1.0). The spec of record is
+> `bitwrench-lifecycle-cleanup-2026-06-09.md`. Do not implement from
+> this document.
+
+**Status**: SUPERSEDED — historical draft
 **Prior art**: `dev/bw-lifecycle-design.md` (handle-object prototype),
 `dev/bitwrench-component-lifecycle.md` (current v2.0.25 docs)
 

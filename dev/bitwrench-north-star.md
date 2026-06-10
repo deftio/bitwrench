@@ -119,11 +119,14 @@ function again. Clone TACOs (data), not DOM nodes (live objects).
 
 define -> create -> hydrate -> mount -> update -> unmount
 
-In practice, some phases are fused for efficiency (create+hydrate happen
-in one pass), and convenience functions combine several phases into one
-call. We are cleaning this up now -- making each phase's responsibilities
-clear and ensuring the convenience functions are thin wrappers, not
-alternate codepaths. See the lifecycle design doc for the full spec.
+In practice, create+hydrate are fused for efficiency (one recursive pass
+holds both TACO and node), and convenience verbs (mount, append, replace,
+remove, refresh) chain phases — but contain no logic except calls to the
+phase verbs. Each phase has exactly one verb; compounds compose, never
+reimplement. Spec of record: `dev/bitwrench-lifecycle-cleanup-2026-06-09.md`
+(lifecycle) and `dev/bitwrench-css-cleanup-2026-06-09.md` (styling, which
+follows the same grammar: makeStyles=create, applyStyles=mount,
+loadStyles=compound).
 
 ### 7. Updates are explicit, not reactive
 
@@ -225,6 +228,44 @@ internal shadow tree, not in the DOM.
 
 Tooling maturity is a function of time and adoption. Architecture is
 permanent. Evaluate the architecture.
+
+### 10. Names carry cost
+
+The update operations are ordered by expense and the names are honest:
+`el.bw.method()` and slot setters are surgical; `patch` is the element
+escape hatch; `replace` kills the element; `refresh` kills its children.
+A cheap-sounding verb is never secretly expensive, and no operation
+silently escalates (bw.update dispatches or warns — it never falls back
+to a rebuild). If you can't tell what an operation costs from its name,
+that's a bug in the API.
+
+### 11. The registry watches the DOM
+
+"The DOM is the registry" cuts both ways: bitwrench must notice when the
+DOM changes underneath it. A document-level MutationObserver (the
+janitor) runs full teardown on any component removed outside bitwrench's
+verbs — hooks fire, registrations clear, subscriptions release. Liveness
+checks at every dispatch mean a dead component never receives a message.
+Nothing bitwrench retains can pin a removed subtree. Rude removal by
+third-party code is an expected event, not an error.
+
+### 12. Dependencies declared, never tracked
+
+bitwrench has no reactive proxies and no auto-tracked dependency graphs
+-- but it does have declared dataflow: `bw.derive(inputTopics, fn,
+outTopic)` recomputes a derived value when its inputs publish. The
+difference from signals is that the graph is written in source where you
+can read it, not assembled by getter traps at runtime. Derive, the word
+bitwrench already uses for palettes, not useMemo.
+
+### 13. Code never crosses the wire
+
+Servers, CLIs, and LLMs send data: TACOs (structure), verb messages,
+method names, action names (`bw_act_*` classes). Executable code travels
+exactly once -- when the page itself is served. There is no eval verb,
+no server-registered function bodies, and string `on*` attributes are
+stripped from wire TACOs. Interactivity for server-sent UI is the
+`bw_act_*` class namespace plus a client-side delegated dispatcher.
 
 ### Validation: industry protocol adapters
 
@@ -348,5 +389,8 @@ Before writing code:
 | Am I writing `<style>` or raw HTML? | Drift. Generate CSS and TACO from JS. | Good. |
 | Am I treating TACO as "nicer innerHTML"? | Drift. It's a component spec. | Good. |
 | Am I reaching for a heavy rebuild when a handle method would do? | Drift. Prefer surgical updates. | Good. |
+| Am I sending code (or function source) over a wire? | Drift. Send data; use bw_act_* + verbs. | Good. |
+| Am I hand-rolling teardown a verb already does? | Drift. unmount/remove/janitor cover it. | Good. |
+| Am I using `data-*` attributes or hand-minting `bw_uuid_*`? | Drift. Classes are bw-owned; use id or your own classes. | Good. |
 | Does this component look/feel different from others? | Drift. Check design tokens. | Good. |
 | Would an MFC/Swing developer recognize this pattern? | Good. | Rethink. |

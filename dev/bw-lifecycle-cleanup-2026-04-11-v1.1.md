@@ -1,6 +1,14 @@
 # Bitwrench Lifecycle Cleanup -- v1.1
 
-**Status**: Active design -- DO NOT IMPLEMENT until reviewed
+> **SUPERSEDED (2026-06-09).** The spec of record is
+> `bitwrench-lifecycle-cleanup-2026-06-09.md`, which overrides this
+> document's decision tables (notably: bw_act_* classes instead of
+> data-bw-action; create performs no registrations; unmount strips
+> marker classes; BCCL rename pulled into 2.1.0; janitor added).
+> This document remains the background analysis — framework
+> comparisons, signals rationale, TACO schema design.
+
+**Status**: SUPERSEDED as spec; retained as background analysis
 **Version target**: 2.1.0 (minor bump -- new public API, behavioral changes)
 **Current version**: 2.0.31
 **Prior art**: `bw-lifecycle-cleanup-2026-04-11-v1.0.md` (first draft),
