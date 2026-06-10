@@ -1,6 +1,9 @@
 # Bitwrench 2.1.x — CSS & Theming Cleanup (companion spec)
 
-**Date**: 2026-06-09
+**Date**: 2026-06-09 (rev 3 — G5.5 review folded in: setThemeMode returns
+{mode,count}, root-only scope grammar, reserved bw_style_* namespace,
+CSP covers all htmlPage inline scripts; rev 2 — CSP lifted from Feb 2026
+discussion; rev 1 — initial)
 **Status**: companion to `bitwrench-lifecycle-cleanup-2026-06-09.md` (§15
 points here). Same release, same rules: breaking changes allowed, tests
 are the contract.
@@ -51,6 +54,9 @@ inserted in layer order *regardless of call order* — `injectCSS` places a
 bw layer element before any higher-layer bw element already in `<head>`.
 Today the order is whatever the call order was; reset injected after a
 theme silently changes specificity outcomes. Cheap fix, real determinism.
+The `bw_style_*` id namespace is **reserved**: user `injectCSS` calls
+with an id in that namespace get a warning and no ordering guarantees
+(G5.5 review).
 
 Scoped theming note (the quikchat pattern, verified): `applyStyles(s,
 '#panel')` emits `#panel .bw_bccl_card` and `#panel.bw_theme_alt
@@ -115,12 +121,20 @@ say "go dark" idempotently — toggle twice = no-op. Fix:
 **`bw.setThemeMode(mode, scope?)`** (`'primary' | 'alternate'`) as the
 real verb; `toggleThemeMode` becomes sugar (reads first element, sets
 all to the inverse). Wire-friendly: `{v:1, type:'message', …}` or a
-`call` can now set dark mode idempotently.
+`call` can now set dark mode idempotently. Per G5.5 review:
+`setThemeMode` returns `{mode, count}` (a bare string hides "no
+targets" vs "three changed") and the `bw:thememode` event carries
+`{mode, scope, count}`. **Scope grammar for themed scopes (rev 2): a
+single root selector only** — `#id`, `.class`, or an Element. Complex
+or comma selectors (`'#a .b'`, `'#a, #b'`) are rejected with a warning;
+arbitrary selector transforms make self-rules and mode-setting
+unreasonable, and 2.1 keeps scoped themes simple.
 
 **CSS-8. Mode events.** Theme mode changes are currently silent. Emit
-`bw:thememode` (pub/sub mirror, `{mode, scope}`) so components that need
-to redraw palette-derived inline values (charts, canvas) can react, and
-bwattach observers see it. One line, consistent with `bw:lifecycle`.
+`bw:thememode` (pub/sub mirror, `{mode, scope, count}`) so components
+that need to redraw palette-derived inline values (charts, canvas) can
+react, and bwattach observers see it. One line, consistent with
+`bw:lifecycle`.
 
 ---
 
@@ -139,7 +153,7 @@ bwattach observers see it. One line, consistent with `bw:lifecycle`.
 | Contrast guarantee | AA check lives in `derivePalette` (warn via `bw:diag`); the marketing line comes free |
 | `bw.u()` | stays an optional plugin; `bw.s()`/`bw.responsive()` documented as composition utilities of the one system, not parallel systems |
 | Typed rules | `BwCssRules` / CSSProperties-style interface in `bitwrench.d.ts` → editor autocomplete inside `bw.css({...})` today; LSP later if traction (per Manu) |
-| **CSP** (lifted from the Feb 2026 discussion doc — was designed, never specced) | `bw.config.cspNonce` — when set, every bitwrench-injected `<style>` (and `bw.htmlPage`'s function-registry `<script>`) carries the nonce. Strict-CSP deployments (enterprise/gov, no inline anything): write `bw.makeStyles(seeds).css` to a static `.css` file at build/deploy time and skip injection entirely — `makeStyles` being pure makes this a one-liner. Documented in `docs/security.md`. |
+| **CSP** (lifted from the Feb 2026 discussion doc — was designed, never specced) | `bw.config.cspNonce` — when set, every bitwrench-injected `<style>` and **every inline `<script>` `bw.htmlPage` emits** (runtime shim, loadStyles bootstrap, function-registry binder — lifecycle spec §5.3) carries the nonce. Note: a nonce is **per-response** — valid for live injection (the page passes its served nonce to bw.config) and for server-generated-per-request htmlPage output; a *static* file with a baked nonce is wrong CSP usage — static artifacts use hash-source CSP or the file path below. Strict-CSP deployments: write `bw.makeStyles(seeds).css` to a static `.css` file at build/deploy time and skip injection entirely — `makeStyles` being pure makes this a one-liner. Handler attributes: htmlPage emits NO inline `on*` attributes (marker-class + bind-at-load, lifecycle spec §1.4 rev 8) so the nonce'd script is the only script surface. Documented in `docs/security.md`. |
 
 One paragraph on why CSP matters here specifically: bitwrench's two
 signature moves — runtime style injection and the htmlPage handler
@@ -154,8 +168,10 @@ it just never made it into a spec until now.
 - make/apply/load: `makeStyles` is pure (no DOM, call twice → deep-equal
   results); `applyStyles` same-scope reapply replaces (idempotent);
   distinct scopes coexist as distinct style elements
-- CSS-1: `#dash` vs `.dash` scopes coexist; complex selector scopes
-  produce valid ids; `.global` class scope does not clobber global
+- CSS-1: `#dash` vs `.dash` scopes coexist; `.global` class scope does
+  not clobber global. (Complex/comma scopes never reach id generation —
+  `applyStyles` rejects them per CSS-7; `scopeRulesUnder` as a low-level
+  utility still accepts arbitrary prefixes, but it generates no ids)
 - CSS-2: clearStyles removes theme class from ALL matched elements
 - CSS-3: scoping a rules object containing `@keyframes` leaves step
   selectors untouched; `@media` inner selectors get prefixed
@@ -166,15 +182,18 @@ it just never made it into a spec until now.
 - CSS-6: `clearStyles('structural')` works; scoped loadStyles injects
   structural once, globally (asserted + documented)
 - CSS-7: `setThemeMode('alternate', '.panel')` is idempotent across
-  mixed prior states; toggle = set(inverse of first); wire round-trip
+  mixed prior states; returns `{mode, count}`; toggle = set(inverse of
+  first); complex/comma scope rejected with warning; wire round-trip
   test (server sets dark deterministically)
-- CSS-8: `bw:thememode` fires on pub/sub with `{mode, scope}`
+- CSS-8: `bw:thememode` fires on pub/sub with `{mode, scope, count}`
+- reserved namespace: user `injectCSS` with a `bw_style_*` id warns
 - Layers: inject theme then reset → reset element still precedes theme
   element in `<head>`
 - Contrast: a seed pair chosen to fail AA produces a `bw:diag` warning
-- CSP: with `bw.config.cspNonce` set, every injected `<style>` and the
-  htmlPage registry `<script>` carry the nonce; `makeStyles().css`
-  written to file + linked statically renders identically to injection
+- CSP: with `bw.config.cspNonce` set, every injected `<style>` and
+  every inline `<script>` htmlPage emits (shim, bootstrap, binder) carry
+  the nonce; `makeStyles().css` written to file + linked statically
+  renders identically to injection
 - d.ts: type-level test that misspelled CSS property errors under TS
 
 ## 5. Out of Scope

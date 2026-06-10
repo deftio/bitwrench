@@ -70,9 +70,10 @@ objects (palette values, spacing tokens, component configuration), CSS
 is just another output of JS functions. This means:
 
 - No CSS preprocessors (Less, Sass) -- JS functions are the preprocessor
-- No CSS custom properties required -- values come from palette objects
-  in JS (though CSS vars are fine to use; see github.com/deftio/quikchat
-  for that style of thinking -- we just don't depend on them)
+- CSS custom properties are a web platform feature and can coexist in
+  user CSS (see github.com/deftio/quikchat for that style of thinking),
+  but bitwrench's design system does not depend on them -- values come
+  from palette objects in JS
 - No utility-class framework (Tailwind) -- bitwrench generates equivalent
   CSS from design tokens at runtime. You get Tailwind's result without
   Tailwind's build step or class proliferation
@@ -247,7 +248,9 @@ janitor) runs full teardown on any component removed outside bitwrench's
 verbs — hooks fire, registrations clear, subscriptions release. Liveness
 checks at every dispatch mean a dead component never receives a message.
 Nothing bitwrench retains can pin a removed subtree. Rude removal by
-third-party code is an expected event, not an error.
+third-party code is an expected event, not an error. The one sanctioned
+exception: `bw.detach(el)` keeps a disconnected element alive and
+registered on purpose -- the exemption clears the moment it reconnects.
 
 ### 12. Dependencies declared, never tracked
 
@@ -255,17 +258,22 @@ bitwrench has no reactive proxies and no auto-tracked dependency graphs
 -- but it does have declared dataflow: `bw.derive(inputTopics, fn,
 outTopic)` recomputes a derived value when its inputs publish. The
 difference from signals is that the graph is written in source where you
-can read it, not assembled by getter traps at runtime. Derive, the word
-bitwrench already uses for palettes, not useMemo.
+can read it, not assembled by getter traps at runtime. The graph is
+explicit and *disposable* -- every derive returns a stopper and can be
+tied to an element's lifecycle. Derive, the word bitwrench already uses
+for palettes, not useMemo.
 
-### 13. Code never crosses the wire
+### 13. Control messages never carry code
 
 Servers, CLIs, and LLMs send data: TACOs (structure), verb messages,
-method names, action names (`bw_act_*` classes). Executable code travels
-exactly once -- when the page itself is served. There is no eval verb,
-no server-registered function bodies, and string `on*` attributes are
-stripped from wire TACOs. Interactivity for server-sent UI is the
-`bw_act_*` class namespace plus a client-side delegated dispatcher.
+method names, action names (`bw_act_*` classes). Executable code is
+delivered only as page code at page-serving time -- never as later
+protocol payload. (`bw.htmlPage` serializing handler source into the
+page IS code delivery, and it's allowed: serving a page is how web code
+is delivered.) There is no eval verb, no server-registered function
+bodies, and string `on*` attributes are stripped from wire TACOs.
+Interactivity for server-sent UI is the `bw_act_*` class namespace plus
+a client-side delegated dispatcher.
 
 ### Validation: industry protocol adapters
 
@@ -385,12 +393,15 @@ Before writing code:
 |----------|--------|-------|
 | Am I using `document.*` directly? | Drift. Use bitwrench APIs or TACO. | Good. |
 | Am I hardcoding px/rem/hex values? | Drift. Use design tokens. | Good. |
-| Would this code break in Node (no DOM)? | Drift. TACO should be universal. | Good. |
+| Am I putting DOM work in a TACO factory or data path that should stay universal? | Drift. Factories return data; DOM work belongs in hooks/handles. | Good. |
 | Am I writing `<style>` or raw HTML? | Drift. Generate CSS and TACO from JS. | Good. |
 | Am I treating TACO as "nicer innerHTML"? | Drift. It's a component spec. | Good. |
 | Am I reaching for a heavy rebuild when a handle method would do? | Drift. Prefer surgical updates. | Good. |
-| Am I sending code (or function source) over a wire? | Drift. Send data; use bw_act_* + verbs. | Good. |
+| Am I sending code (or function source) over a control channel? | Drift. Send data; use bw_act_* + verbs. | Good. |
 | Am I hand-rolling teardown a verb already does? | Drift. unmount/remove/janitor cover it. | Good. |
-| Am I using `data-*` attributes or hand-minting `bw_uuid_*`? | Drift. Classes are bw-owned; use id or your own classes. | Good. |
+| Am I using `data-bw-*` attributes or hand-typing a `bw_uuid_*`/`bw_lc`/`bw_bccl_*`/`bw_act_*` token? | Drift. bw machine namespaces come from helpers; app-owned `data-*` (e.g. data-testid) is fine. | Good. |
+| Am I retaining a TACO or cloning a DOM node to re-render later? | Drift. Consume once; call the factory again. | Good. |
+| Am I registering anything before mount? | Drift. Registration is mount-to-unmount only. | Good. |
+| Am I moving a live node across an async boundary without `bw.detach`? | Drift. The janitor will reap it. | Good. |
 | Does this component look/feel different from others? | Drift. Check design tokens. | Good. |
 | Would an MFC/Swing developer recognize this pattern? | Good. | Rethink. |
