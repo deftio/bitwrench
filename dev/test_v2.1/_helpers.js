@@ -3,6 +3,7 @@
  * Tests import from here; nothing here asserts — pure plumbing.
  */
 import jsdom from "jsdom";
+import bw from "../../src/bitwrench.js";
 const { JSDOM } = jsdom;
 
 let dom;
@@ -19,6 +20,8 @@ export function freshDOM() {
   global.FormData = dom.window.FormData;
   // 2.0.x-compat stub; inert once the rAF mounted path is deleted in 2.1.
   global.requestAnimationFrame = function (fn) { return setTimeout(fn, 0); };
+  // Re-install action listeners on the new document (actions are ON by default)
+  if (bw.actions && typeof bw.actions.enable === "function") bw.actions.enable();
   return dom;
 }
 

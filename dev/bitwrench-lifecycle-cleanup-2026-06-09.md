@@ -1787,7 +1787,14 @@ Every doc gets rewritten to 2.1 grammar **after the implementation is
 green** (rewriting against an unimplemented API creates a third dialect).
 Rules: one old→new grammar table (the §1.3 + §13 tables) drives every
 edit; every code sample must pass the drift lint; removed APIs appear
-nowhere except `docs/migrating-2.0-to-2.1.md`.
+nowhere except `docs/migrating-2.0-to-2.1.md`. **Prose register (per
+Manu)**: public docs are written dry and direct — no aphoristic
+flourishes, no "X, not Y" constructions unless the contrast carries
+technical information, no trailing appositives. The audience is primed
+to detect AI prose and will discount the engineering behind it. When in
+doubt, cut the sentence and keep the fact. (Internal dev/ docs keep
+their mnemonics — "names carry cost" earns its keep; "rooms that trade
+data" did not.)
 
 | Doc | What changes |
 |---|---|

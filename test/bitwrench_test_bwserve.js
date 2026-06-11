@@ -52,12 +52,13 @@ describe("bw.apply()", function() {
     assert.strictEqual(bw.apply({}), false);
   });
 
-  describe("replace", function() {
-    it("should replace #app content with a TACO", function() {
+  describe("mount", function() {
+    it("should mount a TACO into #app", function() {
       bw.apply({
-        type: 'replace',
-        target: '#app',
-        node: { t: 'div', a: { id: 'hello' }, c: 'Hello World' }
+        v: 1,
+        type: 'mount',
+        ref: '#app',
+        taco: { t: 'div', a: { id: 'hello' }, c: 'Hello World' }
       });
       var el = document.getElementById('hello');
       assert.ok(el, "should find #hello in DOM");
@@ -69,9 +70,10 @@ describe("bw.apply()", function() {
       assert.ok(document.querySelector('#app p'));
 
       bw.apply({
-        type: 'replace',
-        target: '#app',
-        node: { t: 'span', c: 'New content' }
+        v: 1,
+        type: 'mount',
+        ref: '#app',
+        taco: { t: 'span', c: 'New content' }
       });
       assert.ok(!document.querySelector('#app p'), "old p should be gone");
       assert.ok(document.querySelector('#app span'), "new span should exist");
@@ -79,9 +81,10 @@ describe("bw.apply()", function() {
 
     it("should return false for unknown target", function() {
       var result = bw.apply({
-        type: 'replace',
-        target: '#nonexistent',
-        node: { t: 'div', c: 'test' }
+        v: 1,
+        type: 'mount',
+        ref: '#nonexistent',
+        taco: { t: 'div', c: 'test' }
       });
       assert.strictEqual(result, false);
     });
@@ -91,9 +94,10 @@ describe("bw.apply()", function() {
     it("should patch text content by id", function() {
       bw.DOM('#app', { t: 'span', a: { id: 'counter' }, c: '0' });
       bw.apply({
+        v: 1,
         type: 'patch',
-        target: 'counter',
-        content: '42'
+        ref: 'counter',
+        text: '42'
       });
       var el = document.getElementById('counter');
       assert.strictEqual(el.textContent, '42');
@@ -101,9 +105,10 @@ describe("bw.apply()", function() {
 
     it("should return false for unknown target", function() {
       var result = bw.apply({
+        v: 1,
         type: 'patch',
-        target: 'nonexistent',
-        content: 'test'
+        ref: 'nonexistent',
+        text: 'test'
       });
       assert.strictEqual(result, false);
     });
@@ -113,9 +118,10 @@ describe("bw.apply()", function() {
     it("should append a child to target", function() {
       bw.DOM('#app', { t: 'ul', a: { id: 'list' } });
       bw.apply({
+        v: 1,
         type: 'append',
-        target: '#list',
-        node: { t: 'li', c: 'Item 1' }
+        ref: '#list',
+        taco: { t: 'li', c: 'Item 1' }
       });
       var items = document.querySelectorAll('#list li');
       assert.strictEqual(items.length, 1);
@@ -124,18 +130,19 @@ describe("bw.apply()", function() {
 
     it("should append multiple children in sequence", function() {
       bw.DOM('#app', { t: 'ul', a: { id: 'list' } });
-      bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'A' } });
-      bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'B' } });
-      bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'C' } });
+      bw.apply({ v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'A' } });
+      bw.apply({ v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'B' } });
+      bw.apply({ v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'C' } });
       var items = document.querySelectorAll('#list li');
       assert.strictEqual(items.length, 3);
     });
 
     it("should return false for unknown parent", function() {
       var result = bw.apply({
+        v: 1,
         type: 'append',
-        target: '#nonexistent',
-        node: { t: 'li', c: 'test' }
+        ref: '#nonexistent',
+        taco: { t: 'li', c: 'test' }
       });
       assert.strictEqual(result, false);
     });
@@ -149,13 +156,13 @@ describe("bw.apply()", function() {
       ]);
       assert.ok(document.getElementById('item-1'));
 
-      bw.apply({ type: 'remove', target: '#item-1' });
+      bw.apply({ v: 1, type: 'remove', ref: '#item-1' });
       assert.ok(!document.getElementById('item-1'), "item-1 should be removed");
       assert.ok(document.getElementById('item-2'), "item-2 should remain");
     });
 
     it("should return false for unknown target", function() {
-      var result = bw.apply({ type: 'remove', target: '#nonexistent' });
+      var result = bw.apply({ v: 1, type: 'remove', ref: '#nonexistent' });
       assert.strictEqual(result, false);
     });
   });
@@ -172,9 +179,9 @@ describe("bw.apply()", function() {
       bw.apply({
         type: 'batch',
         ops: [
-          { type: 'patch', target: 'val', content: '99' },
-          { type: 'append', target: '#list', node: { t: 'li', c: 'Batch A' } },
-          { type: 'append', target: '#list', node: { t: 'li', c: 'Batch B' } }
+          { v: 1, type: 'patch', ref: 'val', text: '99' },
+          { v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'Batch A' } },
+          { v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'Batch B' } }
         ]
       });
 
@@ -188,47 +195,19 @@ describe("bw.apply()", function() {
   });
 
   it("should return false for unknown message type", function() {
-    var result = bw.apply({ type: 'unknown', target: '#app' });
+    var result = bw.apply({ v: 1, type: 'unknown', ref: '#app' });
     assert.strictEqual(result, false);
   });
 
-  describe("register", function() {
-    beforeEach(function() {
-      bw._clientFunctions = {};
-    });
-
-    it("should register a named function from body string", function() {
+  describe("register (rejected in v2.1)", function() {
+    it("should reject register type in v2.1 wire protocol", function() {
       var result = bw.apply({
+        v: 1,
         type: 'register',
         name: 'greet',
         body: 'function(name) { return "Hello " + name; }'
       });
-      assert.strictEqual(result, true);
-      assert.strictEqual(typeof bw._clientFunctions.greet, 'function');
-      assert.strictEqual(bw._clientFunctions.greet('World'), 'Hello World');
-    });
-
-    it("should return false for missing name", function() {
-      assert.strictEqual(bw.apply({ type: 'register', body: 'function(){}' }), false);
-    });
-
-    it("should return false for missing body", function() {
-      assert.strictEqual(bw.apply({ type: 'register', name: 'foo' }), false);
-    });
-
-    it("should return false for invalid body syntax", function() {
-      var result = bw.apply({
-        type: 'register',
-        name: 'bad',
-        body: 'not valid javascript {{{}'
-      });
       assert.strictEqual(result, false);
-    });
-
-    it("should overwrite a previously registered function", function() {
-      bw.apply({ type: 'register', name: 'fn', body: 'function() { return 1; }' });
-      bw.apply({ type: 'register', name: 'fn', body: 'function() { return 2; }' });
-      assert.strictEqual(bw._clientFunctions.fn(), 2);
     });
   });
 
@@ -240,7 +219,7 @@ describe("bw.apply()", function() {
     it("should call a registered function", function() {
       var callLog = [];
       bw._clientFunctions.myFn = function(a, b) { callLog.push(a + b); };
-      var result = bw.apply({ type: 'call', name: 'myFn', args: [3, 4] });
+      var result = bw.apply({ v: 1, type: 'call', name: 'myFn', args: [3, 4] });
       assert.strictEqual(result, true);
       assert.deepStrictEqual(callLog, [7]);
     });
@@ -250,7 +229,7 @@ describe("bw.apply()", function() {
       var origLog = console.log;
       var logged = [];
       console.log = function() { logged.push([].slice.call(arguments)); };
-      var result = bw.apply({ type: 'call', name: 'log', args: ['hello', 'world'] });
+      var result = bw.apply({ v: 1, type: 'call', name: 'log', args: ['hello', 'world'] });
       console.log = origLog;
       assert.strictEqual(result, true);
       assert.deepStrictEqual(logged, [['hello', 'world']]);
@@ -261,7 +240,7 @@ describe("bw.apply()", function() {
       bw.DOM('#app', { t: 'input', a: { id: 'inp' } });
       var focused = false;
       document.getElementById('inp').focus = function() { focused = true; };
-      var result = bw.apply({ type: 'call', name: 'focus', args: ['#inp'] });
+      var result = bw.apply({ v: 1, type: 'call', name: 'focus', args: ['#inp'] });
       assert.strictEqual(result, true);
       assert.strictEqual(focused, true);
     });
@@ -269,55 +248,23 @@ describe("bw.apply()", function() {
     it("should call a registered scrollTo function", function() {
       bw._clientFunctions.scrollTo = function(sel) { var el = bw.el(sel); if (el) el.scrollTop = el.scrollHeight; };
       bw.DOM('#app', { t: 'div', a: { id: 'scrollable' } });
-      var result = bw.apply({ type: 'call', name: 'scrollTo', args: ['#scrollable'] });
+      var result = bw.apply({ v: 1, type: 'call', name: 'scrollTo', args: ['#scrollable'] });
       assert.strictEqual(result, true);
-    });
-
-    it("should return false for missing name", function() {
-      assert.strictEqual(bw.apply({ type: 'call', args: [] }), false);
-    });
-
-    it("should return false for unknown function name", function() {
-      assert.strictEqual(bw.apply({ type: 'call', name: 'nonexistent', args: [] }), false);
     });
 
     it("should handle missing args gracefully", function() {
       bw._clientFunctions.noArgs = function() { return 42; };
-      var result = bw.apply({ type: 'call', name: 'noArgs' });
+      var result = bw.apply({ v: 1, type: 'call', name: 'noArgs' });
       assert.strictEqual(result, true);
     });
   });
 
-  describe("exec", function() {
-    afterEach(function() {
-      bw._allowExec = false;
-    });
-
-    it("should reject exec when allowExec is false", function() {
-      bw._allowExec = false;
-      var result = bw.apply({ type: 'exec', code: 'var x = 1;' });
+  describe("exec (rejected in v2.1)", function() {
+    it("should reject exec type in v2.1 wire protocol", function() {
+      bw._allowExec = true;
+      var result = bw.apply({ v: 1, type: 'exec', code: '_execTest = 42;' });
       assert.strictEqual(result, false);
-    });
-
-    it("should execute code when allowExec is true", function() {
-      bw._allowExec = true;
-      global._execTest = 0;
-      var result = bw.apply({ type: 'exec', code: '_execTest = 42;' });
-      assert.strictEqual(result, true);
-      assert.strictEqual(global._execTest, 42);
-      delete global._execTest;
-    });
-
-    it("should return false for empty code", function() {
-      bw._allowExec = true;
-      assert.strictEqual(bw.apply({ type: 'exec' }), false);
-      assert.strictEqual(bw.apply({ type: 'exec', code: '' }), false);
-    });
-
-    it("should return false for code with syntax errors", function() {
-      bw._allowExec = true;
-      var result = bw.apply({ type: 'exec', code: 'if if if {{{' });
-      assert.strictEqual(result, false);
+      bw._allowExec = false;
     });
   });
 });
@@ -333,56 +280,67 @@ describe("BwServeClient", function() {
     assert.strictEqual(client._closed, false);
   });
 
-  describe("#render()", function() {
-    it("should send a replace message", function() {
+  describe("#mount() / #render()", function() {
+    it("should send a mount message with ref/taco fields", function() {
+      var client = new BwServeClient('c1', null);
+      client.mount('#app', { t: 'div', c: 'Hello' });
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'mount',
+        ref: '#app',
+        taco: { t: 'div', c: 'Hello' },
+        v: 1
+      });
+    });
+
+    it("render() should alias to mount()", function() {
       var client = new BwServeClient('c1', null);
       client.render('#app', { t: 'div', c: 'Hello' });
-      assert.deepStrictEqual(client._sent[0], {
-        type: 'replace',
-        target: '#app',
-        node: { t: 'div', c: 'Hello' }
-      });
+      assert.strictEqual(client._sent[0].type, 'mount');
+      assert.strictEqual(client._sent[0].ref, '#app');
     });
   });
 
   describe("#patch()", function() {
-    it("should send a patch message", function() {
+    it("should send a patch message with discriminated fields", function() {
       var client = new BwServeClient('c1', null);
-      client.patch('counter', '42');
+      client.patch('counter', { text: '42' });
       assert.deepStrictEqual(client._sent[0], {
         type: 'patch',
-        target: 'counter',
-        content: '42',
-        attr: null
+        ref: 'counter',
+        text: '42',
+        v: 1
       });
     });
 
-    it("should send patch with attr", function() {
+    it("should send patch with attrs field", function() {
       var client = new BwServeClient('c1', null);
-      client.patch('el', 'val', { class: 'active' });
-      assert.deepStrictEqual(client._sent[0].attr, { class: 'active' });
+      client.patch('el', { attrs: { class: 'active' } });
+      assert.deepStrictEqual(client._sent[0].attrs, { class: 'active' });
+      assert.strictEqual(client._sent[0].ref, 'el');
     });
   });
 
   describe("#append()", function() {
-    it("should send an append message", function() {
+    it("should send an append message with ref/taco fields", function() {
       var client = new BwServeClient('c1', null);
       client.append('#list', { t: 'li', c: 'Item' });
       assert.deepStrictEqual(client._sent[0], {
         type: 'append',
-        target: '#list',
-        node: { t: 'li', c: 'Item' }
+        ref: '#list',
+        taco: { t: 'li', c: 'Item' },
+        v: 1
       });
     });
   });
 
   describe("#remove()", function() {
-    it("should send a remove message", function() {
+    it("should send a remove message with ref field", function() {
       var client = new BwServeClient('c1', null);
       client.remove('#old-item');
       assert.deepStrictEqual(client._sent[0], {
         type: 'remove',
-        target: '#old-item'
+        ref: '#old-item',
+        v: 1
       });
     });
   });
@@ -400,26 +358,15 @@ describe("BwServeClient", function() {
   });
 
   describe("#message()", function() {
-    it("should send a message dispatch", function() {
+    it("should send a message dispatch with ref field", function() {
       var client = new BwServeClient('c1', null);
       client.message('my-comp', 'refresh', { force: true });
       assert.deepStrictEqual(client._sent[0], {
         type: 'message',
-        target: 'my-comp',
+        ref: 'my-comp',
         action: 'refresh',
-        data: { force: true }
-      });
-    });
-  });
-
-  describe("#register()", function() {
-    it("should send a register message", function() {
-      var client = new BwServeClient('c1', null);
-      client.register('autoScroll', 'function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }');
-      assert.deepStrictEqual(client._sent[0], {
-        type: 'register',
-        name: 'autoScroll',
-        body: 'function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }'
+        data: { force: true },
+        v: 1
       });
     });
   });
@@ -431,7 +378,8 @@ describe("BwServeClient", function() {
       assert.deepStrictEqual(client._sent[0], {
         type: 'call',
         name: 'scrollTo',
-        args: ['#chat']
+        args: ['#chat'],
+        v: 1
       });
     });
 
@@ -441,7 +389,8 @@ describe("BwServeClient", function() {
       assert.deepStrictEqual(client._sent[0], {
         type: 'call',
         name: 'download',
-        args: ['report.csv', 'id,name\n1,Alice', 'text/csv']
+        args: ['report.csv', 'id,name\n1,Alice', 'text/csv'],
+        v: 1
       });
     });
 
@@ -451,18 +400,8 @@ describe("BwServeClient", function() {
       assert.deepStrictEqual(client._sent[0], {
         type: 'call',
         name: 'log',
-        args: []
-      });
-    });
-  });
-
-  describe("#exec()", function() {
-    it("should send an exec message", function() {
-      var client = new BwServeClient('c1', null);
-      client.exec("document.title = 'New Title'");
-      assert.deepStrictEqual(client._sent[0], {
-        type: 'exec',
-        code: "document.title = 'New Title'"
+        args: [],
+        v: 1
       });
     });
   });
@@ -503,166 +442,127 @@ describe("BwServeClient", function() {
 
     it("should not send after close", function() {
       var client = new BwServeClient('c1', null);
-      client.render('#app', { t: 'div', c: 'before' });
+      client.mount('#app', { t: 'div', c: 'before' });
       assert.strictEqual(client._sent.length, 1);
       client.close();
-      client.render('#app', { t: 'div', c: 'after' });
+      client.mount('#app', { t: 'div', c: 'after' });
       assert.strictEqual(client._sent.length, 1, "no new messages after close");
     });
   });
 
   describe("#_send() SSE format", function() {
-    it("should write SSE frame to response stream", function() {
+    it("should write SSE frame to response stream with v:1", function() {
       var written = '';
       var mockRes = {
         write: function(data) { written += data; }
       };
       var client = new BwServeClient('c1', mockRes);
-      client.render('#app', { t: 'div', c: 'Hi' });
-      var expected = 'data: ' + JSON.stringify({ type: 'replace', target: '#app', node: { t: 'div', c: 'Hi' } }) + '\n\n';
+      client.mount('#app', { t: 'div', c: 'Hi' });
+      var expected = 'data: ' + JSON.stringify({ type: 'mount', ref: '#app', taco: { t: 'div', c: 'Hi' }, v: 1 }) + '\n\n';
       assert.strictEqual(written, expected);
     });
 
     it("should still store in _sent when writing SSE", function() {
       var mockRes = { write: function() {} };
       var client = new BwServeClient('c1', mockRes);
-      client.patch('id', 'val');
+      client.patch('id', { text: 'val' });
       assert.strictEqual(client._sent.length, 1);
     });
   });
 });
 
 // ===================================================================================
-// _pend / _resolvePending tests
+// 2.1 removed APIs — query, exec, register are GONE
 // ===================================================================================
 
-describe("BwServeClient _pend/_resolvePending", function() {
-  it("should create a pending request with unique requestId", function() {
-    var client = new BwServeClient('pend-1', null);
-    var p = client._pend(5000);
-    assert.ok(p.requestId, 'should have requestId');
-    assert.ok(p.requestId.startsWith('req_'), 'should start with req_');
-    assert.ok(p.promise instanceof Promise, 'should return a promise');
-    client._resolvePending(p.requestId, { result: 'ok' });
+describe("BwServeClient removed 2.0.x APIs", function() {
+  it("query is removed", function() {
+    var client = new BwServeClient('rm-1', null);
+    assert.strictEqual(client.query, undefined);
   });
 
-  it("should resolve pending promise with result", function() {
-    var client = new BwServeClient('pend-2', null);
-    var p = client._pend(5000);
-    client._resolvePending(p.requestId, { result: 42 });
-    return p.promise.then(function(val) {
-      assert.strictEqual(val, 42);
-    });
+  it("exec is removed", function() {
+    var client = new BwServeClient('rm-2', null);
+    assert.strictEqual(client.exec, undefined);
   });
 
-  it("should reject pending promise on error", function() {
-    var client = new BwServeClient('pend-3', null);
-    var p = client._pend(5000);
-    client._resolvePending(p.requestId, { error: 'Something went wrong' });
-    return p.promise.then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('Something went wrong') !== -1); }
-    );
+  it("register is removed", function() {
+    var client = new BwServeClient('rm-3', null);
+    assert.strictEqual(client.register, undefined);
   });
 
-  it("should timeout and reject after specified ms", function() {
-    var client = new BwServeClient('pend-4', null);
-    var p = client._pend(100);
-    return p.promise.then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('timeout') !== -1); }
-    );
+  it("inspect is removed", function() {
+    var client = new BwServeClient('rm-4', null);
+    assert.strictEqual(client.inspect, undefined);
   });
 
-  it("should return false for unknown requestId", function() {
-    var client = new BwServeClient('pend-5', null);
-    assert.strictEqual(client._resolvePending('unknown_id', {}), false);
+  it("screenshot is removed", function() {
+    var client = new BwServeClient('rm-5', null);
+    assert.strictEqual(client.screenshot, undefined);
   });
 
-  it("should not double-resolve", function() {
-    var client = new BwServeClient('pend-6', null);
-    var p = client._pend(5000);
-    assert.strictEqual(client._resolvePending(p.requestId, { result: 1 }), true);
-    assert.strictEqual(client._resolvePending(p.requestId, { result: 2 }), false);
-    return p.promise.then(function(val) {
-      assert.strictEqual(val, 1);
-    });
+  it("_pend is removed", function() {
+    var client = new BwServeClient('rm-6', null);
+    assert.strictEqual(client._pend, undefined);
+  });
+
+  it("_resolvePending is removed", function() {
+    var client = new BwServeClient('rm-7', null);
+    assert.strictEqual(client._resolvePending, undefined);
   });
 });
 
 // ===================================================================================
-// client.query() tests
-// ===================================================================================
-
-describe("client.query()", function() {
-  it("should send a call to _bw_query with code and requestId", function() {
-    var client = new BwServeClient('q-1', null);
-    var p = client.query('return 42', { timeout: 500 });
-    assert.strictEqual(client._sent.length, 1);
-    var msg = client._sent[0];
-    assert.strictEqual(msg.type, 'call');
-    assert.strictEqual(msg.name, '_bw_query');
-    assert.strictEqual(msg.args[0].code, 'return 42');
-    assert.ok(msg.args[0].requestId);
-    client._resolvePending(msg.args[0].requestId, { result: 42 });
-    return p;
-  });
-
-  it("should resolve with query result", function() {
-    var client = new BwServeClient('q-2', null);
-    var p = client.query('return window.innerWidth', { timeout: 500 });
-    var requestId = client._sent[0].args[0].requestId;
-    client._resolvePending(requestId, { result: 1024 });
-    return p.then(function(val) {
-      assert.strictEqual(val, 1024);
-    });
-  });
-
-  it("should reject on timeout", function() {
-    var client = new BwServeClient('q-3', null);
-    return client.query('return 1', { timeout: 100 }).then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('timeout') !== -1); }
-    );
-  });
-});
-
-// ===================================================================================
-// client.mount() tests
+// client.mount() tests — 2.1 (simple verb, not promise-based)
 // ===================================================================================
 
 describe("client.mount()", function() {
-  it("should send a call to _bw_mount with target, factory, and props", function() {
+  it("should send a mount message with ref and taco", function() {
     var client = new BwServeClient('m-1', null);
-    var p = client.mount('#app', 'accordion', { items: [] }, { timeout: 500 });
+    client.mount('#app', { t: 'div', c: 'Hello' });
     assert.strictEqual(client._sent.length, 1);
     var msg = client._sent[0];
-    assert.strictEqual(msg.type, 'call');
-    assert.strictEqual(msg.name, '_bw_mount');
-    assert.strictEqual(msg.args[0].target, '#app');
-    assert.strictEqual(msg.args[0].factory, 'accordion');
-    assert.deepStrictEqual(msg.args[0].props, { items: [] });
-    assert.ok(msg.args[0].requestId);
-    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
-    return p;
+    assert.strictEqual(msg.type, 'mount');
+    assert.strictEqual(msg.ref, '#app');
+    assert.deepStrictEqual(msg.taco, { t: 'div', c: 'Hello' });
+    assert.strictEqual(msg.v, 1);
   });
 
-  it("should resolve with mount confirmation", function() {
+  it("should support mount with complex TACO", function() {
     var client = new BwServeClient('m-2', null);
-    var p = client.mount('#app', 'card', { title: 'Test' }, { timeout: 500 });
-    var requestId = client._sent[0].args[0].requestId;
-    client._resolvePending(requestId, { result: { mounted: true } });
-    return p.then(function(val) {
-      assert.strictEqual(val.mounted, true);
-    });
+    var taco = { t: 'div', a: { id: 'card' }, c: [{ t: 'h2', c: 'Title' }] };
+    client.mount('#app', taco);
+    assert.deepStrictEqual(client._sent[0].taco, taco);
+  });
+});
+
+// ===================================================================================
+// client.listen() tests — 2.1
+// ===================================================================================
+
+describe("client.listen()", function() {
+  it("should send a listen message with topic", function() {
+    var client = new BwServeClient('l-1', null);
+    client.listen('bw:lifecycle', function() {});
+    assert.strictEqual(client._sent.length, 1);
+    var msg = client._sent[0];
+    assert.strictEqual(msg.type, 'listen');
+    assert.strictEqual(msg.topic, 'bw:lifecycle');
+    assert.strictEqual(msg.v, 1);
   });
 
-  it("should reject on timeout", function() {
-    var client = new BwServeClient('m-3', null);
-    return client.mount('#app', 'bad', {}, { timeout: 100 }).then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('timeout') !== -1); }
-    );
+  it("should register a topic handler", function() {
+    var client = new BwServeClient('l-2', null);
+    var received = null;
+    client.listen('bw:lifecycle', function(data) { received = data; });
+    client._dispatch('_topic:bw:lifecycle', { event: 'mount' });
+    assert.deepStrictEqual(received, { event: 'mount' });
+  });
+
+  it("should support chaining", function() {
+    var client = new BwServeClient('l-3', null);
+    var result = client.listen('a', function() {}).listen('b', function() {});
+    assert.strictEqual(result, client);
   });
 });
 
@@ -710,7 +610,7 @@ describe("BwServeApp", function() {
       this.timeout(5000);
       var app = bwserve.create({ port: 0 });
       app.page('/', function(client) {
-        client.render('#app', { t: 'div', c: 'Hello' });
+        client.mount('#app', { t: 'div', c: 'Hello' });
       });
       var callbackCalled = false;
       await app.listen(function() { callbackCalled = true; });
@@ -732,63 +632,53 @@ describe("bwserve round-trip", function() {
   });
 
   it("should render a TACO via client then apply to DOM", function() {
-    var client = new BwServeClient('rt-1', null);
-    client.render('#app', {
+    // v2.1: bw.apply uses v:1 wire protocol with ref/taco fields
+    bw.apply({ v: 1, type: 'mount', ref: '#app', taco: {
       t: 'div', a: { id: 'greeting' }, c: 'Hello from server'
-    });
-    var msg = client._sent[0];
-    bw.apply(msg);
+    }});
     var el = document.getElementById('greeting');
     assert.ok(el);
     assert.strictEqual(el.textContent, 'Hello from server');
   });
 
   it("should render then patch via round-trip", function() {
-    var client = new BwServeClient('rt-2', null);
-    client.render('#app', {
+    bw.apply({ v: 1, type: 'mount', ref: '#app', taco: {
       t: 'div', c: [
         { t: 'span', a: { id: 'count' }, c: '0' }
       ]
-    });
-    bw.apply(client._sent[0]);
+    }});
     assert.strictEqual(document.getElementById('count').textContent, '0');
-    client.patch('count', '42');
-    bw.apply(client._sent[1]);
+    bw.apply({ v: 1, type: 'patch', ref: 'count', text: '42' });
     assert.strictEqual(document.getElementById('count').textContent, '42');
   });
 
   it("should render then append then remove via round-trip", function() {
-    var client = new BwServeClient('rt-3', null);
-    client.render('#app', { t: 'ul', a: { id: 'list' } });
-    bw.apply(client._sent[0]);
-    client.append('#list', { t: 'li', a: { id: 'i1' }, c: 'Item 1' });
-    client.append('#list', { t: 'li', a: { id: 'i2' }, c: 'Item 2' });
-    bw.apply(client._sent[1]);
-    bw.apply(client._sent[2]);
+    bw.apply({ v: 1, type: 'mount', ref: '#app', taco: { t: 'ul', a: { id: 'list' } } });
+    bw.apply({ v: 1, type: 'append', ref: '#list', taco: { t: 'li', a: { id: 'i1' }, c: 'Item 1' } });
+    bw.apply({ v: 1, type: 'append', ref: '#list', taco: { t: 'li', a: { id: 'i2' }, c: 'Item 2' } });
     assert.strictEqual(document.querySelectorAll('#list li').length, 2);
-    client.remove('#i1');
-    bw.apply(client._sent[3]);
+    bw.apply({ v: 1, type: 'remove', ref: '#i1' });
     assert.strictEqual(document.querySelectorAll('#list li').length, 1);
     assert.ok(!document.getElementById('i1'));
     assert.ok(document.getElementById('i2'));
   });
 
   it("should handle batch round-trip", function() {
-    var client = new BwServeClient('rt-4', null);
-    client.render('#app', {
+    bw.apply({ v: 1, type: 'mount', ref: '#app', taco: {
       t: 'div', c: [
         { t: 'span', a: { id: 'a' }, c: '-' },
         { t: 'span', a: { id: 'b' }, c: '-' },
         { t: 'ul', a: { id: 'list' } }
       ]
+    }});
+    bw.apply({
+      type: 'batch',
+      ops: [
+        { v: 1, type: 'patch', ref: 'a', text: 'X' },
+        { v: 1, type: 'patch', ref: 'b', text: 'Y' },
+        { v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'batch-item' } }
+      ]
     });
-    bw.apply(client._sent[0]);
-    client.batch([
-      { type: 'patch', target: 'a', content: 'X' },
-      { type: 'patch', target: 'b', content: 'Y' },
-      { type: 'append', target: '#list', node: { t: 'li', c: 'batch-item' } }
-    ]);
-    bw.apply(client._sent[1]);
     assert.strictEqual(document.getElementById('a').textContent, 'X');
     assert.strictEqual(document.getElementById('b').textContent, 'Y');
     assert.strictEqual(document.querySelectorAll('#list li').length, 1);
@@ -806,58 +696,52 @@ describe("bwserve round-trip: register/call/exec", function() {
     bw._allowExec = false;
   });
 
-  it("should register via server then call via round-trip", function() {
-    var client = new BwServeClient('rt-reg', null);
-    client.register('setTitle', 'function(id, text) { var el = document.getElementById(id); if (el) el.textContent = text; }');
-    bw.apply(client._sent[0]);
-    assert.strictEqual(typeof bw._clientFunctions.setTitle, 'function');
-    client.render('#app', { t: 'h1', a: { id: 'title' }, c: 'Original' });
-    bw.apply(client._sent[1]);
+  it("should call pre-registered function via round-trip", function() {
+    // v2.1: register type is rejected by bw.apply; register functions directly
+    bw._clientFunctions.setTitle = function(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+    bw.apply({ v: 1, type: 'mount', ref: '#app', taco: { t: 'h1', a: { id: 'title' }, c: 'Original' } });
     assert.strictEqual(document.getElementById('title').textContent, 'Original');
-    client.call('setTitle', 'title', 'Updated by call');
-    bw.apply(client._sent[2]);
+    bw.apply({ v: 1, type: 'call', name: 'setTitle', args: ['title', 'Updated by call'] });
     assert.strictEqual(document.getElementById('title').textContent, 'Updated by call');
   });
 
   it("should call registered log via server round-trip", function() {
-    var client = new BwServeClient('rt-log', null);
     bw._clientFunctions.log = function() { console.log.apply(console, arguments); };
     var origLog = console.log;
     var logged = [];
     console.log = function() { logged.push([].slice.call(arguments)); };
-    client.call('log', 'server says hello');
-    bw.apply(client._sent[0]);
+    bw.apply({ v: 1, type: 'call', name: 'log', args: ['server says hello'] });
     console.log = origLog;
     assert.deepStrictEqual(logged, [['server says hello']]);
   });
 
-  it("should reject exec in round-trip when not opted in", function() {
-    var client = new BwServeClient('rt-exec-no', null);
-    client.exec('var x = 1;');
-    var result = bw.apply(client._sent[0]);
+  it("should reject exec in round-trip (v2.1 rejects exec type)", function() {
+    var result = bw.apply({ v: 1, type: 'exec', code: 'var x = 1;' });
     assert.strictEqual(result, false);
   });
 
   it("should allow exec in round-trip when opted in", function() {
-    bw._allowExec = true;
-    var client = new BwServeClient('rt-exec-yes', null);
-    global._execRoundTrip = 0;
-    client.exec('_execRoundTrip = 99;');
-    var result = bw.apply(client._sent[0]);
-    assert.strictEqual(result, true);
-    assert.strictEqual(global._execRoundTrip, 99);
-    delete global._execRoundTrip;
+    // v2.1: exec type is rejected by bw.apply wire protocol
+    var result = bw.apply({ v: 1, type: 'exec', code: '_execRoundTrip = 99;' });
+    assert.strictEqual(result, false);
   });
 
-  it("should batch register + call in one round-trip", function() {
-    var client = new BwServeClient('rt-batch-call', null);
-    client.render('#app', { t: 'div', a: { id: 'status' }, c: 'waiting' });
-    bw.apply(client._sent[0]);
-    client.batch([
-      { type: 'register', name: 'markDone', body: 'function(id) { var el = document.getElementById(id); if (el) el.textContent = "done"; }' },
-      { type: 'call', name: 'markDone', args: ['status'] }
-    ]);
-    bw.apply(client._sent[1]);
+  it("should batch call in one round-trip", function() {
+    // v2.1: register is rejected; pre-register the function directly
+    bw._clientFunctions.markDone = function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = 'done';
+    };
+    bw.apply({ v: 1, type: 'mount', ref: '#app', taco: { t: 'div', a: { id: 'status' }, c: 'waiting' } });
+    bw.apply({
+      type: 'batch',
+      ops: [
+        { v: 1, type: 'call', name: 'markDone', args: ['status'] }
+      ]
+    });
     assert.strictEqual(document.getElementById('status').textContent, 'done');
   });
 });
@@ -996,7 +880,7 @@ describe("BwServeClient edge cases", function() {
       write: function() { throw new Error('write after end'); }
     };
     var client = new BwServeClient('c-write-err', mockRes);
-    client.render('#app', { t: 'div', c: 'test' });
+    client.mount('#app', { t: 'div', c: 'test' });
     assert.strictEqual(client._sent.length, 1);
   });
 
@@ -1036,7 +920,7 @@ describe("BwServeApp HTTP integration", function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function(client) {
-      client.render('#app', { t: 'div', c: 'Hello from test' });
+      client.mount('#app', { t: 'div', c: 'Hello from test' });
     });
     await app.listen();
     var port = app._server.address().port;
@@ -1098,7 +982,7 @@ describe("BwServeApp HTTP integration", function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function(client) {
-      client.render('#app', { t: 'div', c: 'Hello from SSE test' });
+      client.mount('#app', { t: 'div', c: 'Hello from SSE test' });
       setTimeout(function() { client.close(); }, 50);
     });
     await app.listen();
@@ -1113,7 +997,7 @@ describe("BwServeApp HTTP integration", function() {
     var sseType = sseRes.headers.get('content-type');
     assert.ok(sseType.includes('text/event-stream'));
     var body = await sseRes.text();
-    assert.ok(body.includes('"type":"replace"'), "SSE should contain replace message");
+    assert.ok(body.includes('"type":"mount"'), "SSE should contain mount message");
     assert.ok(body.includes('Hello from SSE test'), "SSE should contain our content");
   });
 
@@ -1122,7 +1006,7 @@ describe("BwServeApp HTTP integration", function() {
     var actionCalled = false;
     var app = createApp();
     app.page('/', function(client) {
-      client.render('#app', { t: 'div', c: 'test' });
+      client.mount('#app', { t: 'div', c: 'test' });
       client.on('myAction', function() {
         actionCalled = true;
       });
@@ -1164,7 +1048,7 @@ describe("BwServeApp HTTP integration", function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function(client) {
-      client.render('#app', { t: 'div', c: 'test' });
+      client.mount('#app', { t: 'div', c: 'test' });
     });
     await app.listen();
     var port = app._server.address().port;
@@ -1186,7 +1070,7 @@ describe("BwServeApp HTTP integration", function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function(client) {
-      client.render('#app', { t: 'div', c: 'test' });
+      client.mount('#app', { t: 'div', c: 'test' });
     });
     await app.listen();
     var port = app._server.address().port;
@@ -1215,10 +1099,10 @@ describe("BwServeApp HTTP integration", function() {
     this.timeout(5000);
     var app = createApp();
     app.page('/', function(client) {
-      client.render('#app', { t: 'div', c: 'Home' });
+      client.mount('#app', { t: 'div', c: 'Home' });
     });
     app.page('/about', function(client) {
-      client.render('#app', { t: 'div', c: 'About' });
+      client.mount('#app', { t: 'div', c: 'About' });
     });
     await app.listen();
     var port = app._server.address().port;
@@ -1509,9 +1393,9 @@ describe("BwServeApp HTTP integration", function() {
     assert.strictEqual(res.status, 200);
   });
 
-  it("should default host to 0.0.0.0", function() {
+  it("should default host to 127.0.0.1 (loopback)", function() {
     var app = bwserve.create({ port: 0 });
-    assert.strictEqual(app.host, '0.0.0.0');
+    assert.strictEqual(app.host, '127.0.0.1');
   });
 
   it("should default dirList to true", function() {
@@ -1802,123 +1686,13 @@ describe("generateShell allowExec", function() {
 });
 
 // ===================================================================================
-// Screenshot protocol tests (using unified pending)
+// Screenshot and pending mechanism removed in 2.1
 // ===================================================================================
 
-describe("client.screenshot()", function() {
-  it("should reject when allowScreenshot is false (default)", function() {
-    var client = new BwServeClient('ss-test-1', null);
-    return client.screenshot().then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('not enabled') !== -1); }
-    );
-  });
-
-  it("should reject when allowScreenshot is explicitly false", function() {
-    var client = new BwServeClient('ss-test-2', null);
-    client._allowScreenshot = false;
-    return client.screenshot('#app').then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('not enabled') !== -1); }
-    );
-  });
-
-  it("should send a call to _bw_screenshot when allowed", function() {
-    var client = new BwServeClient('ss-test-3', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { format: 'jpeg', quality: 0.8, timeout: 500 });
-    assert.strictEqual(client._sent.length, 1);
-    var call = client._sent[0];
-    assert.strictEqual(call.type, 'call');
-    assert.strictEqual(call.name, '_bw_screenshot');
-    assert.strictEqual(call.args[0].selector, '#app');
-    assert.strictEqual(call.args[0].format, 'jpeg');
-    assert.strictEqual(call.args[0].quality, 0.8);
-    assert.ok(call.args[0].requestId, 'should have requestId');
-    return p.catch(function() {});
-  });
-
-  it("should pass default options when none specified", function() {
-    var client = new BwServeClient('ss-test-5', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot(undefined, { timeout: 500 });
-    var call = client._sent[0];
-    assert.strictEqual(call.args[0].selector, 'body');
-    assert.strictEqual(call.args[0].format, 'png');
-    assert.strictEqual(call.args[0].quality, 0.85);
-    assert.strictEqual(call.args[0].scale, 1);
-    assert.strictEqual(call.args[0].maxWidth, null);
-    assert.strictEqual(call.args[0].maxHeight, null);
-    return p.catch(function() {});
-  });
-
-  it("should pass maxWidth and maxHeight options", function() {
-    var client = new BwServeClient('ss-test-6', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { maxWidth: 1024, maxHeight: 768, timeout: 500 });
-    var call = client._sent[0];
-    assert.strictEqual(call.args[0].maxWidth, 1024);
-    assert.strictEqual(call.args[0].maxHeight, 768);
-    return p.catch(function() {});
-  });
-
-  it("should timeout and reject after specified ms", function() {
-    var client = new BwServeClient('ss-test-7', null);
-    client._allowScreenshot = true;
-    var start = Date.now();
-    return client.screenshot('#app', { timeout: 100 }).then(
-      function() { assert.fail('should have rejected'); },
-      function(err) {
-        assert.ok(err.message.indexOf('timeout') !== -1);
-        assert.ok(Date.now() - start >= 90, 'should wait at least ~100ms');
-      }
-    );
-  });
-});
-
-describe("Screenshot resolve via _resolvePending", function() {
-  it("should resolve pending promise with image data", function() {
-    var client = new BwServeClient('ss-resolve-1', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { timeout: 5000 });
-    var requestId = client._sent[0].args[0].requestId;
-    var fakeDataUrl = 'data:image/png;base64,' + Buffer.from('fake-png-data').toString('base64');
-    client._resolvePending(requestId, {
-      result: { data: fakeDataUrl, width: 800, height: 600, format: 'png' }
-    });
-    return p.then(function(result) {
-      assert.strictEqual(result.width, 800);
-      assert.strictEqual(result.height, 600);
-      assert.strictEqual(result.format, 'png');
-      assert.ok(Buffer.isBuffer(result.data), 'data should be a Buffer');
-      assert.strictEqual(result.data.toString(), 'fake-png-data');
-    });
-  });
-
-  it("should reject pending promise on error", function() {
-    var client = new BwServeClient('ss-resolve-2', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { timeout: 5000 });
-    var requestId = client._sent[0].args[0].requestId;
-    client._resolvePending(requestId, { error: 'Element not found: #nonexistent' });
-    return p.then(
-      function() { assert.fail('should have rejected'); },
-      function(err) { assert.ok(err.message.indexOf('Element not found') !== -1); }
-    );
-  });
-
-  it("should clear timeout on resolve", function() {
-    var client = new BwServeClient('ss-resolve-4', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { timeout: 200 });
-    var requestId = client._sent[0].args[0].requestId;
-    var fakeDataUrl = 'data:image/jpeg;base64,' + Buffer.from('jpeg-data').toString('base64');
-    client._resolvePending(requestId, {
-      result: { data: fakeDataUrl, width: 512, height: 384, format: 'jpeg' }
-    });
-    return p.then(function(result) {
-      assert.strictEqual(result.format, 'jpeg');
-    });
+describe("client.screenshot() — removed in 2.1", function() {
+  it("screenshot is not a function on BwServeClient", function() {
+    var client = new BwServeClient('ss-rm', null);
+    assert.strictEqual(client.screenshot, undefined);
   });
 });
 
@@ -1993,40 +1767,12 @@ describe("BwServeApp._serveVendorFile()", function() {
 });
 
 // ===================================================================================
-// BwServeApp._handleReturn() for non-action routes (query/mount/screenshot)
+// BwServeApp._handleReturn() route dispatch
 // ===================================================================================
 
 import { EventEmitter } from 'node:events';
 
-describe("BwServeApp._handleReturn() pending resolve", function() {
-  it("should resolve pending promise for query route", function(done) {
-    var app = new BwServeApp({});
-    var client = new BwServeClient('ret-q1', null);
-    app._clients.set('ret-q1', { pagePath: '/', client: client });
-
-    // Create a pending request on the client
-    var pending = client._pend(5000);
-
-    // Simulate POST body via mock req (EventEmitter)
-    var mockReq = new EventEmitter();
-    var resStatus, resBody;
-    var mockRes = {
-      writeHead: function(s) { resStatus = s; },
-      end: function(b) {
-        resBody = b;
-        // _resolvePending resolves with data.result (not the full data object)
-        pending.promise.then(function(result) {
-          assert.strictEqual(result, 'hello');
-          done();
-        }).catch(done);
-      }
-    };
-
-    app._handleReturn(mockReq, mockRes, 'query', 'ret-q1');
-    mockReq.emit('data', JSON.stringify({ requestId: pending.requestId, result: 'hello' }));
-    mockReq.emit('end');
-  });
-
+describe("BwServeApp._handleReturn() route dispatch", function() {
   it("should dispatch action route to client._dispatch", function(done) {
     var app = new BwServeApp({});
     var dispatched = null;
@@ -2073,6 +1819,28 @@ describe("BwServeApp._handleReturn() pending resolve", function() {
 
     app._handleReturn(mockReq, mockRes, 'event', 'ret-e1');
     mockReq.emit('data', JSON.stringify({ eventType: 'click', target: '#btn' }));
+    mockReq.emit('end');
+  });
+
+  it("should dispatch topic route to listen handler", function(done) {
+    var app = new BwServeApp({});
+    var received = null;
+    var client = new BwServeClient('ret-t1', null);
+    client.listen('bw:lifecycle', function(data) { received = data; });
+    app._clients.set('ret-t1', { pagePath: '/', client: client });
+
+    var mockReq = new EventEmitter();
+    var mockRes = {
+      writeHead: function() {},
+      end: function() {
+        assert.ok(received);
+        assert.strictEqual(received.event, 'mount');
+        done();
+      }
+    };
+
+    app._handleReturn(mockReq, mockRes, 'topic', 'ret-t1');
+    mockReq.emit('data', JSON.stringify({ topic: 'bw:lifecycle', data: { event: 'mount' } }));
     mockReq.emit('end');
   });
 
@@ -2145,153 +1913,48 @@ describe("BwServeApp._serveAttachScript()", function() {
 });
 
 // ===================================================================================
-// BwServeClient coverage: _pend default timeout, _resolvePending data without .result,
-// query/mount without options, screenshot result without .data
+// BwServeClient 2.1 branch coverage
 // ===================================================================================
 
-describe("BwServeClient branch coverage", function() {
-  it("_pend should use default timeout when called without arg", function() {
+describe("BwServeClient 2.1 branch coverage", function() {
+  it("mount() with null taco should not throw", function() {
     var client = new BwServeClient('bc-1', null);
-    var p = client._pend(); // no timeout arg -- defaults to 10000
-    assert.ok(p.requestId);
-    assert.ok(p.promise instanceof Promise);
-    // Resolve immediately to prevent dangling timeout
-    client._resolvePending(p.requestId, { result: 'done' });
-    return p.promise;
+    client.mount('#app', null);
+    assert.strictEqual(client._sent.length, 1);
+    assert.strictEqual(client._sent[0].taco, null);
   });
 
-  it("_pend should use default timeout when called with 0", function() {
+  it("patch() with empty fields object should send ref only", function() {
     var client = new BwServeClient('bc-2', null);
-    var p = client._pend(0); // falsy -> defaults to 10000
-    assert.ok(p.requestId);
-    client._resolvePending(p.requestId, { result: 'ok' });
-    return p.promise;
+    client.patch('#el', {});
+    assert.strictEqual(client._sent[0].ref, '#el');
+    assert.strictEqual(client._sent[0].type, 'patch');
   });
 
-  it("_resolvePending should resolve with full data when data.result is undefined", function() {
+  it("patch() with null fields should not throw", function() {
     var client = new BwServeClient('bc-3', null);
-    var p = client._pend(5000);
-    // Resolve with data that has no .result key -- line 220 branch
-    client._resolvePending(p.requestId, { mounted: true, id: 'x' });
-    return p.promise.then(function(val) {
-      assert.deepStrictEqual(val, { mounted: true, id: 'x' });
-    });
+    client.patch('#el', null);
+    assert.strictEqual(client._sent.length, 1);
   });
 
-  it("_resolvePending should resolve with data.result when it exists (even falsy)", function() {
+  it("patch() with non-object fields should not throw", function() {
     var client = new BwServeClient('bc-4', null);
-    var p = client._pend(5000);
-    // result is 0 (falsy but defined) -- should use data.result, not data
-    client._resolvePending(p.requestId, { result: 0 });
-    return p.promise.then(function(val) {
-      assert.strictEqual(val, 0);
-    });
+    client.patch('#el', 'string');
+    assert.strictEqual(client._sent.length, 1);
   });
 
-  it("_resolvePending should resolve with data.result when it is null", function() {
+  it("all sent messages carry v:1", function() {
     var client = new BwServeClient('bc-5', null);
-    var p = client._pend(5000);
-    client._resolvePending(p.requestId, { result: null });
-    return p.promise.then(function(val) {
-      assert.strictEqual(val, null);
+    client.mount('#a', { t: 'div' });
+    client.patch('#b', { text: 'hi' });
+    client.append('#c', { t: 'li' });
+    client.remove('#d');
+    client.batch([]);
+    client.call('fn');
+    client.listen('topic', function() {});
+    client._sent.forEach(function(msg) {
+      assert.strictEqual(msg.v, 1, 'message type=' + msg.type + ' should have v:1');
     });
-  });
-
-  it("_resolvePending should resolve with data.result when it is false", function() {
-    var client = new BwServeClient('bc-6', null);
-    var p = client._pend(5000);
-    client._resolvePending(p.requestId, { result: false });
-    return p.promise.then(function(val) {
-      assert.strictEqual(val, false);
-    });
-  });
-
-  it("_resolvePending should resolve with data.result '' (empty string)", function() {
-    var client = new BwServeClient('bc-7', null);
-    var p = client._pend(5000);
-    client._resolvePending(p.requestId, { result: '' });
-    return p.promise.then(function(val) {
-      assert.strictEqual(val, '');
-    });
-  });
-
-  it("query() without options arg should use default timeout", function() {
-    var client = new BwServeClient('bc-8', null);
-    client._allowScreenshot = false;
-    var p = client.query('return 1'); // no options -- lines 236-237
-    var msg = client._sent[0];
-    assert.ok(msg);
-    assert.strictEqual(msg.name, '_bw_query');
-    assert.ok(msg.args[0].requestId);
-    // Resolve to clean up
-    client._resolvePending(msg.args[0].requestId, { result: 1 });
-    return p.then(function(val) {
-      assert.strictEqual(val, 1);
-    });
-  });
-
-  it("mount() without options or props arg should use defaults", function() {
-    var client = new BwServeClient('bc-9', null);
-    var p = client.mount('#app', 'accordion'); // no props, no options -- lines 255-260
-    var msg = client._sent[0];
-    assert.ok(msg);
-    assert.strictEqual(msg.name, '_bw_mount');
-    assert.deepStrictEqual(msg.args[0].props, {});
-    assert.strictEqual(msg.args[0].target, '#app');
-    assert.strictEqual(msg.args[0].factory, 'accordion');
-    // Resolve to clean up
-    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
-    return p.then(function(val) {
-      assert.deepStrictEqual(val, { mounted: true });
-    });
-  });
-
-  it("mount() with props but no options should use default timeout", function() {
-    var client = new BwServeClient('bc-10', null);
-    var p = client.mount('#app', 'card', { title: 'Test' }); // no options arg
-    var msg = client._sent[0];
-    assert.deepStrictEqual(msg.args[0].props, { title: 'Test' });
-    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
-    return p;
-  });
-
-  it("screenshot() should return result as-is when result has no .data", function() {
-    var client = new BwServeClient('bc-11', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { timeout: 5000 });
-    var msg = client._sent[0];
-    // Resolve with result that has no .data -- line 335 branch
-    client._resolvePending(msg.args[0].requestId, { result: null });
-    return p.then(function(val) {
-      assert.strictEqual(val, null);
-    });
-  });
-
-  it("screenshot() should return result as-is when result is empty object", function() {
-    var client = new BwServeClient('bc-12', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot('#app', { timeout: 5000 });
-    var msg = client._sent[0];
-    // Resolve with result that has no .data key -- line 335 branch (!result.data)
-    client._resolvePending(msg.args[0].requestId, { result: { width: 100, height: 50 } });
-    return p.then(function(val) {
-      assert.deepStrictEqual(val, { width: 100, height: 50 });
-    });
-  });
-
-  it("screenshot() without options should use defaults", function() {
-    var client = new BwServeClient('bc-13', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot(); // no selector, no options
-    var msg = client._sent[0];
-    assert.strictEqual(msg.args[0].selector, 'body');
-    assert.strictEqual(msg.args[0].format, 'png');
-    assert.strictEqual(msg.args[0].quality, 0.85);
-    assert.strictEqual(msg.args[0].scale, 1);
-    assert.strictEqual(msg.args[0].maxWidth, null);
-    assert.strictEqual(msg.args[0].maxHeight, null);
-    client._resolvePending(msg.args[0].requestId, { result: { data: 'data:image/png;base64,AAAA', width: 10, height: 10, format: 'png' } });
-    return p;
   });
 });
 
@@ -2407,21 +2070,21 @@ describe("BwServeApp HTTP vendor and attach routes", function() {
 // ===================================================================================
 
 describe("BwServeClient malformed inputs", function() {
-  it("render with null target should not throw", function() {
+  it("mount with null target should not throw", function() {
     var client = new BwServeClient('mal-1', null);
-    client.render(null, { t: 'div', c: 'test' });
+    client.mount(null, { t: 'div', c: 'test' });
     assert.ok(client._sent.length > 0);
   });
 
-  it("render with undefined node should not throw", function() {
+  it("mount with undefined taco should not throw", function() {
     var client = new BwServeClient('mal-2', null);
-    client.render('#app', undefined);
+    client.mount('#app', undefined);
     assert.ok(client._sent.length > 0);
   });
 
-  it("patch with empty string target should not throw", function() {
+  it("patch with empty string ref should not throw", function() {
     var client = new BwServeClient('mal-3', null);
-    client.patch('', 'content');
+    client.patch('', { text: 'content' });
     assert.ok(client._sent.length > 0);
   });
 
@@ -2437,18 +2100,6 @@ describe("BwServeClient malformed inputs", function() {
     assert.ok(client._sent.length > 0);
   });
 
-  it("register with empty name and body should not throw", function() {
-    var client = new BwServeClient('mal-6', null);
-    client.register('', '');
-    assert.ok(client._sent.length > 0);
-  });
-
-  it("exec with empty code should not throw", function() {
-    var client = new BwServeClient('mal-7', null);
-    client.exec('');
-    assert.ok(client._sent.length > 0);
-  });
-
   it("message with null action should not throw", function() {
     var client = new BwServeClient('mal-8', null);
     client.message(null);
@@ -2461,41 +2112,11 @@ describe("BwServeClient malformed inputs", function() {
     assert.ok(true, 'did not throw');
   });
 
-  it("_resolvePending with null data should not throw", function() {
-    var client = new BwServeClient('mal-10', null);
-    var p = client._pend(5000);
-    // data with no error and no result -- falls through to resolve with data itself
-    var result = client._resolvePending(p.requestId, {});
-    assert.strictEqual(result, true);
-    return p.promise.then(function(val) {
-      assert.deepStrictEqual(val, {});
-    });
-  });
-
-  it("query with non-string code should not throw", function() {
-    var client = new BwServeClient('mal-11', null);
-    var p = client.query(123);
-    var msg = client._sent[0];
-    client._resolvePending(msg.args[0].requestId, { result: 'ok' });
-    return p;
-  });
-
   it("mount with null selector should not throw", function() {
     var client = new BwServeClient('mal-12', null);
-    var p = client.mount(null, null);
-    var msg = client._sent[0];
-    client._resolvePending(msg.args[0].requestId, { result: { mounted: true } });
-    return p;
-  });
-
-  it("screenshot with non-string selector should not throw", function() {
-    var client = new BwServeClient('mal-13', null);
-    client._allowScreenshot = true;
-    var p = client.screenshot(123, { timeout: 500 });
-    var msg = client._sent[0];
-    assert.strictEqual(msg.args[0].selector, 123);
-    client._resolvePending(msg.args[0].requestId, { result: null });
-    return p;
+    client.mount(null, null);
+    assert.ok(client._sent.length > 0);
+    assert.strictEqual(client._sent[0].ref, null);
   });
 });
 

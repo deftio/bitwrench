@@ -233,10 +233,10 @@ describe("TACO and HTML Generation", function() {
     });
   });
 
-  describe("#createDOM()", function() {
+  describe("#create()", function() {
     it("should create DOM elements from TACO", function() {
       const taco = { t: "div", a: { id: "test" }, c: "Hello" };
-      const element = bw.createDOM(taco);
+      const element = bw.create(taco);
       assert.equal(element.tagName, "DIV");
       assert.equal(element.id, "test");
       assert.equal(element.textContent, "Hello");
@@ -288,29 +288,9 @@ describe("CSS Functions", function() {
 // Component functions
 // ================================================================
 describe("Component Functions", function() {
-  describe("#renderComponent()", function() {
-    it("should render component and return handle", function() {
-      const taco = { t: "div", a: { id: "comp1" }, c: "Test" };
-      const handle = bw.renderComponent(taco);
-      assert.ok(handle);
-      assert.equal(handle.element.tagName, "DIV");
-      assert.equal(handle.element.id, "comp1");
-    });
-  });
-
-  describe("#getComponent()", function() {
-    it("should register and retrieve component when mounted", function() {
-      const taco = { t: "div", a: { id: "comp-test-" + Date.now() }, c: "Test" };
-      const handle = bw.renderComponent(taco);
-      
-      // Component needs to be mounted to be registered
-      document.body.appendChild(handle.element);
-      
-      const retrieved = bw.getComponent(handle.element.id);
-      assert.equal(retrieved, handle);
-      
-      // Clean up
-      handle.destroy();
+  describe("#renderComponent() deprecation", function() {
+    it("should throw Error for removed renderComponent", function() {
+      assert.throws(function() { bw.renderComponent(); }, /removed/i);
     });
   });
 });

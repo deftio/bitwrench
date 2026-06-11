@@ -198,7 +198,7 @@ describe("Lifecycle integration", function() {
     assert.ok(el.classList.contains('bw_lc'), 'should have bw_lc marker');
   });
 
-  it("should remove subscriptions on bw.cleanup()", function() {
+  it("should remove subscriptions on bw.unmount()", function() {
     var el = document.createElement('div');
     el.classList.add(bw.uuid('uuid'));
     el.classList.add('bw_lc');
@@ -207,7 +207,7 @@ describe("Lifecycle integration", function() {
     var called = false;
     bw.sub('cleanup', function() { called = true; }, el);
 
-    bw.cleanup(el);
+    bw.unmount(el);
     bw.pub('cleanup');
     assert.equal(called, false);
 
@@ -246,7 +246,7 @@ describe("Lifecycle integration", function() {
     bw.sub('subB', function() { bCalled = true; }, el);
     assert.equal(el._bw_subs.length, 2);
 
-    bw.cleanup(el);
+    bw.unmount(el);
     bw.pub('subA');
     bw.pub('subB');
     assert.equal(aCalled, false);

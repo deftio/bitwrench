@@ -36,14 +36,14 @@ describe.skip("PENDING: Cookie Operations in jsdom", function() {
 
 describe.skip("PENDING: Component Registry Auto-registration", function() {
   /**
-   * REASON: Components are only registered when mounted to DOM
+   * REASON: renderComponent has been removed (throws). Use bw.render() or bw.mount() instead.
    * FIX NEEDED: Decide if auto-registration should happen on creation
    * PRIORITY: Medium - affects component lifecycle management
    */
   describe("#getComponent() without mounting", function() {
     it("should retrieve component by ID without DOM mounting", function() {
       const taco = { t: "div", a: { id: "comp2" }, c: "Test" };
-      const handle = bw.renderComponent(taco);
+      const handle = bw.render('#app', 'append', taco);
       const retrieved = bw.getComponent("comp2");
       assert.equal(retrieved, handle);
     });

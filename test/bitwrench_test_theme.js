@@ -706,8 +706,8 @@ describe('Backwards Compatibility', function() {
     assert.strictEqual(typeof bw.loadStyles, 'function');
   });
 
-  it('toggleStyles should be a function', function() {
-    assert.strictEqual(typeof bw.toggleStyles, 'function');
+  it('toggleThemeMode should be a function', function() {
+    assert.strictEqual(typeof bw.toggleThemeMode, 'function');
   });
   it('clearStyles should be a function', function() {
     assert.strictEqual(typeof bw.clearStyles, 'function');
@@ -804,8 +804,9 @@ describe('Integration (jsdom)', function() {
     });
     bw.applyStyles(stylesA, '#scope-a');
     bw.applyStyles(stylesB, '#scope-b');
-    const elA = document.getElementById('bw_style_scope_a');
-    const elB = document.getElementById('bw_style_scope_b');
+    // v2.1: _scopeToStyleId preserves sigil: '#scope-a' → 'bw_style_id_scope_a'
+    const elA = document.getElementById('bw_style_id_scope_a');
+    const elB = document.getElementById('bw_style_id_scope_b');
     assert.ok(elA !== null, 'style element A should exist');
     assert.ok(elB !== null, 'style element B should exist');
     assert.notStrictEqual(elA, elB);
@@ -1051,8 +1052,8 @@ describe('Alternate Palette', function() {
     assert.ok(css.includes('.ocean.bw_theme_alt'), 'should use compound selector .ocean.bw_theme_alt');
   });
 
-  it('toggleStyles and clearStyles should be callable', function() {
-    assert.strictEqual(typeof bw.toggleStyles, 'function');
+  it('toggleThemeMode and clearStyles should be callable', function() {
+    assert.strictEqual(typeof bw.toggleThemeMode, 'function');
     assert.strictEqual(typeof bw.clearStyles, 'function');
   });
 });
@@ -1089,7 +1090,8 @@ describe('Structural + Cosmetic = Full Coverage', function() {
   it('loadStyles combined output should cover structural + themed', function() {
     freshDOM();
     bw.loadStyles();
-    const structEl = document.getElementById('bw_structural');
+    // v2.1: structural id is bw_style_structural
+    const structEl = document.getElementById('bw_style_structural');
     const themeEl = document.getElementById('bw_style_global');
     assert.ok(structEl !== null, 'structural styles should be injected');
     assert.ok(themeEl !== null, 'themed styles should be injected');
@@ -1206,7 +1208,8 @@ describe('bw.applyStyles', function() {
     var styles = bw.makeStyles();
     var el = bw.applyStyles(styles, '#my-dashboard');
     assert.ok(el, 'should return a <style> element');
-    assert.strictEqual(el.id, 'bw_style_my_dashboard');
+    // v2.1: _scopeToStyleId preserves sigil: '#my-dashboard' → 'bw_style_id_my_dashboard'
+    assert.strictEqual(el.id, 'bw_style_id_my_dashboard');
   });
 
   it('scoped CSS should wrap selectors under scope', function() {
@@ -1267,7 +1270,8 @@ describe('bw.loadStyles', function() {
 
   it('should inject structural CSS alongside themed CSS', function() {
     bw.loadStyles();
-    var structEl = document.getElementById('bw_structural');
+    // v2.1: structural id is bw_style_structural
+    var structEl = document.getElementById('bw_style_structural');
     var themeEl = document.getElementById('bw_style_global');
     assert.ok(structEl, 'structural styles should be injected');
     assert.ok(themeEl, 'themed styles should be injected');
@@ -1282,7 +1286,8 @@ describe('bw.loadStyles', function() {
   it('should accept scope parameter', function() {
     var styles = bw.loadStyles({ primary: '#4f46e5', secondary: '#d97706' }, '#preview');
     assert.ok(styles.palette, 'should return styles object');
-    var el = document.getElementById('bw_style_preview');
+    // v2.1: _scopeToStyleId preserves sigil: '#preview' → 'bw_style_id_preview'
+    var el = document.getElementById('bw_style_id_preview');
     assert.ok(el, 'scoped style element should be injected');
     assert.ok(el.textContent.includes('#preview'), 'CSS should be scoped');
   });
@@ -1290,7 +1295,8 @@ describe('bw.loadStyles', function() {
   it('structural CSS should only be injected once', function() {
     bw.loadStyles();
     bw.loadStyles({ primary: '#ff0000', secondary: '#00ff00' });
-    var structEls = document.querySelectorAll('#bw_structural');
+    // v2.1: structural id is bw_style_structural
+    var structEls = document.querySelectorAll('#bw_style_structural');
     assert.strictEqual(structEls.length, 1, 'should have exactly one structural <style>');
   });
 });
@@ -1350,36 +1356,36 @@ describe('bw.loadReset', function() {
   });
 });
 
-describe('bw.toggleStyles', function() {
+describe('bw.toggleThemeMode', function() {
   beforeEach(function() { freshDOM(); });
 
   it('should be a function', function() {
-    assert.strictEqual(typeof bw.toggleStyles, 'function');
+    assert.strictEqual(typeof bw.toggleThemeMode, 'function');
   });
 
   it('should toggle bw_theme_alt on <html> (global)', function() {
-    var mode1 = bw.toggleStyles();
+    var mode1 = bw.toggleThemeMode();
     assert.strictEqual(mode1, 'alternate');
     assert.ok(document.documentElement.classList.contains('bw_theme_alt'), 'html should have bw_theme_alt');
 
-    var mode2 = bw.toggleStyles();
+    var mode2 = bw.toggleThemeMode();
     assert.strictEqual(mode2, 'primary');
     assert.ok(!document.documentElement.classList.contains('bw_theme_alt'), 'html should not have bw_theme_alt');
   });
 
   it('should toggle bw_theme_alt on scoped element', function() {
     var app = document.getElementById('app');
-    var mode1 = bw.toggleStyles('#app');
+    var mode1 = bw.toggleThemeMode('#app');
     assert.strictEqual(mode1, 'alternate');
     assert.ok(app.classList.contains('bw_theme_alt'), '#app should have bw_theme_alt');
 
-    var mode2 = bw.toggleStyles('#app');
+    var mode2 = bw.toggleThemeMode('#app');
     assert.strictEqual(mode2, 'primary');
     assert.ok(!app.classList.contains('bw_theme_alt'), '#app should not have bw_theme_alt');
   });
 
   it('should return primary for nonexistent scope', function() {
-    var mode = bw.toggleStyles('#nonexistent');
+    var mode = bw.toggleThemeMode('#nonexistent');
     assert.strictEqual(mode, 'primary');
   });
 });
@@ -1432,10 +1438,12 @@ describe('bw.toggleThemeMode', function() {
     assert.ok(!p3.classList.contains('bw_theme_alt'), 'p3 should not have alt');
   });
 
-  it('should accept DOM element directly', function() {
+  it('should accept DOM element directly via id', function() {
+    // v2.1: toggleThemeMode requires a string scope, not a DOM element
     var el = document.createElement('div');
+    el.id = 'toggle-el-test';
     document.body.appendChild(el);
-    var mode = bw.toggleThemeMode(el);
+    var mode = bw.toggleThemeMode('#toggle-el-test');
     assert.strictEqual(mode, 'alternate');
     assert.ok(el.classList.contains('bw_theme_alt'));
   });
@@ -1444,8 +1452,8 @@ describe('bw.toggleThemeMode', function() {
     assert.strictEqual(bw.toggleThemeMode('#ghost'), 'primary');
   });
 
-  it('bw.toggleStyles should be an alias', function() {
-    assert.strictEqual(bw.toggleStyles, bw.toggleThemeMode);
+  it('bw.toggleThemeMode should be a function', function() {
+    assert.strictEqual(typeof bw.toggleThemeMode, 'function');
   });
 });
 
@@ -1466,9 +1474,10 @@ describe('bw.clearStyles', function() {
   it('should remove scoped <style>', function() {
     var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
     bw.applyStyles(styles, '#my-dashboard');
-    assert.ok(document.getElementById('bw_style_my_dashboard'), 'scoped style should exist');
+    // v2.1: _scopeToStyleId preserves sigil: '#my-dashboard' → 'bw_style_id_my_dashboard'
+    assert.ok(document.getElementById('bw_style_id_my_dashboard'), 'scoped style should exist');
     bw.clearStyles('#my-dashboard');
-    assert.strictEqual(document.getElementById('bw_style_my_dashboard'), null, 'scoped style should be removed');
+    assert.strictEqual(document.getElementById('bw_style_id_my_dashboard'), null, 'scoped style should be removed');
   });
 
   it('should remove reset <style>', function() {
@@ -1479,7 +1488,7 @@ describe('bw.clearStyles', function() {
   });
 
   it('should remove bw_theme_alt class from html on global clear', function() {
-    bw.toggleStyles(); // adds bw_theme_alt to html
+    bw.toggleThemeMode(); // adds bw_theme_alt to html
     assert.ok(document.documentElement.classList.contains('bw_theme_alt'));
     bw.clearStyles();
     assert.ok(!document.documentElement.classList.contains('bw_theme_alt'), 'bw_theme_alt should be removed from html');
@@ -1494,16 +1503,18 @@ describe('bw.clearStyles', function() {
 describe('_scopeToStyleId (via clearStyles/applyStyles)', function() {
   beforeEach(function() { freshDOM(); });
 
-  it('should convert #my-dashboard to bw_style_my_dashboard', function() {
+  it('should convert #my-dashboard to bw_style_id_my_dashboard', function() {
     var styles = bw.makeStyles();
     var el = bw.applyStyles(styles, '#my-dashboard');
-    assert.strictEqual(el.id, 'bw_style_my_dashboard');
+    // v2.1: _scopeToStyleId preserves sigil distinction
+    assert.strictEqual(el.id, 'bw_style_id_my_dashboard');
   });
 
-  it('should convert .preview to bw_style_preview', function() {
+  it('should convert .preview to bw_style_cls_preview', function() {
     var styles = bw.makeStyles();
     var el = bw.applyStyles(styles, '.preview');
-    assert.strictEqual(el.id, 'bw_style_preview');
+    // v2.1: _scopeToStyleId preserves sigil distinction
+    assert.strictEqual(el.id, 'bw_style_cls_preview');
   });
 
   it('no scope should produce bw_style_global', function() {

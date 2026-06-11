@@ -195,10 +195,10 @@ describe("TACO and HTML Generation", function() {
     });
   });
 
-  describe("#createDOM()", function() {
+  describe("#create()", function() {
     it("should create DOM elements from TACO", function() {
       const taco = { t: "div", a: { id: "test" }, c: "Hello" };
-      const element = bw.createDOM(taco);
+      const element = bw.create(taco);
       assert.equal(element.tagName, "DIV");
       assert.equal(element.id, "test");
       assert.equal(element.textContent, "Hello");
@@ -235,18 +235,18 @@ describe("Component Functions", function() {
 });
 
 describe("Styles API", function() {
-  describe("#toggleStyles()", function() {
-    it("toggleStyles should return mode string", function() {
-      var mode = bw.toggleStyles();
+  describe("#toggleThemeMode()", function() {
+    it("toggleThemeMode should return mode string", function() {
+      var mode = bw.toggleThemeMode();
       assert.ok(mode === 'primary' || mode === 'alternate');
     });
 
-    it("toggleStyles should flip between primary and alternate", function() {
+    it("toggleThemeMode should flip between primary and alternate", function() {
       // Ensure clean state
       document.documentElement.classList.remove('bw_theme_alt');
-      var result = bw.toggleStyles();
+      var result = bw.toggleThemeMode();
       assert.equal(result, 'alternate');
-      result = bw.toggleStyles();
+      result = bw.toggleThemeMode();
       assert.equal(result, 'primary');
     });
   });
@@ -267,10 +267,10 @@ describe("CSS Class Handling", function() {
     });
   });
 
-  describe("createDOM() class handling", function() {
+  describe("create() class handling", function() {
     it("should handle underscore classes in DOM", function() {
       const taco = { t: "div", a: { class: "bw_card" }, c: "test" };
-      const el = bw.createDOM(taco);
+      const el = bw.create(taco);
       assert.equal(el.className, "bw_card");
     });
   });

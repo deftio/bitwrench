@@ -748,13 +748,13 @@ function generateModalThemed(scope, palette, layout) {
 function generateToastThemed(scope, palette, layout) {
   var rules = {};
   var rd = layout ? layout.radius : { card: '8px' };
-  rules[_sx(scope, '.bw_toast')] = {
+  rules[_sx(scope, '.bw_bccl_toast')] = {
     'background-color': palette.surface || '#fff',
     'border-color': palette.light.border,
     'border-radius': rd.card,
     'box-shadow': layout.elevation.lg
   };
-  rules[_sx(scope, '.bw_toast_header')] = {
+  rules[_sx(scope, '.bw_bccl_toast_header')] = {
     'border-bottom-color': palette.light.border
   };
   // Variant toast borders handled by palette class
@@ -1047,7 +1047,7 @@ function generatePaletteClasses(scope, palette) {
     };
 
     // Toast: inherit bg, left border accent
-    rules[_sx(scope, '.bw_toast.bw_' + k)] = {
+    rules[_sx(scope, '.bw_bccl_toast.bw_' + k)] = {
       'background-color': 'inherit',
       'color': 'inherit',
       'border-left': '4px solid ' + s.base
@@ -1739,25 +1739,25 @@ var structuralRules = {
 
   // ---- Toast ----
   toast: {
-    '.bw_toast_container': {
+    '.bw_bccl_toast_container': {
       'position': 'fixed', 'z-index': '1080', 'pointer-events': 'none',
       'display': 'flex', 'flex-direction': 'column', 'gap': '0.5rem', 'padding': '1rem'
     },
-    '.bw_toast_container.bw_toast_top_right': { 'top': '0', 'right': '0' },
-    '.bw_toast_container.bw_toast_top_left': { 'top': '0', 'left': '0' },
-    '.bw_toast_container.bw_toast_bottom_right': { 'bottom': '0', 'right': '0' },
-    '.bw_toast_container.bw_toast_bottom_left': { 'bottom': '0', 'left': '0' },
-    '.bw_toast_container.bw_toast_top_center': { 'top': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
-    '.bw_toast_container.bw_toast_bottom_center': { 'bottom': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
-    '.bw_toast': {
+    '.bw_bccl_toast_container.bw_bccl_toast_top_right': { 'top': '0', 'right': '0' },
+    '.bw_bccl_toast_container.bw_bccl_toast_top_left': { 'top': '0', 'left': '0' },
+    '.bw_bccl_toast_container.bw_bccl_toast_bottom_right': { 'bottom': '0', 'right': '0' },
+    '.bw_bccl_toast_container.bw_bccl_toast_bottom_left': { 'bottom': '0', 'left': '0' },
+    '.bw_bccl_toast_container.bw_bccl_toast_top_center': { 'top': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
+    '.bw_bccl_toast_container.bw_bccl_toast_bottom_center': { 'bottom': '0', 'left': '50%', 'transform': 'translateX(-50%)' },
+    '.bw_bccl_toast': {
       'pointer-events': 'auto', 'width': '350px', 'max-width': 'calc(100vw - 2rem)', 'background-clip': 'padding-box',
       'opacity': '0', 'transform': 'translateY(-8px)',
       'transition': 'opacity 0.2s ease-out, transform 0.2s ease-out'
     },
-    '.bw_toast.bw_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
-    '.bw_toast.bw_toast_hiding': { 'opacity': '0', 'transform': 'translateY(-8px)' },
-    '.bw_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem', 'border-bottom': '1px solid transparent' },
-    '.bw_toast_body': { 'padding': '0.5rem 0.75rem', 'font-size': '0.9375rem' }
+    '.bw_bccl_toast.bw_bccl_toast_show': { 'opacity': '1', 'transform': 'translateY(0)' },
+    '.bw_bccl_toast.bw_bccl_toast_hiding': { 'opacity': '0', 'transform': 'translateY(-8px)' },
+    '.bw_bccl_toast_header': { 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 0.75rem', 'font-size': '0.875rem', 'border-bottom': '1px solid transparent' },
+    '.bw_bccl_toast_body': { 'padding': '0.5rem 0.75rem', 'font-size': '0.9375rem' }
   },
 
   // ---- Dropdown ----
@@ -2473,14 +2473,19 @@ export function scopeRulesUnder(rules, prefix, compound) {
   for (var sel in rules) {
     if (!rules.hasOwnProperty(sel)) continue;
     if (sel.charAt(0) === '@') {
-      // @media / @keyframes — recurse into the block
       var innerBlock = rules[sel];
-      var scopedInner = {};
-      for (var innerSel in innerBlock) {
-        if (!innerBlock.hasOwnProperty(innerSel)) continue;
-        scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
+      // @keyframes — steps (0%, 100%, from, to) are NOT selectors; pass through
+      if (/^@keyframes\s/.test(sel)) {
+        scoped[sel] = innerBlock;
+      } else {
+        // @media — prefix inner selectors
+        var scopedInner = {};
+        for (var innerSel in innerBlock) {
+          if (!innerBlock.hasOwnProperty(innerSel)) continue;
+          scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
+        }
+        scoped[sel] = scopedInner;
       }
-      scoped[sel] = scopedInner;
     } else {
       scoped[_prefixSelector(sel, prefix)] = rules[sel];
     }

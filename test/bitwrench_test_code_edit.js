@@ -2,7 +2,7 @@
  * Tests for bitwrench-code-edit.js
  *
  * Covers tokenizeJS, tokenizeCSS, tokenizeHTML, highlight, codeEditor,
- * install, CSS_TEXT, and integration with bw.createDOM / jsdom.
+ * install, CSS_TEXT, and integration with bw.create / jsdom.
  */
 
 import assert from "assert";
@@ -485,7 +485,7 @@ describe('codeEditor Tab key handler', function() {
 
   it('should attach keydown handler that intercepts Tab', function() {
     var taco = codeEditor({ code: 'var x = 1;', lang: 'js' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     // Fire mounted to set up event listeners
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
@@ -505,7 +505,7 @@ describe('codeEditor Tab key handler', function() {
 
   it('should not intercept non-Tab keys', function() {
     var taco = codeEditor({ code: 'hello', lang: 'js' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -536,7 +536,7 @@ describe('codeEditor rehighlight via input', function() {
       lang: 'js',
       onChange: function(newCode) { changed = true; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -563,7 +563,7 @@ describe('codeEditor rehighlight via input', function() {
       lang: 'js',
       onChange: function() { changeCount++; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -591,7 +591,7 @@ describe('codeEditor scroll sync with lineNumbers', function() {
 
   it('should set up scroll handlers when lineNumbers enabled', function() {
     var taco = codeEditor({ code: 'line1\nline2\nline3', lang: 'js', lineNumbers: true });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -616,7 +616,7 @@ describe('Integration: codeEditor with jsdom', function() {
 
   it('should create DOM from codeEditor TACO', function() {
     const taco = codeEditor({ code: 'var x = 1;', lang: 'js' });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     assert.ok(el, 'should create a DOM element');
     assert.strictEqual(el.tagName.toLowerCase(), 'div');
     assert.ok(el.className.includes('bw_ce'), 'element should have bw_ce class');
@@ -624,7 +624,7 @@ describe('Integration: codeEditor with jsdom', function() {
 
   it('should expose _bwCodeEdit API after mounted hook fires', function() {
     const taco = codeEditor({ code: 'var x = 1;', lang: 'js' });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
     // Manually fire mounted hook
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
@@ -635,7 +635,7 @@ describe('Integration: codeEditor with jsdom', function() {
 
   it('should contain highlighted spans after rendering', function() {
     const taco = codeEditor({ code: 'var x = 1;', lang: 'js' });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
     // The code element should have span children from initial highlighting
     const codeEl = el.querySelector('.bw_ce_code');

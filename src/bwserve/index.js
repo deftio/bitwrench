@@ -104,7 +104,7 @@ class BwServeApp {
     this.allowExec = opts.allowExec || false;
     this.allowScreenshot = opts.allowScreenshot || false;
     this.dirList = opts.dirList !== false;
-    this.host = opts.host || '0.0.0.0';
+    this.host = opts.host || '127.0.0.1';
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
@@ -139,6 +139,11 @@ class BwServeApp {
       });
 
       self._server.listen(self.port, self.host, function() {
+        // Update port to the actual bound port (important when port 0 is used)
+        var addr = self._server.address();
+        if (addr && addr.port) {
+          self.port = addr.port;
+        }
         if (callback) callback();
         res();
       });
@@ -383,6 +388,9 @@ class BwServeApp {
     var pagePath = pending ? pending.pagePath : '/';
     self._clients.set(clientId, { pagePath: pagePath, client: client });
 
+    // Send the handshake as the very first SSE event
+    client._send({ type: 'hello' });
+
     // Keep-alive: send SSE comment periodically
     var keepAlive = setInterval(function() {
       if (!client._closed) {
@@ -397,7 +405,7 @@ class BwServeApp {
       self._clients.delete(clientId);
     });
 
-    // Call the page handler
+    // Call the page handler (runs on every connection, including reconnects)
     var handler = self._pages.get(pagePath);
     if (handler) {
       try {
@@ -433,7 +441,12 @@ class BwServeApp {
     req.on('end', function() {
       try {
         var data = JSON.parse(body);
-        if (route === 'action' || route === 'event') {
+        if (route === 'topic') {
+          // Topic dispatch — forward to the listen handler registered on the client
+          var topic = data.topic;
+          var topicData = data.data;
+          record.client._dispatch('_topic:' + topic, topicData);
+        } else if (route === 'action' || route === 'event') {
           // Action/event dispatch (no requestId/pending pattern)
           var action = route === 'event'
             ? '_bw_event'
@@ -443,8 +456,10 @@ class BwServeApp {
             : (data.result ? data.result.data : data.data || data);
           record.client._dispatch(action, payload);
         } else {
-          // All other routes: resolve pending promise
-          record.client._resolvePending(data.requestId, data);
+          // All other routes: resolve pending promise if mechanism exists
+          if (record.client._resolvePending) {
+            record.client._resolvePending(data.requestId, data);
+          }
         }
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ ok: true }));

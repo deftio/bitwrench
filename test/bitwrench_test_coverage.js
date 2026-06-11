@@ -209,8 +209,8 @@ describe("Default Styles (bw.loadStyles)", function() {
     assert.ok(result.palette, 'should have palette');
     assert.ok(result.alternatePalette, 'should have alternatePalette');
     assert.ok(result.css, 'should have css string');
-    // Check structural styles were injected
-    const structEl = document.getElementById('bw_structural');
+    // Check structural styles were injected (v2.1: id is bw_style_structural)
+    const structEl = document.getElementById('bw_style_structural');
     assert.ok(structEl !== null, 'structural style element should exist');
     // Check themed styles were injected
     const themeEl = document.getElementById('bw_style_global');
@@ -253,16 +253,18 @@ describe("Event System (bw.emit, bw.on)", function() {
     bw.emit('#evtarget', 'foo', { x: 1 });
   });
 
-  it("bw.on should return the element", function() {
+  it("bw.on should return an off() function", function() {
     const div = document.createElement('div');
     document.body.appendChild(div);
     const result = bw.on(div, 'test', function() {});
-    assert.equal(result, div);
+    assert.equal(typeof result, 'function');
   });
 
-  it("bw.on should return null for missing selector", function() {
+  it("bw.on should return no-op function for missing selector", function() {
     const result = bw.on('#nonexistent', 'test', function() {});
-    assert.equal(result, null);
+    assert.equal(typeof result, 'function');
+    // Should not throw when called
+    result();
   });
 });
 
@@ -272,22 +274,38 @@ describe("Event System (bw.emit, bw.on)", function() {
 describe("State Updates (bw.update, bw.patch, bw.patchAll)", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("bw.update should call _bw_render on element", function() {
-    const div = document.createElement('div');
-    div.id = 'upd';
-    document.body.appendChild(div);
+  it("bw.update should dispatch to el.bw.update handle", function() {
+    const container = document.createElement('div');
+    container.id = 'upd-container';
+    document.body.appendChild(container);
     let called = false;
-    div._bw_render = function() { called = true; };
-    div._bw_state = { count: 1 };
-    bw.update(div);
+    const el = bw.mount('#upd-container', {
+      t: 'div', c: 'test',
+      o: {
+        state: { count: 1 },
+        handle: {
+          update: function(el, data) { called = true; }
+        }
+      }
+    });
+    bw.update(el);
     assert.ok(called);
   });
 
   it("bw.update should accept string selector", function() {
-    document.body.innerHTML = '<div id="upd2"></div>';
-    const el = document.getElementById('upd2');
+    const container = document.createElement('div');
+    container.id = 'upd2-container';
+    document.body.appendChild(container);
     let called = false;
-    el._bw_render = function() { called = true; };
+    const el = bw.mount('#upd2-container', {
+      t: 'div', a: { id: 'upd2' }, c: 'test',
+      o: {
+        state: {},
+        handle: {
+          update: function(el, data) { called = true; }
+        }
+      }
+    });
     bw.update('#upd2');
     assert.ok(called);
   });
@@ -666,8 +684,8 @@ describe("Table Builder (bw.makeTable)", function() {
       data: [{ x: 1 }],
       className: 'my-table striped'
     });
-    // bw_table is always included as the base class
-    assert.equal(taco.a.class, 'bw_table my-table striped');
+    // bw_bccl_table is always included as the base class
+    assert.equal(taco.a.class, 'bw_bccl_table my-table striped');
   });
 
   it("should add striped and hover classes via props", function() {
@@ -676,9 +694,9 @@ describe("Table Builder (bw.makeTable)", function() {
       striped: true,
       hover: true
     });
-    assert.ok(taco.a.class.includes('bw_table'));
-    assert.ok(taco.a.class.includes('bw_table_striped'));
-    assert.ok(taco.a.class.includes('bw_table_hover'));
+    assert.ok(taco.a.class.includes('bw_bccl_table'));
+    assert.ok(taco.a.class.includes('bw_bccl_table_striped'));
+    assert.ok(taco.a.class.includes('bw_bccl_table_hover'));
   });
 
   it("should support custom column render", function() {
@@ -736,8 +754,8 @@ describe("Table From Array (bw.makeTableFromArray)", function() {
       striped: true,
       hover: true
     });
-    assert.ok(taco.a.class.includes('bw_table_striped'));
-    assert.ok(taco.a.class.includes('bw_table_hover'));
+    assert.ok(taco.a.class.includes('bw_bccl_table_striped'));
+    assert.ok(taco.a.class.includes('bw_bccl_table_hover'));
   });
 
   it("should handle empty data", function() {
@@ -1384,35 +1402,35 @@ describe("bw.getAllComponents", function() {
 });
 
 // =========================================================================
-// create* convenience functions
+// create(make*()) convenience pattern
 // =========================================================================
-describe("create* convenience functions", function() {
+describe("bw.create(bw.make*()) convenience pattern", function() {
   beforeEach(function() {
     freshDOM();
   });
 
-  it("bw.createCard should create a rendered card element", function() {
-    var el = bw.createCard({ title: 'Test', content: 'Body' });
+  it("bw.create(bw.makeCard()) should create a rendered card element", function() {
+    var el = bw.create(bw.makeCard({ title: 'Test', content: 'Body' }));
     assert.ok(el, 'should return an element');
-    assert.ok(el.outerHTML.includes('bw_card'), 'should be a card');
+    assert.ok(el.outerHTML.includes('bw_bccl_card'), 'should be a card');
   });
 
-  it("bw.createButton should create a rendered button element", function() {
-    var el = bw.createButton({ text: 'Click' });
+  it("bw.create(bw.makeButton()) should create a rendered button element", function() {
+    var el = bw.create(bw.makeButton({ text: 'Click' }));
     assert.ok(el, 'should return an element');
     assert.equal(el.tagName, 'BUTTON');
   });
 
-  it("bw.createAlert should create a rendered alert element", function() {
-    var el = bw.createAlert({ content: 'Danger!', variant: 'danger' });
+  it("bw.create(bw.makeAlert()) should create a rendered alert element", function() {
+    var el = bw.create(bw.makeAlert({ content: 'Danger!', variant: 'danger' }));
     assert.ok(el, 'should return an element');
-    assert.ok(el.outerHTML.includes('bw_alert'), 'should be an alert');
+    assert.ok(el.outerHTML.includes('bw_bccl_alert'), 'should be an alert');
   });
 
-  it("bw.createBadge should create a rendered badge element", function() {
-    var el = bw.createBadge({ text: '7' });
+  it("bw.create(bw.makeBadge()) should create a rendered badge element", function() {
+    var el = bw.create(bw.makeBadge({ text: '7' }));
     assert.ok(el, 'should return an element');
-    assert.ok(el.outerHTML.includes('bw_badge'), 'should be a badge');
+    assert.ok(el.outerHTML.includes('bw_bccl_badge'), 'should be a badge');
   });
 });
 
@@ -1492,7 +1510,7 @@ describe("Merged makeCard", function() {
     const taco = bw.makeCard({ title: 'Test', content: 'Content' });
     assert.strictEqual(taco.t, 'div');
     const html = bw.html(taco);
-    assert.ok(html.includes('bw_card'), 'should have bw_card class');
+    assert.ok(html.includes('bw_bccl_card'), 'should have bw_bccl_card class');
     assert.ok(html.includes('Test'), 'should include title');
     assert.ok(html.includes('Content'), 'should include content');
   });
@@ -1501,20 +1519,20 @@ describe("Merged makeCard", function() {
     const taco = bw.makeCard({ title: 'Main', subtitle: 'Sub', content: 'Content' });
     const html = bw.html(taco);
     assert.ok(html.includes('Sub'), 'should include subtitle');
-    assert.ok(html.includes('bw_card_subtitle'), 'should have subtitle class');
+    assert.ok(html.includes('bw_bccl_card_subtitle'), 'should have subtitle class');
   });
 
   it("should support image prop", function() {
     const taco = bw.makeCard({ title: 'Img', content: 'Content', image: { src: 'test.jpg', alt: 'Test' } });
     const html = bw.html(taco);
     assert.ok(html.includes('test.jpg'), 'should include image src');
-    assert.ok(html.includes('bw_card_img_top'), 'should have img-top class by default');
+    assert.ok(html.includes('bw_bccl_card_img_top'), 'should have img-top class by default');
   });
 
   it("should support imagePosition bottom", function() {
     const taco = bw.makeCard({ title: 'Img', content: 'Content', image: { src: 'test.jpg', alt: 'Test' }, imagePosition: 'bottom' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw_card_img_bottom'), 'should have img-bottom class');
+    assert.ok(html.includes('bw_bccl_card_img_bottom'), 'should have img-bottom class');
   });
 
   it("should support shadow prop", function() {
@@ -1526,7 +1544,7 @@ describe("Merged makeCard", function() {
   it("should support hoverable prop", function() {
     const taco = bw.makeCard({ title: 'Hover', content: 'Content', hoverable: true });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw_card_hoverable'), 'should have hoverable class');
+    assert.ok(html.includes('bw_bccl_card_hoverable'), 'should have hoverable class');
   });
 
   it("should not have makeCardV2 (removed)", function() {
@@ -1575,7 +1593,7 @@ describe("makeCheckbox", function() {
   it("should create a checkbox element", function() {
     const taco = bw.makeCheckbox({ label: 'Accept', name: 'terms' });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw_form_check'), 'should have form-check class');
+    assert.ok(html.includes('bw_bccl_form_check'), 'should have form-check class');
     assert.ok(html.includes('Accept'), 'should include label');
   });
 });
@@ -1904,17 +1922,17 @@ describe("bw.copyToClipboard", function() {
 });
 
 // =========================================================================
-// bw.render createDOM error path
+// bw.render create error path
 // =========================================================================
 describe("bw.render error path", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should return error handle when createDOM throws", function() {
-    // Temporarily make createDOM throw to test the catch path
-    const origCreateDOM = bw.createDOM;
-    bw.createDOM = function() { throw new Error('mock createDOM failure'); };
+  it("should return error handle when create throws", function() {
+    // Temporarily make create throw to test the catch path
+    const origCreate = bw.create;
+    bw.create = function() { throw new Error('mock create failure'); };
     const handle = bw.render('#app', 'append', { t: 'div', o: { id: 'err-test' } });
-    bw.createDOM = origCreateDOM;
+    bw.create = origCreate;
     assert.strictEqual(handle.object_type, 'error');
     assert.ok(handle.status_code.includes('render_failed'));
   });
@@ -2013,7 +2031,7 @@ describe("bw.render handle getContent and onUpdate", function() {
 describe("makeTable sortable", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should call onSort when header is clicked", function() {
+  it("should call onSort when sort handle is invoked", function() {
     var sortedCol = null;
     var sortedDir = null;
     const taco = bw.makeTable({
@@ -2032,25 +2050,24 @@ describe("makeTable sortable", function() {
       }
     });
 
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
 
-    // Click on the first header (Name)
-    const headers = el.querySelectorAll('th');
-    if (headers.length > 0) {
-      headers[0].click();
-      assert.strictEqual(sortedCol, 'name');
-      assert.strictEqual(sortedDir, 'asc');
+    // Sort via the el.bw.sort handle (v2.1 handle-based API)
+    assert.ok(el.bw && typeof el.bw.sort === 'function', 'should have sort handle');
 
-      // Click again to toggle direction
-      headers[0].click();
-      assert.strictEqual(sortedDir, 'desc');
+    el.bw.sort('name');
+    assert.strictEqual(sortedCol, 'name');
+    assert.strictEqual(sortedDir, 'asc');
 
-      // Click a different column
-      headers[1].click();
-      assert.strictEqual(sortedCol, 'age');
-      assert.strictEqual(sortedDir, 'asc');
-    }
+    // Sort again to toggle direction
+    el.bw.sort('name');
+    assert.strictEqual(sortedDir, 'desc');
+
+    // Sort a different column
+    el.bw.sort('age');
+    assert.strictEqual(sortedCol, 'age');
+    assert.strictEqual(sortedDir, 'asc');
 
     document.body.removeChild(el);
   });
@@ -2097,14 +2114,14 @@ describe("makeTable sortable", function() {
 describe("makeTable selectable", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should add bw_table_selectable class when selectable is true", function() {
+  it("should add bw_bccl_table_selectable class when selectable is true", function() {
     const taco = bw.makeTable({
       data: [{ name: 'Alice' }],
       selectable: true
     });
     const html = bw.html(taco);
-    assert.ok(html.includes('bw_table_selectable'), 'should have selectable class');
-    assert.ok(html.includes('bw_table_hover'), 'selectable implies hover');
+    assert.ok(html.includes('bw_bccl_table_selectable'), 'should have selectable class');
+    assert.ok(html.includes('bw_bccl_table_hover'), 'selectable implies hover');
   });
 
   it("should not add selectable class when selectable is false", function() {
@@ -2113,26 +2130,26 @@ describe("makeTable selectable", function() {
       selectable: false
     });
     const html = bw.html(taco);
-    assert.ok(!html.includes('bw_table_selectable'), 'should not have selectable class');
+    assert.ok(!html.includes('bw_bccl_table_selectable'), 'should not have selectable class');
   });
 
-  it("should toggle bw_table_row_selected class on click", function() {
+  it("should toggle bw_bccl_table_row_selected class on click", function() {
     const taco = bw.makeTable({
       data: [{ name: 'Alice' }, { name: 'Bob' }],
       selectable: true
     });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
     const rows = el.querySelectorAll('tbody tr');
     assert.ok(rows.length >= 2, 'should have rows');
 
     // Click first row
     rows[0].click();
-    assert.ok(rows[0].classList.contains('bw_table_row_selected'), 'row should be selected');
+    assert.ok(rows[0].classList.contains('bw_bccl_table_row_selected'), 'row should be selected');
 
     // Click again to deselect
     rows[0].click();
-    assert.ok(!rows[0].classList.contains('bw_table_row_selected'), 'row should be deselected');
+    assert.ok(!rows[0].classList.contains('bw_bccl_table_row_selected'), 'row should be deselected');
 
     document.body.removeChild(el);
   });
@@ -2146,7 +2163,7 @@ describe("makeTable selectable", function() {
         clickedIdx = idx;
       }
     });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
     const rows = el.querySelectorAll('tbody tr');
     rows[1].click();
@@ -2219,7 +2236,7 @@ describe("makeTable pagination", function() {
       pageSize: 10
     });
     assert.strictEqual(taco.t, 'div');
-    assert.ok(taco.a.class.includes('bw_table_paginated'));
+    assert.ok(taco.a.class.includes('bw_bccl_table_paginated'));
     // Should contain table + pagination controls
     assert.ok(Array.isArray(taco.c));
     assert.strictEqual(taco.c[0].t, 'table');
@@ -2278,7 +2295,7 @@ describe("makeTable pagination", function() {
       currentPage: 1,
       onPageChange: function(p) { newPage = p; }
     });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
     // Click the Next button
     const buttons = el.querySelectorAll('button');
@@ -2309,7 +2326,7 @@ describe("makeTable pagination", function() {
       currentPage: 2,
       onRowClick: function(row, idx) { clickedIdx = idx; }
     });
-    const el = bw.createDOM(taco);
+    const el = bw.create(taco);
     document.body.appendChild(el);
     const rows = el.querySelectorAll('tbody tr');
     // First row on page 2 should have global index 10
@@ -2340,9 +2357,9 @@ describe("File I/O browser paths", function() {
 
     // The click() and appendChild/removeChild should work in jsdom
     var clickCalled = false;
-    const origCreateDOM = bw.createDOM;
-    bw.createDOM = function(taco) {
-      var el = origCreateDOM.call(bw, taco);
+    const origCreate = bw.create;
+    bw.create = function(taco) {
+      var el = origCreate.call(bw, taco);
       el.click = function() { clickCalled = true; };
       return el;
     };
@@ -2354,7 +2371,7 @@ describe("File I/O browser paths", function() {
 
     // Restore
     bw.isNodeJS = origIsNode;
-    bw.createDOM = origCreateDOM;
+    bw.create = origCreate;
   });
 
   it("loadClientFile browser path via XHR", function(done) {
@@ -2466,10 +2483,10 @@ describe("File I/O browser paths", function() {
     };
     global.FileReader = MockFileReader;
 
-    // Mock the createDOM to return a functional input
-    const origCreateDOM = bw.createDOM;
-    bw.createDOM = function(taco) {
-      var el = origCreateDOM.call(bw, taco);
+    // Mock the create to return a functional input
+    const origCreate = bw.create;
+    bw.create = function(taco) {
+      var el = origCreate.call(bw, taco);
       // Override click to simulate file selection
       if (taco.a && taco.a.type === 'file') {
         el.click = function() {
@@ -2490,7 +2507,7 @@ describe("File I/O browser paths", function() {
       assert.strictEqual(fname, 'test.txt');
       assert.strictEqual(err, null);
       bw.isNodeJS = origIsNode;
-      bw.createDOM = origCreateDOM;
+      bw.create = origCreate;
       done();
     });
   });

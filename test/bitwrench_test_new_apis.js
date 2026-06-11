@@ -235,7 +235,7 @@ describe("Wildcard subscriptions", function() {
     bw.sub('lc:*', function() { count++; }, el);
     bw.pub('lc:one');
     assert.equal(count, 1);
-    bw.cleanup(el);
+    bw.unmount(el);
     bw.pub('lc:two');
     assert.equal(count, 1);
   });
@@ -556,7 +556,7 @@ describe("o.slots caching", function() {
         slots: { title: '.title-slot' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
 
     // Setter should work
@@ -578,7 +578,7 @@ describe("o.slots caching", function() {
         slots: { content: '.content-slot' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
 
     // Set a TACO object into the slot
@@ -597,7 +597,7 @@ describe("o.slots caching", function() {
         slots: { val: '.val-slot' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
 
     el.bw.setVal(null);
@@ -616,7 +616,7 @@ describe("o.slots caching", function() {
         slots: { missing: '.nonexistent' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
 
     // Setter should not throw
@@ -640,7 +640,7 @@ describe("o.type wiring", function() {
       t: 'div', c: 'typed',
       o: { type: 'card' }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     assert.equal(el._bw_type, 'card');
   });
@@ -648,7 +648,7 @@ describe("o.type wiring", function() {
   it("should not set _bw_type when o.type is absent", function() {
     var container = document.getElementById('app');
     var taco = { t: 'div', c: 'untyped' };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     assert.equal(el._bw_type, undefined);
   });
@@ -659,7 +659,7 @@ describe("o.type wiring", function() {
       t: 'div', c: 'custom',
       o: { type: 'my-widget' }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     assert.equal(el._bw_type, 'my-widget');
   });
@@ -671,7 +671,7 @@ describe("o.type wiring", function() {
       t: 'div', c: 'type-only',
       o: { type: 'label' }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     assert.equal(el._bw_type, 'label');
     // Should NOT have lifecycle-related properties
@@ -706,7 +706,7 @@ describe("Error boundaries", function() {
         mounted: function() { throw new Error('mount boom'); }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     // Now flush rAF -- mounted fires, error should be caught
     flushRAF();
@@ -716,25 +716,25 @@ describe("Error boundaries", function() {
 
   it("should catch error in o.render via bw.update() and not throw", function() {
     var container = document.getElementById('app');
-    var renderCount = 0;
+    var updateCount = 0;
     var taco = {
       t: 'div', c: 'render error',
       o: {
         state: { count: 0 },
-        render: function() {
-          renderCount++;
-          if (renderCount > 1) throw new Error('render boom');
+        handle: {
+          update: function(el, data) {
+            updateCount++;
+          }
         }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
-    flushRAF();
-    // First render fired via mounted auto-call
-    assert.equal(renderCount, 1);
-    // Second render via bw.update should catch error, not throw
+    // v2.1: mounted fires synchronously during mountTree
+    bw.mountTree(el);
+    // bw.update dispatches to el.bw.update
     bw.update(el);
-    assert.equal(renderCount, 2);
+    assert.equal(updateCount, 1);
   });
 
   it("should catch error in o.unmount during cleanup and not throw", function() {
@@ -746,26 +746,29 @@ describe("Error boundaries", function() {
         unmount: function() { throw new Error('unmount boom'); }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     flushRAF();
     // Cleanup should not throw
-    bw.cleanup(container);
+    bw.unmount(container);
   });
 
-  it("should still emit statechange after render error in bw.update()", function() {
+  it("should still emit statechange after successful bw.update()", function() {
     var container = document.getElementById('app');
     var emitted = false;
     var taco = {
       t: 'div', c: 'emit test',
       o: {
         state: { x: 1 },
-        render: function() { throw new Error('render fail'); }
+        handle: {
+          update: function(el, data) { /* noop */ }
+        }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
-    flushRAF();
+    // v2.1: mounted fires synchronously during mountTree
+    bw.mountTree(el);
     // Listen for statechange
     el.addEventListener('bw:statechange', function() { emitted = true; });
     bw.update(el);
@@ -783,9 +786,10 @@ describe("Error boundaries", function() {
         mounted: function() { throw new Error('test warning'); }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
-    flushRAF();
+    // v2.1: mounted fires synchronously during mountTree (not via rAF)
+    bw.mountTree(el);
     console.warn = origWarn;
     assert.ok(warnings.some(function(w) { return w.indexOf('o.mounted error') >= 0; }),
       'should have logged o.mounted error warning, got: ' + JSON.stringify(warnings));
@@ -807,7 +811,7 @@ describe("Error boundaries", function() {
     // createDOM while wrapper is in body -- but el itself isn't in body yet
     // So this still uses rAF path. Use bw.mount instead for sync mounted.
     // Actually, let's just verify bw.update catches render errors
-    var el2 = bw.createDOM({
+    var el2 = bw.create({
       t: 'div', c: 'render test',
       o: {
         state: {},
@@ -891,7 +895,7 @@ describe("bw.inspect()", function() {
       t: 'div', c: 'managed',
       o: { state: { x: 1 } }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     var info = bw.inspect(el, 0);
     assert.ok(info.uuid, 'should have uuid');
@@ -904,7 +908,7 @@ describe("bw.inspect()", function() {
       t: 'div', c: 'typed',
       o: { type: 'card' }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     var info = bw.inspect(el, 0);
     assert.equal(info.type, 'card');
@@ -921,7 +925,7 @@ describe("bw.inspect()", function() {
         }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     var info = bw.inspect(el, 0);
     assert.ok(info.handles, 'should have handles');
@@ -935,7 +939,7 @@ describe("bw.inspect()", function() {
       t: 'div', c: 'stateful',
       o: { state: { count: 5, name: 'test' } }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     var info = bw.inspect(el, 0);
     assert.deepEqual(info.state, { count: 5, name: 'test' });
@@ -947,7 +951,7 @@ describe("bw.inspect()", function() {
       t: 'div', c: 'renderable',
       o: { render: function(el, state) {} }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     var info = bw.inspect(el, 0);
     assert.equal(info.hasRender, true);
@@ -1014,7 +1018,7 @@ describe("bw.inspect()", function() {
 });
 
 // =========================================================================
-// SVG namespace support in bw.createDOM()
+// SVG namespace support in bw.create()
 // =========================================================================
 describe("SVG namespace support", function() {
   beforeEach(function() {
@@ -1025,7 +1029,7 @@ describe("SVG namespace support", function() {
 
   it("should create SVG element with correct namespace", function() {
     var taco = { t: 'svg', a: { width: '100', height: '100' } };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     assert.equal(el.namespaceURI, SVG_NS);
     assert.equal(el.tagName.toLowerCase(), 'svg');
   });
@@ -1038,7 +1042,7 @@ describe("SVG namespace support", function() {
         { t: 'rect', a: { x: '10', y: '10', width: '80', height: '80' } }
       ]
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     assert.equal(el.namespaceURI, SVG_NS);
     assert.equal(el.children[0].namespaceURI, SVG_NS);
     assert.equal(el.children[0].tagName.toLowerCase(), 'circle');
@@ -1054,7 +1058,7 @@ describe("SVG namespace support", function() {
         c: { t: 'line', a: { x1: '0', y1: '0', x2: '50', y2: '50' } }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var g = el.children[0];
     assert.equal(g.namespaceURI, SVG_NS);
     assert.equal(g.tagName.toLowerCase(), 'g');
@@ -1069,7 +1073,7 @@ describe("SVG namespace support", function() {
         t: 'circle', a: { cx: '50', cy: '50', r: '25', fill: 'red', stroke: 'blue' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var circle = el.children[0];
     assert.equal(circle.getAttribute('cx'), '50');
     assert.equal(circle.getAttribute('r'), '25');
@@ -1082,7 +1086,7 @@ describe("SVG namespace support", function() {
         t: 'rect', a: { class: 'my-rect bw_chart', width: '50', height: '50' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var rect = el.children[0];
     assert.equal(rect.getAttribute('class'), 'my-rect bw_chart');
   });
@@ -1093,14 +1097,14 @@ describe("SVG namespace support", function() {
         t: 'path', a: { class: ['path-a', 'path-b'], d: 'M0 0 L50 50' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var path = el.children[0];
     assert.equal(path.getAttribute('class'), 'path-a path-b');
   });
 
   it("should create HTML elements outside SVG context normally", function() {
     var htmlTaco = { t: 'div', a: { class: 'wrapper' }, c: 'hello' };
-    var el = bw.createDOM(htmlTaco);
+    var el = bw.create(htmlTaco);
     // HTML namespace (not SVG)
     assert.notEqual(el.namespaceURI, SVG_NS);
     assert.equal(el.tagName.toLowerCase(), 'div');
@@ -1115,7 +1119,7 @@ describe("SVG namespace support", function() {
         c: { t: 'circle', a: { cx: '100', cy: '100', r: '50' } }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     // Outer div is HTML
     assert.notEqual(el.namespaceURI, SVG_NS);
@@ -1134,7 +1138,7 @@ describe("SVG namespace support", function() {
         c: { t: 'div', c: { t: 'p', c: 'HTML inside SVG' } }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var fo = el.children[0];
     assert.equal(fo.namespaceURI, SVG_NS, 'foreignObject itself is SVG');
     assert.equal(fo.tagName.toLowerCase(), 'foreignobject');
@@ -1158,7 +1162,7 @@ describe("SVG namespace support", function() {
         }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     // Flush rAF to trigger mounted
     var queue = global._rafQueue || [];
@@ -1178,7 +1182,7 @@ describe("SVG namespace support", function() {
         t: 'g', o: { type: 'chart-axis' }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var g = el.children[0];
     assert.equal(g._bw_type, 'chart-axis');
   });
@@ -1195,7 +1199,7 @@ describe("SVG namespace support", function() {
         }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var text = el.children[0];
     assert.equal(typeof text.bw.setText, 'function');
     text.bw.setText('world');
@@ -1208,7 +1212,7 @@ describe("SVG namespace support", function() {
         t: 'text', a: { x: '10', y: '20' }, c: 'Hello SVG'
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var text = el.children[0];
     assert.equal(text.textContent, 'Hello SVG');
   });
@@ -1222,7 +1226,7 @@ describe("SVG namespace support", function() {
         { t: 'rect', a: { class: 'bar bar-2' } }
       ]
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
     var info = bw.inspect(el, 1);
     assert.equal(info.tag, 'svg');
@@ -1238,7 +1242,7 @@ describe("SVG namespace support", function() {
         o: { state: {} }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     var g = el.children[0];
     var uuid = bw.getUUID(g);
     assert.ok(uuid, 'SVG element should have UUID');
@@ -1255,7 +1259,10 @@ describe("SVG namespace support", function() {
         o: { state: {} }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    // v2.1: registration happens at mount-time
+    bw.mountTree(el);
     var g = el.children[0];
     // Should be registered by id
     assert.ok(bw._nodeMap['my-group']);
@@ -1280,15 +1287,15 @@ describe("SVG namespace support", function() {
         }
       }
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     container.appendChild(el);
-    bw.cleanup(container);
+    bw.unmount(container);
     assert.equal(unmounted, true, 'SVG element unmount should fire during cleanup');
   });
 
   it("should handle empty SVG", function() {
     var taco = { t: 'svg', a: { width: '0', height: '0' } };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     assert.equal(el.namespaceURI, SVG_NS);
     assert.equal(el.children.length, 0);
   });
@@ -1308,7 +1315,7 @@ describe("SVG namespace support", function() {
         t: 'rect', a: { fill: 'url(#grad1)', width: '100', height: '100' }
       }]
     };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     assert.equal(el.namespaceURI, SVG_NS);
     var defs = el.children[0];
     assert.equal(defs.namespaceURI, SVG_NS);
@@ -1478,8 +1485,10 @@ describe('bw.el() apply support', function() {
 
   it('should accept UUID class with apply', function() {
     var taco = { t: 'div', c: 'old', o: { state: {} } };
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
+    // v2.1: registration happens at mount-time (UUID lookup is registry-only)
+    bw.mountTree(el);
     var uuid = bw.getUUID(el);
     bw.el(uuid, 'via-uuid');
     assert.strictEqual(el.textContent, 'via-uuid');
@@ -1494,12 +1503,12 @@ describe('bw.el() apply support', function() {
     assert.strictEqual(el.textContent, 'untouched');
   });
 
-  it('bw._el alias should still work', function() {
+  it('bw.el should resolve by id', function() {
     var el = document.createElement('div');
     el.id = 'alias-test';
     document.body.appendChild(el);
-    assert.strictEqual(bw._el('alias-test'), el);
-    bw._el('alias-test', 'aliased');
+    assert.strictEqual(bw.el('alias-test'), el);
+    bw.el('alias-test', 'aliased');
     assert.strictEqual(el.textContent, 'aliased');
   });
 

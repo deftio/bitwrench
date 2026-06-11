@@ -4,15 +4,17 @@
  * Represents one browser tab connected via SSE. The server calls methods
  * on this object to push UI updates to the client.
  *
- * Protocol message types (sent as SSE data):
- *   { type: 'replace',  target: '#app', node: {t,a,c,o} }
- *   { type: 'append',   target: '#list', node: {t,a,c,o} }
- *   { type: 'remove',   target: '#item-3' }
- *   { type: 'patch',    target: 'bw_counter_abc', content: '42', attr: null }
- *   { type: 'batch',    ops: [ ...messages ] }
- *   { type: 'register', name: 'fn', body: 'function(x) { ... }' }
- *   { type: 'call',     name: 'fn', args: [...] }
- *   { type: 'exec',     code: 'js code string' }
+ * Protocol message types v2.1 (sent as SSE data, all stamped v:1):
+ *   { v: 1, type: 'hello' }                                  — handshake
+ *   { v: 1, type: 'mount',   ref: '#app', taco: {t,a,c,o} } — mount TACO
+ *   { v: 1, type: 'append',  ref: '#list', taco: {t,a,c,o} }
+ *   { v: 1, type: 'remove',  ref: '#item-3' }
+ *   { v: 1, type: 'patch',   ref: '#id', text: '42' }       — discriminated patch
+ *   { v: 1, type: 'batch',   ops: [ ...messages ] }
+ *   { v: 1, type: 'call',    name: 'fn', args: [...] }
+ *   { v: 1, type: 'listen',  topic: 'bw:lifecycle' }
+ *
+ * Removed in 2.1 (code-bearing): register, exec, query
  *
  * @module bwserve/client
  */
@@ -30,28 +32,44 @@ export class BwServeClient {
         this._res = res;       // SSE response stream (null in stub)
         this._handlers = {};   // action name → handler
         this._closed = false;
-        this._pending = {};    // requestId → { resolve, reject, timer }
     }
 
     /**
-     * Replace the content of a DOM element with a TACO.
+     * Mount a TACO at the given selector (2.1 verb: "mount").
+     * Replaces the content of the target element.
      *
-     * @param {string} selector - CSS selector or UUID
-     * @param {Object} taco - TACO object to render
+     * @param {string} selector - CSS selector or UUID (the "ref")
+     * @param {Object} taco - TACO object to mount
+     */
+    mount(selector, taco) {
+        this._send({ type: 'mount', ref: selector, taco: taco });
+    }
+
+    /**
+     * Alias for mount() — backward compatibility with 2.0.x render().
+     * @deprecated Use mount() instead.
      */
     render(selector, taco) {
-        this._send({ type: 'replace', target: selector, node: taco });
+        this.mount(selector, taco);
     }
 
     /**
      * Patch an element's content or attributes without rebuild.
+     * 2.1 uses discriminated fields: the patch object's keys (text, attrs,
+     * content, etc.) are spread directly into the message.
      *
-     * @param {string} id - Element UUID (from bw.uuid())
-     * @param {string} content - New text content
-     * @param {Object} [attr] - Attributes to update
+     * @param {string} ref - CSS selector or element UUID
+     * @param {Object} fields - Discriminated patch fields (e.g. {text:'hi'}, {attrs:{class:'x'}})
      */
-    patch(id, content, attr) {
-        this._send({ type: 'patch', target: id, content, attr: attr || null });
+    patch(ref, fields) {
+        var msg = { type: 'patch', ref: ref };
+        if (fields && typeof fields === 'object') {
+            var keys = Object.keys(fields);
+            for (var i = 0; i < keys.length; i++) {
+                msg[keys[i]] = fields[keys[i]];
+            }
+        }
+        this._send(msg);
     }
 
     /**
@@ -61,7 +79,7 @@ export class BwServeClient {
      * @param {Object} taco - TACO object to append
      */
     append(selector, taco) {
-        this._send({ type: 'append', target: selector, node: taco });
+        this._send({ type: 'append', ref: selector, taco: taco });
     }
 
     /**
@@ -70,40 +88,27 @@ export class BwServeClient {
      * @param {string} selector - CSS selector or UUID of element to remove
      */
     remove(selector) {
-        this._send({ type: 'remove', target: selector });
+        this._send({ type: 'remove', ref: selector });
     }
 
     /**
      * Send multiple operations as a single batch.
      *
-     * @param {Array} ops - Array of message objects (replace/append/remove/patch)
+     * @param {Array} ops - Array of message objects
      */
     batch(ops) {
-        this._send({ type: 'batch', ops });
+        this._send({ type: 'batch', ops: ops });
     }
 
     /**
      * Send a bw.message() dispatch to a tagged component on the client.
      *
-     * @param {string} target - Component userTag or UUID
+     * @param {string} ref - Component userTag or UUID
      * @param {string} action - Method name to call
      * @param {*} data - Data to pass to the method
      */
-    message(target, action, data) {
-        this._send({ type: 'message', target, action, data });
-    }
-
-    /**
-     * Register a named function on the client for later invocation via call().
-     *
-     * The function body is sent as a string and compiled on the client side.
-     * Registered functions persist for the lifetime of the connection.
-     *
-     * @param {string} name - Function name (used as key for later call())
-     * @param {string} body - Function source as string, e.g. "function(el) { el.scrollTop = el.scrollHeight; }"
-     */
-    register(name, body) {
-        this._send({ type: 'register', name, body });
+    message(ref, action, data) {
+        this._send({ type: 'message', ref: ref, action: action, data: data });
     }
 
     /**
@@ -116,19 +121,21 @@ export class BwServeClient {
      * @param {...*} args - Arguments to pass to the function
      */
     call(name, ...args) {
-        this._send({ type: 'call', name, args });
+        this._send({ type: 'call', name: name, args: args });
     }
 
     /**
-     * Execute arbitrary JavaScript code on the client.
+     * Subscribe to a client-side topic. The client will forward matching
+     * events back through the return route.
      *
-     * Requires the client connection to be created with { allowExec: true }.
-     * Use call() as the safe alternative when possible.
-     *
-     * @param {string} code - JavaScript code string to execute
+     * @param {string} topic - Topic name (e.g. 'bw:lifecycle')
+     * @param {Function} handler - Called with (data) when topic events arrive
+     * @returns {BwServeClient} this (for chaining)
      */
-    exec(code) {
-        this._send({ type: 'exec', code });
+    listen(topic, handler) {
+        this._handlers['_topic:' + topic] = handler;
+        this._send({ type: 'listen', topic: topic });
+        return this;
     }
 
     /**
@@ -155,10 +162,13 @@ export class BwServeClient {
 
     /**
      * Send a protocol message to the client via SSE.
+     * All messages are stamped with v: 1 (wire protocol version).
      * @private
      */
     _send(msg) {
         if (this._closed) return;
+        // Stamp the wire protocol version
+        msg.v = 1;
         // Always store for testing / inspection
         if (!this._sent) this._sent = [];
         this._sent.push(msg);
@@ -170,177 +180,6 @@ export class BwServeClient {
                 // Stream may have been closed — ignore write errors
             }
         }
-    }
-
-    // ── Pending promise mechanism ──
-
-    /**
-     * Create a pending promise with a unique requestId and timeout.
-     *
-     * @param {number} [timeout=10000] - Timeout in ms
-     * @returns {{ requestId: string, promise: Promise }}
-     * @private
-     */
-    _pend(timeout) {
-        var self = this;
-        timeout = timeout || 10000;
-        var requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
-        var promise = new Promise(function(resolve, reject) {
-            var timer = setTimeout(function() {
-                delete self._pending[requestId];
-                reject(new Error('Request timeout after ' + timeout + 'ms'));
-            }, timeout);
-
-            self._pending[requestId] = { resolve: resolve, reject: reject, timer: timer };
-        });
-
-        return { requestId: requestId, promise: promise };
-    }
-
-    /**
-     * Resolve a pending promise by requestId.
-     * Called by the server route handler when a POST-back arrives.
-     *
-     * @param {string} requestId
-     * @param {Object} data - Response data (may contain .error)
-     * @returns {boolean} true if a pending request was found and resolved
-     * @private
-     */
-    _resolvePending(requestId, data) {
-        var pending = this._pending[requestId];
-        if (!pending) return false;
-
-        clearTimeout(pending.timer);
-        delete this._pending[requestId];
-
-        if (data.error) {
-            pending.reject(new Error(data.error));
-        } else {
-            pending.resolve(data.result !== undefined ? data.result : data);
-        }
-        return true;
-    }
-
-    // ── Query ──
-
-    /**
-     * Execute code on the client and get the result back.
-     *
-     * @param {string} code - JavaScript code to evaluate (return value is sent back)
-     * @param {Object} [options]
-     * @param {number} [options.timeout=5000] - Timeout in ms
-     * @returns {Promise<*>} The result of evaluating the code
-     */
-    query(code, options) {
-        var opts = options || {};
-        var pend = this._pend(opts.timeout || 5000);
-        this.call('_bw_query', { code: code, requestId: pend.requestId });
-        return pend.promise;
-    }
-
-    // ── Mount ──
-
-    /**
-     * Mount a BCCL component or factory function on the client.
-     *
-     * @param {string} selector - CSS selector of target element
-     * @param {string} factory - BCCL component name (e.g. 'accordion') or JS factory code
-     * @param {Object} [props] - Props to pass to the component/factory
-     * @param {Object} [options]
-     * @param {number} [options.timeout=10000] - Timeout in ms
-     * @returns {Promise<Object>} Resolves with { mounted: true } on success
-     */
-    mount(selector, factory, props, options) {
-        var opts = options || {};
-        var pend = this._pend(opts.timeout || 10000);
-        this.call('_bw_mount', {
-            target: selector,
-            factory: factory,
-            props: props || {},
-            requestId: pend.requestId
-        });
-        return pend.promise;
-    }
-
-    // ── Inspect ──
-
-    /**
-     * Inspect the DOM tree of the connected client.
-     *
-     * Calls the `_bw_tree` builtin on the client which delegates to
-     * `bw.inspect()` when available, returning a plain-object tree with
-     * bitwrench metadata (tag, uuid, type, handles, state, children).
-     *
-     * @param {string} [selector='body'] - CSS selector of root element
-     * @param {Object} [options]
-     * @param {number} [options.depth=3] - Max recursion depth
-     * @param {number} [options.timeout=10000] - Timeout in ms
-     * @returns {Promise<Object|null>} Tree object, or null if element not found
-     */
-    inspect(selector, options) {
-        var opts = options || {};
-        var pend = this._pend(opts.timeout || 10000);
-        this.call('_bw_tree', {
-            selector: selector || 'body',
-            depth: opts.depth || 3,
-            requestId: pend.requestId
-        });
-        return pend.promise;
-    }
-
-    // ── Screenshot ──
-
-    /**
-     * Capture a screenshot of the client's page or a specific element.
-     *
-     * Requires the server to be created with `{ allowScreenshot: true }`.
-     * Uses html2canvas on the client side (lazy-loaded on first call).
-     *
-     * @param {string} [selector='body'] - CSS selector of element to capture
-     * @param {Object} [options]
-     * @param {string} [options.format='png'] - 'png' or 'jpeg'
-     * @param {number} [options.quality=0.85] - JPEG quality 0-1 (ignored for PNG)
-     * @param {number} [options.maxWidth] - Resize if wider (preserves aspect ratio)
-     * @param {number} [options.maxHeight] - Resize if taller (preserves aspect ratio)
-     * @param {number} [options.scale=1] - Device pixel ratio override
-     * @param {number} [options.timeout=10000] - Reject after ms
-     * @returns {Promise<Object>} { data: Buffer, width, height, format }
-     */
-    screenshot(selector, options) {
-        var self = this;
-        var opts = options || {};
-        var timeout = opts.timeout || 10000;
-
-        if (!self._allowScreenshot) {
-            return Promise.reject(new Error('Screenshot not enabled. Set allowScreenshot: true in server options.'));
-        }
-
-        var pend = self._pend(timeout);
-
-        // Call the bwclient-registered capture function
-        self.call('_bw_screenshot', {
-            requestId: pend.requestId,
-            selector: selector || 'body',
-            format: opts.format || 'png',
-            quality: opts.quality || 0.85,
-            maxWidth: opts.maxWidth || null,
-            maxHeight: opts.maxHeight || null,
-            scale: opts.scale || 1,
-            captureUrl: '/bw/lib/vendor/html2canvas.min.js'
-        });
-
-        // Transform the raw response into { data: Buffer, width, height, format }
-        return pend.promise.then(function(result) {
-            if (!result || !result.data) return result;
-            var base64 = result.data.split(',')[1];
-            return {
-                data: Buffer.from(base64, 'base64'),
-                width: result.width,
-                height: result.height,
-                format: result.format
-            };
-        });
     }
 
     /**

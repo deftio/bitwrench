@@ -199,7 +199,7 @@ describe("makeFormGroup — validation and help text", function() {
     });
     var html = bw.html(fg);
     assert.ok(html.indexOf('Enter your work email') >= 0, 'help text should be in output');
-    assert.ok(html.indexOf('bw_form_text') >= 0, 'help text class should be present');
+    assert.ok(html.indexOf('bw_bccl_form_text') >= 0, 'help text class should be present');
   });
 
   it("should include invalid feedback when validation='invalid'", function() {
@@ -272,7 +272,7 @@ describe("makeHero — overlay and background", function() {
       backgroundImage: 'bg.jpg'
     });
     var html = bw.html(hero);
-    assert.ok(html.indexOf('bw_hero_overlay') >= 0, 'overlay div should be present');
+    assert.ok(html.indexOf('bw_bccl_hero_overlay') >= 0, 'overlay div should be present');
     assert.ok(html.indexOf('background-image') >= 0, 'background image should be set');
   });
 });
@@ -323,29 +323,29 @@ describe("bw.DOM — edge cases", function() {
   it("should handle null selector gracefully", function() {
     // Should not throw
     var result = bw.DOM('#nonexistent-element-xyz', { t: 'div', c: 'test' });
-    // bw.DOM returns undefined or null for invalid selector
-    assert.ok(true, 'should not throw');
+    // bw.DOM returns null for invalid selector (same as bw.mount)
+    assert.strictEqual(result, null);
   });
 });
 // =========================================================================
 // bitwrench.js — cleanup with pub/sub unsubs
 // =========================================================================
-describe("bw.cleanup — pub/sub unsubscription", function() {
+describe("bw.unmount — pub/sub unsubscription", function() {
   beforeEach(function() { freshDOM(); });
 
   it("should call stored unsub functions on cleanup", function() {
     var unsubed = false;
     // cleanup only processes elements with bw_lc class
-    var el = bw.createDOM({ t: 'div', c: 'test', o: { state: {} } });
+    var el = bw.create({ t: 'div', c: 'test', o: { state: {} } });
     document.getElementById('app').appendChild(el);
     el._bw_subs = [function() { unsubed = true; }];
-    bw.cleanup(el);
+    bw.unmount(el);
     assert.strictEqual(unsubed, true);
   });
 
   it("should clean up child elements with bw_lc class", function() {
     var childCleaned = false;
-    var parent = bw.createDOM({
+    var parent = bw.create({
       t: 'div', c: [
         { t: 'span', a: { id: 'child-id' }, c: 'child', o: { state: {} } }
       ], o: { state: {} }
@@ -353,7 +353,7 @@ describe("bw.cleanup — pub/sub unsubscription", function() {
     document.getElementById('app').appendChild(parent);
     var child = parent.querySelector('#child-id');
     child._bw_subs = [function() { childCleaned = true; }];
-    bw.cleanup(parent);
+    bw.unmount(parent);
     assert.strictEqual(childCleaned, true);
   });
 });
@@ -526,12 +526,12 @@ describe("Environment detection", function() {
 describe("Style toggling", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("bw.toggleStyles should toggle bw_theme_alt class", function() {
+  it("bw.toggleThemeMode should toggle bw_theme_alt class", function() {
     bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
-    var mode1 = bw.toggleStyles();
+    var mode1 = bw.toggleThemeMode();
     assert.ok(document.documentElement.classList.contains('bw_theme_alt'),
               'should add alt class');
-    var mode2 = bw.toggleStyles();
+    var mode2 = bw.toggleThemeMode();
     assert.ok(!document.documentElement.classList.contains('bw_theme_alt'),
               'should remove alt class');
     assert.notStrictEqual(mode1, mode2, 'should toggle between modes');
@@ -593,32 +593,32 @@ describe("bw._resolveTemplate edge cases", function() {
 });
 
 // =========================================================================
-// toggleStyles edge cases
+// toggleThemeMode edge cases
 // =========================================================================
-describe("bw.toggleStyles edge cases", function() {
+describe("bw.toggleThemeMode edge cases", function() {
   beforeEach(function() { freshDOM(); });
 
   it("should toggle and return mode string", function() {
     bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
-    var result = bw.toggleStyles();
+    var result = bw.toggleThemeMode();
     assert.ok(typeof result === 'string');
     assert.strictEqual(result, 'alternate');
   });
 
   it("should toggle back to primary", function() {
     bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
-    bw.toggleStyles(); // to alternate
-    var result = bw.toggleStyles(); // back to primary
+    bw.toggleThemeMode(); // to alternate
+    var result = bw.toggleThemeMode(); // back to primary
     assert.strictEqual(result, 'primary');
   });
 
   it("should return primary for nonexistent scope", function() {
-    var result = bw.toggleStyles('#nonexistent');
+    var result = bw.toggleThemeMode('#nonexistent');
     assert.strictEqual(result, 'primary');
   });
 
   it("should return primary in non-browser", function() {
-    // toggleStyles returns 'primary' when not in browser
-    assert.ok(typeof bw.toggleStyles === 'function');
+    // toggleThemeMode returns 'primary' when not in browser
+    assert.ok(typeof bw.toggleThemeMode === 'function');
   });
 });

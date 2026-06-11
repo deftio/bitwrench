@@ -35,14 +35,14 @@ function freshDOM() {
 }
 
 // =========================================================================
-// o.handle in createDOM
+// o.handle in create
 // =========================================================================
 
-describe("o.handle — createDOM", function() {
+describe("o.handle — create", function() {
   beforeEach(function() { freshDOM(); });
 
   it("should create el.bw with bound methods", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       o: {
         handle: {
@@ -57,7 +57,7 @@ describe("o.handle — createDOM", function() {
 
   it("handle methods receive el as first arg (auto-bound)", function() {
     var receivedEl = null;
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       o: {
         handle: {
@@ -72,7 +72,7 @@ describe("o.handle — createDOM", function() {
 
   it("handle methods can accept additional args", function() {
     var result = null;
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       o: {
         handle: {
@@ -86,7 +86,7 @@ describe("o.handle — createDOM", function() {
   });
 
   it("multiple handle methods on same element", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       o: {
         handle: {
@@ -101,14 +101,14 @@ describe("o.handle — createDOM", function() {
 });
 
 // =========================================================================
-// o.slots in createDOM
+// o.slots in create
 // =========================================================================
 
-describe("o.slots — createDOM", function() {
+describe("o.slots — create", function() {
   beforeEach(function() { freshDOM(); });
 
   it("should create setX/getX pairs for each slot", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       c: [
         { t: 'h3', a: { class: 'my_title' }, c: 'Original' },
@@ -129,7 +129,7 @@ describe("o.slots — createDOM", function() {
   });
 
   it("slot getters return text content", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       c: { t: 'span', a: { class: 'val' }, c: 'hello' },
       o: { slots: { val: '.val' } }
@@ -139,7 +139,7 @@ describe("o.slots — createDOM", function() {
   });
 
   it("slot setters update text content", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       c: { t: 'span', a: { class: 'val' }, c: 'old' },
       o: { slots: { val: '.val' } }
@@ -150,7 +150,7 @@ describe("o.slots — createDOM", function() {
   });
 
   it("slot setters accept TACO objects", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       c: { t: 'span', a: { class: 'slot' }, c: 'old' },
       o: { slots: { slot: '.slot' } }
@@ -163,7 +163,7 @@ describe("o.slots — createDOM", function() {
   });
 
   it("slot setter with null clears content", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       c: { t: 'span', a: { class: 'val' }, c: 'hello' },
       o: { slots: { val: '.val' } }
@@ -182,7 +182,7 @@ describe("o.handle + o.slots combined", function() {
   beforeEach(function() { freshDOM(); });
 
   it("should create both handle methods and slot accessors", function() {
-    var el = bw.createDOM({
+    var el = bw.create({
       t: 'div',
       c: { t: 'span', a: { class: 'label' }, c: 'text' },
       o: {
@@ -353,7 +353,7 @@ describe("BCCL — makeCard slots", function() {
   it("setTitle updates the card title", function() {
     var el = bw.mount('#app', bw.makeCard({ title: 'Old Title', content: 'Body' }));
     el.bw.setTitle('New Title');
-    assert.strictEqual(el.querySelector('.bw_card_title').textContent, 'New Title');
+    assert.strictEqual(el.querySelector('.bw_bccl_card_title').textContent, 'New Title');
   });
 
   it("getTitle returns current title text", function() {
@@ -364,7 +364,7 @@ describe("BCCL — makeCard slots", function() {
   it("setContent updates the card body", function() {
     var el = bw.mount('#app', bw.makeCard({ title: 'T', content: 'Old' }));
     el.bw.setContent('New Content');
-    assert.ok(el.querySelector('.bw_card_body').textContent.indexOf('New Content') >= 0);
+    assert.ok(el.querySelector('.bw_bccl_card_body').textContent.indexOf('New Content') >= 0);
   });
 });
 
@@ -437,7 +437,7 @@ describe("BCCL — makeTabs handle", function() {
       ]
     }));
     el.bw.setActiveTab(1);
-    var panes = el.querySelectorAll('.bw_tab_pane');
+    var panes = el.querySelectorAll('.bw_bccl_tab_pane');
     assert.ok(!panes[0].classList.contains('active'));
     assert.ok(panes[1].classList.contains('active'));
   });

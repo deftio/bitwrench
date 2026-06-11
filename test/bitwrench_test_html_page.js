@@ -13,12 +13,14 @@ describe("bw.html() function serialization", function() {
     bw._fnIDCounter = 0;
   });
 
-  it("should serialize function onclick via funcRegister", function() {
+  it("should serialize function onclick via fns registry", function() {
     var fn = function() { alert('hi'); };
-    var html = bw.html({ t: 'button', a: { onclick: fn }, c: 'Click' });
-    assert.ok(html.includes("bw.funcGetById("));
+    var fns = {};
+    var html = bw.html({ t: 'button', a: { onclick: fn }, c: 'Click' }, { fns: fns, _fnCounter: 0 });
+    // v2.1: function attrs emit bw_fn_* class token, not inline onclick
     assert.ok(html.includes("bw_fn_0"));
-    assert.ok(html.includes("(event)"));
+    assert.ok(fns['bw_fn_0'], 'function should be registered in fns');
+    assert.strictEqual(fns['bw_fn_0'].event, 'click');
   });
 
   it("should serialize string onclick as escaped string", function() {
@@ -30,20 +32,25 @@ describe("bw.html() function serialization", function() {
   });
 
   it("should handle multiple on* handlers on same element", function() {
+    var fns = {};
     var html = bw.html({
       t: 'input',
       a: {
         onclick: function() { return 1; },
         onchange: function() { return 2; }
       }
-    });
-    assert.ok(html.includes("onclick="));
-    assert.ok(html.includes("onchange="));
+    }, { fns: fns, _fnCounter: 0 });
+    // v2.1: no inline on* attributes, just bw_fn_* class tokens
+    assert.ok(!html.includes("onclick="));
+    assert.ok(!html.includes("onchange="));
     assert.ok(html.includes("bw_fn_0"));
     assert.ok(html.includes("bw_fn_1"));
+    assert.strictEqual(fns['bw_fn_0'].event, 'click');
+    assert.strictEqual(fns['bw_fn_1'].event, 'change');
   });
 
   it("should serialize functions at different nesting levels", function() {
+    var fns = {};
     var html = bw.html({
       t: 'div', c: [
         { t: 'button', a: { onclick: function() { return 'a'; } }, c: 'A' },
@@ -51,7 +58,7 @@ describe("bw.html() function serialization", function() {
           { t: 'button', a: { onclick: function() { return 'b'; } }, c: 'B' }
         ]}
       ]
-    });
+    }, { fns: fns, _fnCounter: 0 });
     assert.ok(html.includes("bw_fn_0"));
     assert.ok(html.includes("bw_fn_1"));
   });
@@ -63,11 +70,12 @@ describe("bw.html() function serialization", function() {
     assert.ok(!html.includes("onkeyup"));
   });
 
-  it("should register function in bw._fnRegistry", function() {
+  it("should register function in fns registry", function() {
+    var fns = {};
     var fn = function() { return 42; };
-    bw.html({ t: 'button', a: { onclick: fn }, c: 'Click' });
-    assert.ok(bw._fnRegistry['bw_fn_0']);
-    assert.equal(bw._fnRegistry['bw_fn_0'](), 42);
+    bw.html({ t: 'button', a: { onclick: fn }, c: 'Click' }, { fns: fns, _fnCounter: 0 });
+    assert.ok(fns['bw_fn_0']);
+    assert.equal(fns['bw_fn_0'].fn(), 42);
   });
 
   it("should produce correct funcGetDispatchStr format", function() {
@@ -167,7 +175,8 @@ describe("bw.htmlPage()", function() {
       body: { t: 'button', a: { onclick: fn }, c: 'Click' },
       runtime: 'shim'
     });
-    assert.ok(result.includes("bw._fnRegistry['bw_fn_0']"));
+    // v2.1: body-end script uses local r[] registry with fn+event entries
+    assert.ok(result.includes("r['bw_fn_0']"));
     assert.ok(result.includes("return 'works'"));
   });
 

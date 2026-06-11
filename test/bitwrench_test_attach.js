@@ -287,10 +287,10 @@ describe("_bw_tree builtin", function() {
   });
 
   it("should register _bw_tree function from body string", function() {
-    // Register the _bw_tree builtin
+    // v2.1: register type is rejected by bw.apply wire protocol; register directly
     var body = 'function(opts){if(!bw._bwClient)return;var sel=opts.selector||"body";var depth=opts.depth||3;function walk(el,d){if(!el||d>depth)return null;var info={tag:el.tagName?el.tagName.toLowerCase():"#text"};if(el.id)info.id=el.id;if(el.className&&typeof el.className==="string")info.cls=el.className.split(" ").slice(0,5).join(" ");if(el.children&&el.children.length>0&&d<depth){info.children=[];for(var i=0;i<Math.min(el.children.length,20);i++){var c=walk(el.children[i],d+1);if(c)info.children.push(c);}}return info;}var root=document.querySelector(sel);bw._bwClient.respond("query",opts.requestId,walk(root,0));}';
-    var result = bw.apply({ type: 'register', name: '_bw_tree', body: body });
-    assert.strictEqual(result, true);
+    var fn = new Function('return (' + body + ')')();
+    bw._clientFunctions._bw_tree = fn;
     assert.strictEqual(typeof bw._clientFunctions._bw_tree, 'function');
   });
 
@@ -419,14 +419,12 @@ describe("wrapExpression()", function() {
 // BwServeClient _bw_tree via client.call
 // ===================================================================================
 
-describe("BwServeClient _bw_tree call", function() {
+describe("BwServeClient _bw_tree call via client.call()", function() {
   it("should send a call to _bw_tree with selector and depth", function() {
     var client = new BwServeClient('tree-1', null);
-    var pend = client._pend(5000);
     client.call('_bw_tree', {
       selector: '#app',
-      depth: 2,
-      requestId: pend.requestId
+      depth: 2
     });
     assert.strictEqual(client._sent.length, 1);
     var msg = client._sent[0];
@@ -434,46 +432,18 @@ describe("BwServeClient _bw_tree call", function() {
     assert.strictEqual(msg.name, '_bw_tree');
     assert.strictEqual(msg.args[0].selector, '#app');
     assert.strictEqual(msg.args[0].depth, 2);
-    assert.ok(msg.args[0].requestId);
-    // Resolve to clean up
-    client._resolvePending(pend.requestId, { result: null });
+    assert.strictEqual(msg.v, 1);
   });
 });
 
 // ===================================================================================
-// BwServeClient client.inspect() convenience method
+// BwServeClient client.inspect() — removed in 2.1
 // ===================================================================================
 
 describe("BwServeClient client.inspect()", function() {
-  it("should be a function", function() {
+  it("inspect is removed in 2.1", function() {
     var client = new BwServeClient('ins-1', null);
-    assert.strictEqual(typeof client.inspect, 'function');
-  });
-
-  it("should call _bw_tree with defaults", function() {
-    var client = new BwServeClient('ins-2', null);
-    client.inspect();
-    assert.strictEqual(client._sent.length, 1);
-    var msg = client._sent[0];
-    assert.strictEqual(msg.type, 'call');
-    assert.strictEqual(msg.name, '_bw_tree');
-    assert.strictEqual(msg.args[0].selector, 'body');
-    assert.strictEqual(msg.args[0].depth, 3);
-    assert.ok(msg.args[0].requestId);
-  });
-
-  it("should pass selector and depth options", function() {
-    var client = new BwServeClient('ins-3', null);
-    client.inspect('#sidebar', { depth: 5 });
-    var msg = client._sent[0];
-    assert.strictEqual(msg.args[0].selector, '#sidebar');
-    assert.strictEqual(msg.args[0].depth, 5);
-  });
-
-  it("should return a promise", function() {
-    var client = new BwServeClient('ins-4', null);
-    var result = client.inspect();
-    assert.ok(result && typeof result.then === 'function');
+    assert.strictEqual(client.inspect, undefined);
   });
 });
 

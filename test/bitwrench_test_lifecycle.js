@@ -5,7 +5,7 @@
  *   - bw.isComponent(taco)
  *   - bw.hydrate(taco) -- TACO -> DOM + handle
  *   - bw.mount(target, taco) / bw.DOM(target, taco)
- *   - bw.cleanup(element)
+ *   - bw.unmount(element)
  *   - bw.getHandle(selector)
  *   - bw._handles registry
  *   - Handle object: { el, uuid, mounted, _state, _hooks, get, set, getState }
@@ -380,14 +380,14 @@ describe('Lifecycle Engine', function () {
   // cleanup
   // =======================================================================
 
-  describe('bw.cleanup', function () {
+  describe('bw.unmount', function () {
 
     it('fires unmount hook on components', function () {
       var unmounted = false;
       var h = bw.mount('#app', {
         t: 'div', o: { state: {}, unmount: function () { unmounted = true; } }
       });
-      bw.cleanup(h.el);
+      bw.unmount(h.el);
       assert.strictEqual(unmounted, true);
     });
 
@@ -397,7 +397,7 @@ describe('Lifecycle Engine', function () {
       var btn = document.querySelector('#app button');
       btn.click();
       assert.strictEqual(count, 1);
-      bw.cleanup(btn);
+      bw.unmount(btn);
       btn.click();
       assert.strictEqual(count, 1); // listener removed
     });
@@ -406,7 +406,7 @@ describe('Lifecycle Engine', function () {
       var h = bw.mount('#app', { t: 'div', o: { state: {} } });
       var uid = h.uuid;
       assert.ok(bw._handles[uid]);
-      bw.cleanup(h.el);
+      bw.unmount(h.el);
       assert.strictEqual(bw._handles[uid], undefined);
     });
 
@@ -418,7 +418,7 @@ describe('Lifecycle Engine', function () {
           { t: 'span', o: { state: {}, unmount: function () { order.push('child2'); } } }
         ]
       });
-      bw.cleanup(document.querySelector('#app'));
+      bw.unmount(document.querySelector('#app'));
       assert.ok(order.indexOf('child1') >= 0);
       assert.ok(order.indexOf('child2') >= 0);
     });
@@ -431,21 +431,21 @@ describe('Lifecycle Engine', function () {
       });
       var btn = document.querySelector('#plain_btn');
       assert.ok(btn._bw_listeners);
-      bw.cleanup(document.querySelector('#app'));
+      bw.unmount(document.querySelector('#app'));
       assert.strictEqual(btn._bw_listeners, undefined);
     });
 
     it('no error on null/undefined', function () {
       // Should not throw
-      bw.cleanup(null);
-      bw.cleanup(undefined);
+      bw.unmount(null);
+      bw.unmount(undefined);
     });
 
     it('no error on non-browser environment flag check', function () {
       // cleanup should gracefully return for null/undefined input
       // even in browser environment
-      assert.doesNotThrow(function () { bw.cleanup(null); });
-      assert.doesNotThrow(function () { bw.cleanup(undefined); });
+      assert.doesNotThrow(function () { bw.unmount(null); });
+      assert.doesNotThrow(function () { bw.unmount(undefined); });
     });
 
     it('cleans element itself (not just descendants)', function () {
@@ -454,7 +454,7 @@ describe('Lifecycle Engine', function () {
       });
       var uid = h.uuid;
       assert.ok(bw._handles[uid]);
-      bw.cleanup(h.el);
+      bw.unmount(h.el);
       assert.strictEqual(bw._handles[uid], undefined);
       assert.strictEqual(h.el, null); // handle.el nulled out
     });
@@ -595,7 +595,7 @@ describe('Lifecycle Engine', function () {
         }
       });
       assert.strictEqual(unmountCalled, false);
-      bw.cleanup(h.el);
+      bw.unmount(h.el);
       assert.strictEqual(unmountCalled, true);
     });
 
@@ -823,9 +823,9 @@ describe('Lifecycle Engine', function () {
       var h = bw.mount('#app', {
         t: 'div', o: { state: {}, unmount: function () { count++; } }
       });
-      bw.cleanup(h.el);
+      bw.unmount(h.el);
       // second cleanup on the now-nulled handle
-      bw.cleanup(h.el);
+      bw.unmount(h.el);
       assert.strictEqual(count, 1);
     });
 

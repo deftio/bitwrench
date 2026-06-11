@@ -44,7 +44,7 @@ export function variantClass(v) {
   // Handle outline variants: 'outline_primary' or 'outline-primary'
   if (v.indexOf('outline') === 0) {
     var base = v.replace(/^outline[_-]/, '');
-    return 'bw_btn_outline bw_' + base;
+    return 'bw_bccl_btn_outline bw_' + base;
   }
   return 'bw_' + v;
 }
@@ -114,48 +114,48 @@ export function makeCard(props = {}) {
   };
 
   const cardClasses = [
-    'bw_card',
+    'bw_bccl_card',
     variantClass(variant),
     shadow ? (shadowClasses[shadow] || '') : '',
     !bordered ? 'bw_border_0' : '',
-    hoverable ? 'bw_card_hoverable' : '',
+    hoverable ? 'bw_bccl_card_hoverable' : '',
     className
   ].filter(Boolean).join(' ').trim();
 
   const cardContent = [
     header && {
       t: 'div',
-      a: { class: `bw_card_header ${headerClass}`.trim() },
+      a: { class: `bw_bccl_card_header ${headerClass}`.trim() },
       c: header
     },
     image && (imagePosition === 'top' || imagePosition === 'left') && {
       t: 'img',
       a: {
-        class: `bw_card_img_${imagePosition}`,
+        class: `bw_bccl_card_img_${imagePosition}`,
         src: image.src,
         alt: image.alt || ''
       }
     },
     {
       t: 'div',
-      a: { class: `bw_card_body ${bodyClass}`.trim() },
+      a: { class: `bw_bccl_card_body ${bodyClass}`.trim() },
       c: [
-        title && { t: 'h5', a: { class: 'bw_card_title' }, c: title },
-        subtitle && { t: 'h6', a: { class: 'bw_card_subtitle bw_mb_2 bw_text_muted' }, c: subtitle },
+        title && { t: 'h5', a: { class: 'bw_bccl_card_title' }, c: title },
+        subtitle && { t: 'h6', a: { class: 'bw_bccl_card_subtitle bw_mb_2 bw_text_muted' }, c: subtitle },
         content && (Array.isArray(content) ? content : [content])
       ].flat().filter(Boolean)
     },
     image && (imagePosition === 'bottom' || imagePosition === 'right') && {
       t: 'img',
       a: {
-        class: `bw_card_img_${imagePosition}`,
+        class: `bw_bccl_card_img_${imagePosition}`,
         src: image.src,
         alt: image.alt || ''
       }
     },
     footer && {
       t: 'div',
-      a: { class: `bw_card_footer ${footerClass}`.trim() },
+      a: { class: `bw_bccl_card_footer ${footerClass}`.trim() },
       c: footer
     }
   ].filter(Boolean);
@@ -174,9 +174,9 @@ export function makeCard(props = {}) {
         type: 'card',
         state: props.state || {},
         slots: {
-          title: '.bw_card_title',
-          content: '.bw_card_body',
-          footer: '.bw_card_footer'
+          title: '.bw_bccl_card_title',
+          content: '.bw_bccl_card_body',
+          footer: '.bw_bccl_card_footer'
         }
       }
     };
@@ -190,9 +190,9 @@ export function makeCard(props = {}) {
       type: 'card',
       state: props.state || {},
       slots: {
-        title: '.bw_card_title',
-        content: '.bw_card_body',
-        footer: '.bw_card_footer'
+        title: '.bw_bccl_card_title',
+        content: '.bw_bccl_card_body',
+        footer: '.bw_bccl_card_footer'
       }
     }
   };
@@ -229,6 +229,7 @@ export function makeButton(props = {}) {
     size,
     disabled = false,
     onclick,
+    action,
     type = 'button',
     className = '',
     style
@@ -239,9 +240,10 @@ export function makeButton(props = {}) {
     a: {
       type,
       class: [
-        'bw_btn',
+        'bw_bccl_btn',
         variantClass(variant),
-        size && `bw_btn_${size}`,
+        size && `bw_bccl_btn_${size}`,
+        action && ('bw_act_' + action),
         className
       ].filter(Boolean).join(' '),
       disabled,
@@ -275,7 +277,7 @@ export function makeContainer(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_container${fluid ? '-fluid' : ''} ${className}`.trim() },
+    a: { class: `bw_bccl_container${fluid ? '-fluid' : ''} ${className}`.trim() },
     c: children
   };
 }
@@ -301,7 +303,7 @@ export function makeRow(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_row ${gap ? `bw_g_${gap}` : ''} ${className}`.trim()
+      class: `bw_bccl_row bw_row ${gap ? `bw_g_${gap}` : ''} ${className}`.trim()
     },
     c: children
   };
@@ -352,7 +354,7 @@ export function makeCol(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `${classes.join(' ')} ${className}`.trim() },
+    a: { class: `bw_bccl_col ${classes.join(' ')} ${className}`.trim() },
     c: content || children
   };
 }
@@ -391,7 +393,7 @@ export function makeNav(props = {}) {
   return {
     t: 'ul',
     a: {
-      class: `bw_nav ${pills ? 'bw_nav_pills' : 'bw_nav_tabs'} ${vertical ? 'bw_nav_vertical' : ''} ${className}`.trim()
+      class: `bw_bccl_nav bw_nav ${pills ? 'bw_nav_pills' : 'bw_nav_tabs'} ${vertical ? 'bw_nav_vertical' : ''} ${className}`.trim()
     },
     c: items.map(item => ({
       t: 'li',
@@ -444,7 +446,7 @@ export function makeNavbar(props = {}) {
   return {
     t: 'nav',
     a: {
-      class: `bw_navbar ${dark ? 'bw_navbar_dark' : 'bw_navbar_light'} ${className}`.trim()
+      class: `bw_bccl_navbar ${dark ? 'bw_bccl_navbar_dark' : 'bw_bccl_navbar_light'} ${className}`.trim()
     },
     c: {
       t: 'div',
@@ -452,12 +454,12 @@ export function makeNavbar(props = {}) {
       c: [
         brand && {
           t: 'a',
-          a: { href: brandHref, class: 'bw_navbar_brand' },
+          a: { href: brandHref, class: 'bw_bccl_navbar_brand' },
           c: brand
         },
         items.length > 0 && {
           t: 'div',
-          a: { class: 'bw_navbar_nav' },
+          a: { class: 'bw_bccl_navbar_nav' },
           c: items.map(item => ({
             t: 'a',
             a: {
@@ -514,7 +516,7 @@ export function makeTabs(props = {}) {
   // Shared tab switching logic
   function switchTab(el, index) {
     var allTabs = el.querySelectorAll('.bw_nav_link');
-    var allPanes = el.querySelectorAll('.bw_tab_pane');
+    var allPanes = el.querySelectorAll('.bw_bccl_tab_pane');
     if (index < 0 || index >= allTabs.length) return;
     allTabs.forEach(function(t) {
       t.classList.remove('active');
@@ -531,7 +533,7 @@ export function makeTabs(props = {}) {
 
   return {
     t: 'div',
-    a: { class: 'bw_tabs' },
+    a: { class: 'bw_bccl_tabs' },
     c: [
       {
         t: 'ul',
@@ -548,7 +550,7 @@ export function makeTabs(props = {}) {
               tabindex: index === actualActiveIndex ? '0' : '-1',
               'aria-selected': index === actualActiveIndex ? 'true' : 'false',
               onclick: (e) => {
-                switchTab(e.target.closest('.bw_tabs'), index);
+                switchTab(e.target.closest('.bw_bccl_tabs'), index);
               }
             },
             c: tab.label
@@ -557,11 +559,11 @@ export function makeTabs(props = {}) {
       },
       {
         t: 'div',
-        a: { class: 'bw_tab_content' },
+        a: { class: 'bw_bccl_tab_content' },
         c: tabs.map((tab, index) => ({
           t: 'div',
           a: {
-            class: `bw_tab_pane ${index === actualActiveIndex ? 'active' : ''}`,
+            class: `bw_bccl_tab_pane ${index === actualActiveIndex ? 'active' : ''}`,
             role: 'tabpanel'
           },
           c: tab.content
@@ -642,7 +644,7 @@ export function makeAlert(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_alert ${variantClass(variant)} ${dismissible ? 'bw_alert_dismissible' : ''} ${className}`.trim(),
+      class: `bw_bccl_alert ${variantClass(variant)} ${dismissible ? 'bw_bccl_alert_dismissible' : ''} ${className}`.trim(),
       role: 'alert'
     },
     c: [
@@ -654,7 +656,7 @@ export function makeAlert(props = {}) {
           class: 'bw_close',
           'aria-label': 'Close',
           onclick: function(e) {
-            var alert = e.target.closest('.bw_alert');
+            var alert = e.target.closest('.bw_bccl_alert');
             if (alert) { alert.remove(); }
           }
         },
@@ -697,12 +699,12 @@ export function makeBadge(props = {}) {
     className = ''
   } = props;
 
-  const sizeClass = size === 'sm' ? ' bw_badge_sm' : size === 'lg' ? ' bw_badge_lg' : '';
+  const sizeClass = size === 'sm' ? ' bw_bccl_badge_sm' : size === 'lg' ? ' bw_bccl_badge_lg' : '';
 
   return {
     t: 'span',
     a: {
-      class: `bw_badge ${variantClass(variant)}${sizeClass} ${pill ? 'bw_badge_pill' : ''} ${className}`.trim()
+      class: `bw_bccl_badge ${variantClass(variant)}${sizeClass} ${pill ? 'bw_bccl_badge_pill' : ''} ${className}`.trim()
     },
     c: text
   };
@@ -745,17 +747,17 @@ export function makeProgress(props = {}) {
   return {
     t: 'div',
     a: {
-      class: 'bw_progress',
+      class: 'bw_bccl_progress',
       style: height ? { height: `${height}px` } : undefined
     },
     c: {
       t: 'div',
       a: {
         class: [
-          'bw_progress_bar',
+          'bw_bccl_progress_bar',
           variantClass(variant),
-          striped && 'bw_progress_bar_striped',
-          animated && 'bw_progress_bar_animated'
+          striped && 'bw_bccl_progress_bar_striped',
+          animated && 'bw_bccl_progress_bar_animated'
         ].filter(Boolean).join(' '),
         role: 'progressbar',
         style: { width: `${percentage}%` },
@@ -769,7 +771,7 @@ export function makeProgress(props = {}) {
       type: 'progress',
       handle: {
         setValue: function(el, n) {
-          var bar = el.querySelector('.bw_progress_bar');
+          var bar = el.querySelector('.bw_bccl_progress_bar');
           if (!bar) return;
           var maxVal = parseInt(bar.getAttribute('aria-valuemax')) || 100;
           var pct = Math.round((n / maxVal) * 100);
@@ -778,7 +780,7 @@ export function makeProgress(props = {}) {
           bar.textContent = pct + '%';
         },
         getValue: function(el) {
-          var bar = el.querySelector('.bw_progress_bar');
+          var bar = el.querySelector('.bw_bccl_progress_bar');
           return bar ? parseInt(bar.getAttribute('aria-valuenow')) || 0 : 0;
         }
       }
@@ -819,7 +821,7 @@ export function makeListGroup(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_list_group ${flush ? 'bw_list_group_flush' : ''}`.trim() },
+    a: { class: `bw_bccl_listGroup bw_list_group ${flush ? 'bw_list_group_flush' : ''}`.trim() },
     c: items.map(item => {
       const isObject = typeof item === 'object';
       const text = isObject ? item.text : item;
@@ -891,7 +893,7 @@ export function makeBreadcrumb(props = {}) {
 
   return {
     t: 'nav',
-    a: { 'aria-label': 'breadcrumb' },
+    a: { 'aria-label': 'breadcrumb', class: 'bw_bccl_breadcrumb' },
     c: {
       t: 'ol',
       a: { class: 'bw_breadcrumb' },
@@ -930,15 +932,138 @@ export function makeBreadcrumb(props = {}) {
  * });
  */
 export function makeForm(props = {}) {
-  const { children, onsubmit, className = '' } = props;
+  const { children, fields, onsubmit, className = '' } = props;
+
+  // Legacy API: just wraps children
+  if (!fields) {
+    return {
+      t: 'form',
+      a: {
+        class: `bw_bccl_form ${className}`.trim(),
+        onsubmit: onsubmit || ((e) => e.preventDefault())
+      },
+      c: children
+    };
+  }
+
+  // New fields-based API with label association, getValues/setValues/validate
+  var fieldIds = {};
+  var fieldItems = fields.map(function(field) {
+    var fieldId = 'bw_field_' + Math.random().toString(36).substr(2, 9);
+    fieldIds[field.name] = fieldId;
+
+    var inputTag = field.type === 'textarea' ? 'textarea' : (field.type === 'select' ? 'select' : 'input');
+    var inputAttrs = {
+      id: fieldId,
+      name: field.name,
+      class: 'bw_bccl_form_control'
+    };
+    if (inputTag === 'input') {
+      inputAttrs.type = field.type || 'text';
+    }
+    if (field.required) {
+      inputAttrs.required = true;
+    }
+    if (field.placeholder) {
+      inputAttrs.placeholder = field.placeholder;
+    }
+
+    return {
+      t: 'div',
+      a: { class: 'bw_bccl_form_group' },
+      c: [
+        field.label && {
+          t: 'label',
+          a: { for: fieldId, class: 'bw_bccl_form_label' },
+          c: field.required ? [field.label, { t: 'span', a: { class: 'bw_text_danger bw_ms_1' }, c: '*' }] : field.label
+        },
+        {
+          t: inputTag,
+          a: inputAttrs
+        }
+      ].filter(Boolean)
+    };
+  });
 
   return {
     t: 'form',
     a: {
-      class: className,
+      class: `bw_bccl_form ${className}`.trim(),
       onsubmit: onsubmit || ((e) => e.preventDefault())
     },
-    c: children
+    c: fieldItems,
+    o: {
+      type: 'form',
+      handle: {
+        getValues: function(el) {
+          var values = {};
+          fields.forEach(function(field) {
+            var input = el.querySelector('[name="' + field.name + '"]');
+            if (input) {
+              var val = input.value;
+              if (field.type === 'number' && val !== '' && val !== undefined) {
+                val = Number(val);
+              }
+              values[field.name] = val;
+            }
+          });
+          return values;
+        },
+        setValues: function(el, vals) {
+          if (typeof vals !== 'object') return;
+          Object.keys(vals).forEach(function(name) {
+            var input = el.querySelector('[name="' + name + '"]');
+            if (input) {
+              input.value = vals[name];
+            }
+          });
+        },
+        validate: function(el) {
+          var valid = true;
+          fields.forEach(function(field) {
+            var input = el.querySelector('[name="' + field.name + '"]');
+            if (!input) return;
+            // Clear previous error state
+            input.removeAttribute('aria-invalid');
+            input.removeAttribute('aria-describedby');
+            var existingErr = input.parentNode.querySelector('.bw_bccl_form_error');
+            if (existingErr) existingErr.parentNode.removeChild(existingErr);
+
+            var isValid = true;
+            if (field.required && (!input.value || input.value.trim() === '')) {
+              isValid = false;
+            }
+            if (!isValid) {
+              valid = false;
+              input.setAttribute('aria-invalid', 'true');
+              var errId = 'bw_err_' + field.name + '_' + Math.random().toString(36).substr(2, 6);
+              input.setAttribute('aria-describedby', errId);
+              var errEl = document.createElement('div');
+              errEl.id = errId;
+              errEl.className = 'bw_bccl_form_error bw_invalid_feedback';
+              errEl.textContent = (field.label || field.name) + ' is required';
+              input.parentNode.appendChild(errEl);
+            }
+          });
+          return { valid: valid };
+        },
+        setErrors: function(el, errors) {
+          if (typeof errors !== 'object') return;
+          Object.keys(errors).forEach(function(name) {
+            var input = el.querySelector('[name="' + name + '"]');
+            if (!input) return;
+            input.setAttribute('aria-invalid', 'true');
+            var errId = 'bw_err_' + name + '_' + Math.random().toString(36).substr(2, 6);
+            input.setAttribute('aria-describedby', errId);
+            var errEl = document.createElement('div');
+            errEl.id = errId;
+            errEl.className = 'bw_bccl_form_error bw_invalid_feedback';
+            errEl.textContent = errors[name];
+            input.parentNode.appendChild(errEl);
+          });
+        }
+      }
+    }
   };
 }
 
@@ -979,11 +1104,11 @@ export function makeFormGroup(props = {}) {
 
   return {
     t: 'div',
-    a: { class: 'bw_form_group' },
+    a: { class: 'bw_bccl_form_group' },
     c: [
       label && {
         t: 'label',
-        a: { for: id, class: 'bw_form_label' },
+        a: { for: id, class: 'bw_bccl_form_label' },
         c: required ? [label, { t: 'span', a: { class: 'bw_text_danger bw_ms_1' }, c: '*' }] : label
       },
       styledInput,
@@ -994,7 +1119,7 @@ export function makeFormGroup(props = {}) {
       },
       help && {
         t: 'small',
-        a: { class: 'bw_form_text bw_text_muted' },
+        a: { class: 'bw_bccl_form_text bw_text_muted' },
         c: help
       }
     ].filter(Boolean)
@@ -1047,7 +1172,7 @@ export function makeInput(props = {}) {
     t: 'input',
     a: {
       type,
-      class: `bw_form_control ${className}`.trim(),
+      class: `bw_bccl_form_control ${className}`.trim(),
       placeholder,
       value,
       id,
@@ -1100,7 +1225,7 @@ export function makeTextarea(props = {}) {
   return {
     t: 'textarea',
     a: {
-      class: `bw_form_control ${className}`.trim(),
+      class: `bw_bccl_form_control ${className}`.trim(),
       placeholder,
       rows,
       id,
@@ -1154,7 +1279,7 @@ export function makeSelect(props = {}) {
   return {
     t: 'select',
     a: {
-      class: `bw_form_control ${className}`.trim(),
+      class: `bw_bccl_form_control ${className}`.trim(),
       id,
       name,
       disabled,
@@ -1205,13 +1330,13 @@ export function makeCheckbox(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_form_check ${className}`.trim() },
+    a: { class: `bw_bccl_form_check ${className}`.trim() },
     c: [
       {
         t: 'input',
         a: {
           type: 'checkbox',
-          class: 'bw_form_check_input',
+          class: 'bw_bccl_form_check_input',
           checked,
           id,
           name,
@@ -1222,7 +1347,7 @@ export function makeCheckbox(props = {}) {
       },
       label && {
         t: 'label',
-        a: { class: 'bw_form_check_label', for: id },
+        a: { class: 'bw_bccl_form_check_label', for: id },
         c: label
       }
     ].filter(Boolean)
@@ -1260,7 +1385,7 @@ export function makeStack(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_${direction === 'vertical' ? 'vstack' : 'hstack'} bw_gap_${gap} ${className}`.trim()
+      class: `bw_bccl_stack bw_${direction === 'vertical' ? 'vstack' : 'hstack'} bw_gap_${gap} ${className}`.trim()
     },
     c: children
   };
@@ -1288,7 +1413,7 @@ export function makeSpinner(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_spinner_${type} bw_spinner_${type}-${size} ${variantClass(variant)}`,
+      class: `bw_bccl_spinner bw_spinner_${type} bw_spinner_${type}-${size} ${variantClass(variant)}`,
       role: 'status'
     },
     c: {
@@ -1353,35 +1478,35 @@ export function makeHero(props = {}) {
   return {
     t: 'section',
     a: {
-      class: `bw_hero ${variantClass(variant)} ${sizeClasses[size] || sizeClasses.lg} ${centered ? 'bw_text_center' : ''} ${className}`.trim(),
+      class: `bw_bccl_hero ${variantClass(variant)} ${sizeClasses[size] || sizeClasses.lg} ${centered ? 'bw_text_center' : ''} ${className}`.trim(),
       style: backgroundImage ? `background-image: url('${backgroundImage}'); background-size: cover; background-position: center;` : undefined
     },
     c: [
       overlay && {
         t: 'div',
-        a: { class: 'bw_hero_overlay' }
+        a: { class: 'bw_bccl_hero_overlay' }
       },
       {
         t: 'div',
         a: { class: 'bw_container' },
         c: {
           t: 'div',
-          a: { class: 'bw_hero_content' },
+          a: { class: 'bw_bccl_hero_content' },
           c: [
             title && {
               t: 'h1',
-              a: { class: 'bw_hero_title bw_display_4 bw_mb_3' },
+              a: { class: 'bw_bccl_hero_title bw_display_4 bw_mb_3' },
               c: title
             },
             subtitle && {
               t: 'p',
-              a: { class: 'bw_hero_subtitle bw_lead bw_mb_4' },
+              a: { class: 'bw_bccl_hero_subtitle bw_lead bw_mb_4' },
               c: subtitle
             },
             content,
             actions && {
               t: 'div',
-              a: { class: 'bw_hero_actions bw_mt_4' },
+              a: { class: 'bw_bccl_hero_actions bw_mt_4' },
               c: actions
             }
           ].filter(Boolean)
@@ -1431,7 +1556,7 @@ export function makeFeatureGrid(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_feature_grid ${className}`.trim() },
+    a: { class: `bw_bccl_featureGrid bw_feature_grid ${className}`.trim() },
     c: {
       t: 'div',
       a: { class: 'bw_row bw_g_4' },
@@ -1501,7 +1626,7 @@ export function makeCTA(props = {}) {
 
   return {
     t: 'section',
-    a: { class: `bw_cta bw_bg_${variant} bw_py_5 ${className}`.trim() },
+    a: { class: `bw_bccl_cta bw_cta bw_bg_${variant} bw_py_5 ${className}`.trim() },
     c: {
       t: 'div',
       a: { class: 'bw_container' },
@@ -1562,7 +1687,7 @@ export function makeSection(props = {}) {
   return {
     t: 'section',
     a: {
-      class: `bw_section ${spacingClasses[spacing] || spacingClasses.md} ${variant !== 'default' ? `bw_bg_${variant}` : ''} ${className}`.trim()
+      class: `bw_bccl_section bw_section ${spacingClasses[spacing] || spacingClasses.md} ${variant !== 'default' ? `bw_bg_${variant}` : ''} ${className}`.trim()
     },
     c: {
       t: 'div',
@@ -1691,7 +1816,7 @@ export function makeCodeDemo(props = {}) {
 
   return {
     t: 'div',
-    a: { class: 'bw_code_demo' },
+    a: { class: 'bw_bccl_codeDemo bw_code_demo' },
     c: content
   };
 }
@@ -1788,7 +1913,7 @@ export function makePagination(props = {}) {
     c: {
       t: 'ul',
       a: {
-        class: `bw_pagination ${size ? 'bw_pagination_' + size : ''} ${className}`.trim()
+        class: `bw_bccl_pagination ${size ? 'bw_bccl_pagination_' + size : ''} ${className}`.trim()
       },
       c: items
     },
@@ -1850,13 +1975,13 @@ export function makeRadio(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_form_check ${className}`.trim() },
+    a: { class: `bw_bccl_form_check ${className}`.trim() },
     c: [
       {
         t: 'input',
         a: {
           type: 'radio',
-          class: 'bw_form_check_input',
+          class: 'bw_bccl_form_check_input',
           name,
           value,
           checked,
@@ -1867,7 +1992,7 @@ export function makeRadio(props = {}) {
       },
       label && {
         t: 'label',
-        a: { class: 'bw_form_check_label', for: id },
+        a: { class: 'bw_bccl_form_check_label', for: id },
         c: label
       }
     ].filter(Boolean)
@@ -1904,7 +2029,7 @@ export function makeButtonGroup(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `${vertical ? 'bw_btn_group_vertical' : 'bw_btn_group'} ${size ? 'bw_btn_group_' + size : ''} ${className}`.trim(),
+      class: `${vertical ? 'bw_bccl_btn_group_vertical' : 'bw_bccl_btn_group'} ${size ? 'bw_bccl_btn_group_' + size : ''} ${className}`.trim(),
       role: 'group'
     },
     c: children
@@ -1944,35 +2069,37 @@ export function makeAccordion(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_accordion ${className}`.trim() },
+    a: { class: `bw_bccl_accordion ${className}`.trim() },
     c: items.map(function(item, index) {
+      var panelId = 'bw_acc_panel_' + Math.random().toString(36).substr(2, 9) + '_' + index;
       return {
         t: 'div',
-        a: { class: 'bw_accordion_item' },
+        a: { class: 'bw_bccl_accordion_item' },
         c: [
           {
             t: 'h2',
-            a: { class: 'bw_accordion_header' },
+            a: { class: 'bw_bccl_accordion_header' },
             c: {
               t: 'button',
               a: {
-                class: `bw_accordion_button ${item.open ? '' : 'bw_collapsed'}`.trim(),
+                class: `bw_bccl_accordion_button ${item.open ? '' : 'bw_collapsed'}`.trim(),
                 type: 'button',
                 'aria-expanded': item.open ? 'true' : 'false',
+                'aria-controls': panelId,
                 onclick: function(e) {
-                  var btn = e.target.closest('.bw_accordion_button');
-                  var accordionEl = btn.closest('.bw_accordion');
-                  var accordionItem = btn.closest('.bw_accordion_item');
-                  var collapse = accordionItem.querySelector('.bw_accordion_collapse');
+                  var btn = e.target.closest('.bw_bccl_accordion_button');
+                  var accordionEl = btn.closest('.bw_bccl_accordion');
+                  var accordionItem = btn.closest('.bw_bccl_accordion_item');
+                  var collapse = accordionItem.querySelector('.bw_bccl_accordion_collapse');
                   var isOpen = collapse.classList.contains('bw_collapse_show');
 
                   if (!multiOpen) {
                     // Animate-close all other open siblings
-                    var allItems = accordionEl.querySelectorAll('.bw_accordion_item');
+                    var allItems = accordionEl.querySelectorAll('.bw_bccl_accordion_item');
                     for (var j = 0; j < allItems.length; j++) {
                       if (allItems[j] === accordionItem) continue;
-                      var sibCollapse = allItems[j].querySelector('.bw_accordion_collapse');
-                      var sibBtn = allItems[j].querySelector('.bw_accordion_button');
+                      var sibCollapse = allItems[j].querySelector('.bw_bccl_accordion_collapse');
+                      var sibBtn = allItems[j].querySelector('.bw_bccl_accordion_button');
                       if (sibCollapse.classList.contains('bw_collapse_show')) {
                         sibCollapse.style.maxHeight = sibCollapse.scrollHeight + 'px';
                         sibCollapse.offsetHeight; // force reflow
@@ -2016,10 +2143,10 @@ export function makeAccordion(props = {}) {
           },
           {
             t: 'div',
-            a: { class: `bw_accordion_collapse ${item.open ? 'bw_collapse_show' : ''}`.trim() },
+            a: { id: panelId, class: `bw_bccl_accordion_collapse ${item.open ? 'bw_collapse_show' : ''}`.trim() },
             c: {
               t: 'div',
-              a: { class: 'bw_accordion_body' },
+              a: { class: 'bw_bccl_accordion_body' },
               c: item.content
             },
             o: item.open ? {
@@ -2036,16 +2163,16 @@ export function makeAccordion(props = {}) {
       state: { multiOpen: multiOpen },
       handle: {
         toggle: function(el, index) {
-          var items = el.querySelectorAll('.bw_accordion_item');
+          var items = el.querySelectorAll('.bw_bccl_accordion_item');
           if (index < 0 || index >= items.length) return;
-          var btn = items[index].querySelector('.bw_accordion_button');
+          var btn = items[index].querySelector('.bw_bccl_accordion_button');
           if (btn) btn.click();
         },
         openAll: function(el) {
-          var items = el.querySelectorAll('.bw_accordion_item');
+          var items = el.querySelectorAll('.bw_bccl_accordion_item');
           for (var i = 0; i < items.length; i++) {
-            var collapse = items[i].querySelector('.bw_accordion_collapse');
-            var btn = items[i].querySelector('.bw_accordion_button');
+            var collapse = items[i].querySelector('.bw_bccl_accordion_collapse');
+            var btn = items[i].querySelector('.bw_bccl_accordion_button');
             if (!collapse.classList.contains('bw_collapse_show')) {
               collapse.classList.add('bw_collapse_show');
               collapse.style.maxHeight = 'none';
@@ -2055,10 +2182,10 @@ export function makeAccordion(props = {}) {
           }
         },
         closeAll: function(el) {
-          var items = el.querySelectorAll('.bw_accordion_item');
+          var items = el.querySelectorAll('.bw_bccl_accordion_item');
           for (var i = 0; i < items.length; i++) {
-            var collapse = items[i].querySelector('.bw_accordion_collapse');
-            var btn = items[i].querySelector('.bw_accordion_button');
+            var collapse = items[i].querySelector('.bw_bccl_accordion_collapse');
+            var btn = items[i].querySelector('.bw_bccl_accordion_button');
             if (collapse.classList.contains('bw_collapse_show')) {
               collapse.style.maxHeight = collapse.scrollHeight + 'px';
               collapse.offsetHeight;
@@ -2104,40 +2231,55 @@ export function makeModal(props = {}) {
     footer,
     size,
     closeButton = true,
+    closeLabel = 'Close',
     onClose,
+    open = false,
     className = ''
   } = props;
 
   function closeModal(el) {
-    var backdrop = el.closest('.bw_modal');
-    if (backdrop) {
-      backdrop.classList.remove('bw_modal_show');
-      document.body.style.overflow = '';
-    }
+    var backdrop = el.closest('.bw_bccl_modal');
+    if (!backdrop) backdrop = el;
+    // Restore focus to the element that was focused when the modal opened
+    var opener = backdrop._bw_opener || null;
+    backdrop.classList.remove('bw_bccl_modal_show');
+    backdrop.style.display = 'none';
+    document.body.style.overflow = '';
+    // Remove aria-modal when closed
+    var dialog = backdrop.querySelector('[aria-modal]');
+    if (dialog) dialog.removeAttribute('aria-modal');
+    if (opener && typeof opener.focus === 'function') opener.focus();
     if (onClose) onClose();
   }
 
   return {
     t: 'div',
-    a: { class: `bw_modal ${className}`.trim() },
+    a: {
+      class: `bw_bccl_modal ${open ? 'bw_bccl_modal_show' : ''} ${className}`.trim(),
+      style: open ? 'display:flex' : undefined
+    },
     c: {
       t: 'div',
-      a: { class: `bw_modal_dialog ${size ? 'bw_modal_' + size : ''}`.trim() },
+      a: {
+        class: `bw_bccl_modal_dialog ${size ? 'bw_bccl_modal_' + size : ''}`.trim(),
+        role: 'dialog',
+        'aria-modal': 'true'
+      },
       c: {
         t: 'div',
-        a: { class: 'bw_modal_content' },
+        a: { class: 'bw_bccl_modal_content' },
         c: [
           (title || closeButton) && {
             t: 'div',
-            a: { class: 'bw_modal_header' },
+            a: { class: 'bw_bccl_modal_header' },
             c: [
-              title && { t: 'h5', a: { class: 'bw_modal_title' }, c: title },
+              title && { t: 'h5', a: { class: 'bw_bccl_modal_title' }, c: title },
               closeButton && {
                 t: 'button',
                 a: {
                   type: 'button',
                   class: 'bw_close',
-                  'aria-label': 'Close',
+                  'aria-label': closeLabel,
                   onclick: function(e) { closeModal(e.target); }
                 },
                 c: '\u00D7'
@@ -2146,12 +2288,12 @@ export function makeModal(props = {}) {
           },
           content && {
             t: 'div',
-            a: { class: 'bw_modal_body' },
+            a: { class: 'bw_bccl_modal_body' },
             c: content
           },
           footer && {
             t: 'div',
-            a: { class: 'bw_modal_footer' },
+            a: { class: 'bw_bccl_modal_footer' },
             c: footer
           }
         ].filter(Boolean)
@@ -2161,25 +2303,36 @@ export function makeModal(props = {}) {
       type: 'modal',
       handle: {
         open: function(el) {
-          el.classList.add('bw_modal_show');
+          el._bw_opener = document.activeElement;
+          el.classList.add('bw_bccl_modal_show');
           el.style.display = 'flex';
+          var dialog = el.querySelector('[role="dialog"]');
+          if (dialog) dialog.setAttribute('aria-modal', 'true');
           document.body.style.overflow = 'hidden';
         },
         close: function(el) { closeModal(el); }
       },
       mounted: function(el) {
+        // Record the opener (the element that had focus when modal was mounted)
+        el._bw_opener = document.activeElement;
         // Click backdrop to close
         el.addEventListener('click', function(e) {
           if (e.target === el) closeModal(el);
         });
-        // Escape key to close
+        // Escape key to close — listen on the element and on the document
         var escHandler = function(e) {
-          if (e.key === 'Escape' && el.classList.contains('bw_modal_show')) {
+          if (e.key === 'Escape') {
             closeModal(el);
           }
         };
-        document.addEventListener('keydown', escHandler);
-        el._bw_escHandler = escHandler;
+        el.addEventListener('keydown', escHandler);
+        var docEscHandler = function(e) {
+          if (e.key === 'Escape' && (el.classList.contains('bw_bccl_modal_show') || el.style.display === 'flex')) {
+            closeModal(el);
+          }
+        };
+        document.addEventListener('keydown', docEscHandler);
+        el._bw_escHandler = docEscHandler;
       },
       unmount: function(el) {
         if (el._bw_escHandler) {
@@ -2225,13 +2378,13 @@ export function makeToast(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_toast ${variantClass(variant)} bw_toast_${position.replace(/-/g, '_')} ${className}`.trim(),
+      class: `bw_bccl_toast ${variantClass(variant)} bw_bccl_toast_${position.replace(/-/g, '_')} ${className}`.trim(),
       role: 'alert'
     },
     c: [
       (title) && {
         t: 'div',
-        a: { class: 'bw_toast_header' },
+        a: { class: 'bw_bccl_toast_header' },
         c: [
           { t: 'strong', c: title },
           {
@@ -2241,9 +2394,9 @@ export function makeToast(props = {}) {
               class: 'bw_close',
               'aria-label': 'Close',
               onclick: function(e) {
-                var toast = e.target.closest('.bw_toast');
+                var toast = e.target.closest('.bw_bccl_toast');
                 if (toast) {
-                  toast.classList.add('bw_toast_hiding');
+                  toast.classList.add('bw_bccl_toast_hiding');
                   setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
                 }
               }
@@ -2254,7 +2407,7 @@ export function makeToast(props = {}) {
       },
       content && {
         t: 'div',
-        a: { class: 'bw_toast_body' },
+        a: { class: 'bw_bccl_toast_body' },
         c: content
       }
     ].filter(Boolean),
@@ -2262,19 +2415,19 @@ export function makeToast(props = {}) {
       type: 'toast',
       handle: {
         dismiss: function(el) {
-          el.classList.add('bw_toast_hiding');
+          el.classList.add('bw_bccl_toast_hiding');
           setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
         }
       },
       mounted: function(el) {
         // Trigger show animation
         requestAnimationFrame(function() {
-          el.classList.add('bw_toast_show');
+          el.classList.add('bw_bccl_toast_show');
         });
         // Auto-dismiss
         if (autoDismiss) {
           setTimeout(function() {
-            el.classList.add('bw_toast_hiding');
+            el.classList.add('bw_bccl_toast_hiding');
             setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
           }, delay);
         }
@@ -2327,12 +2480,12 @@ export function makeDropdown(props = {}) {
     triggerTaco = {
       t: 'button',
       a: {
-        class: `bw_btn ${variantClass(variant)} bw_dropdown_toggle`,
+        class: `bw_bccl_btn ${variantClass(variant)} bw_bccl_dropdown_toggle`,
         type: 'button',
         onclick: function(e) {
-          var dropdown = e.target.closest('.bw_dropdown');
-          var menu = dropdown.querySelector('.bw_dropdown_menu');
-          menu.classList.toggle('bw_dropdown_show');
+          var dropdown = e.target.closest('.bw_bccl_dropdown');
+          var menu = dropdown.querySelector('.bw_bccl_dropdown_menu');
+          menu.classList.toggle('bw_bccl_dropdown_show');
         }
       },
       c: trigger || 'Dropdown'
@@ -2343,26 +2496,26 @@ export function makeDropdown(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_dropdown ${className}`.trim() },
+    a: { class: `bw_bccl_dropdown ${className}`.trim() },
     c: [
       triggerTaco,
       {
         t: 'div',
-        a: { class: `bw_dropdown_menu ${align === 'end' ? 'bw_dropdown_menu_end' : ''}`.trim() },
+        a: { class: `bw_bccl_dropdown_menu ${align === 'end' ? 'bw_bccl_dropdown_menu_end' : ''}`.trim() },
         c: items.map(function(item) {
           if (item.divider) {
-            return { t: 'hr', a: { class: 'bw_dropdown_divider' } };
+            return { t: 'hr', a: { class: 'bw_bccl_dropdown_divider' } };
           }
           return {
             t: 'a',
             a: {
-              class: `bw_dropdown_item ${item.disabled ? 'disabled' : ''}`.trim(),
+              class: `bw_bccl_dropdown_item ${item.disabled ? 'disabled' : ''}`.trim(),
               href: item.href || '#',
               onclick: item.disabled ? undefined : function(e) {
                 if (!item.href) e.preventDefault();
-                var dropdown = e.target.closest('.bw_dropdown');
-                var menu = dropdown.querySelector('.bw_dropdown_menu');
-                menu.classList.remove('bw_dropdown_show');
+                var dropdown = e.target.closest('.bw_bccl_dropdown');
+                var menu = dropdown.querySelector('.bw_bccl_dropdown_menu');
+                menu.classList.remove('bw_bccl_dropdown_show');
                 if (item.onclick) item.onclick(e);
               }
             },
@@ -2377,8 +2530,8 @@ export function makeDropdown(props = {}) {
         // Click outside to close
         var outsideHandler = function(e) {
           if (!el.contains(e.target)) {
-            var menu = el.querySelector('.bw_dropdown_menu');
-            if (menu) menu.classList.remove('bw_dropdown_show');
+            var menu = el.querySelector('.bw_bccl_dropdown_menu');
+            if (menu) menu.classList.remove('bw_bccl_dropdown_show');
           }
         };
         document.addEventListener('click', outsideHandler);
@@ -2425,13 +2578,13 @@ export function makeSwitch(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_form_check bw_form_switch ${className}`.trim() },
+    a: { class: `bw_bccl_form_check bw_bccl_form_switch ${className}`.trim() },
     c: [
       {
         t: 'input',
         a: {
           type: 'checkbox',
-          class: 'bw_form_check_input bw_switch_input',
+          class: 'bw_bccl_form_check_input bw_switch_input',
           role: 'switch',
           checked,
           id,
@@ -2442,7 +2595,7 @@ export function makeSwitch(props = {}) {
       },
       label && {
         t: 'label',
-        a: { class: 'bw_form_check_label', for: id },
+        a: { class: 'bw_bccl_form_check_label', for: id },
         c: label
       }
     ].filter(Boolean)
@@ -2477,7 +2630,7 @@ export function makeSkeleton(props = {}) {
     return {
       t: 'div',
       a: {
-        class: `bw_skeleton bw_skeleton_circle ${className}`.trim(),
+        class: `bw_bccl_skeleton bw_skeleton bw_skeleton_circle ${className}`.trim(),
         style: { width: circleSize, height: circleSize }
       }
     };
@@ -2487,7 +2640,7 @@ export function makeSkeleton(props = {}) {
     return {
       t: 'div',
       a: {
-        class: `bw_skeleton bw_skeleton_rect ${className}`.trim(),
+        class: `bw_bccl_skeleton bw_skeleton bw_skeleton_rect ${className}`.trim(),
         style: {
           width: width || '100%',
           height: height || '120px'
@@ -2501,7 +2654,7 @@ export function makeSkeleton(props = {}) {
     return {
       t: 'div',
       a: {
-        class: `bw_skeleton bw_skeleton_text ${className}`.trim(),
+        class: `bw_bccl_skeleton bw_skeleton bw_skeleton_text ${className}`.trim(),
         style: {
           width: width || '100%',
           height: height || '1em'
@@ -2526,7 +2679,7 @@ export function makeSkeleton(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_skeleton_group ${className}`.trim() },
+    a: { class: `bw_bccl_skeleton bw_skeleton_group ${className}`.trim() },
     c: lines
   };
 }
@@ -2561,7 +2714,7 @@ export function makeAvatar(props = {}) {
     return {
       t: 'img',
       a: {
-        class: `bw_avatar bw_avatar_${size} ${className}`.trim(),
+        class: `bw_bccl_avatar bw_avatar bw_avatar_${size} ${className}`.trim(),
         src: src,
         alt: alt
       }
@@ -2571,7 +2724,7 @@ export function makeAvatar(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_avatar bw_avatar_${size} ${variantClass(variant)} ${className}`.trim()
+      class: `bw_bccl_avatar bw_avatar bw_avatar_${size} ${variantClass(variant)} ${className}`.trim()
     },
     c: initials || ''
   };
@@ -2615,19 +2768,21 @@ export function makeCarousel(props = {}) {
     interval = 5000,
     height = '300px',
     startIndex = 0,
+    prevLabel = 'Previous slide',
+    nextLabel = 'Next slide',
     className = ''
   } = props;
 
   // Shared navigation logic
   function goToSlide(carouselEl, index) {
-    var total = carouselEl.querySelectorAll('.bw_carousel_slide').length;
+    var total = carouselEl.querySelectorAll('.bw_bccl_carousel_slide').length;
     if (index < 0) index = total - 1;
     if (index >= total) index = 0;
     carouselEl._bw_carouselIndex = index;
-    var track = carouselEl.querySelector('.bw_carousel_track');
+    var track = carouselEl.querySelector('.bw_bccl_carousel_track');
     track.style.transform = 'translateX(-' + (index * 100) + '%)';
     // Update indicators
-    var indicators = carouselEl.querySelectorAll('.bw_carousel_indicator');
+    var indicators = carouselEl.querySelectorAll('.bw_bccl_carousel_indicator');
     for (var i = 0; i < indicators.length; i++) {
       if (i === index) {
         indicators[i].classList.add('active');
@@ -2646,14 +2801,14 @@ export function makeCarousel(props = {}) {
       item.content,
       item.caption && {
         t: 'div',
-        a: { class: 'bw_carousel_caption' },
+        a: { class: 'bw_bccl_carousel_caption' },
         c: item.caption
       }
     ].filter(Boolean);
 
     return {
       t: 'div',
-      a: { class: 'bw_carousel_slide' },
+      a: { class: 'bw_bccl_carousel_slide' },
       c: slideContent.length === 1 ? slideContent[0] : slideContent
     };
   });
@@ -2663,7 +2818,7 @@ export function makeCarousel(props = {}) {
     {
       t: 'div',
       a: {
-        class: 'bw_carousel_track',
+        class: 'bw_bccl_carousel_track',
         style: 'transform: translateX(-' + (startIndex * 100) + '%)'
       },
       c: slides
@@ -2675,30 +2830,30 @@ export function makeCarousel(props = {}) {
     children.push({
       t: 'button',
       a: {
-        class: 'bw_carousel_control bw_carousel_control_prev',
+        class: 'bw_bccl_carousel_control bw_bccl_carousel_control_prev',
         type: 'button',
-        'aria-label': 'Previous slide',
+        'aria-label': prevLabel,
         onclick: function(e) {
-          var carousel = e.target.closest('.bw_carousel');
+          var carousel = e.target.closest('.bw_bccl_carousel');
           var idx = carousel._bw_carouselIndex || 0;
           goToSlide(carousel, idx - 1);
         }
       },
-      c: { t: 'img', a: { src: prevArrow, alt: '', role: 'presentation' } }
+      c: [{ t: 'img', a: { src: prevArrow, alt: '', role: 'presentation' } }, { t: 'span', a: { class: 'bw_visually_hidden' }, c: prevLabel }]
     });
     children.push({
       t: 'button',
       a: {
-        class: 'bw_carousel_control bw_carousel_control_next',
+        class: 'bw_bccl_carousel_control bw_bccl_carousel_control_next',
         type: 'button',
-        'aria-label': 'Next slide',
+        'aria-label': nextLabel,
         onclick: function(e) {
-          var carousel = e.target.closest('.bw_carousel');
+          var carousel = e.target.closest('.bw_bccl_carousel');
           var idx = carousel._bw_carouselIndex || 0;
           goToSlide(carousel, idx + 1);
         }
       },
-      c: { t: 'img', a: { src: nextArrow, alt: '', role: 'presentation' } }
+      c: [{ t: 'img', a: { src: nextArrow, alt: '', role: 'presentation' } }, { t: 'span', a: { class: 'bw_visually_hidden' }, c: nextLabel }]
     });
   }
 
@@ -2706,16 +2861,16 @@ export function makeCarousel(props = {}) {
   if (showIndicators && items.length > 1) {
     children.push({
       t: 'div',
-      a: { class: 'bw_carousel_indicators' },
+      a: { class: 'bw_bccl_carousel_indicators' },
       c: items.map(function(_, i) {
         return {
           t: 'button',
           a: {
-            class: 'bw_carousel_indicator' + (i === startIndex ? ' active' : ''),
+            class: 'bw_bccl_carousel_indicator' + (i === startIndex ? ' active' : ''),
             type: 'button',
             'aria-label': 'Go to slide ' + (i + 1),
             onclick: function(e) {
-              var carousel = e.target.closest('.bw_carousel');
+              var carousel = e.target.closest('.bw_bccl_carousel');
               goToSlide(carousel, i);
             }
           }
@@ -2727,7 +2882,7 @@ export function makeCarousel(props = {}) {
   return {
     t: 'div',
     a: {
-      class: ('bw_carousel ' + className).trim(),
+      class: ('bw_bccl_carousel ' + className).trim(),
       style: 'height: ' + height,
       tabindex: '0',
       'aria-roledescription': 'carousel'
@@ -2855,7 +3010,7 @@ export function makeStatCard(props = {}) {
   }
 
   var classes = [
-    'bw_stat_card',
+    'bw_bccl_statCard bw_stat_card',
     variantClass(variant),
     className
   ].filter(Boolean).join(' ').trim();
@@ -2943,13 +3098,13 @@ export function makeTooltip(props = {}) {
 
   return {
     t: 'span',
-    a: { class: ('bw_tooltip_wrapper ' + className).trim() },
+    a: { class: ('bw_bccl_tooltip_wrapper ' + className).trim() },
     c: [
       content,
       {
         t: 'span',
         a: {
-          class: 'bw_tooltip bw_tooltip_' + placement,
+          class: 'bw_bccl_tooltip bw_bccl_tooltip_' + placement,
           role: 'tooltip'
         },
         c: text
@@ -2958,18 +3113,18 @@ export function makeTooltip(props = {}) {
     o: {
       type: 'tooltip',
       mounted: function(el) {
-        var tip = el.querySelector('.bw_tooltip');
+        var tip = el.querySelector('.bw_bccl_tooltip');
         el.addEventListener('mouseenter', function() {
-          tip.classList.add('bw_tooltip_show');
+          tip.classList.add('bw_bccl_tooltip_show');
         });
         el.addEventListener('mouseleave', function() {
-          tip.classList.remove('bw_tooltip_show');
+          tip.classList.remove('bw_bccl_tooltip_show');
         });
         el.addEventListener('focusin', function() {
-          tip.classList.add('bw_tooltip_show');
+          tip.classList.add('bw_bccl_tooltip_show');
         });
         el.addEventListener('focusout', function() {
-          tip.classList.remove('bw_tooltip_show');
+          tip.classList.remove('bw_bccl_tooltip_show');
         });
       }
     }
@@ -3022,7 +3177,7 @@ export function makePopover(props = {}) {
 
   return {
     t: 'span',
-    a: { class: ('bw_popover_wrapper ' + className).trim() },
+    a: { class: ('bw_bccl_popover bw_popover_wrapper ' + className).trim() },
     c: [
       {
         t: 'span',
@@ -3106,13 +3261,13 @@ export function makeSearchInput(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_search_input ' + className).trim() },
+    a: { class: ('bw_bccl_searchInput bw_search_input ' + className).trim() },
     c: [
       {
         t: 'input',
         a: {
           type: 'search',
-          class: 'bw_form_control bw_search_field',
+          class: 'bw_bccl_form_control bw_search_field',
           placeholder: placeholder,
           value: value,
           id: id,
@@ -3249,7 +3404,7 @@ export function makeRange(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_range_wrapper ' + className).trim() },
+    a: { class: ('bw_bccl_range bw_range_wrapper ' + className).trim() },
     c: children,
     o: { type: 'range' }
   };
@@ -3310,7 +3465,7 @@ export function makeMediaObject(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_media ' + (reverse ? 'bw_media_reverse ' : '') + className).trim() },
+    a: { class: ('bw_bccl_mediaObject bw_media ' + (reverse ? 'bw_media_reverse ' : '') + className).trim() },
     c: reverse
       ? [bodyEl, imgEl].filter(Boolean)
       : [imgEl, bodyEl].filter(Boolean),
@@ -3353,7 +3508,7 @@ export function makeFileUpload(props = {}) {
   return {
     t: 'div',
     a: {
-      class: ('bw_file_upload ' + className).trim(),
+      class: ('bw_bccl_fileUpload bw_file_upload ' + className).trim(),
       tabindex: '0',
       role: 'button',
       'aria-label': text
@@ -3447,32 +3602,32 @@ export function makeTimeline(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_timeline ' + className).trim() },
+    a: { class: ('bw_bccl_timeline ' + className).trim() },
     c: items.map(function(item) {
       return {
         t: 'div',
-        a: { class: 'bw_timeline_item' },
+        a: { class: 'bw_bccl_timeline_item' },
         c: [
           {
             t: 'div',
-            a: { class: 'bw_timeline_marker ' + variantClass(item.variant || 'primary') }
+            a: { class: 'bw_bccl_timeline_marker ' + variantClass(item.variant || 'primary') }
           },
           {
             t: 'div',
-            a: { class: 'bw_timeline_content' },
+            a: { class: 'bw_bccl_timeline_content' },
             c: [
               item.date && {
                 t: 'div',
-                a: { class: 'bw_timeline_date' },
+                a: { class: 'bw_bccl_timeline_date' },
                 c: item.date
               },
               item.title && {
                 t: 'h5',
-                a: { class: 'bw_timeline_title' },
+                a: { class: 'bw_bccl_timeline_title' },
                 c: item.title
               },
               item.content && (typeof item.content === 'string'
-                ? { t: 'p', a: { class: 'bw_timeline_text' }, c: item.content }
+                ? { t: 'p', a: { class: 'bw_bccl_timeline_text' }, c: item.content }
                 : item.content)
             ].filter(Boolean)
           }
@@ -3517,7 +3672,7 @@ export function makeStepper(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_stepper ' + className).trim(), role: 'list' },
+    a: { class: ('bw_bccl_stepper bw_stepper ' + className).trim(), role: 'list' },
     c: steps.map(function(step, index) {
       var state = index < currentStep ? 'completed' : index === currentStep ? 'active' : 'pending';
       return {
@@ -3606,7 +3761,7 @@ export function makeChipInput(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_chip_input ' + className).trim() },
+    a: { class: ('bw_bccl_chipInput bw_chip_input ' + className).trim() },
     c: [
       ...chips.map(makeChipEl),
       {

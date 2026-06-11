@@ -3,9 +3,9 @@
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-export const VERSION = '2.0.32';
+export const VERSION = '2.1.0';
 export const VERSION_INFO = {
-  version: '2.0.32',
+  version: '2.1.0',
   name: 'bitwrench',
   description: 'A library for javascript UI functions.',
   license: 'BSD-2-Clause',
