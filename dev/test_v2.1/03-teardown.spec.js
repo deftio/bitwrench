@@ -121,6 +121,22 @@ describe("03.3 moves vs reaps — timing pinned (§2.1) @browser", function () {
   });
 });
 
+describe("03.3a the reaped-reinserted tripwire (§2.1 rev 19, Aggy-2 harmonized)", function () {
+  it("reinserting a reaped husk diags reaped_reinserted naming bw.detach — deterministic, no grace window", function () {
+    const el = mountSensor();
+    el.remove();                        // rude
+    flush(bw);                          // reaped: husk now inert (by design — strict timing KEPT)
+    const { codes, stop } = collectDiag(bw);
+    app().appendChild(el);              // the developer's async move lands too late
+    flush(bw);
+    stop();
+    assert.ok(codes.indexOf("reaped_reinserted") !== -1,
+      "the silent husk becomes a diagnosed husk with the fix named");
+    // and the tripwire changed nothing about reap semantics:
+    assert.strictEqual(el.bw, undefined, "still a husk — the tripwire warns, it does not resurrect");
+  });
+});
+
 describe("03.4 detach — the sanctioned exception (§2.1)", function () {
   it("detached element survives flush; reinsert clears exemption; NEXT rude remove reaps", function () {
     const log = [];

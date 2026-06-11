@@ -1,6 +1,21 @@
 # Bitwrench 2.1.x — Lifecycle Spec of Record
 
-**Date**: 2026-06-09 (rev 18 — Manu's seven-point pass + outside-dev
+**Date**: 2026-06-09 (rev 20 — pre-flight per Manu: implementation brief
+de-numbered (counts/revs rot — docs' own headers are authoritative);
+browser-tier gate list created in suite README (double-load ×2, Path S
+closure behavioral, TT boundary, janitor-authoritative, focus, axe, GC);
+Trusted Types upgraded from documented limitation to VERIFIED boundary
+test; `DECISIONS.md` created ahead of the first agent.
+rev 19 — Aggy's review harmonized: Path S closure
+gap gets ENFORCEMENT (render-time `fn_unserializable` for detectable
+cases + binder runtime wrap naming the fix); janitor stays
+strict-deterministic but gains the `reaped_reinserted` tripwire (grace
+window REJECTED — converts a diagnosable failure into a heisenbug);
+act payload gains `owner:{uuid,type}` (auto-prefixed topics REJECTED —
+position-dependent routing breaks the wire contract); double-load guard
+gets a version matrix (mismatch = refuse loudly + explanatory throw,
+never silent alias, never hot-overwrite).
+rev 18 — Manu's seven-point pass + outside-dev
 misses folded: §2.2 environment guards (light-DOM stance, double_load
 guard, Trusted Types boundary); §2.3 bw.el resolution order pinned;
 compounds-call-atomics now mechanically enforced by a spy test; blessed
@@ -412,16 +427,32 @@ registry object. Rules:
     function attributes are **skipped with one warning** — a bare
     fragment has nowhere to put code.
 
-  **The honest caveat (documented, not hidden)**:
+  **The honest caveat — now ENFORCED at both ends (rev 19, Aggy-1)**:
   `Function.toString()` serializes *source, not closures*. A handler that
   closes over a variable emits code that references a binding which won't
   exist in the target page. Rule: **serialized handlers must be
   self-contained** — they may use their `event` argument, the DOM, `bw.*`
   globals, and anything else the target page defines; they may not rely
-  on captured variables. (This is undetectable statically in general, so
-  it's a documented contract, not a lint.) Handlers that need closure
-  state belong on Path L — or use `bw_act_*` classes, which serialize as
-  pure data and have no closure problem at all.
+  on captured variables. Closure capture is undetectable statically in
+  the general case (so no blanket throw — that would also break
+  legitimate self-contained handlers), but the contract gets teeth at
+  the two points where violation IS detectable:
+
+  1. **Render time**: functions whose source can't serialize at all —
+     `[native code]`, bound functions — are skipped with a
+     `fn_unserializable` diag naming the element. Detectable = enforced.
+  2. **Runtime, in the emitted page**: the binder script wraps every
+     bound handler; a thrown `ReferenceError` produces a pointed
+     console.error — "handler bw_fn_N references a variable that did not
+     survive serialization; use a self-contained handler or a `bw_act_*`
+     class" — plus a `fn_unserializable` diag when bw is loaded. Aggy's
+     "fails silently" becomes "fails naming its own fix," which is the
+     best achievable for an undetectable-until-invoked defect.
+
+  Docs nudge (per Aggy, §16 workstream rule): htmlPage documentation
+  leads with `bw_act_*` as the recommended serializable interactivity;
+  function serialization is presented as the power tool with the
+  self-containment contract stated beside it.
 - String `onclick="..."` attributes pass through untouched (author's
   explicit choice, escaped like any attribute value elsewhere).
 
@@ -548,6 +579,23 @@ embedded dashboards), `bw.janitor.start({interval: ms})` enables an
 optional heartbeat that walks the registry checking `isConnected` —
 available, off by default, and the spec tests must pass with it off.
 
+**The reaped-reinserted tripwire (rev 19, Aggy-2 harmonized).** Aggy's
+concern: async libraries and adapters hide microtask scheduling, so the
+"async boundary = use detach" rule WILL be violated by developers who
+never read it, producing a silent dead husk. Her proposed remedy — a
+grace window (rAF/setTimeout) — is **rejected**: it converts a
+deterministic, immediately-diagnosable failure into a timing-dependent
+one (the element survives if reinsertion lands inside the window and
+dies if the frame is busy — a heisenbug), and opens an unobserved-
+garbage window for everything genuinely removed. The accepted remedy
+keeps strict timing and flags the exact mistake instead: the janitor
+keeps a **WeakSet of recently-reaped elements** (weak — zero retention);
+when an observer add-record contains one, it diags
+`reaped_reinserted` — "this element was reaped before reinsertion;
+async moves require `bw.detach`." The silent husk becomes a diagnosed
+husk with the fix named, deterministically, with no change to reap
+semantics or the timing tests.
+
 **Testability**: MutationObserver callbacks are asynchronous, so the
 janitor exposes **`bw.janitor.flush()`** — synchronously process all
 pending removal records (the observer's `takeRecords()` + sweep). Every
@@ -584,18 +632,39 @@ Three places where "the DOM is the registry" silently assumes things;
   explicit non-goal for 2.1** (revisit on demand with per-root observers
   + scoped registries). `mountTree` on a node whose root is a shadow
   root warns `shadow_root` and proceeds best-effort.
-- **Single instance, guarded.** Two copies of bw on one page (CDN script
-  + a widget bundle — common) would mean two registries, two janitors,
-  and **double action dispatch**. On boot, bw checks
-  `window.__bitwrench`: if present, the second copy warns `double_load`,
-  aliases itself to the first instance, and initializes nothing.
-- **Trusted Types: documented boundary.** Under
+- **Single instance, guarded — with a version matrix (rev 19, Aggy-4;
+  the flat alias was a real hole).** Two copies of bw on one page (CDN
+  script + a widget bundle — common) would mean two registries, two
+  janitors, and **double action dispatch**. On boot, bw checks
+  `window.__bitwrench` (which carries `{version}`):
+  - **Same version present** → the second copy warns `double_load`,
+    aliases itself to the first instance, initializes nothing. Benign
+    duplicate.
+  - **Different version present — or a version-less occupant (2.0.x
+    predates the guard)** → `double_load_conflict`: console.error naming
+    both versions, and the second copy **refuses to initialize** — its
+    API surface throws an explanatory error on first use ("bitwrench
+    2.1.0 loaded after 2.0.32 — remove one script"). It never silently
+    aliases (the flat-alias trap: code written for 2.1 verbs gets bare
+    TypeErrors against a 2.0 instance with no hint why), and it never
+    hot-overwrites the incumbent (components already mounted by the
+    first instance would be orphaned mid-page with live state on dead
+    machinery — worse than refusing). Early, named failure is the only
+    safe square in that matrix.
+  - Verified in the **browser tier** (karma page loading the UMD bundle
+    twice, plus once after a fake version-less global) — boot-time
+    double-load is not honestly simulatable in the ESM jsdom suite.
+- **Trusted Types: VERIFIED boundary (rev 20 — was docs-only; Manu asked
+  for the call to be explicit, and a tested boundary beats a documented
+  hope for one Playwright page of cost).** Under
   `require-trusted-types-for 'script'`, every innerHTML assignment
   throws — which hits `bw.raw()` and the raw-fragment create path. 2.1
-  documents this as a limitation in `docs/security.md` (raw content is
-  incompatible with TT-strict pages; everything else — createElement,
-  textContent, setAttribute — is TT-clean). A
-  `bw.config.trustedTypesPolicy` hook is the additive future fix.
+  documents this in `docs/security.md` AND proves it browser-tier
+  (README "Browser-tier gates" #5): under TT-strict CSP, non-raw
+  create/mount/patch/actions all work, and `bw.raw()` paths fail
+  *predictably* with the documented error — the limitation is confined
+  exactly where the docs say it is. A `bw.config.trustedTypesPolicy`
+  hook remains the additive future fix.
 
 ### 2.3 `bw.el(ref)` resolution order (rev 18 — pinned; it was load-bearing and undefined)
 
@@ -1060,15 +1129,27 @@ actions with zero setup:
 4. **preventDefault policy**: links (`a[href]`) and form `submit` →
    prevented (and native submit stopped); buttons and inputs → not
    prevented.
-5. **Payload**: `{ action, value, name?, ref, form? }` — `value` from
-   the element where applicable, `name` from its `name` attribute,
+5. **Payload**: `{ action, value, name?, ref, form?, owner }` — `value`
+   from the element where applicable, `name` from its `name` attribute,
    `form: bw.formData(formEl)` included on form submit (the `{action,
    value, ref}` triple alone is too thin for internal-tool forms —
-   G5.5 catch).
+   G5.5 catch). **`owner` (rev 19, Aggy-3 harmonized)**: the nearest
+   component ancestor, `{uuid, type}` (type null if untyped), or `null`
+   when there is none — resolved once by the dispatcher so handlers
+   never DOM-walk to learn which component instance an action came
+   from. Aggy's alternative — auto-prefixing the *topic* with the
+   ancestor type (`act:<parentType>:<action>`) — is **rejected**: it
+   doesn't disambiguate instances (still needs ref), and it makes the
+   topic name position-dependent — rewrapping a button silently changes
+   its routing, and the server's `client.on(name)` would have to know
+   the client's DOM nesting. Topics stay flat names-as-data; ownership
+   is payload. (Same-name actions sharing a topic is frequently the
+   point: a column of delete buttons SHOULD all be `act:delete` with
+   `ref`/`owner` distinguishing rows — that's delegation working.)
 6. **`ref` priority**: element's UUID, else its `id`, else `null` —
    never auto-assigned (the dispatcher must not mutate server markup).
-7. **Wire shape**: POST `{v:1, type:'event', action, value, name?,
-   form?, ref}` to the bwserve event endpoint; server handles via
+7. **Wire shape**: `bw.remote.send({v:1, type:'event', action, value,
+   name?, form?, ref, owner})` — server handles via
    `client.on(action, fn)`. Both sides are in the test contract.
 8. **Installer is idempotent**; `bw.actions.enable()/disable()` are
    duplicate-listener safe (tested).
@@ -1374,8 +1455,11 @@ added deliberately).
    | `scope_rejected` | complex/comma themed scope (CSS-7) |
    | `css_reserved_id` | user injectCSS with a `bw_style_*` id (CSS spec §1) |
    | `contrast_aa` | palette seeds produce a failing AA pair (§6) |
-   | `double_load` | second bw instance detected on the page; aliased to the first (§2.2) |
+   | `double_load` | second bw instance, SAME version: aliased to the first (§2.2) |
+   | `double_load_conflict` | second bw instance, DIFFERENT/unknown version: refused, API throws explanatorily (§2.2, rev 19) |
    | `shadow_root` | mountTree target lives in a shadow root — unsupported in 2.1 (§2.2) |
+   | `fn_unserializable` | Path S handler can't survive serialization — render-time (native/bound fn) or runtime (binder caught a ReferenceError) (§1.4, rev 19) |
+   | `reaped_reinserted` | a janitor-reaped element was later reinserted — async move without `bw.detach` (§2.1, rev 19) |
 
    Codes are append-only once shipped; renaming one is a breaking change.
 

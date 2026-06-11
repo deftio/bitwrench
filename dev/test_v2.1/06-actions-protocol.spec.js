@@ -154,8 +154,33 @@ describe("06.1 action dispatch mechanics (§5.4 items 1–6)", function () {
 
     assert.deepStrictEqual(posts, [{
       v: 1, type: "event", action: "threshold", value: "7",
-      name: "threshold", ref: null
+      name: "threshold", ref: null, owner: null
     }]);
+  });
+
+  it("payload carries owner {uuid,type} from the nearest component; topics stay FLAT (rev 19, Aggy-3)", function () {
+    const card = bw.mount(app(), makeSensorTaco());
+    bw.append(card, { t: "button", a: { class: "bw_act_close" }, c: "x" });
+    const topics = [];
+    const stop = bw.sub("act:*", function (d, topic) { topics.push({ topic: topic, d: d }); });
+    card.querySelector(".bw_act_close").dispatchEvent(
+      new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+    stop();
+    assert.strictEqual(topics.length, 1);
+    assert.strictEqual(topics[0].topic, "act:close",
+      "auto-prefixed topics REJECTED — position-dependent routing breaks the wire contract");
+    assert.strictEqual(topics[0].d.owner.type, "sensor-card",
+      "ownership is payload, not topic: handlers never DOM-walk");
+    assert.strictEqual(topics[0].d.owner.uuid, bw.getUUID(card));
+  });
+
+  it("owner is null for an actionable element with no component ancestor", function () {
+    const el = bw.mount(app(), { t: "button", a: { class: "bw_act_lonely" }, c: "x" });
+    const acts = [];
+    const stop = bw.sub("act:lonely", function (d) { acts.push(d); });
+    el.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+    stop();
+    assert.strictEqual(acts[0].owner, null);
   });
 });
 

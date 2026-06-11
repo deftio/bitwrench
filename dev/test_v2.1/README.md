@@ -21,6 +21,7 @@ enumerates files explicitly, so CI cannot pick these up by accident).
 | `02-operations.spec.js` | §1.2 compounds + §3 tiers, errors, state surface | written |
 | `03-teardown.spec.js` | §2.1 matrix + janitor + detach timing | written; timing cases tagged @browser |
 | `04-identity.spec.js` | §3.2 UUID honor/collision/refs-re-key/plain nodes/ids | written |
+| `04b-lifecycle-hardening.spec.js` | reentrancy, half-born arming, orphaned detach, exact-order pins, end-to-end zero-residue | written; **Phase 1, gated with 01–04** — the auditor cases |
 | `05-syncchildren.spec.js` | §4 keyed children | written; focus cases tagged @browser |
 | `06-actions-protocol.spec.js` | §5.4 mechanics 1–8 + §5.1/5.2 wire + §5.3 threat model | written |
 | `07-path-s.spec.js` | §1.4 string path, fn registry, CSP walk, adoption + parity | written |
@@ -86,6 +87,36 @@ These tests are structured to validate the main 2.1 bets:
   global function leaks.
 - CSS/theming is deterministic data output with scoped side effects, not a set
   of ad hoc DOM writes.
+
+## Browser-tier gates (Phase 4 — Playwright/karma; jsdom green is the per-package bar)
+
+The authoritative pass for `@browser`/`@gc` cases, plus behaviors that
+cannot be honestly simulated in an ESM jsdom suite. Each is a release
+gate, not a package gate:
+
+1. **Janitor timing, authoritative** — the §2.1 sync/microtask/timer
+   matrix on a real event loop (jsdom runs it; the browser pass decides).
+2. **Double-load, same version** — UMD bundle loaded twice on one page →
+   one `double_load` diag, ONE active instance, registries not duplicated,
+   and a `bw_act_*` click dispatches **exactly once**.
+3. **Double-load, conflict** — a version-less fake `window.__bitwrench`
+   (2.0.x-shaped) present before the bundle → `double_load_conflict` +
+   console.error naming both versions; second copy's API throws the
+   explanatory error on first use; the incumbent is untouched.
+4. **Path S closure failure, behavioral** — real `htmlPage` output served;
+   click a handler that references missing closure state → console
+   carries the guidance message (names `bw_act_*` as the fix); page does
+   not break otherwise. (jsdom holds the structural pin; this proves the
+   developer actually sees it.)
+5. **Trusted Types boundary** (decided: boundary TEST, not docs-only) —
+   page served with `require-trusted-types-for 'script'`: non-raw
+   create/mount/patch/actions all work; `bw.raw()` paths fail
+   *predictably* with the documented error. Verifies the limitation is
+   confined exactly where security.md says it is.
+6. **syncChildren focus preservation** — real focus across reorders.
+7. **Modal focus trap / Esc / focus-return** (§6 row).
+8. **axe-core floor** — full component gallery, zero criticals (§6).
+9. **GC smoke** — `node --expose-gc` run of package 11.
 
 ## Run
 

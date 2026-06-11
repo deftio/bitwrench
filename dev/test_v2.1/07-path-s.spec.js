@@ -38,6 +38,31 @@ describe("07.1 bw.html — pure, identity-stamping (§1.4)", function () {
     assert.strictEqual(codes.filter(c => c === "fn_skipped").length, 1, "warn once per render");
   });
 
+  it("detectably-unserializable handlers (bound/native) → fn_unserializable diag + skipped (rev 19, Aggy-1)", function () {
+    const fns = {};
+    const bound = function (x) { return x; }.bind(null, 1);   // toString → '[native code]'
+    const { codes, stop } = collectDiag(bw);
+    const out = bw.html({ t: "div", c: [
+      { t: "button", a: { onclick: bound }, c: "broken" },
+      { t: "button", a: { onclick: function () {} }, c: "fine" }
+    ]}, { fns: fns });
+    stop();
+    assert.ok(codes.indexOf("fn_unserializable") !== -1, "detectable = enforced at render time");
+    assert.strictEqual(Object.keys(fns).length, 1, "the serializable sibling still registers");
+    assert.ok(out.indexOf("onclick=") === -1);
+  });
+
+  it("the emitted binder wraps handlers: a runtime ReferenceError names the fix (rev 19, Aggy-1)", function () {
+    // Closure capture is undetectable until invoked; the binder converts the
+    // resulting ReferenceError into guidance instead of a silent mystery.
+    // Structural pin (the behavioral version runs in the browser tier):
+    const htmlStr = bw.htmlPage({ body: { t: "div", c: [
+      { t: "button", a: { onclick: function () {} }, c: "x" }
+    ]}});
+    assert.ok(/catch/.test(htmlStr) && /bw_act/.test(htmlStr),
+      "binder source carries the try/catch and the bw_act_* guidance string");
+  });
+
   it("with {fns}: caller registry filled; elements get bw_fn_* MARKER CLASSES, no inline on*", function () {
     const fns = {};
     const shared = function () {};
