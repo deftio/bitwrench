@@ -267,6 +267,7 @@ export function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
     startSpot = (startSpot + 1) % lorem.length;
     skippedChars++;
     // Prevent infinite loop in case entire lorem is spaces/punctuation
+    /* c8 ignore next -- lorem text always contains letters; this is a defensive guard */
     if (skippedChars >= lorem.length) {
       startSpot = 0;
       skippedChars = 0;
@@ -297,6 +298,7 @@ export function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
   // Ensure capital letter at start if requested
   if (startWithCapitalLetter) {
     let c = result[0].toUpperCase();
+    /* c8 ignore next -- while loop at L266 skips past non-letters, so first char is always a letter */
     c = /[A-Z]/.test(c) ? c : "L";  // Use "L" as default if first char isn't a letter
     result = c + result.substring(1);
   }
@@ -363,7 +365,9 @@ export function naturalCompare(as, bs) {
   }
 
   // Split into chunks of digits/non-digits
+  /* c8 ignore next -- match always succeeds for strings that pass the digit check above */
   const aParts = a.match(/(\d+|\D+)/g) || [];
+  /* c8 ignore next -- match always succeeds for strings that pass the digit check above */
   const bParts = b.match(/(\d+|\D+)/g) || [];
 
   const len = Math.min(aParts.length, bParts.length);

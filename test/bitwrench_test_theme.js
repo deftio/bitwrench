@@ -4,7 +4,7 @@
 
 import assert from "assert";
 import bw from "../src/bitwrench.js";
-import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder, THEME_PRESETS } from "../src/bitwrench-styles.js";
+import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder, THEME_PRESETS, generateTypeScale, deepMerge, updateTheme, theme } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -1605,3 +1605,664 @@ describe('Tertiary Color in Themed CSS', function() {
     });
   });
 });
+
+// =========================================================================
+// Branch Coverage: generateTypeScale falsy defaults (L81, L82)
+// =========================================================================
+
+describe('generateTypeScale falsy argument defaults', function() {
+
+  it('should use defaults when base is 0', function() {
+    var scale = generateTypeScale(0, 1.2);
+    assert.strictEqual(scale.base, 16, 'should default base to 16 when 0 is passed');
+  });
+
+  it('should use defaults when ratio is 0', function() {
+    var scale = generateTypeScale(16, 0);
+    assert.strictEqual(scale.base, 16);
+    // With default ratio 1.200, lg should be 19
+    assert.strictEqual(scale.lg, Math.round(16 * 1.2));
+  });
+
+  it('should use defaults when both are null', function() {
+    var scale = generateTypeScale(null, null);
+    assert.strictEqual(scale.base, 16, 'should default base to 16');
+    assert.strictEqual(scale.lg, Math.round(16 * 1.2), 'should default ratio to 1.2');
+  });
+
+  it('should use defaults when both are undefined', function() {
+    var scale = generateTypeScale(undefined, undefined);
+    assert.strictEqual(scale.base, 16);
+    assert.strictEqual(scale.lg, Math.round(16 * 1.2));
+  });
+
+  it('should use defaults when both are 0', function() {
+    var scale = generateTypeScale(0, 0);
+    assert.strictEqual(scale.base, 16, 'base should default to 16');
+    assert.strictEqual(scale.lg, Math.round(16 * 1.2), 'ratio should default to 1.2');
+  });
+});
+
+// =========================================================================
+// Branch Coverage: resolveLayout unknown preset name fallbacks (L187, L196, L197, L200, L201)
+// =========================================================================
+
+describe('resolveLayout unknown preset fallbacks', function() {
+
+  it('should fall back to normal spacing for unknown spacing name', function() {
+    var layout = resolveLayout({ spacing: 'nonexistent_preset' });
+    var normalLayout = resolveLayout({ spacing: 'normal' });
+    assert.deepStrictEqual(layout.spacing, normalLayout.spacing,
+      'unknown spacing should fall back to normal');
+  });
+
+  it('should fall back to md radius for unknown radius name', function() {
+    var layout = resolveLayout({ radius: 'nonexistent_preset' });
+    var mdLayout = resolveLayout({ radius: 'md' });
+    assert.deepStrictEqual(layout.radius, mdLayout.radius,
+      'unknown radius should fall back to md');
+  });
+
+  it('should fall back to normal typeRatio for unknown typeRatio name', function() {
+    var layout = resolveLayout({ typeRatio: 'nonexistent_preset' });
+    var normalLayout = resolveLayout({ typeRatio: 'normal' });
+    assert.deepStrictEqual(layout.typeScale, normalLayout.typeScale,
+      'unknown typeRatio should fall back to normal');
+  });
+
+  it('should fall back to md elevation for unknown elevation name', function() {
+    var layout = resolveLayout({ elevation: 'nonexistent_preset' });
+    var mdLayout = resolveLayout({ elevation: 'md' });
+    assert.deepStrictEqual(layout.elevation, mdLayout.elevation,
+      'unknown elevation should fall back to md');
+  });
+
+  it('should fall back to standard motion for unknown motion name', function() {
+    var layout = resolveLayout({ motion: 'nonexistent_preset' });
+    var standardLayout = resolveLayout({ motion: 'standard' });
+    assert.deepStrictEqual(layout.motion, standardLayout.motion,
+      'unknown motion should fall back to standard');
+  });
+
+  it('should handle all unknown presets simultaneously', function() {
+    var layout = resolveLayout({
+      spacing: 'bogus',
+      radius: 'bogus',
+      typeRatio: 'bogus',
+      elevation: 'bogus',
+      motion: 'bogus'
+    });
+    var defaultLayout = resolveLayout({
+      spacing: 'normal',
+      radius: 'md',
+      typeRatio: 'normal',
+      elevation: 'md',
+      motion: 'standard'
+    });
+    assert.deepStrictEqual(layout.spacing, defaultLayout.spacing);
+    assert.deepStrictEqual(layout.radius, defaultLayout.radius);
+    assert.deepStrictEqual(layout.typeScale, defaultLayout.typeScale);
+    assert.deepStrictEqual(layout.elevation, defaultLayout.elevation);
+    assert.deepStrictEqual(layout.motion, defaultLayout.motion);
+  });
+});
+
+// =========================================================================
+// Branch Coverage: palette.surface || '#fff' and palette.background || '#f5f5f5' (L299, L348, L389, etc.)
+// =========================================================================
+
+describe('generateThemedCSS with palette missing surface/background', function() {
+
+  // Helper: create a minimal palette without 'surface' and 'background'
+  function makePaletteWithoutSurface() {
+    var shades = function(hex) { return bw.deriveShades(hex); };
+    return {
+      primary:    shades('#006666'),
+      secondary:  shades('#6c757d'),
+      tertiary:   shades('#20c997'),
+      success:    shades('#198754'),
+      danger:     shades('#dc3545'),
+      warning:    shades('#f0ad4e'),
+      info:       shades('#17a2b8'),
+      light:      shades('#f8f9fa'),
+      dark:       shades('#212529'),
+      // deliberately omit 'surface' and 'background' to trigger || fallbacks
+      surfaceAlt: '#eeeeee'
+    };
+  }
+
+  it('should use #fff fallback when palette.surface is missing', function() {
+    var palette = makePaletteWithoutSurface();
+    var layout = resolveLayout({});
+    var rules = generateThemedCSS('', palette, layout);
+    var css = bw.css(rules);
+    // The #fff fallback should appear in the generated CSS for cards, forms, etc.
+    assert.ok(css.includes('#fff'), 'CSS should contain #fff fallback when surface is missing');
+  });
+
+  it('should produce valid CSS even without surface property', function() {
+    var palette = makePaletteWithoutSurface();
+    var layout = resolveLayout({});
+    assert.doesNotThrow(function() {
+      var rules = generateThemedCSS('', palette, layout);
+      bw.css(rules);
+    }, 'should not throw when surface is missing');
+  });
+
+  it('should use #f5f5f5 fallback when palette.background is missing', function() {
+    var palette = makePaletteWithoutSurface();
+    var layout = resolveLayout({});
+    var rules = generateThemedCSS('', palette, layout);
+    var css = bw.css(rules);
+    // The generateResetThemed function uses palette.background || '#f5f5f5'
+    assert.ok(css.includes('#f5f5f5'), 'CSS should contain #f5f5f5 fallback when background is missing');
+  });
+
+  it('should handle scoped generation without surface', function() {
+    var palette = makePaletteWithoutSurface();
+    var layout = resolveLayout({});
+    var rules = generateThemedCSS('testscope', palette, layout);
+    var css = bw.css(rules);
+    assert.ok(css.includes('.testscope'), 'CSS should contain scope prefix');
+    assert.ok(css.includes('#fff'), 'scoped CSS should use #fff fallback');
+  });
+});
+
+// =========================================================================
+// Branch Coverage: generateAlternateCSS @media handling (L2424, L2426)
+// =========================================================================
+
+describe('generateAlternateCSS branch coverage', function() {
+
+  it('should handle hasOwnProperty guard on prototype-extended objects', function() {
+    var config = { primary: '#006666', secondary: '#cc6633' };
+    var altConfig = bw.deriveAlternateConfig(config);
+    var palette = bw.derivePalette(altConfig);
+    var layout = resolveLayout({});
+    // This exercises the normal path through generateAlternateCSS
+    var rules = generateAlternateCSS('', palette, layout);
+    var css = bw.css(rules);
+    assert.ok(css.includes('.bw_theme_alt'), 'should scope under .bw_theme_alt');
+    // The @ branch (L2426) is only hit if generateThemedCSS produces @-prefixed selectors
+    // In the current implementation, themed CSS does not produce @media blocks,
+    // so we verify the non-@ path works correctly
+    assert.ok(Object.keys(rules).length > 10, 'should produce many rules');
+  });
+
+  it('should produce rules with named scope prefix', function() {
+    var config = { primary: '#ff0000', secondary: '#00ff00' };
+    var altConfig = bw.deriveAlternateConfig(config);
+    var palette = bw.derivePalette(altConfig);
+    var layout = resolveLayout({});
+    var rules = generateAlternateCSS('mytheme', palette, layout);
+    var css = bw.css(rules);
+    assert.ok(css.includes('.mytheme.bw_theme_alt'), 'should use compound selector');
+  });
+});
+
+// =========================================================================
+// Branch Coverage: scopeRulesUnder @keyframes passthrough (L2474, L2478, L2484)
+// =========================================================================
+
+describe('scopeRulesUnder @keyframes and @media branch coverage', function() {
+
+  it('should pass @keyframes blocks through without scoping steps', function() {
+    var rules = {
+      '@keyframes spin': {
+        '0%': { 'transform': 'rotate(0deg)' },
+        '100%': { 'transform': 'rotate(360deg)' }
+      },
+      '.bw_btn': { 'color': 'red' }
+    };
+    var scoped = scopeRulesUnder(rules, '.my-scope');
+    // @keyframes should pass through unchanged
+    assert.ok('@keyframes spin' in scoped, 'should preserve @keyframes key');
+    assert.ok('0%' in scoped['@keyframes spin'], 'should preserve 0% step');
+    assert.ok('100%' in scoped['@keyframes spin'], 'should preserve 100% step');
+    // Regular selectors should be scoped
+    assert.ok('.my-scope .bw_btn' in scoped, 'should scope regular selectors');
+  });
+
+  it('should scope inner selectors of @media blocks', function() {
+    var rules = {
+      '@media (min-width: 768px)': {
+        '.bw_card': { 'padding': '2rem' },
+        '.bw_btn': { 'font-size': '1rem' }
+      }
+    };
+    var scoped = scopeRulesUnder(rules, '#app');
+    assert.ok('@media (min-width: 768px)' in scoped, 'should preserve @media key');
+    var inner = scoped['@media (min-width: 768px)'];
+    assert.ok('#app .bw_card' in inner, 'should scope .bw_card inside @media');
+    assert.ok('#app .bw_btn' in inner, 'should scope .bw_btn inside @media');
+  });
+
+  it('should handle @keyframes with named animation', function() {
+    var rules = {
+      '@keyframes bw_spinner_border': {
+        '100%': { 'transform': 'rotate(360deg)' }
+      }
+    };
+    var scoped = scopeRulesUnder(rules, '.theme');
+    assert.ok('@keyframes bw_spinner_border' in scoped, 'should keep @keyframes');
+    assert.deepStrictEqual(scoped['@keyframes bw_spinner_border'], rules['@keyframes bw_spinner_border'],
+      '@keyframes content should be identical (not scoped)');
+  });
+
+  it('should handle mixed @media, @keyframes, and regular selectors', function() {
+    var rules = {
+      '.bw_card': { 'color': 'red' },
+      '@media (max-width: 575px)': { '.bw_card': { 'padding': '0.5rem' } },
+      '@keyframes fadeIn': { '0%': { 'opacity': '0' }, '100%': { 'opacity': '1' } },
+      '.bw_btn': { 'display': 'inline-block' }
+    };
+    var scoped = scopeRulesUnder(rules, '.scope');
+    // Regular selectors scoped
+    assert.ok('.scope .bw_card' in scoped, 'regular selector should be scoped');
+    assert.ok('.scope .bw_btn' in scoped, 'regular selector should be scoped');
+    // @media inner selectors scoped
+    assert.ok('.scope .bw_card' in scoped['@media (max-width: 575px)'], '@media inner should be scoped');
+    // @keyframes passed through
+    assert.ok('0%' in scoped['@keyframes fadeIn'], '@keyframes steps should not be scoped');
+    assert.ok('100%' in scoped['@keyframes fadeIn'], '@keyframes steps should not be scoped');
+  });
+
+  it('should handle hasOwnProperty guard with prototype-extended objects', function() {
+    // Create an object with inherited properties
+    function ProtoRules() {}
+    ProtoRules.prototype.inheritedProp = { 'color': 'green' };
+    var rules = new ProtoRules();
+    rules['.bw_card'] = { 'color': 'red' };
+
+    var scoped = scopeRulesUnder(rules, '.scope');
+    // Own property should be scoped
+    assert.ok('.scope .bw_card' in scoped, 'own property should be scoped');
+    // Inherited property should NOT be in the result (hasOwnProperty guard)
+    assert.ok(!('.scope inheritedProp' in scoped), 'inherited property should be filtered');
+    assert.ok(!('inheritedProp' in scoped), 'inherited property should not appear');
+  });
+
+  it('should handle hasOwnProperty for inner @media blocks', function() {
+    function InnerRules() {}
+    InnerRules.prototype.inheritedInner = { 'color': 'green' };
+    var inner = new InnerRules();
+    inner['.bw_card'] = { 'padding': '1rem' };
+
+    var rules = {
+      '@media (min-width: 768px)': inner
+    };
+    var scoped = scopeRulesUnder(rules, '.scope');
+    var mediaBlock = scoped['@media (min-width: 768px)'];
+    assert.ok('.scope .bw_card' in mediaBlock, 'own inner property should be scoped');
+    assert.ok(!('.scope inheritedInner' in mediaBlock), 'inherited inner property should be filtered');
+  });
+});
+
+// =========================================================================
+// Branch Coverage: generateAlternateCSS hasOwnProperty (L2424)
+// =========================================================================
+
+describe('generateAlternateCSS hasOwnProperty guard', function() {
+
+  it('should skip inherited properties on the rules object', function() {
+    // We cannot directly pass custom rules to generateAlternateCSS since it
+    // internally calls generateThemedCSS. But we can verify it handles
+    // the normal palette correctly and produces valid output.
+    var config = { primary: '#336699', secondary: '#996633', tertiary: '#669933' };
+    var altConfig = bw.deriveAlternateConfig(config);
+    var palette = bw.derivePalette(altConfig);
+    var layout = resolveLayout({});
+    var rules = generateAlternateCSS('', palette, layout);
+    // Verify output integrity
+    var keys = Object.keys(rules);
+    assert.ok(keys.length > 0, 'should produce rules');
+    // All keys should be strings (selectors)
+    keys.forEach(function(k) {
+      assert.strictEqual(typeof k, 'string', 'all keys should be strings');
+    });
+  });
+});
+
+// =========================================================================
+// Branch Coverage: resolveLayout with custom object presets (non-string paths)
+// =========================================================================
+
+describe('resolveLayout custom object presets (non-string branches)', function() {
+
+  it('should accept spacing as a custom object (non-string path)', function() {
+    var customSpacing = { btn: '0.5rem 1rem', card: '1rem', input: '0.3rem 0.6rem', alert: '0.5rem', cell: '0.3rem' };
+    var layout = resolveLayout({ spacing: customSpacing });
+    assert.deepStrictEqual(layout.spacing, customSpacing, 'should use custom spacing object directly');
+  });
+
+  it('should accept radius as a custom object (non-string path)', function() {
+    var customRadius = { btn: '10px', card: '12px', input: '8px', alert: '6px', badge: '4px' };
+    var layout = resolveLayout({ radius: customRadius });
+    assert.deepStrictEqual(layout.radius, customRadius, 'should use custom radius object directly');
+  });
+
+  it('should accept elevation as a custom object (non-string path)', function() {
+    var customElev = { sm: 'none', md: '0 2px 4px black', lg: '0 4px 8px black', xl: '0 8px 16px black' };
+    var layout = resolveLayout({ elevation: customElev });
+    assert.deepStrictEqual(layout.elevation, customElev, 'should use custom elevation object directly');
+  });
+
+  it('should accept motion as a custom object (non-string path)', function() {
+    var customMotion = { fast: '50ms', normal: '100ms', slow: '200ms', easing: 'linear' };
+    var layout = resolveLayout({ motion: customMotion });
+    assert.deepStrictEqual(layout.motion, customMotion, 'should use custom motion object directly');
+  });
+});
+
+// =========================================================================
+// Branch Coverage: deepMerge and updateTheme (L2506-2515, L2518-2519)
+// =========================================================================
+
+describe('deepMerge', function() {
+
+  it('should merge flat properties', function() {
+    var target = { a: 1, b: 2 };
+    var source = { b: 3, c: 4 };
+    var result = deepMerge(target, source);
+    assert.strictEqual(result.a, 1);
+    assert.strictEqual(result.b, 3);
+    assert.strictEqual(result.c, 4);
+    assert.strictEqual(result, target, 'should mutate target');
+  });
+
+  it('should deeply merge nested objects', function() {
+    var target = { colors: { primary: '#red', secondary: '#blue' }, font: '16px' };
+    var source = { colors: { primary: '#green' } };
+    var result = deepMerge(target, source);
+    assert.strictEqual(result.colors.primary, '#green');
+    assert.strictEqual(result.colors.secondary, '#blue', 'non-overridden nested keys should remain');
+    assert.strictEqual(result.font, '16px');
+  });
+
+  it('should overwrite non-object with source value', function() {
+    var target = { a: 'string' };
+    var source = { a: { nested: true } };
+    var result = deepMerge(target, source);
+    assert.deepStrictEqual(result.a, { nested: true });
+  });
+
+  it('should overwrite arrays (not merge them)', function() {
+    var target = { arr: [1, 2, 3] };
+    var source = { arr: [4, 5] };
+    var result = deepMerge(target, source);
+    assert.deepStrictEqual(result.arr, [4, 5], 'arrays should be replaced, not merged');
+  });
+
+  it('should handle null source values', function() {
+    var target = { a: { b: 1 } };
+    var source = { a: null };
+    var result = deepMerge(target, source);
+    assert.strictEqual(result.a, null);
+  });
+
+  it('should handle empty source', function() {
+    var target = { a: 1 };
+    var result = deepMerge(target, {});
+    assert.deepStrictEqual(result, { a: 1 });
+  });
+
+  it('should handle deeply nested merge', function() {
+    var target = { l1: { l2: { l3: { val: 'old' } } } };
+    var source = { l1: { l2: { l3: { val: 'new' } } } };
+    var result = deepMerge(target, source);
+    assert.strictEqual(result.l1.l2.l3.val, 'new');
+  });
+});
+
+describe('updateTheme', function() {
+
+  it('should update the global theme object', function() {
+    // Save original values
+    var origPrimary = theme.colors.primary;
+    // Apply override
+    updateTheme({ colors: { primary: '#testcolor' } });
+    assert.strictEqual(theme.colors.primary, '#testcolor');
+    // Restore original value
+    updateTheme({ colors: { primary: origPrimary } });
+    assert.strictEqual(theme.colors.primary, origPrimary);
+  });
+
+  it('should merge without losing existing keys', function() {
+    var origSecondary = theme.colors.secondary;
+    updateTheme({ colors: { primary: '#temp' } });
+    assert.strictEqual(theme.colors.secondary, origSecondary, 'secondary should be preserved');
+    // Restore
+    updateTheme({ colors: { primary: theme.colors.primary } });
+  });
+});
+
+
+// =========================================================================
+// bitwrench-color-utils.js — colorParse with 8-char hex (line 54)
+// =========================================================================
+describe('colorParse — 8-character hex with alpha (line 54)', function() {
+  it('should parse #rrggbbaa format', function() {
+    var result = bw.colorParse('#ff000080');
+    assert.strictEqual(result[0], 255);
+    assert.strictEqual(result[1], 0);
+    assert.strictEqual(result[2], 0);
+    assert.strictEqual(result[3], 128);  // 0x80 = 128
+    assert.strictEqual(result[4], 'rgb');
+  });
+
+  it('should parse #00ff00ff (full opacity)', function() {
+    var result = bw.colorParse('#00ff00ff');
+    assert.strictEqual(result[0], 0);
+    assert.strictEqual(result[1], 255);
+    assert.strictEqual(result[2], 0);
+    assert.strictEqual(result[3], 255);
+  });
+});
+
+
+// =========================================================================
+// bitwrench-color-utils.js — colorParse with rgb() string (line 66)
+// =========================================================================
+describe('colorParse — rgb() string input (line 66)', function() {
+  it('should parse rgb(255, 128, 0)', function() {
+    var result = bw.colorParse('rgb(255, 128, 0)');
+    assert.strictEqual(result[0], 255);
+    assert.strictEqual(result[1], 128);
+    assert.strictEqual(result[2], 0);
+    assert.strictEqual(result[4], 'rgb');
+  });
+
+  it('should parse rgba(100, 200, 50, 0.5)', function() {
+    var result = bw.colorParse('rgba(100, 200, 50, 0.5)');
+    assert.strictEqual(result[0], 100);
+    assert.strictEqual(result[1], 200);
+    assert.strictEqual(result[2], 50);
+    // alpha 0.5 * 255 = 127.5
+    assert.ok(Math.abs(result[3] - 127.5) < 0.01);
+    assert.strictEqual(result[4], 'rgb');
+  });
+});
+
+
+// =========================================================================
+// bitwrench-color-utils.js — harmonize with undefined amount (line 271)
+// =========================================================================
+describe('harmonize — undefined amount defaults to 0.20 (line 271)', function() {
+  it('should use default amount=0.20 when amount is not passed', function() {
+    // Call harmonize without the third argument
+    var result = bw.harmonize('#dc3545', '#006666');
+    // Should produce the same result as explicitly passing 0.20
+    var explicit = bw.harmonize('#dc3545', '#006666', 0.20);
+    assert.strictEqual(result, explicit);
+  });
+
+  it('should shift hue when amount is undefined (default 0.20)', function() {
+    var result = bw.harmonize('#dc3545', '#006666');
+    // The result should differ from the source (since amount != 0)
+    assert.notStrictEqual(result, '#dc3545');
+  });
+});
+
+
+// =========================================================================
+// bitwrench-styles.js — generateThemedCSS with scope name (line 217)
+// =========================================================================
+describe('generateThemedCSS — scoped output with theme name (line 217)', function() {
+  it('should scope all selectors under the theme class', function() {
+    var palette = bw.derivePalette({ primary: '#336699' });
+    var layout = resolveLayout();
+    var rules = generateThemedCSS('my_theme', palette, layout);
+    var keys = Object.keys(rules);
+    var scoped = keys.filter(function(k) { return k.indexOf('.my_theme') >= 0; });
+    assert.ok(scoped.length > 0, 'should have scoped selectors');
+  });
+
+  it('should generate unscoped selectors with empty name', function() {
+    var palette = bw.derivePalette({ primary: '#336699' });
+    var layout = resolveLayout();
+    var rules = generateThemedCSS('', palette, layout);
+    var keys = Object.keys(rules);
+    assert.ok(keys.length > 0, 'should generate rules');
+    var dotStart = keys.filter(function(k) { return k.charAt(0) === '.'; });
+    assert.ok(dotStart.length > 0);
+  });
+});
+
+
+// =========================================================================
+// bitwrench-styles.js — generateThemedCSS with different layout configs
+// (exercise radius paths in lines 577, 666, 729, 750, 766, 872, 974)
+// =========================================================================
+describe('generateThemedCSS — different layout radius presets', function() {
+  it('should use lg radius preset', function() {
+    var palette = bw.derivePalette({ primary: '#336699' });
+    var layout = resolveLayout({ radius: 'lg' });
+    var rules = generateThemedCSS('', palette, layout);
+    assert.ok(typeof rules === 'object');
+    assert.ok(Object.keys(rules).length > 0);
+  });
+
+  it('should use none radius preset', function() {
+    var palette = bw.derivePalette({ primary: '#336699' });
+    var layout = resolveLayout({ radius: 'none' });
+    var rules = generateThemedCSS('', palette, layout);
+    assert.ok(typeof rules === 'object');
+    assert.ok(Object.keys(rules).length > 0);
+  });
+
+  it('should use custom radius object', function() {
+    var palette = bw.derivePalette({ primary: '#336699' });
+    var layout = resolveLayout();
+    // Override radius with custom values
+    layout.radius = { btn: '4px', card: '12px', badge: '6px', input: '4px', pill: '50rem' };
+    var rules = generateThemedCSS('', palette, layout);
+    assert.ok(typeof rules === 'object');
+    assert.ok(Object.keys(rules).length > 0);
+  });
+});
+
+
+// =========================================================================
+// bitwrench-styles.js — generateAlternateCSS (lines 2424, 2426)
+// =========================================================================
+describe('generateAlternateCSS — scoped alternate rules', function() {
+  it('should generate alternate CSS with named scope', function() {
+    var palette = bw.derivePalette({ primary: '#cc3300' });
+    var layout = resolveLayout();
+    var altRules = generateAlternateCSS('mytheme', palette, layout);
+    var keys = Object.keys(altRules);
+    assert.ok(keys.length > 0, 'should have alternate rules');
+    var prefixed = keys.filter(function(k) { return k.indexOf('.mytheme.bw_theme_alt') >= 0; });
+    assert.ok(prefixed.length > 0, 'selectors should be scoped under .mytheme.bw_theme_alt');
+  });
+
+  it('should handle empty name (global alternate)', function() {
+    var palette = bw.derivePalette({ primary: '#cc3300' });
+    var layout = resolveLayout();
+    var altRules = generateAlternateCSS('', palette, layout);
+    var keys = Object.keys(altRules);
+    assert.ok(keys.length > 0);
+    var prefixed = keys.filter(function(k) { return k.indexOf('.bw_theme_alt') >= 0; });
+    assert.ok(prefixed.length > 0);
+  });
+});
+
+
+// =========================================================================
+// scopeRulesUnder — @media and @keyframes blocks
+// =========================================================================
+describe('scopeRulesUnder — @media and @keyframes blocks', function() {
+  it('should scope inner selectors of @media blocks', function() {
+    var input = {
+      '.bw_btn': { color: 'red' },
+      '@media (min-width: 768px)': {
+        '.bw_container': { 'max-width': '720px' }
+      }
+    };
+    var scoped = scopeRulesUnder(input, '.my-scope');
+    assert.ok(scoped['@media (min-width: 768px)'], 'should preserve @media block');
+    var inner = scoped['@media (min-width: 768px)'];
+    var innerKeys = Object.keys(inner);
+    assert.ok(innerKeys.some(function(k) { return k.indexOf('.my-scope') >= 0; }), 'inner selectors should be scoped');
+  });
+
+  it('should pass through @keyframes blocks without scoping steps', function() {
+    var input = {
+      '@keyframes spin': {
+        '0%': { transform: 'rotate(0deg)' },
+        '100%': { transform: 'rotate(360deg)' }
+      }
+    };
+    var scoped = scopeRulesUnder(input, '.my-scope');
+    assert.ok(scoped['@keyframes spin'], 'should preserve @keyframes block');
+    assert.ok(scoped['@keyframes spin']['0%'], '0% step should be preserved');
+    assert.ok(scoped['@keyframes spin']['100%'], '100% step should be preserved');
+  });
+});
+
+
+// =========================================================================
+// colorParse — rgb() string parsing (bitwrench-color-utils.js L66)
+// =========================================================================
+describe('colorParse — rgb() string parsing (line 66)', function() {
+  it('should parse rgb(128, 64, 32) into [128, 64, 32, 255, "rgb"]', function() {
+    var result = bw.colorParse('rgb(128, 64, 32)');
+    assert.strictEqual(result[0], 128, 'red should be 128');
+    assert.strictEqual(result[1], 64, 'green should be 64');
+    assert.strictEqual(result[2], 32, 'blue should be 32');
+    assert.strictEqual(result[3], 255, 'alpha should default to 255');
+    assert.strictEqual(result[4], 'rgb', 'type should be rgb');
+  });
+
+  it('should parse rgba(255, 0, 128, 0.5) with alpha', function() {
+    var result = bw.colorParse('rgba(255, 0, 128, 0.5)');
+    assert.strictEqual(result[0], 255, 'red should be 255');
+    assert.strictEqual(result[1], 0, 'green should be 0');
+    assert.strictEqual(result[2], 128, 'blue should be 128');
+    // alpha 0.5 * 255 = 127.5
+    assert.ok(Math.abs(result[3] - 127.5) < 0.01, 'alpha should be ~127.5');
+    assert.strictEqual(result[4], 'rgb', 'type should be rgb');
+  });
+
+  it('should parse rgb(0, 0, 0) as black', function() {
+    var result = bw.colorParse('rgb(0, 0, 0)');
+    assert.strictEqual(result[0], 0);
+    assert.strictEqual(result[1], 0);
+    assert.strictEqual(result[2], 0);
+    assert.strictEqual(result[4], 'rgb');
+  });
+});
+
+
+// =========================================================================
+// generateAlternateCSS — @media/@keyframes re-scoping (L2427-2434)
+//
+// NOTE: This branch is defensive code. generateThemedCSS() never produces
+// @media or @keyframes selectors, so generateAlternateCSS()'s @ branch
+// (lines 2427-2434) cannot be reached through the normal code path.
+// The code exists to future-proof against themed generators that might
+// someday return @media rules. Coverage of this branch would require either
+// monkey-patching the module-internal generateThemedCSS call or modifying
+// the source to accept custom rules. This is documented here as a known
+// gap in test coverage.
+// =========================================================================

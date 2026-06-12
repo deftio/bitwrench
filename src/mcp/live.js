@@ -50,6 +50,7 @@ export function startLive(opts) {
         if (opts.open) {
           import('child_process').then(function(cp) {
             var url = 'http://localhost:' + port;
+            /* c8 ignore next 2 -- platform-dependent; only darwin in CI */
             var cmd = process.platform === 'darwin' ? 'open'
               : process.platform === 'win32' ? 'start' : 'xdg-open';
             cp.exec(cmd + ' ' + url);
@@ -58,6 +59,7 @@ export function startLive(opts) {
 
         resolve(_app);
       });
+    /* c8 ignore next 3 -- defensive catch for synchronous listen errors */
     } catch (e) {
       reject(e);
     }

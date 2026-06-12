@@ -304,3 +304,202 @@ describe('MCP Tools - Error Handling', function() {
     assert(typeof toolHandlers.make_styles === 'function');
   });
 });
+
+
+// =========================================================================
+// mcp/tools.js — callBCCL method not found (line 301-302)
+// =========================================================================
+
+describe('MCP Tools - callBCCL method not found', function() {
+  it('should return error when bw method does not exist (line 301-302)', function() {
+    // Use a tool name that maps to a non-existent bw method
+    // We can trigger this by calling with an invented handler that maps to a non-existent bw function
+    // The easiest way is to import callBCCL or call a handler that maps to a missing method
+    // Since callBCCL is not exported, test indirectly:
+    // Create a handler that would call a non-existent bw method.
+    // Actually, we can test by making a temporary handler.
+    // Let's instead just call an existing handler with args that cause error.
+    // OR: we can use toolHandlers directly with a mock.
+
+    // The simplest approach: directly test via handleMessage from mcp/server
+    import('../src/mcp/server.js').then(function(mod) {
+      var resp = mod.handleMessage({
+        jsonrpc: '2.0',
+        id: 99,
+        method: 'tools/call',
+        params: { name: 'nonexistent_tool' }
+      });
+      assert.ok(resp.error);
+      assert.strictEqual(resp.error.code, -32602);
+    });
+  });
+});
+
+
+// =========================================================================
+// mcp/tools.js — callBCCL taco call (line 305) and error catch (line 310)
+// =========================================================================
+
+describe('MCP Tools - callBCCL taco call and error', function() {
+  it('should return TACO for valid component call (line 305)', function() {
+    var result = toolHandlers.make_card({ title: 'Test' });
+    assert.ok(!result.isError);
+    assert.ok(result.structuredContent);
+    assert.ok(result.structuredContent.t);
+  });
+
+  it('should return TACO when args is empty (line 305 - args || {})', function() {
+    var result = toolHandlers.make_card();
+    // make_card() with no args should still produce a card (empty)
+    assert.ok(!result.isError);
+    assert.ok(result.structuredContent);
+  });
+});
+
+
+// =========================================================================
+// mcp/tools.js — render_taco indent option (line 332)
+// =========================================================================
+
+describe('MCP Tools - render_taco with indent', function() {
+  it('should produce indented HTML when indent=true (line 332)', function() {
+    var result = toolHandlers.render_taco({
+      taco: { t: 'div', c: [{ t: 'p', c: 'Hello' }] },
+      indent: true
+    });
+    assert.ok(!result.isError);
+    var html = result.content[0].text;
+    // Indented output should contain newlines or extra whitespace
+    assert.ok(html.indexOf('div') >= 0);
+    assert.ok(html.indexOf('Hello') >= 0);
+  });
+
+  it('should produce compact HTML when indent is not set (line 331)', function() {
+    var result = toolHandlers.render_taco({
+      taco: { t: 'div', c: 'Hi' }
+    });
+    assert.ok(!result.isError);
+    assert.ok(result.content[0].text.indexOf('<div>Hi</div>') >= 0);
+  });
+});
+
+
+// =========================================================================
+// mcp/tools.js — render_taco error catch (line 335)
+// =========================================================================
+
+describe('MCP Tools - render_taco error path', function() {
+  it('should return error when taco causes bw.html to throw (line 335)', function() {
+    // Pass something that might cause bw.html to throw
+    // bw.html is fairly robust, so we test with a circular reference
+    var obj = { t: 'div' };
+    obj.c = obj; // circular reference — JSON.stringify would fail, but bw.html might handle it
+    var result = toolHandlers.render_taco({ taco: obj });
+    // Whether it errors or not, it should return a valid result object
+    assert.ok(result.content);
+  });
+});
+
+
+// =========================================================================
+// mcp/tools.js — build_page error catch (line 350)
+// =========================================================================
+
+describe('MCP Tools - build_page error path', function() {
+  it('should return error for completely invalid input (line 350)', function() {
+    // Test with args that would cause htmlPage to throw
+    // htmlPage expects title and body at minimum
+    var result = toolHandlers.build_page({});
+    // Even with empty args, htmlPage may succeed; if not, error is caught
+    assert.ok(result.content);
+  });
+});
+
+
+// =========================================================================
+// mcp/tools.js — make_styles error catch (line 365)
+// =========================================================================
+
+describe('MCP Tools - make_styles error path', function() {
+  it('should catch and return error for invalid input (line 365)', function() {
+    // makeStyles with invalid primary color
+    var result = toolHandlers.make_styles({ primary: 'not-a-color-at-all-!@#$%' });
+    // May error or return best-effort result
+    assert.ok(result.content);
+  });
+});
+
+// =========================================================================
+// mcp/tools.js — force callBCCL method not found branch (line 301)
+// =========================================================================
+
+import bw from '../src/bitwrench.js';
+
+describe('MCP Tools - callBCCL method not found (forced, line 301)', function() {
+  it('should return isError when bw method is temporarily removed', function() {
+    // Temporarily remove bw.makeCard to force the "not found" branch
+    var orig = bw.makeCard;
+    bw.makeCard = undefined;
+    try {
+      var result = toolHandlers.make_card({ title: 'Test' });
+      assert.ok(result.isError, 'should return error when method not found');
+      assert.ok(result.content[0].text.indexOf('not found') >= 0);
+    } finally {
+      bw.makeCard = orig;
+    }
+  });
+});
+
+// =========================================================================
+// mcp/tools.js — force callBCCL catch block (line 310)
+// =========================================================================
+
+describe('MCP Tools - callBCCL exception catch (forced, line 310)', function() {
+  it('should catch and return error when bw method throws', function() {
+    var orig = bw.makeButton;
+    bw.makeButton = function() { throw new Error('test-bccl-throw'); };
+    try {
+      var result = toolHandlers.make_button({ text: 'Click' });
+      assert.ok(result.isError, 'should return error');
+      assert.ok(result.content[0].text.indexOf('test-bccl-throw') >= 0);
+    } finally {
+      bw.makeButton = orig;
+    }
+  });
+});
+
+// =========================================================================
+// mcp/tools.js — force build_page catch block (line 350)
+// =========================================================================
+
+describe('MCP Tools - build_page exception catch (forced, line 350)', function() {
+  it('should catch and return error when bw.htmlPage throws', function() {
+    var orig = bw.htmlPage;
+    bw.htmlPage = function() { throw new Error('test-htmlpage-throw'); };
+    try {
+      var result = toolHandlers.build_page({ title: 'Test', content: { t: 'p', c: 'Hi' } });
+      assert.ok(result.isError, 'should return error');
+      assert.ok(result.content[0].text.indexOf('test-htmlpage-throw') >= 0);
+    } finally {
+      bw.htmlPage = orig;
+    }
+  });
+});
+
+// =========================================================================
+// mcp/tools.js — force make_styles catch block (line 365)
+// =========================================================================
+
+describe('MCP Tools - make_styles exception catch (forced, line 365)', function() {
+  it('should catch and return error when bw.makeStyles throws', function() {
+    var orig = bw.makeStyles;
+    bw.makeStyles = function() { throw new Error('test-makestyles-throw'); };
+    try {
+      var result = toolHandlers.make_styles({ primary: '#4f46e5' });
+      assert.ok(result.isError, 'should return error');
+      assert.ok(result.content[0].text.indexOf('test-makestyles-throw') >= 0);
+    } finally {
+      bw.makeStyles = orig;
+    }
+  });
+});

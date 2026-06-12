@@ -202,3 +202,40 @@ describe('MCP Knowledge - Section Extraction Helpers', function() {
     assert.equal(result, null);
   });
 });
+
+
+// =========================================================================
+// mcp/knowledge.js — readDoc error branch (line 81)
+// =========================================================================
+
+import { readDoc } from '../src/mcp/knowledge.js';
+
+describe('MCP Knowledge - readDoc error handling', function() {
+  it('should return error string for non-existent file (line 81-82)', function() {
+    var result = readDoc('nonexistent-file-xyz.md');
+    assert.ok(result.indexOf('Error:') >= 0, 'should contain Error prefix');
+    assert.ok(result.indexOf('nonexistent-file-xyz.md') >= 0, 'should contain filename');
+  });
+});
+
+
+// =========================================================================
+// mcp/knowledge.js — bitwrench_guide section not found in content (line 195)
+// =========================================================================
+
+describe('MCP Knowledge - bitwrench_guide section not found', function() {
+  it('should return error when valid section key has no matching heading in guide (line 195)', function() {
+    // This test exercises the path where the section key exists in GUIDE_SECTIONS
+    // but extractSection returns null because the heading is not found in the content.
+    // We temporarily add a fake section key whose heading won't exist in the guide.
+    var fakeKey = '__test_nonexistent_section__';
+    GUIDE_SECTIONS[fakeKey] = 'This Heading Does Not Exist In Any Guide File';
+    try {
+      var result = knowledgeHandlers.bitwrench_guide({ section: fakeKey });
+      assert.ok(result.isError, 'should be an error when heading not found in content');
+      assert.ok(result.content[0].text.indexOf('Section not found in guide') >= 0);
+    } finally {
+      delete GUIDE_SECTIONS[fakeKey];
+    }
+  });
+});

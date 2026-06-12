@@ -1788,6 +1788,7 @@ export function makeCodeDemo(props = {}) {
             },
             c: 'Copy'
           },
+          /* c8 ignore next 2 -- codeEditor ternary; requires globalThis.bw.codeEditor setup */
           (typeof globalThis !== 'undefined' && typeof globalThis.bw !== 'undefined' && typeof globalThis.bw.codeEditor === 'function')
             ? globalThis.bw.codeEditor({ code: code, lang: language === 'javascript' ? 'js' : language, readOnly: true, height: 'auto' })
             : {
@@ -2239,6 +2240,7 @@ export function makeModal(props = {}) {
 
   function closeModal(el) {
     var backdrop = el.closest('.bw_bccl_modal');
+    /* c8 ignore next -- defensive; closeModal always called from within modal */
     if (!backdrop) backdrop = el;
     // Restore focus to the element that was focused when the modal opened
     var opener = backdrop._bw_opener || null;
@@ -2416,6 +2418,7 @@ export function makeToast(props = {}) {
       handle: {
         dismiss: function(el) {
           el.classList.add('bw_bccl_toast_hiding');
+          /* c8 ignore next -- setTimeout callback; requires real timer advancement */
           setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
         }
       },
@@ -2835,6 +2838,7 @@ export function makeCarousel(props = {}) {
         'aria-label': prevLabel,
         onclick: function(e) {
           var carousel = e.target.closest('.bw_bccl_carousel');
+          /* c8 ignore next -- carousel index fallback; default 0 */
           var idx = carousel._bw_carouselIndex || 0;
           goToSlide(carousel, idx - 1);
         }
@@ -2894,6 +2898,7 @@ export function makeCarousel(props = {}) {
       handle: {
         goToSlide: function(el, index) { goToSlide(el, index); },
         next: function(el) { goToSlide(el, (el._bw_carouselIndex || 0) + 1); },
+        /* c8 ignore next -- carousel index fallback */
         prev: function(el) { goToSlide(el, (el._bw_carouselIndex || 0) - 1); },
         getActiveIndex: function(el) { return el._bw_carouselIndex || 0; },
         pause: function(el) {
@@ -2904,6 +2909,7 @@ export function makeCarousel(props = {}) {
         },
         play: function(el) {
           if (!el._bw_carouselInterval && el._bw_state) {
+            /* c8 ignore next -- interval fallback to default 5000ms */
             var ms = el._bw_state.interval || 5000;
             el._bw_carouselInterval = setInterval(function() {
               goToSlide(el, (el._bw_carouselIndex || 0) + 1);

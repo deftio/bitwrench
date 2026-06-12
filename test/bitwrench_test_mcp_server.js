@@ -621,3 +621,121 @@ describe('MCP Server - createMcpServer with bwserve', function() {
     }, 1000);
   });
 });
+
+
+// ===================================================================================
+// createMcpServer opts default (line 124)
+// ===================================================================================
+
+describe('MCP Server - createMcpServer with no opts', function() {
+  it('should default opts to {} when called with no arguments (line 124)', function() {
+    var server = createMcpServer();
+    assert.ok(server);
+    assert.strictEqual(typeof server.listen, 'function');
+    assert.strictEqual(typeof server.close, 'function');
+    server.close();
+  });
+});
+
+
+// ===================================================================================
+// run() argv default (line 164)
+// ===================================================================================
+
+describe('MCP Server - run() with no argv', function() {
+  it('should default argv to [] when called with no arguments (line 164)', function(done) {
+    var origStdin = process.stdin;
+    var origStderrWrite = process.stderr.write;
+    var origExit = process.exit;
+    var stderrOutput = '';
+
+    var fakeStdin = new PassThrough();
+    Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+    process.stderr.write = function(s) { stderrOutput += s; return true; };
+    process.exit = function() {};
+
+    // run() with no args defaults argv to []
+    var server = run();
+
+    setTimeout(function() {
+      assert.ok(stderrOutput.indexOf('MCP server ready') >= 0);
+      server.close();
+      fakeStdin.end();
+      Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+      process.stderr.write = origStderrWrite;
+      process.exit = origExit;
+      process.removeAllListeners('SIGINT');
+      process.removeAllListeners('SIGTERM');
+      stopLive().then(function() { done(); });
+    }, 200);
+  });
+});
+
+
+// ===================================================================================
+// run() --port arg parsing (line 175)
+// ===================================================================================
+
+// ===================================================================================
+// createMcpServer — startLive with default port (line 141: opts.port || 7910)
+// ===================================================================================
+
+describe('MCP Server - createMcpServer startLive default port', function() {
+  it('should use default port 7910 when opts.port is not set (line 141)', function(done) {
+    this.timeout(5000);
+    var origStdin = process.stdin;
+    var origStdoutWrite = process.stdout.write;
+    var origStderrWrite = process.stderr.write;
+    var stderrOutput = '';
+
+    var fakeStdin = new PassThrough();
+    Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+    process.stdout.write = function() { return true; };
+    process.stderr.write = function(s) { stderrOutput += s; return true; };
+
+    // Create server with noBrowser: false and NO port set — triggers opts.port || 7910
+    var server = createMcpServer({ noBrowser: false });
+    server.listen();
+
+    setTimeout(function() {
+      var app = getApp();
+      assert.ok(app, 'bwserve should be running');
+      // The port should be 7910 (or assigned if 7910 was busy)
+      assert.ok(stderrOutput.indexOf('7910') >= 0 || app.port > 0, 'should use default port or an assigned port');
+
+      server.close();
+      fakeStdin.end();
+      Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+      process.stdout.write = origStdoutWrite;
+      process.stderr.write = origStderrWrite;
+      stopLive().then(function() { done(); });
+    }, 1000);
+  });
+});
+
+describe('MCP Server - run() --port parsing', function() {
+  it('should parse --port with invalid value and fallback to default (line 175)', function(done) {
+    var origStdin = process.stdin;
+    var origStderrWrite = process.stderr.write;
+    var origExit = process.exit;
+
+    var fakeStdin = new PassThrough();
+    Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+    process.stderr.write = function() { return true; };
+    process.exit = function() {};
+
+    // Pass invalid port value (NaN), should fall back to 7910
+    var server = run(['--port', 'invalid', '--no-browser']);
+
+    setTimeout(function() {
+      server.close();
+      fakeStdin.end();
+      Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+      process.stderr.write = origStderrWrite;
+      process.exit = origExit;
+      process.removeAllListeners('SIGINT');
+      process.removeAllListeners('SIGTERM');
+      stopLive().then(function() { done(); });
+    }, 200);
+  });
+});

@@ -85,7 +85,10 @@ function tokenizeJS(code) {
   var buf = '';
 
   function flush(type) {
-    if (buf.length) { tokens.push({ type: type || 'plain', text: buf }); buf = ''; }
+    if (buf.length) {
+      /* c8 ignore next -- flush() is always called with an explicit type argument */
+      tokens.push({ type: type || 'plain', text: buf }); buf = '';
+    }
   }
 
   while (i < len) {
@@ -279,7 +282,10 @@ function tokenizeCSS(code) {
   var buf = '';
 
   function flush(type) {
-    if (buf.length) { tokens.push({ type: type || 'plain', text: buf }); buf = ''; }
+    if (buf.length) {
+      /* c8 ignore next -- flush() is always called with an explicit type argument */
+      tokens.push({ type: type || 'plain', text: buf }); buf = '';
+    }
   }
 
   while (i < len) {
@@ -389,7 +395,10 @@ function tokenizeHTML(code) {
   var buf = '';
 
   function flush(type) {
-    if (buf.length) { tokens.push({ type: type || 'plain', text: buf }); buf = ''; }
+    if (buf.length) {
+      /* c8 ignore next -- flush() is always called with an explicit type argument */
+      tokens.push({ type: type || 'plain', text: buf }); buf = '';
+    }
   }
 
   while (i < len) {
@@ -614,6 +623,7 @@ function codeEditor(opts) {
 
         // Scroll sync: keep gutter aligned with code
         if (gutterEl) {
+          /* c8 ignore next -- codeEditor always wraps in .bw_ce; defensive fallback */
           var scrollParent = codeEl.closest('.bw_ce') || el;
           scrollParent.addEventListener('scroll', function() {
             gutterEl.style.transform = 'translateY(' + (-scrollParent.scrollTop) + 'px)';
@@ -666,6 +676,7 @@ function install(bw) {
 }
 
 // Auto-install if bw is on window (script tag usage)
+/* c8 ignore next 3 -- module-level auto-install; only runs at import time in browser with script tags */
 if (typeof window !== 'undefined' && window.bw) {
   install(window.bw);
 }
