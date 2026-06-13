@@ -578,7 +578,7 @@ app.page('/', function(client) {
   var procs     = getProcesses(6);
   var gpioState = readAllGpio();
 
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', a: { style: 'max-width:960px;margin:0 auto;padding:1rem;background:#0f172a;color:#e2e8f0;min-height:100vh' }, c: [
       { t: 'h1', a: { style: 'font-size:1.3rem;margin:0 0 1rem' }, c: 'Raspberry Pi System Monitor' },
       buildOverviewCards(cpuTemp, cpuAvg, memPct, mem.usedMB, mem.totalMB, diskPct, disk.usedGB, disk.totalGB),
@@ -631,11 +631,11 @@ app.page('/', function(client) {
     // Use batch to push all updates in a single SSE frame
     client.batch([
       // Replace entire sections that have complex structure
-      { type: 'replace', target: '#overview',     node: buildOverviewCards(t, avg, mp, m.usedMB, m.totalMB, dp, d.usedGB, d.totalGB) },
-      { type: 'replace', target: '#cpu-bars',     node: buildCpuBars(cu) },
-      { type: 'replace', target: '#mem-card',     node: buildMemCard(m.usedMB, m.totalMB, m.swapUsedMB, m.swapTotalMB) },
-      { type: 'replace', target: '#gpio-section', node: buildGpioControls(gs) },
-      { type: 'replace', target: '#proc-body',    node: {
+      { type: 'replace', ref: '#overview',     taco: buildOverviewCards(t, avg, mp, m.usedMB, m.totalMB, dp, d.usedGB, d.totalGB) },
+      { type: 'replace', ref: '#cpu-bars',     taco: buildCpuBars(cu) },
+      { type: 'replace', ref: '#mem-card',     taco: buildMemCard(m.usedMB, m.totalMB, m.swapUsedMB, m.swapTotalMB) },
+      { type: 'replace', ref: '#gpio-section', taco: buildGpioControls(gs) },
+      { type: 'replace', ref: '#proc-body',    taco: {
         t: 'tbody', a: { id: 'proc-body' }, c: pr.map(function(p) {
           return { t: 'tr', c: [
             { t: 'td', c: String(p.pid) },
@@ -645,7 +645,7 @@ app.page('/', function(client) {
           ]};
         })
       }},
-      { type: 'replace', target: '#info-body',    node: {
+      { type: 'replace', ref: '#info-body',    taco: {
         t: 'tbody', a: { id: 'info-body' }, c: [
           ['Model',      sysInfo.model],
           ['OS',         sysInfo.os],
@@ -663,7 +663,7 @@ app.page('/', function(client) {
           ]};
         })
       }},
-      { type: 'replace', target: '#log-section',  node: buildLogSection(logEntries) }
+      { type: 'replace', ref: '#log-section',  taco: buildLogSection(logEntries) }
     ]);
   }, 2000);
 
@@ -686,8 +686,8 @@ app.page('/', function(client) {
     // Immediately push the updated GPIO section and log
     gpioState = readAllGpio();
     client.batch([
-      { type: 'replace', target: '#gpio-section', node: buildGpioControls(gpioState) },
-      { type: 'replace', target: '#log-section',  node: buildLogSection(logEntries) }
+      { type: 'replace', ref: '#gpio-section', taco: buildGpioControls(gpioState) },
+      { type: 'replace', ref: '#log-section',  taco: buildLogSection(logEntries) }
     ]);
   });
 });

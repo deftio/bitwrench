@@ -25,7 +25,7 @@ app.page('/', function(client) {
   var captureCount = 0;
 
   function renderUI() {
-    client.render('#app', {
+    client.mount('#app', {
       t: 'div', a: { style: 'max-width: 700px; margin: 2rem auto; padding: 0 1rem;' },
       c: [
         { t: 'h1', c: 'Screenshot Demo' },
@@ -106,14 +106,14 @@ app.page('/', function(client) {
     captureCount++;
     var n = captureCount;
 
-    client.patch('screenshot-result', 'Capturing...');
+    client.patch('screenshot-result', { text: 'Capturing...' });
 
     client.screenshot(selector, { format: 'png', scale: 1 })
       .then(function(result) {
         var base64 = result.data.toString('base64');
         var dataUrl = 'data:image/' + result.format + ';base64,' + base64;
 
-        client.render('#screenshot-result', {
+        client.mount('#screenshot-result', {
           t: 'div', c: [
             {
               t: 'div', a: { style: 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;' },
@@ -133,7 +133,7 @@ app.page('/', function(client) {
         });
       })
       .catch(function(err) {
-        client.patch('screenshot-result', 'Error: ' + err.message);
+        client.patch('screenshot-result', { text: 'Error: ' + err.message });
       });
   }
 

@@ -89,28 +89,17 @@ def get_config():
 
 SYSTEM_PROMPT = r"""You are a UI builder. The user describes what they want to see in the browser and you respond with bwserve protocol JSON messages. Your response must be ONLY valid JSON — no explanation, no markdown, no prose.
 
-The browser has bitwrench loaded (a JS UI library). You have two modes:
+The browser has bitwrench loaded (a JS UI library). Use TACO protocol messages to manipulate DOM:
 
-## Mode 1: TACO protocol messages
-Use replace/append/patch/remove to manipulate DOM:
-- replace: {"type":"replace","target":"#app","node":{"t":"div","a":{"class":"bw_bccl_card"},"c":"Hello"}}
-- append:  {"type":"append","target":"#app","node":{"t":"p","c":"New paragraph"}}
-- patch:   {"type":"patch","target":"#my-id","content":"Updated text"}
-- remove:  {"type":"remove","target":"#old-element"}
+## TACO protocol messages
+- replace: {"type":"replace","ref":"#app","taco":{"t":"div","a":{"class":"bw_bccl_card"},"c":"Hello"}}
+- append:  {"type":"append","ref":"#app","taco":{"t":"p","c":"New paragraph"}}
+- patch:   {"type":"patch","ref":"#my-id","text":"Updated text"}
+- remove:  {"type":"remove","ref":"#old-element"}
 
 TACO format: {"t":"tag","a":{"attr":"value"},"c":"content or array of children"}
 
-## Mode 2: exec messages (preferred for complex UI)
-Run JavaScript in the browser. bitwrench is loaded as `bw`.
-{"type":"exec","code":"bw.DOM('#app', bw.makeCard({title:'Hello', content:'World'}))"}
-
-Key bitwrench functions available:
-- bw.DOM(selector, taco) — mount TACO to DOM
-- bw.html(taco) — TACO to HTML string
-- bw.css(rules) — JS object to CSS string
-- bw.injectCSS(css) — inject CSS into page
-- bw.loadStyles() — load Bootstrap-like defaults
-- bw.loadStyles({primary:'#hex', secondary:'#hex'}) — load themed CSS
+Key bitwrench components available (use as TACO "c" children or standalone):
 - bw.makeCard({title, content, variant}) — card component
 - bw.makeButton({label, variant, size}) — button
 - bw.makeTable({headers, rows, striped, hover}) — table
@@ -124,26 +113,23 @@ Key bitwrench functions available:
 - bw.makeTabs({tabs:[{label,content}]}) — tabbed content
 - bw.makeAccordion({items:[{title,content}]}) — accordion
 - bw.makeForm({fields:[{label,name,type}]}) — form
-- bw.makeStatCard({title, value, subtitle, icon, variant}) — stat card (custom TACO)
+- bw.makeStatCard({title, value, subtitle, icon, variant}) — stat card
 
-Stat card example (not a built-in — build from TACO):
-{"type":"exec","code":"bw.DOM('#app', {t:'div',a:{style:'display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1rem'},c:[{t:'div',a:{class:'bw_bccl_card',style:'padding:1.5rem;text-align:center'},c:[{t:'div',a:{style:'font-size:0.85rem;color:#64748b'},c:'Users'},{t:'div',a:{style:'font-size:2rem;font-weight:700'},c:'1,234'},{t:'div',a:{style:'font-size:0.8rem;color:#22c55e'},c:'+12%'}]}]})"}
+Stat card example (build from TACO):
+{"type":"replace","ref":"#app","taco":{"t":"div","a":{"style":"display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1rem"},"c":[{"t":"div","a":{"class":"bw_bccl_card","style":"padding:1.5rem;text-align:center"},"c":[{"t":"div","a":{"style":"font-size:0.85rem;color:#64748b"},"c":"Users"},{"t":"div","a":{"style":"font-size:2rem;font-weight:700"},"c":"1,234"},{"t":"div","a":{"style":"font-size:0.8rem;color:#22c55e"},"c":"+12%"}]}]}}
 
 ## Batching multiple operations
 {"type":"batch","ops":[
-  {"type":"exec","code":"bw.loadStyles()"},
-  {"type":"exec","code":"bw.loadStyles({primary:'#2563eb',secondary:'#64748b'})"},
-  {"type":"exec","code":"bw.DOM('#app', bw.makeCard({title:'Dashboard', content:'Ready'}))"}
+  {"type":"replace","ref":"#app","taco":{"t":"div","a":{"class":"bw_bccl_card"},"c":"Dashboard Ready"}}
 ]}
 
 ## Rules
 1. Respond with ONLY valid JSON. No markdown fences, no explanation.
 2. Always target #app for the main content area.
-3. For complex layouts, use exec mode with bw.DOM() and bitwrench components.
-4. Use batch to combine multiple operations (e.g., load styles + render content).
-5. On the FIRST request, always include bw.loadStyles() in a batch.
-6. Use semantic HTML and bitwrench CSS classes (bw_bccl_card, bw_bccl_btn, bw_bccl_alert, etc.).
-7. Keep JavaScript in exec messages concise — single expressions or IIFEs.
+3. Use TACO protocol messages (replace/append/patch/remove) exclusively.
+4. Use batch to combine multiple operations.
+5. Use semantic HTML and bitwrench CSS classes (bw_bccl_card, bw_bccl_btn, bw_bccl_alert, etc.).
+6. Wire fields use "ref" (not "target"), "taco" (not "node"), and patch uses "text" (not "content").
 """
 
 # ---------------------------------------------------------------------------
@@ -324,7 +310,6 @@ def start_bwcli(cfg):
         "serve",
         "--port", str(cfg["port"]),
         "--listen", str(cfg["input_port"]),
-        "--allow-exec",
     ]
 
     proc = subprocess.Popen(
@@ -368,11 +353,10 @@ def send_welcome(cfg):
     welcome = {
         "type": "batch",
         "ops": [
-            {"type": "exec", "code": "bw.loadStyles()"},
             {
                 "type": "replace",
-                "target": "#app",
-                "node": {
+                "ref": "#app",
+                "taco": {
                     "t": "div",
                     "a": {"style": "max-width:700px;margin:2rem auto;text-align:center;padding:2rem"},
                     "c": [
@@ -419,7 +403,7 @@ def run_repl(cfg, proc, session):
 
         if user_input.lower() == "/clear":
             result = send_message(
-                {"type": "replace", "target": "#app", "node": {"t": "div", "a": {"id": "app"}}},
+                {"type": "replace", "ref": "#app", "taco": {"t": "div", "a": {"id": "app"}}},
                 cfg["input_port"],
             )
             status = "ok" if result.get("ok") else "send_error"

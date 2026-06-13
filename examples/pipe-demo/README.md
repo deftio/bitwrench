@@ -15,21 +15,21 @@ Terminal 2 — send UI from the command line:
 ```bash
 # Replace #app with a heading
 curl -s -X POST http://localhost:9000 \
-  -d '{"type":"replace","target":"#app","node":{"t":"h1","c":"Hello from curl!"}}'
+  -d '{"type":"replace","ref":"#app","taco":{"t":"h1","c":"Hello from curl!"}}'
 
 # Patch text into an element
 curl -s -X POST http://localhost:9000 \
-  -d '{"type":"replace","target":"#app","node":{"t":"div","c":[{"t":"h2","c":"Temperature"},{"t":"div","a":{"id":"temp","style":"font-size:3rem"},"c":"--"}]}}'
+  -d '{"type":"replace","ref":"#app","taco":{"t":"div","c":[{"t":"h2","c":"Temperature"},{"t":"div","a":{"id":"temp","style":"font-size:3rem"},"c":"--"}]}}'
 
 curl -s -X POST http://localhost:9000 \
-  -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+  -d '{"type":"patch","ref":"temp","text":"23.5 C"}'
 ```
 
 ## Pipe mode (stdin)
 
 ```bash
 # From a shell script
-echo '{"type":"replace","target":"#app","node":{"t":"h1","c":"Piped!"}}' | npx bwcli serve --stdin --port 8080
+echo '{"type":"replace","ref":"#app","taco":{"t":"h1","c":"Piped!"}}' | npx bwcli serve --stdin --port 8080
 ```
 
 ## sensor.sh — simulated sensor loop
@@ -48,13 +48,13 @@ The pipe server accepts any HTTP POST with a JSON body. Examples:
 ```python
 import requests
 requests.post("http://localhost:9000", json={
-    "type": "patch", "target": "temp", "content": "24.1 C"
+    "type": "patch", "ref": "temp", "text": "24.1 C"
 })
 ```
 
 **Rust:**
 ```bash
-curl -X POST http://localhost:9000 -d '{"type":"patch","target":"temp","content":"24.1 C"}'
+curl -X POST http://localhost:9000 -d '{"type":"patch","ref":"temp","text":"24.1 C"}'
 ```
 
 **C (ESP32):**

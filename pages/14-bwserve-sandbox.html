@@ -24,11 +24,11 @@
     var PRESETS = {
       counter: {
         label: 'Counter',
-        desc: 'render + patch — basic state update',
+        desc: 'mount + patch — basic state update',
         code: [
           '// Counter: bw.makeCard() + bw.makeButton() with action()',
-          '// action(taco, name) tags a component (uses data-bw-action; v2.1 prefers bw_act_* classes)',
-          'client.render("#app", {',
+          '// action(taco, name) tags a component with a bw_act_* class for event delegation',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Hello from bwserve!" },',
           '    bw.makeCard({',
@@ -51,11 +51,11 @@
           'var count = 0;',
           'onAction("increment", function() {',
           '  count++;',
-          '  client.patch("count", String(count));',
+          '  client.patch("count", { text: String(count) });',
           '});',
           'onAction("reset", function() {',
           '  count = 0;',
-          '  client.patch("count", "0");',
+          '  client.patch("count", { text: "0" });',
           '});'
         ].join('\n')
       },
@@ -66,7 +66,7 @@
           '// Todo List: append items, remove on click',
           'var nextId = 1;',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Todo List" },',
           '    bw.makeCard({ content: { t: "div", c: [',
@@ -111,7 +111,7 @@
           '  }});',
           '}',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Live Dashboard" },',
           '    bw.makeAlert({ content: "Stats update every 500ms via batch. Click Start!", variant: "info" }),',
@@ -133,10 +133,10 @@
           '  if (timer) return;',
           '  timer = setInterval(function() {',
           '    client.batch([',
-          '      { type: "patch", target: "users", content: String(Math.floor(Math.random() * 500) + 100) },',
-          '      { type: "patch", target: "orders", content: String(Math.floor(Math.random() * 50) + 10) },',
-          '      { type: "patch", target: "revenue", content: "$" + (Math.floor(Math.random() * 10000) + 1000) },',
-          '      { type: "patch", target: "errors", content: String(Math.floor(Math.random() * 5)) }',
+          '      { type: "patch", ref: "users", text: String(Math.floor(Math.random() * 500) + 100) },',
+          '      { type: "patch", ref: "orders", text: String(Math.floor(Math.random() * 50) + 10) },',
+          '      { type: "patch", ref: "revenue", text: "$" + (Math.floor(Math.random() * 10000) + 1000) },',
+          '      { type: "patch", ref: "errors", text: String(Math.floor(Math.random() * 5)) }',
           '    ]);',
           '  }, 500);',
           '});',
@@ -148,7 +148,7 @@
         desc: 'append — streaming content',
         code: [
           '// Chat: bw.makeCard() + bw.makeInput() + append for messages',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px;display:flex;flex-direction:column;height:100%" }, c: [',
           '    { t: "h2", c: "Chat Demo" },',
           '    bw.makeCard({ content: { t: "div", a: { style: "display:flex;flex-direction:column;height:100%" }, c: [',
@@ -189,10 +189,10 @@
         code: [
           '// BCCL Gallery — showcasing component helpers via bwserve',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "BCCL Component Gallery" },',
-          '    { t: "p", a: { style: "color:#888" }, c: "Every element is a BCCL component rendered via bwserve" },',
+          '    { t: "p", a: { style: "color:#888" }, c: "Every element is a BCCL component mounted via bwserve" },',
           '',
           '    bw.makeAlert({ content: "Info: This page was rendered by the server!", variant: "info" }),',
           '    bw.makeAlert({ content: "Success: All components loaded.", variant: "success" }),',
@@ -248,7 +248,7 @@
           '// in the Protocol Messages log below (C\u2192S direction), just like',
           '// the real POST-back to the server.',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Screenshot Demo" },',
           '    bw.makeAlert({ content: "Click Capture to screenshot this page. The image appears in the Protocol Messages log below (C\\u2192S) \\u2014 that\\u2019s where the server receives it.", variant: "info" }),',
@@ -270,7 +270,6 @@
           '});',
           '',
           '// Register a capture function on the client.',
-          '// Note: client.register() is removed in v2.1; use client.exec() instead.',
           '// In production, client.screenshot() does this automatically.',
           'client.register("_demo_capture", "function(opts) {"',
           '  + "var el = document.querySelector(opts.selector || \\"body\\");"',
@@ -327,11 +326,12 @@
           '// Raw Protocol: send JSON messages directly',
           '// Edit the messages below and click Run to see them applied',
           '',
-          '// Step 1: render initial UI',
+          '// Step 1: mount initial UI',
           'send({',
-          '  type: "replace",',
-          '  target: "#app",',
-          '  node: {',
+          '  v: 1,',
+          '  type: "mount",',
+          '  ref: "#app",',
+          '  taco: {',
           '    t: "div", a: { style: "padding:24px" }, c: [',
           '      { t: "h2", c: "Raw Protocol Demo" },',
           '      { t: "p", a: { id: "msg", class: "bw_bccl_alert bw_info" }, c: "This text can be patched." },',
@@ -344,21 +344,23 @@
           '});',
           '',
           '// Step 2: patch the paragraph',
-          'send({ type: "patch", target: "msg", content: "Patched at " + new Date().toLocaleTimeString() });',
+          'send({ v: 1, type: "patch", ref: "msg", text: "Patched at " + new Date().toLocaleTimeString() });',
           '',
           '// Step 3: append to the list',
           'send({',
+          '  v: 1,',
           '  type: "append",',
-          '  target: "#list",',
-          '  node: { t: "li", a: { class: "bw_bccl_list_group_item", style: "color:green" }, c: "Appended item!" }',
+          '  ref: "#list",',
+          '  taco: { t: "li", a: { class: "bw_bccl_list_group_item", style: "color:green" }, c: "Appended item!" }',
           '});',
           '',
           '// Step 4: batch multiple ops',
           'send({',
+          '  v: 1,',
           '  type: "batch",',
           '  ops: [',
-          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item A" } },',
-          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item B" } }',
+          '    { type: "append", ref: "#list", taco: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item A" } },',
+          '    { type: "append", ref: "#list", taco: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item B" } }',
           '  ]',
           '});'
         ].join('\n')
@@ -509,30 +511,32 @@
         }
       }
 
-      client.render = function(target, taco) {
-        send({ type: 'replace', target: target, node: taco });
+      client.mount = function(target, taco) {
+        send({ v: 1, type: 'mount', ref: target, taco: taco });
       };
-      client.patch = function(id, content, attr) {
-        send({ type: 'patch', target: id, content: content, attr: attr || null });
+      client.patch = function(id, fields) {
+        var msg = { v: 1, type: 'patch', ref: id };
+        if (fields) { for (var k in fields) msg[k] = fields[k]; }
+        send(msg);
       };
       client.append = function(target, taco) {
-        send({ type: 'append', target: target, node: taco });
+        send({ v: 1, type: 'append', ref: target, taco: taco });
       };
       client.remove = function(target) {
-        send({ type: 'remove', target: target });
+        send({ v: 1, type: 'remove', ref: target });
       };
       client.batch = function(ops) {
-        send({ type: 'batch', ops: ops });
+        send({ v: 1, type: 'batch', ops: ops });
       };
       client.message = function(target, action, data) {
-        send({ type: 'message', target: target, action: action, data: data });
+        send({ v: 1, type: 'message', ref: target, action: action, data: data });
       };
       client.register = function(name, body) {
-        send({ type: 'register', name: name, body: body });
+        send({ v: 1, type: 'register', name: name, body: body });
       };
       client.call = function(name) {
         var args = Array.prototype.slice.call(arguments, 1);
-        send({ type: 'call', name: name, args: args });
+        send({ v: 1, type: 'call', name: name, args: args });
       };
 
       // Also expose raw send for the "Raw Protocol" preset
@@ -547,17 +551,17 @@
       var doc = win.document;
       if (!doc) return;
 
-      if (msg.type === 'replace') {
-        var target = doc.querySelector(msg.target);
+      if (msg.type === 'mount') {
+        var target = doc.querySelector(msg.ref);
         if (target && win.bw) {
-          var el = win.bw.create(msg.node);
+          var el = win.bw.create(msg.taco);
           target.innerHTML = '';
           target.appendChild(el);
         }
       } else if (msg.type === 'patch') {
-        var el2 = doc.getElementById(msg.target) || doc.querySelector(msg.target);
+        var el2 = doc.getElementById(msg.ref) || doc.querySelector(msg.ref);
         if (el2) {
-          if (msg.content !== undefined && msg.content !== null) el2.textContent = msg.content;
+          if (msg.text !== undefined && msg.text !== null) el2.textContent = msg.text;
           if (msg.attr) {
             for (var k in msg.attr) {
               if (msg.attr[k] === null) el2.removeAttribute(k);
@@ -566,13 +570,13 @@
           }
         }
       } else if (msg.type === 'append') {
-        var parent = doc.querySelector(msg.target);
+        var parent = doc.querySelector(msg.ref);
         if (parent && win.bw) {
-          var child = win.bw.create(msg.node);
+          var child = win.bw.create(msg.taco);
           parent.appendChild(child);
         }
       } else if (msg.type === 'remove') {
-        var toRemove = doc.querySelector(msg.target);
+        var toRemove = doc.querySelector(msg.ref);
         if (toRemove) toRemove.remove();
       } else if (msg.type === 'batch' && msg.ops) {
         msg.ops.forEach(function(op) { applyFallback(win, op); });
@@ -601,12 +605,14 @@
       'bw.loadStyles();',
       'bw.loadStyles({ primary: "#006666", secondary: "#333333" });',
       'window._bwReady = true;',
-      // Wire up data-bw-action click delegation
+      // Wire up bw_act_* click delegation
       'document.addEventListener("click", function(e) {',
-      '  var el = e.target.closest("[data-bw-action]");',
+      '  var el = e.target.closest("[class*=bw_act_]");',
       '  if (!el) return;',
       '  e.preventDefault();',
-      '  var actionData = { action: el.getAttribute("data-bw-action") };',
+      '  var match = el.className.match(/bw_act_(\\S+)/);',
+      '  if (!match) return;',
+      '  var actionData = { action: match[1] };',
       '  if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");',
       '  var form = el.closest("div") || document;',
       '  var inp = form.querySelector("input[type=text],input:not([type])");',
@@ -616,9 +622,11 @@
       'document.addEventListener("keydown", function(e) {',
       '  if (e.key === "Enter" && e.target.tagName === "INPUT") {',
       '    var form = e.target.closest("div") || document;',
-      '    var actionBtn = form.querySelector("[data-bw-action]");',
+      '    var actionBtn = form.querySelector("[class*=bw_act_]");',
       '    if (actionBtn) {',
-      '      var actionData = { action: actionBtn.getAttribute("data-bw-action"), inputValue: e.target.value };',
+      '      var match = actionBtn.className.match(/bw_act_(\\S+)/);',
+      '      if (!match) return;',
+      '      var actionData = { action: match[1], inputValue: e.target.value };',
       '      e.target.value = "";',
       '      window.parent.postMessage(actionData, "*");',
       '    }',
@@ -689,10 +697,10 @@
         window.addEventListener('message', window._bwSandboxMsgHandler);
 
         try {
-          // action(taco, name, extra) — adds data-bw-action attr to a BCCL component TACO
+          // action(taco, name, extra) — adds bw_act_<name> class to a BCCL component TACO
           function actionHelper(taco, actionName, extraAttrs) {
             if (taco && taco.a) {
-              taco.a['data-bw-action'] = actionName;
+              taco.a['class'] = (taco.a['class'] || '') + ' bw_act_' + actionName;
               if (extraAttrs) { for (var k in extraAttrs) taco.a[k] = extraAttrs[k]; }
             }
             return taco;
@@ -960,16 +968,16 @@
                           { t: 'th', c: 'Description' }
                         ]}},
                         { t: 'tbody', c: [
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.render(target, taco)' } }, { t: 'td', c: 'Replace target contents with TACO' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.patch(id, content, attr)' } }, { t: 'td', c: 'Update text/attributes of element by id' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.mount(target, taco)' } }, { t: 'td', c: 'Mount TACO into target, replacing contents' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.patch(ref, { text, attr })' } }, { t: 'td', c: 'Update text/attributes of element by ref' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.append(target, taco)' } }, { t: 'td', c: 'Append a TACO child to target' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.remove(target)' } }, { t: 'td', c: 'Remove element from DOM' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.batch(ops)' } }, { t: 'td', c: 'Send multiple operations at once' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.register(name, body)' } }, { t: 'td', c: 'Register a named function on the client (removed in v2.1)' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.register(name, body)' } }, { t: 'td', c: 'Register a named function on the client' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } }, { t: 'td', c: 'Call a registered function on the client' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'onAction(name, handler)' } }, { t: 'td', c: 'Handle actions from client (button clicks etc.)' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'action(taco, name, extra)' } }, { t: 'td', c: 'Add data-bw-action attribute to a BCCL component TACO' }] }
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'action(taco, name, extra)' } }, { t: 'td', c: 'Add bw_act_<name> class to a BCCL component TACO' }] }
                         ]}
                       ]
                     }

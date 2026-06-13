@@ -84,18 +84,16 @@ Each session is saved to `session-otfui-YYYY-MM-DD-HHMMSS.json` in the OnTheFlyU
 
 ## How It Works
 
-1. `otfui.py` spawns `bwcli serve --port 8080 --listen 9000 --allow-exec`
+1. `otfui.py` spawns `bwcli serve --port 8080 --listen 9000`
 2. The browser loads bitwrench from `bwcli serve` and opens an SSE connection
 3. User types a description in the console
 4. `otfui.py` sends the description to the LLM with a system prompt explaining the bwserve protocol and available bitwrench components
-5. The LLM responds with JSON protocol messages (TACO replace/append/patch or exec with JS)
+5. The LLM responds with JSON protocol messages (TACO replace/append/patch/remove)
 6. `otfui.py` POSTs each message to `localhost:9000`
 7. `bwcli serve` broadcasts the message to all connected browsers via SSE
 8. The browser applies the message — UI appears/updates in real-time
 
-The LLM has two modes:
-- **TACO mode** — raw `replace`/`append`/`patch`/`remove` with TACO JSON objects
-- **Exec mode** — `{"type":"exec","code":"..."}` which runs JS in the browser, giving access to all bitwrench `make*()` functions, theming, CSS generation, etc.
+The LLM uses TACO protocol messages -- `replace`/`append`/`patch`/`remove` with TACO JSON objects. Wire fields use `ref` (not `target`), `taco` (not `node`), and patch uses `text` (not `content`).
 
 ## Tips for Effective Prompts
 

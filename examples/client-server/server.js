@@ -23,8 +23,8 @@ var app = create({
 app.page('/', function(client) {
   var count = 0;
 
-  // Render initial UI
-  client.render('#app', {
+  // Mount initial UI
+  client.mount('#app', {
     t: 'div', a: { style: 'max-width: 500px; margin: 2rem auto; text-align: center;' },
     c: [
       { t: 'h1', c: 'bwserve Counter' },
@@ -65,17 +65,17 @@ app.page('/', function(client) {
   // Handle actions from the client
   client.on('increment', function() {
     count++;
-    client.patch('counter-display', String(count));
+    client.patch('counter-display', { text: String(count) });
   });
 
   client.on('decrement', function() {
     count--;
-    client.patch('counter-display', String(count));
+    client.patch('counter-display', { text: String(count) });
   });
 
   client.on('reset', function() {
     count = 0;
-    client.patch('counter-display', '0');
+    client.patch('counter-display', { text: '0' });
   });
 });
 
@@ -91,7 +91,7 @@ app.page('/dashboard', function(client) {
   };
 
   function renderDashboard() {
-    client.render('#app', {
+    client.mount('#app', {
       t: 'div', a: { style: 'max-width: 800px; margin: 2rem auto;' },
       c: [
         { t: 'h1', a: { style: 'text-align: center;' }, c: 'Live Dashboard' },
@@ -143,11 +143,11 @@ app.page('/dashboard', function(client) {
     stats.uptime = 99.9 + Math.random() * 0.09;
 
     client.batch([
-      { type: 'replace', target: '#users-card', node: statCard('users-card', 'Active Users', stats.users, '\uD83D\uDC64') },
-      { type: 'replace', target: '#req-card', node: statCard('req-card', 'Requests/min', stats.requests, '\uD83D\uDCE1') },
-      { type: 'replace', target: '#err-card', node: statCard('err-card', 'Errors', stats.errors, '\u26A0\uFE0F') },
-      { type: 'replace', target: '#up-card', node: statCard('up-card', 'Uptime', stats.uptime.toFixed(2) + '%', '\u2705') },
-      { type: 'patch', target: 'last-update', content: 'Last update: ' + new Date().toLocaleTimeString() }
+      { type: 'replace', ref: '#users-card', taco: statCard('users-card', 'Active Users', stats.users, '\uD83D\uDC64') },
+      { type: 'replace', ref: '#req-card', taco: statCard('req-card', 'Requests/min', stats.requests, '\uD83D\uDCE1') },
+      { type: 'replace', ref: '#err-card', taco: statCard('err-card', 'Errors', stats.errors, '\u26A0\uFE0F') },
+      { type: 'replace', ref: '#up-card', taco: statCard('up-card', 'Uptime', stats.uptime.toFixed(2) + '%', '\u2705') },
+      { type: 'patch', ref: 'last-update', text: 'Last update: ' + new Date().toLocaleTimeString() }
     ]);
   }, 2000);
 

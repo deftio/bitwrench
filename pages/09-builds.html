@@ -398,7 +398,7 @@
                 codeSnippet('CommonJS require', "const bw = require('bitwrench');", 'js'),
                 codeSnippet('GitHub', 'git clone https://github.com/deftio/bitwrench.git', 'bash'),
                 codeSnippet('ES5 (legacy browsers)', '<script src="dist/bitwrench.es5.min.js"><\/script>', 'html'),
-                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js'),
+                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.mount('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js'),
                 codeSnippet('bwcli (convert files)', 'npx bwcli README.md -o readme.html --theme ocean --standalone', 'bash'),
                 codeSnippet('bwcli (dev server)', 'npx bwcli serve --port 8080', 'bash')
               ]

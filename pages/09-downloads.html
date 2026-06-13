@@ -644,7 +644,7 @@
                         t: 'div', a: { class: 'embedded-step' },
                         c: [
                           { t: 'h4', c: 'Write your app' },
-                          codeSnippet(null, 'from bwserve import App\n\napp = App(port=80)\n\n@app.page("/")\ndef home(client):\n    client.render("#app", {"t": "h1", "c": "Hello from " + app.runtime})\n\napp.listen()  # Blocks, serves HTTP + SSE', 'python')
+                          codeSnippet(null, 'from bwserve import App\n\napp = App(port=80)\n\n@app.page("/")\ndef home(client):\n    client.mount("#app", {"t": "h1", "c": "Hello from " + app.runtime})\n\napp.listen()  # Blocks, serves HTTP + SSE', 'python')
                         ]
                       }
                     ]
@@ -653,7 +653,7 @@
                   // Quick start: RPi
                   { t: 'h3', c: 'Quick Start: Raspberry Pi (Linux)' },
                   codeSnippet('Python (CPython 3.6+)', 'python3 bwserve.py  # Serves on port 7902', 'bash'),
-                  codeSnippet('Node.js', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from RPi!' });\n});\napp.listen();", 'js'),
+                  codeSnippet('Node.js', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.mount('#app', { t: 'h1', c: 'Hello from RPi!' });\n});\napp.listen();", 'js'),
 
                   // Example dashboards link
                   { t: 'p', a: { style: 'margin-top:1.5rem' }, c: [

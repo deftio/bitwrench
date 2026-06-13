@@ -533,7 +533,7 @@
             'var es = new EventSource(\'/api/events\');',
             'es.onmessage = function(e) {',
             '  var msg = JSON.parse(e.data);',
-            '  bw.patch(msg.target, msg.content);',
+            '  bw.patch(msg.ref, msg);',
             '};'
           ]),
 
