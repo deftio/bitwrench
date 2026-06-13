@@ -27,7 +27,7 @@
         desc: 'render + patch — basic state update',
         code: [
           '// Counter: bw.makeCard() + bw.makeButton() with action()',
-          '// action(taco, name) tags a component with data-bw-action',
+          '// action(taco, name) tags a component (uses data-bw-action; v2.1 prefers bw_act_* classes)',
           'client.render("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Hello from bwserve!" },',
@@ -74,7 +74,7 @@
           '        bw.makeInput({ placeholder: "What needs to be done?", id: "todo-input", style: "flex:1" }),',
           '        action(bw.makeButton({ text: "Add", variant: "primary" }), "add-todo")',
           '      ]},',
-          '      { t: "ul", a: { id: "todo-list", class: "bw-list-group" } }',
+          '      { t: "ul", a: { id: "todo-list", class: "bw_bccl_list_group" } }',
           '    ]}})',
           '  ]',
           '});',
@@ -83,7 +83,7 @@
           '  var text = data.inputValue || "Item " + nextId;',
           '  var id = "todo-" + nextId++;',
           '  client.append("#todo-list", {',
-          '    t: "li", a: { id: id, class: "bw-list-group-item", style: "display:flex;justify-content:space-between;align-items:center" },',
+          '    t: "li", a: { id: id, class: "bw_bccl_list_group_item", style: "display:flex;justify-content:space-between;align-items:center" },',
           '    c: [',
           '      { t: "span", c: text },',
           '      action(bw.makeButton({ text: "\\u2715", variant: "outline-danger", size: "sm" }), "remove-todo", { "data-bw-id": id })',
@@ -170,13 +170,13 @@
           'onAction("send", function(data) {',
           '  var text = data.inputValue || "Hello!";',
           '  client.append("#messages", {',
-          '    t: "div", a: { class: "bw-alert bw-alert-primary", style: "max-width:80%;margin-left:auto;margin-bottom:8px" },',
+          '    t: "div", a: { class: "bw_bccl_alert bw_primary", style: "max-width:80%;margin-left:auto;margin-bottom:8px" },',
           '    c: text',
           '  });',
           '  setTimeout(function() {',
           '    var reply = botReplies[Math.floor(Math.random() * botReplies.length)];',
           '    client.append("#messages", {',
-          '      t: "div", a: { class: "bw-alert bw-alert-light", style: "max-width:80%;margin-bottom:8px" },',
+          '      t: "div", a: { class: "bw_bccl_alert bw_light", style: "max-width:80%;margin-bottom:8px" },',
           '      c: reply',
           '    });',
           '  }, 500 + Math.random() * 1000);',
@@ -270,6 +270,7 @@
           '});',
           '',
           '// Register a capture function on the client.',
+          '// Note: client.register() is removed in v2.1; use client.exec() instead.',
           '// In production, client.screenshot() does this automatically.',
           'client.register("_demo_capture", "function(opts) {"',
           '  + "var el = document.querySelector(opts.selector || \\"body\\");"',
@@ -333,10 +334,10 @@
           '  node: {',
           '    t: "div", a: { style: "padding:24px" }, c: [',
           '      { t: "h2", c: "Raw Protocol Demo" },',
-          '      { t: "p", a: { id: "msg", class: "bw-alert bw-alert-info" }, c: "This text can be patched." },',
-          '      { t: "ul", a: { id: "list", class: "bw-list-group" }, c: [',
-          '        { t: "li", a: { class: "bw-list-group-item" }, c: "Item 1" },',
-          '        { t: "li", a: { class: "bw-list-group-item" }, c: "Item 2" }',
+          '      { t: "p", a: { id: "msg", class: "bw_bccl_alert bw_info" }, c: "This text can be patched." },',
+          '      { t: "ul", a: { id: "list", class: "bw_bccl_list_group" }, c: [',
+          '        { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Item 1" },',
+          '        { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Item 2" }',
           '      ]}',
           '    ]',
           '  }',
@@ -349,15 +350,15 @@
           'send({',
           '  type: "append",',
           '  target: "#list",',
-          '  node: { t: "li", a: { class: "bw-list-group-item", style: "color:green" }, c: "Appended item!" }',
+          '  node: { t: "li", a: { class: "bw_bccl_list_group_item", style: "color:green" }, c: "Appended item!" }',
           '});',
           '',
           '// Step 4: batch multiple ops',
           'send({',
           '  type: "batch",',
           '  ops: [',
-          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw-list-group-item" }, c: "Batch item A" } },',
-          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw-list-group-item" }, c: "Batch item B" } }',
+          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item A" } },',
+          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item B" } }',
           '  ]',
           '});'
         ].join('\n')
@@ -410,7 +411,7 @@
       var time = new Date(entry.ts);
       var timeStr = time.toLocaleTimeString() + '.' + String(time.getMilliseconds()).padStart(3, '0');
 
-      var div = bw.createDOM({
+      var div = bw.create({
         t: 'div', a: {
           class: 'log-entry',
           style: 'border-left:3px solid ' + borderColor + ';background:' + bgColor +
@@ -448,7 +449,7 @@
       function fmt(bytes) { return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB'; }
       function avg(total, count) { return count === 0 ? '0 B' : fmt(Math.round(total / count)); }
       el.innerHTML = '';
-      el.appendChild(bw.createDOM({
+      el.appendChild(bw.create({
         t: 'span', c: [
           { t: 'span', a: { style: 'color:#1a7a6e;font-weight:600' }, c: 'S\u2192C: ' },
           logStats.serverMsgs + ' msgs, ' + fmt(logStats.serverBytes) + ', avg ' + avg(logStats.serverBytes, logStats.serverMsgs) + '/msg',
@@ -465,7 +466,7 @@
       var logEl = bw.$('#protocol-log')[0];
       if (logEl) {
         logEl.innerHTML = '';
-        logEl.appendChild(bw.createDOM({
+        logEl.appendChild(bw.create({
           t: 'div', a: { class: 'log-placeholder', style: 'color:#666;font-size:0.8rem' },
           c: '// Protocol messages will appear here after you click Run...'
         }));
@@ -486,7 +487,7 @@
       });
       var blob = new Blob([lines.join('\n') + '\n'], { type: 'application/x-ndjson' });
       var url = URL.createObjectURL(blob);
-      var a = bw.createDOM({ t: 'a', a: { href: url, download: 'bwserve-protocol-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.jsonl' } });
+      var a = bw.create({ t: 'a', a: { href: url, download: 'bwserve-protocol-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.jsonl' } });
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -549,7 +550,7 @@
       if (msg.type === 'replace') {
         var target = doc.querySelector(msg.target);
         if (target && win.bw) {
-          var el = win.bw.createDOM(msg.node);
+          var el = win.bw.create(msg.node);
           target.innerHTML = '';
           target.appendChild(el);
         }
@@ -567,7 +568,7 @@
       } else if (msg.type === 'append') {
         var parent = doc.querySelector(msg.target);
         if (parent && win.bw) {
-          var child = win.bw.createDOM(msg.node);
+          var child = win.bw.create(msg.node);
           parent.appendChild(child);
         }
       } else if (msg.type === 'remove') {
@@ -838,7 +839,7 @@
                                 height: '100%',
                                 onChange: function() {}
                               });
-                              var dom = bw.createDOM(editor);
+                              var dom = bw.create(editor);
                               el.innerHTML = '';
                               el.appendChild(dom);
                               // The inner .bw_ce mounted hook sets _bwCodeEdit via rAF.
@@ -964,7 +965,7 @@
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.append(target, taco)' } }, { t: 'td', c: 'Append a TACO child to target' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.remove(target)' } }, { t: 'td', c: 'Remove element from DOM' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.batch(ops)' } }, { t: 'td', c: 'Send multiple operations at once' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.register(name, body)' } }, { t: 'td', c: 'Register a named function on the client' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.register(name, body)' } }, { t: 'td', c: 'Register a named function on the client (removed in v2.1)' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } }, { t: 'td', c: 'Call a registered function on the client' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'onAction(name, handler)' } }, { t: 'td', c: 'Handle actions from client (button clicks etc.)' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] },

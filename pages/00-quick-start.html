@@ -281,7 +281,7 @@
             { t: 'code', c: 'el._bw_state' },
             ', and ', { t: 'code', c: 'o.render(el)' },
             ' is called on mount and whenever you call ',
-            { t: 'code', c: 'bw.update(el)' }, '.'
+            { t: 'code', c: 'bw.refresh(el)' }, '.'
           ]},
           makeTryIt({
             code: [
@@ -299,7 +299,7 @@
               '            text: \'+\', variant: \'primary\',',
               '            onclick: function() {',
               '              s.count++;',
-              '              bw.update(el);',
+              '              bw.refresh(el);',
               '            }',
               '          }),',
               '          \' \',',
@@ -308,7 +308,7 @@
               '            variant: \'secondary\',',
               '            onclick: function() {',
               '              s.count = 0;',
-              '              bw.update(el);',
+              '              bw.refresh(el);',
               '            }',
               '          })',
               '        ]',
@@ -325,7 +325,7 @@
                 { t: 'strong', c: 'Closure + render()' }, ' \u2014 simple widgets, one-off interactivity.'
               ]},
               { t: 'p', c: [
-                { t: 'strong', c: 'o.state + o.render' }, ' \u2014 anything with state you want to read/write from outside. State at el._bw_state, re-render via bw.update(el), pub/sub integration.'
+                { t: 'strong', c: 'o.state + o.render' }, ' \u2014 anything with state you want to read/write from outside. State at el._bw_state, re-render via bw.refresh(el), pub/sub integration.'
               ]},
               { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
                 'See the ',

@@ -62,7 +62,7 @@ bw>
 bw> document.title
 "My Page Title"
 
-bw> bw.$('.bw-card').length
+bw> bw.$('.bw_bccl_card').length
 3
 
 bw> /tree #app 2
@@ -128,10 +128,10 @@ bw> document.title
 bw> window.innerWidth
 1440
 
-bw> bw.$('.bw-card').length
+bw> bw.$('.bw_bccl_card').length
 3
 
-bw> bw.$('.bw-btn').map(function(b) { return b.textContent; })
+bw> bw.$('.bw_bccl_btn').map(function(b) { return b.textContent; })
 ["Save", "Cancel", "Delete"]
 
 bw> location.href
@@ -168,11 +168,11 @@ div#app
     ul#list
     div.footer
 
-bw> /tree .bw-card 1
-div.bw-card
-  div.bw-card-header
-  div.bw-card-body
-  div.bw-card-footer
+bw> /tree .bw_bccl_card 1
+div.bw_bccl_card
+  div.bw_bccl_card_header
+  div.bw_bccl_card_body
+  div.bw_bccl_card_footer
 ```
 
 The tree shows tag name, id, and CSS classes for each element. Child elements are indented. Limited to 20 children per level to prevent flooding.
@@ -190,8 +190,8 @@ bw> /screenshot body page.png
 Capturing body ...
 Saved: page.png (1440x900, 245832 bytes)
 
-bw> /screenshot .bw-card card.png
-Capturing .bw-card ...
+bw> /screenshot .bw_bccl_card card.png
+Capturing .bw_bccl_card ...
 Saved: card.png (400x300, 48291 bytes)
 ```
 
@@ -220,7 +220,7 @@ Renders a TACO object at the specified selector. Use for quick UI injection.
 bw> /render #app {"t":"h1","c":"Hello from REPL"}
 Rendered at #app
 
-bw> /render #app {"t":"div","a":{"class":"bw-alert bw-alert-info"},"c":"Injected alert"}
+bw> /render #app {"t":"div","a":{"class":"bw_bccl_alert bw_info"},"c":"Injected alert"}
 Rendered at #app
 ```
 
@@ -250,10 +250,10 @@ Listening for click on button
 [event] click on button → BUTTON#save-btn "Save"
 [event] click on button → BUTTON#cancel-btn "Cancel"
 
-bw> /listen .bw-card mouseover
-Listening for mouseover on .bw-card
+bw> /listen .bw_bccl_card mouseover
+Listening for mouseover on .bw_bccl_card
 
-[event] mouseover on .bw-card → DIV "Card Title"
+[event] mouseover on .bw_bccl_card → DIV "Card Title"
 
 bw> /listen input change
 Listening for change on input

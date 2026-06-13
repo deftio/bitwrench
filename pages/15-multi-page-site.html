@@ -1075,7 +1075,7 @@
           '    mounted: function(el) {\n' +
           '      bw.sub(\'bw:route\', function(d) {\n' +
           '        el._bw_state.active = d.path;\n' +
-          '        bw.update(el);\n' +
+          '        bw.refresh(el);\n' +
           '      }, el);  // auto-unsubscribes when el is removed\n' +
           '    },\n' +
           '    render: function(el) {\n' +
@@ -1174,7 +1174,7 @@
         {
           t: 'ul',
           c: [
-            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management -- o.state, bw.patch, bw.update' } },
+            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management -- o.state, bw.patch, bw.refresh' } },
             { t: 'li', c: { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard -- full example app' } },
             { t: 'li', c: { t: 'a', a: { href: '01-components.html' }, c: 'Components -- BCCL component gallery' } },
             { t: 'li', c: { t: 'a', a: { href: '03-styling.html' }, c: 'Styling & CSS -- bw.css(), bw.injectCSS()' } },

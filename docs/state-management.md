@@ -7,15 +7,15 @@ Bitwrench has a three-level component model. Each level adds capability on top o
 | Level 0 -- TACO data | A plain JavaScript object describing UI | Static content, server rendering, serialization |
 | Level 1 -- DOM rendering | A live DOM element with optional lifecycle hooks | Render-once UI, manual state management |
 | Level 1.5 -- Component handles | `o.handle` and `o.slots` for imperative control of rendered elements | Update parts of a component without re-rendering |
-| Level 2 -- Stateful TACO | A TACO with `o.state` + `o.render` and `bw.update()` for re-rendering | Interactive components with changing state |
+| Level 2 -- Stateful TACO | A TACO with `o.state` + `o.render` and `bw.refresh()` for re-rendering | Interactive components with changing state |
 
 This guide covers all three levels, from simplest to most capable.
 
-> **Coming from React?** Level 0 is like calling `React.createElement()` to get a virtual element. Level 1 is like `ReactDOM.render()` with no state. Level 2 is like a class component with `this.state` and `this.setState()`, where you call `bw.update(el)` instead of `setState`.
+> **Coming from React?** Level 0 is like calling `React.createElement()` to get a virtual element. Level 1 is like `ReactDOM.render()` with no state. Level 2 is like a class component with `this.state` and `this.setState()`, where you call `bw.refresh(el)` instead of `setState`.
 
-> **Coming from Vue?** Level 0 is like a render function's return value. Level 1 is mounting with `createApp().mount()`. Level 2 is like a component with a `setup()` function that manages its own reactivity, where the render function re-runs on `bw.update()`.
+> **Coming from Vue?** Level 0 is like a render function's return value. Level 1 is mounting with `createApp().mount()`. Level 2 is like a component with a `setup()` function that manages its own reactivity, where the render function re-runs on `bw.refresh()`.
 
-> **Coming from Svelte?** Level 0 is like the compiled component descriptor. Level 1 is mounting with `new Component({ target })`. Level 2 is a live component with state variables, where `bw.update(el)` triggers the re-render.
+> **Coming from Svelte?** Level 0 is like the compiled component descriptor. Level 1 is mounting with `new Component({ target })`. Level 2 is a live component with state variables, where `bw.refresh(el)` triggers the re-render.
 
 ---
 
@@ -94,7 +94,7 @@ var html = bw.html({ t: 'div', c: 'Hello' });
 // '<div>Hello</div>'
 
 // Create a detached DOM element (browser only)
-var el = bw.createDOM({ t: 'div', c: 'Hello' });
+var el = bw.create({ t: 'div', c: 'Hello' });
 
 // Mount into an existing DOM element (browser only)
 bw.DOM('#app', { t: 'div', c: 'Hello' });
@@ -119,7 +119,7 @@ function makeCounter() {
             { t: 'button', c: '+1', a: {
               onclick: function() {
                 el._bw_state.count++;
-                bw.update(el);
+                bw.refresh(el);
               }
             }}
           ]
@@ -136,7 +136,7 @@ This is the **manual render pump** pattern:
 
 1. Define state in `o.state`
 2. Define a render function in `o.render`
-3. When state changes, call `bw.update(el)` to re-invoke the render function
+3. When state changes, call `bw.refresh(el)` to re-invoke the render function
 
 This pattern works and is fully supported. It gives you direct control over when and how re-rendering happens.
 
@@ -161,7 +161,7 @@ Level 1 components can respond to mount and unmount events:
 }
 ```
 
-> **Warning: Never use `o.mounted` to attach event handlers.** When a stateful component re-renders (after `bw.update()`), the old DOM content is replaced and any listeners attached via `addEventListener` in `mounted` are silently lost. Always put event handlers in `a: { onclick: fn }` -- bitwrench re-attaches them on every render. Use `o.mounted` only for non-event setup: timers, observers, third-party library init, measuring dimensions.
+> **Warning: Never use `o.mounted` to attach event handlers.** When a stateful component re-renders (after `bw.refresh()`), the old DOM content is replaced and any listeners attached via `addEventListener` in `mounted` are silently lost. Always put event handlers in `a: { onclick: fn }` -- bitwrench re-attaches them on every render. Use `o.mounted` only for non-event setup: timers, observers, third-party library init, measuring dimensions.
 
 ### Targeted updates with `bw.patch()`
 
@@ -192,10 +192,10 @@ Use Level 1 when:
 - You need interactivity but want full control over the render cycle
 - You are building a one-off interactive widget
 - You are integrating with external libraries that manage their own state
-- You prefer explicit `bw.update()` calls over automatic re-rendering
+- You prefer explicit `bw.refresh()` calls over automatic re-rendering
 - You are building the transport layer for server-driven UI (bwserve)
 
-> **Coming from jQuery?** Level 1 with `o.render` + `bw.update()` is conceptually similar to jQuery's manual DOM updates, but structured. Instead of scattered `$('.count').text(val)` calls, you have a single render function that produces the complete UI from state. When state changes, you call `bw.update()` and the render function runs again.
+> **Coming from jQuery?** Level 1 with `o.render` + `bw.refresh()` is conceptually similar to jQuery's manual DOM updates, but structured. Instead of scattered `$('.count').text(val)` calls, you have a single render function that produces the complete UI from state. When state changes, you call `bw.refresh()` and the render function runs again.
 
 ---
 
@@ -231,7 +231,7 @@ Declare named content areas with CSS selectors. Bitwrench auto-generates `el.bw.
 
 ```javascript
 var card = bw.makeCard({ title: 'Stats', content: '0' });
-// makeCard declares o.slots: { title: '.bw_card_title', content: '.bw_card_body', footer: '.bw_card_footer' }
+// makeCard declares o.slots: { title: '.bw_bccl_card_title', content: '.bw_bccl_card_body', footer: '.bw_bccl_card_footer' }
 var el = bw.mount('#app', card);
 el.bw.setTitle('Updated Title');
 el.bw.setContent({ t: 'strong', c: '42' });  // accepts TACO objects
@@ -279,7 +279,7 @@ All BCCL factories include `o.handle` and/or `o.slots`. Examples:
 |-----------|-----|
 | Update a label, badge, or slot text | **Handles** -- `el.bw.setTitle('new')` |
 | Advance a carousel or toggle an accordion | **Handles** -- `el.bw.next()`, `el.bw.toggle(0)` |
-| Component has complex state that triggers full UI rebuild | **Level 2** -- `o.state` + `o.render` + `bw.update()` |
+| Component has complex state that triggers full UI rebuild | **Level 2** -- `o.state` + `o.render` + `bw.refresh()` |
 | Need to preserve input focus during updates | **Handles** -- slot setters don't re-render siblings |
 | External code needs to control an embedded widget | **Handles** -- `bw.mount()` + `el.bw.method()` |
 
@@ -287,7 +287,7 @@ All BCCL factories include `o.handle` and/or `o.slots`. Examples:
 
 ## Level 2: Stateful TACO
 
-Level 2 adds `o.state` and `o.render` to a TACO, giving it managed state and a render pump. When state changes, you call `bw.update(el)` to re-invoke the render function. This is the recommended pattern for interactive components.
+Level 2 adds `o.state` and `o.render` to a TACO, giving it managed state and a render pump. When state changes, you call `bw.refresh(el)` to re-invoke the render function. This is the recommended pattern for interactive components.
 
 ```javascript
 var counter = {
@@ -301,7 +301,7 @@ var counter = {
           { t: 'h3', c: 'Count: ' + s.count },
           bw.makeButton({ text: '+1', onclick: function() {
             s.count++;
-            bw.update(el);
+            bw.refresh(el);
           }})
         ]
       });
@@ -314,9 +314,9 @@ bw.DOM('#app', counter);
 
 ### How it works
 
-1. `bw.createDOM()` (called internally by `bw.DOM()`) sees `o.state` and copies it to `el._bw_state`
+1. `bw.create()` (called internally by `bw.DOM()`) sees `o.state` and copies it to `el._bw_state`
 2. If `o.render` is defined, it is stored as `el._bw_render` and called immediately: `o.render(el, el._bw_state)`
-3. When state changes, you call `bw.update(el)` which re-invokes `el._bw_render(el, el._bw_state)` and emits a `bw:statechange` event
+3. When state changes, you call `bw.refresh(el)` which re-invokes `el._bw_render(el, el._bw_state)` and emits a `bw:statechange` event
 4. The render function produces new content via `bw.DOM(el, ...)`, replacing the old children
 
 ### Accessing state
@@ -343,7 +343,7 @@ To read or modify state from outside, get a reference to the element:
 ```javascript
 var el = bw.$('#my-component')[0];
 el._bw_state.count = 42;
-bw.update(el);
+bw.refresh(el);
 ```
 
 ### Lifecycle hooks
@@ -363,7 +363,7 @@ var timer = {
     mounted: function(el) {
       el._interval = setInterval(function() {
         el._bw_state.seconds++;
-        bw.update(el);
+        bw.refresh(el);
       }, 1000);
     },
     unmount: function(el) {
@@ -376,7 +376,7 @@ var timer = {
 };
 ```
 
-> **Warning: Never attach event handlers in `o.mounted`.** When `bw.update()` re-renders a component, the old DOM children are replaced. Any listeners attached via `addEventListener` in `mounted` are silently lost. Always put event handlers in `a: { onclick: fn }` -- bitwrench re-attaches them on every render.
+> **Warning: Never attach event handlers in `o.mounted`.** When `bw.refresh()` re-renders a component, the old DOM children are replaced. Any listeners attached via `addEventListener` in `mounted` are silently lost. Always put event handlers in `a: { onclick: fn }` -- bitwrench re-attaches them on every render.
 
 ### Targeted updates with `bw.patch()`
 
@@ -415,9 +415,9 @@ Use Level 2 when:
 - You need lifecycle management (mount, unmount)
 - You want explicit control over what triggers a re-render
 
-> **Coming from React?** Level 2 is like a class component with `this.state` and a manual `forceUpdate()`. The render function rebuilds the component from state each time `bw.update()` is called.
+> **Coming from React?** Level 2 is like a class component with `this.state` and a manual `forceUpdate()`. The render function rebuilds the component from state each time `bw.refresh()` is called.
 
-> **Coming from jQuery?** Level 2 with `o.render` + `bw.update()` is conceptually similar to jQuery's manual DOM updates, but structured. Instead of scattered `$('.count').text(val)` calls, you have a single render function that produces the complete UI from state.
+> **Coming from jQuery?** Level 2 with `o.render` + `bw.refresh()` is conceptually similar to jQuery's manual DOM updates, but structured. Instead of scattered `$('.count').text(val)` calls, you have a single render function that produces the complete UI from state.
 
 ---
 
@@ -487,7 +487,7 @@ bw.DOM('#app', {
         t: 'div', c: [
           { t: 'span', c: 'Count: ' + s.count },
           { t: 'button', c: '+1', a: {
-            onclick: function() { s.count++; bw.update(el); }
+            onclick: function() { s.count++; bw.refresh(el); }
           }}
         ]
       });
@@ -496,7 +496,7 @@ bw.DOM('#app', {
 });
 ```
 
-The Level 2 version encapsulates state inside the component. No external variable, no standalone render function. The render function is called automatically on mount and on each `bw.update(el)` call.
+The Level 2 version encapsulates state inside the component. No external variable, no standalone render function. The render function is called automatically on mount and on each `bw.refresh(el)` call.
 
 ---
 
@@ -506,7 +506,7 @@ Bitwrench provides three mechanisms for components to communicate, each suited t
 
 ### Shared state (parent-child)
 
-Multiple components can share the same state object. When either calls `bw.update()`, it re-renders with the current shared state:
+Multiple components can share the same state object. When either calls `bw.refresh()`, it re-renders with the current shared state:
 
 ```javascript
 var appState = { user: { name: 'Alice' }, items: [] };
@@ -555,7 +555,7 @@ var results = {
     mounted: function(el) {
       bw.sub('search:changed', function(detail) {
         el._bw_state.query = detail.query;
-        bw.update(el);
+        bw.refresh(el);
       }, el);
     },
     render: function(el) {
@@ -565,7 +565,7 @@ var results = {
 };
 ```
 
-Pub/sub is app-scoped -- publishers and subscribers do not need to know about each other. Pass the element as the third argument to `bw.sub()` to tie the subscription's lifetime to the element (auto-cleaned on `bw.cleanup()`).
+Pub/sub is app-scoped -- publishers and subscribers do not need to know about each other. Pass the element as the third argument to `bw.sub()` to tie the subscription's lifetime to the element (auto-cleaned on `bw.unmount()`).
 
 Wildcard subscriptions let you listen to a group of related topics at once:
 
@@ -596,7 +596,7 @@ bw.DOM('#app', {
     mounted: function(el) {
       bw.sub('upload:progress', function(d) {
         el._bw_state.pct = d.pct;
-        bw.update(el);
+        bw.refresh(el);
       }, el);
     },
     render: function(el) {
@@ -630,7 +630,8 @@ These primitives are the building blocks of the stateful TACO model. They are al
 
 | Function | Purpose |
 |----------|---------|
-| `bw.update(el)` | Re-invoke `el._bw_render(el)` to re-render |
+| `bw.refresh(ref)` | Re-invoke `el._bw_render(el)` to re-render |
+| `bw.update(ref, data)` | Dispatch to `el.bw.update(data)` |
 | `bw.patch(uuid, content, attr)` | Update a single UUID-addressed element |
 | `bw.patchAll(patches)` | Batch-update multiple UUID-addressed elements |
 | `bw.uuid(prefix)` | Generate a UUID class for addressing |
@@ -640,7 +641,14 @@ These primitives are the building blocks of the stateful TACO model. They are al
 | `bw.sub(topic, handler, el?)` | Subscribe to topic (supports wildcard `'ns:*'` patterns) |
 | `bw.once(topic, handler, el?)` | One-shot subscribe (auto-unsub after first fire) |
 | `bw.unsub(topic, handler)` | Unsubscribe from topic |
-| `bw.cleanup(el)` | Run unmount hooks and clear subscriptions |
+| `bw.unmount(el)` | Tear down subtree lifecycle |
+| `bw.mountTree(el)` | Register an inserted subtree |
+| `bw.unmountChildren(el)` | Unmount descendants only |
+| `bw.detach(el)` | Keep-alive disconnect |
+| `bw.hydrate(el, taco)` | Wire lifecycle onto existing DOM |
+| `bw.append(target, taco)` | Add child without removing existing |
+| `bw.replace(ref, taco)` | Swap element at DOM position |
+| `bw.remove(ref)` | Unmount + remove from DOM |
 
 ### `bw.emit()` / `bw.on()` vs `bw.pub()` / `bw.sub()`
 
@@ -651,7 +659,7 @@ Bitwrench has two event systems that serve different purposes:
 | Scope | DOM element and its ancestors (bubbles) | App-wide (all subscribers) |
 | Addressing | By DOM element reference | By topic string |
 | Use case | Parent-child DOM communication | Decoupled cross-component messaging |
-| Cleanup | Manual or via bw.cleanup() | Auto-cleanup via `handle.sub()` or element lifecycle |
+| Cleanup | Manual or via bw.unmount() | Auto-cleanup via `handle.sub()` or element lifecycle |
 
 ---
 
@@ -690,7 +698,7 @@ function renderTodoView(target) {
       mounted: function(el) {
         bw.sub('store:todos', function(todos) {
           el._bw_state.items = todos;
-          bw.update(el);
+          bw.refresh(el);
         }, el);  // auto-unsubscribes when view is removed
       },
       render: function(el) {
@@ -712,7 +720,7 @@ function renderProjectView(target) {
       mounted: function(el) {
         bw.sub('store:projects', function(projects) {
           el._bw_state.projects = projects;
-          bw.update(el);
+          bw.refresh(el);
         }, el);
       },
       render: function(el) {
@@ -778,7 +786,7 @@ bw.router({
 | Static content, server rendering | Level 0 -- TACO data, `bw.html()` |
 | Interactive widget, full control | Level 1 -- manual `bw.DOM()` re-renders |
 | Update a slot, label, or control a widget | Level 1.5 -- `o.handle` / `o.slots` via `bw.mount()` + `el.bw` |
-| Stateful component with changing data | Level 2 -- `o.state` + `o.render` + `bw.update()` |
+| Stateful component with changing data | Level 2 -- `o.state` + `o.render` + `bw.refresh()` |
 | Server pushes UI updates | Level 1 -- `bw.patch()` / `bw.DOM()` |
 | Components need to talk to each other | `bw.pub()`/`bw.sub()` |
 | URL-driven views (SPA) | `bw.router()` -- see [Routing](routing.md) |

@@ -445,7 +445,7 @@
                     { t: 'tr', c: [
                       { t: 'td', c: '2' },
                       { t: 'td', c: 'State management' },
-                      { t: 'td', c: bw.raw('<code>o.state</code>, <code>o.render</code>, <code>bw.update()</code>') }
+                      { t: 'td', c: bw.raw('<code>o.state</code>, <code>o.render</code>, <code>bw.refresh()</code>') }
                     ]},
                     { t: 'tr', c: [
                       { t: 'td', c: '3' },
@@ -486,7 +486,7 @@
                   c: [
                     { t: 'li', c: bw.raw('<strong>o.state</strong> &mdash; declare initial state inside the TACO') },
                     { t: 'li', c: bw.raw('<strong>o.render</strong> &mdash; function that builds UI from <code>el._bw_state</code>') },
-                    { t: 'li', c: bw.raw('<strong>Event handler</strong> &mdash; mutate state, then call <code>bw.update(el)</code>') },
+                    { t: 'li', c: bw.raw('<strong>Event handler</strong> &mdash; mutate state, then call <code>bw.refresh(el)</code>') },
                     { t: 'li', c: bw.raw('<strong>bw.DOM()</strong> &mdash; mount the TACO to the page') }
                   ]
                 },
@@ -613,7 +613,7 @@
                       if (s.squares[i]) return;
                       s.squares[i] = s.xIsNext ? 'X' : 'O';
                       s.xIsNext = !s.xIsNext;
-                      bw.update(el);
+                      bw.refresh(el);
                     });
                   })
                 },
@@ -624,7 +624,7 @@
                     onclick: function() {
                       s.squares = Array(9).fill(null);
                       s.xIsNext = true;
-                      bw.update(el);
+                      bw.refresh(el);
                     }
                   },
                   c: 'Reset'
@@ -638,7 +638,7 @@
       var code = [
         '// Step 2: State with o.render',
         '// State and rendering live inside the TACO.',
-        '// bw.update(el) re-renders the component.',
+        '// bw.refresh(el) re-renders the component.',
         '',
         'bw.DOM("#game", {',
         '  t: "div",',
@@ -662,7 +662,7 @@
         '                    if (s.squares[i]) return;',
         '                    s.squares[i] = s.xIsNext ? "X" : "O";',
         '                    s.xIsNext = !s.xIsNext;',
-        '                    bw.update(el);   // re-render',
+        '                    bw.refresh(el);   // re-render',
         '                  }',
         '                },',
         '                c: sq || ""',
@@ -673,7 +673,7 @@
         '              onclick: function() {',
         '                s.squares = Array(9).fill(null);',
         '                s.xIsNext = true;',
-        '                bw.update(el);',
+        '                bw.refresh(el);',
         '              }',
         '            }, c: "Reset"',
         '          }',
@@ -722,7 +722,7 @@
           {
             t: 'div', a: { class: 'bw_step_body' },
             c: [
-              { t: 'p', c: 'Now we add state management. Declare initial state in o.state, define the render function in o.render, and call bw.update(el) when state changes. That\'s the entire pattern.' },
+              { t: 'p', c: 'Now we add state management. Declare initial state in o.state, define the render function in o.render, and call bw.refresh(el) when state changes. That\'s the entire pattern.' },
               {
                 t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' },
                 c: [
@@ -734,7 +734,7 @@
                     { t: 'code', c: 'o.render' }, ' defines the render function (stored at ',
                     { t: 'code', c: 'el._bw_render' }, ').',
                     { t: 'br' },
-                    { t: 'code', c: 'bw.update(el)' }, ' calls the render function and emits a ',
+                    { t: 'code', c: 'bw.refresh(el)' }, ' calls the render function and emits a ',
                     { t: 'code', c: 'bw:statechange' }, ' event.'
                   ]}
                 ]
@@ -776,7 +776,7 @@
                     if (calcWinner(s.squares) || s.squares[i]) return;
                     s.squares[i] = s.xIsNext ? 'X' : 'O';
                     s.xIsNext = !s.xIsNext;
-                    bw.update(el);
+                    bw.refresh(el);
                   });
                 })
               }
@@ -790,7 +790,7 @@
                   onclick: function() {
                     s.squares = Array(9).fill(null);
                     s.xIsNext = true;
-                    bw.update(el);
+                    bw.refresh(el);
                   }
                 },
                 c: 'New Game'
@@ -912,13 +912,13 @@
               s.history = hist.concat([{ squares: sq, lastMove: i }]);
               s.stepNumber = hist.length;
               s.xIsNext = !s.xIsNext;
-              bw.update(el);
+              bw.refresh(el);
             }
 
             function jumpTo(step) {
               s.stepNumber = step;
               s.xIsNext = (step % 2) === 0;
-              bw.update(el);
+              bw.refresh(el);
             }
 
             var statusClass = 'status-bar';
@@ -967,7 +967,7 @@
                           s.history = [{ squares: Array(9).fill(null) }];
                           s.stepNumber = 0;
                           s.xIsNext = true;
-                          bw.update(el);
+                          bw.refresh(el);
                         }
                       },
                       c: 'New Game'
@@ -1011,13 +1011,13 @@
         '      s.history = hist.concat([{ squares: sq, lastMove: i }]);',
         '      s.stepNumber = hist.length;',
         '      s.xIsNext = !s.xIsNext;',
-        '      bw.update(el);',
+        '      bw.refresh(el);',
         '    }',
         '',
         '    function jumpTo(step) {',
         '      s.stepNumber = step;',
         '      s.xIsNext = (step % 2) === 0;',
-        '      bw.update(el);',
+        '      bw.refresh(el);',
         '    }',
         '',
         '    // History buttons',
@@ -1106,7 +1106,7 @@
                     ' to copy arrays before modifying them. The old data stays in the history. ',
                     { t: 'code', c: 'jumpTo()' }, ' just sets ',
                     { t: 'code', c: 's.stepNumber' }, ' and calls ',
-                    { t: 'code', c: 'bw.update(el)' }, '.'
+                    { t: 'code', c: 'bw.refresh(el)' }, '.'
                   ]}
                 ]
               },
@@ -1171,7 +1171,7 @@
               s.history = hist.concat([{ squares: sq, lastMove: i }]);
               s.stepNumber = hist.length;
               s.xIsNext = !s.xIsNext;
-              bw.update(el);
+              bw.refresh(el);
 
               // Publish gameover if this move ended the game
               var result = calcWinner(sq);
@@ -1183,7 +1183,7 @@
             function jumpTo(step) {
               s.stepNumber = step;
               s.xIsNext = (step % 2) === 0;
-              bw.update(el);
+              bw.refresh(el);
             }
 
             var statusClass = 'status-bar';
@@ -1234,7 +1234,7 @@
                           s.history = [{ squares: Array(9).fill(null) }];
                           s.stepNumber = 0;
                           s.xIsNext = true;
-                          bw.update(el);
+                          bw.refresh(el);
                         }
                       },
                       c: 'New Game'
@@ -1258,7 +1258,7 @@
                                 checked: s.showCoords,
                                 onchange: function(e) {
                                   s.showCoords = e.target.checked;
-                                  bw.update(el);
+                                  bw.refresh(el);
                                 }
                               }
                             },
@@ -1271,7 +1271,7 @@
                             class: 'sort-btn',
                             onclick: function() {
                               s.sortAsc = !s.sortAsc;
-                              bw.update(el);
+                              bw.refresh(el);
                             }
                           },
                           c: s.sortAsc ? 'Sort: Oldest first' : 'Sort: Newest first'
@@ -1315,7 +1315,7 @@
         '      // ... build board, detect winner ...',
         '',
         '      function handleClick(i) {',
-        '        // ... make the move, bw.update(el) ...',
+        '        // ... make the move, bw.refresh(el) ...',
         '',
         '        // Publish if game just ended:',
         '        var result = calcWinner(sq);',
@@ -1430,7 +1430,7 @@
                       { t: 'code', c: 'bw.emit(el, name, data)' }, ' + ',
                       { t: 'code', c: 'bw.on(el, name, fn)' },
                       bw.raw(' &mdash; CustomEvent, bubbles up the DOM tree. Best for parent&ndash;child coordination. '),
-                      { t: 'code', c: 'bw.update()' }, ' emits ', { t: 'code', c: 'bw:statechange' }, ' this way.',
+                      { t: 'code', c: 'bw.refresh()' }, ' emits ', { t: 'code', c: 'bw:statechange' }, ' this way.',
                       { t: 'br' }, { t: 'br' },
                       { t: 'strong', c: 'Application-scoped (pub/sub):' }, ' ',
                       { t: 'code', c: 'bw.pub(topic, data)' }, ' + ',
@@ -1482,7 +1482,7 @@
           t: 'ul', a: { style: 'list-style: none; padding: 0; margin: 1rem 0;' },
           c: [
             { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'TACO objects' }, bw.raw(' &mdash; describing HTML with plain JS objects')] },
-            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.update()' }, bw.raw(' &mdash; state management without boilerplate')] },
+            { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'o.render + bw.refresh()' }, bw.raw(' &mdash; state management without boilerplate')] },
             { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Conditional rendering' }, bw.raw(' &mdash; standard JavaScript (ternaries, arrays, .filter)')] },
             { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'Immutable history' }, bw.raw(' &mdash; .slice() for time travel')] },
             { t: 'li', a: { style: 'padding: 0.3rem 0;' }, c: [{ t: 'strong', c: 'bw.pub() + bw.sub()' }, bw.raw(' &mdash; topic-based events, decoupled from DOM')] },
@@ -1626,7 +1626,7 @@
       '            s.history = hist.concat([{ squares: sq, lastMove: i }]);',
       '            s.stepNumber = hist.length;',
       '            s.xIsNext = !s.xIsNext;',
-      '            bw.update(el);',
+      '            bw.refresh(el);',
       '            var result = calcWinner(sq);',
       '            var draw = !result && sq.every(function(v) { return v !== null; });',
       '            if (result) bw.pub("gameover", { winner: result.winner });',
@@ -1636,7 +1636,7 @@
       '          function jumpTo(step) {',
       '            s.stepNumber = step;',
       '            s.xIsNext = (step % 2) === 0;',
-      '            bw.update(el);',
+      '            bw.refresh(el);',
       '          }',
       '',
       '          var statusClass = "status-bar";',
@@ -1683,7 +1683,7 @@
       '                },',
       '                { t: "button", a: { class: "new-game-btn", onclick: function() {',
       '                    s.history = [{ squares: Array(9).fill(null) }];',
-      '                    s.stepNumber = 0; s.xIsNext = true; bw.update(el);',
+      '                    s.stepNumber = 0; s.xIsNext = true; bw.refresh(el);',
       '                  } }, c: "New Game" }',
       '              ]},',
       '              { t: "div", a: { class: "game-sidebar" }, c: [',
@@ -1691,11 +1691,11 @@
       '                { t: "div", a: { class: "game-options" }, c: [',
       '                  { t: "label", c: [',
       '                    { t: "input", a: { type: "checkbox", checked: s.showCoords,',
-      '                      onchange: function(e) { s.showCoords = e.target.checked; bw.update(el); }',
+      '                      onchange: function(e) { s.showCoords = e.target.checked; bw.refresh(el); }',
       '                    }}, " Show coordinates"',
       '                  ]},',
       '                  { t: "button", a: { class: "sort-btn",',
-      '                    onclick: function() { s.sortAsc = !s.sortAsc; bw.update(el); }',
+      '                    onclick: function() { s.sortAsc = !s.sortAsc; bw.refresh(el); }',
       '                  }, c: s.sortAsc ? "Sort: Oldest first" : "Sort: Newest first" }',
       '                ]},',
       '                { t: "h4", c: "History" },',

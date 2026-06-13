@@ -54,9 +54,9 @@ app.page('/', function(client) {
       { t: 'h1', c: 'Counter' },
       { t: 'div', a: { id: 'count', style: 'font-size: 3rem; text-align: center' }, c: '0' },
       { t: 'div', a: { style: 'text-align: center; margin-top: 1rem' }, c: [
-        { t: 'button', a: { 'data-bw-action': 'decrement', class: 'bw-btn bw-btn-secondary' }, c: '-1' },
-        { t: 'button', a: { 'data-bw-action': 'increment', class: 'bw-btn bw-btn-primary', style: 'margin-left: 0.5rem' }, c: '+1' },
-        { t: 'button', a: { 'data-bw-action': 'reset', class: 'bw-btn', style: 'margin-left: 0.5rem' }, c: 'Reset' }
+        { t: 'button', a: { class: 'bw_act_decrement bw_bccl_btn bw_secondary' }, c: '-1' },
+        { t: 'button', a: { class: 'bw_act_increment bw_bccl_btn bw_primary', style: 'margin-left: 0.5rem' }, c: '+1' },
+        { t: 'button', a: { class: 'bw_act_reset bw_bccl_btn', style: 'margin-left: 0.5rem' }, c: 'Reset' }
       ]}
     ]
   });
@@ -80,7 +80,7 @@ app.page('/', function(client) {
 ```
 
 Key concepts:
-- `data-bw-action="increment"` on the button tells the client to POST `{action: "increment"}` when clicked
+- `class: 'bw_act_increment'` on the button tells the client to POST `{action: "increment"}` when clicked. (The older `data-bw-action="increment"` attribute is also supported but `bw_act_*` classes are preferred.)
 - `client.on('increment', fn)` registers a server-side handler for that action
 - `client.patch('count', '0')` sends an SSE message that updates the element with `id="count"`
 
@@ -101,15 +101,15 @@ app.page('/', function(client) {
     t: 'div', a: { style: 'margin-top: 2rem' }, c: [
       { t: 'h2', c: 'Live Metrics' },
       { t: 'div', a: { style: 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem' }, c: [
-        { t: 'div', a: { class: 'bw-card' }, c: [
+        { t: 'div', a: { class: 'bw_bccl_card' }, c: [
           { t: 'div', a: { style: 'color: #666; font-size: 0.85rem' }, c: 'Uptime' },
           { t: 'div', a: { id: 'uptime', style: 'font-size: 1.5rem; font-weight: 700' }, c: '0s' }
         ]},
-        { t: 'div', a: { class: 'bw-card' }, c: [
+        { t: 'div', a: { class: 'bw_bccl_card' }, c: [
           { t: 'div', a: { style: 'color: #666; font-size: 0.85rem' }, c: 'Memory' },
           { t: 'div', a: { id: 'memory', style: 'font-size: 1.5rem; font-weight: 700' }, c: '--' }
         ]},
-        { t: 'div', a: { class: 'bw-card' }, c: [
+        { t: 'div', a: { class: 'bw_bccl_card' }, c: [
           { t: 'div', a: { style: 'color: #666; font-size: 0.85rem' }, c: 'Requests' },
           { t: 'div', a: { id: 'requests', style: 'font-size: 1.5rem; font-weight: 700' }, c: '0' }
         ]}
@@ -245,7 +245,7 @@ Browser                              Server (Node.js)
 | `message` | `client.message(level, text)` | Show notification |
 | `call` | `client.call(name, ...args)` | Invoke registered or built-in function |
 | `exec` | `client.exec(code)` | Run arbitrary JS (requires `allowExec`) |
-| `register` | `client.register(name, body)` | Send named function to client |
+| `register` | ~~`client.register(name, body)`~~ | **Removed in v2.1.** Use `client.exec()` or `client.call()` with built-in functions instead. |
 
 ### Screenshots
 

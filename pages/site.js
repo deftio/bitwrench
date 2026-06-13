@@ -767,6 +767,7 @@
   // No merge needed: SITE_STRUCTURAL and themed rules have disjoint selectors.
   // =========================================================================
   function applySiteChromeCSS(styles) {
+    window._bw_current_styles = styles;
     var structural = bw.css(SITE_STRUCTURAL);
     var primary = bw.css(siteAllThemedRules(styles.palette));
     var alt = bw.css(bw.scopeRulesUnder(
@@ -965,6 +966,7 @@
   // =========================================================================
   function initBitwrenchPage(currentPage, baseHref) {
     var styles = bw.loadStyles();
+    window._bw_current_styles = styles;
     applySiteChromeCSS(styles);
     mountExampleNav('#example-nav', currentPage, baseHref);
     return styles;

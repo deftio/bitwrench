@@ -39,7 +39,7 @@
             <strong><code>o.render</code></strong> &mdash; first-class render function stored
             as <code>el._bw_render</code>. Replaces the <code>o.mounted</code> boilerplate
             pattern. Called automatically on mount.<br>
-            <strong><code>bw.update(el)</code></strong> &mdash; re-runs <code>el._bw_render</code>.
+            <strong><code>bw.refresh(el)</code></strong> &mdash; re-runs <code>el._bw_render</code>.
             Replaces manual <code>render(el)</code> calls. Emits <code>bw:statechange</code> so
             other components can react.<br>
             <strong><code>bw.patch(id, value)</code></strong> &mdash; targeted DOM update by UUID.
@@ -108,7 +108,7 @@
           <p class="intro-text">
             A list of mini-counters that can be added and removed. Each item gets a stable
             UUID at creation time. <code>bw.patch()</code> updates individual values without
-            re-rendering the list. <code>bw.update()</code> rebuilds the list when items are
+            re-rendering the list. <code>bw.refresh()</code> rebuilds the list when items are
             added or removed. UUIDs survive removal &mdash; the same ID addresses the same
             item regardless of its position in the list.
           </p>
@@ -437,7 +437,7 @@
 '              bw.makeButton({ text: \'+\', variant: \'primary\',\n' +
 '                onclick: function() {\n' +
 '                  s.count++;\n' +
-'                  bw.update(el);           // re-renders + emits bw:statechange\n' +
+'                  bw.refresh(el);           // re-renders + emits bw:statechange\n' +
 '                }\n' +
 '              }),\n' +
 '              // ... more buttons\n' +
@@ -459,7 +459,7 @@
 '      var el = bw.$(\'#\' + id)[0];\n' +
 '      if (el && el._bw_state) {\n' +
 '        el._bw_state.count = n;\n' +
-'        bw.update(el);                     // re-renders + emits event\n' +
+'        bw.refresh(el);                     // re-renders + emits event\n' +
 '      }\n' +
 '    },\n' +
 '    getElement: function() { return bw.$(\'#\' + id)[0]; }\n' +
@@ -522,7 +522,7 @@
 '}';
 
     var SRC_LIST =
-'// Dynamic Counter List — bw.patch() for values, bw.update() for structure\n' +
+'// Dynamic Counter List — bw.patch() for values, bw.refresh() for structure\n' +
 '\n' +
 'var listNextNum = 1;\n' +
 'var listItems = [];  // { id, valId, name, count }\n' +
@@ -534,12 +534,12 @@
 '    name:  \'Counter #\' + listNextNum++,\n' +
 '    count: 0\n' +
 '  });\n' +
-'  bw.update(listEl);           // structural change → full re-render\n' +
+'  bw.refresh(listEl);           // structural change → full re-render\n' +
 '}\n' +
 '\n' +
 'function removeListItem(itemId) {\n' +
 '  listItems = listItems.filter(function(it) { return it.id !== itemId; });\n' +
-'  bw.update(listEl);           // structural change → full re-render\n' +
+'  bw.refresh(listEl);           // structural change → full re-render\n' +
 '}\n' +
 '\n' +
 '// In the o.render function, value changes use bw.patch:\n' +
@@ -588,7 +588,7 @@
     }
 
     // ============================================================
-    //  Counter Card Factory — uses o.render + bw.update()
+    //  Counter Card Factory — uses o.render + bw.refresh()
     //
     //  Returns: { taco, getCount, setCount, getElement, name, id }
     // ============================================================
@@ -603,7 +603,7 @@
         if (isNaN(n)) return;
         el._bw_state.count = n;
         logEvent('set', name, n);
-        bw.update(el);
+        bw.refresh(el);
       }
 
       var taco = {
@@ -624,21 +624,21 @@
                     onclick: function() {
                       s.count++;
                       logEvent('+1', name, s.count);
-                      bw.update(el);
+                      bw.refresh(el);
                     }
                   }),
                   bw.makeButton({ text: '\u2013', variant: 'primary',
                     onclick: function() {
                       s.count--;
                       logEvent('-1', name, s.count);
-                      bw.update(el);
+                      bw.refresh(el);
                     }
                   }),
                   bw.makeButton({ text: 'Clear', variant: 'secondary',
                     onclick: function() {
                       s.count = 0;
                       logEvent('clear', name, s.count);
-                      bw.update(el);
+                      bw.refresh(el);
                     }
                   })
                 ]},
@@ -671,7 +671,7 @@
           var el = bw.$('#' + id)[0];
           if (el && el._bw_state) {
             el._bw_state.count = n;
-            bw.update(el);
+            bw.refresh(el);
           }
         },
         getElement: function() {
@@ -716,7 +716,7 @@
     // ============================================================
     //  Cross-component event wiring
     //
-    //  Cards emit bw:statechange (via bw.update). The global panel
+    //  Cards emit bw:statechange (via bw.refresh). The global panel
     //  and state inspector listen for it on the cards container.
     //  No tight coupling — cards don't know about renderGlobal().
     // ============================================================
@@ -792,7 +792,7 @@
     // ============================================================
     //  Dynamic Counter List
     //
-    //  Demonstrates bw.patch() for value changes and bw.update()
+    //  Demonstrates bw.patch() for value changes and bw.refresh()
     //  for structural changes (add/remove items). Each item has a
     //  stable UUID created when the data is created, not when the
     //  DOM is rendered. UUIDs survive removal of other items.
@@ -1010,7 +1010,7 @@
     var SRC_PUBSUB_NOTIF =
 '// Demo A: Notification Publisher\n' +
 '// bw.pub() sends to topic. bw.sub() receives.\n' +
-'// bw.cleanup() removes element-tied subscriptions.\n' +
+'// bw.unmount() removes element-tied subscriptions.\n' +
 '\n' +
 '// Publish:\n' +
 'bw.pub("notification", { text: msg });\n' +
@@ -1022,16 +1022,16 @@
 '}, panelElement);\n' +
 '\n' +
 '// Destroy subscriber B:\n' +
-'bw.cleanup(panelBElement);  // unsubs automatically';
+'bw.unmount(panelBElement);  // unsubs automatically';
 
     var SRC_PUBSUB_AUDIT =
 '// Demo B: Counter Audit Log\n' +
-'// Cards emit bw:statechange (DOM-scoped, via bw.update).\n' +
+'// Cards emit bw:statechange (DOM-scoped, via bw.refresh).\n' +
 '// Audit log subscribes to "counter.audit" (pub/sub).\n' +
 '// Both systems coexist.\n' +
 '\n' +
 '// In card button handler:\n' +
-'bw.update(el);  // emits bw:statechange (DOM)\n' +
+'bw.refresh(el);  // emits bw:statechange (DOM)\n' +
 'bw.pub("counter.audit", {  // publishes to topic\n' +
 '  card: name, action: "+1", value: s.count\n' +
 '});\n' +
@@ -1139,7 +1139,7 @@
         panelBContent = [
           { t: 'h4', c: 'Subscriber B (destroyed)' },
           { t: 'div', a: { style: 'color: #444; font-style: italic; padding: 0.5rem 0;' },
-            c: 'Cleaned up via bw.cleanup() \u2014 no longer receiving messages.' }
+            c: 'Cleaned up via bw.unmount() \u2014 no longer receiving messages.' }
         ];
       } else {
         panelBContent = [

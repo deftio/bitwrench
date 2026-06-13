@@ -63,16 +63,16 @@ The mapping is direct: `t` is the tag name, `a` is an object of HTML attributes,
 ```js
 var card = { t: 'div', a: { class: 'card', id: 'x' }, c: 'Hello world' };
 
-bw.html(card);              // → '<div class="card" id="x">Hello world</div>'
-bw.create(card);            // → HTMLDivElement (a real DOM node, ready to insert)
-bw.mount('#target', card);  // mount directly into an existing element on the page
+bw.html(card);           // → '<div class="card" id="x">Hello world</div>'
+bw.createDOM(card);      // → HTMLDivElement (a real DOM node, ready to insert)
+bw.DOM('#target', card); // mount directly into an existing element on the page
 ```
 
 Three output modes from one input:
 
 - `bw.html()` — returns an HTML string. Useful for server-side rendering, Node.js scripts, email templates.
-- `bw.create()` — returns a detached DOM element, hydrated with lifecycle and handles but not yet registered. Useful when you need to manipulate it before inserting.
-- `bw.mount()` — mounts the result into an existing page element, registers it, and fires lifecycle hooks. The most common use. `bw.DOM()` is an exact alias.
+- `bw.createDOM()` — returns a detached DOM element. Useful when you need to manipulate it before inserting.
+- `bw.DOM()` — mounts the result into an existing page element. The most common use.
 
 The TACO is data. The rendering is a separate step. You decide when and how it becomes real.
 
@@ -389,7 +389,7 @@ The breakpoints (`sm`, `md`, `lg`, `xl`) match bitwrench's grid system. `bw.resp
 
 ### Built-in styles
 
-Bitwrench ships with Bootstrap-inspired classes (`bw_bccl_card`, `bw_bccl_btn`, `bw_bccl_table`, etc.) that you can load with `bw.loadStyles()`. Use them, ignore them, or override them.
+Bitwrench ships with Bootstrap-inspired classes (`bw-card`, `bw-btn`, `bw-table`, etc.) that you can load with `bw.loadStyles()`. Use them, ignore them, or override them.
 
 ### Utility shorthand — bw.u() (optional plugin)
 
@@ -470,7 +470,7 @@ One of the unusual properties of TACO is that it supports two timing modes in th
 **Rendering time (function reference)** — the function is stored as-is and evaluated when bitwrench processes the tree:
 
 ```js
-// This function runs when bw.create() or bw.mount() encounters it
+// This function runs when bw.createDOM() or bw.DOM() encounters it
 { t: 'div', a: {
     style: function() { return 'opacity:' + getOpacity(); }
   }
@@ -602,7 +602,7 @@ Three things to know about BCCL:
 
 ```js
 var card = bw.makeCard({ title: 'Users', content: '42 online' });
-// card is { t:'div', a:{class:'bw_bccl_card'}, c:[...] }
+// card is { t:'div', a:{class:'bw-card'}, c:[...] }
 
 var page = { t: 'div', c: [
     bw.makeNavbar({ brand: 'My App', items: [
@@ -616,7 +616,7 @@ var page = { t: 'div', c: [
     bw.makeTable({ data: users, sortable: true })
 ]};
 
-bw.mount('#app', page);
+bw.DOM('#app', page);
 ```
 
 ### Quick inventory
@@ -651,7 +651,7 @@ Since BCCL returns plain objects, you can modify them before rendering:
 var card = bw.makeCard({ title: 'Users', content: '42 online' });
 card.a.style = 'border-left:4px solid #336699';
 card.c.push({ t: 'small', c: 'Updated 5m ago' });
-bw.mount('#app', card);
+bw.DOM('#app', card);
 ```
 
 ---
@@ -661,8 +661,8 @@ bw.mount('#app', card);
 | Level | What you get | What you write | When to use |
 |-------|-------------|---------------|-------------|
 | **0 -- Data** | A plain JS object | `makeCard({...})` or `{t,a,c}` | Static content, SSR, data-driven lists |
-| **1 -- DOM** | A rendered DOM tree | `bw.mount('#x', taco)` | One-shot renders, manual re-renders |
-| **2 -- Stateful** | A reactive component | `o.state` + `o.render` + `bw.refresh()` | State that changes, re-rendering UI |
+| **1 -- DOM** | A rendered DOM tree | `bw.DOM('#x', taco)` | One-shot renders, manual re-renders |
+| **2 -- Stateful** | A reactive component | `o.state` + `o.render` + `bw.update()` | State that changes, re-rendering UI |
 
 Most of your UI should be Level 0. Only escalate when you need interactivity. Level 0 TACOs are composable, serializable, and free. Level 2 components have overhead — use them for the parts that actually change.
 
@@ -681,20 +681,20 @@ var listing = {
   })
 };
 
-bw.mount('#products', listing);  // render once, done
+bw.DOM('#products', listing);  // render once, done
 ```
 
 ### Level 1 — render and re-render
 
 ```js
 function renderClock() {
-  bw.mount('#clock', { t: 'div', c: new Date().toLocaleTimeString() });
+  bw.DOM('#clock', { t: 'div', c: new Date().toLocaleTimeString() });
 }
 setInterval(renderClock, 1000);
 renderClock();
 ```
 
-You own the render loop. Call `bw.mount()` whenever you want. Simple, explicit, good enough for many use cases.
+You own the render loop. Call `bw.DOM()` whenever you want. Simple, explicit, good enough for many use cases.
 
 ### Level 2 -- stateful TACO with o.state + o.render
 
@@ -705,16 +705,16 @@ var counter = {
     state: { count: 0 },
     render: function(el) {
       var s = el._bw_state;
-      bw.mount(el, {
+      bw.DOM(el, {
         t: 'div', c: [
           { t: 'span', c: 'Count: ' + s.count },
           bw.makeButton({ text: '+1', onclick: function() {
             s.count++;
-            bw.refresh(el);
+            bw.update(el);
           }}),
           bw.makeButton({ text: 'Reset', onclick: function() {
             s.count = 0;
-            bw.refresh(el);
+            bw.update(el);
           }})
         ]
       });
@@ -722,23 +722,23 @@ var counter = {
   }
 };
 
-bw.mount('#app', counter);
+bw.DOM('#app', counter);
 ```
 
-When state changes, call `bw.refresh(el)` to re-invoke the render function. The component owns its update logic -- event handlers modify `el._bw_state` directly and trigger re-render. `bw.refresh()` is the heavy path — it tears down child components and rebuilds from `o.render`. For surgical updates without a full rebuild, use component handles (Section 6).
+When state changes, call `bw.update(el)` to re-invoke the render function. The component owns its update logic -- event handlers modify `el._bw_state` directly and trigger re-render.
 
 ### When to use which level
 
 ```
 Is the content static or computed once from data?
-  => Level 0. Use make*() or hand-write TACO. Render with bw.mount().
+  => Level 0. Use make*() or hand-write TACO. Render with bw.DOM().
 
 Does the content change, but you control when?
-  => Level 1. Call bw.mount() again when data changes.
+  => Level 1. Call bw.DOM() again when data changes.
 
 Does the content change in response to user interaction or external events,
 and you want structured state management?
-  => Level 2. Use o.state + o.render + bw.refresh().
+  => Level 2. Use o.state + o.render + bw.update().
 ```
 
 ---
@@ -747,7 +747,7 @@ and you want structured state management?
 
 ### Event handlers — use onclick, not o.mounted
 
-> **Warning: Never attach event handlers in `o.mounted`.** When a stateful component re-renders (after `bw.refresh()`), the old DOM children are replaced. Any listeners attached via `addEventListener` in `o.mounted` are silently lost -- no error, no warning. The click handler simply stops working after the first state change. This is the most common mistake new bitwrench developers make.
+> **Warning: Never attach event handlers in `o.mounted`.** When a stateful component re-renders (after `bw.update()`), the old DOM children are replaced. Any listeners attached via `addEventListener` in `o.mounted` are silently lost -- no error, no warning. The click handler simply stops working after the first state change. This is the most common mistake new bitwrench developers make.
 
 ```js
 // CORRECT — onclick in attributes. Re-attached automatically on every render.
@@ -781,15 +781,15 @@ function addToCart(item) {
 // Subscriber (navbar badge) -- auto-cleans when element is removed
 bw.sub('cart:updated', function(data) {
   navbarEl._bw_state.cartCount = data.count;
-  bw.refresh(navbarEl);
+  bw.update(navbarEl);
 }, navbarEl);
 ```
 
-`bw.pub()` and `bw.sub()` are app-wide -- not scoped to the DOM tree. Any component can publish, any component can subscribe. Pass the element as the third argument to `bw.sub()` to tie the subscription lifetime to that element (auto-cleaned when the element is unmounted or reaped by the janitor).
+`bw.pub()` and `bw.sub()` are app-wide -- not scoped to the DOM tree. Any component can publish, any component can subscribe. Pass the element as the third argument to `bw.sub()` to tie the subscription lifetime to that element (auto-cleaned on `bw.cleanup()`).
 
 ### Component handles -- o.handle and o.slots
 
-When you need to update part of a rendered component without re-rendering the whole thing -- change a title, advance a carousel, read a form value -- use component handles. Handles are the cheap update path; `bw.refresh()` is the expensive one.
+When you need to update part of a rendered component without re-rendering the whole thing -- change a title, advance a carousel, read a form value -- use component handles.
 
 **When to use handles vs pub/sub:** Pub/sub is for decoupled cross-component messaging ("something happened, anyone who cares can react"). Handles are for direct imperative control of a specific element ("carousel, go to slide 3"). If you have a reference to the element, use handles. If you don't know who should respond, use pub/sub.
 
@@ -829,29 +829,11 @@ el.bw.setContent({ t: 'b', c: '$42k' }); // accepts TACO objects
 el.bw.getTitle();                         // returns 'Revenue'
 ```
 
-Slot setters update only the targeted child element. Input focus, scroll position, and animation state in sibling elements are preserved -- this is the key advantage over a full `bw.refresh()` re-render.
+Slot setters update only the targeted child element. Input focus, scroll position, and animation state in sibling elements are preserved -- this is the key advantage over a full `bw.update()` re-render.
 
 **bw.mount()** is the entry point: it works like `bw.DOM()` but returns the root element so you can access `el.bw`. Use `bw.message(selector, action, data)` when you don't have a direct reference.
 
-**bw.update(ref, data)** dispatches to `el.bw.update(data)` if the component defines an `update` handle. It never falls back to a rebuild — if no update handle exists, it emits a diagnostic warning. This makes `bw.update()` safe to call without worrying about accidental expensive rebuilds. Use `bw.refresh()` when you explicitly want a full re-render.
-
 All BCCL factories (`makeCard`, `makeCarousel`, `makeTabs`, `makeAccordion`, `makeModal`, `makeProgress`, `makeChipInput`, `makeStatCard`) include handles and/or slots. See [Component Library](component-library.md) for the full method table.
-
-### The update cost spectrum
-
-Bitwrench update operations are ordered from cheapest to most expensive, and the names are honest about what they cost:
-
-| Operation | Cost | What happens |
-|-----------|------|-------------|
-| `el.bw.method()` | Surgical | Component updates its own DOM |
-| Slot setters (`el.bw.setTitle()`) | O(1) | Replaces content at a cached DOM target |
-| `bw.message(ref, action, data)` | Dispatch | Calls `el.bw[action](data)` by selector |
-| `bw.update(ref, data)` | Dispatch | Calls `el.bw.update(data)`, warns if missing |
-| `bw.patch(id, content)` | Targeted | Updates a single element's content |
-| `bw.replace(ref, taco)` | Element swap | Unmounts old, mounts new at same position |
-| `bw.refresh(ref)` | Full rebuild | Unmounts children, re-renders from `o.render` |
-
-A cheap-sounding verb is never secretly expensive. No operation silently escalates.
 
 ---
 
@@ -884,7 +866,7 @@ app.page('/', function(client) {
     t: 'div', c: [
       { t: 'h1', c: 'Hello from the server' },
       { t: 'p', a: { id: 'status' }, c: 'Connected.' },
-      { t: 'button', a: { class: 'bw_act_greet' }, c: 'Say hello' }
+      { t: 'button', a: { 'data-bw-action': 'greet' }, c: 'Say hello' }
     ]
   });
 });
@@ -907,7 +889,7 @@ client.batch([
 
 ### Client events back to server
 
-When a user clicks a `bw_act_*` element, the browser POSTs the action name to the server:
+When a user clicks a `data-bw-action` element, the browser POSTs the action name to the server:
 
 ```js
 client.on('greet', function(data) {
@@ -915,9 +897,14 @@ client.on('greet', function(data) {
 });
 ```
 
-### Server-side lifecycle — listen and call
+### Server-side lifecycle — register and call
+
+Register JavaScript functions on the client, then invoke them by name:
 
 ```js
+client.register('showAlert', 'function(msg) { alert(msg); }');
+client.call('showAlert', 'Server says hi!');
+
 // Built-in calls
 client.call('scrollTo', '#section-2');
 client.call('redirect', '/dashboard');
@@ -1041,7 +1028,7 @@ bw.router({ mode: 'history', base: '/app', target: '#app', routes: { ... } });
 Many bitwrench apps are single-page dashboards where tab-switching is enough:
 
 ```js
-bw.mount('#app', bw.makeTabs({
+bw.DOM('#app', bw.makeTabs({
   tabs: [
     { label: 'Overview', content: makeOverview() },
     { label: 'Analytics', content: makeAnalytics() }
@@ -1130,7 +1117,7 @@ Unquoted keys, single quotes, trailing commas — all accepted. Especially usefu
 bw.loadStyles();
 bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
 
-bw.mount('#app', [
+bw.DOM('#app', [
   bw.makeNavbar({ brand: 'Acme', items: [
     { text: 'Home', href: '#' }, { text: 'About', href: '#about' }
   ]}),
@@ -1151,7 +1138,7 @@ function renderList() {
   var items = filter === 'all' ? allItems : allItems.filter(function(i) {
     return i.type === filter;
   });
-  bw.mount('#list', { t: 'div', c: items.map(function(i) {
+  bw.DOM('#list', { t: 'div', c: items.map(function(i) {
     return { t: 'div', a: { class: 'item' }, c: [
       { t: 'h3', c: i.name },
       { t: 'p', c: i.description }
@@ -1159,7 +1146,7 @@ function renderList() {
   })});
 }
 
-bw.mount('#filters', { t: 'div', c: ['all', 'widget', 'gadget'].map(function(f) {
+bw.DOM('#filters', { t: 'div', c: ['all', 'widget', 'gadget'].map(function(f) {
   return bw.makeButton({
     text: f,
     variant: filter === f ? 'primary' : 'outline-secondary',
@@ -1174,13 +1161,13 @@ Level 1 -- you own the render loop. No stateful TACO needed.
 ### Reactive component with state
 
 ```js
-bw.mount('#contact', {
+bw.DOM('#contact', {
   t: 'div',
   o: {
     state: { statusMsg: '', showStatus: false },
     render: function(el) {
       var s = el._bw_state;
-      bw.mount(el, {
+      bw.DOM(el, {
         t: 'div', c: [
           s.showStatus ? { t: 'div', c: s.statusMsg } : null,
           bw.makeForm({ children: [
@@ -1191,7 +1178,7 @@ bw.mount('#contact', {
             e.preventDefault();
             s.statusMsg = 'Sent!';
             s.showStatus = true;
-            bw.refresh(el);
+            bw.update(el);
           }})
         ]
       });
@@ -1210,11 +1197,11 @@ var cartBadge = {
     mounted: function(el) {
       bw.sub('cart:updated', function(d) {
         el._bw_state.count = d.count;
-        bw.refresh(el);
+        bw.update(el);
       }, el);
     },
     render: function(el) {
-      bw.mount(el, { t: 'span', c: 'Cart (' + el._bw_state.count + ')' });
+      bw.DOM(el, { t: 'span', c: 'Cart (' + el._bw_state.count + ')' });
     }
   }
 };
@@ -1246,7 +1233,7 @@ bw.injectCSS(bw.css({
 
 ```js
 // Add a toast container to your page layout (once)
-bw.mount('#app', [
+bw.DOM('#app', [
   { t: 'div', a: { id: 'toast-container',
       style: 'position:fixed;top:1rem;right:1rem;z-index:9999' } },
   // ... rest of your page
@@ -1259,15 +1246,19 @@ function showToast(message, variant) {
     t: 'div', a: { class: toastId, style: 'min-width:280px;margin-bottom:0.5rem' },
     c: bw.makeAlert({ content: message, variant: variant || 'info', dismissible: true })
   };
-  bw.append('#toast-container', toast);
-  setTimeout(function() {
-    bw.remove('.' + toastId);
-  }, 3500);
+  var container = bw.$('#toast-container')[0];
+  if (container) {
+    container.appendChild(bw.createDOM(toast));
+    setTimeout(function() {
+      var el = bw.$('.' + toastId)[0];
+      if (el) { bw.cleanup(el); el.remove(); }
+    }, 3500);
+  }
 }
 showToast('Item added to cart', 'success');
 ```
 
-The toast container is part of the TACO tree. Individual toasts are added with `bw.append()` and cleaned up with `bw.remove()`, which handles lifecycle teardown automatically.
+The toast container is part of the TACO tree. Individual toasts append into it and auto-remove after a delay. `bw.cleanup()` ensures any lifecycle hooks are properly torn down.
 
 ### Dashboard card — theme tokens + bw.s() + responsive + component
 
@@ -1292,7 +1283,7 @@ bw.injectCSS(bw.responsive('.stat-grid', {
 var metrics = { users: 2847, revenue: 48920, orders: 384, rate: 3.2 };
 
 function renderStats() {
-  bw.mount('#stats', { t: 'div', a: { class: 'stat-grid' }, c: [
+  bw.DOM('#stats', { t: 'div', a: { class: 'stat-grid' }, c: [
     bw.makeStatCard({ value: metrics.users.toLocaleString(), label: 'Users', variant: 'primary' }),
     bw.makeStatCard({ value: '$' + metrics.revenue.toLocaleString(), label: 'Revenue', variant: 'success' }),
     bw.makeStatCard({ value: metrics.orders.toString(), label: 'Orders', variant: 'info' }),
@@ -1301,7 +1292,7 @@ function renderStats() {
 }
 
 // Layout uses bw.s() — no inline style strings
-bw.mount('#app', { t: 'div', c: [
+bw.DOM('#app', { t: 'div', c: [
   { t: 'div', a: { style: bw.s({ display: 'flex' }, { justifyContent: 'space-between' },
     { alignItems: 'center' }, { background: P.primary.base, color: '#fff', padding: '1.5rem 2rem' }) },
     c: [
@@ -1324,7 +1315,7 @@ Key things this example proves:
 - **No hardcoded hex in layout** -- colors come from `theme.palette`
 - **No inline style strings** — `bw.s({ display: 'flex' }, { padding: '1rem' }, ...)` composes style objects
 - **Responsive without media queries in HTML** — `bw.responsive()` generates `@media` CSS
-- **Re-render is just calling `bw.mount()` again** — Level 1, no framework magic
+- **Re-render is just calling `bw.DOM()` again** — Level 1, no framework magic
 
 ---
 
@@ -1333,54 +1324,24 @@ Key things this example proves:
 | Feature | Why not | What to use instead |
 |---------|---------|-------------------|
 | TypeScript types | Ships `dist/bitwrench.d.ts` with full type declarations | See [TypeScript Usage Guide](bitwrench_typescript_usage.md) |
-| Virtual DOM | Targeted patches via UUID refs are sufficient | `bw.patch()`, `o.render` + `bw.refresh()`, `el.bw.method()` |
+| Virtual DOM | Targeted patches via UUID refs are sufficient | `bw.patch()`, `o.render` + `bw.update()` |
 | CSS purging | You generate only what you use via `bw.css()` | N/A |
-| SSR hydration | `bw.html()` for SSR, `bw.mount()` for client; `bw.hydrate()` for adoption | Full page render via `bw.html()` in Node |
+| SSR hydration | `bw.html()` for SSR, `bw.DOM()` for client | Full page render via `bw.html()` in Node |
 | Module bundling | No build step required | `<script>` tag, CDN, or ESM `import` |
 
 ---
 
 ## 12. Quick Reference
 
-### The lifecycle
-
-```
-define → create → mount → live (updates) → unmount → removed
-```
-
-Each phase has one verb. Convenience verbs compose phase verbs — they never reimplement them.
-
 ### Core rendering
 
 | Function | What it does |
 |----------|-------------|
 | `bw.html(taco)` | TACO to HTML string |
-| `bw.create(taco)` | TACO to detached, hydrated DOM element (not yet registered) |
-| `bw.mount(sel, taco)` | Mount TACO into existing element; returns the root element |
-| `bw.DOM(sel, taco)` | Alias for `bw.mount()` |
+| `bw.createDOM(taco)` | TACO to detached DOM element |
+| `bw.DOM(sel, taco)` | Mount TACO into existing element |
 | `bw.h(tag, attrs, c, o)` | TACO constructor — returns plain `{t,a,c,o}` from positional args |
 | `bw.raw(str)` | Mark string as pre-escaped HTML |
-
-### Lifecycle verbs (atomic)
-
-| Function | What it does |
-|----------|-------------|
-| `bw.create(taco)` | Build hydrated, detached DOM from TACO; no registrations |
-| `bw.hydrate(el, taco)` | Wire lifecycle from TACO onto an existing DOM node |
-| `bw.mountTree(el)` | Register an inserted subtree; fire `mounted` hooks |
-| `bw.unmount(el)` | Tear down subtree lifecycle; fire `unmount` hooks; deregister |
-| `bw.unmountChildren(el)` | Unmount descendants only; element's own state untouched |
-| `bw.detach(el)` | Remove from document while keeping lifecycle intact (keep-alive) |
-
-### Convenience verbs (compound)
-
-| Function | What it does |
-|----------|-------------|
-| `bw.mount(sel, taco)` | = `unmountChildren` → `create` → insert → `mountTree` |
-| `bw.append(target, taco)` | Add child without touching existing; returns new element |
-| `bw.replace(ref, taco)` | Swap element at its DOM position; returns new element |
-| `bw.remove(ref)` | = `unmount` → `el.remove()` |
-| `bw.refresh(ref)` | = `unmountChildren` → re-render → `mountTree`; the heavy path |
 
 ### CSS
 
@@ -1390,28 +1351,30 @@ Each phase has one verb. Convenience verbs compose phase verbs — they never re
 | `bw.injectCSS(css)` | Insert CSS string into document |
 | `bw.s(...styles)` | Merge style objects into a style string |
 | `bw.responsive(sel, bp)` | Generate responsive `@media` CSS from breakpoint object |
-| `bw.loadStyles()` | Load built-in structural CSS (no args) or generate + apply (with config) |
+| `bw.loadStyles()` | Load built-in structural CSS |
 | `bw.makeStyles(cfg)` | Generate styled CSS from seed colors (returns styles object) |
 | `bw.applyStyles(styles)` | Inject generated styles' CSS into the document |
+| `bw.loadStyles(cfg)` | Generate and apply styles in one call |
+| `bw.toggleStyles()` | Switch between primary and alternate palettes |
 | `bw.clearStyles()` | Remove injected styles |
 
-### State and updates
+### State (Level 2)
 
 | Function | What it does |
 |----------|-------------|
 | `o.state` | Initial state object (copied to `el._bw_state`) |
-| `o.render(el, state)` | Render function called on mount and `bw.refresh()` |
-| `bw.refresh(ref)` | Re-invoke `el._bw_render` — tears down and rebuilds children |
-| `bw.update(ref, data)` | Dispatch to `el.bw.update(data)` — never falls back to rebuild |
-| `bw.patch(id, content)` | Update a single addressed element's content |
+| `o.render(el, state)` | Render function called on mount and `bw.update()` |
+| `bw.update(el)` | Re-invoke `el._bw_render(el, el._bw_state)` |
+| `bw.patch(uuid, content)` | Update a single UUID-addressed element |
+| `bw.cleanup(el)` | Run unmount hooks, clear subscriptions |
 
 ### Component Handles
 
 | Function | What it does |
 |----------|-------------|
-| `o.handle` | Object of methods attached to `el.bw` at create time |
+| `o.handle` | Object of methods attached to `el.bw` on createDOM |
 | `o.slots` | `{name: '.selector'}` -- auto-generates `el.bw.setName()` / `el.bw.getName()` |
-| `bw.mount(sel, taco)` | Returns root element for `el.bw` access |
+| `bw.mount(sel, taco)` | Like DOM() but returns the root element for `el.bw` access |
 | `bw.message(target, action, data)` | Dispatch to `el.bw[action](data)` by id, UUID, or selector |
 
 ### Communication
@@ -1420,7 +1383,7 @@ Each phase has one verb. Convenience verbs compose phase verbs — they never re
 |----------|-------------|
 | `bw.pub(topic, data)` | Publish to all subscribers (exact + wildcard) |
 | `bw.sub(topic, fn)` | Subscribe (returns unsub function; supports wildcard `'ns:*'`) |
-| `bw.sub(topic, fn, owner)` | Subscribe with auto-cleanup when owner is unmounted |
+| `bw.sub(topic, fn, owner)` | Subscribe with auto-cleanup when owner is removed |
 | `bw.once(topic, fn, el?)` | One-shot subscribe (auto-unsub after first fire) |
 
 ### Routing
@@ -1467,16 +1430,16 @@ How common UI operations map across frameworks. Each cell is the idiomatic one-l
 
 | Operation | What it is | React | Vue 3 | Vanilla JS | Svelte 5 | Solid | Bitwrench |
 |-----------|-----------|-------|-------|------------|----------|-------|-----------|
-| **Render element** | Create and display a UI element | `<div className="card">Hi</div>` | `<div class="card">Hi</div>` | `el.innerHTML = '<div>Hi</div>'` | `<div class="card">Hi</div>` | `<div class="card">Hi</div>` | `bw.mount('#x', {t:'div', a:{class:'card'}, c:'Hi'})` |
-| **Update text** | Change text content after render | `setText('new')` via `useState` | `msg.value = 'new'` | `el.textContent = 'new'` | `msg = 'new'` | `setMsg('new')` | `el.bw.setContent('new')` or `bw.patch(id, 'new')` |
+| **Render element** | Create and display a UI element | `<div className="card">Hi</div>` | `<div class="card">Hi</div>` | `el.innerHTML = '<div>Hi</div>'` | `<div class="card">Hi</div>` | `<div class="card">Hi</div>` | `bw.DOM('#x', {t:'div', a:{class:'card'}, c:'Hi'})` |
+| **Update text** | Change text content after render | `setText('new')` via `useState` | `msg.value = 'new'` | `el.textContent = 'new'` | `msg = 'new'` | `setMsg('new')` | `el._bw_state.msg = 'new'; bw.update(el)` or `bw.patch(id, 'new')` |
 | **Conditional render** | Show/hide based on state | `{show && <Comp/>}` | `v-if="show"` | `if (show) el.style.display = ''` | `{#if show}<Comp/>{/if}` | `<Show when={show}><Comp/></Show>` | `show ? taco : null` in `c:` array |
 | **List rendering** | Render array of items | `{items.map(i => <Li key={i.id}/>)}` | `v-for="i in items" :key="i.id"` | `el.innerHTML = items.map(...)` | `{#each items as i (i.id)}` | `<For each={items}>{i => ...}</For>` | `c: items.map(function(i) { return {t:'li', c:i.name} })` |
 | **Event handler** | Attach click/input handler | `onClick={handler}` | `@click="handler"` | `el.addEventListener('click', fn)` | `onclick={handler}` | `onClick={handler}` | `a: { onclick: fn }` |
 | **State declaration** | Declare reactive state | `const [x, setX] = useState(0)` | `const x = ref(0)` | `let x = 0` | `let x = $state(0)` | `const [x, setX] = createSignal(0)` | `o: { state: { x: 0 } }` |
-| **State update** | Change state and trigger re-render | `setX(42)` | `x.value = 42` | `x = 42; render()` | `x = 42` | `setX(42)` | `el._bw_state.x = 42; bw.refresh(el)` |
+| **State update** | Change state and trigger re-render | `setX(42)` | `x.value = 42` | `x = 42; render()` | `x = 42` | `setX(42)` | `el._bw_state.x = 42; bw.update(el)` |
 | **Computed / derived** | Derive value from state | `useMemo(() => x * 2, [x])` | `computed(() => x.value * 2)` | `function get() { return x * 2; }` | `let d = $derived(x * 2)` | `const d = () => x() * 2` | `c: '${x}'` with Tier 2: `'${x * 2}'` |
 | **Side effect** | Run code on mount/change | `useEffect(() => {...}, [])` | `onMounted(() => {...})` | `window.addEventListener('load', fn)` | `$effect(() => {...})` | `onMount(() => {...})` | `o: { mounted: function(el) {...} }` |
-| **Cleanup on unmount** | Tear down timers/listeners | `useEffect return cleanup` | `onUnmounted(() => {...})` | manual | `return () => {...}` in `$effect` | `onCleanup(() => {...})` | `o: { unmount: fn }` or `bw.unmount(el)` |
+| **Cleanup on unmount** | Tear down timers/listeners | `useEffect return cleanup` | `onUnmounted(() => {...})` | manual | `return () => {...}` in `$effect` | `onCleanup(() => {...})` | `o: { unmount: fn }` or `bw.cleanup(el)` |
 | **Style inline** | Apply inline styles | `style={{color: 'red'}}` | `:style="{color: 'red'}"` | `el.style.color = 'red'` | `style="color:red"` | `style={{color: 'red'}}` | `a: { style: bw.s({ color: 'red' }) }` |
 | **Style composition** | Compose/merge styles | `{...base, ...override}` | `[baseStyle, overrideStyle]` | `Object.assign({}, base, over)` | `{...base, ...override}` | `{...base, ...override}` | `bw.s({ display: 'flex' }, { padding: '1rem' }, { color: accent })` |
 | **CSS class conditional** | Toggle classes | `className={active ? 'on' : ''}` | `:class="{on: active}"` | `el.classList.toggle('on')` | `class:on={active}` | `classList={{on: active()}}` | `a: { class: 'btn ' + (active ? 'on' : '') }` |

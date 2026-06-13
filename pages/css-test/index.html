@@ -50,7 +50,18 @@
         },
         bw.makeButton({
           text: 'Toggle Dark Mode', variant: 'secondary', size: 'sm',
-          onclick: function() { bw.toggleStyles(); }
+          onclick: function() {
+            var currentStyles = window._bw_current_styles;
+            var isAlt = document.documentElement.classList.contains('bw_theme_alt');
+            if (currentStyles) {
+              if (isAlt) {
+                bw.applyStyles(currentStyles);
+              } else if (currentStyles.alternateCss) {
+                bw.applyStyles({ css: currentStyles.alternateCss });
+              }
+            }
+            document.documentElement.classList.toggle('bw_theme_alt');
+          }
         })
       ]
     };

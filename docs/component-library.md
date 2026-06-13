@@ -1078,7 +1078,7 @@ Because every factory returns a TACO object, you compose components with standar
 // Functions as component factories
 function userRow(user) {
   return {
-    t: 'div', a: { class: 'bw-card' }, c: [
+    t: 'div', a: { class: 'bw_bccl_card' }, c: [
       bw.makeAvatar({ initials: user.name[0], size: 'sm' }),
       { t: 'span', c: user.name },
       bw.makeBadge({ text: user.role, variant: 'info' })

@@ -274,8 +274,8 @@
         [
           [badge('replace'), 'Replace element content with a TACO tree', code('bw.DOM(target, node)')],
           [badge('patch'), 'Update text content or attributes', code('bw.patch(target, content, attr)')],
-          [badge('append'), 'Add a new child element', code('target.appendChild(bw.createDOM(node))')],
-          [badge('remove'), 'Remove an element from the DOM', code('bw.cleanup(el); el.remove()')],
+          [badge('append'), 'Add a new child element', code('target.appendChild(bw.create(node))')],
+          [badge('remove'), 'Remove an element from the DOM', code('bw.unmount(el); el.remove()')],
           [badge('batch'), 'Execute multiple operations atomically', code('ops.forEach(bw.apply)')],
           [badge('message'), 'Send notification/dispatch to component', code('bw.pub() or component dispatch')],
           [badge('register'), 'Register a named function for later call', code('bw._clientFunctions[name] = fn')],
@@ -290,7 +290,7 @@
       site.makeCodeBlock([
         '{ type: "replace", target: "#app",',
         '  node: {',
-        '    t: "div", a: { class: "bw-card" }, c: [',
+        '    t: "div", a: { class: "bw_bccl_card" }, c: [',
         '      { t: "h3", c: "Hello from bwserve" },',
         '      { t: "p", c: "Rendered by the server." }',
         '    ]',
@@ -314,13 +314,13 @@
       { t: 'p', c: 'Adds a new child element to the target. Use for lists, chat messages, and growing content.' },
       site.makeCodeBlock([
         '{ type: "append", target: "#messages",',
-        '  node: { t: "div", a: { class: "bw-alert bw-alert-info" }, c: "New message!" }',
+        '  node: { t: "div", a: { class: "bw_bccl_alert bw_info" }, c: "New message!" }',
         '}'
       ].join('\n')),
 
       // remove
       { t: 'h3', c: [badge('remove'), ' remove'] },
-      { t: 'p', c: 'Removes an element from the DOM. Calls bw.cleanup() first to tear down lifecycle hooks.' },
+      { t: 'p', c: 'Removes an element from the DOM. Calls bw.unmount() first to tear down lifecycle hooks.' },
       site.makeCodeBlock('{ type: "remove", target: "#todo-5" }'),
 
       // batch
@@ -336,7 +336,7 @@
 
       // register
       { t: 'h3', c: [badge('register'), ' register'] },
-      { t: 'p', c: 'Sends a named function to the client for later invocation. Register once, call many times.' },
+      { t: 'p', c: 'Sends a named function to the client for later invocation. Register once, call many times. Note: client.register() is removed in v2.1; use client.call() with built-in functions or client.exec() instead.' },
       site.makeCodeBlock([
         '{ type: "register", name: "autoScroll",',
         '  body: "function(sel) { var el = document.querySelector(sel);',
@@ -380,7 +380,7 @@
         ['Pattern', 'Resolution', 'Example'],
         [
           [code('#selector'), 'CSS selector via querySelector', code('#app')],
-          [code('.selector'), 'CSS class selector via querySelector', code('.bw-card')],
+          [code('.selector'), 'CSS class selector via querySelector', code('.bw_bccl_card')],
           [code('bare-string'), 'getElementById, then bw._el() fallback', code('counter')]
         ]
       ),
@@ -402,14 +402,19 @@
         '{ "action": "increment", "data": { "inputValue": "hello" } }'
       ].join('\n')),
 
-      { t: 'h3', c: 'data-bw-action shorthand' },
+      { t: 'h3', c: 'Action dispatch' },
       { t: 'p', c: [
-        'Add ', code('data-bw-action="name"'), ' to any clickable element. The shell page auto-delegates clicks:'
+        'The preferred v2.1 pattern uses ', code('bw_act_*'), ' CSS classes (e.g., ', code('class: "bw_act_save"'), '). The legacy ', code('data-bw-action="name"'), ' attribute is still supported for backwards compatibility. The shell page auto-delegates clicks for both patterns:'
       ]},
       site.makeCodeBlock([
-        '// Server sends this TACO:',
+        '// Preferred v2.1 pattern:',
         '{ t: "button",',
-        '  a: { class: "bw-btn bw-btn-primary", "data-bw-action": "save" },',
+        '  a: { class: "bw_bccl_btn bw_primary bw_act_save" },',
+        '  c: "Save" }',
+        '',
+        '// Legacy pattern (still supported):',
+        '{ t: "button",',
+        '  a: { class: "bw_bccl_btn bw_primary", "data-bw-action": "save" },',
         '  c: "Save" }',
         '',
         '// When clicked, client posts: { action: "save", data: {} }',
@@ -542,7 +547,7 @@
           [code('client.remove(target)'), badge('remove'), 'Remove element'],
           [code('client.batch(ops)'), badge('batch'), 'Multiple operations at once'],
           [code('client.message(target, action, data)'), badge('message'), 'Dispatch to component'],
-          [code('client.register(name, body)'), badge('register'), 'Send named function to client'],
+          [code('client.register(name, body)'), badge('register'), 'Send named function to client (removed in v2.1)'],
           [code('client.call(name, ...args)'), badge('call'), 'Invoke registered or built-in function'],
           [code('client.exec(code)'), badge('exec'), 'Execute arbitrary JS (needs allowExec)'],
           [code('client.on(action, handler)'), '\u2014', 'Register handler for client actions'],
@@ -618,7 +623,7 @@
       protoTable(
         ['Tier', 'Server Method', 'What it Does', 'When to Use'],
         [
-          ['1', code('client.register(name, body)'), 'Send a named function to the client', 'Reusable behavior (auto-scroll, format, validate)'],
+          ['1', code('client.register(name, body)'), 'Send a named function to the client (removed in v2.1)', 'Reusable behavior (auto-scroll, format, validate)'],
           ['2', code('client.call(name, ...args)'), 'Invoke a registered or built-in function', 'Non-DOM operations (scroll, focus, download)'],
           ['3', code('client.exec(code)'), 'Execute arbitrary JS (opt-in required)', 'Quick one-off operations, debugging']
         ]

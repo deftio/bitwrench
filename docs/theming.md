@@ -225,11 +225,14 @@ theme.alternate.palette;     // light-inverted version of ocean
 ### Switching between palettes
 
 ```javascript
-// Toggle between primary and alternate palettes
-bw.toggleStyles();
+// Switch to the alternate palette by re-applying:
+bw.applyStyles(theme.alternate);
+
+// Switch back to the primary palette:
+bw.applyStyles(theme);
 ```
 
-The toggle works by adding or removing the CSS class `.bw_theme_alt` on the `<html>` element. Both primary and alternate stylesheets are injected at theme generation time, so switching is instant -- no re-generation needed.
+> **Note:** `bw.toggleStyles()` was removed in v2.1. To switch between primary and alternate palettes, call `bw.applyStyles()` with the desired palette object. Both palettes are available from the `bw.makeStyles()` return value.
 
 ### Clearing a theme
 

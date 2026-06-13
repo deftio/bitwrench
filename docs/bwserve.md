@@ -29,10 +29,10 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 │                  │               │  client.batch()      │
 │                  │               │                      │
 │                  │               │ Execution:           │
-│                  │               │  client.register()   │
 │                  │               │  client.call()       │
 │                  │               │  client.exec()       │
 │                  │               │                      │
+│  bw_act_* class  │               │                      │
 │  data-bw-action  │               │                      │
 │  conn.sendAction │──POST───────> │ client.on(action,fn) │
 │                  │  {action,data}│                      │
@@ -44,7 +44,7 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 2. Shell loads bitwrench from `/bw/lib/bitwrench.umd.js` and opens SSE
 3. SSE triggers page handler → server sends TACO rendering commands
 4. Browser applies each message via `bw.apply()` → DOM updates
-5. User clicks → `data-bw-action` triggers POST → server handler runs
+5. User clicks → `bw_act_*` class (or `data-bw-action` for backwards compatibility) triggers POST → server handler runs
 6. Server sends more messages → browser updates. Loop continues.
 
 ## Quick Start
@@ -65,8 +65,8 @@ app.page('/', function(client) {
         'Count: ',
         { t: 'span', a: { id: 'count', style: 'font-weight:bold' }, c: '0' }
       ]},
-      { t: 'button', a: { 'data-bw-action': 'increment', class: 'bw-btn bw-btn-primary' }, c: '+1' },
-      { t: 'button', a: { 'data-bw-action': 'reset', class: 'bw-btn bw-btn-outline-secondary' }, c: 'Reset' }
+      { t: 'button', a: { class: 'bw_bccl_btn bw_primary bw_act_increment' }, c: '+1' },
+      { t: 'button', a: { class: 'bw_bccl_btn bw_bccl_btn_outline bw_secondary bw_act_reset' }, c: 'Reset' }
     ]
   });
 
@@ -101,19 +101,20 @@ These modify the browser's DOM tree:
 |------|---------|---------------|---------------|
 | `replace` | Replace element content | `client.render(target, taco)` | `bw.DOM(target, node)` |
 | `patch` | Update text/attributes | `client.patch(id, content, attr?)` | `bw.patch(target, content, attr)` |
-| `append` | Add child element | `client.append(target, taco)` | `target.appendChild(bw.createDOM(node))` |
-| `remove` | Remove element | `client.remove(target)` | `bw.cleanup(el); el.remove()` |
+| `append` | Add child element | `client.append(target, taco)` | `target.appendChild(bw.create(node))` |
+| `remove` | Remove element | `client.remove(target)` | `bw.unmount(el); el.remove()` |
 | `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence |
 
-### Execution Operations (3 types)
+### Execution Operations (2 types)
 
 These invoke functions or execute code on the client:
 
 | Type | Purpose | Server Method | Client Action |
 |------|---------|---------------|---------------|
-| `register` | Send named function | `client.register(name, body)` | Store in `bw._clientFunctions` |
-| `call` | Invoke function by name | `client.call(name, ...args)` | Call registered or built-in function |
+| `call` | Invoke built-in function | `client.call(name, ...args)` | Call built-in function (scrollTo, focus, download, etc.) |
 | `exec` | Run arbitrary JS | `client.exec(code)` | `new Function(code)()` (needs opt-in) |
+
+> **Note:** `client.register(name, body)` was removed in v2.1 for security reasons (code should never cross the wire). Use `bw_act_*` class patterns for user actions, and `client.call()` for built-in client-side operations like scrollTo, focus, download, clipboard, and redirect.
 
 ### Additional
 
@@ -147,11 +148,7 @@ These invoke functions or execute code on the client:
 
 // --- Execution Operations ---
 
-// register — send a named function to the client
-{ "type": "register", "name": "autoScroll", "body": "function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }" }
-
-// call — invoke a registered or built-in function
-{ "type": "call", "name": "autoScroll", "args": ["#chat"] }
+// call — invoke a built-in function
 { "type": "call", "name": "focus", "args": ["#search-input"] }
 { "type": "call", "name": "download", "args": ["report.csv", "id,name\n1,Alice", "text/csv"] }
 
@@ -166,7 +163,7 @@ All DOM operation targets are resolved using:
 | Pattern | Resolution | Example |
 |---------|-----------|---------|
 | `#selector` | CSS selector via `querySelector` | `#app`, `#counter` |
-| `.selector` | CSS class selector | `.bw-card` |
+| `.selector` | CSS class selector | `.bw_bccl_card` |
 | `bare-string` | `getElementById`, then `bw._el()` fallback | `counter` |
 
 **Best practice:** Use simple `id` attributes for patchable elements:
@@ -189,11 +186,14 @@ Content-Type: application/json
 { "action": "increment", "data": { "inputValue": "hello" } }
 ```
 
-**Wiring actions** — add `data-bw-action` to any element:
+**Wiring actions** — use `bw_act_*` classes on elements (preferred), or `data-bw-action` for backwards compatibility:
 
 ```javascript
-// Server sends this TACO:
-{ t: 'button', a: { 'data-bw-action': 'save', class: 'bw-btn' }, c: 'Save' }
+// Server sends this TACO (preferred bw_act_* pattern):
+{ t: 'button', a: { class: 'bw_bccl_btn bw_act_save' }, c: 'Save' }
+
+// Or with data-bw-action (backwards compatible):
+{ t: 'button', a: { 'data-bw-action': 'save', class: 'bw_bccl_btn' }, c: 'Save' }
 
 // When clicked, client auto-POSTs:
 { action: 'save', data: {} }
@@ -223,7 +223,7 @@ Create a bwserve application.
 | `allowScreenshot` | boolean | false | Enable `client.screenshot()` capability |
 | `keepAliveInterval` | number | 15000 | SSE keep-alive interval in ms |
 
-> **Start without `allowExec`.** The `register/call` pattern (Tier 1 + Tier 2) handles 95% of use cases — send named functions once, invoke them by name with safe argument passing. Only enable `allowExec: true` if you genuinely need to evaluate arbitrary code strings on the client. When in doubt, leave it off.
+> **Start without `allowExec`.** The `call` pattern with built-in functions handles most use cases — invoke scrollTo, focus, download, clipboard, redirect by name with safe argument passing. Only enable `allowExec: true` if you genuinely need to evaluate arbitrary code strings on the client. When in doubt, leave it off.
 
 ### `app.page(path, handler)`
 
@@ -289,8 +289,7 @@ app.broadcast({
 
 | Method | Protocol Type | Description |
 |--------|--------------|-------------|
-| `client.register(name, body)` | `register` | Send named function to client for later call() |
-| `client.call(name, ...args)` | `call` | Invoke registered or built-in function |
+| `client.call(name, ...args)` | `call` | Invoke built-in function |
 | `client.exec(code)` | `exec` | Execute arbitrary JS (requires client allowExec) |
 
 #### Connection Management
@@ -352,7 +351,7 @@ var feedback = await visionModel.evaluate(img.data);
 ### How it works
 
 1. Server calls `client.screenshot(selector, options)` — returns a Promise
-2. On first call, a capture function is registered on the client via the `register` protocol
+2. On first call, a capture function is set up on the client
 3. The capture function is invoked via `call` with the selector and options
 4. Client lazy-loads html2canvas (vendored, served from `/bw/lib/vendor/html2canvas.min.js`)
 5. html2canvas renders the DOM element to a `<canvas>`
@@ -367,32 +366,14 @@ var feedback = await visionModel.evaluate(img.data);
 
 ## Server-to-Client Execution
 
-Beyond DOM operations, the server can invoke functions and execute code on the client. This is organized in three tiers:
+Beyond DOM operations, the server can invoke functions and execute code on the client.
 
-### Tier 1: `client.register(name, body)`
+### `client.call(name, ...args)`
 
-Send a named function to the client. The function body is a string that gets compiled once and cached. Use for reusable client-side behavior.
-
-```javascript
-// Register an auto-scroll function on connect
-client.register('autoScroll',
-  'function(sel) { var el = document.querySelector(sel); if (el) el.scrollTop = el.scrollHeight; }');
-
-// Register a formatter
-client.register('formatCurrency',
-  'function(id, val) { var el = document.getElementById(id); if (el) el.textContent = "$" + Number(val).toFixed(2); }');
-```
-
-### Tier 2: `client.call(name, ...args)`
-
-Invoke a previously registered function or a built-in function by name. This is the workhorse for non-DOM operations — safe, lightweight, no code transfer.
+Invoke a built-in function by name. This is the workhorse for non-DOM operations — safe, lightweight, no code transfer.
 
 ```javascript
-// Call registered functions
-client.call('autoScroll', '#chat');
-client.call('formatCurrency', 'total', 42.5);
-
-// Call built-in functions (always available, no registration needed)
+// Call built-in functions (always available)
 client.call('focus', '#search-input');
 client.call('scrollTo', '#bottom');
 client.call('download', 'report.csv', csvContent, 'text/csv');
@@ -412,11 +393,11 @@ client.call('log', 'Debug: user count =', users.length);
 | `redirect` | `url` | Navigate to a URL |
 | `log` | `...args` | console.log from the server |
 
-### Tier 3: `client.exec(code)`
+### `client.exec(code)`
 
 Execute arbitrary JavaScript on the client. **Requires opt-in:** the server must be created with `allowExec: true` and/or the client connection with `{ allowExec: true }`. Without this flag, exec messages are silently rejected.
 
-> **You probably don't need this.** If you're reaching for `exec`, consider whether `register` + `call` would work instead. `register` sends the function once; `call` invokes it by name with arguments. This covers scroll, focus, download, format, animate — essentially any reusable client-side behavior. `exec` is for truly one-off operations where registering a function would be wasteful.
+> **You probably don't need this.** If you're reaching for `exec`, consider whether `call` with built-in functions would work instead. `call` invokes functions by name with safe arguments. This covers scroll, focus, download, and similar operations. `exec` is for truly one-off operations.
 
 ```javascript
 // Server side
@@ -431,14 +412,13 @@ client.exec("window.scrollTo(0, 0)");
 | Need | Use | Why |
 |------|-----|-----|
 | Update the DOM | replace/patch/append/remove | Declarative, inspectable, safe |
-| Simple button click | `data-bw-action` | Zero code, just an attribute |
+| Simple button click | `bw_act_*` class | Zero code, just a class |
 | Scroll after append | `call("scrollTo", sel)` | Built-in, no registration |
 | Trigger file download | `call("download", ...)` | Built-in, safe |
-| Reusable client logic | `register` + `call` | **Default choice.** Send once, invoke many times |
 | Quick one-off operation | `exec` | Last resort. No registration overhead but requires `allowExec` |
 | Production security | `call` (never `exec`) | Arguments can't inject code |
 
-> **Rule of thumb:** Start with `data-bw-action` + DOM operations. When you need client-side behavior, use `register` + `call`. Only reach for `exec` if you have a genuine one-off need and understand the security implications.
+> **Rule of thumb:** Start with `bw_act_*` classes + DOM operations. When you need client-side behavior, use `call` with built-in functions. Only reach for `exec` if you have a genuine one-off need and understand the security implications.
 
 ## Client API Reference
 
@@ -459,8 +439,7 @@ bw.apply({ type: 'remove', target: '#old' });
 bw.apply({ type: 'batch', ops: [msg1, msg2] });
 
 // Execution operations
-bw.apply({ type: 'register', name: 'myFn', body: 'function() { ... }' });
-bw.apply({ type: 'call', name: 'myFn', args: [] });
+bw.apply({ type: 'call', name: 'scrollTo', args: ['#chat'] });
 bw.apply({ type: 'exec', code: 'alert(1)' });  // needs allowExec
 ```
 
@@ -637,7 +616,7 @@ app.page('/', function(client) {
     t: 'div', c: [
       { t: 'h2', c: 'Counter' },
       { t: 'span', a: { id: 'count' }, c: '0' },
-      { t: 'button', a: { 'data-bw-action': 'inc' }, c: '+1' }
+      { t: 'button', a: { class: 'bw_act_inc' }, c: '+1' }
     ]
   });
 
@@ -658,7 +637,7 @@ app.page('/', function(client) {
   client.render('#app', {
     t: 'div', c: [
       { t: 'input', a: { type: 'text', id: 'inp' } },
-      { t: 'button', a: { 'data-bw-action': 'add' }, c: 'Add' },
+      { t: 'button', a: { class: 'bw_act_add' }, c: 'Add' },
       { t: 'ul', a: { id: 'list' } }
     ]
   });
@@ -668,7 +647,7 @@ app.page('/', function(client) {
     client.append('#list', {
       t: 'li', a: { id: id }, c: [
         data.inputValue || 'item',
-        { t: 'button', a: { 'data-bw-action': 'del', 'data-bw-id': id }, c: 'x' }
+        { t: 'button', a: { class: 'bw_act_del', 'data-bw-id': id }, c: 'x' }
       ]
     });
   });
@@ -679,7 +658,7 @@ app.page('/', function(client) {
 });
 ```
 
-### Dashboard (batch + register/call)
+### Dashboard (batch + call)
 
 ```javascript
 app.page('/', function(client) {
@@ -692,24 +671,20 @@ app.page('/', function(client) {
     ]
   });
 
-  // Register a format function on the client
-  client.register('formatNum',
-    'function(id, val) { var el = document.getElementById(id); if (el) el.textContent = Number(val).toLocaleString(); }');
-
   // Update every second
   setInterval(function() {
     var users = Math.floor(Math.random() * 500);
     var orders = Math.floor(Math.random() * 50);
     client.batch([
-      { type: 'call', name: 'formatNum', args: ['users', users] },
-      { type: 'call', name: 'formatNum', args: ['orders', orders] },
+      { type: 'patch', target: 'users', content: String(users) },
+      { type: 'patch', target: 'orders', content: String(orders) },
       { type: 'patch', target: 'revenue', content: '$' + Math.floor(Math.random() * 10000) }
     ]);
   }, 1000);
 });
 ```
 
-### Chat with Auto-scroll (append + register + call)
+### Chat with Auto-scroll (append + call)
 
 ```javascript
 app.page('/', function(client) {
@@ -718,14 +693,10 @@ app.page('/', function(client) {
       { t: 'div', a: { id: 'chat', style: 'max-height:400px;overflow-y:auto' } },
       { t: 'div', a: { style: 'display:flex;gap:8px' }, c: [
         { t: 'input', a: { type: 'text', id: 'msg-input' } },
-        { t: 'button', a: { 'data-bw-action': 'send' }, c: 'Send' }
+        { t: 'button', a: { class: 'bw_act_send' }, c: 'Send' }
       ]}
     ]
   });
-
-  // Register auto-scroll for reuse after each message
-  client.register('scrollChat',
-    'function() { var el = document.getElementById("chat"); if (el) el.scrollTop = el.scrollHeight; }');
 
   client.on('send', function(data) {
     if (!data.inputValue) return;
@@ -734,7 +705,7 @@ app.page('/', function(client) {
     client.append('#chat', {
       t: 'div', a: { style: 'padding:4px' }, c: data.inputValue
     });
-    client.call('scrollChat');
+    client.call('scrollTo', '#chat');
 
     // Focus back on the input
     client.call('focus', '#msg-input');
@@ -784,7 +755,7 @@ Once connected, you get a REPL:
 bw> document.title
 "My Page"
 
-bw> bw.$('.bw-card').length
+bw> bw.$('.bw_bccl_card').length
 3
 
 bw> /tree #app 2

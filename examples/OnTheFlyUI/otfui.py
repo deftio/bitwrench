@@ -93,7 +93,7 @@ The browser has bitwrench loaded (a JS UI library). You have two modes:
 
 ## Mode 1: TACO protocol messages
 Use replace/append/patch/remove to manipulate DOM:
-- replace: {"type":"replace","target":"#app","node":{"t":"div","a":{"class":"bw-card"},"c":"Hello"}}
+- replace: {"type":"replace","target":"#app","node":{"t":"div","a":{"class":"bw_bccl_card"},"c":"Hello"}}
 - append:  {"type":"append","target":"#app","node":{"t":"p","c":"New paragraph"}}
 - patch:   {"type":"patch","target":"#my-id","content":"Updated text"}
 - remove:  {"type":"remove","target":"#old-element"}
@@ -127,7 +127,7 @@ Key bitwrench functions available:
 - bw.makeStatCard({title, value, subtitle, icon, variant}) — stat card (custom TACO)
 
 Stat card example (not a built-in — build from TACO):
-{"type":"exec","code":"bw.DOM('#app', {t:'div',a:{style:'display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1rem'},c:[{t:'div',a:{class:'bw-card',style:'padding:1.5rem;text-align:center'},c:[{t:'div',a:{style:'font-size:0.85rem;color:#64748b'},c:'Users'},{t:'div',a:{style:'font-size:2rem;font-weight:700'},c:'1,234'},{t:'div',a:{style:'font-size:0.8rem;color:#22c55e'},c:'+12%'}]}]})"}
+{"type":"exec","code":"bw.DOM('#app', {t:'div',a:{style:'display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1rem'},c:[{t:'div',a:{class:'bw_bccl_card',style:'padding:1.5rem;text-align:center'},c:[{t:'div',a:{style:'font-size:0.85rem;color:#64748b'},c:'Users'},{t:'div',a:{style:'font-size:2rem;font-weight:700'},c:'1,234'},{t:'div',a:{style:'font-size:0.8rem;color:#22c55e'},c:'+12%'}]}]})"}
 
 ## Batching multiple operations
 {"type":"batch","ops":[
@@ -142,7 +142,7 @@ Stat card example (not a built-in — build from TACO):
 3. For complex layouts, use exec mode with bw.DOM() and bitwrench components.
 4. Use batch to combine multiple operations (e.g., load styles + render content).
 5. On the FIRST request, always include bw.loadStyles() in a batch.
-6. Use semantic HTML and bitwrench CSS classes (bw-card, bw-btn, bw-alert, etc.).
+6. Use semantic HTML and bitwrench CSS classes (bw_bccl_card, bw_bccl_btn, bw_bccl_alert, etc.).
 7. Keep JavaScript in exec messages concise — single expressions or IIFEs.
 """
 

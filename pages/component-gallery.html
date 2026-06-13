@@ -50,7 +50,18 @@
       })).concat([
         { t: 'span', a: { style: 'width:1px;height:1.25rem;background:rgba(128,128,128,0.3);margin:0 0.25rem;' } },
         bw.makeButton({ text: 'Toggle Dark', variant: 'dark', size: 'sm',
-          onclick: function() { bw.toggleStyles(); }
+          onclick: function() {
+            var currentStyles = window._bw_current_styles;
+            var isAlt = document.documentElement.classList.contains('bw_theme_alt');
+            if (currentStyles) {
+              if (isAlt) {
+                bw.applyStyles(currentStyles);
+              } else if (currentStyles.alternateCss) {
+                bw.applyStyles({ css: currentStyles.alternateCss });
+              }
+            }
+            document.documentElement.classList.toggle('bw_theme_alt');
+          }
         })
       ])
     };
@@ -258,7 +269,7 @@
             ]
           }, open: true },
           { title: 'How does theming work?', content: 'Call bw.loadStyles() with a palette config containing primary and secondary colors. The design system derives a complete set of shades, surfaces, and semantic colors from just two seed hex values.' },
-          { title: 'What about dark mode?', content: 'Call bw.toggleStyles() to switch between primary and alternate palettes. The alternate palette is automatically derived with inverted luminance.' }
+          { title: 'What about dark mode?', content: 'Use bw.applyStyles() to swap between the primary and alternate palettes from your styles object (styles.css vs styles.alternateCss). The alternate palette is automatically derived with inverted luminance.' }
         ]
       })
     ]);

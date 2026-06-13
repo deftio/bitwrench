@@ -579,7 +579,7 @@
                     { t: 'strong', c: 'primary' },
                     ' (your seed colors) and ',
                     { t: 'strong', c: 'alternate' },
-                    bw.raw(' (luminance-inverted). Use <code>bw.toggleStyles()</code> to switch.')
+                    bw.raw(' (luminance-inverted). Use <code>bw.applyStyles({ css: styles.alternateCss })</code> to switch.')
                   ]
                 },
                 { t: 'div', a: { id: 'theme-toggle-demo' } }
@@ -1578,7 +1578,7 @@
                 { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'How it works' },
                 { t: 'p', c: bw.raw('Every theme has two sides: <strong>primary</strong> (your seed colors) and <strong>alternate</strong> (luminance-inverted). If your primary is light, the alternate is dark, and vice versa. Both go through the same derivation pipeline.') },
                 (function() {
-                  var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Toggle between primary and alternate\nbw.toggleStyles();           // flip between them';
+                  var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Switch to alternate palette\nbw.applyStyles({ css: styles.alternateCss });\n\n// Switch back to primary\nbw.applyStyles(styles);';
                   var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
                   return typeof bw.codeEditor === 'function'
                     ? bw.codeEditor({ code: toggleCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })

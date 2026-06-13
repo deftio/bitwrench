@@ -52,14 +52,14 @@
   //   - Coffee filter uses o.mounted + manual re-render
   //   - Contact form uses o.state + o.render with status display
   //   - Counter uses o.state + o.render with closures for methods
-  //   - Toast notification system uses bw.createDOM() for append pattern
+  //   - Toast notification system uses bw.create() for append pattern
   //   - Theme: bw.loadStyles({ '#8B4513', '#D2691E', '#2F4F2F' })
   //
   // Key Patterns to Study:
   //   1. Pub/sub cart: cartAdd() -> bw.pub('cart:updated') -> bw.sub()
-  //   2. o.state + o.render: el._bw_state access + bw.update(el)
+  //   2. o.state + o.render: el._bw_state access + bw.refresh(el)
   //   3. Filter pattern: renderCoffeeSection() re-renders on filter change
-  //   4. Toast append: bw.createDOM() + DOM insertion for transient UI
+  //   4. Toast append: bw.create() + DOM insertion for transient UI
   //   5. Theme tokens: All colors derived from 3 seed hex values
   //
   // No build step. No framework. Just bitwrench.
@@ -240,16 +240,16 @@
     ];
     var FILTERS = ['All', 'Africa', 'Americas', 'Asia', 'Light', 'Medium', 'Dark'];
 
-    // ─── Toast — uses bw.createDOM() for append pattern ─────────────────────
+    // ─── Toast — uses bw.create() for append pattern ─────────────────────
     function toast(title, msg, type) {
       var wraps = bw.$('#eo-toasts');
       var wrap = wraps.length ? wraps[0] : null;
       if (!wrap) {
-        wrap = bw.createDOM({ t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
+        wrap = bw.create({ t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
         bw.$('body')[0].appendChild(wrap);
       }
       var icons = { success: '\u2713', warning: '\u26A0', info: '\u2139' };
-      var toastEl = bw.createDOM({
+      var toastEl = bw.create({
         t: 'div', a: { class: 'eo-toast ' + (type || 'info') },
         c: [
           { t: 'span', a: { style: 'font-size:1.3rem' }, c: icons[type] || icons.info },
@@ -366,7 +366,7 @@
         mounted: function(el) {
           bw.sub('cart:updated', function(d) {
             el._bw_state.cartCount = d.count;
-            bw.update(el);
+            bw.refresh(el);
           });
           window.addEventListener('scroll', function() {
             var n = bw.$('#eo-navbar')[0];
@@ -604,14 +604,14 @@
                 { value: '', text: 'Choose a topic...' }, { value: 'order', text: 'Order Inquiry' }, { value: 'wholesale', text: 'Wholesale' }, { value: 'visit', text: 'Tasting Room' }, { value: 'other', text: 'Other' }
               ]}) }),
               bw.makeFormGroup({ label: 'Message', id: 'cmsg', input: bw.makeTextarea({ id: 'cmsg', placeholder: 'Tell us what\'s on your mind...', rows: 5 }) }),
-              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw-btn-lg' })
+              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw_bccl_btn_lg' })
             ], onsubmit: function(e) {
               e.preventDefault();
               var cEl = bw.$('#' + contactFormId)[0];
               if (cEl) {
                 cEl._bw_state.statusMsg = 'Message sent! We\'ll reply within 24 hours.';
                 cEl._bw_state.statusVisible = 'block';
-                bw.update(cEl);
+                bw.refresh(cEl);
               }
               e.target.reset();
               toast('Message Sent', 'We\'ll get back to you within 24 hours.', 'success');
@@ -681,7 +681,7 @@
 
     function counterSet(val) {
       var el = bw.$('#' + counterIdStr)[0];
-      if (el) { el._bw_state.count = val; bw.update(el); }
+      if (el) { el._bw_state.count = val; bw.refresh(el); }
     }
     function counterGet() {
       var el = bw.$('#' + counterIdStr)[0];
@@ -706,7 +706,7 @@
                 bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counterSet(counterGet() + 1); } }),
                 bw.makeButton({ text: '+5', variant: 'outline-primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
               ]},
-              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.update(el)' }
+              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.refresh(el)' }
             ]
           });
         }
@@ -721,7 +721,7 @@
       if (el) {
         el._bw_state.roastLabel = label;
         el._bw_state.progress = pct;
-        bw.update(el);
+        bw.refresh(el);
       }
     }
 
@@ -764,7 +764,7 @@
       '// Update state and re-render:',
       "var el = bw.$('#app')[0];",
       'el._bw_state.count = 42;',
-      'bw.update(el);',
+      'bw.refresh(el);',
       '',
       '// Cross-component messaging:',
       "bw.pub('data:updated', { value: 42 });",
@@ -792,7 +792,7 @@
           bw.makeTableFromArray({ headerRow: true, striped: true, hover: true, data: [
             ['API', 'Level', 'Used For'],
             ['o.state + o.render', 'Core', 'Navbar cart count, contact status, counter, progress'],
-            ['el._bw_state + bw.update()', 'Core', 'State access and re-render triggers'],
+            ['el._bw_state + bw.refresh()', 'Core', 'State access and re-render triggers'],
             ['bw.pub() / bw.sub()', 'Core', 'Cart state broadcast, cross-component messaging'],
             ['o.mounted lifecycle', 'Core', 'Initial renders, scroll listeners'],
             ['o.mounted lifecycle', 'Level 1', 'Initial renders, scroll listeners'],
@@ -819,7 +819,7 @@
         { t: 'div', a: { style: 'display:flex;gap:.65rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem' }, c: [
           bw.makeTooltip({ content: bw.makeBadge({ text: 'Zero Dependencies', variant: 'success', pill: true }), text: 'No npm install for the frontend', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'No Build Step', variant: 'primary', pill: true }), text: 'Works directly in the browser via CDN', placement: 'top' }),
-          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.update() for reactive DOM updates', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.refresh() for reactive DOM updates', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'SSR Ready', variant: 'warning', pill: true }), text: 'bw.html() renders TACO to string in Node.js', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'IE11 Compatible', variant: 'secondary', pill: true }), text: 'Use bitwrench.es5.min.js for legacy browsers', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'MIT License', variant: 'dark', pill: true }), text: 'Free for commercial and personal use', placement: 'top' })

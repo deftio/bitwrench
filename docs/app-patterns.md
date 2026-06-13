@@ -143,7 +143,7 @@ app.page('/', function(client) {
     t: 'div', c: [
       { t: 'h1', c: 'Server Counter' },
       { t: 'span', a: { id: 'val' }, c: '0' },
-      { t: 'button', a: { 'data-bw-action': 'inc' }, c: '+1' }
+      { t: 'button', a: { class: 'bw_act_inc' }, c: '+1' }
     ]
   });
 
@@ -156,7 +156,7 @@ app.page('/', function(client) {
 app.listen();
 ```
 
-**State flow:** Browser requests `/` => server returns HTML shell. Shell opens SSE => server sends TACO via `client.render()`. User clicks `data-bw-action` => browser POSTs to server. Server calls `client.patch()` => browser updates. All state stays on the server. See [bwserve.md](bwserve.md).
+**State flow:** Browser requests `/` => server returns HTML shell. Shell opens SSE => server sends TACO via `client.render()`. User clicks a `bw_act_*` classed element => browser POSTs to server. Server calls `client.patch()` => browser updates. All state stays on the server. See [bwserve.md](bwserve.md).
 
 ---
 

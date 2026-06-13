@@ -49,7 +49,7 @@ An object of HTML attributes. All standard attributes work, including event hand
 {
   t: 'button',
   a: {
-    class: 'bw-btn bw-btn-primary',
+    class: 'bw_bccl_btn bw_primary',
     id: 'save-btn',
     disabled: true,
     onclick: function() { console.log('clicked'); },
@@ -135,7 +135,7 @@ The options key carries state, lifecycle hooks, and component behavior. This is 
     // Component state
     state: { count: 0, items: [] },
 
-    // Render function (called by bw.update)
+    // Render function (called by bw.refresh)
     render: function(el) {
       bw.DOM(el, { t: 'span', c: 'Count: ' + el._bw_state.count });
     },
@@ -149,7 +149,7 @@ The options key carries state, lifecycle hooks, and component behavior. This is 
 
     // Component handle -- methods exposed on el.bw (v2.0.19+)
     handle: {
-      increment: function(el) { el._bw_state.count++; bw.update(el); }
+      increment: function(el) { el._bw_state.count++; bw.refresh(el); }
     },
 
     // Content slots -- auto-generates el.bw.setX()/getX() (v2.0.19+)
@@ -173,7 +173,7 @@ const html = bw.html({ t: 'div', c: 'Hello' });
 // '<div>Hello</div>'
 
 // Create a live DOM element (browser only)
-const el = bw.createDOM({ t: 'div', c: 'Hello' });
+const el = bw.create({ t: 'div', c: 'Hello' });
 // HTMLDivElement
 
 // Mount into an existing DOM element (browser only)
@@ -208,7 +208,7 @@ var footer = h('footer', { class: 'bw_bg_dark bw_text_light bw_py_4' }, [
 ]);
 ```
 
-The output is serializable (assuming no function values), works with `bw.html()`, `bw.DOM()`, `bw.createDOM()`, bwserve, and everywhere else TACO is accepted. Mix `bw.h()` calls freely with `make*()` returns and hand-written TACO — they all produce the same thing.
+The output is serializable (assuming no function values), works with `bw.html()`, `bw.DOM()`, `bw.create()`, bwserve, and everywhere else TACO is accepted. Mix `bw.h()` calls freely with `make*()` returns and hand-written TACO — they all produce the same thing.
 
 > **When to use `bw.h()` vs. hand-written TACO**: Use `bw.h()` for structural glue — wrapper divs, footers, headings — where the `{t:, a:, c:}` key syntax feels heavy. For complex nodes with `o:` (state, lifecycle), write full TACO — the named keys are clearer.
 
@@ -353,7 +353,7 @@ bw.DOM('#app', {
 var el = bw.$('.status-badge')[0].parentElement;
 el._bw_state.label = 'ERROR';
 el._bw_state.color = '#f44336';
-bw.update(el);
+bw.refresh(el);
 ```
 
 ## TACO beyond the browser

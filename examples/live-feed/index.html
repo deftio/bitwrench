@@ -15,8 +15,8 @@
     //
     // Demonstrates:
     //   - Level 1 manual render with bw.DOM() re-render on filter change
-    //   - bw.createDOM() + appendChild for appending items into container
-    //   - bw.cleanup() for removing old items
+    //   - bw.create() + appendChild for appending items into container
+    //   - bw.unmount() for removing old items
     //   - bw.css({ '@keyframes slideIn': {...} }) for entry animation
     //   - bw.patch() for updating counters without full re-render
     //   - bw.patchAll() for batch counter updates
@@ -223,11 +223,11 @@
         feedItems.unshift(item);
         counts[type]++;
 
-        // Append new item into the visible feed via bw.createDOM
+        // Append new item into the visible feed via bw.create
         if (activeFilter === 'all' || activeFilter === type) {
           var listEl = bw.$('#feed-list')[0];
           if (listEl) {
-            var domItem = bw.createDOM(makeFeedItem(item));
+            var domItem = bw.create(makeFeedItem(item));
             listEl.insertBefore(domItem, listEl.firstChild);
           }
         }
@@ -248,7 +248,7 @@
             // Remove from DOM
             var els = bw.$('[data-id="' + item.id + '"]');
             if (els.length) {
-              bw.cleanup(els[0]);
+              bw.unmount(els[0]);
               els[0].remove();
             }
             removed = true;
@@ -277,7 +277,7 @@
           var old = feedItems.pop();
           var els = bw.$('[data-id="' + old.id + '"]');
           if (els.length) {
-            bw.cleanup(els[0]);
+            bw.unmount(els[0]);
             els[0].remove();
           }
         }

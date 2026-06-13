@@ -57,11 +57,11 @@ app.page('/', function(client) {
           t: 'div', a: { style: 'display: flex; gap: 1rem; margin-bottom: 1.5rem;' },
           c: [
             { t: 'button', a: {
-              class: 'bw_btn bw_primary', 'data-bw-action': 'capture-full',
+              class: 'bw_bccl_btn bw_primary bw_act_capture-full',
               style: 'font-size: 1rem; padding: 0.5rem 1.25rem;'
             }, c: 'Capture Full Page' },
             { t: 'button', a: {
-              class: 'bw_btn bw_secondary', 'data-bw-action': 'capture-area',
+              class: 'bw_bccl_btn bw_secondary bw_act_capture-area',
               style: 'font-size: 1rem; padding: 0.5rem 1.25rem;'
             }, c: 'Capture Stats Only' }
           ]

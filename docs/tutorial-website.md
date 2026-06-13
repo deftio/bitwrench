@@ -219,7 +219,7 @@ Use `bw.css()` for page-specific styles:
 
 ```javascript
 bw.injectCSS(bw.css({
-  '.brand .bw-hero': {
+  '.brand .bw_bccl_hero': {
     'text-align': 'center',
     'background': 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
     'color': '#fff',

@@ -153,11 +153,11 @@ const counter: Taco = {
     handle: {
       increment: (el: HTMLElement) => {
         el._bw_state.count++;
-        bw.update(el);
+        bw.refresh(el);
       },
       reset: (el: HTMLElement) => {
         el._bw_state.count = 0;
-        bw.update(el);
+        bw.refresh(el);
       }
     },
     slots: {
@@ -248,8 +248,10 @@ const primaryBase: string = p.primary.base;       // '#2563eb'
 const primaryHover: string = p.primary.hover;     // derived shade
 const bg: string = p.background;                  // plain string (NOT an object)
 
-// Toggle dark/light
-bw.toggleStyles();
+// Toggle dark/light — manually re-apply the alternate palette:
+// bw.applyStyles(styles.alternate);
+// Note: bw.toggleStyles() was removed in v2.1. Switch themes by
+// calling bw.applyStyles() with the desired palette.
 
 // Shorthand: generate + apply in one call
 bw.loadStyles({ primary: '#dc2626' });

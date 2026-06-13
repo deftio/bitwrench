@@ -447,9 +447,8 @@ function buildGpioControls(gpioState) {
                 ]},
                 isOut
                   ? { t: 'button', a: {
-                      class: 'bw_btn bw_' + (g.value ? 'danger' : 'success'),
+                      class: 'bw_btn bw_' + (g.value ? 'danger' : 'success') + ' bw_act_gpio-toggle',
                       style: 'font-size:0.75rem;padding:4px 10px',
-                      'data-bw-action': 'gpio-toggle',
                       'data-bw-id': String(g.pin)
                     }, c: g.value ? 'Turn Off' : 'Turn On' }
                   : { t: 'span', a: { style: 'font-size:0.7rem;opacity:0.6' }, c: 'Read-only input' }

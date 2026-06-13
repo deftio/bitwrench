@@ -162,7 +162,7 @@
           if (cls.indexOf('html') !== -1) lang = 'html';
           else if (cls.indexOf('css') !== -1) lang = 'css';
           var editor = bw.codeEditor({ code: code, lang: lang, readOnly: true, height: 'auto' });
-          var editorEl = bw.createDOM(editor);
+          var editorEl = bw.create(editor);
           pre.parentNode.replaceChild(editorEl, pre);
         });
       }

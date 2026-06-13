@@ -80,7 +80,7 @@ app.page('/', function(client) {
           {
             t: 'button',
             a: {
-              'data-bw-action': 'send',
+              class: 'bw_act_send',
               style: 'padding: 0.6rem 1.25rem; background: #2563eb; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; cursor: pointer;'
             },
             c: 'Send'

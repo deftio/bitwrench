@@ -339,12 +339,16 @@
 
     function applyThemePreset(th) {
       var newStyles = bw.loadStyles({ primary: th.p, secondary: th.s, tertiary: th.tr });
-      // If switching between light/dark, toggle to the right palette
+      // If switching between light/dark, apply the appropriate palette
       if (th.dark && !currentThemeDark) {
-        bw.toggleStyles();
+        if (newStyles.alternateCss) {
+          bw.applyStyles({ css: newStyles.alternateCss });
+        }
+        document.documentElement.classList.add('bw_theme_alt');
         currentThemeDark = true;
       } else if (!th.dark && currentThemeDark) {
-        bw.toggleStyles();
+        bw.applyStyles(newStyles);
+        document.documentElement.classList.remove('bw_theme_alt');
         currentThemeDark = false;
       }
       applySiteChromeCSS(newStyles);
@@ -408,7 +412,7 @@
               onclick: function() {
                 var container = bw.$('#ha-toast-box');
                 if (container.length) {
-                  container[0].appendChild(bw.createDOM(
+                  container[0].appendChild(bw.create(
                     bw.makeToast({ title: 'Success', content: 'Operation completed.', variant: 'success', delay: 3000 })
                   ));
                 }

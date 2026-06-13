@@ -42,15 +42,15 @@ app.page('/', function(client) {
           t: 'div', a: { style: 'display: flex; gap: 1rem; justify-content: center;' },
           c: [
             { t: 'button', a: {
-              class: 'bw_btn bw_primary', 'data-bw-action': 'decrement',
+              class: 'bw_bccl_btn bw_primary bw_act_decrement',
               style: 'font-size: 1.25rem; padding: 0.5rem 1.5rem;'
             }, c: '\u2212' },
             { t: 'button', a: {
-              class: 'bw_btn bw_secondary', 'data-bw-action': 'reset',
+              class: 'bw_bccl_btn bw_secondary bw_act_reset',
               style: 'font-size: 1.25rem; padding: 0.5rem 1.5rem;'
             }, c: 'Reset' },
             { t: 'button', a: {
-              class: 'bw_btn bw_primary', 'data-bw-action': 'increment',
+              class: 'bw_bccl_btn bw_primary bw_act_increment',
               style: 'font-size: 1.25rem; padding: 0.5rem 1.5rem;'
             }, c: '+' }
           ]
@@ -108,7 +108,7 @@ app.page('/dashboard', function(client) {
           ]
         },
         { t: 'div', a: { style: 'text-align: center;' }, c: [
-          { t: 'button', a: { class: 'bw_btn bw_primary', 'data-bw-action': 'refresh' }, c: 'Force Refresh' },
+          { t: 'button', a: { class: 'bw_bccl_btn bw_primary bw_act_refresh' }, c: 'Force Refresh' },
           { t: 'span', a: { style: 'display:inline-block; width:1rem;' } },
           { t: 'a', a: { href: '/', class: 'bw_btn bw_secondary' }, c: '\u2190 Counter' }
         ]},

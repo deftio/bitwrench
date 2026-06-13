@@ -8,7 +8,7 @@ A Streamlit-style server-driven UI app using bwserve. The server pushes UI updat
 - **Server-push rendering**: `client.render()` sends TACO over SSE, browser renders via `bw.apply()`
 - **Targeted patches**: `client.patch()` updates individual elements without full re-render
 - **Batch updates**: `client.batch()` sends multiple operations in a single SSE frame
-- **Action handling**: `data-bw-action` attributes on buttons trigger `client.on()` handlers on the server
+- **Action handling**: `bw_act_*` classes on buttons trigger `client.on()` handlers on the server
 - **Live data**: Dashboard stats update every 2 seconds via server push — no polling from client
 - **Multi-page**: Two pages (counter + dashboard) registered on the same server
 
@@ -39,7 +39,7 @@ Browser                    Server (Node.js)
   |  <-- SSE: patch #counter  |   (client.patch() updates text)
   |                           |
   |  POST /bw/return/action/:id |
-  |  { action: "increment" }  |   (data-bw-action click → POST)
+  |  { action: "increment" }  |   (bw_act_* click → POST)
   |  <-- SSE: patch #counter  |   (server updates, pushes back)
 ```
 

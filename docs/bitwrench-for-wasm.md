@@ -52,7 +52,7 @@ Each boundary crossing has overhead: type marshaling, memory copying, function d
 
 ### An alternative: batch the boundary
 
-A different approach is to cross the boundary **once per render, not once per DOM operation.** The WASM module builds a TACO object (a JSON-serializable data structure) and sends it across the boundary as a single message. The JS-side library materializes the entire tree in one shot using `bw.createDOM()` or `bw.DOM()`.
+A different approach is to cross the boundary **once per render, not once per DOM operation.** The WASM module builds a TACO object (a JSON-serializable data structure) and sends it across the boundary as a single message. The JS-side library materializes the entire tree in one shot using `bw.create()` or `bw.DOM()`.
 
 ```
 WASM side                           JS side (bitwrench)
@@ -319,16 +319,16 @@ use serde_json::json;
 
 fn render_dashboard(state: &AppState) -> String {
     json!({
-        "t": "div", "a": {"class": "bw-container"}, "c": [
+        "t": "div", "a": {"class": "bw_container"}, "c": [
             {"t": "h1", "c": &state.title},
-            {"t": "div", "a": {"class": "bw-row"}, "c": [
+            {"t": "div", "a": {"class": "bw_row"}, "c": [
                 stat_card("Users", &state.users.to_string(), "primary"),
                 stat_card("Revenue", &format!("${}", state.revenue), "success"),
                 stat_card("Orders", &state.orders.to_string(), "info")
             ]},
             {"t": "button", "a": {
                 "id": "refresh-btn",
-                "class": "bw-btn bw-btn-primary"
+                "class": "bw_bccl_btn bw_primary"
             }, "c": "Refresh"}
         ]
     }).to_string()
@@ -336,9 +336,9 @@ fn render_dashboard(state: &AppState) -> String {
 
 fn stat_card(label: &str, value: &str, variant: &str) -> serde_json::Value {
     json!({
-        "t": "div", "a": {"class": format!("bw-stat-card bw-stat-card-{}", variant)}, "c": [
-            {"t": "div", "a": {"class": "bw-stat-card-value"}, "c": value},
-            {"t": "div", "a": {"class": "bw-stat-card-label"}, "c": label}
+        "t": "div", "a": {"class": format!("bw_bccl_stat_card bw_{}", variant)}, "c": [
+            {"t": "div", "a": {"class": "bw_bccl_stat_card_value"}, "c": value},
+            {"t": "div", "a": {"class": "bw_bccl_stat_card_label"}, "c": label}
         ]
     })
 }
@@ -372,7 +372,7 @@ pub fn div(attrs: Value, children: Vec<Value>) -> Value {
 pub fn button(label: &str, id: &str) -> Value {
     json!({
         "t": "button",
-        "a": {"id": id, "class": "bw-btn bw-btn-primary"},
+        "a": {"id": id, "class": "bw_bccl_btn bw_primary"},
         "c": label
     })
 }
@@ -561,7 +561,7 @@ const char* render() {
         "{'t':'div','c':["
             "{'t':'h1','c':'Sensor Dashboard'},"
             "{'t':'p','a':{'id':'temp'},'c':'%.1f C'},"
-            "{'t':'button','a':{'id':'toggle-btn','class':'bw-btn'},"
+            "{'t':'button','a':{'id':'toggle-btn','class':'bw_bccl_btn'},"
                 "'c':'Toggle LED'}"
         "]}}", temp);
 
@@ -601,7 +601,7 @@ AI models typically output structured data -- JSON, function calls, tool use. TA
 {"t": "div", "c": [
   {"t": "h2", "c": "Analysis Results"},
   {"t": "p", "c": "Found 3 anomalies in the dataset."},
-  {"t": "div", "a": {"class": "bw-card"}, "c": [
+  {"t": "div", "a": {"class": "bw_bccl_card"}, "c": [
     {"t": "h3", "c": "Anomaly #1"},
     {"t": "p", "c": "Temperature spike at 14:32 UTC"}
   ]},

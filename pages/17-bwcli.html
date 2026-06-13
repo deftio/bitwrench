@@ -485,12 +485,12 @@
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: '/listen <sel> <event>' } },
                 { t: 'td', c: 'Start listening for DOM events. Events print inline as they fire.' },
-                { t: 'td', c: { t: 'code', c: '/listen .bw-btn click' } }
+                { t: 'td', c: { t: 'code', c: '/listen .bw_bccl_btn click' } }
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: '/unlisten <sel> <event>' } },
                 { t: 'td', c: 'Stop listening for a previously added listener.' },
-                { t: 'td', c: { t: 'code', c: '/unlisten .bw-btn click' } }
+                { t: 'td', c: { t: 'code', c: '/unlisten .bw_bccl_btn click' } }
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: '/exec <code>' } },
@@ -506,7 +506,7 @@
           ]},
 
           site.makeCallout('tip', 'Plain JS expressions work too', {
-            t: 'p', c: bw.raw('Type any JS expression at the prompt and it runs in the connected browser. For example: <code>document.title</code>, <code>bw.$(\'.bw-card\').length</code>, <code>bw.version</code>.')
+            t: 'p', c: bw.raw('Type any JS expression at the prompt and it runs in the connected browser. For example: <code>document.title</code>, <code>bw.$(\'.bw_bccl_card\').length</code>, <code>bw.version</code>.')
           })
         ]}
       ]
@@ -569,10 +569,10 @@
             '<span class="console-output">  div</span>',
             '<span class="console-output">    h2</span>',
             '<span class="console-output">    div#stats</span>',
-            '<span class="console-output">  div.bw-card</span>',
+            '<span class="console-output">  div.bw_bccl_card</span>',
             '',
-            '<span class="console-prompt">bw&gt;</span> /listen .bw-btn click',
-            '<span class="console-output">Listening for click on .bw-btn</span>',
+            '<span class="console-prompt">bw&gt;</span> /listen .bw_bccl_btn click',
+            '<span class="console-output">Listening for click on .bw_bccl_btn</span>',
             '<span class="console-comment"># Now any button click in the page prints here</span>'
           ]),
 
@@ -629,7 +629,7 @@
 
           { t: 'h3', c: 'Evaluate expressions' },
           consoleBlock([
-            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw-card\').length',
+            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_bccl_card\').length',
             '<span class="console-output">4</span>',
             '',
             '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_lc\').length',

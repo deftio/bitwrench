@@ -828,7 +828,7 @@ function createTableComponent() {
               const data = JSON.stringify(state.filteredEmployees, null, 2);
               const blob = new Blob([data], { type: 'application/json' });
               const url = URL.createObjectURL(blob);
-              const a = bw.createDOM({ t: 'a', a: { href: url, download: 'employees.json' } });
+              const a = bw.create({ t: 'a', a: { href: url, download: 'employees.json' } });
               a.click();
               URL.revokeObjectURL(url);
             }

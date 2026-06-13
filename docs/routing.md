@@ -235,7 +235,7 @@ function dashboard() {
       state: { data: null },
       mounted: function(el) {
         fetch('/api/stats').then(function(r) { return r.json(); })
-          .then(function(d) { el._bw_state.data = d; bw.update(el); });
+          .then(function(d) { el._bw_state.data = d; bw.refresh(el); });
       },
       render: function(el) {
         var s = el._bw_state;
@@ -405,7 +405,7 @@ function makeNav() {
       mounted: function(el) {
         bw.sub('bw:route', function(d) {
           el._bw_state.active = d.path;
-          bw.update(el);
+          bw.refresh(el);
         }, el);
       },
       render: function(el) {
@@ -460,7 +460,7 @@ function usersPage() {
     o: {
       state: {},
       mounted: function(el) {
-        bw.sub('store:users', function() { bw.update(el); }, el);
+        bw.sub('store:users', function() { bw.refresh(el); }, el);
       },
       render: function(el) {
         bw.DOM(el, bw.makeTable({

@@ -61,7 +61,7 @@ Parse a bwserve protocol message string, supporting both strict JSON and r-prefi
 
 ### `bw.apply(msg)`
 
-Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.createDOM(node)) remove   — bw.cleanup(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call bw.apply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
+Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.create(node)) remove   — bw.unmount(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call bw.apply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
 
 **Parameters:**
 
@@ -107,7 +107,7 @@ const table = bw.makeDataTable({ title: "Users", data: [{ name: "Alice", role: "
 
 ### `bw.raw(str)`
 
-Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM(). By default, bitwrench escapes all text content to prevent XSS. Use bw.raw() when you need to embed pre-sanitized HTML, entities, or inline markup.
+Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create(). By default, bitwrench escapes all text content to prevent XSS. Use bw.raw() when you need to embed pre-sanitized HTML, entities, or inline markup.
 
 **Parameters:**
 
@@ -115,7 +115,7 @@ Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM
 |------|------|-------------|
 | `str` | `string` | - HTML string to mark as raw |
 
-**Returns:** `Object` — object recognized by bw.html() and bw.createDOM()
+**Returns:** `Object` — object recognized by bw.html() and bw.create()
 
 **Example:**
 ```javascript
@@ -140,7 +140,7 @@ Convert a TACO object (or array of TACOs) to an HTML string. This is the core re
 
 **Example:**
 ```javascript
-bw.html({ t: 'h1', c: 'Hello' }) // => '<h1>Hello</h1>' bw.html({ t: 'div', a: { class: 'card' }, c: [ { t: 'p', c: 'Content here' } ]}) // => '<div class="card"><p>Content here</p></div>'
+bw.html({ t: 'h1', c: 'Hello' }) // => '<h1>Hello</h1>' bw.html({ t: 'div', a: { class: 'bw_bccl_card' }, c: [ { t: 'p', c: 'Content here' } ]}) // => '<div class="bw_bccl_card"><p>Content here</p></div>'
 ```
 
 ---
@@ -173,7 +173,7 @@ bw.htmlPage({ title: 'My App', body: { t: 'h1', c: 'Hello World' }, runtime: 'sh
 
 ---
 
-### `bw.createDOM(taco, options = {})`
+### `bw.create(taco, options = {})`
 
 Create a live DOM element from a TACO object (browser only). Unlike `bw.html()` which returns a string, this creates real DOM elements with event handlers, lifecycle hooks (mounted/unmount), and state. Used internally by `bw.DOM()`. Throws in Node.js — use `bw.html()` instead.
 
@@ -188,7 +188,7 @@ Create a live DOM element from a TACO object (browser only). Unlike `bw.html()` 
 
 **Example:**
 ```javascript
-var el = bw.createDOM({ t: 'button', a: { class: 'bw_btn', onclick: () => alert('clicked') }, c: 'Click Me' }); document.body.appendChild(el);
+var el = bw.create({ t: 'button', a: { class: 'bw_bccl_btn', onclick: () => alert('clicked') }, c: 'Click Me' }); document.body.appendChild(el);
 ```
 
 ---
@@ -209,7 +209,7 @@ Mount a TACO object into a DOM element, replacing its contents (browser only). T
 
 **Example:**
 ```javascript
-bw.DOM('#app', { t: 'div', a: { class: 'card' }, c: [ { t: 'h2', c: 'Hello' }, { t: 'p', c: 'Built with bitwrench.' } ] });
+bw.DOM('#app', { t: 'div', a: { class: 'bw_bccl_card' }, c: [ { t: 'h2', c: 'Hello' }, { t: 'p', c: 'Built with bitwrench.' } ] });
 ```
 
 ---
@@ -235,9 +235,9 @@ var el = bw.mount('#app', bw.makeCarousel({ items: slides })); el.bw.goToSlide(2
 
 ---
 
-### `bw.cleanup(element)`
+### `bw.unmount(element)`
 
-Clean up a DOM element and all its children by calling unmount callbacks, removing pub/sub subscriptions, and clearing state/render references. Called automatically by `bw.DOM()` before re-rendering. Call manually when removing elements to prevent memory leaks from orphaned callbacks.
+Tear down a DOM element and all its children by calling unmount callbacks, removing pub/sub subscriptions, and clearing state/render references. Called automatically by `bw.DOM()` before re-rendering. Call manually when removing elements to prevent memory leaks from orphaned callbacks.
 
 **Parameters:**
 
@@ -247,7 +247,7 @@ Clean up a DOM element and all its children by calling unmount callbacks, removi
 
 **Example:**
 ```javascript
-var el = document.querySelector('#my-widget'); bw.cleanup(el);   // runs unmount hooks, clears _bw_state, _bw_render el.remove();       // safe to remove from DOM now
+var el = document.querySelector('#my-widget'); bw.unmount(el);   // runs unmount hooks, clears _bw_state, _bw_render el.remove();       // safe to remove from DOM now
 ```
 
 ---
@@ -268,7 +268,7 @@ Render a TACO object into the DOM at a specific position, returning a component 
 
 **Example:**
 ```javascript
-var handle = bw.render('#app', 'append', { t: 'button', a: { class: 'bw_btn' }, c: 'Click Me', o: { state: { clicks: 0 } } }); handle.setState({ clicks: 1 }); handle.destroy();
+var handle = bw.render('#app', 'append', { t: 'button', a: { class: 'bw_bccl_btn' }, c: 'Click Me', o: { state: { clicks: 0 } } }); handle.setState({ clicks: 1 }); handle.destroy();
 ```
 
 ---
@@ -299,7 +299,7 @@ Get all registered component handles as a Map.
 
 ### `bw.el(target, apply)`
 
-Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optionally apply content or a function to the resolved element. Resolution order for string targets: 1. Check `bw._nodeMap[id]` cache (O(1), stale entries auto-pruned) 2. `document.getElementById(id)` 3. `document.querySelector(id)` for selectors starting with # or . 4. Class-based lookup for `bw_uuid_*` tokens With one argument, returns the element (or null). With two arguments, applies the second argument to the element and returns the element: - string/number: sets `el.textContent` - function: calls `apply(el)`, returns el - TACO object: clears children, mounts TACO via `bw.createDOM()` - array: clears children, appends each item (string -> text node, TACO -> element)
+Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optionally apply content or a function to the resolved element. Resolution order for string targets: 1. Check `bw._nodeMap[id]` cache (O(1), stale entries auto-pruned) 2. `document.getElementById(id)` 3. `document.querySelector(id)` for selectors starting with # or . 4. Class-based lookup for `bw_uuid_*` tokens With one argument, returns the element (or null). With two arguments, applies the second argument to the element and returns the element: - string/number: sets `el.textContent` - function: calls `apply(el)`, returns el - TACO object: clears children, mounts TACO via `bw.create()` - array: clears children, appends each item (string -> text node, TACO -> element)
 
 **Parameters:**
 
@@ -398,9 +398,9 @@ bw.escapeHTML('<b>Hello</b> & "world"') // => '&lt;b&gt;Hello&lt;&#x2F;b&gt; &am
 
 ## State Management
 
-### `bw.update(target)`
+### `bw.refresh(target)`
 
-Trigger re-render of a component by calling its stored `o.render` function. This is the recommended way to update a component after changing its state. Calls `el._bw_render(el, state)` and emits `bw:statechange` so other components can react without tight coupling.
+Re-invoke the render function of a component to re-render it. This is the recommended way to update a component after changing its state. Calls `el._bw_render(el, state)` and emits `bw:statechange` so other components can react without tight coupling.
 
 **Parameters:**
 
@@ -412,14 +412,29 @@ Trigger re-render of a component by calling its stored `o.render` function. This
 
 **Example:**
 ```javascript
-// Given a counter element with o.render el._bw_state.count++; bw.update(el);  // re-renders, emits bw:statechange
+// Given a counter element with o.render el._bw_state.count++; bw.refresh(el);  // re-renders, emits bw:statechange
 ```
+
+---
+
+### `bw.update(ref, data)`
+
+Dispatch to a component's `el.bw.update(data)` handle method. Use this for sending data to a component without re-rendering. For re-rendering after state changes, use `bw.refresh(ref)` instead.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element |
+| `data` | `*` | - Data to pass to `el.bw.update(data)` |
+
+**Returns:** `Element|null` — element, or null if not found
 
 ---
 
 ### `bw.patch(id, content, attr)`
 
-Targeted DOM update by element ID — change one element's content or attribute without rebuilding the entire component tree. Use `bw.patch()` for lightweight value updates (scores, labels, counters) and `bw.update()` for full structural re-renders.
+Targeted DOM update by element ID — change one element's content or attribute without rebuilding the entire component tree. Use `bw.patch()` for lightweight value updates (scores, labels, counters) and `bw.refresh()` for full structural re-renders.
 
 **Parameters:**
 
@@ -523,7 +538,7 @@ bw.pub('score:updated', { player: 'X', score: 10 }); // Wildcard subscribers mat
 
 ### `bw.sub(topic, handler, el)`
 
-Subscribe to a topic. Returns an unsub() function. Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before the `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. The handler receives `(detail, topic)` so it can distinguish which topic fired. Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
+Subscribe to a topic. Returns an unsub() function. Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before the `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. The handler receives `(detail, topic)` so it can distinguish which topic fired. Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.unmount()` is called on that element, the subscription is automatically removed, preventing memory leaks.
 
 **Parameters:**
 
@@ -596,7 +611,7 @@ Generate CSS from JavaScript objects. Converts an object of `{ selector: { prop:
 
 **Example:**
 ```javascript
-bw.css({ '.card': { padding: '1rem', fontSize: '14px', borderRadius: '8px' } }) // => '.card {\n  padding: 1rem;\n  font-size: 14px;\n  border-radius: 8px;\n}'
+bw.css({ '.bw_bccl_card': { padding: '1rem', fontSize: '14px', borderRadius: '8px' } }) // => '.bw_bccl_card {\n  padding: 1rem;\n  font-size: 14px;\n  border-radius: 8px;\n}'
 ```
 
 ---
@@ -618,7 +633,7 @@ Inject CSS into the document head (browser only). Creates or reuses a `<style>` 
 
 **Example:**
 ```javascript
-bw.injectCSS('.my-class { color: red; }'); bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' });
+bw.injectCSS('.my-class { color: red; }'); bw.injectCSS({ '.bw_bccl_card': { padding: '1rem' } }, { id: 'card-styles' });
 ```
 
 ---
@@ -1893,7 +1908,7 @@ const pop = makePopover({ trigger: makeButton({ text: 'Click me' }), title: 'Pop
 
 ### `bw.makeSearchInput(props = {})`
 
-Create a search input with clear button Wraps a text input with a clear (×) button that appears when the field has content. Calls onSearch on Enter key.
+Create a search input with clear button Wraps a text input with a clear (x) button that appears when the field has content. Calls onSearch on Enter key.
 
 **Parameters:**
 
@@ -2048,7 +2063,7 @@ const stepper = makeStepper({ currentStep: 1, steps: [ { label: 'Account', descr
 
 ### `bw.makeChipInput(props = {})`
 
-Create a chip/tag input for managing a list of items Displays existing chips with remove buttons and an input field for adding new ones. Chips are added on Enter and removed on clicking the × button.
+Create a chip/tag input for managing a list of items Displays existing chips with remove buttons and an input field for adding new ones. Chips are added on Enter and removed on clicking the x button.
 
 **Parameters:**
 
