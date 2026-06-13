@@ -150,7 +150,7 @@ bwserve.onMessage = function(msg) {
     denyRawHtml: true
   });
   if (!result.valid) return;  // reject
-  bw.DOM(msg.target, msg.taco);
+  bw.DOM(msg.ref, msg.taco);
 };
 ```
 
@@ -475,7 +475,7 @@ Policy merge behavior:
 Validate message payloads before `bw.DOM()`/`bw.apply()`:
 
 ```javascript
-var result = validateTree(msg.node, { mode: 'wire', policy: wirePolicy });
+var result = validateTree(msg.taco, { mode: 'wire', policy: wirePolicy });
 if (!result.valid) {
   // reject payload, log findings, optionally patch an error placeholder
   return;

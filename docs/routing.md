@@ -492,7 +492,7 @@ The client router complements bwserve's server-side `app.page()`. Use bwserve fo
 ```javascript
 // Server handles top-level pages
 app.page('/dashboard', function(client) {
-  client.render('#app', dashboardShell());
+  client.mount('#app', dashboardShell());
 });
 
 // Client handles tab navigation within the dashboard

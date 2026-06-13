@@ -771,7 +771,8 @@ function addToCart(item) {
     bw.pub('cart:updated', { count: cart.length });
 }
 
-// Subscriber -- auto-cleans when element is removed
+// Subscriber -- navEl is the element returned by bw.mount() for a nav component
+// Auto-cleans when element is removed
 bw.sub('cart:updated', function(data) {
     navEl._bw_state.cartCount = data.count;
     bw.refresh(navEl);
@@ -805,7 +806,7 @@ import bwserve from 'bitwrench/bwserve';
 
 var app = bwserve.create({ port: 8080 });
 app.page('/', function(client) {
-    client.render('#app', {
+    client.mount('#app', {
         t: 'div', c: [
             { t: 'h1', c: 'Hello from the server' },
             { t: 'p', a: { id: 'status' }, c: 'Connected.' },
@@ -821,12 +822,12 @@ The browser receives one HTML shell page with bitwrench loaded. Everything after
 ### Incremental updates
 
 ```js
-client.patch('#status', 'Processing...');
+client.patch('#status', { text: 'Processing...' });
 client.append('#log', { t: 'div', c: 'Event at ' + new Date().toISOString() });
 client.remove('#old-notification');
 client.batch([
-    { type: 'patch', target: '#status', content: 'Done.' },
-    { type: 'remove', target: '#spinner' }
+    { type: 'patch', ref: '#status', text: 'Done.', v: 1 },
+    { type: 'remove', ref: '#spinner', v: 1 }
 ]);
 ```
 
@@ -840,7 +841,7 @@ When a user clicks a `bw_act_*` element, the browser POSTs the action name to th
 
 // Server-side handler
 client.on('greet', function(data) {
-    client.patch('#status', 'Hello, user!');
+    client.patch('#status', { text: 'Hello, user!' });
 });
 ```
 

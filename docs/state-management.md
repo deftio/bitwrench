@@ -796,4 +796,4 @@ bw.router({
 
 ## Removed: bw.component() (v2.0.19)
 
-`bw.component()`, `bw.compile()`, `bw.when()`, and `bw.each()` were removed in v2.0.19. Calling these functions now throws an Error. Their functionality is replaced by `o.handle`, `o.slots`, and `bw.mount()` -- see [Level 1.5: Component Handles](#level-15-component-handles) above.
+`bw.component()`, `bw.compile()`, `bw.when()`, and `bw.each()` were removed in v2.0.19. These functions are now `undefined`. Their functionality is replaced by `o.handle`, `o.slots`, and `bw.mount()` -- see [Level 1.5: Component Handles](#level-15-component-handles) above.

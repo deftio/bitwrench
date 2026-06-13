@@ -450,12 +450,12 @@ import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902, allowScreenshot: true });
 
 app.page('/', function(client) {
-  client.render('#app', myTaco);
+  client.mount('#app', myTaco);
 
   // Capture what the user sees
   var img = await client.screenshot('#app', { maxWidth: 800 });
   // img.data is a Buffer (PNG) -- send to vision model for evaluation
-  // Vision model says "button is too small" => adjust TACO => re-render => screenshot again
+  // Vision model says "button is too small" => adjust TACO => re-mount => screenshot again
 });
 ```
 
@@ -470,8 +470,8 @@ import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902 });
 
 app.page('/', function(client) {
-  // Render initial UI
-  client.render('#app', {
+  // Mount initial UI
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'h1', c: 'Hello from server' },
       { t: 'p', a: { id: 'status' }, c: 'Connected.' },
@@ -480,12 +480,12 @@ app.page('/', function(client) {
   });
 
   // Incremental updates
-  client.patch('#status', 'Processing...');
+  client.patch('#status', { text: 'Processing...' });
   client.append('#log', { t: 'p', c: 'New entry' });
   client.remove('.old-item');
 
   // Handle user actions (bw_act_* class elements)
-  client.on('greet', function() { client.patch('#status', 'Hello!'); });
+  client.on('greet', function() { client.patch('#status', { text: 'Hello!' }); });
 
   // Call built-in client-side functions
   client.call('scrollTo', '#bottom');
@@ -494,7 +494,7 @@ app.page('/', function(client) {
 app.listen();
 ```
 
-**Protocol**: `replace`, `patch`, `append`, `remove`, `batch`, `message`, `call`, `exec`.
+**Protocol (v2.1)**: `mount`, `patch`, `append`, `remove`, `batch`, `call`, `message`, `listen`, `unlisten`. All messages stamped `v: 1`. Wire fields: `ref` (not `target`), `taco` (not `node`).
 **Language-agnostic**: any server that writes SSE works (Python, Go, Rust, C, shell scripts).
 
 ---
@@ -701,9 +701,9 @@ See [TypeScript Usage Guide](bitwrench_typescript_usage.md) for full details.
 
 ---
 
-## Removed APIs (v2.0.19)
+## Removed APIs (v2.1)
 
-`bw.component()`, `bw.compile()`, `bw.when()`, `bw.each()` -- all throw Error.
+`bw.component()`, `bw.compile()`, `bw.when()`, `bw.each()` -- all removed (undefined).
 Replaced by `o.handle` + `o.slots` + `bw.mount()`. See Step 4.
 
 ---

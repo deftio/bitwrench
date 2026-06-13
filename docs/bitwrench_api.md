@@ -61,7 +61,7 @@ Parse a bwserve protocol message string, supporting both strict JSON and r-prefi
 
 ### `bw.apply(msg)`
 
-Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.create(node)) remove   — bw.unmount(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call bw.apply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
+Apply a bwserve protocol message to the DOM. All messages are stamped `v: 1`. Wire fields use `ref` (not `target`) and `taco` (not `node`). Dispatches one of 9 message verbs: mount    — bw.DOM(ref, taco) patch    — bw.patch(ref, fields) with discriminated fields object append   — ref.appendChild(bw.create(taco)) remove   — bw.unmount(ref); ref.remove() batch    — iterate ops, call bw.apply for each call     — invoke a registered function message  — bw.message(ref, action, data) listen   — subscribe to client-side events unlisten — unsubscribe from client-side events Ref resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
 
 **Parameters:**
 
@@ -2267,7 +2267,7 @@ Dispatch a message to a component by UUID, CSS class, or selector. Finds the ele
 
 **Example:**
 ```javascript
-bw.message('my_carousel', 'goToSlide', 2); // Or from SSE handler: es.onmessage = function(e) { var msg = JSON.parse(e.data); bw.message(msg.target, msg.action, msg.data); };
+bw.message('my_carousel', 'goToSlide', 2); // Or from SSE handler: es.onmessage = function(e) { var msg = JSON.parse(e.data); bw.message(msg.ref, msg.action, msg.data); };
 ```
 
 ---

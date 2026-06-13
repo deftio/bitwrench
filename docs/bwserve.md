@@ -10,7 +10,7 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 - Zero runtime dependencies — only Node.js stdlib (`http`, `fs`, `path`)
 - Auto-generates the client page (loads bitwrench, opens SSE, wires actions)
 - Same protocol works for Node.js servers and ESP32/Arduino embedded devices
-- 9 protocol message types covering DOM operations and remote execution
+- 10 protocol message types (hello, mount, patch, append, remove, batch, call, message, listen, unlisten)
 
 ## Architecture
 
@@ -22,18 +22,16 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 │  bwclient.js     ├──────────────>  app.page('/', fn)    │
 │  (opens SSE)     │               │                      │
 │                  │<──SSE──────── │ DOM operations:      │
-│  bw.apply()      │  {type,node}  │  client.render()     │
+│  bw.apply()      │  {type,taco}  │  client.mount()      │
 │  -> bw.DOM()     │               │  client.patch()      │
 │  -> bw.patch()   │               │  client.append()     │
 │                  │               │  client.remove()     │
 │                  │               │  client.batch()      │
 │                  │               │                      │
-│                  │               │ Execution:           │
+│                  │               │ Other:               │
 │                  │               │  client.call()       │
-│                  │               │  client.exec()       │
-│                  │               │                      │
-│  bw_act_* class  │               │                      │
-│  data-bw-action  │               │                      │
+│                  │               │  client.message()    │
+│  bw_act_* class  │               │  client.listen()     │
 │  conn.sendAction │──POST───────> │ client.on(action,fn) │
 │                  │  {action,data}│                      │
 └──────────────────┘               └──────────────────────┘
@@ -44,7 +42,7 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 2. Shell loads bitwrench from `/bw/lib/bitwrench.umd.js` and opens SSE
 3. SSE triggers page handler → server sends TACO rendering commands
 4. Browser applies each message via `bw.apply()` → DOM updates
-5. User clicks → `bw_act_*` class (or `data-bw-action` for backwards compatibility) triggers POST → server handler runs
+5. User clicks → `bw_act_*` class triggers POST → server handler runs
 6. Server sends more messages → browser updates. Loop continues.
 
 ## Quick Start
@@ -57,8 +55,8 @@ var app = bwserve.create({ port: 7902 });
 var count = 0;
 
 app.page('/', function(client) {
-  // 1. Render the initial UI as a TACO tree
-  client.render('#app', {
+  // 1. Mount the initial UI as a TACO tree
+  client.mount('#app', {
     t: 'div', a: { style: 'padding:24px' }, c: [
       { t: 'h1', c: 'Counter' },
       { t: 'p', c: [
@@ -73,12 +71,12 @@ app.page('/', function(client) {
   // 2. Handle user actions
   client.on('increment', function() {
     count++;
-    client.patch('count', String(count));
+    client.patch('count', { text: String(count) });
   });
 
   client.on('reset', function() {
     count = 0;
-    client.patch('count', '0');
+    client.patch('count', { text: '0' });
   });
 });
 
@@ -91,7 +89,7 @@ Save as `server.js`, run `node server.js`, open `http://localhost:7902`.
 
 ## Protocol Messages
 
-bwserve uses 9 message types, organized in two categories:
+bwserve uses 10 message types. All messages are stamped with `v: 1` (wire protocol version) and use `ref` for target references and `taco` for TACO payloads.
 
 ### DOM Operations (5 types)
 
@@ -99,61 +97,64 @@ These modify the browser's DOM tree:
 
 | Type | Purpose | Server Method | Client Action |
 |------|---------|---------------|---------------|
-| `replace` | Replace element content | `client.render(target, taco)` | `bw.DOM(target, node)` |
-| `patch` | Update text/attributes | `client.patch(id, content, attr?)` | `bw.patch(target, content, attr)` |
-| `append` | Add child element | `client.append(target, taco)` | `target.appendChild(bw.create(node))` |
-| `remove` | Remove element | `client.remove(target)` | `bw.unmount(el); el.remove()` |
+| `mount` | Mount TACO at selector | `client.mount(ref, taco)` | `bw.DOM(ref, taco)` |
+| `patch` | Update text/attributes | `client.patch(ref, fields)` | `bw.patch(ref, fields)` |
+| `append` | Add child element | `client.append(ref, taco)` | `ref.appendChild(bw.create(taco))` |
+| `remove` | Remove element | `client.remove(ref)` | `bw.unmount(el); el.remove()` |
 | `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence |
 
-### Execution Operations (2 types)
-
-These invoke functions or execute code on the client:
+### Communication Operations (5 types)
 
 | Type | Purpose | Server Method | Client Action |
 |------|---------|---------------|---------------|
 | `call` | Invoke built-in function | `client.call(name, ...args)` | Call built-in function (scrollTo, focus, download, etc.) |
-| `exec` | Run arbitrary JS | `client.exec(code)` | `new Function(code)()` (needs opt-in) |
+| `message` | Component dispatch | `client.message(ref, action, data)` | `bw.message(ref, action, data)` |
+| `listen` | Subscribe to topic | `client.listen(topic, handler)` | Forward matching events to server |
+| `unlisten` | Unsubscribe from topic | (automatic on disconnect) | Stop forwarding events |
+| `hello` | Handshake | (automatic on connect) | Establish connection |
 
-> **Note:** `client.register(name, body)` was removed in v2.1 for security reasons (code should never cross the wire). Use `bw_act_*` class patterns for user actions, and `client.call()` for built-in client-side operations like scrollTo, focus, download, clipboard, and redirect.
-
-### Additional
-
-| Type | Purpose | Server Method | Client Action |
-|------|---------|---------------|---------------|
-| `message` | Component dispatch | `client.message(target, action, data)` | `bw.message(target, action, data)` |
+> **Note:** `exec`, `register`, and `query` were removed in v2.1 for security reasons (code should never cross the wire). Use `bw_act_*` class patterns for user actions, and `client.call()` for built-in client-side operations like scrollTo, focus, download, clipboard, and redirect.
 
 ### Message Schemas
+
+All messages include `v: 1` (wire protocol version).
 
 ```json
 // --- DOM Operations ---
 
-// replace — full subtree replacement
-{ "type": "replace", "target": "#app", "node": {"t":"div","c":"Hello"} }
+// mount — full subtree mount
+{ "v": 1, "type": "mount", "ref": "#app", "taco": {"t":"div","c":"Hello"} }
 
-// patch — lightweight text/attribute update
-{ "type": "patch", "target": "counter", "content": "42" }
-{ "type": "patch", "target": "status", "content": "active", "attr": {"class": "done"} }
+// patch — lightweight text/attribute update (discriminated fields)
+{ "v": 1, "type": "patch", "ref": "counter", "text": "42" }
+{ "v": 1, "type": "patch", "ref": "status", "text": "active", "attrs": {"class": "done"} }
 
 // append — add a child
-{ "type": "append", "target": "#list", "node": {"t":"li","c":"New item"} }
+{ "v": 1, "type": "append", "ref": "#list", "taco": {"t":"li","c":"New item"} }
 
 // remove — delete from DOM
-{ "type": "remove", "target": "#old-item" }
+{ "v": 1, "type": "remove", "ref": "#old-item" }
 
 // batch — multi-update
-{ "type": "batch", "ops": [
-    { "type": "patch", "target": "a", "content": "1" },
-    { "type": "patch", "target": "b", "content": "2" }
+{ "v": 1, "type": "batch", "ops": [
+    { "type": "patch", "ref": "a", "text": "1" },
+    { "type": "patch", "ref": "b", "text": "2" }
 ]}
 
-// --- Execution Operations ---
+// --- Communication Operations ---
 
 // call — invoke a built-in function
-{ "type": "call", "name": "focus", "args": ["#search-input"] }
-{ "type": "call", "name": "download", "args": ["report.csv", "id,name\n1,Alice", "text/csv"] }
+{ "v": 1, "type": "call", "name": "focus", "args": ["#search-input"] }
+{ "v": 1, "type": "call", "name": "download", "args": ["report.csv", "id,name\n1,Alice", "text/csv"] }
 
-// exec — execute arbitrary JS (requires allowExec on client)
-{ "type": "exec", "code": "document.title = 'Updated'" }
+// message — component dispatch
+{ "v": 1, "type": "message", "ref": "#my-component", "action": "update", "data": {"value": 42} }
+
+// listen — subscribe to topic
+{ "v": 1, "type": "listen", "topic": "bw:lifecycle" }
+
+// hello — handshake (sent automatically on connect)
+{ "v": 1, "type": "hello" }
 ```
 
 ### Target Resolution
@@ -168,11 +169,11 @@ All DOM operation targets are resolved using:
 
 **Best practice:** Use simple `id` attributes for patchable elements:
 ```javascript
-// Server sends render with id:
-client.render('#app', { t: 'span', a: { id: 'count' }, c: '0' });
+// Server mounts with id:
+client.mount('#app', { t: 'span', a: { id: 'count' }, c: '0' });
 
 // Later, server patches by id:
-client.patch('count', '42');
+client.patch('count', { text: '42' });
 ```
 
 ### Actions (Client → Server)
@@ -186,21 +187,18 @@ Content-Type: application/json
 { "action": "increment", "data": { "inputValue": "hello" } }
 ```
 
-**Wiring actions** — use `bw_act_*` classes on elements (preferred), or `data-bw-action` for backwards compatibility:
+**Wiring actions** — use `bw_act_*` CSS classes on elements:
 
 ```javascript
-// Server sends this TACO (preferred bw_act_* pattern):
+// Server sends this TACO with bw_act_* class:
 { t: 'button', a: { class: 'bw_bccl_btn bw_act_save' }, c: 'Save' }
-
-// Or with data-bw-action (backwards compatible):
-{ t: 'button', a: { 'data-bw-action': 'save', class: 'bw_bccl_btn' }, c: 'Save' }
 
 // When clicked, client auto-POSTs:
 { action: 'save', data: {} }
 
 // Server handles it:
 client.on('save', function(data) {
-  client.patch('status', 'Saved!');
+  client.patch('status', { text: 'Saved!' });
 });
 ```
 
@@ -219,11 +217,8 @@ Create a bwserve application.
 | `static` | string | null | Static file directory |
 | `theme` | string/object | null | Theme preset name or config |
 | `injectBitwrench` | boolean | true | Auto-inject bitwrench UMD + CSS |
-| `allowExec` | boolean | false | Enable `exec` messages on client (see warning below) |
 | `allowScreenshot` | boolean | false | Enable `client.screenshot()` capability |
 | `keepAliveInterval` | number | 15000 | SSE keep-alive interval in ms |
-
-> **Start without `allowExec`.** The `call` pattern with built-in functions handles most use cases — invoke scrollTo, focus, download, clipboard, redirect by name with safe argument passing. Only enable `allowExec: true` if you genuinely need to evaluate arbitrary code strings on the client. When in doubt, leave it off.
 
 ### `app.page(path, handler)`
 
@@ -231,7 +226,7 @@ Register a page handler. The `handler` function is called with a `BwServeClient`
 
 ```javascript
 app.page('/', function(client) {
-  client.render('#app', { t: 'div', c: 'Hello' });
+  client.mount('#app', { t: 'div', c: 'Hello' });
 });
 
 app.page('/dashboard', function(client) {
@@ -258,16 +253,16 @@ Send a protocol message to all connected clients. Useful for dashboards, notific
 
 ```javascript
 // Broadcast a patch to all browsers:
-app.broadcast({ type: 'patch', target: 'status', content: 'System OK' });
+app.broadcast({ type: 'patch', ref: 'status', text: 'System OK' });
 
 // Target a specific client by setting clientId:
-app.broadcast({ type: 'patch', target: 'msg', content: 'Hello', clientId: 'c1' });
+app.broadcast({ type: 'patch', ref: 'msg', text: 'Hello', clientId: 'c1' });
 
 // Broadcast a batch update:
 app.broadcast({
   type: 'batch', ops: [
-    { type: 'patch', target: 'users', content: '342' },
-    { type: 'patch', target: 'orders', content: '28' }
+    { type: 'patch', ref: 'users', text: '342' },
+    { type: 'patch', ref: 'orders', text: '28' }
   ]
 });
 ```
@@ -278,19 +273,19 @@ app.broadcast({
 
 | Method | Protocol Type | Description |
 |--------|--------------|-------------|
-| `client.render(target, taco)` | `replace` | Replace target contents with TACO tree |
-| `client.patch(id, content, attr?)` | `patch` | Update text or attribute of element |
-| `client.append(target, taco)` | `append` | Add TACO as child of target |
-| `client.remove(target)` | `remove` | Remove element from DOM |
+| `client.mount(ref, taco)` | `mount` | Mount TACO tree at ref |
+| `client.patch(ref, fields)` | `patch` | Update element with discriminated fields (e.g. `{text:'...'}`, `{attrs:{...}}`) |
+| `client.append(ref, taco)` | `append` | Add TACO as child of ref |
+| `client.remove(ref)` | `remove` | Remove element from DOM |
 | `client.batch(ops)` | `batch` | Send multiple operations atomically |
-| `client.message(target, action, data)` | `message` | Dispatch to el.bw[action] |
 
-#### Execution Operations
+#### Communication
 
 | Method | Protocol Type | Description |
 |--------|--------------|-------------|
 | `client.call(name, ...args)` | `call` | Invoke built-in function |
-| `client.exec(code)` | `exec` | Execute arbitrary JS (requires client allowExec) |
+| `client.message(ref, action, data)` | `message` | Dispatch to el.bw[action] |
+| `client.listen(topic, handler)` | `listen` | Subscribe to client-side topic |
 
 #### Connection Management
 
@@ -298,6 +293,8 @@ app.broadcast({
 |--------|-------------|
 | `client.on(action, handler)` | Register handler for client actions |
 | `client.close()` | Disconnect this client |
+
+> **Note:** `client.render()` still works as a deprecated alias for `client.mount()` but should not be used in new code.
 
 ## Screenshots
 
@@ -342,7 +339,7 @@ var img = await client.screenshot('#dashboard', {
 });
 
 // LLM visual feedback loop
-client.render('#app', myCard);
+client.mount('#app', myCard);
 var img = await client.screenshot('#app', { maxWidth: 800 });
 var feedback = await visionModel.evaluate(img.data);
 // refine TACO based on feedback...
@@ -364,9 +361,9 @@ var feedback = await visionModel.evaluate(img.data);
 - **DOM-level capture:** html2canvas reads the DOM — it cannot see other tabs, OS windows, or anything outside the page
 - **No external requests:** html2canvas is vendored locally, not loaded from a CDN
 
-## Server-to-Client Execution
+## Server-to-Client Operations
 
-Beyond DOM operations, the server can invoke functions and execute code on the client.
+Beyond DOM operations, the server can invoke functions on the client.
 
 ### `client.call(name, ...args)`
 
@@ -393,32 +390,37 @@ client.call('log', 'Debug: user count =', users.length);
 | `redirect` | `url` | Navigate to a URL |
 | `log` | `...args` | console.log from the server |
 
-### `client.exec(code)`
+### `client.message(ref, action, data)`
 
-Execute arbitrary JavaScript on the client. **Requires opt-in:** the server must be created with `allowExec: true` and/or the client connection with `{ allowExec: true }`. Without this flag, exec messages are silently rejected.
-
-> **You probably don't need this.** If you're reaching for `exec`, consider whether `call` with built-in functions would work instead. `call` invokes functions by name with safe arguments. This covers scroll, focus, download, and similar operations. `exec` is for truly one-off operations.
+Dispatch to a BCCL component's handle method. The client calls `bw.message(ref, action, data)` which invokes `el.bw[action](data)` on the target component.
 
 ```javascript
-// Server side
-client.exec("document.title = 'Updated at ' + new Date().toLocaleTimeString()");
-client.exec("window.scrollTo(0, 0)");
+client.message('#my-slider', 'setValue', 75);
+client.message('#my-modal', 'open', { title: 'Confirm' });
 ```
 
-**Security:** Prefer `call()` over `exec()` whenever possible. `call()` passes data as arguments (safe from injection), while `exec()` evaluates a code string. Never interpolate user input into `exec()` code strings.
+### `client.listen(topic, handler)`
+
+Subscribe to a client-side topic. The client forwards matching events back to the server via the return route.
+
+```javascript
+client.listen('bw:lifecycle', function(data) {
+  console.log('Lifecycle event:', data);
+});
+```
 
 ### When to Use Each Tier
 
 | Need | Use | Why |
 |------|-----|-----|
-| Update the DOM | replace/patch/append/remove | Declarative, inspectable, safe |
+| Update the DOM | mount/patch/append/remove | Declarative, inspectable, safe |
 | Simple button click | `bw_act_*` class | Zero code, just a class |
-| Scroll after append | `call("scrollTo", sel)` | Built-in, no registration |
+| Scroll after append | `call("scrollTo", sel)` | Built-in, no code transfer |
 | Trigger file download | `call("download", ...)` | Built-in, safe |
-| Quick one-off operation | `exec` | Last resort. No registration overhead but requires `allowExec` |
-| Production security | `call` (never `exec`) | Arguments can't inject code |
+| Component interaction | `message(ref, action, data)` | Dispatches to el.bw[action] |
+| Event subscription | `listen(topic, handler)` | Server observes client events |
 
-> **Rule of thumb:** Start with `bw_act_*` classes + DOM operations. When you need client-side behavior, use `call` with built-in functions. Only reach for `exec` if you have a genuine one-off need and understand the security implications.
+> **Rule of thumb:** Start with `bw_act_*` classes + DOM operations. When you need client-side behavior, use `call` with built-in functions. For component communication, use `message`.
 
 ## Client API Reference
 
@@ -428,19 +430,19 @@ SSE connection management has moved to `bwclient.js`, which is auto-generated by
 
 ### `bw.apply(msg)`
 
-Apply a single protocol message to the DOM. Called automatically by the shell connection, but also usable standalone for testing or custom transports. Handles all 9 message types.
+Apply a single protocol message to the DOM. Called automatically by the shell connection, but also usable standalone for testing or custom transports. Handles all 10 message types.
 
 ```javascript
 // DOM operations
-bw.apply({ type: 'replace', target: '#app', node: { t: 'div', c: 'Hi' } });
-bw.apply({ type: 'patch', target: 'counter', content: '42' });
-bw.apply({ type: 'append', target: '#list', node: { t: 'li', c: 'New' } });
-bw.apply({ type: 'remove', target: '#old' });
-bw.apply({ type: 'batch', ops: [msg1, msg2] });
+bw.apply({ v: 1, type: 'mount', ref: '#app', taco: { t: 'div', c: 'Hi' } });
+bw.apply({ v: 1, type: 'patch', ref: 'counter', text: '42' });
+bw.apply({ v: 1, type: 'append', ref: '#list', taco: { t: 'li', c: 'New' } });
+bw.apply({ v: 1, type: 'remove', ref: '#old' });
+bw.apply({ v: 1, type: 'batch', ops: [msg1, msg2] });
 
-// Execution operations
-bw.apply({ type: 'call', name: 'scrollTo', args: ['#chat'] });
-bw.apply({ type: 'exec', code: 'alert(1)' });  // needs allowExec
+// Communication operations
+bw.apply({ v: 1, type: 'call', name: 'scrollTo', args: ['#chat'] });
+bw.apply({ v: 1, type: 'message', ref: '#comp', action: 'update', data: {} });
 ```
 
 Returns `true` if the message was applied successfully, `false` otherwise.
@@ -451,14 +453,14 @@ Parse both strict JSON and r-prefix relaxed JSON. This is a state-machine parser
 
 ```javascript
 // Strict JSON — passes through to JSON.parse():
-bw.parseJSONFlex('{"type":"patch","target":"t","content":"42"}');
+bw.parseJSONFlex('{"type":"patch","ref":"t","text":"42"}');
 
 // r-prefix relaxed JSON (from ESP32 / C macros):
-bw.parseJSONFlex("r{'type':'patch','target':'t','content':'42'}");
+bw.parseJSONFlex("r{'type':'patch','ref':'t','text':'42'}");
 
 // Handles apostrophes in values:
-bw.parseJSONFlex("r{'content':'Barry\\'s Room'}");
-// → { content: "Barry's Room" }
+bw.parseJSONFlex("r{'text':'Barry\\'s Room'}");
+// → { text: "Barry's Room" }
 ```
 
 The shell connection calls `bw.parseJSONFlex()` on every incoming SSE message automatically. You only need to call it directly if you're building a custom transport or testing.
@@ -487,7 +489,7 @@ bwserve supports multiple transports:
 
 Each protocol message is sent as a single SSE data frame:
 ```
-data: {"type":"replace","target":"#app","node":{"t":"div","c":"Hello"}}
+data: {"v":1,"type":"mount","ref":"#app","taco":{"t":"div","c":"Hello"}}
 
 ```
 
@@ -518,10 +520,10 @@ For embedded C/C++ systems, composing JSON with double-quoted strings is painful
 
 ```
 // Standard JSON in C (painful):
-"{\"type\":\"patch\",\"target\":\"temp\",\"content\":\"23.5\"}"
+"{\"type\":\"patch\",\"ref\":\"temp\",\"text\":\"23.5\"}"
 
 // r-prefix relaxed JSON (natural):
-"r{'type':'patch','target':'temp','content':'23.5'}"
+"r{'type':'patch','ref':'temp','text':'23.5'}"
 ```
 
 The `r` prefix tells the parser to convert single quotes to double quotes before parsing. The browser's `bw.parseJSONFlex()` handles this automatically.
@@ -578,10 +580,10 @@ bwcli serve -v
 # Patch a value via curl:
 curl -X POST http://localhost:9000 \
   -H "Content-Type: application/json" \
-  -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+  -d '{"type":"patch","ref":"temp","text":"23.5 C"}'
 
 # r-prefix relaxed JSON is also accepted:
-curl -X POST http://localhost:9000 -d "r{'type':'patch','target':'temp','content':'23.5'}"
+curl -X POST http://localhost:9000 -d "r{'type':'patch','ref':'temp','text':'23.5'}"
 ```
 
 ### From Python
@@ -593,8 +595,8 @@ while True:
     temp = 20 + random.random() * 10
     requests.post("http://localhost:9000", json={
         "type": "patch",
-        "target": "temp",
-        "content": f"{temp:.1f} C"
+        "ref": "temp",
+        "text": f"{temp:.1f} C"
     })
     time.sleep(2)
 ```
@@ -603,7 +605,7 @@ Both the input port and stdin mode accept strict JSON and r-prefix relaxed JSON.
 
 ## Complete Examples
 
-### Counter (render + patch + actions)
+### Counter (mount + patch + actions)
 
 ```javascript
 import bwserve from 'bitwrench/bwserve';
@@ -612,7 +614,7 @@ var app = bwserve.create({ port: 7902 });
 var count = 0;
 
 app.page('/', function(client) {
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'h2', c: 'Counter' },
       { t: 'span', a: { id: 'count' }, c: '0' },
@@ -621,7 +623,7 @@ app.page('/', function(client) {
   });
 
   client.on('inc', function() {
-    client.patch('count', String(++count));
+    client.patch('count', { text: String(++count) });
   });
 });
 
@@ -634,7 +636,7 @@ app.listen();
 app.page('/', function(client) {
   var nextId = 1;
 
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'input', a: { type: 'text', id: 'inp' } },
       { t: 'button', a: { class: 'bw_act_add' }, c: 'Add' },
@@ -662,7 +664,7 @@ app.page('/', function(client) {
 
 ```javascript
 app.page('/', function(client) {
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'span', a: { id: 'users' }, c: '0' },
       { t: 'span', a: { id: 'orders' }, c: '0' },
@@ -676,9 +678,9 @@ app.page('/', function(client) {
     var users = Math.floor(Math.random() * 500);
     var orders = Math.floor(Math.random() * 50);
     client.batch([
-      { type: 'patch', target: 'users', content: String(users) },
-      { type: 'patch', target: 'orders', content: String(orders) },
-      { type: 'patch', target: 'revenue', content: '$' + Math.floor(Math.random() * 10000) }
+      { type: 'patch', ref: 'users', text: String(users) },
+      { type: 'patch', ref: 'orders', text: String(orders) },
+      { type: 'patch', ref: 'revenue', text: '$' + Math.floor(Math.random() * 10000) }
     ]);
   }, 1000);
 });
@@ -688,7 +690,7 @@ app.page('/', function(client) {
 
 ```javascript
 app.page('/', function(client) {
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'div', a: { id: 'chat', style: 'max-height:400px;overflow-y:auto' } },
       { t: 'div', a: { style: 'display:flex;gap:8px' }, c: [
@@ -783,7 +785,6 @@ Saved: page.png (1440x900, 245832 bytes)
 
 | Command | Description |
 |---------|-------------|
-| `<expression>` | Evaluate JS in the browser (e.g., `document.title`) |
 | `/tree [sel] [depth]` | DOM tree summary (default: body, depth 3) |
 | `/screenshot [sel] [file]` | Capture element to PNG (requires `--allow-screenshot`) |
 | `/mount <sel> <comp> [json]` | Mount a BCCL component |
@@ -791,19 +792,18 @@ Saved: page.png (1440x900, 245832 bytes)
 | `/patch <id> <content>` | Update element text by ID |
 | `/listen <sel> <event>` | Watch for DOM events |
 | `/unlisten <sel> <event>` | Stop watching events |
-| `/exec <code>` | Execute JS (fire-and-forget) |
 | `/clients` | List connected clients |
 | `/help`, `/quit` | Help / exit |
 
 ### Security
 
-Attach mode has `allowExec: true` always on — it's a debugging tool. The server binds to `localhost` by default. **Never expose to the public internet.**
+Attach mode is a debugging tool. The server binds to `localhost` by default. **Never expose to the public internet.**
 
 For the full attach guide, see [bwcli attach documentation](bw-attach.md).
 
 ## Related
 
-- [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 9 message types
+- [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 10 message types
 - [Sandbox](../pages/14-bwserve-sandbox.html) — Try bwserve protocol in the browser (no server needed)
 - [Screenshot Example](../examples/client-server/screenshot-server.js) — Runnable screenshot demo
 - [Design Document](../dev/bw-client-server.md) — Protocol design decisions and architecture

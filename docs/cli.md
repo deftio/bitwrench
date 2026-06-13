@@ -189,20 +189,20 @@ bwcli serve -v
 Your app sends bwserve protocol messages (JSON) to the input port. All connected browsers update in real time.
 
 ```bash
-# Patch a value:
+# Patch a value (v2.1 wire protocol — ref, discriminated fields, v:1 stamp):
 curl -X POST http://localhost:9000 \
   -H "Content-Type: application/json" \
-  -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+  -d '{"v":1,"type":"patch","ref":"temp","text":"23.5 C"}'
 
 # Batch update:
 curl -X POST http://localhost:9000 \
-  -d '{"type":"batch","ops":[
-    {"type":"patch","target":"temp","content":"23.5"},
-    {"type":"patch","target":"humidity","content":"67%"}
+  -d '{"v":1,"type":"batch","ops":[
+    {"v":1,"type":"patch","ref":"temp","text":"23.5"},
+    {"v":1,"type":"patch","ref":"humidity","text":"67%"}
   ]}'
 
 # r-prefix relaxed JSON is also accepted (for C/embedded):
-curl -X POST http://localhost:9000 -d "r{'type':'patch','target':'temp','content':'23.5'}"
+curl -X POST http://localhost:9000 -d "r{'v':1,'type':'patch','ref':'temp','text':'23.5'}"
 ```
 
 ### Options
@@ -232,7 +232,7 @@ Both strict JSON and r-prefix relaxed JSON are accepted on the input port. See [
 
 ## The `bwcli attach` subcommand — Remote Debugging REPL
 
-`bwcli attach` provides a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in `<script>` tag. Once connected, you get an interactive REPL for evaluating JS, inspecting the DOM, taking screenshots, and listening to events.
+`bwcli attach` provides a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in `<script>` tag. Once connected, you get an interactive REPL for inspecting the DOM, mounting components, taking screenshots, and listening to events.
 
 ### Usage
 
@@ -265,15 +265,13 @@ The drop-in script automatically loads bitwrench if it's not already on the page
 Once connected, you get a `bw>` prompt:
 
 ```
-bw> document.title                    # Evaluate JS expression
 bw> /tree #app 2                      # Show DOM tree
 bw> /screenshot body page.png         # Capture screenshot (requires --allow-screenshot)
 bw> /mount #app card {"title":"Hi"}   # Mount BCCL component
-bw> /render #app {"t":"h1","c":"Hi"}  # Render TACO
+bw> /render #app {"t":"h1","c":"Hi"}  # Render TACO at selector
 bw> /patch counter 42                 # Update element text
 bw> /listen button click              # Watch DOM events
 bw> /unlisten button click            # Stop watching
-bw> /exec alert('hello')             # Execute JS (fire-and-forget)
 bw> /clients                          # List connected clients
 bw> /help                             # Command reference
 bw> /quit                             # Exit
@@ -290,6 +288,8 @@ Options:
   -v, --verbose              Verbose output
   -h, --help                 Print help
 ```
+
+Bare JS evaluation and the `/exec` command were removed in v2.1. Non-slash input is no longer evaluated. Use the slash commands above for all interactions.
 
 For the complete guide, see [bwcli attach documentation](bw-attach.md).
 

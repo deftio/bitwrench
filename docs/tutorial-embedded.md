@@ -215,8 +215,8 @@ Create `data/index.html`:
 
     function applyOp(op) {
       if (op.type === 'patch') {
-        var el = document.getElementById(op.target);
-        if (el) el.textContent = op.content;
+        var el = document.getElementById(op.ref);
+        if (el && op.text != null) el.textContent = op.text;
       }
     }
 
@@ -274,7 +274,7 @@ serves `.gz` files transparently for the matching uncompressed filename.
 
 The C macros produce strings like:
 ```
-r{'type':'patch','target':'val-temp','content':'23.5 C'}
+r{'type':'patch','ref':'val-temp','text':'23.5 C','v':1}
 ```
 
 The `r` prefix tells the browser parser to convert single quotes to double quotes before `JSON.parse()`. This avoids escaping double quotes in C string literals — a major ergonomic win.
