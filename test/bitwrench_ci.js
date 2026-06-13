@@ -227,9 +227,9 @@ describe("CSS Functions", function() {
 });
 
 describe("Component Functions", function() {
-  describe("#renderComponent() deprecation", function() {
-    it("should throw Error for removed renderComponent", function() {
-      assert.throws(function() { bw.renderComponent(); }, /removed/i);
+  describe("#renderComponent() removal", function() {
+    it("should be undefined for removed renderComponent", function() {
+      assert.strictEqual(bw.renderComponent, undefined);
     });
   });
 });

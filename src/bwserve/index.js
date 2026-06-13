@@ -98,12 +98,11 @@ export function create(opts) {
  */
 class BwServeApp {
   constructor(opts) {
-    this.port = opts.port || 7902;
+    this.port = opts.port != null ? opts.port : 7902;
     this.title = opts.title || 'bwserve';
     this.staticDir = opts.static || null;
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
-    this.allowExec = opts.allowExec || false;
     this.allowScreenshot = opts.allowScreenshot || false;
     this.dirList = opts.dirList !== false;
     this.host = opts.host || '127.0.0.1';
@@ -333,8 +332,7 @@ class BwServeApp {
         clientId: clientId2,
         title: this.title,
         theme: this.theme,
-        injectBitwrench: this.injectBitwrench,
-        allowExec: this.allowExec
+        injectBitwrench: this.injectBitwrench
       });
       // Store the page path for this client so SSE knows which handler to call
       this._clients.set(clientId2, { pagePath: path, client: null });
@@ -429,8 +427,8 @@ class BwServeApp {
    *
    * Routes:
    *   action     — fire-and-forget action dispatch (no requestId)
-   *   query      — resolve pending query promise
-   *   mount      — resolve pending mount promise
+   *   event      — event dispatch from client listeners
+   *   topic      — topic dispatch from client pub/sub
    *   screenshot — resolve pending screenshot promise
    *
    * @private

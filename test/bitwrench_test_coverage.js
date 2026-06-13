@@ -1939,11 +1939,11 @@ describe("bw.render error path", function() {
 });
 
 // =========================================================================
-// renderComponent handle methods (addChild, getChild, setState, onPropChange)
+// renderComponent removed in v2.1
 // =========================================================================
-describe("renderComponent deprecation", function() {
-  it("bw.renderComponent() throws Error", function() {
-    assert.throws(function() { bw.renderComponent(); }, /removed/i);
+describe("renderComponent removal", function() {
+  it("bw.renderComponent is undefined", function() {
+    assert.strictEqual(bw.renderComponent, undefined, "bw.renderComponent should be undefined after v2.1 removal");
   });
 });
 

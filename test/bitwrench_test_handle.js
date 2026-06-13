@@ -307,32 +307,32 @@ describe("bw.inspect()", function() {
 // =========================================================================
 
 describe("deprecation stubs", function() {
-  it("bw.component() throws Error", function() {
-    assert.throws(function() { bw.component(); }, /removed/i);
+  it("bw.component is undefined", function() {
+    assert.strictEqual(bw.component, undefined, "bw.component removed in v2.1");
   });
 
-  it("bw.renderComponent() throws Error", function() {
-    assert.throws(function() { bw.renderComponent(); }, /removed/i);
+  it("bw.renderComponent is undefined", function() {
+    assert.strictEqual(bw.renderComponent, undefined, "bw.renderComponent removed in v2.1");
   });
 
   it("bw.compile() throws Error", function() {
     assert.throws(function() { bw.compile(); }, /removed/i);
   });
 
-  it("bw.when() throws Error", function() {
-    assert.throws(function() { bw.when(); }, /removed/i);
+  it("bw.when is undefined", function() {
+    assert.strictEqual(bw.when, undefined, "bw.when removed in v2.1");
   });
 
-  it("bw.each() throws Error", function() {
-    assert.throws(function() { bw.each(); }, /removed/i);
+  it("bw.each is undefined", function() {
+    assert.strictEqual(bw.each, undefined, "bw.each removed in v2.1");
   });
 
-  it("bw.compileProps() throws Error", function() {
-    assert.throws(function() { bw.compileProps(); }, /removed/i);
+  it("bw.compileProps is undefined", function() {
+    assert.strictEqual(bw.compileProps, undefined, "bw.compileProps removed in v2.1");
   });
 
-  it("bw.flush() does NOT throw (no-op)", function() {
-    assert.doesNotThrow(function() { bw.flush(); });
+  it("bw.flush is undefined", function() {
+    assert.strictEqual(bw.flush, undefined, "bw.flush removed in v2.1");
   });
 });
 

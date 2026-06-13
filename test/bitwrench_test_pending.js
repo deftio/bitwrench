@@ -36,7 +36,7 @@ describe.skip("PENDING: Cookie Operations in jsdom", function() {
 
 describe.skip("PENDING: Component Registry Auto-registration", function() {
   /**
-   * REASON: renderComponent has been removed (throws). Use bw.render() or bw.mount() instead.
+   * REASON: renderComponent has been removed (undefined in v2.1). Use bw.render() or bw.mount() instead.
    * FIX NEEDED: Decide if auto-registration should happen on creation
    * PRIORITY: Medium - affects component lifecycle management
    */

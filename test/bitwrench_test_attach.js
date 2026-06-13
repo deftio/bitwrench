@@ -8,7 +8,7 @@
  * - _bw_listen/_bw_unlisten builtins — event delegation
  * - event route in _handleReturn — dispatch to _bw_event
  * - CORS preflight on /bw/return/
- * - wrapExpression() — REPL expression wrapping
+ * - REPL command handling (bare JS eval removed in v2.1)
  */
 
 import assert from "assert";
@@ -19,7 +19,7 @@ const { JSDOM } = jsdom;
 import bwserve from "../src/bwserve/index.js";
 const { BwServeApp, BwServeClient } = bwserve;
 import { generateAttachScript } from "../src/bwserve/attach.js";
-import { wrapExpression, printTree, printHelp, handleSlashCommand, startAttach, runAttach } from "../src/cli/attach.js";
+import { printTree, printHelp, handleSlashCommand, startAttach, runAttach } from "../src/cli/attach.js";
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 
@@ -92,9 +92,9 @@ describe("generateAttachScript()", function() {
     assert.ok(js.includes('window.bw'), 'should check for existing bw');
   });
 
-  it("should set allowExec to true", function() {
+  it("should not include allowExec (removed in v2.1)", function() {
     var js = generateAttachScript();
-    assert.ok(js.includes('allowExec: true'), 'should enable allowExec');
+    assert.ok(!js.includes('allowExec'), 'should not contain allowExec');
   });
 });
 
@@ -337,83 +337,7 @@ describe("_bw_tree builtin", function() {
   });
 });
 
-// ===================================================================================
-// wrapExpression() tests
-// ===================================================================================
-
-describe("wrapExpression()", function() {
-  it("should wrap simple expression in return()", function() {
-    assert.strictEqual(wrapExpression('document.title'), 'return (document.title)');
-  });
-
-  it("should wrap property access", function() {
-    assert.strictEqual(wrapExpression('window.innerWidth'), 'return (window.innerWidth)');
-  });
-
-  it("should wrap function call", function() {
-    assert.strictEqual(wrapExpression('bw.$(".card").length'), 'return (bw.$(".card").length)');
-  });
-
-  it("should wrap number literal", function() {
-    assert.strictEqual(wrapExpression('42'), 'return (42)');
-  });
-
-  it("should wrap string literal", function() {
-    assert.strictEqual(wrapExpression('"hello"'), 'return ("hello")');
-  });
-
-  it("should NOT wrap var declarations", function() {
-    assert.strictEqual(wrapExpression('var x = 5'), 'var x = 5');
-  });
-
-  it("should NOT wrap let declarations", function() {
-    assert.strictEqual(wrapExpression('let x = 5'), 'let x = 5');
-  });
-
-  it("should NOT wrap const declarations", function() {
-    assert.strictEqual(wrapExpression('const x = 5'), 'const x = 5');
-  });
-
-  it("should NOT wrap if statements", function() {
-    assert.strictEqual(wrapExpression('if (true) { alert(1); }'), 'if (true) { alert(1); }');
-  });
-
-  it("should NOT wrap for loops", function() {
-    assert.strictEqual(wrapExpression('for (var i=0; i<10; i++) {}'), 'for (var i=0; i<10; i++) {}');
-  });
-
-  it("should NOT wrap while loops", function() {
-    assert.strictEqual(wrapExpression('while (false) {}'), 'while (false) {}');
-  });
-
-  it("should NOT wrap function declarations", function() {
-    assert.strictEqual(wrapExpression('function foo() {}'), 'function foo() {}');
-  });
-
-  it("should NOT wrap try statements", function() {
-    assert.strictEqual(wrapExpression('try { x(); } catch(e) {}'), 'try { x(); } catch(e) {}');
-  });
-
-  it("should NOT wrap switch statements", function() {
-    assert.strictEqual(wrapExpression('switch (x) { case 1: break; }'), 'switch (x) { case 1: break; }');
-  });
-
-  it("should NOT wrap throw statements", function() {
-    assert.strictEqual(wrapExpression('throw new Error("test")'), 'throw new Error("test")');
-  });
-
-  it("should NOT wrap class declarations", function() {
-    assert.strictEqual(wrapExpression('class Foo {}'), 'class Foo {}');
-  });
-
-  it("should NOT wrap object literals starting with {", function() {
-    assert.strictEqual(wrapExpression('{ a: 1 }'), '{ a: 1 }');
-  });
-
-  it("should trim whitespace", function() {
-    assert.strictEqual(wrapExpression('  document.title  '), 'return (document.title)');
-  });
-});
+// wrapExpression() tests removed — function removed in v2.1 security migration
 
 // ===================================================================================
 // BwServeClient _bw_tree via client.call
@@ -602,7 +526,7 @@ describe("printHelp()", function() {
     assert.ok(text.includes('/patch'), 'should mention /patch');
     assert.ok(text.includes('/listen'), 'should mention /listen');
     assert.ok(text.includes('/unlisten'), 'should mention /unlisten');
-    assert.ok(text.includes('/exec'), 'should mention /exec');
+    assert.ok(!text.includes('/exec'), 'should NOT mention /exec (removed in v2.1)');
     assert.ok(text.includes('/clients'), 'should mention /clients');
   });
 });
@@ -755,15 +679,11 @@ describe("handleSlashCommand()", function() {
     assert.ok(logged.some(function(l) { return l.includes('Usage'); }));
   });
 
-  it("/exec with no client shows message", function() {
-    handleSlashCommand('/exec', null, new Map(), {}, mockRl);
-    assert.ok(logged.some(function(l) { return l.includes('No client'); }));
-  });
+  // /exec tests removed — command removed in v2.1 security migration
 
-  it("/exec with too few args shows usage", function() {
-    var mockClient = {};
-    handleSlashCommand('/exec', mockClient, new Map(), {}, mockRl);
-    assert.ok(logged.some(function(l) { return l.includes('Usage'); }));
+  it("/exec is now an unknown command", function() {
+    handleSlashCommand('/exec alert("hi")', null, new Map(), {}, mockRl);
+    assert.ok(logged.some(function(l) { return l.includes('Unknown command'); }));
   });
 
   it("unknown command shows error", function() {
@@ -864,31 +784,17 @@ describe("handleSlashCommand()", function() {
     }, 50);
   });
 
-  it("/mount with valid args calls client.mount", function(done) {
+  it("/mount with valid args calls client.call('_bw_mount', ...)", function() {
+    var callArgs = null;
     var mockClient = {
-      mount: function(sel, comp, props, opts) {
-        assert.strictEqual(sel, '#app');
-        assert.strictEqual(comp, 'card');
-        assert.deepStrictEqual(props, { title: 'Hi' });
-        return Promise.resolve();
-      }
+      call: function(name, args) { callArgs = { name: name, args: args }; }
     };
     handleSlashCommand('/mount #app card {"title":"Hi"}', mockClient, new Map(), {}, mockRl);
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('Mounted'); }));
-      done();
-    }, 50);
-  });
-
-  it("/mount handles rejection", function(done) {
-    var mockClient = {
-      mount: function() { return Promise.reject(new Error('mount failed')); }
-    };
-    handleSlashCommand('/mount #app card', mockClient, new Map(), {}, mockRl);
-    setTimeout(function() {
-      assert.ok(errors.some(function(l) { return l.includes('mount failed'); }));
-      done();
-    }, 50);
+    assert.strictEqual(callArgs.name, '_bw_mount');
+    assert.strictEqual(callArgs.args.target, '#app');
+    assert.strictEqual(callArgs.args.factory, 'card');
+    assert.deepStrictEqual(callArgs.args.props, { title: 'Hi' });
+    assert.ok(logged.some(function(l) { return l.includes('Mounted'); }));
   });
 
   it("/mount with invalid JSON shows error", function() {
@@ -953,15 +859,7 @@ describe("handleSlashCommand()", function() {
     assert.ok(logged.some(function(l) { return l.includes('Stopped listening'); }));
   });
 
-  it("/exec calls client.exec", function() {
-    var execCode = null;
-    var mockClient = {
-      exec: function(code) { execCode = code; }
-    };
-    handleSlashCommand('/exec alert("hi")', mockClient, new Map(), {}, mockRl);
-    assert.strictEqual(execCode, 'alert("hi")');
-    assert.ok(logged.some(function(l) { return l.includes('Executed'); }));
-  });
+  // "/exec calls client.exec" test removed — /exec removed in v2.1
 
   it("/screenshot generates default filename when not specified", function(done) {
     var ssSel = null;
@@ -1236,11 +1134,11 @@ describe("startAttach()", function() {
     }, 50);
   });
 
-  it("should show 'No client connected' for JS expression with no client", function(done) {
+  it("should show 'Unknown input' for bare JS expression (eval removed in v2.1)", function(done) {
     var inst = makeInstance();
     inst.fakeInput.write('document.title\n');
     setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('No client connected'); }));
+      assert.ok(logged.some(function(l) { return l.includes('Unknown input'); }));
       done();
     }, 50);
   });
@@ -1369,102 +1267,22 @@ describe("startAttach()", function() {
     assert.ok(logged.some(function(l) { return l.includes('[active]'); }));
   });
 
-  it("should handle JS query with connected client", function(done) {
-    var inst = makeInstance({ verbose: false });
+  // JS query tests removed — bare JS eval removed in v2.1 security migration
+  // client.query() no longer exists; bare input shows "Unknown input" message
+
+  it("should show 'Unknown input' for bare JS with connected client (v2.1)", function(done) {
+    var inst = makeInstance();
     var app = inst.mockBwserve._app;
 
-    // Set up a mock client with query method
     var mockClient = new EventEmitter();
     mockClient.id = 'att_q1';
-    mockClient.query = function(code, opts) {
-      return Promise.resolve('test-title');
-    };
     app._clients.set('att_q1', { pagePath: '/_attach', client: mockClient });
     var mockReq = new EventEmitter();
     app._handleSSE(mockReq, {}, 'att_q1');
 
-    // Send a JS expression
     inst.fakeInput.write('document.title\n');
     setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l === 'test-title'; }));
-      done();
-    }, 100);
-  });
-
-  it("should handle JS query that returns object", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_q2';
-    mockClient.query = function() {
-      return Promise.resolve({ foo: 'bar' });
-    };
-    app._clients.set('att_q2', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_q2');
-
-    inst.fakeInput.write('someObj\n');
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('"foo"'); }));
-      done();
-    }, 100);
-  });
-
-  it("should handle JS query that returns null", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_q3';
-    mockClient.query = function() {
-      return Promise.resolve(null);
-    };
-    app._clients.set('att_q3', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_q3');
-
-    inst.fakeInput.write('null\n');
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l === 'undefined'; }));
-      done();
-    }, 100);
-  });
-
-  it("should handle JS query rejection", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_q4';
-    mockClient.query = function() {
-      return Promise.reject(new Error('eval failed'));
-    };
-    app._clients.set('att_q4', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_q4');
-
-    inst.fakeInput.write('badcode\n');
-    setTimeout(function() {
-      assert.ok(errors.some(function(l) { return l.includes('eval failed'); }));
-      done();
-    }, 100);
-  });
-
-  it("should show verbose query info when verbose is true", function(done) {
-    var inst = makeInstance({ verbose: true });
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_v1';
-    mockClient.query = function() { return Promise.resolve('ok'); };
-    app._clients.set('att_v1', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_v1');
-
-    inst.fakeInput.write('1+1\n');
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('[query]'); }));
+      assert.ok(logged.some(function(l) { return l.includes('Unknown input'); }));
       done();
     }, 100);
   });
@@ -1478,26 +1296,7 @@ describe("startAttach()", function() {
     }, 50);
   });
 
-  it("should handle query result that throws on JSON.stringify", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_circ';
-    var circular = {};
-    circular.self = circular;
-    mockClient.query = function() { return Promise.resolve(circular); };
-    app._clients.set('att_circ', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_circ');
-
-    inst.fakeInput.write('circularObj\n');
-    setTimeout(function() {
-      // Should fall back to String(result)
-      assert.ok(logged.some(function(l) { return l.includes('[object Object]'); }));
-      done();
-    }, 100);
-  });
+  // "handle query result that throws on JSON.stringify" test removed — query removed in v2.1
 });
 
 // ===================================================================================
@@ -1563,18 +1362,7 @@ describe("runAttach() --allow-screenshot flag", function() {
 // ===================================================================================
 
 describe("attach malformed inputs", function() {
-  it("wrapExpression with empty string", function() {
-    var result = wrapExpression('');
-    assert.strictEqual(typeof result, 'string');
-  });
-
-  it("wrapExpression with null-ish input should throw", function() {
-    assert.throws(function() { wrapExpression(null); });
-  });
-
-  it("wrapExpression with numeric input should throw", function() {
-    assert.throws(function() { wrapExpression(42); });
-  });
+  // wrapExpression tests removed — function removed in v2.1 security migration
 
   it("printTree with null node", function() {
     var origLog = console.log;

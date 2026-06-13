@@ -146,14 +146,11 @@ describe("serve handleCommand()", function() {
         var client = Object.assign({
             id: id,
             _closed: false,
-            query: function(code, opts) { return Promise.resolve('mock-result'); },
             screenshot: function(sel, opts) { return Promise.resolve({ data: Buffer.from('png'), width: 100, height: 50, format: 'png' }); },
             _pend: function(timeout) { return { requestId: 'req_1', promise: Promise.resolve({ tag: 'body' }) }; },
             call: function(name) {},
-            exec: function(code) {},
             render: function(sel, taco) {},
             patch: function(id, content, attr) {},
-            mount: function(sel, factory, props, opts) { return Promise.resolve({ mounted: true }); },
             _allowScreenshot: true
         }, overrides || {});
         return client;
@@ -194,12 +191,7 @@ describe("serve handleCommand()", function() {
     });
 
     // -- missing required fields --
-    it("query without code returns missing field error", async function() {
-        var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'query' }, app, false);
-        assert.ok(result.error.includes('Missing required field'));
-        assert.ok(result.error.includes('code'));
-    });
+    // query, mount, exec commands removed in v2.1 security migration
 
     it("render without selector returns missing field error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
@@ -213,24 +205,6 @@ describe("serve handleCommand()", function() {
         var result = await handleCommand({ command: 'render', selector: '#app' }, app, false);
         assert.ok(result.error.includes('Missing required field'));
         assert.ok(result.error.includes('taco'));
-    });
-
-    it("mount without selector returns missing field error", async function() {
-        var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'mount', factory: 'card' }, app, false);
-        assert.ok(result.error.includes('selector'));
-    });
-
-    it("mount without factory returns missing field error", async function() {
-        var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'mount', selector: '#app' }, app, false);
-        assert.ok(result.error.includes('factory'));
-    });
-
-    it("exec without code returns missing field error", async function() {
-        var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'exec' }, app, false);
-        assert.ok(result.error.includes('code'));
     });
 
     it("patch without id returns missing field error", async function() {
@@ -264,16 +238,16 @@ describe("serve handleCommand()", function() {
     });
 
     // -- no clients connected --
-    it("query with no clients returns error", async function() {
+    it("render with no clients returns error", async function() {
         var app = makeMockApp();
-        var result = await handleCommand({ command: 'query', code: '1+1' }, app, false);
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, false);
         assert.ok(result.error.includes('No clients connected'));
     });
 
     // -- client not found --
     it("clientId targeting non-existent client returns error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'query', code: '1+1', clientId: 'c99' }, app, false);
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' }, clientId: 'c99' }, app, false);
         assert.ok(result.error.includes('Client not found'));
         assert.ok(result.error.includes('c99'));
     });
@@ -281,79 +255,49 @@ describe("serve handleCommand()", function() {
     it("clientId targeting entry with null client returns error", async function() {
         var app = { _clients: new Map() };
         app._clients.set('c1', { client: null });
-        var result = await handleCommand({ command: 'query', code: '1+1', clientId: 'c1' }, app, false);
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' }, clientId: 'c1' }, app, false);
         assert.ok(result.error.includes('Client not found'));
     });
 
     // -- first-available client fallback --
     it("uses first available client when clientId not specified", async function() {
-        var queriedCode = null;
+        var rendered = null;
         var c1 = makeMockClient('c1', {
-            query: function(code) { queriedCode = code; return Promise.resolve('result-1'); }
+            render: function(sel, taco) { rendered = { sel: sel, taco: taco }; }
         });
         var app = makeMockApp({ c1: c1 });
-        var result = await handleCommand({ command: 'query', code: 'document.title' }, app, false);
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div', c: 'Hello' } }, app, false);
         assert.strictEqual(result.ok, true);
-        assert.strictEqual(queriedCode, 'document.title');
+        assert.strictEqual(rendered.sel, '#app');
         assert.strictEqual(result.clientId, 'c1');
     });
 
     it("skips closed clients when picking first available", async function() {
         var closedClient = makeMockClient('c1', { _closed: true });
         var activeClient = makeMockClient('c2', {
-            query: function(code) { return Promise.resolve('from-c2'); }
+            render: function(sel, taco) {}
         });
         var app = { _clients: new Map() };
         app._clients.set('c1', { client: closedClient });
         app._clients.set('c2', { client: activeClient });
-        var result = await handleCommand({ command: 'query', code: '1' }, app, false);
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, false);
         assert.strictEqual(result.clientId, 'c2');
     });
 
     // -- clientId targeting --
     it("targets specific client via clientId", async function() {
-        var c1Code = null;
-        var c2Code = null;
-        var c1 = makeMockClient('c1', { query: function(code) { c1Code = code; return Promise.resolve('r1'); } });
-        var c2 = makeMockClient('c2', { query: function(code) { c2Code = code; return Promise.resolve('r2'); } });
+        var c1Rendered = false;
+        var c2Rendered = false;
+        var c1 = makeMockClient('c1', { render: function() { c1Rendered = true; } });
+        var c2 = makeMockClient('c2', { render: function() { c2Rendered = true; } });
         var app = makeMockApp({ c1: c1, c2: c2 });
-        var result = await handleCommand({ command: 'query', code: 'test', clientId: 'c2' }, app, false);
-        assert.strictEqual(c1Code, null);
-        assert.strictEqual(c2Code, 'test');
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' }, clientId: 'c2' }, app, false);
+        assert.strictEqual(c1Rendered, false);
+        assert.strictEqual(c2Rendered, true);
         assert.strictEqual(result.clientId, 'c2');
     });
 
-    // -- query command --
-    it("query returns result from client", async function() {
-        var c = makeMockClient('c1', {
-            query: function(code, opts) { return Promise.resolve('My Title'); }
-        });
-        var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'query', code: 'document.title' }, app, false);
-        assert.strictEqual(result.ok, true);
-        assert.strictEqual(result.result, 'My Title');
-        assert.strictEqual(result.clientId, 'c1');
-    });
-
-    it("query passes timeout to client", async function() {
-        var passedTimeout = null;
-        var c = makeMockClient('c1', {
-            query: function(code, opts) { passedTimeout = opts.timeout; return Promise.resolve('ok'); }
-        });
-        var app = makeMockApp({ c1: c });
-        await handleCommand({ command: 'query', code: '1', timeout: 3000 }, app, false);
-        assert.strictEqual(passedTimeout, 3000);
-    });
-
-    it("query uses default timeout", async function() {
-        var passedTimeout = null;
-        var c = makeMockClient('c1', {
-            query: function(code, opts) { passedTimeout = opts.timeout; return Promise.resolve('ok'); }
-        });
-        var app = makeMockApp({ c1: c });
-        await handleCommand({ command: 'query', code: '1' }, app, false);
-        assert.strictEqual(passedTimeout, 5000);
-    });
+    // -- query, exec, mount commands removed in v2.1 security migration --
 
     // -- screenshot command --
     it("screenshot returns base64 result", async function() {
@@ -423,48 +367,7 @@ describe("serve handleCommand()", function() {
         assert.strictEqual(callArgs.args.depth, 5);
     });
 
-    // -- mount command --
-    it("mount calls client.mount with correct args", async function() {
-        var mountArgs = null;
-        var c = makeMockClient('c1', {
-            mount: function(sel, factory, props, opts) {
-                mountArgs = { sel: sel, factory: factory, props: props };
-                return Promise.resolve({ mounted: true });
-            }
-        });
-        var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'mount', selector: '#app', factory: 'card', props: { title: 'Hi' } }, app, false);
-        assert.strictEqual(result.ok, true);
-        assert.strictEqual(mountArgs.sel, '#app');
-        assert.strictEqual(mountArgs.factory, 'card');
-        assert.deepStrictEqual(mountArgs.props, { title: 'Hi' });
-    });
-
-    it("mount uses empty props when not specified", async function() {
-        var mountArgs = null;
-        var c = makeMockClient('c1', {
-            mount: function(sel, factory, props, opts) {
-                mountArgs = { props: props };
-                return Promise.resolve({});
-            }
-        });
-        var app = makeMockApp({ c1: c });
-        await handleCommand({ command: 'mount', selector: '#app', factory: 'card' }, app, false);
-        assert.deepStrictEqual(mountArgs.props, {});
-    });
-
-    // -- exec command --
-    it("exec calls client.exec", async function() {
-        var execCode = null;
-        var c = makeMockClient('c1', {
-            exec: function(code) { execCode = code; }
-        });
-        var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'exec', code: 'alert("hi")' }, app, false);
-        assert.strictEqual(result.ok, true);
-        assert.strictEqual(execCode, 'alert("hi")');
-        assert.strictEqual(result.clientId, 'c1');
-    });
+    // -- mount, exec commands removed in v2.1 security migration --
 
     // -- render command --
     it("render calls client.render", async function() {
@@ -539,8 +442,8 @@ describe("serve handleCommand()", function() {
         try {
             var c = makeMockClient('c1');
             var app = makeMockApp({ c1: c });
-            await handleCommand({ command: 'query', code: '1' }, app, true);
-            assert.ok(errors.some(function(l) { return l.includes('[command]') && l.includes('query'); }));
+            await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, true);
+            assert.ok(errors.some(function(l) { return l.includes('[command]') && l.includes('render'); }));
         } finally {
             console.error = origError;
         }
@@ -568,24 +471,14 @@ describe("serve handleCommand()", function() {
         assert.strictEqual(passedTimeout, 7000);
     });
 
-    it("mount passes custom timeout", async function() {
-        var passedTimeout = null;
-        var c = makeMockClient('c1', {
-            mount: function(sel, factory, props, opts) { passedTimeout = opts.timeout; return Promise.resolve({}); }
-        });
-        var app = makeMockApp({ c1: c });
-        await handleCommand({ command: 'mount', selector: '#a', factory: 'b', timeout: 2000 }, app, false);
-        assert.strictEqual(passedTimeout, 2000);
-    });
-
     // -- error from client method --
     it("handles client method throwing", async function() {
         var c = makeMockClient('c1', {
-            exec: function() { throw new Error('exec boom'); }
+            render: function() { throw new Error('render boom'); }
         });
         var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'exec', code: 'bad' }, app, false);
-        assert.ok(result.error.includes('exec boom'));
+        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, false);
+        assert.ok(result.error.includes('render boom'));
     });
 });
 
@@ -778,7 +671,6 @@ describe("serve startServer()", function() {
             title: 'test',
             verbose: false,
             open: false,
-            allowExec: false
         });
         setTimeout(function() {
             assert.ok(errors.some(function(l) { return l.includes('bwcli serve'); }));
@@ -800,7 +692,6 @@ describe("serve startServer()", function() {
             title: 'test',
             verbose: false,
             open: false,
-            allowExec: false
         });
         setTimeout(function() {
             assert.ok(errors.some(function(l) { return l.includes('Theme') && l.includes('ocean'); }));
@@ -819,7 +710,6 @@ describe("serve startServer()", function() {
             title: 'test',
             verbose: false,
             open: false,
-            allowExec: false
         });
         setTimeout(function() {
             assert.ok(errors.some(function(l) { return l.includes('stdin'); }));
@@ -838,7 +728,6 @@ describe("serve startServer()", function() {
             title: 'test',
             verbose: true,
             open: false,
-            allowExec: false
         });
         setTimeout(function() {
             var app = bwserve._app;
@@ -866,7 +755,6 @@ describe("serve startServer()", function() {
             title: 'test',
             verbose: false,
             open: false,
-            allowExec: false
         });
         setTimeout(function() {
             var app = bwserve._app;
@@ -926,13 +814,10 @@ describe("serve startInputServer()", function() {
         return Object.assign({
             id: id,
             _closed: false,
-            query: function(code, opts) { return Promise.resolve('mock'); },
-            exec: function(code) {},
             render: function(sel, taco) {},
             patch: function(id, content, attr) {},
             call: function(name) {},
             _pend: function(timeout) { return { requestId: 'r1', promise: Promise.resolve(null) }; },
-            mount: function() { return Promise.resolve({}); },
             screenshot: function() { return Promise.resolve({ data: Buffer.from(''), width: 1, height: 1, format: 'png' }); },
             _allowScreenshot: true
         }, overrides || {});
@@ -1019,14 +904,13 @@ describe("serve startInputServer()", function() {
 
     it("interactive command path: routes command and returns result", async function() {
         var c = makeMockClient('c1', {
-            query: function(code) { return Promise.resolve('Hello'); }
+            render: function(sel, taco) {}
         });
         var app = makeMockApp({ c1: c });
-        var res = await fakeRequest(app, false, 'POST', '{"command":"query","code":"document.title"}');
+        var res = await fakeRequest(app, false, 'POST', '{"command":"render","selector":"#app","taco":{"t":"div","c":"Hello"}}');
         assert.strictEqual(res._status, 200);
         var body = JSON.parse(res._body);
         assert.strictEqual(body.ok, true);
-        assert.strictEqual(body.result, 'Hello');
         assert.strictEqual(body.clientId, 'c1');
     });
 
@@ -1048,7 +932,7 @@ describe("serve startInputServer()", function() {
 
     it("command error path returns 400 (result.error branch)", async function() {
         var app = makeMockApp();
-        var res = await fakeRequest(app, false, 'POST', '{"command":"query","code":"1+1"}');
+        var res = await fakeRequest(app, false, 'POST', '{"command":"render","selector":"#app","taco":{"t":"div"}}');
         assert.strictEqual(res._status, 400);
         assert.ok(JSON.parse(res._body).error.includes('No clients connected'));
     });
@@ -1346,14 +1230,14 @@ describe("serve startInputServer() real server", function() {
         var mockClient = {
             id: 'ic1',
             _closed: false,
-            query: function() { return Promise.resolve('result-value'); },
+            render: function() {},
             _pend: function() { return { requestId: 'r1', promise: Promise.resolve(null) }; }
         };
         app._clients.set('ic1', { client: mockClient });
 
         server = await startInputServer(app, 0, false);
         var port = server.address().port;
-        var res = await postToServer(port, '{"command":"query","code":"1+1"}');
+        var res = await postToServer(port, '{"command":"render","selector":"#app","taco":{"t":"div"}}');
         assert.strictEqual(res.status, 200);
         var parsed = JSON.parse(res.body);
         assert.strictEqual(parsed.ok, true);
@@ -1373,14 +1257,14 @@ describe("serve startInputServer() real server", function() {
         var rejectClient = {
             id: 'rej1',
             _closed: false,
-            query: function() { return Promise.reject(new Error('boom')); },
+            screenshot: function() { return Promise.reject(new Error('boom')); },
             _pend: function() { return { requestId: 'r1', promise: Promise.reject(new Error('boom')) }; }
         };
         app._clients.set('rej1', { client: rejectClient });
 
         server = await startInputServer(app, 0, false);
         var port = server.address().port;
-        var res = await postToServer(port, '{"command":"query","code":"bad()"}');
+        var res = await postToServer(port, '{"command":"screenshot"}');
         assert.strictEqual(res.status, 400);
         var parsed = JSON.parse(res.body);
         assert.ok(parsed.error);
@@ -1391,14 +1275,14 @@ describe("serve startInputServer() real server", function() {
         var rejectClient = {
             id: 'rej2',
             _closed: false,
-            query: function() { return Promise.reject(new Error('verbose-error')); },
+            screenshot: function() { return Promise.reject(new Error('verbose-error')); },
             _pend: function() { return { requestId: 'r1', promise: Promise.reject(new Error('verbose-error')) }; }
         };
         app._clients.set('rej2', { client: rejectClient });
 
         server = await startInputServer(app, 0, true);
         var port = server.address().port;
-        var res = await postToServer(port, '{"command":"query","code":"bad()"}');
+        var res = await postToServer(port, '{"command":"screenshot"}');
         assert.strictEqual(res.status, 400);
         assert.ok(errors.some(function(l) { return l.indexOf('[command]') >= 0; }));
     });
@@ -1497,7 +1381,6 @@ describe("serve startServer() useStdin=false path", function() {
             title: 'test-theme',
             verbose: false,
             open: false,
-            allowExec: true
         });
 
         setTimeout(function() {
@@ -1558,7 +1441,6 @@ describe("serve startServer() useStdin=false with real input server", function()
             title: 'test-no-stdin',
             verbose: false,
             open: false,
-            allowExec: false
         });
 
         setTimeout(function() {
@@ -1619,7 +1501,6 @@ describe("serve startServer() open flag", function() {
             title: 'test-open',
             verbose: false,
             open: true, // THIS exercises lines 400-405
-            allowExec: false
         });
 
         // The open flag triggers a dynamic import('node:child_process') which runs async
@@ -1780,8 +1661,7 @@ describe("handleCommand — screenshot data conversion", function() {
                     height: 600,
                     format: 'png'
                 });
-            },
-            query: function() { return Promise.resolve('ok'); }
+            }
         };
         mockApp._clients.set('c1', { client: fakeClient });
         return handleCommand({ command: 'screenshot' }, mockApp, false).then(function(result) {
@@ -1881,7 +1761,6 @@ describe("handleCommand — screenshot with null result.data (line 236)", functi
                     format: 'png'
                 });
             },
-            query: function() { return Promise.resolve('ok'); },
             _pend: function() { return { requestId: 'r1', promise: Promise.resolve({}) }; }
         };
         mockApp._clients.set('c1', { client: fakeClient });
@@ -1904,7 +1783,6 @@ describe("handleCommand — screenshot with null result.data (line 236)", functi
                     format: 'png'
                 });
             },
-            query: function() { return Promise.resolve('ok'); },
             _pend: function() { return { requestId: 'r1', promise: Promise.resolve({}) }; }
         };
         mockApp._clients.set('c1', { client: fakeClient });
@@ -2022,7 +1900,6 @@ describe("startServer — bind address branch (line 394)", function() {
             title: 'test',
             verbose: false,
             open: false,
-            allowExec: false
         });
 
         setTimeout(function() {
@@ -2088,7 +1965,6 @@ describe("startServer — dirList=false via startServer (line 398)", function() 
             dirList: false,
             verbose: false,
             open: false,
-            allowExec: false
         });
 
         setTimeout(function() {
@@ -2178,7 +2054,7 @@ describe("_createInputServer — handleCommand catch path (lines 483, 488)", fun
         // We need a client whose method rejects with a non-Error value
         var fakeClient = {
             _closed: false,
-            query: function() { return Promise.reject('string-rejection'); },
+            screenshot: function() { return Promise.reject('string-rejection'); },
             _pend: function() { return { requestId: 'r1', promise: Promise.reject('str') }; }
         };
         app._clients.set('c1', { client: fakeClient });
@@ -2186,9 +2062,9 @@ describe("_createInputServer — handleCommand catch path (lines 483, 488)", fun
         server = await startInputServer(app, 0, true);
         var port = server.address().port;
 
-        // Send a query command that will trigger the rejection
+        // Send a screenshot command that will trigger the rejection
         var res = await new Promise(function(resolve, reject) {
-            var postData = '{"command":"query","code":"bad()"}';
+            var postData = '{"command":"screenshot"}';
             var req = http.request({
                 hostname: '127.0.0.1',
                 port: port,
@@ -2264,7 +2140,6 @@ describe("startServer — open flag platform cmd (line 415)", function() {
             title: 'test-open-cmd',
             verbose: false,
             open: true, // exercises the open block including platform-specific cmd
-            allowExec: false
         });
 
         setTimeout(function() {
@@ -2330,7 +2205,6 @@ describe("startServer — open flag platform branches (line 415)", function() {
             title: 'test-win32',
             verbose: false,
             open: true,
-            allowExec: false
         });
 
         setTimeout(function() {
@@ -2362,7 +2236,6 @@ describe("startServer — open flag platform branches (line 415)", function() {
             title: 'test-linux',
             verbose: false,
             open: true,
-            allowExec: false
         });
 
         setTimeout(function() {

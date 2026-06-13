@@ -103,7 +103,7 @@ describe('MCP Server - handleMessage', function() {
       var names = resp.result.tools.map(function(t) { return t.name; });
       assert(names.indexOf('render_live') >= 0);
       assert(names.indexOf('screenshot') >= 0);
-      assert(names.indexOf('query_dom') >= 0);
+      assert(names.indexOf('inspect_dom') >= 0);
     });
 
     it('each tool should have name, description, and inputSchema', function() {
@@ -207,10 +207,10 @@ describe('MCP Server - async tool handling', function() {
     });
   });
 
-  it('should handle tool that returns a Promise (query_dom)', function() {
+  it('should handle tool that returns a Promise (inspect_dom)', function() {
     var resp = handleMessage({
       jsonrpc: '2.0', id: 21, method: 'tools/call',
-      params: { name: 'query_dom', arguments: { code: '1+1' } }
+      params: { name: 'inspect_dom', arguments: { selector: 'body', depth: 3 } }
     });
     assert.ok(resp && typeof resp.then === 'function', 'should return a Promise');
     return resp.then(function(r) {

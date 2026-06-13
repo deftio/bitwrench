@@ -34,7 +34,6 @@ Options:
       --stdin                Read protocol messages from stdin (newline-delimited JSON)
   -t, --theme <name>         Theme preset or hex colors ("#pri,#sec")
       --title <string>       Page title (default: "bwcli serve")
-      --allow-exec           Enable exec messages (runs JS in browser, use for dev only)
       --no-dir-list          Disable directory listings
       --open                 Open browser on start
   -v, --verbose              Verbose output
@@ -45,8 +44,7 @@ Examples:
   bwcli serve ./public --port 3000        Serve ./public on :3000
   bwcli serve --stdin                     Read from pipe instead of input port
   sensor-reader | bwcli serve --stdin     Pipe sensor data to browser
-  curl -X POST :9000 -d '{"type":"replace","target":"#app","node":{"t":"h1","c":"Hi"}}'
-  curl -X POST :9000 -d '{"command":"query","code":"document.title"}'
+  curl -X POST :9000 -d '{"type":"mount","ref":"#app","taco":{"t":"h1","c":"Hi"},"v":1}'
   curl -X POST :9000 -d '{"command":"clients"}'
 `.trim();
 
@@ -141,11 +139,8 @@ function parseRelaxedJSON(str) {
 
 // Required fields per command (async commands also listed)
 var _COMMAND_REQUIRED = {
-    query:    ['code'],
     screenshot: [],
     tree:     [],
-    mount:    ['selector', 'factory'],
-    exec:     ['code'],
     render:   ['selector', 'taco'],
     patch:    ['id'],
     listen:   ['selector', 'event'],
@@ -154,7 +149,7 @@ var _COMMAND_REQUIRED = {
 };
 
 // Commands that return a result via promise
-var _ASYNC_COMMANDS = { query: 1, screenshot: 1, tree: 1, mount: 1 };
+var _ASYNC_COMMANDS = { screenshot: 1, tree: 1 };
 
 /**
  * Handle an interactive command from the listen port.
@@ -225,11 +220,6 @@ function handleCommand(msg, app, verbose) {
     // Dispatch
     try {
         switch (cmd) {
-            case 'query':
-                return client.query(msg.code, { timeout: timeout || 5000 }).then(function(result) {
-                    return { ok: true, result: result, clientId: clientId };
-                });
-
             case 'screenshot':
                 return client.screenshot(msg.selector || 'body', { timeout: timeout || 10000 }).then(function(result) {
                     // Convert Buffer to base64 for JSON response
@@ -247,15 +237,6 @@ function handleCommand(msg, app, verbose) {
                 return pend.promise.then(function(result) {
                     return { ok: true, result: result, clientId: clientId };
                 });
-
-            case 'mount':
-                return client.mount(msg.selector, msg.factory, msg.props || {}, { timeout: timeout || 10000 }).then(function(result) {
-                    return { ok: true, result: result, clientId: clientId };
-                });
-
-            case 'exec':
-                client.exec(msg.code);
-                return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'render':
                 client.render(msg.selector, msg.taco);
@@ -298,7 +279,6 @@ export function runServe(argv, ioOpts) {
                 stdin:   { type: 'boolean' },
                 theme:   { type: 'string', short: 't' },
                 title:   { type: 'string' },
-                'allow-exec': { type: 'boolean' },
                 'no-dir-list': { type: 'boolean' },
                 open:    { type: 'boolean' },
                 verbose: { type: 'boolean', short: 'v' },
@@ -351,8 +331,7 @@ export function runServe(argv, ioOpts) {
             title: title,
             dirList: dirList,
             verbose: verbose,
-            open: !!values.open,
-            allowExec: !!values['allow-exec']
+            open: !!values.open
         });
     }).catch(function(err) {
         console.error('Failed to load bwserve: ' + err.message);
@@ -372,8 +351,7 @@ function startServer(bwserve, opts) {
         title: opts.title,
         static: opts.dir,
         theme: opts.theme,
-        dirList: opts.dirList,
-        allowExec: opts.allowExec
+        dirList: opts.dirList
     });
 
     // Register a passthrough page handler — just keeps clients alive

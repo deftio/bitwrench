@@ -19,7 +19,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-06-11T14:32:51.797Z'
+    buildDate: '2026-06-13T04:55:14.258Z'
   };
 
   /**
@@ -7849,16 +7849,16 @@
     // ── Node reference cache ──────────────────────────────────────────────
     // Fast O(1) lookup for elements by id attribute or bw_uuid_* class.
     //
-    // Populated by bw.createDOM() when elements have:
+    // Populated by bw.create() when elements have:
     //   - id attribute (standard HTML id)
     //   - bw_uuid_* class (lifecycle-managed or explicitly addressed elements)
     //
-    // Cleaned up by bw.cleanup() when elements are destroyed via bitwrench APIs.
+    // Cleaned up by bw.unmount() when elements are destroyed via bitwrench APIs.
     // On cache miss, falls back to querySelector/getElementById — never fails,
     // just slower. Stale entries (refs to detached nodes) are removed on miss
     // via parentNode === null check (IE11-safe, unlike el.isConnected).
     //
-    // Elements created via bw.createDOM() also get el._bw_refs — a local map of
+    // Elements created via bw.create() also get el._bw_refs — a local map of
     // child id/UUID -> DOM node ref for fast parent->child access in o.render.
     // This is the bitwrench equivalent of React's compiled template "holes".
     //
@@ -7927,7 +7927,7 @@
   // because it can't prove they're side-effect-free. We can, so we alias
   // them here. Each alias saves bytes in the minified output, and the short
   // names also reduce visual noise in the hot paths (binding pipeline,
-  // createDOM, etc.).
+  // create, etc.).
   //
   // Alias       Target                                  Sites
   // ─────────   ──────────────────────────────────────   ─────
@@ -8120,7 +8120,7 @@
    * applies the second argument to the element and returns the element:
    * - string/number: sets `el.textContent`
    * - function: calls `apply(el)`, returns el
-   * - TACO object: clears children, mounts TACO via `bw.createDOM()`
+   * - TACO object: clears children, mounts TACO via `bw.create()`
    * - array: clears children, appends each item (string -> text node, TACO -> element)
    *
    * @param {string|Element} target - Element ref, ID, CSS selector, or bw_uuid_* class
@@ -8215,7 +8215,7 @@
   /**
    * Register a DOM element in the node cache under one or more keys.
    *
-   * Called internally by `bw.createDOM()`. Registers elements that have
+   * Called internally by `bw.create()`. Registers elements that have
    * id attributes, UUID classes, or both.
    *
    * @param {Element} el - DOM element to register
@@ -8238,7 +8238,7 @@
   /**
    * Remove a DOM element from the node cache.
    *
-   * Called internally by `bw.cleanup()` when elements are destroyed
+   * Called internally by `bw.unmount()` when elements are destroyed
    * through bitwrench APIs.
    *
    * @param {Element} el - DOM element to deregister
@@ -8263,7 +8263,7 @@
 
   /**
    * Marker class for elements with lifecycle hooks (mounted/unmount/render/state).
-   * Used by cleanup() to find lifecycle-managed elements via querySelectorAll('.bw_lc').
+   * Used by unmount() to find lifecycle-managed elements via querySelectorAll('.bw_lc').
    * @private
    */
   var _BW_LC = 'bw_lc';
@@ -8379,13 +8379,13 @@
   };
 
   /**
-   * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM().
+   * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create().
    *
    * By default, bitwrench escapes all text content to prevent XSS. Use bw.raw()
    * when you need to embed pre-sanitized HTML, entities, or inline markup.
    *
    * @param {string} str - HTML string to mark as raw
-   * @returns {Object} Marked object recognized by bw.html() and bw.createDOM()
+   * @returns {Object} Marked object recognized by bw.html() and bw.create()
    * @category DOM Generation
    * @see bw.escapeHTML
    * @see bw.html
@@ -8412,7 +8412,7 @@
    * @returns {Object} Plain TACO object {t, a?, c?, o?}
    * @category Utilities
    * @see bw.html
-   * @see bw.createDOM
+   * @see bw.create
    * @see bw.DOM
    * @example
    * bw.h('div')
@@ -8448,7 +8448,7 @@
    * @param {boolean} [options.raw=false] - If true, skip HTML escaping on content
    * @returns {string} HTML string
    * @category DOM Generation
-   * @see bw.createDOM
+   * @see bw.create
    * @see bw.DOM
    * @example
    * bw.html({ t: 'h1', c: 'Hello' })
@@ -8940,12 +8940,7 @@
     return el;
   }
 
-  // v2.1: bw.createDOM is removed (alias purge §12)
-  bw.createDOM = undefined;
-
-  // v2.1: renderComponent and compileProps are removed — throw stubs for migration
-  bw.renderComponent = function() { throw new Error('bw.renderComponent has been removed in v2.1. Use bw.create() + bw.mountTree() instead.'); };
-  bw.compileProps = function() { throw new Error('bw.compileProps has been removed in v2.1.'); };
+  // v2.1: bw.createDOM, bw.renderComponent, bw.compileProps fully removed.
 
   /**
    * Internal: wire a TACO's o.* options onto an existing DOM element.
@@ -9338,8 +9333,7 @@
     if (el.parentNode) el.parentNode.removeChild(el);
   };
 
-  // v2.1: bw.cleanup is removed (alias purge §12)
-  bw.cleanup = undefined;
+  // v2.1: bw.cleanup fully removed.
 
   /**
    * Janitor: document-level cleanup for ungraceful teardown.
@@ -9843,7 +9837,7 @@
    * without rebuilding the entire component tree.
    *
    * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
-   * and `bw.update()` for full structural re-renders.
+   * and `bw.refresh()` for full structural re-renders.
    *
    * @param {string|Element} id - Element ID, bw_uuid_* class, CSS selector, or DOM element.
    *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
@@ -10159,7 +10153,7 @@
    * receives `(detail, topic)` so it can distinguish which topic fired.
    *
    * Optional third argument ties the subscription to a DOM element's lifecycle --
-   * when `bw.cleanup()` is called on that element, the subscription is automatically
+   * when `bw.unmount()` is called on that element, the subscription is automatically
    * removed, preventing memory leaks.
    *
    * @param {string} topic - Topic name, or wildcard pattern ending in '*'
@@ -10543,28 +10537,9 @@
     return result;
   };
 
-  // ===================================================================================
-  // Deprecation stubs for removed ComponentHandle APIs (v2.0.19)
-  // ===================================================================================
-
-  bw._extractDeps = undefined;
-  bw._dirtyComponents = undefined;
-  bw._flushScheduled = undefined;
-  bw._scheduleFlush = undefined;
-  bw._doFlush = undefined;
-  bw._ComponentHandle = undefined;
-
-  /**
-   * No-op flush (ComponentHandle removed in v2.0.19).
-   * Kept as no-op for backward compatibility.
-   * @category Component
-   */
-  bw.flush = function() {};
-
-
-  bw.when = function() { throw new Error('bw.when() removed in v2.0.19. Use conditional logic in o.render instead.'); };
-  bw.each = function() { throw new Error('bw.each() removed in v2.0.19. Use array mapping in o.render instead.'); };
-  bw.component = function() { throw new Error('bw.component() removed in v2.0.19. Use o.handle/o.slots on TACO options instead.'); };
+  // v2.1: ComponentHandle APIs (_extractDeps, _dirtyComponents, _flushScheduled,
+  // _scheduleFlush, _doFlush, _ComponentHandle, flush, when, each, component)
+  // fully removed — no stubs needed in v2.1.
 
 
   // ===================================================================================
@@ -10809,19 +10784,11 @@
   // ===================================================================================
 
   /**
-   * Registry of named functions sent via register messages.
-   * Populated by bw.apply({ type: 'register', name, body }).
-   * Invoked by bw.apply({ type: 'call', name, args }).
+   * Registry of named functions for backward compat with code that checks _clientFunctions.
+   * v2.1: exec/register are rejected at the protocol level; use bw.registerRemote() instead.
    * @private
    */
   bw._clientFunctions = {};
-
-  /**
-   * Whether exec messages are allowed. Set by bwclient connect opts.allowExec.
-   * Default false — exec messages are rejected unless explicitly opted in.
-   * @private
-   */
-  bw._allowExec = false;
 
   /**
    * Parse a bwserve protocol message string, supporting both strict JSON
@@ -10919,16 +10886,19 @@
   /**
    * Apply a bwserve protocol message to the DOM.
    *
-   * Dispatches one of 9 message types:
-   *   replace  — bw.DOM(target, node)
-   *   append   — target.appendChild(bw.createDOM(node))
-   *   remove   — bw.cleanup(target); target.remove()
-   *   patch    — bw.patch(target, content, attr)
+   * Dispatches one of 12 v:1 message types:
+   *   mount    — bw.mount(ref, taco)
+   *   patch    — bw.patch(ref, text/attrs/content)
+   *   append   — bw.append(ref, taco)
+   *   replace  — bw.replace(ref, taco)
+   *   remove   — bw.remove(ref)
+   *   refresh  — bw.refresh(ref)
+   *   update   — bw.update(ref, data)
+   *   message  — bw.message(ref, action, data)
    *   batch    — iterate ops, call bw.apply for each
-   *   message  — bw.message(target, action, data)
-   *   register — store a named function for later call()
-   *   call     — invoke a registered function
-   *   exec     — execute arbitrary JS (requires allowExec)
+   *   listen   — subscribe to a pub/sub topic
+   *   unlisten — unsubscribe from a topic
+   *   call     — invoke a registered remote function
    *
    * Target resolution:
    *   Starts with '#' or '.' → CSS selector (querySelector)
@@ -11527,7 +11497,7 @@
    * every matched element (same apply rules as `bw.el()`):
    * - string/number: sets `el.textContent`
    * - function: calls `apply(el)` for each element
-   * - TACO object: clears children, mounts TACO via `bw.createDOM()`
+   * - TACO object: clears children, mounts TACO via `bw.create()`
    * - array: clears children, appends each item
    *
    * @param {string|Element|Array} selector - CSS selector, element, or array

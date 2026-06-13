@@ -268,10 +268,8 @@ describe("bw.apply()", function() {
 
   describe("exec (rejected in v2.1)", function() {
     it("should reject exec type in v2.1 wire protocol", function() {
-      bw._allowExec = true;
       var result = bw.apply({ v: 1, type: 'exec', code: '_execTest = 42;' });
       assert.strictEqual(result, false);
-      bw._allowExec = false;
     });
   });
 });
@@ -700,7 +698,6 @@ describe("bwserve round-trip: register/call/exec", function() {
   beforeEach(function() {
     resetApp();
     bw._clientFunctions = {};
-    bw._allowExec = false;
   });
 
   it("should call pre-registered function via round-trip", function() {
@@ -981,8 +978,8 @@ describe("BwServeApp HTTP integration", function() {
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench.css');
-    // bitwrench.css is not in dist (only bitwrench.min.css), so expect 404
+    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench-nonexistent.css');
+    // bitwrench-nonexistent.css does not exist in dist, so expect 404
     assert.strictEqual(res.status, 404);
   });
 
@@ -1319,8 +1316,8 @@ describe("BwServeApp HTTP integration", function() {
     app.page('/', function() {});
     await app.listen();
     var port = app._server.address().port;
-    // bitwrench.css doesn't exist in dist (only bitwrench.min.css) — tests the 404 path
-    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench.css');
+    // bitwrench-nonexistent.css does not exist in dist — tests the 404 path
+    var res = await fetch('http://localhost:' + port + '/bw/lib/bitwrench-nonexistent.css');
     assert.strictEqual(res.status, 404);
     var body = await res.text();
     assert.ok(body.includes('Not Found'));
@@ -1667,35 +1664,8 @@ describe("DIST_DIR resolution", function() {
 });
 
 // ===================================================================================
-// generateShell allowExec
+// generateShell allowExec — removed in v2.1 security migration
 // ===================================================================================
-describe("generateShell allowExec", function() {
-  it("should NOT include allowExec in init script by default", function() {
-    var html = generateShell({ clientId: 'test1', title: 'Test' });
-    // The bwclient source always contains _allowExec inside attach() as part of an if-statement.
-    // The init script puts it on its own line after the clientId declaration.
-    // Count occurrences — without allowExec, only bwclient's attach handler should have it.
-    var count = html.split('bw._allowExec = true').length - 1;
-    assert.strictEqual(count, 1, "only bwclient attach handler should contain _allowExec, not the init script");
-  });
-
-  it("should include _allowExec = true when opts.allowExec is true", function() {
-    var html = generateShell({ clientId: 'test2', title: 'Test', allowExec: true });
-    // Should have 2 occurrences: one in bwclient attach handler, one in init script
-    var count = html.split('bw._allowExec = true').length - 1;
-    assert.strictEqual(count, 2, "should contain _allowExec in both bwclient and init script");
-  });
-
-  it("BwServeApp should store allowExec option", function() {
-    var app = new BwServeApp({ allowExec: true });
-    assert.strictEqual(app.allowExec, true);
-  });
-
-  it("BwServeApp should default allowExec to false", function() {
-    var app = new BwServeApp({});
-    assert.strictEqual(app.allowExec, false);
-  });
-});
 
 // ===================================================================================
 // Screenshot and pending mechanism removed in 2.1

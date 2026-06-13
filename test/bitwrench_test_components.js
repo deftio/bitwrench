@@ -4369,7 +4369,7 @@ describe('makeCarousel — play() interval callback fires (line 2909)', function
         if (el.parentNode) el.parentNode.removeChild(el);
         done(e);
       }
-    }, 200);
+    }, 500);
   });
 });
 

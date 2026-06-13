@@ -27,11 +27,11 @@ describe('MCP Live - liveToolDefs', function() {
     assert.strictEqual(liveToolDefs.length, 3);
   });
 
-  it('should include render_live, screenshot, query_dom', function() {
+  it('should include render_live, screenshot, inspect_dom', function() {
     var names = liveToolDefs.map(function(d) { return d.name; });
     assert.ok(names.indexOf('render_live') >= 0);
     assert.ok(names.indexOf('screenshot') >= 0);
-    assert.ok(names.indexOf('query_dom') >= 0);
+    assert.ok(names.indexOf('inspect_dom') >= 0);
   });
 
   it('each tool should have name, description, inputSchema', function() {
@@ -69,8 +69,8 @@ describe('MCP Live - handlers without bwserve', function() {
     });
   });
 
-  it('query_dom should return promise with error when no client', function() {
-    return liveHandlers.query_dom({ code: '1+1' }).then(function(result) {
+  it('inspect_dom should return promise with error when no client', function() {
+    return liveHandlers.inspect_dom({ selector: 'body', depth: 3 }).then(function(result) {
       assert.ok(result.isError);
       assert.ok(result.content[0].text.indexOf('no browser client') >= 0);
     });
@@ -216,10 +216,10 @@ describe('MCP Live - handlers with bwserve (no client)', function() {
     });
   });
 
-  // -- query_dom --
+  // -- inspect_dom --
 
-  it('query_dom should return error when no client connected', function() {
-    return liveHandlers.query_dom({ code: 'document.title' }).then(function(result) {
+  it('inspect_dom should return error when no client connected', function() {
+    return liveHandlers.inspect_dom({ selector: 'body', depth: 3 }).then(function(result) {
       assert.ok(result.isError);
       assert.ok(result.content[0].text.indexOf('no browser client') >= 0);
     });
@@ -227,10 +227,12 @@ describe('MCP Live - handlers with bwserve (no client)', function() {
 });
 
 // ===================================================================================
-// liveHandlers with injected fake client (covers screenshot/query_dom success paths)
+// liveHandlers with injected fake client (covers screenshot/inspect_dom success paths)
 // ===================================================================================
 
 describe('MCP Live - handlers with fake client', function() {
+  var _pendResult = '42';
+
   before(function() {
     this.timeout(5000);
     suppressStderr();
@@ -251,8 +253,11 @@ describe('MCP Live - handlers with fake client', function() {
               format: 'png'
             });
           },
-          query: function(code, opts) {
-            return Promise.resolve('42');
+          _pend: function(timeout) {
+            return { requestId: 'r1', promise: Promise.resolve(_pendResult) };
+          },
+          call: function(method, params) {
+            // no-op: the result comes from _pend's promise
           }
         }
       });
@@ -275,25 +280,22 @@ describe('MCP Live - handlers with fake client', function() {
     });
   });
 
-  it('query_dom should return result when client is connected', function() {
-    return liveHandlers.query_dom({ code: '1+1' }).then(function(result) {
+  it('inspect_dom should return result when client is connected', function() {
+    _pendResult = '42';
+    return liveHandlers.inspect_dom({ selector: 'body', depth: 3 }).then(function(result) {
       assert.ok(!result.isError, 'should not be an error');
       assert.strictEqual(result.content[0].type, 'text');
       assert.strictEqual(result.content[0].text, '42');
     });
   });
 
-  it('query_dom should JSON.stringify non-string results', function() {
-    // Replace the query function to return an object
-    var app = getApp();
-    var record = app._clients.get('fake1');
-    var origQuery = record.client.query;
-    record.client.query = function() { return Promise.resolve({ count: 5 }); };
-
-    return liveHandlers.query_dom({ code: 'x' }).then(function(result) {
+  it('inspect_dom should JSON.stringify non-string results', function() {
+    _pendResult = { count: 5 };
+    return liveHandlers.inspect_dom({ selector: 'div', depth: 2 }).then(function(result) {
       assert.ok(!result.isError);
-      assert.strictEqual(result.content[0].text, '{"count":5}');
-      record.client.query = origQuery;
+      var parsed = JSON.parse(result.content[0].text);
+      assert.strictEqual(parsed.count, 5);
+      _pendResult = '42';
     });
   });
 });
@@ -317,8 +319,11 @@ describe('MCP Live - handler error paths', function() {
           screenshot: function() {
             return Promise.reject(new Error('capture failed'));
           },
-          query: function() {
-            return Promise.reject(new Error('eval failed'));
+          _pend: function(timeout) {
+            return { requestId: 'r1', promise: Promise.reject(new Error('inspect failed')) };
+          },
+          call: function(method, params) {
+            // no-op: the result comes from _pend's promise
           }
         }
       });
@@ -339,10 +344,10 @@ describe('MCP Live - handler error paths', function() {
     });
   });
 
-  it('query_dom should return error on client rejection', function() {
-    return liveHandlers.query_dom({ code: 'bad()' }).then(function(result) {
+  it('inspect_dom should return error on client rejection', function() {
+    return liveHandlers.inspect_dom({ selector: 'body', depth: 3 }).then(function(result) {
       assert.ok(result.isError);
-      assert.ok(result.content[0].text.indexOf('eval failed') >= 0);
+      assert.ok(result.content[0].text.indexOf('Inspect error') >= 0);
     });
   });
 });

@@ -38,7 +38,6 @@ export function generateAttachScript(opts) {
     + '  function _go() {\n'
     + '    ' + clientSource + '\n'
     + '    bw._bwClient.attach(origin, {\n'
-    + '      allowExec: true,\n'
     + '      onStatus: function(s) { console.log("[bw-attach] " + s); }\n'
     + '    });\n'
     + '    console.log("[bw-attach] v' + VERSION + ' connecting to " + (origin || location.origin));\n'

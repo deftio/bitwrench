@@ -18,7 +18,7 @@ export default [
             "linebreak-style": ["error", "unix"],
             "semi": ["error", "always"],
             "no-empty": ["error", { "allowEmptyCatch": true }],
-            "no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }]
+            "no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_", "caughtErrors": "none" }]
         }
     }
 ];
