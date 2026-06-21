@@ -378,7 +378,7 @@
       }
     };
 
-    // ─── COFFEE SECTION — Level 1: o.state + o.render ───────────────────────
+    // ─── COFFEE SECTION — o.mounted with search + filter re-render ──────────
     var csFilter = 'All', csSearch = '';
 
     function renderCoffeeSection(el) {
@@ -644,7 +644,7 @@
       ]}
     };
 
-    // ─── NEWSLETTER — Level 1 TACO with direct DOM handler ───────────────────
+    // ─── NEWSLETTER — o.mounted TACO with direct DOM handler ─────────────────
     // Newsletter uses o.mounted + direct DOM handler for the subscribe button
     // (other sections use o.state + o.render for reactive updates)
     var newsletter = {
@@ -795,7 +795,7 @@
             ['el._bw_state + bw.refresh()', 'Core', 'State access and re-render triggers'],
             ['bw.pub() / bw.sub()', 'Core', 'Cart state broadcast, cross-component messaging'],
             ['o.mounted lifecycle', 'Core', 'Initial renders, scroll listeners'],
-            ['o.mounted lifecycle', 'Level 1', 'Initial renders, scroll listeners'],
+            ['o.mounted lifecycle', 'Lifecycle', 'Initial renders, scroll listeners'],
             ['bw.DOM()', 'Core', 'Mounting all sections + sub-tree updates'],
             ['bw.makeStatCard()', 'BCCL', 'Impact section (new in v2.0.23)'],
             ['bw.makeTimeline()', 'BCCL', 'Our Story milestones'],

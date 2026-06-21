@@ -9,7 +9,7 @@
  *   import bwserve from 'bitwrench/bwserve';
  *   const app = bwserve.create({ port: 7902 });
  *   app.page('/', (client) => {
- *     client.render('#app', bw.makeCard({ title: 'Hello' }));
+ *     client.mount('#app', bw.makeCard({ title: 'Hello' }));
  *   });
  *   app.listen();
  *

@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.32 |
-| Generated | 2026-04-26 |
+| Version | 2.1.0 |
+| Generated | 2026-06-20 |
 | Total APIs | 105 |
 | Categories | 14 |
 | bitwrench.js | 4100 lines |
@@ -2247,7 +2247,7 @@ Get a shallow copy of the function registry for inspection.
 
 ### `bw.flush()`
 
-No-op flush (ComponentHandle removed in v2.0.19). Kept as no-op for backward compatibility.
+No-op flush (ComponentHandle was removed). Kept as no-op for backward compatibility.
 
 ---
 

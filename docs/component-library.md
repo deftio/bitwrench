@@ -1049,7 +1049,7 @@ Build your own with `o.handle` and `o.slots`:
 }
 ```
 
-See [State Management -- Level 1.5](state-management.md#level-15-component-handles) for the full guide.
+See [State Management -- Component Handles](state-management.md#component-handles) for the full guide.
 
 ---
 

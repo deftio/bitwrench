@@ -68,32 +68,34 @@ def taco_json(tag, content="", **kwargs):
 # Protocol message builders
 # =========================================================================
 
-def patch(target, content, attr=None):
-    """Build a patch protocol message."""
-    msg = {"type": "patch", "target": target, "content": str(content)}
-    if attr:
-        msg["attr"] = attr
+def patch(ref, text=None, attrs=None):
+    """Build a patch protocol message with discriminated fields."""
+    msg = {"v": 1, "type": "patch", "ref": ref}
+    if text is not None:
+        msg["text"] = str(text)
+    if attrs:
+        msg["attrs"] = attrs
     return msg
 
 
-def replace(target, node):
-    """Build a replace protocol message. node is a TACO dict or pre-built dict."""
-    return {"type": "replace", "target": target, "node": node}
+def mount(ref, taco):
+    """Build a mount protocol message. taco is a TACO dict."""
+    return {"v": 1, "type": "mount", "ref": ref, "taco": taco}
 
 
-def append(target, node):
+def append(ref, taco):
     """Build an append protocol message."""
-    return {"type": "append", "target": target, "node": node}
+    return {"v": 1, "type": "append", "ref": ref, "taco": taco}
 
 
-def remove(target):
+def remove(ref):
     """Build a remove protocol message."""
-    return {"type": "remove", "target": target}
+    return {"v": 1, "type": "remove", "ref": ref}
 
 
 def batch(*ops):
     """Build a batch protocol message from multiple ops."""
-    return {"type": "batch", "ops": list(ops)}
+    return {"v": 1, "type": "batch", "ops": list(ops)}
 
 
 def message(level, text):
@@ -167,27 +169,31 @@ function sendAction(action,data){{
 # =========================================================================
 
 class Client:
-    """A connected SSE client. Send protocol messages via render/patch/etc."""
+    """A connected SSE client. Send protocol messages via mount/patch/etc."""
 
     def __init__(self, send_fn):
         self._send = send_fn
         self._handlers = {}
 
-    def render(self, target, node):
-        """Replace target with a TACO node."""
-        self._send(replace(target, node))
+    def mount(self, ref, taco_node):
+        """Mount a TACO at the given ref (replaces content)."""
+        self._send(mount(ref, taco_node))
 
-    def patch(self, target, content, attr=None):
-        """Patch target's text content (and optionally attributes)."""
-        self._send(patch(target, content, attr))
+    def render(self, ref, taco_node):
+        """Deprecated alias for mount()."""
+        self.mount(ref, taco_node)
 
-    def append(self, target, node):
-        """Append a TACO node as child of target."""
-        self._send(append(target, node))
+    def patch(self, ref, text=None, attrs=None):
+        """Patch ref's text content (and optionally attributes)."""
+        self._send(patch(ref, text=text, attrs=attrs))
 
-    def remove(self, target):
-        """Remove target element from DOM."""
-        self._send(remove(target))
+    def append(self, ref, taco_node):
+        """Append a TACO node as child of ref."""
+        self._send(append(ref, taco_node))
+
+    def remove(self, ref):
+        """Remove ref element from DOM."""
+        self._send(remove(ref))
 
     def batch(self, *ops):
         """Send multiple ops atomically."""
@@ -490,7 +496,7 @@ def serve(port=8080, title="bwserve"):
     app = App(title=title, port=port)
 
     def default_page(client):
-        client.render("#app", taco("div", "bwserve ready. Send protocol messages to update this page.", cls="container"))
+        client.mount("#app", taco("div", "bwserve ready. Send protocol messages to update this page.", cls="container"))
 
     app.page("/", default_page)
     app.serve()

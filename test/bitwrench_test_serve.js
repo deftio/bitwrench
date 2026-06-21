@@ -38,9 +38,9 @@ describe("serve parseMessage()", function() {
     });
 
     it("should parse valid JSON", function() {
-        var result = parseMessage('{"type":"replace","target":"#app"}');
+        var result = parseMessage('{"type":"replace","ref":"#app"}');
         assert.strictEqual(result.type, 'replace');
-        assert.strictEqual(result.target, '#app');
+        assert.strictEqual(result.ref, '#app');
     });
 
     it("should return null for invalid JSON", function() {
@@ -146,11 +146,14 @@ describe("serve handleCommand()", function() {
         var client = Object.assign({
             id: id,
             _closed: false,
+            _sent: [],
             screenshot: function(sel, opts) { return Promise.resolve({ data: Buffer.from('png'), width: 100, height: 50, format: 'png' }); },
             _pend: function(timeout) { return { requestId: 'req_1', promise: Promise.resolve({ tag: 'body' }) }; },
             call: function(name) {},
-            render: function(sel, taco) {},
-            patch: function(id, content, attr) {},
+            mount: function(ref, taco) {},
+            listen: function(topic) {},
+            patch: function(ref, fields) {},
+            _send: function(msg) { client._sent.push(msg); },
             _allowScreenshot: true
         }, overrides || {});
         return client;
@@ -193,61 +196,49 @@ describe("serve handleCommand()", function() {
     // -- missing required fields --
     // query, mount, exec commands removed in v2.1 security migration
 
-    it("render without selector returns missing field error", async function() {
+    it("mount without ref returns missing field error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'render', taco: { t: 'div' } }, app, false);
+        var result = await handleCommand({ command: 'mount', taco: { t: 'div' } }, app, false);
         assert.ok(result.error.includes('Missing required field'));
-        assert.ok(result.error.includes('selector'));
+        assert.ok(result.error.includes('ref'));
     });
 
-    it("render without taco returns missing field error", async function() {
+    it("mount without taco returns missing field error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'render', selector: '#app' }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app' }, app, false);
         assert.ok(result.error.includes('Missing required field'));
         assert.ok(result.error.includes('taco'));
     });
 
-    it("patch without id returns missing field error", async function() {
+    it("patch without ref returns missing field error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
         var result = await handleCommand({ command: 'patch' }, app, false);
-        assert.ok(result.error.includes('id'));
+        assert.ok(result.error.includes('ref'));
     });
 
-    it("listen without selector returns missing field error", async function() {
+    it("listen without topic returns missing field error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'listen', event: 'click' }, app, false);
-        assert.ok(result.error.includes('selector'));
+        var result = await handleCommand({ command: 'listen' }, app, false);
+        assert.ok(result.error.includes('topic'));
     });
 
-    it("listen without event returns missing field error", async function() {
+    it("unlisten without topic returns missing field error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'listen', selector: 'button' }, app, false);
-        assert.ok(result.error.includes('event'));
-    });
-
-    it("unlisten without selector returns missing field error", async function() {
-        var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'unlisten', event: 'click' }, app, false);
-        assert.ok(result.error.includes('selector'));
-    });
-
-    it("unlisten without event returns missing field error", async function() {
-        var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'unlisten', selector: 'button' }, app, false);
-        assert.ok(result.error.includes('event'));
+        var result = await handleCommand({ command: 'unlisten' }, app, false);
+        assert.ok(result.error.includes('topic'));
     });
 
     // -- no clients connected --
-    it("render with no clients returns error", async function() {
+    it("mount with no clients returns error", async function() {
         var app = makeMockApp();
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' } }, app, false);
         assert.ok(result.error.includes('No clients connected'));
     });
 
     // -- client not found --
     it("clientId targeting non-existent client returns error", async function() {
         var app = makeMockApp({ c1: makeMockClient('c1') });
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' }, clientId: 'c99' }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' }, clientId: 'c99' }, app, false);
         assert.ok(result.error.includes('Client not found'));
         assert.ok(result.error.includes('c99'));
     });
@@ -255,45 +246,45 @@ describe("serve handleCommand()", function() {
     it("clientId targeting entry with null client returns error", async function() {
         var app = { _clients: new Map() };
         app._clients.set('c1', { client: null });
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' }, clientId: 'c1' }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' }, clientId: 'c1' }, app, false);
         assert.ok(result.error.includes('Client not found'));
     });
 
     // -- first-available client fallback --
     it("uses first available client when clientId not specified", async function() {
-        var rendered = null;
+        var mounted = null;
         var c1 = makeMockClient('c1', {
-            render: function(sel, taco) { rendered = { sel: sel, taco: taco }; }
+            mount: function(ref, taco) { mounted = { ref: ref, taco: taco }; }
         });
         var app = makeMockApp({ c1: c1 });
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div', c: 'Hello' } }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div', c: 'Hello' } }, app, false);
         assert.strictEqual(result.ok, true);
-        assert.strictEqual(rendered.sel, '#app');
+        assert.strictEqual(mounted.ref, '#app');
         assert.strictEqual(result.clientId, 'c1');
     });
 
     it("skips closed clients when picking first available", async function() {
         var closedClient = makeMockClient('c1', { _closed: true });
         var activeClient = makeMockClient('c2', {
-            render: function(sel, taco) {}
+            mount: function(ref, taco) {}
         });
         var app = { _clients: new Map() };
         app._clients.set('c1', { client: closedClient });
         app._clients.set('c2', { client: activeClient });
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' } }, app, false);
         assert.strictEqual(result.clientId, 'c2');
     });
 
     // -- clientId targeting --
     it("targets specific client via clientId", async function() {
-        var c1Rendered = false;
-        var c2Rendered = false;
-        var c1 = makeMockClient('c1', { render: function() { c1Rendered = true; } });
-        var c2 = makeMockClient('c2', { render: function() { c2Rendered = true; } });
+        var c1Mounted = false;
+        var c2Mounted = false;
+        var c1 = makeMockClient('c1', { mount: function() { c1Mounted = true; } });
+        var c2 = makeMockClient('c2', { mount: function() { c2Mounted = true; } });
         var app = makeMockApp({ c1: c1, c2: c2 });
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' }, clientId: 'c2' }, app, false);
-        assert.strictEqual(c1Rendered, false);
-        assert.strictEqual(c2Rendered, true);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' }, clientId: 'c2' }, app, false);
+        assert.strictEqual(c1Mounted, false);
+        assert.strictEqual(c2Mounted, true);
         assert.strictEqual(result.clientId, 'c2');
     });
 
@@ -369,69 +360,64 @@ describe("serve handleCommand()", function() {
 
     // -- mount, exec commands removed in v2.1 security migration --
 
-    // -- render command --
-    it("render calls client.render", async function() {
-        var renderArgs = null;
+    // -- mount command (render is deprecated alias) --
+    it("mount calls client.mount", async function() {
+        var mountArgs = null;
         var c = makeMockClient('c1', {
-            render: function(sel, taco) { renderArgs = { sel: sel, taco: taco }; }
+            mount: function(ref, taco) { mountArgs = { ref: ref, taco: taco }; }
         });
         var app = makeMockApp({ c1: c });
         var taco = { t: 'h1', c: 'Hello' };
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: taco }, app, false);
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: taco }, app, false);
         assert.strictEqual(result.ok, true);
-        assert.strictEqual(renderArgs.sel, '#app');
-        assert.deepStrictEqual(renderArgs.taco, taco);
+        assert.strictEqual(mountArgs.ref, '#app');
+        assert.deepStrictEqual(mountArgs.taco, taco);
     });
 
-    // -- patch command --
-    it("patch calls client.patch", async function() {
+    // -- patch command (discriminated fields) --
+    it("patch calls client.patch with discriminated fields", async function() {
         var patchArgs = null;
         var c = makeMockClient('c1', {
-            patch: function(id, content, attr) { patchArgs = { id: id, content: content, attr: attr }; }
+            patch: function(ref, fields) { patchArgs = { ref: ref, fields: fields }; }
         });
         var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'patch', id: 'counter', content: '42' }, app, false);
+        var result = await handleCommand({ command: 'patch', ref: 'counter', text: '42' }, app, false);
         assert.strictEqual(result.ok, true);
-        assert.strictEqual(patchArgs.id, 'counter');
-        assert.strictEqual(patchArgs.content, '42');
+        assert.strictEqual(patchArgs.ref, 'counter');
+        assert.strictEqual(patchArgs.fields.text, '42');
     });
 
-    it("patch passes attr when provided", async function() {
+    it("patch passes attrs when provided", async function() {
         var patchArgs = null;
         var c = makeMockClient('c1', {
-            patch: function(id, content, attr) { patchArgs = { id: id, content: content, attr: attr }; }
+            patch: function(ref, fields) { patchArgs = { ref: ref, fields: fields }; }
         });
         var app = makeMockApp({ c1: c });
-        await handleCommand({ command: 'patch', id: 'myel', content: 'text', attr: { class: 'active' } }, app, false);
-        assert.deepStrictEqual(patchArgs.attr, { class: 'active' });
+        await handleCommand({ command: 'patch', ref: 'myel', text: 'hello', attrs: { class: 'active' } }, app, false);
+        assert.deepStrictEqual(patchArgs.fields.attrs, { class: 'active' });
+        assert.strictEqual(patchArgs.fields.text, 'hello');
     });
 
-    // -- listen command --
-    it("listen calls client.call with _bw_listen", async function() {
-        var callArgs = null;
+    // -- listen command (topic-based) --
+    it("listen calls client.listen with topic", async function() {
+        var listenTopic = null;
         var c = makeMockClient('c1', {
-            call: function(name, args) { callArgs = { name: name, args: args }; }
+            listen: function(topic) { listenTopic = topic; }
         });
         var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'listen', selector: 'button', event: 'click' }, app, false);
+        var result = await handleCommand({ command: 'listen', topic: 'bw:lifecycle' }, app, false);
         assert.strictEqual(result.ok, true);
-        assert.strictEqual(callArgs.name, '_bw_listen');
-        assert.strictEqual(callArgs.args.selector, 'button');
-        assert.strictEqual(callArgs.args.event, 'click');
+        assert.strictEqual(listenTopic, 'bw:lifecycle');
     });
 
-    // -- unlisten command --
-    it("unlisten calls client.call with _bw_unlisten", async function() {
-        var callArgs = null;
-        var c = makeMockClient('c1', {
-            call: function(name, args) { callArgs = { name: name, args: args }; }
-        });
+    // -- unlisten command (topic-based) --
+    it("unlisten sends unlisten wire message", async function() {
+        var c = makeMockClient('c1');
         var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'unlisten', selector: '.btn', event: 'mouseover' }, app, false);
+        var result = await handleCommand({ command: 'unlisten', topic: 'bw:lifecycle' }, app, false);
         assert.strictEqual(result.ok, true);
-        assert.strictEqual(callArgs.name, '_bw_unlisten');
-        assert.strictEqual(callArgs.args.selector, '.btn');
-        assert.strictEqual(callArgs.args.event, 'mouseover');
+        assert.strictEqual(c._sent[0].type, 'unlisten');
+        assert.strictEqual(c._sent[0].topic, 'bw:lifecycle');
     });
 
     // -- verbose logging --
@@ -442,8 +428,8 @@ describe("serve handleCommand()", function() {
         try {
             var c = makeMockClient('c1');
             var app = makeMockApp({ c1: c });
-            await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, true);
-            assert.ok(errors.some(function(l) { return l.includes('[command]') && l.includes('render'); }));
+            await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' } }, app, true);
+            assert.ok(errors.some(function(l) { return l.includes('[command]') && l.includes('mount'); }));
         } finally {
             console.error = origError;
         }
@@ -474,11 +460,11 @@ describe("serve handleCommand()", function() {
     // -- error from client method --
     it("handles client method throwing", async function() {
         var c = makeMockClient('c1', {
-            render: function() { throw new Error('render boom'); }
+            mount: function() { throw new Error('mount boom'); }
         });
         var app = makeMockApp({ c1: c });
-        var result = await handleCommand({ command: 'render', selector: '#app', taco: { t: 'div' } }, app, false);
-        assert.ok(result.error.includes('render boom'));
+        var result = await handleCommand({ command: 'mount', ref: '#app', taco: { t: 'div' } }, app, false);
+        assert.ok(result.error.includes('mount boom'));
     });
 });
 
@@ -811,16 +797,20 @@ describe("serve startInputServer()", function() {
     }
 
     function makeMockClient(id, overrides) {
-        return Object.assign({
+        var client = {
             id: id,
             _closed: false,
-            render: function(sel, taco) {},
-            patch: function(id, content, attr) {},
+            _sent: [],
+            mount: function(ref, taco) {},
+            patch: function(ref, fields) {},
+            listen: function(topic) {},
             call: function(name) {},
+            _send: function(msg) { client._sent.push(msg); },
             _pend: function(timeout) { return { requestId: 'r1', promise: Promise.resolve(null) }; },
             screenshot: function() { return Promise.resolve({ data: Buffer.from(''), width: 1, height: 1, format: 'png' }); },
             _allowScreenshot: true
-        }, overrides || {});
+        };
+        return Object.assign(client, overrides || {});
     }
 
     /**
@@ -894,7 +884,7 @@ describe("serve startInputServer()", function() {
             _clients: new Map(),
             broadcast: function(msg) { broadcastMsg = msg; return 2; }
         };
-        var res = await fakeRequest(app, false, 'POST', '{"type":"replace","target":"#app","node":{"t":"div"}}');
+        var res = await fakeRequest(app, false, 'POST', '{"type":"replace","ref":"#app","taco":{"t":"div"}}');
         assert.strictEqual(res._status, 200);
         var body = JSON.parse(res._body);
         assert.strictEqual(body.ok, true);
@@ -904,10 +894,10 @@ describe("serve startInputServer()", function() {
 
     it("interactive command path: routes command and returns result", async function() {
         var c = makeMockClient('c1', {
-            render: function(sel, taco) {}
+            mount: function(ref, taco) {}
         });
         var app = makeMockApp({ c1: c });
-        var res = await fakeRequest(app, false, 'POST', '{"command":"render","selector":"#app","taco":{"t":"div","c":"Hello"}}');
+        var res = await fakeRequest(app, false, 'POST', '{"command":"mount","ref":"#app","taco":{"t":"div","c":"Hello"}}');
         assert.strictEqual(res._status, 200);
         var body = JSON.parse(res._body);
         assert.strictEqual(body.ok, true);
@@ -932,7 +922,7 @@ describe("serve startInputServer()", function() {
 
     it("command error path returns 400 (result.error branch)", async function() {
         var app = makeMockApp();
-        var res = await fakeRequest(app, false, 'POST', '{"command":"render","selector":"#app","taco":{"t":"div"}}');
+        var res = await fakeRequest(app, false, 'POST', '{"command":"mount","ref":"#app","taco":{"t":"div"}}');
         assert.strictEqual(res._status, 400);
         assert.ok(JSON.parse(res._body).error.includes('No clients connected'));
     });
@@ -950,7 +940,7 @@ describe("serve startInputServer()", function() {
             _clients: new Map(),
             broadcast: function(msg) { return 0; }
         };
-        await fakeRequest(app, true, 'POST', '{"type":"replace","target":"#app","node":{"t":"div"}}');
+        await fakeRequest(app, true, 'POST', '{"type":"replace","ref":"#app","taco":{"t":"div"}}');
         assert.ok(errors.some(function(l) { return l.includes('[input]') && l.includes('replace'); }));
     });
 
@@ -1001,7 +991,7 @@ describe("serve startStdinReader()", function() {
         Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
 
         startStdinReader(app, false);
-        fakeStdin.emit('data', '{"type":"replace","target":"#app","node":{"t":"div"}}\n');
+        fakeStdin.emit('data', '{"type":"replace","ref":"#app","taco":{"t":"div"}}\n');
 
         assert.strictEqual(app._broadcasts.length, 1);
         assert.strictEqual(app._broadcasts[0].type, 'replace');
@@ -1016,7 +1006,7 @@ describe("serve startStdinReader()", function() {
         Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
 
         startStdinReader(app, false);
-        fakeStdin.emit('data', '\n\n{"type":"patch","target":"x","content":"y"}\n\n');
+        fakeStdin.emit('data', '\n\n{"type":"patch","ref":"x","text":"y"}\n\n');
 
         assert.strictEqual(app._broadcasts.length, 1);
 
@@ -1058,7 +1048,7 @@ describe("serve startStdinReader()", function() {
         Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
 
         startStdinReader(app, true);
-        fakeStdin.emit('data', '{"type":"replace","target":"#x","node":{}}\n');
+        fakeStdin.emit('data', '{"type":"replace","ref":"#x","taco":{}}\n');
 
         assert.ok(errors.some(function(l) { return l.includes('[stdin]') && l.includes('replace'); }));
 
@@ -1073,7 +1063,7 @@ describe("serve startStdinReader()", function() {
 
         startStdinReader(app, false);
         // Send data without trailing newline
-        fakeStdin.emit('data', '{"type":"patch","target":"y","content":"z"}');
+        fakeStdin.emit('data', '{"type":"patch","ref":"y","text":"z"}');
         assert.strictEqual(app._broadcasts.length, 0); // buffered, not yet flushed
 
         fakeStdin.emit('end');
@@ -1194,7 +1184,7 @@ describe("serve startInputServer() real server", function() {
         var app = makeMockApp();
         server = await startInputServer(app, 0, false);
         var port = server.address().port;
-        var res = await postToServer(port, '{"type":"replace","target":"#app","node":{"t":"div"}}');
+        var res = await postToServer(port, '{"type":"replace","ref":"#app","taco":{"t":"div"}}');
         assert.strictEqual(res.status, 200);
         var parsed = JSON.parse(res.body);
         assert.strictEqual(parsed.ok, true);
@@ -1230,14 +1220,14 @@ describe("serve startInputServer() real server", function() {
         var mockClient = {
             id: 'ic1',
             _closed: false,
-            render: function() {},
+            mount: function() {},
             _pend: function() { return { requestId: 'r1', promise: Promise.resolve(null) }; }
         };
         app._clients.set('ic1', { client: mockClient });
 
         server = await startInputServer(app, 0, false);
         var port = server.address().port;
-        var res = await postToServer(port, '{"command":"render","selector":"#app","taco":{"t":"div"}}');
+        var res = await postToServer(port, '{"command":"mount","ref":"#app","taco":{"t":"div"}}');
         assert.strictEqual(res.status, 200);
         var parsed = JSON.parse(res.body);
         assert.strictEqual(parsed.ok, true);
@@ -1247,7 +1237,7 @@ describe("serve startInputServer() real server", function() {
         var app = makeMockApp();
         server = await startInputServer(app, 0, true);
         var port = server.address().port;
-        var res = await postToServer(port, '{"type":"patch","target":"#x","content":"y"}');
+        var res = await postToServer(port, '{"type":"patch","ref":"#x","text":"y"}');
         assert.strictEqual(res.status, 200);
         assert.ok(errors.some(function(l) { return l.indexOf('[input]') >= 0; }));
     });
@@ -1843,7 +1833,7 @@ describe("runServe() — ioOpts fallback to {} (lines 341-342)", function() {
     it("should use default import path (line 342: io._importPath || '...')", function() {
         // When ioOpts is null, importPath defaults to '../../src/bwserve/index.js'
         // Already covered by the above test. Verify runServe returns a promise.
-        var promise = runServe(['--stdin'], { _importPath: undefined });
+        var promise = runServe(['--stdin', '--port', '18766'], { _importPath: undefined });
         assert.ok(promise instanceof Promise);
         return promise.catch(function() { /* swallow — may time out */ });
     });

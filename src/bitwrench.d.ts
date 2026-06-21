@@ -323,10 +323,10 @@ export interface Bitwrench {
   htmlPage(opts: { title?: string; css?: string; content?: TacoContent; favicon?: string; [key: string]: any }): string;
   /** Create DOM element from TACO (browser only). SVG TACOs ({t:'svg',...}) use createElementNS. */
   create(taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | SVGElement | DocumentFragment;
-  /** Mount TACO into target, replacing contents. Returns the target element. */
-  DOM(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement;
-  /** Mount TACO and return root element (for el.bw access) */
-  mount(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement;
+  /** Mount TACO into target, replacing contents. Alias for bw.mount(). Returns the first created element. */
+  DOM(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | null;
+  /** Mount TACO into target, replacing contents. Returns the first created element. */
+  mount(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | null;
   /** Mark string as pre-escaped HTML */
   raw(str: string): BwRaw;
   /** Escape HTML special characters */
@@ -337,6 +337,8 @@ export interface Bitwrench {
   update(ref: string | HTMLElement, data?: any): void;
   /** Re-render element by calling el._bw_render */
   refresh(ref: string | HTMLElement): void;
+  /** Set a named slot value via el.bw.setName(value) */
+  updateSlot(ref: string | HTMLElement, name: string, value: any): boolean;
   /** Unmount element: fire unmount hooks, clean subscriptions, remove from cache */
   unmount(element: HTMLElement): void;
   /** Fire mounted() hooks on an element subtree */
@@ -363,8 +365,8 @@ export interface Bitwrench {
   janitor(options?: { verbose?: boolean }): void;
   /** Reconcile children of parent with new TACO list */
   syncChildren(parent: HTMLElement, items: Taco[], options?: { key?: string }): void;
-  /** Create a derived state subscription */
-  derive(options: { sources: string[]; compute: (...args: any[]) => any; target?: string | HTMLElement }): () => void;
+  /** Declared dataflow: recompute fn(inputs...) on any input publish, publish result to outTopic. Returns disposer. */
+  derive(inputs: string[], fn: (...values: any[]) => any, outTopic: string, opts?: { seed?: any[]; immediate?: boolean; el?: HTMLElement }): () => void;
 
   // -- DOM Selection --------------------------------------------------------
   /** Resolve target to first matching element. Optional apply: string (textContent), function, TACO (mount), or array. @see bw.$ */
@@ -383,6 +385,8 @@ export interface Bitwrench {
   sub(topic: string, handler: (detail: any, topic?: string) => void, el?: HTMLElement): () => void;
   /** Unsubscribe handler from topic */
   unsub(topic: string, handler: Function): number;
+  /** Subscribe to topic for a single delivery; auto-unsubscribes after first fire. Returns unsub(). */
+  once(topic: string, handler: (detail: any) => void, el?: HTMLElement): () => void;
 
   // -- UUID & Identity ------------------------------------------------------
   /** Generate unique ID */
@@ -395,6 +399,8 @@ export interface Bitwrench {
   // -- Component Messages & Wire Protocol -----------------------------------
   /** Call method on el.bw: el.bw[action](data) */
   message(target: string | HTMLElement, action: string, data?: any): any;
+  /** Extract form data from a form or container element */
+  formData(target: string | HTMLElement): Record<string, any>;
   /** Execute wire-protocol message object */
   apply(msg: Record<string, any>): boolean;
   /** Inspect DOM element and subtree, returning plain-object tree with bitwrench metadata */
@@ -407,8 +413,8 @@ export interface Bitwrench {
   registerRemote(name: string, fn: Function): void;
   /** Connect to a bwserve instance via SSE */
   connect(url: string, options?: Record<string, any>): { send(msg: any): void; close(): void };
-  /** Set theme mode on matching elements */
-  setThemeMode(mode: string): void;
+  /** Set theme mode ('primary' or 'alternate') on matching elements */
+  setThemeMode(mode: string, scope?: string | HTMLElement): { mode: string; count: number };
   /** Load structural CSS only (no theming) */
   loadStructural(): void;
 
@@ -429,6 +435,8 @@ export interface Bitwrench {
   css(rules: Record<string, any>, options?: { scopeSelector?: string; selector?: string }): string;
   /** Inject CSS into document */
   injectCSS(css: string, options?: { id?: string; append?: boolean; scope?: string }): HTMLElement;
+  /** Merge style objects (shallow Object.assign). Use to compose inline styles. */
+  s(...objs: Record<string, string | number>[]): Record<string, string | number>;
   /** Responsive media query helper */
   responsive(selector: string, breakpoints: Record<string, Record<string, any>>): string;
   /** Generate styles from config */
@@ -523,55 +531,8 @@ export interface Bitwrench {
   makeDataTable(config?: TableConfig): Taco;
   makeBarChart(config?: ComponentConfig): Taco;
 
-  // -- Corresponding create* (return DOM Element) ---------------------------
-  createCard(config?: CardConfig | string): HTMLElement;
-  createButton(config?: ButtonConfig | string): HTMLElement;
-  createContainer(config?: ComponentConfig): HTMLElement;
-  createRow(config?: ComponentConfig): HTMLElement;
-  createCol(config?: ComponentConfig): HTMLElement;
-  createStack(config?: ComponentConfig): HTMLElement;
-  createSection(config?: ComponentConfig): HTMLElement;
-  createNav(config?: NavConfig): HTMLElement;
-  createNavbar(config?: ComponentConfig): HTMLElement;
-  createBreadcrumb(config?: ComponentConfig): HTMLElement;
-  createTabs(config?: TabsConfig): HTMLElement;
-  createPagination(config?: ComponentConfig): HTMLElement;
-  createAlert(config?: AlertConfig | string): HTMLElement;
-  createBadge(config?: ComponentConfig | string): HTMLElement;
-  createProgress(config?: ComponentConfig): HTMLElement;
-  createSpinner(config?: ComponentConfig): HTMLElement;
-  createToast(config?: ComponentConfig): HTMLElement;
-  createTooltip(config?: ComponentConfig): HTMLElement;
-  createPopover(config?: ComponentConfig): HTMLElement;
-  createListGroup(config?: ComponentConfig): HTMLElement;
-  createAccordion(config?: AccordionConfig): HTMLElement;
-  createCarousel(config?: CarouselConfig): HTMLElement;
-  createTimeline(config?: ComponentConfig): HTMLElement;
-  createStepper(config?: ComponentConfig): HTMLElement;
-  createChipInput(config?: ComponentConfig): HTMLElement;
-  createModal(config?: ModalConfig): HTMLElement;
-  createDropdown(config?: ComponentConfig): HTMLElement;
-  createForm(config?: ComponentConfig): HTMLElement;
-  createFormGroup(config?: ComponentConfig): HTMLElement;
-  createInput(config?: InputConfig): HTMLElement;
-  createTextarea(config?: ComponentConfig): HTMLElement;
-  createSelect(config?: ComponentConfig): HTMLElement;
-  createCheckbox(config?: ComponentConfig): HTMLElement;
-  createRadio(config?: ComponentConfig): HTMLElement;
-  createSwitch(config?: ComponentConfig): HTMLElement;
-  createRange(config?: ComponentConfig): HTMLElement;
-  createFileUpload(config?: ComponentConfig): HTMLElement;
-  createSearchInput(config?: ComponentConfig): HTMLElement;
-  createButtonGroup(config?: ComponentConfig): HTMLElement;
-  createHero(config?: ComponentConfig): HTMLElement;
-  createFeatureGrid(config?: ComponentConfig): HTMLElement;
-  createCTA(config?: ComponentConfig): HTMLElement;
-  createCodeDemo(config?: ComponentConfig): HTMLElement;
-  createSkeleton(config?: ComponentConfig): HTMLElement;
-  createAvatar(config?: ComponentConfig): HTMLElement;
-  createStatCard(config?: ComponentConfig): HTMLElement;
-  createMediaObject(config?: ComponentConfig): HTMLElement;
-  createTable(config?: TableConfig): HTMLElement;
+  /** List available BCCL component types, or get factory for a type */
+  catalog(type?: string): Record<string, any>;
 
   // -- Array Utilities ------------------------------------------------------
   arrayUniq(arr: any[]): any[];

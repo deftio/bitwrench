@@ -350,7 +350,7 @@
         { t: 'rect', a: { class: 'box-rect', x: '510', y: '60', width: '170', height: '80', rx: '6' } },
         { t: 'text', a: { class: 'box-title', x: '595', y: '90', 'text-anchor': 'middle' }, c: 'Browser Page' },
         { t: 'text', a: { class: 'box-line', x: '595', y: '110', 'text-anchor': 'middle' }, c: 'attach.js script' },
-        { t: 'text', a: { class: 'box-line', x: '595', y: '125', 'text-anchor': 'middle' }, c: 'eval + report back' }
+        { t: 'text', a: { class: 'box-line', x: '595', y: '125', 'text-anchor': 'middle' }, c: 'builtins + report back' }
       ]
     };
 
@@ -360,7 +360,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'bwcli attach -- Remote Debugging REPL' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('<code>bwcli attach</code> starts a bwserve instance and waits for a browser page to connect via a drop-in script. Once connected, you get an interactive REPL for evaluating JS, inspecting the DOM tree, taking screenshots, and listening to events -- all from your terminal.') },
+            c: bw.raw('<code>bwcli attach</code> starts a bwserve instance and waits for a browser page to connect via a drop-in script. Once connected, you get an interactive REPL for inspecting the DOM tree, mounting components, taking screenshots, and listening to events -- all from your terminal.') },
 
           { t: 'h3', c: 'Architecture' },
           { t: 'div', a: { class: 'arch-diagram' },
@@ -370,7 +370,7 @@
           consoleBlock([
             '<span class="console-comment"># 1. Start the REPL</span>',
             '<span class="console-prompt">$</span> bwcli attach',
-            '<span class="console-output">bwcli attach v2.0.19</span>',
+            '<span class="console-output">bwcli attach v2.1.0</span>',
             '<span class="console-output">  Server: http://localhost:7902</span>',
             '<span class="console-output">  Drop-in: &lt;script src="http://localhost:7902/bw/attach.js"&gt;&lt;/script&gt;</span>',
             '<span class="console-output">Waiting for connection...</span>',
@@ -500,8 +500,8 @@
             ]}
           ]},
 
-          site.makeCallout('tip', 'Plain JS expressions work too', {
-            t: 'p', c: bw.raw('Type any JS expression at the prompt and it runs in the connected browser. For example: <code>document.title</code>, <code>bw.$(\'.bw_bccl_card\').length</code>, <code>bw.version</code>.')
+          site.makeCallout('concept', 'Slash commands only', {
+            t: 'p', c: bw.raw('As of v2.1, all REPL input must be a slash command (<code>/tree</code>, <code>/mount</code>, etc.). Bare JS evaluation was removed. Non-slash input is ignored.')
           })
         ]}
       ]
@@ -521,7 +521,7 @@
           { t: 'h3', c: 'Step 1: Start attach and connect a page' },
           consoleBlock([
             '<span class="console-prompt">$</span> bwcli attach --allow-screenshot',
-            '<span class="console-output">bwcli attach v2.0.19</span>',
+            '<span class="console-output">bwcli attach v2.1.0</span>',
             '<span class="console-output">  Server: http://localhost:7902</span>',
             '<span class="console-output">Waiting for connection...</span>',
             '',
@@ -616,23 +616,7 @@
             '<span class="console-output">  div.page-header</span>',
             '<span class="console-output">  div.content-container</span>',
             '<span class="console-output">    div.demo-section</span>',
-            '<span class="console-output">    div.demo-section</span>',
-            '',
-            '<span class="console-prompt">bw&gt;</span> document.title',
-            '<span class="console-output">"Bitwrench - Dashboard"</span>'
-          ]),
-
-          { t: 'h3', c: 'Evaluate expressions' },
-          consoleBlock([
-            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_bccl_card\').length',
-            '<span class="console-output">4</span>',
-            '',
-            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_lc\').length',
-            '<span class="console-output">2</span>',
-            '',
-            '<span class="console-comment"># Find all stateful elements</span>',
-            '<span class="console-prompt">bw&gt;</span> bw.$(\'.bw_lc\').map(function(el) { return { id: el.id, state: el._bw_state }; })',
-            '<span class="console-output">[{"id":"counter","state":{"count":5}},{"id":"timer","state":{"running":true}}]</span>'
+            '<span class="console-output">    div.demo-section</span>'
           ]),
 
           { t: 'h3', c: 'Listen to events and take a screenshot' },

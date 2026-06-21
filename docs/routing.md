@@ -249,7 +249,7 @@ function dashboard() {
 }
 ```
 
-When the router mounts this TACO, `mounted` fires, fetches data, updates state, and triggers a re-render. The route handler is just a function that returns any valid TACO -- the full component model (Level 0 through Level 2) is available.
+When the router mounts this TACO, `mounted` fires, fetches data, updates state, and triggers a re-render. The route handler is just a function that returns any valid TACO -- the full component model (static TACOs, mounted components, and stateful components) is available.
 
 ---
 

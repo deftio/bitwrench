@@ -19,7 +19,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-06-13T04:55:14.258Z'
+    buildDate: '2026-06-21T06:59:36.443Z'
   };
 
   /**
@@ -11051,6 +11051,7 @@
 
   bw.apply = function(msg) {
     if (!msg || !msg.type) return false;
+    if (msg.type === 'hello') return true; // handshake -- no-op ack
     if (msg.type !== 'batch' && msg.v !== 1) {
       bw.pub('bw:diag', { code: 'wire_rejected', msg: 'missing or unknown version', v: msg.v });
       return false;

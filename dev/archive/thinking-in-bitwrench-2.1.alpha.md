@@ -24,7 +24,14 @@
 
 Building web UIs with raw HTML, CSS, and JavaScript works -- but it is painful. HTML is verbose. Styling the same element across a page means copying CSS rules or managing class hierarchies. Adding interactivity means wiring up event listeners, tracking state in variables, and manually updating the DOM when things change. The more complex the UI, the more copy-paste, the more boilerplate, the more places things can go wrong.
 
-Frameworks emerged to manage this -- React, Vue, Svelte for rendering; Sass, Tailwind for styling; Redux, Zustand for state -- each adding a new syntax, a new tool, a new layer. Each solves a real problem. But each also adds an abstraction to learn, configure, and maintain.
+Different paradigms emerged to manage this complexity:
+
+- **Markup generation**: JSX (React), templates (Vue, Svelte, Angular) -- describe UI declaratively, let a compiler or runtime translate it to DOM operations.
+- **Styling**: Sass and Less added variables and mixins. Tailwind invented utility classes. CSS-in-JS libraries generate styles at runtime.
+- **State management**: React hooks, Vue reactivity, Svelte stores, Redux, Zustand -- track application state and automatically re-render when it changes.
+- **Build tooling**: Babel, webpack, Vite, esbuild -- transpile, bundle, tree-shake, hot-reload. Required infrastructure to connect the pieces.
+
+Each of these solves a real problem. But each also adds a layer -- a new syntax, a new tool, a new abstraction to learn, configure, and maintain.
 
 Bitwrench takes a different approach. Instead of adding layers, it leans into what the browser already provides -- the DOM for structure, CSS for styling, JavaScript for behavior -- and uses the JavaScript language itself to manage all three concerns.
 
@@ -62,22 +69,6 @@ bw.html(greeting);
 ```
 
 That is the entire concept. Everything else builds on it.
-
-We will use a **contact card** as a running example throughout this document, building it up one capability at a time. Here is the card as a TACO:
-
-```js
-var card = {
-    t: 'div', a: { class: 'card' }, c: [
-        { t: 'h3', c: 'Alice' },
-        { t: 'p', c: 'alice@example.com' }
-    ]
-};
-
-bw.html(card);
-// => '<div class="card"><h3>Alice</h3><p>alice@example.com</p></div>'
-```
-
-A tag, attributes, nested content -- the same shape as the greeting, just with children. We will mount this card to the DOM in Section 3, make it reusable in Section 4, style it in Section 5, and add interactivity in Section 6.
 
 ### Minimal cases
 
@@ -177,11 +168,9 @@ You have seen `t`, `a`, and `c`. There is a fourth key -- `o` (options) -- for l
 
 ## 3. TACO to Live DOM
 
-We can generate HTML strings, but a live page needs DOM elements.
-
 ### bw.mount() -- the primary path
 
-`bw.mount()` takes a CSS selector and a TACO, and renders the TACO into that element:
+`bw.html()` produces strings. For a live page, you need DOM elements. `bw.mount()` takes a CSS selector and a TACO, and renders the TACO into that element:
 
 ```html
 <div id="app"></div>
@@ -210,18 +199,6 @@ var page = { t: 'div', a: { class: 'page' }, c: [
 bw.mount('#app', page);
 ```
 
-Continuing our contact card: mounting it is a one-liner.
-
-```js
-bw.mount('#app', {
-    t: 'div', a: { class: 'card' }, c: [
-        { t: 'h3', c: 'Alice' },
-        { t: 'p', c: 'alice@example.com' }
-    ]
-});
-// The #app div now contains a live card element in the DOM.
-```
-
 ### bw.create() -- detached elements
 
 Sometimes you need a DOM element before inserting it. `bw.create()` returns a detached DOM node:
@@ -230,7 +207,9 @@ Sometimes you need a DOM element before inserting it. `bw.create()` returns a de
 var el = bw.create({ t: 'div', c: 'Not in the page yet' });
 // el is an HTMLDivElement, but it is not attached to the document.
 // You can inspect it, modify it, then insert it manually.
+// Note: this low-level DOM call is what bw.mount() does for you automatically.
 // In practice, prefer bw.mount('#target', taco) instead of manual insertion.
+bw.el('#target').appendChild(el);
 ```
 
 Use `bw.create()` when you need to manipulate the element before it goes into the page. For most cases, `bw.mount()` is simpler and handles lifecycle automatically.
@@ -264,7 +243,7 @@ The TACO is data. The rendering step is separate. You decide when and how it bec
 
 ## 4. JavaScript Makes TACOs Composable
 
-Mounting a single TACO is useful, but real pages have many elements. Because TACOs are JavaScript objects, composition is natural -- every field is a JavaScript expression. This is the most important thing to understand about bitwrench.
+Because a TACO is a JavaScript object literal, every field is a JavaScript expression. This is the most important thing to understand about bitwrench.
 
 ### Functions are your components
 
@@ -280,26 +259,6 @@ bw.mount('#app', { t: 'div', c: [
     greeting('Bob')
 ]});
 ```
-
-Continuing our card: make it a function, and it works for any contact.
-
-```js
-function contactCard(name, email) {
-    return {
-        t: 'div', a: { class: 'card' }, c: [
-            { t: 'h3', c: name },
-            { t: 'p', c: email }
-        ]
-    };
-}
-
-bw.mount('#app', { t: 'div', c: [
-    contactCard('Alice', 'alice@example.com'),
-    contactCard('Bob', 'bob@example.com')
-]});
-```
-
-Same pattern as the `greeting()` function, but now it produces structured content. This is the entire component model.
 
 ### Component factory pattern
 
@@ -398,8 +357,6 @@ No template language needed. JavaScript already has functions (components), arra
 
 ## 5. Styling Grows Naturally
 
-We can compose structure, but unstyled HTML is not a UI. Because styles are just strings and objects in JavaScript, bitwrench handles CSS the same way it handles markup -- with plain JS.
-
 ### Start simple -- class and style attributes
 
 The `style` and `class` attributes in a TACO work exactly like their HTML counterparts:
@@ -487,24 +444,6 @@ bw.injectCSS(bw.css({
 
 Change `brand` once and re-run `bw.injectCSS(bw.css(...))` -- every rule that references it updates. No build step needed to generate the CSS; just call the functions again.
 
-Continuing our card: let's style the contact card with `bw.css()`.
-
-```js
-bw.injectCSS(bw.css({
-    '.card': {
-        padding: '1.5rem',
-        borderRadius: '12px',
-        border: '1px solid #ddd',
-        maxWidth: '300px'
-    },
-    '.card h3': { margin: '0 0 0.5rem 0' },
-    '.card p':  { margin: '0', color: '#666' }
-}));
-
-bw.mount('#app', contactCard('Alice', 'alice@example.com'));
-// Now the card renders with rounded corners, padding, and subtle text.
-```
-
 ### Functions generate CSS rules
 
 ```js
@@ -586,8 +525,6 @@ Start at the top. Move down when you need more power. Each level builds on the o
 
 ## 6. Events and Behavior
 
-A styled card looks right but does nothing. Adding behavior means adding event handler functions to `a:` -- the same place every other attribute lives.
-
 ### Inline event handlers
 
 Event handlers go in `a:` as function values:
@@ -601,26 +538,6 @@ bw.mount('#app', {
 ```
 
 All standard DOM events work: `onclick`, `onchange`, `oninput`, `onsubmit`, `onkeydown`, etc.
-
-Continuing our card: add a click handler that copies the email address.
-
-```js
-function contactCard(name, email) {
-    return {
-        t: 'div', a: {
-            class: 'card',
-            style: 'cursor:pointer',
-            onclick: function() { alert('Email: ' + email); }
-        },
-        c: [
-            { t: 'h3', c: name },
-            { t: 'p', c: email }
-        ]
-    };
-}
-```
-
-The handler closes over `email` -- no data binding, no state management. Just a closure.
 
 ### Re-rendering on interaction
 
@@ -702,8 +619,6 @@ bw.mount('#app', {
 
 ## 7. Lifecycle: `o:` Options
 
-Event handlers give us interactivity, but real components need state that persists across renders and cleanup logic for resources. That is what the `o:` (options) key provides.
-
 The `o:` key is where non-HTML concerns live. It was separated from `a:` because `a:` compiles directly to HTML attributes -- library metadata should not leak into the DOM.
 
 ### o.state -- component state
@@ -713,15 +628,16 @@ bw.mount('#app', {
     t: 'div',
     o: {
         state: { count: 0 },
-        render: function(el, state) {
+        render: function(el) {
+            var s = el._bw_state;
             bw.mount(el, { t: 'div', c: [
-                { t: 'span', c: 'Count: ' + state.count },
+                { t: 'span', c: 'Count: ' + s.count },
                 { t: 'button', a: { onclick: function() {
-                    state.count++;
+                    s.count++;
                     bw.refresh(el);
                 }}, c: '+1' },
                 { t: 'button', a: { onclick: function() {
-                    state.count = 0;
+                    s.count = 0;
                     bw.refresh(el);
                 }}, c: 'Reset' }
             ]});
@@ -730,35 +646,7 @@ bw.mount('#app', {
 });
 ```
 
-`o.state` is copied to `el._bw_state` at creation time. `o.render` is called with `(el, state)` on mount and on every `bw.refresh(el)`. When state changes, mutate the state object and call `bw.refresh(el)` to re-render.
-
-Continuing our card: let's add an expanded/collapsed state to the contact card.
-
-```js
-function contactCard(name, email, phone) {
-    return {
-        t: 'div', a: { class: 'card' },
-        o: {
-            state: { expanded: false },
-            render: function(el, state) {
-                bw.mount(el, { t: 'div', c: [
-                    { t: 'h3', a: { onclick: function() {
-                        state.expanded = !state.expanded;
-                        bw.refresh(el);
-                    }, style: 'cursor:pointer' }, c: name + (state.expanded ? ' \u25B2' : ' \u25BC') },
-                    { t: 'p', c: email },
-                    state.expanded ? { t: 'p', c: phone } : null
-                ]});
-            }
-        }
-    };
-}
-
-bw.mount('#app', contactCard('Alice', 'alice@example.com', '+1-555-0100'));
-// Clicking the name toggles the phone number.
-```
-
-The card now has real state. The render function receives `(el, state)`, reads `state.expanded`, and conditionally shows the phone number. `bw.refresh(el)` re-renders when state changes.
+`o.state` is copied to `el._bw_state` at creation time. `o.render` is stored on `el._bw_render` and called on mount and on every `bw.refresh(el)`. When state changes, mutate `el._bw_state` directly and call `bw.refresh(el)` to re-render.
 
 ### o.mounted and o.unmount -- lifecycle hooks
 
@@ -899,8 +787,6 @@ bw.sub('cart:updated', function(data) {
 
 ## 8. Server-Driven UI (bwserve)
 
-Everything so far runs in the browser. But because a TACO without functions is pure JSON, it can come from anywhere -- including a server in any language.
-
 ### Why TACOs cross a wire
 
 A TACO without functions in `o:` is pure data -- it serializes to JSON. This means any server in any language can generate TACOs and send them to the browser for rendering. That is exactly what bwserve does.
@@ -973,8 +859,6 @@ The client never runs application logic -- it renders what the server sends and 
 ---
 
 ## 9. BCCL: Ready-Made Components
-
-Building every component from scratch teaches you the model, but for common patterns -- cards, tables, modals, alerts -- bitwrench ships ready-made factories.
 
 BCCL (Bitwrench Common Component Library) is a set of factory functions that return TACO objects for common UI patterns. Think of it as Bootstrap, but instead of HTML templates you get JavaScript objects.
 
@@ -1055,8 +939,6 @@ See [Component Library](component-library.md) for the full method table per comp
 
 ## 10. Routing, Utilities, Advanced
 
-Sections 2-9 cover the core model. This section covers the remaining tools bitwrench provides: routing, declared dataflow, color utilities, and general-purpose helpers.
-
 ### Client-side routing
 
 Bitwrench includes a built-in client-side router:
@@ -1088,8 +970,8 @@ Route parameters (`/users/:id`), query strings (`params._query.tab`), catch-all 
 `bw.derive()` recomputes a derived value when its input topics publish:
 
 ```js
-bw.derive(['cart:updated', 'discount:changed'], function(cartData, discountData) {
-    var total = cartData.total * (1 - discountData.rate);
+bw.derive(['cart:updated', 'discount:changed'], function(data) {
+    var total = data['cart:updated'].total * (1 - data['discount:changed'].rate);
     return { total: total };
 }, 'order:total');
 
@@ -1099,7 +981,7 @@ bw.sub('order:total', function(data) {
 });
 ```
 
-The combiner function receives the latest value from each input topic as positional arguments, in the same order as the `inputs` array. The dependency graph is explicit and written in source code -- not assembled by getter traps at runtime.
+The dependency graph is explicit and written in source code -- not assembled by getter traps at runtime.
 
 ### Color functions
 

@@ -112,17 +112,17 @@ bw.DOM('#app', { t: 'div', c: [
 
 ---
 
-## Step 3: Three Levels
+## Step 3: From Data to DOM
 
-| Level | What | How | When |
-|-------|------|-----|------|
-| **0 -- Data** | Plain JS object | `bw.makeCard({...})` or `{t,a,c}` | Static content, SSR |
-| **1 -- DOM** | Rendered tree | `bw.DOM('#x', taco)` | Re-render on demand |
-| **2 -- Stateful** | Reactive component | `o.state` + `o.render` + `bw.refresh()` | Interactive UI |
+| Form | What | How | When |
+|------|------|-----|------|
+| **Static TACO** | Plain JS object | `bw.makeCard({...})` or `{t,a,c}` | Static content, SSR |
+| **Mounted TACO** | Rendered tree | `bw.DOM('#x', taco)` | Re-render on demand |
+| **Stateful TACO** | Reactive component | `o.state` + `o.render` + `bw.refresh()` | Interactive UI |
 
-**Most UI should be Level 0.** Escalate only when needed.
+**Most UI should be static TACOs.** Escalate only when needed.
 
-### Level 1 -- re-render when data changes
+### Mounted -- re-render when data changes
 
 ```javascript
 var filter = 'all';
@@ -135,7 +135,7 @@ function render() {
 render();
 ```
 
-### Level 2 -- stateful TACO
+### Stateful -- reactive TACO
 
 ```javascript
 bw.DOM('#app', {
@@ -333,7 +333,7 @@ bw.u.css('p4 shadow')  // includes your custom token
 
 ## Step 6: BCCL Components
 
-**Bitwrench ships ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
+**Bitwrench ships ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return static TACO objects. Factory dispatcher: `bw.make('card', props)`.
 
 ### Most-Used Components
 
@@ -652,7 +652,7 @@ bwcli serve                                   # dev server (port 7902)
 | `bw.textOnColor(hex)` | Contrast-safe text color ('#fff' or '#000') |
 | `bw.random(min, max)` | Random integer (or array variant) |
 | `bw.loremIpsum(n)` | Placeholder text |
-| `bw.parseRJSON(str)` | Relaxed JSON (unquoted keys, trailing commas) |
+| `bw.parseJSONFlex(str)` | Relaxed JSON (single-quoted keys, trailing commas, r-prefix) |
 | `bw.saveClientFile(name, data)` | Browser file download |
 
 ---
@@ -662,10 +662,10 @@ bwcli serve                                   # dev server (port 7902)
 1. **Events in `a: { onclick: fn }`** -- never in `o.mounted`. This is the #1 mistake.
 2. **Call `bw.loadStyles()`** before rendering. Use `bw.loadStyles(config)` for themed colors.
 3. **Content is escaped by default.** Use `bw.raw(str)` for trusted HTML only.
-4. **All `make*()` return Level 0 TACOs** -- pass to `bw.DOM()` or `bw.html()`.
+4. **All `make*()` return static TACOs** -- pass to `bw.DOM()` or `bw.html()`.
 5. **TACO is computation** -- every field is a JS expression. Use variables, `.map()`, ternaries.
 6. **CSS is just strings** -- store in variables, compose with `bw.s()`, generate with `bw.css()`.
-7. **Three levels are explicit** -- you always know if you have data (L0), DOM (L1), or stateful (L2).
+7. **TACO forms are explicit** -- you always know if you have a static TACO, a mounted TACO, or a stateful TACO.
 8. **No raw DOM** -- use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
 9. **CSS classes use `bw_` prefix**: `bw_bccl_card`, `bw_bccl_btn`, `bw_container`.
 10. **Routing is built in** -- `bw.router()` for SPAs. Hash mode by default, history mode optional.

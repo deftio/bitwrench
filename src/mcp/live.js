@@ -34,7 +34,7 @@ export function startLive(opts) {
   // Register the default page handler
   _app.page('/', function(client) {
     // Render an initial placeholder
-    client.render('#app', {
+    client.mount('#app', {
       t: 'div',
       a: { class: 'bw_container', style: 'padding: 2rem; text-align: center; color: #888;' },
       c: { t: 'p', c: 'bwmcp ready -- waiting for agent to render UI...' }

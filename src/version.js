@@ -12,5 +12,5 @@ export const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-06-13T04:55:14.258Z'
+  buildDate: '2026-06-21T06:59:36.443Z'
 };

@@ -3264,6 +3264,7 @@ function _sanitizeWireTaco(taco) {
 
 bw.apply = function(msg) {
   if (!msg || !msg.type) return false;
+  if (msg.type === 'hello') return true; // handshake -- no-op ack
   if (msg.type !== 'batch' && msg.v !== 1) {
     bw.pub('bw:diag', { code: 'wire_rejected', msg: 'missing or unknown version', v: msg.v });
     return false;

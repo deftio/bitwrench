@@ -366,44 +366,44 @@
         { t: 'thead', c: { t: 'tr', c: [
           { t: 'th', c: 'Use case' },
           { t: 'th', c: 'Pattern' },
-          { t: 'th', c: 'Level' },
+          { t: 'th', c: 'Category' },
           { t: 'th', c: 'Example' }
         ]}},
         { t: 'tbody', c: [
           { t: 'tr', c: [
             { t: 'td', c: 'Static content, layout, markup' },
             { t: 'td', c: bw.raw('<code>bw.DOM()</code> or <code>bw.html()</code>') },
-            { t: 'td', c: 'Level 0' },
+            { t: 'td', c: 'Static' },
             { t: 'td', c: bw.raw('Landing pages, docs, cards without state') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Simple interactivity' },
             { t: 'td', c: bw.raw('Closure + re-render') },
-            { t: 'td', c: 'Level 1' },
+            { t: 'td', c: 'Mounted' },
             { t: 'td', c: bw.raw('Tabs, toggles, one-off widgets') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Stateful components' },
             { t: 'td', c: bw.raw('<code>o.state</code> + <code>o.render</code>') },
-            { t: 'td', c: bw.raw('<strong>Level 2</strong>') },
+            { t: 'td', c: bw.raw('<strong>Stateful</strong>') },
             { t: 'td', c: bw.raw('Counters, forms, dashboards -- state on element, render via <code>bw.refresh(el)</code>') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Custom render logic' },
             { t: 'td', c: bw.raw('<code>o.render</code> + <code>bw.refresh()</code>') },
-            { t: 'td', c: 'Level 1 (manual)' },
+            { t: 'td', c: 'Mounted (manual)' },
             { t: 'td', c: bw.raw('Canvas, WebGL, complex DOM that needs full control') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'High-frequency value updates' },
             { t: 'td', c: bw.raw('<code>bw.patch()</code>') },
-            { t: 'td', c: 'Level 1 (targeted)' },
+            { t: 'td', c: 'Mounted (targeted)' },
             { t: 'td', c: bw.raw('Live tickers, sensor values, counters in large lists') }
           ]},
           { t: 'tr', c: [
             { t: 'td', c: 'Server-driven UI' },
             { t: 'td', c: bw.raw('bwserve + <code>bw.apply()</code>') },
-            { t: 'td', c: 'Level 0 over SSE' },
+            { t: 'td', c: 'Static over SSE' },
             { t: 'td', c: bw.raw('Streamlit-style apps, embedded dashboards') }
           ]}
         ]}
@@ -416,7 +416,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Which Pattern to Use?' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('Bitwrench has three materialization levels. Most applications only need Level 0 (static) and Level 2 (<code>o.state</code> + <code>o.render</code>). The low-level tools exist for custom components and escape hatches.') },
+            c: bw.raw('Bitwrench TACOs progress from static data to mounted DOM to stateful components. Most applications only need static TACOs and stateful components (<code>o.state</code> + <code>o.render</code>). The lower-level tools exist for custom components and escape hatches.') },
           decisionTable,
           site.makeCallout('tip', 'Rule of thumb', {
             t: 'p',
@@ -471,13 +471,13 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Composing make*() into Stateful TACOs') },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('BCCL <code>make*()</code> functions return Level 0 TACOs -- pure data with no reactivity. This is by design: it keeps them serializable, composable, and SSR-friendly. To add reactivity, compose the <code>make*()</code> output inside a TACO with <code>o.state</code> and <code>o.render</code>.') },
+            c: bw.raw('BCCL <code>make*()</code> functions return static TACOs -- pure data with no reactivity. This is by design: it keeps them serializable, composable, and SSR-friendly. To add reactivity, compose the <code>make*()</code> output inside a TACO with <code>o.state</code> and <code>o.render</code>.') },
 
           site.makeCallout('concept', 'The pattern', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('<strong>Level 0</strong>: <code>bw.makeCard({ title: \'Hello\' })</code> -- static TACO, no reactivity') },
-              { t: 'p', c: bw.raw('<strong>Level 2</strong>: add <code>o.state</code> + <code>o.render</code> -- state on element, render function re-draws on <code>bw.refresh(el)</code>') },
-              { t: 'p', c: bw.raw('The key insight: <code>make*()</code> intentionally returns Level 0. This is a feature, not a limitation. You choose when to "activate" reactivity by adding <code>o.state</code>/<code>o.render</code> to the containing TACO.') }
+              { t: 'p', c: bw.raw('<strong>Static</strong>: <code>bw.makeCard({ title: \'Hello\' })</code> -- plain TACO data, no reactivity') },
+              { t: 'p', c: bw.raw('<strong>Stateful</strong>: add <code>o.state</code> + <code>o.render</code> -- state on element, render function re-draws on <code>bw.refresh(el)</code>') },
+              { t: 'p', c: bw.raw('The key insight: <code>make*()</code> intentionally returns static data. This is a feature, not a limitation. You choose when to "activate" reactivity by adding <code>o.state</code>/<code>o.render</code> to the containing TACO.') }
             ]
           }),
 

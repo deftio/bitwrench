@@ -4,7 +4,6 @@ Classic reactive todo application with filter bar and pub/sub state management.
 
 ## What This Demonstrates
 
-- `bw.component()` Level 2 with template bindings
 - `bw.pub()` / `bw.sub()` for `todos:changed` events
 - `bw.makeButton()` with dynamic variant switching (active filter)
 - `bw.makeCheckbox()`, `bw.makeInput()` for form elements

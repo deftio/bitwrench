@@ -239,7 +239,7 @@ Browser                              Server (Node.js)
 | Type | Method | What it does |
 |------|--------|-------------|
 | `mount` | `client.mount(ref, taco)` | Mount TACO tree into element |
-| `patch` | `client.patch(ref, fields)` | Update element via discriminated fields (`text`, `attr`, `css`, etc.) |
+| `patch` | `client.patch(ref, fields)` | Update element via discriminated fields (`text`, `attrs`, `css`, etc.) |
 | `append` | `client.append(ref, taco)` | Add child element |
 | `remove` | `client.remove(ref)` | Remove element from DOM |
 | `batch` | `client.batch(op1, op2, ...)` | Multiple ops in one frame |

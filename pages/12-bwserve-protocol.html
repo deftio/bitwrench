@@ -281,8 +281,8 @@
           [badge('batch'), 'Execute multiple operations atomically', code('ops.forEach(bw.apply)')],
           [badge('call'), 'Invoke a built-in function', code('fn.apply(null, args)')],
           [badge('message'), 'Send notification/dispatch to component', code('bw.pub() or component dispatch')],
-          [badge('listen'), 'Subscribe to DOM events on a selector', code('addEventListener on ref')],
-          [badge('unlisten'), 'Unsubscribe from DOM events', code('removeEventListener on ref')]
+          [badge('listen'), 'Subscribe to a pub/sub topic', code('bw.sub(topic, handler)')],
+          [badge('unlisten'), 'Unsubscribe from a pub/sub topic (wire-only)', code('bw.unsub(topic)')]
         ]
       ),
 
@@ -307,8 +307,8 @@
         '// Update text content',
         '{ v: 1, type: "patch", ref: "counter", text: "42" }',
         '',
-        '// Update an attribute',
-        '{ v: 1, type: "patch", ref: "status", text: "active", attr: "class" }'
+        '// Update attributes',
+        '{ v: 1, type: "patch", ref: "status", text: "active", attrs: { "class": "done" } }'
       ].join('\n')),
 
       // append
@@ -364,16 +364,24 @@
 
       // listen
       { t: 'h3', c: [badge('listen'), ' listen'] },
-      { t: 'p', c: 'Subscribe to DOM events on a selector. The client adds a delegated event listener and posts matching events back to the server.' },
+      { t: 'p', c: 'Subscribe to a pub/sub topic. When events are published to that topic on the client, they are forwarded back to the server.' },
       site.makeCodeBlock([
-        '{ v: 1, type: "listen", ref: "#form", event: "submit" }'
+        '{ v: 1, type: "listen", topic: "bw:lifecycle" }'
       ].join('\n')),
 
       // unlisten
       { t: 'h3', c: [badge('unlisten'), ' unlisten'] },
-      { t: 'p', c: 'Unsubscribe from a previously subscribed DOM event.' },
+      { t: 'p', c: [
+        'Unsubscribe from a previously subscribed topic. Note: there is no ',
+        code('client.unlisten()'),
+        ' method on the server. Send unlisten via ',
+        code('client.batch()'),
+        ' or raw ',
+        code('_send()'),
+        '.'
+      ]},
       site.makeCodeBlock([
-        '{ v: 1, type: "unlisten", ref: "#form", event: "submit" }'
+        '{ v: 1, type: "unlisten", topic: "bw:lifecycle" }'
       ].join('\n'))
     ]);
 
@@ -519,7 +527,7 @@
         '});',
         '',
         'app.page("/", function(client) {',
-        '  // client.render() still works as an alias, but client.mount() is preferred',
+        '  // Mount the initial UI into #app',
         '  client.mount("#app", {',
         '    t: "div", c: [',
         '      { t: "h2", c: "Counter" },',
@@ -543,15 +551,14 @@
       protoTable(
         ['Method', 'Message Type', 'Description'],
         [
-          [code('client.mount(ref, taco)'), badge('mount'), 'Replace ref with TACO tree (client.render() is a deprecated alias)'],
-          [code('client.patch(ref, { text, attr? })'), badge('patch'), 'Update text or attribute'],
+          [code('client.mount(ref, taco)'), badge('mount'), 'Replace ref with TACO tree'],
+          [code('client.patch(ref, { text, attrs? })'), badge('patch'), 'Update text or attributes'],
           [code('client.append(ref, taco)'), badge('append'), 'Add child element'],
           [code('client.remove(ref)'), badge('remove'), 'Remove element'],
           [code('client.batch(ops)'), badge('batch'), 'Multiple operations at once'],
           [code('client.call(name, ...args)'), badge('call'), 'Invoke a built-in function'],
           [code('client.message(ref, action, data)'), badge('message'), 'Dispatch to component'],
-          [code('client.listen(ref, event)'), badge('listen'), 'Subscribe to DOM events'],
-          [code('client.unlisten(ref, event)'), badge('unlisten'), 'Unsubscribe from DOM events'],
+          [code('client.listen(topic, handler)'), badge('listen'), 'Subscribe to a pub/sub topic'],
           [code('client.on(action, handler)'), '\u2014', 'Register handler for client actions'],
           [code('client.close()'), '\u2014', 'Disconnect this client']
         ]
@@ -750,14 +757,14 @@
     var secCliAttach = section('bwcli-attach', 'bwcli attach \u2014 Remote Debugging REPL', [
       { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
         code('bwcli attach'), ' is a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in ',
-        code('<scr' + 'ipt>'), ' tag, then gives you an interactive REPL where you can evaluate JS, inspect the DOM, take screenshots, and listen to events.'
+        code('<scr' + 'ipt>'), ' tag, then gives you an interactive REPL where you can inspect the DOM, take screenshots, mount components, and listen to events.'
       ]},
 
       { t: 'div', a: { class: 'arch-diagram' }, c:
         bw.raw(bw.html({ t: 'svg', a: { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 700 150' }, c: [].concat(
           svgArrowDefs('3'),
           svgBox(10, 32, 220, 95, 'bwcli attach', [
-            'readline REPL', 'JS expressions',
+            'readline REPL', 'slash commands',
             '/tree /screenshot /listen'
           ]),
           svgBox(270, 32, 170, 95, 'bwserve', [
@@ -791,7 +798,6 @@
       protoTable(
         ['Command', 'Description', 'Example'],
         [
-          [code('<expression>'), 'Evaluate JS in browser', code('document.title')],
           [code('/tree [sel] [depth]'), 'DOM tree summary', code('/tree #app 2')],
           [code('/screenshot [sel] [file]'), 'Capture element to PNG', code('/screenshot body page.png')],
           [code('/mount <sel> <comp> [json]'), 'Mount BCCL component', code('/mount #app card {"title":"Hi"}')],
@@ -812,7 +818,7 @@
       protoTable(
         ['Builtin', 'Purpose', 'Response Route'],
         [
-          [code('_bw_tree'), 'Walk DOM tree, return structure', code('/bw/return/tree/:id')],
+          [code('_bw_tree'), 'Walk DOM tree, return structure', code('/bw/return/query/:id')],
           [code('_bw_listen'), 'Add delegated event listener', code('/bw/return/event/:id')],
           [code('_bw_unlisten'), 'Remove event listener', '\u2014'],
           [code('_bw_screenshot'), 'Capture element via html2canvas', code('/bw/return/screenshot/:id')],
@@ -822,7 +828,7 @@
 
       site.makeCallout('warning', 'Security', {
         t: 'p', c: [
-          'Attach mode is a debugging tool with full JS evaluation capability. The server binds to localhost. ',
+          'Attach mode is a debugging tool that can inspect and modify the live DOM. The server binds to localhost. ',
           { t: 'strong', c: 'Never expose to the public internet.' }
         ]
       }),

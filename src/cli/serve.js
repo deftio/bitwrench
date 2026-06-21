@@ -141,10 +141,11 @@ function parseRelaxedJSON(str) {
 var _COMMAND_REQUIRED = {
     screenshot: [],
     tree:     [],
-    render:   ['selector', 'taco'],
-    patch:    ['id'],
-    listen:   ['selector', 'event'],
-    unlisten: ['selector', 'event'],
+    mount:    ['ref', 'taco'],
+    render:   ['ref', 'taco'],   // deprecated alias for mount
+    patch:    ['ref'],
+    listen:   ['topic'],
+    unlisten: ['topic'],
     clients:  []
 };
 
@@ -238,20 +239,27 @@ function handleCommand(msg, app, verbose) {
                     return { ok: true, result: result, clientId: clientId };
                 });
 
+            case 'mount':
             case 'render':
-                client.render(msg.selector, msg.taco);
+                client.mount(msg.ref, msg.taco);
                 return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'patch':
-                client.patch(msg.id, msg.content, msg.attr);
+                var patchFields = {};
+                for (var pk in msg) {
+                    if (pk !== 'command' && pk !== 'ref' && pk !== 'clientId' && pk !== 'timeout') {
+                        patchFields[pk] = msg[pk];
+                    }
+                }
+                client.patch(msg.ref, patchFields);
                 return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'listen':
-                client.call('_bw_listen', { selector: msg.selector, event: msg.event });
+                client.listen(msg.topic);
                 return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'unlisten':
-                client.call('_bw_unlisten', { selector: msg.selector, event: msg.event });
+                client._send({ type: 'unlisten', topic: msg.topic });
                 return Promise.resolve({ ok: true, clientId: clientId });
         }
     } catch (err) {

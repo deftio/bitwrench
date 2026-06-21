@@ -225,7 +225,7 @@
         renderWizard();
       }
 
-      // -- Main render function (Level 1 — manual re-render) ---------------
+      // -- Main render function (manual re-render with bw.DOM()) ------------
       function renderWizard() {
         var stepContent = step === 1 ? stepAccount() :
                           step === 2 ? stepPreferences() :

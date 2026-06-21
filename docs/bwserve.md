@@ -294,8 +294,6 @@ app.broadcast({
 | `client.on(action, handler)` | Register handler for client actions |
 | `client.close()` | Disconnect this client |
 
-> **Note:** `client.render()` still works as a deprecated alias for `client.mount()` but should not be used in new code.
-
 ## Screenshots
 
 The server can capture what the client is displaying as a PNG or JPEG image. This uses html2canvas on the client side (lazy-loaded on first call, vendored at ~194 KB).

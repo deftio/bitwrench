@@ -260,39 +260,39 @@
 
 
     // =========================================================================
-    // Section 2: Three Levels of TACO Materialization
+    // Section 2: TACO Materialization Stages
     // =========================================================================
 
     var section2 = {
       t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Three Levels of Materialization' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'TACO Materialization Stages' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('A TACO object exists at one of three levels. Understanding this model is key to debugging effectively.') },
+            c: bw.raw('A TACO object exists at one of three stages. Understanding this model is key to debugging effectively.') },
 
           { t: 'table', a: { class: 'api-table' }, c: [
             { t: 'thead', c: { t: 'tr', c: [
-              { t: 'th', c: 'Level' },
+              { t: 'th', c: 'Stage' },
               { t: 'th', c: 'What it is' },
               { t: 'th', c: 'How you get it' },
               { t: 'th', c: 'Use case' }
             ]}},
             { t: 'tbody', c: [
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Level 0: TACO' } },
+                { t: 'td', c: { t: 'strong', c: 'Data (TACO)' } },
                 { t: 'td', c: 'Plain JS object (data/intent)' },
                 { t: 'td', c: bw.raw('<code>bw.makeCard({...})</code>') },
                 { t: 'td', c: 'Serialize, transform, send over wire, SSR' }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Level 1: DOM/HTML' } },
+                { t: 'td', c: { t: 'strong', c: 'DOM / HTML' } },
                 { t: 'td', c: 'Live DOM nodes (fire-and-forget)' },
                 { t: 'td', c: bw.raw('<code>bw.DOM(sel, taco)</code> or <code>bw.html(taco)</code>') },
                 { t: 'td', c: 'Render once, static pages' }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Level 2: Stateful' } },
+                { t: 'td', c: { t: 'strong', c: 'Stateful' } },
                 { t: 'td', c: 'Element with state + render' },
                 { t: 'td', c: bw.raw('<code>o: { state: {...}, render: fn }</code>') },
                 { t: 'td', c: 'Reactive state, bw.refresh(el), bw.patch(id, content)' }
@@ -300,17 +300,17 @@
             ]}
           ]},
 
-          { t: 'h3', c: 'When to use each level' },
+          { t: 'h3', c: 'When to use each stage' },
           consoleBlock([
-            '<span class="console-comment">// Level 0 — I just need a description</span>',
+            '<span class="console-comment">// Data — I just need a description</span>',
             'var card = bw.makeCard({ title: \'Users\', content: \'1,234\' });',
             'typeof card;  <span class="console-comment">// "object" — plain TACO</span>',
             '',
-            '<span class="console-comment">// Level 1 — mount it and forget</span>',
+            '<span class="console-comment">// DOM — mount it and forget</span>',
             'bw.DOM(\'#app\', card);',
             '<span class="console-comment">// or: var html = bw.html(card); // for SSR</span>',
             '',
-            '<span class="console-comment">// Level 2 — I need reactive state + render</span>',
+            '<span class="console-comment">// Stateful — I need reactive state + render</span>',
             'var counter = {',
             '  t: \'div\',',
             '  o: {',
@@ -335,7 +335,7 @@
 
           site.makeCallout('concept', 'The key insight', {
             t: 'p',
-            c: bw.raw('Level 0 is bitwrench\'s <strong>moat</strong>. No other framework has a pure-data layer that\'s serializable, transformable, and sendable over a WebSocket. Level 2 adds reactivity <em>on top</em> of Level 0 &mdash; it doesn\'t replace it. You choose which level you need per-component.')
+            c: bw.raw('The data stage is bitwrench\'s <strong>moat</strong>. No other framework has a pure-data layer that\'s serializable, transformable, and sendable over a WebSocket. The stateful stage adds reactivity <em>on top</em> of the data stage &mdash; it doesn\'t replace it. You choose which stage you need per-component.')
           })
         ]}
       ]
