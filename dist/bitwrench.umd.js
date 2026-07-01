@@ -19,7 +19,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-07-01T16:14:08.862Z'
+    buildDate: '2026-07-01T17:17:09.933Z'
   };
 
   /**
@@ -1689,6 +1689,16 @@
   // a generate*Themed() function. That's it.
   // =========================================================================
 
+  // Generate 12-column grid rules for a given class prefix (e.g. 'bw_col', 'bw_col_sm')
+  function _gridCols(prefix) {
+    var r = {};
+    for (var i = 1; i <= 12; i++) {
+      var pct = +(100 * i / 12).toFixed(6) + '%';
+      r['.' + prefix + '_' + i] = { 'flex': '0 0 ' + pct, 'max-width': pct };
+    }
+    return r;
+  }
+
   var structuralRules = {
     // ---- Reset ----
     base: {
@@ -1759,18 +1769,7 @@
         'padding-left': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)'
       },
       '.bw_col': { 'flex-basis': '0', 'flex-grow': '1', 'max-width': '100%' },
-      '.bw_col_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-      '.bw_col_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-      '.bw_col_3': { 'flex': '0 0 25%', 'max-width': '25%' },
-      '.bw_col_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-      '.bw_col_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-      '.bw_col_6': { 'flex': '0 0 50%', 'max-width': '50%' },
-      '.bw_col_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-      '.bw_col_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-      '.bw_col_9': { 'flex': '0 0 75%', 'max-width': '75%' },
-      '.bw_col_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-      '.bw_col_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-      '.bw_col_12': { 'flex': '0 0 100%', 'max-width': '100%' }
+      ..._gridCols('bw_col')
     },
 
     // ---- Buttons ----
@@ -2482,48 +2481,9 @@
 
     // ---- Responsive ----
     responsive: {
-      '@media (min-width: 576px)': {
-        '.bw_col_sm_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-        '.bw_col_sm_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-        '.bw_col_sm_3': { 'flex': '0 0 25%', 'max-width': '25%' },
-        '.bw_col_sm_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-        '.bw_col_sm_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-        '.bw_col_sm_6': { 'flex': '0 0 50%', 'max-width': '50%' },
-        '.bw_col_sm_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-        '.bw_col_sm_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-        '.bw_col_sm_9': { 'flex': '0 0 75%', 'max-width': '75%' },
-        '.bw_col_sm_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-        '.bw_col_sm_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-        '.bw_col_sm_12': { 'flex': '0 0 100%', 'max-width': '100%' }
-      },
-      '@media (min-width: 768px)': {
-        '.bw_col_md_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-        '.bw_col_md_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-        '.bw_col_md_3': { 'flex': '0 0 25%', 'max-width': '25%' },
-        '.bw_col_md_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-        '.bw_col_md_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-        '.bw_col_md_6': { 'flex': '0 0 50%', 'max-width': '50%' },
-        '.bw_col_md_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-        '.bw_col_md_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-        '.bw_col_md_9': { 'flex': '0 0 75%', 'max-width': '75%' },
-        '.bw_col_md_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-        '.bw_col_md_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-        '.bw_col_md_12': { 'flex': '0 0 100%', 'max-width': '100%' }
-      },
-      '@media (min-width: 992px)': {
-        '.bw_col_lg_1': { 'flex': '0 0 8.333333%', 'max-width': '8.333333%' },
-        '.bw_col_lg_2': { 'flex': '0 0 16.666667%', 'max-width': '16.666667%' },
-        '.bw_col_lg_3': { 'flex': '0 0 25%', 'max-width': '25%' },
-        '.bw_col_lg_4': { 'flex': '0 0 33.333333%', 'max-width': '33.333333%' },
-        '.bw_col_lg_5': { 'flex': '0 0 41.666667%', 'max-width': '41.666667%' },
-        '.bw_col_lg_6': { 'flex': '0 0 50%', 'max-width': '50%' },
-        '.bw_col_lg_7': { 'flex': '0 0 58.333333%', 'max-width': '58.333333%' },
-        '.bw_col_lg_8': { 'flex': '0 0 66.666667%', 'max-width': '66.666667%' },
-        '.bw_col_lg_9': { 'flex': '0 0 75%', 'max-width': '75%' },
-        '.bw_col_lg_10': { 'flex': '0 0 83.333333%', 'max-width': '83.333333%' },
-        '.bw_col_lg_11': { 'flex': '0 0 91.666667%', 'max-width': '91.666667%' },
-        '.bw_col_lg_12': { 'flex': '0 0 100%', 'max-width': '100%' }
-      },
+      '@media (min-width: 576px)': _gridCols('bw_col_sm'),
+      '@media (min-width: 768px)': _gridCols('bw_col_md'),
+      '@media (min-width: 992px)': _gridCols('bw_col_lg'),
       '@media (max-width: 575px)': {
         '.bw_card_img_left, .bw_card-img-left': { 'width': '100%' },
         '.bw_card_img_right, .bw_card-img-right': { 'width': '100%' },
@@ -2563,12 +2523,12 @@
       rules['.bw_ms_' + k] = { 'margin-left': v + ' !important' };
       rules['.bw_me_' + k] = { 'margin-right': v + ' !important' };
       rules['.bw_p_' + k] = { 'padding': v + ' !important' };
-      rules['.bw_pt_' + k + ', .pt-' + k] = { 'padding-top': v + ' !important' };
-      rules['.bw_pb_' + k + ', .pb-' + k] = { 'padding-bottom': v + ' !important' };
-      rules['.bw_ps_' + k + ', .ps-' + k] = { 'padding-left': v + ' !important' };
-      rules['.bw_pe_' + k + ', .pe-' + k] = { 'padding-right': v + ' !important' };
+      rules['.bw_pt_' + k] = { 'padding-top': v + ' !important' };
+      rules['.bw_pb_' + k] = { 'padding-bottom': v + ' !important' };
+      rules['.bw_ps_' + k] = { 'padding-left': v + ' !important' };
+      rules['.bw_pe_' + k] = { 'padding-right': v + ' !important' };
     }
-    rules['.bw_m_auto, .m-auto'] = { 'margin': 'auto !important' };
+    rules['.bw_m_auto'] = { 'margin': 'auto !important' };
     rules['.bw_py_3'] = { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' };
     rules['.bw_py_4'] = { 'padding-top': '1.5rem !important', 'padding-bottom': '1.5rem !important' };
     rules['.bw_py_5'] = { 'padding-top': '3rem !important', 'padding-bottom': '3rem !important' };
@@ -2607,6 +2567,10 @@
     rules['.bw_text_lowercase'] = { 'text-transform': 'lowercase' };
     rules['.bw_text_capitalize'] = { 'text-transform': 'capitalize' };
 
+    // White-space
+    rules['.bw_text_wrap'] = { 'white-space': 'normal' };
+    rules['.bw_text_nowrap'] = { 'white-space': 'nowrap' };
+
     // Font size
     rules['.bw_fs_sm'] = { 'font-size': '0.875rem' };
     rules['.bw_fs_base'] = { 'font-size': '1rem' };
@@ -2615,94 +2579,65 @@
 
     // Flexbox
     var jc = { start: 'flex-start', end: 'flex-end', center: 'center', between: 'space-between', around: 'space-around' };
-    for (var jk in jc) { rules['.bw_justify_content_' + jk + ', .justify-content-' + jk] = { 'justify-content': jc[jk] }; }
+    for (var jk in jc) { rules['.bw_justify_content_' + jk] = { 'justify-content': jc[jk] }; }
     var ai = { start: 'flex-start', end: 'flex-end', center: 'center' };
-    for (var ak in ai) { rules['.bw_align_items_' + ak + ', .align-items-' + ak] = { 'align-items': ai[ak] }; }
+    for (var ak in ai) { rules['.bw_align_items_' + ak] = { 'align-items': ai[ak] }; }
 
     // Borders
     rules['.bw_border'] = { 'border': '1px solid transparent !important' };
     rules['.bw_border_0'] = { 'border': '0 !important' };
-    rules['.bw_border_top_0, .border-top-0'] = { 'border-top': '0 !important' };
-    rules['.bw_border_end_0, .border-end-0'] = { 'border-right': '0 !important' };
-    rules['.bw_border_bottom_0, .border-bottom-0'] = { 'border-bottom': '0 !important' };
-    rules['.bw_border_start_0, .border-start-0'] = { 'border-left': '0 !important' };
+    rules['.bw_border_top_0'] = { 'border-top': '0 !important' };
+    rules['.bw_border_end_0'] = { 'border-right': '0 !important' };
+    rules['.bw_border_bottom_0'] = { 'border-bottom': '0 !important' };
+    rules['.bw_border_start_0'] = { 'border-left': '0 !important' };
 
     // Rounded
     rules['.bw_rounded'] = { 'border-radius': '.375rem !important' };
     rules['.bw_rounded_0'] = { 'border-radius': '0 !important' };
-    rules['.bw_rounded_1, .rounded-1'] = { 'border-radius': '.25rem !important' };
-    rules['.bw_rounded_2, .rounded-2'] = { 'border-radius': '.375rem !important' };
-    rules['.bw_rounded_3, .rounded-3'] = { 'border-radius': '.5rem !important' };
+    rules['.bw_rounded_1'] = { 'border-radius': '.25rem !important' };
+    rules['.bw_rounded_2'] = { 'border-radius': '.375rem !important' };
+    rules['.bw_rounded_3'] = { 'border-radius': '.5rem !important' };
     rules['.bw_rounded_circle'] = { 'border-radius': '50% !important' };
-    rules['.bw_rounded_pill, .rounded-pill'] = { 'border-radius': '50rem !important' };
+    rules['.bw_rounded_pill'] = { 'border-radius': '50rem !important' };
 
     // Shadows
     rules['.bw_shadow'] = { 'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important' };
     rules['.bw_shadow_sm'] = { 'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important' };
     rules['.bw_shadow_lg'] = { 'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important' };
-    rules['.bw_shadow_none, .shadow-none'] = { 'box-shadow': 'none !important' };
+    rules['.bw_shadow_none'] = { 'box-shadow': 'none !important' };
 
     // Width/Height
     ['25', '50', '75', '100'].forEach(function(n) {
-      rules['.bw_w_' + n + ', .w-' + n] = { 'width': n + '% !important' };
-      rules['.bw_h_' + n + ', .h-' + n] = { 'height': n + '% !important' };
+      rules['.bw_w_' + n] = { 'width': n + '% !important' };
+      rules['.bw_h_' + n] = { 'height': n + '% !important' };
     });
-    rules['.bw_w_auto, .w-auto'] = { 'width': 'auto !important' };
-    rules['.bw_h_auto, .h-auto'] = { 'height': 'auto !important' };
-    rules['.bw_mw_100, .mw-100'] = { 'max-width': '100% !important' };
-    rules['.bw_mh_100, .mh-100'] = { 'max-height': '100% !important' };
+    rules['.bw_w_auto'] = { 'width': 'auto !important' };
+    rules['.bw_h_auto'] = { 'height': 'auto !important' };
+    rules['.bw_mw_100'] = { 'max-width': '100% !important' };
+    rules['.bw_mh_100'] = { 'max-height': '100% !important' };
 
     // Positioning
     ['static', 'relative', 'absolute', 'fixed', 'sticky'].forEach(function(p) {
-      rules['.bw_position_' + p + ', .position-' + p] = { 'position': p + ' !important' };
+      rules['.bw_position_' + p] = { 'position': p + ' !important' };
     });
-    rules['.bw_top_0, .top-0'] = { 'top': '0 !important' };
-    rules['.bw_top_50, .top-50'] = { 'top': '50% !important' };
-    rules['.bw_top_100, .top-100'] = { 'top': '100% !important' };
-    rules['.bw_bottom_0, .bottom-0'] = { 'bottom': '0 !important' };
-    rules['.bw_bottom_50, .bottom-50'] = { 'bottom': '50% !important' };
-    rules['.bw_bottom_100, .bottom-100'] = { 'bottom': '100% !important' };
-    rules['.bw_start_0, .start-0'] = { 'left': '0 !important' };
-    rules['.bw_start_50, .start-50'] = { 'left': '50% !important' };
-    rules['.bw_start_100, .start-100'] = { 'left': '100% !important' };
-    rules['.bw_end_0, .end-0'] = { 'right': '0 !important' };
-    rules['.bw_end_50, .end-50'] = { 'right': '50% !important' };
-    rules['.bw_end_100, .end-100'] = { 'right': '100% !important' };
-    rules['.bw_translate_middle, .translate-middle'] = { 'transform': 'translate(-50%, -50%) !important' };
+    rules['.bw_top_0'] = { 'top': '0 !important' };
+    rules['.bw_top_50'] = { 'top': '50% !important' };
+    rules['.bw_top_100'] = { 'top': '100% !important' };
+    rules['.bw_bottom_0'] = { 'bottom': '0 !important' };
+    rules['.bw_bottom_50'] = { 'bottom': '50% !important' };
+    rules['.bw_bottom_100'] = { 'bottom': '100% !important' };
+    rules['.bw_start_0'] = { 'left': '0 !important' };
+    rules['.bw_start_50'] = { 'left': '50% !important' };
+    rules['.bw_start_100'] = { 'left': '100% !important' };
+    rules['.bw_end_0'] = { 'right': '0 !important' };
+    rules['.bw_end_50'] = { 'right': '50% !important' };
+    rules['.bw_end_100'] = { 'right': '100% !important' };
+    rules['.bw_translate_middle'] = { 'transform': 'translate(-50%, -50%) !important' };
 
     // Overflow
     ['auto', 'hidden', 'visible', 'scroll'].forEach(function(o) {
-      rules['.bw_overflow_' + o + ', .overflow-' + o] = { 'overflow': o + ' !important' };
+      rules['.bw_overflow_' + o] = { 'overflow': o + ' !important' };
     });
-
-    // Typography utilities
-    rules['.fs-1'] = { 'font-size': 'calc(1.375rem + 1.5vw) !important' };
-    rules['.fs-2'] = { 'font-size': 'calc(1.325rem + .9vw) !important' };
-    rules['.fs-3'] = { 'font-size': 'calc(1.3rem + .6vw) !important' };
-    rules['.fs-4'] = { 'font-size': 'calc(1.275rem + .3vw) !important' };
-    rules['.fs-5'] = { 'font-size': '1.25rem !important' };
-    rules['.fs-6'] = { 'font-size': '1rem !important' };
-    rules['.fw-light'] = { 'font-weight': '300 !important' };
-    rules['.fw-lighter'] = { 'font-weight': 'lighter !important' };
-    rules['.fw-normal'] = { 'font-weight': '400 !important' };
-    rules['.fw-bold'] = { 'font-weight': '700 !important' };
-    rules['.fw-bolder'] = { 'font-weight': 'bolder !important' };
-    rules['.fst-italic'] = { 'font-style': 'italic !important' };
-    rules['.fst-normal'] = { 'font-style': 'normal !important' };
-    rules['.text-decoration-none'] = { 'text-decoration': 'none !important' };
-    rules['.text-decoration-underline'] = { 'text-decoration': 'underline !important' };
-    rules['.text-decoration-line-through'] = { 'text-decoration': 'line-through !important' };
-    rules['.text-lowercase'] = { 'text-transform': 'lowercase !important' };
-    rules['.text-uppercase'] = { 'text-transform': 'uppercase !important' };
-    rules['.text-capitalize'] = { 'text-transform': 'capitalize !important' };
-    rules['.text-wrap'] = { 'white-space': 'normal !important' };
-    rules['.text-nowrap'] = { 'white-space': 'nowrap !important' };
-
-    // List utilities
-    rules['.list-unstyled'] = { 'padding-left': '0', 'list-style': 'none' };
-    rules['.list-inline'] = { 'padding-left': '0', 'list-style': 'none' };
-    rules['.list-inline-item'] = { 'display': 'inline-block' };
-    rules['.list-inline-item:not(:last-child)'] = { 'margin-right': '.5rem' };
 
     // Typography — bw_ prefixed utilities via loops
     var _imp = function(p, v) { var o = {}; o[p] = v + ' !important'; return o; };
@@ -2710,6 +2645,12 @@
      ['fw',{light:'300',normal:'400',medium:'500',semibold:'600',bold:'700'},'font-weight'],
      ['lh',{tight:'1.25',normal:'1.5',relaxed:'1.75'},'line-height']
     ].forEach(function(d) { for (var dk in d[1]) rules['.bw_'+d[0]+'_'+dk] = _imp(d[2], d[1][dk]); });
+
+    // List utilities
+    rules['.bw_list_unstyled'] = { 'padding-left': '0', 'list-style': 'none' };
+    rules['.bw_list_inline'] = { 'padding-left': '0', 'list-style': 'none' };
+    rules['.bw_list_inline_item'] = { 'display': 'inline-block' };
+    rules['.bw_list_inline_item:not(:last-child)'] = { 'margin-right': '.5rem' };
 
     // Flex utilities
     rules['.bw_flex'] = { 'display': 'flex' };
@@ -2719,24 +2660,24 @@
     for (var gk in spacingValues) rules['.bw_gap_' + gk] = { 'gap': spacingValues[gk] + ' !important' };
 
     // Visibility
-    rules['.bw_visible, .visible'] = { 'visibility': 'visible !important' };
-    rules['.bw_invisible, .invisible'] = { 'visibility': 'hidden !important' };
+    rules['.bw_visible'] = { 'visibility': 'visible !important' };
+    rules['.bw_invisible'] = { 'visibility': 'hidden !important' };
 
     // User select
     ['all', 'auto', 'none'].forEach(function(u) {
-      rules['.bw_user_select_' + u + ', .user-select-' + u] = { 'user-select': u + ' !important' };
+      rules['.bw_user_select_' + u] = { 'user-select': u + ' !important' };
     });
 
     // Pointer events
-    rules['.pe-none'] = { 'pointer-events': 'none !important' };
-    rules['.pe-auto'] = { 'pointer-events': 'auto !important' };
+    rules['.bw_pe_none'] = { 'pointer-events': 'none !important' };
+    rules['.bw_pe_auto'] = { 'pointer-events': 'auto !important' };
 
     // Opacity
-    rules['.opacity-0'] = { 'opacity': '0 !important' };
-    rules['.opacity-25'] = { 'opacity': '.25 !important' };
-    rules['.opacity-50'] = { 'opacity': '.5 !important' };
-    rules['.opacity-75'] = { 'opacity': '.75 !important' };
-    rules['.opacity-100'] = { 'opacity': '1 !important' };
+    rules['.bw_opacity_0'] = { 'opacity': '0 !important' };
+    rules['.bw_opacity_25'] = { 'opacity': '.25 !important' };
+    rules['.bw_opacity_50'] = { 'opacity': '.5 !important' };
+    rules['.bw_opacity_75'] = { 'opacity': '.75 !important' };
+    rules['.bw_opacity_100'] = { 'opacity': '1 !important' };
 
     return rules;
   }
