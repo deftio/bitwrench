@@ -982,21 +982,21 @@ describe("Bar Chart (bw.makeBarChart)", function() {
 });
 
 // =========================================================================
-// bw.render() — component rendering
+// bw.render() — convenience factory over bw.append / bw.replace
 // =========================================================================
-describe("Component Render (bw.render)", function() {
+describe("bw.render (lifecycle-delegating factory)", function() {
   beforeEach(function() {
     freshDOM();
-    bw._componentRegistry.clear();
   });
 
-  it("should render TACO and return handle", function() {
-    const handle = bw.render('#app', 'append', {
+  it("should return {el, ok, error} on success", function() {
+    const r = bw.render('#app', 'append', {
       t: 'div', a: { class: 'test' }, c: 'Hello'
     });
-    assert.equal(handle.status_code, 'success');
-    assert.ok(handle.element);
-    assert.equal(handle.element.textContent, 'Hello');
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.error, null);
+    assert.ok(r.el);
+    assert.equal(r.el.textContent, 'Hello');
   });
 
   it("should append to target element", function() {
@@ -1015,167 +1015,84 @@ describe("Component Render (bw.render)", function() {
     assert.equal(app.children[0].textContent, 'Before');
   });
 
+  it("should replace target element", function() {
+    bw.render('#app', 'append', { t: 'span', a: { id: 'old' }, c: 'Old' });
+    const r = bw.render('#old', 'replace', { t: 'span', c: 'New' });
+    assert.strictEqual(r.ok, true);
+    assert.equal(r.el.textContent, 'New');
+    assert.strictEqual(document.getElementById('old'), null);
+  });
+
+  it("should insert before target", function() {
+    bw.render('#app', 'append', { t: 'span', a: { id: 'ref' }, c: 'Ref' });
+    const r = bw.render('#ref', 'before', { t: 'span', c: 'Before' });
+    assert.strictEqual(r.ok, true);
+    const app = document.getElementById('app');
+    assert.equal(app.children[0].textContent, 'Before');
+    assert.equal(app.children[1].textContent, 'Ref');
+  });
+
+  it("should insert after target", function() {
+    bw.render('#app', 'append', { t: 'span', a: { id: 'ref2' }, c: 'Ref' });
+    bw.render('#app', 'append', { t: 'span', c: 'End' });
+    const r = bw.render('#ref2', 'after', { t: 'span', c: 'After' });
+    assert.strictEqual(r.ok, true);
+    const app = document.getElementById('app');
+    assert.equal(app.children[1].textContent, 'After');
+  });
+
   it("should return error for missing target", function() {
-    const handle = bw.render('#nonexistent', 'append', { t: 'div', c: 'x' });
-    assert.ok(handle.status_code.includes('error'));
+    const r = bw.render('#nonexistent', 'append', { t: 'div', c: 'x' });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.el, null);
+    assert.ok(r.error);
   });
 
-  it("should store component in registry", function() {
-    const handle = bw.render('#app', 'append', { t: 'div', c: 'x' });
-    const retrieved = bw.getComponent(handle.component_id);
-    assert.ok(retrieved);
-    assert.equal(retrieved, handle);
+  it("should return error for invalid position", function() {
+    const r = bw.render('#app', 'sideways', { t: 'div', c: 'x' });
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.error.indexOf('invalid position') >= 0);
   });
 
-  it("handle.setState should update state", function() {
-    const handle = bw.render('#app', 'append', {
+  it("el should carry lifecycle state from o.state", function() {
+    const r = bw.render('#app', 'append', {
       t: 'div', c: 'x',
       o: { state: { count: 0 } }
     });
-    handle.setState({ count: 5 });
-    assert.equal(handle.getState().count, 5);
+    assert.ok(r.el._bw_state);
+    assert.equal(r.el._bw_state.count, 0);
   });
 
-  it("handle.setContent should update text content", function() {
-    const handle = bw.render('#app', 'append', { t: 'div', c: 'old' });
-    handle.setContent('new');
-    assert.equal(handle.element.textContent, 'new');
-  });
-
-  it("handle.addClass/removeClass/toggleClass/hasClass", function() {
-    const handle = bw.render('#app', 'append', { t: 'div', c: 'x' });
-    handle.addClass('active');
-    assert.ok(handle.hasClass('active'));
-    handle.toggleClass('active');
-    assert.ok(!handle.hasClass('active'));
-    handle.addClass('foo');
-    handle.removeClass('foo');
-    assert.ok(!handle.hasClass('foo'));
-  });
-
-  it("handle.show/hide", function() {
-    const handle = bw.render('#app', 'append', { t: 'div', c: 'x' });
-    handle.hide();
-    assert.equal(handle.element.style.display, 'none');
-    handle.show();
-    assert.equal(handle.element.style.display, '');
-  });
-
-  it("handle.setProp/getProp", function() {
-    const handle = bw.render('#app', 'append', {
-      t: 'div', a: { title: 'hello' }, c: 'x'
+  it("el.bw handle methods should work", function() {
+    const r = bw.render('#app', 'append', {
+      t: 'div', c: 'x',
+      o: {
+        handle: {
+          greet: function(el) { return 'hi'; }
+        }
+      }
     });
-    assert.equal(handle.getProp('title'), 'hello');
-    handle.setProp('title', 'world');
-    assert.equal(handle.element.getAttribute('title'), 'world');
+    assert.ok(r.el.bw);
+    assert.equal(r.el.bw.greet(), 'hi');
   });
 
-  it("handle.setProp with null should remove attribute", function() {
-    const handle = bw.render('#app', 'append', {
-      t: 'div', a: { 'data-x': 'val' }, c: 'x'
-    });
-    handle.setProp('data-x', null);
-    assert.equal(handle.element.hasAttribute('data-x'), false);
-  });
-
-  it("handle.setProp with true should set empty attribute", function() {
-    const handle = bw.render('#app', 'append', { t: 'div', c: 'x' });
-    handle.setProp('disabled', true);
-    assert.equal(handle.element.getAttribute('disabled'), '');
-  });
-
-  it("handle.on/off should add/remove event listeners", function() {
-    const handle = bw.render('#app', 'append', { t: 'button', c: 'click' });
-    let clicked = false;
-    const handler = function() { clicked = true; };
-    handle.on('click', handler);
-    handle.element.click();
-    assert.ok(clicked);
-    clicked = false;
-    handle.off('click', handler);
-    handle.element.click();
-    assert.ok(!clicked);
-  });
-
-  it("handle.destroy should remove from DOM and registry", function() {
-    const handle = bw.render('#app', 'append', { t: 'div', c: 'bye' });
-    const id = handle.component_id;
-    handle.destroy();
-    assert.equal(handle._mounted, false);
-    assert.equal(handle.status_code, 'destroyed');
-    assert.equal(bw.getComponent(id), null);
-  });
-
-  it("handle.update should re-render", function() {
-    const handle = bw.render('#app', 'append', {
-      t: 'div', c: 'original',
-      o: { state: { text: 'original' } }
-    });
-    handle._taco.c = 'updated';
-    handle.update();
-    assert.equal(handle.element.textContent, 'updated');
-  });
-
-  it("should call mounted lifecycle when o.mounted is set", function() {
-    // bw.render calls taco.o.mounted directly at line 2598
-    // but createDOM may also queue it via setTimeout. In Node test env,
-    // createDOM skips DOM lifecycle. Verify the bw.render direct call.
-    let callCount = 0;
-    const taco = { t: 'div', c: 'x' };
-    // Don't put mounted on taco.o upfront — createDOM might consume it.
-    // Instead, test that bw.render checks taco.o.mounted:
-    const handle = bw.render('#app', 'append', taco);
-    assert.equal(handle.status_code, 'success');
-    // Verify the handle has expected shape even if mounted wasn't called
-    assert.ok(handle.element);
-  });
-
-  it("should call unmount lifecycle on destroy", function() {
+  it("bw.remove should unmount rendered element", function() {
     let unmounted = false;
-    const handle = bw.render('#app', 'append', {
+    const r = bw.render('#app', 'append', {
       t: 'div', c: 'x',
       o: { unmount: function() { unmounted = true; } }
     });
-    handle.destroy();
+    bw.remove(r.el);
     assert.ok(unmounted);
   });
 
-  it("should call onStateChange", function() {
-    let changedState = null;
-    const handle = bw.render('#app', 'append', {
-      t: 'div', c: 'x',
-      o: {
-        state: { v: 0 },
-        onStateChange: function(state) { changedState = state; }
-      }
+  it("should fire mounted lifecycle via mountTree", function() {
+    // bw.append calls mountTree which fires o.mounted
+    const r = bw.render('#app', 'append', {
+      t: 'div', c: 'x'
     });
-    handle.setState({ v: 42 });
-    assert.equal(changedState.v, 42);
-  });
-});
-
-// =========================================================================
-// bw.getComponent() and bw.getAllComponents()
-// =========================================================================
-describe("Component Registry", function() {
-  beforeEach(function() {
-    freshDOM();
-    bw._componentRegistry.clear();
-  });
-
-  it("bw.getComponent should return null for unknown id", function() {
-    assert.equal(bw.getComponent('fake-id'), null);
-  });
-
-  it("bw.getAllComponents should return a Map copy", function() {
-    bw.render('#app', 'append', { t: 'div', c: 'a' });
-    bw.render('#app', 'append', { t: 'div', c: 'b' });
-    const all = bw.getAllComponents();
-    assert.ok(all instanceof Map);
-    assert.equal(all.size, 2);
-    // Should be a copy
-    all.clear();
-    assert.equal(bw.getAllComponents().size, 2);
+    assert.strictEqual(r.ok, true);
+    assert.ok(r.el);
   });
 });
 
@@ -1305,25 +1222,22 @@ describe("Clipboard (bw.copyToClipboard)", function() {
 });
 
 // =========================================================================
-// bw.render position modes
+// bw.render position modes (v2.1 — {el, ok, error} return)
 // =========================================================================
 describe("bw.render position modes", function() {
   beforeEach(function() {
     freshDOM();
-    bw._componentRegistry.clear();
   });
 
   it("should support 'replace' position", function() {
-    // Add a child to replace
     var child = document.createElement('div');
     child.id = 'replaceme';
     child.textContent = 'old';
     document.getElementById('app').appendChild(child);
-    var handle = bw.render('#replaceme', 'replace', { t: 'span', c: 'new' });
-    assert.equal(handle.status_code, 'success');
-    assert.equal(handle.element.textContent, 'new');
-    assert.equal(handle.element.tagName, 'SPAN');
-    // Old element should be gone
+    var r = bw.render('#replaceme', 'replace', { t: 'span', c: 'new' });
+    assert.strictEqual(r.ok, true);
+    assert.equal(r.el.textContent, 'new');
+    assert.equal(r.el.tagName, 'SPAN');
     assert.equal(document.getElementById('replaceme'), null);
   });
 
@@ -1332,8 +1246,8 @@ describe("bw.render position modes", function() {
     marker.id = 'marker';
     marker.textContent = 'marker';
     document.getElementById('app').appendChild(marker);
-    var handle = bw.render('#marker', 'before', { t: 'span', c: 'before-content' });
-    assert.equal(handle.status_code, 'success');
+    var r = bw.render('#marker', 'before', { t: 'span', c: 'before-content' });
+    assert.strictEqual(r.ok, true);
     var app = document.getElementById('app');
     assert.equal(app.children[0].textContent, 'before-content');
     assert.equal(app.children[1].textContent, 'marker');
@@ -1344,60 +1258,33 @@ describe("bw.render position modes", function() {
     marker.id = 'marker2';
     marker.textContent = 'marker';
     document.getElementById('app').appendChild(marker);
-    var handle = bw.render('#marker2', 'after', { t: 'span', c: 'after-content' });
-    assert.equal(handle.status_code, 'success');
+    var r = bw.render('#marker2', 'after', { t: 'span', c: 'after-content' });
+    assert.strictEqual(r.ok, true);
     var app = document.getElementById('app');
     assert.equal(app.children[0].textContent, 'marker');
     assert.equal(app.children[1].textContent, 'after-content');
   });
 
   it("should return error for invalid position", function() {
-    var handle = bw.render('#app', 'invalid_pos', { t: 'div', c: 'x' });
-    assert.ok(handle.status_code.includes('error'), 'should return error status');
+    var r = bw.render('#app', 'invalid_pos', { t: 'div', c: 'x' });
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.error);
   });
 
-  it("should call o.mounted callback on render", function() {
+  it("should call o.mounted callback via mountTree", function() {
     var mountedCalled = false;
     var mountedEl = null;
-    var mountedHandle = null;
-    bw.render('#app', 'append', {
+    var r = bw.render('#app', 'append', {
       t: 'div', c: 'mounted-test',
       o: {
-        mounted: function(el, h) {
+        mounted: function(el) {
           mountedCalled = true;
           mountedEl = el;
-          mountedHandle = h;
         }
       }
     });
     assert.ok(mountedCalled, 'mounted callback should be called');
     assert.ok(mountedEl, 'mounted should receive element');
-    assert.ok(mountedHandle, 'mounted should receive handle');
-  });
-});
-
-// =========================================================================
-// bw.getAllComponents
-// =========================================================================
-describe("bw.getAllComponents", function() {
-  beforeEach(function() {
-    freshDOM();
-    bw._componentRegistry.clear();
-  });
-
-  it("should return a Map of all registered components", function() {
-    bw.render('#app', 'append', { t: 'div', c: 'A' });
-    bw.render('#app', 'append', { t: 'div', c: 'B' });
-    var all = bw.getAllComponents();
-    assert.ok(all instanceof Map, 'should return a Map');
-    assert.equal(all.size, 2, 'should have 2 components');
-  });
-
-  it("should return a copy, not the registry itself", function() {
-    bw.render('#app', 'append', { t: 'div', c: 'X' });
-    var a = bw.getAllComponents();
-    var b = bw.getAllComponents();
-    assert.notStrictEqual(a, b, 'should be different Map instances');
   });
 });
 
@@ -1435,55 +1322,42 @@ describe("bw.create(bw.make*()) convenience pattern", function() {
 });
 
 // =========================================================================
-// bw.render handle methods
+// bw.render — el.bw handle and DOM operations
 // =========================================================================
-describe("bw.render handle methods", function() {
+describe("bw.render — el.bw handle and DOM operations", function() {
   beforeEach(function() {
     freshDOM();
-    bw._componentRegistry.clear();
   });
 
-  it("setContent with string should update textContent", function() {
-    var handle = bw.render('#app', 'append', { t: 'div', c: 'initial' });
-    assert.equal(handle.status_code, 'success');
-    handle.setContent('updated');
-    assert.equal(handle.element.textContent, 'updated');
+  it("should create element with correct content", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 'initial' });
+    assert.strictEqual(r.ok, true);
+    assert.equal(r.el.textContent, 'initial');
   });
 
-  it("setContent with TACO should call update", function() {
-    var handle = bw.render('#app', 'append', { t: 'div', c: 'initial' });
-    // setContent with a TACO triggers update path (line 3889-3891)
-    handle.setContent({ t: 'span', c: 'nested' });
-    assert.ok(handle.element);
+  it("should create element with nested TACO content", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: { t: 'span', c: 'nested' } });
+    assert.ok(r.el);
+    assert.ok(r.el.querySelector('span'));
   });
 
-  it("addClass/removeClass/toggleClass/hasClass should work", function() {
-    var handle = bw.render('#app', 'append', { t: 'div', c: 'test' });
-    handle.addClass('foo');
-    assert.ok(handle.hasClass('foo'), 'should have class after addClass');
-    handle.removeClass('foo');
-    assert.ok(!handle.hasClass('foo'), 'should not have class after removeClass');
-    handle.toggleClass('bar');
-    assert.ok(handle.hasClass('bar'), 'should have class after toggleClass');
-    handle.toggleClass('bar');
-    assert.ok(!handle.hasClass('bar'), 'should not have class after second toggleClass');
+  it("el.bw handle methods should be accessible", function() {
+    var r = bw.render('#app', 'append', {
+      t: 'div', c: 'test',
+      o: {
+        handle: {
+          ping: function() { return 'pong'; }
+        }
+      }
+    });
+    assert.ok(r.el.bw);
+    assert.strictEqual(r.el.bw.ping(), 'pong');
   });
 
-  it("show/hide should toggle display", function() {
-    var handle = bw.render('#app', 'append', { t: 'div', c: 'vis' });
-    handle.hide();
-    assert.equal(handle.element.style.display, 'none');
-    handle.show();
-    assert.equal(handle.element.style.display, '');
-  });
-
-  it("destroy should remove element and clean up", function() {
-    var handle = bw.render('#app', 'append', { t: 'div', c: 'destroy-me' });
-    var id = handle.component_id;
-    document.getElementById('app').appendChild(handle.element);
-    handle.destroy();
-    assert.equal(handle.status_code, 'destroyed');
-    assert.equal(bw.getComponent(id), null);
+  it("bw.remove should clean up element", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { id: 'rm-test' }, c: 'destroy-me' });
+    bw.remove(r.el);
+    assert.strictEqual(document.getElementById('rm-test'), null);
   });
 });
 
@@ -1927,14 +1801,13 @@ describe("bw.copyToClipboard", function() {
 describe("bw.render error path", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should return error handle when create throws", function() {
-    // Temporarily make create throw to test the catch path
+  it("should return {ok:false} when create throws", function() {
     const origCreate = bw.create;
     bw.create = function() { throw new Error('mock create failure'); };
-    const handle = bw.render('#app', 'append', { t: 'div', o: { id: 'err-test' } });
+    const r = bw.render('#app', 'append', { t: 'div', o: { id: 'err-test' } });
     bw.create = origCreate;
-    assert.strictEqual(handle.object_type, 'error');
-    assert.ok(handle.status_code.includes('render_failed'));
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.error);
   });
 });
 
@@ -1948,80 +1821,41 @@ describe("renderComponent removal", function() {
 });
 
 // =========================================================================
-// bw.render handle getContent, setContent, onUpdate
+// bw.render — content, attributes, state, and refresh
 // =========================================================================
-describe("bw.render handle getContent and onUpdate", function() {
+describe("bw.render — content, attributes, state, and refresh", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("getContent should return the TACO content", function() {
-    const taco = { t: 'div', c: 'Hello World' };
-    const handle = bw.render('#app', 'append', taco);
-    assert.strictEqual(handle.getContent(), 'Hello World');
+  it("should render text content", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 'Hello World' });
+    assert.strictEqual(r.el.textContent, 'Hello World');
   });
 
-  it("setContent with string should update textContent", function() {
-    const taco = { t: 'div', c: 'original' };
-    const handle = bw.render('#app', 'append', taco);
-    handle.setContent('updated text');
-    assert.strictEqual(handle.element.textContent, 'updated text');
+  it("should render attributes from TACO", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { 'data-val': '1', 'data-x': '42' }, c: 'test' });
+    assert.strictEqual(r.el.getAttribute('data-val'), '1');
+    assert.strictEqual(r.el.getAttribute('data-x'), '42');
   });
 
-  it("update should trigger onUpdate lifecycle", function() {
-    var updateCalled = false;
-    const taco = {
+  it("should store o.state on el._bw_state", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 'test', o: { state: { count: 10 } } });
+    assert.strictEqual(r.el._bw_state.count, 10);
+  });
+
+  it("bw.refresh should call o.render", function() {
+    var renderCalled = false;
+    var r = bw.render('#app', 'append', {
       t: 'div',
       c: 'original',
       o: {
-        onUpdate: function(el, state) {
-          updateCalled = true;
+        state: {},
+        render: function(el, state) {
+          renderCalled = true;
         }
       }
-    };
-    const handle = bw.render('#app', 'append', taco);
-    handle.update();
-    assert.ok(updateCalled, 'onUpdate should have been called');
-  });
-
-  it("setProp should update DOM attribute", function() {
-    const taco = { t: 'div', a: { 'data-val': '1' }, c: 'test' };
-    const handle = bw.render('#app', 'append', taco);
-    handle.setProp('data-val', '2');
-    assert.strictEqual(handle.element.getAttribute('data-val'), '2');
-    // Set to null should remove
-    handle.setProp('data-val', null);
-    assert.strictEqual(handle.element.getAttribute('data-val'), null);
-    // Set to true should set empty string
-    handle.setProp('disabled', true);
-    assert.strictEqual(handle.element.getAttribute('disabled'), '');
-  });
-
-  it("getProp should return attribute value", function() {
-    const taco = { t: 'div', a: { 'data-x': '42' }, c: 'test' };
-    const handle = bw.render('#app', 'append', taco);
-    assert.strictEqual(handle.getProp('data-x'), '42');
-  });
-
-  it("setState and getState should manage state", function() {
-    const taco = { t: 'div', c: 'test' };
-    const handle = bw.render('#app', 'append', taco);
-    handle.setState({ count: 10 });
-    assert.strictEqual(handle.getState().count, 10);
-  });
-
-  it("onStateChange lifecycle should fire on setState", function() {
-    var stateChangeCalled = false;
-    const taco = {
-      t: 'div',
-      c: 'test',
-      o: {
-        onStateChange: function(newState, updates) {
-          stateChangeCalled = true;
-        }
-      }
-    };
-    const handle = bw.render('#app', 'append', taco);
-    handle.setState({ a: 1 });
-    assert.ok(stateChangeCalled, 'onStateChange should have been called');
+    });
+    bw.refresh(r.el);
+    assert.ok(renderCalled, 'o.render should have been called');
   });
 });
 

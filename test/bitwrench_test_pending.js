@@ -34,22 +34,6 @@ describe.skip("PENDING: Cookie Operations in jsdom", function() {
   });
 });
 
-describe.skip("PENDING: Component Registry Auto-registration", function() {
-  /**
-   * REASON: renderComponent has been removed (undefined in v2.1). Use bw.render() or bw.mount() instead.
-   * FIX NEEDED: Decide if auto-registration should happen on creation
-   * PRIORITY: Medium - affects component lifecycle management
-   */
-  describe("#getComponent() without mounting", function() {
-    it("should retrieve component by ID without DOM mounting", function() {
-      const taco = { t: "div", a: { id: "comp2" }, c: "Test" };
-      const handle = bw.render('#app', 'append', taco);
-      const retrieved = bw.getComponent("comp2");
-      assert.equal(retrieved, handle);
-    });
-  });
-});
-
 describe.skip("PENDING: Environment Detection in Test Environment", function() {
   /**
    * REASON: jsdom environment confuses Node.js detection
@@ -171,10 +155,9 @@ describe.skip("PENDING: Performance Optimizations", function() {
 
 // Export test counts for reporting
 export const pendingTests = {
-  total: 9,
+  total: 8,
   categories: {
     "Cookie Operations": { count: 1, priority: "Low" },
-    "Component Registry": { count: 1, priority: "Medium" },
     "Environment Detection": { count: 1, priority: "Low" },
     "Legacy v1 API": { count: 2, priority: "High" },
     "Color Operations": { count: 1, priority: "Medium" },

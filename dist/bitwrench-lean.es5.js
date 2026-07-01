@@ -197,7 +197,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-06-21T17:53:18.206Z'
+    buildDate: '2026-07-01T16:14:08.862Z'
   };
 
   /**
@@ -10906,291 +10906,87 @@
   };
 
   /**
-   * Component registry for tracking rendered components
-   * @private
-   */
-  bw._componentRegistry = new Map();
-
-  /**
-   * Render a TACO object into the DOM at a specific position, returning a component handle.
+   * Render a TACO into the DOM at a specific position relative to a target.
    *
-   * The handle provides full lifecycle control: state management, re-rendering,
-   * class manipulation, show/hide, event binding, and destroy. Components are
-   * tracked in a registry for later retrieval via `bw.getComponent()`.
+   * Thin convenience factory over `bw.append()` / `bw.replace()`. Every code
+   * path goes through the v2.1 lifecycle pipeline (create → insert → mountTree),
+   * so mounted/unmount hooks, state, handles, and the janitor all work
+   * automatically.
    *
-   * @param {Element|string} element - Target element or CSS selector
-   * @param {string} position - Position: 'replace', 'prepend', 'append', 'before', 'after'
+   * @param {Element|string} target - Target element or CSS selector
+   * @param {string} position - 'append', 'prepend', 'replace', 'before', 'after'
    * @param {Object} taco - TACO object to render
-   * @returns {Object} Component handle with element, setState, update, destroy, etc.
+   * @returns {{ el: Element|null, ok: boolean, error: string|null }}
    * @category DOM Generation
-   * @see bw.getComponent
-   * @see bw.DOM
+   * @see bw.append
+   * @see bw.replace
    * @example
-   * var handle = bw.render('#app', 'append', {
+   * var r = bw.render('#app', 'append', {
    *   t: 'button', a: { class: 'bw_btn' }, c: 'Click Me',
    *   o: { state: { clicks: 0 } }
    * });
-   * handle.setState({ clicks: 1 });
-   * handle.destroy();
+   * if (r.ok) r.el.bw.myMethod();   // use component handle
    */
-  bw.render = function (element, position, taco) {
-    var _taco$o2, _taco$o3, _taco$o4;
-    // Get target element
-    var targetEl = _is(element, 'string') ? document.querySelector(element) : element;
-    if (!targetEl) {
-      return {
-        object_type: 'error',
-        component_id: null,
-        object_handle_in_dom: null,
-        status_code: 'error=target_element_not_found'
-      };
-    }
-
-    // Generate unique UUID class if not provided
-    var componentId = ((_taco$o2 = taco.o) === null || _taco$o2 === void 0 ? void 0 : _taco$o2.id) || bw.uuid('uuid');
-
-    // Create DOM element
-    var domElement;
+  bw.render = function (target, position, taco) {
     try {
-      domElement = bw.create(taco);
-    } catch (e) {
-      return {
-        object_type: 'error',
-        component_id: componentId,
-        object_handle_in_dom: null,
-        status_code: "error=render_failed:".concat(e.message)
+      var targetEl = _is(target, 'string') ? bw.$(target)[0] : target;
+      if (!targetEl) return {
+        el: null,
+        ok: false,
+        error: 'target not found'
       };
-    }
-
-    // Add component ID as class + lifecycle marker
-    domElement.classList.add(componentId);
-    domElement.classList.add(_BW_LC);
-
-    // Insert into DOM based on position
-    try {
+      var el;
       switch (position) {
-        case 'replace':
-          targetEl.parentNode.replaceChild(domElement, targetEl);
+        case 'append':
+          el = bw.append(targetEl, taco);
           break;
         case 'prepend':
-          targetEl.insertBefore(domElement, targetEl.firstChild);
+          el = bw.append(targetEl, taco, {
+            before: 0
+          });
           break;
-        case 'append':
-          targetEl.appendChild(domElement);
+        case 'replace':
+          el = bw.replace(targetEl, taco);
           break;
         case 'before':
-          targetEl.parentNode.insertBefore(domElement, targetEl);
+          if (!targetEl.parentNode) return {
+            el: null,
+            ok: false,
+            error: 'no parent for before'
+          };
+          el = bw.append(targetEl.parentNode, taco, {
+            before: targetEl
+          });
           break;
         case 'after':
-          targetEl.parentNode.insertBefore(domElement, targetEl.nextSibling);
+          if (!targetEl.parentNode) return {
+            el: null,
+            ok: false,
+            error: 'no parent for after'
+          };
+          el = bw.append(targetEl.parentNode, taco, {
+            before: targetEl.nextSibling
+          });
           break;
         default:
-          throw new Error("Invalid position: ".concat(position));
+          return {
+            el: null,
+            ok: false,
+            error: 'invalid position: ' + position
+          };
       }
+      return {
+        el: el,
+        ok: true,
+        error: null
+      };
     } catch (e) {
       return {
-        object_type: 'error',
-        component_id: componentId,
-        object_handle_in_dom: null,
-        status_code: "error=insertion_failed:".concat(e.message)
+        el: null,
+        ok: false,
+        error: e.message
       };
     }
-
-    // Create component handle
-    var handle = {
-      /* c8 ignore next -- taco.t always set by callers; 'element' is defensive fallback */
-      object_type: taco.t || 'element',
-      component_id: componentId,
-      object_handle_in_dom: domElement,
-      status_code: 'success',
-      // Reference to original TACO
-      _taco: _objectSpread2({}, taco),
-      _state: _objectSpread2({}, ((_taco$o3 = taco.o) === null || _taco$o3 === void 0 ? void 0 : _taco$o3.state) || {}),
-      _mounted: true,
-      // Get DOM element
-      get element() {
-        return this.object_handle_in_dom;
-      },
-      // Get/set state
-      getState: function getState() {
-        return _objectSpread2({}, this._state);
-      },
-      setState: function setState(updates) {
-        var _this$_taco$o;
-        this._state = _objectSpread2(_objectSpread2({}, this._state), updates);
-        if ((_this$_taco$o = this._taco.o) !== null && _this$_taco$o !== void 0 && _this$_taco$o.onStateChange) {
-          this._taco.o.onStateChange(this._state, updates);
-        }
-        return this;
-      },
-      // Update component (re-render)
-      update: function update() {
-        var _this$_taco$o2;
-        if (!this._mounted || !this.element) return this;
-        var parent = this.element.parentNode;
-
-        // Update TACO with current state
-        if (this._taco.o) {
-          this._taco.o.state = this._state;
-        }
-
-        // Re-render
-        var newElement = bw.create(this._taco);
-        newElement.classList.add(componentId);
-        newElement.classList.add(_BW_LC);
-
-        // Replace in DOM
-        parent.replaceChild(newElement, this.element);
-        this.object_handle_in_dom = newElement;
-
-        // Call update lifecycle
-        if ((_this$_taco$o2 = this._taco.o) !== null && _this$_taco$o2 !== void 0 && _this$_taco$o2.onUpdate) {
-          this._taco.o.onUpdate(newElement, this._state);
-        }
-        return this;
-      },
-      // Get/set properties
-      getProp: function getProp(key) {
-        var _this$_taco$a;
-        return (_this$_taco$a = this._taco.a) === null || _this$_taco$a === void 0 ? void 0 : _this$_taco$a[key];
-      },
-      setProp: function setProp(key, value) {
-        if (!this._taco.a) this._taco.a = {};
-        this._taco.a[key] = value;
-
-        // Update DOM attribute
-        if (this.element) {
-          if (value === null || value === undefined) {
-            this.element.removeAttribute(key);
-          } else if (value === true) {
-            this.element.setAttribute(key, '');
-          } else {
-            this.element.setAttribute(key, String(value));
-          }
-        }
-        return this;
-      },
-      // Get/set content
-      getContent: function getContent() {
-        return this._taco.c;
-      },
-      setContent: function setContent(content) {
-        this._taco.c = content;
-        if (this.element) {
-          if (_is(content, 'string')) {
-            this.element.textContent = content;
-          } else {
-            // Re-render for complex content
-            this.update();
-          }
-        }
-        return this;
-      },
-      // Add/remove CSS classes
-      addClass: function addClass(className) {
-        if (this.element) {
-          this.element.classList.add(className);
-        }
-        return this;
-      },
-      removeClass: function removeClass(className) {
-        if (this.element) {
-          this.element.classList.remove(className);
-        }
-        return this;
-      },
-      toggleClass: function toggleClass(className) {
-        if (this.element) {
-          this.element.classList.toggle(className);
-        }
-        return this;
-      },
-      hasClass: function hasClass(className) {
-        return this.element ? this.element.classList.contains(className) : false;
-      },
-      // Show/hide
-      show: function show() {
-        if (this.element) {
-          this.element.style.display = '';
-        }
-        return this;
-      },
-      hide: function hide() {
-        if (this.element) {
-          this.element.style.display = 'none';
-        }
-        return this;
-      },
-      // Event handling
-      on: function on(event, handler) {
-        if (this.element) {
-          this.element.addEventListener(event, handler);
-        }
-        return this;
-      },
-      off: function off(event, handler) {
-        if (this.element) {
-          this.element.removeEventListener(event, handler);
-        }
-        return this;
-      },
-      // Destroy component
-      destroy: function destroy() {
-        var _this$_taco$o3;
-        if (!this._mounted) return this;
-
-        // Call unmount lifecycle
-        if ((_this$_taco$o3 = this._taco.o) !== null && _this$_taco$o3 !== void 0 && _this$_taco$o3.unmount) {
-          this._taco.o.unmount(this.element);
-        }
-
-        // Remove from DOM
-        if (this.element && this.element.parentNode) {
-          this.element.parentNode.removeChild(this.element);
-        }
-
-        // Remove from registry
-        bw._componentRegistry["delete"](componentId);
-
-        // Clean up
-        this._mounted = false;
-        this.object_handle_in_dom = null;
-        this.status_code = 'destroyed';
-        return this;
-      }
-    };
-
-    // Store in registry
-    bw._componentRegistry.set(componentId, handle);
-
-    // Call mounted lifecycle
-    if ((_taco$o4 = taco.o) !== null && _taco$o4 !== void 0 && _taco$o4.mounted) {
-      taco.o.mounted(domElement, handle);
-    }
-    return handle;
-  };
-
-  /**
-   * Get a component handle by its ID from the component registry.
-   *
-   * @param {string} id - Component ID (from bw.render)
-   * @returns {Object|null} Component handle or null if not found
-   * @category DOM Generation
-   * @see bw.render
-   */
-  bw.getComponent = function (id) {
-    return bw._componentRegistry.get(id) || null;
-  };
-
-  /**
-   * Get all registered component handles as a Map.
-   *
-   * @returns {Map} Map of componentId → component handle
-   * @category DOM Generation
-   * @see bw.getComponent
-   */
-  bw.getAllComponents = function () {
-    return new Map(bw._componentRegistry);
   };
   initRouter(bw);
 

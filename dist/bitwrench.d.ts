@@ -425,10 +425,8 @@ export interface Bitwrench {
   funcUnregister(name: string): void;
   funcGetRegistry(): Record<string, Function>;
 
-  // -- Component Registry ---------------------------------------------------
-  render(element: HTMLElement, position: string, taco: Taco): string;
-  getComponent(id: string): Record<string, any> | null;
-  getAllComponents(): Map<string, any>;
+  // -- Render (convenience factory over append/replace) --------------------
+  render(target: string | HTMLElement, position: 'append' | 'prepend' | 'replace' | 'before' | 'after', taco: Taco): { el: HTMLElement | null; ok: boolean; error: string | null };
 
   // -- CSS & Styles ---------------------------------------------------------
   /** Generate CSS string from JS object */
@@ -598,7 +596,6 @@ export interface Bitwrench {
   _unmountCallbacks: Map<string, Function>;
   _topics: Record<string, any[]>;
   _fnRegistry: Record<string, Function>;
-  _componentRegistry: Map<string, any>;
   _clientFunctions: Record<string, Function>;
   _clientRemotes: Record<string, Function>;
   _wireListeners: Record<string, () => void>;

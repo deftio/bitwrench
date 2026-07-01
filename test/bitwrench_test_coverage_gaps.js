@@ -2083,67 +2083,68 @@ describe("bw.makeBarChart — branches", function() {
 
 
 // =========================================================================
-// L4972-5190 — bw.render
+// bw.render — branches (lifecycle-delegating factory)
 // =========================================================================
 describe("bw.render — branches", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should return error for missing target (L4972)", function() {
-    assert.strictEqual(bw.render('#nope', 'append', { t: 'div', c: 't' }).status_code, 'error=target_element_not_found');
+  it("should return {ok:false} for missing target", function() {
+    var r = bw.render('#nope', 'append', { t: 'div', c: 't' });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.el, null);
+    assert.ok(r.error);
   });
 
-  it("should render append/prepend", function() {
-    assert.strictEqual(bw.render('#app', 'append', { t: 'span', c: 'a' }).status_code, 'success');
-    assert.strictEqual(bw.render('#app', 'prepend', { t: 'span', c: 'p' }).status_code, 'success');
+  it("should render append/prepend and return {ok:true}", function() {
+    var r1 = bw.render('#app', 'append', { t: 'span', c: 'a' });
+    var r2 = bw.render('#app', 'prepend', { t: 'span', c: 'p' });
+    assert.strictEqual(r1.ok, true);
+    assert.strictEqual(r2.ok, true);
+    assert.ok(r1.el);
+    assert.ok(r2.el);
   });
 
-  it("should return object_type from tag (L5035)", function() {
-    assert.strictEqual(bw.render('#app', 'append', { t: 'button', c: 'c' }).object_type, 'button');
+  it("should return the created DOM element", function() {
+    var r = bw.render('#app', 'append', { t: 'button', c: 'c' });
+    assert.strictEqual(r.el.tagName.toLowerCase(), 'button');
   });
 
-  it("should support setState/getState", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 't', o: { state: { c: 0 } } });
-    h.setState({ c: 5 });
-    assert.strictEqual(h.getState().c, 5);
+  it("el should carry state from o.state", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 't', o: { state: { c: 0 } } });
+    assert.strictEqual(r.el._bw_state.c, 0);
   });
 
-  it("should skip update when unmounted (L5065)", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 't' });
-    h.destroy();
-    assert.strictEqual(h.update(), h);
-  });
-
-  it("hasClass false after destroy (L5155)", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 't' });
-    h.destroy();
-    assert.strictEqual(h.hasClass('foo'), false);
-  });
-
-  it("addClass/toggleClass/show/hide/on/off", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 't' });
-    h.addClass('x');
-    assert.ok(h.hasClass('x'));
-    h.toggleClass('x');
-    assert.ok(!h.hasClass('x'));
-    h.hide();
-    assert.strictEqual(h.element.style.display, 'none');
-    h.show();
-    assert.strictEqual(h.element.style.display, '');
-    h.on('click', function() {});
-    h.off('click', function() {});
-    assert.ok(true);
-  });
-
-  it("should not destroy twice (L5190)", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 't' });
-    h.destroy();
-    assert.strictEqual(h.destroy().status_code, 'destroyed');
-  });
-
-  it("should call unmount lifecycle", function() {
+  it("bw.remove fires unmount on rendered element", function() {
     var unmounted = false;
-    bw.render('#app', 'append', { t: 'div', c: 't', o: { unmount: function() { unmounted = true; } } }).destroy();
+    var r = bw.render('#app', 'append', { t: 'div', c: 't', o: { unmount: function() { unmounted = true; } } });
+    bw.remove(r.el);
     assert.strictEqual(unmounted, true);
+  });
+
+  it("should return {ok:false} for invalid position", function() {
+    var r = bw.render('#app', 'badpos', { t: 'div', c: 't' });
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.error.indexOf('invalid position') >= 0);
+  });
+
+  it("before/after positions work correctly", function() {
+    bw.render('#app', 'append', { t: 'span', a: { id: 'mid' }, c: 'M' });
+    var rb = bw.render('#mid', 'before', { t: 'span', c: 'B' });
+    var ra = bw.render('#mid', 'after', { t: 'span', c: 'A' });
+    assert.strictEqual(rb.ok, true);
+    assert.strictEqual(ra.ok, true);
+    var app = document.getElementById('app');
+    assert.strictEqual(app.children[0].textContent, 'B');
+    assert.strictEqual(app.children[1].textContent, 'M');
+    assert.strictEqual(app.children[2].textContent, 'A');
+  });
+
+  it("replace position works correctly", function() {
+    bw.render('#app', 'append', { t: 'span', a: { id: 'rep' }, c: 'Old' });
+    var r = bw.render('#rep', 'replace', { t: 'span', c: 'New' });
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.el.textContent, 'New');
+    assert.strictEqual(document.getElementById('rep'), null);
   });
 });
 
@@ -3937,28 +3938,29 @@ describe("bw.makeBarChart — showLabels=false (L4845)", function() {
 
 
 // =========================================================================
-// L4972 — bw.render non-string element
+// bw.render — DOM element directly
 // =========================================================================
-describe("bw.render — DOM element directly (L4972)", function() {
+describe("bw.render — DOM element directly", function() {
   beforeEach(function() { freshDOM(); });
 
   it("should accept DOM element directly", function() {
     var target = document.getElementById('app');
-    var h = bw.render(target, 'append', { t: 'div', c: 'direct' });
-    assert.strictEqual(h.status_code, 'success');
+    var r = bw.render(target, 'append', { t: 'div', c: 'direct' });
+    assert.strictEqual(r.ok, true);
+    assert.ok(r.el);
   });
 });
 
 
 // =========================================================================
-// L5035 — bw.render object_type from taco.t
+// bw.render — tag type preserved on element
 // =========================================================================
-describe("bw.render — object_type (L5035)", function() {
+describe("bw.render — tag type on element", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should use taco.t as object_type", function() {
-    var h = bw.render('#app', 'append', { t: 'span', c: 'test' });
-    assert.strictEqual(h.object_type, 'span');
+  it("should create element with correct tag", function() {
+    var r = bw.render('#app', 'append', { t: 'span', c: 'test' });
+    assert.strictEqual(r.el.tagName.toLowerCase(), 'span');
   });
 });
 
@@ -4000,110 +4002,88 @@ describe("bw.render — positions", function() {
     var child = document.createElement('div');
     child.id = 'rp-target';
     document.getElementById('app').appendChild(child);
-    var h = bw.render('#rp-target', 'replace', { t: 'em', c: 'replaced' });
-    assert.strictEqual(h.status_code, 'success');
+    var r = bw.render('#rp-target', 'replace', { t: 'em', c: 'replaced' });
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.el.tagName.toLowerCase(), 'em');
   });
 
   it("should handle before position", function() {
     var child = document.createElement('div');
     child.id = 'bf-target';
     document.getElementById('app').appendChild(child);
-    var h = bw.render('#bf-target', 'before', { t: 'span', c: 'before' });
-    assert.strictEqual(h.status_code, 'success');
+    var r = bw.render('#bf-target', 'before', { t: 'span', c: 'before' });
+    assert.strictEqual(r.ok, true);
   });
 
   it("should handle after position", function() {
     var child = document.createElement('div');
     child.id = 'af-target';
     document.getElementById('app').appendChild(child);
-    var h = bw.render('#af-target', 'after', { t: 'span', c: 'after' });
-    assert.strictEqual(h.status_code, 'success');
+    var r = bw.render('#af-target', 'after', { t: 'span', c: 'after' });
+    assert.strictEqual(r.ok, true);
   });
 
   it("should handle prepend position", function() {
-    var h = bw.render('#app', 'prepend', { t: 'span', c: 'first' });
-    assert.strictEqual(h.status_code, 'success');
+    var r = bw.render('#app', 'prepend', { t: 'span', c: 'first' });
+    assert.strictEqual(r.ok, true);
   });
 });
 
 
 // =========================================================================
-// bw.render — destroy lifecycle
+// bw.render — unmount lifecycle via bw.remove
 // =========================================================================
-describe("bw.render — destroy/unmount lifecycle", function() {
+describe("bw.render — unmount lifecycle via bw.remove", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should call unmount lifecycle on destroy", function() {
+  it("should call unmount lifecycle on bw.remove", function() {
     var called = false;
-    var h = bw.render('#app', 'append', {
+    var r = bw.render('#app', 'append', {
       t: 'div', c: 'test',
       o: { unmount: function() { called = true; } }
     });
-    h.destroy();
+    bw.remove(r.el);
     assert.strictEqual(called, true);
   });
 });
 
 
 // =========================================================================
-// bw.render — setProp / getProp / setContent
+// bw.render — DOM attributes and content via standard DOM APIs
 // =========================================================================
-describe("bw.render — setProp/getProp/setContent", function() {
+describe("bw.render — DOM attributes and content", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should set and get props", function() {
-    var h = bw.render('#app', 'append', { t: 'div', a: { 'data-x': '1' }, c: 'test' });
-    h.setProp('data-y', '2');
-    assert.strictEqual(h.element.getAttribute('data-y'), '2');
+  it("should set attributes via TACO", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { 'data-x': '1' }, c: 'test' });
+    assert.strictEqual(r.el.getAttribute('data-x'), '1');
   });
 
-  it("should remove attr when setProp value is null", function() {
-    var h = bw.render('#app', 'append', { t: 'div', a: { 'data-x': '1' }, c: 'test' });
-    h.setProp('data-x', null);
-    assert.strictEqual(h.element.getAttribute('data-x'), null);
-  });
-
-  it("should set boolean true attr as empty string", function() {
-    var h = bw.render('#app', 'append', { t: 'input', a: { type: 'text' } });
-    h.setProp('disabled', true);
-    assert.strictEqual(h.element.getAttribute('disabled'), '');
-  });
-
-  it("should set string content", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'old' });
-    h.setContent('new text');
-    assert.strictEqual(h.element.textContent, 'new text');
-  });
-
-  it("should get content", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'hello' });
-    assert.strictEqual(h.getContent(), 'hello');
+  it("should set content via TACO", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 'hello' });
+    assert.strictEqual(r.el.textContent, 'hello');
   });
 });
 
 
 // =========================================================================
-// bw.getComponent / bw.getAllComponents
+// bw.render — element retrieval via standard lifecycle (no registry)
 // =========================================================================
-describe("bw.getComponent and bw.getAllComponents", function() {
+describe("bw.render — element retrieval via bw.el / bw.$", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should retrieve component by ID", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'test' });
-    var found = bw.getComponent(h.component_id);
+  it("rendered element found via bw.$", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { class: 'findme' }, c: 'test' });
+    var found = bw.$('.findme');
+    assert.ok(found.length >= 1);
+    assert.strictEqual(found[0], r.el);
+  });
+
+  it("rendered element with id found via bw.el", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { id: 'mycomp' }, c: 'test' });
+    var found = bw.el('mycomp');
     assert.ok(found);
-    assert.strictEqual(found.component_id, h.component_id);
-  });
-
-  it("should return null for unknown ID", function() {
-    assert.strictEqual(bw.getComponent('nonexistent_id'), null);
-  });
-
-  it("should return all components", function() {
-    bw.render('#app', 'append', { t: 'div', c: 'test' });
-    var all = bw.getAllComponents();
-    assert.ok(all instanceof Map);
-    assert.ok(all.size >= 1);
+    assert.strictEqual(found, r.el);
   });
 });
 
@@ -4646,78 +4626,78 @@ describe("bw.makeBarChart — title (L4852)", function() {
   });
 });
 
-describe("bw.render — create error (L4990)", function() {
+describe("bw.render — create error", function() {
   beforeEach(function() { freshDOM(); });
-  it("should return error status", function() {
+  it("should return {ok:false} on create error", function() {
     var orig = bw.create;
     bw.create = function() { throw new Error('fail'); };
-    var h = bw.render('#app', 'append', { t: 'div', c: 'test' });
+    var r = bw.render('#app', 'append', { t: 'div', c: 'test' });
     bw.create = orig;
-    assert.ok(h.status_code.indexOf('error=render_failed') >= 0);
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.error);
   });
 });
 
-describe("bw.render — invalid position (L5021-5024)", function() {
+describe("bw.render — invalid position error", function() {
   beforeEach(function() { freshDOM(); });
-  it("should return error", function() {
-    var h = bw.render('#app', 'invalid_pos', { t: 'div', c: 'test' });
-    assert.ok(h.status_code.indexOf('error=insertion_failed') >= 0);
+  it("should return {ok:false} for invalid position", function() {
+    var r = bw.render('#app', 'invalid_pos', { t: 'div', c: 'test' });
+    assert.strictEqual(r.ok, false);
+    assert.ok(r.error.indexOf('invalid position') >= 0);
   });
 });
 
-describe("bw.render — onStateChange (L5057)", function() {
+describe("bw.render — state stored on element", function() {
   beforeEach(function() { freshDOM(); });
-  it("should call onStateChange", function() {
-    var changes = [];
-    var h = bw.render('#app', 'append', { t: 'div', c: 'x', o: { state: { x: 0 }, onStateChange: function(s, u) { changes.push(u); } } });
-    h.setState({ x: 1 });
-    assert.strictEqual(changes.length, 1);
+  it("should store o.state on el._bw_state", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 'x', o: { state: { x: 0 } } });
+    assert.strictEqual(r.el._bw_state.x, 0);
   });
 });
 
-describe("bw.render — update when unmounted (L5065-5066)", function() {
+describe("bw.render — remove then re-render", function() {
   beforeEach(function() { freshDOM(); });
-  it("should skip update after destroy", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'x' });
-    h.destroy();
-    assert.strictEqual(h.update(), h);
+  it("element removed via bw.remove is gone from DOM", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { id: 'gone' }, c: 'x' });
+    bw.remove(r.el);
+    assert.strictEqual(document.getElementById('gone'), null);
   });
 });
 
-describe("bw.render — onUpdate (L5084)", function() {
+describe("bw.render — refresh calls o.render", function() {
   beforeEach(function() { freshDOM(); });
-  it("should call onUpdate", function() {
-    var updated = false;
-    var h = bw.render('#app', 'append', { t: 'div', c: 'x', o: { state: {}, onUpdate: function() { updated = true; } } });
-    h.update();
-    assert.strictEqual(updated, true);
+  it("should call o.render via bw.refresh", function() {
+    var rendered = false;
+    var r = bw.render('#app', 'append', { t: 'div', c: 'x', o: { state: {}, render: function() { rendered = true; } } });
+    bw.refresh(r.el);
+    assert.strictEqual(rendered, true);
   });
 });
 
-describe("bw.render — setProp without attrs (L5097)", function() {
+describe("bw.render — attributes set on element", function() {
   beforeEach(function() { freshDOM(); });
-  it("should create attrs object", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'x' });
-    h.setProp('data-new', 'val');
-    assert.strictEqual(h.element.getAttribute('data-new'), 'val');
+  it("should set attributes from TACO a property", function() {
+    var r = bw.render('#app', 'append', { t: 'div', a: { 'data-new': 'val' }, c: 'x' });
+    assert.strictEqual(r.el.getAttribute('data-new'), 'val');
   });
 });
 
-describe("bw.render — setContent complex (L5124)", function() {
+describe("bw.render — nested content", function() {
   beforeEach(function() { freshDOM(); });
-  it("should re-render for TACO content", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'old' });
-    h.setContent({ t: 'em', c: 'new' });
-    assert.ok(true);
+  it("should render nested TACO content", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: { t: 'em', c: 'nested' } });
+    assert.ok(r.ok);
+    assert.ok(r.el.querySelector('em'));
   });
 });
 
-describe("bw.render — mounted lifecycle (L5218)", function() {
+describe("bw.render — mounted lifecycle via mountTree", function() {
   beforeEach(function() { freshDOM(); });
-  it("should call mounted", function() {
+  it("should call mounted via mountTree", function() {
     var mountedEl = null;
-    var h = bw.render('#app', 'append', { t: 'div', c: 'x', o: { mounted: function(el) { mountedEl = el; } } });
+    var r = bw.render('#app', 'append', { t: 'div', c: 'x', o: { mounted: function(el) { mountedEl = el; } } });
     assert.ok(mountedEl);
+    assert.strictEqual(mountedEl, r.el);
   });
 });
 
@@ -5742,19 +5722,19 @@ describe("bw.makeBarChart — showLabels false branch (L4845 arm 0)", function()
 
 
 // =========================================================================
-// L5035 branch arm 0 — bw.render: object_type from taco.t
+// bw.render — element tag matches taco.t
 // =========================================================================
-describe("bw.render — object_type from taco.t (L5035 arm 0)", function() {
+describe("bw.render — element tag matches taco.t", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should use taco.t as object_type in handle", function() {
-    var h = bw.render('#app', 'append', { t: 'section', c: 'content' });
-    assert.strictEqual(h.object_type, 'section');
+  it("should create section element from section taco", function() {
+    var r = bw.render('#app', 'append', { t: 'section', c: 'content' });
+    assert.strictEqual(r.el.tagName.toLowerCase(), 'section');
   });
 
-  it("should fall back to element for generic tag", function() {
-    var h = bw.render('#app', 'append', { t: 'div', c: 'generic' });
-    assert.strictEqual(h.object_type, 'div');
+  it("should create div element from div taco", function() {
+    var r = bw.render('#app', 'append', { t: 'div', c: 'generic' });
+    assert.strictEqual(r.el.tagName.toLowerCase(), 'div');
   });
 });
 
@@ -6292,14 +6272,15 @@ describe("bw.makeBarChart — falsy label value (L4845 arm 0)", function() {
 });
 
 
-// L5035 arm 0 — taco.t || 'element' fallback
-describe("bw.render — empty taco.t fallback (L5035 arm 0)", function() {
+// bw.render — empty taco.t fallback
+describe("bw.render — empty taco.t fallback", function() {
   beforeEach(function() { freshDOM(); });
 
-  it("should use 'element' when taco.t is empty string", function() {
+  it("should handle empty tag gracefully", function() {
     try {
-      var h = bw.render('#app', 'append', { t: '', c: 'test' });
-      assert.ok(h.object_type === 'element' || h.object_type === '');
+      var r = bw.render('#app', 'append', { t: '', c: 'test' });
+      // either succeeds or fails gracefully
+      assert.ok(r.ok === true || r.ok === false);
     } catch(e) {
       assert.ok(true, "empty tag may throw");
     }
@@ -7668,18 +7649,16 @@ describe("makeTable cell render function in update path (L4557)", function() {
   });
 });
 
-// ---------- L5035: bw.render with taco.t falsy ----------
-describe("bw.render with falsy taco.t (L5035)", function() {
+// ---------- bw.render returns correct element ----------
+describe("bw.render returns correct element", function() {
   afterEach(function() { bw._resetForTest(); });
 
-  it("should use 'element' when taco.t is empty string", function() {
+  it("should return the created element with correct tag", function() {
     freshDOM();
-    // We need to pass through the createDOM step which requires a real tag
-    // The L5035 branch is taco.t || 'element' in the handle — so we need
-    // a taco that has t but renders, then manually check the handle
     var result = bw.render('#app', 'append', { t: 'div', c: 'test' });
     assert.ok(result);
-    assert.strictEqual(result.object_type, 'div');
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.el.tagName.toLowerCase(), 'div');
   });
 });
 
