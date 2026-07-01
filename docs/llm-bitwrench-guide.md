@@ -142,12 +142,11 @@ bw.DOM('#app', {
   t: 'div',
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, { t: 'div', c: [
-        { t: 'h3', c: 'Count: ' + s.count },
+        { t: 'h3', c: 'Count: ' + state.count },
         bw.makeButton({ text: '+1', onclick: function() {
-          s.count++;
+          state.count++;
           bw.refresh(el);
         }})
       ]});

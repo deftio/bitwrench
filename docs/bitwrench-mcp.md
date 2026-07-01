@@ -299,7 +299,7 @@ If using live rendering:
 ```
 screenshot({})           // see what the browser shows
 screenshot({selector: '.bw_stat_card:first-child'})  // zoom in on one element
-query_dom({code: 'document.querySelectorAll(".bw_card").length'})  // count cards
+query_dom({code: 'bw.$(\'.bw_card\').length'})  // count cards
 ```
 
 Evaluate the screenshot, decide what to change, and call `render_live` again.

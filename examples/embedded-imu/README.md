@@ -171,7 +171,7 @@ bars and tilt dot:
 
 ```javascript
 function renderIMU() {
-    var imuEl = document.getElementById('imu-section');
+    var imuEl = bw.$('#imu-section')[0];
     if (!imuEl) return;
 
     // Update accelerometer bars
@@ -189,7 +189,7 @@ function renderIMU() {
     ]});
 
     // Update tilt dot position
-    var dot = document.querySelector('.tilt-dot');
+    var dot = bw.$('.tilt-dot')[0];
     if (dot) {
         var dotX = 50 + (state.accelX / 2.0) * 40;
         var dotY = 50 + (state.accelY / 2.0) * 40;

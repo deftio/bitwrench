@@ -61,7 +61,7 @@ Parse a bwserve protocol message string, supporting both strict JSON and r-prefi
 
 ### `bw.apply(msg)`
 
-Apply a bwserve protocol message to the DOM. All messages are stamped `v: 1`. Wire fields use `ref` (not `target`) and `taco` (not `node`). Dispatches one of 9 message verbs: mount    — bw.DOM(ref, taco) patch    — bw.patch(ref, fields) with discriminated fields object append   — ref.appendChild(bw.create(taco)) remove   — bw.unmount(ref); ref.remove() batch    — iterate ops, call bw.apply for each call     — invoke a registered function message  — bw.message(ref, action, data) listen   — subscribe to client-side events unlisten — unsubscribe from client-side events Ref resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
+Apply a bwserve protocol message to the DOM. All messages are stamped `v: 1`. Wire fields use `ref` (not `target`) and `taco` (not `node`). Dispatches one of 9 message verbs: mount    — bw.DOM(ref, taco) patch    — bw.patch(ref, fields) with discriminated fields object append   — ref.appendChild(bw.create(taco)) remove   — bw.unmount(ref); ref.remove() batch    — iterate ops, call bw.apply for each call     — invoke a registered function message  — bw.message(ref, action, data) listen   — subscribe to client-side events unlisten — unsubscribe from client-side events Ref resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw.el fallback
 
 **Parameters:**
 
@@ -247,7 +247,9 @@ Tear down a DOM element and all its children by calling unmount callbacks, remov
 
 **Example:**
 ```javascript
-var el = document.querySelector('#my-widget'); bw.unmount(el);   // runs unmount hooks, clears _bw_state, _bw_render el.remove();       // safe to remove from DOM now
+var el = bw.$('#my-widget')[0];
+bw.unmount(el);   // runs unmount hooks, clears _bw_state, _bw_render
+el.remove();      // safe to remove from DOM now
 ```
 
 ---
@@ -400,7 +402,7 @@ bw.escapeHTML('<b>Hello</b> & "world"') // => '&lt;b&gt;Hello&lt;&#x2F;b&gt; &am
 
 ### `bw.refresh(target)`
 
-Re-invoke the render function of a component to re-render it. This is the recommended way to update a component after changing its state. Calls `el._bw_render(el, state)` and emits `bw:statechange` so other components can react without tight coupling.
+Re-invoke the render function of a component to re-render it. This is the recommended way to update a component after changing its state. Calls `el._bw_render(el, state)` and emits `bw:refresh` so other components can react without tight coupling.
 
 **Parameters:**
 
@@ -412,7 +414,7 @@ Re-invoke the render function of a component to re-render it. This is the recomm
 
 **Example:**
 ```javascript
-// Given a counter element with o.render el._bw_state.count++; bw.refresh(el);  // re-renders, emits bw:statechange
+// Given a counter element with o.render el._bw_state.count++; bw.refresh(el);  // re-renders, emits bw:refresh
 ```
 
 ---
@@ -505,11 +507,12 @@ Listen for a custom bitwrench event on a DOM element. Handler receives `(detail,
 | `eventName` | `string` | - Event name (will be prefixed with 'bw:') |
 | `handler` | `Function` | - Called with (detail, event) |
 
-**Returns:** `Element|null` — element (for chaining), or null if not found
+**Returns:** `Function` — off() function to remove the listener
 
 **Example:**
 ```javascript
-bw.on(document.body, 'statechange', function(detail) { console.log('State changed:', detail); });
+var off = bw.on(document.body, 'statechange', function(detail) { console.log('State changed:', detail); });
+// later: off() to stop listening
 ```
 
 ---

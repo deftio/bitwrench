@@ -260,8 +260,7 @@ function applyOp(op) {
         if (map[op.ref]) state[map[op.ref]] = op.text;
 
         // Direct DOM update for live values
-        var el = document.getElementById(op.ref);
-        if (el) el.textContent = op.text;
+        bw.el(op.ref, function(el) { el.textContent = op.text; });
     }
 }
 ```
@@ -338,7 +337,7 @@ function makeStatCard(label, id) {
 ```
 
 The `id` attribute on the value `<div>` matches the `ref` in SSE patch messages,
-so `applyOp()` can update it directly via `document.getElementById()`.
+so `applyOp()` can update it directly via `bw.el()`.
 
 ### NeoPixel Color Buttons
 

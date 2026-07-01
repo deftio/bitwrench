@@ -206,19 +206,8 @@ Create `data/index.html`:
       if (raw.charAt(0) === 'r') raw = raw.slice(1).replace(/'/g, '"');
       try { var msg = JSON.parse(raw); } catch(x) { return; }
 
-      if (msg.type === 'batch') {
-        msg.ops.forEach(applyOp);
-      } else {
-        applyOp(msg);
-      }
+      bw.apply(msg);
     };
-
-    function applyOp(op) {
-      if (op.type === 'patch') {
-        var el = document.getElementById(op.ref);
-        if (el && op.text != null) el.textContent = op.text;
-      }
-    }
 
     function sendCmd(cmd) {
       fetch('/api/command', {

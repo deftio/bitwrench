@@ -237,10 +237,9 @@ function dashboard() {
         fetch('/api/stats').then(function(r) { return r.json(); })
           .then(function(d) { el._bw_state.data = d; bw.refresh(el); });
       },
-      render: function(el) {
-        var s = el._bw_state;
-        bw.DOM(el, s.data
-          ? bw.makeTable({ data: s.data, sortable: true })
+      render: function(el, state) {
+        bw.DOM(el, state.data
+          ? bw.makeTable({ data: state.data, sortable: true })
           : { t: 'p', c: 'Loading...' }
         );
       }
@@ -408,12 +407,11 @@ function makeNav() {
           bw.refresh(el);
         }, el);
       },
-      render: function(el) {
-        var s = el._bw_state;
+      render: function(el, state) {
         bw.DOM(el, {
           t: 'ul', c: links.map(function(link) {
             return { t: 'li', a: {
-              style: link.path === s.active ? 'font-weight:bold' : ''
+              style: link.path === state.active ? 'font-weight:bold' : ''
             }, c: bw.link(link.path, link.label) };
           })
         });
@@ -462,7 +460,7 @@ function usersPage() {
       mounted: function(el) {
         bw.sub('store:users', function() { bw.refresh(el); }, el);
       },
-      render: function(el) {
+      render: function(el, state) {
         bw.DOM(el, bw.makeTable({
           data: store.users,
           columns: ['name', 'role', 'status'],

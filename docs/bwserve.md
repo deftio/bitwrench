@@ -165,7 +165,7 @@ All DOM operation targets are resolved using:
 |---------|-----------|---------|
 | `#selector` | CSS selector via `querySelector` | `#app`, `#counter` |
 | `.selector` | CSS class selector | `.bw_bccl_card` |
-| `bare-string` | `getElementById`, then `bw._el()` fallback | `counter` |
+| `bare-string` | `getElementById`, then `bw.el()` fallback | `counter` |
 
 **Best practice:** Use simple `id` attributes for patchable elements:
 ```javascript

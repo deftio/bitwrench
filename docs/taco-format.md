@@ -136,8 +136,8 @@ The options key carries state, lifecycle hooks, and component behavior. This is 
     state: { count: 0, items: [] },
 
     // Render function (called by bw.refresh)
-    render: function(el) {
-      bw.DOM(el, { t: 'span', c: 'Count: ' + el._bw_state.count });
+    render: function(el, state) {
+      bw.DOM(el, { t: 'span', c: 'Count: ' + state.count });
     },
 
     // Lifecycle hooks
@@ -337,13 +337,12 @@ bw.DOM('#app', {
   t: 'span',
   o: {
     state: { label: 'OK', color: '#4caf50' },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
         t: 'span',
         a: { class: 'status-badge',
-             style: 'background:' + s.color + '; color:#fff; padding:0.25rem 0.75rem; border-radius:999px;' },
-        c: s.label
+             style: 'background:' + state.color + '; color:#fff; padding:0.25rem 0.75rem; border-radius:999px;' },
+        c: state.label
       });
     }
   }

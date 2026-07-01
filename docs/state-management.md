@@ -112,13 +112,13 @@ function makeCounter() {
     t: 'div',
     o: {
       state: { count: 0 },
-      render: function(el) {
+      render: function(el, state) {
         bw.DOM(el, {
           t: 'div', c: [
-            { t: 'span', c: 'Count: ' + el._bw_state.count },
+            { t: 'span', c: 'Count: ' + state.count },
             { t: 'button', c: '+1', a: {
               onclick: function() {
-                el._bw_state.count++;
+                state.count++;
                 bw.refresh(el);
               }
             }}
@@ -294,13 +294,12 @@ var counter = {
   t: 'div',
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
         t: 'div', c: [
-          { t: 'h3', c: 'Count: ' + s.count },
+          { t: 'h3', c: 'Count: ' + state.count },
           bw.makeButton({ text: '+1', onclick: function() {
-            s.count++;
+            state.count++;
             bw.refresh(el);
           }})
         ]
@@ -316,7 +315,7 @@ bw.DOM('#app', counter);
 
 1. `bw.create()` (called internally by `bw.DOM()`) sees `o.state` and copies it to `el._bw_state`
 2. If `o.render` is defined, it is stored as `el._bw_render` and called immediately: `o.render(el, el._bw_state)`
-3. When state changes, you call `bw.refresh(el)` which re-invokes `el._bw_render(el, el._bw_state)` and emits a `bw:statechange` event
+3. When state changes, you call `bw.refresh(el)` which re-invokes `el._bw_render(el, el._bw_state)` and emits a `bw:refresh` event
 4. The render function produces new content via `bw.DOM(el, ...)`, replacing the old children
 
 ### Accessing state
@@ -328,10 +327,9 @@ State lives directly on the DOM element as `el._bw_state`:
   t: 'div',
   o: {
     state: { count: 0, label: 'Clicks' },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
-        t: 'div', c: s.label + ': ' + s.count
+        t: 'div', c: state.label + ': ' + state.count
       });
     }
   }
@@ -369,8 +367,8 @@ var timer = {
     unmount: function(el) {
       clearInterval(el._interval);
     },
-    render: function(el) {
-      bw.DOM(el, { t: 'span', c: 'Elapsed: ' + el._bw_state.seconds + 's' });
+    render: function(el, state) {
+      bw.DOM(el, { t: 'span', c: 'Elapsed: ' + state.seconds + 's' });
     }
   }
 };
@@ -387,11 +385,10 @@ var dashboard = {
   t: 'div',
   o: {
     state: { temp: 0 },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
         t: 'div', c: [
-          { t: 'span', a: { class: bw.uuid('temp') }, c: s.temp + ' C' },
+          { t: 'span', a: { class: bw.uuid('temp') }, c: state.temp + ' C' },
           { t: 'span', a: { class: bw.uuid('status') }, c: 'OK' }
         ]
       });
@@ -447,8 +444,8 @@ var statefulCard = {
   t: 'div',
   o: {
     state: { title: 'Hello' },
-    render: function(el) {
-      bw.DOM(el, bw.makeCard({ title: el._bw_state.title }));
+    render: function(el, state) {
+      bw.DOM(el, bw.makeCard({ title: state.title }));
     }
   }
 };
@@ -481,13 +478,12 @@ bw.DOM('#app', {
   t: 'div',
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
         t: 'div', c: [
-          { t: 'span', c: 'Count: ' + s.count },
+          { t: 'span', c: 'Count: ' + state.count },
           { t: 'button', c: '+1', a: {
-            onclick: function() { s.count++; bw.refresh(el); }
+            onclick: function() { state.count++; bw.refresh(el); }
           }}
         ]
       });
@@ -515,8 +511,8 @@ var header = {
   t: 'header',
   o: {
     state: appState,
-    render: function(el) {
-      bw.DOM(el, { t: 'span', c: 'Hello, ' + el._bw_state.user.name });
+    render: function(el, state) {
+      bw.DOM(el, { t: 'span', c: 'Hello, ' + state.user.name });
     }
   }
 };
@@ -525,10 +521,9 @@ var main = {
   t: 'main',
   o: {
     state: appState,
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
-        t: 'div', c: s.items.map(function(item) {
+        t: 'div', c: state.items.map(function(item) {
           return { t: 'div', c: item.text };
         })
       });
@@ -558,8 +553,8 @@ var results = {
         bw.refresh(el);
       }, el);
     },
-    render: function(el) {
-      bw.DOM(el, { t: 'span', c: 'Results for: ' + el._bw_state.query });
+    render: function(el, state) {
+      bw.DOM(el, { t: 'span', c: 'Results for: ' + state.query });
     }
   }
 };
@@ -599,12 +594,11 @@ bw.DOM('#app', {
         bw.refresh(el);
       }, el);
     },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, {
         t: 'div', c: [
           { t: 'h2', c: 'Upload Progress' },
-          bw.makeProgress({ value: s.pct, label: s.pct + '%' }),
+          bw.makeProgress({ value: state.pct, label: state.pct + '%' }),
           bw.makeButton({ text: 'Start', onclick: function() {
             var pct = 0;
             var interval = setInterval(function() {
@@ -630,7 +624,7 @@ These primitives are the building blocks of the stateful TACO model. They are al
 
 | Function | Purpose |
 |----------|---------|
-| `bw.refresh(ref)` | Re-invoke `el._bw_render(el)` to re-render |
+| `bw.refresh(ref)` | Re-invoke `el._bw_render(el, state)` to re-render |
 | `bw.update(ref, data)` | Dispatch to `el.bw.update(data)` |
 | `bw.patch(uuid, content, attr)` | Update a single UUID-addressed element |
 | `bw.patchAll(patches)` | Batch-update multiple UUID-addressed elements |
@@ -701,9 +695,8 @@ function renderTodoView(target) {
           bw.refresh(el);
         }, el);  // auto-unsubscribes when view is removed
       },
-      render: function(el) {
-        var s = el._bw_state;
-        bw.DOM(el, { t: 'ul', c: s.items.map(function(item) {
+      render: function(el, state) {
+        bw.DOM(el, { t: 'ul', c: state.items.map(function(item) {
           return { t: 'li', c: item.text };
         })});
       }
@@ -723,7 +716,7 @@ function renderProjectView(target) {
           bw.refresh(el);
         }, el);
       },
-      render: function(el) {
+      render: function(el, state) {
         // ... render projects
       }
     }

@@ -212,8 +212,7 @@
       }
 
       // Update DOM directly for live values
-      var el = document.getElementById(op.ref);
-      if (el && op.text != null) el.textContent = op.text;
+      if (op.text != null) bw.el(op.ref, function(el) { el.textContent = op.text; });
 
       if (!state.connected) {
         state.connected = true;
@@ -282,7 +281,7 @@
 
     function renderIMU() {
       // Only update the IMU section if it exists
-      var imuEl = document.getElementById('imu-section');
+      var imuEl = bw.$('#imu-section')[0];
       if (!imuEl) return;
 
       var accelContent = [
@@ -306,14 +305,13 @@
       var dotY = 50 + (state.accelY / maxG) * 40;
       dotX = Math.max(10, Math.min(90, dotX));
       dotY = Math.max(10, Math.min(90, dotY));
-      var dot = document.querySelector('.tilt-dot');
+      var dot = bw.$('.tilt-dot')[0];
       if (dot) {
         dot.style.left = dotX + '%';
         dot.style.top = dotY + '%';
       }
       var isLevel = Math.abs(state.accelX) < 0.15 && Math.abs(state.accelY) < 0.15;
-      var badge = document.getElementById('tilt-badge');
-      if (badge) badge.textContent = isLevel ? 'Level' : 'Tilted';
+      bw.el('tilt-badge', function(el) { el.textContent = isLevel ? 'Level' : 'Tilted'; });
     }
 
     function render() {

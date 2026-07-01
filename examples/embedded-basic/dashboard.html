@@ -192,8 +192,7 @@
           }
         }
         // Also update DOM directly for live values
-        var el = document.getElementById(op.ref);
-        if (el) el.textContent = op.text;
+        bw.el(op.ref, function(el) { el.textContent = op.text; });
 
         // Track connection
         if (!state.connected) {
