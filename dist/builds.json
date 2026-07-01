@@ -53,7 +53,7 @@
       "component": "core",
       "minified": false,
       "raw": 453856,
-      "gzipped": 108934,
+      "gzipped": 108933,
       "sourceMap": true,
       "integrity": "sha384-Ci2BIUNMP9Q7wl2w6+0HMO3eQL5AyMQl9YLAEEmB/Ja9c+RTMFlg+EZ1vbqJ1DOf"
     },
@@ -163,7 +163,7 @@
       "component": "lean",
       "minified": false,
       "raw": 373422,
-      "gzipped": 86847,
+      "gzipped": 86846,
       "sourceMap": true,
       "integrity": "sha384-75O3mZrFRf7n5d7DwrTMhxDL5DewH6uly/jvwahUF1dToVYtG2Iu3s/eofkHf0Pr"
     },
@@ -207,7 +207,7 @@
       "component": "lean",
       "minified": true,
       "raw": 142863,
-      "gzipped": 39118,
+      "gzipped": 39117,
       "sourceMap": true,
       "integrity": "sha384-Dai/3Rb6qXYvLirAwePAXrRnejdXm2xmupf0NbnyEYphkHPLL6J7dAQjWasCopHt"
     },
@@ -328,7 +328,7 @@
       "component": "lean",
       "minified": true,
       "raw": 136705,
-      "gzipped": 37691,
+      "gzipped": 37690,
       "sourceMap": true,
       "integrity": "sha384-e6uhgikkdh1x/MOKiTD1mTYZ7tTU4NUJl0HCljYsnLP3yN+uTNx93ekhxmbYgfDh"
     },
@@ -460,7 +460,7 @@
       "component": "lean",
       "minified": true,
       "raw": 137860,
-      "gzipped": 37925,
+      "gzipped": 37924,
       "sourceMap": true,
       "integrity": "sha384-CTMjnWZhncKenL6e7Vk0wvNELUPkHqHl3YlvspR0n+7OParJqIEkPt1tGXhChMPy"
     },

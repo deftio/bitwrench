@@ -45,11 +45,11 @@ Copy the embedded C headers into your project:
 ```
 my_project/
   my_project.ino
-  bitwrench.h      ← from embedded_c/
-  bwserve.h        ← from embedded_c/
+  bitwrench.h      <- from embedded_c/
+  bwserve.h        <- from embedded_c/
   data/
-    index.html                 ← the dashboard page
-    bitwrench.umd.min.js.gz   ← gzip -k dist/bitwrench.umd.min.js
+    index.html                 <- the dashboard page
+    bitwrench.umd.min.js.gz   <- gzip -k dist/bitwrench.umd.min.js
 ```
 
 ### With PlatformIO
@@ -274,7 +274,7 @@ serves `.gz` files transparently for the matching uncompressed filename.
 
 The C macros produce strings like:
 ```
-r{'type':'patch','ref':'val-temp','text':'23.5 C','v':1}
+r{'v':1,'type':'patch','ref':'val-temp','text':'23.5 C'}
 ```
 
 The `r` prefix tells the browser parser to convert single quotes to double quotes before `JSON.parse()`. This avoids escaping double quotes in C string literals — a major ergonomic win.

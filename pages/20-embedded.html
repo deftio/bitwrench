@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Embedded Web Dashboards</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    var styles = initBitwrenchPage('20-embedded.html');
+    var p = styles.palette;
+
+    // =========================================================================
+    // Page CSS
+    // =========================================================================
+    bw.injectCSS(bw.css({
+      '.emb-hero': {
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        color: '#e2e8f0',
+        padding: '2.5rem 0 2rem',
+        'text-align': 'center'
+      },
+      '.emb-hero h1': {
+        'font-size': '2rem',
+        'font-weight': '700',
+        margin: '0 0 0.5rem',
+        color: '#10b981'
+      },
+      '.emb-hero .tagline': {
+        'font-size': '1.1rem',
+        opacity: '0.7',
+        margin: '0 0 1.5rem'
+      },
+      '.emb-arch': {
+        background: '#1e293b',
+        'border-radius': '8px',
+        padding: '1.5rem',
+        'font-family': '"SF Mono", Monaco, "Cascadia Code", monospace',
+        'font-size': '0.8rem',
+        color: '#94a3b8',
+        'line-height': '1.6',
+        'white-space': 'pre',
+        'overflow-x': 'auto',
+        'max-width': '600px',
+        margin: '0 auto 1rem'
+      },
+      '.emb-board-grid': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(260px, 1fr))',
+        gap: '1rem',
+        'margin-top': '1rem'
+      },
+      '.emb-example-grid': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '1rem',
+        'margin-top': '1rem'
+      },
+      '.emb-lang-tabs': {
+        display: 'flex',
+        gap: '0.25rem',
+        'margin-bottom': '0.75rem'
+      },
+      '.emb-lang-tab': {
+        padding: '0.35rem 0.75rem',
+        'border-radius': '4px 4px 0 0',
+        cursor: 'pointer',
+        border: '1px solid ' + p.light.border,
+        'border-bottom': 'none',
+        background: 'transparent',
+        color: p.textPrimary,
+        'font-size': '0.8rem'
+      },
+      '.emb-lang-tab.active': {
+        background: p.surface,
+        'font-weight': '600'
+      },
+      '.emb-lang-panel': {
+        display: 'none',
+        background: '#1e293b',
+        'border-radius': '0 8px 8px 8px',
+        padding: '1rem',
+        'overflow-x': 'auto'
+      },
+      '.emb-lang-panel.active': {
+        display: 'block'
+      },
+      '.emb-proto-row': {
+        display: 'grid',
+        'grid-template-columns': 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: '1rem',
+        'margin-top': '0.75rem'
+      },
+      '.emb-proto-col': {
+        background: '#1e293b',
+        'border-radius': '8px',
+        padding: '0.75rem'
+      },
+      '.emb-proto-col h4': {
+        margin: '0 0 0.5rem',
+        color: '#38bdf8',
+        'font-size': '0.8rem',
+        'text-transform': 'uppercase'
+      },
+      '.emb-proto-col pre': {
+        margin: '0',
+        'font-size': '0.75rem',
+        'line-height': '1.5',
+        color: '#e2e8f0',
+        'white-space': 'pre-wrap'
+      },
+      '.emb-pill': {
+        display: 'inline-block',
+        padding: '0.15rem 0.5rem',
+        'border-radius': '12px',
+        'font-size': '0.7rem',
+        'font-weight': '600',
+        'margin-left': '0.35rem',
+        'vertical-align': 'middle'
+      },
+      '.pill-c': { background: '#3b82f6', color: '#fff' },
+      '.pill-py': { background: '#f59e0b', color: '#1a1a1a' },
+      '.pill-beginner': { background: '#10b981', color: '#fff' },
+      '.pill-intermediate': { background: '#f59e0b', color: '#1a1a1a' }
+    }));
+
+    // =========================================================================
+    // Section 1: Hero
+    // =========================================================================
+    var hero = {
+      t: 'div', a: { class: 'emb-hero' },
+      c: [
+        { t: 'div', a: { class: 'content-container' }, c: [
+          { t: 'h1', c: 'Embedded Web Dashboards' },
+          { t: 'p', a: { class: 'tagline' }, c: 'Your $6 microcontroller just became a web server.' }
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 2: Architecture
+    // =========================================================================
+    var archDiagram =
+      'Device (C/Python)              Browser\n' +
+      '  |                               |\n' +
+      '  |  GET /dashboard.html          |\n' +
+      '  |  <-- HTML + bitwrench.js      |\n' +
+      '  |                               |\n' +
+      '  |  GET /events (SSE)            |\n' +
+      '  |  <-- JSON patches every 2s    |\n' +
+      '  |       {ref, text, type}       |\n' +
+      '  |                               |\n' +
+      '  |  POST /api/command            |\n' +
+      '  |  {cmd:"set_color"} -->        |\n' +
+      '  |  <-- {ok: true}               |';
+
+    var archSection = site.makeDemoSection({
+      title: 'How It Works',
+      body: [
+        site.makeCallout({
+          variant: 'info',
+          content: 'The device never generates HTML. It sends tiny JSON messages (~200 bytes). The browser renders everything with bitwrench.'
+        }),
+        { t: 'div', a: { class: 'emb-arch' }, c: archDiagram }
+      ]
+    });
+
+    // =========================================================================
+    // Section 3: Board Gallery
+    // =========================================================================
+    var boards = [
+      {
+        name: 'ESP32-S3 Pro',
+        maker: 'Unexpected Maker',
+        chip: 'ESP32-S3 (dual Xtensa LX7)',
+        flash: '16 MB',
+        ram: '512 KB + 8 MB PSRAM',
+        wifi: 'WiFi + BLE 5.0',
+        features: 'NeoPixel, STEMMA QT, battery charging',
+        price: '~$18'
+      },
+      {
+        name: 'Raspberry Pi Pico 2W',
+        maker: 'Raspberry Pi Foundation',
+        chip: 'RP2350 (dual Cortex-M33)',
+        flash: '4 MB',
+        ram: '520 KB',
+        wifi: 'WiFi (CYW43)',
+        features: 'Onboard LED, 3 ADC channels',
+        price: '~$7'
+      },
+      {
+        name: 'Arduino Nano ESP32',
+        maker: 'Arduino',
+        chip: 'ESP32-S3 (dual Xtensa LX7)',
+        flash: '16 MB',
+        ram: '512 KB + 8 MB PSRAM',
+        wifi: 'WiFi + BLE 5.0',
+        features: 'RGB LED, Arduino ecosystem',
+        price: '~$20'
+      },
+      {
+        name: 'Adafruit QT Py ESP32-S3',
+        maker: 'Adafruit',
+        chip: 'ESP32-S3',
+        flash: '8 MB',
+        ram: '512 KB + 2 MB PSRAM',
+        wifi: 'WiFi + BLE 5.0',
+        features: 'NeoPixel, STEMMA QT, tiny form factor',
+        price: '~$13'
+      }
+    ];
+
+    var boardCards = boards.map(function(b) {
+      return bw.makeCard({
+        title: b.name,
+        className: 'bw_mb_2',
+        content: [
+          { t: 'div', a: { style: 'font-size:0.75rem;color:#64748b;margin-bottom:0.5rem' }, c: b.maker },
+          bw.makeTable({
+            data: [
+              { Spec: 'Chip', Value: b.chip },
+              { Spec: 'Flash', Value: b.flash },
+              { Spec: 'RAM', Value: b.ram },
+              { Spec: 'WiFi', Value: b.wifi },
+              { Spec: 'Features', Value: b.features },
+              { Spec: 'Price', Value: b.price }
+            ],
+            columns: [
+              { key: 'Spec', label: '' },
+              { key: 'Value', label: '' }
+            ],
+            compact: true
+          })
+        ]
+      });
+    });
+
+    var boardSection = site.makeDemoSection({
+      title: 'Supported Boards',
+      body: [
+        { t: 'p', c: 'Any board with WiFi and a C or Python compiler works. These are tested:' },
+        { t: 'div', a: { class: 'emb-board-grid' }, c: boardCards }
+      ]
+    });
+
+    // =========================================================================
+    // Section 4: Flash Size Table
+    // =========================================================================
+    var flashTable = bw.makeTable({
+      data: [
+        { Config: 'bitwrench.umd.min.js.gz', Size: '~40 KB', Pct4MB: '1.0%', Pct16MB: '0.25%', Notes: 'Gzipped, transparent decompression' },
+        { Config: 'dashboard.html (basic)', Size: '~6 KB', Pct4MB: '0.15%', Pct16MB: '0.04%', Notes: 'BCCL components, TACO UI' },
+        { Config: 'dashboard.html (IMU)', Size: '~8 KB', Pct4MB: '0.2%', Pct16MB: '0.05%', Notes: 'Adds accelerometer/gyro bars' },
+        { Config: 'Total (self-contained)', Size: '~48 KB', Pct4MB: '1.2%', Pct16MB: '0.3%', Notes: 'Full dashboard from flash' },
+        { Config: 'Total (CDN-served)', Size: '~8 KB', Pct4MB: '0.2%', Pct16MB: '0.05%', Notes: 'bitwrench loaded from CDN' }
+      ],
+      columns: [
+        { key: 'Config', label: 'Configuration' },
+        { key: 'Size', label: 'Flash Used' },
+        { key: 'Pct4MB', label: '% of 4 MB' },
+        { key: 'Pct16MB', label: '% of 16 MB' },
+        { key: 'Notes', label: 'Notes' }
+      ],
+      striped: true,
+      hover: true
+    });
+
+    var flashSection = site.makeDemoSection({
+      title: 'Flash Footprint',
+      body: [
+        { t: 'p', c: 'bitwrench is designed for constrained flash. Here are the actual sizes:' },
+        flashTable
+      ]
+    });
+
+    // =========================================================================
+    // Section 5: Example Gallery
+    // =========================================================================
+    var examples = [
+      {
+        title: 'Basic Dashboard (ESP32-S3)',
+        desc: 'NeoPixel color control, system stats, board info. No external peripherals.',
+        board: 'ESP32-S3 Pro',
+        lang: 'C++',
+        level: 'Beginner',
+        href: '../examples/embedded-basic/esp32s3-pro/esp32s3_basic.ino'
+      },
+      {
+        title: 'Basic Dashboard (Pico 2W)',
+        desc: 'LED toggle, on-die temp, VSYS voltage, WiFi RSSI.',
+        board: 'Pico 2W',
+        lang: 'C++',
+        level: 'Beginner',
+        href: '../examples/embedded-basic/pico2w/pico2w_basic.ino'
+      },
+      {
+        title: 'IMU Dashboard (ESP32-S3)',
+        desc: 'MPU6050/ICM-20948 accelerometer + gyroscope with live bars and tilt indicator.',
+        board: 'ESP32-S3 Pro',
+        lang: 'C++',
+        level: 'Intermediate',
+        href: '../examples/embedded-imu/esp32s3-pro/esp32s3_imu.ino'
+      },
+      {
+        title: 'IMU Dashboard (Pico 2W)',
+        desc: 'Same IMU dashboard, Pico 2W pins.',
+        board: 'Pico 2W',
+        lang: 'C++',
+        level: 'Intermediate',
+        href: '../examples/embedded-imu/pico2w/pico2w_imu.ino'
+      },
+      {
+        title: 'Basic (CircuitPython)',
+        desc: 'ESP32-S3 Pro with NeoPixel, served via adafruit_httpserver.',
+        board: 'ESP32-S3 Pro',
+        lang: 'Python',
+        level: 'Beginner',
+        href: '../examples/embedded-basic/esp32s3-pro/basic_circuitpython.py'
+      },
+      {
+        title: 'Basic (MicroPython)',
+        desc: 'Pico 2W with LED toggle, raw socket server.',
+        board: 'Pico 2W',
+        lang: 'Python',
+        level: 'Beginner',
+        href: '../examples/embedded-basic/pico2w/basic_micropython.py'
+      },
+      {
+        title: 'Pico W Full Dashboard',
+        desc: 'ADC, PWM, GPIO, LED, temperature, WiFi. 3 language variants.',
+        board: 'Pico W / 2W',
+        lang: 'C++ / Python',
+        level: 'Intermediate',
+        href: '../examples/embedded-pico-w/'
+      },
+      {
+        title: 'C Desktop Demo',
+        desc: 'POSIX socket server speaking bwserve protocol. Compiles on Linux/macOS.',
+        board: 'Desktop',
+        lang: 'C',
+        level: 'Beginner',
+        href: '../examples/embedded/cmake-demo/'
+      }
+    ];
+
+    var exampleCards = examples.map(function(ex) {
+      var langPill = ex.lang.indexOf('Python') >= 0 ? 'pill-py' : 'pill-c';
+      var levelPill = ex.level === 'Beginner' ? 'pill-beginner' : 'pill-intermediate';
+      return bw.makeCard({
+        title: ex.title,
+        content: [
+          { t: 'p', a: { style: 'font-size:0.8rem;margin:0 0 0.5rem;color:#64748b' }, c: ex.desc },
+          { t: 'div', a: { style: 'font-size:0.75rem' }, c: [
+            bw.makeBadge({ text: ex.board, variant: 'secondary', pill: true }),
+            ' ',
+            { t: 'span', a: { class: 'emb-pill ' + langPill }, c: ex.lang },
+            { t: 'span', a: { class: 'emb-pill ' + levelPill }, c: ex.level }
+          ]}
+        ]
+      });
+    });
+
+    var exampleSection = site.makeDemoSection({
+      title: 'Examples',
+      body: [
+        { t: 'div', a: { class: 'emb-example-grid' }, c: exampleCards }
+      ]
+    });
+
+    // =========================================================================
+    // Section 6: Getting Started (tabbed by language)
+    // =========================================================================
+    var cppCode =
+      '#include "bitwrench.h"\n' +
+      '#include "bwserve.h"\n' +
+      '\n' +
+      '// Send a patch to update the temperature display:\n' +
+      'char msg[256];\n' +
+      'BW_PATCH(msg, "val-temp", "23.5 C");\n' +
+      'events.send(msg, NULL, millis());\n' +
+      '\n' +
+      '// Send a batch of updates:\n' +
+      'bw_batch_t batch;\n' +
+      'bw_batch_begin(&batch);\n' +
+      'BW_PATCH(m1, "val-temp", "23.5 C");\n' +
+      'BW_PATCH(m2, "val-humidity", "67%");\n' +
+      'bw_batch_add(&batch, m1);\n' +
+      'bw_batch_add(&batch, m2);\n' +
+      'bw_batch_end(out, sizeof(out), &batch);\n' +
+      'events.send(out, NULL, millis());';
+
+    var pyCode =
+      'import bwserve, json\n' +
+      '\n' +
+      '# Send a patch to update the temperature display:\n' +
+      'msg = bwserve.patch("val-temp", "23.5 C")\n' +
+      'sse.send_event(json.dumps(msg))\n' +
+      '\n' +
+      '# Send a batch of updates:\n' +
+      'msg = bwserve.batch(\n' +
+      '    bwserve.patch("val-temp", "23.5 C"),\n' +
+      '    bwserve.patch("val-humidity", "67%")\n' +
+      ')\n' +
+      'sse.send_event(json.dumps(msg))';
+
+    var jsCode =
+      'import bwserve from "bitwrench/bwserve";\n' +
+      '\n' +
+      '// Send a patch to update the temperature display:\n' +
+      'app.broadcast(bwserve.patch("val-temp", "23.5 C"));\n' +
+      '\n' +
+      '// Send a batch of updates:\n' +
+      'app.broadcast(bwserve.batch(\n' +
+      '  bwserve.patch("val-temp", "23.5 C"),\n' +
+      '  bwserve.patch("val-humidity", "67%")\n' +
+      '));';
+
+    var activeLang = 'cpp';
+
+    function renderTabs() {
+      var tabs = ['cpp', 'python', 'node'].map(function(lang) {
+        var label = lang === 'cpp' ? 'Arduino C++' : lang === 'python' ? 'MicroPython / CircuitPython' : 'Node.js';
+        return {
+          t: 'button', a: {
+            class: 'emb-lang-tab' + (activeLang === lang ? ' active' : ''),
+            onclick: function() { activeLang = lang; renderTabs(); }
+          }, c: label
+        };
+      });
+
+      var panels = [
+        { t: 'div', a: { class: 'emb-lang-panel' + (activeLang === 'cpp' ? ' active' : '') }, c: { t: 'pre', c: { t: 'code', c: cppCode } } },
+        { t: 'div', a: { class: 'emb-lang-panel' + (activeLang === 'python' ? ' active' : '') }, c: { t: 'pre', c: { t: 'code', c: pyCode } } },
+        { t: 'div', a: { class: 'emb-lang-panel' + (activeLang === 'node' ? ' active' : '') }, c: { t: 'pre', c: { t: 'code', c: jsCode } } }
+      ];
+
+      bw.DOM('#lang-tabs-container', { t: 'div', c: [
+        { t: 'div', a: { class: 'emb-lang-tabs' }, c: tabs },
+        { t: 'div', c: panels }
+      ]});
+    }
+
+    var gettingStartedSection = site.makeDemoSection({
+      title: 'Getting Started',
+      body: [
+        { t: 'p', c: 'The same protocol works from C, Python, and JavaScript. Choose your language:' },
+        { t: 'div', a: { id: 'lang-tabs-container' } }
+      ]
+    });
+
+    // =========================================================================
+    // Section 7: Protocol Explainer
+    // =========================================================================
+    var protoSection = site.makeDemoSection({
+      title: 'One Protocol, Any Language',
+      body: [
+        { t: 'p', c: 'The same patch message, three languages, identical JSON on the wire:' },
+        { t: 'div', a: { class: 'emb-proto-row' }, c: [
+          { t: 'div', a: { class: 'emb-proto-col' }, c: [
+            { t: 'h4', c: 'C (bwserve.h)' },
+            { t: 'pre', c: 'BW_PATCH(msg, "val-temp", "23.5 C");\n// produces:\n// r{\'v\':1,\'type\':\'patch\',\n//   \'ref\':\'val-temp\',\n//   \'text\':\'23.5 C\'}' }
+          ]},
+          { t: 'div', a: { class: 'emb-proto-col' }, c: [
+            { t: 'h4', c: 'Python (bwserve.py)' },
+            { t: 'pre', c: 'bwserve.patch("val-temp", "23.5 C")\n# produces:\n# {"v":1,"type":"patch",\n#  "ref":"val-temp",\n#  "text":"23.5 C"}' }
+          ]},
+          { t: 'div', a: { class: 'emb-proto-col' }, c: [
+            { t: 'h4', c: 'JSON on the wire' },
+            { t: 'pre', c: '{"v":1,\n "type":"patch",\n "ref":"val-temp",\n "text":"23.5 C"}' }
+          ]}
+        ]}
+      ]
+    });
+
+    // =========================================================================
+    // Section 8: CDN vs Self-Contained
+    // =========================================================================
+    var cdnTable = bw.makeTable({
+      data: [
+        { Aspect: 'Flash usage', SelfContained: '~48 KB', CDN: '~8 KB' },
+        { Aspect: 'Internet required', SelfContained: 'No', CDN: 'Yes (initial load)' },
+        { Aspect: 'Offline capable', SelfContained: 'Yes', CDN: 'After first load (if cached)' },
+        { Aspect: 'Setup complexity', SelfContained: 'Upload .gz to flash', CDN: 'Add CDN script tag' },
+        { Aspect: 'Best for', SelfContained: 'Field devices, demos', CDN: 'Development, prototyping' }
+      ],
+      columns: [
+        { key: 'Aspect', label: '' },
+        { key: 'SelfContained', label: 'Self-Contained' },
+        { key: 'CDN', label: 'CDN-Served' }
+      ],
+      striped: true,
+      hover: true
+    });
+
+    var cdnSection = site.makeDemoSection({
+      title: 'CDN vs Self-Contained',
+      body: [
+        { t: 'p', c: 'bitwrench can be served from the device flash or loaded from a CDN:' },
+        cdnTable,
+        site.makeCallout({
+          variant: 'default',
+          content: 'Recommendation: use self-contained for production deployments and CDN during development. The gzipped library is only ~40 KB.'
+        })
+      ]
+    });
+
+    // =========================================================================
+    // Section 9: Links
+    // =========================================================================
+    var linksSection = site.makeDemoSection({
+      title: 'Resources',
+      body: [
+        bw.makeListGroup({
+          items: [
+            { t: 'a', a: { href: '12-bwserve-protocol.html' }, c: 'bwserve Protocol Reference' },
+            { t: 'a', a: { href: '14-bwserve-sandbox.html' }, c: 'Protocol Sandbox (try it in your browser)' },
+            { t: 'a', a: { href: '../embedded_c/README.md' }, c: 'C/C++ Header Reference' },
+            { t: 'a', a: { href: '../docs/tutorial-embedded.md' }, c: 'ESP32 Tutorial' },
+            { t: 'a', a: { href: '../examples/embedded-pico-w/' }, c: 'Pico W Full Example' },
+            { t: 'a', a: { href: 'https://github.com/nicktackes/bitwrench' }, c: 'GitHub Repository' }
+          ]
+        })
+      ]
+    });
+
+    // =========================================================================
+    // Assemble and mount
+    // =========================================================================
+    var content = {
+      t: 'div', a: { class: 'content-container wide' },
+      c: [
+        archSection,
+        boardSection,
+        flashSection,
+        exampleSection,
+        gettingStartedSection,
+        protoSection,
+        cdnSection,
+        linksSection
+      ]
+    };
+
+    bw.DOM('#app', [hero, content]);
+
+    // Post-mount: render language tabs
+    renderTabs();
+  </script>
+</body>
+</html>

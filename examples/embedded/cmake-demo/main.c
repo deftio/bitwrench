@@ -244,7 +244,7 @@ static const char BOOTSTRAP_HTML[] =
     "  var raw=e.data;"
     "  if(raw.charAt(0)==='r'){"
     "    raw=raw.slice(1);"
-    "    raw=raw.replace(/'/g,'\"');"  /* simple inline parser for demo */
+    "    raw=raw.replace(/'/g,'\"');"
     "  }"
     "  try{msg=JSON.parse(raw)}catch(x){return}"
     "  if(msg.type==='batch'){"
@@ -253,11 +253,11 @@ static const char BOOTSTRAP_HTML[] =
     "};"
     "function applyOp(op){"
     "  if(op.type==='patch'){"
-    "    var el=document.getElementById(op.target);"
-    "    if(el)el.textContent=op.content;"
-    "  }else if(op.type==='replace'){"
-    "    var el2=document.querySelector(op.target);"
-    "    if(el2)el2.innerHTML=op.node;"
+    "    var el=document.getElementById(op.ref);"
+    "    if(el&&op.text!=null)el.textContent=op.text;"
+    "  }else if(op.type==='mount'){"
+    "    var el2=document.querySelector(op.ref);"
+    "    if(el2)el2.innerHTML=op.taco;"
     "  }"
     "}"
     "function sendCmd(cmd){"
@@ -345,9 +345,6 @@ static void handle_request(int client_fd) {
     if (strcmp(method, "POST") == 0 && strcmp(path, "/api/command") == 0) {
         int recognized = 0;
         if (body) {
-            /* Simple command parsing for demo readability.
-             * Production code should use a proper JSON parser and auth checks.
-             */
             if (strstr(body, "led_on")) {
                 g_sensors.led_on = 1;
                 printf("[cmd] LED on\n");

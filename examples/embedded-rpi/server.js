@@ -630,12 +630,12 @@ app.page('/', function(client) {
 
     // Use batch to push all updates in a single SSE frame
     client.batch([
-      // Replace entire sections that have complex structure
-      { type: 'replace', ref: '#overview',     taco: buildOverviewCards(t, avg, mp, m.usedMB, m.totalMB, dp, d.usedGB, d.totalGB) },
-      { type: 'replace', ref: '#cpu-bars',     taco: buildCpuBars(cu) },
-      { type: 'replace', ref: '#mem-card',     taco: buildMemCard(m.usedMB, m.totalMB, m.swapUsedMB, m.swapTotalMB) },
-      { type: 'replace', ref: '#gpio-section', taco: buildGpioControls(gs) },
-      { type: 'replace', ref: '#proc-body',    taco: {
+      // Mount entire sections that have complex structure
+      { type: 'mount', ref: '#overview',     taco: buildOverviewCards(t, avg, mp, m.usedMB, m.totalMB, dp, d.usedGB, d.totalGB) },
+      { type: 'mount', ref: '#cpu-bars',     taco: buildCpuBars(cu) },
+      { type: 'mount', ref: '#mem-card',     taco: buildMemCard(m.usedMB, m.totalMB, m.swapUsedMB, m.swapTotalMB) },
+      { type: 'mount', ref: '#gpio-section', taco: buildGpioControls(gs) },
+      { type: 'mount', ref: '#proc-body',    taco: {
         t: 'tbody', a: { id: 'proc-body' }, c: pr.map(function(p) {
           return { t: 'tr', c: [
             { t: 'td', c: String(p.pid) },
@@ -645,7 +645,7 @@ app.page('/', function(client) {
           ]};
         })
       }},
-      { type: 'replace', ref: '#info-body',    taco: {
+      { type: 'mount', ref: '#info-body',    taco: {
         t: 'tbody', a: { id: 'info-body' }, c: [
           ['Model',      sysInfo.model],
           ['OS',         sysInfo.os],
@@ -663,7 +663,7 @@ app.page('/', function(client) {
           ]};
         })
       }},
-      { type: 'replace', ref: '#log-section',  taco: buildLogSection(logEntries) }
+      { type: 'mount', ref: '#log-section',  taco: buildLogSection(logEntries) }
     ]);
   }, 2000);
 
@@ -686,8 +686,8 @@ app.page('/', function(client) {
     // Immediately push the updated GPIO section and log
     gpioState = readAllGpio();
     client.batch([
-      { type: 'replace', ref: '#gpio-section', taco: buildGpioControls(gpioState) },
-      { type: 'replace', ref: '#log-section',  taco: buildLogSection(logEntries) }
+      { type: 'mount', ref: '#gpio-section', taco: buildGpioControls(gpioState) },
+      { type: 'mount', ref: '#log-section',  taco: buildLogSection(logEntries) }
     ]);
   });
 });

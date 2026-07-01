@@ -1,0 +1,11 @@
+version: "2.1.0"
+description: "Header-only bwserve protocol helpers for serving bitwrench web dashboards from ESP-IDF projects."
+url: "https://github.com/nicktackes/bitwrench"
+repository: "https://github.com/nicktackes/bitwrench.git"
+targets:
+  - esp32
+  - esp32s2
+  - esp32s3
+  - esp32c3
+  - esp32c6
+  - esp32h2

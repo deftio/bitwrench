@@ -3,17 +3,25 @@
  *
  * Part of the bitwrench project: https://github.com/nicktackes/bitwrench
  *
- * Provides macros for composing bwserve protocol messages (replace, patch,
+ * Provides macros for composing bwserve protocol messages (mount, patch,
  * append, remove, batch) as r-prefix relaxed JSON strings. These are sent
  * to browsers via SSE (Server-Sent Events).
  *
+ * v2.1 protocol fields:
+ *   type   — message type (mount, patch, append, remove, batch, message)
+ *   ref    — CSS selector for target element
+ *   taco   — TACO node object (for mount/append)
+ *   text   — text content update (for patch)
+ *   attrs  — attribute updates (for patch)
+ *   v      — protocol version (always 1)
+ *
  * Typical usage on ESP32:
  *   char msg[512];
- *   BW_REPLACE(msg, "#app", taco_buf);
+ *   BW_MOUNT(msg, "#app", taco_buf);
  *   events.send(msg, NULL, millis());  // SSE push
  *
  * All macros produce r-prefixed relaxed JSON:
- *   r{'type':'replace','target':'#app','node':{'t':'h1','c':'Hello'}}
+ *   r{'v':1,'type':'mount','ref':'#app','taco':{'t':'h1','c':'Hello'}}
  *
  * The browser's bw.parseJSONFlex() normalizes this to strict JSON before
  * passing to bw.apply().
@@ -32,104 +40,107 @@ extern "C" {
 #endif
 
 /* ========================================================================
- * Protocol message macros — the 5 bwserve message types
+ * Protocol message macros — the 5 bwserve message types (v2.1)
  * ======================================================================== */
 
 /**
- * BW_REPLACE — Replace target element's content with a TACO node.
+ * BW_MOUNT — Mount a TACO node into the target element (replaces children).
  *   char taco[256], msg[512];
  *   BW_TACO(taco, "h1", "Hello");
- *   BW_REPLACE(msg, "#app", taco);
- *   → r{'type':'replace','target':'#app','node':r{'t':'h1','c':'Hello'}}
+ *   BW_MOUNT(msg, "#app", taco);
+ *   -> r{'v':1,'type':'mount','ref':'#app','taco':r{'t':'h1','c':'Hello'}}
  *
  * Note: `taco_str` should be a pre-composed TACO string (from BW_TACO etc).
  * The r-prefix is on the outer message; the inner TACO doesn't need one.
  */
-#define BW_REPLACE(buf, target, taco_str) \
+#define BW_MOUNT(buf, ref, taco_str) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'replace','target':'%s','node':%s}", target, taco_str)
+        "r{'v':1,'type':'mount','ref':'%s','taco':%s}", ref, taco_str)
 
 /**
  * BW_PATCH — Update text content and/or attributes of target element.
  *   BW_PATCH(msg, "counter", "42")
- *   → r{'type':'patch','target':'counter','content':'42'}
+ *   -> r{'v':1,'type':'patch','ref':'counter','text':'42'}
  */
-#define BW_PATCH(buf, target, content) \
+#define BW_PATCH(buf, ref, text) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'patch','target':'%s','content':'%s'}", target, content)
+        "r{'v':1,'type':'patch','ref':'%s','text':'%s'}", ref, text)
 
 /**
  * BW_PATCH_NUM — Patch with a numeric value (no quotes, formatted as %g).
  *   BW_PATCH_NUM(msg, "temperature", 23.5)
- *   → r{'type':'patch','target':'temperature','content':'23.5'}
+ *   -> r{'v':1,'type':'patch','ref':'temperature','text':'23.5'}
  */
-#define BW_PATCH_NUM(buf, target, value) \
+#define BW_PATCH_NUM(buf, ref, value) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'patch','target':'%s','content':'%g'}", target, (double)(value))
+        "r{'v':1,'type':'patch','ref':'%s','text':'%g'}", ref, (double)(value))
 
 /**
- * BW_PATCH_SAFE — Patch with user-provided content that may contain apostrophes.
+ * BW_PATCH_SAFE — Patch with user-provided text that may contain apostrophes.
  * Uses bw_escape_string() to auto-escape single quotes and backslashes.
  *   char name[] = "Barry's Room";
  *   BW_PATCH_SAFE(msg, sizeof(msg), "room-name", name)
- *   → r{'type':'patch','target':'room-name','content':'Barry\'s Room'}
+ *   -> r{'v':1,'type':'patch','ref':'room-name','text':'Barry\'s Room'}
  */
-#define BW_PATCH_SAFE(buf, buf_size, target, content) \
+#define BW_PATCH_SAFE(buf, buf_size, ref, text) \
     do { \
         char _esc[BW_BUF_SIZE]; \
-        bw_escape_string(_esc, sizeof(_esc), content); \
+        bw_escape_string(_esc, sizeof(_esc), text); \
         snprintf(buf, buf_size, \
-            "r{'type':'patch','target':'%s','content':'%s'}", target, _esc); \
+            "r{'v':1,'type':'patch','ref':'%s','text':'%s'}", ref, _esc); \
     } while(0)
 
 /**
- * BW_PATCH_ATTR — Patch with content AND attributes.
+ * BW_PATCH_ATTR — Patch with text AND attributes.
  *   BW_PATCH_ATTR(msg, "status", "Online", "'class':'text-success'")
- *   → r{'type':'patch','target':'status','content':'Online','attr':{'class':'text-success'}}
+ *   -> r{'v':1,'type':'patch','ref':'status','text':'Online','attrs':{'class':'text-success'}}
  */
-#define BW_PATCH_ATTR(buf, target, content, attr_str) \
+#define BW_PATCH_ATTR(buf, ref, text, attr_str) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'patch','target':'%s','content':'%s','attr':{%s}}", \
-        target, content, attr_str)
+        "r{'v':1,'type':'patch','ref':'%s','text':'%s','attrs':{%s}}", \
+        ref, text, attr_str)
 
 /**
  * BW_APPEND — Append a TACO node as child of target element.
  *   BW_APPEND(msg, "#log", taco_str)
- *   → r{'type':'append','target':'#log','node':{...}}
+ *   -> r{'v':1,'type':'append','ref':'#log','taco':{...}}
  */
-#define BW_APPEND(buf, target, taco_str) \
+#define BW_APPEND(buf, ref, taco_str) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'append','target':'%s','node':%s}", target, taco_str)
+        "r{'v':1,'type':'append','ref':'%s','taco':%s}", ref, taco_str)
 
 /**
  * BW_REMOVE — Remove target element from the DOM.
  *   BW_REMOVE(msg, "#old-item")
- *   → r{'type':'remove','target':'#old-item'}
+ *   -> r{'v':1,'type':'remove','ref':'#old-item'}
  */
-#define BW_REMOVE(buf, target) \
+#define BW_REMOVE(buf, ref) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'remove','target':'%s'}", target)
+        "r{'v':1,'type':'remove','ref':'%s'}", ref)
 
 /**
  * BW_BATCH — Wrap multiple messages in a batch.
  *   Build the ops array yourself, then:
  *   BW_BATCH(msg, ops_array_str)
- *   → r{'type':'batch','ops':[...]}
+ *   -> r{'v':1,'type':'batch','ops':[...]}
  *
  * Helper: use bw_batch_* functions below for easier composition.
  */
 #define BW_BATCH(buf, ops_array) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'batch','ops':[%s]}", ops_array)
+        "r{'v':1,'type':'batch','ops':[%s]}", ops_array)
 
 /**
  * BW_MESSAGE — Send a notification/toast to the browser.
  *   BW_MESSAGE(msg, "info", "Sensor calibrated")
- *   → r{'type':'message','level':'info','text':'Sensor calibrated'}
+ *   -> r{'v':1,'type':'message','level':'info','text':'Sensor calibrated'}
  */
 #define BW_MESSAGE(buf, level, text) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'message','level':'%s','text':'%s'}", level, text)
+        "r{'v':1,'type':'message','level':'%s','text':'%s'}", level, text)
+
+/* ── Deprecated v2.0 aliases (remove in v3) ──────────────────────────── */
+#define BW_REPLACE(buf, ref, taco_str) BW_MOUNT(buf, ref, taco_str)
 
 /* ========================================================================
  * SSE frame helpers
@@ -191,8 +202,7 @@ extern "C" {
     "</head><body>" \
     "<div id=\"app\">Connecting...</div>" \
     "<script>" \
-    "bw.loadDefaultStyles();" \
-    /* SSE connection setup omitted — managed by bwclient.js or inline polling */ \
+    "bw.loadStyles();" \
     "</script>" \
     "</body></html>"
 
@@ -227,7 +237,7 @@ static inline void bw_batch_add(bw_batch_t* b, const char* msg) {
 }
 
 static inline int bw_batch_end(char* buf, size_t buf_size, const bw_batch_t* b) {
-    return snprintf(buf, buf_size, "r{'type':'batch','ops':[%s]}", b->ops);
+    return snprintf(buf, buf_size, "r{'v':1,'type':'batch','ops':[%s]}", b->ops);
 }
 
 /* ========================================================================
@@ -272,43 +282,48 @@ static inline int bw_batch_end(char* buf, size_t buf_size, const bw_batch_t* b) 
 namespace bwserve {
 
 /**
- * replace() — Build a replace protocol message.
- *   auto msg = bwserve::replace("#app", bw::taco("h1", "Hello"));
+ * mount() — Build a mount protocol message (v2.1).
+ *   auto msg = bwserve::mount("#app", bw::taco("h1", "Hello"));
  */
-inline std::string replace(const char* target, const std::string& taco) {
+inline std::string mount(const char* ref, const std::string& taco) {
     char buf[BW_BUF_SIZE];
     /* Strip r-prefix from taco if present (will be in outer message) */
     const char* node = taco.c_str();
     if (node[0] == 'r') node++;
     snprintf(buf, sizeof(buf),
-        "r{'type':'replace','target':'%s','node':%s}", target, node);
+        "r{'v':1,'type':'mount','ref':'%s','taco':%s}", ref, node);
     return std::string(buf);
 }
 
-inline std::string patch(const char* target, const char* content) {
+/** Deprecated v2.0 alias for mount(). */
+inline std::string replace(const char* ref, const std::string& taco) {
+    return mount(ref, taco);
+}
+
+inline std::string patch(const char* ref, const char* text) {
     char buf[BW_BUF_SIZE];
-    BW_PATCH(buf, target, content);
+    BW_PATCH(buf, ref, text);
     return std::string(buf);
 }
 
-inline std::string patch_num(const char* target, double value) {
+inline std::string patch_num(const char* ref, double value) {
     char buf[BW_BUF_SIZE];
-    BW_PATCH_NUM(buf, target, value);
+    BW_PATCH_NUM(buf, ref, value);
     return std::string(buf);
 }
 
-inline std::string append(const char* target, const std::string& taco) {
+inline std::string append(const char* ref, const std::string& taco) {
     char buf[BW_BUF_SIZE];
     const char* node = taco.c_str();
     if (node[0] == 'r') node++;
     snprintf(buf, sizeof(buf),
-        "r{'type':'append','target':'%s','node':%s}", target, node);
+        "r{'v':1,'type':'append','ref':'%s','taco':%s}", ref, node);
     return std::string(buf);
 }
 
-inline std::string remove(const char* target) {
+inline std::string remove(const char* ref) {
     char buf[BW_BUF_SIZE];
-    BW_REMOVE(buf, target);
+    BW_REMOVE(buf, ref);
     return std::string(buf);
 }
 
@@ -326,7 +341,7 @@ inline std::string message(const char* level, const char* text) {
  *   });
  */
 inline std::string batch(const std::initializer_list<std::string>& ops) {
-    std::string result = "r{'type':'batch','ops':[";
+    std::string result = "r{'v':1,'type':'batch','ops':[";
     bool first = true;
     for (const auto& op : ops) {
         if (!first) result += ",";

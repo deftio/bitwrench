@@ -1,0 +1,51 @@
+{
+    "name": "bitwrench-embedded",
+    "version": "2.1.0",
+    "description": "Header-only C/C++ library for composing bwserve protocol messages (TACO UI nodes, patch, mount, batch) as relaxed JSON. Enables microcontrollers to serve bitwrench-powered web dashboards via SSE.",
+    "keywords": [
+        "bitwrench",
+        "bwserve",
+        "embedded",
+        "iot",
+        "dashboard",
+        "web-ui",
+        "sse",
+        "server-sent-events",
+        "taco",
+        "json",
+        "esp32",
+        "rp2040",
+        "rp2350",
+        "pico"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nicktackes/bitwrench.git"
+    },
+    "authors": [
+        {
+            "name": "M. A. Chatterjee",
+            "email": "deftio@deftio.com",
+            "url": "https://github.com/nicktackes/bitwrench",
+            "maintainer": true
+        }
+    ],
+    "license": "BSD-2-Clause",
+    "homepage": "https://github.com/nicktackes/bitwrench",
+    "frameworks": "*",
+    "platforms": "*",
+    "build": {
+        "flags": "-I.",
+        "srcFilter": ["-<*>"],
+        "includeDir": "."
+    },
+    "export": {
+        "include": [
+            "bitwrench.h",
+            "bwserve.h",
+            "library.properties",
+            "LICENSE",
+            "README.md"
+        ]
+    }
+}

@@ -52,11 +52,12 @@
     { text: 'Code Editor', href: '13-code-editor.html' }
   ];
 
-  // bwserve sub-nav (unchanged)
+  // bwserve sub-nav
   var bwserveSecondaryItems = [
     { text: 'Protocol', href: '12-bwserve-protocol.html' },
     { text: 'CLI', href: '17-bwcli.html' },
-    { text: 'Sandbox', href: '14-bwserve-sandbox.html' }
+    { text: 'Sandbox', href: '14-bwserve-sandbox.html' },
+    { text: 'Embedded', href: '20-embedded.html' }
   ];
 
   // Set of hrefs for quick lookup
