@@ -173,7 +173,7 @@ function handleCommand(msg, app, verbose) {
     }
 
     // Validate command name
-    if (!_COMMAND_REQUIRED.hasOwnProperty(cmd)) {
+    if (!Object.prototype.hasOwnProperty.call(_COMMAND_REQUIRED, cmd)) {
         return Promise.resolve({ error: 'Unknown command: ' + cmd });
     }
 

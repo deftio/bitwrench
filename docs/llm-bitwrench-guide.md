@@ -135,7 +135,7 @@ function render() {
 render();
 ```
 
-### Stateful -- reactive TACO
+### Stateful TACO
 
 ```javascript
 bw.DOM('#app', {

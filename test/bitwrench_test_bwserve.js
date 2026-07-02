@@ -2965,3 +2965,96 @@ describe("BwServeApp branch coverage — attach.js, CORS, return paths", functio
     }
   });
 });
+
+// =========================================================================
+// bwserve/index.js — path traversal prevention
+// =========================================================================
+
+describe("BwServeApp — path traversal prevention", function() {
+  it("should return 403 for directory traversal attempt via _handleRequest", async function() {
+    var os = await import('os');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-traversal-test-'));
+    fs.writeFileSync(path.join(tmpDir, 'safe.txt'), 'safe content');
+    try {
+      // Test _handleRequest directly to bypass HTTP client URL normalization
+      var app = new BwServeApp({ static: tmpDir });
+      var status, headers, body;
+      var mockRes = {
+        writeHead: function(s, h) { status = s; headers = h; },
+        end: function(b) { body = b; }
+      };
+      app._handleRequest({ url: '/../../package.json', method: 'GET' }, mockRes);
+      assert.strictEqual(status, 403);
+      assert.strictEqual(body, 'Forbidden');
+    } finally {
+      fs.unlinkSync(path.join(tmpDir, 'safe.txt'));
+      fs.rmdirSync(tmpDir);
+    }
+  });
+
+  it("should return 403 for encoded traversal attempt", async function() {
+    var os = await import('os');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-traversal-test-'));
+    fs.writeFileSync(path.join(tmpDir, 'safe.txt'), 'safe content');
+    try {
+      var app = new BwServeApp({ static: tmpDir });
+      var status, body;
+      var mockRes = {
+        writeHead: function(s) { status = s; },
+        end: function(b) { body = b; }
+      };
+      app._handleRequest({ url: '/../../../etc/passwd', method: 'GET' }, mockRes);
+      assert.strictEqual(status, 403);
+      assert.strictEqual(body, 'Forbidden');
+    } finally {
+      fs.unlinkSync(path.join(tmpDir, 'safe.txt'));
+      fs.rmdirSync(tmpDir);
+    }
+  });
+
+  it("should block prefix collision (staticDir sibling with shared prefix)", async function() {
+    var os = await import('os');
+    // Create /tmp/bwserve-pfx and /tmp/bwserve-pfx-evil side by side
+    var baseDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-pfx'));
+    var evilDir = baseDir + '-evil';
+    if (!fs.existsSync(evilDir)) fs.mkdirSync(evilDir);
+    fs.writeFileSync(path.join(evilDir, 'secret.txt'), 'stolen');
+    try {
+      var app = new BwServeApp({ static: baseDir });
+      var status, body;
+      var mockRes = {
+        writeHead: function(s) { status = s; },
+        end: function(b) { body = b; }
+      };
+      // Craft a path that would resolve to the evil sibling via prefix match
+      // resolve(baseDir, '.' + path) = baseDir + '-evil/secret.txt' only if
+      // baseDir doesn't end with sep — the old indexOf check would pass this
+      app._handleRequest({ url: '/../' + path.basename(evilDir) + '/secret.txt', method: 'GET' }, mockRes);
+      assert.strictEqual(status, 403, 'sibling directory with shared prefix should be blocked');
+    } finally {
+      fs.unlinkSync(path.join(evilDir, 'secret.txt'));
+      fs.rmdirSync(evilDir);
+      fs.rmdirSync(baseDir);
+    }
+  });
+
+  it("should still serve files within the static directory", async function() {
+    this.timeout(5000);
+    var os = await import('os');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-traversal-test-'));
+    fs.writeFileSync(path.join(tmpDir, 'safe.txt'), 'safe content');
+    try {
+      var app = bwserve.create({ port: 0, static: tmpDir });
+      await app.listen();
+      var port = app._server.address().port;
+      var res = await fetch('http://localhost:' + port + '/safe.txt');
+      assert.strictEqual(res.status, 200);
+      var body = await res.text();
+      assert.strictEqual(body, 'safe content');
+      await app.close();
+    } finally {
+      fs.unlinkSync(path.join(tmpDir, 'safe.txt'));
+      fs.rmdirSync(tmpDir);
+    }
+  });
+});

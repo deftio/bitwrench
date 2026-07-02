@@ -118,7 +118,7 @@
 		"test:all-unit": "c8 --reporter=text mocha './test/bitwrench_test*.js' -r jsdom-global/",
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm -rf dist/* bitwrench*.tgz",
-		"lint": "./node_modules/.bin/eslint src/bitwrench.js",
+		"lint": "./node_modules/.bin/eslint src/",
 		"serve": "node server.js",
 		"dev": "npm run build && npm run serve",
 		"instrument-bw": "echo 'deprecated: use c8 instead'",

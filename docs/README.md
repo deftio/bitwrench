@@ -27,7 +27,7 @@ These guides cover how to build UIs with bitwrench.
 |-------|-------------|
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
-| [State Management](state-management.md) | Three-level component model, reactive state, cross-component communication |
+| [State Management](state-management.md) | Three-level component model, explicit stateful components, cross-component communication |
 | [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all components with capabilities and handles |
 | [Component Library](component-library.md) | All `make*()` functions with full signatures and examples |
 | [Routing](routing.md) | Client-side router: hash/history mode, route params, guards, pub/sub |
@@ -72,7 +72,7 @@ The library provides four things:
 
 1. **A rendering engine** that turns objects into HTML or DOM
 2. **A component library** of ready-made UI elements
-3. **A reactivity system** that updates the DOM when state changes
+3. **An explicit update model** — `el.bw.method()`, slots, `bw.refresh()` — that updates the DOM when you tell it to
 4. **A client-side router** that maps URLs to views with guards and pub/sub
 
 Everything else -- styling, theming, event handling, server communication -- builds on these pieces.

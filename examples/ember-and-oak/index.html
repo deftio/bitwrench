@@ -49,7 +49,7 @@
   //
   // Architecture:
   //   - Cart state managed via bw.pub('cart:updated') — navbar subscribes
-  //   - Coffee filter uses o.mounted + manual re-render
+  //   - Coffee filter uses inline onclick + manual re-render
   //   - Contact form uses o.state + o.render with status display
   //   - Counter uses o.state + o.render with closures for methods
   //   - Toast notification system uses bw.create() for append pattern
@@ -300,9 +300,7 @@
             ]},
             { t: 'div', a: { style: 'display:flex;align-items:center;gap:.35rem' }, c: [
               { t: 'span', a: { class: 'eo-cart-rprice' }, c: '$' + item.price.toFixed(2) },
-              { t: 'button', a: { class: 'eo-cart-rm', 'aria-label': 'Remove' }, c: '×',
-                o: { mounted: function(btn) { var idx = i; btn.addEventListener('click', function() { cartRemove(idx); }); } }
-              }
+              { t: 'button', a: { class: 'eo-cart-rm', 'aria-label': 'Remove', onclick: (function(idx) { return function() { cartRemove(idx); }; })(i) }, c: '×' }
             ]}
           ]};
         })});
@@ -313,9 +311,7 @@
               { t: 'span', c: 'Total' },
               { t: 'span', c: '$' + total.toFixed(2) }
             ]},
-            { t: 'button', a: { class: 'eo-checkout', 'data-testid': 'button-checkout' }, c: 'Proceed to Checkout →',
-              o: { mounted: function(el) { el.addEventListener('click', function() { cartClose(); toast('Checkout', 'Redirecting to secure checkout…', 'info'); }); } }
-            }
+            { t: 'button', a: { class: 'eo-checkout', 'data-testid': 'button-checkout', onclick: function() { cartClose(); toast('Checkout', 'Redirecting to secure checkout…', 'info'); } }, c: 'Proceed to Checkout →' }
           ]});
         }
       }
@@ -391,9 +387,7 @@
       var fb = bw.$('#eo-fb')[0];
       if (fb) {
         bw.DOM(fb, { t: 'div', a: { class: 'eo-filter-bar' }, c: FILTERS.map(function(f) {
-          return { t: 'button', a: { class: 'eo-fb' + (csFilter === f ? ' active' : ''), 'data-testid': 'filter-' + f.toLowerCase() }, c: f,
-            o: { mounted: function(btn) { var ff = f; btn.addEventListener('click', function() { csFilter = ff; renderCoffeeSection(el); }); } }
-          };
+          return { t: 'button', a: { class: 'eo-fb' + (csFilter === f ? ' active' : ''), 'data-testid': 'filter-' + f.toLowerCase(), onclick: (function(ff) { return function() { csFilter = ff; renderCoffeeSection(el); }; })(f) }, c: f };
         })});
       }
       // Grid
@@ -418,9 +412,7 @@
               { t: 'p', a: { class: 'eo-desc' }, c: c.desc },
               { t: 'div', a: { class: 'eo-foot' }, c: [
                 { t: 'span', a: { class: 'eo-price' }, c: '$' + c.price.toFixed(2) },
-                { t: 'button', a: { class: 'eo-add', 'data-testid': 'button-add-' + c.id }, c: '+ Add to Cart',
-                  o: { mounted: function(btn) { var coffee = c; btn.addEventListener('click', function() { cartAdd(coffee); }); } }
-                }
+                { t: 'button', a: { class: 'eo-add', 'data-testid': 'button-add-' + c.id, onclick: (function(coffee) { return function() { cartAdd(coffee); }; })(c) }, c: '+ Add to Cart' }
               ]}
             ]}
           ]};
@@ -644,9 +636,7 @@
       ]}
     };
 
-    // ─── NEWSLETTER — o.mounted TACO with direct DOM handler ─────────────────
-    // Newsletter uses o.mounted + direct DOM handler for the subscribe button
-    // (other sections use o.state + o.render for reactive updates)
+    // ─── NEWSLETTER ─────────────────────────────────────────────────────────
     var newsletter = {
       t: 'section', a: { class: 'eo-dark', style: 'text-align:center', 'data-testid': 'section-newsletter' },
       c: { t: 'div', a: { style: 'max-width:600px;margin:0 auto' }, c: [
@@ -655,21 +645,18 @@
         { t: 'p', a: { style: 'color:rgba(250,248,245,.55);margin-bottom:2rem;line-height:1.65' }, c: 'First access to new arrivals, brewing tips, and 10% off your first order.' },
         { t: 'div', a: { class: 'eo-nl-row' }, c: [
           { t: 'input', a: { type: 'email', id: 'nl-email', class: 'eo-nl-in', placeholder: 'your@email.com', 'data-testid': 'input-newsletter' } },
-          { t: 'button', a: { class: 'eo-nl-btn', 'data-testid': 'button-subscribe' }, c: 'Subscribe',
-            o: { mounted: function(el) {
-              el.addEventListener('click', function() {
+          { t: 'button', a: { class: 'eo-nl-btn', 'data-testid': 'button-subscribe', onclick: function(e) {
+                var btn = e.target;
                 var inp = bw.$('#nl-email')[0];
                 if (!inp || !inp.value || inp.value.indexOf('@') < 0) {
                   toast('Oops', 'Please enter a valid email address.', 'warning');
                   return;
                 }
-                el.textContent = '✓ Subscribed!';
-                el.disabled = true;
+                btn.textContent = '✓ Subscribed!';
+                btn.disabled = true;
                 toast('Welcome aboard!', 'Check your inbox for your 10% off code.', 'success');
                 inp.value = '';
-              });
-            }}
-          }
+            } }, c: 'Subscribe' }
         ]},
         { t: 'p', a: { style: 'color:rgba(250,248,245,.3);font-size:.78rem;margin-top:1rem' }, c: 'No spam. Unsubscribe any time.' }
       ]}
@@ -747,7 +734,7 @@
     };
 
     var codeExample = [
-      '// o.state + o.render = reactive component pattern',
+      '// o.state + o.render = stateful component pattern',
       'var counter = {',
       "  t: 'div',",
       '  o: {',
@@ -776,8 +763,8 @@
       c: { t: 'div', a: { class: 'eo-inner' }, c: [
         { t: 'div', a: { class: 'eo-sec-hd' }, c: [
           { t: 'div', a: { class: 'eo-label' }, c: 'Built with Bitwrench v2.0.23' },
-          { t: 'h2', a: { class: 'eo-h2' }, c: 'Reactive State. No Build Step.' },
-          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses o.state + o.render for reactive state. No React. No Vite. One CDN script.' }
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Explicit State. No Build Step.' },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses o.state + o.render for stateful components. No React. No Vite. One CDN script.' }
         ]},
         { t: 'div', a: { class: 'eo-demo-grid' }, c: [
           { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Live Counter -- o.state + o.render' }, counter ] },
@@ -819,7 +806,7 @@
         { t: 'div', a: { style: 'display:flex;gap:.65rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem' }, c: [
           bw.makeTooltip({ content: bw.makeBadge({ text: 'Zero Dependencies', variant: 'success', pill: true }), text: 'No npm install for the frontend', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'No Build Step', variant: 'primary', pill: true }), text: 'Works directly in the browser via CDN', placement: 'top' }),
-          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.refresh() for reactive DOM updates', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.refresh() for explicit DOM updates', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'SSR Ready', variant: 'warning', pill: true }), text: 'bw.html() renders TACO to string in Node.js', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'IE11 Compatible', variant: 'secondary', pill: true }), text: 'Use bitwrench.es5.min.js for legacy browsers', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'MIT License', variant: 'dark', pill: true }), text: 'Free for commercial and personal use', placement: 'top' })
@@ -868,11 +855,11 @@
     var cartDOM = {
       t: 'div', a: { id: 'eo-cart-shell' },
       c: [
-        { t: 'div', a: { class: 'eo-bdrop', id: 'eo-bdrop' }, o: { mounted: function(el) { el.addEventListener('click', cartClose); } } },
+        { t: 'div', a: { class: 'eo-bdrop', id: 'eo-bdrop', onclick: cartClose } },
         { t: 'div', a: { class: 'eo-cart-panel', id: 'eo-cart' }, c: [
           { t: 'div', a: { class: 'eo-cart-hdr' }, c: [
             { t: 'h3', c: '🛒 Your Cart' },
-            { t: 'button', a: { class: 'eo-cart-x', 'aria-label': 'Close cart' }, c: '×', o: { mounted: function(el) { el.addEventListener('click', cartClose); } } }
+            { t: 'button', a: { class: 'eo-cart-x', 'aria-label': 'Close cart', onclick: cartClose }, c: '×' }
           ]},
           { t: 'div', a: { id: 'eo-cart-body', class: 'eo-cart-body' } },
           { t: 'div', a: { id: 'eo-cart-ftr', class: 'eo-cart-ftr' } }
@@ -889,9 +876,7 @@
         ourStory, teamSection, testimonials, impactSection,
         faqSection, contactSection, newsletter, showcase,
         footer, cartDOM,
-        { t: 'button', a: { class: 'eo-scroll-top', id: 'eo-scroll-top', 'data-testid': 'button-scroll-top', 'aria-label': 'Scroll to top' }, c: '↑',
-          o: { mounted: function(el) { el.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }); } }
-        }
+        { t: 'button', a: { class: 'eo-scroll-top', id: 'eo-scroll-top', 'data-testid': 'button-scroll-top', 'aria-label': 'Scroll to top', onclick: function() { window.scrollTo({ top: 0, behavior: 'smooth' }); } }, c: '↑' }
       ]
     });
 

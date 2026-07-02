@@ -2371,7 +2371,7 @@ export function generateAlternateCSS(name, altPalette, layout) {
 
   for (var sel in rawRules) {
     /* c8 ignore next -- for-in on plain object; hasOwnProperty always true */
-    if (!rawRules.hasOwnProperty(sel)) continue;
+    if (!Object.prototype.hasOwnProperty.call(rawRules, sel)) continue;
 
     /* c8 ignore next -- generateThemedCSS never produces @media/@keyframes selectors */
     if (sel.charAt(0) === '@') {
@@ -2379,7 +2379,7 @@ export function generateAlternateCSS(name, altPalette, layout) {
       var innerBlock = rawRules[sel];
       var altInner = {};
       for (var innerSel in innerBlock) {
-        if (!innerBlock.hasOwnProperty(innerSel)) continue;
+        if (!Object.prototype.hasOwnProperty.call(innerBlock, innerSel)) continue;
         altInner[altPrefix + ' ' + innerSel] = innerBlock[innerSel];
       }
       altRules[sel] = altInner;
@@ -2422,7 +2422,7 @@ export function generateAlternateCSS(name, altPalette, layout) {
 export function scopeRulesUnder(rules, prefix, compound) {
   var scoped = {};
   for (var sel in rules) {
-    if (!rules.hasOwnProperty(sel)) continue;
+    if (!Object.prototype.hasOwnProperty.call(rules, sel)) continue;
     if (sel.charAt(0) === '@') {
       var innerBlock = rules[sel];
       // @keyframes — steps (0%, 100%, from, to) are NOT selectors; pass through
@@ -2432,7 +2432,7 @@ export function scopeRulesUnder(rules, prefix, compound) {
         // @media — prefix inner selectors
         var scopedInner = {};
         for (var innerSel in innerBlock) {
-          if (!innerBlock.hasOwnProperty(innerSel)) continue;
+          if (!Object.prototype.hasOwnProperty.call(innerBlock, innerSel)) continue;
           scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
         }
         scoped[sel] = scopedInner;

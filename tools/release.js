@@ -125,6 +125,9 @@ step('4. Tests');
 run('npm test');
 run('npm run test:cli');
 
+console.log('  Running E2E tests...');
+run('npm run test:e2e');
+
 // Update coverage badge in README from json-summary produced by npm test
 run('node tools/update-coverage-badge.js');
 

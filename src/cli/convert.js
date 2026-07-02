@@ -110,7 +110,7 @@ export function convertFile(inputPath, flags = {}) {
     const raw = readFileSync(absInput, 'utf8');
     const ext = extname(absInput).toLowerCase();
 
-    let bodyHTML = '';
+    let bodyHTML;
     let autoTitle = null;
 
     // Process based on file extension

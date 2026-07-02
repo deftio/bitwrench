@@ -1,6 +1,6 @@
 # Todo App
 
-Classic reactive todo application with filter bar and pub/sub state management.
+Classic stateful todo application with filter bar and pub/sub state management.
 
 ## What This Demonstrates
 
@@ -11,7 +11,7 @@ Classic reactive todo application with filter bar and pub/sub state management.
 
 ## Audience
 
-**Beginner** — The best starting point for understanding bitwrench reactive patterns.
+**Beginner** — The best starting point for understanding bitwrench stateful patterns.
 
 ## Theme
 

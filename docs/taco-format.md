@@ -328,9 +328,9 @@ You can also wrap existing CSS frameworks (Bootstrap, Tailwind, etc.) in TACO ob
 }
 ```
 
-Bitwrench doesn't care where your CSS classes come from — it just renders the TACO to HTML/DOM. The `make*()` functions use bitwrench's built-in CSS classes (`bw_card`, `bw_btn`, etc.), but that's a choice, not a constraint.
+Bitwrench doesn't care where your CSS classes come from — it just renders the TACO to HTML/DOM. The `make*()` functions use bitwrench's built-in CSS classes (`bw_bccl_card`, `bw_bccl_btn`, etc.), but that's a choice, not a constraint.
 
-To make a custom component reactive, add `o.state` and `o.render`:
+To make a custom component stateful, add `o.state` and `o.render`:
 
 ```javascript
 bw.DOM('#app', {

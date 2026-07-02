@@ -4,8 +4,11 @@ import globals from "globals";
 export default [
     js.configs.recommended,
     {
+        ignores: ["src/vendor/**"]
+    },
+    {
         languageOptions: {
-            ecmaVersion: 2020,
+            ecmaVersion: 2022,
             sourceType: "module",
             globals: {
                 ...globals.browser,

@@ -19,7 +19,7 @@
     homepage: 'https://deftio.github.com/bitwrench/pages',
     repository: 'git+https://github.com/deftio/bitwrench.git',
     author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-07-01T17:17:09.933Z'
+    buildDate: '2026-07-02T12:28:08.992Z'
   };
 
   /**
@@ -35,7 +35,7 @@
    */
 
   function _xs (x) {
-    return ('0' + x.toString(16)).slice(-2)
+    return ('0' + x.toString(16)).slice(-2);
   }
   /**
    * Clamp a value between min and max.
@@ -2779,7 +2779,7 @@
   function scopeRulesUnder(rules, prefix, compound) {
     var scoped = {};
     for (var sel in rules) {
-      if (!rules.hasOwnProperty(sel)) continue;
+      if (!Object.prototype.hasOwnProperty.call(rules, sel)) continue;
       if (sel.charAt(0) === '@') {
         var innerBlock = rules[sel];
         // @keyframes — steps (0%, 100%, from, to) are NOT selectors; pass through
@@ -2789,7 +2789,7 @@
           // @media — prefix inner selectors
           var scopedInner = {};
           for (var innerSel in innerBlock) {
-            if (!innerBlock.hasOwnProperty(innerSel)) continue;
+            if (!Object.prototype.hasOwnProperty.call(innerBlock, innerSel)) continue;
             scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
           }
           scoped[sel] = scopedInner;

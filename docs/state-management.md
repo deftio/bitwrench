@@ -240,9 +240,9 @@ var text = el.bw.getTitle();                   // returns text content
 
 Slot setters accept strings or TACO objects. They update just the targeted element -- no full re-render, so input focus, scroll position, and animation state are preserved.
 
-### bw.mount() -- get the element back
+### bw.mount() / bw.DOM() -- get the element back
 
-`bw.mount()` works like `bw.DOM()` but returns the created root element instead of the container. This is how you get access to `el.bw`:
+`bw.mount()` and `bw.DOM()` are identical (aliases). Both return the created root element, which gives you access to `el.bw`:
 
 ```javascript
 var el = bw.mount('#app', bw.makeCarousel({ items: slides }));

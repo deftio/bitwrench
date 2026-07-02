@@ -11,7 +11,7 @@
  */
 
 function _xs (x) {
-  return ('0' + x.toString(16)).slice(-2)
+  return ('0' + x.toString(16)).slice(-2);
 }
 /**
  * Clamp a value between min and max.

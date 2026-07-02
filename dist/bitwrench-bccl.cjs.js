@@ -3806,8 +3806,8 @@ function makeChipInput(props = {}) {
             }
             // Backspace on empty input removes last chip
             if (e.key === 'Backspace' && !e.target.value) {
-              var wrapper = e.target.closest('.bw_chip_input');
-              var chipEls = wrapper.querySelectorAll('.bw_chip');
+              var chipWrapper = e.target.closest('.bw_chip_input');
+              var chipEls = chipWrapper.querySelectorAll('.bw_chip');
               if (chipEls.length) {
                 var last = chipEls[chipEls.length - 1];
                 var removedVal = last._bw_chipValue || last.firstChild.textContent;

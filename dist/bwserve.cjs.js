@@ -836,9 +836,9 @@ class BwServeApp {
       return 0;
     }
     var count = 0;
-    for (var record of this._clients.values()) {
-      if (record.client && !record.client._closed) {
-        record.client._send(msg);
+    for (var rec of this._clients.values()) {
+      if (rec.client && !rec.client._closed) {
+        rec.client._send(msg);
         count++;
       }
     }
@@ -920,18 +920,26 @@ class BwServeApp {
     // so that bwserve works as a drop-in static server (like python -m
     // http.server or npx serve) with opt-in bwserve superpowers.
     if (method === 'GET' && this.staticDir) {
-      var filePath = path.join(this.staticDir, path$1);
-      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-        var ext = path.extname(filePath);
+      // Path traversal guard: resolve to absolute and verify containment
+      var resolvedBase = path.resolve(this.staticDir);
+      var resolvedPath = path.resolve(resolvedBase, '.' + path$1);
+      if (resolvedPath !== resolvedBase && !resolvedPath.startsWith(resolvedBase + path.sep)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Forbidden');
+        return;
+      }
+
+      if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isFile()) {
+        var ext = path.extname(resolvedPath);
         var mime = MIME_TYPES[ext] || 'application/octet-stream';
-        var content = fs.readFileSync(filePath);
+        var content = fs.readFileSync(resolvedPath);
         res.writeHead(200, { 'Content-Type': mime });
         res.end(content);
         return;
       }
       // Directory index resolution: /foo/ => /foo/index.html
       if (path$1.endsWith('/')) {
-        var indexPath = path.join(this.staticDir, path$1, 'index.html');
+        var indexPath = path.join(resolvedPath, 'index.html');
         if (fs.existsSync(indexPath) && fs.statSync(indexPath).isFile()) {
           var indexContent = fs.readFileSync(indexPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -939,16 +947,15 @@ class BwServeApp {
           return;
         }
         // Directory listing when no index.html
-        var dirPath = path.join(this.staticDir, path$1);
-        if (this.dirList && fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory()) {
-          var listing = this._generateDirListing(path$1, dirPath);
+        if (this.dirList && fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
+          var listing = this._generateDirListing(path$1, resolvedPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(listing);
           return;
         }
       }
       // Bare directory without trailing slash: /foo => 301 to /foo/
-      if (!path$1.endsWith('/') && fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      if (!path$1.endsWith('/') && fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
         var qs = url.split('?')[1];
         var location = path$1 + '/' + (qs ? '?' + qs : '');
         res.writeHead(301, { 'Location': location });

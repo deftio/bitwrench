@@ -15,7 +15,7 @@ const VERSION_INFO = {
   homepage: 'https://deftio.github.com/bitwrench/pages',
   repository: 'git+https://github.com/deftio/bitwrench.git',
   author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-  buildDate: '2026-07-01T17:17:09.933Z'
+  buildDate: '2026-07-02T12:28:08.992Z'
 };
 
 /**
@@ -31,7 +31,7 @@ const VERSION_INFO = {
  */
 
 function _xs (x) {
-  return ('0' + x.toString(16)).slice(-2)
+  return ('0' + x.toString(16)).slice(-2);
 }
 /**
  * Clamp a value between min and max.
@@ -2775,7 +2775,7 @@ Object.assign({}, structuralRules, {
 function scopeRulesUnder(rules, prefix, compound) {
   var scoped = {};
   for (var sel in rules) {
-    if (!rules.hasOwnProperty(sel)) continue;
+    if (!Object.prototype.hasOwnProperty.call(rules, sel)) continue;
     if (sel.charAt(0) === '@') {
       var innerBlock = rules[sel];
       // @keyframes — steps (0%, 100%, from, to) are NOT selectors; pass through
@@ -2785,7 +2785,7 @@ function scopeRulesUnder(rules, prefix, compound) {
         // @media — prefix inner selectors
         var scopedInner = {};
         for (var innerSel in innerBlock) {
-          if (!innerBlock.hasOwnProperty(innerSel)) continue;
+          if (!Object.prototype.hasOwnProperty.call(innerBlock, innerSel)) continue;
           scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
         }
         scoped[sel] = scopedInner;
@@ -7540,8 +7540,8 @@ function makeChipInput(props = {}) {
             }
             // Backspace on empty input removes last chip
             if (e.key === 'Backspace' && !e.target.value) {
-              var wrapper = e.target.closest('.bw_chip_input');
-              var chipEls = wrapper.querySelectorAll('.bw_chip');
+              var chipWrapper = e.target.closest('.bw_chip_input');
+              var chipEls = chipWrapper.querySelectorAll('.bw_chip');
               if (chipEls.length) {
                 var last = chipEls[chipEls.length - 1];
                 var removedVal = last._bw_chipValue || last.firstChild.textContent;

@@ -421,7 +421,7 @@
         flush('selector');
         var aBuf = '@';
         i++;
-        while (i < len && /[a-zA-Z\-]/.test(code[i])) {
+        while (i < len && /[a-zA-Z-]/.test(code[i])) {
           aBuf += code[i];
           i++;
         }
@@ -571,7 +571,7 @@
           i++;
         }
         // Tag name
-        while (i < len && /[a-zA-Z0-9\-]/.test(code[i])) {
+        while (i < len && /[a-zA-Z0-9-]/.test(code[i])) {
           tBuf += code[i];
           i++;
         }

@@ -323,7 +323,7 @@ function tokenizeCSS(code) {
       flush('selector');
       var aBuf = '@';
       i++;
-      while (i < len && /[a-zA-Z\-]/.test(code[i])) { aBuf += code[i]; i++; }
+      while (i < len && /[a-zA-Z-]/.test(code[i])) { aBuf += code[i]; i++; }
       tokens.push({ type: 'at-rule', text: aBuf });
       continue;
     }
@@ -423,7 +423,7 @@ function tokenizeHTML(code) {
       i++;
       if (i < len && code[i] === '/') { tBuf += '/'; i++; }
       // Tag name
-      while (i < len && /[a-zA-Z0-9\-]/.test(code[i])) { tBuf += code[i]; i++; }
+      while (i < len && /[a-zA-Z0-9-]/.test(code[i])) { tBuf += code[i]; i++; }
       tokens.push({ type: 'tag', text: tBuf });
 
       // Attributes

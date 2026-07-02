@@ -45,7 +45,7 @@ The page is organized as a sequence of TACO sections mounted via a single `bw.DO
 9. **Impact** — `bw.makeStatCard()` + `bw.makeBarChart()` + `bw.makeTable()`
 10. **FAQ** — `bw.makeAccordion()` with 6 entries
 11. **Contact** — `o.handle`/`o.slots` form with status binding
-12. **Newsletter** — `o.mounted` with event handler
+12. **Newsletter** — inline `onclick` handler
 13. **Showcase** — Live counter + progress demos + code example
 14. **Footer** — Static TACO
 15. **Cart panel** — Slide-out panel driven by pub/sub

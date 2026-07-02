@@ -35,9 +35,9 @@ Structure, styling, state, and server rendering are all handled as JavaScript ob
 - **No build toolchain** -- works with a `<script>` tag
 - **Ready-made components** -- buttons, tables, modals, forms, charts, toasts -- one `make*()` call each, returns a composable TACO
 - **CSS from JavaScript** -- `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.loadStyles()` derives a complete design system from 2 seed colors
-- **Reactive state** -- `o.state` + `o.render` + `bw.update()` for stateful components; `bw.pub()`/`bw.sub()` for cross-component messaging
+- **Explicit stateful components** -- `o.state` + `o.render` + `bw.refresh()` for stateful components; `bw.pub()`/`bw.sub()` for cross-component messaging
 - **Dual rendering** -- same object renders to live DOM (`bw.DOM()`) or HTML string (`bw.html()`) for SSR, emails, or static sites
-- **Server-driven UI** -- push UI updates from any backend (Python, C, Rust, Go) over SSE via the biwrench bwserve protocol; `client.screenshot()` captures the page back as PNG/JPEG
+- **Server-driven UI** -- push UI updates from any backend (Python, C, Rust, Go) over SSE via the bitwrench bwserve protocol; `client.screenshot()` captures the page back as PNG/JPEG
 - **CLI** -- `bwcli` converts Markdown, HTML, and JSON to styled standalone pages
 - **Debug tools** -- live client and server debugging with remote incremental inspect, screenshots, and state updates
 - **TypeScript** -- full type declarations ship with the package (`dist/bitwrench.d.ts`); see the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md)
@@ -57,7 +57,7 @@ Bitwrench uses JavaScript equivalents for most forms of front-end development. H
 | Sass / PostCSS | CSS generation | `bw.css()` from JS objects (supports @media, @keyframes) |
 | ThemeProvider / CSS vars | Theming | `bw.loadStyles()` / `bw.makeStyles()` from 2 seed colors |
 | Streamlit / Gradio | Server-driven UI | bwserve SSE -- from any language (Python, Go, C, Rust) |
-| Redux / Zustand / Pinia | State management | `o.state` + `bw.update()` + `bw.pub()/sub()` |
+| Redux / Zustand / Pinia | State management | `o.state` + `bw.refresh()` + `bw.pub()/sub()` |
 | Vite / webpack / Babel | Build tooling | Not needed -- open the HTML file |
 | DefinitelyTyped / @types | Type declarations | Ships `dist/bitwrench.d.ts` -- nothing extra to install |
 
@@ -97,7 +97,7 @@ Or include directly in a page:
     bw.loadStyles();
 
     bw.DOM('#app', {
-      t: 'div', a: { class: 'bw-container' },
+      t: 'div', a: { class: 'bw_container' },
       c: [
         { t: 'h1', c: 'My App' },
         bw.makeCard({
@@ -118,7 +118,7 @@ Or include directly in a page:
 
 ## Adding State
 
-Add `o.state` and `o.render` to any TACO to make it stateful. The render function is called with the DOM element, and state lives on `el._bw_state`. Call `bw.update(el)` to re-render:
+Add `o.state` and `o.render` to any TACO to make it stateful. The render function is called with the DOM element, and state lives on `el._bw_state`. Call `bw.refresh(el)` to re-render:
 
 ```javascript
 var counter = {
@@ -132,7 +132,7 @@ var counter = {
           { t: 'h3', c: 'Count: ' + s.count },
           bw.makeButton({ text: '+1', onclick: function() {
             s.count++;
-            bw.update(el);
+            bw.refresh(el);
           }})
         ]
       });
@@ -185,7 +185,7 @@ bw.responsive('.hero', {
 
 ## Theming
 
-`bw.loadStyles()` derives a complete design system -- buttons, alerts, badges, cards, forms, tables, hover states, focus rings -- from two seed colors. Styles can be scoped to DOM subtrees, so different sections of a page can use different themes. `bw.toggleStyles()` switches between primary and alternate palettes:
+`bw.loadStyles()` derives a complete design system -- buttons, alerts, badges, cards, forms, tables, hover states, focus rings -- from two seed colors. Styles can be scoped to DOM subtrees, so different sections of a page can use different themes. `bw.toggleThemeMode()` switches between primary and alternate palettes:
 
 ```javascript
 bw.loadStyles({
@@ -193,7 +193,7 @@ bw.loadStyles({
   secondary: '#cc6633'
 });
 
-bw.toggleStyles();  // switch between primary and alternate palettes
+bw.toggleThemeMode();  // switch between primary and alternate palettes
 ```
 
 
@@ -211,10 +211,11 @@ bw.toggleStyles();  // switch between primary and alternate palettes
 | `bw.loadStyles(config?)` | Load structural CSS (no args) or generate + apply a theme from seed colors |
 | `bw.makeStyles(config)` | Generate a theme from seed colors (returns styles object) |
 | `bw.applyStyles(styles)` | Inject a generated styles object's CSS into the document |
-| `bw.toggleStyles()` | Switch between primary and alternate palettes |
+| `bw.toggleThemeMode(scope?)` | Switch between primary and alternate palettes |
 | `bw.clearStyles()` | Remove injected theme styles |
 | `bw.patch(id, content)` | Update a specific element by id or UUID |
-| `bw.update(el)` | Re-render via the element's `o.render` function |
+| `bw.refresh(el)` | Re-render a stateful component via its `o.render` function |
+| `bw.update(el, data)` | Dispatch to a component's `el.bw.update(data)` handle |
 | `bw.message(target, action, data)` | Dispatch a method call to a component's `el.bw` handle |
 | `bw.pub(topic, detail)` | Publish to subscribers (exact + wildcard matches) |
 | `bw.sub(topic, handler, el?)` | Subscribe to topic (supports wildcard `'ns:*'`); returns unsub function |
@@ -271,7 +272,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 **Reference guides** (in `docs/`):
 
 - [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
-- [State Management](docs/state-management.md) -- three-level component model, stateful TACO, reactive state
+- [State Management](docs/state-management.md) -- three-level component model, explicit stateful components, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens
 - [CLI](docs/cli.md) -- the `bwcli` command for file conversion and pipe server
@@ -307,7 +308,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 ## FAQ
 
-**Is this a framework?** -- No. Bitwrench is a library (~40KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.
+**Is this a framework?** -- No. Bitwrench is a library (~40KB gzipped). No mandatory lifecycle ceremony, no project structure to follow. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
 
 **How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine -- use whichever fits the job.
 

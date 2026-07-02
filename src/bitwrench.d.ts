@@ -68,9 +68,7 @@ export interface TacoOptions {
   unmount?: (el: HTMLElement, state?: Record<string, any>) => void;
   /** Called by bw.refresh(); stored on el._bw_render */
   render?: (el: HTMLElement, state?: Record<string, any>) => void;
-  /** Called by bw.update(); dispatch handler */
-  update?: (el: HTMLElement, data?: any) => void;
-  /** Methods attached to el.bw namespace */
+  /** Methods attached to el.bw namespace (e.g. handle.update dispatched by bw.update()) */
   handle?: Record<string, (el: HTMLElement, ...args: any[]) => any>;
   /** Slot selectors: auto-generates el.bw.setName()/getName() */
   slots?: Record<string, string>;

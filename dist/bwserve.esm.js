@@ -1,6 +1,6 @@
 /*! bwserve v2.1.0 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
 import { fileURLToPath } from 'url';
-import { dirname, resolve, join, extname } from 'path';
+import { dirname, resolve, sep, extname, join } from 'path';
 import { createServer } from 'http';
 import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
 
@@ -831,9 +831,9 @@ class BwServeApp {
       return 0;
     }
     var count = 0;
-    for (var record of this._clients.values()) {
-      if (record.client && !record.client._closed) {
-        record.client._send(msg);
+    for (var rec of this._clients.values()) {
+      if (rec.client && !rec.client._closed) {
+        rec.client._send(msg);
         count++;
       }
     }
@@ -915,18 +915,26 @@ class BwServeApp {
     // so that bwserve works as a drop-in static server (like python -m
     // http.server or npx serve) with opt-in bwserve superpowers.
     if (method === 'GET' && this.staticDir) {
-      var filePath = join(this.staticDir, path);
-      if (existsSync(filePath) && statSync(filePath).isFile()) {
-        var ext = extname(filePath);
+      // Path traversal guard: resolve to absolute and verify containment
+      var resolvedBase = resolve(this.staticDir);
+      var resolvedPath = resolve(resolvedBase, '.' + path);
+      if (resolvedPath !== resolvedBase && !resolvedPath.startsWith(resolvedBase + sep)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Forbidden');
+        return;
+      }
+
+      if (existsSync(resolvedPath) && statSync(resolvedPath).isFile()) {
+        var ext = extname(resolvedPath);
         var mime = MIME_TYPES[ext] || 'application/octet-stream';
-        var content = readFileSync(filePath);
+        var content = readFileSync(resolvedPath);
         res.writeHead(200, { 'Content-Type': mime });
         res.end(content);
         return;
       }
       // Directory index resolution: /foo/ => /foo/index.html
       if (path.endsWith('/')) {
-        var indexPath = join(this.staticDir, path, 'index.html');
+        var indexPath = join(resolvedPath, 'index.html');
         if (existsSync(indexPath) && statSync(indexPath).isFile()) {
           var indexContent = readFileSync(indexPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -934,16 +942,15 @@ class BwServeApp {
           return;
         }
         // Directory listing when no index.html
-        var dirPath = join(this.staticDir, path);
-        if (this.dirList && existsSync(dirPath) && statSync(dirPath).isDirectory()) {
-          var listing = this._generateDirListing(path, dirPath);
+        if (this.dirList && existsSync(resolvedPath) && statSync(resolvedPath).isDirectory()) {
+          var listing = this._generateDirListing(path, resolvedPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(listing);
           return;
         }
       }
       // Bare directory without trailing slash: /foo => 301 to /foo/
-      if (!path.endsWith('/') && existsSync(filePath) && statSync(filePath).isDirectory()) {
+      if (!path.endsWith('/') && existsSync(resolvedPath) && statSync(resolvedPath).isDirectory()) {
         var qs = url.split('?')[1];
         var location = path + '/' + (qs ? '?' + qs : '');
         res.writeHead(301, { 'Location': location });
