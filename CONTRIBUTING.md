@@ -51,7 +51,7 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 
 ## Code Rules
 
-- **No direct DOM manipulation** in examples or library code. Use `bw.DOM()`, `bw.createDOM()`, and TACO patterns.
+- **No direct DOM manipulation** in examples or library code. Use `bw.DOM()`, `bw.create()`, and TACO patterns.
 - **TACO format**: `{ t, a, c, o }` — Tag, Attributes, Content, Options.
 - **CSS classes**: All bitwrench classes use underscores (`bw_btn`, `bw_card`, etc.). This is the only supported form.
 - **Content escaping**: On by default. Use `bw.raw()` or `o: { raw: true }` to opt out.

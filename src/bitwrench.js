@@ -5034,6 +5034,7 @@ bw.BCCL = components.BCCL;
 bw.BCCL.table = { make: bw.makeTable };
 bw.BCCL.tableFromArray = { make: bw.makeTableFromArray };
 bw.BCCL.dataTable = { make: bw.makeDataTable };
+bw.BCCL.barChart = { make: bw.makeBarChart };
 
 // Variant class helper: bw.variantClass('primary') → 'bw_primary'
 bw.variantClass = components.variantClass;

@@ -246,10 +246,10 @@
           ]},
           { t: 'h1', a: { class: 'ha_hero_tagline' }, c: 'A compact JavaScript UI engine' },
           { t: 'p', a: { class: 'ha_hero_intro' },
-            c: 'Rendering engine, component library, router, reactive state, theme generator, and server-push streaming -- all from plain JavaScript objects. Zero dependencies, no build step, client and remote debug tools included. Runs everywhere from Arduino/ESP32 to enterprise.'
+            c: 'Rendering engine, component library, router, explicit state, theme generator, and server-push streaming -- all from plain JavaScript objects. Zero dependencies, no build step, client and remote debug tools included. Runs everywhere from Arduino/ESP32 to enterprise.'
           },
           { t: 'div', a: { class: 'ha_hero_pills' }, c: (function() {
-            var items = ['Rendering Engine', 'Component Library', 'Router', 'Reactive State',
+            var items = ['Rendering Engine', 'Component Library', 'Router', 'Explicit State',
               'Theme Generator', 'Server Push', 'Debugging', 'Embedded / IoT'];
             var out = [];
             items.forEach(function(item, i) {
@@ -517,7 +517,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How It Works' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
-            c: 'In bitwrench, UI is written as plain JavaScript objects called TACOs -- Tag, Attributes, Content, Options. A button, a table row, or an entire page layout all use the same structure: {t: \'div\', a: {class: \'card\'}, c: \'Hello\'}. TACOs nest and compose like HTML does, so you can build a single widget or a full application from the same building blocks. bitwrench turns TACOs into real HTML -- either as DOM in the browser or as strings on a server -- and provides reactive state, lifecycle hooks, and pub/sub for keeping everything in sync.'
+            c: 'In bitwrench, UI is written as plain JavaScript objects called TACOs -- Tag, Attributes, Content, Options. A button, a table row, or an entire page layout all use the same structure: {t: \'div\', a: {class: \'card\'}, c: \'Hello\'}. TACOs nest and compose like HTML does, so you can build a single widget or a full application from the same building blocks. bitwrench turns TACOs into real HTML -- either as DOM in the browser or as strings on a server -- and provides stateful components, lifecycle hooks, and pub/sub for keeping everything in sync.'
           },
           { t: 'div', a: { class: 'ha_how_grid' }, c: [
             { t: 'div', c: [
@@ -531,7 +531,7 @@
           ]},
           { t: 'p', a: { style: 'font-size:0.8125rem;color:#555;margin:1rem 0 0;line-height:1.55' },
             c: [
-              'This object format is called TACO (Tag, Attributes, Content, Options). Add state and it becomes reactive. Add handles for imperative control. The built-in components are TACO objects too -- they compose, nest, and render the same way. ',
+              'This object format is called TACO (Tag, Attributes, Content, Options). Add state and it becomes stateful. Add handles for imperative control. The built-in components are TACO objects too -- they compose, nest, and render the same way. ',
               { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' },
               ' walks through the full progression.'
             ]
@@ -591,7 +591,7 @@
         { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' }
       ]},
       { category: 'Go Deeper', pages: [
-        { title: 'State', href: '05-state.html', desc: 'Make components interactive and reactive' },
+        { title: 'State', href: '05-state.html', desc: 'Make components interactive and stateful' },
         { title: 'Themes', href: '10-themes.html', desc: 'Generate a full theme from 2-3 colors' },
         { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and layout' },
         { title: 'Clock', href: '06-clock.html', desc: 'Real-time clock with live theme switching' },

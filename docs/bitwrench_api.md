@@ -5,10 +5,10 @@
 | Field | Value |
 |-------|-------|
 | Version | 2.1.0 |
-| Generated | 2026-07-01 |
+| Generated | 2026-07-02 |
 | Total APIs | 113 |
 | Categories | 14 |
-| bitwrench.js | 5109 lines |
+| bitwrench.js | 5110 lines |
 | bitwrench-bccl.js | 3954 lines |
 
 ## Table of Contents
@@ -1522,7 +1522,7 @@ Create a hero section for landing pages and headers Supports gradient background
 
 **Example:**
 ```javascript
-const hero = makeHero({ title: "Welcome to Bitwrench", subtitle: "Build UIs with pure JavaScript", variant: "dark", actions: [ makeButton({ text: "Get Started", variant: "primary", size: "lg" }), makeButton({ text: "Learn More", variant: "outline-light", size: "lg" }) ] });
+const hero = makeHero({ title: "Welcome to Bitwrench", subtitle: "Build UIs with pure JavaScript", variant: "dark", actions: [ makeButton({ text: "Get Started", variant: "primary", size: "lg" }), makeButton({ text: "Learn More", variant: "outline_light", size: "lg" }) ] });
 ```
 
 ---

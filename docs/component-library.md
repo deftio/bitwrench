@@ -334,7 +334,7 @@ bw.makeButton({
   text: 'Click Me',
   variant: 'primary',       // 'primary' | 'secondary' | 'success' | 'danger' |
                              // 'warning' | 'info' | 'light' | 'dark' |
-                             // 'outline-primary' | 'outline-secondary' | ...
+                             // 'outline_primary' | 'outline_secondary' | ...
   size: '',                  // 'sm' or 'lg'
   disabled: false,
   onclick: function() {},
@@ -1068,7 +1068,7 @@ Most components accept a `variant` prop. The available variants are:
 | `light` | Light background |
 | `dark` | Dark background |
 
-Buttons also support outline variants: `outline-primary`, `outline-secondary`, etc.
+Buttons also support outline variants: `outline_primary`, `outline_secondary`, etc.
 
 ## Composition
 

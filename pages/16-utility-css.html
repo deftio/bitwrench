@@ -135,14 +135,14 @@
 
         // Demo 3: Card-like layout
         { t: 'h3', a: { style: 'margin-top:2rem' }, c: 'Card-like layout' },
-        site.makeCodeBlock("{ t: 'div', a: { style: bw.u.css('flexCol gap2 p4') + ';border:1px solid #ddd;border-radius:0.5rem' },\n  c: [\n    { t: 'h4', a: { style: bw.u.css('bold textLg') }, c: 'Card Title' },\n    { t: 'p', a: { style: bw.u.css('text-[#666]') }, c: 'Some description text.' },\n    { t: 'div', a: { style: bw.u.css('flex gap2 justifyEnd') },\n      c: [\n        bw.makeButton({ text: 'Cancel', variant: 'outline-secondary', size: 'sm' }),\n        bw.makeButton({ text: 'Save', variant: 'primary', size: 'sm' })\n      ]\n    }\n  ]\n}"),
+        site.makeCodeBlock("{ t: 'div', a: { style: bw.u.css('flexCol gap2 p4') + ';border:1px solid #ddd;border-radius:0.5rem' },\n  c: [\n    { t: 'h4', a: { style: bw.u.css('bold textLg') }, c: 'Card Title' },\n    { t: 'p', a: { style: bw.u.css('text-[#666]') }, c: 'Some description text.' },\n    { t: 'div', a: { style: bw.u.css('flex gap2 justifyEnd') },\n      c: [\n        bw.makeButton({ text: 'Cancel', variant: 'outline_secondary', size: 'sm' }),\n        bw.makeButton({ text: 'Save', variant: 'primary', size: 'sm' })\n      ]\n    }\n  ]\n}"),
         { t: 'div', a: { style: bw.u.css('flexCol gap2 p4') + ';border:1px solid #ddd;border-radius:0.5rem' },
           c: [
             { t: 'h4', a: { style: bw.u.css('bold textLg') }, c: 'Card Title' },
             { t: 'p', a: { style: bw.u.css('text-[#666]') }, c: 'Some description text here.' },
             { t: 'div', a: { style: bw.u.css('flex gap2 justifyEnd') },
               c: [
-                bw.makeButton({ text: 'Cancel', variant: 'outline-secondary', size: 'sm' }),
+                bw.makeButton({ text: 'Cancel', variant: 'outline_secondary', size: 'sm' }),
                 bw.makeButton({ text: 'Save', variant: 'primary', size: 'sm' })
               ]
             }

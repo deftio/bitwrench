@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.1.0 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-bccl v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * Bitwrench v2 Components
  *
@@ -1451,7 +1451,7 @@ function makeSpinner(props = {}) {
  *   variant: "dark",
  *   actions: [
  *     makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
- *     makeButton({ text: "Learn More", variant: "outline-light", size: "lg" })
+ *     makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
  *   ]
  * });
  */

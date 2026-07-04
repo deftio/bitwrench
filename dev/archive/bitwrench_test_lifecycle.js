@@ -1,12 +1,17 @@
 /**
- * Bitwrench Lifecycle Engine Test Suite
+ * Bitwrench Lifecycle Engine Test Suite (STALE)
  *
- * Tests for the hydrate/mount/cleanup lifecycle system:
+ * WARNING: This file references bw.getHandle() which was removed in v2.1.
+ * It is NOT wired into `npm test` and will fail if run directly.
+ * Retained for reference only. The canonical lifecycle tests are in
+ * dev/test_v2.1/ (spec suite) and will move to test/spec21/ when complete.
+ *
+ * Original test surface:
  *   - bw.isComponent(taco)
  *   - bw.hydrate(taco) -- TACO -> DOM + handle
  *   - bw.mount(target, taco) / bw.DOM(target, taco)
  *   - bw.unmount(element)
- *   - bw.getHandle(selector)
+ *   - bw.getHandle(selector) [REMOVED in v2.1]
  *   - bw._handles registry
  *   - Handle object: { el, uuid, mounted, _state, _hooks, get, set, getState }
  *   - bw.message(target, action, data)

@@ -1,14 +1,23 @@
 {
 	"name": "bitwrench",
 	"version": "2.1.0",
-	"description": "A library for javascript UI functions.",
+	"description": "Zero-dependency JavaScript UI library. Describe UI as plain objects (TACO), render to DOM or HTML strings. Theming, components, pub/sub, server-driven UI (bwserve). No build step.",
 	"main": "./dist/bitwrench.umd.js",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/deftio/bitwrench.git"
 	},
 	"keywords": [
-		"javascript DOM UI utitlities"
+		"javascript",
+		"UI",
+		"DOM",
+		"utilities",
+		"components",
+		"theming",
+		"SSE",
+		"server-driven-ui",
+		"no-build",
+		"embedded"
 	],
 	"author": "manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)",
 	"license": "BSD-2-Clause",
@@ -38,8 +47,23 @@
 			"default": "./dist/bitwrench-bccl.umd.js"
 		},
 		"./bwserve": {
+			"types": "./dist/bwserve.d.ts",
 			"import": "./dist/bwserve.esm.js",
 			"require": "./dist/bwserve.cjs.js"
+		},
+		"./util-css": {
+			"import": "./dist/bitwrench-util-css.esm.js",
+			"require": "./dist/bitwrench-util-css.cjs.js",
+			"default": "./dist/bitwrench-util-css.umd.js"
+		},
+		"./code-edit": {
+			"import": "./dist/bitwrench-code-edit.esm.js",
+			"require": "./dist/bitwrench-code-edit.cjs.js",
+			"default": "./dist/bitwrench-code-edit.umd.js"
+		},
+		"./debug": {
+			"require": "./dist/bitwrench-debug.js",
+			"default": "./dist/bitwrench-debug.js"
 		},
 		"./mcp": {
 			"import": "./src/mcp/server.js"
@@ -100,7 +124,7 @@
 		"generate-version": "node tools/generate-version.cjs",
 		"prebuild": "npm run generate-version && npm run lint",
 		"build": "rollup --config && npm run build:css && npm run build:types && npm run build:metrics && npm run build:builds",
-		"build:types": "cp src/bitwrench.d.ts dist/bitwrench.d.ts",
+		"build:types": "cp src/bitwrench.d.ts dist/bitwrench.d.ts && cp src/bwserve.d.ts dist/bwserve.d.ts",
 		"build:css": "node src/generate-css.js",
 		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
@@ -108,6 +132,7 @@
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
 		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js -r jsdom-global/register --exit && npm run test:bundles",
+		"posttest": "node tools/drift-lint.js",
 		"test:bundles": "mocha ./test/bitwrench_test_bundles.js -r jsdom-global/register --exit",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
 		"test:attach": "mocha ./test/bitwrench_test_attach.js -r jsdom-global/register",
@@ -132,7 +157,9 @@
 		"test:html-page": "mocha ./test/bitwrench_test_html_page.js -r jsdom-global/register",
 		"test:mcp": "mocha ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js -r jsdom-global/register --exit",
 		"test:mcp:e2e": "mocha ./test/bitwrench_test_mcp_e2e.js --exit --timeout 15000",
+		"test:spec21": "mocha \"dev/test_v2.1/*.spec.js\" -r jsdom-global/register --exit",
 		"test:e2e": "playwright test",
+		"test:e2e:docker": "bash tools/e2e-docker.sh",
 		"test:e2e:headed": "playwright test --headed",
 		"test:e2e:debug": "playwright test --debug",
 		"test:examples": "playwright test tests/examples.spec.js",
@@ -146,7 +173,7 @@
 		"release": "node tools/release.js",
 		"start-release": "node tools/start-release.js"
 	},
-	"homepage": "https://deftio.github.com/bitwrench/pages",
+	"homepage": "https://deftio.github.io/bitwrench/pages",
 	"overrides": {
 		"mocha": {
 			"serialize-javascript": "^7.0.3",

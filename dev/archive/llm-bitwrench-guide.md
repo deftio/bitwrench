@@ -1,3 +1,6 @@
+> **SUPERSEDED — do not copy patterns from this file.**
+> This is an archived version of the LLM guide. The current version is `docs/llm-bitwrench-guide.md`.
+
 # Bitwrench LLM Guide
 
 > Single-file reference for building sites with bitwrench.js v2.

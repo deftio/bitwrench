@@ -295,7 +295,7 @@
                 { t: 'td', c: { t: 'strong', c: 'Stateful' } },
                 { t: 'td', c: 'Element with state + render' },
                 { t: 'td', c: bw.raw('<code>o: { state: {...}, render: fn }</code>') },
-                { t: 'td', c: 'Reactive state, bw.refresh(el), bw.patch(id, content)' }
+                { t: 'td', c: 'Stateful components, bw.refresh(el), bw.patch(id, content)' }
               ]}
             ]}
           ]},
@@ -310,7 +310,7 @@
             'bw.DOM(\'#app\', card);',
             '<span class="console-comment">// or: var html = bw.html(card); // for SSR</span>',
             '',
-            '<span class="console-comment">// Stateful — I need reactive state + render</span>',
+            '<span class="console-comment">// Stateful — I need state + render</span>',
             'var counter = {',
             '  t: \'div\',',
             '  o: {',
@@ -352,7 +352,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Stateful Elements API' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('When you need reactive state, add <code>o.state</code> and <code>o.render</code> to any TACO. State lives directly on the DOM element at <code>el._bw_state</code>. Re-render by calling <code>bw.refresh(el)</code>.') },
+            c: bw.raw('When you need explicit state, add <code>o.state</code> and <code>o.render</code> to any TACO. State lives directly on the DOM element at <code>el._bw_state</code>. Re-render by calling <code>bw.refresh(el)</code>.') },
 
           { t: 'table', a: { class: 'api-table' }, c: [
             { t: 'thead', c: { t: 'tr', c: [

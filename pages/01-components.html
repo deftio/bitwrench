@@ -240,9 +240,9 @@
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 1rem;' }, c: [
                       subheading('Outline Variants'),
-                      bw.makeButton({ text: 'Primary', variant: 'outline-primary' }), ' ',
-                      bw.makeButton({ text: 'Secondary', variant: 'outline-secondary' }), ' ',
-                      bw.makeButton({ text: 'Success', variant: 'outline-success' })
+                      bw.makeButton({ text: 'Primary', variant: 'outline_primary' }), ' ',
+                      bw.makeButton({ text: 'Secondary', variant: 'outline_secondary' }), ' ',
+                      bw.makeButton({ text: 'Success', variant: 'outline_success' })
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 1rem;' }, c: [
                       subheading('Sizes'),
@@ -257,7 +257,7 @@
                     ]}
                   ]
                 },
-                "bw.makeButton({ text: 'Primary', variant: 'primary' })\nbw.makeButton({ text: 'Outline', variant: 'outline-primary' })\nbw.makeButton({ text: 'Small', size: 'sm' })\nbw.makeButton({ text: 'Disabled', disabled: true })"
+                "bw.makeButton({ text: 'Primary', variant: 'primary' })\nbw.makeButton({ text: 'Outline', variant: 'outline_primary' })\nbw.makeButton({ text: 'Small', size: 'sm' })\nbw.makeButton({ text: 'Disabled', disabled: true })"
               )
             ),
 
@@ -1137,13 +1137,13 @@
                       variant: 'primary', size: 'sm', centered: true,
                       actions: [
                         bw.makeButton({ text: 'Get Started', variant: 'light' }),
-                        bw.makeButton({ text: 'Learn More', variant: 'outline-light' })
+                        bw.makeButton({ text: 'Learn More', variant: 'outline_light' })
                       ]
                     }),
                     bw.makeHero({
                       title: 'Dark Variant', subtitle: 'For dramatic headers and dark-themed pages.',
                       variant: 'dark', size: 'sm', centered: true,
-                      actions: [ bw.makeButton({ text: 'Explore', variant: 'outline-light' }) ]
+                      actions: [ bw.makeButton({ text: 'Explore', variant: 'outline_light' }) ]
                     }),
                     bw.makeHero({
                       title: 'Light Variant', subtitle: 'Subtle background for content-heavy pages.',
@@ -1201,10 +1201,10 @@
                         variant: 'primary', size: 'md', centered: true,
                         actions: [
                           bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),
-                          bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })
+                          bw.makeButton({ text: 'Learn More', variant: 'outline_light', size: 'lg' })
                         ]
                       }),
-                      "// Basic hero with CTA buttons\nbw.makeHero({\n  title: 'Build Beautiful UIs',\n  subtitle: 'Zero deps. No build step.',\n  variant: 'primary',   // 'primary' | 'secondary' | 'light' | 'dark'\n  size: 'md',           // 'sm' | 'md' | 'lg' | 'xl'\n  centered: true,       // false for left-aligned\n  actions: [\n    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),\n    bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })\n  ]\n})\n\n// Hero with background image + overlay\nbw.makeHero({\n  title: 'Image Hero',\n  subtitle: 'Use overlay: true for readability over images.',\n  variant: 'dark',\n  size: 'lg',\n  backgroundImage: 'https://example.com/photo.jpg',\n  overlay: true,\n  actions: [ bw.makeButton({ text: 'CTA', variant: 'primary', size: 'lg' }) ]\n})\n\n// Left-aligned dashboard header\nbw.makeHero({\n  title: 'Dashboard',\n  subtitle: 'Welcome back, user.',\n  variant: 'light',\n  size: 'sm',\n  centered: false\n})"
+                      "// Basic hero with CTA buttons\nbw.makeHero({\n  title: 'Build Beautiful UIs',\n  subtitle: 'Zero deps. No build step.',\n  variant: 'primary',   // 'primary' | 'secondary' | 'light' | 'dark'\n  size: 'md',           // 'sm' | 'md' | 'lg' | 'xl'\n  centered: true,       // false for left-aligned\n  actions: [\n    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),\n    bw.makeButton({ text: 'Learn More', variant: 'outline_light', size: 'lg' })\n  ]\n})\n\n// Hero with background image + overlay\nbw.makeHero({\n  title: 'Image Hero',\n  subtitle: 'Use overlay: true for readability over images.',\n  variant: 'dark',\n  size: 'lg',\n  backgroundImage: 'https://example.com/photo.jpg',\n  overlay: true,\n  actions: [ bw.makeButton({ text: 'CTA', variant: 'primary', size: 'lg' }) ]\n})\n\n// Left-aligned dashboard header\nbw.makeHero({\n  title: 'Dashboard',\n  subtitle: 'Welcome back, user.',\n  variant: 'light',\n  size: 'sm',\n  centered: false\n})"
                     )
                   }
                 ]
@@ -1241,7 +1241,7 @@
                   actions: [
                     bw.makeButton({ text: 'Sign Up Free', variant: 'primary', size: 'lg' }),
                     { t: 'span', c: ' ' },
-                    bw.makeButton({ text: 'View Docs', variant: 'outline-primary', size: 'lg' })
+                    bw.makeButton({ text: 'View Docs', variant: 'outline_primary', size: 'lg' })
                   ]
                 }),
                 "bw.makeCTA({\n  title: 'Ready to Get Started?',\n  description: 'Join thousands of developers.',\n  actions: [\n    bw.makeButton({ text: 'Sign Up', variant: 'primary', size: 'lg' })\n  ]\n})"

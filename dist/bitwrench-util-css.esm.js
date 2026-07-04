@@ -1,4 +1,4 @@
-/*! bitwrench-util-css v2.1.0 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-util-css v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * bitwrench-util-css.js - Rule-based CSS utility parser plugin
  *

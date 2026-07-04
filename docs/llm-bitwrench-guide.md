@@ -118,7 +118,7 @@ bw.DOM('#app', { t: 'div', c: [
 |------|------|-----|------|
 | **Static TACO** | Plain JS object | `bw.makeCard({...})` or `{t,a,c}` | Static content, SSR |
 | **Mounted TACO** | Rendered tree | `bw.DOM('#x', taco)` | Re-render on demand |
-| **Stateful TACO** | Reactive component | `o.state` + `o.render` + `bw.refresh()` | Interactive UI |
+| **Stateful TACO** | Stateful component | `o.state` + `o.render` + `bw.refresh()` | Interactive UI |
 
 **Most UI should be static TACOs.** Escalate only when needed.
 

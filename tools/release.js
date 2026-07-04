@@ -125,8 +125,18 @@ step('4. Tests');
 run('npm test');
 run('npm run test:cli');
 
-console.log('  Running E2E tests...');
-run('npm run test:e2e');
+// E2E gate: containerized by default (Linux browsers, reproducible env).
+// BW_E2E_NATIVE=1 npm run release  → use the native suite instead (e.g. no Docker).
+if (process.env.BW_E2E_NATIVE === '1') {
+  console.log('  Running E2E tests (native — BW_E2E_NATIVE=1)...');
+  run('npm run test:e2e');
+} else {
+  console.log('  Running E2E tests (Docker gate)...');
+  run('npm run test:e2e:docker');
+}
+
+console.log('  Running drift-lint...');
+run('node tools/drift-lint.js');
 
 // Update coverage badge in README from json-summary produced by npm test
 run('node tools/update-coverage-badge.js');
@@ -173,15 +183,73 @@ if (gzipped > BUDGET) {
 }
 console.log('  ✓ Under 45KB budget');
 
-// ── 7. Archive release snapshot ─────────────────────────────────────────
+// ── 7. Docker clean-room install test ──────────────────────────────────
 
-step('7. Archive release snapshot');
+step('7. Docker clean-room test');
+
+try {
+  runQuiet('docker info');
+  console.log('  Docker available — running clean-room install test');
+
+  // Pack the tarball
+  const packOut = runQuiet('npm pack --pack-destination tmp/');
+  const tarball = packOut.split('\n').pop().trim();
+  console.log(`  Packed: ${tarball}`);
+
+  // CJS require test
+  const cjsScript = `
+    const bw = require('bitwrench');
+    if (typeof bw.html !== 'function') { process.exit(1); }
+    if (typeof bw.version !== 'string') { process.exit(1); }
+    console.log('CJS OK: bitwrench v' + bw.version);
+  `.trim().replace(/\n/g, ' ');
+
+  // ESM import test
+  const esmScript = `
+    import bw from 'bitwrench';
+    if (typeof bw.html !== 'function') { process.exit(1); }
+    console.log('ESM OK: bitwrench v' + bw.version);
+  `.trim().replace(/\n/g, ' ');
+
+  // Build a single docker command that installs from tarball and tests both formats
+  const dockerCmd = [
+    'docker run --rm',
+    `-v "${join(root, 'tmp')}:/pkg"`,
+    'node:22-slim',
+    'sh -c "' + [
+      'mkdir /test && cd /test',
+      `npm init -y > /dev/null 2>&1`,
+      `npm install /pkg/${tarball} --silent 2>&1 | tail -1`,
+      // CJS test
+      `node -e "${cjsScript}"`,
+      // ESM test (needs type:module in a subdir)
+      `mkdir /test/esm && cd /test/esm`,
+      `echo '{"type":"module"}' > package.json`,
+      `ln -s /test/node_modules node_modules`,
+      `node -e "${esmScript}"`
+    ].join(' && ') + '"'
+  ].join(' ');
+
+  run(dockerCmd);
+  console.log('  ✓ Clean-room install: CJS + ESM verified');
+} catch (e) {
+  if (e.message && e.message.includes('docker')) {
+    console.log('  ⚠ Docker not available — skipping clean-room test');
+    console.log('    Install Docker to enable this gate');
+  } else {
+    fail('Docker clean-room install test failed: ' + e.message);
+  }
+}
+
+// ── 8. Archive release snapshot ─────────────────────────────────────────
+
+step('8. Archive release snapshot');
 
 run('node tools/build-release.js');
 
-// ── 8. Git commit and push ──────────────────────────────────────────────
+// ── 9. Git commit and push ──────────────────────────────────────────────
 
-step('8. Git commit and push');
+step('9. Git commit and push');
 
 const filesToStage = [
   'package.json',
@@ -211,7 +279,7 @@ if (staged.length === 0) {
   run(`git commit -m "v${version} release"`);
 }
 
-// ── 9. Summary ──────────────────────────────────────────────────────────
+// ── 10. Summary ─────────────────────────────────────────────────────────
 
 step('Done!');
 

@@ -204,7 +204,7 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
   }
 };
 
-bw.DOM(&#39;#app&#39;, counter);</code></pre><blockquote class="quikdown-blockquote"><strong class="quikdown-strong">Important: event handlers go in <code class="quikdown-code">a: { onclick: fn }</code>, not in <code class="quikdown-code">o.mounted</code>.</strong> Handlers attached via <code class="quikdown-code">addEventListener</code> in <code class="quikdown-code">o.mounted</code> are silently lost when a component re-renders. Always use <code class="quikdown-code">onclick</code>/<code class="quikdown-code">onchange</code>/etc. inside <code class="quikdown-code">a:</code> -- bitwrench re-attaches them on every render automatically.</blockquote><p>See the <a class="quikdown-a" href="docs/state-management.md">State Management guide</a> for the full three-level component model.</p><p>For communication between components, use pub/sub:</p><pre class="quikdown-pre"><code class="language-javascript">bw.sub(&#39;item-added&#39;, function(detail) {
+bw.DOM(&#39;#app&#39;, counter);</code></pre><blockquote class="quikdown-blockquote"><strong class="quikdown-strong">Important: event handlers go in <code class="quikdown-code">a: { onclick: fn }</code>, not in <code class="quikdown-code">o.mounted</code>.</strong> Handlers attached via <code class="quikdown-code">addEventListener</code> in <code class="quikdown-code">o.mounted</code> are silently lost when a component re-renders. Always use <code class="quikdown-code">onclick</code>/<code class="quikdown-code">onchange</code>/etc. inside <code class="quikdown-code">a:</code> -- bitwrench re-attaches them on every render automatically.</blockquote><p>See the <a class="quikdown-a" href="docs/state-management.md">State Management guide</a> for the full component model.</p><p>For communication between components, use pub/sub:</p><pre class="quikdown-pre"><code class="language-javascript">bw.sub(&#39;item-added&#39;, function(detail) {
   console.log(&#39;New item:&#39;, detail.name);
 });
 
@@ -336,7 +336,7 @@ bwcli doc.md -o doc.html --standalone --theme ocean
 # Custom colors
 bwcli doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</code></pre><p>Flags: <code class="quikdown-code">--output/-o</code>, <code class="quikdown-code">--standalone/-s</code>, <code class="quikdown-code">--cdn</code>, <code class="quikdown-code">--theme/-t</code>, <code class="quikdown-code">--css/-c</code>, <code class="quikdown-code">--title</code>, <code class="quikdown-code">--favicon/-f</code>, <code class="quikdown-code">--highlight</code>, <code class="quikdown-code">--verbose/-v</code></p><h3 class="quikdown-h3">Pipe Server</h3>
 <p><code class="quikdown-code">bwcli serve</code> turns any language into a bwserve backend -- send JSON protocol messages via HTTP POST or stdin, and connected browsers update in real time:</p><pre class="quikdown-pre"><code class="language-bash">bwcli serve --port 8080 --input-port 9000
-curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&quot;target&quot;:&quot;temp&quot;,&quot;content&quot;:&quot;23.5 C&quot;}&#39;</code></pre><h2 class="quikdown-h2">Build Formats</h2>
+curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&quot;ref&quot;:&quot;temp&quot;,&quot;content&quot;:&quot;23.5 C&quot;}&#39;</code></pre><h2 class="quikdown-h2">Build Formats</h2>
 <table class="quikdown-table">
 <thead class="quikdown-thead">
 <tr class="quikdown-tr">
@@ -369,11 +369,11 @@ curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&
 </tbody>
 </table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><h2 class="quikdown-h2">Documentation</h2>
 <strong class="quikdown-strong">Start here:</strong></p><ul class="quikdown-ul">
-<li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a></strong> -- the complete guide. Covers TACO, styling (<code class="quikdown-code">bw.css</code>, <code class="quikdown-code">bw.s</code>, <code class="quikdown-code">bw.responsive</code>), composition, events, the three-level component model, bwserve, and common patterns</li>
+<li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a></strong> -- the complete guide. Covers TACO, styling (<code class="quikdown-code">bw.css</code>, <code class="quikdown-code">bw.s</code>, <code class="quikdown-code">bw.responsive</code>), composition, events, the component model, bwserve, and common patterns</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/llm-bitwrench-guide.md">LLM Guide</a></strong> -- compact single-file reference with all APIs, patterns, and rules. Designed for AI-assisted development but works as a cheat sheet for anyone</li>
 </ul><p><strong class="quikdown-strong">Reference guides</strong> (in <code class="quikdown-code">docs/</code>):</p><ul class="quikdown-ul">
 <li class="quikdown-li"><a class="quikdown-a" href="docs/taco-format.md">TACO Format</a> -- the <code class="quikdown-code">{t, a, c, o}</code> object format</li>
-<li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> -- three-level component model, explicit stateful components, cross-component communication</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> -- component model, explicit stateful components, cross-component communication</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> -- all <code class="quikdown-code">make*()</code> functions with signatures and examples</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/theming.md">Theming</a> -- palette-driven theme generation, presets, design tokens</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/cli.md">CLI</a> -- the <code class="quikdown-code">bwcli</code> command for file conversion and pipe server</li>

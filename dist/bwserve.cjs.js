@@ -1,4 +1,4 @@
-/*! bwserve v2.1.0 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });

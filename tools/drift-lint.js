@@ -118,12 +118,93 @@ var RULES = [
       /heading.*level|h[1-6].*level/i,    // heading-level references
       /level.*deep|depth.*level/i          // inspect depth references
     ]
+  },
+  {
+    id: 'toggleStyles',
+    pattern: /toggleStyles/g,
+    message: 'bw.toggleStyles() → bw.toggleThemeMode()',
+    contextExclude: [
+      /removed|was removed|renamed|no longer|SUPERSEDED/i
+    ]
+  },
+  {
+    id: 'bw_card-bare',
+    pattern: /\bbw_card\b/g,
+    message: 'bw_card → bw_bccl_card when describing BCCL component output',
+    fileFilter: /\.md$/,
+    fileExclude: /taco-format|taco-schema|CONTRIBUTING|typescript_usage|bitwrench_api/,
+    contextExclude: [
+      /bw_bccl_card/,           // already correct
+      /removed|renamed|was/i,   // explaining the change
+      /\.bw_card/,              // CSS selector reference (still valid)
+      /class[:\s]/i,            // CSS class attribute usage (CSS class still valid)
+      /pattern/                 // regex pattern reference
+    ]
+  },
+  {
+    id: 'bw_btn-bare',
+    pattern: /\bbw_btn\b/g,
+    message: 'bw_btn → bw_bccl_btn when describing BCCL component output',
+    fileFilter: /\.md$/,
+    fileExclude: /taco-format|taco-schema|CONTRIBUTING|typescript_usage|bitwrench_api/,
+    contextExclude: [
+      /bw_bccl_btn/,
+      /removed|renamed|was/i,
+      /\.bw_btn/,              // CSS selector reference (still valid)
+      /class[:\s]/i            // CSS class attribute usage
+    ]
+  },
+  {
+    id: 'bw-container',
+    pattern: /bw-container/g,
+    message: 'bw-container → bw_container (underscore canonical)'
+  },
+  {
+    id: 'normalizeClass',
+    pattern: /normalizeClass/g,
+    message: 'bw.normalizeClass() does not exist — remove reference'
+  },
+  {
+    id: 'three-level',
+    pattern: /three-level/g,
+    message: 'three-level → component model (state-management.md uses stages, not a fixed count)'
+  },
+  {
+    id: 'outline-hyphen',
+    pattern: /outline-(?:primary|secondary|success|danger|warning|info|light|dark)/g,
+    message: 'outline-variant → outline_variant (underscore canonical)',
+    fileFilter: /\.(md|html)$/,
+    contextExclude: [
+      /or .outline-/,             // explaining both forms
+      /btn-outline-/,             // Bootstrap class names in comparison code
+      /outline-offset|outline-color|outline-style|outline-width/  // CSS properties
+    ]
+  },
+  {
+    id: 'reactive-self',
+    pattern: /\breactive\b/gi,
+    message: '"reactive" as self-description — use "explicit stateful" or "state + explicit re-render"',
+    fileFilter: /\.(md|html)$/,
+    fileExclude: /framework-translation-table|bitwrench-for-wasm/,
+    contextExclude: [
+      /Coming from React|React\/Vue|vs React|compared to|React-style|framework comparison/i,  // comparative content OK
+      /SUPERSEDED|removed|was reactive/i,  // explaining the change
+      /not reactive|non-reactive|isn.t reactive|without reactive|explicit.not.reactive/i,  // negations OK
+      /zero reactive/i,     // negation: "zero reactive state"
+      /CSS reactive|CSS.*react|react.*CSS/i,  // CSS context
+      /\.reactive/,                            // CSS class name
+      /Yew|Leptos|Dioxus|Vue|Svelte|Solid|Angular/i,  // describing other frameworks
+      /does NOT do|doesn.t do/i,  // saying what bitwrench doesn't do
+      /bitwrench does not/i,      // same
+      /Log search is reactive/i   // fictional product copy, not bitwrench
+    ]
   }
 ];
 
 // ── File collection ──────────────────────────────────────────────────
 
 var SCAN_DIRS = ['docs', 'pages', 'examples', 'embedded_python'];
+var SCAN_ROOT_FILES = ['README.md', 'CONTRIBUTING.md', 'ABOUT.md'];
 var SCAN_EXTS = new Set(['.md', '.html', '.js', '.py', '.sh', '.ts']);
 var SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'dev']);
 
@@ -153,11 +234,17 @@ function collectFiles(dir) {
 function scanFile(filePath, content) {
   var hits = [];
   var lines = content.split('\n');
+  var relPath = relative(ROOT, filePath);
 
   for (var li = 0; li < lines.length; li++) {
     var line = lines[li];
     for (var ri = 0; ri < RULES.length; ri++) {
       var rule = RULES[ri];
+
+      // Check file-level filters
+      if (rule.fileFilter && !rule.fileFilter.test(relPath)) continue;
+      if (rule.fileExclude && rule.fileExclude.test(relPath)) continue;
+
       rule.pattern.lastIndex = 0;
       if (rule.pattern.test(line)) {
         // Check context exclusions
@@ -172,7 +259,7 @@ function scanFile(filePath, content) {
         }
         if (!excluded) {
           hits.push({
-            file: relative(ROOT, filePath),
+            file: relPath,
             line: li + 1,
             rule: rule.id,
             message: rule.message,
@@ -190,6 +277,19 @@ function scanFile(filePath, content) {
 var allHits = [];
 var fileCount = 0;
 
+// Scan root-level files
+for (var ri = 0; ri < SCAN_ROOT_FILES.length; ri++) {
+  var rootFile = resolve(ROOT, SCAN_ROOT_FILES[ri]);
+  var rootContent;
+  try {
+    rootContent = readFileSync(rootFile, 'utf8');
+  } catch (_) { continue; }
+  fileCount++;
+  var rootHits = scanFile(rootFile, rootContent);
+  allHits = allHits.concat(rootHits);
+}
+
+// Scan directories
 for (var di = 0; di < SCAN_DIRS.length; di++) {
   var dir = resolve(ROOT, SCAN_DIRS[di]);
   var files = collectFiles(dir);

@@ -18,7 +18,7 @@ These guides cover how to build UIs with bitwrench.
 
 ## Start Here
 
-- **[Thinking in Bitwrench](thinking-in-bitwrench.md)** -- The complete guide to building with bitwrench. Covers TACO basics, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, the three-level component model, events (and why `onclick` goes in `a:`, not `o.mounted`), bwserve, and common patterns. **Read this first.**
+- **[Thinking in Bitwrench](thinking-in-bitwrench.md)** -- The complete guide to building with bitwrench. Covers TACO basics, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, the component model, events (and why `onclick` goes in `a:`, not `o.mounted`), bwserve, and common patterns. **Read this first.**
 - **[LLM Guide](llm-bitwrench-guide.md)** -- Compact single-file reference for AI-assisted development. All APIs, patterns, and rules in one document. Also useful as a quick-reference cheat sheet for humans.
 
 ## Guides
@@ -27,7 +27,7 @@ These guides cover how to build UIs with bitwrench.
 |-------|-------------|
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
-| [State Management](state-management.md) | Three-level component model, explicit stateful components, cross-component communication |
+| [State Management](state-management.md) | Component model, explicit stateful components, cross-component communication |
 | [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all components with capabilities and handles |
 | [Component Library](component-library.md) | All `make*()` functions with full signatures and examples |
 | [Routing](routing.md) | Client-side router: hash/history mode, route params, guards, pub/sub |
@@ -47,6 +47,7 @@ These guides cover how to build UIs with bitwrench.
 | [Building a Website](tutorial-website.md) | Build a complete landing page from scratch |
 | [Server App with bwserve](tutorial-bwserve.md) | Build a Streamlit-style server-driven dashboard |
 | [ESP32 Embedded](tutorial-embedded.md) | ESP32 IoT dashboard with C/C++ macros |
+| [Component Lifecycle Walkthrough](../dev/v2.1_samples/01-card-lifecycle.md) | Stats card: define, create, mount, update, unmount — every phase of a v2.1 component |
 
 ## Interactive Docs
 

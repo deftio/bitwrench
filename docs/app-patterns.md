@@ -189,7 +189,8 @@ bw.DOM('#app', { t: 'div', c: [
   }})
 ]});
 
-// Poll the device -- re-render readings section each cycle
+// Quick prototype: poll + full re-render. For production, use SSE
+// with bw.patch() instead -- see tutorial-embedded.md for the SSE version.
 setInterval(function() {
   fetch('/api/sensors').then(function(r) { return r.json(); })
     .then(function(data) {

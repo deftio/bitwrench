@@ -1,3 +1,6 @@
+> **SUPERSEDED — do not copy patterns from this file.**
+> This is the 2.0.x version of the guide. The current version is `docs/thinking-in-bitwrench.md`.
+
 # Thinking in Bitwrench
 
 ## Table of Contents

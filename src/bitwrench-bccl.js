@@ -1450,7 +1450,7 @@ export function makeSpinner(props = {}) {
  *   variant: "dark",
  *   actions: [
  *     makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
- *     makeButton({ text: "Learn More", variant: "outline-light", size: "lg" })
+ *     makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
  *   ]
  * });
  */

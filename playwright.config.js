@@ -60,9 +60,12 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Run your local dev server before starting the tests.
+     Uses the repo's node static server (not python3) so the same config
+     works inside the Playwright Docker image, where python3 isn't guaranteed. */
   webServer: {
-    command: 'python3 -m http.server 8081',
+    command: 'node server.js',
+    env: { PORT: '8081' },
     port: 8081,
     reuseExistingServer: !process.env.CI,
   },

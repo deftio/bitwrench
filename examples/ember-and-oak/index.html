@@ -53,7 +53,7 @@
   //   - Contact form uses o.state + o.render with status display
   //   - Counter uses o.state + o.render with closures for methods
   //   - Toast notification system uses bw.create() for append pattern
-  //   - Theme: bw.loadStyles({ '#8B4513', '#D2691E', '#2F4F2F' })
+  //   - Theme: bw.loadStyles({ primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' })
   //
   // Key Patterns to Study:
   //   1. Pub/sub cart: cartAdd() -> bw.pub('cart:updated') -> bw.sub()
@@ -687,11 +687,11 @@
               { t: 'div', a: { class: 'eo-ctr-lbl' }, c: 'Counter Value' },
               { t: 'div', a: { class: 'eo-ctr-disp' }, c: String(s.count) },
               { t: 'div', a: { class: 'eo-ctr-btns' }, c: [
-                bw.makeButton({ text: '\u22125', variant: 'outline-secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 5)); } }),
+                bw.makeButton({ text: '\u22125', variant: 'outline_secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 5)); } }),
                 bw.makeButton({ text: '\u22121', variant: 'secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 1)); } }),
                 bw.makeButton({ text: 'Reset', variant: 'warning', size: 'sm', onclick: function() { counterSet(0); } }),
                 bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counterSet(counterGet() + 1); } }),
-                bw.makeButton({ text: '+5', variant: 'outline-primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
+                bw.makeButton({ text: '+5', variant: 'outline_primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
               ]},
               { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.refresh(el)' }
             ]
@@ -723,8 +723,8 @@
             { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:#2d2017' }, c: 'Roast Stage: ' + s.roastLabel },
             bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }),
             { t: 'div', a: { style: 'display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap' }, c: [
-              bw.makeButton({ text: 'Drying Phase', variant: 'outline-primary', size: 'sm', onclick: function() { progressSet('Drying Phase (0-150\u00B0C)', 25); } }),
-              bw.makeButton({ text: 'Maillard', variant: 'outline-primary', size: 'sm', onclick: function() { progressSet('Maillard Reaction (150-190\u00B0C)', 50); } }),
+              bw.makeButton({ text: 'Drying Phase', variant: 'outline_primary', size: 'sm', onclick: function() { progressSet('Drying Phase (0-150\u00B0C)', 25); } }),
+              bw.makeButton({ text: 'Maillard', variant: 'outline_primary', size: 'sm', onclick: function() { progressSet('Maillard Reaction (150-190\u00B0C)', 50); } }),
               bw.makeButton({ text: 'First Crack', variant: 'warning', size: 'sm', onclick: function() { progressSet('First Crack (195\u00B0C)', 72); } }),
               bw.makeButton({ text: 'Drop', variant: 'success', size: 'sm', onclick: function() { progressSet('Drop & Cool (205\u00B0C)', 100); } })
             ]}
@@ -770,7 +770,7 @@
           { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Live Counter -- o.state + o.render' }, counter ] },
           { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Roast Progress -- o.state + o.render' }, progressComp ] },
           { t: 'div', a: { class: 'eo-box', style: 'grid-column:1/-1' }, c: [
-            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Reactive Pattern (o.state + o.render)' },
+            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Stateful Pattern (o.state + o.render)' },
             bw.makeCodeDemo({ title: '', description: '', code: codeExample, language: 'javascript' })
           ]}
         ]},
@@ -794,7 +794,7 @@
             ['bw.makeTable()', 'BCCL', 'Coffee menu sortable table'],
             ['bw.makeTableFromArray()', 'BCCL', 'This feature table'],
             ['bw.makeAlert()', 'BCCL', 'Wholesale info in contact section'],
-            ['bw.makeCodeDemo()', 'BCCL', 'Reactive pattern code example'],
+            ['bw.makeCodeDemo()', 'BCCL', 'Stateful pattern code example'],
             ['bw.makeProgress()', 'BCCL', 'Roast progress demo'],
             ['bw.makeButton() variants', 'BCCL', 'CTAs, filter buttons, counter controls'],
             ['bw.makeBadge() + makeTooltip()', 'BCCL', 'SCA score pills + hover info'],

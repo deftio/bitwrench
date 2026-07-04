@@ -482,7 +482,7 @@ bw.DOM(target, bw.makeTable({
     ];
 
 
-    // Create a reactive table component using bitwrench patterns
+    // Create a stateful table component using bitwrench patterns
     function createTableComponent() {
       const state = {
         employees: [...employees],
@@ -698,7 +698,7 @@ const employees = [
   { id: 5, name: 'Alex Rivera', position: 'Marketing Manager', department: 'Marketing', salary: 90000, startDate: '2020-11-30' }
 ];
 
-// bitwrench Approach - Reactive Component Pattern
+// bitwrench Approach - Stateful Component Pattern
 function createTableComponent() {
   // Component state
   const state = {
@@ -710,7 +710,7 @@ function createTableComponent() {
     sortDirection: 'asc'
   };
 
-  // Update view function - uses bw.DOM for reactive updates
+  // Update view function - uses bw.DOM for explicit updates
   function updateView() {
     // Transform data for display
     const tableData = state.filteredEmployees.map(emp => ({

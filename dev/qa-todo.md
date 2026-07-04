@@ -165,7 +165,7 @@ Source: `dev/bitwrench-component-lifecycle.md`, `dev/bitwrench_agui_a2ui_feedbac
 ### Should-have (unlocks)
 
 * [x] implement --> SVG namespace support in createDOM (createElementNS for SVG/MathML context)
-* [ ] implement --> Scoped theme toggle: bw.toggleStyles(scopeEl) for container-scoped palette switching
+* [ ] implement --> Scoped theme toggle: bw.toggleThemeMode(scopeEl) for container-scoped palette switching
 
 ### Small wins (from AG-UI/A2UI feedback)
 

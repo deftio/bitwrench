@@ -224,15 +224,22 @@ theme.alternate.palette;     // light-inverted version of ocean
 
 ### Switching between palettes
 
-```javascript
-// Switch to the alternate palette by re-applying:
-bw.applyStyles(theme.alternate);
+Both palettes are injected together — the alternate is scoped under the `bw_theme_alt` class. Switching is a one-class toggle, no restyling needed:
 
-// Switch back to the primary palette:
-bw.applyStyles(theme);
+```javascript
+bw.toggleThemeMode();              // flip primary <-> alternate (whole page)
+bw.setThemeMode('alternate');      // set explicitly
+bw.toggleThemeMode('#dashboard');  // toggle just one subtree
 ```
 
-> **Note:** `bw.toggleStyles()` was removed in v2.1. To switch between primary and alternate palettes, call `bw.applyStyles()` with the desired palette object. Both palettes are available from the `bw.makeStyles()` return value.
+To swap in a different palette entirely, re-apply:
+
+```javascript
+bw.applyStyles(theme.alternate);   // make the alternate palette primary
+bw.applyStyles(theme);             // switch back
+```
+
+> **Note:** `bw.toggleStyles()` was removed in v2.1. Its replacement is `bw.toggleThemeMode()`, which toggles the `bw_theme_alt` class instead of re-injecting styles. See [`bw.toggleThemeMode()`](bitwrench_api.md#bwtogglethememodescope) and [`bw.setThemeMode()`](bitwrench_api.md#bwsetthememodemode-scope).
 
 ### Clearing a theme
 

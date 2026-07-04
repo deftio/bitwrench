@@ -1166,7 +1166,7 @@ bw.saveLocalFile('output.txt', content);
 | CSS purging | You generate only what you use via `bw.css()` | N/A |
 | SSR hydration | `bw.html()` for SSR, `bw.mount()` for client | Full page render via `bw.html()` in Node |
 | Module bundling | No build step required | `<script>` tag, CDN, or ESM `import` |
-| Reactive state tracking | Explicit updates are clearer and debuggable | `el.bw.method()`, `bw.refresh()`, pub/sub |
+| Automatic state tracking | Explicit updates are clearer and debuggable | `el.bw.method()`, `bw.refresh()`, pub/sub |
 | TypeScript requirement | Ships `dist/bitwrench.d.ts` for optional TS support | See [TypeScript Usage Guide](bitwrench_typescript_usage.md) |
 
 ---

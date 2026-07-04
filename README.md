@@ -145,7 +145,7 @@ bw.DOM('#app', counter);
 
 > **Important: event handlers go in `a: { onclick: fn }`, not in `o.mounted`.** Handlers attached via `addEventListener` in `o.mounted` are silently lost when a component re-renders. Always use `onclick`/`onchange`/etc. inside `a:` -- bitwrench re-attaches them on every render automatically.
 
-See the [State Management guide](docs/state-management.md) for the full three-level component model.
+See the [State Management guide](docs/state-management.md) for the full component model.
 
 For communication between components, use pub/sub:
 
@@ -248,7 +248,7 @@ Flags: `--output/-o`, `--standalone/-s`, `--cdn`, `--theme/-t`, `--css/-c`, `--t
 
 ```bash
 bwcli serve --port 8080 --input-port 9000
-curl -X POST http://localhost:9000 -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+curl -X POST http://localhost:9000 -d '{"type":"patch","ref":"temp","content":"23.5 C"}'
 ```
 
 ## Build Formats
@@ -266,13 +266,13 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Start here:**
 
-- **[Thinking in Bitwrench](docs/thinking-in-bitwrench.md)** -- the complete guide. Covers TACO, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, events, the three-level component model, bwserve, and common patterns
+- **[Thinking in Bitwrench](docs/thinking-in-bitwrench.md)** -- the complete guide. Covers TACO, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, events, the component model, bwserve, and common patterns
 - **[LLM Guide](docs/llm-bitwrench-guide.md)** -- compact single-file reference with all APIs, patterns, and rules. Designed for AI-assisted development but works as a cheat sheet for anyone
 
 **Reference guides** (in `docs/`):
 
 - [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
-- [State Management](docs/state-management.md) -- three-level component model, explicit stateful components, cross-component communication
+- [State Management](docs/state-management.md) -- component model, explicit stateful components, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens
 - [CLI](docs/cli.md) -- the `bwcli` command for file conversion and pipe server

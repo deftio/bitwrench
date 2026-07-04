@@ -222,7 +222,7 @@ This costs about 200 tokens. Always call it first.
 ### Step 2: Learn (Optional but Recommended)
 
 If you have not used bitwrench before, call `bitwrench_guide`. This is the
-full tutorial (about 4000 tokens). It covers TACO nesting, the three-level
+full tutorial (about 4000 tokens). It covers TACO nesting, the
 component model, events, CSS/theming, all component categories, debugging,
 bwserve, routing, and API reference tables.
 
