@@ -56,14 +56,13 @@
             t: 'div', a: { class: 'bw_site_pages_snippet_wrap' },
             c: [
               {
-                t: 'button', a: { class: 'bw_site_pages_snippet_copy' }, c: 'Copy',
-                o: { mounted: function(el) {
-                  el.addEventListener('click', function() {
-                    navigator.clipboard.writeText(code).then(function() {
-                      el.textContent = 'Copied!';
-                      el.classList.add('copied');
-                      setTimeout(function() { el.textContent = 'Copy'; el.classList.remove('copied'); }, 1500);
-                    });
+                t: 'button', c: 'Copy',
+                a: { class: 'bw_site_pages_snippet_copy', onclick: function(e) {
+                  var el = e.target;
+                  navigator.clipboard.writeText(code).then(function() {
+                    el.textContent = 'Copied!';
+                    el.classList.add('copied');
+                    setTimeout(function() { el.textContent = 'Copy'; el.classList.remove('copied'); }, 1500);
                   });
                 }}
               },
@@ -101,15 +100,15 @@
                 var arrow = state.col === i ? (state.dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
                 return {
                   t: 'th',
-                  a: Object.assign({ style: 'cursor:pointer;user-select:none' }, h.sz ? { class: 'sz' } : {}),
-                  c: h.label + arrow,
-                  o: { mounted: function(el) {
-                    el.addEventListener('click', function() {
+                  a: Object.assign(
+                    { style: 'cursor:pointer;user-select:none', onclick: function() {
                       if (state.col === i) { state.dir = state.dir === 'asc' ? 'desc' : 'asc'; }
                       else { state.col = i; state.dir = 'asc'; }
                       render();
-                    });
-                  }}
+                    }},
+                    h.sz ? { class: 'sz' } : {}
+                  ),
+                  c: h.label + arrow
                 };
               })}},
               { t: 'tbody', c: sorted.map(function(row) {
@@ -771,22 +770,19 @@
               {
                 t: 'div', a: { class: 'bw_site_pages_snippet_wrap' }, c: [
                   {
-                    t: 'button', a: { class: 'bw_site_pages_snippet_copy' },
+                    t: 'button',
                     c: 'Copy',
-                    o: {
-                      mounted: function(el) {
-                        el.addEventListener('click', function() {
-                          navigator.clipboard.writeText(tag).then(function() {
-                            el.textContent = 'Copied!';
-                            el.classList.add('copied');
-                            setTimeout(function() {
-                              el.textContent = 'Copy';
-                              el.classList.remove('copied');
-                            }, 1500);
-                          });
-                        });
-                      }
-                    }
+                    a: { class: 'bw_site_pages_snippet_copy', onclick: function(e) {
+                      var el = e.target;
+                      navigator.clipboard.writeText(tag).then(function() {
+                        el.textContent = 'Copied!';
+                        el.classList.add('copied');
+                        setTimeout(function() {
+                          el.textContent = 'Copy';
+                          el.classList.remove('copied');
+                        }, 1500);
+                      });
+                    }}
                   },
                   { t: 'div', a: { class: 'sri-tag-block' }, c: tag }
                 ]

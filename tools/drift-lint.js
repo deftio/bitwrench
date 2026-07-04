@@ -3,11 +3,26 @@
 /**
  * drift-lint.js — Scan release-facing files for stale v2.0 patterns.
  *
- * Usage:
- *   node tools/drift-lint.js          # scan all release-facing dirs
- *   node tools/drift-lint.js --fix    # (future) auto-fix simple renames
+ * Catches drift between what the code does and what docs/examples/pages
+ * say it does. Two rule kinds:
+ *   - name rules:       a token that should no longer appear (e.g. a removed API)
+ *   - structural rules: an anti-pattern shape — anchor on one line, evidence
+ *                       within the next few lines (rule.followedBy / rule.within)
  *
- * Exit code:  0 = clean,  1 = stale patterns found
+ * Ignore pragma (any comment style — //, #, <!-- -->):
+ *   drift-lint:ignore-start: reason for the exemption
+ *   ...exempt lines...
+ *   drift-lint:ignore-end
+ * A missing reason warns (doesn't fail — hotfixes shouldn't be blocked on
+ * prose, but please add one). Unclosed/unmatched pragmas fail the run.
+ *
+ * Usage:
+ *   npm run lint:drift                # scan all release-facing dirs
+ *   node tools/drift-lint.js --verbose  # also list honored ignore blocks
+ *
+ * Exit code:  0 = clean,  1 = stale patterns found (or malformed pragmas)
+ *
+ * Full documentation: docs/drift-lint.md
  */
 
 import { readFileSync, readdirSync, statSync } from 'fs';
@@ -198,13 +213,49 @@ var RULES = [
       /bitwrench does not/i,      // same
       /Log search is reactive/i   // fictional product copy, not bitwrench
     ]
+  },
+  {
+    id: 'getHandle',
+    pattern: /getHandle/g,
+    message: 'bw.getHandle() removed in v2.1 — handles live on el.bw directly',
+    contextExclude: [
+      /removed|was removed|no longer|SUPERSEDED/i
+    ]
+  },
+  {
+    id: 'update-as-rerender',
+    // Prose claiming bw.update() re-renders — it dispatches to el.bw.update();
+    // re-render is bw.refresh(). Catches "call bw.update(el) to re-render" style text.
+    pattern: /bw\.update\([^)]*\)[^.\n]{0,40}re-?render|re-?render[^.\n]{0,40}bw\.update\(/gi,
+    message: 'bw.update() dispatches to el.bw.update(); re-render is bw.refresh()',
+    contextExclude: [
+      /never|not|instead of|rather than|vs\.?|whereas/i  // contrasting the two correctly
+    ]
+  },
+  {
+    id: 'mounted-event-wiring',
+    // Structural rule: DOM event handlers attached via addEventListener inside
+    // o.mounted. Handlers wired this way are lost on bw.refresh() — the docs
+    // mark this pattern WRONG. Use a: { onclick: fn } instead.
+    // Anchor: "mounted:" — evidence: an interactive-event listener within 3 lines.
+    pattern: /\bmounted\s*:/,
+    followedBy: /\.addEventListener\(\s*['"](?:click|input|change|submit|keydown|keyup|pointerdown|pointerup|touchstart)['"]/,
+    within: 3,
+    message: 'event handler wired in o.mounted is lost on bw.refresh() — use a: { onclick: fn }',
+    fileFilter: /\.(html|js)$/,
+    contextExclude: [
+      /['"`].*addEventListener.*['"`]/,  // quoted demo/comparison code strings
+      /window\.addEventListener|document\.addEventListener/  // page-level listeners are fine
+    ]
   }
 ];
 
 // ── File collection ──────────────────────────────────────────────────
 
 var SCAN_DIRS = ['docs', 'pages', 'examples', 'embedded_python'];
-var SCAN_ROOT_FILES = ['README.md', 'CONTRIBUTING.md', 'ABOUT.md'];
+// readme.html is generated from README.md — scanning it catches "README fixed
+// but build:readme not re-run", which is itself a form of drift.
+var SCAN_ROOT_FILES = ['README.md', 'CONTRIBUTING.md', 'ABOUT.md', 'readme.html'];
 var SCAN_EXTS = new Set(['.md', '.html', '.js', '.py', '.sh', '.ts']);
 var SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'dev']);
 
@@ -229,43 +280,136 @@ function collectFiles(dir) {
   return files;
 }
 
+// ── Ignore pragma ────────────────────────────────────────────────────
+//
+//   drift-lint:ignore-start: <reason>     ← reason is REQUIRED
+//   ...exempt lines...
+//   drift-lint:ignore-end
+//
+// Works in any comment style (//, #, <!-- -->, /* */).
+//
+// Structural problems (unclosed start, end without start, nested start) are
+// hard ERRORS — they can silently exempt far more than intended.
+// A missing reason is a WARNING, not a failure: a hotfix shouldn't be blocked
+// on prose, but pragmas without context become archaeology. Add the reason.
+
+var PRAGMA_START = /drift-lint\s*:\s*ignore-start\s*:?\s*(.*)$/;
+var PRAGMA_END = /drift-lint\s*:\s*ignore-end/;
+
+// Computes per-line ignore state.
+// Returns { ignored: bool[], blocks: [...], errors: [...], warnings: [...] }
+function computeIgnores(lines, relPath) {
+  var ignored = new Array(lines.length).fill(false);
+  var blocks = [];
+  var errors = [];
+  var warnings = [];
+  var openLine = -1;
+  var openReason = null;
+
+  for (var i = 0; i < lines.length; i++) {
+    var startMatch = lines[i].match(PRAGMA_START);
+    if (startMatch) {
+      if (openLine !== -1) {
+        errors.push(relPath + ':L' + (i + 1) + ' — ignore-start inside an open ignore block (started L' + (openLine + 1) + ')');
+        continue;
+      }
+      var reason = startMatch[1].replace(/-->.*$|\*\/.*$/, '').trim();
+      if (!reason) {
+        warnings.push(relPath + ':L' + (i + 1) + ' — ignore block has no reason; add one (drift-lint:ignore-start: <why>) so future readers know what was intended');
+      }
+      openLine = i;
+      openReason = reason || '(no reason given)';
+      ignored[i] = true;
+      continue;
+    }
+    if (PRAGMA_END.test(lines[i])) {
+      if (openLine === -1) {
+        errors.push(relPath + ':L' + (i + 1) + ' — ignore-end without matching ignore-start');
+        continue;
+      }
+      ignored[i] = true;
+      blocks.push({ file: relPath, from: openLine + 1, to: i + 1, reason: openReason });
+      openLine = -1;
+      openReason = null;
+      continue;
+    }
+    if (openLine !== -1) ignored[i] = true;
+  }
+
+  if (openLine !== -1) {
+    errors.push(relPath + ':L' + (openLine + 1) + ' — ignore-start never closed (add drift-lint:ignore-end)');
+  }
+  return { ignored: ignored, blocks: blocks, errors: errors, warnings: warnings };
+}
+
 // ── Scan ─────────────────────────────────────────────────────────────
+
+function ruleApplies(rule, relPath) {
+  if (rule.fileFilter && !rule.fileFilter.test(relPath)) return false;
+  if (rule.fileExclude && rule.fileExclude.test(relPath)) return false;
+  return true;
+}
+
+function contextExcluded(rule, line) {
+  if (!rule.contextExclude) return false;
+  for (var ci = 0; ci < rule.contextExclude.length; ci++) {
+    if (rule.contextExclude[ci].test(line)) return true;
+  }
+  return false;
+}
 
 function scanFile(filePath, content) {
   var hits = [];
   var lines = content.split('\n');
   var relPath = relative(ROOT, filePath);
 
+  var ig = computeIgnores(lines, relPath);
+  pragmaErrors = pragmaErrors.concat(ig.errors);
+  pragmaWarnings = pragmaWarnings.concat(ig.warnings);
+  ignoreBlocks = ignoreBlocks.concat(ig.blocks);
+
   for (var li = 0; li < lines.length; li++) {
+    if (ig.ignored[li]) continue;
     var line = lines[li];
+
     for (var ri = 0; ri < RULES.length; ri++) {
       var rule = RULES[ri];
-
-      // Check file-level filters
-      if (rule.fileFilter && !rule.fileFilter.test(relPath)) continue;
-      if (rule.fileExclude && rule.fileExclude.test(relPath)) continue;
+      if (!ruleApplies(rule, relPath)) continue;
 
       rule.pattern.lastIndex = 0;
-      if (rule.pattern.test(line)) {
-        // Check context exclusions
-        var excluded = false;
-        if (rule.contextExclude) {
-          for (var ci = 0; ci < rule.contextExclude.length; ci++) {
-            if (rule.contextExclude[ci].test(line)) {
-              excluded = true;
-              break;
-            }
+      if (!rule.pattern.test(line)) continue;
+
+      if (rule.followedBy) {
+        // Structural rule: anchor matched; look for evidence within N lines
+        // (including the anchor line itself). contextExclude is applied to
+        // the EVIDENCE line, since that's where false-positive context lives.
+        var window = rule.within || 3;
+        var evidenceLine = -1;
+        for (var wi = 0; wi <= window && li + wi < lines.length; wi++) {
+          if (ig.ignored[li + wi]) continue;
+          rule.followedBy.lastIndex = 0;
+          if (rule.followedBy.test(lines[li + wi]) && !contextExcluded(rule, lines[li + wi])) {
+            evidenceLine = li + wi;
+            break;
           }
         }
-        if (!excluded) {
-          hits.push({
-            file: relPath,
-            line: li + 1,
-            rule: rule.id,
-            message: rule.message,
-            text: line.trim().substring(0, 120)
-          });
-        }
+        if (evidenceLine === -1) continue;
+        hits.push({
+          file: relPath,
+          line: evidenceLine + 1,
+          rule: rule.id,
+          message: rule.message,
+          text: lines[evidenceLine].trim().substring(0, 120)
+        });
+      } else {
+        if (contextExcluded(rule, line)) continue;
+        hits.push({
+          file: relPath,
+          line: li + 1,
+          rule: rule.id,
+          message: rule.message,
+          text: line.trim().substring(0, 120)
+        });
       }
     }
   }
@@ -276,6 +420,10 @@ function scanFile(filePath, content) {
 
 var allHits = [];
 var fileCount = 0;
+var pragmaErrors = [];
+var pragmaWarnings = [];
+var ignoreBlocks = [];
+var VERBOSE = process.argv.indexOf('--verbose') !== -1;
 
 // Scan root-level files
 for (var ri = 0; ri < SCAN_ROOT_FILES.length; ri++) {
@@ -306,8 +454,38 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
 
 // ── Report ───────────────────────────────────────────────────────────
 
+if (pragmaErrors.length > 0) {
+  console.log('drift-lint: malformed ignore pragma(s):\n');
+  for (var pe = 0; pe < pragmaErrors.length; pe++) {
+    console.log('  ' + pragmaErrors[pe]);
+  }
+  console.log('');
+  process.exit(1);
+}
+
+if (pragmaWarnings.length > 0) {
+  console.log('drift-lint: warning — ' + pragmaWarnings.length + ' ignore block(s) without a reason:\n');
+  for (var pw = 0; pw < pragmaWarnings.length; pw++) {
+    console.log('  ' + pragmaWarnings[pw]);
+  }
+  console.log('');
+}
+
+if (VERBOSE && ignoreBlocks.length > 0) {
+  console.log('drift-lint: honored ignore blocks:');
+  for (var ib = 0; ib < ignoreBlocks.length; ib++) {
+    var b = ignoreBlocks[ib];
+    console.log('  ' + b.file + ' L' + b.from + '-' + b.to + ' — ' + b.reason);
+  }
+  console.log('');
+}
+
+var ignoreNote = ignoreBlocks.length > 0
+  ? ' (' + ignoreBlocks.length + ' ignore block' + (ignoreBlocks.length === 1 ? '' : 's') + ' honored)'
+  : '';
+
 if (allHits.length === 0) {
-  console.log('drift-lint: ' + fileCount + ' files scanned, 0 stale patterns found.');
+  console.log('drift-lint: ' + fileCount + ' files scanned, 0 stale patterns found' + ignoreNote + '.');
   process.exit(0);
 } else {
   console.log('drift-lint: ' + fileCount + ' files scanned, ' + allHits.length + ' stale pattern(s) found:\n');

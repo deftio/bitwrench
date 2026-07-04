@@ -144,6 +144,8 @@
 		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm -rf dist/* bitwrench*.tgz",
 		"lint": "./node_modules/.bin/eslint src/",
+		"lint:drift": "node tools/drift-lint.js",
+		"postbuild": "npm run lint:drift",
 		"serve": "node server.js",
 		"dev": "npm run build && npm run serve",
 		"instrument-bw": "echo 'deprecated: use c8 instead'",

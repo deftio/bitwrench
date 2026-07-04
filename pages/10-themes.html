@@ -1012,31 +1012,31 @@
             t: 'button', c: 'Light',
             a: {
               style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:4px 0 0 4px;cursor:pointer;font-size:0.875rem;font-weight:600;' +
-                (!isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;')
-            },
-            o: { mounted: function(el) { el.addEventListener('click', function() {
-              state.galleryDark = false;
-              state.isAlternate = false;
-              generateCurrentTheme();
-              renderGenerator();
-              renderGallery();
-              renderPreview();
-            }); }}
+                (!isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;'),
+              onclick: function() {
+                state.galleryDark = false;
+                state.isAlternate = false;
+                generateCurrentTheme();
+                renderGenerator();
+                renderGallery();
+                renderPreview();
+              }
+            }
           },
           {
             t: 'button', c: 'Dark',
             a: {
               style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:0 4px 4px 0;cursor:pointer;font-size:0.875rem;font-weight:600;' +
-                (isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;')
-            },
-            o: { mounted: function(el) { el.addEventListener('click', function() {
-              state.galleryDark = true;
-              state.isAlternate = true;
-              generateCurrentTheme();
-              renderGenerator();
-              renderGallery();
-              renderPreview();
-            }); }}
+                (isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;'),
+              onclick: function() {
+                state.galleryDark = true;
+                state.isAlternate = true;
+                generateCurrentTheme();
+                renderGenerator();
+                renderGallery();
+                renderPreview();
+              }
+            }
           }
         ]
       });

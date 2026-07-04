@@ -112,6 +112,12 @@
 
   function createExampleNav(currentPage, baseHref) {
     var homeHref = resolveHref(primaryItems[0].href, baseHref);
+    // Icon lives at <root>/images/; baseHref points at <root>/pages/ from the
+    // current page (undefined when the page itself is in pages/). Derive the
+    // icon path from it so nested example dirs (../../pages/) resolve correctly.
+    var iconSrc = baseHref
+      ? baseHref.replace(/pages\/$/, 'images/') + 'bitwrench-icon.svg'
+      : '../images/bitwrench-icon.svg';
     var ver = window.bw && window.bw.version || '2.0.4';
     var onLearnPage = isLearnPage(currentPage);
     var onExamplePage = isExamplePage(currentPage);
@@ -260,7 +266,7 @@
                 {
                   t: 'img',
                   a: {
-                    src: '../images/bitwrench-icon.svg',
+                    src: iconSrc,
                     alt: 'bitwrench',
                     class: 'bw_site_nav_icon'
                   }

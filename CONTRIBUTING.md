@@ -48,6 +48,8 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 - `npm test` — Unit tests with coverage (Mocha + c8)
 - `npm run test:examples` — Playwright e2e tests for example pages
 - `npm run test:all` — Run all test suites
+- `npm run lint` — ESLint over `src/` (is the code well-formed?)
+- `npm run lint:drift` — drift-lint over docs/examples/pages (do the docs still tell the truth?). Runs automatically after `npm test` and `npm run build`. See [docs/drift-lint.md](docs/drift-lint.md) — if you remove or rename a user-facing API, add a rule in the same commit.
 
 ## Code Rules
 

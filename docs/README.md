@@ -39,6 +39,7 @@ These guides cover how to build UIs with bitwrench.
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
 | [TypeScript Usage Guide](bitwrench_typescript_usage.md) | Import patterns, typed configs, TACO types, tree-shaking |
 | [bwmcp MCP Server](bitwrench-mcp.md) | MCP server for AI agents: tool catalog, live rendering, screenshots |
+| [drift-lint](drift-lint.md) | Maintainer tool: keeps docs/examples consistent with the shipped API |
 
 ## Tutorials
 
