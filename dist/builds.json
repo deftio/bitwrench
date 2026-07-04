@@ -1,6 +1,6 @@
 {
   "version": "2.1.0",
-  "buildDate": "2026-07-03",
+  "buildDate": "2026-07-04",
   "files": [
     {
       "file": "bitwrench-bccl.cjs.js",
@@ -11,7 +11,7 @@
       "raw": 127821,
       "gzipped": 27228,
       "sourceMap": true,
-      "integrity": "sha384-2GQyFlVc9kRuJD49ACi0jdgqsKC/j17EvWjWvh2Si4yEaDoj9SbwK9b070UV6nYs"
+      "integrity": "sha384-XbU3f/gHLPzyZ4mRCx4KgdWfzgzHOFIqSx/fq4gM5Ys5fUoDdkCaOc/2MpaUPENU"
     },
     {
       "file": "bitwrench-code-edit.cjs.js",
@@ -33,7 +33,7 @@
       "raw": 318233,
       "gzipped": 81006,
       "sourceMap": true,
-      "integrity": "sha384-72w3lQH5ksxLZJoMbuP+GlqqvfEkUrnzLUHq3py2p9zgtmSd4f0kSnkVQgHqSRPI"
+      "integrity": "sha384-1frGYdnoSdyVOkef1zgWCxyW1Cx8PgX+exFoX9quOtyl5Mqsm6papxcCEsiwS4FR"
     },
     {
       "file": "bitwrench-util-css.cjs.js",
@@ -55,7 +55,7 @@
       "raw": 443364,
       "gzipped": 107229,
       "sourceMap": true,
-      "integrity": "sha384-Xa88NbYDd8wvyDXRVdWjJNtKVVnCdZuXHnuHRmSzzx8MVD/VT7iY/btRNACMkm9u"
+      "integrity": "sha384-9kbSAy5enyQNN5lQBio4K3SGjeHpZbKxyFEzAzMsdi6kpVgA2cBjHs9cVdM6LBw1"
     },
     {
       "file": "bwserve.cjs.js",
@@ -99,7 +99,7 @@
       "raw": 128199,
       "gzipped": 35497,
       "sourceMap": true,
-      "integrity": "sha384-TRpZ9t6ZYjiQW6jY1QWz1W7Pe2l7s1PPoSLfda0yOrht7dPhnugETNTR+9TzOW0q"
+      "integrity": "sha384-+p4Pmq73o+YOob9LqY9yqAnNtTTXWSNZiSsyfk3wdSTPz5+Lf2wSs3PerOntlgsO"
     },
     {
       "file": "bitwrench-util-css.cjs.min.js",
@@ -121,7 +121,7 @@
       "raw": 168652,
       "gzipped": 45691,
       "sourceMap": true,
-      "integrity": "sha384-GsJGcgM8KYnGkUQpfeYRMupSlaLXtzV3GXGAxFCKLnze5riwTrTJNNYaWRZu4r22"
+      "integrity": "sha384-LEX/5oACj2du3b26+H6yDGxcn+t8DnT6XFSmSM0DnexMf8zdC+HBrR8JzCCRF9Xe"
     },
     {
       "file": "bitwrench.css",
@@ -165,7 +165,7 @@
       "raw": 360447,
       "gzipped": 84957,
       "sourceMap": true,
-      "integrity": "sha384-nsq6iBD3dlUKeerrnLlrArCp/4qiBrbL/IorCsCP1nGXd2cU68C0nE0UFDFFE86e"
+      "integrity": "sha384-LpQX0VUTc9ce3abpSvaKyxNfiqKgXGu8kc+LqzPt4M7cyvw2dDT7QuHRumpEcBC9"
     },
     {
       "file": "bitwrench-util-css.es5.js",
@@ -187,7 +187,7 @@
       "raw": 517109,
       "gzipped": 114316,
       "sourceMap": true,
-      "integrity": "sha384-EiIU2Tn0Wdx8eM912JoqwpsVa0p+YoswtWrKTdJPaLCC/Ficy8V00tu3DddvdkZ8"
+      "integrity": "sha384-VuWoWXREtZnzJh7mWBuamOEGFPT8hfflCkLhLOTl4XNOeYclX9aVEobYamqvc3w6"
     },
     {
       "file": "bitwrench-code-edit.es5.min.js",
@@ -209,7 +209,7 @@
       "raw": 134566,
       "gzipped": 37271,
       "sourceMap": true,
-      "integrity": "sha384-1JC0V7Kxc/Ky7VajH/QDJ7JTvFGVW+3IAGvytxmUhtaXDnL2NhlX8cHPsrtZLIMq"
+      "integrity": "sha384-sQDZJfLq4Pa1VbS6NaFD3yGFfUIe+YF0+AsC/Xa+lj8LuuDEJdKqlCN58VQI5+50"
     },
     {
       "file": "bitwrench-util-css.es5.min.js",
@@ -231,7 +231,7 @@
       "raw": 181174,
       "gzipped": 48101,
       "sourceMap": true,
-      "integrity": "sha384-v1JryCLHPOBcp8Sno5WunO+Vm8ibzJajdI0jZfGf0CKJ042SaOWaAGR9GQi3Xo3Z"
+      "integrity": "sha384-pLvOXFJIwvqjjsSMb8yXS+5Iix0J6lDOef3FJ4/dt5dMji/ZFupDXRufX3TgDcYU"
     },
     {
       "file": "bitwrench-bccl.esm.js",
@@ -242,7 +242,7 @@
       "raw": 127741,
       "gzipped": 27211,
       "sourceMap": true,
-      "integrity": "sha384-LJ4HT9uXLU3xzvVPM2v33pzICCEu4/YP/kYF9QIPwDhkJ1ADH/vnFqjcPInuN36z"
+      "integrity": "sha384-CTA+j6DQalo5XjHQE/YzOIQeiyI9cFMTGhgPalxosgwBZJfXlHMkTMh6hZKQnJGO"
     },
     {
       "file": "bitwrench-code-edit.esm.js",
@@ -264,7 +264,7 @@
       "raw": 317370,
       "gzipped": 80822,
       "sourceMap": true,
-      "integrity": "sha384-3WG6We7YZJqRvvfLRDa5yyV9KMnzlMMqZ6yzIpsrNZpAYxNoJ6Cc9/YRw16VQcsY"
+      "integrity": "sha384-t11xOiS+0AJm60fsqqVAUSQ0mtiC7ilDq6zwazAYGymGH6pk8AEJfB7+PTGz6L0b"
     },
     {
       "file": "bitwrench-util-css.esm.js",
@@ -286,7 +286,7 @@
       "raw": 443148,
       "gzipped": 107303,
       "sourceMap": true,
-      "integrity": "sha384-S78slqaxHVJjpAaIYWrWrHb7iyLoeV8lKdi9YP81otMOTVSI2fR5vyJA46C0WCHf"
+      "integrity": "sha384-UP4LRNzwPxrxLBdik1WAU8IJHoMFtY3/0UZbB3bBkMiAUbrwcF/OlsApBWKLL+4D"
     },
     {
       "file": "bwserve.esm.js",
@@ -330,7 +330,7 @@
       "raw": 127620,
       "gzipped": 35351,
       "sourceMap": true,
-      "integrity": "sha384-xtG0aXQRWeE33P9S3s3BWbgl+MQqnb6LWsuAZ+v9EqEaYXpbyAFjvOlnRrgKFobN"
+      "integrity": "sha384-feqtmJTY2lu+VGPL+7mtKjAkHwNcymPUAM4kTmbTgRwJrsEQcYnmE4tb2fXY1eD+"
     },
     {
       "file": "bitwrench-util-css.esm.min.js",
@@ -352,7 +352,7 @@
       "raw": 168958,
       "gzipped": 45896,
       "sourceMap": true,
-      "integrity": "sha384-GAqikXLWppf5yr3eBLi/V/ge5Oa18rGtMm2F+RMOkhYpVTW8VkA0LcuIDt0SQqhp"
+      "integrity": "sha384-5z3gTPgR241hQ5EIsWtMeusKQ94qKfFXDGkgDwIp9ITq3i8Hj1Z8tBLpefCrQLvS"
     },
     {
       "file": "bitwrench-bccl.umd.js",
@@ -363,7 +363,7 @@
       "raw": 135939,
       "gzipped": 27767,
       "sourceMap": true,
-      "integrity": "sha384-Qe+EAEtiPoL3VwdrV/CrbivrxP6NNVCPHTqry+XBYRP+WlzirVOIkXkH43VSOkJy"
+      "integrity": "sha384-NCGWZfLO9NLHctwtPxEBIeoUiOcf8MpgcP6o0F7q7nLmUlvw2YV3nnDsBsWmNrQM"
     },
     {
       "file": "bitwrench-code-edit.umd.js",
@@ -396,7 +396,7 @@
       "raw": 335000,
       "gzipped": 82469,
       "sourceMap": true,
-      "integrity": "sha384-opFKmCJMhjBtoMdQ6mAeRw1AtK61/aiE/VL2KUTFB3MslVmZFKbNigSl002wsBv2"
+      "integrity": "sha384-xNE8pRDXAtW2Z+Cb01B5Pxfj75WuWUsdV1vnp+PMCPx36arX9SzRP6zpfwz/rVrk"
     },
     {
       "file": "bitwrench-util-css.umd.js",
@@ -418,7 +418,7 @@
       "raw": 467757,
       "gzipped": 108879,
       "sourceMap": true,
-      "integrity": "sha384-rP7VCj1/lZi5jyiXqIDunQpb5DejLneNWhlY0J1bfPMiD/EXnkWnizh/3b5E1Qi6"
+      "integrity": "sha384-OQnztOaI3usI0E0jBAKqbwtuECjFY5Q143yWLIuxyAp5E5ArsY8bKDCT1tbH5N3P"
     },
     {
       "file": "bitwrench-bccl.umd.min.js",
@@ -462,7 +462,7 @@
       "raw": 128625,
       "gzipped": 35584,
       "sourceMap": true,
-      "integrity": "sha384-ws/NETNrr6IR6F2wW5BEeMbM/8a2fAIR1CNL8TWyziBJTap644xlD/gjHEN1/mjs"
+      "integrity": "sha384-g0lW3hPXiCOvUr7mlj6B/+msrPsV0ZEImIfvyJI5ZVjI97LcMKpKv7eHGnKxluia"
     },
     {
       "file": "bitwrench-util-css.umd.min.js",
@@ -484,7 +484,7 @@
       "raw": 169078,
       "gzipped": 45773,
       "sourceMap": true,
-      "integrity": "sha384-lsFjsnSXAd+OIp/aG1pdrCpfZEDjQc0343m/fZHXZIsSi5uVE2kNZgW2DL1POosC"
+      "integrity": "sha384-Rsxzb/Zx1+Z6HBkP9wslq9emVt8+OkUcZu421W8M54SQq8B40rXshoDn8uG05UC/"
     }
   ]
 }
