@@ -92,10 +92,11 @@ void setup() {
     char taco[256];
     BW_TACO_ID(taco, "div", "counter", "0");
 
-    // Build a button: <button data-bw-action="increment">+1</button>
+    // Build a button: <button class="bw_btn bw_primary bw_act_increment">+1</button>
+    // (the bw_act_* class marks it as a server action named "increment")
     char btn[256];
     BW_TACO_ATTR(btn, "button",
-      "'data-bw-action':'increment','class':'bw-btn'", "+1");
+      "'class':'bw_btn bw_primary bw_act_increment'", "+1");
 
     // Build array of both nodes
     char content[512];

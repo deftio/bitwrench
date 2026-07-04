@@ -1,5 +1,9 @@
 # Bitwrench Router Design
 
+> **STALE-CHECK (2026-07):** pre-implementation draft. The router has since
+> shipped -- the current, accurate documentation is `docs/routing.md`. This
+> draft may differ from what was actually built; kept for design history.
+
 Status: DRAFT -- awaiting sign-off
 Estimated size: ~100-120 lines in core, 0 new dependencies
 

@@ -1,5 +1,9 @@
 # Future Features -- Landscape Comparison and Gap Analysis
 
+> **STALE-CHECK (2026-07):** written pre-2.1 (Mar 2026). Some gaps listed here
+> have since closed (router, MCP server, TypeScript declarations, charts).
+> Re-verify each claim against the current release before acting on it.
+
 Honest assessment of bitwrench vs the 2026 lightweight UI library landscape.
 Not compared against React/Vue/Angular ecosystems (different category entirely).
 Compared against: HTMX, Alpine.js, Lit, Preact, Solid, Svelte, Mithril, Van.js.

@@ -422,7 +422,7 @@ dynamic and don't have specific types:
 - **`el.bw.*` methods** -- populated at runtime from `o.handle`/`o.slots`.
   Cast `el.bw` to a custom interface for your components.
 - **`bw.apply()` wire protocol messages** -- typed as `Record<string, any>`.
-  The bwserve protocol is documented in `dev/bw-client-server.md`.
+  The bwserve protocol is documented in [docs/bwserve.md](bwserve.md).
 - **Less common `make*()` configs** -- typed as `ComponentConfig` (open
   object). The most-used components (Card, Button, Tabs, Accordion, Modal,
   Alert, Nav, Input, Carousel, Table) have specific config types.

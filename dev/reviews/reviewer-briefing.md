@@ -1,5 +1,10 @@
 # Reviewer Briefing: bitwrench v2.1.0 Lifecycle Cleanup
 
+> **HISTORICAL (2026-07):** this briefing was written while v2.1 was in the
+> design phase. v2.1 has since been implemented; the spec of record is
+> `dev/bitwrench-lifecycle-cleanup-2026-06-09.md` and the shipped behavior is
+> documented in `docs/`. Kept as context for the reviews in this folder.
+
 **Date**: April 2026
 **Current shipped version**: v2.0.32 (on npm, in production)
 **Target version**: v2.1.0 (design phase -- not yet implemented)
@@ -84,7 +89,7 @@ attention to "For reviewers: what to challenge" at the end -- it
 separates productive challenges from already-settled questions.
 
 **2. Lifecycle Design v1.1 (~25 min)**
-`dev/bw-lifecycle-cleanup-2026-04-11-v1.1.md`
+`dev/archive/bw-lifecycle-cleanup-2026-04-11-v1.1.md`
 
 The full technical spec for the v2.1.0 cleanup. Covers:
 - All 6 lifecycle phases with function signatures

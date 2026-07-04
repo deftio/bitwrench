@@ -10,6 +10,7 @@ These guides cover how to build UIs with bitwrench.
 | How do I build a page? | [Building a Website tutorial](tutorial-website.md) |
 | How does TACO work? | [TACO Format](taco-format.md) or [Thinking in Bitwrench](thinking-in-bitwrench.md) |
 | How do I add interactivity? | [State Management](state-management.md) |
+| How does a component actually work? | [Component Lifecycle Walkthrough](component-lifecycle.md) |
 | How do I theme my app? | [Theming](theming.md) |
 | I'm an LLM generating bitwrench code | [LLM Guide](llm-bitwrench-guide.md) |
 | How do I use bwmcp with an AI agent? | [bwmcp MCP Server](bitwrench-mcp.md) |
@@ -48,7 +49,7 @@ These guides cover how to build UIs with bitwrench.
 | [Building a Website](tutorial-website.md) | Build a complete landing page from scratch |
 | [Server App with bwserve](tutorial-bwserve.md) | Build a Streamlit-style server-driven dashboard |
 | [ESP32 Embedded](tutorial-embedded.md) | ESP32 IoT dashboard with C/C++ macros |
-| [Component Lifecycle Walkthrough](../dev/v2.1_samples/01-card-lifecycle.md) | Stats card: define, create, mount, update, unmount — every phase of a v2.1 component |
+| [Component Lifecycle Walkthrough](component-lifecycle.md) | Stats card: define, create, mount, update, unmount — every phase of a v2.1 component |
 
 ## Interactive Docs
 
@@ -74,7 +75,7 @@ The library provides four things:
 
 1. **A rendering engine** that turns objects into HTML or DOM
 2. **A component library** of ready-made UI elements
-3. **An explicit update model** — `el.bw.method()`, slots, `bw.refresh()` — that updates the DOM when you tell it to
+3. **An explicit update model** — components live on the DOM element itself (`el.bw` methods, slots, `el._bw_state`), and updates happen when you call them (`el.bw.method()`, `bw.update()`, `bw.refresh()`)
 4. **A client-side router** that maps URLs to views with guards and pub/sub
 
 Everything else -- styling, theming, event handling, server communication -- builds on these pieces.

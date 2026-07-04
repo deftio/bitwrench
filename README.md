@@ -145,7 +145,33 @@ bw.DOM('#app', counter);
 
 > **Important: event handlers go in `a: { onclick: fn }`, not in `o.mounted`.** Handlers attached via `addEventListener` in `o.mounted` are silently lost when a component re-renders. Always use `onclick`/`onchange`/etc. inside `a:` -- bitwrench re-attaches them on every render automatically.
 
-See the [State Management guide](docs/state-management.md) for the full component model.
+Full re-render is only one option -- components can also expose methods and named slots on the element itself for surgical updates. See the [State Management guide](docs/state-management.md) for the full component model.
+
+## Components Live in the DOM
+
+Here's the part that surprises people coming from other frameworks: after rendering, **the DOM element is the component**. The TACO is consumed at mount time -- there's no virtual DOM, no retained tree, no framework instance to look up. State lives on the element (`el._bw_state`), and the component's public API lives on the element too (`el.bw`):
+
+```javascript
+var card = bw.mount('#stats', {
+  t: 'div', a: { class: 'stats-card' },
+  c: [
+    { t: 'h3', a: { class: 'card-title' }, c: 'Revenue' },
+    { t: 'span', a: { class: 'card-value' }, c: '$50,000' }
+  ],
+  o: {
+    slots: { title: '.card-title', value: '.card-value' },  // auto-generates setters/getters
+    handle: {
+      update: function(el, data) { el.bw.setValue('$' + data.value.toLocaleString()); }
+    }
+  }
+});
+
+card.bw.setTitle('Profit');          // surgical DOM update via slot -- no re-render
+card.bw.update({ value: 120000 });   // component method with logic
+bw.update(card, { value: 99000 });   // same call, dispatched -- works by element or UUID
+```
+
+Because everything lives on the element, debugging needs no extension: select any component in the browser's Elements panel and type `$0._bw_state` to see its state, or `$0.bw` to see its methods. See the [Component Lifecycle Walkthrough](docs/component-lifecycle.md) for the full tour -- define, create, mount, update, unmount.
 
 For communication between components, use pub/sub:
 
@@ -223,6 +249,20 @@ bw.toggleThemeMode();  // switch between primary and alternate palettes
 | `bw.inspect(target, depth)` | Introspect a DOM subtree with bitwrench metadata (state, handles, type) |
 | `bw.apply(msg)` | Apply a bwserve protocol message to the DOM |
 
+### Choosing an update verb
+
+The update functions form a cost ladder -- prefer the cheapest one that does the job:
+
+| Operation | Cost | What happens |
+|-----------|------|-------------|
+| `el.bw.method()` / slot setters | Surgical | Component updates its own DOM directly |
+| `bw.update(ref, data)` | Dispatch | Calls `el.bw.update(data)` -- never rebuilds |
+| `bw.message(ref, action, data)` | Dispatch | Calls `el.bw[action](data)` by selector or UUID |
+| `bw.patch(id, content)` | Targeted | Replaces a single element's content |
+| `bw.refresh(ref)` | Full rebuild | Re-runs `o.render`; children are unmounted and rebuilt |
+
+Choosing where you sit on this ladder *is* the programming model -- there's no diffing engine deciding for you. See [the update cost spectrum](docs/thinking-in-bitwrench.md#the-update-cost-spectrum) for the full version.
+
 See the full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html) for all functions.
 
 ## CLI
@@ -272,6 +312,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 **Reference guides** (in `docs/`):
 
 - [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
+- [Component Lifecycle Walkthrough](docs/component-lifecycle.md) -- one stats card through every phase: define, create, mount, update, unmount
 - [State Management](docs/state-management.md) -- component model, explicit stateful components, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens

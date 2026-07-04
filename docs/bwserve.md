@@ -804,7 +804,7 @@ For the full attach guide, see [bwcli attach documentation](bw-attach.md).
 - [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference with all 13 message types
 - [Sandbox](../pages/14-bwserve-sandbox.html) — Try bwserve protocol in the browser (no server needed)
 - [Screenshot Example](../examples/client-server/screenshot-server.js) — Runnable screenshot demo
-- [Design Document](../dev/bw-client-server.md) — Protocol design decisions and architecture
+- [Design Document](../dev/archive/bw-client-server.md) — Original (pre-v2.1) protocol design exploration, kept for history
 - [CLI](cli.md) — The `bwcli` command for file conversion and pipe server
 - [Attach Mode](bw-attach.md) — Full remote debugging REPL documentation
 - [Embedded Tutorial](tutorial-embedded.md) — ESP32 IoT dashboard with C macros and r-prefix JSON

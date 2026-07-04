@@ -1,5 +1,10 @@
 # Example 1: Stats Card -- Full Lifecycle
 
+> **Promoted:** the maintained version of this walkthrough lives at
+> [docs/component-lifecycle.md](../../docs/component-lifecycle.md) with v2.1
+> API names (`bw.create`, `bw.unmount`). This copy is retained as part of the
+> original design-exercise set and may use pre-release names.
+
 Walk through every phase of a component's life using the v2.1.0 API.
 This is a design exercise to test ergonomics before implementation.
 

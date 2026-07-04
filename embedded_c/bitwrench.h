@@ -85,8 +85,8 @@ extern "C" {
 
 /**
  * BW_TACO_ATTR — Element with arbitrary attribute string (pre-composed)
- *   BW_TACO_ATTR(buf, "button", "'data-bw-action':'increment','class':'bw-btn'", "+1")
- *   → r{'t':'button','a':{'data-bw-action':'increment','class':'bw-btn'},'c':'+1'}
+ *   BW_TACO_ATTR(buf, "button", "'class':'bw_btn bw_primary bw_act_increment'", "+1")
+ *   → r{'t':'button','a':{'class':'bw_btn bw_primary bw_act_increment'},'c':'+1'}
  */
 #define BW_TACO_ATTR(buf, tag, attr_str, text) \
     snprintf(buf, sizeof(buf), \

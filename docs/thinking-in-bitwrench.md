@@ -1035,7 +1035,7 @@ bw.mount('#app', card);
 
 ### BCCL components include handles and slots
 
-All BCCL factories wire up `o.handle` and/or `o.slots` automatically:
+The stateful and interactive BCCL components (cards, tables, tabs, modals, toasts, accordions, and others) wire up `o.handle` and/or `o.slots` automatically. Purely structural factories (rows, containers, buttons) return plain TACOs with no handles -- they don't need any:
 
 ```js
 var el = bw.mount('#app', bw.makeCard({ title: 'Stats', content: '0' }));

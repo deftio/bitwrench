@@ -204,7 +204,24 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
   }
 };
 
-bw.DOM(&#39;#app&#39;, counter);</code></pre><blockquote class="quikdown-blockquote"><strong class="quikdown-strong">Important: event handlers go in <code class="quikdown-code">a: { onclick: fn }</code>, not in <code class="quikdown-code">o.mounted</code>.</strong> Handlers attached via <code class="quikdown-code">addEventListener</code> in <code class="quikdown-code">o.mounted</code> are silently lost when a component re-renders. Always use <code class="quikdown-code">onclick</code>/<code class="quikdown-code">onchange</code>/etc. inside <code class="quikdown-code">a:</code> -- bitwrench re-attaches them on every render automatically.</blockquote><p>See the <a class="quikdown-a" href="docs/state-management.md">State Management guide</a> for the full component model.</p><p>For communication between components, use pub/sub:</p><pre class="quikdown-pre"><code class="language-javascript">bw.sub(&#39;item-added&#39;, function(detail) {
+bw.DOM(&#39;#app&#39;, counter);</code></pre><blockquote class="quikdown-blockquote"><strong class="quikdown-strong">Important: event handlers go in <code class="quikdown-code">a: { onclick: fn }</code>, not in <code class="quikdown-code">o.mounted</code>.</strong> Handlers attached via <code class="quikdown-code">addEventListener</code> in <code class="quikdown-code">o.mounted</code> are silently lost when a component re-renders. Always use <code class="quikdown-code">onclick</code>/<code class="quikdown-code">onchange</code>/etc. inside <code class="quikdown-code">a:</code> -- bitwrench re-attaches them on every render automatically.</blockquote><p>Full re-render is only one option -- components can also expose methods and named slots on the element itself for surgical updates. See the <a class="quikdown-a" href="docs/state-management.md">State Management guide</a> for the full component model.</p><h2 class="quikdown-h2">Components Live in the DOM</h2>
+<p>Here&#39;s the part that surprises people coming from other frameworks: after rendering, <strong class="quikdown-strong">the DOM element is the component</strong>. The TACO is consumed at mount time -- there&#39;s no virtual DOM, no retained tree, no framework instance to look up. State lives on the element (<code class="quikdown-code">el._bw_state</code>), and the component&#39;s public API lives on the element too (<code class="quikdown-code">el.bw</code>):</p><pre class="quikdown-pre"><code class="language-javascript">var card = bw.mount(&#39;#stats&#39;, {
+  t: &#39;div&#39;, a: { class: &#39;stats-card&#39; },
+  c: [
+    { t: &#39;h3&#39;, a: { class: &#39;card-title&#39; }, c: &#39;Revenue&#39; },
+    { t: &#39;span&#39;, a: { class: &#39;card-value&#39; }, c: &#39;$50,000&#39; }
+  ],
+  o: {
+    slots: { title: &#39;.card-title&#39;, value: &#39;.card-value&#39; },  // auto-generates setters/getters
+    handle: {
+      update: function(el, data) { el.bw.setValue(&#39;§CB6§#39; + data.value.toLocaleString()); }
+    }
+  }
+});
+
+card.bw.setTitle(&#39;Profit&#39;);          // surgical DOM update via slot -- no re-render
+card.bw.update({ value: 120000 });   // component method with logic
+bw.update(card, { value: 99000 });   // same call, dispatched -- works by element or UUID</code></pre><p>Because everything lives on the element, debugging needs no extension: select any component in the browser&#39;s Elements panel and type <code class="quikdown-code">$0._bw_state</code> to see its state, or <code class="quikdown-code">$0.bw</code> to see its methods. See the <a class="quikdown-a" href="docs/component-lifecycle.md">Component Lifecycle Walkthrough</a> for the full tour -- define, create, mount, update, unmount.</p><p>For communication between components, use pub/sub:</p><pre class="quikdown-pre"><code class="language-javascript">bw.sub(&#39;item-added&#39;, function(detail) {
   console.log(&#39;New item:&#39;, detail.name);
 });
 
@@ -326,7 +343,43 @@ bw.toggleThemeMode();  // switch between primary and alternate palettes</code></
 <td class="quikdown-td">Apply a bwserve protocol message to the DOM</td>
 </tr>
 </tbody>
-</table><p>See the full <a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/08-api-reference.html" rel="noopener noreferrer">API Reference</a> for all functions.</p><h2 class="quikdown-h2">CLI</h2>
+</table><h3 class="quikdown-h3">Choosing an update verb</h3>
+<p>The update functions form a cost ladder -- prefer the cheapest one that does the job:</p><table class="quikdown-table">
+<thead class="quikdown-thead">
+<tr class="quikdown-tr">
+<th class="quikdown-th">Operation</th>
+<th class="quikdown-th">Cost</th>
+<th class="quikdown-th">What happens</th>
+</tr>
+</thead>
+<tbody class="quikdown-tbody">
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">el.bw.method()</code> / slot setters</td>
+<td class="quikdown-td">Surgical</td>
+<td class="quikdown-td">Component updates its own DOM directly</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.update(ref, data)</code></td>
+<td class="quikdown-td">Dispatch</td>
+<td class="quikdown-td">Calls <code class="quikdown-code">el.bw.update(data)</code> -- never rebuilds</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.message(ref, action, data)</code></td>
+<td class="quikdown-td">Dispatch</td>
+<td class="quikdown-td">Calls <code class="quikdown-code">el.bw[action](data)</code> by selector or UUID</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.patch(id, content)</code></td>
+<td class="quikdown-td">Targeted</td>
+<td class="quikdown-td">Replaces a single element&#39;s content</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td"><code class="quikdown-code">bw.refresh(ref)</code></td>
+<td class="quikdown-td">Full rebuild</td>
+<td class="quikdown-td">Re-runs <code class="quikdown-code">o.render</code>; children are unmounted and rebuilt</td>
+</tr>
+</tbody>
+</table><p>Choosing where you sit on this ladder <em class="quikdown-em">is</em> the programming model -- there&#39;s no diffing engine deciding for you. See <a class="quikdown-a" href="docs/thinking-in-bitwrench.md#the-update-cost-spectrum">the update cost spectrum</a> for the full version.</p><p>See the full <a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/08-api-reference.html" rel="noopener noreferrer">API Reference</a> for all functions.</p><h2 class="quikdown-h2">CLI</h2>
 <p>Convert Markdown, HTML, or JSON files to styled standalone pages:</p><pre class="quikdown-pre"><code class="language-bash"># Convert Markdown to a self-contained HTML page
 bwcli README.md -o index.html --standalone
 
@@ -373,6 +426,7 @@ curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/llm-bitwrench-guide.md">LLM Guide</a></strong> -- compact single-file reference with all APIs, patterns, and rules. Designed for AI-assisted development but works as a cheat sheet for anyone</li>
 </ul><p><strong class="quikdown-strong">Reference guides</strong> (in <code class="quikdown-code">docs/</code>):</p><ul class="quikdown-ul">
 <li class="quikdown-li"><a class="quikdown-a" href="docs/taco-format.md">TACO Format</a> -- the <code class="quikdown-code">{t, a, c, o}</code> object format</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/component-lifecycle.md">Component Lifecycle Walkthrough</a> -- one stats card through every phase: define, create, mount, update, unmount</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> -- component model, explicit stateful components, cross-component communication</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> -- all <code class="quikdown-code">make*()</code> functions with signatures and examples</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/theming.md">Theming</a> -- palette-driven theme generation, presets, design tokens</li>
